@@ -1497,6 +1497,33 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
+  var ADPCMMONOPACKET = {
+    initialSample: SI16,
+    initialIndex: UB6,
+    codes: {
+      type: UB,
+      params: ['$codeSize+2'],
+      list: { count: 4095 }
+    }
+  };
+
+  var ADPCMSTEREOPACKET = {
+    initialSampleLeft: SI16,
+    initialIndexLeft: UB6,
+    initialSampleRight: SI16,
+    initialIndexRight: UB6,
+    codes: {
+      type: UB,
+      params: ['$codeSize+2'],
+      list: { count: 8190 }
+    }
+  };
+
+  var ADPCMSOUNDDATA = {
+    $codeSize: UB2,
+    packets: ['soundType', ADPCMMONOPACKET, ADPCMSTEREOPACKET]
+  };
+
   var DEFINESOUND = {
     id: UI16,
     format: UB4,
@@ -1504,7 +1531,11 @@
     size: FLAG,
     soundType: FLAG,
     sampleCount: UI32,
-    soundData: BINARY
+    soundData: ['format', {
+      0: BINARY,
+      1: ADPCMSOUNDDATA,
+      3: BINARY
+    }]
   };
 
   var SOUNDENVELOPE = {
@@ -1573,7 +1604,11 @@
   };
 
   var SOUNDSTREAMBLOCK = {
-    streamData: BINARY
+    streamData: ['streamCompression', {
+      0: BINARY,
+      1: ADPCMSOUNDDATA,
+      3: BINARY
+    }]
   };
 
 
