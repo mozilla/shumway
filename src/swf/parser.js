@@ -1584,10 +1584,8 @@
     soundType: FLAG,
     sampleCount: UI32,
     soundData: ['format', {
-      0: BINARY,
       1: ADPCMSOUNDDATA,
-      2: MP3SOUNDDATA,
-      3: BINARY
+      2: MP3SOUNDDATA
     }]
   };
 
@@ -1658,10 +1656,8 @@
 
   var SOUNDSTREAMBLOCK = {
     streamData: ['streamCompression', {
-      0: BINARY,
       1: ADPCMSOUNDDATA,
-      2: MP3SOUNDDATA,
-      3: BINARY
+      2: MP3SOUNDDATA
     }]
   };
 
