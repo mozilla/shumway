@@ -37,10 +37,14 @@
   const UB5         = 22;
   const UB6         = 23;
   const UB7         = 24;
-  const UB10        = 25;
+  const UB8         = 25
+  const UB10        = 26;
+  const UB12        = 27;
+  const UB16        = 28;
+  const UB17        = 29;
 
-  const TAG         = 26;
-  const COLOR       = 27;
+  const TAG         = 30;
+  const COLOR       = 31;
 
   var LANGCODE = UI8;
 
@@ -1523,16 +1527,16 @@
     $codeSize: UB2,
     packets: ['soundType', ADPCMMONOPACKET, ADPCMSTEREOPACKET]
   };
-  
+
   var mpeg1Bitrates =
     [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
   var mpeg1SamplingRates = [44100, 48000, 32000];
-    
+
   var mpeg2xBitrates =
     [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
   var mpeg2SamplingRates = [22050, 24000, 16000];
   var mpeg25SamplingRates = [11025, 12000, 8000];
-  
+
   var MP3FRAME = {
     syncword: UB11,
     $mpegVersion: UB2,
@@ -1567,7 +1571,7 @@
       }]
     }
   };
-  
+
   var MP3SOUNDDATA = {
     seekSamples: SI16,
     frames: {
@@ -1772,6 +1776,172 @@
 
   //////////////////////////////////////////////////////////////////////////////
   //
+  // Video
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  var MACROBLOCK = {
+    isCoded: FLAG,
+    macroblockType: -1 // varies,
+    blockPattern: -1 // varies,
+    quantizerInformation: UB2,
+    motionVectorData: {
+      type: -1 // varies,
+      list: { count: 2 }
+    },
+    extraMotionVectorData: {
+      type: -1 // varies,
+      list: { count: 6 }
+    },
+    blockData: BINARY
+  };
+
+  var H263VIDEOPACKET = {
+    pictureStartCode: UB17,
+    version: UB5,
+    temporalReference: UB8,
+    $pictureSize: UB3,
+    customWidth: {
+      type: ['pictureSize', UB8, UB16]
+    },
+    customHeight: {
+      type: ['pictureSize', UB8, UB16]
+    },
+    pictureType: UB2,
+    useDeblocking: FLAG,
+    quantizer: UB5,
+    extraInformations: {
+      $hasExtraInformation: FLAG,
+      extraInformation: {
+        type: UB8,
+        condition: 'hasExtraInformation'
+      },
+      list: { condition: 'hasExtraInformation' }
+    },
+    macroblock: MACROBLOCK,
+    pictureStuffing: -1 // varies
+  };
+
+  var IMAGEBLOCK = {
+    $dataSize: UB16,
+    pixelData: {
+      type: BINARY,
+      list: { count: 'dataSize' }
+    }
+  };
+
+  var SCREENVIDEOPACKET = {
+    blockWidth: UB4,
+    imageWidth: UB12,
+    blockHeight: UB4,
+    imageHeight: UB12,
+    imageBlocks: {
+      type: IMAGEBLOCK,
+      list: true
+    }
+  };
+
+  var IMAGEFORMAT = {
+    reserved: UB3,
+    colorDepth: UB2,
+    hasDiffBlocks: FLAG,
+    usesZlibPrimeCompressCurrent: FLAG,
+    usesZlibPrimeCompressPrevious: FLAG
+  };
+
+  var IMAGEDIFFPOSITION = {
+    rowStart: UI8,
+    height: UI8
+  };
+
+  var IMAGEPRIMEPOSITION = {
+    column: UI8,
+    row: UI8
+  };
+
+  var IMAGEBLOCKV2 = {
+    $dataSize: UB16,
+    format: IMAGEFORMAT,
+    imageBlockHeader: -1 // varies,
+    pixelData: {
+      type: BINARY,
+      list: { count: 'dataSize' }
+    }
+  };
+
+  var SCREENV2VIDEOPACKET = {
+    blockWidth: UB4,
+    imageWidth: UB12,
+    blockHeight: UB4,
+    imageHeight: UB12,
+    reserved: UB6,
+    $hasIframeImage: FLAG,
+    $hasPaletteInfo: FLAG,
+    paletteInfo: {
+      type: IMAGEBLOCK,
+      condition: 'hasPaletteInfo'
+    },
+    imageBlocks: {
+      type: IMAGEBLOCKV2,
+      list: true
+    },
+    iframeImage: {
+      type: IMAGEBLOCKV2,
+      condition: 'hasIframeImage',
+      list: true
+    }
+  };
+
+  var VP6FLVVIDEOPACKET = {
+    horizontalAdjustment: UB4,
+    verticalAdjustment: UB4,
+    videoData: BINARY
+  };
+
+  var VP6FLVALPHAVIDEOPACKET = {
+    horizontalAdjustment: UB4,
+    verticalAdjustment: UB4,
+    $offsetToAlpha: UI24,
+    videoData: {
+      type: BINARY,
+      length: 'offsetToAlpha'
+    },
+    alphaData: BINARY
+  };
+
+  var VP6SWFVIDEOPACKET = {
+    videoData: BINARY
+  };
+
+  var VP6SWFALPHAVIDEOPACKET = {
+    $offsetToAlpha: UI24,
+    videoData: {
+      type: BINARY
+      length: 'offsetToAlpha'
+    },
+    alphaData: BINARY
+  };
+
+  var DEFINEVIDEOSTREAM = {
+    id: UI16,
+    numFrames: UI16,
+    width: UI16,
+    height: UI16,
+    reserved: UB4,
+    deblocking: UB3,
+    enableSmoothing: FLAG,
+    codecId: UI8
+  };
+
+  var VIDEOFRAME = {
+    streamId: UI16,
+    frameNum: UI16,
+    videoData: BINARY
+  };
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
   // Tags
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -1781,13 +1951,9 @@
     // Display list tags ///////////////////////////////////////////////////////
 
     /* PlaceObject */ 4: PLACEOBJECT,
-
     /* PlaceObject2 */ 26: PLACEOBJECT2,
-
     /* PlaceObject3 */ 70: PLACEOBJECT3,
-
     /* RemoveObject */ 5: REMOVEOBJECT,
-
     /* RemoveObject2 */ 28: REMOVEOBJECT2,
 
     // Control tags ////////////////////////////////////////////////////////////
@@ -1920,91 +2086,60 @@
     // Action tags /////////////////////////////////////////////////////////////
 
     /* DoAction*/ 12: DOACTION,
-
     /* DoInitAction */ 59: DOINITACTION,
-
     /* DoABC */ 82: DOABC,
 
     // Shape tags //////////////////////////////////////////////////////////////
 
     /* DefineShape */ 2: DEFINESHAPE,
-
     /* DefineShape2 */ 22: DEFINESHAPE2,
-
     /* DefineShape3 */ 32: DEFINESHAPE2,
-
     /* DefineShape4 */ 83: DEFINESHAPE4,
 
     // Bitmap tags /////////////////////////////////////////////////////////////
 
     /* DefineBits */ 6: DEFINEBITS,
-
     /* JPEGTables */ 8: JPEGTABLES,
-
     /* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
-
     /* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
-
     /* DefineBitsLossless */ 20: DEFINEBITSLOSSLESS,
-
     /* DefineBitsLossless2 */ 36: DEFINEBITSLOSSLESS2,
-
     /* DefineBitsJPEG4 */ 90: DEFINEBITSJPEG4,
 
     // Shape morphing tags /////////////////////////////////////////////////////
 
     /* DefineMorphShape */ 46: DEFINEMORPHSHAPE,
-
     /* DefineMorphShape2 */ 84: DEFINEMORPHSHAPE2,
 
     // Font tags ///////////////////////////////////////////////////////////////
 
     /* DefineFont */ 10: DEFINEFONT,
-
     /* DefineFontInfo */ 13: DEFINEFONTINFO,
-
     /* DefineFontInfo2 */ 62: DEFINEFONTINFO2,
-
     /* DefineFont2 */ 48: DEFINEFONT2,
-
     /* DefineFont3 */ 75: DEFINEFONT2,
-
     /* DefineFontAlignZones */ 73: DEFINEFONTALIGNZONES,
-
     /* DefineFontName */ 88: DEFINEFONTNAME,
-
     /* DefineText */ 11: DEFINETEXT,
-
     /* DefineText2 */ 33: DEFINETEXT,
-
     /* DefineEditText */ 37: DEFINEEDITTEXT,
-
     /* CSMTextSettings */ 74: CSMTEXTSETTINGS,
-
     /* DefineFont4 */ 91: DEFINEFONT4,
 
     // Sound tags //////////////////////////////////////////////////////////////
 
     /* DefineSound */ 14: DEFINESOUND,
-
     /* StartSound */ 15: STARTSOUND,
-
     /* StartSound2 */ 89: STARTSOUND2,
-
     /* SoundStreamHead */ 18: SOUNDSTREAMHEAD,
-
     /* SoundStreamHead2 */ 45: SOUNDSTREAMHEAD,
-
     /* SoundStreamBlock */ 19: SOUNDSTREAMBLOCK,
 
     // Button tags /////////////////////////////////////////////////////////////
 
     /* DefineButton */ 7: DEFINEBUTTON,
-
     /* DefineButton2 */ 34: DEFINEBUTTON2,
-
     /* DefineButtonCxform */ 23: DEFINEBUTTONCXFORM,
-
     /* DefineButtonSound */ 17: DEFINEBUTTONSOUND,
 
     // Movie clips /////////////////////////////////////////////////////////////
@@ -2020,22 +2155,8 @@
 
     // Video tags //////////////////////////////////////////////////////////////
 
-    /* DefineVideoStream */ 60: {
-      id: UI16,
-      numFrames: UI16,
-      width: UI16,
-      height: UI16,
-      reserved: UB4,
-      deblocking: UB3,
-      enableSmoothing: FLAG,
-      codecId: UI8
-    },
-
-    /* VideoFrame */ 61: {
-      streamId: UI16,
-      frameNum: UI16,
-      videoData: BINARY
-    },
+    /* DefineVideoStream */ 60: DEFINEVIDEOSTREAM,
+    /* VideoFrame */ 61: VIDEOFRAME,
 
     // Binary data /////////////////////////////////////////////////////////////
 
