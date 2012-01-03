@@ -1523,6 +1523,55 @@
     $codeSize: UB2,
     packets: ['soundType', ADPCMMONOPACKET, ADPCMSTEREOPACKET]
   };
+  
+  var mpeg1Bitrates =
+    [32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320];
+  var mpeg1SamplingRates = [44100, 48000, 32000];
+    
+  var mpeg2xBitrates =
+    [8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+  var mpeg2SamplingRates = [22050, 24000, 16000];
+  var mpeg25SamplingRates = [11025, 12000, 8000];
+  
+  var MP3FRAME = {
+    syncword: UB11,
+    $mpegVersion: UB2,
+    layer: UB2,
+    isProtected: FLAG,
+    $bitrate: UB4,
+    $samplingRate: UB2,
+    $isPadded: FLAG,
+    reserved: FLAG,
+    channelMode: UB2,
+    modeExtension: UB2,
+    isCopyrighted: FLAG,
+    isOriginal: FLAG,
+    emphasis: UB2,
+    sampleData: {
+      type: ['mpegVersion', {
+        0: {
+          type: BINARY,
+          length: '(72*mpeg2xBitrates[bitrate]*1000)/mpeg25SamplingRates[samplingRate]+isPadded-4'
+        },
+        2: {
+          type: BINARY,
+          length: '(72*mpeg2xBitrates[bitrate]*1000)/mpeg2SamplingRates[samplingRate]+isPadded-4'
+        },
+        3: {
+          type: BINARY,
+          length: '(144*mpeg1Bitrates[bitrate]*1000)/mpeg1SamplingRates[samplingRate]+isPadded-4'
+        }
+      }]
+    }
+  };
+  
+  var MP3SOUNDDATA = {
+    seekSamples: SI16,
+    frames: {
+      type: MP3FRAME,
+      list: true
+    }
+  };
 
   var DEFINESOUND = {
     id: UI16,
@@ -1534,6 +1583,7 @@
     soundData: ['format', {
       0: BINARY,
       1: ADPCMSOUNDDATA,
+      2: MP3SOUNDDATA,
       3: BINARY
     }]
   };
@@ -1607,6 +1657,7 @@
     streamData: ['streamCompression', {
       0: BINARY,
       1: ADPCMSOUNDDATA,
+      2: MP3SOUNDDATA,
       3: BINARY
     }]
   };
