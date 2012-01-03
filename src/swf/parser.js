@@ -1,16 +1,16 @@
 /* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 
-;(function (window, undefined) {
+(function (window, undefined) {
 
   'use strict';
-  
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Basic Data Types
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   const SI8         = 0;
   const SI16        = 1;
   const SI32        = 2;
@@ -28,7 +28,7 @@
   const FB          = 14;
   const STRING      = 15;
   const BINARY      = 16;
-  
+
   const UI24        = 17;
   const FLAG        = 18;
   const UB2         = 19;
@@ -38,18 +38,18 @@
   const UB6         = 23;
   const UB7         = 24;
   const UB10        = 25;
-  
+
   const TAG         = 26;
   const COLOR       = 27;
-  
+
   var LANGCODE = UI8;
-  
+
   var RGB = {
     red: UI8,
     green: UI8,
     blue: UI8
   };
-  
+
   var RGBA = {
     rgb: {
       type: RGB,
@@ -57,7 +57,7 @@
     },
     alpha: UI8
   };
-  
+
   var ARGB = {
     alpha: UI8,
     rgb: {
@@ -65,7 +65,7 @@
       seamless: true
     }
   };
-  
+
   var RECT = {
     $nBits: UB5,
     xMin: SB,
@@ -73,7 +73,7 @@
     yMin: SB,
     yMax: SB
   };
-  
+
   var MATRIX = {
     $hasScale: FLAG,
     scale: {
@@ -99,19 +99,19 @@
     translateX: SB,
     translateY: SB
   };
-  
+
   var MULTTERMS = {
     redMultTerm: SB,
     greenMultTerm: SB,
     blueMultTerm: SB
   };
-  
+
   var ADDTERMS = {
     redAddTerm: SB,
     greenAddTerm: SB,
     blueAddTerm: SB
   };
-  
+
   var CXFORM = {
     $hasAddTerms: FLAG,
     $hasMultTerms: FLAG,
@@ -127,7 +127,7 @@
       condition: 'hasAddTerms'
     }
   };
-  
+
   var CXFORMWITHALPHA = {
     $hasAddTerms: FLAG,
     $hasMultTerms: FLAG,
@@ -155,43 +155,43 @@
       condition: 'hasAddTerms'
     }
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Actions
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var REGISTERPARAM = {
     register: UI8,
     paramName: STRING
   };
-  
+
   var actions = {
-  
+
     /* GotoFrame */ 129: {
       frame: STRING
     },
-  
+
     /* GetURL */ 131: {
       url: STRING,
       target: STRING
     },
-  
+
     /* WaitForFrame */ 138: {
       frame: UI16,
       skipCount: UI8
     },
-  
+
     /* SetTarget */ 139: {
       targetName: STRING
     },
-  
+
     /* GoToLabel */ 140: {
       label: STRING
     },
-  
+
     /* Push */ 150: {
       values: {
         type: {
@@ -213,22 +213,22 @@
           list: true
         }
       },
-  
+
       /* Jump */ 153: {
         branchOffset: SI16
       },
-  
+
       /* If */ 157: {
         branchOffset: SI16
       },
-  
+
       /* GetURL2 */ 154: {
         sendVarsMethod: UB2,
         reserved: UB4,
         loadTarget: FLAG,
         loadVariables: FLAG
       },
-  
+
       /* GotoFrame2 */ 159: {
         reserved: UB6,
         $hasSceneBias: FLAG,
@@ -238,7 +238,7 @@
           condition: 'hasSceneBias'
         }
       },
-  
+
       /* ConstantPool */ 136: {
         $count: UI16,
         constantPool: {
@@ -246,7 +246,7 @@
           list: { count: 'count' }
         }
       },
-  
+
       /* DefineFunction */ 155: {
         functionName: STRING,
         numParams: UI16,
@@ -255,24 +255,24 @@
           list: { count: 'numParams' }
         },
         $codeSize: UI16,
-        body: {
+        actions: {
           type: ACTIONRECORD,
           list: { length: 'codeSize' }
         }
       },
-  
+
       /* With */ 148: {
         size: UI16,
-        body: {
+        actions: {
           type: ACTIONRECORD,
           list: { length: 'size' }
         }
       },
-  
+
       /* StoreRegister */ 135: {
         registerNumber: UI8
       },
-  
+
       /* DefineFunction2 */ 142: {
         functionName: STRING,
         $numParams: UI16,
@@ -287,17 +287,17 @@
         preloadThis: FLAG,
         reserved: UB7,
         preloadGlobal: FLAG,
-        parameters: {
+        params: {
           type: REGISTERPARAM,
           list: { count: 'numParams' }
         },
         $codeSize: UI16,
-        body: {
+        actions: {
           type: ACTIONRECORD,
           list: { length: 'codeSize' }
         }
       },
-  
+
       /* Try */ 143: {
         reserved: UB5,
         $catchInRegister: FLAG,
@@ -314,22 +314,22 @@
           type: UI8,
           condition: 'catchInRegister'
         },
-        tryBody: {
+        tryActions: {
           type: ACTIONRECORD,
           list: { length: 'trySize' }
         },
-        catchBody: {
+        catchActions: {
           type: ACTIONRECORD,
           list: { length: 'catchSize' }
         },
-        finallyBody: {
+        finallyActions: {
           type: ACTIONRECORD,
           list: { length: 'finallySize' }
         }
       }
-  
+
   }; // end of actions
-  
+
   var ACTIONRECORD = {
     $actionCode: UI8,
     length: {
@@ -341,14 +341,14 @@
       seamless: true
     }
   };
-  
+
   var DOACTION = {
     actions: {
       type: ACTIONRECORD,
       list: true
     }
   };
-  
+
   var DOINITACTION = {
     spriteId: UI16,
     actions: {
@@ -356,20 +356,20 @@
       list: true
     }
   };
-  
+
   var DOABC = {
     flags: UI32,
     name: STRING,
     abcData: BINARY
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // The Display List
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var PLACEOBJECT = {
     characterId: UI16,
     depth: UI16,
@@ -379,7 +379,7 @@
       optional: true
     }
   };
-  
+
   var PLACEFLAGS = {
     $hasClipActions: FLAG,
     $hasClipDepth: FLAG,
@@ -390,7 +390,7 @@
     $hasCharacter: FLAG,
     move: FLAG
   };
-  
+
   var PLACEINFO = {
     characterId: {
       type: UI16,
@@ -415,9 +415,9 @@
     clipDepth: {
       type: UI16,
       condition: 'hasClipDepth'
-    }  
+    }
   };
-  
+
   var CLIPEVENTFLAGS = {
     keyUp: FLAG,
     keyDown: FLAG,
@@ -447,7 +447,7 @@
       condition: 'version>=6'
     }
   };
-  
+
   var CLIPACTIONRECORD = {
     $eventFlags: CLIPEVENTFLAGS,
     $actionRecordSize: UI32,
@@ -460,16 +460,16 @@
       list: { length: 'actionRecordSize-eventFlags.keyPress' }
     }
   };
-  
+
   var CLIPACTIONS = {
     reserved: UI16,
     allEventFlags: CLIPEVENTFLAGS,
-    clipActionRecords: {
+    actionRecords: {
       type: CLIPACTIONRECORD,
       list: { condition: 'eventFlags' }
     }
   };
-  
+
   var PLACEOBJECT2 = {
     flags: {
       type: PLACEFLAGS,
@@ -485,14 +485,14 @@
       condition: 'hasClipActions'
     }
   };
-  
+
   var COLORMATRIXFILTER = {
     matrix: {
       type: FLOAT,
       list: { count: 20 }
     }
   };
-  
+
   var CONVOLUTIONFILTER = {
     $matrixX: UI8,
     $matrixY: UI8,
@@ -507,14 +507,14 @@
     clamp: FLAG,
     preserveAlpha: FLAG
   };
-  
+
   var BLURFILTER = {
     blurX: FIXED,
     blurY: FIXED,
     passes: UB5,
     reserved: UB3
   };
-  
+
   var DROPSHADOWFILTER = {
     dropShadowColor: RGBA,
     blurX: FIXED,
@@ -527,7 +527,7 @@
     compositeSource: FLAG,
     passes: UB5
   };
-  
+
   var GLOWFILTER = {
     glowColor: RGBA,
     blurX: FIXED,
@@ -538,7 +538,7 @@
     compositeSource: FLAG,
     passes: UB5
   };
-  
+
   var BEVELFILTER = {
     shadowColor: RGBA,
     highlightColor: FIXED,
@@ -553,14 +553,14 @@
     onTop: FLAG,
     passes: UB4
   };
-  
+
   var GRADIENTGLOWFILTER = {
     $numColors: UI8,
     gradienColors: {
       type: RGBA,
       list: { count: 'numColors' }
     },
-    gradientRatio: {
+    gradientRatios: {
       type: UI8,
       list: { count: 'numColors' }
     },
@@ -575,9 +575,9 @@
     onTop: FLAG,
     passes: UB4
   };
-  
+
   var GRADIENTBEVELFILTER = GRADIENTGLOWFILTER;
-  
+
   var FILTER = {
     $filterId: UI8,
     filter: {
@@ -594,15 +594,15 @@
       seamless: true
     }
   };
-  
+
   var FILTERLIST = {
     $numberOfFilters: UI8,
-    filter: {
+    filters: {
       type: FILTER,
       list: { count: 'numberOfFilters' }
     }
   };
-  
+
   var PLACEOBJECT3 = {
     flags: {
       type: PLACEFLAGS,
@@ -623,7 +623,7 @@
       type: PLACEINFO,
       seamless: true
     },
-    surfaceFilterList: {
+    filterList: {
       type: FILTERLIST,
       condition: 'hasFilterList'
     },
@@ -640,28 +640,28 @@
       condition: 'hasClipActions'
     }
   };
-  
+
   var REMOVEOBJECT = {
     characterId: UI16,
     depth: UI16
   };
-  
+
   var REMOVEOBJECT2 = {
     depth: UI16
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Gradients
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var GRADRECORD = {
     ratio: UI8,
     color: COLOR
   };
-  
+
   var GRADIENT = {
     spreadMode: UB2,
     interpolationMode: UB2,
@@ -671,7 +671,7 @@
       list: { count: 'numGradients' }
     }
   };
-  
+
   var FOCALGRADIENT = {
     gradient: {
       type: GRADIENT,
@@ -679,16 +679,16 @@
     },
     focalPoint: FIXED8
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Shapes
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   // Fill styles ///////////////////////////////////////////////////////////////
-  
+
   var GRADIENTINFO = {
     matrix:  MATRIX,
     gradient: {
@@ -699,12 +699,12 @@
       }]
     }
   };
-  
+
   var BITMAPINFO = {
     bitmapId: UI16,
     matrix: MATRIX
   };
-  
+
   var FILLSTYLE = {
     $fillType: UI8,
     fill: {
@@ -721,7 +721,7 @@
       seamless: true
     }
   };
-  
+
   var FILLSTYLEARRAY = {
     $count: UI8,
     $countExtended: {
@@ -733,14 +733,14 @@
       list: { count: 'count<255?count:countExtended' }
     }
   };
-  
+
   // Line styles ///////////////////////////////////////////////////////////////
-  
+
   var LINESTYLE = {
     width: UI16,
-    color: COLOR  
+    color: COLOR
   };
-  
+
   var LINESTYLE2 = {
     width: UI16,
     startCapStyle: UB2,
@@ -765,7 +765,7 @@
       condition: 'hasFill'
     }
   };
-  
+
   var LINESTYLEARRAY = {
     $count: UI8,
     $countExtended: {
@@ -777,9 +777,9 @@
       list: { count: 'count<255?count:countExtended' }
     }
   };
-  
+
   // Shape structures /////////////////////////////////////////////////////////
-  
+
   var STYLECHANGERECORD = {
     $hasNewStyles: FLAG,
     $hasLineStyle: FLAG,
@@ -827,7 +827,7 @@
       condition: 'hasNewStyle'
     }
   };
-  
+
   var STRAIGHTEDGERECORD = {
     $numBits: {
       type: UB4,
@@ -847,7 +847,7 @@
       condition: 'isGeneralLine||isVertLine'
     }
   };
-  
+
   var CURVEDEDGERECORD = {
     $numBits: {
       type: UB4,
@@ -858,15 +858,15 @@
     anchorDeltaX: SB,
     anchorDeltaY: SB
   };
-  
+
   var EDGERECORD = {
-    $straight: FLAG,
+    $isStraight: FLAG,
     edge: {
-      type: ['straight', CURVEDEDGERECORD, STRAIGHTEDGERECORD],
+      type: ['isStraight', CURVEDEDGERECORD, STRAIGHTEDGERECORD],
       seamless: true
     }
   };
-  
+
   var SHAPERECORD = {
     $recordType: FLAG,
     record: {
@@ -874,7 +874,7 @@
       seamless: true
     }
   };
-  
+
   var SHAPE = {
     $numFillBits: UB4,
     $numLineBits: UB4,
@@ -883,7 +883,7 @@
       list: { condition: 'type||$flags' }
     }
   };
-  
+
   var SHAPEWITHSTYLE = {
     fillStyles: FILLSTYLEARRAY,
     lineStyles: LINESTYLEARRAY,
@@ -892,19 +892,19 @@
       seamless: true
     }
   };
-  
+
   var DEFINESHAPE = {
     id: UI16,
     bounds: RECT,
     shapes: SHAPEWITHSTYLE
   };
-  
+
   var DEFINESHAPE2 = {
     id: UI16,
     bounds: RECT,
     shapes: SHAPEWITHSTYLE
   };
-  
+
   var DEFINESHAPE4 = {
     id: UI16,
     bounds: RECT,
@@ -915,28 +915,28 @@
     usesScalingStrokes: FLAG,
     shapes: SHAPEWITHSTYLE
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Bitmaps
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var DEFINEBITS = {
     id: UI16,
     jpegData: BINARY
   };
-  
+
   var JPEGTABLES = {
     jpegData: BINARY
   };
-  
+
   var DEFINEBITSJPEG2 = {
     id: UI16,
     imageData: BINARY
   };
-  
+
   var DEFINEBITSJPEG3 = {
     id: UI16,
     $alphaDataOffset: UI32,
@@ -949,7 +949,7 @@
       compressed: true
     }
   };
-  
+
   var COLORMAPDATA = {
     colorTable: {
       type: RGB,
@@ -957,14 +957,14 @@
     },
     pixelData: BINARY
   };
-  
+
   var PIX15 = {
     reserved: FLAG,
     red: UB5,
     green: UB5,
     blue: UB5
   };
-  
+
   var PIX24 = {
     reserved: UI8,
     rgb: {
@@ -972,7 +972,7 @@
       seamless: true
     }
   };
-  
+
   var BITMAPDATA = {
     pixelData: {
       type: ['format', {
@@ -981,7 +981,7 @@
       }]
     }
   };
-  
+
   var ALPHACOLORMAPDATA = {
     colorTable: {
       type: RGBA,
@@ -989,11 +989,11 @@
     },
     pixelData: BINARY
   };
-  
+
   var ALPHABITMAPDATA = {
     pixelData: RGBA
   };
-  
+
   var DEFINEBITSLOSSLESS = {
     id: UI16,
     $format: UI8,
@@ -1014,7 +1014,7 @@
       compressed: true
     }
   };
-  
+
   var DEFINEBITSLOSSLESS2 = {
     id: UI16,
     format: UI8,
@@ -1035,7 +1035,7 @@
       compressed: true
     }
   };
-  
+
   var DEFINEBITSJPEG4 = {
     id: UI16,
     $alphaDataOffset: UI32,
@@ -1049,23 +1049,23 @@
       compressed: true
     }
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Shape Morphing
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   // Morph gradient values /////////////////////////////////////////////////////
-  
+
   var MORPHGRADRECORD = {
     startRatio: UI8,
     endRatio: UI8,
     startColor: RGBA,
     endColor: RGBA
   };
-  
+
   var MORPHGRADIENT = {
     $numGradients: UB4,
     gradientRecords: {
@@ -1073,21 +1073,21 @@
       list: { count: 'numGradients' }
     }
   };
-  
+
   // Morph fill styles /////////////////////////////////////////////////////////
-  
+
   var MORPHGRADIENTINFO = {
     startMatrix: MATRIX,
     endMatrix: MATRIX,
     gradient: MORPHGRADIENT
   };
-  
+
   var MORPHBITMAPINFO = {
     bitmapId: UI16,
     startMatrix: MATRIX,
     endMatrix: MATRIX
   };
-  
+
   var MORPHFILLSTYLE = {
     $fillType: UI8,
     fill: {
@@ -1106,7 +1106,7 @@
       seamless: true
     }
   };
-  
+
   var MORPHFILLSTYLEARRAY = {
     $count: UI8,
     $countExtended: {
@@ -1118,16 +1118,16 @@
       list: { count: 'count<255?count:countExtended' }
     }
   };
-  
+
   // Morph line styles /////////////////////////////////////////////////////////
-  
+
   var MORPHLINESTYLE = {
     startWidth: UI16,
     endWidth: UI16,
     startColor: RGBA,
     endColor: RGBA
   };
-  
+
   var MORPHLINESTYLE2 = {
     startWidth: UI16,
     endWidth: UI16,
@@ -1157,7 +1157,7 @@
       condition: 'hasFill'
     }
   };
-  
+
   var MORPHLINESTYLEARRAY = {
     $count: UI8,
     $countExtended: {
@@ -1169,7 +1169,7 @@
       list: { count: 'count<255?count:countExtended' }
     }
   };
-  
+
   var DEFINEMORPHSHAPE = {
     id: UI16,
     startBounds: RECT,
@@ -1180,7 +1180,7 @@
     startEdges: SHAPE,
     endEdges: SHAPE
   };
-  
+
   var DEFINEMORPHSHAPE2 = {
     id: UI16,
     startBounds: RECT,
@@ -1196,14 +1196,14 @@
     startEdges: SHAPE,
     endEdges: SHAPE
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Fonts and Text
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var DEFINEFONT = {
     id: UI16,
     $numGlyphs: {
@@ -1214,12 +1214,12 @@
       type: UI16,
       list: { count: 'numGlyphs-1' }
     },
-    glyphShapeTable: {
+    glyphTable: {
       type: SHAPE,
       list: { count: 'numGlyphs' }
     }
   };
-  
+
   var DEFINEFONTINFO = {
     fontId: UI16,
     $fontNameLen: UI8,
@@ -1228,18 +1228,18 @@
       length: 'fontNameLen'
     },
     reserved: UB2,
-    isSmallText: FLAG,
+    isSmall: FLAG,
     isShiftJis: FLAG,
     isAnsi: FLAG,
     isItalic: FLAG,
     isBold: FLAG,
-    wideCodes: FLAG,
+    usesWideCodes: FLAG,
     codeTable: {
       type: ['usesWideCodes', UI8, UI16],
       list: true
     }
   };
-  
+
   var DEFINEFONTINFO2 = {
     fontId: UI16,
     fontNameLen: UI8,
@@ -1248,7 +1248,7 @@
       length: 'fontNameLen'
     },
     reserved: UB2,
-    isSmallText: FLAG,
+    isSmall: FLAG,
     isShiftJis: FLAG,
     isAnsi: FLAG,
     isItalic: FLAG,
@@ -1260,18 +1260,18 @@
       list: true
     }
   };
-  
+
   var KERNINGRECORD = {
     code1: ['usesWideCodes', UI8, UI16],
     code2: ['usesWideCodes', UI8, UI16],
     adjustment: SI16
   };
-  
+
   var DEFINEFONT2 = {
     fontId: UI16,
     $hasLayout: FLAG,
     isShiftJis: FLAG,
-    isSmallText: FLAG,
+    isSmall: FLAG,
     isAnsi: FLAG,
     usesWideOffsets: FLAG,
     usesWideCodes: FLAG,
@@ -1289,7 +1289,7 @@
       list: { count: 'numGlyphs' }
     },
     codeTableOffset: ['usesWideOffsets', UI16, UI32],
-    glyphShapeTable: {
+    glyphTable: {
       type: SHAPE,
       list: { count: 'numGlyphs' }
     },
@@ -1320,12 +1320,12 @@
       condition: 'hasLayout'
     }
   };
-  
+
   var ZONEDATA = {
     alignmentCoordinate: FLOAT16,
     range: FLOAT16
   };
-  
+
   var ZONERECORD = {
     $numZoneData: UI8,
     zoneData: {
@@ -1336,7 +1336,7 @@
     maskY: FLAG,
     maskX: FLAG
   };
-  
+
   var DEFINEFONTALIGNZONES = {
     fontId: UI16,
     csmTableHint: UB2,
@@ -1346,13 +1346,13 @@
       list: true
     }
   };
-  
+
   var DEFINEFONTNAME = {
     fontId: UI16,
     fontName: STRING,
     copyright: STRING
   };
-  
+
   var GLYPHENTRY = {
     index: {
       type: UB,
@@ -1363,7 +1363,7 @@
       params: ['advanceBits']
     }
   };
-  
+
   var TEXTRECORD = {
     $recordType: FLAG,
     reserved: UB3,
@@ -1375,7 +1375,7 @@
       type: UI16,
       condition: 'hasFont'
     },
-    textColor: {
+    color: {
       type: COLOR,
       condition: 'hasColor'
     },
@@ -1387,7 +1387,7 @@
       type: SI16,
       condition: 'hasYOffset'
     },
-    textHeight: {
+    fontSize: {
       type: UI16,
       condition: 'hasFont'
     },
@@ -1397,7 +1397,7 @@
       list: { count: 'glyphCount' }
     }
   };
-  
+
   var DEFINETEXT = {
     id: UI16,
     bounds: RECT,
@@ -1409,7 +1409,7 @@
       list: { condition: 'recordType' }
     }
   };
-  
+
   var DEFINEEDITTEXT = {
     id: UI16,
     bounds: RECT,
@@ -1427,7 +1427,7 @@
     noSelect: FLAG,
     hasBorder: FLAG,
     wasStatic: FLAG,
-    isHtml: FLAG,
+    usesHtml: FLAG,
     useOutlines: FLAG,
     fontId: {
       type: UI16,
@@ -1437,13 +1437,13 @@
       type: STRING,
       condition: 'hasFontClass'
     },
-    fontHeight: {
+    fontSize: {
       type: UI16,
       condition: 'hasFont'
     },
-    textColor: {
+    color: {
       type: RGBA,
-      condition: 'hasTextColor'
+      condition: 'hasColor'
     },
     maxLength: {
       type: UI16,
@@ -1466,7 +1466,7 @@
       condition: 'hasText'
     }
   };
-  
+
   var CSMTEXTSETTINGS = {
     textId: UI16,
     useFlashType: UB2,
@@ -1476,7 +1476,7 @@
     sharpness: FLOAT,
     reserved2: UI8
   };
-  
+
   var DEFINEFONT4 = {
     id: UI16,
     reserved: UB5,
@@ -1489,34 +1489,34 @@
       optional: true
     }
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Sounds
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var DEFINESOUND = {
     id: UI16,
     format: UB4,
     rate: UB2,
     size: FLAG,
-    type: FLAG,
+    soundType: FLAG,
     sampleCount: UI32,
     soundData: BINARY
   };
-  
+
   var SOUNDENVELOPE = {
     pos44: UI32,
     leftLevel: UI16,
     rightLevel: UI16
   };
-  
+
   var SOUNDINFO = {
     reserved: UB2,
-    syncStop: FLAG,
-    syncNoMultiple: FLAG,
+    stopSync: FLAG,
+    noMultipleSync: FLAG,
     $hasEnvelope: FLAG,
     $hasLoops: FLAG,
     $hasOutPoint: FLAG,
@@ -1545,17 +1545,17 @@
       condition: 'hasEnvelope'
     }
   };
-  
+
   var STARTSOUND = {
     soundId: UI16,
     soundInfo: SOUNDINFO
   };
-  
+
   var STARTSOUND2 = {
     soundClassName: STRING,
     soundInfo: SOUNDINFO
   };
-  
+
   var SOUNDSTREAMHEAD = {
     reserved: UB4,
     playbackRate: UB2,
@@ -1571,18 +1571,18 @@
       condition: 'streamCompression===2'
     }
   };
-  
+
   var SOUNDSTREAMBLOCK = {
     streamData: BINARY
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Buttons
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var BUTTONRECORD = {
     reserved: UB4,
     stateHitTest: FLAG,
@@ -1590,10 +1590,10 @@
     stateOver: FLAG,
     stateUp: FLAG,
     characterId: UI16,
-    placeDepth: UI16,
-    placeMatrix: MATRIX
+    depth: UI16,
+    matrix: MATRIX
   };
-  
+
   var DEFINEBUTTON = {
     id: UI16,
     characters: {
@@ -1605,7 +1605,7 @@
       list: { condition: 'actionCode' }
     }
   };
-  
+
   var BUTTONRECORD2 = {
     reserved: UB2,
     $hasBlendMode: FLAG,
@@ -1618,7 +1618,7 @@
     depth: UI16,
     matrix: MATRIX,
     colorTransform: CXFORMWITHALPHA,
-    filterList: {
+    filters: {
       type: FILTERLIST,
       condition: 'hasFilterList'
     },
@@ -1627,7 +1627,7 @@
       condition: 'hasBlendMode'
     }
   };
-  
+
   var BUTTONCONDACTION = {
     actionSize: UI16,
     idleToOverDown: FLAG,
@@ -1645,7 +1645,7 @@
       list: { condition: 'actionCode' }
     }
   };
-  
+
   var DEFINEBUTTON2 = {
     id: UI16,
     reserved: UB7,
@@ -1664,12 +1664,12 @@
       condition: 'actionOffset'
     }
   };
-  
+
   var DEFINEBUTTONCXFORM = {
     buttonId: UI16,
     colorTransform: CXFORM
   };
-  
+
   var DEFINEBUTTONSOUND = {
     buttonId: UI16,
     characters: {
@@ -1683,49 +1683,49 @@
       list: { count: 4 }
     }
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Tags
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var tags = {
-  
+
     // Display list tags ///////////////////////////////////////////////////////
-  
+
     /* PlaceObject */ 4: PLACEOBJECT,
-  
+
     /* PlaceObject2 */ 26: PLACEOBJECT2,
-  
+
     /* PlaceObject3 */ 70: PLACEOBJECT3,
-  
+
     /* RemoveObject */ 5: REMOVEOBJECT,
-  
+
     /* RemoveObject2 */ 28: REMOVEOBJECT2,
-  
+
     // Control tags ////////////////////////////////////////////////////////////
-  
+
     /* SetBackgroundColor */ 9: {
       backgroundColor: RGB
     },
-  
+
     /* FrameLabel */ 43: {
       name: STRING,
-      namedAnchor: {
+      isNamedAnchor: {
         type: UI8,
         optional: true
       }
     },
-  
+
     /* Protect */ 24: {
       password: {
         type: STRING,
         optional: true
       }
     },
-  
+
     /* ExportAssets */ 56: {
       $count: UI16,
       assets: {
@@ -1736,38 +1736,38 @@
         list: { count: 'count' }
       }
     },
-  
+
     /* ImportAssets */ 57: {
       url: STRING,
       $count: UI16,
       assets: {
         type: {
           tag: UI16,
-          name: STRING  
+          name: STRING
         },
         list: { count: 'count' }
       }
     },
-  
+
     /* EnableDebugger */ 58: {
       password: STRING
     },
-  
+
     /* EnableDebugger2 */ 64: {
       reserved: UI16,
       password: STRING
     },
-  
+
     /* ScriptLimits */ 65: {
       maxRecursionDepth: UI16,
       scriptTimeoutSeconds: UI16
     },
-  
+
     /* SetTabIndex */ 66: {
       depth: UI16,
       tabIndex: UI16
     },
-  
+
     /* FileAttributes */  69: {
       reserved: FLAG,
       useDirectBlit: FLAG,
@@ -1778,7 +1778,7 @@
       useNetwork: FLAG,
       reserved3: UI24
     },
-  
+
     /* ImportAssets2 */ 71: {
       url: STRING,
       reserved: UI8,
@@ -1792,7 +1792,7 @@
         list: { count: 'count' }
       }
     },
-  
+
     /* SymbolClass */ 76: {
       $numSymbols: UI16,
       symbols: {
@@ -1803,16 +1803,16 @@
         list: { count: 'numSymbols' }
       }
     },
-  
+
     /* Metadata */ 77: {
       metadata: STRING
     },
-  
+
     /* DefineScalingGrid */ 78: {
       characterId: UI16,
       splitter: RECT
     },
-  
+
     /* DefineSceneAndFrameLabelData */ 86: {
       $sceneCount: EncodedU32,
       scenes: {
@@ -1826,104 +1826,104 @@
       frameLabels: {
         type: {
           frameNum: EncodedU32,
-          label: STRING  
+          label: STRING
         },
         list: { count: 'frameLabelCount' }
       }
     },
-  
+
     // Action tags /////////////////////////////////////////////////////////////
-  
+
     /* DoAction*/ 12: DOACTION,
-  
+
     /* DoInitAction */ 59: DOINITACTION,
-  
+
     /* DoABC */ 82: DOABC,
-  
+
     // Shape tags //////////////////////////////////////////////////////////////
-  
+
     /* DefineShape */ 2: DEFINESHAPE,
-  
+
     /* DefineShape2 */ 22: DEFINESHAPE2,
-  
+
     /* DefineShape3 */ 32: DEFINESHAPE2,
-  
+
     /* DefineShape4 */ 83: DEFINESHAPE4,
-  
+
     // Bitmap tags /////////////////////////////////////////////////////////////
-  
+
     /* DefineBits */ 6: DEFINEBITS,
-  
+
     /* JPEGTables */ 8: JPEGTABLES,
-  
+
     /* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
-  
+
     /* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
-  
+
     /* DefineBitsLossless */ 20: DEFINEBITSLOSSLESS,
-  
+
     /* DefineBitsLossless2 */ 36: DEFINEBITSLOSSLESS2,
-  
+
     /* DefineBitsJPEG4 */ 90: DEFINEBITSJPEG4,
-  
+
     // Shape morphing tags /////////////////////////////////////////////////////
-  
+
     /* DefineMorphShape */ 46: DEFINEMORPHSHAPE,
-  
+
     /* DefineMorphShape2 */ 84: DEFINEMORPHSHAPE2,
-  
+
     // Font tags ///////////////////////////////////////////////////////////////
-  
+
     /* DefineFont */ 10: DEFINEFONT,
-  
+
     /* DefineFontInfo */ 13: DEFINEFONTINFO,
-  
+
     /* DefineFontInfo2 */ 62: DEFINEFONTINFO2,
-  
+
     /* DefineFont2 */ 48: DEFINEFONT2,
-  
+
     /* DefineFont3 */ 75: DEFINEFONT2,
-  
+
     /* DefineFontAlignZones */ 73: DEFINEFONTALIGNZONES,
-  
+
     /* DefineFontName */ 88: DEFINEFONTNAME,
-  
+
     /* DefineText */ 11: DEFINETEXT,
-  
+
     /* DefineText2 */ 33: DEFINETEXT,
-  
+
     /* DefineEditText */ 37: DEFINEEDITTEXT,
-  
+
     /* CSMTextSettings */ 74: CSMTEXTSETTINGS,
-  
+
     /* DefineFont4 */ 91: DEFINEFONT4,
-  
+
     // Sound tags //////////////////////////////////////////////////////////////
-  
+
     /* DefineSound */ 14: DEFINESOUND,
-  
+
     /* StartSound */ 15: STARTSOUND,
-  
+
     /* StartSound2 */ 89: STARTSOUND2,
-  
+
     /* SoundStreamHead */ 18: SOUNDSTREAMHEAD,
-  
+
     /* SoundStreamHead2 */ 45: SOUNDSTREAMHEAD,
-  
+
     /* SoundStreamBlock */ 19: SOUNDSTREAMBLOCK,
-  
+
     // Button tags /////////////////////////////////////////////////////////////
-  
+
     /* DefineButton */ 7: DEFINEBUTTON,
-  
+
     /* DefineButton2 */ 34: DEFINEBUTTON2,
-  
+
     /* DefineButtonCxform */ 23: DEFINEBUTTONCXFORM,
-  
+
     /* DefineButtonSound */ 17: DEFINEBUTTONSOUND,
-  
+
     // Movie clips /////////////////////////////////////////////////////////////
-  
+
     /* DefineSprite */ 39: {
       id: UI16,
       frameCount: UI16,
@@ -1932,9 +1932,9 @@
         list: { condition: 'tagCode' }
       }
     },
-  
+
     // Video tags //////////////////////////////////////////////////////////////
-  
+
     /* DefineVideoStream */ 60: {
       id: UI16,
       numFrames: UI16,
@@ -1942,26 +1942,26 @@
       height: UI16,
       reserved: UB4,
       deblocking: UB3,
-      smoothing: FLAG,
-      codecID: UI8
+      enableSmoothing: FLAG,
+      codecId: UI8
     },
-  
+
     /* VideoFrame */ 61: {
       streamId: UI16,
       frameNum: UI16,
       videoData: BINARY
     },
-  
+
     // Binary data /////////////////////////////////////////////////////////////
-  
+
     /* DefineBinaryData */ 87: {
       tag: UI16,
       reserved: UI32,
       binaryData: BINARY
     }
-  
+
   }; // end of tags
-  
+
   var TAGRECORD = {
     $tagCode: UB6,
     $shortLength: UB10,
@@ -1974,14 +1974,14 @@
       seamless: true
     }
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // SWF File Structure
   //
   //////////////////////////////////////////////////////////////////////////////
-  
+
   var SWFFILE = {
     signature: {
       type: STRING,
@@ -1997,7 +1997,7 @@
       seamless: true
     }
   };
-  
+
   var SWFFILECOMPRESSED = {
     signature: {
       type: STRING,
