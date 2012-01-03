@@ -1551,15 +1551,18 @@
       type: ['mpegVersion', {
         0: {
           type: BINARY,
-          length: '(72*mpeg2xBitrates[bitrate]*1000)/mpeg25SamplingRates[samplingRate]+isPadded-4'
+          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+            '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
         },
         2: {
           type: BINARY,
-          length: '(72*mpeg2xBitrates[bitrate]*1000)/mpeg2SamplingRates[samplingRate]+isPadded-4'
+          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+            '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
         },
         3: {
           type: BINARY,
-          length: '(144*mpeg1Bitrates[bitrate]*1000)/mpeg1SamplingRates[samplingRate]+isPadded-4'
+          length: '((144*mpeg1Bitrates[bitrate]*1000)' +
+            '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
         }
       }]
     }
