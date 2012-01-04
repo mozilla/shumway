@@ -2322,7 +2322,7 @@
     var maxArgs = 1 << 16;
     var numChunks = codes.length / maxArgs;
     var str = '';
-    for (var i = 0; i < numChunks; i++) {
+    for (var i = 0; i < numChunks; ++i) {
       var s = codes.slice(i * maxArgs, (i + 1) * maxArgs);
       str += fcc.apply(null, s);
     }
@@ -2344,6 +2344,58 @@
 
   function fail(msg) {
     throw Error(msg);
+  }
+  
+  var max = Math.max;
+  
+  var codeLengthOrder =
+  	[16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+
+  var distanceCodes = [];
+  var distanceExtraBits = [];
+  for (var i = 0, j = 0, code = 1; i < 30; ++i) {
+  	distanceCodes[i] = code;
+  	code += 1 << (distanceExtraBits[i] = ~~((j += (i > 2 ? 1 : 0)) / 2));
+  }
+
+  var bitLengths = [];
+  for (var i = 0; i < 32; ++i)
+  	bitLengths[i] = 5;
+  var fixedDistanceTable = buildHuffmanTable(bitLengths);
+
+  var lengthCodes = [];
+  var lengthExtraBits = [];
+  for (var i = 0, j = 0, code = 3; i < 29; ++i) {
+  	lengthCodes[i] = code - (i == 28 ? 1 : 0);
+  	code += 1 << (lengthExtraBits[i] = ~~(((j += (i > 4 ? 1 : 0)) / 4) % 6));
+  }
+
+  for (var i = 0; i < 287; ++i)
+  	bitLengths[i] = i < 144 || (i > 279 ? 8 : (i < 256 ? 9 : 7));
+  var fixedLiteralTable = buildHuffmanTable(bitLengths);
+
+  function buildHuffmanTable(bitLengths) {
+    var maxBits = max.apply(null, bitLengths);
+  	var numLengths = bitLengths.length;
+  	var size = 1 << maxBits;
+  	var table = new Uint32Array(size);
+  	for (var code = 0, len = 1, skip = 2;
+  		   len <= maxBits;
+  		   code <<= 1, ++len, skip <<= 1)
+    {
+  		for (var i = 0; i < numLengths; ++i) {
+  			if (bitLengths[i] === len) {
+  				var lsb = 0;
+  				for (var j = 0; j < len; ++j)
+  					lsb = (lsb * 2) + ((code >> j) & 1);
+  				for (var k = lsb; k < size; k += skip)
+  					table[k] = (len << 16) | i;
+  				++code;
+  			}
+  		}
+  	}
+  	table.maxBits = maxBits;
+  	return table;
   }
 
   function generate(struct, tmplset) {
