@@ -2226,4 +2226,35 @@
     }
   };
 
+
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Parser
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  function fail(msg) {
+    throw Error(msg);
+  }
+
+  function generate(struct, tmplset) {
+    return Function('$bytes', 'var $view=new DataView($bytes.buffer),$pos=0;');
+  }
+
+  function parse(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var b1 = bytes[0];
+    var b2 = bytes[1];
+    var b3 = bytes[2];
+    var compressed = bytes[0] === 67;
+
+    if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
+      fail('invalid swf data');
+
+    if (compressed)
+      fail('compressed swf data is not supported yet');
+
+    return generate(SWFFILE, [ ])(bytes);
+  }
+
 })(this); // end of file
