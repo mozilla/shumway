@@ -39,13 +39,14 @@
   const UB7         = 24;
   const UB8         = 25
   const UB10        = 26;
-  const UB12        = 27;
-  const UB16        = 28;
-  const UB17        = 29;
-  const FLAG        = 30;
+  const UB11        = 27;
+  const UB12        = 28;
+  const UB16        = 29;
+  const UB17        = 30;
+  const FLAG        = 31;
 
-  const TAG         = 31;
-  const COLOR       = 32;
+  const TAG         = 32;
+  const COLOR       = 33;
 
   var LANGCODE = UI8;
 
