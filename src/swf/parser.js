@@ -2231,35 +2231,36 @@
   var pow = Max.pow;
   var fcc = String.fromCharCode;
 
-  function readSi8($bytes, $view, $pos) {
-    return $view.getInt8($pos++);
+  function readSi8($bytes, $view) {
+    return $view.getInt8($bytes.pos++);
   }
-  function readSi8($bytes, $view, $pos) {
-    return $view.getInt16($pos, $pos += 2);
+  function readSi8($bytes, $view) {
+    return $view.getInt16($bytes.pos, $bytes.pos += 2);
   }
-  function readSi8($bytes, $view, $pos) {
-    return $view.getInt32($pos, $pos += 4);
+  function readSi8($bytes, $view) {
+    return $view.getInt32($bytes.pos, $bytes.pos += 4);
   }
-  function readUi8($bytes, $view, $pos) {
-    return $bytes[$pos++];
+  function readUi8($bytes, $view) {
+    return $bytes[$bytes.pos++];
   }
-  function readUi16($bytes, $view, $pos) {
-    return $view.getUint16($pos, $pos += 2);
+  function readUi16($bytes, $view) {
+    return $view.getUint16($bytes.pos, $bytes.pos += 2);
   }
-  function readUi24($bytes, $view, $pos) {
-    return $view.getUint16($pos, $pos += 2) | ($bytes[$pos++] << 16);
+  function readUi24($bytes, $view) {
+    return $view.getUint16($bytes.pos, $bytes.pos += 2) |
+           ($bytes[$bytes.pos++] << 16);
   }
-  function readUi32($bytes, $view, $pos) {
-    return $view.getUint32($pos, $pos += 4);
+  function readUi32($bytes, $view) {
+    return $view.getUint32($bytes.pos, $bytes.pos += 4);
   }
-  function readFixed($bytes, $view, $pos) {
-    return readUb($bytes, $view, $pos, 32) * pow(2, -16);
+  function readFixed($bytes, $view) {
+    return readUb($bytes, $view, 32) * pow(2, -16);
   }
-  function readFixed8($bytes, $view, $pos) {
-    return readUb($bytes, $view, $pos, 16) * pow(2, -8);
+  function readFixed8($bytes, $view) {
+    return readUb($bytes, $view, 16) * pow(2, -8);
   }
-  function readtFloat16($bytes, $view, $pos) {
-    var bits = readUb($bytes, $view, $pos, 16);
+  function readFloat16($bytes, $view) {
+    var bits = readUb($bytes, $view, 16);
     var sign = (bits & 0x8000) >> 15 ? -1 : 1;
     var exponent = (bits & 0x7c00) >> 10;
     var fraction = bits & 0x03ff;
@@ -2269,34 +2270,34 @@
       return fraction ? NaN : sign * Infinity;
     return sign * pow(2, exponent - 15) * (1 + (fraction / pow(2, 10)));
   }
-  function readFloat($bytes, $view, $pos) {
-    return $view.getFloat32($pos, $pos += 4);
+  function readFloat($bytes, $view) {
+    return $view.getFloat32($bytes.pos, $bytes.pos += 4);
   }
-  function readDouble($bytes, $view, $pos) {
-    return $view.getFloat64($pos, $pos += 4);
+  function readDouble($bytes, $view) {
+    return $view.getFloat64($bytes.pos, $bytes.pos += 4);
   }
-  function readEncodedU32($bytes, $view, $pos) {
+  function readEncodedU32($bytes, $view) {
     var val = 0;
     for (var i = 0; i < 5; ++i) {
-      var b = $bytes[$pos++];
+      var b = $bytes[$bytes.pos++];
       val = value | ((b & 0x7f) << (7 * i));
       if (!(b & 0x80))
         break;
     }
     return val;
   }
-  function readSb($bytes, $view, $pos, $numBits) {
-    return (readUb($bytes, $view, $pos, $numBits) << (32 - $numBits)) >>
+  function readSb($bytes, $view, $numBits) {
+    return (readUb($bytes, $view, $numBits) << (32 - $numBits)) >>
            (32 - $numBits);
   }
-  function readUb($bytes, $view, $pos, $numBits) {
+  function readUb($bytes, $view, $numBits) {
     var buffer = $bytes.bitBuffer;
     var bufflen = $bytes.bitLength;
-    var val = 0;
     while ($numBits > bufflen) {
-      buffer = (buffer << 8) | $bytes[$pos++];
+      buffer = (buffer << 8) | $bytes[$bytes.pos++];
       bufflen += 8;
     }
+    var val = 0;
     var i = $numBits;
     while (i--)
       val = (val * 2) + (buffer >> --bufflen & 1);
@@ -2304,17 +2305,17 @@
     $bytes.bitLength = bufflen;
     return val;
   }
-  function readFb($bytes, $view, $pos, $numBits) {
-    return readUb($bytes, $view, $pos, $numBits) * pow(2, -16);
+  function readFb($bytes, $view, $numBits) {
+    return readUb($bytes, $view, $numBits) * pow(2, -16);
   }
-  function readString($bytes, $view, $pos, $length) {
+  function readString($bytes, $view, $length) {
     var codes = [];
-    var i = 0;
     if ($length) {
-      codes = slice.call($bytes, $pos, $length);
+      codes = slice.call($bytes, $bytes.pos, $length);
     } else {
       var code;
-      while (code = $bytes[$pos++])
+      var i = 0;
+      while (code = $bytes[$bytes.pos++])
         codes[i++] = code;
     }
     var maxArgs = 1 << 16;
@@ -2326,8 +2327,8 @@
     }
     return decodeURIComponent(escape(str));
   }
-  function readBinary($bytes, $view, $pos, $length) {
-    return $bytes.subarray($pos, $pos += $length);
+  function readBinary($bytes, $view, $length) {
+    return $bytes.subarray($bytes.pos, $bytes.pos += $length);
   }
 
 
@@ -2394,7 +2395,9 @@
   }
 
   function generate(struct, tmplset) {
-    return Function('$bytes', 'var $view=new DataView($bytes.buffer),$pos=0;');
+    return new Function('$bytes',
+      'var $view=new DataView($bytes.buffer);$bytes.pos=0;'
+    );
   }
 
   function parse(buffer) {
