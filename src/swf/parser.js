@@ -1778,15 +1778,15 @@
 
   var MACROBLOCK = {
     isCoded: FLAG,
-    macroblockType: -1 // varies,
-    blockPattern: -1 // varies,
+    macroblockType: -1, // varies
+    blockPattern: -1, // varies
     quantizerInformation: UB2,
     motionVectorData: {
-      type: -1 // varies,
+      type: -1,// varies
       list: { count: 2 }
     },
     extraMotionVectorData: {
-      type: -1 // varies,
+      type: -1, // varies
       list: { count: 6 }
     },
     blockData: BINARY
@@ -1858,7 +1858,7 @@
   var IMAGEBLOCKV2 = {
     $dataSize: UB16,
     format: IMAGEFORMAT,
-    imageBlockHeader: -1 // varies,
+    imageBlockHeader: -1, // varies
     pixelData: {
       type: BINARY,
       list: { count: 'dataSize' }
@@ -1912,7 +1912,7 @@
   var VP6SWFALPHAVIDEOPACKET = {
     $offsetToAlpha: UI24,
     videoData: {
-      type: BINARY
+      type: BINARY,
       length: 'offsetToAlpha'
     },
     alphaData: BINARY
@@ -2229,16 +2229,16 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  var pow = Max.pow;
+  var pow = Math.pow;
   var fcc = String.fromCharCode;
 
   function readSi8($bytes, $view) {
     return $view.getInt8($bytes.pos++);
   }
-  function readSi8($bytes, $view) {
+  function readSi16($bytes, $view) {
     return $view.getInt16($bytes.pos, $bytes.pos += 2);
   }
-  function readSi8($bytes, $view) {
+  function readSi32($bytes, $view) {
     return $view.getInt32($bytes.pos, $bytes.pos += 4);
   }
   function readUi8($bytes, $view) {
@@ -2265,9 +2265,9 @@
     var sign = (bits & 0x8000) >> 15 ? -1 : 1;
     var exponent = (bits & 0x7c00) >> 10;
     var fraction = bits & 0x03ff;
-    if(exponent === 0)
+    if (exponent === 0)
       return sign * pow(2, -14) * (fraction / pow(2, 10));
-    else if (exponent === 0x1f) {
+    if (exponent === 0x1f)
       return fraction ? NaN : sign * Infinity;
     return sign * pow(2, exponent - 15) * (1 + (fraction / pow(2, 10)));
   }
@@ -2293,17 +2293,17 @@
   }
   function readUb($bytes, $view, $numBits) {
     var buffer = $bytes.bitBuffer;
-    var bufflen = $bytes.bitLength;
-    while ($numBits > bufflen) {
+    var bitlen = $bytes.bitLength;
+    while ($numBits > bitlen) {
       buffer = (buffer << 8) | $bytes[$bytes.pos++];
-      bufflen += 8;
+      bitlen += 8;
     }
     var val = 0;
     var i = $numBits;
     while (i--)
-      val = (val * 2) + (buffer >> --bufflen & 1);
+      val = (val * 2) + (buffer >> --bitlen & 1);
     $bytes.bitBuffer = buffer;
-    $bytes.bitLength = bufflen;
+    $bytes.bitLength = bitlen;
     return val;
   }
   function readFb($bytes, $view, $numBits) {
@@ -2340,7 +2340,7 @@
   //////////////////////////////////////////////////////////////////////////////
 
   function fail(msg) {
-    throw Error(msg);
+    throw new Error(msg);
   }
 
   var max = Math.max;
