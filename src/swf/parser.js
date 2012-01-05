@@ -30,7 +30,7 @@
   const BINARY      = 16;
 
   const UI24        = 17;
-  const FLAG        = 18;
+  const UB1         = 18;
   const UB2         = 19;
   const UB3         = 20;
   const UB4         = 21;
@@ -42,9 +42,10 @@
   const UB12        = 27;
   const UB16        = 28;
   const UB17        = 29;
+  const FLAG        = 30;
 
-  const TAG         = 30;
-  const COLOR       = 31;
+  const TAG         = 31;
+  const COLOR       = 32;
 
   var LANGCODE = UI8;
 
@@ -71,7 +72,7 @@
   };
 
   var RECT = {
-    $nBits: UB5,
+    $numBits: UB5,
     xMin: SB,
     xMax: SB,
     yMin: SB,
@@ -82,7 +83,7 @@
     $hasScale: FLAG,
     scale: {
       type: {
-        $nBits: UB5,
+        $numBits: UB5,
         scaleX: FB,
         scaleY: FB
       },
@@ -92,14 +93,14 @@
     $hasRotate: FLAG,
     rotate: {
       type: {
-        $nBits: UB5,
+        $numBits: UB5,
         rotateSkew0: FB,
         rotateSkew1: FB
       },
       seamless: true,
       condition: 'hasRotate'
     },
-    $nBits: UB5,
+    $numBits: UB5,
     translateX: SB,
     translateY: SB
   };
@@ -119,7 +120,7 @@
   var CXFORM = {
     $hasAddTerms: FLAG,
     $hasMultTerms: FLAG,
-    $nBits: UB4,
+    $numBits: UB4,
     multTerms: {
       type: MULTTERMS,
       seamless: true,
@@ -135,7 +136,7 @@
   var CXFORMWITHALPHA = {
     $hasAddTerms: FLAG,
     $hasMultTerms: FLAG,
-    $nBits: UB4,
+    $numBits: UB4,
     multTerms: {
       type: {
         terms: {
@@ -792,15 +793,9 @@
     $moveTo: FLAG,
     move: {
       type: {
-        $moveBits: UB5,
-        moveDeltaX: {
-          type: SB,
-          params: ['moveBits']
-        },
-        moveDeltaY: {
-          type: SB,
-          params: ['moveBits']
-        }
+        $numBits: UB5,
+        moveDeltaX: SB,
+        moveDeltaY: SB,
       },
       seamless: true,
       condition: 'moveTo'
@@ -1506,7 +1501,7 @@
     initialIndex: UB6,
     codes: {
       type: UB,
-      params: ['$codeSize+2'],
+      params: ['codeSize+2'],
       list: { count: 4095 }
     }
   };
@@ -1518,7 +1513,7 @@
     initialIndexRight: UB6,
     codes: {
       type: UB,
-      params: ['$codeSize+2'],
+      params: ['codeSize+2'],
       list: { count: 8190 }
     }
   };
@@ -1810,13 +1805,13 @@
     pictureType: UB2,
     useDeblocking: FLAG,
     quantizer: UB5,
-    extraInformations: {
-      $hasExtraInformation: FLAG,
-      extraInformation: {
+    extraInformation: {
+      $hasInfo: FLAG,
+      info: {
         type: UB8,
-        condition: 'hasExtraInformation'
+        condition: 'hasInfo'
       },
-      list: { condition: 'hasExtraInformation' }
+      list: { condition: 'hasInfo' }
     },
     macroblock: MACROBLOCK,
     pictureStuffing: -1 // varies
@@ -2020,7 +2015,7 @@
     },
 
     /* FileAttributes */  69: {
-      reserved: FLAG,
+      reserved: UB1,
       useDirectBlit: FLAG,
       useGPU: FLAG,
       hasMedatata: FLAG,
@@ -2251,7 +2246,10 @@
   function readUi16($bytes, $view, $pos) {
     return $view.getUint16($pos, $pos += 2);
   }
-  function readUi8($bytes, $view, $pos) {
+  function readUi24($bytes, $view, $pos) {
+    return $view.getUint16($pos, $pos += 2) | ($bytes[$pos++] << 16);
+  }
+  function readUi32($bytes, $view, $pos) {
     return $view.getUint32($pos, $pos += 4);
   }
   function readFixed($bytes, $view, $pos) {
@@ -2287,27 +2285,27 @@
     }
     return val;
   }
-  function readSb($bytes, $view, $pos, $nBits) {
-    return (readUb($bytes, $view, $pos, $nBits) << (32 - $nBits)) >>
-           (32 - $nBits);
+  function readSb($bytes, $view, $pos, $numBits) {
+    return (readUb($bytes, $view, $pos, $numBits) << (32 - $numBits)) >>
+           (32 - $numBits);
   }
-  function readUb($bytes, $view, $pos, $nBits) {
+  function readUb($bytes, $view, $pos, $numBits) {
     var buffer = $bytes.bitBuffer;
     var bufflen = $bytes.bitLength;
     var val = 0;
-    while ($nBits > bufflen) {
+    while ($numBits > bufflen) {
       buffer = (buffer << 8) | $bytes[$pos++];
       bufflen += 8;
     }
-    var i = $nBits;
+    var i = $numBits;
     while (i--)
       val = (val * 2) + (buffer >> --bufflen & 1);
     $bytes.bitBuffer = buffer;
     $bytes.bitLength = bufflen;
     return val;
   }
-  function readFb($bytes, $view, $pos, $nBits) {
-    return readUb($bytes, $view, $pos, $nBits) * pow(2, -16);
+  function readFb($bytes, $view, $pos, $numBits) {
+    return readUb($bytes, $view, $pos, $numBits) * pow(2, -16);
   }
   function readString($bytes, $view, $pos, $length) {
     var codes = [];
@@ -2330,9 +2328,6 @@
   }
   function readBinary($bytes, $view, $pos, $length) {
     return $bytes.subarray($pos, $pos += $length);
-  }
-  function readUi24($bytes, $view, $pos) {
-    return $view.getUint16($pos, $pos += 2) | ($bytes[$pos++] << 16);
   }
 
 
