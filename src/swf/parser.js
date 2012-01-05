@@ -2331,7 +2331,7 @@
   function readBinary($bytes, $view, $length) {
     return $bytes.subarray($bytes.pos, $bytes.pos += $length);
   }
-  
+
   var defaultTmplset = [readSi8, readSi16, readSi32, readUi8, readUi16,
                         readUi32, readFixed, readFixed8, readFloat16, readFloat,
                         readDouble, readEncodedU32, readSb, readUb, readFb,
@@ -2399,11 +2399,112 @@
     table.maxBits = maxBits;
     return table;
   }
-
-  function generate(struct, tmplset) {
-    return new Function('$bytes',
-      'var $view=new DataView($bytes.buffer);$bytes.pos=0;'
-    );
+  function inflateBlock = function(inBuffer, view, outBuffer) {
+    if (inBuffer.eof)
+      fail();
+    var hdr = readBits(inBuffer, 3);
+    switch(hdr >> 1){
+    case 0:
+      inBuffer.bitBuffer = inBuffer.bitLength = 0;
+      var pos = inBuffer.pos;
+      var len = view.getUint16(pos);
+      var nlen = view.getUint16(pos + 2);
+      if (~nlen & 0xffff !== len)
+        fail();
+      var begin = pos + 4;
+      var end = inBuffer.pos = begin + len;
+      push.apply(outBuffer, inBuffer.subarray(begin, end));
+      break;
+    case 1:
+      inflate(inBuffer, fixedLiteralTable, fixedDistanceTable);
+      break;
+    case 2:
+      var bitLengths = [];
+      var numLiteralCodes = readBits(inBuffer, 5) + 257;
+      var numDistanceCodes = readBits(inBuffer, 5) + 1;
+      var numCodes = numLiteralCodes + numDistanceCodes;
+      var numCodelengthCodes = readBits(inBuffer, 4) + 4;
+      for (var i = 0; i < 19; ++i)
+        bitLengths[codeLengthOrder[i]] =
+          i < numCodelengthCodes ? readBits(inBuffer, 3) : 0;
+      var codeLengthTable = buildHuffmanTable(bitLengths);
+      bitLengths = [];
+      for (var i = 0, prevSym = 0; i < numCodes;)
+        var k = 1;
+        var sym = decode(inBuffer, codeLengthTable);
+        switch(sym){
+        case 16:
+          k = readBits(inBuffer, 2) + 3;
+          sym = prevSym;
+          break;
+        case 17:
+          k = readBits(inBuffer, 3) + 3;
+          sym = 0;
+          break;
+        case 18:
+          k = readBits(inBuffer, 7) + 11;
+          sym = 0;
+          break;
+        default:
+          prevSym = sym;
+        }
+        while (k--)
+          bitLengths[i++] = sym;
+      }
+      var distanceTable =
+        buildHuffmanTable(bitLengths.splice(numLiteralCodes, numDistanceCodes));
+      var literalTable = buildHuffmanTable(bitLengths);
+      inflate(inBuffer, outBuffer, literalTable, distanceTable);
+      break;
+    default:
+       fail();
+    }
+    inBuffer.eof = hdr & 1;
+  }
+  function readBits(buffer, count) {
+    var buffer = buffer.bitBuffer;
+    var bufflen = buffer.bitLength;
+    while (count > bufflen) {
+      buffer |= buffer[buffer.pos++] << bufflen;
+      bufflen += 8;
+    }
+    buffer.bitBuffer = buffer >>> count;
+    buffer.bitLength = bufflen - count;
+    return buffer & ((1 << count) - 1);
+  }
+  function inflate (inBuffer, outBuffer, literalTable, distanceTable) {
+    var bufflen = inBuffer.byteLength;
+    var pos = outBuffer.length;
+    for (var sym; (sym = decode(inBuffer, literalTable)) !== 256;) {
+      if (sym < 256) {
+        outBuffer[pos++] = sym;
+      } else {
+        sym -= 257;
+        var len = lengthCodes[sym] + readBits(inBuffer, lengthExtraBits[sym]);
+        sym = decode(inBuffer, distanceTable);
+        var distance = distanceCodes[sym] +
+                       readBits(inBuffer, distanceExtraBits[sym]);
+        var i = pos - distance;
+        while (len--)
+          outBuffer[pos++] = inBuffer[i++];
+      }
+    }
+  }
+  function decode(buffer, codeTable) {
+    var buffer = buffer.bitBuffer;
+    var bitlen = buffer.bitLength;
+    var maxBits = codeTable.maxBits;
+    while (maxBits > bitlen)
+      buffer |= buffer[buffer.pos++] << bitlen;
+      bitlen += 8;
+    }
+    var code = codeTable[buffer & ((1 << maxBits) - 1)];
+    var len = code >> 16;
+    if(!len)
+      fail();
+    buffer.bitBuffer = buffer >>> len;
+    buffer.bitLength = bitlen - len;
+    return code & 0xffff;
   }
 
   function parse(buffer) {
@@ -2412,14 +2513,38 @@
     var b2 = bytes[1];
     var b3 = bytes[2];
     var compressed = bytes[0] === 67;
-
     if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
       fail('invalid swf data');
-
     if (compressed)
       fail('compressed swf data is not supported yet');
+    return generate(SWFFILE, defaultTmplset)(bytes);
+  }
+  function generate(struct, tmplset) {
+    function cast(type) {
+      if (typeof type === 'object')
+        return cast(type.type);
+      return type;
+    }
+    (function translate(struct) {
+      for (var prop in struct) {
+        var type = struct[prop];
+        switch (typeof type) {
+        case 'number':
+          break;
+        case 'object':
+          if (Array.isArray(type)) {
 
-    return generate(SWFFILE, [ ])(bytes);
+          } else {
+            var options = type;
+            type = cast(type);
+          }
+          break;
+        }
+      }
+    })(struct);
+    return new Function('$bytes',
+      'var $view=new DataView($bytes.buffer);$bytes.pos=0;return {}'
+    );
   }
 
 })(this); // end of file
