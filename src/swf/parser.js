@@ -2331,6 +2331,11 @@
   function readBinary($bytes, $view, $length) {
     return $bytes.subarray($bytes.pos, $bytes.pos += $length);
   }
+  
+  var defaultTmplset = [readSi8, readSi16, readSi32, readUi8, readUi16,
+                        readUi32, readFixed, readFixed8, readFloat16, readFloat,
+                        readDouble, readEncodedU32, readSb, readUb, readFb,
+                        readString, readBinary, readUi24];
 
 
   //////////////////////////////////////////////////////////////////////////////
