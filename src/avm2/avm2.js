@@ -30,6 +30,7 @@ var Stream = (function () {
                     }
                 }
             }
+            print("readU32:", result);
             return result;
         },
         readU30: function() {
@@ -73,6 +74,7 @@ var Stream = (function () {
                 result = (result << 25) >> 25;
             }
 
+            print("readS32:", result);
             return result;
         },
         readWord: function() {
@@ -88,6 +90,10 @@ var Stream = (function () {
             return (u << 8) >> 8;
         },
         readDouble: function() {
+            // XXX: this code is not working.
+            // Should probably treat the data as 8 bytes rather than
+            // two words. Given that this.bytes is a typed array, 
+            // we can optimize this, if the endianness is right.
             if (!decode) {
                 // Setup the decode buffer for doubles.
                 var b = ArrayBuffer(8);
@@ -98,13 +104,16 @@ var Stream = (function () {
                 decode = ({ i32: i32, f64: f64, bigEndian: i8[0] == 0x11 });
             }
             if (decode.bigEndian) {
-                decode.i32[0] = readWord();
-                decode.i32[1] = readWord();
+                decode.i32[0] = this.readWord();
+                decode.i32[1] = this.readWord();
             } else {
-                decode.i32[1] = readWord();
-                decode.i32[0] = readWord();
+                decode.i32[1] = this.readWord();
+                decode.i32[0] = this.readWord();
             }
-            return decode.f64[0];
+
+            var result = decode.f64[0];
+            print("readDouble:", result);
+            return result;
         },
         readUTFString: function(length) {
             var result = "", end = this.pos + length;
@@ -138,6 +147,7 @@ var Stream = (function () {
                     result += String.fromCharCode(code);
                 } // Otherwise it's an invalid UTF8, skipped.
             }
+            print("readUTFString:", result);
             return result;
         }
     };
@@ -280,7 +290,7 @@ function parseAbcFile(b) {
             }
         }
 
-        return { int32: int32, uint32: uint32, float64: float64, strings: strings,
+        return { int32: int32, uint32: uint32, doubles: float64, strings: strings,
                  names: names, ns: ns };
     }
     function parseMethodInfo(constants, b) {
@@ -1083,7 +1093,7 @@ function compileAbc(abc) {
 }
 
 try {
-    var bytes = snarf("tests/bitops-bits-in-byte.abc", "binary");
+    var bytes = snarf("tests/test.abc", "binary");
     var abc = parseAbcFile(new Stream(bytes));
     compileAbc(abc);
 } catch (e) {
