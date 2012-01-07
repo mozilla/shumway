@@ -2264,14 +2264,14 @@
   }
   function readFloat16($bytes, $view) {
     var bits = readUb($bytes, $view, 16);
-    var sign = (bits & 0x8000) >> 15 ? -1 : 1;
+    var sign = bits >> 15 ? -1 : 1;
     var exponent = (bits & 0x7c00) >> 10;
     var fraction = bits & 0x03ff;
-    if (exponent === 0)
-      return sign * pow(2, -14) * (fraction / pow(2, 10));
+    if (!exponent)
+      return sign * pow(2, -14) * (fraction / 1024);
     if (exponent === 0x1f)
       return fraction ? NaN : sign * Infinity;
-    return sign * pow(2, exponent - 15) * (1 + (fraction / pow(2, 10)));
+    return sign * pow(2, exponent - 15) * (1 + (fraction / 1024));
   }
   function readFloat($bytes, $view) {
     return $view.getFloat32($bytes.pos, $bytes.pos += 4);
@@ -2303,7 +2303,7 @@
     var val = 0;
     var i = $numBits;
     while (i--)
-      val = (val * 2) + (buffer >> --bitlen & 1);
+      val = (val * 2) + ((buffer >> --bitlen) & 1);
     $bytes.bitBuffer = buffer;
     $bytes.bitLength = bitlen;
     return val;
@@ -2314,7 +2314,7 @@
   function readString($bytes, $view, $length) {
     var codes = [];
     if ($length) {
-      codes = slice.call($bytes, $bytes.pos, $length);
+      codes = slice.call($bytes, $bytes.pos, $bytes.pos += $length);
     } else {
       var code;
       var i = 0;
