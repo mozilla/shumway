@@ -170,14 +170,14 @@
   //////////////////////////////////////////////////////////////////////////////
 
   var REGISTERPARAM = {
-    register: UI8,
+    registerNumber: UI8,
     paramName: STRING
   };
 
   var actions = {
 
     /* GotoFrame */ 129: {
-      frame: STRING
+      frame: UI16
     },
 
     /* GetURL */ 131: {
@@ -255,7 +255,7 @@
 
       /* DefineFunction */ 155: {
         functionName: STRING,
-        numParams: UI16,
+        $numParams: UI16,
         params: {
           type: STRING,
           list: { count: 'numParams' }
@@ -268,10 +268,10 @@
       },
 
       /* With */ 148: {
-        size: UI16,
+        $codeSize: UI16,
         actions: {
           type: ACTIONRECORD,
-          list: { length: 'size' }
+          list: { length: 'codeSize' }
         }
       },
 
@@ -562,7 +562,7 @@
 
   var GRADIENTGLOWFILTER = {
     $numColors: UI8,
-    gradienColors: {
+    gradientColors: {
       type: RGBA,
       list: { count: 'numColors' }
     },
@@ -602,10 +602,10 @@
   };
 
   var FILTERLIST = {
-    $numberOfFilters: UI8,
+    $numFilters: UI8,
     filters: {
       type: FILTER,
-      list: { count: 'numberOfFilters' }
+      list: { count: 'numFilters' }
     }
   };
 
@@ -617,7 +617,7 @@
     reserved: UB3,
     $hasImage: FLAG,
     $hasClassName: FLAG,
-    $hasCacheAsBitmap: FLAG,
+    $cacheAsBitmap: FLAG,
     $hasBlendMode: FLAG,
     $hasFilterList: FLAG,
     depth: UI16,
@@ -639,7 +639,7 @@
     },
     bitmapCache: {
       type: UI8,
-      condition: 'hasCacheAsBitmap'
+      condition: 'cacheAsBitmap'
     },
     clipActions: {
       type: CLIPACTIONS,
@@ -696,9 +696,9 @@
   // Fill styles ///////////////////////////////////////////////////////////////
 
   var GRADIENTINFO = {
-    matrix:  MATRIX,
+    matrix: MATRIX,
     gradient: {
-      type: ['fillStyleType', {
+      type: ['fillType', {
         16: GRADIENT,
         18: GRADIENT,
         19: FOCALGRADIENT
@@ -766,7 +766,7 @@
       type: RGBA,
       condition: '!hasFill'
     },
-    fillType: {
+    fill: {
       type: FILLSTYLE,
       condition: 'hasFill'
     }
@@ -824,7 +824,7 @@
         $numLineBits: UB4
       },
       seamless: true,
-      condition: 'hasNewStyle'
+      condition: 'hasNewStyles'
     }
   };
 
@@ -880,7 +880,7 @@
     $numLineBits: UB4,
     shapeRecords: {
       type: SHAPERECORD,
-      list: { condition: 'type||$flags' }
+      list: { condition: 'recordType||$flags' }
     }
   };
 
@@ -982,18 +982,6 @@
     }
   };
 
-  var ALPHACOLORMAPDATA = {
-    colorTable: {
-      type: RGBA,
-      list: { count: 'colorTableSize' }
-    },
-    pixelData: BINARY
-  };
-
-  var ALPHABITMAPDATA = {
-    pixelData: RGBA
-  };
-
   var DEFINEBITSLOSSLESS = {
     id: UI16,
     $format: UI8,
@@ -1015,9 +1003,21 @@
     }
   };
 
+  var ALPHACOLORMAPDATA = {
+    colorTable: {
+      type: RGBA,
+      list: { count: 'colorTableSize' }
+    },
+    pixelData: BINARY
+  };
+
+  var ALPHABITMAPDATA = {
+    pixelData: RGBA
+  };
+
   var DEFINEBITSLOSSLESS2 = {
     id: UI16,
-    format: UI8,
+    $format: UI8,
     width: UI16,
     height: UI16,
     $colorTableSize: {
@@ -1578,10 +1578,10 @@
 
   var DEFINESOUND = {
     id: UI16,
-    format: UB4,
+    $format: UB4,
     rate: UB2,
     size: FLAG,
-    soundType: FLAG,
+    $soundType: FLAG,
     sampleCount: UI32,
     soundData: ['format', {
       1: ADPCMSOUNDDATA,
@@ -1617,10 +1617,10 @@
     },
     envelope: {
       type: {
-        $envPoints: UI8,
+        $envPointCount: UI8,
         envelopeRecords: {
           type: SOUNDENVELOPE,
-          list: { count: 'envPoints' }
+          list: { count: 'envPointCount' }
         }
       },
       seamless: true,
@@ -1683,7 +1683,7 @@
     id: UI16,
     characters: {
       type: BUTTONRECORD,
-      list: { condition: 'flags' }
+      list: { condition: '$flags' }
     },
     actions: {
       type: ACTIONRECORD,
@@ -1703,7 +1703,7 @@
     depth: UI16,
     matrix: MATRIX,
     colorTransform: CXFORMWITHALPHA,
-    filters: {
+    filterList: {
       type: FILTERLIST,
       condition: 'hasFilterList'
     },
@@ -1797,11 +1797,13 @@
     version: UB5,
     temporalReference: UB8,
     $pictureSize: UB3,
-    customWidth: {
-      type: ['pictureSize', UB8, UB16]
-    },
-    customHeight: {
-      type: ['pictureSize', UB8, UB16]
+    customSize: {
+      type: {
+        customWidth: ['pictureSize', UB8, UB16],
+        customHeight: ['pictureSize', UB8, UB16]
+      },
+      seamless: true,
+      condition: 'pictureSize<=1'
     },
     pictureType: UB2,
     useDeblocking: FLAG,
@@ -1925,7 +1927,7 @@
     height: UI16,
     reserved: UB4,
     deblocking: UB3,
-    enableSmoothing: FLAG,
+    smoothing: FLAG,
     codecId: UI8
   };
 
