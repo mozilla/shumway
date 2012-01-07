@@ -7,7 +7,6 @@ var Stream = (function () {
     }
 
     var decode;
-    var tmp;
 
     constructor.prototype = {
         remaining: function () {
@@ -108,29 +107,29 @@ var Stream = (function () {
             return decode.f64[0];
         },
         readUTFString: function(length) {
-            if (!tmp || tmp.length < length)
-                tmp = Uint8Array(length);
-            for (var i = 0; i < length; ++i)
-                tmp[i] = this.readU8();
-            var result = "";
-            for (var i = 0; i < length; i++) {
-                if (tmp[i] <= 0x7f) {
-                    result += String.fromCharCode(tmp[i]);
-                } else if (tmp[i] >= 0xc0) { // multibyte
+            var result = "", end = this.pos + length;
+            
+            while(this.pos < end) {
+                var c = this.bytes[this.pos++];
+                if (c <= 0x7f) {
+                    result += String.fromCharCode(c);
+                }
+                else if (c >= 0xc0) { // multibyte
                     var code;
-                    if (tmp[i] < 0xe0) { // 2 bytes
-                        code = ((tmp[i++] & 0x1f) << 6) |
-                               (tmp[i] & 0x3f);
-                    } else if (tmp[i] < 0xf0) { // 3 bytes
-                        code = ((tmp[i++] & 0x0f) << 12) |
-                               ((tmp[i++] & 0x3f) << 6) |
-                               (tmp[i] & 0x3f);
+                    if (c < 0xe0) { // 2 bytes
+                        code = ((c & 0x1f) << 6) |
+                               (this.bytes[this.pos++] & 0x3f);
+                    }
+                    else if (c < 0xf0) { // 3 bytes
+                        code = ((c & 0x0f) << 12) |
+                               ((this.bytes[this.pos++] & 0x3f) << 6) |
+                               (this.bytes[this.pos++] & 0x3f);
                     } else { // 4 bytes
                         // turned into two characters in JS as surrogate pair
-                        code = (((tmp[i++] & 0x07) << 18) |
-                                ((tmp[i++] & 0x3f) << 12) |
-                                ((tmp[i++] & 0x3f) << 6) |
-                                (tmp[i] & 0x3f)) - 0x10000;
+                        code = (((c & 0x07) << 18) |
+                                ((this.bytes[this.pos++] & 0x3f) << 12) |
+                                ((this.bytes[this.pos++] & 0x3f) << 6) |
+                                (this.bytes[this.pos++] & 0x3f)) - 0x10000;
                         // High surrogate
                         result += String.fromCharCode(((code & 0xffc00) >>> 10) + 0xd800);
                         // Low surrogate
