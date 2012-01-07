@@ -2402,11 +2402,11 @@
     table.maxBits = maxBits;
     return table;
   }
-  function inflateBlock = function(inBuffer, view, outBuffer) {
+  function inflateBlock(inBuffer, view, outBuffer) {
     if (inBuffer.eof)
       fail();
     var hdr = readBits(inBuffer, 3);
-    switch(hdr >> 1){
+    switch (hdr >> 1) {
     case 0:
       inBuffer.bitBuffer = inBuffer.bitLength = 0;
       var pos = inBuffer.pos;
@@ -2432,7 +2432,7 @@
           i < numCodelengthCodes ? readBits(inBuffer, 3) : 0;
       var codeLengthTable = buildHuffmanTable(bitLengths);
       bitLengths = [];
-      for (var i = 0, prevSym = 0; i < numCodes;)
+      for (var i = 0, prevSym = 0; i < numCodes;) {
         var k = 1;
         var sym = decode(inBuffer, codeLengthTable);
         switch(sym){
@@ -2475,7 +2475,7 @@
     buffer.bitLength = bufflen - count;
     return buffer & ((1 << count) - 1);
   }
-  function inflate (inBuffer, outBuffer, literalTable, distanceTable) {
+  function inflate(inBuffer, outBuffer, literalTable, distanceTable) {
     var bufflen = inBuffer.byteLength;
     var pos = outBuffer.length;
     for (var sym; (sym = decode(inBuffer, literalTable)) !== 256;) {
@@ -2497,7 +2497,7 @@
     var buffer = buffer.bitBuffer;
     var bitlen = buffer.bitLength;
     var maxBits = codeTable.maxBits;
-    while (maxBits > bitlen)
+    while (maxBits > bitlen) {
       buffer |= buffer[buffer.pos++] << bitlen;
       bitlen += 8;
     }
