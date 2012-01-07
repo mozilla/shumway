@@ -2334,10 +2334,11 @@
     return $bytes.subarray($bytes.pos, $bytes.pos += $length);
   }
 
-  var defaultTmplset = [readSi8, readSi16, readSi32, readUi8, readUi16,
-                        readUi32, readFixed, readFixed8, readFloat16, readFloat,
-                        readDouble, readEncodedU32, readSb, readUb, readFb,
-                        readString, readBinary, readUi24];
+  var defaultTemplateSet = [
+    readSi8, readSi16, readSi32, readUi8, readUi16, readUi32, readFixed,
+    readFixed8, readFloat16, readFloat, readDouble, readEncodedU32, readSb,
+    readUb, readFb, readString, readBinary, readUi24
+  ];
 
 
   //////////////////////////////////////////////////////////////////////////////
@@ -2519,9 +2520,9 @@
       fail('invalid swf data');
     if (compressed)
       fail('compressed swf data is not supported yet');
-    return generate(SWFFILE, defaultTmplset)(bytes);
+    return generate(SWFFILE, defaultTemplateSet)(bytes);
   }
-  function generate(struct, tmplset) {
+  function generate(struct, templateSet) {
     function cast(type) {
       if (typeof type === 'object')
         return cast(type.type);
