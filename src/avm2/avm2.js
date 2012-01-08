@@ -41,45 +41,7 @@ var Stream = (function () {
             return this.readU32();
         },
         readS32: function() {
-            var u8 = this.readU8();
-            var result = u8;
-            if (u8 & 0x80) {
-                u8 = this.readU8();
-                result = result & 0x7f | u8 << 7;
-                if (u8 & 0x80) {
-                    u8 = this.readU8();
-                    result = result & 0x3fff | u8 << 14;
-                    if (u8 & 0x80) {
-                        u8 = this.readU8();
-                        result = result & 0x1fffff | u8 << 21;
-                        if (u8 & 0x80) {
-                            u8 = this.readU8();
-                            result = result & 0x0fffffff | u8 << 28;
-                            result = result & 0xffffffff;
-                            // XXX this sign isn't really 
-                            // in the 7th bit of u8 here, is it?
-                            // The spec is unclear on this, but we may need
-                            // to put the 7th bit of u8 into the 32nd bit of
-                            // result here.
-                        }
-                        else if (u8 & 0x40) { // sign extension
-                            result = (result << 4) >> 4;
-                        }
-                    }
-                    else if (u8 & 0x40) {
-                        result = (result << 11) >> 11;
-                    }
-                }
-                else if (u8 & 0x40) {
-                    result = (result << 18) >> 18;
-                }
-            }
-            else if (u8 & 0x40) {
-                result = (result << 25) >> 25;
-            }
-
-            trace("readS32:", result);
-            return result;
+            return this.readU32();
         },
         readWord: function() {
             return this.readU8() |
@@ -1100,6 +1062,8 @@ if (typeof webShell == 'undefined') {
   try {
       var bytes = snarf("tests/test.abc", "binary");
       var abc = parseAbcFile(new Stream(bytes));
+      print("Constant pool");
+      print(JSON.stringify(abc.constants, null, 2));
       compileAbc(abc);
   } catch (e) {
       print(e);
