@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Shumway AVM Shell</title>
+</head>
+<body>
+    <script type="text/javascript">
+        print = function (message) {
+            console.log(message);
+        };
+        
+        var webShell = true;
+        
+    </script>
+    <script type="text/javascript" src="file-reader.js"></script>
+    <script type="text/javascript" src="avm2-runtime.js"></script>
+    <script type="text/javascript" src="avm2.js"></script>
+    <script type="text/javascript">
+        var fileReader = new FileReader("tests/test.abc");
+        fileReader.readAll(null, function (buffer) {
+            var abc = parseAbcFile(new Stream(new Uint8Array(buffer)));
+            compileAbc(abc);
+        });
+    </script>
+</body>
+</html>

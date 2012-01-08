@@ -96,10 +96,10 @@ var Stream = (function () {
             // we can optimize this, if the endianness is right.
             if (!decode) {
                 // Setup the decode buffer for doubles.
-                var b = ArrayBuffer(8);
-                var i8 = Uint8Array(b);
-                var i32 = Uint32Array(b);
-                var f64 = Float64Array(b);
+                var b = new ArrayBuffer(8);
+                var i8 = new Uint8Array(b);
+                var i32 = new Uint32Array(b);
+                var f64 = new Float64Array(b);
                 i32[0] = 0x11223344;
                 decode = ({ i32: i32, f64: f64, bigEndian: i8[0] == 0x11 });
             }
@@ -427,7 +427,7 @@ function parseAbcFile(b) {
                    initScopeDepth: b.readU30(), maxScopeDepth: b.readU30() };
 
         var code_len = b.readU30();
-        var code = Uint8Array(code_len);
+        var code = new Uint8Array(code_len);
         for (var i = 0; i < code_len; ++i)
             code[i] = b.readU8();
         mb.code = code;
@@ -1092,11 +1092,13 @@ function compileAbc(abc) {
     return abc;
 }
 
-try {
-    var bytes = snarf("tests/test.abc", "binary");
-    var abc = parseAbcFile(new Stream(bytes));
-    compileAbc(abc);
-} catch (e) {
-    print(e);
-    print(e.stack);
+if (typeof webShell == 'undefined') {
+  try {
+      var bytes = snarf("tests/test.abc", "binary");
+      var abc = parseAbcFile(new Stream(bytes));
+      compileAbc(abc);
+  } catch (e) {
+      print(e);
+      print(e.stack);
+  }
 }
