@@ -26,22 +26,20 @@
     <script type="text/javascript" src="avm2-runtime.js"></script>
     <script type="text/javascript" src="avm2.js"></script>
     <script type="text/javascript">
-        var fileReader = new FileReader("tests/abc/1-0.abc");
-        fileReader.readAll(null, function (buffer) {
-            var abc = parseAbcFile(new Stream(new Uint8Array(buffer)));
-            compileAbc(abc);
-        });
-        
-        var range = {from: 0, to: 100};
-        
+        var total = 0;
+        var failed = 0;
         new FileReader("tests/abc.list", "text").readAll(null, function(text) {
             var files = text.split("\n");
+            var range = {from: 0, to: files.length};
+            total = range.to - range.from;
             var index = range.from;
             setTimeout(function next() {
                 if (index >= range.to) {
+                    console.info("Failed: " + failed + " out of " + total);
                     return;
                 }
                 var file = files[index];
+                var number = index;
                 new FileReader("tests/abc/" + file).readAll(null, function (buffer) {
                     var start = Date.now();
                     var ret = "OK";
@@ -50,8 +48,9 @@
                         compileAbc(abc);
                     } catch (e) {
                         ret = "FAIL: " + e + e.stack;
+                        failed++;
                     }
-                    appendResult({test: file, elapsed: (Date.now() - start), ret: ret});
+                    appendResult({number: number, test: file, elapsed: (Date.now() - start), ret: ret});
                     setTimeout(next, 1);
                 });
                 index ++;
@@ -91,6 +90,7 @@
     </style>
     <table id="results">
         <tr>
+            <td style="width: 50px">#</td>
             <td style="width: 200px">Test</td>
             <td style="width: 100px">Time (ms)</td>
             <td>Result</td>

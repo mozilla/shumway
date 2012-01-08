@@ -20,6 +20,24 @@ var Stream = (function () {
             return this.bytes[this.pos++];
         },
         readU32: function() {
+            return this.readS32() >>> 0;
+        },
+        readU30: function() {
+            var result = this.readU32();
+            if (result & 0xc0000000) {
+                throw "Corrupt ABC File";
+            }
+            return result;
+        },
+        /**
+         * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian), 
+         * each contributing 7 bits. The most significant bit of each byte indicates that the next byte is part of
+         * the value. The spec indicates that the most significant bit of the last byte to be read is sign extended
+         * but this turns out not to be the case in the real implementation, for instance 0x7f should technically be
+         * -1, but instead it's 127. Moreover, what happens to the remaining 4 high bits of the fifth byte that is
+         * read? Who knows, here we'll just stay true to the Tamarin implementation.
+         */
+        readS32: function() {
             var result = this.readU8();
             if (result & 0x80) {
                 result = result & 0x7f | this.readU8() << 7;
@@ -34,51 +52,6 @@ var Stream = (function () {
                     }
                 }
             }
-            trace("readU32:", result);
-            return result;
-        },
-        readU30: function() {
-            return this.readU32();
-        },
-        readS32: function() {
-            var u8 = this.readU8();
-            var result = u8;
-            if (u8 & 0x80) {
-                u8 = this.readU8();
-                result = result & 0x7f | u8 << 7;
-                if (u8 & 0x80) {
-                    u8 = this.readU8();
-                    result = result & 0x3fff | u8 << 14;
-                    if (u8 & 0x80) {
-                        u8 = this.readU8();
-                        result = result & 0x1fffff | u8 << 21;
-                        if (u8 & 0x80) {
-                            u8 = this.readU8();
-                            result = result & 0x0fffffff | u8 << 28;
-                            result = result & 0xffffffff;
-                            // XXX this sign isn't really 
-                            // in the 7th bit of u8 here, is it?
-                            // The spec is unclear on this, but we may need
-                            // to put the 7th bit of u8 into the 32nd bit of
-                            // result here.
-                        }
-                        else if (u8 & 0x40) { // sign extension
-                            result = (result << 4) >> 4;
-                        }
-                    }
-                    else if (u8 & 0x40) {
-                        result = (result << 11) >> 11;
-                    }
-                }
-                else if (u8 & 0x40) {
-                    result = (result << 18) >> 18;
-                }
-            }
-            else if (u8 & 0x40) {
-                result = (result << 25) >> 25;
-            }
-
-            trace("readS32:", result);
             return result;
         },
         readWord: function() {
@@ -332,7 +305,7 @@ function parseAbcFile(b) {
 
         var items = [];
         for (var i = 0; i < itemcount; ++i)
-            items[i] = { key: readU30(), value: readU30() };
+            items[i] = { key: b.readU30(), value: b.readU30() };
 
         return { name: name, items: items };
     }
@@ -1089,8 +1062,10 @@ function compileAbc(abc) {
     // Compile all method bodies
     var methodBodies = abc.methodBodies;
     var length = methodBodies.length;
+    /*
     for (var n = 0; n < length; ++n)
         methodBodies[n].compiled = Function(compileBody(methodBodies[n]));
+    */
     
     //compile(methods[scripts[0].init]);
     return abc;
