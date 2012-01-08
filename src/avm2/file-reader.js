@@ -1,8 +1,9 @@
 'use strict';
 
 var FileReader = (function fileReader() {
-  function constructor(url) {
+  function constructor(url, responseType) {
     this.url = url;
+    this.responseType = responseType || "arraybuffer"; 
   }
   
   constructor.prototype = {
@@ -10,7 +11,7 @@ var FileReader = (function fileReader() {
       var xhr = new XMLHttpRequest();
       var async = true;
       xhr.open("GET", this.url, async);
-      xhr.responseType = "arraybuffer";
+      xhr.responseType = this.responseType;
       if (progress) {
         xhr.onprogress = function (event) {
           progress(xhr.response, event.loaded, event.total);

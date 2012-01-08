@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>Shumway AVM Shell</title>
+<title>Shumway AVM Web Shell</title>
 </head>
 <body>
     <script type="text/javascript">
@@ -13,15 +13,88 @@
         var webShell = true;
         
     </script>
+    
+    <!--  
+    
+    This page runs each of the test cases listed in tests/abc.list and which are found in tests/abc/. 
+    Unpack abc.tar.gz in tests/abc/ and run "ls tests/abc > tests/abc.list" to create a list of tests
+    that this page can read and iterate over.
+    
+    -->
+    
     <script type="text/javascript" src="file-reader.js"></script>
     <script type="text/javascript" src="avm2-runtime.js"></script>
     <script type="text/javascript" src="avm2.js"></script>
     <script type="text/javascript">
-        var fileReader = new FileReader("tests/test.abc");
+        var fileReader = new FileReader("tests/abc/1-0.abc");
         fileReader.readAll(null, function (buffer) {
             var abc = parseAbcFile(new Stream(new Uint8Array(buffer)));
             compileAbc(abc);
         });
+        
+        var range = {from: 0, to: 100};
+        
+        new FileReader("tests/abc.list", "text").readAll(null, function(text) {
+            var files = text.split("\n");
+            var index = range.from;
+            setTimeout(function next() {
+                if (index >= range.to) {
+                    return;
+                }
+                var file = files[index];
+                new FileReader("tests/abc/" + file).readAll(null, function (buffer) {
+                    var start = Date.now();
+                    var ret = "OK";
+                    try {
+                        var abc = parseAbcFile(new Stream(new Uint8Array(buffer)));
+                        compileAbc(abc);
+                    } catch (e) {
+                        ret = "FAIL: " + e + e.stack;
+                    }
+                    appendResult({test: file, elapsed: (Date.now() - start), ret: ret});
+                    setTimeout(next, 1);
+                });
+                index ++;
+            }, 1);
+        });
+        
+        function appendResult(result) {
+            var table = document.getElementById('results');
+            var row = document.createElement("tr");
+            for (var val in result) {
+                var cell = document.createElement("td");1
+                cell.appendChild(document.createTextNode(result[val]));
+                row.appendChild(cell);
+            }
+            if (result.ret == "OK") {
+                row.setAttribute("class", "success");
+            } else {
+                row.setAttribute("class", "failure");
+            }
+            table.appendChild(row);
+        }
+        
     </script>
+    <style>
+        body {
+            font-family: verdana;
+            font-size: 12px;
+        }
+        
+        .success {
+            color: green;
+        }
+        
+        .failure {
+            color: red;
+        }
+    </style>
+    <table id="results">
+        <tr>
+            <td style="width: 200px">Test</td>
+            <td style="width: 100px">Time (ms)</td>
+            <td>Result</td>
+        </tr>
+    </table>
 </body>
 </html>

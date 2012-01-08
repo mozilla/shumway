@@ -1,5 +1,9 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+function trace(message) {
+    // print(message);
+}
+
 var Stream = (function () {
     function constructor(bytes) {
         this.bytes = bytes;
@@ -30,7 +34,7 @@ var Stream = (function () {
                     }
                 }
             }
-            print("readU32:", result);
+            trace("readU32:", result);
             return result;
         },
         readU30: function() {
@@ -74,7 +78,7 @@ var Stream = (function () {
                 result = (result << 25) >> 25;
             }
 
-            print("readS32:", result);
+            trace("readS32:", result);
             return result;
         },
         readWord: function() {
@@ -112,7 +116,7 @@ var Stream = (function () {
             }
 
             var result = decode.f64[0];
-            print("readDouble:", result);
+            trace("readDouble:", result);
             return result;
         },
         readUTFString: function(length) {
@@ -147,7 +151,7 @@ var Stream = (function () {
                     result += String.fromCharCode(code);
                 } // Otherwise it's an invalid UTF8, skipped.
             }
-            print("readUTFString:", result);
+            trace("readUTFString:", result);
             return result;
         }
     };
@@ -461,7 +465,7 @@ function parseAbcFile(b) {
     // MetaDataInfos
     n = b.readU30();
     for (i = 0; i < n; ++i)
-        metadata.push(parseMetadata(b));
+        metadata.push(parseMetadataInfo(b));
 
     // InstanceInfos
     n = b.readU30();
@@ -1087,7 +1091,7 @@ function compileAbc(abc) {
     var length = methodBodies.length;
     for (var n = 0; n < length; ++n)
         methodBodies[n].compiled = Function(compileBody(methodBodies[n]));
-
+    
     //compile(methods[scripts[0].init]);
     return abc;
 }
