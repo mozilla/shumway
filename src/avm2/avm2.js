@@ -1075,6 +1075,8 @@ if (typeof webShell == 'undefined') {
   try {
       var bytes = snarf("tests/test.abc", "binary");
       var abc = parseAbcFile(new Stream(bytes));
+      print("Constant pool");
+      print(JSON.stringify(abc.constants, null, 2));
       compileAbc(abc);
   } catch (e) {
       print(e);
