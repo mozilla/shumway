@@ -1299,8 +1299,8 @@
     },
     layout: {
       type: {
-        ascent: SI16,
-        descent: SI16,
+        ascent: UI16,
+        descent: UI16,
         leading: SI16,
         advanceTable: {
           type: SI16,
