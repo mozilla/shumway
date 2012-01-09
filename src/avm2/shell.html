@@ -14,6 +14,10 @@
         
     </script>
     
+    Parse ( + Compile: <input name="compile" type="checkbox" id="compile" value="Y" checked="true"> )<br>
+    <button onclick="runAll();">Run All</button><input type="text" id="runAllText" value="0:*"/>
+    <button onclick="runOne();">Run One</button><input type="text" id="runOneText" value="abc/1-0.abc"/>
+    
     <!--  
     
     This page runs each of the test cases listed in tests/abc.list and which are found in tests/abc/. 
@@ -28,36 +32,60 @@
     <script type="text/javascript" src="parser.js"></script>
     <script type="text/javascript" src="compiler.js"></script>
     <script type="text/javascript">
-        var total = 0;
-        var failed = 0;
-        new FileReader("tests/abc.list", "text").readAll(null, function(text) {
-            var files = text.split("\n");
-            var range = {from: 0, to: files.length};
-            total = range.to - range.from;
-            var index = range.from;
-            setTimeout(function next() {
-                if (index >= range.to) {
-                    console.info("Failed: " + failed + " out of " + total);
-                    return;
-                }
-                var file = files[index];
-                var number = index;
-                new FileReader("tests/abc/" + file).readAll(null, function (buffer) {
-                    var start = Date.now();
-                    var ret = "OK";
-                    try {
-                        var abc = parseAbcFile(new Uint8Array(buffer));
-                        compileAbc(abc);
-                    } catch (e) {
-                        ret = "FAIL: " + e + e.stack;
-                        failed++;
+        function runOne() {
+            var file = document.getElementById('runOneText').value;
+            new FileReader("tests/" + file).readAll(null, function (buffer) {
+                var start = Date.now();
+                var ret = "OK";
+                try {
+                    var abc = parseAbcFile(new Uint8Array(buffer));
+                    if (document.getElementById('compile').checked) {
+                      compileAbc(abc);
                     }
-                    appendResult({number: number, test: file, elapsed: (Date.now() - start), ret: ret});
-                    setTimeout(next, 1);
-                });
-                index ++;
-            }, 1);
-        });
+                } catch (e) {
+                    ret = "FAIL: " + e + e.stack;
+                    failed++;
+                }
+                appendResult({number: 0, test: file, elapsed: (Date.now() - start), ret: ret});
+            });
+        }
+        
+        function runAll() {
+          var range = document.getElementById('runAllText').value.split(":");
+          var total = 0;
+          var failed = 0;
+          new FileReader("tests/abc.list", "text").readAll(null, function(text) {
+              var files = text.split("\n");
+              var from = parseInt(range[0]);
+              var to = range.length <= 1 ? from + 1 : range[1] == "*" ? files.length : parseInt(range[1]);
+              total = to - from;
+              var index = from;
+              setTimeout(function next() {
+                  if (index >= to) {
+                      console.info("Failed: " + failed + " out of " + total);
+                      return;
+                  }
+                  var file = files[index];
+                  var number = index;
+                  new FileReader("tests/abc/" + file).readAll(null, function (buffer) {
+                      var start = Date.now();
+                      var ret = "OK";
+                      try {
+                          var abc = parseAbcFile(new Uint8Array(buffer));
+                          if (document.getElementById('compile').checked) {
+                              compileAbc(abc);
+                          }
+                      } catch (e) {
+                          ret = "FAIL: " + e + e.stack;
+                          failed++;
+                      }
+                      appendResult({number: number, test: file, elapsed: (Date.now() - start), ret: ret});
+                      setTimeout(next, 1);
+                  });
+                  index ++;
+              }, 1);
+          });
+        }
         
         function appendResult(result) {
             var table = document.getElementById('results');
