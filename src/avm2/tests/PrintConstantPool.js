@@ -1,3 +1,4 @@
+load("../DataView.js");
 load("../constants.js");
 load("../parser.js");
 try {
