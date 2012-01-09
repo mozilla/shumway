@@ -450,7 +450,7 @@
         reserved2: UI8
       },
       seamless: true,
-      condition: 'version>=6'
+      condition: 'swfVersion>=6'
     }
   };
 
@@ -522,7 +522,7 @@
   };
 
   var DROPSHADOWFILTER = {
-    dropShadowColor: RGBA,
+    color: RGBA,
     blurX: FIXED,
     blurY: FIXED,
     angle: FIXED,
@@ -535,7 +535,7 @@
   };
 
   var GLOWFILTER = {
-    glowColor: RGBA,
+    color: RGBA,
     blurX: FIXED,
     blurY: FIXED,
     strength: FIXED8,
@@ -562,11 +562,11 @@
 
   var GRADIENTGLOWFILTER = {
     $numColors: UI8,
-    gradientColors: {
+    colors: {
       type: RGBA,
       list: { count: 'numColors' }
     },
-    gradientRatios: {
+    ratios: {
       type: UI8,
       list: { count: 'numColors' }
     },
@@ -588,14 +588,14 @@
     $filterId: UI8,
     filter: {
       type: ['filterId', {
-        0: { dropShadowFilter: DROPSHADOWFILTER },
-        1: { blurFilter: BLURFILTER },
-        2: { glowFilter: GLOWFILTER },
-        3: { bevelFilter: BEVELFILTER },
-        4: { gradientGlowFilter: GRADIENTGLOWFILTER },
-        5: { convolutionFilter: CONVOLUTIONFILTER },
-        6: { colorMatrixFilter: COLORMATRIXFILTER },
-        7: { gradientBevelFilter: GRADIENTBEVELFILTER }
+        0: DROPSHADOWFILTER,
+        1: BLURFILTER,
+        2: GLOWFILTER,
+        3: BEVELFILTER,
+        4: GRADIENTGLOWFILTER,
+        5: CONVOLUTIONFILTER,
+        6: COLORMATRIXFILTER,
+        7: GRADIENTBEVELFILTER
       }],
       seamless: true
     }
@@ -631,6 +631,7 @@
     },
     filterList: {
       type: FILTERLIST,
+      seamless: true,
       condition: 'hasFilterList'
     },
     blendMode: {
@@ -702,7 +703,8 @@
         16: GRADIENT,
         18: GRADIENT,
         19: FOCALGRADIENT
-      }]
+      }],
+      seamless: true
     }
   };
 
@@ -784,7 +786,7 @@
     }
   };
 
-  // Shape structures /////////////////////////////////////////////////////////
+  // Shape structures //////////////////////////////////////////////////////////
 
   var STYLECHANGERECORD = {
     $hasNewStyles: FLAG,
@@ -831,7 +833,7 @@
   var STRAIGHTEDGERECORD = {
     $numBits: {
       type: UB4,
-      appendix: '+2'
+      post: '+2'
     },
     $isGeneralLine: FLAG,
     $isVertLine: {
@@ -851,7 +853,7 @@
   var CURVEDEDGERECORD = {
     $numBits: {
       type: UB4,
-      appendix: '+2'
+      post: '+2'
     },
     controlDeltaX: SB,
     controlDeltaY: SB,
@@ -896,13 +898,13 @@
   var DEFINESHAPE = {
     id: UI16,
     bounds: RECT,
-    shapes: SHAPEWITHSTYLE
+    edges: SHAPEWITHSTYLE
   };
 
   var DEFINESHAPE2 = {
     id: UI16,
     bounds: RECT,
-    shapes: SHAPEWITHSTYLE
+    edges: SHAPEWITHSTYLE
   };
 
   var DEFINESHAPE4 = {
@@ -913,7 +915,7 @@
     usesFillWindingRule: FLAG,
     usesNonScalingStrokes: FLAG,
     usesScalingStrokes: FLAG,
-    shapes: SHAPEWITHSTYLE
+    edges: SHAPEWITHSTYLE
   };
 
 
@@ -959,7 +961,7 @@
   };
 
   var PIX15 = {
-    reserved: FLAG,
+    reserved: UB1,
     red: UB5,
     green: UB5,
     blue: UB5
@@ -999,7 +1001,8 @@
           5: BITMAPDATA
         }]
       },
-      compressed: true
+      compressed: true,
+      seamless: true
     }
   };
 
@@ -1012,14 +1015,17 @@
   };
 
   var ALPHABITMAPDATA = {
-    pixelData: RGBA
+    pixelData: {
+      type: ARGB,
+      list: { count: 'width*height' }
+    }
   };
 
   var DEFINEBITSLOSSLESS2 = {
     id: UI16,
     $format: UI8,
-    width: UI16,
-    height: UI16,
+    $width: UI16,
+    $height: UI16,
     $colorTableSize: {
       type: UI8,
       condition: 'format===3'
@@ -1032,7 +1038,8 @@
           5: ALPHABITMAPDATA
         }]
       },
-      compressed: true
+      compressed: true,
+      seamless: true
     }
   };
 
@@ -1079,7 +1086,10 @@
   var MORPHGRADIENTINFO = {
     startMatrix: MATRIX,
     endMatrix: MATRIX,
-    gradient: MORPHGRADIENT
+    gradient: {
+      type: MORPHGRADIENT,
+      seamless: true
+    }
   };
 
   var MORPHBITMAPINFO = {
@@ -1152,7 +1162,7 @@
       seamless: true,
       condition: '!hasFill'
     },
-    fillType: {
+    fill: {
       type: MORPHFILLSTYLE,
       condition: 'hasFill'
     }
@@ -1208,7 +1218,7 @@
     id: UI16,
     $numGlyphs: {
       type: UI16,
-      appendix: '/2'
+      post: '/2'
     },
     offsetTable: {
       type: UI16,
@@ -1228,7 +1238,7 @@
       length: 'fontNameLen'
     },
     reserved: UB2,
-    isSmall: FLAG,
+    isSmallText: FLAG,
     isShiftJis: FLAG,
     isAnsi: FLAG,
     isItalic: FLAG,
@@ -1248,7 +1258,7 @@
       length: 'fontNameLen'
     },
     reserved: UB2,
-    isSmall: FLAG,
+    isSmallText: FLAG,
     isShiftJis: FLAG,
     isAnsi: FLAG,
     isItalic: FLAG,
@@ -1271,7 +1281,7 @@
     fontId: UI16,
     $hasLayout: FLAG,
     isShiftJis: FLAG,
-    isSmall: FLAG,
+    isSmallText: FLAG,
     isAnsi: FLAG,
     usesWideOffsets: FLAG,
     usesWideCodes: FLAG,
@@ -1356,11 +1366,11 @@
   var GLYPHENTRY = {
     index: {
       type: UB,
-      params: ['glyphBits']
+      params: ['numGlyphBits']
     },
     advance: {
       type: SB,
-      params: ['advanceBits']
+      params: ['numAdvanceBits']
     }
   };
 
@@ -1402,8 +1412,8 @@
     id: UI16,
     bounds: RECT,
     matrix: MATRIX,
-    $glyphBits: UI8,
-    $advanceBits: UI8,
+    $numGlyphBits: UI8,
+    $numAdvanceBits: UI8,
     textRecords: {
       type: TEXTRECORD,
       list: { condition: 'recordType' }
@@ -1415,8 +1425,8 @@
     bounds: RECT,
     $hasText: FLAG,
     wordWrap: FLAG,
-    isMultiline: FLAG,
-    isPassword: FLAG,
+    multiline: FLAG,
+    password: FLAG,
     readOnly: FLAG,
     $hasTextColor: FLAG,
     $hasMaxLength: FLAG,
@@ -1427,7 +1437,7 @@
     noSelect: FLAG,
     hasBorder: FLAG,
     wasStatic: FLAG,
-    usesHtml: FLAG,
+    html: FLAG,
     useOutlines: FLAG,
     fontId: {
       type: UI16,
@@ -1705,6 +1715,7 @@
     colorTransform: CXFORMWITHALPHA,
     filterList: {
       type: FILTERLIST,
+      seamless: true,
       condition: 'hasFilterList'
     },
     blendMode: {
@@ -1738,12 +1749,12 @@
     $actionOffset: UI16,
     characters: {
       type: BUTTONRECORD2,
-      list: { condition: '' }
+      list: { condition: '$flags' }
     },
     actions: {
       type: {
         actions: BUTTONCONDACTION,
-        list: { condition: 'actionOffset' }
+        list: { condition: 'actionSize' }
       },
       seamless: true,
       condition: 'actionOffset'
@@ -1809,10 +1820,12 @@
     useDeblocking: FLAG,
     quantizer: UB5,
     extraInformation: {
-      $hasInfo: FLAG,
-      info: {
-        type: UB8,
-        condition: 'hasInfo'
+      type: {
+        $hasInfo: FLAG,
+        info: {
+          type: UB8,
+          condition: 'hasInfo'
+        }
       },
       list: { condition: 'hasInfo' }
     },
@@ -1824,7 +1837,7 @@
     $dataSize: UB16,
     pixelData: {
       type: BINARY,
-      list: { count: 'dataSize' }
+      length: 'dataSize'
     }
   };
 
@@ -1863,15 +1876,15 @@
     imageBlockHeader: -1, // varies
     pixelData: {
       type: BINARY,
-      list: { count: 'dataSize' }
+      length: 'dataSize'
     }
   };
 
   var SCREENV2VIDEOPACKET = {
-    blockWidth: UB4,
-    imageWidth: UB12,
-    blockHeight: UB4,
-    imageHeight: UB12,
+    $blockWidth: UB4,
+    $imageWidth: UB12,
+    $blockHeight: UB4,
+    $imageHeight: UB12,
     reserved: UB6,
     $hasIframeImage: FLAG,
     $hasPaletteInfo: FLAG,
@@ -1881,7 +1894,7 @@
     },
     imageBlocks: {
       type: IMAGEBLOCKV2,
-      list: true
+      list: { length: 'imageWidth/blockWidth*imageHeight/blockHeight' }
     },
     iframeImage: {
       type: IMAGEBLOCKV2,
@@ -2159,7 +2172,7 @@
     // Binary data /////////////////////////////////////////////////////////////
 
     /* DefineBinaryData */ 87: {
-      tag: UI16,
+      characterId: UI16,
       reserved: UI32,
       binaryData: BINARY
     }
@@ -2191,7 +2204,7 @@
       type: STRING,
       length: 3
     },
-    $version: UI8,
+    $swfVersion: UI8,
     fileLength: UI32,
     frameSize: RECT,
     frameRate: UI16,
@@ -2207,7 +2220,7 @@
       type: STRING,
       length: 3
     },
-    $version: UI8,
+    $swfVersion: UI8,
     fileLength: UI32,
     body: {
       type: {
