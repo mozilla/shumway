@@ -37,16 +37,20 @@
   const UB5         = 22;
   const UB6         = 23;
   const UB7         = 24;
-  const UB8         = 25
-  const UB10        = 26;
-  const UB11        = 27;
-  const UB12        = 28;
-  const UB16        = 29;
-  const UB17        = 30;
-  const FLAG        = 31;
+  const UB8         = 25;
+  const UB9         = 26;
+  const UB10        = 27;
+  const UB11        = 28;
+  const UB12        = 29;
+  const UB13        = 30;
+  const UB14        = 31;
+  const UB15        = 32;
+  const UB16        = 33;
+  const UB17        = 34;
+  const FLAG        = 35;
 
-  const TAG         = 32;
-  const COLOR       = 33;
+  const TAG         = 36;
+  const COLOR       = 37;
 
   var LANGCODE = UI8;
 
@@ -2302,49 +2306,47 @@
     }
     return val;
   }
-  function readSb($bytes, $view, $numBits) {
-    return (readUb($bytes, $view, $numBits) << (32 - $numBits)) >>
-           (32 - $numBits);
+  function readSb($bytes, $view, numBits) {
+    return (readUb($bytes, $view, numBits) << (32 - numBits)) >> (32 - numBits);
   }
-  function readUb($bytes, $view, $numBits) {
+  function readUb($bytes, $view, numBits) {
     var buffer = $bytes.bitBuffer;
     var bitlen = $bytes.bitLength;
-    while ($numBits > bitlen) {
+    while (numBits > bitlen) {
       buffer = (buffer << 8) | $bytes[$bytes.pos++];
       bitlen += 8;
     }
     var val = 0;
-    var i = $numBits;
+    var i = numBits;
     while (i--)
-      val = (val * 2) + ((buffer >> --bitlen) & 1);
+      val = (val << 1) | ((buffer >> --bitlen) & 1);
     $bytes.bitBuffer = buffer;
     $bytes.bitLength = bitlen;
     return val;
   }
-  function readFb($bytes, $view, $numBits) {
-    return readUb($bytes, $view, $numBits) * pow(2, -16);
+  function readFb($bytes, $view, numBits) {
+    return readUb($bytes, $view, numBits) * pow(2, -16);
   }
-  function readString($bytes, $view, $length) {
+  function readString($bytes, $view, length) {
     var codes = [];
-    if ($length) {
-      codes = slice.call($bytes, $bytes.pos, $bytes.pos += $length);
+    if (length) {
+      codes = slice.call($bytes, $bytes.pos, $bytes.pos += length);
     } else {
       var code;
       var i = 0;
       while (code = $bytes[$bytes.pos++])
         codes[i++] = code;
     }
-    var maxArgs = 1 << 16;
-    var numChunks = codes.length / maxArgs;
+    var numChunks = codes.length / 65536;
     var str = '';
     for (var i = 0; i < numChunks; ++i) {
-      var s = codes.slice(i * maxArgs, (i + 1) * maxArgs);
+      var s = codes.slice(i * 65536, (i + 1) * 65536);
       str += fcc.apply(null, s);
     }
     return decodeURIComponent(escape(str));
   }
-  function readBinary($bytes, $view, $length) {
-    return $bytes.subarray($bytes.pos, $bytes.pos += $length);
+  function readBinary($bytes, $view, length) {
+    return $bytes.subarray($bytes.pos, $bytes.pos += length);
   }
 
   var defaultTemplateSet = [
@@ -2498,8 +2500,8 @@
         sym -= 257;
         var len = lengthCodes[sym] + readBits(inBuffer, lengthExtraBits[sym]);
         sym = decode(inBuffer, distanceTable);
-        var distance = distanceCodes[sym] +
-                       readBits(inBuffer, distanceExtraBits[sym]);
+        var distance =
+          distanceCodes[sym] + readBits(inBuffer, distanceExtraBits[sym]);
         var i = pos - distance;
         while (len--)
           outBuffer[pos++] = inBuffer[i++];
@@ -2536,30 +2538,68 @@
     return generate(SWFFILE, defaultTemplateSet)(bytes);
   }
   function generate(struct, templateSet) {
-    function cast(type) {
-      if (typeof type === 'object')
-        return cast(type.type);
-      return type;
+    function cast(type, options) {
+      var template = templateSet[type];
+      if (typeof template === 'function') {
+        var funParts = /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
+        var lines = funParts[3].split('\n');
+        if (/^\s*return ([^;]*);$/.test(lines[1]))
+          return RegExp.$1;
+        var name = funParts[1];
+        var args = funParts[2].split(', ');
+        if (options.params)
+          args.splice.apply(args, [2, options.params.length].concat(options.params));
+        return name + '(' + args.join(',') + ')';
+      }
+      return template;
     }
+
+    var assignments = [];
+    var localsCount = 0;
+
     (function translate(struct) {
+      function assign(leftHand, value) {
+        if (leftHand[0] === '$') {
+          leftHand = leftHand.substr(1);
+          assignments.push('var ' + leftHand + '=$' + localsCount + '=' + value);
+        } else {
+          assignments.push('$' + localsCount + '=' + value);
+        }
+        propValPairs.push(leftHand + ':$' + localsCount);
+        ++localsCount;
+      }
+      var propValPairs = [];
       for (var prop in struct) {
         var type = struct[prop];
+        var options = { };
         switch (typeof type) {
         case 'number':
+          if (type >= UB1 && type <= FLAG) {
+            options = { params: [type === FLAG ? 1 : type - 17] };
+            type = UB;
+          }
+          assign(prop, cast(type, options));
           break;
         case 'object':
           if (Array.isArray(type)) {
-
+            // TODO
+          } else if ('type' in type) {
+            options = type;
+            type = options.type;
+            // TODO
           } else {
-            var options = type;
-            type = cast(type);
+            translate(type, options);
+            assign(prop, '$$');
           }
           break;
         }
       }
+      assignments.push('$$={' + propValPairs.join(',') + '}');
     })(struct);
+
     return new Function('$bytes',
-      'var $view=new DataView($bytes.buffer);$bytes.pos=0;return {}'
+      'var $view=new DataView($bytes.buffer);$bytes.pos=0;' +
+        assignments.join(';') + ';return $$'
     );
   }
 
