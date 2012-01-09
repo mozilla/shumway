@@ -24,7 +24,9 @@
     
     <script type="text/javascript" src="file-reader.js"></script>
     <script type="text/javascript" src="avm2-runtime.js"></script>
-    <script type="text/javascript" src="avm2.js"></script>
+    <script type="text/javascript" src="constants.js"></script>
+    <script type="text/javascript" src="parser.js"></script>
+    <script type="text/javascript" src="compiler.js"></script>
     <script type="text/javascript">
         var total = 0;
         var failed = 0;
@@ -44,7 +46,7 @@
                     var start = Date.now();
                     var ret = "OK";
                     try {
-                        var abc = parseAbcFile(new Stream(new Uint8Array(buffer)));
+                        var abc = parseAbcFile(new Uint8Array(buffer));
                         compileAbc(abc);
                     } catch (e) {
                         ret = "FAIL: " + e + e.stack;
