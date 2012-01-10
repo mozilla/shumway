@@ -894,7 +894,7 @@
     fillStyles: FILLSTYLEARRAY,
     lineStyles: LINESTYLEARRAY,
     shape: {
-      TYPE: SHAPE,
+      type: SHAPE,
       seamless: true
     }
   };
@@ -2244,7 +2244,7 @@
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Parser Generator Templates
+  // Parser Templates
   //
   //////////////////////////////////////////////////////////////////////////////
 
