@@ -11,46 +11,46 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  const SI8         = 0;
-  const SI16        = 1;
-  const SI32        = 2;
-  const UI8         = 3;
-  const UI16        = 4;
-  const UI32        = 5;
-  const FIXED       = 6;
-  const FIXED8      = 7;
-  const FLOAT16     = 8;
-  const FLOAT       = 9;
-  const DOUBLE      = 10;
-  const EncodedU32  = 11;
-  const SB          = 12;
-  const UB          = 13;
-  const FB          = 14;
-  const STRING      = 15;
-  const BINARY      = 16;
+  const SI8         = 1;
+  const SI16        = 2;
+  const SI32        = 3;
+  const UI8         = 4;
+  const UI16        = 5;
+  const UI32        = 6;
+  const FIXED       = 7;
+  const FIXED8      = 8;
+  const FLOAT16     = 9;
+  const FLOAT       = 10;
+  const DOUBLE      = 11;
+  const EncodedU32  = 12;
+  const SB          = 13;
+  const UB          = 14;
+  const FB          = 15;
+  const STRING      = 16;
+  const BINARY      = 17;
 
-  const UI24        = 17;
-  const UB1         = 18;
-  const UB2         = 19;
-  const UB3         = 20;
-  const UB4         = 21;
-  const UB5         = 22;
-  const UB6         = 23;
-  const UB7         = 24;
-  const UB8         = 25;
-  const UB9         = 26;
-  const UB10        = 27;
-  const UB11        = 28;
-  const UB12        = 29;
-  const UB13        = 30;
-  const UB14        = 31;
-  const UB15        = 32;
-  const UB16        = 33;
-  const UB17        = 34;
-  const FLAG        = 35;
+  const UI24        = 18;
+  const UB1         = 19;
+  const UB2         = 20;
+  const UB3         = 21;
+  const UB4         = 22;
+  const UB5         = 23;
+  const UB6         = 24;
+  const UB7         = 25;
+  const UB8         = 26;
+  const UB9         = 27;
+  const UB10        = 28;
+  const UB11        = 29;
+  const UB12        = 30;
+  const UB13        = 31;
+  const UB14        = 32;
+  const UB15        = 33;
+  const UB16        = 34;
+  const UB17        = 35;
+  const FLAG        = 36;
 
-  const TAG         = 36;
-  const COLOR       = 37;
+  const TAG         = 37;
+  const COLOR       = 38;
 
   var LANGCODE = UI8;
 
@@ -2569,7 +2569,8 @@
 
     (function translate(struct) {
       var propValList = [];
-      for (var prop in struct) {
+      var props = Object.keys(struct);
+      for (var i = 0, prop; prop = props[i++];) {
         var type = struct[prop];
         var options = { };
         var expr = undefined;
@@ -2589,6 +2590,11 @@
           expr = (type === FLAG ? '!!' : '') + cast(type, options);
         } else if (Array.isArray(type)) {
           // TODO
+        } else if (options.seamless) {
+          // merge sub-properties
+          splice.apply(props, [i, 0].concat(Object.keys(type)));
+          struct.__proto__ = type;
+          continue;
         } else {
           translate(type, options);
           expr = '$$';
