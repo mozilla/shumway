@@ -2525,7 +2525,7 @@
     return code & 0xffff;
   }
 
-  function parse(buffer) {
+  window.parseSWF = function (buffer) {
     var bytes = new Uint8Array(buffer);
     var b1 = bytes[0];
     var b2 = bytes[1];
