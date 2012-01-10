@@ -1,13 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+// Takes a Uint8Array of bytes and returns an object.
 function parseAbcFile(bytes) {
-    var Stream = (function () {
+
+    var ABCStream = (function () {
         function constructor(bytes) {
             this.bytes = bytes;
+            this.view = new DataView(bytes.buffer);
             this.pos = 0;
         }
-
-        var decode;
 
         constructor.prototype = {
             remaining: function () {
@@ -52,10 +53,9 @@ function parseAbcFile(bytes) {
                 return result;
             },
             readWord: function() {
-                return this.readU8() |
-                    (this.readU8() << 8) |
-                    (this.readU8() << 16) |
-                    (this.readU8() << 24);
+                var result = this.view.getUint32(this.pos, true);
+                this.pos += 4;
+                return result;
             },
             readS24: function() {
                 var u = this.readU8() |
@@ -64,28 +64,8 @@ function parseAbcFile(bytes) {
                 return (u << 8) >> 8;
             },
             readDouble: function() {
-                // XXX: this code is not working.
-                // Should probably treat the data as 8 bytes rather than
-                // two words. Given that this.bytes is a typed array, 
-                // we can optimize this, if the endianness is right.
-                if (!decode) {
-                    // Setup the decode buffer for doubles.
-                    var b = new ArrayBuffer(8);
-                    var i8 = new Uint8Array(b);
-                    var i32 = new Uint32Array(b);
-                    var f64 = new Float64Array(b);
-                    i32[0] = 0x11223344;
-                    decode = ({ i32: i32, f64: f64, bigEndian: i8[0] == 0x11 });
-                }
-                if (decode.bigEndian) {
-                    decode.i32[0] = this.readWord();
-                    decode.i32[1] = this.readWord();
-                } else {
-                    decode.i32[1] = this.readWord();
-                    decode.i32[0] = this.readWord();
-                }
-
-                var result = decode.f64[0];
+                var result = this.view.getFloat64(this.pos, true);
+                this.pos += 8;
                 return result;
             },
             readUTFString: function(length) {
@@ -130,6 +110,7 @@ function parseAbcFile(bytes) {
     function parseTrait(stream) {
         var name = stream.readU30();
         var tag = stream.readU8();
+
         var kind = tag & 0x0F;
         var attrs = (tag >> 4) & 0x0F;
         var trait;
@@ -410,7 +391,7 @@ function parseAbcFile(bytes) {
     var AbcFile = (function abcFile() {
         function constructor(bytes) {
             var n;
-            var stream = new Stream(bytes);
+            var stream = new ABCStream(bytes);
             checkMagic(stream);
             this.constantPool = new ConstantPool(stream);
             
@@ -472,5 +453,4 @@ function parseAbcFile(bytes) {
     })();
     
     return new AbcFile(bytes);
-    // console.info(JSON.stringify(new AbcFile(bytes)));
 }
