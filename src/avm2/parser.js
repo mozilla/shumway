@@ -127,281 +127,350 @@ function parseAbcFile(bytes) {
         return constructor;
     })();
 
-
-    function checkMagic(b) {
-        var magic = b.readWord();
-        if (magic < (46<<16|15)) // Flash Player Brannan
-            throw new Error("not an abc file. magic=" + Number(magic).toString(16));
-    }
-    function parseCpool(b) {
-        var int32 = [0];
-        var uint32 = [0];
-        var float64 = [0];
-        var strings = [""];
-        var ns = [(void 0)];
-        var nsset = [(void 0)];
-        var names = [(void 0)];
-        var i, n;
-
-        // ints
-        n = b.readU30();
-        for (i = 1; i < n; ++i) {
-            int32.push(b.readS32());
-        }
-
-        // uints
-        n = b.readU30();
-        for (i = 1; i < n; ++i)
-            uint32.push(b.readU32());
-
-        // doubles
-        n = b.readU30();
-        for ( i =1; i < n; ++i)
-            float64.push(b.readDouble());
-
-        // strings
-        n = b.readU30();
-        for (i = 1; i < n; ++i)
-            strings.push(b.readUTFString(b.readU32()));
-
-        // namespaces
-        n = b.readU30();
-        for (i = 1; i < n; ++i)
-            ns.push({ nskind: b.readU8(), name: strings[b.readU30()] });
-
-        // namespace sets
-        n = b.readU30();
-        for (i = 1; i < n; ++i) {
-            var count = b.readU30();
-            var nss = [];
-            for (var j = 0; j < count; ++j)
-                nss.push(ns[b.readU30()]);
-            nsset.push(nss);
-        }
-
-        // multinames
-        n = b.readU30();
-        for (i = 1; i < n; ++i) {
-            var kind = b.readU8();
-            switch (kind) {
-            case CONSTANT_QName: case CONSTANT_QNameA:
-                names[i] = { idx: i, ns: ns[b.readU30()], name: strings[b.readU30()], kind: kind };
-                break;
-            case CONSTANT_RTQName: case CONSTANT_RTQNameA:
-                names[i] = { idx: i, name: strings[b.readU30()], kind: kind };
-                break;
-            case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-                names[i] = { idx: i, kind: kind };
-                break;
-            case CONSTANT_Multiname: case CONSTANT_MultinameA:
-                names[i] = { idx: i, name: strings[b.readU30()], nsset: nsset[b.readU30()], kind: kind };
-                break;
-            case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-                names[i] = { idx: i, nsset: nsset[b.readU30()], kind: kind };
-                break;
-            }
-        }
-
-        return { int32: int32, uint32: uint32, doubles: float64, strings: strings,
-                 names: names, ns: ns };
-    }
-    function parseMethodInfo(constants, b) {
-        var paramcount = b.readU30();
-        var returntype = b.readU30();
-        var params = [];
-        for (var i = 0; i < paramcount; ++i)
-            params.push(b.readU30());
-
-        var name = constants.strings[b.readU30()];
-        var flags = b.readU8();
-
-        var optionalcount = 0;
-        var optionals = null;
-        if (flags & METHOD_HasOptional) {
-            optionalcount = b.readU30();
-            optionals = [];
-            for (var i = 0; i < optionalcount; ++i)
-                optionals[i] = { val: b.readU30(), kind:b.readU8() };
-        }
-
-        var paramnames = null;
-        if (flags & METHOD_HasParamNames) {
-            paramnames = [];
-            for (var i = 0; i < paramcount; ++i)
-                paramnames[i] = constants.strings[b.readU30()];
-        }
-
-        return { name: name, params: params, returntype: returntype, flags: flags,
-                 optionals: optionals, paramnames: paramnames };
-    }
-    function parseMetadataInfo(b) {
-        var name = b.readU30();
-        var itemcount = b.readU30();
-
-        var items = [];
-        for (var i = 0; i < itemcount; ++i)
-            items[i] = { key: b.readU30(), value: b.readU30() };
-
-        return { name: name, items: items };
-    }
-    function parseTrait(b) {
-        var name = b.readU30();
-        var tag = b.readU8();
+    function parseTrait(stream) {
+        var name = stream.readU30();
+        var tag = stream.readU8();
         var kind = tag & 0x0F;
-        var attrs = (tag>>4) & 0x0F;
+        var attrs = (tag >> 4) & 0x0F;
         var trait;
 
         switch (kind) {
         case TRAIT_Slot:
         case TRAIT_Const:
-            var slotid = b.readU30();
-            var typename = b.readU30();
-            var value = b.readU30();
+            var slotid = stream.readU30();
+            var typename = stream.readU30();
+            var value = stream.readU30();
             var kind = null;
             if (value != 0)
-                kind = b.readU8();
+                kind = stream.readU8();
             trait = { name: name, attrs: attrs, kind: kind, slotid: slotid,
                       typename: typename, value: value };
             break;
         case TRAIT_Method:
         case TRAIT_Setter:
         case TRAIT_Getter:
-            var dispid = b.readU30();
-            var methinfo = b.readU30();
+            var dispid = stream.readU30();
+            var methinfo = stream.readU30();
             trait = { name: name, attrs: attrs, kind: kind, dispid: dispid,
                       methinfo: methinfo };
             break;
         case TRAIT_Class:
-            var slotid = b.readU30();
-            var classinfo = b.readU30();
+            var slotid = stream.readU30();
+            var classinfo = stream.readU30();
             trait = { name: name, attrs: attrs, kind: kind, slotid: slotid,
                       classinfo: classinfo };
             break;
         case TRAIT_Function: // TODO
-            b.readU30();
-            b.readU30();
+            stream.readU30();
+            stream.readU30();
             break;
         }
 
         if (attrs & ATTR_Metadata) {
             var metadata = [];
-            var metadatacount = b.readU30();
+            var metadatacount = stream.readU30();
             for (var i = 0; i < metadatacount; ++i)
-                metadata.push(b.readU30());
+                metadata.push(stream.readU30());
             trait.metadata = metadata;
         }
 
         return trait;
     }
-    function parseTraits(b, target) {
-        var traitcount = b.readU30();
+    
+    function parseTraits(stream, target) {
+        var traitCount = stream.readU30();
         var traits = [];
-        for (var i = 0; i < traitcount; ++i)
-            traits.push(parseTrait(b));
+        for (var i = 0; i < traitCount; ++i)
+            traits.push(parseTrait(stream));
         target.traits = traits;
     }
-    function parseInstanceInfo(b) {
-        var name = b.readU30();
-        var superclass = b.readU30();
-        var flags = b.readU8();
-        var protectedNS = 0;
-        if (flags & 8)
-            protectedNS = b.readU30();
+    
+    var ConstantPool = (function constantPool() {
+        function constructor(stream) {
+            var i, n;
 
-        var interfacecount = b.readU30();
-        var interfaces = [];
-        for (var i = 0; i < interfacecount; ++i)
-            interfaces[i] = b.readU30();
-        var iinit = b.readU30();
-        var instance_info = { name: name, superclass: superclass, flags: flags,
-                              protectedNS: protectedNS, interfaces: interfaces,
-                              iinit: iinit };
-        parseTraits(b, instance_info);
-        return instance_info;
-    }
-    function parseClassInfo(b) {
-        var cinit = b.readU30();
-        var class_info = { cinit: cinit };
-        parseTraits(b, class_info);
-        return class_info;
-    }
-    function parseScriptInfo(b) {
-        var script = { init: b.readU30() };
-        parseTraits(b, script);
-        return script;
-    }
-    function parseException(b) {
-        return { start: b.readU30(), end: b.readU30(), target: b.readU30(),
-                 typename: b.readU30(), name: b.readU30() };
-    }
-    function parseMethodBody(methods, b) {
-        var mb = { method: methods[b.readU30()], maxStack: b.readU30(), localCount: b.readU30(),
-                   initScopeDepth: b.readU30(), maxScopeDepth: b.readU30() };
+            // ints
+            var ints = [0];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                ints.push(stream.readS32());
+            }
 
-        var code_len = b.readU30();
-        var code = new Uint8Array(code_len);
-        for (var i = 0; i < code_len; ++i)
-            code[i] = b.readU8();
-        mb.code = code;
+            // uints
+            var uints = [0];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                uints.push(stream.readU32());
+            }
 
-        var exceptions = [];
-        var excount = b.readU30();
-        for (var i = 0; i < excount; ++i)
-            exceptions = parseException(b);
-        mb.exceptions = exceptions;
+            // doubles
+            var doubles = [0];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                doubles.push(stream.readDouble());
+            }
 
-        parseTraits(b, mb);
-        return mb;
-    }
+            // strings
+            var strings = [""];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                strings.push(stream.readUTFString(stream.readU32()));
+            }
 
-    var b = new Stream(bytes);
-    checkMagic(b);
+            // namespaces
+            var namespaces = [(void 0)];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                namespaces.push({ kind: stream.readU8(), name: strings[stream.readU30()] });
+            }
 
-    var constants = parseCpool(b);
-    var methods = [];
-    var metadata = [];
-    var instances = [];
-    var classes = [];
-    var scripts = [];
-    var methodBodies = [];
-    var i, n;
+            // namespace sets
+            var namespaceSets = [(void 0)];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                var count = stream.readU30();
+                var set = [];
+                for (var j = 0; j < count; ++j) {
+                    set.push(namespaces[stream.readU30()]);
+                }
+                namespaceSets.push(set);
+            }
 
-    // MethodInfos
-    n = b.readU30();
-    for (i = 0; i < n; ++i)
-        methods.push(parseMethodInfo(constants, b));
+            // multinames
+            var multinames = [(void 0)];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                var kind = stream.readU8();
+                switch (kind) {
+                case CONSTANT_QName: case CONSTANT_QNameA:
+                    multinames[i] = { idx: i, namespace: namespaces[stream.readU30()], name: strings[stream.readU30()], kind: kind };
+                    break;
+                case CONSTANT_RTQName: case CONSTANT_RTQNameA:
+                    multinames[i] = { idx: i, name: strings[stream.readU30()], kind: kind };
+                    break;
+                case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
+                    multinames[i] = { idx: i, kind: kind };
+                    break;
+                case CONSTANT_Multiname: case CONSTANT_MultinameA:
+                    multinames[i] = { idx: i, name: strings[stream.readU30()], namespaceSet: namespaceSets[stream.readU30()], kind: kind };
+                    break;
+                case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
+                    multinames[i] = { idx: i, nsset: namespaceSets[stream.readU30()], kind: kind };
+                    break;
+                }
+            }
 
-    // MetaDataInfos
-    n = b.readU30();
-    for (i = 0; i < n; ++i)
-        metadata.push(parseMetadataInfo(b));
+            this.ints = ints;
+            this.uints = uints;
+            this.doubles = doubles;
+            this.strings = strings;
+            this.namespaces = namespaces;
+            this.namespaceSets = namespaceSets;
+            this.multinames = multinames;
+        }
+        
+        constructor.prototype = {
+            
+        };
+        
+        return constructor;
+    })();
+    
+    var MethodInfo = (function methodInfo() {
+        function constructor(cp, stream) {
+            var paramcount = stream.readU30();
+            var returntype = stream.readU30();
+            var params = [];
+            for (var i = 0; i < paramcount; ++i)
+                params.push(stream.readU30());
+    
+            var name = cp.strings[stream.readU30()];
+            var flags = stream.readU8();
+    
+            var optionalcount = 0;
+            var optionals = null;
+            if (flags & METHOD_HasOptional) {
+                optionalcount = stream.readU30();
+                optionals = [];
+                for (var i = 0; i < optionalcount; ++i) {
+                    optionals[i] = { val: stream.readU30(), kind:stream.readU8() };
+                }
+            }
+    
+            var paramnames = null;
+            if (flags & METHOD_HasParamNames) {
+                paramnames = [];
+                for (var i = 0; i < paramcount; ++i) {
+                    paramnames[i] = cp.strings[stream.readU30()];
+                }
+            }
+    
+            this.name = name;
+            this.params = params;
+            this.returntype = returntype;
+            this.flags = flags;
+            this.optionals = optionals;
+            this.paramnames = paramnames;
+        }
+        
+        constructor.prototype = {
+            
+        };
+        
+        return constructor;
+    })();
 
-    // InstanceInfos
-    n = b.readU30();
-    for (i = 0; i < n; ++i)
-        instances.push(parseInstanceInfo(b));
+    
+    var MetaDataInfo = (function metaDataInfo() {
+        function constructor(stream) {
+            var name = stream.readU30();
+            var itemcount = stream.readU30();
+            
+            var items = [];
+            for (var i = 0; i < itemcount; ++i) {
+                items[i] = { key: stream.readU30(), value: stream.readU30() };
+            }
 
-    // ClassInfos
-    for (i = 0; i < n; ++i)
-        classes.push(parseClassInfo(b));
+            this.name = name;
+            this.items = items;
+        }
+        return constructor;
+    })();
+    
+    var InstanceInfo = (function instanceInfo() {
+        function constructor(stream) {
+            this.name = stream.readU30();
+            this.superclass = stream.readU30();
+            this.flags = stream.readU8();
+            this.protectedNS = 0;
+            if (this.flags & 8)
+                this.protectedNS = stream.readU30();
 
-    // ScriptInfos
-    n = b.readU30();
-    for (i = 0; i < n; ++i)
-        scripts.push(parseScriptInfo(b));
+            var interfaceCount = stream.readU30();
+            this.interfaces = [];
+            for (var i = 0; i < interfaceCount; ++i)
+                this.interfaces[i] = stream.readU30();
+            this.iinit = stream.readU30();
+            parseTraits(stream, this);
+        }
+        return constructor;
+    })();
 
-    // MethodBodies
-    n = b.readU30();
-    for (i = 0; i < n; ++i)
-        methodBodies.push(parseMethodBody(methods, b));
+    var ClassInfo = (function classInfo() {
+        function constructor(stream) {
+            this.cinit = stream.readU30();
+            parseTraits(stream, this);
+        }
+        return constructor;
+    })();
+    
+    var ScriptInfo = (function scriptInfo() {
+        function constructor(stream) {
+            this.init = stream.readU30();
+            parseTraits(stream, this);
+        }
+        return constructor;
+    })();
 
-    return {
-        constants: constants,
-        methods: methods,
-        metadata: metadata,
-        instances: instances,
-        classes: classes,
-        scripts: scripts,
-        methodBodies: methodBodies
-    };
+    var MethodBody = (function methodBody() {
+        function parseException(stream) {
+            return {
+                start: stream.readU30(), 
+                end: stream.readU30(), 
+                target: stream.readU30(),
+                typename: stream.readU30(), 
+                name: stream.readU30()
+            };
+        }
+        
+        function constructor(methods, stream) {
+            this.methodInfo = methods[stream.readU30()];
+            this.maxStack = stream.readU30();
+            this.localCount = stream.readU30();
+            this.initScopeDepth = stream.readU30();
+            this.maxScopeDepth = stream.readU30();
+
+            var code = new Uint8Array(stream.readU30());
+            for (var i = 0; i < code.length; ++i) { 
+                code[i] = stream.readU8();
+            }
+            this.code = code;
+    
+            var exceptions = [];
+            var exceptionCount = stream.readU30();
+            for (var i = 0; i < exceptionCount; ++i) {
+                exceptions = parseException(stream);
+            }
+            this.exceptions = exceptions;
+            parseTraits(stream, this);
+        }
+        return constructor;
+    })();
+
+    var AbcFile = (function abcFile() {
+        function constructor(bytes) {
+            var n;
+            var stream = new Stream(bytes);
+            checkMagic(stream);
+            this.constantPool = new ConstantPool(stream);
+            
+            // Method Infos
+            this.methods = [];
+            n = stream.readU30();
+            for (i = 0; i < n; ++i) {
+                this.methods.push(new MethodInfo(this.constantPool, stream));
+            }
+                        
+            // MetaData Infos
+            this.metadata = [];
+            n = stream.readU30();
+            for (i = 0; i < n; ++i) {
+                this.metadata.push(new MetaDataInfo(stream));
+            }
+
+            // Instance Infos
+            this.instances = [];
+            n = stream.readU30();
+            for (i = 0; i < n; ++i) {
+                this.instances.push(new InstanceInfo(stream));
+            }
+
+            // Class Infos
+            this.classes = [];
+            for (i = 0; i < n; ++i) {
+                this.classes.push(new ClassInfo(stream));
+            }
+
+            // Script Infos
+            this.scripts = [];
+            n = stream.readU30();
+            for (i = 0; i < n; ++i) {
+                this.scripts.push(new ScriptInfo(stream));
+            }
+
+            // Method Bodies
+            this.methodBodies = [];
+            n = stream.readU30();
+            for (i = 0; i < n; ++i) {
+                this.methodBodies.push(new MethodBody(this.methods, stream));
+            }
+        }
+        
+        function checkMagic(stream) {
+            var magic = stream.readWord();
+            var flashPlayerBrannan = 46 << 16 | 15; 
+            if (magic < flashPlayerBrannan) {
+                throw new Error("Invalid ABC File (magic = " + Number(magic).toString(16) + ")");
+            }
+        }
+        
+        constructor.prototype = {
+            
+        };
+        
+        return constructor;
+    })();
+    
+    return new AbcFile(bytes);
+    // console.info(JSON.stringify(new AbcFile(bytes)));
 }
