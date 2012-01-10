@@ -2565,6 +2565,7 @@
 
     var productions = [];
     var localCount = 0;
+    var align = false;
 
     (function translate(struct) {
       var propValList = [];
@@ -2585,8 +2586,14 @@
             // TODO: reduce amount of function calls by bulk reading bit fields
             options = { params: [type === FLAG ? 1 : type - 17] };
             type = UB;
+            align = true;
           }
           expr = (type === FLAG ? '!!' : '') + cast(type, options);
+          // clear bit buffer before reading byte-aligned values
+          if (align && type !== SB && type !== UB && type !== FB) {
+            productions.push('$bytes.bitBuffer=$bytes.bitLength=0');
+            align = false;
+          }
         } else if (Array.isArray(type)) {
           // TODO
         } else if (options.seamless) {
