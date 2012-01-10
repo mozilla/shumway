@@ -28,7 +28,7 @@
   const FB          = 15;
   const STRING      = 16;
   const BINARY      = 17;
-  
+
   const UI24        = 18;
   const TAG         = 19;
   const ACTION      = 20;
@@ -453,8 +453,8 @@
   var REMOVEOBJECT2 = {
     depth: UI16
   };
-  
-  
+
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Actions
