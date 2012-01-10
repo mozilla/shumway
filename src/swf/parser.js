@@ -2580,56 +2580,84 @@
     var align = false;
 
     (function translate(struct) {
-      var propValList = [];
-      var props = Object.keys(struct);
-      for (var i = 0, prop; prop = props[i++];) {
-        var type = struct[prop];
-        var options = { };
-        var expr = undefined;
-        if (typeof type === 'object' && type.type) {
-          options = type;
-          type = type.type;
-        }
-        // TODO: make dynamic type mapping more convenient
-        if (type === TAG)
-          type = TAGRECORD;
-        if (typeof type === 'number') {
-          if (type >= UB1 && type <= FLAG) {
-            // TODO: reduce amount of function calls by bulk reading bit fields
-            options = { params: [type === FLAG ? 1 : type - 17] };
-            type = UB;
-            align = true;
+      if (!struct.production) {
+        var production = [];
+        var propValList = [];
+        var props = Object.keys(struct);
+        for (var i = 0, prop; prop = props[i++];) {
+          var type = struct[prop];
+          var options = { };
+          var expr = undefined;
+          if (typeof type === 'object' && type.type) {
+            options = type;
+            type = type.type;
           }
-          expr = (type === FLAG ? '!!' : '') + cast(type, options);
-          // clear bit buffer before reading byte-aligned values
-          if (align && type !== SB && type !== UB && type !== FB) {
-            productions.push('$bytes.bitBuffer=$bytes.bitLength=0');
-            align = false;
+          if (typeof type === 'number') {
+            if (type >= UB1 && type <= FLAG) {
+              // TODO: reduce amount of function calls by bulk reading bit fields
+              options = {
+                params: [type === FLAG ? 1 : type - 20],
+                pre: type === FLAG ? '!!' : ''
+              };
+              type = UB;
+              align = true;
+            }
+            // clear bit buffer before reading byte-aligned values
+            if (align && type !== SB && type !== UB && type !== FB) {
+              production.push('$bytes.bitBuffer=$bytes.bitLength=0');
+              align = false;
+            }
+            expr = cast(type, options);
+          } else if (Array.isArray(type)) {
+            if (type.length === 2) {
+              production.push('switch(' + type[0] + '){\n');
+              for (var val in type[1]) {
+                production.push('case ' + val + ':\n');
+                if (typeof type[1][val] === 'object')
+                  translate(type[1][val]);
+                production.push('break\n');
+              }
+              production.push('\n}');
+              expr = '$$';
+            } else {
+
+            }
+          } else if (options.seamless) {
+            // merge sub-properties
+            var keys = Object.keys(type);
+            splice.apply(props, [i, 0].concat(keys));
+            // don't change the original object
+            struct = Object.create(struct);
+            keys.forEach(function(key) {
+              struct[key] = type[key];
+            });
+            continue;
+          } else {
+            translate(type);
+            expr = '$$';
           }
-        } else if (Array.isArray(type)) {
-          // TODO
-        } else if (options.seamless) {
-          // merge sub-properties
-          splice.apply(props, [i, 0].concat(Object.keys(type)));
-          struct.__proto__ = type;
-          continue;
-        } else {
-          translate(type, options);
-          expr = '$$';
+
+          var local = '$' + localCount++;
+          production.push('var ' + local + '=' +
+                           (options.pre || '') + expr + (options.post || ''));
+
+          // create named references for properties with leading dollar sign
+          if (prop[0] === '$') {
+            prop = prop.substr(1);
+            production.push('var ' + prop + '=' + local);
+          }
+
+          propValList.push(prop + ':' + local);
         }
+        production.push('var $$={' + propValList.join(',') + '}');
 
-        var local = '$' + localCount++;
-        productions.push('var ' + local + '=' + expr);
-
-        // create named references for properties with leading dollar sign
-        if (prop[0] === '$') {
-          prop = prop.substr(1);
-          productions.push('var ' + prop + '=' + local);
-        }
-
-        propValList.push(prop + ':' + local);
+        // cache production to speed up subsequent translations
+        Object.defineProperty(struct, 'production', {
+          value: production.join('\n'),
+          enumerable: false
+        });
       }
-      productions.push('$$={' + propValList.join(',') + '}');
+      productions.push(struct.production);
     })(struct);
 
     return new Function('$bytes,$view',
