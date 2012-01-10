@@ -2551,14 +2551,15 @@
         return cast[type];
       var template = templateSet[type];
       if (typeof template === 'function') {
-        var funTerms = /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
-        var name = funTerms[1];
-        var params = funTerms[2].split(', ');
+        var funcTerms =
+          /^function (.*)\(([^\)]*)\) \{([.\s\S]*)\}$/.exec(template);
+        var name = funcTerms[1];
+        var params = funcTerms[2].split(', ');
         var expr;
 
         // inline simple template functions if single-lined
         if (params.length === 2) {
-          var lines = funTerms[3].split('\n');
+          var lines = funcTerms[3].split('\n');
           if (/^\s*return ([^;]*);$/.test(lines[1]))
             expr = RegExp.$1;
         }
