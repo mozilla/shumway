@@ -2541,24 +2541,30 @@
   }
   function generate(struct, templateSet) {
     function cast(type, options) {
+      if (cast[type])
+        return cast[type];
       var template = templateSet[type];
       if (typeof template === 'function') {
         var funTerms = /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
         var name = funTerms[1];
         var params = funTerms[2].split(', ');
+        var expr;
 
         // inline simple template functions if single-lined
         if (params.length === 2) {
           var lines = funTerms[3].split('\n');
           if (/^\s*return ([^;]*);$/.test(lines[1]))
-            return RegExp.$1;
+            expr = RegExp.$1;
         }
 
         // overwrite custom parameters
         if (options.params)
           splice.apply(params, [2, options.params.length].concat(options.params));
 
-        return name + '(' + params.join(',') + ')';
+        expr = name + '(' + params.join(',') + ')';
+
+        // cache and return result
+        return cast[type] = expr;
       }
       return template;
     }
