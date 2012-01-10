@@ -1669,10 +1669,7 @@
   };
 
   var SOUNDSTREAMBLOCK = {
-    streamData: ['streamCompression', {
-      1: ADPCMSOUNDDATA,
-      2: MP3SOUNDDATA
-    }]
+    streamData: BINARY
   };
 
 
