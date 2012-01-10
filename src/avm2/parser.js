@@ -185,7 +185,7 @@ function parseAbcFile(bytes) {
             }
 
             // doubles
-            var doubles = [0];
+            var doubles = [NaN];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
                 doubles.push(stream.readDouble());
@@ -195,18 +195,18 @@ function parseAbcFile(bytes) {
             var strings = [""];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
-                strings.push(stream.readUTFString(stream.readU32()));
+                strings.push(stream.readUTFString(stream.readU30()));
             }
 
             // namespaces
-            var namespaces = [(void 0)];
+            var namespaces = [undefined];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
                 namespaces.push({ kind: stream.readU8(), name: strings[stream.readU30()] });
             }
 
             // namespace sets
-            var namespaceSets = [(void 0)];
+            var namespaceSets = [undefined];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
                 var count = stream.readU30();
@@ -218,25 +218,46 @@ function parseAbcFile(bytes) {
             }
 
             // multinames
-            var multinames = [(void 0)];
+            var multinames = [undefined];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
                 var kind = stream.readU8();
                 switch (kind) {
                 case CONSTANT_QName: case CONSTANT_QNameA:
-                    multinames[i] = { idx: i, namespace: namespaces[stream.readU30()], name: strings[stream.readU30()], kind: kind };
+                    multinames[i] = { 
+                        idx: i, 
+                        namespace: namespaces[stream.readU30()], 
+                        name: strings[stream.readU30()], 
+                        kind: kind
+                    };
                     break;
                 case CONSTANT_RTQName: case CONSTANT_RTQNameA:
-                    multinames[i] = { idx: i, name: strings[stream.readU30()], kind: kind };
+                    multinames[i] = {
+                        idx: i,
+                        name: strings[stream.readU30()],
+                        kind: kind
+                    };
                     break;
                 case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-                    multinames[i] = { idx: i, kind: kind };
+                    multinames[i] = {
+                        idx: i,
+                        kind: kind
+                    };
                     break;
                 case CONSTANT_Multiname: case CONSTANT_MultinameA:
-                    multinames[i] = { idx: i, name: strings[stream.readU30()], namespaceSet: namespaceSets[stream.readU30()], kind: kind };
+                    multinames[i] = {
+                        idx: i,
+                        name: strings[stream.readU30()],
+                        namespaceSet: namespaceSets[stream.readU30()],
+                        kind: kind
+                    };
                     break;
                 case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-                    multinames[i] = { idx: i, nsset: namespaceSets[stream.readU30()], kind: kind };
+                    multinames[i] = {
+                        idx: i,
+                        namespaceSet: namespaceSets[stream.readU30()],
+                        kind: kind
+                    };
                     break;
                 }
             }
