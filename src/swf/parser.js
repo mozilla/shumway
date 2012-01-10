@@ -1754,8 +1754,10 @@
     },
     actions: {
       type: {
-        actions: BUTTONCONDACTION,
-        list: { condition: 'actionSize' }
+        actions: {
+          type: BUTTONCONDACTION,
+          list: { condition: 'actionSize' }
+        }
       },
       seamless: true,
       condition: 'actionOffset'
