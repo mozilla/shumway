@@ -50,7 +50,6 @@
   const FLAG        = 36;
 
   const TAG         = 37;
-  const COLOR       = 38;
 
   var LANGCODE = UI8;
 
@@ -670,7 +669,7 @@
 
   var GRADRECORD = {
     ratio: UI8,
-    color: COLOR
+    color: ['tagCode>22', RGB, RGBA]
   };
 
   var GRADIENT = {
@@ -721,7 +720,7 @@
     $fillType: UI8,
     fill: {
       type: ['fillType', {
-        0: { color: COLOR },
+        0: { color: ['tagCode>22', RGB, RGBA] },
         16: GRADIENTINFO,
         18: GRADIENTINFO,
         19: GRADIENTINFO,
@@ -750,7 +749,7 @@
 
   var LINESTYLE = {
     width: UI16,
-    color: COLOR
+    color: ['tagCode>22', RGB, RGBA]
   };
 
   var LINESTYLE2 = {
@@ -1390,7 +1389,7 @@
       condition: 'hasFont'
     },
     color: {
-      type: COLOR,
+      type: ['tagCode>11', RGB, RGBA],
       condition: 'hasColor'
     },
     xOffset: {
