@@ -2367,6 +2367,7 @@
   }
 
   var max = Math.max;
+  var splice = [].splice;
 
   var codeLengthOrder =
     [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
@@ -2531,75 +2532,86 @@
     var b2 = bytes[1];
     var b3 = bytes[2];
     var compressed = bytes[0] === 67;
+
     if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
       fail('invalid swf data');
     if (compressed)
       fail('compressed swf data is not supported yet');
+
     return generate(SWFFILE, defaultTemplateSet)(bytes);
   }
   function generate(struct, templateSet) {
     function cast(type, options) {
       var template = templateSet[type];
       if (typeof template === 'function') {
-        var funParts = /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
-        var lines = funParts[3].split('\n');
-        if (/^\s*return ([^;]*);$/.test(lines[1]))
-          return RegExp.$1;
-        var name = funParts[1];
-        var args = funParts[2].split(', ');
+        var funTerms = /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
+        var name = funTerms[1];
+        var params = funTerms[2].split(', ');
+
+        // inline simple template functions if single-lined
+        if (params.length === 2) {
+          var lines = funTerms[3].split('\n');
+          if (/^\s*return ([^;]*);$/.test(lines[1]))
+            return RegExp.$1;
+        }
+
+        // overwrite custom parameters
         if (options.params)
-          args.splice.apply(args, [2, options.params.length].concat(options.params));
-        return name + '(' + args.join(',') + ')';
+          splice.apply(params, [2, options.params.length].concat(options.params));
+
+        return name + '(' + params.join(',') + ')';
       }
       return template;
     }
 
-    var assignments = [];
-    var localsCount = 0;
+    var productions = [];
+    var localCount = 0;
 
     (function translate(struct) {
-      function assign(leftHand, value) {
-        if (leftHand[0] === '$') {
-          leftHand = leftHand.substr(1);
-          assignments.push('var ' + leftHand + '=$' + localsCount + '=' + value);
-        } else {
-          assignments.push('$' + localsCount + '=' + value);
-        }
-        propValPairs.push(leftHand + ':$' + localsCount);
-        ++localsCount;
-      }
-      var propValPairs = [];
+      var propValList = [];
       for (var prop in struct) {
         var type = struct[prop];
         var options = { };
-        switch (typeof type) {
-        case 'number':
+        var expr = undefined;
+        if (typeof type === 'object' && type.type) {
+          options = type;
+          type = type.type;
+        }
+        // TODO: make dynamic type mapping more convenient
+        if (type === TAG)
+          type = TAGRECORD;
+        if (typeof type === 'number') {
           if (type >= UB1 && type <= FLAG) {
+            // TODO: reduce amount of function calls by bulk reading bit fields
             options = { params: [type === FLAG ? 1 : type - 17] };
             type = UB;
           }
-          assign(prop, cast(type, options));
-          break;
-        case 'object':
-          if (Array.isArray(type)) {
-            // TODO
-          } else if ('type' in type) {
-            options = type;
-            type = options.type;
-            // TODO
-          } else {
-            translate(type, options);
-            assign(prop, '$$');
-          }
-          break;
+          expr = (type === FLAG ? '!!' : '') + cast(type, options);
+        } else if (Array.isArray(type)) {
+          // TODO
+        } else {
+          translate(type, options);
+          expr = '$$';
         }
+
+        var local = '$' + localCount++;
+        productions.push('var ' + local + '=' + expr);
+
+        // create named references for properties with leading dollar sign
+        if (prop[0] === '$') {
+          prop = prop.substr(1);
+          productions.push('var ' + prop + '=' + local);
+        }
+
+        propValList.push(prop + ':' + local);
       }
-      assignments.push('$$={' + propValPairs.join(',') + '}');
+      productions.push('$$={' + propValList.join(',') + '}');
     })(struct);
 
     return new Function('$bytes',
-      'var $view=new DataView($bytes.buffer);$bytes.pos=0;' +
-        assignments.join(';') + ';return $$'
+      'var $view=new DataView($bytes.buffer)\n' +
+      '$bytes.pos=$bytes.bitBuffer=$bytes.bitLength=0\n' +
+      productions.join(';\n') + '\nreturn $$'
     );
   }
 
