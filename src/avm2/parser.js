@@ -117,18 +117,17 @@ function parseAbcFile(bytes) {
     function parseCpool(b) {
         var int32 = [0];
         var uint32 = [0];
-        var float64 = [0];
+        var float64 = [NaN];
         var strings = [""];
-        var ns = [(void 0)];
-        var nsset = [(void 0)];
-        var names = [(void 0)];
+        var ns = [undefined];
+        var nsset = [undefined];
+        var names = [undefined];
         var i, n;
 
         // ints
         n = b.readU30();
-        for (i = 1; i < n; ++i) {
+        for (i = 1; i < n; ++i)
             int32.push(b.readS32());
-        }
 
         // uints
         n = b.readU30();
@@ -137,13 +136,13 @@ function parseAbcFile(bytes) {
 
         // doubles
         n = b.readU30();
-        for ( i =1; i < n; ++i)
+        for (i = 1; i < n; ++i)
             float64.push(b.readDouble());
 
         // strings
         n = b.readU30();
         for (i = 1; i < n; ++i)
-            strings.push(b.readUTFString(b.readU32()));
+            strings.push(b.readUTFString(b.readU30()));
 
         // namespaces
         n = b.readU30();
@@ -165,27 +164,61 @@ function parseAbcFile(bytes) {
         for (i = 1; i < n; ++i) {
             var kind = b.readU8();
             switch (kind) {
-            case CONSTANT_QName: case CONSTANT_QNameA:
-                names[i] = { idx: i, ns: ns[b.readU30()], name: strings[b.readU30()], kind: kind };
+            case CONSTANT_QName:
+            case CONSTANT_QNameA:
+                names[i] = {
+                    kind: kind,
+                    idx: i,
+                    ns: ns[b.readU30()],
+                    name: strings[b.readU30()]
+                };
                 break;
-            case CONSTANT_RTQName: case CONSTANT_RTQNameA:
-                names[i] = { idx: i, name: strings[b.readU30()], kind: kind };
+            case CONSTANT_RTQName:
+            case CONSTANT_RTQNameA:
+                names[i] = {
+                    kind: kind,
+                    idx: i,
+                    name: strings[b.readU30()]
+                };
                 break;
-            case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-                names[i] = { idx: i, kind: kind };
+            case CONSTANT_RTQNameL:
+            case CONSTANT_RTQNameLA:
+                names[i] = {
+                    kind: kind,
+                    idx: i
+                };
                 break;
-            case CONSTANT_Multiname: case CONSTANT_MultinameA:
-                names[i] = { idx: i, name: strings[b.readU30()], nsset: nsset[b.readU30()], kind: kind };
+            case CONSTANT_Multiname:
+            case CONSTANT_MultinameA:
+                names[i] = {
+                    kind: kind,
+                    idx: i,
+                    name: strings[b.readU30()],
+                    nsset: nsset[b.readU30()]
+                };
                 break;
-            case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-                names[i] = { idx: i, nsset: nsset[b.readU30()], kind: kind };
+            case CONSTANT_MultinameL:
+            case CONSTANT_MultinameLA:
+                names[i] = {
+                    kind: kind,
+                    idx: i,
+                    nsset: nsset[b.readU30()]
+                };
                 break;
             }
         }
 
-        return { int32: int32, uint32: uint32, doubles: float64, strings: strings,
-                 names: names, ns: ns };
+        return {
+            int32: int32,
+            uint32: uint32,
+            doubles: float64,
+            strings: strings,
+            ns: ns,
+            nsset: nsset,
+            names: names
+        };
     }
+
     function parseMethodInfo(constants, b) {
         var paramcount = b.readU30();
         var returntype = b.readU30();
