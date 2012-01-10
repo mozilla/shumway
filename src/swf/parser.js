@@ -2349,9 +2349,12 @@
   }
 
   var defaultTemplateSet = [
-    readSi8, readSi16, readSi32, readUi8, readUi16, readUi32, readFixed,
-    readFixed8, readFloat16, readFloat, readDouble, readEncodedU32, readSb,
-    readUb, readFb, readString, readBinary, readUi24
+    readSi8, readSi16, readSi32, readUi8, readUi16, readUi32,
+    readFixed, readFixed8, readFloat16, readFloat, readDouble,
+    readEncodedU32,
+    readSb, readUb, readFb, readString, readBinary,
+    readUi24,
+    'readTag($bytes,$view)', 'readAction($bytes,$view)'
   ];
 
 
@@ -2537,7 +2540,10 @@
     if (compressed)
       fail('compressed swf data is not supported yet');
 
-    return generate(SWFFILE, defaultTemplateSet)(bytes);
+    var readTag = generate(TAGRECORD, defaultTemplateSet);
+    var readAction = generate(ACTIONRECORD, defaultTemplateSet);
+
+    return generate(SWFFILE, defaultTemplateSet);
   }
   function generate(struct, templateSet) {
     function cast(type, options) {
@@ -2626,10 +2632,8 @@
       productions.push('$$={' + propValList.join(',') + '}');
     })(struct);
 
-    return new Function('$bytes',
-      'var $view=new DataView($bytes.buffer)\n' +
-      '$bytes.pos=$bytes.bitBuffer=$bytes.bitLength=0\n' +
-      productions.join(';\n') + '\nreturn $$'
+    return new Function('$bytes,$view',
+      productions.join('\n') + '\nreturn $$'
     );
   }
 
