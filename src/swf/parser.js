@@ -28,28 +28,29 @@
   const FB          = 15;
   const STRING      = 16;
   const BINARY      = 17;
-
+  
   const UI24        = 18;
-  const UB1         = 19;
-  const UB2         = 20;
-  const UB3         = 21;
-  const UB4         = 22;
-  const UB5         = 23;
-  const UB6         = 24;
-  const UB7         = 25;
-  const UB8         = 26;
-  const UB9         = 27;
-  const UB10        = 28;
-  const UB11        = 29;
-  const UB12        = 30;
-  const UB13        = 31;
-  const UB14        = 32;
-  const UB15        = 33;
-  const UB16        = 34;
-  const UB17        = 35;
-  const FLAG        = 36;
+  const TAG         = 19;
+  const ACTION      = 20;
 
-  const TAG         = 37;
+  const UB1         = 21;
+  const UB2         = 22;
+  const UB3         = 23;
+  const UB4         = 24;
+  const UB5         = 25;
+  const UB6         = 26;
+  const UB7         = 27;
+  const UB8         = 28;
+  const UB9         = 29;
+  const UB10        = 30;
+  const UB11        = 21;
+  const UB12        = 32;
+  const UB13        = 33;
+  const UB14        = 34;
+  const UB15        = 35;
+  const UB16        = 36;
+  const UB17        = 37;
+  const FLAG        = 38;
 
   var LANGCODE = UI8;
 
@@ -168,213 +169,6 @@
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Actions
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  var REGISTERPARAM = {
-    registerNumber: UI8,
-    paramName: STRING
-  };
-
-  var actions = {
-
-    /* GotoFrame */ 129: {
-      frame: UI16
-    },
-
-    /* GetURL */ 131: {
-      url: STRING,
-      target: STRING
-    },
-
-    /* WaitForFrame */ 138: {
-      frame: UI16,
-      skipCount: UI8
-    },
-
-    /* SetTarget */ 139: {
-      targetName: STRING
-    },
-
-    /* GoToLabel */ 140: {
-      label: STRING
-    },
-
-    /* Push */ 150: {
-      values: {
-        type: {
-          $valueType: UI8,
-          value: {
-            type: ['valueType', {
-              0: { string: STRING },
-              1: { 'float': FLOAT },
-              4: { registerNumber: UI8 },
-              5: { 'boolean': UI8 },
-              6: { 'double': DOUBLE },
-              7: { 'integer': UI32 },
-              8: { constant8: UI8 },
-              9: { constant16: UI16 }
-              }],
-              seamless: true
-            }
-          },
-          list: true
-        }
-      },
-
-      /* Jump */ 153: {
-        branchOffset: SI16
-      },
-
-      /* If */ 157: {
-        branchOffset: SI16
-      },
-
-      /* GetURL2 */ 154: {
-        sendVarsMethod: UB2,
-        reserved: UB4,
-        loadTarget: FLAG,
-        loadVariables: FLAG
-      },
-
-      /* GotoFrame2 */ 159: {
-        reserved: UB6,
-        $hasSceneBias: FLAG,
-        play: FLAG,
-        sceneBias: {
-          type: UI16,
-          condition: 'hasSceneBias'
-        }
-      },
-
-      /* ConstantPool */ 136: {
-        $count: UI16,
-        constantPool: {
-          type: STRING,
-          list: { count: 'count' }
-        }
-      },
-
-      /* DefineFunction */ 155: {
-        functionName: STRING,
-        $numParams: UI16,
-        params: {
-          type: STRING,
-          list: { count: 'numParams' }
-        },
-        $codeSize: UI16,
-        actions: {
-          type: ACTIONRECORD,
-          list: { length: 'codeSize' }
-        }
-      },
-
-      /* With */ 148: {
-        $codeSize: UI16,
-        actions: {
-          type: ACTIONRECORD,
-          list: { length: 'codeSize' }
-        }
-      },
-
-      /* StoreRegister */ 135: {
-        registerNumber: UI8
-      },
-
-      /* DefineFunction2 */ 142: {
-        functionName: STRING,
-        $numParams: UI16,
-        registerCount: UI8,
-        preloadParent: FLAG,
-        preloadRoot: FLAG,
-        suppressSuper: FLAG,
-        preloadSuper: FLAG,
-        suppressArguments: FLAG,
-        preloadArguments: FLAG,
-        suppressThis: FLAG,
-        preloadThis: FLAG,
-        reserved: UB7,
-        preloadGlobal: FLAG,
-        params: {
-          type: REGISTERPARAM,
-          list: { count: 'numParams' }
-        },
-        $codeSize: UI16,
-        actions: {
-          type: ACTIONRECORD,
-          list: { length: 'codeSize' }
-        }
-      },
-
-      /* Try */ 143: {
-        reserved: UB5,
-        $catchInRegister: FLAG,
-        $hasFinallyBlock: FLAG,
-        $hasCatchBlock: FLAG,
-        $trySize: UI16,
-        $catchSize: UI16,
-        $finallySize: UI16,
-        catchName: {
-          type: STRING,
-          condition: '!catchInRegister'
-        },
-        catchRegister: {
-          type: UI8,
-          condition: 'catchInRegister'
-        },
-        tryActions: {
-          type: ACTIONRECORD,
-          list: { length: 'trySize' }
-        },
-        catchActions: {
-          type: ACTIONRECORD,
-          list: { length: 'catchSize' }
-        },
-        finallyActions: {
-          type: ACTIONRECORD,
-          list: { length: 'finallySize' }
-        }
-      }
-
-  }; // end of actions
-
-  var ACTIONRECORD = {
-    $actionCode: UI8,
-    length: {
-      type: UI16,
-      condition: 'actionCode>=128'
-    },
-    action: {
-      type: ['actionCode', actions],
-      seamless: true
-    }
-  };
-
-  var DOACTION = {
-    actions: {
-      type: ACTIONRECORD,
-      list: true
-    }
-  };
-
-  var DOINITACTION = {
-    spriteId: UI16,
-    actions: {
-      type: ACTIONRECORD,
-      list: true
-    }
-  };
-
-  var DOABC = {
-    flags: UI32,
-    name: STRING,
-    abcData: BINARY
-  };
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // The Display List
   //
   //////////////////////////////////////////////////////////////////////////////
@@ -465,7 +259,7 @@
       condition: 'eventFlags.keyPress'
     },
     actions: {
-      type: ACTIONRECORD,
+      type: ACTION,
       list: { length: 'actionRecordSize-eventFlags.keyPress' }
     }
   };
@@ -658,6 +452,213 @@
 
   var REMOVEOBJECT2 = {
     depth: UI16
+  };
+  
+  
+  //////////////////////////////////////////////////////////////////////////////
+  //
+  // Actions
+  //
+  //////////////////////////////////////////////////////////////////////////////
+
+  var REGISTERPARAM = {
+    registerNumber: UI8,
+    paramName: STRING
+  };
+
+  var actions = {
+
+    /* GotoFrame */ 129: {
+      frame: UI16
+    },
+
+    /* GetURL */ 131: {
+      url: STRING,
+      target: STRING
+    },
+
+    /* WaitForFrame */ 138: {
+      frame: UI16,
+      skipCount: UI8
+    },
+
+    /* SetTarget */ 139: {
+      targetName: STRING
+    },
+
+    /* GoToLabel */ 140: {
+      label: STRING
+    },
+
+    /* Push */ 150: {
+      values: {
+        type: {
+          $valueType: UI8,
+          value: {
+            type: ['valueType', {
+              0: { string: STRING },
+              1: { 'float': FLOAT },
+              4: { registerNumber: UI8 },
+              5: { 'boolean': UI8 },
+              6: { 'double': DOUBLE },
+              7: { 'integer': UI32 },
+              8: { constant8: UI8 },
+              9: { constant16: UI16 }
+              }],
+              seamless: true
+            }
+          },
+          list: true
+        }
+      },
+
+      /* Jump */ 153: {
+        branchOffset: SI16
+      },
+
+      /* If */ 157: {
+        branchOffset: SI16
+      },
+
+      /* GetURL2 */ 154: {
+        sendVarsMethod: UB2,
+        reserved: UB4,
+        loadTarget: FLAG,
+        loadVariables: FLAG
+      },
+
+      /* GotoFrame2 */ 159: {
+        reserved: UB6,
+        $hasSceneBias: FLAG,
+        play: FLAG,
+        sceneBias: {
+          type: UI16,
+          condition: 'hasSceneBias'
+        }
+      },
+
+      /* ConstantPool */ 136: {
+        $count: UI16,
+        constantPool: {
+          type: STRING,
+          list: { count: 'count' }
+        }
+      },
+
+      /* DefineFunction */ 155: {
+        functionName: STRING,
+        $numParams: UI16,
+        params: {
+          type: STRING,
+          list: { count: 'numParams' }
+        },
+        $codeSize: UI16,
+        actions: {
+          type: ACTION,
+          list: { length: 'codeSize' }
+        }
+      },
+
+      /* With */ 148: {
+        $codeSize: UI16,
+        actions: {
+          type: ACTION,
+          list: { length: 'codeSize' }
+        }
+      },
+
+      /* StoreRegister */ 135: {
+        registerNumber: UI8
+      },
+
+      /* DefineFunction2 */ 142: {
+        functionName: STRING,
+        $numParams: UI16,
+        registerCount: UI8,
+        preloadParent: FLAG,
+        preloadRoot: FLAG,
+        suppressSuper: FLAG,
+        preloadSuper: FLAG,
+        suppressArguments: FLAG,
+        preloadArguments: FLAG,
+        suppressThis: FLAG,
+        preloadThis: FLAG,
+        reserved: UB7,
+        preloadGlobal: FLAG,
+        params: {
+          type: REGISTERPARAM,
+          list: { count: 'numParams' }
+        },
+        $codeSize: UI16,
+        actions: {
+          type: ACTION,
+          list: { length: 'codeSize' }
+        }
+      },
+
+      /* Try */ 143: {
+        reserved: UB5,
+        $catchInRegister: FLAG,
+        $hasFinallyBlock: FLAG,
+        $hasCatchBlock: FLAG,
+        $trySize: UI16,
+        $catchSize: UI16,
+        $finallySize: UI16,
+        catchName: {
+          type: STRING,
+          condition: '!catchInRegister'
+        },
+        catchRegister: {
+          type: UI8,
+          condition: 'catchInRegister'
+        },
+        tryActions: {
+          type: ACTION,
+          list: { length: 'trySize' }
+        },
+        catchActions: {
+          type: ACTION,
+          list: { length: 'catchSize' }
+        },
+        finallyActions: {
+          type: ACTION,
+          list: { length: 'finallySize' }
+        }
+      }
+
+  }; // end of actions
+
+  var ACTIONRECORD = {
+    $actionCode: UI8,
+    length: {
+      type: UI16,
+      condition: 'actionCode>=128'
+    },
+    action: {
+      type: ['actionCode', actions],
+      seamless: true
+    }
+  };
+
+  var DOACTION = {
+    actions: {
+      type: ACTION,
+      list: true
+    }
+  };
+
+  var DOINITACTION = {
+    spriteId: UI16,
+    actions: {
+      type: ACTION,
+      list: true
+    }
+  };
+
+  var DOABC = {
+    flags: UI32,
+    name: STRING,
+    abcData: BINARY
   };
 
 
@@ -1699,7 +1700,7 @@
       list: { condition: '$flags' }
     },
     actions: {
-      type: ACTIONRECORD,
+      type: ACTION,
       list: { condition: 'actionCode' }
     }
   };
@@ -1740,7 +1741,7 @@
     keyPress: UB7,
     overDownToIdle: FLAG,
     actions: {
-      type: ACTIONRECORD,
+      type: ACTION,
       list: { condition: 'actionCode' }
     }
   };
