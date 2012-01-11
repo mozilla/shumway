@@ -2342,7 +2342,7 @@
       var s = codes.slice(i * 65536, (i + 1) * 65536);
       str += fcc.apply(null, s);
     }
-    return decodeURIComponent(escape(str));
+    return decodeURIComponent(escape(str.replace('\0', '')));
   }
   function readBinary($bytes, $view, length) {
     return $bytes.subarray($bytes.pos, $bytes.pos += length);
