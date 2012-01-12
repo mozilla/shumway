@@ -1561,25 +1561,21 @@
     isCopyrighted: FLAG,
     isOriginal: FLAG,
     emphasis: UB2,
-    sampleData: {
-      type: ['mpegVersion', {
-        0: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        2: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        3: {
-          type: BINARY,
-          length: '((144*mpeg1Bitrates[bitrate]*1000)' +
-            '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
-        }
-      }]
-    }
+    sampleData: ['mpegVersion',
+      {
+        type: BINARY,
+        length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+          '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
+      }, undefined, {
+        type: BINARY,
+        length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+          '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
+      }, {
+        type: BINARY,
+        length: '((144*mpeg1Bitrates[bitrate]*1000)' +
+          '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
+      }
+    ]
   };
 
   var MP3SOUNDDATA = {
