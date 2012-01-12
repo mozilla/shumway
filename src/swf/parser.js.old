@@ -63,7 +63,7 @@
   var RGBA = {
     rgb: {
       type: RGB,
-      merge: true
+      seamless: true
     },
     alpha: UI8
   };
@@ -72,7 +72,7 @@
     alpha: UI8,
     rgb: {
       type: RGB,
-      merge: true
+      seamless: true
     }
   };
 
@@ -92,7 +92,7 @@
         scaleX: FB,
         scaleY: FB
       },
-      merge: true,
+      seamless: true,
       condition: 'hasScale'
     },
     $hasRotate: FLAG,
@@ -102,7 +102,7 @@
         rotateSkew0: FB,
         rotateSkew1: FB
       },
-      merge: true,
+      seamless: true,
       condition: 'hasRotate'
     },
     $numBits: UB5,
@@ -128,12 +128,12 @@
     $numBits: UB4,
     multTerms: {
       type: MULTTERMS,
-      merge: true,
+      seamless: true,
       condition: 'hasMultTerms'
     },
     addTerms: {
       type: ADDTERMS,
-      merge: true,
+      seamless: true,
       condition: 'hasAddTerms'
     }
   };
@@ -146,22 +146,22 @@
       type: {
         terms: {
           type: MULTTERMS,
-          merge: true
+          seamless: true
         },
         alphaMultTerm: SB
       },
-      merge: true,
+      seamless: true,
       condition: 'hasMultTerms'
     },
     addTerms: {
       type: {
         terms: {
           type: ADDTERMS,
-          merge: true
+          seamless: true
         },
         alphaAddTerm: SB
       },
-      merge: true,
+      seamless: true,
       condition: 'hasAddTerms'
     }
   };
@@ -246,7 +246,7 @@
         dragOut: FLAG,
         reserved2: UI8
       },
-      merge: true,
+      seamless: true,
       condition: 'swfVersion>=6'
     }
   };
@@ -276,12 +276,12 @@
   var PLACEOBJECT2 = {
     flags: {
       type: PLACEFLAGS,
-      merge: true
+      seamless: true
     },
     depth: UI16,
     info: {
       type: PLACEINFO,
-      merge: true
+      seamless: true
     },
     clipActions: {
       type: CLIPACTIONS,
@@ -394,7 +394,7 @@
         6: COLORMATRIXFILTER,
         7: GRADIENTBEVELFILTER
       }],
-      merge: true
+      seamless: true
     }
   };
 
@@ -409,7 +409,7 @@
   var PLACEOBJECT3 = {
     flags: {
       type: PLACEFLAGS,
-      merge: true
+      seamless: true
     },
     reserved: UB3,
     $hasImage: FLAG,
@@ -424,11 +424,11 @@
     },
     info: {
       type: PLACEINFO,
-      merge: true
+      seamless: true
     },
     filterList: {
       type: FILTERLIST,
-      merge: true,
+      seamless: true,
       condition: 'hasFilterList'
     },
     blendMode: {
@@ -505,7 +505,7 @@
               8: { constant8: UI8 },
               9: { constant16: UI16 }
               }],
-              merge: true
+              seamless: true
             }
           },
           list: true
@@ -636,7 +636,7 @@
     },
     action: {
       type: ['actionCode', actions],
-      merge: true
+      seamless: true
     }
   };
 
@@ -686,7 +686,7 @@
   var FOCALGRADIENT = {
     gradient: {
       type: GRADIENT,
-      merge: true
+      seamless: true
     },
     focalPoint: FIXED8
   };
@@ -708,7 +708,7 @@
         18: GRADIENT,
         19: FOCALGRADIENT
       }],
-      merge: true
+      seamless: true
     }
   };
 
@@ -730,7 +730,7 @@
         66: BITMAPINFO,
         67: BITMAPINFO
       }],
-      merge: true
+      seamless: true
     }
   };
 
@@ -804,22 +804,22 @@
         moveDeltaX: SB,
         moveDeltaY: SB,
       },
-      merge: true,
+      seamless: true,
       condition: 'moveTo'
     },
     fillStyle0: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle0'
     },
     fillStyle1: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle1'
     },
     lineStyle: {
       type: UB,
-      params: ['numLineBits'],
+      numBits: 'numLineBits',
       condition: 'hasLineStyle'
     },
     newStyles: {
@@ -829,7 +829,7 @@
         $numFillBits: UB4,
         $numLineBits: UB4
       },
-      merge: true,
+      seamless: true,
       condition: 'hasNewStyles'
     }
   };
@@ -869,7 +869,7 @@
     $isStraight: FLAG,
     edge: {
       type: ['isStraight', CURVEDEDGERECORD, STRAIGHTEDGERECORD],
-      merge: true
+      seamless: true
     }
   };
 
@@ -877,7 +877,7 @@
     $recordType: FLAG,
     record: {
       type: ['recordType', STYLECHANGERECORD, EDGERECORD],
-      merge: true
+      seamless: true
     }
   };
 
@@ -895,7 +895,7 @@
     lineStyles: LINESTYLEARRAY,
     shape: {
       type: SHAPE,
-      merge: true
+      seamless: true
     }
   };
 
@@ -975,7 +975,7 @@
     reserved: UI8,
     rgb: {
       type: RGB,
-      merge: true
+      seamless: true
     }
   };
 
@@ -1006,7 +1006,7 @@
         }]
       },
       compressed: true,
-      merge: true
+      seamless: true
     }
   };
 
@@ -1043,7 +1043,7 @@
         }]
       },
       compressed: true,
-      merge: true
+      seamless: true
     }
   };
 
@@ -1092,7 +1092,7 @@
     endMatrix: MATRIX,
     gradient: {
       type: MORPHGRADIENT,
-      merge: true
+      seamless: true
     }
   };
 
@@ -1117,7 +1117,7 @@
         66: MORPHBITMAPINFO,
         67: MORPHBITMAPINFO
       }],
-      merge: true
+      seamless: true
     }
   };
 
@@ -1163,7 +1163,7 @@
         startColor: RGBA,
         endColor: RGBA
       },
-      merge: true,
+      seamless: true,
       condition: '!hasFill'
     },
     fill: {
@@ -1330,7 +1330,7 @@
           list: { count: 'kerningCount' }
         }
       },
-      merge: true,
+      seamless: true,
       condition: 'hasLayout'
     }
   };
@@ -1370,11 +1370,11 @@
   var GLYPHENTRY = {
     index: {
       type: UB,
-      params: ['numGlyphBits']
+      numBits: 'numGlyphBits'
     },
     advance: {
       type: SB,
-      params: ['numAdvanceBits']
+      numBits: 'numAdvanceBits'
     }
   };
 
@@ -1471,7 +1471,7 @@
         indent: UI16,
         leading: SI16
       },
-      merge: true,
+      seamless: true,
       condition: 'hasLayout'
     },
     variableName: STRING,
@@ -1516,7 +1516,7 @@
     initialIndex: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 4095 }
     }
   };
@@ -1528,7 +1528,7 @@
     initialIndexRight: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 8190 }
     }
   };
@@ -1561,25 +1561,25 @@
     isCopyrighted: FLAG,
     isOriginal: FLAG,
     emphasis: UB2,
-    sampleData: {
-      type: ['mpegVersion', {
-        0: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        2: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        3: {
-          type: BINARY,
-          length: '((144*mpeg1Bitrates[bitrate]*1000)' +
-            '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
-        }
-      }]
-    }
+    //sampleData: {
+    //  type: ['mpegVersion', {
+    //    0: {
+    //      type: BINARY,
+    //      length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+    //        '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
+    //    },
+    //    2: {
+    //      type: BINARY,
+    //      length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+    //        '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
+    //    },
+    //    3: {
+    //      type: BINARY,
+    //      length: '((144*mpeg1Bitrates[bitrate]*1000)' +
+    //        '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
+    //    }
+    //  }]
+    //}
   };
 
   var MP3SOUNDDATA = {
@@ -1637,7 +1637,7 @@
           list: { count: 'envPointCount' }
         }
       },
-      merge: true,
+      seamless: true,
       condition: 'hasEnvelope'
     }
   };
@@ -1716,7 +1716,7 @@
     colorTransform: CXFORMWITHALPHA,
     filterList: {
       type: FILTERLIST,
-      merge: true,
+      seamless: true,
       condition: 'hasFilterList'
     },
     blendMode: {
@@ -1759,7 +1759,7 @@
           list: { condition: 'actionSize' }
         }
       },
-      merge: true,
+      seamless: true,
       condition: 'actionOffset'
     }
   };
@@ -1816,7 +1816,7 @@
         customWidth: ['pictureSize', UB8, UB16],
         customHeight: ['pictureSize', UB8, UB16]
       },
-      merge: true,
+      seamless: true,
       condition: 'pictureSize<=1'
     },
     pictureType: UB2,
@@ -2191,7 +2191,7 @@
     },
     tag: {
       type: ['tagCode', tags],
-      merge: true
+      seamless: true
     }
   };
 
@@ -2214,7 +2214,7 @@
     frameCount: UI16,
     tags: {
       type: TAG,
-      merge: true
+      seamless: true
     }
   };
 
@@ -2232,11 +2232,11 @@
         frameCount: UI16,
         tags: {
           type: TAG,
-          merge: true
+          seamless: true
         }
       },
       compressed: true,
-      merge: true
+      seamless: true
     }
   };
 
@@ -2327,22 +2327,14 @@
     return readUb($bytes, $view, numBits) * pow(2, -16);
   }
   function readString($bytes, $view, length) {
-    var codes = [];
-    if (length) {
-      codes = slice.call($bytes, $bytes.pos, $bytes.pos += length);
-    } else {
-      var code;
-      var i = 0;
-      while (code = $bytes[$bytes.pos++])
-        codes[i++] = code;
-    }
+    var codes = slice.call($bytes, $bytes.pos, $bytes.pos += length);
     var numChunks = codes.length / 65536;
     var str = '';
     for (var i = 0; i < numChunks; ++i) {
       var s = codes.slice(i * 65536, (i + 1) * 65536);
       str += fcc.apply(null, s);
     }
-    return decodeURIComponent(escape(str.replace('\0', '')));
+    return decodeURIComponent(escape(str.repalce('\0', '')));
   }
   function readBinary($bytes, $view, length) {
     return $bytes.subarray($bytes.pos, $bytes.pos += length);
@@ -2364,12 +2356,17 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
+  // Utils /////////////////////////////////////////////////////////////////////
+
   function fail(msg) {
     throw new Error(msg);
   }
 
   var max = Math.max;
   var splice = [].splice;
+  var indexOf = [].indexOf;
+
+  // Fixed deflate code tables /////////////////////////////////////////////////
 
   var codeLengthOrder =
     [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
@@ -2396,6 +2393,8 @@
   for (var i = 0; i < 287; ++i)
     bitLengths[i] = i < 144 || (i > 279 ? 8 : (i < 256 ? 9 : 7));
   var fixedLiteralTable = buildHuffmanTable(bitLengths);
+
+  // Inflate ///////////////////////////////////////////////////////////////////
 
   function buildHuffmanTable(bitLengths) {
     var maxBits = max.apply(null, bitLengths);
@@ -2528,50 +2527,44 @@
     return code & 0xffff;
   }
 
-  window.parseSWF = function (buffer) {
-    var bytes = new Uint8Array(buffer);
-    var b1 = bytes[0];
-    var b2 = bytes[1];
-    var b3 = bytes[2];
-    var compressed = bytes[0] === 67;
+  // Parser generator //////////////////////////////////////////////////////////
 
-    if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
-      fail('invalid swf data');
-    if (compressed)
-      fail('compressed swf data is not supported yet');
-
-    var readTag = generate(TAGRECORD, defaultTemplateSet);
-    var readAction = generate(ACTIONRECORD, defaultTemplateSet);
-
-    return generate(SWFFILE, defaultTemplateSet);
-  }
   function generate(struct, templateSet) {
-    function cast(type, options) {
-      if (cast[type])
-        return cast[type];
+    function translate(type, options) {
+      if (translate[type])
+        return translate[type];
       var template = templateSet[type];
       if (typeof template === 'function') {
         var funcTerms =
-          /^function (.*)\(([^\)]*)\) \{([.\s\S]*)\}$/.exec(template);
+          /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
         var name = funcTerms[1];
         var params = funcTerms[2].split(', ');
+        var lines = funcTerms[3].split('\n');
+        var isSimple = params.length === 2;
+        var inline = true;
         var expr;
 
-        // inline simple template functions if single-lined
-        if (params.length === 2) {
-          var lines = funcTerms[3].split('\n');
-          if (/^\s*return ([^;]*);$/.test(lines[1]))
-            expr = RegExp.$1;
+        // COMMENT
+        if (!isSimple) {
+          params.forEach(function(p, i) {
+            if (typeof options[p] !== 'undefined') {
+              inline = false;
+              params[i] = options[p];
+            }
+          });
         }
 
-        // overwrite custom parameters
-        if (options.params)
-          splice.apply(params, [2, options.params.length].concat(options.params));
+        // COMMENT
+        if (inline && /^\s*return ([^;]*);$/.test(lines[1]))
+          expr = RegExp.$1;
+        else
+          expr = name + '(' + params.join(',') + ')';
 
-        expr = name + '(' + params.join(',') + ')';
+        // COMMENT
+        if (isSimple)
+          translate[type] = expr;
 
-        // cache and return result
-        return cast[type] = expr;
+        return expr;
       }
       return template;
     }
@@ -2580,7 +2573,7 @@
     var localCount = 0;
     var align = false;
 
-    (function translate(struct) {
+    (function process(struct) {
       if (!struct.production) {
         var production = [];
         var propValList = [];
@@ -2595,54 +2588,65 @@
           }
           if (typeof type === 'number') {
             if (type >= UB1 && type <= FLAG) {
-              // TODO: reduce amount of function calls by bulk reading bit fields
+              // TODO
               options = {
-                params: [type === FLAG ? 1 : type - 20],
+                numBits: [type === FLAG ? 1 : type - 19],
                 pre: type === FLAG ? '!!' : ''
               };
               type = UB;
               align = true;
             }
-            // clear bit buffer before reading byte-aligned values
+
+            // COMMENT
             if (align && type !== SB && type !== UB && type !== FB) {
-              production.push('$bytes.bitBuffer=$bytes.bitLength=0');
+              production.push('$bytes.bitLength=0');
               align = false;
             }
-            expr = cast(type, options);
+
+            // COMMENT
+            if (type === STRING && !('length' in options))
+              options.length = 'indexOf.call($bytes,0)';
+
+            // COMMENT
+            if (type === BINARY && !('length' in options))
+              options.length = '$bytes.byteLength-$bytes.pos';
+
+            expr = translate(type, options);
           } else if (Array.isArray(type)) {
             if (type.length === 2) {
               production.push('switch(' + type[0] + '){\n');
-              for (var val in type[1]) {
+              var s = type[1];
+              for (var val in s) {
                 production.push('case ' + val + ':\n');
-                if (typeof type[1][val] === 'object')
-                  translate(type[1][val]);
+                if (typeof s[val] === 'object') {
+                  process(s[val]);
+                  production.push(productions.pop());
+                }
                 production.push('break\n');
               }
-              production.push('\n}');
-              expr = '$$';
+              production.push('}');
             } else {
-
+              production.push('$$=undefined');
             }
+            expr = '$$';
           } else if (options.seamless) {
-            // merge sub-properties
+            // COMMENT
             var keys = Object.keys(type);
             splice.apply(props, [i, 0].concat(keys));
-            // don't change the original object
+            // COMMENT
             struct = Object.create(struct);
-            keys.forEach(function(key) {
-              struct[key] = type[key];
-            });
+            keys.forEach(function(k) { struct[k] = type[k]; });
             continue;
           } else {
-            translate(type);
+            process(type);
             expr = '$$';
           }
 
           var local = '$' + localCount++;
           production.push('var ' + local + '=' +
-                           (options.pre || '') + expr + (options.post || ''));
+                          (options.pre || '') + expr + (options.post || ''));
 
-          // create named references for properties with leading dollar sign
+          // COMMENT
           if (prop[0] === '$') {
             prop = prop.substr(1);
             production.push('var ' + prop + '=' + local);
@@ -2652,7 +2656,7 @@
         }
         production.push('var $$={' + propValList.join(',') + '}');
 
-        // cache production to speed up subsequent translations
+        // COMMENT
         Object.defineProperty(struct, 'production', {
           value: production.join('\n'),
           enumerable: false
@@ -2664,6 +2668,27 @@
     return new Function('$bytes,$view',
       productions.join('\n') + '\nreturn $$'
     );
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  window.parseSWF = function (buffer) {
+    var bytes = new Uint8Array(buffer);
+    var b1 = bytes[0];
+    var b2 = bytes[1];
+    var b3 = bytes[2];
+    var compressed = bytes[0] === 67;
+
+    if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
+      fail('invalid swf data');
+    if (compressed)
+      fail('compressed swf data is not supported yet');
+
+    // COMMENT
+    var readTag = generate(TAGRECORD, defaultTemplateSet);
+    var readAction = generate(ACTIONRECORD, defaultTemplateSet);
+
+    return generate(SWFFILE, defaultTemplateSet);
   }
 
 })(this); // end of file

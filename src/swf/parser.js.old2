@@ -809,17 +809,17 @@
     },
     fillStyle0: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle0'
     },
     fillStyle1: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle1'
     },
     lineStyle: {
       type: UB,
-      params: ['numLineBits'],
+      numBits: 'numLineBits',
       condition: 'hasLineStyle'
     },
     newStyles: {
@@ -1370,11 +1370,11 @@
   var GLYPHENTRY = {
     index: {
       type: UB,
-      params: ['numGlyphBits']
+      numBits: 'numGlyphBits'
     },
     advance: {
       type: SB,
-      params: ['numAdvanceBits']
+      numBits: 'numAdvanceBits'
     }
   };
 
@@ -1516,7 +1516,7 @@
     initialIndex: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 4095 }
     }
   };
@@ -1528,7 +1528,7 @@
     initialIndexRight: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 8190 }
     }
   };
@@ -1561,25 +1561,25 @@
     isCopyrighted: FLAG,
     isOriginal: FLAG,
     emphasis: UB2,
-    sampleData: {
-      type: ['mpegVersion', {
-        0: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        2: {
-          type: BINARY,
-          length: '((72*mpeg2xBitrates[bitrate]*1000)' +
-            '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
-        },
-        3: {
-          type: BINARY,
-          length: '((144*mpeg1Bitrates[bitrate]*1000)' +
-            '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
-        }
-      }]
-    }
+    //sampleData: {
+    //  type: ['mpegVersion', {
+    //    0: {
+    //      type: BINARY,
+    //      length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+    //        '/mpeg25SamplingRates[samplingRate]+isPadded-4)/8'
+    //    },
+    //    2: {
+    //      type: BINARY,
+    //      length: '((72*mpeg2xBitrates[bitrate]*1000)' +
+    //        '/mpeg2SamplingRates[samplingRate]+isPadded-4)/8'
+    //    },
+    //    3: {
+    //      type: BINARY,
+    //      length: '((144*mpeg1Bitrates[bitrate]*1000)' +
+    //        '/mpeg1SamplingRates[samplingRate]+isPadded-4)/8'
+    //    }
+    //  }]
+    //}
   };
 
   var MP3SOUNDDATA = {
@@ -2364,12 +2364,17 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
+  // Utils /////////////////////////////////////////////////////////////////////
+
   function fail(msg) {
     throw new Error(msg);
   }
 
   var max = Math.max;
   var splice = [].splice;
+  var isArray = Array.isArray;
+
+  // Fixed deflate code tables /////////////////////////////////////////////////
 
   var codeLengthOrder =
     [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
@@ -2396,6 +2401,8 @@
   for (var i = 0; i < 287; ++i)
     bitLengths[i] = i < 144 || (i > 279 ? 8 : (i < 256 ? 9 : 7));
   var fixedLiteralTable = buildHuffmanTable(bitLengths);
+
+  // Inflate ///////////////////////////////////////////////////////////////////
 
   function buildHuffmanTable(bitLengths) {
     var maxBits = max.apply(null, bitLengths);
@@ -2528,6 +2535,147 @@
     return code & 0xffff;
   }
 
+  // Parser generator //////////////////////////////////////////////////////////
+
+  function generate(struct, templateSet) {
+    var productions = [];
+    var localCount = 0;
+    var align = false;
+
+    function translate(type, options) {
+      var template = templateSet[type];
+      if (typeof template === 'function') {
+        var funcTerms =
+          /^function (.*)\(([^\)]*)\) \{\n([.\s\S]*)\n\}$/.exec(template);
+        var name = funcTerms[1];
+        var params = funcTerms[2].split(', ');
+        var isSimple = params.length === 2;
+
+        if (!isSimple) {
+          for (var i = 0, p; p = params[i]; i++) {
+            if (typeof options[p] !== 'undefined')
+              params[i] = options[p];
+          }
+        }
+
+        return name + '(' + params.join(',') + ')';
+      }
+      return template;
+    }
+
+    (function process(struct) {
+      var propValList = [];
+      for (var prop in struct) {
+        var type = struct[prop];
+        var options = { };
+        var startLine = productions.length;
+        var expr = undefined;
+        if (typeof type === 'object' && type.type) {
+          options = type;
+          type = options.type;
+        }
+        if (typeof type === 'number') {
+          if (type >= UB1 && type <= FLAG) {
+            if (type === FLAG) {
+              options.numBits = 1;
+              options.pre = '!!';
+            } else {
+              options.numBits = type - 19;
+            }
+            type = UB;
+            align = true;
+          } else if (align && (type < SB || type > FB)) {
+            productions.push('$bytes.bitLength=0');
+            align = false;
+          }
+
+          expr = translate(type, options);
+
+          if (options.condition)
+            expr = '(' + options.condition + ')?' + expr + ':undefined';
+        } else {
+          if (isArray(type)) {
+            if (type.length === 2) {
+              productions.push('switch(' + type[0] + '){');
+              var members = type[1];
+              for (var key in members) {
+                productions.push('case ' + key + ':');
+                process(members[key]);
+                productions.push('break');
+              }
+              productions.push('}');
+            } else {
+              
+            }
+          } else {
+            process(type);
+          }
+
+          if (options.condition) {
+            productions.splice(startLine, 0, 'if(' + options.condition + '){');
+            productions.push('}else{\n$$=undefined\n}');
+          }
+                    
+          expr = '$$';
+        }
+
+        var local = '$' + localCount++;
+        productions.push('var ' + local + '=' +
+                         (options.pre || '') + expr + (options.post || ''));
+
+        if (prop[0] === '$') {
+          prop = prop.substr(1);
+          productions.push('var ' + prop + '=' + local);
+        }
+
+        if (options.list) {
+          var args = options.list;
+          var array = '$' + localCount++;
+
+          if (args.condition) {
+            productions.splice(startLine, 0, array + '=[];\ndo{');
+            productions.push(
+              array + '.push(' + local + ')\n}while(' + args.condition + ')'
+            );
+          } else if (args.count) {
+            var countVar = '$' + localCount++;
+            productions.splice(startLine, 0,
+              array + '=[];\n' + countVar + '=' + args.count +
+              '\nwhile(' + countVar + '--){'
+            );
+            productions.push(array + '.push(' + local + ')\n}');
+          } else {
+            var lengthVar = '$' + localCount++;
+            var endPos = args.length ?
+              '$bytes.pos+' + args.length :
+              '$bytes.byteLength'
+            ;
+            productions.splice(startLine, 0,
+              array + '=[];\n' + lengthVar+ '=' + endPos +
+              '\nwhile($bytes.pos<' + lengthVar + '){'
+            );
+            productions.push(array + '.push(' + local + ')\n}');
+          }
+
+          local = array;
+        }
+
+        propValList.push(prop + ':' + local);
+      }
+      productions.push('var $$={' + propValList.join(',') + '}');
+    })(struct);
+
+    return eval(
+      '(function($bytes,$view){\n' +
+        productions.join('\n') +
+      '\nreturn $$\n})'
+    );
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  var parse;
+
   window.parseSWF = function (buffer) {
     var bytes = new Uint8Array(buffer);
     var b1 = bytes[0];
@@ -2540,130 +2688,9 @@
     if (compressed)
       fail('compressed swf data is not supported yet');
 
-    var readTag = generate(TAGRECORD, defaultTemplateSet);
-    var readAction = generate(ACTIONRECORD, defaultTemplateSet);
-
-    return generate(SWFFILE, defaultTemplateSet);
+    return parse || generate(ACTIONRECORD, defaultTemplateSet);
   }
-  function generate(struct, templateSet) {
-    function cast(type, options) {
-      if (cast[type])
-        return cast[type];
-      var template = templateSet[type];
-      if (typeof template === 'function') {
-        var funcTerms =
-          /^function (.*)\(([^\)]*)\) \{([.\s\S]*)\}$/.exec(template);
-        var name = funcTerms[1];
-        var params = funcTerms[2].split(', ');
-        var expr;
 
-        // inline simple template functions if single-lined
-        if (params.length === 2) {
-          var lines = funcTerms[3].split('\n');
-          if (/^\s*return ([^;]*);$/.test(lines[1]))
-            expr = RegExp.$1;
-        }
-
-        // overwrite custom parameters
-        if (options.params)
-          splice.apply(params, [2, options.params.length].concat(options.params));
-
-        expr = name + '(' + params.join(',') + ')';
-
-        // cache and return result
-        return cast[type] = expr;
-      }
-      return template;
-    }
-
-    var productions = [];
-    var localCount = 0;
-    var align = false;
-
-    (function translate(struct) {
-      if (!struct.production) {
-        var production = [];
-        var propValList = [];
-        var props = Object.keys(struct);
-        for (var i = 0, prop; prop = props[i++];) {
-          var type = struct[prop];
-          var options = { };
-          var expr = undefined;
-          if (typeof type === 'object' && type.type) {
-            options = type;
-            type = type.type;
-          }
-          if (typeof type === 'number') {
-            if (type >= UB1 && type <= FLAG) {
-              // TODO: reduce amount of function calls by bulk reading bit fields
-              options = {
-                params: [type === FLAG ? 1 : type - 20],
-                pre: type === FLAG ? '!!' : ''
-              };
-              type = UB;
-              align = true;
-            }
-            // clear bit buffer before reading byte-aligned values
-            if (align && type !== SB && type !== UB && type !== FB) {
-              production.push('$bytes.bitBuffer=$bytes.bitLength=0');
-              align = false;
-            }
-            expr = cast(type, options);
-          } else if (Array.isArray(type)) {
-            if (type.length === 2) {
-              production.push('switch(' + type[0] + '){\n');
-              for (var val in type[1]) {
-                production.push('case ' + val + ':\n');
-                if (typeof type[1][val] === 'object')
-                  translate(type[1][val]);
-                production.push('break\n');
-              }
-              production.push('\n}');
-              expr = '$$';
-            } else {
-
-            }
-          } else if (options.seamless) {
-            // merge sub-properties
-            var keys = Object.keys(type);
-            splice.apply(props, [i, 0].concat(keys));
-            // don't change the original object
-            struct = Object.create(struct);
-            keys.forEach(function(key) {
-              struct[key] = type[key];
-            });
-            continue;
-          } else {
-            translate(type);
-            expr = '$$';
-          }
-
-          var local = '$' + localCount++;
-          production.push('var ' + local + '=' +
-                           (options.pre || '') + expr + (options.post || ''));
-
-          // create named references for properties with leading dollar sign
-          if (prop[0] === '$') {
-            prop = prop.substr(1);
-            production.push('var ' + prop + '=' + local);
-          }
-
-          propValList.push(prop + ':' + local);
-        }
-        production.push('var $$={' + propValList.join(',') + '}');
-
-        // cache production to speed up subsequent translations
-        Object.defineProperty(struct, 'production', {
-          value: production.join('\n'),
-          enumerable: false
-        });
-      }
-      productions.push(struct.production);
-    })(struct);
-
-    return new Function('$bytes,$view',
-      productions.join('\n') + '\nreturn $$'
-    );
-  }
+  //////////////////////////////////////////////////////////////////////////////
 
 })(this); // end of file
