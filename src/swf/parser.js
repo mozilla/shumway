@@ -809,17 +809,17 @@
     },
     fillStyle0: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle0'
     },
     fillStyle1: {
       type: UB,
-      params: ['numFillBits'],
+      numBits: 'numFillBits',
       condition: 'hasFillStyle1'
     },
     lineStyle: {
       type: UB,
-      params: ['numLineBits'],
+      numBits: 'numLineBits',
       condition: 'hasLineStyle'
     },
     newStyles: {
@@ -1370,11 +1370,11 @@
   var GLYPHENTRY = {
     index: {
       type: UB,
-      params: ['numGlyphBits']
+      numBits: 'numGlyphBits'
     },
     advance: {
       type: SB,
-      params: ['numAdvanceBits']
+      numBits: 'numAdvanceBits'
     }
   };
 
@@ -1516,7 +1516,7 @@
     initialIndex: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 4095 }
     }
   };
@@ -1528,7 +1528,7 @@
     initialIndexRight: UB6,
     codes: {
       type: UB,
-      params: ['codeSize+2'],
+      numBits: 'codeSize+2',
       list: { count: 8190 }
     }
   };
