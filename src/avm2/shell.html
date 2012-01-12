@@ -14,7 +14,8 @@
         
     </script>
     
-    Parse ( + Compile: <input name="compile" type="checkbox" id="compile" value="Y" checked="true"> )<br>
+    Parse ( + Compile: <input name="compile" type="checkbox" id="compile" value="Y"> )
+    (Break on First Error <input name="break" type="checkbox" id="break" value="Y"> )<br>
     <button onclick="runAll();">Run All</button><input type="text" id="runAllText" value="0:*"/>
     <button onclick="runOne();">Run One</button><input type="text" id="runOneText" value="abc/1-0.abc"/>
     
@@ -26,13 +27,21 @@
     
     -->
     
+    <script type="text/javascript" src="util.js"></script>
     <script type="text/javascript" src="file-reader.js"></script>
     <script type="text/javascript" src="avm2-runtime.js"></script>
     <script type="text/javascript" src="DataView.js"></script>
     <script type="text/javascript" src="constants.js"></script>
     <script type="text/javascript" src="parser.js"></script>
     <script type="text/javascript" src="compiler.js"></script>
+    <script type="text/javascript" src="interpreter.js"></script>
     <script type="text/javascript">
+    
+        new FileReader("tests/testInterpreter.abc").readAll(null, function (buffer) {
+            var abc = parseAbcFile(new Uint8Array(buffer));
+            interpretAbc(abc);
+        });
+    
         function runOne() {
             var file = document.getElementById('runOneText').value;
             new FileReader("tests/" + file).readAll(null, function (buffer) {
@@ -79,6 +88,9 @@
                       } catch (e) {
                           ret = "FAIL: " + e + e.stack;
                           failed++;
+                          if (document.getElementById('break').checked) {
+                              throw e;
+                          }
                       }
                       appendResult({number: number, test: file, elapsed: (Date.now() - start), ret: ret});
                       setTimeout(next, 1);

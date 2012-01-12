@@ -1,114 +1,117 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var ABCStream = (function () {
+    function constructor(bytes) {
+        this.bytes = bytes;
+        this.view = new DataView(bytes.buffer);
+        this.pos = 0;
+    }
+
+    constructor.prototype = {
+        remaining: function () {
+            return this.bytes.length - this.pos;
+        },
+        seek: function(pos) {
+            this.pos = pos;
+        },
+        readU8: function() {
+            return this.bytes[this.pos++];
+        },
+        readU32: function() {
+            return this.readS32() >>> 0;
+        },
+        readU30: function() {
+            var result = this.readU32();
+            if (result & 0xc0000000) {
+                throw "Corrupt ABC File";
+            }
+            return result;
+        },
+        /**
+         * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian), 
+         * each contributing 7 bits. The most significant bit of each byte indicates that the next byte is part of
+         * the value. The spec indicates that the most significant bit of the last byte to be read is sign extended
+         * but this turns out not to be the case in the real implementation, for instance 0x7f should technically be
+         * -1, but instead it's 127. Moreover, what happens to the remaining 4 high bits of the fifth byte that is
+         * read? Who knows, here we'll just stay true to the Tamarin implementation.
+         */
+        readS32: function() {
+            var result = this.readU8();
+            if (result & 0x80) {
+                result = result & 0x7f | this.readU8() << 7;
+                if (result & 0x4000) {
+                    result = result & 0x3fff | this.readU8() << 14;
+                    if (result & 0x200000) {
+                        result = result & 0x1fffff | this.readU8() << 21;
+                        if (result & 0x10000000) {
+                            result = result & 0x0fffffff | this.readU8() << 28;
+                            result = result & 0xffffffff;
+                        }
+                    }
+                }
+            }
+            return result;
+        },
+        readWord: function() {
+            var result = this.view.getUint32(this.pos, true);
+            this.pos += 4;
+            return result;
+        },
+        readS24: function() {
+            var u = this.readU8() |
+                (this.readU8() << 8) |
+                (this.readU8() << 16);
+            return (u << 8) >> 8;
+        },
+        readDouble: function() {
+            var result = this.view.getFloat64(this.pos, true);
+            this.pos += 8;
+            return result;
+        },
+        readUTFString: function(length) {
+            var result = "", end = this.pos + length;
+            
+            while(this.pos < end) {
+                var c = this.bytes[this.pos++];
+                if (c <= 0x7f) {
+                    result += String.fromCharCode(c);
+                }
+                else if (c >= 0xc0) { // multibyte
+                    var code;
+                    if (c < 0xe0) { // 2 bytes
+                        code = ((c & 0x1f) << 6) |
+                            (this.bytes[this.pos++] & 0x3f);
+                    }
+                    else if (c < 0xf0) { // 3 bytes
+                        code = ((c & 0x0f) << 12) |
+                            ((this.bytes[this.pos++] & 0x3f) << 6) |
+                            (this.bytes[this.pos++] & 0x3f);
+                    } else { // 4 bytes
+                        // turned into two characters in JS as surrogate pair
+                        code = (((c & 0x07) << 18) |
+                                ((this.bytes[this.pos++] & 0x3f) << 12) |
+                                ((this.bytes[this.pos++] & 0x3f) << 6) |
+                                (this.bytes[this.pos++] & 0x3f)) - 0x10000;
+                        // High surrogate
+                        result += String.fromCharCode(((code & 0xffc00) >>> 10) + 0xd800);
+                        // Low surrogate
+                        code = (code & 0x3ff) + 0xdc00;
+                    }
+                    result += String.fromCharCode(code);
+                } // Otherwise it's an invalid UTF8, skipped.
+            }
+            return result;
+        }
+    };
+
+    return constructor;
+})();
+
 // Takes a Uint8Array of bytes and returns an object.
 function parseAbcFile(bytes) {
 
-    var ABCStream = (function () {
-        function constructor(bytes) {
-            this.bytes = bytes;
-            this.view = new DataView(bytes.buffer);
-            this.pos = 0;
-        }
-
-        constructor.prototype = {
-            remaining: function () {
-                return this.bytes.length - this.pos;
-            },
-            readU8: function() {
-                return this.bytes[this.pos++];
-            },
-            readU32: function() {
-                return this.readS32() >>> 0;
-            },
-            readU30: function() {
-                var result = this.readU32();
-                if (result & 0xc0000000) {
-                    throw "Corrupt ABC File";
-                }
-                return result;
-            },
-            /**
-             * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian), 
-             * each contributing 7 bits. The most significant bit of each byte indicates that the next byte is part of
-             * the value. The spec indicates that the most significant bit of the last byte to be read is sign extended
-             * but this turns out not to be the case in the real implementation, for instance 0x7f should technically be
-             * -1, but instead it's 127. Moreover, what happens to the remaining 4 high bits of the fifth byte that is
-             * read? Who knows, here we'll just stay true to the Tamarin implementation.
-             */
-            readS32: function() {
-                var result = this.readU8();
-                if (result & 0x80) {
-                    result = result & 0x7f | this.readU8() << 7;
-                    if (result & 0x4000) {
-                        result = result & 0x3fff | this.readU8() << 14;
-                        if (result & 0x200000) {
-                            result = result & 0x1fffff | this.readU8() << 21;
-                            if (result & 0x10000000) {
-                                result = result & 0x0fffffff | this.readU8() << 28;
-                                result = result & 0xffffffff;
-                            }
-                        }
-                    }
-                }
-                return result;
-            },
-            readWord: function() {
-                var result = this.view.getUint32(this.pos, true);
-                this.pos += 4;
-                return result;
-            },
-            readS24: function() {
-                var u = this.readU8() |
-                    (this.readU8() << 8) |
-                    (this.readU8() << 16);
-                return (u << 8) >> 8;
-            },
-            readDouble: function() {
-                var result = this.view.getFloat64(this.pos, true);
-                this.pos += 8;
-                return result;
-            },
-            readUTFString: function(length) {
-                var result = "", end = this.pos + length;
-                
-                while(this.pos < end) {
-                    var c = this.bytes[this.pos++];
-                    if (c <= 0x7f) {
-                        result += String.fromCharCode(c);
-                    }
-                    else if (c >= 0xc0) { // multibyte
-                        var code;
-                        if (c < 0xe0) { // 2 bytes
-                            code = ((c & 0x1f) << 6) |
-                                (this.bytes[this.pos++] & 0x3f);
-                        }
-                        else if (c < 0xf0) { // 3 bytes
-                            code = ((c & 0x0f) << 12) |
-                                ((this.bytes[this.pos++] & 0x3f) << 6) |
-                                (this.bytes[this.pos++] & 0x3f);
-                        } else { // 4 bytes
-                            // turned into two characters in JS as surrogate pair
-                            code = (((c & 0x07) << 18) |
-                                    ((this.bytes[this.pos++] & 0x3f) << 12) |
-                                    ((this.bytes[this.pos++] & 0x3f) << 6) |
-                                    (this.bytes[this.pos++] & 0x3f)) - 0x10000;
-                            // High surrogate
-                            result += String.fromCharCode(((code & 0xffc00) >>> 10) + 0xd800);
-                            // Low surrogate
-                            code = (code & 0x3ff) + 0xdc00;
-                        }
-                        result += String.fromCharCode(code);
-                    } // Otherwise it's an invalid UTF8, skipped.
-                }
-                return result;
-            }
-        };
-
-        return constructor;
-    })();
-
-    function parseTrait(stream) {
-        var name = stream.readU30();
+    function parseTrait(constantPool, stream) {
+        var name = constantPool.multinames[stream.readU30()];
         var tag = stream.readU8();
 
         var kind = tag & 0x0F;
@@ -119,13 +122,21 @@ function parseAbcFile(bytes) {
         case TRAIT_Slot:
         case TRAIT_Const:
             var slotid = stream.readU30();
-            var typename = stream.readU30();
-            var value = stream.readU30();
-            var kind = null;
-            if (value != 0)
-                kind = stream.readU8();
-            trait = { name: name, attrs: attrs, kind: kind, slotid: slotid,
-                      typename: typename, value: value };
+            var typename = constantPool.multinames[stream.readU30()];
+            var valueIndex = stream.readU30();
+            var value = null;
+            if (valueIndex != 0) {
+                var valueKind = null;
+                value = constantPool.getValue(stream.readU8(), valueIndex);
+            }
+            trait = {
+                name: name,
+                attrs: attrs,
+                kind: kind,
+                slotid: slotid,
+                typename: typename, 
+                value: value
+            };
             break;
         case TRAIT_Method:
         case TRAIT_Setter:
@@ -158,11 +169,11 @@ function parseAbcFile(bytes) {
         return trait;
     }
     
-    function parseTraits(stream, target) {
+    function parseTraits(constantPool, stream, target) {
         var traitCount = stream.readU30();
         var traits = [];
         for (var i = 0; i < traitCount; ++i)
-            traits.push(parseTrait(stream));
+            traits.push(parseTrait(constantPool, stream));
         target.traits = traits;
     }
     
@@ -271,22 +282,33 @@ function parseAbcFile(bytes) {
             this.multinames = multinames;
         }
         
-        constructor.prototype = {
-            
-        };
+        constructor.prototype.getValue = function getValue(kind, index) {
+            switch (kind) {
+            case CONSTANT_Int: 
+                return this.ints[index];
+            case CONSTANT_UInt: 
+                return this.uints[index];
+            case CONSTANT_Double: 
+                return this.doubles[index];
+            case CONSTANT_Utf8: 
+                return this.strings[index];
+            default: 
+                assert(false, "Not Implemented");
+            }
+        }; 
         
         return constructor;
     })();
     
     var MethodInfo = (function methodInfo() {
-        function constructor(cp, stream) {
+        function constructor(constantPool, stream) {
             var paramcount = stream.readU30();
             var returntype = stream.readU30();
             var params = [];
             for (var i = 0; i < paramcount; ++i)
                 params.push(stream.readU30());
     
-            var name = cp.strings[stream.readU30()];
+            var name = constantPool.strings[stream.readU30()];
             var flags = stream.readU8();
     
             var optionalcount = 0;
@@ -303,7 +325,7 @@ function parseAbcFile(bytes) {
             if (flags & METHOD_HasParamNames) {
                 paramnames = [];
                 for (var i = 0; i < paramcount; ++i) {
-                    paramnames[i] = cp.strings[stream.readU30()];
+                    paramnames[i] = constantPool.strings[stream.readU30()];
                 }
             }
     
@@ -322,9 +344,8 @@ function parseAbcFile(bytes) {
         return constructor;
     })();
 
-    
     var MetaDataInfo = (function metaDataInfo() {
-        function constructor(stream) {
+        function constructor(constantPool, stream) {
             var name = stream.readU30();
             var itemcount = stream.readU30();
             
@@ -340,7 +361,7 @@ function parseAbcFile(bytes) {
     })();
     
     var InstanceInfo = (function instanceInfo() {
-        function constructor(stream) {
+        function constructor(constantPool, stream) {
             this.name = stream.readU30();
             this.superclass = stream.readU30();
             this.flags = stream.readU8();
@@ -353,23 +374,29 @@ function parseAbcFile(bytes) {
             for (var i = 0; i < interfaceCount; ++i)
                 this.interfaces[i] = stream.readU30();
             this.iinit = stream.readU30();
-            parseTraits(stream, this);
+            parseTraits(constantPool, stream, this);
         }
         return constructor;
     })();
 
     var ClassInfo = (function classInfo() {
-        function constructor(stream) {
+        function constructor(constantPool, stream) {
             this.cinit = stream.readU30();
-            parseTraits(stream, this);
+            parseTraits(constantPool, stream, this);
         }
         return constructor;
     })();
     
     var ScriptInfo = (function scriptInfo() {
-        function constructor(stream) {
+        function constructor(constantPool, methods, stream) {
             this.init = stream.readU30();
-            parseTraits(stream, this);
+            this.methods = methods;
+            parseTraits(constantPool, stream, this);
+        }
+        constructor.prototype = {
+            get entryPoint() {
+                return this.methods[this.init];
+            }
         }
         return constructor;
     })();
@@ -385,7 +412,7 @@ function parseAbcFile(bytes) {
             };
         }
         
-        function constructor(methods, stream) {
+        function constructor(constantPool, methods, stream) {
             this.methodInfo = methods[stream.readU30()];
             this.maxStack = stream.readU30();
             this.localCount = stream.readU30();
@@ -404,7 +431,7 @@ function parseAbcFile(bytes) {
                 exceptions = parseException(stream);
             }
             this.exceptions = exceptions;
-            parseTraits(stream, this);
+            parseTraits(constantPool, stream, this);
         }
         return constructor;
     })();
@@ -427,34 +454,34 @@ function parseAbcFile(bytes) {
             this.metadata = [];
             n = stream.readU30();
             for (i = 0; i < n; ++i) {
-                this.metadata.push(new MetaDataInfo(stream));
+                this.metadata.push(new MetaDataInfo(this.constantPool, stream));
             }
 
             // Instance Infos
             this.instances = [];
             n = stream.readU30();
             for (i = 0; i < n; ++i) {
-                this.instances.push(new InstanceInfo(stream));
+                this.instances.push(new InstanceInfo(this.constantPool, stream));
             }
 
             // Class Infos
             this.classes = [];
             for (i = 0; i < n; ++i) {
-                this.classes.push(new ClassInfo(stream));
+                this.classes.push(new ClassInfo(this.constantPool, stream));
             }
 
             // Script Infos
             this.scripts = [];
             n = stream.readU30();
             for (i = 0; i < n; ++i) {
-                this.scripts.push(new ScriptInfo(stream));
+                this.scripts.push(new ScriptInfo(this.constantPool, this.methods, stream));
             }
 
             // Method Bodies
             this.methodBodies = [];
             n = stream.readU30();
             for (i = 0; i < n; ++i) {
-                this.methodBodies.push(new MethodBody(this.methods, stream));
+                this.methodBodies.push(new MethodBody(this.constantPool, this.methods, stream));
             }
         }
         
@@ -467,7 +494,26 @@ function parseAbcFile(bytes) {
         }
         
         constructor.prototype = {
+            get lastScript() {
+                assert (this.scripts.length > 0);
+                return this.scripts[this.scripts.length - 1];
+            },
+            /**
+             * Returns the entry point method for this Abc file. According to the spec, this is the
+             * method associated with the last script in the file.
+             */
+            get entryPoint() {
+                return this.lastScript.entryPoint;
+            },
             
+            sillyMethodLookup: function (methodInfo) {
+                for (var key in this.methodBodies) {
+                    if (this.methodBodies[key].methodInfo ==  methodInfo) {
+                        return this.methodBodies[key];
+                    }
+                }
+                return null;
+            }
         };
         
         return constructor;
