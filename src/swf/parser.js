@@ -11,46 +11,46 @@
   //
   //////////////////////////////////////////////////////////////////////////////
 
-  const SI8         = 1;
-  const SI16        = 2;
-  const SI32        = 3;
-  const UI8         = 4;
-  const UI16        = 5;
-  const UI32        = 6;
-  const FIXED       = 7;
-  const FIXED8      = 8;
-  const FLOAT16     = 9;
-  const FLOAT       = 10;
-  const DOUBLE      = 11;
-  const EncodedU32  = 12;
-  const SB          = 13;
-  const UB          = 14;
-  const FB          = 15;
-  const STRING      = 16;
-  const BINARY      = 17;
+  const SI8         = 0;
+  const SI16        = 1;
+  const SI32        = 2;
+  const UI8         = 3;
+  const UI16        = 4;
+  const UI32        = 5;
+  const FIXED       = 6;
+  const FIXED8      = 7;
+  const FLOAT16     = 8;
+  const FLOAT       = 9;
+  const DOUBLE      = 10;
+  const EncodedU32  = 11;
+  const SB          = 12;
+  const UB          = 13;
+  const FB          = 14;
+  const STRING      = 15;
+  const BINARY      = 16;
 
-  const UI24        = 18;
-  const TAG         = 19;
-  const ACTION      = 20;
+  const UI24        = 17;
+  const TAG         = 18;
+  const ACTION      = 19;
 
-  const UB1         = 21;
-  const UB2         = 22;
-  const UB3         = 23;
-  const UB4         = 24;
-  const UB5         = 25;
-  const UB6         = 26;
-  const UB7         = 27;
-  const UB8         = 28;
-  const UB9         = 29;
-  const UB10        = 30;
-  const UB11        = 21;
-  const UB12        = 32;
-  const UB13        = 33;
-  const UB14        = 34;
-  const UB15        = 35;
-  const UB16        = 36;
-  const UB17        = 37;
-  const FLAG        = 38;
+  const UB1         = 20;
+  const UB2         = 21;
+  const UB3         = 22;
+  const UB4         = 23;
+  const UB5         = 24;
+  const UB6         = 25;
+  const UB7         = 26;
+  const UB8         = 27;
+  const UB9         = 28;
+  const UB10        = 29;
+  const UB11        = 30;
+  const UB12        = 31;
+  const UB13        = 32;
+  const UB14        = 33;
+  const UB15        = 34;
+  const UB16        = 35;
+  const UB17        = 36;
+  const FLAG        = 37;
 
   var LANGCODE = UI8;
 
