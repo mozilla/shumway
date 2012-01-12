@@ -260,7 +260,7 @@
     },
     actions: {
       type: ACTION,
-      list: { length: 'actionRecordSize-eventFlags.keyPress' }
+      list: { length: 'actionRecordSize-(eventFlags.keyPress?1:0)' }
     }
   };
 
@@ -1420,7 +1420,7 @@
     $numAdvanceBits: UI8,
     textRecords: {
       type: TEXTRECORD,
-      list: { condition: 'recordType' }
+      list: { condition: '$flags' }
     }
   };
 
