@@ -397,7 +397,7 @@ function parseAbcFile(bytes) {
             get entryPoint() {
                 return this.methods[this.init];
             }
-        }
+        };
         return constructor;
     })();
 

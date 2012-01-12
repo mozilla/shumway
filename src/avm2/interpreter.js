@@ -13,14 +13,6 @@ Array.prototype.first = function() {
     return this[0];
 };
 
-function interpretAbc(abc) {
-    var methodBody = abc.sillyMethodLookup(abc.entryPoint);
-    
-    new Frame(abc.constantPool, methodBody).interpret(new ASObject());
-    
-    console.info("Done");
-}
-
 var ASObject = (function () {
     function asObject() {
         this.slots = [];
@@ -28,16 +20,18 @@ var ASObject = (function () {
     return asObject;
 })();
 
-var Scope = (function () {
-    function scope(parent) {
-        if (parent) {
-            this.prototype = parent;
-        }
-    }
-    return scope;
-})();
-
 var global = new ASObject();
+
+function interpretAbc(abc) {
+    var methodBody = abc.sillyMethodLookup(abc.entryPoint);
+    
+    
+    
+    new Frame(abc.constantPool, methodBody).interpret(new ASObject());
+    
+    console.info("Done");
+}
+
 
 var Frame = (function frame() {
     function constructor (constantPool, methodBody) {
@@ -97,10 +91,10 @@ var Frame = (function frame() {
                 var bc = code.readU8();
                 
                 function notImplemented() {
-                    assert (false, "Not Implemented: " + getOpName(bc));
+                    assert (false, "Not Implemented: " + getOpcodeName(bc));
                 }
                 
-                console.info("Executing: " + getOpName(bc));
+                console.info("Executing: " + getOpcodeName(bc));
                 
                 switch (bc) {
                 case OP_bkpt: notImplemented(); break;
@@ -347,7 +341,7 @@ var Frame = (function frame() {
                 case OP_bkptline: notImplemented(); break;
                 case OP_timestamp: notImplemented(); break;
                 default:
-                    console.info("Not Implemented: " + getOpName(bc));
+                    console.info("Not Implemented: " + getOpcodeName(bc));
                 }
             }
             console.info("AAAA");

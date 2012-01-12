@@ -256,3 +256,7 @@ var opcodes = [
     null,  //0xFE
     null  //0xFF
 ];
+
+function getOpcodeName(op) {
+    return opcodes[op].name;
+}
