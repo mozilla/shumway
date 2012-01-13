@@ -126,7 +126,6 @@ function parseAbcFile(bytes) {
             var valueIndex = stream.readU30();
             var value = null;
             if (valueIndex != 0) {
-                var valueKind = null;
                 value = constantPool.getValue(stream.readU8(), valueIndex);
             }
             trait = {
@@ -292,8 +291,31 @@ function parseAbcFile(bytes) {
                 return this.doubles[index];
             case CONSTANT_Utf8: 
                 return this.strings[index];
+            case CONSTANT_True: 
+                return true;
+            case CONSTANT_False: 
+                return false;
+            case CONSTANT_Null: 
+                return null;
+            case CONSTANT_Undefined: 
+                return undefined;
+            case CONSTANT_Namespace:
+            case CONSTANT_PackageInternalNS:
+                return this.namespaces[index];
+            case CONSTANT_QName:
+            case CONSTANT_MultinameA:
+            case CONSTANT_RTQName:
+            case CONSTANT_RTQNameA:
+            case CONSTANT_RTQNameL:
+            case CONSTANT_RTQNameLA:
+            case CONSTANT_NameL:
+            case CONSTANT_NameLA:
+                return this.multinames[index];
+            case CONSTANT_Float: 
+                warning("TODO: CONSTANT_Float may be deprecated?");
+                break;
             default: 
-                assert(false, "Not Implemented");
+                assert(false, "Not Implemented Kind " + kind);
             }
         }; 
         

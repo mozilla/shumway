@@ -13,3 +13,7 @@ function assertFalse(condition, message) {
         error(message);
     }
 }
+
+function warning(message) {
+    console.warn(message);
+}

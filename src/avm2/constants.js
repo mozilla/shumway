@@ -1,4 +1,6 @@
+const CONSTANT_Undefined          = 0x00;
 const CONSTANT_Utf8               = 0x01;
+const CONSTANT_Float              = 0x02; // May be deprecated ??
 const CONSTANT_Int                = 0x03;
 const CONSTANT_UInt               = 0x04;
 const CONSTANT_PrivateNamespace   = 0x05;

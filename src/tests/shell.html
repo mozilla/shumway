@@ -14,6 +14,8 @@
         
     </script>
     
+    ( Show Only Failures: <input name="failure" type="checkbox" id="showOnlyFailures" value="Y" checked> )
+    
     <p>
     ABC: Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y"> ) <br>
     <button onclick="runAllAbc();">Run All</button><input type="text" id="runAllAbcText" value="0:*" style="width: 50px"/>
@@ -73,9 +75,13 @@
             }
         }
         
+        testStatus = {total: 0, remaining: 0, pass: 0, fail: 0};
+        
         function runTestsAsynchronously(queue) {
+            testStatus.total += queue.length;
             setTimeout(function next() {
                if (queue.length > 0) {
+                   testStatus.remaining = queue.length - 1;
                    runTest(queue.shift(), function () { setTimeout(next, 1); });
                }
             }, 1);  
@@ -94,6 +100,7 @@
         }
         
         function tryParseAbcFile(test, buffer) {
+            // parseAbcFile(new Uint8Array(buffer));
             try {
                 parseAbcFile(new Uint8Array(buffer));
             } catch (e) {
@@ -185,8 +192,22 @@
               runTestsAsynchronously(tests);
           }
           
-        
+        var testStatusDisplayDiv = null;
         function appendResult(result) {
+            if (result.pass) {
+                testStatus.pass ++;
+            } else {
+                testStatus.fail ++;
+            }
+            
+            if (!testStatusDisplayDiv) {
+                testStatusDisplayDiv = document.getElementById('testStatusDisplay'); 
+            }
+            testStatusDisplayDiv.innerHTML = JSON.stringify(testStatus);
+            
+            if (document.getElementById('showOnlyFailures').checked && result.pass) {
+                return;
+            }
             var table = document.getElementById('results');
             var row = document.createElement("tr");
             for (var val in result) {
@@ -217,10 +238,11 @@
             color: red;
         }
     </style>
+    <div id="testStatusDisplay"></div>
     <table id="results">
         <tr>
             <td style="width: 50px">#</td>
-            <td style="width: 200px">Test</td>
+            <td style="width: 300px">Test</td>
             <td style="width: 100px">Pass</td>
             <td>Result</td>
         </tr>
