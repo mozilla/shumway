@@ -3,7 +3,7 @@
 
 (function (window, undefined) {
 
-  'use strict';
+  // 'use strict'; In Chrome 'strict' disallows the use of the 'const' keyword. 
 
   //////////////////////////////////////////////////////////////////////////////
   //

@@ -14,9 +14,17 @@
         
     </script>
     
-    Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y"> ) <br>
-    <button onclick="runAll();">Run All</button><input type="text" id="runAllText" value="0:*" style="width: 50px"/>
-    <button onclick="runOne();">Run One</button><input type="text" id="runOneText" value="../avm2/tests/abc/1-0.abc" style="width: 250px"/>
+    <p>
+    ABC: Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y"> ) <br>
+    <button onclick="runAllAbc();">Run All</button><input type="text" id="runAllAbcText" value="0:*" style="width: 50px"/>
+    <button onclick="runOneAbc();">Run One</button><input type="text" id="runOneAbcText" value="../avm2/tests/abc/1-0.abc" style="width: 250px"/>
+    </p>
+    
+    <p>
+    SWF: Parse <br>
+    <button onclick="runAllSwf();">Run All</button><input type="text" id="runAllSwfText" value="0:*" style="width: 50px"/>
+    <button onclick="runOneSwf();">Run One</button><input type="text" id="runOneSwfText" value="../swf/tests/swf/1.swf" style="width: 250px"/>
+    </p>
     
     <!--  
     
@@ -37,8 +45,9 @@
     <script type="text/javascript" src="../avm2/interpreter.js"></script>
     <script type="text/javascript" src="../avm2/disassembler.js"></script>
     
+    <script type="text/javascript" src="../swf/parser.js"></script>
+    
     <script type="text/javascript">
-       
         /* 
         new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
             var abc = parseAbcFile(new Uint8Array(buffer));
@@ -50,7 +59,6 @@
         });
         */
     
-        
         function runTest(test, next) {
             try {
               new FileReader(test.path).readAll(null, function (buffer) {
@@ -73,10 +81,10 @@
         }
 
         /**
-         * Here we specify everything that we want to do for each test case. We accumulate properties in test.result that
+         * Here we specify everything that we want to do for each abc test case. We accumulate properties in test.result that
          * we want displayed in the result table.
          */
-        function runner(test, buffer) {
+        function abcRunner(test, buffer) {
             test.result.pass = true;
             if (document.getElementById('disassemble').checked) {
                 tryDisassembleAbcFile(test, buffer);
@@ -107,16 +115,16 @@
             }
         }
         
-        function runAll() {
+        function runAllAbc() {
           var tests = [];
-          var range = document.getElementById('runAllText').value.split(":");
+          var range = document.getElementById('runAllAbcText').value.split(":");
           new FileReader("../avm2/tests/abc.list", "text").readAll(null, function(text) {
               var files = text.split("\n");
               var from = parseInt(range[0]);
               var to = range.length <= 1 ? from + 1 : range[1] == "*" ? files.length : parseInt(range[1]);
               for (var i = from; i < to; i++) {
                   var file = "../avm2/tests/abc/" + files[i];
-                  var test = {path: file, execute: runner};
+                  var test = {path: file, execute: abcRunner};
                   test.result = {id: i, name: file, pass: false};
                   tests.push(test);
               }
@@ -124,14 +132,58 @@
           });
         }
         
-        function runOne() {
+        function runOneAbc() {
             var tests = [];
-            var file = document.getElementById('runOneText').value;
-            var test = {path: file, execute: runner};
+            var file = document.getElementById('runOneAbcText').value;
+            var test = {path: file, execute: abcRunner};
             test.result = {id: 0, name: file, pass: false};
             tests.push(test);
             runTestsAsynchronously(tests);
         }
+        
+        /**
+         * Here we specify what needs to be done for each swf test case.
+         */
+        function swfRunner(test, buffer) {
+            test.result.pass = true;
+            tryParseSwfFile(test, buffer);
+        }
+        
+        function tryParseSwfFile(test, buffer) {
+            try {
+                parseSWF(buffer);
+            } catch (e) {
+                test.result.pass = false;
+                test.result.parserFail = e.message;
+            }
+        }
+        
+        function runAllSwf() {
+            var tests = [];
+            var range = document.getElementById('runAllSwfText').value.split(":");
+            new FileReader("../swf/tests/swf.list", "text").readAll(null, function(text) {
+                var files = text.split("\n");
+                var from = parseInt(range[0]);
+                var to = range.length <= 1 ? from + 1 : range[1] == "*" ? files.length : parseInt(range[1]);
+                for (var i = from; i < to; i++) {
+                    var file = "../swf/tests/swf/" + files[i];
+                    var test = {path: file, execute: swfRunner};
+                    test.result = {id: i, name: file, pass: false};
+                    tests.push(test);
+                }
+                runTestsAsynchronously(tests);
+            });
+          }
+          
+          function runOneSwf() {
+              var tests = [];
+              var file = document.getElementById('runOneSwfText').value;
+              var test = {path: file, execute: swfRunner};
+              test.result = {id: 0, name: file, pass: false};
+              tests.push(test);
+              runTestsAsynchronously(tests);
+          }
+          
         
         function appendResult(result) {
             var table = document.getElementById('results');
