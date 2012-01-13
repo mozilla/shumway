@@ -85,18 +85,18 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
         var bc = code.readU8();
         
         switch (bc) {
-        default:
-            var opcode = opcodeTable[bc];
-            if (opcode) {
-                var str = opcode.name;
-                if (opcode.operands.length > 0) {
-                    str += ": ";
-                    for (var i = 0; i < opcode.operands.length; i++) {
-                        str += readOperand(opcode.operands[i]) + " ";
+            default:
+                var opcode = opcodeTable[bc];
+                if (opcode) {
+                    var str = opcode.name;
+                    if (opcode.operands.length > 0) {
+                        str += ": ";
+                        for (var i = 0; i < opcode.operands.length; i++) {
+                            str += readOperand(opcode.operands[i]) + " ";
+                        }
                     }
+                    writer.writeLn(str);
                 }
-                writer.writeLn(str);
-            }
         }
     }
     

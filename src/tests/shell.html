@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Shumway Web Shell</title>
+</head>
+<body>
+    <script type="text/javascript">
+        print = function (message) {
+            console.log(message);
+        };
+        
+        var webShell = true;
+        
+    </script>
+    
+    Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y"> ) <br>
+    <button onclick="runAll();">Run All</button><input type="text" id="runAllText" value="0:*" style="width: 50px"/>
+    <button onclick="runOne();">Run One</button><input type="text" id="runOneText" value="../avm2/tests/abc/1-0.abc" style="width: 250px"/>
+    
+    <!--  
+    
+    This page runs each of the test cases listed in tests/abc.list and which are found in tests/abc/. 
+    Unpack abc.tar.gz in tests/abc/ and run "ls tests/abc > tests/abc.list" to create a list of tests
+    that this page can read and iterate over.
+    
+    -->
+    
+    <script type="text/javascript" src="../avm2/util.js"></script>
+    <script type="text/javascript" src="file-reader.js"></script>
+    <script type="text/javascript" src="../avm2/avm2-runtime.js"></script>
+    <script type="text/javascript" src="../avm2/DataView.js"></script>
+    <script type="text/javascript" src="../avm2/constants.js"></script>
+    <script type="text/javascript" src="../avm2/opcodes.js"></script>
+    <script type="text/javascript" src="../avm2/parser.js"></script>
+    <script type="text/javascript" src="../avm2/compiler.js"></script>
+    <script type="text/javascript" src="../avm2/interpreter.js"></script>
+    <script type="text/javascript" src="../avm2/disassembler.js"></script>
+    
+    <script type="text/javascript">
+       
+        /* 
+        new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
+            var abc = parseAbcFile(new Uint8Array(buffer));
+            var writer = new IndentingWriter();
+            var methodBodies = abc.methodBodies;
+            for (var i = 0; i < methodBodies.length; i++) {
+                traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+            }
+        });
+        */
+    
+        
+        function runTest(test, next) {
+            try {
+              new FileReader(test.path).readAll(null, function (buffer) {
+                  test.execute(test, buffer);
+                  appendResult(test.result);
+                  next();
+              });
+            } catch (e) {
+                test.result.pass = false;
+                test.result.readFail = e.message;
+            }
+        }
+        
+        function runTestsAsynchronously(queue) {
+            setTimeout(function next() {
+               if (queue.length > 0) {
+                   runTest(queue.shift(), function () { setTimeout(next, 1); });
+               }
+            }, 1);  
+        }
+
+        /**
+         * Here we specify everything that we want to do for each test case. We accumulate properties in test.result that
+         * we want displayed in the result table.
+         */
+        function runner(test, buffer) {
+            test.result.pass = true;
+            if (document.getElementById('disassemble').checked) {
+                tryDisassembleAbcFile(test, buffer);
+            }
+            tryParseAbcFile(test, buffer);
+        }
+        
+        function tryParseAbcFile(test, buffer) {
+            try {
+                parseAbcFile(new Uint8Array(buffer));
+            } catch (e) {
+                test.result.pass = false;
+                test.result.parserFail = e.message;
+            }
+        }
+         
+        function tryDisassembleAbcFile(test, buffer) {
+            try {
+                var abc = parseAbcFile(new Uint8Array(buffer));
+                var writer = new IndentingWriter();
+                var methodBodies = abc.methodBodies;
+                for (var i = 0; i < methodBodies.length; i++) {
+                    traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+                }
+            } catch (e) {
+                test.result.pass = false;
+                test.result.disassembleFail = e.message;
+            }
+        }
+        
+        function runAll() {
+          var tests = [];
+          var range = document.getElementById('runAllText').value.split(":");
+          new FileReader("../avm2/tests/abc.list", "text").readAll(null, function(text) {
+              var files = text.split("\n");
+              var from = parseInt(range[0]);
+              var to = range.length <= 1 ? from + 1 : range[1] == "*" ? files.length : parseInt(range[1]);
+              for (var i = from; i < to; i++) {
+                  var file = "../avm2/tests/abc/" + files[i];
+                  var test = {path: file, execute: runner};
+                  test.result = {id: i, name: file, pass: false};
+                  tests.push(test);
+              }
+              runTestsAsynchronously(tests);
+          });
+        }
+        
+        function runOne() {
+            var tests = [];
+            var file = document.getElementById('runOneText').value;
+            var test = {path: file, execute: runner};
+            test.result = {id: 0, name: file, pass: false};
+            tests.push(test);
+            runTestsAsynchronously(tests);
+        }
+        
+        function appendResult(result) {
+            var table = document.getElementById('results');
+            var row = document.createElement("tr");
+            for (var val in result) {
+                var cell = document.createElement("td");
+                cell.appendChild(document.createTextNode(result[val]));
+                row.appendChild(cell);
+            }
+            if (result.pass) {
+                row.setAttribute("class", "success");
+            } else {
+                row.setAttribute("class", "failure");
+            }
+            table.appendChild(row);
+        }
+        
+    </script>
+    <style>
+        body {
+            font-family: verdana;
+            font-size: 12px;
+        }
+        
+        .success {
+            color: green;
+        }
+        
+        .failure {
+            color: red;
+        }
+    </style>
+    <table id="results">
+        <tr>
+            <td style="width: 50px">#</td>
+            <td style="width: 200px">Test</td>
+            <td style="width: 100px">Pass</td>
+            <td>Result</td>
+        </tr>
+    </table>
+</body>
+</html>
