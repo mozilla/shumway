@@ -36,11 +36,20 @@
     <script type="text/javascript" src="parser.js"></script>
     <script type="text/javascript" src="compiler.js"></script>
     <script type="text/javascript" src="interpreter.js"></script>
+    <script type="text/javascript" src="disassembler.js"></script>
+    
     <script type="text/javascript">
     
         new FileReader("tests/testInterpreter.abc").readAll(null, function (buffer) {
             var abc = parseAbcFile(new Uint8Array(buffer));
-            interpretAbc(abc);
+            // interpretAbc(abc);
+            
+            var writer = new IndentingWriter();
+            var methodBodies = abc.methodBodies;
+            for (var i = 0; i < methodBodies.length; i++) {
+                traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+            }
+            
         });
     
         function runOne() {
