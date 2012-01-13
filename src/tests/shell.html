@@ -51,16 +51,14 @@
     <script type="text/javascript" src="../swf/parser.js"></script>
     
     <script type="text/javascript">
-        /* 
-        new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
+        /* new FileReader("../avm2/tests/abc/10010-0.abc").readAll(null, function (buffer) {
             var abc = parseAbcFile(new Uint8Array(buffer));
-            var writer = new IndentingWriter();
+            var writer = new IndentingWriter(true);
             var methodBodies = abc.methodBodies;
             for (var i = 0; i < methodBodies.length; i++) {
                 traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
             }
-        });
-        */
+        }); */
     
         function runTest(test, next) {
             try {
@@ -93,14 +91,23 @@
          */
         function abcRunner(test, buffer) {
             test.result.pass = true;
+            
+            /* // TEMP
+            var abc = parseAbcFile(new Uint8Array(buffer));
+            var writer = new IndentingWriter(true);
+            var methodBodies = abc.methodBodies;
+            for (var i = 0; i < methodBodies.length; i++) {
+                traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+            }
+            //  TEMP
+             */
+            tryParseAbcFile(test, buffer);
             if (document.getElementById('disassemble').checked) {
                 tryDisassembleAbcFile(test, buffer);
             }
-            tryParseAbcFile(test, buffer);
         }
         
         function tryParseAbcFile(test, buffer) {
-            // parseAbcFile(new Uint8Array(buffer));
             try {
                 parseAbcFile(new Uint8Array(buffer));
             } catch (e) {
@@ -112,7 +119,7 @@
         function tryDisassembleAbcFile(test, buffer) {
             try {
                 var abc = parseAbcFile(new Uint8Array(buffer));
-                var writer = new IndentingWriter();
+                var writer = new IndentingWriter(true);
                 var methodBodies = abc.methodBodies;
                 for (var i = 0; i < methodBodies.length; i++) {
                     traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);

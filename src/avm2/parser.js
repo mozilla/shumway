@@ -23,9 +23,12 @@ var ABCStream = (function () {
         readU30: function() {
             var result = this.readU32();
             if (result & 0xc0000000) {
-                throw "Corrupt ABC File";
+                error("Corrupt ABC File");
             }
             return result;
+        },
+        readU30Unsafe: function() {
+            return this.readU32();
         },
         /**
          * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian), 

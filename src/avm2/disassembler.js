@@ -1,20 +1,27 @@
 var IndentingWriter = (function () {
-    function indentingWriter() {
+    function indentingWriter(suppressOutput) {
         this.padding = "";
+        this.suppressOutput = suppressOutput;
     }
     
     indentingWriter.prototype.writeLn = function writeLn(str) {
-        console.info(this.padding + str);
+        if (!this.suppressOutput) {
+            console.info(this.padding + str);
+        }
     };
     
     indentingWriter.prototype.enter = function enter(str) {
-        console.info(this.padding + str);
+        if (!this.suppressOutput) {
+            console.info(this.padding + str);
+        }
         this.indent();
     };
     
     indentingWriter.prototype.leave = function leave(str) {
         this.outdent();
-        console.info(this.padding + str);
+        if (!this.suppressOutput) {
+            console.info(this.padding + str);
+        }
     };
     
     indentingWriter.prototype.indent = function indent() {
@@ -62,6 +69,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
         var value = 0;
         switch(operand.size) {
             case "u08": value = code.readU8(); break;
+            case "s16": value = code.readU30Unsafe(); break;
             case "s24": value = code.readS24(); break;
             case "u30": value = code.readU30(); break;
             case "u32": value = code.readU32(); break;
@@ -83,20 +91,36 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
     
     while (code.remaining() > 0) {
         var bc = code.readU8();
+        var opcode = opcodeTable[bc];
+        var str, defaultOffset, offset, count;
         
         switch (bc) {
-            default:
-                var opcode = opcodeTable[bc];
-                if (opcode) {
-                    var str = opcode.name;
-                    if (opcode.operands.length > 0) {
-                        str += ": ";
-                        for (var i = 0; i < opcode.operands.length; i++) {
-                            str += readOperand(opcode.operands[i]) + " ";
-                        }
-                    }
-                    writer.writeLn(str);
+            case OP_lookupswitch:
+                str = opcode.name + ": defaultOffset: " + code.readS24();
+                count = code.readU30() + 1;
+                for (var i = 0; i < count; i++) {
+                    str += " offset: " + code.readS24();
                 }
+                writer.writeLn(str);
+                break;
+            default:
+                if (opcode) {
+                    str = opcode.name;
+                    if (!opcode.operands) {
+                        assert(false, "Opcode: " + opcode.name + " has undefined operands.");
+                    } else {
+                        if (opcode.operands.length > 0) {
+                            str += ": ";
+                            for (var i = 0; i < opcode.operands.length; i++) {
+                                str += readOperand(opcode.operands[i]) + " ";
+                            }
+                        }
+                        writer.writeLn(str);
+                    }
+                } else {
+                    assert(false, "Opcode: " + bc + " is not implemented.");
+                }
+                break;
         }
     }
     

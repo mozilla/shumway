@@ -7,6 +7,7 @@
  *    
  *   u08 - a one-byte unsigned integer
  *   s24 - a three byte signed integer
+ *   s16 - a variable-length encoded 30-bit unsigned integer value that is casted to a short value
  *   u30 - a variable-length encoded 30-bit unsigned integer value
  *  
  * Type (semantic) Suffix:
@@ -60,7 +61,7 @@ var opcodeTable = [
     null,  //0x22
     {name:"nextvalue",          operands:"",                 canThrow:true, stackDelta:-1},  //0x23
     {name:"pushbyte",           operands:"value:u08",        canThrow:false, stackDelta:1},  //0x24
-    {name:"pushshort",          operands:"value:u30",        canThrow:false, stackDelta:1},  //0x25
+    {name:"pushshort",          operands:"value:s16",        canThrow:false, stackDelta:1},  //0x25
     {name:"pushtrue",           operands:"",                 canThrow:false, stackDelta:1},  //0x26
     {name:"pushfalse",          operands:"",                 canThrow:false, stackDelta:1},  //0x27
     {name:"pushnan",            operands:"",                 canThrow:false, stackDelta:1},  //0x28
@@ -108,7 +109,7 @@ var opcodeTable = [
     {name:"sxi1",               operands:"",                 canThrow:false, stackDelta:0},  //0x50
     {name:"sxi8",               operands:"",                 canThrow:false, stackDelta:0},  //0x51
     {name:"sxi16",              operands:"",                 canThrow:false, stackDelta:0},  //0x52
-    {name:"applytype",          operands:null,               canThrow:true, stackDelta:0},   //0x53
+    {name:"applytype",          operands:"value:u30",        canThrow:true, stackDelta:0},   //0x53
     {name:"pushfloat4",         operands:null,               canThrow:false, stackDelta:1},  //0x54
     {name:"newobject",          operands:"argCount:u30",     canThrow:true, stackDelta:1},   //0x55
     {name:"newarray",           operands:"argCount:u30",     canThrow:true, stackDelta:1},   //0x56
@@ -289,8 +290,8 @@ var opcodeTable = [
 (function processOpcodeTable() {
     for (var i = 0; i < opcodeTable.length; i++) {
         var entry = opcodeTable[i];
-        if (entry) {
-            if (!entry.operands || entry.operands.length == 0) {
+        if (entry && entry.operands != null) {
+            if (entry.operands === "") {
                 entry.operands = [];
             } else {
                 entry.operands = entry.operands.split(",").map(function (value) {
