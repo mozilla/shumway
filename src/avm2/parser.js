@@ -180,16 +180,56 @@ function parseAbcFile(bytes) {
     }
 
     var Namespace = (function () {
-        const PUBLIC          = 0x00;
+        
+        const PUBLIC             = 0x00;
+        const PROTECTED          = 0x01;
+        const PACKAGE_INTERNAL   = 0x02;
+        const PRIVATE            = 0x04;
+        const EXPLICIT           = 0x08;
+        const STATIC_PROTECTED   = 0x10;
         
         function namespace(constantPool, stream) {
             this.kind = stream.readU8();
-            this.name = constantPool.strings[stream.readU30()];
+            
+            var index = stream.readU30();
+            
+            switch(this.kind) {
+                case CONSTANT_Namespace:
+                case CONSTANT_PackageNamespace:
+                case CONSTANT_PackageInternalNs:
+                case CONSTANT_ProtectedNamespace:
+                case CONSTANT_ExplicitNamespace:
+                case CONSTANT_StaticProtectedNs:
+                    this.type = PUBLIC;
+                    switch(this.kind) {
+                        case CONSTANT_PackageInternalNs:
+                            this.type = PACKAGE_INTERNAL;
+                            break;
+                        case CONSTANT_ProtectedNamespace:
+                            this.type = PROTECTED;
+                            break;
+                        case CONSTANT_ExplicitNamespace:
+                            this.type = EXPLICIT;
+                            break;
+                        case CONSTANT_StaticProtectedNs:
+                            this.type = STATIC_PROTECTED;
+                            break;
+                    }
+                    this.name = constantPool.strings[index];
+                    
+                    break;
+                case CONSTANT_PrivateNs:
+                    this.type = PRIVATE;
+                    this.name = constantPool.strings[index];
+                    break;
+                default:
+                    unexpected();
+            }
         }
         
         namespace.prototype.isPublic = function isPublic() {
             // TODO: Broken
-            return this.kind == PUBLIC; 
+            return this.type == PUBLIC; 
         };
         
         namespace.prototype.getURI = function getURI() {
