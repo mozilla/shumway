@@ -17,7 +17,7 @@
     ( Show Only Failures: <input name="failure" type="checkbox" id="showOnlyFailures" value="Y" checked> )
     
     <p>
-    ABC: Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y"> ) <br>
+    ABC: Parse ( + Disassemble: <input name="compile" type="checkbox" id="disassemble" value="Y" checked> ) <br>
     <button onclick="runAllAbc();">Run All</button><input type="text" id="runAllAbcText" value="0:*" style="width: 50px"/>
     <button onclick="runOneAbc();">Run One</button><input type="text" id="runOneAbcText" value="../avm2/tests/abc/1-0.abc" style="width: 250px"/>
     </p>
@@ -51,14 +51,14 @@
     <script type="text/javascript" src="../swf/parser.js"></script>
     
     <script type="text/javascript">
-        /* new FileReader("../avm2/tests/abc/10010-0.abc").readAll(null, function (buffer) {
+        new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
             var abc = parseAbcFile(new Uint8Array(buffer));
-            var writer = new IndentingWriter(true);
+            var writer = new IndentingWriter(false);
             var methodBodies = abc.methodBodies;
             for (var i = 0; i < methodBodies.length; i++) {
                 traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
             }
-        }); */
+        });
     
         function runTest(test, next) {
             try {
@@ -100,10 +100,12 @@
                 traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
             }
             //  TEMP
-             */
-            tryParseAbcFile(test, buffer);
+            */
+            
             if (document.getElementById('disassemble').checked) {
                 tryDisassembleAbcFile(test, buffer);
+            } else {
+                tryParseAbcFile(test, buffer);
             }
         }
         

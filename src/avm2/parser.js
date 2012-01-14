@@ -178,6 +178,176 @@ function parseAbcFile(bytes) {
             traits.push(parseTrait(constantPool, stream));
         target.traits = traits;
     }
+
+    /**
+     * Section 2.3 and 4.4.3
+     * 
+     * There are 10 multiname types, those ending in "A" represent the names of attributes. Some multinames
+     * have the name and/or namespace part resolved at runtime, and are referred to as runtime multinames.
+     * 
+     *  QName[A] - A qualified name is the simplest form of multiname, it has a name with exactly one
+     *    namespace. They are usually used to represent the names of variables and for type annotations.
+     *              
+     *  RTQName[A] - A runtime qualified name is a QName whose runtime part is resolved at runtime. Whenever
+     *    a RTQName is used as an operand for an instruction, the namespace part is expected to be on the stack. 
+     *    RTQNames are used when the namespace is not known at compile time.
+     *    ex: getNamespace()::f
+     *  
+     *  RTQNameL[A] - A runtime qualified name late is a QName whose name and runtime part are resolved at runtime.
+     *    ex: getNamespace()::[getName()]
+     *                 
+     *  Multiname[A] - A multiple namespace name is a name with a namespace set. The namespace set represents
+     *  a collection of namespaces. Multinames are used for unqualified names where multiple namespace may be open.
+     *    ex: f
+     *                 
+     *  MultinameL[A] - A multiname where the name is resolved at runtime.
+     *    ex: [f]
+     *  
+     *  Multiname Resolution: Section 2.3.6 
+     *  
+     *    Multinames are resolved in the object's declared traits, its dynamic properties, and finally the 
+     *    prototype chain, in this order, unless otherwise noted. The last two only happen if the multiname 
+     *    contains the public namespace (dynamic properties are always in the public namespace).
+     *    
+     *    If the multiname is any type of QName, the QName will resolve to the property with the same name and
+     *    namespace as the QName. If no property has the same name and namespace then the QName is unresolved.
+     *    
+     *    If the multiname has a namespace set, then the object is searched for any properties with the same
+     *    name and a namespace matches any of the namespaces in the namespace set.
+     */
+    var Multiname = (function () {
+        const ATTRIBUTE          = 0x01;
+        const QNAME              = 0x02;
+        const RUNTIME_NAMESPACE  = 0x04;
+        const RUNTIME_NAME       = 0x08;
+        const NAMESPACE_SET      = 0x10;
+        const TYPE_PARAMETER     = 0x20;
+        
+        function multiname(constantPool, stream, multinames) {
+            var index = 0;
+            this.flags = 0;
+            this.kind = stream.readU8();
+            
+            var setAnyNamespace = function() {
+                this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE); 
+                this.namespace = null;
+            }.bind(this);
+            
+            var setAnyName = function() {
+                this.flags &= ~(RUNTIME_NAME); 
+                this.name = null;
+            }.bind(this);
+            
+            var setQName = function() {
+                this.flags |= QNAME;
+            }.bind(this);
+            
+            var setAttribute = function(set) {
+                if (set) {
+                    this.flags |= ATTRIBUTE;
+                } else {
+                    this.flags &= ~(ATTRIBUTE);
+                }
+            }.bind(this);
+            
+            var setRuntimeName = function() {
+                this.flags |= RUNTIME_NAME;
+                this.name = null;
+            }.bind(this);
+            
+            var setRuntimeNamespace = function() {
+                this.flags |= RUNTIME_NAMESPACE;
+                this.flags &= ~(NAMESPACE_SET);
+                this.namespace = null;
+            }.bind(this);
+            
+            var setNamespaceSet = function(namespaceSet) {
+                assert(namespaceSet != null);
+                this.flags &= ~(RUNTIME_NAMESPACE);
+                this.flags |= NAMESPACE_SET;
+                this.namespaceSet = namespaceSet;
+            }.bind(this);
+            
+            var setTypeParameter = function(typeParameter) {
+                this.flags |= TYPE_PARAMETER;
+                this.typeParameter = typeParameter;
+            }.bind(this);
+            
+            switch (this.kind) {
+                case CONSTANT_QName: case CONSTANT_QNameA:
+                    index = stream.readU30();
+                    if (index == 0) {
+                        setAnyNamespace();
+                    } else {
+                        this.namespace = constantPool.namespaces[index]; 
+                    }
+                    index = stream.readU30();
+                    if (index == 0) {
+                        setAnyName();
+                    } else {
+                        this.name = constantPool.strings[index];
+                    }
+                    setQName();
+                    setAttribute(this.kind == CONSTANT_QNameA);
+                    break;
+                case CONSTANT_RTQName: case CONSTANT_RTQNameA:
+                    index = stream.readU30();
+                    if (index == 0) {
+                        setAnyName();
+                    } else {
+                        this.name = constantPool.strings[index];
+                    }
+                    setQName();
+                    setRuntimeNamespace();
+                    setAttribute(this.kind == CONSTANT_RTQNameA);
+                    break;
+                case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
+                    setQName();
+                    setRuntimeNamespace();
+                    setRuntimeName();
+                    setAttribute(this.kind == CONSTANT_RTQNameLA);
+                    break;
+                case CONSTANT_Multiname: case CONSTANT_MultinameA:
+                    index = stream.readU30();
+                    if (index == 0) {
+                        setAnyName();
+                    } else {
+                        this.name = constantPool.strings[index];
+                    }
+                    index = stream.readU30();
+                    assert(index != 0);
+                    setNamespaceSet(constantPool.namespaceSets[index]);
+                    setAttribute(this.kind == CONSTANT_MultinameA);
+                    break;
+                case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
+                    setRuntimeName();
+                    index = stream.readU30();
+                    assert(index != 0);
+                    setNamespaceSet(constantPool.namespaceSets[index]);
+                    setAttribute(this.kind == CONSTANT_MultinameLA);
+                    break;
+                /**
+                 * This is undocumented, looking at Tamarin source for this one.
+                 */
+                case CONSTANT_TypeName:
+                    index = stream.readU32();
+                    for (var key in multinames[index]) {
+                        this[key] = multinames[index][key];
+                    }
+                    index = stream.readU32();
+                    assert(index == 1);
+                    setTypeParameter(stream.readU32());
+                    break;
+                default:
+                    unexpected();
+                    break;
+            }
+        }
+        multiname.prototype.toString = function toString() {
+            return "TODO";
+        }
+        return multiname;
+    })();
     
     var ConstantPool = (function constantPool() {
         function constructor(stream) {
@@ -230,57 +400,20 @@ function parseAbcFile(bytes) {
                 namespaceSets.push(set);
             }
 
-            // multinames
-            var multinames = [undefined];
-            n = stream.readU30();
-            for (i = 1; i < n; ++i) {
-                var kind = stream.readU8();
-                switch (kind) {
-                case CONSTANT_QName: case CONSTANT_QNameA:
-                    multinames[i] = { 
-                        idx: i, 
-                        namespace: namespaces[stream.readU30()], 
-                        name: strings[stream.readU30()], 
-                        kind: kind
-                    };
-                    break;
-                case CONSTANT_RTQName: case CONSTANT_RTQNameA:
-                    multinames[i] = {
-                        idx: i,
-                        name: strings[stream.readU30()],
-                        kind: kind
-                    };
-                    break;
-                case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-                    multinames[i] = {
-                        idx: i,
-                        kind: kind
-                    };
-                    break;
-                case CONSTANT_Multiname: case CONSTANT_MultinameA:
-                    multinames[i] = {
-                        idx: i,
-                        name: strings[stream.readU30()],
-                        namespaceSet: namespaceSets[stream.readU30()],
-                        kind: kind
-                    };
-                    break;
-                case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-                    multinames[i] = {
-                        idx: i,
-                        namespaceSet: namespaceSets[stream.readU30()],
-                        kind: kind
-                    };
-                    break;
-                }
-            }
-
             this.ints = ints;
             this.uints = uints;
             this.doubles = doubles;
             this.strings = strings;
             this.namespaces = namespaces;
             this.namespaceSets = namespaceSets;
+            
+            // multinames
+            var multinames = [undefined];
+            n = stream.readU30();
+            for (i = 1; i < n; ++i) {
+                multinames.push(new Multiname(this, stream, multinames));
+            }
+            
             this.multinames = multinames;
         }
         

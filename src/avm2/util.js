@@ -17,3 +17,11 @@ function assertFalse(condition, message) {
 function warning(message) {
     console.warn(message);
 }
+
+function notImplemented(message) {
+    assert(false, "Not Implemented" + message);
+}
+
+function unexpected() {
+    assert(false);
+}

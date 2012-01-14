@@ -27,6 +27,8 @@ const CONSTANT_ExplicitNamespace  = 0x19;
 const CONSTANT_StaticProtectedNS  = 0x1A;
 const CONSTANT_MultinameL         = 0x1B;
 const CONSTANT_MultinameLA        = 0x1C;
+const CONSTANT_TypeName           = 0x1D;
+
 const CONSTANT_ClassSealed        = 0x01;
 const CONSTANT_ClassFinal         = 0x02;
 const CONSTANT_ClassInterface     = 0x04;
