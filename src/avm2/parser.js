@@ -179,6 +179,27 @@ function parseAbcFile(bytes) {
         target.traits = traits;
     }
 
+    var Namespace = (function () {
+        const PUBLIC          = 0x00;
+        
+        function namespace(constantPool, stream) {
+            this.kind = stream.readU8();
+            this.name = constantPool.strings[stream.readU30()];
+        }
+        
+        namespace.prototype.isPublic = function isPublic() {
+            // TODO: Broken
+            return this.kind == PUBLIC; 
+        };
+        
+        namespace.prototype.getURI = function getURI() {
+            // TODO: Broken
+            return this.name; 
+        };
+        
+        return namespace;
+    })();
+    
     /**
      * Section 2.3 and 4.4.3
      * 
@@ -343,9 +364,85 @@ function parseAbcFile(bytes) {
                     break;
             }
         }
+        
+        multiname.prototype.isAttribute = function isAttribute() {
+            return this.flags & ATTRIBUTE;
+        };
+        
+        multiname.prototype.isAnyName = function isAnyName() {
+            return !this.isRuntimeName() && this.name != null;
+        };
+        
+        multiname.prototype.isAnyNamespace = function isAnyNamespace() {
+            return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace == null;
+        };
+        
+        multiname.prototype.isRuntimeNamespace = function isRuntimeNamespace() {
+            return this.flags & RUNTIME_NAMESPACE;
+        };
+        
+        multiname.prototype.isQName = function isQName() {
+            return this.flags & QNAME;
+        };
+        
+        multiname.prototype.isRuntimeName = function isRuntimeName() {
+            return this.flags & RUNTIME_NAME;
+        };
+        
+        multiname.prototype.namespaceCount = function namespaceCount() {
+            return (this.namespaceSet && (this.flags & NAMESPACE_SET)) ? this.namespaceSet.length : 1; 
+        };
+        
+        multiname.prototype.getName = function getName() {
+            assert(!this.isAnyName() && !this.isRuntimeName());
+        };
+        
+        multiname.prototype.getNamespace = function getNamespace(i) {
+            assert(!this.isRuntimeNamespace() && !this.isAnyNamespace());
+            if (this.flags & NAMESPACE_SET) {
+                return this.namespaceSet != null ? this.namespaceSet[i] : null;
+            } else {
+                assert(i == 0);
+                return this.namespace;
+            }
+        };
+        
+        multiname.prototype.nameToString = function nameToString() {
+            if (this.isAnyName()) {
+                return "*";
+            } else {
+                return this.isRuntimeName() ? "[]" : this.getName();
+            }
+        };
+        
         multiname.prototype.toString = function toString() {
-            return "TODO";
+            var str = this.isAttribute() ? "@" : "";
+            if (this.isAnyNamespace()) {
+                str += "*::" + this.nameToString();
+            } else if (this.isRuntimeNamespace()) {
+                str += "[]::" + this.nameToString();
+            } else if (this.namespaceCount() == 1 && this.isQName()) {
+                if (this.namespace.isPublic()) {
+                    str += this.namespace + "::";
+                }
+                str += this.nameToString();
+            } else {
+                str += "{";
+                for (var i = 0, count = this.namespaceCount(); i < count; i++) {
+                    if (this.getNamespace(i).isPublic()) {
+                        str += "public";
+                    } else {
+                        str += this.getNamespace(i).getURI();
+                    }
+                    if (i + 1 < count) {
+                        str += ",";
+                    }
+                }
+                str += "}::" + this.nameToString();
+            }
+            return str;
         }
+        
         return multiname;
     })();
     
@@ -381,11 +478,16 @@ function parseAbcFile(bytes) {
                 strings.push(stream.readUTFString(stream.readU30()));
             }
 
+            this.ints = ints;
+            this.uints = uints;
+            this.doubles = doubles;
+            this.strings = strings;
+            
             // namespaces
             var namespaces = [undefined];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
-                namespaces.push({ kind: stream.readU8(), name: strings[stream.readU30()] });
+                namespaces.push(new Namespace(this, stream));
             }
 
             // namespace sets
@@ -400,10 +502,7 @@ function parseAbcFile(bytes) {
                 namespaceSets.push(set);
             }
 
-            this.ints = ints;
-            this.uints = uints;
-            this.doubles = doubles;
-            this.strings = strings;
+            
             this.namespaces = namespaces;
             this.namespaceSets = namespaceSets;
             
