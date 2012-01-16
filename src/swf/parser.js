@@ -5,6 +5,8 @@
 
   'use strict';
 
+  console.time('init');
+
   //////////////////////////////////////////////////////////////////////////////
   //
   // Basic Data Types
@@ -77,37 +79,49 @@
   };
 
   var RECT = {
-    $numBits: UB5,
-    xMin: SB,
-    xMax: SB,
-    yMin: SB,
-    yMax: SB
+    rect: {
+      type: {
+        $numBits: UB5,
+        xMin: SB,
+        xMax: SB,
+        yMin: SB,
+        yMax: SB
+      },
+      align: true,
+      merge: true
+    }
   };
 
   var MATRIX = {
-    $hasScale: FLAG,
-    scale: {
+    matrix: {
       type: {
+        $hasScale: FLAG,
+        scale: {
+          type: {
+            $numBits: UB5,
+            scaleX: FB,
+            scaleY: FB
+          },
+          merge: true,
+          condition: 'hasScale'
+        },
+        $hasRotate: FLAG,
+        rotate: {
+          type: {
+            $numBits: UB5,
+            rotateSkew0: FB,
+            rotateSkew1: FB
+          },
+          merge: true,
+          condition: 'hasRotate'
+        },
         $numBits: UB5,
-        scaleX: FB,
-        scaleY: FB
+        translateX: SB,
+        translateY: SB
       },
-      merge: true,
-      condition: 'hasScale'
-    },
-    $hasRotate: FLAG,
-    rotate: {
-      type: {
-        $numBits: UB5,
-        rotateSkew0: FB,
-        rotateSkew1: FB
-      },
-      merge: true,
-      condition: 'hasRotate'
-    },
-    $numBits: UB5,
-    translateX: SB,
-    translateY: SB
+      align: true,
+      merge: true
+    }
   };
 
   var MULTTERMS = {
@@ -123,46 +137,58 @@
   };
 
   var CXFORM = {
-    $hasAddTerms: FLAG,
-    $hasMultTerms: FLAG,
-    $numBits: UB4,
-    multTerms: {
-      type: MULTTERMS,
-      merge: true,
-      condition: 'hasMultTerms'
-    },
-    addTerms: {
-      type: ADDTERMS,
-      merge: true,
-      condition: 'hasAddTerms'
+    cxform: {
+      type: {
+        $hasAddTerms: FLAG,
+        $hasMultTerms: FLAG,
+        $numBits: UB4,
+        multTerms: {
+          type: MULTTERMS,
+          merge: true,
+          condition: 'hasMultTerms'
+        },
+        addTerms: {
+          type: ADDTERMS,
+          merge: true,
+          condition: 'hasAddTerms'
+        }
+      },
+      align: true,
+      merge: true
     }
   };
 
   var CXFORMWITHALPHA = {
-    $hasAddTerms: FLAG,
-    $hasMultTerms: FLAG,
-    $numBits: UB4,
-    multTerms: {
+    cxform: {
       type: {
-        terms: {
-          type: MULTTERMS,
-          merge: true
+        $hasAddTerms: FLAG,
+        $hasMultTerms: FLAG,
+        $numBits: UB4,
+        multTerms: {
+          type: {
+            terms: {
+              type: MULTTERMS,
+              merge: true
+            },
+            alphaMultTerm: SB
+          },
+          merge: true,
+          condition: 'hasMultTerms'
         },
-        alphaMultTerm: SB
+        addTerms: {
+          type: {
+            terms: {
+              type: ADDTERMS,
+              merge: true
+            },
+            alphaAddTerm: SB
+          },
+          merge: true,
+          condition: 'hasAddTerms'
+        }
       },
-      merge: true,
-      condition: 'hasMultTerms'
-    },
-    addTerms: {
-      type: {
-        terms: {
-          type: ADDTERMS,
-          merge: true
-        },
-        alphaAddTerm: SB
-      },
-      merge: true,
-      condition: 'hasAddTerms'
+      align: true,
+      merge: true
     }
   };
 
@@ -177,10 +203,7 @@
     characterId: UI16,
     depth: UI16,
     matrix: MATRIX,
-    colorTransform: {
-      type: CXFORM,
-      optional: true
-    }
+    colorTransform: CXFORM
   };
 
   var PLACEFLAGS = {
@@ -213,6 +236,7 @@
     },
     name: {
       type: STRING,
+      length: undefined,
       condition: 'hasName'
     },
     clipDepth: {
@@ -222,29 +246,31 @@
   };
 
   var CLIPEVENTFLAGS = {
-    keyUp: FLAG,
-    keyDown: FLAG,
-    mouseUp: FLAG,
-    mouseDown: FLAG,
-    mouseMove: FLAG,
-    unload: FLAG,
-    enterFrame: FLAG,
-    load: FLAG,
-    dragOver: FLAG,
-    rollOut: FLAG,
-    rollOver: FLAG,
-    releaseOutside: FLAG,
-    release: FLAG,
-    press: FLAG,
-    initialize: FLAG,
-    data: FLAG,
+    $eventFlags: UB16,
+    keyUp: '!!(eventFlags&32768)',
+    keyDown: '!!(eventFlags&16384)',
+    mouseUp: '!!(eventFlags&8192)',
+    mouseDown: '!!(eventFlags&4096)',
+    mouseMove: '!!(eventFlags&2048)',
+    unload: '!!(eventFlags&1024)',
+    enterFrame: '!!(eventFlags&512)',
+    load: '!!(eventFlags&256)',
+    dragOver: '!!(eventFlags&128)',
+    rollOut: '!!(eventFlags&64)',
+    rollOver: '!!(eventFlags&32)',
+    releaseOutside: '!!(eventFlags&16)',
+    release: '!!(eventFlags&8)',
+    press: '!!(eventFlags&4)',
+    initialize: '!!(eventFlags&2)',
+    data: '!!(eventFlags&1)',
     extraEvents: {
       type: {
-        reserved: UB5,
-        construct: FLAG,
-        keyPress: FLAG,
-        dragOut: FLAG,
-        reserved2: UI8
+        $extraFlags: UB16,
+        reserved: 'eventFlags>>11',
+        construct: '!!(eventFlags&1024)',
+        keyPress: '!!(eventFlags&512)',
+        dragOut: '!!(eventFlags&256)',
+        reserved2: 'eventFlags&255'
       },
       merge: true,
       condition: 'swfVersion>=6'
@@ -252,7 +278,7 @@
   };
 
   var CLIPACTIONRECORD = {
-    $eventFlags: CLIPEVENTFLAGS,
+    eventFlags: CLIPEVENTFLAGS,
     $actionRecordSize: UI32,
     $keyCode: {
       type: UI8,
@@ -269,7 +295,7 @@
     allEventFlags: CLIPEVENTFLAGS,
     actionRecords: {
       type: CLIPACTIONRECORD,
-      list: { condition: 'eventFlags' }
+      list: { condition: 'eventFlags||extraFlags' }
     }
   };
 
@@ -420,6 +446,7 @@
     depth: UI16,
     className: {
       type: STRING,
+      length: undefined,
       condition: 'hasClassName||hasImage&&hasCharacter'
     },
     info: {
@@ -463,7 +490,10 @@
 
   var REGISTERPARAM = {
     registerNumber: UI8,
-    paramName: STRING
+    paramName: {
+      type: STRING,
+      length: undefined
+    }
   };
 
   var actions = {
@@ -473,8 +503,17 @@
     },
 
     /* GetURL */ 131: {
-      url: STRING,
-      target: STRING
+      url: {
+        type: STRING,
+        length: undefined
+      },
+      target: {
+        type: {
+          type: STRING,
+          length: undefined
+        },
+        length: undefined
+      }
     },
 
     /* WaitForFrame */ 138: {
@@ -483,11 +522,17 @@
     },
 
     /* SetTarget */ 139: {
-      targetName: STRING
+      targetName: {
+        type: STRING,
+        length: undefined
+      }
     },
 
     /* GoToLabel */ 140: {
-      label: STRING
+      label: {
+        type: STRING,
+        length: undefined
+      }
     },
 
     /* Push */ 150: {
@@ -496,7 +541,12 @@
           $valueType: UI8,
           value: {
             type: ['valueType', {
-              0: { string: STRING },
+              0: {
+                string: {
+                  type: STRING,
+                  length: undefined
+                }
+              },
               1: { 'float': FLOAT },
               4: { registerNumber: UI8 },
               5: { 'boolean': UI8 },
@@ -541,15 +591,20 @@
         $count: UI16,
         constantPool: {
           type: STRING,
+          length: undefined,
           list: { count: 'count' }
         }
       },
 
       /* DefineFunction */ 155: {
-        functionName: STRING,
+        functionName: {
+          type: STRING,
+          length: undefined
+        },
         $numParams: UI16,
         params: {
           type: STRING,
+          length: undefined,
           list: { count: 'numParams' }
         },
         $codeSize: UI16,
@@ -572,7 +627,10 @@
       },
 
       /* DefineFunction2 */ 142: {
-        functionName: STRING,
+        functionName: {
+          type: STRING,
+          length: undefined
+        },
         $numParams: UI16,
         registerCount: UI8,
         preloadParent: FLAG,
@@ -606,6 +664,7 @@
         $finallySize: UI16,
         catchName: {
           type: STRING,
+          length: undefined,
           condition: '!catchInRegister'
         },
         catchRegister: {
@@ -624,26 +683,32 @@
           type: ACTION,
           list: { length: 'finallySize' }
         }
+      },
+
+      unknown: {
+        actionData: BINARY
       }
 
   }; // end of actions
 
   var ACTIONRECORD = {
     $actionCode: UI8,
-    length: {
+    $length: {
       type: UI16,
       condition: 'actionCode>=128'
     },
     action: {
       type: ['actionCode', actions],
-      merge: true
+      size: 'length',
+      merge: true,
+      condition: 'length'
     }
   };
 
   var DOACTION = {
     actions: {
       type: ACTION,
-      list: true
+      list: { condition: '$.actionCode' }
     }
   };
 
@@ -651,13 +716,16 @@
     spriteId: UI16,
     actions: {
       type: ACTION,
-      list: true
+      list: { condition: '$.actionCode' }
     }
   };
 
   var DOABC = {
     flags: UI32,
-    name: STRING,
+    name: {
+      type: STRING,
+      length: undefined
+    },
     abcData: BINARY
   };
 
@@ -740,9 +808,10 @@
       type: UI16,
       condition: 'count===255'
     },
+    $numStyles: 'count<255?count:countExtended',
     styles: {
       type: FILLSTYLE,
-      list: { count: 'count<255?count:countExtended' }
+      list: { count: 'numStyles' }
     }
   };
 
@@ -784,25 +853,27 @@
       type: UI16,
       condition: 'count===255'
     },
+    $numStyles: 'count<255?count:countExtended',
     styles: {
-      type: LINESTYLE,
-      list: { count: 'count<255?count:countExtended' }
+      type: ['tagCode===83', LINESTYLE, LINESTYLE2],
+      list: { count: 'numStyles' }
     }
   };
 
   // Shape structures //////////////////////////////////////////////////////////
 
   var STYLECHANGERECORD = {
-    $hasNewStyles: FLAG,
-    $hasLineStyle: FLAG,
-    $hasFillStyle1: FLAG,
-    $hasFillStyle0: FLAG,
-    $moveTo: FLAG,
+    $flags: UB5,
+    $hasNewStyles: '!!(flags&16)',
+    $hasLineStyle: '!!(flags&8)',
+    $hasFillStyle1: '!!(flags&4)',
+    $hasFillStyle0: '!!(flags&2)',
+    $moveTo: '!!(flags&1)',
     move: {
       type: {
         $numBits: UB5,
         moveDeltaX: SB,
-        moveDeltaY: SB,
+        moveDeltaY: SB
       },
       merge: true,
       condition: 'moveTo'
@@ -829,6 +900,7 @@
         $numFillBits: UB4,
         $numLineBits: UB4
       },
+      align: true,
       merge: true,
       condition: 'hasNewStyles'
     }
@@ -874,7 +946,7 @@
   };
 
   var SHAPERECORD = {
-    $recordType: FLAG,
+    $recordType: UB1,
     record: {
       type: ['recordType', STYLECHANGERECORD, EDGERECORD],
       merge: true
@@ -886,7 +958,7 @@
     $numLineBits: UB4,
     shapeRecords: {
       type: SHAPERECORD,
-      list: { condition: 'recordType||$flags' }
+      list: { condition: 'recordType||flags' }
     }
   };
 
@@ -905,11 +977,9 @@
     edges: SHAPEWITHSTYLE
   };
 
-  var DEFINESHAPE2 = {
-    id: UI16,
-    bounds: RECT,
-    edges: SHAPEWITHSTYLE
-  };
+  var DEFINESHAPE2 = DEFINESHAPE;
+
+  var DEFINESHAPE3 = DEFINESHAPE;
 
   var DEFINESHAPE4 = {
     id: UI16,
@@ -1127,9 +1197,10 @@
       type: UI16,
       condition: 'count===255'
     },
+    $numStyles: 'count<255?count:countExtended',
     styles: {
       type: MORPHFILLSTYLE,
-      list: { count: 'count<255?count:countExtended' }
+      list: { count: 'numStyles' }
     }
   };
 
@@ -1178,11 +1249,14 @@
       type: UI16,
       condition: 'count===255'
     },
+    $numStyles: 'count<255?count:countExtended',
     styles: {
       type: MORPHLINESTYLE,
-      list: { count: 'count<255?count:countExtended' }
+      list: { count: 'numStyles' }
     }
   };
+
+  //////////////////////////////////////////////////////////////////////////////
 
   var DEFINEMORPHSHAPE = {
     id: UI16,
@@ -1247,7 +1321,7 @@
     isAnsi: FLAG,
     isItalic: FLAG,
     isBold: FLAG,
-    usesWideCodes: FLAG,
+    $usesWideCodes: FLAG,
     codeTable: {
       type: ['usesWideCodes', UI8, UI16],
       list: true
@@ -1256,7 +1330,7 @@
 
   var DEFINEFONTINFO2 = {
     fontId: UI16,
-    fontNameLen: UI8,
+    $fontNameLen: UI8,
     fontName: {
       type: STRING,
       length: 'fontNameLen'
@@ -1287,12 +1361,12 @@
     isShiftJis: FLAG,
     isSmallText: FLAG,
     isAnsi: FLAG,
-    usesWideOffsets: FLAG,
-    usesWideCodes: FLAG,
+    $usesWideOffsets: FLAG,
+    $usesWideCodes: FLAG,
     isItalic: FLAG,
     isBold: FLAG,
     languageCode: LANGCODE,
-    fontNameLen: UI8,
+    $fontNameLen: UI8,
     fontName: {
       type: STRING,
       length: 'fontNameLen'
@@ -1308,7 +1382,7 @@
       list: { count: 'numGlyphs' }
     },
     codeTable: {
-      type: ['usesideCodes', UI8, UI16],
+      type: ['usesWideCodes', UI8, UI16],
       list: { count: 'numGlyphs' }
     },
     layout: {
@@ -1334,6 +1408,8 @@
       condition: 'hasLayout'
     }
   };
+
+  var DEFINEFONT3 = DEFINEFONT2;
 
   var ZONEDATA = {
     alignmentCoordinate: FLOAT16,
@@ -1363,8 +1439,14 @@
 
   var DEFINEFONTNAME = {
     fontId: UI16,
-    fontName: STRING,
-    copyright: STRING
+    fontName: {
+      type: STRING,
+      length: undefined
+    },
+    copyright: {
+      type: STRING,
+      length: undefined
+    }
   };
 
   var GLYPHENTRY = {
@@ -1379,12 +1461,13 @@
   };
 
   var TEXTRECORD = {
-    $recordType: FLAG,
-    reserved: UB3,
-    $hasFont: FLAG,
-    $hasColor: FLAG,
-    $hasYOffset: FLAG,
-    $hasXOffset: FLAG,
+    $flags: UB8,
+    $recordType: 'flags>>7',
+    reserved: 'flags>>4&7',
+    $hasFont: '!!(flags&8)',
+    $hasColor: '!!(flags&4)',
+    $hasYOffset: '!!(flags&2)',
+    $hasXOffset: '!!(flags&1)',
     fontId: {
       type: UI16,
       condition: 'hasFont'
@@ -1420,9 +1503,11 @@
     $numAdvanceBits: UI8,
     textRecords: {
       type: TEXTRECORD,
-      list: { condition: '$flags' }
+      list: { condition: 'flags' }
     }
   };
+
+  var DEFINETEXT2 = DEFINETEXT;
 
   var DEFINEEDITTEXT = {
     id: UI16,
@@ -1449,6 +1534,7 @@
     },
     fontClass: {
       type: STRING,
+      length: undefined,
       condition: 'hasFontClass'
     },
     fontSize: {
@@ -1474,9 +1560,13 @@
       merge: true,
       condition: 'hasLayout'
     },
-    variableName: STRING,
+    variableName: {
+      type: STRING,
+      length: undefined
+    },
     intitialText: {
       type: STRING,
+      length: undefined,
       condition: 'hasText'
     }
   };
@@ -1497,11 +1587,11 @@
     hasFontData: FLAG,
     isItalic: FLAG,
     isBold: FLAG,
-    fontName: STRING,
-    fontData: {
-      type: BINARY,
-      optional: true
-    }
+    fontName: {
+      type: STRING,
+      length: undefined
+    },
+    fontData: BINARY
   };
 
 
@@ -1644,7 +1734,10 @@
   };
 
   var STARTSOUND2 = {
-    soundClassName: STRING,
+    soundClassName: {
+      type: STRING,
+      length: undefined
+    },
     soundInfo: SOUNDINFO
   };
 
@@ -1664,6 +1757,8 @@
     }
   };
 
+  var SOUNDSTREAMHEAD2 = SOUNDSTREAMHEAD;
+
   var SOUNDSTREAMBLOCK = {
     streamData: BINARY
   };
@@ -1676,11 +1771,12 @@
   //////////////////////////////////////////////////////////////////////////////
 
   var BUTTONRECORD = {
-    reserved: UB4,
-    stateHitTest: FLAG,
-    stateDown: FLAG,
-    stateOver: FLAG,
-    stateUp: FLAG,
+    $flags: UB8,
+    reserved: 'flags>>4',
+    stateHitTest: '!!(flags&8)',
+    stateDown: '!!(flags&4)',
+    stateOver: '!!(flags&2)',
+    stateUp: '!!(flags&1)',
     characterId: UI16,
     depth: UI16,
     matrix: MATRIX
@@ -1690,7 +1786,7 @@
     id: UI16,
     characters: {
       type: BUTTONRECORD,
-      list: { condition: '$flags' }
+      list: { condition: 'flags' }
     },
     actions: {
       type: ACTION,
@@ -1699,13 +1795,14 @@
   };
 
   var BUTTONRECORD2 = {
-    reserved: UB2,
-    $hasBlendMode: FLAG,
-    $hasFilterList: FLAG,
-    stateHitTest: FLAG,
-    stateDown: FLAG,
-    stateOver: FLAG,
-    stateUp: FLAG,
+    $flags: UB8,
+    reserved: 'flags>>6',
+    $hasBlendMode: '!!(flags&32)',
+    $hasFilterList: '!!(flags&16)',
+    stateHitTest: '!!(flags&8)',
+    stateDown: '!!(flags&4)',
+    stateOver: '!!(flags&2)',
+    stateUp: '!!(flags&1)',
     characterId: UI16,
     depth: UI16,
     matrix: MATRIX,
@@ -1746,7 +1843,7 @@
     $actionOffset: UI16,
     characters: {
       type: BUTTONRECORD2,
-      list: { condition: '$flags' }
+      list: { condition: 'flags' }
     },
     actions: {
       type: {
@@ -1962,7 +2059,7 @@
 
     /* PlaceObject */ 4: PLACEOBJECT,
     /* PlaceObject2 */ 26: PLACEOBJECT2,
-    /* PlaceObject3 */ 70: PLACEOBJECT3,
+    ///* PlaceObject3 */ 70: PLACEOBJECT3,
     /* RemoveObject */ 5: REMOVEOBJECT,
     /* RemoveObject2 */ 28: REMOVEOBJECT2,
 
@@ -1973,61 +2070,76 @@
     },
 
     /* FrameLabel */ 43: {
-      name: STRING,
-      isNamedAnchor: {
-        type: UI8,
-        optional: true
-      }
+      name: {
+        type: STRING,
+        length: undefined
+      },
+      isNamedAnchor: UI8
     },
 
-    /* Protect */ 24: {
-      password: {
-        type: STRING,
-        optional: true
-      }
-    },
+    ///* Protect */ 24: {
+    //  password: {
+    //    type: STRING,
+    //    length: undefined
+    //  }
+    //},
 
     /* ExportAssets */ 56: {
       $count: UI16,
       assets: {
         type: {
           tag: UI16,
-          name: STRING
+          name: {
+            type: STRING,
+            length: undefined
+          }
         },
         list: { count: 'count' }
       }
     },
 
-    /* ImportAssets */ 57: {
-      url: STRING,
-      $count: UI16,
-      assets: {
-        type: {
-          tag: UI16,
-          name: STRING
-        },
-        list: { count: 'count' }
-      }
-    },
-
-    /* EnableDebugger */ 58: {
-      password: STRING
-    },
-
-    /* EnableDebugger2 */ 64: {
-      reserved: UI16,
-      password: STRING
-    },
-
-    /* ScriptLimits */ 65: {
-      maxRecursionDepth: UI16,
-      scriptTimeoutSeconds: UI16
-    },
-
-    /* SetTabIndex */ 66: {
-      depth: UI16,
-      tabIndex: UI16
-    },
+    ///* ImportAssets */ 57: {
+    //  url: {
+    //    type: STRING,
+    //    length: undefined
+    //  },
+    //  $count: UI16,
+    //  assets: {
+    //    type: {
+    //      tag: UI16,
+    //      name: {
+    //        type: STRING,
+    //        length: undefined
+    //      }
+    //    },
+    //    list: { count: 'count' }
+    //  }
+    //},
+    //
+    ///* EnableDebugger */ 58: {
+    //  password: {
+    //    type: STRING,
+    //    length: undefined
+    //  }
+    //},
+    //
+    ///* EnableDebugger2 */ 64: {
+    //  reserved: UI16,
+    //  password: {
+    //    type: STRING,
+    //    length: undefined
+    //  }
+    //},
+    //
+    ///* ScriptLimits */ 65: {
+    //  maxRecursionDepth: UI16,
+    //  scriptTimeoutSeconds: UI16
+    //},
+    //
+    ///* SetTabIndex */ 66: {
+    //  depth: UI16,
+    //  tabIndex: UI16
+    //},
 
     /* FileAttributes */  69: {
       reserved: UB1,
@@ -2040,58 +2152,76 @@
       reserved3: UI24
     },
 
-    /* ImportAssets2 */ 71: {
-      url: STRING,
-      reserved: UI8,
-      reserved2: UI8,
-      $count: UI16,
-      assets: {
-        type: {
-          tag: UI16,
-          name: STRING
-        },
-        list: { count: 'count' }
-      }
-    },
-
-    /* SymbolClass */ 76: {
-      $numSymbols: UI16,
-      symbols: {
-        type: {
-          tag: UI16,
-          name: STRING
-        },
-        list: { count: 'numSymbols' }
-      }
-    },
-
-    /* Metadata */ 77: {
-      metadata: STRING
-    },
-
-    /* DefineScalingGrid */ 78: {
-      characterId: UI16,
-      splitter: RECT
-    },
-
-    /* DefineSceneAndFrameLabelData */ 86: {
-      $sceneCount: EncodedU32,
-      scenes: {
-        type: {
-          offset: EncodedU32,
-          name: STRING
-        },
-        list: { count: 'sceneCount' }
-      },
-      $frameLabelCount: EncodedU32,
-      frameLabels: {
-        type: {
-          frameNum: EncodedU32,
-          label: STRING
-        },
-        list: { count: 'frameLabelCount' }
-      }
-    },
+    ///* ImportAssets2 */ 71: {
+    //  url: {
+    //    type: STRING,
+    //    length: undefined
+    //  },
+    //  reserved: UI8,
+    //  reserved2: UI8,
+    //  $count: UI16,
+    //  assets: {
+    //    type: {
+    //      tag: UI16,
+    //      name: {
+    //        type: STRING,
+    //        length: undefined
+    //      }
+    //    },
+    //    list: { count: 'count' }
+    //  }
+    //},
+    //
+    ///* SymbolClass */ 76: {
+    //  $numSymbols: UI16,
+    //  symbols: {
+    //    type: {
+    //      tag: UI16,
+    //      name: {
+    //        type: STRING,
+    //        length: undefined
+    //      }
+    //    },
+    //    list: { count: 'numSymbols' }
+    //  }
+    //},
+    //
+    ///* Metadata */ 77: {
+    //  metadata: {
+    //    type: STRING,
+    //    length: undefined
+    //  }
+    //},
+    //
+    ///* DefineScalingGrid */ 78: {
+    //  characterId: UI16,
+    //  splitter: RECT
+    //},
+    //
+    ///* DefineSceneAndFrameLabelData */ 86: {
+    //  $sceneCount: EncodedU32,
+    //  scenes: {
+    //    type: {
+    //      offset: EncodedU32,
+    //      name: {
+    //        type: STRING,
+    //        length: undefined
+    //      }
+    //    },
+    //    list: { count: 'sceneCount' }
+    //  },
+    //  $frameLabelCount: EncodedU32,
+    //  frameLabels: {
+    //    type: {
+    //      frameNum: EncodedU32,
+    //      label: {
+    //        type: STRING,
+    //        length: undefined
+    //      }
+    //    },
+    //    list: { count: 'frameLabelCount' }
+    //  }
+    //},
 
     // Action tags /////////////////////////////////////////////////////////////
 
@@ -2103,54 +2233,54 @@
 
     /* DefineShape */ 2: DEFINESHAPE,
     /* DefineShape2 */ 22: DEFINESHAPE2,
-    /* DefineShape3 */ 32: DEFINESHAPE2,
+    /* DefineShape3 */ 32: DEFINESHAPE3,
     /* DefineShape4 */ 83: DEFINESHAPE4,
 
-    // Bitmap tags /////////////////////////////////////////////////////////////
-
-    /* DefineBits */ 6: DEFINEBITS,
-    /* JPEGTables */ 8: JPEGTABLES,
-    /* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
-    /* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
-    /* DefineBitsLossless */ 20: DEFINEBITSLOSSLESS,
-    /* DefineBitsLossless2 */ 36: DEFINEBITSLOSSLESS2,
-    /* DefineBitsJPEG4 */ 90: DEFINEBITSJPEG4,
+    //// Bitmap tags ///////////////////////////////////////////////////////////
+    //
+    ///* DefineBits */ 6: DEFINEBITS,
+    ///* JPEGTables */ 8: JPEGTABLES,
+    ///* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
+    ///* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
+    ///* DefineBitsLossless */ 20: DEFINEBITSLOSSLESS,
+    ///* DefineBitsLossless2 */ 36: DEFINEBITSLOSSLESS2,
+    ///* DefineBitsJPEG4 */ 90: DEFINEBITSJPEG4,
 
     // Shape morphing tags /////////////////////////////////////////////////////
 
     /* DefineMorphShape */ 46: DEFINEMORPHSHAPE,
-    /* DefineMorphShape2 */ 84: DEFINEMORPHSHAPE2,
+    ///* DefineMorphShape2 */ 84: DEFINEMORPHSHAPE2,
 
-    // Font tags ///////////////////////////////////////////////////////////////
-
-    /* DefineFont */ 10: DEFINEFONT,
-    /* DefineFontInfo */ 13: DEFINEFONTINFO,
-    /* DefineFontInfo2 */ 62: DEFINEFONTINFO2,
+    //// Font tags /////////////////////////////////////////////////////////////
+    //
+    ///* DefineFont */ 10: DEFINEFONT,
+    ///* DefineFontInfo */ 13: DEFINEFONTINFO,
+    ///* DefineFontInfo2 */ 62: DEFINEFONTINFO2,
     /* DefineFont2 */ 48: DEFINEFONT2,
-    /* DefineFont3 */ 75: DEFINEFONT2,
-    /* DefineFontAlignZones */ 73: DEFINEFONTALIGNZONES,
-    /* DefineFontName */ 88: DEFINEFONTNAME,
+    ///* DefineFont3 */ 75: DEFINEFONT3,
+    ///* DefineFontAlignZones */ 73: DEFINEFONTALIGNZONES,
+    ///* DefineFontName */ 88: DEFINEFONTNAME,
     /* DefineText */ 11: DEFINETEXT,
-    /* DefineText2 */ 33: DEFINETEXT,
-    /* DefineEditText */ 37: DEFINEEDITTEXT,
-    /* CSMTextSettings */ 74: CSMTEXTSETTINGS,
-    /* DefineFont4 */ 91: DEFINEFONT4,
-
-    // Sound tags //////////////////////////////////////////////////////////////
-
-    /* DefineSound */ 14: DEFINESOUND,
-    /* StartSound */ 15: STARTSOUND,
-    /* StartSound2 */ 89: STARTSOUND2,
-    /* SoundStreamHead */ 18: SOUNDSTREAMHEAD,
-    /* SoundStreamHead2 */ 45: SOUNDSTREAMHEAD,
-    /* SoundStreamBlock */ 19: SOUNDSTREAMBLOCK,
-
-    // Button tags /////////////////////////////////////////////////////////////
-
-    /* DefineButton */ 7: DEFINEBUTTON,
-    /* DefineButton2 */ 34: DEFINEBUTTON2,
-    /* DefineButtonCxform */ 23: DEFINEBUTTONCXFORM,
-    /* DefineButtonSound */ 17: DEFINEBUTTONSOUND,
+    ///* DefineText2 */ 33: DEFINETEXT2,
+    ///* DefineEditText */ 37: DEFINEEDITTEXT,
+    ///* CSMTextSettings */ 74: CSMTEXTSETTINGS,
+    ///* DefineFont4 */ 91: DEFINEFONT4,
+    //
+    //// Sound tags ////////////////////////////////////////////////////////////
+    //
+    ///* DefineSound */ 14: DEFINESOUND,
+    ///* StartSound */ 15: STARTSOUND,
+    ///* StartSound2 */ 89: STARTSOUND2,
+    ///* SoundStreamHead */ 18: SOUNDSTREAMHEAD,
+    ///* SoundStreamHead2 */ 45: SOUNDSTREAMHEAD2,
+    ///* SoundStreamBlock */ 19: SOUNDSTREAMBLOCK,
+    //
+    //// Button tags ///////////////////////////////////////////////////////////
+    //
+    ///* DefineButton */ 7: DEFINEBUTTON,
+    ///* DefineButton2 */ 34: DEFINEBUTTON2,
+    ///* DefineButtonCxform */ 23: DEFINEBUTTONCXFORM,
+    ///* DefineButtonSound */ 17: DEFINEBUTTONSOUND,
 
     // Movie clips /////////////////////////////////////////////////////////////
 
@@ -2159,35 +2289,40 @@
       frameCount: UI16,
       controlTags: {
         type: TAG,
-        list: { condition: 'tagCode' }
+        list: { condition: '$.tagCode' }
       }
     },
 
-    // Video tags //////////////////////////////////////////////////////////////
+    //// Video tags ////////////////////////////////////////////////////////////
+    //
+    ///* DefineVideoStream */ 60: DEFINEVIDEOSTREAM,
+    ///* VideoFrame */ 61: VIDEOFRAME,
+    //
+    //// Binary data ///////////////////////////////////////////////////////////
+    //
+    ///* DefineBinaryData */ 87: {
+    //  characterId: UI16,
+    //  reserved: UI32,
+    //  binaryData: BINARY
+    //},
+    //
+    ////////////////////////////////////////////////////////////////////////////
 
-    /* DefineVideoStream */ 60: DEFINEVIDEOSTREAM,
-    /* VideoFrame */ 61: VIDEOFRAME,
-
-    // Binary data /////////////////////////////////////////////////////////////
-
-    /* DefineBinaryData */ 87: {
-      characterId: UI16,
-      reserved: UI32,
-      binaryData: BINARY
+    unknown: {
+      tagData: BINARY
     }
 
   }; // end of tags
 
   var TAGRECORD = {
-    $tagCode: UB6,
-    $shortLength: UB10,
-    longLength: {
-      type: UI32,
-      condition: 'shortLength>=63'
-    },
+    $tagCodeAndLength: UI16,
+    $tagCode: 'tagCodeAndLength>>6',
+    $length: ['(tagCodeAndLength&63)<63', UI32, 'tagCodeAndLength&63'],
     tag: {
       type: ['tagCode', tags],
-      merge: true
+      size: 'length',
+      merge: true,
+      condition: 'length'
     }
   };
 
@@ -2206,11 +2341,14 @@
     $swfVersion: UI8,
     fileLength: UI32,
     frameSize: RECT,
-    frameRate: UI16,
+    frameRate: {
+      type: UI16,
+      post: '/256'
+    },
     frameCount: UI16,
     tags: {
       type: TAG,
-      merge: true
+      list: { condition: '$.tagCode' }
     }
   };
 
@@ -2224,11 +2362,14 @@
     body: {
       type: {
         frameSize: RECT,
-        frameRate: UI16,
+        frameRate: {
+          type: UI16,
+          post: '/256'
+        },
         frameCount: UI16,
         tags: {
           type: TAG,
-          merge: true
+          list: { condition: '$.tagCode' }
         }
       },
       compressed: true,
@@ -2239,133 +2380,33 @@
 
   //////////////////////////////////////////////////////////////////////////////
   //
-  // Parser Templates
-  //
-  //////////////////////////////////////////////////////////////////////////////
-
-  var pow = Math.pow;
-  var fcc = String.fromCharCode;
-
-  function readSi8($bytes, $view) {
-    return $view.getInt8($bytes.pos++);
-  }
-  function readSi16($bytes, $view) {
-    return $view.getInt16($bytes.pos, $bytes.pos += 2);
-  }
-  function readSi32($bytes, $view) {
-    return $view.getInt32($bytes.pos, $bytes.pos += 4);
-  }
-  function readUi8($bytes, $view) {
-    return $bytes[$bytes.pos++];
-  }
-  function readUi16($bytes, $view) {
-    return $view.getUint16($bytes.pos, $bytes.pos += 2);
-  }
-  function readUi24($bytes, $view) {
-    return $view.getUint16($bytes.pos, $bytes.pos += 2) |
-           ($bytes[$bytes.pos++] << 16);
-  }
-  function readUi32($bytes, $view) {
-    return $view.getUint32($bytes.pos, $bytes.pos += 4);
-  }
-  function readFixed($bytes, $view) {
-    return readUb($bytes, $view, 32) * pow(2, -16);
-  }
-  function readFixed8($bytes, $view) {
-    return readUb($bytes, $view, 16) * pow(2, -8);
-  }
-  function readFloat16($bytes, $view) {
-    var bits = readUb($bytes, $view, 16);
-    var sign = bits >> 15 ? -1 : 1;
-    var exponent = (bits & 0x7c00) >> 10;
-    var fraction = bits & 0x03ff;
-    if (!exponent)
-      return sign * pow(2, -14) * (fraction / 1024);
-    if (exponent === 0x1f)
-      return fraction ? NaN : sign * Infinity;
-    return sign * pow(2, exponent - 15) * (1 + (fraction / 1024));
-  }
-  function readFloat($bytes, $view) {
-    return $view.getFloat32($bytes.pos, $bytes.pos += 4);
-  }
-  function readDouble($bytes, $view) {
-    return $view.getFloat64($bytes.pos, $bytes.pos += 4);
-  }
-  function readEncodedU32($bytes, $view) {
-    var val = 0;
-    for (var i = 0; i < 5; ++i) {
-      var b = $bytes[$bytes.pos++];
-      val = value | ((b & 0x7f) << (7 * i));
-      if (!(b & 0x80))
-        break;
-    }
-    return val;
-  }
-  function readSb($bytes, $view, numBits) {
-    return (readUb($bytes, $view, numBits) << (32 - numBits)) >> (32 - numBits);
-  }
-  function readUb($bytes, $view, numBits) {
-    var buffer = $bytes.bitBuffer;
-    var bitlen = $bytes.bitLength;
-    while (numBits > bitlen) {
-      buffer = (buffer << 8) | $bytes[$bytes.pos++];
-      bitlen += 8;
-    }
-    var val = 0;
-    var i = numBits;
-    while (i--)
-      val = (val << 1) | ((buffer >> --bitlen) & 1);
-    $bytes.bitBuffer = buffer;
-    $bytes.bitLength = bitlen;
-    return val;
-  }
-  function readFb($bytes, $view, numBits) {
-    return readUb($bytes, $view, numBits) * pow(2, -16);
-  }
-  function readString($bytes, $view, length) {
-    var codes = [];
-    if (length) {
-      codes = slice.call($bytes, $bytes.pos, $bytes.pos += length);
-    } else {
-      var code;
-      var i = 0;
-      while (code = $bytes[$bytes.pos++])
-        codes[i++] = code;
-    }
-    var numChunks = codes.length / 65536;
-    var str = '';
-    for (var i = 0; i < numChunks; ++i) {
-      var s = codes.slice(i * 65536, (i + 1) * 65536);
-      str += fcc.apply(null, s);
-    }
-    return decodeURIComponent(escape(str.replace('\0', '')));
-  }
-  function readBinary($bytes, $view, length) {
-    return $bytes.subarray($bytes.pos, $bytes.pos += length);
-  }
-
-  var defaultTemplateSet = [
-    readSi8, readSi16, readSi32, readUi8, readUi16, readUi32,
-    readFixed, readFixed8, readFloat16, readFloat, readDouble,
-    readEncodedU32,
-    readSb, readUb, readFb, readString, readBinary,
-    readUi24,
-    'readTag($bytes,$view)', 'readAction($bytes,$view)'
-  ];
-
-
-  //////////////////////////////////////////////////////////////////////////////
-  //
   // Parser
   //
   //////////////////////////////////////////////////////////////////////////////
+
+  // Utils /////////////////////////////////////////////////////////////////////
+
+  var max = Math.max;
+  var splice = [].splice;
+  var pow = Math.pow;
+  var slice = [].slice;
+  var fromCharCode = String.fromCharCode;
+  var isArray = Array.isArray;
 
   function fail(msg) {
     throw new Error(msg);
   }
 
-  var max = Math.max;
-  var splice = [].splice;
+  function createStream(parent, size) {
+    var stream = Object.create(parent);
+    var start = stream.start = stream.pos = parent.pos || 0;
+    stream.end = size ? start + size : parent.endPos;
+    stream.bitBuffer = 0;
+    stream.bitLength = 0;
+    return stream;
+  }
+
+  // Fixed deflate code tables /////////////////////////////////////////////////
 
   var codeLengthOrder =
     [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
@@ -2392,6 +2433,8 @@
   for (var i = 0; i < 287; ++i)
     bitLengths[i] = i < 144 || (i > 279 ? 8 : (i < 256 ? 9 : 7));
   var fixedLiteralTable = buildHuffmanTable(bitLengths);
+
+  // Inflate ///////////////////////////////////////////////////////////////////
 
   function buildHuffmanTable(bitLengths) {
     var maxBits = max.apply(null, bitLengths);
@@ -2490,7 +2533,7 @@
     return buffer & ((1 << count) - 1);
   }
   function inflate(inBuffer, outBuffer, literalTable, distanceTable) {
-    var bufflen = inBuffer.byteLength;
+    var bufflen = inBuffer.length;
     var pos = outBuffer.length;
     for (var sym; (sym = decode(inBuffer, literalTable)) !== 256;) {
       if (sym < 256) {
@@ -2524,142 +2567,324 @@
     return code & 0xffff;
   }
 
-  window.parseSWF = function (buffer) {
+  // Parsing templates /////////////////////////////////////////////////////////
+
+  function readSi8($bytes, $stream) {
+    return $stream.getInt8($stream.pos++);
+  }
+  function readSi16($bytes, $stream) {
+    return $stream.getInt16($stream.pos, $stream.pos += 2);
+  }
+  function readSi32($bytes, $stream) {
+    return $stream.getInt32($stream.pos, $stream.pos += 4);
+  }
+  function readUi8($bytes, $stream) {
+    return $bytes[$stream.pos++];
+  }
+  function readUi16($bytes, $stream) {
+    return $stream.getUint16($stream.pos, $stream.pos += 2);
+  }
+  function readUi24($bytes, $stream) {
+    return $stream.getUint16($stream.pos, $stream.pos += 2) |
+           ($bytes[$stream.pos++] << 16);
+  }
+  function readUi32($bytes, $stream) {
+    return $stream.getUint32($stream.pos, $stream.pos += 4);
+  }
+  function readFixed($bytes, $stream) {
+    return readUb($bytes, $stream, 32) * pow(2, -16);
+  }
+  function readFixed8($bytes, $stream) {
+    return readUb($bytes, $stream, 16) * pow(2, -8);
+  }
+  function readFloat16($bytes, $stream) {
+    var bits = readUb($bytes, $stream, 16);
+    var sign = bits >> 15 ? -1 : 1;
+    var exponent = (bits & 0x7c00) >> 10;
+    var fraction = bits & 0x03ff;
+    if (!exponent)
+      return sign * pow(2, -14) * (fraction / 1024);
+    if (exponent === 0x1f)
+      return fraction ? NaN : sign * Infinity;
+    return sign * pow(2, exponent - 15) * (1 + (fraction / 1024));
+  }
+  function readFloat($bytes, $stream) {
+    return $stream.getFloat32($stream.pos, $stream.pos += 4);
+  }
+  function readDouble($bytes, $stream) {
+    return $stream.getFloat64($stream.pos, $stream.pos += 4);
+  }
+  function readEncodedU32($bytes, $stream) {
+    var val = 0;
+    for (var i = 0; i < 5; ++i) {
+      var b = $bytes[$stream.pos++];
+      val = value | ((b & 0x7f) << (7 * i));
+      if (!(b & 0x80))
+        break;
+    }
+    return val;
+  }
+  function readSb($bytes, $stream, numBits) {
+    return (readUb($bytes, $stream, numBits)
+           << (32 - numBits)) >> (32 - numBits);
+  }
+  function readUb($bytes, $stream, numBits) {
+    var buffer = $stream.bitBuffer;
+    var bitlen = $stream.bitLength;
+    while (numBits > bitlen) {
+      buffer = (buffer << 8) | $bytes[$stream.pos++];
+      bitlen += 8;
+    }
+    var val = 0;
+    var i = numBits;
+    while (i--)
+      val = (val << 1) | ((buffer >> --bitlen) & 1);
+    $stream.bitBuffer = buffer;
+    $stream.bitLength = bitlen;
+    return val;
+  }
+  function readFb($bytes, $stream, numBits) {
+    return readUb($bytes, $stream, numBits) * pow(2, -16);
+  }
+  function readString($bytes, $stream, length) {
+    var codes = [];
+    if (length) {
+      codes = slice.call($bytes, $stream.pos, $stream.pos += length);
+    } else {
+      var code;
+      var i = 0;
+      while (code = $bytes[$stream.pos++])
+        codes[i++] = code;
+    }
+    var numChunks = codes.length / 65536;
+    var str = '';
+    for (var i = 0; i < numChunks; ++i) {
+      var s = codes.slice(i * 65536, (i + 1) * 65536);
+      str += fromCharCode.apply(null, s);
+    }
+    return decodeURIComponent(escape(str.replace('\0', '', 'g')));
+  }
+  function readBinary($bytes, $stream) {
+    return $bytes.subarray($stream.pos);
+  }
+
+  var defaultTemplateSet = [
+    readSi8, readSi16, readSi32, readUi8, readUi16, readUi32,
+    readFixed, readFixed8, readFloat16, readFloat, readDouble,
+    readEncodedU32,
+    readSb, readUb, readFb, readString, readBinary,
+    readUi24,
+    'readTag($bytes,$stream,swfVersion)',
+    'readAction($bytes,$stream,swfVersion)'
+  ];
+
+  // Parser generator //////////////////////////////////////////////////////////
+
+  var firstLineIndex = (function(){} + '').split('\n').length > 1 ? 1 : 0;
+
+  function generate(struct, templateSet) {
+    if (!templateSet)
+      templateSet = defaultTemplateSet;
+
+    var varCount = 0;
+
+    function translate(type, options) {
+      if (translate[type])
+        return translate[type];
+      var template = templateSet[type];
+      if (typeof template === 'function') {
+        var funcTerms =
+          /^function (.*)\(([^\)]*)\).*\{\n?([.\s\S]*)\n?\}$/.exec(template);
+        var name = funcTerms[1];
+        var params = funcTerms[2].split(', ');
+        var lines = funcTerms[3].split('\n');
+        var isSimple = params.length === 2;
+        var inline = true;
+        var expr;
+        if (!isSimple) {
+          for (var i = 2, p; p = params[i]; i++) {
+            if (p in options) {
+              params[i] = options[p] + '';
+              inline = false;
+            }
+          }
+        }
+        if (inline && /^\s*return ([^;]*);$/.test(lines[firstLineIndex]))
+          expr = RegExp.$1;
+        else
+          expr = name + '(' + params.join(',') + ')';
+        if (isSimple)
+          translate[type] = expr;
+        return expr;
+      }
+      return template;
+    }
+
+    var body = (function process(struct) {
+      if (struct.__production__)
+        return struct.__production__;
+      var production = '';
+      var propValList = [];
+      if (typeof struct !== 'object' || 'type' in struct) {
+        struct = { $$: struct };
+      }
+      var props = Object.keys(struct);
+      for (var i = 0, prop; prop = props[i++];) {
+        var type = struct[prop];
+        var options = { };
+        var segment = '';
+        var expr = type;
+        if (typeof type === 'object' && 'type' in type) {
+          options = type;
+          type = type.type;
+        }
+        if (typeof type === 'number') {
+          if (type >= UB1 && type <= FLAG) {
+            if (type === FLAG) {
+              options.numBits = 1;
+              options.pre = '!!';
+            } else {
+              options.numBits = type - 19;
+            }
+            type = UB;
+          }
+          expr = translate(type, options);
+          if (options.condition)
+            expr = '(' + options.condition + ')?' + expr + ':undefined';
+        } else if (typeof type === 'object') {
+          if (isArray(type)) {
+            if (type.length === 3) {
+              segment += 'if(' + type[0] + '){';
+              segment += process(type[2]);
+              segment += '}else{'
+              segment += process(type[1]);
+              segment += '}';
+            } else {
+              var members = type.length === 2 ? type[1] : type.slice(1);
+              segment += 'switch(' + type[0] + '){';
+              var keys = Object.keys(members);
+              for (var j = 0, key; (key = keys[j++]) !== undefined;) {
+                var member = members[key];
+                if (key !== 'unknown' && member != undefined) {
+                  segment += 'case ' + key + ':';
+                  if (member !== members[keys[j]]) {
+                    segment += process(member);
+                    segment += 'break;';
+                  }
+                }
+              }
+              segment += 'default:' + (
+                'unknown' in members ? process(members.unknown) : '$=undefined'
+              );
+              segment += '}';
+            }
+          } else {
+            segment += process(type);
+          }
+          if (options.align)
+            segment += '$stream.bitBuffer=$stream.bitLength=0;';
+          if (options.size) {
+            segment = '$=(function($bytes,$stream,$){' + segment;
+            segment += 'return $})($bytes,createStream($stream,' + options.size + '));';
+            segment += '$stream.pos+=' + options.size + ';';
+          }
+          if (options.condition) {
+            segment = 'if(' + options.condition + '){' + segment;
+            segment += '}else{$=undefined;}';
+          }
+          expr = '$';
+        }
+        var tmpVar = '$' + varCount++;
+        segment += 'var ' + tmpVar + '=';
+        segment += options.pre || '';
+        segment += expr;
+        segment += options.post || '';
+        segment += ';';
+        if (options.list) {
+          var args = options.list;
+          var listVar = '$' + varCount++;
+          var header = 'var ' + listVar + '=[];';
+          var footer = '}';
+          if (args.condition) {
+            header += 'do{';
+            footer += 'while(' + args.condition + ')';
+          } else if (args.count) {
+            var loopVar = '$' + varCount++;
+            header += 'var ' + loopVar + '=' + args.count;
+            header += ';while(' + loopVar + '--){';
+          } else {
+            var endVar = '$' + varCount++;
+            header += 'var ' + endVar + '=';
+            if (args.length)
+              header += '$bytes.pos+' + args.length;
+            else
+              header += '$stream.end';
+            header += ';while($stream.pos<' + endVar + '){';
+          }
+          segment = header + segment;
+          segment += listVar + '.push($=' + tmpVar + ')';
+          segment += footer;
+          tmpVar = listVar;
+        }
+        if (prop[0] === '$') {
+          prop = prop.substr(1);
+          segment += 'var ' + prop + '=' + tmpVar + ';';
+        }
+        production += segment;
+        propValList.push(prop + ':' + tmpVar);
+      }
+      if (!('$$' in struct))
+        production += '$={' + propValList.join(',') + '};';
+      return struct.__production__ = production;
+    })(struct);
+
+    return eval(
+      '(function($bytes,$stream,swfVersion){' +
+        'var $;' +
+        body +
+      'return $})'
+    );
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+
+  console.timeEnd('init');
+  console.time('generate');
+
+  var readTag = generate(TAGRECORD);
+  var readAction = generate(ACTIONRECORD);
+  var readSwf = generate(SWFFILE);
+
+  console.timeEnd('generate');
+
+  function parse(buffer) {
     var bytes = new Uint8Array(buffer);
     var b1 = bytes[0];
     var b2 = bytes[1];
     var b3 = bytes[2];
     var compressed = bytes[0] === 67;
 
-    if (!(b2 === 87 && b3 === 83 && (b1 === 70 || compressed)))
+    if (!((b1 === 70 || compressed) && b2 === 87 && b3 === 83))
       fail('invalid swf data');
     if (compressed)
       fail('compressed swf data is not supported yet');
 
-    var readTag = generate(TAGRECORD, defaultTemplateSet);
-    var readAction = generate(ACTIONRECORD, defaultTemplateSet);
+    var stream = createStream(new DataView(buffer));
 
-    return generate(SWFFILE, defaultTemplateSet);
+    console.time('parse');
+    //console.profile();
+
+    var result = readSwf(bytes, stream);
+
+    //console.profileEnd();
+    console.timeEnd('parse');
+    console.dir(result);
+
+    return result;
   }
-  function generate(struct, templateSet) {
-    function cast(type, options) {
-      if (cast[type])
-        return cast[type];
-      var template = templateSet[type];
-      if (typeof template === 'function') {
-        var funcTerms =
-          /^function (.*)\(([^\)]*)\) \{([.\s\S]*)\}$/.exec(template);
-        var name = funcTerms[1];
-        var params = funcTerms[2].split(', ');
-        var expr;
 
-        // inline simple template functions if single-lined
-        if (params.length === 2) {
-          var lines = funcTerms[3].split('\n');
-          if (/^\s*return ([^;]*);$/.test(lines[1]))
-            expr = RegExp.$1;
-        }
+  //////////////////////////////////////////////////////////////////////////////
 
-        // overwrite custom parameters
-        if (options.params)
-          splice.apply(params, [2, options.params.length].concat(options.params));
-
-        expr = name + '(' + params.join(',') + ')';
-
-        // cache and return result
-        return cast[type] = expr;
-      }
-      return template;
-    }
-
-    var productions = [];
-    var localCount = 0;
-    var align = false;
-
-    (function translate(struct) {
-      if (!struct.production) {
-        var production = [];
-        var propValList = [];
-        var props = Object.keys(struct);
-        for (var i = 0, prop; prop = props[i++];) {
-          var type = struct[prop];
-          var options = { };
-          var expr = undefined;
-          if (typeof type === 'object' && type.type) {
-            options = type;
-            type = type.type;
-          }
-          if (typeof type === 'number') {
-            if (type >= UB1 && type <= FLAG) {
-              // TODO: reduce amount of function calls by bulk reading bit fields
-              options = {
-                params: [type === FLAG ? 1 : type - 20],
-                pre: type === FLAG ? '!!' : ''
-              };
-              type = UB;
-              align = true;
-            }
-            // clear bit buffer before reading byte-aligned values
-            if (align && type !== SB && type !== UB && type !== FB) {
-              production.push('$bytes.bitBuffer=$bytes.bitLength=0');
-              align = false;
-            }
-            expr = cast(type, options);
-          } else if (Array.isArray(type)) {
-            if (type.length === 2) {
-              production.push('switch(' + type[0] + '){\n');
-              for (var val in type[1]) {
-                production.push('case ' + val + ':\n');
-                if (typeof type[1][val] === 'object')
-                  translate(type[1][val]);
-                production.push('break\n');
-              }
-              production.push('\n}');
-              expr = '$$';
-            } else {
-
-            }
-          } else if (options.seamless) {
-            // merge sub-properties
-            var keys = Object.keys(type);
-            splice.apply(props, [i, 0].concat(keys));
-            // don't change the original object
-            struct = Object.create(struct);
-            keys.forEach(function(key) {
-              struct[key] = type[key];
-            });
-            continue;
-          } else {
-            translate(type);
-            expr = '$$';
-          }
-
-          var local = '$' + localCount++;
-          production.push('var ' + local + '=' +
-                           (options.pre || '') + expr + (options.post || ''));
-
-          // create named references for properties with leading dollar sign
-          if (prop[0] === '$') {
-            prop = prop.substr(1);
-            production.push('var ' + prop + '=' + local);
-          }
-
-          propValList.push(prop + ':' + local);
-        }
-        production.push('var $$={' + propValList.join(',') + '}');
-
-        // cache production to speed up subsequent translations
-        Object.defineProperty(struct, 'production', {
-          value: production.join('\n'),
-          enumerable: false
-        });
-      }
-      productions.push(struct.production);
-    })(struct);
-
-    return new Function('$bytes,$view',
-      productions.join('\n') + '\nreturn $$'
-    );
-  }
+  (window.SWF || (window.SWF = { })).parse = parse;
 
 })(this); // end of file
