@@ -168,7 +168,7 @@
         
         function tryParseSwfFile(test, buffer) {
             try {
-                parseSWF(buffer);
+                SWF.parse(buffer);
             } catch (e) {
                 test.result.pass = false;
                 test.result.parserFail = e.message;
