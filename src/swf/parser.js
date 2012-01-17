@@ -2081,7 +2081,7 @@
 
     /* PlaceObject */ 4: PLACEOBJECT,
     /* PlaceObject2 */ 26: PLACEOBJECT2,
-    ///* PlaceObject3 */ 70: PLACEOBJECT3,
+    /* PlaceObject3 */ 70: PLACEOBJECT3,
     /* RemoveObject */ 5: REMOVEOBJECT,
     /* RemoveObject2 */ 28: REMOVEOBJECT2,
 
