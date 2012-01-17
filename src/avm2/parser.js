@@ -410,7 +410,7 @@ function parseAbcFile(bytes) {
         };
         
         multiname.prototype.isAnyName = function isAnyName() {
-            return !this.isRuntimeName() && this.name != null;
+            return !this.isRuntimeName() && this.name == null;
         };
         
         multiname.prototype.isAnyNamespace = function isAnyNamespace() {
@@ -435,6 +435,7 @@ function parseAbcFile(bytes) {
         
         multiname.prototype.getName = function getName() {
             assert(!this.isAnyName() && !this.isRuntimeName());
+            return this.name;
         };
         
         multiname.prototype.getNamespace = function getNamespace(i) {
