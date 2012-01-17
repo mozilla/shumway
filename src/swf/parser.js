@@ -2219,31 +2219,31 @@
     //  characterId: UI16,
     //  splitter: RECT
     //},
-    //
-    ///* DefineSceneAndFrameLabelData */ 86: {
-    //  $sceneCount: EncodedU32,
-    //  scenes: {
-    //    type: {
-    //      offset: EncodedU32,
-    //      name: {
-    //        type: STRING,
-    //        length: undefined
-    //      }
-    //    },
-    //    list: { count: 'sceneCount' }
-    //  },
-    //  $frameLabelCount: EncodedU32,
-    //  frameLabels: {
-    //    type: {
-    //      frameNum: EncodedU32,
-    //      label: {
-    //        type: STRING,
-    //        length: undefined
-    //      }
-    //    },
-    //    list: { count: 'frameLabelCount' }
-    //  }
-    //},
+
+    /* DefineSceneAndFrameLabelData */ 86: {
+      $sceneCount: EncodedU32,
+      scenes: {
+        type: {
+          offset: EncodedU32,
+          name: {
+            type: STRING,
+            length: undefined
+          }
+        },
+        list: { count: 'sceneCount' }
+      },
+      $frameLabelCount: EncodedU32,
+      frameLabels: {
+        type: {
+          frameNum: EncodedU32,
+          label: {
+            type: STRING,
+            length: undefined
+          }
+        },
+        list: { count: 'frameLabelCount' }
+      }
+    },
 
     // Action tags /////////////////////////////////////////////////////////////
 
