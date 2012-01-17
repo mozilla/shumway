@@ -473,7 +473,6 @@
     },
     filterList: {
       type: FILTERLIST,
-      merge: true,
       condition: 'hasFilterList'
     },
     blendMode: {
@@ -1833,7 +1832,6 @@
     colorTransform: CXFORMWITHALPHA,
     filterList: {
       type: FILTERLIST,
-      merge: true,
       condition: 'hasFilterList'
     },
     blendMode: {
