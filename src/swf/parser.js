@@ -2716,7 +2716,7 @@
       var template = templateSet[type];
       if (typeof template === 'function') {
         var funcTerms =
-          /^function (.*)\(([^\)]*)\).*\{\n?([.\s\S]*)\n?\}$/.exec(template);
+          /^function (.*)\(([^\)]*)\).*{\n?([.\s\S]*)\n?}$/.exec(template);
         var name = funcTerms[1];
         var params = funcTerms[2].split(', ');
         var lines = funcTerms[3].split('\n');
