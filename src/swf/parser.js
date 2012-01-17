@@ -2258,12 +2258,12 @@
     /* DefineShape3 */ 32: DEFINESHAPE3,
     /* DefineShape4 */ 83: DEFINESHAPE4,
 
-    //// Bitmap tags ///////////////////////////////////////////////////////////
-    //
-    ///* DefineBits */ 6: DEFINEBITS,
-    ///* JPEGTables */ 8: JPEGTABLES,
-    ///* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
-    ///* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
+    // Bitmap tags /////////////////////////////////////////////////////////////
+
+    /* DefineBits */ 6: DEFINEBITS,
+    /* JPEGTables */ 8: JPEGTABLES,
+    /* DefineBitsJPEG2 */ 21: DEFINEBITSJPEG2,
+    /* DefineBitsJPEG3 */ 35: DEFINEBITSJPEG3,
     ///* DefineBitsLossless */ 20: DEFINEBITSLOSSLESS,
     ///* DefineBitsLossless2 */ 36: DEFINEBITSLOSSLESS2,
     ///* DefineBitsJPEG4 */ 90: DEFINEBITSJPEG4,
