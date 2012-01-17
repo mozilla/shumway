@@ -2614,10 +2614,10 @@
     return $stream.getUint32($stream.pos, $stream.pos += 4);
   }
   function readFixed($bytes, $stream) {
-    return readUb($bytes, $stream, 32) * pow(2, -16);
+    return readSi32($bytes, $stream) / 65536;
   }
   function readFixed8($bytes, $stream) {
-    return readUb($bytes, $stream, 16) * pow(2, -8);
+    return readSi16($bytes, $stream) / 255;
   }
   function readFloat16($bytes, $stream) {
     var bits = readUb($bytes, $stream, 16);
