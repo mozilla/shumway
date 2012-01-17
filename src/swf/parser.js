@@ -2640,7 +2640,7 @@
     var val = 0;
     for (var i = 0; i < 5; ++i) {
       var b = $bytes[$stream.pos++];
-      val = value | ((b & 0x7f) << (7 * i));
+      val = val | ((b & 0x7f) << (7 * i));
       if (!(b & 0x80))
         break;
     }
