@@ -2663,7 +2663,7 @@
       val = (val << 1) | ((buffer >> --bitlen) & 1);
     $stream.bitBuffer = buffer;
     $stream.bitLength = bitlen;
-    return val;
+    return val >>> 0;
   }
   function readFb($bytes, $stream, numBits) {
     return readUb($bytes, $stream, numBits) * pow(2, -16);
