@@ -98,9 +98,15 @@
         $hasScale: FLAG,
         scale: {
           type: {
-            $numBits: UB5,
-            scaleX: FB,
-            scaleY: FB
+            $numScaleBits: UB5,
+            scaleX: {
+              type: FB,
+              numBits: 'numScaleBits'
+            },
+            scaleY: {
+              type: FB,
+              numBits: 'numScaleBits'
+            }
           },
           merge: true,
           condition: 'hasScale'
@@ -108,16 +114,28 @@
         $hasRotate: FLAG,
         rotate: {
           type: {
-            $numBits: UB5,
-            rotateSkew0: FB,
-            rotateSkew1: FB
+            $numRotateBits: UB5,
+            rotateSkew0: {
+              type: FB,
+              numBits: 'numRotateBits'
+            },
+            rotateSkew1: {
+              type: FB,
+              numBits: 'numRotateBits'
+            }
           },
           merge: true,
           condition: 'hasRotate'
         },
-        $numBits: UB5,
-        translateX: SB,
-        translateY: SB
+        $numTranslateBits: UB5,
+        translateX: {
+          type: SB,
+          numBits: 'numTranslateBits'
+        },
+        translateY: {
+          type: SB,
+          numBits: 'numTranslateBits'
+        }
       },
       align: true,
       merge: true
@@ -871,9 +889,15 @@
     $moveTo: '!!(flags&1)',
     move: {
       type: {
-        $numBits: UB5,
-        moveDeltaX: SB,
-        moveDeltaY: SB
+        $numMoveBits: UB5,
+        moveDeltaX: {
+          type: SB,
+          numBits: 'numMoveBits'
+        },
+        moveDeltaY: {
+          type: SB,
+          numBits: 'numMoveBits'
+        }
       },
       merge: true,
       condition: 'moveTo'
@@ -2725,8 +2749,10 @@
         return struct.__production__;
       var production = '';
       var propValList = [];
+      var dumpLiteral = true;
       if (typeof struct !== 'object' || 'type' in struct) {
         struct = { $$: struct };
+        dumpLiteral = false;
       }
       var props = Object.keys(struct);
       for (var i = 0, prop; prop = props[i++];) {
@@ -2778,62 +2804,72 @@
               );
               segment += '}';
             }
+            options.merge = false;
+          } else if (options.merge) {
+            var results = /^(.*)\$ ?= ?{(.*)};$/.exec(process(type));
+            segment += results[1];
+            propValList.push(results[2]);
           } else {
             segment += process(type);
           }
           if (options.align)
             segment += '$stream.bitBuffer=$stream.bitLength=0;';
           if (options.size) {
-            segment = '$=(function($bytes,$stream,$){' + segment;
-            segment += 'return $})($bytes,createStream($stream,' + options.size + '));';
+            segment = '$=(function($bytes,$stream,$){' + segment + 'return $})';
+            segment += '($bytes,createStream($stream,' + options.size + '));';
             segment += '$stream.pos+=' + options.size + ';';
           }
           if (options.condition) {
             segment = 'if(' + options.condition + '){' + segment;
-            segment += '}else{$=undefined;}';
+            segment += '}';
+            if (!options.merge)
+              segment += 'else{$=undefined}';
           }
           expr = '$';
         }
-        var tmpVar = '$' + varCount++;
-        segment += 'var ' + tmpVar + '=';
-        segment += options.pre || '';
-        segment += expr;
-        segment += options.post || '';
-        segment += ';';
-        if (options.list) {
-          var args = options.list;
-          var listVar = '$' + varCount++;
-          var header = 'var ' + listVar + '=[];';
-          var footer = '}';
-          if (args.condition) {
-            header += 'do{';
-            footer += 'while(' + args.condition + ')';
-          } else if (args.count) {
-            var loopVar = '$' + varCount++;
-            header += 'var ' + loopVar + '=' + args.count;
-            header += ';while(' + loopVar + '--){';
+        if (!options.merge) {
+          if (prop[0] === '$') {
+            prop = prop.substr(1);
+            var tmpVar = prop;
           } else {
-            var endVar = '$' + varCount++;
-            header += 'var ' + endVar + '=';
-            if (args.length)
-              header += '$bytes.pos+' + args.length;
-            else
-              header += '$stream.end';
-            header += ';while($stream.pos<' + endVar + '){';
+            var tmpVar = '$' + varCount++;
           }
-          segment = header + segment;
-          segment += listVar + '.push($=' + tmpVar + ')';
-          segment += footer;
-          tmpVar = listVar;
-        }
-        if (prop[0] === '$') {
-          prop = prop.substr(1);
-          segment += 'var ' + prop + '=' + tmpVar + ';';
+          segment += 'var ' + tmpVar + '=';
+          segment += options.pre || '';
+          segment += expr;
+          segment += options.post || '';
+          segment += ';';
+          if (options.list) {
+            var args = options.list;
+            var listVar = '$' + varCount++;
+            var header = 'var ' + listVar + '=[];';
+            var footer = '}';
+            if (args.condition) {
+              header += 'do{';
+              footer += 'while(' + args.condition + ')';
+            } else if (args.count) {
+              var loopVar = '$' + varCount++;
+              header += 'var ' + loopVar + '=' + args.count;
+              header += ';while(' + loopVar + '--){';
+            } else {
+              var endVar = '$' + varCount++;
+              header += 'var ' + endVar + '=';
+              if (args.length)
+                header += '$bytes.pos+' + args.length;
+              else
+                header += '$stream.end';
+              header += ';while($stream.pos<' + endVar + '){';
+            }
+            segment = header + segment;
+            segment += listVar + '.push($=' + tmpVar + ')';
+            segment += footer;
+            tmpVar = listVar;
+          }
+          propValList.push(prop + ':' + tmpVar);
         }
         production += segment;
-        propValList.push(prop + ':' + tmpVar);
       }
-      if (!('$$' in struct))
+      if (dumpLiteral)
         production += '$={' + propValList.join(',') + '};';
       return struct.__production__ = production;
     })(struct);
