@@ -119,6 +119,12 @@ var opcodeTable = [
     {name:"newcatch",           operands:"index:u30EI",      canThrow:true, stackDelta:1},   //0x5A
     {name:"findpropglobalstrict", operands:null,             canThrow:true, stackDelta:0, internal:true},  //0x5B
     {name:"findpropglobal",     operands:null,               canThrow:true, stackDelta:0, internal:true},  //0x5C
+    
+    /**
+     * This searches the scope stack, and then the saved scope stack in the current method closure for a property
+     * with the name specified by the multiname. If property is unresolved, then an exception is thrown, or
+     * in case of "findproperty" the global object is pushed on the stack.  
+     */
     {name:"findpropstrict",     operands:"index:u30M",       canThrow:true, stackDelta:1},   //0x5D
     {name:"findproperty",       operands:"index:u30M",       canThrow:true, stackDelta:1},   //0x5E
     {name:"finddef",            operands:null,               canThrow:true, stackDelta:1},   //0x5F

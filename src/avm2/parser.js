@@ -1,13 +1,13 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var ABCStream = (function () {
-    function constructor(bytes) {
+    function abcStream(bytes) {
         this.bytes = bytes;
         this.view = new DataView(bytes.buffer);
         this.pos = 0;
     }
 
-    constructor.prototype = {
+    abcStream.prototype = {
         remaining: function () {
             return this.bytes.length - this.pos;
         },
@@ -107,78 +107,95 @@ var ABCStream = (function () {
         }
     };
 
-    return constructor;
+    return abcStream;
 })();
 
 // Takes a Uint8Array of bytes and returns an object.
 function parseAbcFile(bytes) {
 
-    function parseTrait(constantPool, stream) {
-        var name = constantPool.multinames[stream.readU30()];
-        var tag = stream.readU8();
-
-        var kind = tag & 0x0F;
-        var attrs = (tag >> 4) & 0x0F;
-        var trait;
-
-        switch (kind) {
-        case TRAIT_Slot:
-        case TRAIT_Const:
-            var slotid = stream.readU30();
-            var typename = constantPool.multinames[stream.readU30()];
-            var valueIndex = stream.readU30();
-            var value = null;
-            if (valueIndex != 0) {
-                value = constantPool.getValue(stream.readU8(), valueIndex);
+    var Traits = (function () {
+        function traits(constantPool, stream) {
+            var count = stream.readU30();
+            var items = [];
+            for (var i = 0; i < count; i++) {
+                items.push(parseTrait(constantPool, stream));
             }
-            trait = {
-                name: name,
-                attrs: attrs,
-                kind: kind,
-                slotid: slotid,
-                typename: typename, 
-                value: value
-            };
-            break;
-        case TRAIT_Method:
-        case TRAIT_Setter:
-        case TRAIT_Getter:
-            var dispid = stream.readU30();
-            var methinfo = stream.readU30();
-            trait = { name: name, attrs: attrs, kind: kind, dispid: dispid,
-                      methinfo: methinfo };
-            break;
-        case TRAIT_Class:
-            var slotid = stream.readU30();
-            var classinfo = stream.readU30();
-            trait = { name: name, attrs: attrs, kind: kind, slotid: slotid,
-                      classinfo: classinfo };
-            break;
-        case TRAIT_Function: // TODO
-            stream.readU30();
-            stream.readU30();
-            break;
+            this.traits = items;
         }
+        
+        function parseTrait(constantPool, stream) {
+            var name = constantPool.multinames[stream.readU30()];
+            assert(name.isQName());
+            
+            var tag = stream.readU8();
+            
+            var kind = tag & 0x0F;
+            var attrs = (tag >> 4) & 0x0F;
+            var trait;
 
-        if (attrs & ATTR_Metadata) {
-            var metadata = [];
-            var metadatacount = stream.readU30();
-            for (var i = 0; i < metadatacount; ++i)
-                metadata.push(stream.readU30());
-            trait.metadata = metadata;
+            switch (kind) {
+            case TRAIT_Slot:
+            case TRAIT_Const:
+                var slotid = stream.readU30();
+                var typename = constantPool.multinames[stream.readU30()];
+                var valueIndex = stream.readU30();
+                var value = null;
+                if (valueIndex != 0) {
+                    value = constantPool.getValue(stream.readU8(), valueIndex);
+                }
+                trait = {
+                    name: name,
+                    attrs: attrs,
+                    kind: kind,
+                    slotid: slotid,
+                    typename: typename, 
+                    value: value
+                };
+                break;
+            case TRAIT_Method:
+            case TRAIT_Setter:
+            case TRAIT_Getter:
+                var dispid = stream.readU30();
+                var methinfo = stream.readU30();
+                trait = { name: name, attrs: attrs, kind: kind, dispid: dispid,
+                          methinfo: methinfo };
+                break;
+            case TRAIT_Class:
+                var slotid = stream.readU30();
+                var classinfo = stream.readU30();
+                trait = { name: name, attrs: attrs, kind: kind, slotid: slotid,
+                          classinfo: classinfo };
+                break;
+            case TRAIT_Function: // TODO
+                stream.readU30();
+                stream.readU30();
+                break;
+            }
+
+            if (attrs & ATTR_Metadata) {
+                var metadata = [];
+                var metadatacount = stream.readU30();
+                for (var i = 0; i < metadatacount; ++i)
+                    metadata.push(stream.readU30());
+                trait.metadata = metadata;
+            }
+
+            return trait;
         }
-
-        return trait;
-    }
+        
+        traits.prototype.find = function find(multiname) {
+            var traits = this.traits;
+            for (var i = 0; i < traits.length; i++) {
+                if (traits[i].name.matches(multiname)) {
+                    return traits[i];
+                }
+            }
+            return null;
+        };
+        
+        return traits;
+    })();
     
-    function parseTraits(constantPool, stream, target) {
-        var traitCount = stream.readU30();
-        var traits = [];
-        for (var i = 0; i < traitCount; ++i)
-            traits.push(parseTrait(constantPool, stream));
-        target.traits = traits;
-    }
-
     var Namespace = (function () {
         
         const PUBLIC             = 0x00;
@@ -417,16 +434,20 @@ function parseAbcFile(bytes) {
             return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace == null;
         };
         
+        multiname.prototype.isRuntimeName = function isRuntimeName() {
+            return this.flags & RUNTIME_NAME;
+        };
+        
         multiname.prototype.isRuntimeNamespace = function isRuntimeNamespace() {
             return this.flags & RUNTIME_NAMESPACE;
         };
         
+        multiname.prototype.isRuntime = function isRuntime() {
+            return this.flags & (RUNTIME_NAME | RUNTIME_NAMESPACE);
+        }
+        
         multiname.prototype.isQName = function isQName() {
             return this.flags & QNAME;
-        };
-        
-        multiname.prototype.isRuntimeName = function isRuntimeName() {
-            return this.flags & RUNTIME_NAME;
         };
         
         multiname.prototype.namespaceCount = function namespaceCount() {
@@ -446,6 +467,19 @@ function parseAbcFile(bytes) {
                 assert(i == 0);
                 return this.namespace;
             }
+        };
+        
+        multiname.prototype.matches = function matches(multiname) {
+            assert(this.isQName() && !this.isRuntime());
+            if (this.name != multiname.name) {
+                return false;
+            }
+            if (multiname.namespace) {
+                return this.namespace == multiname.namespace;
+            } else {
+                return multiname.namespaceSet.indexOf(this.namespace) >= 0;
+            }
+            return this.name;
         };
         
         multiname.prototype.nameToString = function nameToString() {
@@ -488,7 +522,7 @@ function parseAbcFile(bytes) {
     })();
     
     var ConstantPool = (function constantPool() {
-        function constructor(stream) {
+        function constantPool(stream) {
             var i, n;
 
             // ints
@@ -557,7 +591,7 @@ function parseAbcFile(bytes) {
             this.multinames = multinames;
         }
         
-        constructor.prototype.getValue = function getValue(kind, index) {
+        constantPool.prototype.getValue = function getValue(kind, index) {
             switch (kind) {
             case CONSTANT_Int: 
                 return this.ints[index];
@@ -595,11 +629,11 @@ function parseAbcFile(bytes) {
             }
         }; 
         
-        return constructor;
+        return constantPool;
     })();
     
-    var MethodInfo = (function methodInfo() {
-        function constructor(constantPool, stream) {
+    var MethodInfo = (function () {
+        function methodInfo(constantPool, stream) {
             var paramcount = stream.readU30();
             var returntype = stream.readU30();
             var params = [];
@@ -635,15 +669,15 @@ function parseAbcFile(bytes) {
             this.paramnames = paramnames;
         }
         
-        constructor.prototype = {
+        methodInfo.prototype = {
             
         };
         
-        return constructor;
+        return methodInfo;
     })();
 
-    var MetaDataInfo = (function metaDataInfo() {
-        function constructor(constantPool, stream) {
+    var MetaDataInfo = (function () {
+        function metaDataInfo(constantPool, stream) {
             var name = stream.readU30();
             var itemcount = stream.readU30();
             
@@ -655,11 +689,11 @@ function parseAbcFile(bytes) {
             this.name = name;
             this.items = items;
         }
-        return constructor;
+        return metaDataInfo;
     })();
     
-    var InstanceInfo = (function instanceInfo() {
-        function constructor(constantPool, stream) {
+    var InstanceInfo = (function () {
+        function instanceInfo(constantPool, stream) {
             this.name = stream.readU30();
             this.superclass = stream.readU30();
             this.flags = stream.readU8();
@@ -672,34 +706,34 @@ function parseAbcFile(bytes) {
             for (var i = 0; i < interfaceCount; ++i)
                 this.interfaces[i] = stream.readU30();
             this.iinit = stream.readU30();
-            parseTraits(constantPool, stream, this);
+            this.traits = new Traits(constantPool, stream);
         }
-        return constructor;
+        return instanceInfo;
     })();
 
-    var ClassInfo = (function classInfo() {
-        function constructor(constantPool, stream) {
+    var ClassInfo = (function () {
+        function classInfo(constantPool, stream) {
             this.cinit = stream.readU30();
-            parseTraits(constantPool, stream, this);
+            this.traits = new Traits(constantPool, stream);
         }
-        return constructor;
+        return classInfo;
     })();
     
     var ScriptInfo = (function scriptInfo() {
-        function constructor(constantPool, methods, stream) {
+        function scriptInfo(constantPool, methods, stream) {
             this.init = stream.readU30();
             this.methods = methods;
-            parseTraits(constantPool, stream, this);
+            this.traits = new Traits(constantPool, stream);
         }
-        constructor.prototype = {
+        scriptInfo.prototype = {
             get entryPoint() {
                 return this.methods[this.init];
             }
         };
-        return constructor;
+        return scriptInfo;
     })();
 
-    var MethodBody = (function methodBody() {
+    var MethodBody = (function () {
         function parseException(stream) {
             return {
                 start: stream.readU30(), 
@@ -710,7 +744,7 @@ function parseAbcFile(bytes) {
             };
         }
         
-        function constructor(constantPool, methods, stream) {
+        function methodBody(constantPool, methods, stream) {
             this.methodInfo = methods[stream.readU30()];
             this.maxStack = stream.readU30();
             this.localCount = stream.readU30();
@@ -729,13 +763,13 @@ function parseAbcFile(bytes) {
                 exceptions = parseException(stream);
             }
             this.exceptions = exceptions;
-            parseTraits(constantPool, stream, this);
+            this.traits = new Traits(constantPool, stream);
         }
-        return constructor;
+        return methodBody;
     })();
 
-    var AbcFile = (function abcFile() {
-        function constructor(bytes) {
+    var AbcFile = (function () {
+        function abcFile(bytes) {
             var n;
             var stream = new ABCStream(bytes);
             checkMagic(stream);
@@ -791,7 +825,7 @@ function parseAbcFile(bytes) {
             }
         }
         
-        constructor.prototype = {
+        abcFile.prototype = {
             get lastScript() {
                 assert (this.scripts.length > 0);
                 return this.scripts[this.scripts.length - 1];
@@ -806,7 +840,7 @@ function parseAbcFile(bytes) {
             
             sillyMethodLookup: function (methodInfo) {
                 for (var key in this.methodBodies) {
-                    if (this.methodBodies[key].methodInfo ==  methodInfo) {
+                    if (this.methodBodies[key].methodInfo == methodInfo) {
                         return this.methodBodies[key];
                     }
                 }
@@ -814,7 +848,7 @@ function parseAbcFile(bytes) {
             }
         };
         
-        return constructor;
+        return abcFile;
     })();
     
     return new AbcFile(bytes);

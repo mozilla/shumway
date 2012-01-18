@@ -16,74 +16,148 @@ Array.prototype.first = function() {
 var ASObject = (function () {
     function asObject() {
         this.slots = [];
+        this.traits = null;
     }
+    asObject.prototype.resolve = function resolve(multiname) {
+        if (this.traits) {
+            var trait = this.traits.find(multiname);
+            if (trait) {
+                return this.slots[trait.slotid];
+            }
+        }
+        return this[multiname.name];
+    };
     return asObject;
 })();
 
-var global = new ASObject();
+var Closure = (function () {
+    function closure(frame) {
+        ASObject.call(this);
+        this.frame = frame;
+    }
+    closure.prototype = inherit(ASObject, {
+        apply: function($this, args) {
+            return this.frame.interpret($this, args);
+        } 
+    });
+    return closure;
+})();
+
+var ScopeStack = (function () {
+    function scopeStack(original) {
+        if (original) {
+            this.stack = original.stack.slice(0);
+        } else {
+            this.stack = [];
+        }
+    }
+    
+    scopeStack.prototype.push = function push(val) {
+        this.stack.push(val);
+    };
+    
+    scopeStack.prototype.pop = function pop() {
+        return this.stack.pop();
+    };
+    
+    scopeStack.prototype.global = function global() {
+        return this.stack[0];
+    };
+    
+    scopeStack.prototype.clone = function clone() {
+        return new ScopeStack(this);
+    };
+    
+    scopeStack.prototype.findProperty = function findProperty(multiname) {
+        var stack = this.stack;
+        for (var i = stack.length - 1; i >= 0; i--) {
+            var scope = stack[i];
+            if (scope.traits) {
+                var trait = scope.traits.find(multiname);
+                if (trait != null) {
+                    return scope;
+                }
+            }
+            if (i == 0 && scope.hasOwnProperty(multiname.name)) {
+                return scope;
+            }
+        }
+        return null;
+    }
+    
+    return scopeStack;
+})();
+
+function createGlobalScope(script) {
+    var global = new ASObject();
+    global.traits = script.traits;
+    global.trace = function (val) {
+        console.info(val);
+    };
+    
+    var scopeStack = new ScopeStack();
+    scopeStack.push(global);
+    return scopeStack;
+}
 
 function interpretAbc(abc) {
     var methodBody = abc.sillyMethodLookup(abc.entryPoint);
+    var scope = createGlobalScope(abc.lastScript);
     
-    
-    
-    new Frame(abc.constantPool, methodBody).interpret(new ASObject());
-    
-    console.info("Done");
+    new Frame(abc, methodBody, scope).interpret(new ASObject());
 }
 
 
 var Frame = (function frame() {
-    function constructor (constantPool, methodBody) {
-        this.constantPool = constantPool;
+    function constructor (abc, methodBody, scopeStack) {
+        this.scopeStack = scopeStack;
         this.code = methodBody.code;
-    }
-    
-    function isRuntimeMultiname(multiname) {
-        return multiname.kind == CONSTANT_RTQName  ||
-               multiname.kind == CONSTANT_RTQNameA ||
-               multiname.kind == CONSTANT_RTQNameL ||
-               multiname.kind == CONSTANT_RTQNameLA;
+        this.abc = abc;
     }
     
     constructor.prototype = {
-        interpret: function($this) {
-            assert($this);
+        interpret: function($this, args) {
             
             var i = 0;
             
             var code = new ABCStream(this.code);
-            var ints = this.constantPool.ints;
-            var uints = this.constantPool.uints;
-            var doubles = this.constantPool.doubles;
-            var strings = this.constantPool.strings;
-            var multinames = this.constantPool.multinames;
+            var ints = this.abc.constantPool.ints;
+            var uints = this.abc.constantPool.uints;
+            var doubles = this.abc.constantPool.doubles;
+            var strings = this.abc.constantPool.strings;
+            var multinames = this.abc.constantPool.multinames;
             
-            var bci = 0;
             
             var local = [$this];
-            var stack = [];
-            var scope = [global];
             
-            var offset, value2, value1, index, multiname;
+            if (args) {
+                local = local.concat(args);
+            }
+            
+            var stack = [];
+            
+            
+            var scopeStack = this.scopeStack;
+            
+            var offset, value2, value1, index, multiname, argCount, args, obj, top;
+            
+            var methodInfo, methodBody;
             
             function jump (offset) {
                 code.seek(code.pos + offset);
             }
             
-            function findPropertyInScope(name) {
-                for (var i = scope.length - 1; i >= 0; i--) {
-                    if (scope[i].hasOwnProperty(name)) {
-                        return scope[i];
-                    }
-                }
-                return null;
-            }
-            
+            /**
+             * Finds the object with a property that matches the given multiname. This first searches the scope stack,
+             * and then the saved scope stack. 
+             */
             function findProperty(multiname, strict) {
-                var res = findPropertyInScope(multiname.name);
+                var res = scopeStack.findProperty(multiname);
                 if (res == null) {
-                    res = global[multiname.name];
+                    assert(!strict, "Property " + multiname + " not found.");
+                    return scopeStack.global();
+                } else {
+                    return res;
                 }
             };
                 
@@ -160,7 +234,9 @@ var Frame = (function frame() {
                 case OP_pushbyte: 
                     stack.push(code.readU8());
                     break;
-                case OP_pushshort: notImplemented(); break;
+                case OP_pushshort:
+                    stack.push(code.readU30());
+                    break;
                 case OP_pushtrue: notImplemented(); break;
                 case OP_pushfalse: notImplemented(); break;
                 case OP_pushnan: notImplemented(); break;
@@ -179,8 +255,8 @@ var Frame = (function frame() {
                 case OP_pushdouble: 
                     stack.push(doubles[code.readU30()]);
                     break;
-                case OP_pushscope: 
-                    scope.push(stack.pop());
+                case OP_pushscope:
+                    scopeStack.push(stack.pop());
                     break;
                 case OP_pushnamespace: notImplemented(); break;
                 case OP_hasnext2: notImplemented(); break;
@@ -194,15 +270,29 @@ var Frame = (function frame() {
                 case OP_si32: notImplemented(); break;
                 case OP_sf32: notImplemented(); break;
                 case OP_sf64: notImplemented(); break;
-                case OP_newfunction: notImplemented(); break;
+                case OP_newfunction:
+                    methodInfo = this.abc.methods[code.readU30()];
+                    methodBody = this.abc.sillyMethodLookup(methodInfo);
+                    stack.push(new Closure(new Frame(this.abc, methodBody, scopeStack.clone())));
+                    break;
                 case OP_call: notImplemented(); break;
                 case OP_construct: notImplemented(); break;
                 case OP_callmethod: notImplemented(); break;
                 case OP_callstatic: notImplemented(); break;
                 case OP_callsuper: notImplemented(); break;
-                case OP_callproperty: notImplemented(); break;
+                case OP_callproperty:
+                    multiname = multinames[code.readU30()];
+                    args = stack.popMany(code.readU30());
+                    if (multiname.isRuntime()) {
+                        assert(false);
+                    } else {
+                        obj = stack.pop();
+                        stack.push(obj.resolve(multiname).apply(obj, args));
+                    }
+                    break;
                 case OP_returnvoid: notImplemented(); break;
-                case OP_returnvalue: notImplemented(); break;
+                case OP_returnvalue:
+                    return stack.pop();
                 case OP_constructsuper: notImplemented(); break;
                 case OP_constructprop: notImplemented(); break;
                 case OP_callsuperid: notImplemented(); break;
@@ -225,7 +315,7 @@ var Frame = (function frame() {
                 case OP_newcatch: notImplemented(); break;
                 case OP_findpropstrict:
                     multiname = multinames[code.readU30()];
-                    if (isRuntimeMultiname(multiname)) {
+                    if (multiname.isRuntime()) {
                         assert(false);
                     } else {
                         stack.push(findProperty(multiname, true));
@@ -237,8 +327,8 @@ var Frame = (function frame() {
                 case OP_setproperty: notImplemented(); break;
                 case OP_getlocal: notImplemented(); break;
                 case OP_setlocal: notImplemented(); break;
-                case OP_getglobalscope: 
-                    stack.push(scope.first());
+                case OP_getglobalscope:
+                    stack.push(scopeStack.global());
                     break;
                 case OP_getscopeobject: notImplemented(); break;
                 case OP_getproperty: notImplemented(); break;
@@ -272,7 +362,9 @@ var Frame = (function frame() {
                 case OP_convert_f4: notImplemented(); break;
                 case OP_coerce: notImplemented(); break;
                 case OP_coerce_b: notImplemented(); break;
-                case OP_coerce_a: notImplemented(); break;
+                case OP_coerce_a: 
+                    // NOP
+                    break;
                 case OP_coerce_i: notImplemented(); break;
                 case OP_coerce_d: notImplemented(); break;
                 case OP_coerce_s: notImplemented(); break;
