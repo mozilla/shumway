@@ -58,7 +58,21 @@
             for (var i = 0; i < methodBodies.length; i++) {
                 traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
             }
+            interpretAbc(abc);
         });
+        
+        /*
+        new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
+            var abc = parseAbcFile(new Uint8Array(buffer));
+            var writer = new IndentingWriter(false);
+            var methodBodies = abc.methodBodies;
+            for (var i = 0; i < methodBodies.length; i++) {
+                traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+            }
+            
+            interpretAbc(abc);
+        });
+        */
     
         function runTest(test, next) {
             try {
