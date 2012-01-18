@@ -923,7 +923,6 @@
         $numFillBits: UB4,
         $numLineBits: UB4
       },
-      align: true,
       merge: true,
       condition: 'hasNewStyles'
     }
@@ -973,15 +972,22 @@
     record: {
       type: ['recordType', STYLECHANGERECORD, EDGERECORD],
       merge: true
-    }
+    },
+    $isEndRecord: '!(recordType||flags)'
   };
 
   var SHAPE = {
-    $numFillBits: UB4,
-    $numLineBits: UB4,
-    shapeRecords: {
-      type: SHAPERECORD,
-      list: { condition: 'recordType||flags' }
+    shape: {
+      type: {
+        $numFillBits: UB4,
+        $numLineBits: UB4,
+        shapeRecords: {
+          type: SHAPERECORD,
+          list: { condition: '!$.isEndRecord' }
+        }
+      },
+      align: true,
+      merge: true
     }
   };
 
