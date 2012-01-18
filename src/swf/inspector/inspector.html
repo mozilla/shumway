@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>  
+<html>
   <head>
     <meta charset="utf-8">
 
@@ -12,7 +12,7 @@
         width: 100%;
         height: 100%;
       }
-      
+
       body {
         margin: 0;
         padding: 0;
@@ -20,7 +20,7 @@
         font-family: Helvetica;
         font-size: 14px;
       }
-      
+
       #instruction {
         position: absolute;
         left: 50%;
@@ -35,7 +35,7 @@
         line-height: 500px;
         text-align: center;
       }
-      
+
       #tagbrowser {
         display: none;
         width: 250px;
@@ -43,13 +43,13 @@
         float: left;
         overflow: auto;
       }
-      
+
       #taglist {
         margin: 0;
         padding: 0;
         border-right: 1px solid #666;
       }
-      
+
       #taglist li {
         background: #666;
         margin: 1px;
@@ -58,7 +58,7 @@
         list-style: none;
         cursor: pointer;
       }
-      
+
       #objectviewer {
         display: none;
         width: 1000px;
@@ -76,18 +76,90 @@
     </style>
   </head>
   <body>
-    
+
     <div id="instruction">Drop SWF File Here</div>
-    
+
     <div id ="tagbrowser">
       <ul id="taglist"></ul>
     </div>
-  
+
     <pre id="objectviewer"></pre>
 
     <script>
-      var tagNames = 'End ShowFrame DefineShape PlaceObject RemoveObject DefineBits DefineButton JPEGTables SetBackgroundColor DefineFont DefineText DoAction DefineFontInfo DefineSound StartSound DefineButtonSound SoundStreamHead SoundStreamBlock DefineBitsLossless DefineBitsJPEG2 DefineShape2 DefineButtonCxform Protect PlaceObject2 RemoveObject2 DefineShape3 DefineText2 DefineButton2 DefineBitsJPEG3 DefineBitsLossless2 DefineEditText DefineSprite FrameLabel SoundStreamHead2 DefineMorphShape DefineFont2 ExportAssets ImportAssets EnableDebugger DoInitAction DefineVideoStream VideoFrame DefineFontInfo2 EnableDebugger2 ScriptLimits SetTabIndex FileAttributes PlaceObject3 ImportAssets2 DefineFontAlignZones CSMTextSettings DefineFont3 SymbolClass Metadata DefineScalingGrid DoABC DefineShape4 DefineMorphShape2 DefineSceneAndFrameLabelData DefineBinaryData DefineFontName StartSound2 DefineBitsJPEG4 DefineFont4'.split(' ');
-    
+			var tags = {
+				End: 0,
+				ShowFrame: 1,
+				DefineShape: 2,
+				PlaceObject: 4,
+				RemoveObject: 5,
+				DefineBits: 6,
+				DefineButton: 7,
+				JPEGTables: 8,
+				SetBackgroundColor: 9,
+				DefineFont: 10,
+				DefineText: 11,
+				DoAction: 12,
+				DefineFontInfo: 13,
+				DefineSound: 14,
+				StartSound: 15,
+				DefineButtonSound: 17,
+				SoundStreamHead: 18,
+				SoundStreamBlock: 19,
+				DefineBitsLossless: 20,
+				DefineBitsJPEG2: 21,
+				DefineShape2: 22,
+				DefineButtonCxform: 23,
+				Protect: 24,
+				PlaceObject2: 26,
+				RemoveObject2: 28,
+				DefineShape3: 32,
+				DefineText2: 33,
+				DefineButton2: 34,
+				DefineBitsJPEG3: 35,
+				DefineBitsLossless2: 36,
+				DefineEditText: 37,
+				DefineSprite: 39,
+				FrameLabel: 43,
+				SoundStreamHead2: 45,
+				DefineMorphShape: 46,
+				DefineFont2: 48,
+				ExportAssets: 56,
+				ImportAssets: 57,
+				EnableDebugger: 58,
+				DoInitAction: 59,
+				DefineVideoStream: 60,
+				VideoFrame: 61,
+				DefineFontInfo2: 62,
+				EnableDebugger2: 64,
+				ScriptLimits: 65,
+				SetTabIndex: 66,
+				FileAttributes: 69,
+				PlaceObject3: 70,
+				ImportAssets2: 71,
+				DefineFontAlignZones: 73,
+				CSMTextSettings: 74,
+				DefineFont3: 75,
+				SymbolClass: 76,
+				Metadata: 77,
+				DefineScalingGrid: 78,
+				DoABC: 82,
+				DefineShape4: 83,
+				DefineMorphShape2: 84,
+				DefineSceneAndFrameLabelData: 86,
+				DefineBinaryData: 87,
+				DefineFontName: 88,
+				StartSound2: 89,
+				DefineBitsJPEG4: 90,
+				DefineFont4: 91,
+	  	};
+
+			var tagNames = (function() {
+				var map = { };
+				for (var name in tags)
+					map[tags[name]] = name; 
+				return map;
+			})();
+
       var instruction = document.getElementById('instruction');
       var tagbrowser = document.getElementById('tagbrowser');
       var taglist = document.getElementById('taglist');
@@ -97,21 +169,21 @@
       document.body.addEventListener('dragover', dragover, false);
       document.body.addEventListener('drop', drop, false);
 
-      function dragenter(e) {  
-        e.stopPropagation();  
-        e.preventDefault();  
+      function dragenter(e) {
+        e.stopPropagation();
+        e.preventDefault();
       }
-      function dragover(e) {  
-        e.stopPropagation();  
-        e.preventDefault();  
+      function dragover(e) {
+        e.stopPropagation();
+        e.preventDefault();
       }
-      function drop(e) {  
+      function drop(e) {
         e.stopPropagation();
         e.preventDefault();
 
         var file = e.dataTransfer.files[0];
         var reader = new FileReader();
-         
+
         reader.onload = (function(e) {
           var result = SWF.parse(this.result);
           taglist.innerHTML = '';
@@ -129,7 +201,7 @@
           instruction.style.display = 'none';
           tagbrowser.style.display = objectviewer.style.display ='block';
         });
-        
+
         reader.readAsArrayBuffer(file);
       }
     </script>
