@@ -2419,10 +2419,9 @@
     throw new Error(msg);
   }
 
-  function createStream(parent, size) {
-    var stream = Object.create(parent);
-    var start = stream.start = stream.pos = parent.pos || 0;
-    stream.end = size ? start + size : parent.endPos;
+  function createStream(bytes) {
+    var stream = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    stream.pos = 0;
     stream.bitBuffer = 0;
     stream.bitLength = 0;
     return stream;
@@ -2803,19 +2802,28 @@
               segment += '}';
             }
             options.merge = false;
+            expr = '$';
           } else if (options.merge) {
             var results = /^(.*)\$ ?= ?{(.*)};$/.exec(process(type));
             segment += results[1];
             propValList.push(results[2]);
           } else {
             segment += process(type);
+            expr = '$';
           }
           if (options.align)
             segment += '$stream.bitBuffer=$stream.bitLength=0;';
           if (options.size) {
-            segment = '$=(function($bytes,$stream,$){' + segment + 'return $})';
-            segment += '($bytes,createStream($stream,' + options.size + '));';
-            segment += '$stream.pos+=' + options.size + ';';
+            var bytesVar = '$' + varCount++;
+            var streamVar = '$' + varCount++;
+            var init = 'var ' + bytesVar + '=$bytes;';
+            init += 'var ' + streamVar + '=$stream;';
+            init += '$bytes=$bytes.subarray($stream.pos,$stream.pos+=(' +
+                    options.size + '));';
+            init += '$stream=createStream($bytes);';
+            segment = init + segment;
+            segment += '$bytes=' + bytesVar + ';';
+            segment += '$stream=' + streamVar + ';';
           }
           if (options.condition) {
             segment = 'if(' + options.condition + '){' + segment;
@@ -2823,7 +2831,6 @@
             if (!options.merge)
               segment += 'else{$=undefined}';
           }
-          expr = '$';
         }
         if (!options.merge) {
           if (prop[0] === '$') {
@@ -2855,7 +2862,7 @@
               if (args.length)
                 header += '$bytes.pos+' + args.length;
               else
-                header += '$stream.end';
+                header += '$stream.byteLength';
               header += ';while($stream.pos<' + endVar + '){';
             }
             segment = header + segment;
@@ -2903,7 +2910,7 @@
     if (compressed)
       fail('compressed swf data is not supported yet');
 
-    var stream = createStream(new DataView(buffer));
+    var stream = createStream(bytes);
 
     console.time('parse');
     //console.profile();
