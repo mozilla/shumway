@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>  
+  <head>
+    <meta charset="utf-8">
+
+    <script src="../../avm2/DataView.js"></script>
+    <script src="../parser.js"></script>
+    <script src="beautify.js"></script>
+
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+      
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ccc;
+        font-family: Helvetica;
+        font-size: 14px;
+      }
+      
+      #instruction {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 500px;
+        height: 500px;
+        margin: -250px 0 0 -250px;
+        border: 10px dashed #666;
+        border-radius: 50px;
+        color: #666;
+        font-size: 30px;
+        line-height: 500px;
+        text-align: center;
+      }
+      
+      #tagbrowser {
+        display: none;
+        width: 250px;
+        height: 100%;
+        float: left;
+        overflow: auto;
+      }
+      
+      #taglist {
+        margin: 0;
+        padding: 0;
+        border-right: 1px solid #666;
+      }
+      
+      #taglist li {
+        background: #666;
+        margin: 1px;
+        padding: 10px;
+        color: #ccc;
+        list-style: none;
+        cursor: pointer;
+      }
+      
+      #objectviewer {
+        display: none;
+        width: 1000px;
+        height: 100%;
+        margin: 0;
+        padding: 20px;
+        -moz-box-sizing: padding-box;
+        -webkit-box-sizing: padding-box;
+        box-sizing: padding-box;
+        background: #333;
+        color: #fff;
+        float: left;
+        overflow: auto;
+      }
+    </style>
+  </head>
+  <body>
+    
+    <div id="instruction">Drop SWF File Here</div>
+    
+    <div id ="tagbrowser">
+      <ul id="taglist"></ul>
+    </div>
+  
+    <pre id="objectviewer"></pre>
+
+    <script>
+      var tagNames = 'End ShowFrame DefineShape PlaceObject RemoveObject DefineBits DefineButton JPEGTables SetBackgroundColor DefineFont DefineText DoAction DefineFontInfo DefineSound StartSound DefineButtonSound SoundStreamHead SoundStreamBlock DefineBitsLossless DefineBitsJPEG2 DefineShape2 DefineButtonCxform Protect PlaceObject2 RemoveObject2 DefineShape3 DefineText2 DefineButton2 DefineBitsJPEG3 DefineBitsLossless2 DefineEditText DefineSprite FrameLabel SoundStreamHead2 DefineMorphShape DefineFont2 ExportAssets ImportAssets EnableDebugger DoInitAction DefineVideoStream VideoFrame DefineFontInfo2 EnableDebugger2 ScriptLimits SetTabIndex FileAttributes PlaceObject3 ImportAssets2 DefineFontAlignZones CSMTextSettings DefineFont3 SymbolClass Metadata DefineScalingGrid DoABC DefineShape4 DefineMorphShape2 DefineSceneAndFrameLabelData DefineBinaryData DefineFontName StartSound2 DefineBitsJPEG4 DefineFont4'.split(' ');
+    
+      var instruction = document.getElementById('instruction');
+      var tagbrowser = document.getElementById('tagbrowser');
+      var taglist = document.getElementById('taglist');
+      var objectviewer = document.getElementById('objectviewer');
+
+      document.body.addEventListener('dragenter', dragenter, false);
+      document.body.addEventListener('dragover', dragover, false);
+      document.body.addEventListener('drop', drop, false);
+
+      function dragenter(e) {  
+        e.stopPropagation();  
+        e.preventDefault();  
+      }
+      function dragover(e) {  
+        e.stopPropagation();  
+        e.preventDefault();  
+      }
+      function drop(e) {  
+        e.stopPropagation();
+        e.preventDefault();
+
+        var file = e.dataTransfer.files[0];
+        var reader = new FileReader();
+         
+        reader.onload = (function(e) {
+          var result = SWF.parse(this.result);
+          taglist.innerHTML = '';
+          var tags = result.tags;
+          for (var i = 0, tag; tag = tags[i++];) {
+            var entry = document.createElement('li');
+            entry.innerHTML = tagNames[tag.tagCode];
+            entry.onclick = (function(dump) {
+              return function() {
+                objectviewer.innerHTML = js_beautify(dump);
+              };
+            })(JSON.stringify(tag));
+            taglist.appendChild(entry);
+          }
+          instruction.style.display = 'none';
+          tagbrowser.style.display = objectviewer.style.display ='block';
+        });
+        
+        reader.readAsArrayBuffer(file);
+      }
+    </script>
+  </body>
+</html>
