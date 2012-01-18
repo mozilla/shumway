@@ -245,7 +245,7 @@
       condition: 'hasMatrix'
     },
     colorTransform: {
-      type: CXFORM,
+      type: CXFORMWITHALPHA,
       condition: 'hasColorTransform'
     },
     ratio: {
@@ -388,12 +388,12 @@
 
   var BEVELFILTER = {
     shadowColor: RGBA,
-    highlightColor: FIXED,
+    highlightColor: RGBA,
     blurX: FIXED,
     blurY: FIXED,
     angle: FIXED,
-    distance: FIXED8,
-    strength: FLAG,
+    distance: FIXED,
+    strength: FIXED8,
     innerShadow: FLAG,
     knockout: FLAG,
     compositeSource: FLAG,
