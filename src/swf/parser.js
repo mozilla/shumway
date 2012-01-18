@@ -2925,7 +2925,7 @@
 
     //console.profileEnd();
     console.timeEnd('parse');
-    console.dir(result);
+    //console.dir(result);
 
     return result;
   }
