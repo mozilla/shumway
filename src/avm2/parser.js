@@ -254,6 +254,10 @@ function parseAbcFile(bytes) {
             return this.name; 
         };
         
+        namespace.prototype.toString = function toString() {
+            return this.name;
+        }
+        
         return namespace;
     })();
     

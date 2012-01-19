@@ -25,12 +25,18 @@ var IndentingWriter = (function () {
     };
     
     indentingWriter.prototype.indent = function indent() {
-        this.padding += " ";
+        this.padding += "  ";
     };
     
     indentingWriter.prototype.outdent = function outdent() {
         if (this.padding.length > 0) {
-            this.padding = this.padding.substring(0, this.padding.length - 1);
+            this.padding = this.padding.substring(0, this.padding.length - 2);
+        }
+    };
+    
+    indentingWriter.prototype.writeArray = function writeArray(arr) {
+        for (var i = 0; i < arr.length; i++) {
+            this.writeLn(("" + i).padRight(' ', 3) + arr[i]);
         }
     };
     
@@ -50,6 +56,18 @@ function getFlags(value, flags) {
     return str;
 }
 
+function traceConstantPool(writer, constantPool) {
+    writer.enter("constantPool {");
+    for (var key in constantPool) {
+        if (constantPool[key] instanceof Array) {
+            writer.enter(key + " {");
+            writer.writeArray(constantPool[key]);
+            writer.leave("}");
+        }
+    }
+    writer.leave("}");
+}
+        
 function traceMethodInfo(writer, constantPool, methodInfo) {
     var mi = methodInfo;
     writer.enter("methodInfo {");
@@ -83,10 +101,12 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
             case "D": description = constantPool.doubles[value]; break;
             case "S": description = constantPool.strings[value]; break;
             case "N": description = constantPool.namespaces[value]; break;
-            case "M": description = constantPool.multinames[value]; break;
+            case "M": 
+                return constantPool.multinames[value]; 
             default: detail = "?"; break;
         }
-        return operand.name + ":" + value + (description == "" ? "" : "(" + operand.type + ":" + description + ")");
+        return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
+        
     }
     
     while (code.remaining() > 0) {
@@ -105,14 +125,16 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
                 break;
             default:
                 if (opcode) {
-                    str = opcode.name;
+                    str = opcode.name.padRight(' ', 20);
                     if (!opcode.operands) {
                         assert(false, "Opcode: " + opcode.name + " has undefined operands.");
                     } else {
                         if (opcode.operands.length > 0) {
-                            str += ": ";
                             for (var i = 0; i < opcode.operands.length; i++) {
-                                str += readOperand(opcode.operands[i]) + " ";
+                                str += readOperand(opcode.operands[i]);
+                                if (i < opcode.operands.length - 1) {
+                                    str += ", ";
+                                }
                             }
                         }
                         writer.writeLn(str);

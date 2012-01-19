@@ -1,3 +1,10 @@
+if (typeof console == "undefined") {
+    console = {
+        info: print,
+        warn: print
+    };
+}
+
 function error(message) {
     throw new Error(message);
 }
@@ -24,6 +31,18 @@ function notImplemented(message) {
 
 function unexpected() {
     assert(false);
+}
+
+String.prototype.padRight = function(c, n) {
+    var str = this;
+    if (!c || str.length >= n) {
+        return str;
+    }
+    var max = (n - str.length) / c.length;
+    for (var i = 0; i < max; i++) {
+        str += c;
+    }
+    return str;
 }
 
 /**
