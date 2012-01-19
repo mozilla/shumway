@@ -301,7 +301,21 @@ function parseAbcFile(bytes) {
         const NAMESPACE_SET      = 0x10;
         const TYPE_PARAMETER     = 0x20;
         
-        function multiname(constantPool, stream, multinames) {
+        function multiname() {
+            
+        }
+        
+        multiname.prototype.clone = function clone() {
+            var clone = new multiname();
+            clone.flags = this.flags;
+            clone.name = this.name;
+            clone.namespace = this.namespace;
+            clone.namespaceSet = this.namespaceSet;
+            clone.typeParameter = this.typeParameter;
+            return clone;
+        }
+        
+        multiname.prototype.parse = function parse(constantPool, stream, multinames) {
             var index = 0;
             this.flags = 0;
             this.kind = stream.readU8();
@@ -420,7 +434,7 @@ function parseAbcFile(bytes) {
                     unexpected();
                     break;
             }
-        }
+        };
         
         multiname.prototype.isAttribute = function isAttribute() {
             return this.flags & ATTRIBUTE;
@@ -457,6 +471,11 @@ function parseAbcFile(bytes) {
         multiname.prototype.getName = function getName() {
             assert(!this.isAnyName() && !this.isRuntimeName());
             return this.name;
+        };
+        
+        multiname.prototype.setName = function setName(name) {
+            this.flags &= ~(RUNTIME_NAME);
+            this.name = name;
         };
         
         multiname.prototype.getNamespace = function getNamespace(i) {
@@ -585,7 +604,9 @@ function parseAbcFile(bytes) {
             var multinames = [undefined];
             n = stream.readU30();
             for (i = 1; i < n; ++i) {
-                multinames.push(new Multiname(this, stream, multinames));
+                var multiname = new Multiname(this, stream, multinames);
+                multiname.parse(this, stream, multinames);
+                multinames.push(multiname);
             }
             
             this.multinames = multinames;

@@ -13,12 +13,37 @@ Array.prototype.first = function() {
     return this[0];
 };
 
+Array.prototype.peek = function() {
+    assert (this.length > 0);
+    return this[this.length - 1];
+};
+
+Array.prototype.getProperty = function(multiname) {
+    return this[multiname.name];
+};
+
+Array.prototype.setProperty = function setProperty(multiname, value) {
+    return this[multiname.name] = value;
+};
+
+String.prototype.getProperty = function(multiname) {
+    return this[multiname.name];
+};
+
+Date.prototype.getProperty = function(multiname) {
+    return this[multiname.name];
+};
+
+Math.getProperty = function(multiname) {
+    return this[multiname.name];
+};
+
 var ASObject = (function () {
     function asObject() {
         this.slots = [];
         this.traits = null;
     }
-    asObject.prototype.resolve = function resolve(multiname) {
+    asObject.prototype.getProperty = function getProperty(multiname) {
         if (this.traits) {
             var trait = this.traits.find(multiname);
             if (trait) {
@@ -26,6 +51,16 @@ var ASObject = (function () {
             }
         }
         return this[multiname.name];
+    };
+    
+    asObject.prototype.setProperty = function setProperty(multiname, value) {
+        if (this.traits) {
+            var trait = this.traits.find(multiname);
+            if (trait) {
+                this.slots[trait.slotid] = value;
+            }
+        }
+        return this[multiname.name] = value;
     };
     return asObject;
 })();
@@ -83,7 +118,8 @@ var ScopeStack = (function () {
             }
         }
         return null;
-    }
+    };
+    
     
     return scopeStack;
 })();
@@ -95,9 +131,31 @@ function createGlobalScope(script) {
         console.info(val);
     };
     
+    global.Date = {
+        construct: function (obj, args) {
+            assert(args.length == 0);
+            return new Date();
+        }
+    };
+    
+    global.Array = {
+        construct: function (obj, args) {
+            assert(args.length == 1);
+            return new Array(args[0]);
+        }
+    };
+    
+    global.Math = Math;
+    
+    global.String = String;
+    
     var scopeStack = new ScopeStack();
     scopeStack.push(global);
     return scopeStack;
+}
+
+function toBoolean(x) {
+    return Boolean(x);
 }
 
 function interpretAbc(abc) {
@@ -139,7 +197,7 @@ var Frame = (function frame() {
             
             var scopeStack = this.scopeStack;
             
-            var offset, value2, value1, index, multiname, argCount, args, obj, top;
+            var offset, value2, value1, value, index, multiname, argCount, args, obj, top;
             
             var methodInfo, methodBody;
             
@@ -160,7 +218,32 @@ var Frame = (function frame() {
                     return res;
                 }
             };
-                
+            
+            function readMultiname() {
+                return multinames[code.readU30()];
+            }
+            
+            /**
+             * Creates a multiname by fetching the name and namespace from the stack if necessary.
+             */
+            function createMultiname(multiname) {
+                if (multiname.isRuntime()) {
+                    multiname = multiname.clone();
+                    if (multiname.isRuntimeName()) {
+                        multiname.setName(stack.pop());
+                    } 
+                    if (multiname.isRuntimeNamespace()) {
+                        multiname.setNamespace(stack.pop());
+                    }
+                }
+                assert(!multiname.isRuntime());
+                return multiname;
+            }
+            
+            function readAndCreateMultiname() {
+                return createMultiname(readMultiname());
+            }
+            
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
@@ -168,7 +251,7 @@ var Frame = (function frame() {
                     assert (false, "Not Implemented: " + getOpcodeName(bc));
                 }
                 
-                console.info("Executing: " + getOpcodeName(bc));
+                // console.info("Executing: " + getOpcodeName(bc) + ", Stack: " + stack);
                 
                 switch (bc) {
                 case OP_bkpt: notImplemented(); break;
@@ -194,8 +277,14 @@ var Frame = (function frame() {
                 case OP_jump: 
                     jump(code.readS24());
                     break;
-                case OP_iftrue: notImplemented(); break;
-                case OP_iffalse: notImplemented(); break;
+                case OP_iftrue:
+                    offset = code.readS24();
+                    if (stack.pop()) jump(offset);
+                    break;
+                case OP_iffalse:
+                    offset = code.readS24();
+                    if (stack.pop() == false) jump(offset);
+                    break;
                 case OP_ifeq:
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
                     if (value1 == value2) jump(offset);
@@ -227,8 +316,12 @@ var Frame = (function frame() {
                 case OP_popscope: notImplemented(); break;
                 case OP_nextname: notImplemented(); break;
                 case OP_hasnext: notImplemented(); break;
-                case OP_pushnull: notImplemented(); break;
-                case OP_pushundefined: notImplemented(); break;
+                case OP_pushnull: 
+                    stack.push(null); 
+                    break;
+                case OP_pushundefined:
+                    stack.push(undefined);
+                    break;
                 case OP_pushfloat: notImplemented(); break;
                 case OP_nextvalue: notImplemented(); break;
                 case OP_pushbyte: 
@@ -240,8 +333,12 @@ var Frame = (function frame() {
                 case OP_pushtrue: notImplemented(); break;
                 case OP_pushfalse: notImplemented(); break;
                 case OP_pushnan: notImplemented(); break;
-                case OP_pop:          notImplemented(); break;
-                case OP_dup:          notImplemented(); break;
+                case OP_pop:
+                    stack.pop();
+                    break;
+                case OP_dup:
+                    stack.push(stack.peek());
+                    break;
                 case OP_swap:         stack.push(stack.pop(), stack.pop());       break;
                 case OP_pushstring: 
                     stack.push(strings[code.readU30()]);
@@ -287,14 +384,23 @@ var Frame = (function frame() {
                         assert(false);
                     } else {
                         obj = stack.pop();
-                        stack.push(obj.resolve(multiname).apply(obj, args));
+                        stack.push(obj.getProperty(multiname).apply(obj, args));
                     }
                     break;
                 case OP_returnvoid: notImplemented(); break;
                 case OP_returnvalue:
                     return stack.pop();
                 case OP_constructsuper: notImplemented(); break;
-                case OP_constructprop: notImplemented(); break;
+                case OP_constructprop: 
+                    multiname = multinames[code.readU30()];
+                    args = stack.popMany(code.readU30());
+                    if (multiname.isRuntime()) {
+                        assert(false);
+                    } else {
+                        obj = stack.pop();
+                        stack.push(obj.getProperty(multiname).construct(obj, args));
+                    }
+                    break;
                 case OP_callsuperid: notImplemented(); break;
                 case OP_callproplex: notImplemented(); break;
                 case OP_callinterface: notImplemented(); break;
@@ -324,14 +430,26 @@ var Frame = (function frame() {
                 case OP_findproperty: notImplemented(); break;
                 case OP_finddef: notImplemented(); break;
                 case OP_getlex: notImplemented(); break;
-                case OP_setproperty: notImplemented(); break;
-                case OP_getlocal: notImplemented(); break;
-                case OP_setlocal: notImplemented(); break;
+                case OP_setproperty: 
+                    value = stack.pop();
+                    multiname = readAndCreateMultiname();
+                    obj = stack.pop();
+                    obj.setProperty(multiname, value);
+                    break;
+                case OP_getlocal: 
+                    stack.push(local[code.readU30()]);
+                    break;
+                case OP_setlocal:
+                    local[code.readU30()] = stack.pop();
+                    break;
                 case OP_getglobalscope:
                     stack.push(scopeStack.global());
                     break;
                 case OP_getscopeobject: notImplemented(); break;
-                case OP_getproperty: notImplemented(); break;
+                case OP_getproperty:
+                    multiname = readAndCreateMultiname();
+                    stack.push(stack.pop().getProperty(multiname));
+                    break;
                 case OP_getouterscope: notImplemented(); break;
                 case OP_initproperty: notImplemented(); break;
                 case OP_setpropertylate: notImplemented(); break;
@@ -354,7 +472,9 @@ var Frame = (function frame() {
                 case OP_convert_i: notImplemented(); break;
                 case OP_convert_u: notImplemented(); break;
                 case OP_convert_d: notImplemented(); break;
-                case OP_convert_b: notImplemented(); break;
+                case OP_convert_b:
+                    stack.push(toBoolean(stack.pop()));
+                    break;
                 case OP_convert_o: notImplemented(); break;
                 case OP_checkfilter: notImplemented(); break;
                 case OP_convert_f: notImplemented(); break;
@@ -380,29 +500,79 @@ var Frame = (function frame() {
                 case OP_decrement: notImplemented(); break;
                 case OP_declocal: notImplemented(); break;
                 case OP_typeof: notImplemented(); break;
-                case OP_not: notImplemented(); break;
+                case OP_not: 
+                    stack.push(!stack.pop());
+                    break;
                 case OP_bitnot: notImplemented(); break;
                 case OP_add_d: notImplemented(); break;
                 case OP_add:
                     value2 = stack.pop(); value1 = stack.pop();
                     stack.push(value1 + value2);
                     break;
-                case OP_subtract: notImplemented(); break;
-                case OP_multiply: notImplemented(); break;
-                case OP_divide: notImplemented(); break;
-                case OP_modulo: notImplemented(); break;
-                case OP_lshift: notImplemented(); break;
-                case OP_rshift: notImplemented(); break;
-                case OP_urshift: notImplemented(); break;
-                case OP_bitand: notImplemented(); break;
-                case OP_bitor: notImplemented(); break;
-                case OP_bitxor: notImplemented(); break;
-                case OP_equals: notImplemented(); break;
-                case OP_strictequals: notImplemented(); break;
-                case OP_lessthan: notImplemented(); break;
-                case OP_lessequals: notImplemented(); break;
-                case OP_greaterthan: notImplemented(); break;
-                case OP_greaterequals: notImplemented(); break;
+                case OP_subtract:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 - value2);
+                    break;
+                case OP_multiply: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 * value2);
+                    break;
+                case OP_divide:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 / value2);
+                    break;
+                case OP_modulo:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 % value2);
+                    break;
+                case OP_lshift: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 << value2);
+                    break;
+                case OP_rshift: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 >> value2);
+                    break;
+                case OP_urshift: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 >>> value2);
+                    break;
+                case OP_bitand:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 & value2);
+                    break;
+                case OP_bitor: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 | value2);
+                    break;
+                case OP_bitxor:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 ^ value2);
+                    break;
+                case OP_equals:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 == value2);
+                    break;
+                case OP_strictequals:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 === value2);
+                    break;
+                case OP_lessthan: 
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 < value2);
+                    break;
+                case OP_lessequals:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 <= value2);
+                    break;
+                case OP_greaterthan:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 > value2);
+                    break;
+                case OP_greaterequals:
+                    value2 = stack.pop(); value1 = stack.pop();
+                    stack.push(value1 >= value2);
+                    break;
                 case OP_instanceof: notImplemented(); break;
                 case OP_istype: notImplemented(); break;
                 case OP_istypelate: notImplemented(); break;
