@@ -477,12 +477,21 @@ And sails upon the bosom of the air.";
 
 var password = "O Romeo, Romeo! wherefore art thou Romeo?";
 
+print("Password " + password);
+
 var cipherText = AESEncryptCtr(plainText, password, 256);
+
+print("Encrypted - cipherText: " + cipherText + ", Length: " + cipherText.length);
+
 var decryptedText = AESDecryptCtr(cipherText, password, 256);
+
+print("Decrypted - decryptedText: " + decryptedText);
 
     var totaltime=new Date()-start;
 if (decryptedText==plainText) {
-    print("Pass");
+    print("Passed Test");
+    print(cipherText);
+    print(decryptedText);
 } else {
     print("error plaintext and decrypted text did not match\nplaintext=\n"+plainText+"\ndecryptedtext=\n"+decryptedText);
 }

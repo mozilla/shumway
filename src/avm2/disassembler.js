@@ -1,5 +1,6 @@
 var IndentingWriter = (function () {
     function indentingWriter(suppressOutput) {
+        this.tab = "  ";
         this.padding = "";
         this.suppressOutput = suppressOutput;
     }
@@ -25,12 +26,12 @@ var IndentingWriter = (function () {
     };
     
     indentingWriter.prototype.indent = function indent() {
-        this.padding += "  ";
+        this.padding += this.tab;
     };
     
     indentingWriter.prototype.outdent = function outdent() {
         if (this.padding.length > 0) {
-            this.padding = this.padding.substring(0, this.padding.length - 2);
+            this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
         }
     };
     
@@ -109,14 +110,15 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
         
     }
     
+    writer.enter("code {");
     while (code.remaining() > 0) {
         var bc = code.readU8();
         var opcode = opcodeTable[bc];
         var str, defaultOffset, offset, count;
-        
+        str = ("" + code.position).padRight(' ', 5);
         switch (bc) {
             case OP_lookupswitch:
-                str = opcode.name + ": defaultOffset: " + code.readS24();
+                str += opcode.name + ": defaultOffset: " + code.readS24();
                 count = code.readU30() + 1;
                 for (var i = 0; i < count; i++) {
                     str += " offset: " + code.readS24();
@@ -125,7 +127,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
                 break;
             default:
                 if (opcode) {
-                    str = opcode.name.padRight(' ', 20);
+                    str += opcode.name.padRight(' ', 20);
                     if (!opcode.operands) {
                         assert(false, "Opcode: " + opcode.name + " has undefined operands.");
                     } else {
@@ -145,6 +147,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
                 break;
         }
     }
+    writer.leave("}");
     
     writer.leave("}");
 }

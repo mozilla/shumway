@@ -309,6 +309,6 @@ var opcodeTable = [
     }
 })();
 
-function getOpcodeName(op) {
+function opcodeName(op) {
     return opcodeTable[op].name;
 }

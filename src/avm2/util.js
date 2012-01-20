@@ -1,4 +1,6 @@
-if (typeof console == "undefined") {
+var inBrowser = typeof console != "undefined";
+
+if (!inBrowser) {
     console = {
         info: print,
         warn: print

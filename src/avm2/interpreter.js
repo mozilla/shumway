@@ -26,11 +26,34 @@ Array.prototype.setProperty = function setProperty(multiname, value) {
     return this[multiname.name] = value;
 };
 
+function f(n) {
+    return n & (n - 1) != 0;
+}
+
+function wrap(fn) {
+    return function () { 
+        return fn.apply(null, Array.prototype.slice.call(arguments, 0));
+    };
+}
+
 String.prototype.getProperty = function(multiname) {
+    if (multiname.name == "replace") {
+        return function (regexp, val) {
+            return this.replace(regexp, wrap(val));
+        };
+    }
+    return this[multiname.name];
+};
+
+String.getProperty = function(multiname) {
     return this[multiname.name];
 };
 
 Date.prototype.getProperty = function(multiname) {
+    return this[multiname.name];
+};
+
+Number.prototype.getProperty = function(multiname) {
     return this[multiname.name];
 };
 
@@ -72,7 +95,7 @@ var Closure = (function () {
     }
     closure.prototype = inherit(ASObject, {
         apply: function($this, args) {
-            return this.frame.interpret($this, args);
+            return this.frame.apply($this, args);
         } 
     });
     return closure;
@@ -97,6 +120,10 @@ var ScopeStack = (function () {
     
     scopeStack.prototype.global = function global() {
         return this.stack[0];
+    };
+    
+    scopeStack.prototype.scope = function scope(i) {
+        return this.stack[i];
     };
     
     scopeStack.prototype.clone = function clone() {
@@ -149,9 +176,25 @@ function createGlobalScope(script) {
     
     global.String = String;
     
+    global.RegExp = {
+        construct: function (obj, args) {
+            assert(args.length == 2);
+            return new RegExp(args[0], args[1]);
+        }
+    };
+    
+    global.parseInt = parseInt;
+    global.print = function (val) {
+        console.info(val);
+    };
+    
     var scopeStack = new ScopeStack();
     scopeStack.push(global);
     return scopeStack;
+}
+
+function toDouble(x) {
+    return Number(x);
 }
 
 function toBoolean(x) {
@@ -162,9 +205,13 @@ function interpretAbc(abc) {
     var methodBody = abc.sillyMethodLookup(abc.entryPoint);
     var scope = createGlobalScope(abc.lastScript);
     
-    new Frame(abc, methodBody, scope).interpret(new ASObject());
+    new Frame(abc, methodBody, scope).apply(new ASObject());
 }
 
+var traceExecution = inBrowser ? null : new IndentingWriter();
+if (traceExecution) {
+    traceExecution.tab = "    ";
+}
 
 var Frame = (function frame() {
     function constructor (abc, methodBody, scopeStack) {
@@ -174,7 +221,7 @@ var Frame = (function frame() {
     }
     
     constructor.prototype = {
-        interpret: function($this, args) {
+        apply: function($this, args) {
             
             var i = 0;
             
@@ -244,14 +291,20 @@ var Frame = (function frame() {
                 return createMultiname(readMultiname());
             }
             
+//            if (traceExecution) {
+//                traceExecution.enter("");
+//            }
+            
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
                 function notImplemented() {
-                    assert (false, "Not Implemented: " + getOpcodeName(bc));
+                    assert (false, "Not Implemented: " + opcodeName(bc));
                 }
                 
-                // console.info("Executing: " + getOpcodeName(bc) + ", Stack: " + stack);
+                if (traceExecution) {
+                    traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc));
+                }
                 
                 switch (bc) {
                 case OP_bkpt: notImplemented(); break;
@@ -373,7 +426,11 @@ var Frame = (function frame() {
                     stack.push(new Closure(new Frame(this.abc, methodBody, scopeStack.clone())));
                     break;
                 case OP_call: notImplemented(); break;
-                case OP_construct: notImplemented(); break;
+                case OP_construct:
+                    args = stack.popMany(code.readU30());
+                    obj = stack.pop();
+                    stack.push(obj.construct(obj, args));
+                    break;
                 case OP_callmethod: notImplemented(); break;
                 case OP_callstatic: notImplemented(); break;
                 case OP_callsuper: notImplemented(); break;
@@ -387,8 +444,13 @@ var Frame = (function frame() {
                         stack.push(obj.getProperty(multiname).apply(obj, args));
                     }
                     break;
-                case OP_returnvoid: notImplemented(); break;
+                case OP_returnvoid: 
+                    return undefined;
+                    break;
                 case OP_returnvalue:
+                    if (traceExecution) {
+                        traceExecution.outdent();
+                    }
                     return stack.pop();
                 case OP_constructsuper: notImplemented(); break;
                 case OP_constructprop: 
@@ -415,7 +477,9 @@ var Frame = (function frame() {
                 case OP_newarray: 
                     stack.push(stack.popMany(code.readU32()));
                     break;
-                case OP_newactivation: notImplemented(); break;
+                case OP_newactivation:
+                    stack.push(new ASObject());
+                    break;
                 case OP_newclass: notImplemented(); break;
                 case OP_getdescendants: notImplemented(); break;
                 case OP_newcatch: notImplemented(); break;
@@ -445,7 +509,9 @@ var Frame = (function frame() {
                 case OP_getglobalscope:
                     stack.push(scopeStack.global());
                     break;
-                case OP_getscopeobject: notImplemented(); break;
+                case OP_getscopeobject:
+                    stack.push(scopeStack.scope(code.readU8()));
+                    break;
                 case OP_getproperty:
                     multiname = readAndCreateMultiname();
                     stack.push(stack.pop().getProperty(multiname));
@@ -471,7 +537,9 @@ var Frame = (function frame() {
                 case OP_esc_xattr: notImplemented(); break;
                 case OP_convert_i: notImplemented(); break;
                 case OP_convert_u: notImplemented(); break;
-                case OP_convert_d: notImplemented(); break;
+                case OP_convert_d:
+                    stack.push(toDouble(stack.pop()));
+                    break;
                 case OP_convert_b:
                     stack.push(toBoolean(stack.pop()));
                     break;
@@ -603,10 +671,20 @@ var Frame = (function frame() {
                 case OP_bkptline: notImplemented(); break;
                 case OP_timestamp: notImplemented(); break;
                 default:
-                    console.info("Not Implemented: " + getOpcodeName(bc));
+                    console.info("Not Implemented: " + opcodeName(bc));
                 }
+                
+                if (traceExecution) {
+                    traceExecution.enter("local:");
+                    traceExecution.writeArray(local);
+                    traceExecution.outdent();
+                    traceExecution.enter("stack:");
+                    traceExecution.writeArray(stack);
+                    traceExecution.outdent();
+                    traceExecution.outdent();
+                }
+                
             }
-            console.info("AAAA");
         }
     };
     

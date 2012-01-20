@@ -5,8 +5,8 @@ load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");
 load("../compiler.js");
-load("../interpreter.js");
 load("../disassembler.js");
+load("../interpreter.js");
 
 if (arguments.length == 0) {
     printUsage();
@@ -14,9 +14,10 @@ if (arguments.length == 0) {
 }
 
 function printUsage() {
-    print("avm: [-d] file");
+    print("avm: [-d | -x] file");
     print("      -d = Disassemble .abc file.");
     print("      -x = Execute .abc file.");
+    print("      -q = Quiet.");
 }
 
 var file = arguments[arguments.length - 1];
@@ -24,7 +25,11 @@ var options = arguments.slice(0, arguments.length - 1);
 
 var disassemble = options.indexOf("-d") >= 0;
 var execute = options.indexOf("-x") >= 0;
+var quiet = options.indexOf("-q") >= 0;
 
+if (quiet) {
+    traceExecution = null;
+}
 
 var abc = parseAbcFile(snarf(file, "binary"));
 var writer = new IndentingWriter(false);
@@ -40,14 +45,3 @@ if (disassemble) {
 if (execute) {
     interpretAbc(abc);
 }
-
-/*
-try {
-    var abc = parseAbcFile(snarf(arguments[0], "binary"));
-    print("Constant pool for: " + arguments[0]);
-    print(JSON.stringify(abc.constantPool, null, 2));
-} catch (e) {
-    print(e);
-    print(e.stack);
-}
-*/

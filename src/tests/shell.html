@@ -45,8 +45,8 @@
     <script type="text/javascript" src="../avm2/opcodes.js"></script>
     <script type="text/javascript" src="../avm2/parser.js"></script>
     <script type="text/javascript" src="../avm2/compiler.js"></script>
-    <script type="text/javascript" src="../avm2/interpreter.js"></script>
     <script type="text/javascript" src="../avm2/disassembler.js"></script>
+    <script type="text/javascript" src="../avm2/interpreter.js"></script>
     
     <script type="text/javascript" src="../swf/parser.js"></script>
     
@@ -60,7 +60,6 @@
             }
             interpretAbc(abc);
         }); */
-        
         
         new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
             var abc = parseAbcFile(new Uint8Array(buffer));

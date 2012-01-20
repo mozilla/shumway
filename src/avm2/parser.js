@@ -8,6 +8,9 @@ var ABCStream = (function () {
     }
 
     abcStream.prototype = {
+        get position() {
+            return this.pos;
+        },
         remaining: function () {
             return this.bytes.length - this.pos;
         },
@@ -255,6 +258,9 @@ function parseAbcFile(bytes) {
         };
         
         namespace.prototype.toString = function toString() {
+            if (this.type == PRIVATE) {
+                return "private";
+            }
             return this.name;
         }
         
@@ -527,11 +533,7 @@ function parseAbcFile(bytes) {
             } else {
                 str += "{";
                 for (var i = 0, count = this.namespaceCount(); i < count; i++) {
-                    if (this.getNamespace(i).isPublic()) {
-                        str += "public";
-                    } else {
-                        str += this.getNamespace(i).getURI();
-                    }
+                    str += this.getNamespace(i);
                     if (i + 1 < count) {
                         str += ",";
                     }
