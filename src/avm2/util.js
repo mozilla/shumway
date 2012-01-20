@@ -47,6 +47,24 @@ String.prototype.padRight = function(c, n) {
     return str;
 }
 
+Array.prototype.popMany = function(count) {
+    assert (this.length >= count);
+    var start = this.length - count;
+    var res = this.slice(start, this.length);
+    this.splice(start, count);
+    return res;
+};
+
+Array.prototype.first = function() {
+    assert (this.length > 0);
+    return this[0];
+};
+
+Array.prototype.peek = function() {
+    assert (this.length > 0);
+    return this[this.length - 1];
+};
+
 /**
  * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
  *

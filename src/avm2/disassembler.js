@@ -77,6 +77,48 @@ function traceMethodInfo(writer, constantPool, methodInfo) {
     writer.leave("}");
 }
 
+function traceOperand(operand, constantPool, code) {
+    var value = 0;
+    switch(operand.size) {
+        case "u08": value = code.readU8(); break;
+        case "s16": value = code.readU30Unsafe(); break;
+        case "s24": value = code.readS24(); break;
+        case "u30": value = code.readU30(); break;
+        case "u32": value = code.readU32(); break;
+        default: assert (false); break;
+    }
+    var description = "";
+    switch(operand.type) {
+        case "": break;
+        case "I": description = constantPool.ints[value]; break;
+        case "U": description = constantPool.uints[value]; break;
+        case "D": description = constantPool.doubles[value]; break;
+        case "S": description = constantPool.strings[value]; break;
+        case "N": description = constantPool.namespaces[value]; break;
+        case "M": 
+            return constantPool.multinames[value]; 
+        default: detail = "?"; break;
+    }
+    return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
+    
+}
+
+function traceOperands(opcode, constantPool, code, rewind) {
+    rewind = rewind || false;
+    var old = code.position;
+    var str = "";
+    for (var i = 0; i < opcode.operands.length; i++) {
+        str += traceOperand(opcode.operands[i], constantPool, code);
+        if (i < opcode.operands.length - 1) {
+            str += ", ";
+        }
+    }
+    if (rewind) {
+        code.seek(old);
+    }
+    return str;
+}
+
 function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
     var mbi = methodBodyInfo;
     writer.enter("methodBodyInfo {");
@@ -84,31 +126,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
     
     var code = new ABCStream(mbi.code);
     
-    function readOperand(operand) {
-        var value = 0;
-        switch(operand.size) {
-            case "u08": value = code.readU8(); break;
-            case "s16": value = code.readU30Unsafe(); break;
-            case "s24": value = code.readS24(); break;
-            case "u30": value = code.readU30(); break;
-            case "u32": value = code.readU32(); break;
-            default: assert (false); break;
-        }
-        var description = "";
-        switch(operand.type) {
-            case "": break;
-            case "I": description = constantPool.ints[value]; break;
-            case "U": description = constantPool.uints[value]; break;
-            case "D": description = constantPool.doubles[value]; break;
-            case "S": description = constantPool.strings[value]; break;
-            case "N": description = constantPool.namespaces[value]; break;
-            case "M": 
-                return constantPool.multinames[value]; 
-            default: detail = "?"; break;
-        }
-        return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
-        
-    }
+    
     
     writer.enter("code {");
     while (code.remaining() > 0) {
@@ -132,12 +150,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
                         assert(false, "Opcode: " + opcode.name + " has undefined operands.");
                     } else {
                         if (opcode.operands.length > 0) {
-                            for (var i = 0; i < opcode.operands.length; i++) {
-                                str += readOperand(opcode.operands[i]);
-                                if (i < opcode.operands.length - 1) {
-                                    str += ", ";
-                                }
-                            }
+                            str += traceOperands(opcode, constantPool, code);
                         }
                         writer.writeLn(str);
                     }

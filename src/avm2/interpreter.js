@@ -1,34 +1,12 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-Array.prototype.popMany = function(count) {
-    assert (this.length >= count);
-    var start = this.length - count;
-    var res = this.slice(start, this.length);
-    this.splice(start, count);
-    return res;
-};
-
-Array.prototype.first = function() {
-    assert (this.length > 0);
-    return this[0];
-};
-
-Array.prototype.peek = function() {
-    assert (this.length > 0);
-    return this[this.length - 1];
-};
-
-Array.prototype.getProperty = function(multiname) {
+Object.prototype.getProperty = function(multiname) {
     return this[multiname.name];
 };
 
 Array.prototype.setProperty = function setProperty(multiname, value) {
     return this[multiname.name] = value;
 };
-
-function f(n) {
-    return n & (n - 1) != 0;
-}
 
 function wrap(fn) {
     return function () { 
@@ -45,22 +23,6 @@ String.prototype.getProperty = function(multiname) {
     return this[multiname.name];
 };
 
-String.getProperty = function(multiname) {
-    return this[multiname.name];
-};
-
-Date.prototype.getProperty = function(multiname) {
-    return this[multiname.name];
-};
-
-Number.prototype.getProperty = function(multiname) {
-    return this[multiname.name];
-};
-
-Math.getProperty = function(multiname) {
-    return this[multiname.name];
-};
-
 var ASObject = (function () {
     function asObject() {
         this.slots = [];
@@ -73,7 +35,7 @@ var ASObject = (function () {
                 return this.slots[trait.slotid];
             }
         }
-        return this[multiname.name];
+        return Object.prototype.getProperty.call(this, multiname);
     };
     
     asObject.prototype.setProperty = function setProperty(multiname, value) {
@@ -173,6 +135,11 @@ function createGlobalScope(script) {
     };
     
     global.Math = Math;
+    global.Object = {
+        construct: function (obj, args) {
+            return new ASObject();
+        }
+    };
     
     global.String = String;
     
@@ -291,10 +258,6 @@ var Frame = (function frame() {
                 return createMultiname(readMultiname());
             }
             
-//            if (traceExecution) {
-//                traceExecution.enter("");
-//            }
-            
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
@@ -303,7 +266,8 @@ var Frame = (function frame() {
                 }
                 
                 if (traceExecution) {
-                    traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc));
+                    traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc) + " " + 
+                                         traceOperands(opcodeTable[bc], this.abc.constantPool, code, true));
                 }
                 
                 switch (bc) {
