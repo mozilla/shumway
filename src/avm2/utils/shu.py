@@ -26,8 +26,8 @@ class Base:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", file]
             subprocess.call(args)
 
-    def runAvm(self, file, execute = True, quiet = False, disassemble = False):
-        args = ["js", "avm.js"];
+    def runAvm(self, file, execute = True, quiet = True, disassemble = False):
+        args = ["js", "-m", "-n", "avm.js"];
         if disassemble:
             args.append("-d")
         if quiet:
