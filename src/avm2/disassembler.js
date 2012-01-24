@@ -77,8 +77,8 @@ ConstantPool.prototype.trace = function (writer) {
 };
 
 ClassInfo.prototype.trace = function (writer) {
-    writer.enter("class {");
-
+    writer.enter("class " + this.init + "{");
+    traceArray(writer, "traits", this.traits);
     writer.leave("}");
 };
 

@@ -20,7 +20,7 @@ class Base:
             sys.exit();
 
     def runAsc(self, file, createSwf = False):
-        args = ["java", "-jar", self.asc, file]
+        args = ["java", "-jar", self.asc, "-d", file]
         subprocess.call(args)
         if createSwf:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]

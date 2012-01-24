@@ -170,6 +170,10 @@ var Trait = (function () {
         }
     }
     
+    trait.prototype.isSlot = function isSlot() {
+        return this.kind == TRAIT_Slot;
+    };
+    
     trait.prototype.toString = function toString() {
         var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
         switch (this.kind) {
@@ -188,17 +192,6 @@ var Trait = (function () {
                 break;
         }
     }
-    
-//        trait.prototype.find = function find(multiname) {
-//            var traits = this.traits;
-//            for (var i = 0; i < traits.length; i++) {
-//                if (traits[i].name.matches(multiname)) {
-//                    return traits[i];
-//                }
-//            }
-//            return null;
-//        };
-    
     return trait;
 })();
 
@@ -695,6 +688,7 @@ var MethodInfo = (function () {
         this.flags = flags;
         this.optionals = optionals;
         this.paramnames = paramnames;
+        this.methodBody = null; // This will be filled in later when method bodies are parsed.
     }
     
     methodInfo.prototype = {
@@ -787,6 +781,8 @@ var MethodBody = (function () {
     
     function methodBody(constantPool, methods, stream) {
         this.methodInfo = methods[stream.readU30()];
+        assert(this.methodInfo.methodBody === null);
+        this.methodInfo.methodBody = this; // Link method info's with method bodies.
         this.maxStack = stream.readU30();
         this.localCount = stream.readU30();
         this.initScopeDepth = stream.readU30();
@@ -877,15 +873,6 @@ var AbcFile = (function () {
          */
         get entryPoint() {
             return this.lastScript.entryPoint;
-        },
-        
-        sillyMethodLookup: function (methodInfo) {
-            for (var key in this.methodBodies) {
-                if (this.methodBodies[key].methodInfo == methodInfo) {
-                    return this.methodBodies[key];
-                }
-            }
-            return null;
         }
     };
     
