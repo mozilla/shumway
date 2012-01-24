@@ -262,14 +262,6 @@ var Frame = (function frame() {
                 return createMultiname(readMultiname());
             }
             
-            function lt(a, b) {
-                return isNaN(a) || isNan(b) ? undefined : a < b;
-            }
-            
-            function gt(a, b) {
-                return isNaN(a) || isNan(b) ? undefined : a > b;
-            }
-            
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
@@ -279,7 +271,7 @@ var Frame = (function frame() {
                 
                 if (traceExecution) {
                     traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc) + " " + 
-                                         traceOperands(opcodeTable[bc], this.abc.constantPool, code, true));
+                                         traceOperands(opcodeTable[bc], this.abc, code, true));
                 }
                 
                 switch (bc) {
@@ -564,7 +556,9 @@ var Frame = (function frame() {
                 case OP_not: 
                     stack.push(!stack.pop());
                     break;
-                case OP_bitnot: notImplemented(); break;
+                case OP_bitnot:
+                    stack.push(~stack.pop());
+                    break;
                 case OP_add_d: notImplemented(); break;
                 case OP_add:
                     value2 = stack.pop(); value1 = stack.pop();
@@ -658,10 +652,10 @@ var Frame = (function frame() {
                 case OP_setlocal3:
                     local[bc - OP_setlocal0] = stack.pop();
                     break;
-                case OP_debug: notImplemented(); break;
-                case OP_debugline: notImplemented(); break;
-                case OP_debugfile: notImplemented(); break;
-                case OP_bkptline: notImplemented(); break;
+                case OP_debug: break;
+                case OP_debugline: break;
+                case OP_debugfile: break;
+                case OP_bkptline: break;
                 case OP_timestamp: notImplemented(); break;
                 default:
                     console.info("Not Implemented: " + opcodeName(bc));

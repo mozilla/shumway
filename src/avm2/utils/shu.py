@@ -23,7 +23,7 @@ class Base:
         args = ["java", "-jar", self.asc, file]
         subprocess.call(args)
         if createSwf:
-            args = ["java", "-jar", self.asc, "-swf", "cls,1,1", file]
+            args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]
             subprocess.call(args)
 
     def runAvm(self, file, execute = True, trace = False, disassemble = False):

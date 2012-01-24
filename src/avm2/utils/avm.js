@@ -31,15 +31,12 @@ if (quiet) {
     traceExecution = null;
 }
 
-var abc = parseAbcFile(snarf(file, "binary"));
+var abc = new AbcFile(snarf(file, "binary"));
 var writer = new IndentingWriter(false);
 var methodBodies = abc.methodBodies;
 
 if (disassemble) {
-    traceConstantPool(writer, abc.constantPool);
-    for (var i = 0; i < methodBodies.length; i++) {
-        traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
-    }
+    traceAbc(writer, abc);
 }
 
 if (execute) {

@@ -44,17 +44,44 @@ var IndentingWriter = (function () {
     return indentingWriter;
 })();
 
-function getFlags(value, flags) {
-    var str = "";
-    for (var i = 0; i < flags.length; i++) {
-        if (value & (1 << i)) {
-            str += flags[i] + " ";
-        }
+function traceAbc(writer, abc) {
+    traceConstantPool(writer, abc.constantPool);
+    traceClasses(writer, abc);
+    traceInstances(writer, abc);
+    for (var i = 0; i < abc.methodBodies.length; i++) {
+        traceMethodBodyInfo(writer, abc, abc.methodBodies[i]);
     }
-    if (str.length == 0) {
-        return "NONE";
+}
+
+function traceClasses(writer, abc) {
+    writer.enter("classes {");
+    for (var i = 0; i < abc.classes.length; i++) {
+        var ci = abc.classes[i];
+        writer.enter("class {");
+        traceTraits(writer, abc, ci.traits);
+        writer.leave("}");
     }
-    return str;
+    writer.leave("}");
+}
+
+function traceInstances(writer, abc) {
+    writer.enter("instances {");
+    for (var i = 0; i < abc.instances.length; i++) {
+        var ii = abc.instances[i];
+        writer.enter("instance " + ii.name + " {");
+        traceTraits(writer, abc, ii.traits);
+        writer.leave("}");
+    }
+    writer.leave("}");
+}
+
+function traceTraits(writer, abc, traits) {
+    if (traits.length == 0) {
+        return;
+    }
+    writer.enter("traits {");
+    writer.writeArray(traits);
+    writer.leave("}");
 }
 
 function traceConstantPool(writer, constantPool) {
@@ -69,7 +96,7 @@ function traceConstantPool(writer, constantPool) {
     writer.leave("}");
 }
         
-function traceMethodInfo(writer, constantPool, methodInfo) {
+function traceMethodInfo(writer, methodInfo) {
     var mi = methodInfo;
     writer.enter("methodInfo {");
     writer.writeLn("name: " + mi.name);
@@ -77,7 +104,7 @@ function traceMethodInfo(writer, constantPool, methodInfo) {
     writer.leave("}");
 }
 
-function traceOperand(operand, constantPool, code) {
+function traceOperand(operand, abc, code) {
     var value = 0;
     switch(operand.size) {
         case "u08": value = code.readU8(); break;
@@ -90,25 +117,26 @@ function traceOperand(operand, constantPool, code) {
     var description = "";
     switch(operand.type) {
         case "": break;
-        case "I": description = constantPool.ints[value]; break;
-        case "U": description = constantPool.uints[value]; break;
-        case "D": description = constantPool.doubles[value]; break;
-        case "S": description = constantPool.strings[value]; break;
-        case "N": description = constantPool.namespaces[value]; break;
+        case "I": description = abc.constantPool.ints[value]; break;
+        case "U": description = abc.constantPool.uints[value]; break;
+        case "D": description = abc.constantPool.doubles[value]; break;
+        case "S": description = abc.constantPool.strings[value]; break;
+        case "N": description = abc.constantPool.namespaces[value]; break;
+        case "CI": description = abc.classes[value]; break;
         case "M": 
-            return constantPool.multinames[value]; 
-        default: detail = "?"; break;
+            return abc.constantPool.multinames[value]; 
+        default: description = "?"; break;
     }
     return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
     
 }
 
-function traceOperands(opcode, constantPool, code, rewind) {
+function traceOperands(opcode, abc, code, rewind) {
     rewind = rewind || false;
     var old = code.position;
     var str = "";
     for (var i = 0; i < opcode.operands.length; i++) {
-        str += traceOperand(opcode.operands[i], constantPool, code);
+        str += traceOperand(opcode.operands[i], abc, code);
         if (i < opcode.operands.length - 1) {
             str += ", ";
         }
@@ -119,14 +147,12 @@ function traceOperands(opcode, constantPool, code, rewind) {
     return str;
 }
 
-function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
+function traceMethodBodyInfo(writer, abc, methodBodyInfo) {
     var mbi = methodBodyInfo;
     writer.enter("methodBodyInfo {");
-    traceMethodInfo(writer, constantPool, mbi.methodInfo);
+    traceMethodInfo(writer, mbi.methodInfo);
     
     var code = new ABCStream(mbi.code);
-    
-    
     
     writer.enter("code {");
     while (code.remaining() > 0) {
@@ -150,7 +176,7 @@ function traceMethodBodyInfo(writer, constantPool, methodBodyInfo) {
                         assert(false, "Opcode: " + opcode.name + " has undefined operands.");
                     } else {
                         if (opcode.operands.length > 0) {
-                            str += traceOperands(opcode, constantPool, code);
+                            str += traceOperands(opcode, abc, code);
                         }
                         writer.writeLn(str);
                     }
