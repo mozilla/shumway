@@ -108,8 +108,6 @@ var ScopeStack = (function () {
         }
         return null;
     };
-    
-    
     return scopeStack;
 })();
 
@@ -129,12 +127,18 @@ function createGlobalScope(script) {
     
     global.Array = {
         construct: function (obj, args) {
-            assert(args.length == 1);
-            return new Array(args[0]);
+            if (args.length == 0) {
+                return new Array();
+            } else if (args.length == 1) {
+                return new Array(args[0]);
+            } else {
+                assert(false);
+            }
         }
     };
     
     global.Math = Math;
+    
     global.Object = {
         construct: function (obj, args) {
             return new ASObject();
@@ -211,7 +215,7 @@ var Frame = (function frame() {
             
             var scopeStack = this.scopeStack;
             
-            var offset, value2, value1, value, index, multiname, argCount, args, obj, top;
+            var offset, value2, value1, value, index, multiname, argCount, args, obj, top, res;
             
             var methodInfo, methodBody;
             
@@ -258,6 +262,14 @@ var Frame = (function frame() {
                 return createMultiname(readMultiname());
             }
             
+            function lt(a, b) {
+                return isNaN(a) || isNan(b) ? undefined : a < b;
+            }
+            
+            function gt(a, b) {
+                return isNaN(a) || isNan(b) ? undefined : a > b;
+            }
+            
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
@@ -287,20 +299,52 @@ var Frame = (function frame() {
                     break;
                 case OP_lf32x4: notImplemented(); break;
                 case OP_sf32x4: notImplemented(); break;
-                case OP_ifnlt: notImplemented(); break;
-                case OP_ifnle: notImplemented(); break;
-                case OP_ifngt: notImplemented(); break;
-                case OP_ifnge: notImplemented(); break;
+                case OP_ifnlt:
+                case OP_ifge:
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (isNaN(value1) || isNaN(value2)) {
+                        if (bc === OP_ifnlt) jump(offse);
+                    } else if (value1 < value2 === false) {
+                        jump(offset);
+                    }
+                    break;
+                case OP_ifnle:
+                case OP_ifgt:
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (isNaN(value1) || isNaN(value2)) {
+                        if (bc === OP_ifnle) jump(offse);
+                    } else if (value2 < value1 === true) {
+                        jump(offset);
+                    }
+                    break;
+                case OP_ifngt: 
+                case OP_ifle:
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (isNaN(value1) || isNaN(value2)) {
+                        if (bc === OP_ifngt) jump(offse);
+                    } else if (value2 < value1 === false) {
+                        jump(offset);
+                    }
+                    break;
+                case OP_ifnge:
+                case OP_iflt: 
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (isNaN(value1) || isNaN(value2)) {
+                        if (bc === OP_ifnge) jump(offse);
+                    } else if (value1 < value2 === true) {
+                        jump(offset);
+                    }
+                    break;
                 case OP_jump: 
                     jump(code.readS24());
                     break;
                 case OP_iftrue:
                     offset = code.readS24();
-                    if (stack.pop()) jump(offset);
+                    if (toBoolean(stack.pop())) jump(offset);
                     break;
                 case OP_iffalse:
                     offset = code.readS24();
-                    if (stack.pop() == false) jump(offset);
+                    if (toBoolean(stack.pop()) === false) jump(offset);
                     break;
                 case OP_ifeq:
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
@@ -308,24 +352,9 @@ var Frame = (function frame() {
                     break;
                 case OP_ifne: 
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
-                    if (value1 != value2) jump(offset);
+                    if ((value1 == value2) === false) jump(offset);
                     break;
-                case OP_iflt: 
-                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
-                    if (value1 < value2) jump(offset);
-                    break;
-                case OP_ifle:
-                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
-                    if (!(value2 < value1)) jump(offset);
-                    break;
-                case OP_ifgt:
-                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
-                    if (value2 < value1) jump(offset);
-                    break;
-                case OP_ifge:
-                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
-                    if (!(value1 < value2)) jump(offset);
-                    break;
+                
                 case OP_ifstricteq: notImplemented(); break;
                 case OP_ifstrictne: notImplemented(); break;
                 case OP_lookupswitch: notImplemented(); break;

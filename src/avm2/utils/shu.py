@@ -26,11 +26,11 @@ class Base:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", file]
             subprocess.call(args)
 
-    def runAvm(self, file, execute = True, quiet = True, disassemble = False):
+    def runAvm(self, file, execute = True, trace = False, disassemble = False):
         args = ["js", "-m", "-n", "avm.js"];
         if disassemble:
             args.append("-d")
-        if quiet:
+        if not trace:
             args.append("-q")
         if execute:
             args.append("-x")
@@ -70,9 +70,10 @@ class Avm(Command):
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Runs an .abc file using Shumway AVM')
         parser.add_argument('src', help="source .abc file")
+        parser.add_argument('-trace', action='store_true', help="trace bytecode execution")
         args = parser.parse_args(args)
         print "Running %s" % args.src
-        self.runAvm(args.src)
+        self.runAvm(args.src, trace = args.trace)
 
 class Dis(Command):
     def __init__(self):
