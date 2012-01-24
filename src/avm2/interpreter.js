@@ -219,6 +219,8 @@ var Frame = (function frame() {
             
             var methodInfo, methodBody;
             
+            var debugFile = null, debugLine = null;
+            
             function jump (offset) {
                 code.seek(code.pos + offset);
             }
@@ -270,8 +272,9 @@ var Frame = (function frame() {
                 }
                 
                 if (traceExecution) {
+                    var debugInfo = debugFile && debugLine ? debugFile + ":" + debugLine : ""; 
                     traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc) + " " + 
-                                         traceOperands(opcodeTable[bc], this.abc, code, true));
+                                         traceOperands(opcodeTable[bc], this.abc, code, true) + " " + debugInfo);
                 }
                 
                 switch (bc) {
@@ -652,8 +655,12 @@ var Frame = (function frame() {
                     local[bc - OP_setlocal0] = stack.pop();
                     break;
                 case OP_debug: break;
-                case OP_debugline: break;
-                case OP_debugfile: break;
+                case OP_debugline: 
+                    debugLine = code.readU30(); 
+                    break;
+                case OP_debugfile:
+                    debugFile = strings[code.readU30()];
+                    break;
                 case OP_bkptline: break;
                 case OP_timestamp: notImplemented(); break;
                 default:
