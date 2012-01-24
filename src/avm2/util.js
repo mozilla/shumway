@@ -95,7 +95,7 @@ function getFlags(value, flags) {
         }
     }
     if (str.length == 0) {
-        return "NONE";
+        return "";
     }
-    return str;
+    return str.trim();
 }

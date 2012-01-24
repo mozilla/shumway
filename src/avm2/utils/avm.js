@@ -32,11 +32,10 @@ if (quiet) {
 }
 
 var abc = new AbcFile(snarf(file, "binary"));
-var writer = new IndentingWriter(false);
 var methodBodies = abc.methodBodies;
 
 if (disassemble) {
-    traceAbc(writer, abc);
+    abc.trace(new IndentingWriter(false));
 }
 
 if (execute) {

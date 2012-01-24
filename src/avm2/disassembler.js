@@ -44,64 +44,60 @@ var IndentingWriter = (function () {
     return indentingWriter;
 })();
 
-function traceAbc(writer, abc) {
-    traceConstantPool(writer, abc.constantPool);
-    traceClasses(writer, abc);
-    traceInstances(writer, abc);
-    for (var i = 0; i < abc.methodBodies.length; i++) {
-        traceMethodBodyInfo(writer, abc, abc.methodBodies[i]);
-    }
-}
-
-function traceClasses(writer, abc) {
-    writer.enter("classes {");
-    for (var i = 0; i < abc.classes.length; i++) {
-        var ci = abc.classes[i];
-        writer.enter("class {");
-        traceTraits(writer, abc, ci.traits);
-        writer.leave("}");
-    }
-    writer.leave("}");
-}
-
-function traceInstances(writer, abc) {
-    writer.enter("instances {");
-    for (var i = 0; i < abc.instances.length; i++) {
-        var ii = abc.instances[i];
-        writer.enter("instance " + ii.name + " {");
-        traceTraits(writer, abc, ii.traits);
-        writer.leave("}");
-    }
-    writer.leave("}");
-}
-
-function traceTraits(writer, abc, traits) {
-    if (traits.length == 0) {
+function traceArray(writer, name, array, abc) {
+    if (array.length == 0) {
         return;
     }
-    writer.enter("traits {");
-    writer.writeArray(traits);
+    writer.enter(name + " {");
+    for (var i = 0; i < array.length; i++) {
+        array[i].trace(writer, abc);
+    }
     writer.leave("}");
 }
 
-function traceConstantPool(writer, constantPool) {
+AbcFile.prototype.trace = function trace(writer) {
+    this.constantPool.trace(writer);
+    traceArray(writer, "classes", this.classes);
+    traceArray(writer, "instances", this.instances);
+    traceArray(writer, "metadata", this.metadata);
+    traceArray(writer, "scripts", this.scripts);
+    traceArray(writer, "methodBodies", this.methodBodies, this);
+};
+
+ConstantPool.prototype.trace = function (writer) {
     writer.enter("constantPool {");
-    for (var key in constantPool) {
-        if (constantPool[key] instanceof Array) {
-            writer.enter(key + " {");
-            writer.writeArray(constantPool[key]);
+    for (var key in this) {
+        if (this[key] instanceof Array) {
+            writer.enter(key + " " + this[key].length + " {");
+            writer.writeArray(this[key]);
             writer.leave("}");
         }
     }
     writer.leave("}");
-}
-        
-function traceMethodInfo(writer, methodInfo) {
-    var mi = methodInfo;
-    writer.enter("methodInfo {");
-    writer.writeLn("name: " + mi.name);
-    writer.writeLn("flags: " + getFlags(mi.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|")));
+};
+
+ClassInfo.prototype.trace = function (writer) {
+    writer.enter("class {");
+
     writer.leave("}");
+};
+
+InstanceInfo.prototype.trace = function (writer) {
+    writer.enter("instance " + this + " {");
+    traceArray(writer, "traits", this.traits);
+    writer.leave("}");
+};
+
+ScriptInfo.prototype.trace = function (writer) {
+    writer.writeLn(this);
+};
+
+Trait.prototype.trace = function (writer) {
+    writer.writeLn(this);
+};
+
+function traceAbc(writer, abc) {
+    abc.trace(writer);
 }
 
 function traceOperand(operand, abc, code) {
@@ -147,13 +143,10 @@ function traceOperands(opcode, abc, code, rewind) {
     return str;
 }
 
-function traceMethodBodyInfo(writer, abc, methodBodyInfo) {
-    var mbi = methodBodyInfo;
+MethodBody.prototype.trace = function trace(writer, abc) {
     writer.enter("methodBodyInfo {");
-    traceMethodInfo(writer, mbi.methodInfo);
-    
-    var code = new ABCStream(mbi.code);
-    
+    writer.writeLn("name: " + this.methodInfo.toString());
+    var code = new AbcStream(this.code);
     writer.enter("code {");
     while (code.remaining() > 0) {
         var bc = code.readU8();
@@ -187,6 +180,5 @@ function traceMethodBodyInfo(writer, abc, methodBodyInfo) {
         }
     }
     writer.leave("}");
-    
     writer.leave("}");
 }

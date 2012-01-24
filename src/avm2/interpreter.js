@@ -196,7 +196,7 @@ var Frame = (function frame() {
             
             var i = 0;
             
-            var code = new ABCStream(this.code);
+            var code = new AbcStream(this.code);
             var ints = this.abc.constantPool.ints;
             var uints = this.abc.constantPool.uints;
             var doubles = this.abc.constantPool.doubles;
@@ -346,7 +346,6 @@ var Frame = (function frame() {
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
                     if ((value1 == value2) === false) jump(offset);
                     break;
-                
                 case OP_ifstricteq: notImplemented(); break;
                 case OP_ifstrictne: notImplemented(); break;
                 case OP_lookupswitch: notImplemented(); break;

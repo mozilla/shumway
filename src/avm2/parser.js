@@ -1,6 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-var ABCStream = (function () {
+var AbcStream = (function () {
     function abcStream(bytes) {
         this.bytes = bytes;
         this.view = new DataView(bytes.buffer);
@@ -171,18 +171,18 @@ var Trait = (function () {
     }
     
     trait.prototype.toString = function toString() {
-        var str = this.name + " " + getFlags(this.attributes, "FINAL|OVERRIDE|METADATA");
+        var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
         switch (this.kind) {
             case TRAIT_Slot:
             case TRAIT_Const:
-                return str + " " + this.slotId + " " + this.typeName + " " + this.value;
+                return str + ", slotId: " + this.slotId + ", typeName: " + this.typeName + ", value: " + this.value;
             case TRAIT_Method:
             case TRAIT_Setter:
             case TRAIT_Getter:
-                return str + " " + this.method + " " + this.dispId;
+                return str + ", method: " + this.method + ", dispId: " + this.dispId;
                 break;
             case TRAIT_Class:
-                return str + " " + this.slotId + " " + this.class;
+                return str + ", slotId: " + this.slotId + ", class: " + this.class;
                 break;
             case TRAIT_Function: // TODO
                 break;
@@ -529,9 +529,7 @@ var Multiname = (function () {
         } else if (this.isRuntimeNamespace()) {
             str += "[]::" + this.nameToString();
         } else if (this.namespaceCount() == 1 && this.isQName()) {
-            if (this.namespace.isPublic()) {
-                str += this.namespace + "::";
-            }
+            str += this.namespace + "::";
             str += this.nameToString();
         } else {
             str += "{";
@@ -701,7 +699,8 @@ var MethodInfo = (function () {
     
     methodInfo.prototype = {
         toString: function toString() {
-            return this.name;
+            var flags = getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|"));
+            return (flags ? flags + " " : "") + this.name;
         }
     };
     
@@ -726,19 +725,29 @@ var MetaDataInfo = (function () {
 
 var InstanceInfo = (function () {
     function instanceInfo(constantPool, methods, stream) {
-        this.name = constantPool.strings[stream.readU30()];
-        this.superclass = stream.readU30();
+        this.name = constantPool.multinames[stream.readU30()];
+        assert(this.name.isQName());
+        this.superName = constantPool.multinames[stream.readU30()];
         this.flags = stream.readU8();
-        this.protectedNS = 0;
-        if (this.flags & 8)
-            this.protectedNS = stream.readU30();
-
+        this.protectedNs = 0;
+        if (this.flags & 8) {
+            this.protectedNs = constantPool.namespaces[stream.readU30()];
+        }
         var interfaceCount = stream.readU30();
         this.interfaces = [];
-        for (var i = 0; i < interfaceCount; ++i)
-            this.interfaces[i] = stream.readU30();
+        for (var i = 0; i < interfaceCount; i++) {
+            this.interfaces[i] = constantPool.multinames[stream.readU30()];
+        }
         this.init = methods[stream.readU30()];
         this.traits = parseTraits(constantPool, stream, methods);
+    }
+    instanceInfo.prototype.toString = function toString() {
+        var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
+        var str = (flags ? flags + " " : "") + this.name;
+        if (this.superName) {
+            str += " extends " + this.superName; 
+        }
+        return str;
     }
     return instanceInfo;
 })();
@@ -803,7 +812,7 @@ var MethodBody = (function () {
 var AbcFile = (function () {
     function abcFile(bytes) {
         var n;
-        var stream = new ABCStream(bytes);
+        var stream = new AbcStream(bytes);
         checkMagic(stream);
         this.constantPool = new ConstantPool(stream);
         
