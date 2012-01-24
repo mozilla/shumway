@@ -170,6 +170,10 @@ var Trait = (function () {
         }
     }
 
+    trait.prototype.isSlot = function isSlot() {
+        return this.kind == TRAIT_Slot;
+    };
+
     trait.prototype.toString = function toString() {
         var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
         switch (this.kind) {
@@ -900,15 +904,6 @@ var AbcFile = (function () {
          */
         get entryPoint() {
             return this.lastScript.entryPoint;
-        },
-
-        sillyMethodLookup: function (methodInfo) {
-            for (var key in this.methodBodies) {
-                if (this.methodBodies[key].methodInfo == methodInfo) {
-                    return this.methodBodies[key];
-                }
-            }
-            return null;
         }
     };
 

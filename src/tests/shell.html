@@ -58,9 +58,9 @@
     
     <script type="text/javascript">
         new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
-            var abc = parseAbcFile(new Uint8Array(buffer));
+            var abc = new AbcFile(new Uint8Array(buffer));
             var writer = new IndentingWriter(false);
-            traceAbc(writer, abc);
+            abc.trace(writer);
             interpretAbc(abc);
         });
         

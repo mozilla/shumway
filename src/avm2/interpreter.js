@@ -30,9 +30,9 @@ var ASObject = (function () {
     }
     asObject.prototype.getProperty = function getProperty(multiname) {
         if (this.traits) {
-            var trait = this.traits.find(multiname);
+            var trait = findTrait(this.traits, multiname);
             if (trait) {
-                return this.slots[trait.slotid];
+                return this.slots[trait.slotId];
             }
         }
         return Object.prototype.getProperty.call(this, multiname);
@@ -40,13 +40,23 @@ var ASObject = (function () {
     
     asObject.prototype.setProperty = function setProperty(multiname, value) {
         if (this.traits) {
-            var trait = this.traits.find(multiname);
+            var trait = findTrait(this.traits, multiname);
             if (trait) {
-                this.slots[trait.slotid] = value;
+                this.slots[trait.slotId] = value;
             }
         }
         return this[multiname.name] = value;
     };
+    
+    asObject.prototype.applyTraits = function applyTraits(traits) {
+        for (var i = 0; i < traits.length; i++) {
+            var trait = traits[i];
+            if (trait.isSlot()) {
+                this.slots[trait.slotId] = trait.value;
+            }
+        }
+    };
+    
     return asObject;
 })();
 
@@ -63,6 +73,27 @@ var Closure = (function () {
     return closure;
 })();
 
+var Klass = (function () {
+    function klass(classInfo, baseType) {
+        ASObject.call(this);
+        ASObject.prototype.applyTraits.call(this, classInfo.traits);
+        this.traits = classInfo.traits;
+    }
+    klass.prototype = inherit(ASObject, {
+        
+    });
+    return klass;
+})();
+
+function findTrait(traits, multiname) {
+    for (var i = 0; i < traits.length; i++) {
+        if (traits[i].name.matches(multiname)) {
+            return traits[i];
+        }
+    }
+    return null;
+};
+    
 var ScopeStack = (function () {
     function scopeStack(original) {
         if (original) {
@@ -97,7 +128,7 @@ var ScopeStack = (function () {
         for (var i = stack.length - 1; i >= 0; i--) {
             var scope = stack[i];
             if (scope.traits) {
-                var trait = scope.traits.find(multiname);
+                var trait = findTrait(scope.traits, multiname);
                 if (trait != null) {
                     return scope;
                 }
@@ -173,10 +204,10 @@ function toBoolean(x) {
 }
 
 function interpretAbc(abc) {
-    var methodBody = abc.sillyMethodLookup(abc.entryPoint);
+    var method = abc.entryPoint;
     var scope = createGlobalScope(abc.lastScript);
     
-    new Frame(abc, methodBody, scope).apply(new ASObject());
+    new Frame(abc, method, scope).apply(new ASObject());
 }
 
 var traceExecution = inBrowser ? null : new IndentingWriter();
@@ -185,9 +216,9 @@ if (traceExecution) {
 }
 
 var Frame = (function frame() {
-    function constructor (abc, methodBody, scopeStack) {
+    function constructor (abc, method, scopeStack) {
         this.scopeStack = scopeStack;
-        this.code = methodBody.code;
+        this.code = method.code;
         this.abc = abc;
     }
     
@@ -196,13 +227,13 @@ var Frame = (function frame() {
             
             var i = 0;
             
+            var abc = this.abc;
             var code = new AbcStream(this.code);
-            var ints = this.abc.constantPool.ints;
-            var uints = this.abc.constantPool.uints;
-            var doubles = this.abc.constantPool.doubles;
-            var strings = this.abc.constantPool.strings;
-            var multinames = this.abc.constantPool.multinames;
-            
+            var ints = abc.constantPool.ints;
+            var uints = abc.constantPool.uints;
+            var doubles = abc.constantPool.doubles;
+            var strings = abc.constantPool.strings;
+            var multinames = abc.constantPool.multinames;
             
             var local = [$this];
             
@@ -212,12 +243,13 @@ var Frame = (function frame() {
             
             var stack = [];
             
-            
             var scopeStack = this.scopeStack;
             
-            var offset, value2, value1, value, index, multiname, argCount, args, obj, top, res;
-            
-            var methodInfo, methodBody;
+            var offset, value2, value1, value, index, multiname, argCount, args, obj, top, res, classInfo;
+            var baseType;
+            var method;
+            var debugFile = null, debugLine = null;
+            var klass;
             
             function jump (offset) {
                 code.seek(code.pos + offset);
@@ -270,8 +302,9 @@ var Frame = (function frame() {
                 }
                 
                 if (traceExecution) {
+                    var debugInfo = debugFile && debugLine ? debugFile + ":" + debugLine : ""; 
                     traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc) + " " + 
-                                         traceOperands(opcodeTable[bc], this.abc, code, true));
+                                         traceOperands(opcodeTable[bc], abc, code, true) + " " + debugInfo);
                 }
                 
                 switch (bc) {
@@ -350,7 +383,9 @@ var Frame = (function frame() {
                 case OP_ifstrictne: notImplemented(); break;
                 case OP_lookupswitch: notImplemented(); break;
                 case OP_pushwith: notImplemented(); break;
-                case OP_popscope: notImplemented(); break;
+                case OP_popscope:
+                    scopeStack.pop();
+                    break;
                 case OP_nextname: notImplemented(); break;
                 case OP_hasnext: notImplemented(); break;
                 case OP_pushnull: 
@@ -405,9 +440,8 @@ var Frame = (function frame() {
                 case OP_sf32: notImplemented(); break;
                 case OP_sf64: notImplemented(); break;
                 case OP_newfunction:
-                    methodInfo = this.abc.methods[code.readU30()];
-                    methodBody = this.abc.sillyMethodLookup(methodInfo);
-                    stack.push(new Closure(new Frame(this.abc, methodBody, scopeStack.clone())));
+                    method = abc.methods[code.readU30()];
+                    stack.push(new Closure(new Frame(abc, method, scopeStack.clone())));
                     break;
                 case OP_call: notImplemented(); break;
                 case OP_construct:
@@ -428,7 +462,10 @@ var Frame = (function frame() {
                         stack.push(obj.getProperty(multiname).apply(obj, args));
                     }
                     break;
-                case OP_returnvoid: 
+                case OP_returnvoid:
+                    if (traceExecution) {
+                        traceExecution.outdent();
+                    }
                     return undefined;
                     break;
                 case OP_returnvalue:
@@ -464,7 +501,14 @@ var Frame = (function frame() {
                 case OP_newactivation:
                     stack.push(new ASObject());
                     break;
-                case OP_newclass: notImplemented(); break;
+                case OP_newclass:
+                    classInfo = abc.classes[code.readU30()];
+                    method = classInfo.init;
+                    baseType = stack.pop();
+                    klass = new Klass(classInfo, baseType);
+                    new Frame(abc, method, scopeStack.clone()).apply(klass);
+                    stack.push(klass);
+                    break;
                 case OP_getdescendants: notImplemented(); break;
                 case OP_newcatch: notImplemented(); break;
                 case OP_findpropstrict:
@@ -475,7 +519,10 @@ var Frame = (function frame() {
                         stack.push(findProperty(multiname, true));
                     }
                     break;
-                case OP_findproperty: notImplemented(); break;
+                case OP_findproperty:
+                    multiname = readAndCreateMultiname();
+                    stack.push(findProperty(multiname, false));
+                    break;
                 case OP_finddef: notImplemented(); break;
                 case OP_getlex: notImplemented(); break;
                 case OP_setproperty: 
@@ -501,7 +548,11 @@ var Frame = (function frame() {
                     stack.push(stack.pop().getProperty(multiname));
                     break;
                 case OP_getouterscope: notImplemented(); break;
-                case OP_initproperty: notImplemented(); break;
+                case OP_initproperty:
+                    value = stack.pop();
+                    multiname = readAndCreateMultiname();
+                    stack.pop().setProperty(multiname, value);
+                    break;
                 case OP_setpropertylate: notImplemented(); break;
                 case OP_deleteproperty: notImplemented(); break;
                 case OP_deletepropertylate: notImplemented(); break;
@@ -651,9 +702,18 @@ var Frame = (function frame() {
                 case OP_setlocal3:
                     local[bc - OP_setlocal0] = stack.pop();
                     break;
-                case OP_debug: break;
-                case OP_debugline: break;
-                case OP_debugfile: break;
+                case OP_debug:
+                    code.readU8();
+                    code.readU30();
+                    code.readU8();
+                    code.readU30();
+                    break;
+                case OP_debugline: 
+                    debugLine = code.readU30(); 
+                    break;
+                case OP_debugfile:
+                    debugFile = strings[code.readU30()];
+                    break;
                 case OP_bkptline: break;
                 case OP_timestamp: notImplemented(); break;
                 default:
