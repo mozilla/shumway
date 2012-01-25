@@ -34,7 +34,7 @@ var AbcStream = (function () {
             return this.readU32();
         },
         /**
-         * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian), 
+         * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian),
          * each contributing 7 bits. The most significant bit of each byte indicates that the next byte is part of
          * the value. The spec indicates that the most significant bit of the last byte to be read is sign extended
          * but this turns out not to be the case in the real implementation, for instance 0x7f should technically be
@@ -76,7 +76,7 @@ var AbcStream = (function () {
         },
         readUTFString: function(length) {
             var result = "", end = this.pos + length;
-            
+
             while(this.pos < end) {
                 var c = this.bytes[this.pos++];
                 if (c <= 0x7f) {
@@ -113,7 +113,6 @@ var AbcStream = (function () {
     return abcStream;
 })();
 
-
 function parseTraits(constantPool, stream, methods, classes) {
     var count = stream.readU30();
     var traits = [];
@@ -127,9 +126,9 @@ var Trait = (function () {
     function trait(constantPool, stream, methods, classes) {
         this.name = constantPool.multinames[stream.readU30()];
         assert(this.name.isQName());
-        
+
         var tag = stream.readU8();
-        
+
         this.kind = tag & 0x0F;
         this.attributes = (tag >> 4) & 0x0F;
 
@@ -149,6 +148,7 @@ var Trait = (function () {
             case TRAIT_Getter:
                 this.dispId = stream.readU30();
                 this.method = methods[stream.readU30()];
+                this.method.name = this.name;
                 break;
             case TRAIT_Class:
                 this.slotId = stream.readU30();
@@ -169,15 +169,15 @@ var Trait = (function () {
             this.metadata = metadata;
         }
     }
-    
+
     trait.prototype.isSlot = function isSlot() {
         return this.kind == TRAIT_Slot;
     };
-    
+
     trait.prototype.isMethod = function isMethod() {
         return this.kind == TRAIT_Method;
     };
-    
+
     trait.prototype.toString = function toString() {
         var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
         switch (this.kind) {
@@ -196,23 +196,23 @@ var Trait = (function () {
                 break;
         }
     }
+
     return trait;
 })();
 
 var Namespace = (function () {
-    
+
     const PUBLIC             = 0x00;
     const PROTECTED          = 0x01;
     const PACKAGE_INTERNAL   = 0x02;
     const PRIVATE            = 0x04;
     const EXPLICIT           = 0x08;
     const STATIC_PROTECTED   = 0x10;
-    
+
     function namespace(constantPool, stream) {
         this.kind = stream.readU8();
-        
-        var index = stream.readU30();
-        
+        this.name = constantPool.strings[stream.readU30()];
+
         switch(this.kind) {
             case CONSTANT_Namespace:
             case CONSTANT_PackageNamespace:
@@ -235,71 +235,98 @@ var Namespace = (function () {
                         this.type = STATIC_PROTECTED;
                         break;
                 }
-                this.name = constantPool.strings[index];
-                
+
                 break;
             case CONSTANT_PrivateNs:
                 this.type = PRIVATE;
-                this.name = constantPool.strings[index];
                 break;
             default:
                 unexpected();
         }
     }
-    
+
     namespace.prototype.isPublic = function isPublic() {
         // TODO: Broken
-        return this.type == PUBLIC; 
+        return this.type == PUBLIC;
     };
-    
+
     namespace.prototype.getURI = function getURI() {
         // TODO: Broken
-        return this.name; 
-    };
-    
-    namespace.prototype.toString = function toString() {
-        if (this.type == PRIVATE) {
-            return "private";
-        }
         return this.name;
+    };
+
+    namespace.prototype.nameAndKind = function nameAndKind() {
+        var kind;
+
+        switch (this.kind) {
+        case CONSTANT_Namespace:
+            kind = "namespace";
+            break;
+        case CONSTANT_PackageNamespace:
+            kind = "package";
+            break;
+        case CONSTANT_PackageInternalNs:
+            kind = "_package";
+            break;
+        case CONSTANT_ProtectedNamespace:
+            kind = "protected";
+            break;
+        case CONSTANT_ExplicitNamespace:
+            kind = "explicit";
+            break;
+        case CONSTANT_StaticProtectedNs:
+            kind = "static";
+            break;
+        case CONSTANT_PrivateNs:
+            kind = "private";
+            break;
+        default:
+            unexpected();
+        }
+
+        return this.toString() + " (" + kind + ")";
     }
-    
+
+    namespace.prototype.toString = function toString() {
+        return this.type === PRIVATE ? "private" : this.name;
+    }
+
     return namespace;
 })();
 
 /**
  * Section 2.3 and 4.4.3
- * 
+ *
  * There are 10 multiname types, those ending in "A" represent the names of attributes. Some multinames
  * have the name and/or namespace part resolved at runtime, and are referred to as runtime multinames.
- * 
+ *
  *  QName[A] - A qualified name is the simplest form of multiname, it has a name with exactly one
  *    namespace. They are usually used to represent the names of variables and for type annotations.
- *              
+ *
  *  RTQName[A] - A runtime qualified name is a QName whose runtime part is resolved at runtime. Whenever
- *    a RTQName is used as an operand for an instruction, the namespace part is expected to be on the stack. 
+ *    a RTQName is used as an operand for an instruction, the namespace part is expected to be on the stack.
  *    RTQNames are used when the namespace is not known at compile time.
  *    ex: getNamespace()::f
- *  
+ *
  *  RTQNameL[A] - A runtime qualified name late is a QName whose name and runtime part are resolved at runtime.
  *    ex: getNamespace()::[getName()]
- *                 
+ *
  *  Multiname[A] - A multiple namespace name is a name with a namespace set. The namespace set represents
  *  a collection of namespaces. Multinames are used for unqualified names where multiple namespace may be open.
  *    ex: f
- *                 
+ *
  *  MultinameL[A] - A multiname where the name is resolved at runtime.
  *    ex: [f]
- *  
- *  Multiname Resolution: Section 2.3.6 
- *  
- *    Multinames are resolved in the object's declared traits, its dynamic properties, and finally the 
- *    prototype chain, in this order, unless otherwise noted. The last two only happen if the multiname 
+ *
+ *  Multiname Resolution: Section 2.3.6
+ *
+ *    Multinames are resolved in the object's declared traits, its dynamic properties, and finally the
+ *    prototype chain, in this order, unless otherwise noted. The last two only happen if the multiname
  *    contains the public namespace (dynamic properties are always in the public namespace).
- *    
+ *
  *    If the multiname is any type of QName, the QName will resolve to the property with the same name and
  *    namespace as the QName. If no property has the same name and namespace then the QName is unresolved.
- *    
+ *
  *    If the multiname has a namespace set, then the object is searched for any properties with the same
  *    name and a namespace matches any of the namespaces in the namespace set.
  */
@@ -310,11 +337,11 @@ var Multiname = (function () {
     const RUNTIME_NAME       = 0x08;
     const NAMESPACE_SET      = 0x10;
     const TYPE_PARAMETER     = 0x20;
-    
+
     function multiname() {
-        
+
     }
-    
+
     multiname.prototype.clone = function clone() {
         var clone = new multiname();
         clone.flags = this.flags;
@@ -324,26 +351,26 @@ var Multiname = (function () {
         clone.typeParameter = this.typeParameter;
         return clone;
     }
-    
+
     multiname.prototype.parse = function parse(constantPool, stream, multinames) {
         var index = 0;
         this.flags = 0;
         this.kind = stream.readU8();
-        
+
         var setAnyNamespace = function() {
-            this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE); 
+            this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE);
             this.namespace = null;
         }.bind(this);
-        
+
         var setAnyName = function() {
-            this.flags &= ~(RUNTIME_NAME); 
+            this.flags &= ~(RUNTIME_NAME);
             this.name = null;
         }.bind(this);
-        
+
         var setQName = function() {
             this.flags |= QNAME;
         }.bind(this);
-        
+
         var setAttribute = function(set) {
             if (set) {
                 this.flags |= ATTRIBUTE;
@@ -351,37 +378,37 @@ var Multiname = (function () {
                 this.flags &= ~(ATTRIBUTE);
             }
         }.bind(this);
-        
+
         var setRuntimeName = function() {
             this.flags |= RUNTIME_NAME;
             this.name = null;
         }.bind(this);
-        
+
         var setRuntimeNamespace = function() {
             this.flags |= RUNTIME_NAMESPACE;
             this.flags &= ~(NAMESPACE_SET);
             this.namespace = null;
         }.bind(this);
-        
+
         var setNamespaceSet = function(namespaceSet) {
             assert(namespaceSet != null);
             this.flags &= ~(RUNTIME_NAMESPACE);
             this.flags |= NAMESPACE_SET;
             this.namespaceSet = namespaceSet;
         }.bind(this);
-        
+
         var setTypeParameter = function(typeParameter) {
             this.flags |= TYPE_PARAMETER;
             this.typeParameter = typeParameter;
         }.bind(this);
-        
+
         switch (this.kind) {
             case CONSTANT_QName: case CONSTANT_QNameA:
                 index = stream.readU30();
                 if (index == 0) {
                     setAnyNamespace();
                 } else {
-                    this.namespace = constantPool.namespaces[index]; 
+                    this.namespace = constantPool.namespaces[index];
                 }
                 index = stream.readU30();
                 if (index == 0) {
@@ -445,49 +472,49 @@ var Multiname = (function () {
                 break;
         }
     };
-    
+
     multiname.prototype.isAttribute = function isAttribute() {
         return this.flags & ATTRIBUTE;
     };
-    
+
     multiname.prototype.isAnyName = function isAnyName() {
         return !this.isRuntimeName() && this.name == null;
     };
-    
+
     multiname.prototype.isAnyNamespace = function isAnyNamespace() {
         return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace == null;
     };
-    
+
     multiname.prototype.isRuntimeName = function isRuntimeName() {
         return this.flags & RUNTIME_NAME;
     };
-    
+
     multiname.prototype.isRuntimeNamespace = function isRuntimeNamespace() {
         return this.flags & RUNTIME_NAMESPACE;
     };
-    
+
     multiname.prototype.isRuntime = function isRuntime() {
         return this.flags & (RUNTIME_NAME | RUNTIME_NAMESPACE);
     }
-    
+
     multiname.prototype.isQName = function isQName() {
         return this.flags & QNAME;
     };
-    
+
     multiname.prototype.namespaceCount = function namespaceCount() {
-        return (this.namespaceSet && (this.flags & NAMESPACE_SET)) ? this.namespaceSet.length : 1; 
+        return (this.namespaceSet && (this.flags & NAMESPACE_SET)) ? this.namespaceSet.length : 1;
     };
-    
+
     multiname.prototype.getName = function getName() {
         assert(!this.isAnyName() && !this.isRuntimeName());
         return this.name;
     };
-    
+
     multiname.prototype.setName = function setName(name) {
         this.flags &= ~(RUNTIME_NAME);
         this.name = name;
     };
-    
+
     multiname.prototype.getNamespace = function getNamespace(i) {
         assert(!this.isRuntimeNamespace() && !this.isAnyNamespace());
         if (this.flags & NAMESPACE_SET) {
@@ -497,7 +524,7 @@ var Multiname = (function () {
             return this.namespace;
         }
     };
-    
+
     multiname.prototype.matches = function matches(multiname) {
         assert(this.isQName() && !this.isRuntime());
         if (this.name != multiname.name) {
@@ -510,7 +537,7 @@ var Multiname = (function () {
         }
         return this.name;
     };
-    
+
     multiname.prototype.nameToString = function nameToString() {
         if (this.isAnyName()) {
             return "*";
@@ -518,7 +545,7 @@ var Multiname = (function () {
             return this.isRuntimeName() ? "[]" : this.getName();
         }
     };
-    
+
     multiname.prototype.toString = function toString() {
         var str = this.isAttribute() ? "@" : "";
         if (this.isAnyNamespace()) {
@@ -540,7 +567,7 @@ var Multiname = (function () {
         }
         return str;
     }
-    
+
     return multiname;
 })();
 
@@ -580,7 +607,7 @@ var ConstantPool = (function constantPool() {
         this.uints = uints;
         this.doubles = doubles;
         this.strings = strings;
-        
+
         // namespaces
         var namespaces = [undefined];
         n = stream.readU30();
@@ -600,10 +627,10 @@ var ConstantPool = (function constantPool() {
             namespaceSets.push(set);
         }
 
-        
+
         this.namespaces = namespaces;
         this.namespaceSets = namespaceSets;
-        
+
         // multinames
         var multinames = [undefined];
         n = stream.readU30();
@@ -612,27 +639,27 @@ var ConstantPool = (function constantPool() {
             multiname.parse(this, stream, multinames);
             multinames.push(multiname);
         }
-        
+
         this.multinames = multinames;
     }
-    
+
     constantPool.prototype.getValue = function getValue(kind, index) {
         switch (kind) {
-        case CONSTANT_Int: 
+        case CONSTANT_Int:
             return this.ints[index];
-        case CONSTANT_UInt: 
+        case CONSTANT_UInt:
             return this.uints[index];
-        case CONSTANT_Double: 
+        case CONSTANT_Double:
             return this.doubles[index];
-        case CONSTANT_Utf8: 
+        case CONSTANT_Utf8:
             return this.strings[index];
-        case CONSTANT_True: 
+        case CONSTANT_True:
             return true;
-        case CONSTANT_False: 
+        case CONSTANT_False:
             return false;
-        case CONSTANT_Null: 
+        case CONSTANT_Null:
             return null;
-        case CONSTANT_Undefined: 
+        case CONSTANT_Undefined:
             return undefined;
         case CONSTANT_Namespace:
         case CONSTANT_PackageInternalNS:
@@ -646,14 +673,14 @@ var ConstantPool = (function constantPool() {
         case CONSTANT_NameL:
         case CONSTANT_NameLA:
             return this.multinames[index];
-        case CONSTANT_Float: 
+        case CONSTANT_Float:
             warning("TODO: CONSTANT_Float may be deprecated?");
             break;
-        default: 
+        default:
             assert(false, "Not Implemented Kind " + kind);
         }
-    }; 
-    
+    };
+
     return constantPool;
 })();
 
@@ -665,7 +692,7 @@ var MethodInfo = (function () {
         for (var i = 0; i < paramcount; ++i)
             params.push(stream.readU30());
 
-        var name = constantPool.strings[stream.readU30()];
+        var debugName = constantPool.strings[stream.readU30()];
         var flags = stream.readU8();
 
         var optionalcount = 0;
@@ -686,22 +713,53 @@ var MethodInfo = (function () {
             }
         }
 
-        this.name = name;
+        this.debugName = debugName;
         this.params = params;
         this.returntype = returntype;
         this.flags = flags;
         this.optionals = optionals;
         this.paramnames = paramnames;
-        this.methodBody = null; // This will be filled in later when method bodies are parsed.
     }
-    
+
     methodInfo.prototype = {
         toString: function toString() {
             var flags = getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|"));
             return (flags ? flags + " " : "") + this.name;
         }
     };
-    
+
+    function parseException(stream) {
+        return {
+            start: stream.readU30(),
+            end: stream.readU30(),
+            target: stream.readU30(),
+            typename: stream.readU30(),
+            name: stream.readU30()
+        };
+    }
+
+    methodInfo.parseBody = function parseBody(constantPool, methods, stream) {
+        var info = methods[stream.readU30()];
+        info.maxStack = stream.readU30();
+        info.localCount = stream.readU30();
+        info.initScopeDepth = stream.readU30();
+        info.maxScopeDepth = stream.readU30();
+
+        var code = new Uint8Array(stream.readU30());
+        for (var i = 0; i < code.length; ++i) {
+            code[i] = stream.readU8();
+        }
+        info.code = code;
+
+        var exceptions = [];
+        var exceptionCount = stream.readU30();
+        for (var i = 0; i < exceptionCount; ++i) {
+            exceptions.push(parseException(stream));
+        }
+        info.exceptions = exceptions;
+        info.traits = parseTraits(constantPool, stream, methods);
+    };
+
     return methodInfo;
 })();
 
@@ -709,7 +767,7 @@ var MetaDataInfo = (function () {
     function metaDataInfo(constantPool, stream) {
         var name = stream.readU30();
         var itemcount = stream.readU30();
-        
+
         var items = [];
         for (var i = 0; i < itemcount; ++i) {
             items[i] = { key: stream.readU30(), value: stream.readU30() };
@@ -743,7 +801,7 @@ var InstanceInfo = (function () {
         var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
         var str = (flags ? flags + " " : "") + this.name;
         if (this.superName) {
-            str += " extends " + this.superName; 
+            str += " extends " + this.superName;
         }
         return str;
     }
@@ -751,9 +809,10 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
-    function classInfo(constantPool, methods, stream) {
+    function classInfo(constantPool, methods, instance, stream) {
         this.init = methods[stream.readU30()];
         this.traits = parseTraits(constantPool, stream, methods);
+        this.instance = instance
     }
     return classInfo;
 })();
@@ -772,57 +831,20 @@ var ScriptInfo = (function scriptInfo() {
     return scriptInfo;
 })();
 
-var MethodBody = (function () {
-    function parseException(stream) {
-        return {
-            start: stream.readU30(), 
-            end: stream.readU30(), 
-            target: stream.readU30(),
-            typename: stream.readU30(), 
-            name: stream.readU30()
-        };
-    }
-    
-    function methodBody(constantPool, methods, stream) {
-        this.methodInfo = methods[stream.readU30()];
-        assert(this.methodInfo.methodBody === null);
-        this.methodInfo.methodBody = this; // Link method info's with method bodies.
-        this.maxStack = stream.readU30();
-        this.localCount = stream.readU30();
-        this.initScopeDepth = stream.readU30();
-        this.maxScopeDepth = stream.readU30();
-
-        var code = new Uint8Array(stream.readU30());
-        for (var i = 0; i < code.length; ++i) { 
-            code[i] = stream.readU8();
-        }
-        this.code = code;
-
-        var exceptions = [];
-        var exceptionCount = stream.readU30();
-        for (var i = 0; i < exceptionCount; ++i) {
-            exceptions = parseException(stream);
-        }
-        this.exceptions = exceptions;
-        this.traits = parseTraits(constantPool, stream, methods);
-    }
-    return methodBody;
-})();
-
 var AbcFile = (function () {
     function abcFile(bytes) {
         var n;
         var stream = new AbcStream(bytes);
         checkMagic(stream);
         this.constantPool = new ConstantPool(stream);
-        
+
         // Method Infos
         this.methods = [];
         n = stream.readU30();
         for (i = 0; i < n; ++i) {
             this.methods.push(new MethodInfo(this.constantPool, stream));
         }
-                    
+
         // MetaData Infos
         this.metadata = [];
         n = stream.readU30();
@@ -840,7 +862,7 @@ var AbcFile = (function () {
         // Class Infos
         this.classes = [];
         for (i = 0; i < n; ++i) {
-            this.classes.push(new ClassInfo(this.constantPool, this.methods, stream));
+            this.classes.push(new ClassInfo(this.constantPool, this.methods, this.instances[i], stream));
         }
 
         // Script Infos
@@ -850,22 +872,21 @@ var AbcFile = (function () {
             this.scripts.push(new ScriptInfo(this.constantPool, this.methods, this.classes, stream));
         }
 
-        // Method Bodies
-        this.methodBodies = [];
+        // Method body info just live inside methods
         n = stream.readU30();
         for (i = 0; i < n; ++i) {
-            this.methodBodies.push(new MethodBody(this.constantPool, this.methods, stream));
+            MethodInfo.parseBody(this.constantPool, this.methods, stream);
         }
     }
-    
+
     function checkMagic(stream) {
         var magic = stream.readWord();
-        var flashPlayerBrannan = 46 << 16 | 15; 
+        var flashPlayerBrannan = 46 << 16 | 15;
         if (magic < flashPlayerBrannan) {
             throw new Error("Invalid ABC File (magic = " + Number(magic).toString(16) + ")");
         }
     }
-    
+
     abcFile.prototype = {
         get lastScript() {
             assert (this.scripts.length > 0);
@@ -879,6 +900,6 @@ var AbcFile = (function () {
             return this.lastScript.entryPoint;
         }
     };
-    
+
     return abcFile;
 })();

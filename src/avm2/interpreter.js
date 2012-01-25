@@ -224,7 +224,7 @@ var Closure = (function () {
         },
         apply: function($this, args) {
             var abc = this.abc;
-            var code = new AbcStream(this.methodInfo.methodBody.code);
+            var code = new AbcStream(this.methodInfo.code);
             var ints = abc.constantPool.ints;
             var uints = abc.constantPool.uints;
             var doubles = abc.constantPool.doubles;
@@ -239,8 +239,8 @@ var Closure = (function () {
             var scope = this.scope;
             
             var offset, value2, value1, value, index, multiname, args, obj, classInfo, baseType;
-            var methodInfo, methodBody, klass, debugFile = null, debugLine = null;
-            
+            var methodInfo, klass, debugFile = null, debugLine = null;
+
             function jump (offset) {
                 code.seek(code.pos + offset);
             }
@@ -290,13 +290,13 @@ var Closure = (function () {
                 function notImplemented() {
                     assert (false, "Not Implemented: " + opcodeName(bc));
                 }
-                
+
                 if (traceExecution) {
                     var debugInfo = debugFile && debugLine ? debugFile + ":" + debugLine : ""; 
                     traceExecution.enter(String(code.position).padRight(' ', 4) + opcodeName(bc) + " " + 
                                          traceOperands(opcodeTable[bc], abc, code, true) + " " + debugInfo);
                 }
-                
+
                 switch (bc) {
                 case OP_bkpt: notImplemented(); break;
                 case OP_nop: notImplemented(); break;
@@ -495,15 +495,15 @@ var Closure = (function () {
                     break;
                 case OP_newactivation:
                     obj = new ASObject();
-                    obj.traits = this.methodInfo.methodBody.traits;
+                    obj.traits = this.methodInfo.traits;
                     stack.push(obj);
                     break;
                 case OP_newclass:
                     classInfo = abc.classes[code.readU30()];
-                    methodBody = classInfo.init.methodBody;
+                    method = classInfo.init;
                     baseType = stack.pop();
                     klass = new Klass(classInfo, baseType);
-                    new Closure(abc, methodBody, scope.clone()).apply(klass);
+                    new Closure(abc, method, scope.clone()).apply(klass);
                     stack.push(klass);
                     break;
                 case OP_getdescendants: notImplemented(); break;

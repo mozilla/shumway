@@ -4,43 +4,43 @@ var IndentingWriter = (function () {
         this.padding = "";
         this.suppressOutput = suppressOutput;
     }
-    
+
     indentingWriter.prototype.writeLn = function writeLn(str) {
         if (!this.suppressOutput) {
             console.info(this.padding + str);
         }
     };
-    
+
     indentingWriter.prototype.enter = function enter(str) {
         if (!this.suppressOutput) {
             console.info(this.padding + str);
         }
         this.indent();
     };
-    
+
     indentingWriter.prototype.leave = function leave(str) {
         this.outdent();
         if (!this.suppressOutput) {
             console.info(this.padding + str);
         }
     };
-    
+
     indentingWriter.prototype.indent = function indent() {
         this.padding += this.tab;
     };
-    
+
     indentingWriter.prototype.outdent = function outdent() {
         if (this.padding.length > 0) {
             this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
         }
     };
-    
+
     indentingWriter.prototype.writeArray = function writeArray(arr) {
-        for (var i = 0; i < arr.length; i++) {
+        for (var i = 0, j = arr.length; i < j; i++) {
             this.writeLn(("" + i).padRight(' ', 3) + arr[i]);
         }
     };
-    
+
     return indentingWriter;
 })();
 
@@ -49,9 +49,9 @@ function traceArray(writer, name, array, abc) {
         return;
     }
     writer.enter(name + " {");
-    for (var i = 0; i < array.length; i++) {
-        array[i].trace(writer, abc);
-    }
+    array.forEach(function (a) {
+        a.trace(writer, abc);
+    });
     writer.leave("}");
 }
 
@@ -61,13 +61,21 @@ AbcFile.prototype.trace = function trace(writer) {
     traceArray(writer, "instances", this.instances);
     traceArray(writer, "metadata", this.metadata);
     traceArray(writer, "scripts", this.scripts);
-    traceArray(writer, "methodBodies", this.methodBodies, this);
+    traceArray(writer, "methods", this.methods, this);
 };
 
 ConstantPool.prototype.trace = function (writer) {
     writer.enter("constantPool {");
     for (var key in this) {
-        if (this[key] instanceof Array) {
+        /* Special-case namespaces to print out full names. */
+        if (key === "namespaces") {
+            writer.enter("namespaces {");
+            this.namespaces.forEach(function (ns, i) {
+                writer.writeLn(("" + i).padRight(' ', 3) +
+                               (ns ? ns.nameAndKind() : "*"));
+            });
+            writer.leave("}");
+        } else if (this[key] instanceof Array) {
             writer.enter(key + " " + this[key].length + " {");
             writer.writeArray(this[key]);
             writer.leave("}");
@@ -119,34 +127,41 @@ function traceOperand(operand, abc, code) {
         case "S": description = abc.constantPool.strings[value]; break;
         case "N": description = abc.constantPool.namespaces[value]; break;
         case "CI": description = abc.classes[value]; break;
-        case "M": 
-            return abc.constantPool.multinames[value]; 
+        case "M":
+            return abc.constantPool.multinames[value];
         default: description = "?"; break;
     }
     return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
-    
+
 }
 
 function traceOperands(opcode, abc, code, rewind) {
     rewind = rewind || false;
     var old = code.position;
     var str = "";
-    for (var i = 0; i < opcode.operands.length; i++) {
-        str += traceOperand(opcode.operands[i], abc, code);
+    opcode.operands.forEach(function (op, i) {
+        str += traceOperand(op, abc, code);
         if (i < opcode.operands.length - 1) {
             str += ", ";
         }
-    }
+    });
     if (rewind) {
         code.seek(old);
     }
     return str;
 }
 
-MethodBody.prototype.trace = function trace(writer, abc) {
-    writer.enter("methodBodyInfo {");
-    writer.writeLn("name: " + this.methodInfo.toString());
+MethodInfo.prototype.trace = function trace(writer, abc) {
+    writer.enter("method" + (this.name ? " " + this.name : "") + " {");
+    writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|")));
+
+    if (!this.code) {
+        writer.leave("}");
+        return;
+    }
+
     var code = new AbcStream(this.code);
+
     writer.enter("code {");
     while (code.remaining() > 0) {
         var bc = code.readU8();
