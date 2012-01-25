@@ -1,41 +1,32 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+function injectPropertyOperations(obj) {
+    obj.getProperty = function(multiname) {
+        return this[multiname.name];
+    };
+
+    obj.setProperty = function setProperty(multiname, value) {
+        return this[multiname.name] = value;
+    };
+
+    return obj;
+}
+
+injectPropertyOperations(Object.prototype);
+
 function createGlobalObject(script) {
     var global = new ASObject();
     global.traits = script.traits;
     global.trace = function (val) {
         console.info(val);
     };
-    global.Date = {
-        construct: function (obj, args) {
-            assert(args.length == 0);
-            return new Date();
-        }
-    };
-    global.Array = {
-        construct: function (obj, args) {
-            if (args.length == 0) {
-                return new Array();
-            } else if (args.length == 1) {
-                return new Array(args[0]);
-            } else {
-                assert(false);
-            }
-        }
-    };
+    global.Date = Date;
+    global.Array = Array;
     global.Math = Math;
-    global.Object = {
-        construct: function (obj, args) {
-            return new ASObject();
-        }
-    };
+    global.Object = ASObject;
     global.String = String;
-    global.RegExp = {
-        construct: function (obj, args) {
-            assert(args.length == 2);
-            return new RegExp(args[0], args[1]);
-        }
-    };
+    global.RegExp = RegExp;
+    global.Namespace = ASNamespace;
     global.parseInt = parseInt;
     global.print = function (val) {
         console.info(val);
@@ -43,6 +34,9 @@ function createGlobalObject(script) {
     global.toString = function () {
         return "[global]";
     };
+    global.Capabilities = injectPropertyOperations({
+       'playerType': 'AVMPlus'
+    });
     return global;
 }
 
@@ -104,12 +98,24 @@ function interpretAbc(abc) {
     new Closure(abc, methodInfo, scope).apply($this);
 }
 
-Object.prototype.getProperty = function(multiname) {
-    return this[multiname.name];
+Array.construct = function (obj, args) {
+    switch (args.length) {
+        case 0:
+            return new Array();
+        case 1:
+            return new Array(args[0]);
+        default:
+            assert(false);
+            break;
+    }
 };
 
-Array.prototype.setProperty = function setProperty(multiname, value) {
-    return this[multiname.name] = value;
+Array.prototype.popMany = function(count) {
+    assert (this.length >= count);
+    var start = this.length - count;
+    var res = this.slice(start, this.length);
+    this.splice(start, count);
+    return res;
 };
 
 function wrap(fn) {
@@ -118,13 +124,25 @@ function wrap(fn) {
     };
 }
 
-String.prototype.getProperty = function(multiname) {
-    if (multiname.name == "replace") {
-        return function (regexp, val) {
-            return this.replace(regexp, wrap(val));
-        };
+injectPropertyOperations(String);
+
+injectPropertyOperations(Math);
+
+Date.construct = function(obj, args) {
+    switch (args.length) {
+        case 0:
+            return new Date();
+        case 3:
+            return new Date(args[0], args[1], args[2]);
+        default:
+            assert(false);
+            break;
     }
-    return this[multiname.name];
+};
+
+RegExp.construct = function (obj, args) {
+    assert(args.length == 2);
+    return new RegExp(args[0], args[1]);
 };
 
 var ASObject = (function () {
@@ -135,7 +153,7 @@ var ASObject = (function () {
         this.traits = null;
         this.id = counter++; 
     }
-    
+
     asObject.prototype.getProperty = function getProperty(multiname) {
         if (this.traits) {
             var trait = findTrait(this.traits, multiname);
@@ -154,7 +172,7 @@ var ASObject = (function () {
         if (this.traits) {
             var trait = findTrait(this.traits, multiname);
             if (trait) {
-                assert (trait.isSlot());
+               // assert (trait.isSlot());
                 this.slots[trait.slotId] = value;
             }
         }
@@ -177,17 +195,45 @@ var ASObject = (function () {
     return asObject;
 })();
 
-var Klass = (function () {
-    function klass(classInfo, baseType) {
-        ASObject.call(this);
-        ASObject.prototype.applyTraits.call(this, classInfo.traits);
-        this.traits = classInfo.traits;
+var ASNamespace = (function() {
+    function namespace() {
+        ASObject.call(null);
+        this.prefix = arguments.length > 1 ? arguments[0] : undefined;
+        this.uri = arguments.length == 1 ? arguments[0] : arguments[1];
     }
-    klass.prototype = inherit(ASObject, {
-        
-    });
-    return klass;
+    namespace.prototype = Object.create(ASObject.prototype);
+    return namespace;
 })();
+
+function createNewClass(abc, scope, classInfo, baseClass) {
+    baseClass = baseClass || ASObject;
+
+    var classScope = scope.clone();
+    classScope.superClass = baseClass;
+
+    var class_ = function() {
+      ASObject.prototype.applyTraits.call(this, classInfo.traits);
+      this.traits = (this.traits || []).concat(classInfo.traits);
+
+      new Closure(abc, classInfo.instance.init, classScope).apply(this, arguments);
+    };
+    class_.prototype = Object.create(baseClass.prototype);
+
+    // call static initialization
+    new Closure(abc, classInfo.init, classScope.clone()).apply(null);
+
+    return class_;
+}
+
+function constructObject(constructor, args) {
+    if ('construct' in constructor)
+       return constructor.construct(constructor, args);
+    else {
+       var obj = Object.create(constructor.prototype);
+       constructor.apply(obj, args);
+       return obj;
+    }
+}
 
 function findTrait(traits, multiname) {
     for (var i = 0; i < traits.length; i++) {
@@ -215,6 +261,9 @@ var Closure = (function () {
     function closure (abc, methodInfo, scope) {
         this.abc = abc;
         this.methodInfo = methodInfo;
+        this.paramCount = methodInfo.params.length;
+        this.needRest = !!(methodInfo.flags & METHOD_Needrest);
+        this.needArguments = !!(methodInfo.flags & METHOD_Arguments);
         this.scope = scope;
     }
     
@@ -230,16 +279,23 @@ var Closure = (function () {
             var doubles = abc.constantPool.doubles;
             var strings = abc.constantPool.strings;
             var multinames = abc.constantPool.multinames;
-            
+            var classes = abc.classes;
+
             var local = [$this];
+
             if (args) {
-                local = local.concat(args);
+                local = local.concat(Array.prototype.slice.call(args, 0, this.paramCount));
+
+                if (this.needRest)
+                    local[this.paramCount + 1] = args.slice(this.paramCount);
+                else if (this.needArguments)
+                    local[this.paramCount + 1] = args;
             }
             var stack = [];
             var scope = this.scope;
-            
+
             var offset, value2, value1, value, index, multiname, args, obj, classInfo, baseType;
-            var methodInfo, klass, debugFile = null, debugLine = null;
+            var methodInfo, debugFile = null, debugLine = null;
 
             function jump (offset) {
                 code.seek(code.pos + offset);
@@ -257,8 +313,8 @@ var Closure = (function () {
                 } else {
                     return res;
                 }
-            };
-            
+            }
+
             function readMultiname() {
                 return multinames[code.readU30()];
             }
@@ -392,8 +448,12 @@ var Closure = (function () {
                 case OP_pushshort:
                     stack.push(code.readU30());
                     break;
-                case OP_pushtrue: notImplemented(); break;
-                case OP_pushfalse: notImplemented(); break;
+                case OP_pushtrue:
+                    stack.push(true)
+                    break;
+                case OP_pushfalse:
+                    stack.push(false)
+                    break;
                 case OP_pushnan: notImplemented(); break;
                 case OP_pop:
                     stack.pop();
@@ -441,7 +501,7 @@ var Closure = (function () {
                 case OP_construct:
                     args = stack.popMany(code.readU30());
                     obj = stack.pop();
-                    stack.push(obj.construct(obj, args));
+                    stack.push(constructObject(obj, args));
                     break;
                 case OP_callmethod: notImplemented(); break;
                 case OP_callstatic: notImplemented(); break;
@@ -457,6 +517,7 @@ var Closure = (function () {
                     }
                     stack.push(val.apply(obj, args));
                     break;
+                case OP_returnvoid: 
                 case OP_returnvoid:
                     if (traceExecution) {
                         traceExecution.outdent();
@@ -468,7 +529,12 @@ var Closure = (function () {
                         traceExecution.outdent();
                     }
                     return stack.pop();
-                case OP_constructsuper: notImplemented(); break;
+                case OP_constructsuper:
+                    // find better way to retrive the base class
+                    obj = local[0]; // this
+                    args = stack.popMany(code.readU30());
+                    stack.push(scope.superClass.apply(obj, args));
+                    break;
                 case OP_constructprop: 
                     multiname = multinames[code.readU30()];
                     args = stack.popMany(code.readU30());
@@ -476,7 +542,7 @@ var Closure = (function () {
                         assert(false);
                     } else {
                         obj = stack.pop();
-                        stack.push(obj.getProperty(multiname).construct(obj, args));
+                        stack.push(constructObject(obj.getProperty(multiname), args));
                     }
                     break;
                 case OP_callsuperid: notImplemented(); break;
@@ -499,12 +565,8 @@ var Closure = (function () {
                     stack.push(obj);
                     break;
                 case OP_newclass:
-                    classInfo = abc.classes[code.readU30()];
-                    method = classInfo.init;
-                    baseType = stack.pop();
-                    klass = new Klass(classInfo, baseType);
-                    new Closure(abc, method, scope.clone()).apply(klass);
-                    stack.push(klass);
+                    classInfo = classes[code.readU30()];
+                    stack.push(createNewClass(abc, scope, classInfo, stack.pop()));
                     break;
                 case OP_getdescendants: notImplemented(); break;
                 case OP_newcatch: notImplemented(); break;
@@ -542,13 +604,15 @@ var Closure = (function () {
                     break;
                 case OP_getproperty:
                     multiname = readAndCreateMultiname();
-                    stack.push(stack.pop().getProperty(multiname));
+                    obj = stack.pop();
+                    stack.push(obj.getProperty(multiname));
                     break;
                 case OP_getouterscope: notImplemented(); break;
                 case OP_initproperty:
                     value = stack.pop();
                     multiname = readAndCreateMultiname();
-                    stack.pop().setProperty(multiname, value);
+                    obj = stack.pop();
+                    obj.setProperty(multiname, value);
                     break;
                 case OP_setpropertylate: notImplemented(); break;
                 case OP_deleteproperty: notImplemented(); break;
@@ -592,14 +656,20 @@ var Closure = (function () {
                 case OP_astypelate: notImplemented(); break;
                 case OP_coerce_u: notImplemented(); break;
                 case OP_coerce_o: notImplemented(); break;
-                case OP_negate: notImplemented(); break;
+                case OP_negate:
+                    stack.push(-stack.pop());
+                    break;
                 case OP_increment: 
                     stack.push(stack.pop() + 1);
                     break;
                 case OP_inclocal: notImplemented(); break;
                 case OP_decrement: notImplemented(); break;
                 case OP_declocal: notImplemented(); break;
-                case OP_typeof: notImplemented(); break;
+                case OP_typeof:
+                    obj = stack.pop();
+                    // TODO XML|XMLList
+                    stack.push(typeof obj);
+                    break;
                 case OP_not: 
                     stack.push(!stack.pop());
                     break;
