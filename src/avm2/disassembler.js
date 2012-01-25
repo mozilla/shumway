@@ -45,7 +45,7 @@ var IndentingWriter = (function () {
 })();
 
 function traceArray(writer, name, array, abc) {
-    if (array.length == 0) {
+    if (array.length === 0) {
         return;
     }
     writer.enter(name + " {");
@@ -131,7 +131,7 @@ function traceOperand(operand, abc, code) {
             return abc.constantPool.multinames[value];
         default: description = "?"; break;
     }
-    return operand.name + ":" + value + (description == "" ? "" : " (" + description + ")");
+    return operand.name + ":" + value + (description === "" ? "" : " (" + description + ")");
 
 }
 
