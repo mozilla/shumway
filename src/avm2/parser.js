@@ -174,6 +174,10 @@ var Trait = (function () {
         return this.kind == TRAIT_Slot;
     };
     
+    trait.prototype.isMethod = function isMethod() {
+        return this.kind == TRAIT_Method;
+    };
+    
     trait.prototype.toString = function toString() {
         var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
         switch (this.kind) {

@@ -5,6 +5,7 @@ from dis import disassemble
 class Base:
     asc = None
     avm = None
+    builtin_abc = None
     
     def __init__(self):
         self.setEnvironmentVariables();
@@ -16,11 +17,19 @@ class Base:
         else:
             print "Environment variable ASC is not defined, set it to asc.jar"
         
+        if 'BUILTIN_ABC' in os.environ:
+            self.builtin_abc = os.environ['BUILTIN_ABC'].strip();
+        else:
+            print "Environment variable BUILTIN_ABC is not defined, set it to builtin.abc"
+            
         if not self.asc:
             sys.exit();
 
-    def runAsc(self, file, createSwf = False):
-        args = ["java", "-jar", self.asc, "-d", file]
+    def runAsc(self, file, createSwf = False, builtin = False):
+        args = ["java", "-jar", self.asc]
+        if builtin:
+            args.extend(["-import", self.builtin_abc])
+        args.append(file);
         subprocess.call(args)
         if createSwf:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]
@@ -55,10 +64,11 @@ class Asc(Command):
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
         parser.add_argument('src', help="source .as file")
+        parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
         parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
         args = parser.parse_args(args)
         print "Compiling %s" % args.src
-        self.runAsc(args.src, args.swf)
+        self.runAsc(args.src, args.swf, builtin = args.builtin)
 
 class Avm(Command):
     def __init__(self):
