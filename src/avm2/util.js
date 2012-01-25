@@ -94,7 +94,7 @@ function getFlags(value, flags) {
             str += flags[i] + " ";
         }
     }
-    if (str.length == 0) {
+    if (str.length === 0) {
         return "";
     }
     return str.trim();

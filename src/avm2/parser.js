@@ -171,11 +171,11 @@ var Trait = (function () {
     }
 
     trait.prototype.isSlot = function isSlot() {
-        return this.kind == TRAIT_Slot;
+        return this.kind === TRAIT_Slot;
     };
 
     trait.prototype.isMethod = function isMethod() {
-        return this.kind == TRAIT_Method;
+        return this.kind === TRAIT_Method;
     };
 
     trait.prototype.toString = function toString() {
@@ -247,7 +247,7 @@ var Namespace = (function () {
 
     namespace.prototype.isPublic = function isPublic() {
         // TODO: Broken
-        return this.type == PUBLIC;
+        return this.type === PUBLIC;
     };
 
     namespace.prototype.getURI = function getURI() {
@@ -338,12 +338,12 @@ var Multiname = (function () {
     const NAMESPACE_SET      = 0x10;
     const TYPE_PARAMETER     = 0x20;
 
-    function multiname() {
-
+    function multiname(index) {
+        this.index = index;
     }
 
     multiname.prototype.clone = function clone() {
-        var clone = new multiname();
+        var clone = new multiname(this.index);
         clone.flags = this.flags;
         clone.name = this.name;
         clone.namespace = this.namespace;
@@ -405,40 +405,40 @@ var Multiname = (function () {
         switch (this.kind) {
             case CONSTANT_QName: case CONSTANT_QNameA:
                 index = stream.readU30();
-                if (index == 0) {
+                if (index === 0) {
                     setAnyNamespace();
                 } else {
                     this.namespace = constantPool.namespaces[index];
                 }
                 index = stream.readU30();
-                if (index == 0) {
+                if (index === 0) {
                     setAnyName();
                 } else {
                     this.name = constantPool.strings[index];
                 }
                 setQName();
-                setAttribute(this.kind == CONSTANT_QNameA);
+                setAttribute(this.kind === CONSTANT_QNameA);
                 break;
             case CONSTANT_RTQName: case CONSTANT_RTQNameA:
                 index = stream.readU30();
-                if (index == 0) {
+                if (index === 0) {
                     setAnyName();
                 } else {
                     this.name = constantPool.strings[index];
                 }
                 setQName();
                 setRuntimeNamespace();
-                setAttribute(this.kind == CONSTANT_RTQNameA);
+                setAttribute(this.kind === CONSTANT_RTQNameA);
                 break;
             case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
                 setQName();
                 setRuntimeNamespace();
                 setRuntimeName();
-                setAttribute(this.kind == CONSTANT_RTQNameLA);
+                setAttribute(this.kind === CONSTANT_RTQNameLA);
                 break;
             case CONSTANT_Multiname: case CONSTANT_MultinameA:
                 index = stream.readU30();
-                if (index == 0) {
+                if (index === 0) {
                     setAnyName();
                 } else {
                     this.name = constantPool.strings[index];
@@ -446,14 +446,14 @@ var Multiname = (function () {
                 index = stream.readU30();
                 assert(index != 0);
                 setNamespaceSet(constantPool.namespaceSets[index]);
-                setAttribute(this.kind == CONSTANT_MultinameA);
+                setAttribute(this.kind === CONSTANT_MultinameA);
                 break;
             case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
                 setRuntimeName();
                 index = stream.readU30();
                 assert(index != 0);
                 setNamespaceSet(constantPool.namespaceSets[index]);
-                setAttribute(this.kind == CONSTANT_MultinameLA);
+                setAttribute(this.kind === CONSTANT_MultinameLA);
                 break;
             /**
              * This is undocumented, looking at Tamarin source for this one.
@@ -464,7 +464,7 @@ var Multiname = (function () {
                     this[key] = multinames[index][key];
                 }
                 index = stream.readU32();
-                assert(index == 1);
+                assert(index === 1);
                 setTypeParameter(stream.readU32());
                 break;
             default:
@@ -478,11 +478,11 @@ var Multiname = (function () {
     };
 
     multiname.prototype.isAnyName = function isAnyName() {
-        return !this.isRuntimeName() && this.name == null;
+        return !this.isRuntimeName() && this.name === null;
     };
 
     multiname.prototype.isAnyNamespace = function isAnyNamespace() {
-        return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace == null;
+        return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace === null;
     };
 
     multiname.prototype.isRuntimeName = function isRuntimeName() {
@@ -520,7 +520,7 @@ var Multiname = (function () {
         if (this.flags & NAMESPACE_SET) {
             return this.namespaceSet != null ? this.namespaceSet[i] : null;
         } else {
-            assert(i == 0);
+            assert(i === 0);
             return this.namespace;
         }
     };
@@ -531,7 +531,7 @@ var Multiname = (function () {
             return false;
         }
         if (multiname.namespace) {
-            return this.namespace == multiname.namespace;
+            return this.namespace === multiname.namespace;
         } else {
             return multiname.namespaceSet.indexOf(this.namespace) >= 0;
         }
@@ -552,7 +552,7 @@ var Multiname = (function () {
             str += "*::" + this.nameToString();
         } else if (this.isRuntimeNamespace()) {
             str += "[]::" + this.nameToString();
-        } else if (this.namespaceCount() == 1 && this.isQName()) {
+        } else if (this.namespaceCount() === 1 && this.isQName()) {
             str += this.namespace + "::";
             str += this.nameToString();
         } else {
@@ -566,7 +566,7 @@ var Multiname = (function () {
             str += "}::" + this.nameToString();
         }
         return str;
-    }
+    };
 
     return multiname;
 })();
@@ -635,7 +635,7 @@ var ConstantPool = (function constantPool() {
         var multinames = [undefined];
         n = stream.readU30();
         for (i = 1; i < n; ++i) {
-            var multiname = new Multiname(this, stream, multinames);
+            var multiname = new Multiname(i);
             multiname.parse(this, stream, multinames);
             multinames.push(multiname);
         }
