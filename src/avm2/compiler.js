@@ -1,9 +1,325 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+function Emitter() {
+    this.stmts = [];
+    this.exprs = [];
+}
+
+Emitter.prototype = {
+    stmt: function stmt(s) {
+        if (!s) {
+            s = this.exprs.pop();
+        }
+        this.stmts.push(s + ";");
+    },
+
+    decl: function decl() {
+        this.stmts.push(this.exprs.pop());
+    },
+
+    expr: function expr(e) {
+        this.exprs.push(e);
+    },
+
+    assign: function assign() {
+        var lhs = this.exprs.pop();
+        var rhs = this.exprs.pop();
+        this.stmt(lhs + "=" + rhs);
+    },
+
+    call: function assign(nargs) {
+        var lhs = this.exprs.pop();
+        var args = this.exprs.slice(-nargs).reverse()
+        this.expr("(" + lhs + ")(" + args.join(",") + ")");
+    },
+
+    ret: function ret() {
+        this.stmt("return " + this.exprs.pop());
+    },
+
+    func: function func(name, nparams, body) {
+        var tmpEmit = new Emitter;
+        body(tmpEmit);
+        var params = [];
+        for (var i = 0; i < nparams; i++) {
+            params.push("param" + i);
+        }
+        this.expr("function " + name + "(" + params.join(",") + ") {" +
+                  tmpEmit.finish() + "}");
+    },
+
+    varDecl: function varDecl(name) {
+        this.stmt("var " + name);
+    },
+
+    thunk: function thunk(body) {
+        this.func("", 0, body);
+    },
+
+    setProp: function setProp(scope, multiname) {
+        if (multiname.isQName()) {
+            this.expr(scope + "." + mangleQName(multiname));
+            this.assign();
+            return;
+        }
+        this.expr(multiname.index);
+        this.expr(scope + ".setBinding");
+        this.call(2);
+        this.stmt();
+    },
+
+    findProp: function findProp(scope, multiname) {
+        if (multiname.isQName()) {
+            this.expr(scope + "." + mangleQName(multiname));
+        }
+        this.expr(multiname.index);
+        this.expr(scope + ".findBinding");
+        this.call(1);
+    },
+
+    finish: function finish() {
+        var out = this.stmts.join("\n");
+        this.stmts = [];
+        this.exprs = [];
+        return out;
+    }
+}
+
+function mangleQName(multiname) {
+    assert(multiname.isQName());
+    return multiname.getNamespace(0) + "$$" + multiname.getName();
+}
+
+function compiler(abc) {
+    const args = "args";
+    const localScope = "scope";
+    const parentScope = "parentScope";
+    const proto = "prototype";
+
+    function defaultValue(typeName) {
+        /* :XXX: Is this right? */
+        switch (typeName.name) {
+        case undefined:
+            return "undefined";
+        case "Boolean":
+            return "false";
+        case "int":
+            return "0";
+        case "Number":
+            return "NaN";
+        case "uint":
+            return "0";
+        default:
+            return "null";
+        }
+    }
+
+    /*
+     * Classes in AVM are split into two parts:
+     *  - instance_info, which describe layout of class instances.
+     *  - class_info, which describe layout of classes themselves, i.e. static
+     *    properties.
+     *
+     * Some AVM terms:
+     *  iinit  - instance initializer, i.e. constructor
+     *  cinit  - class initializer, i.e. static constructor
+     *  traits - descriptions of properties
+     *
+     * AVM classes are compiled to JS functions using the folowing mappings:
+     *
+     * Classes are functions with their iinit folded in,
+     *   class C { public function C(args) { ... } }
+     *     =>
+     *   function C(args) { ... }
+     *
+     * Class traits (static properties) are set on C itself,
+     *   class C { ... public static const CPROP: int = 0 ... }
+     *     =>
+     *   ... C.public$$CPROP = 0 ...
+     *
+     * Instance traits of type TRAIT_Slot, TRAIT_Const are set in the beginning
+     * of the JS function,
+     *   class C { public var x }
+     *     =>
+     *   function C() { this.public$$x = undefined }
+     *
+     * Instance traits of type TRAIT_Method, TRAIT_Getter, TRAIT_Setter are set
+     * on C.prototype,
+     *   class C { public function m() { ... } }
+     *     =>
+     *   C.prototype.public$$m = function () { ... }
+     *
+     * Classes' cinit functions are compiled as a special function init and are
+     * called at the toplevel.
+     *   class C { ... }
+     *     =>
+     *   C.init = function C$init() { }; ...; C.init();
+     *
+     * Inheritance is dealt with by copying instance properties and chaining
+     * prototypes,
+     *   class C extends B { ... }
+     *     =>
+     *   function C() { B(); ... }
+     *   C.prototype = B.prototype;
+     */
+
+    function isSlot(t) {
+        return (t.kind === TRAIT_Slot ||
+                t.kind === TRAIT_Const);
+    }
+
+    function isMethod(t) {
+        return (t.kind === TRAIT_Method ||
+                t.kind === TRAIT_Setter ||
+                t.kind === TRAIT_Setter);
+    }
+
+    function compileClass(emit, classInfo, i) {
+        var instanceInfo = classInfo.instance;
+        var itraits = instanceInfo.traits;
+        var className = instanceInfo.name.getName();
+
+        emit.thunk(function (emit) {
+            emit.func(className, 0, function (emit) {
+                itraits.filter(isSlot).forEach(compileSlot.bind(undefined, emit));
+            });
+            emit.decl();
+
+            emit.expr("abc.classes[" + i + "]");
+            emit.expr(className + ".class");
+            emit.assign();
+
+            if (instanceInfo.superName) {
+                emit.findProp(localScope, instanceInfo.superName);
+                emit.expr(className + ".super");
+                emit.assign();
+            }
+
+            emit.varDecl(proto);
+
+            emit.expr("new " + className + ".super");
+            emit.expr(proto);
+            emit.assign();
+
+            emit.expr(className);
+            emit.expr(proto + ".constructor");
+            emit.assign();
+
+            emit.expr(className + ".class.instance.traits");
+            emit.expr(proto + ".traits");
+            emit.assign();
+
+            /* The instance initializer. */
+            var tmpEmit = new Emitter;
+            compileMethod(tmpEmit, instanceInfo.init);
+            emit.expr(tmpEmit.finish());
+            emit.expr(proto + ".init");
+            emit.assign();
+
+            itraits.filter(isMethod).forEach(function (trait) {
+                compileMethod(tmpEmit, trait.method);
+                emit.expr(tmpEmit.finish());
+                emit.setProp(proto, trait.name);
+            });
+
+            emit.expr(proto);
+            emit.expr(className + "." + proto);
+            emit.assign();
+
+            /* The static initializer. */
+            // compileCode(emit, classInfo.init.code);
+
+            emit.expr(className);
+            emit.ret();
+        });
+    }
+
+    function compileSlot(emit, trait) {
+        assert(trait.kind === TRAIT_Slot || trait.kind === TRAIT_Const);
+
+        if (trait.kind === TRAIT_Slot) {
+            emit.expr(defaultValue(trait.typeName));
+            emit.setProp("this", trait.name);
+        } else {
+            /* Where's my quasiquote? */
+            propDesc = { value: defaultValue(trait.typeName),
+                         writable: false,
+                         configurable: false };
+            emit.expr(JSON.stringify(propDesc));
+            emit.expr(mangleQName(traits.name));
+            emit.expr("this");
+            emit.expr("Object.defineProperty");
+            emit.call(3);
+            emit.stmt();
+        }
+    }
+
+    function compileMethod(emit, method, options) {
+        emit.func(method.name ? method.name.getName() : "", 0, function (emit) {
+            emit.ret();
+        });
+        emit.decl();
+    }
+
+    function compileTraits(emit, traits) {
+        traits.forEach(function (trait, i) {
+            switch (trait.kind) {
+            case TRAIT_Slot:
+            case TRAIT_Const:
+                compileSlot(emit, trait);
+                break;
+            case TRAIT_Method:
+            case TRAIT_Setter:
+            case TRAIT_Getter:
+                compileMethod(emit, trait.method);
+                break;
+            case TRAIT_Class:
+                compileClass(emit, trait.class, i);
+                break;
+            default:
+                unexpected();
+            }
+        });
+    }
+
+    function compileScript(emit, script) {
+        compileTraits(emit, script.traits);
+    }
+
+    return {
+        /*
+         * We expose compileClass because the interpreter uses it for name
+         * resolution.
+         */
+        compileClass: compileClass,
+        compileScript: compileScript
+    };
+}
+
+function compileAbc(abc) {
+    var emit = new Emitter;
+    var cc = compiler(abc);
+    cc.compileScript(emit, abc.lastScript);
+    return emit.finish();
+}
+
+function runScript(scope, abc, code) {
+    /*
+     * The compiled code requires a scope object named 'scope' and an abcFile
+     * named 'abc' in scope!
+     */
+    return eval(code);
+}
+
+/*
 function compileAbc(abc) {
     var constants = abc.constants;
     var strings = constants.strings;
     var names = constants.names;
+    var scripts = abc.scripts;
+
+    for (var i = 0, j = scripts.length; i < j; i++)
+        compileScript(scripts[i]);
 
     function compileBody(body) {
         var maxStack = body.maxStack;
@@ -602,8 +918,8 @@ function compileAbc(abc) {
     /*
     for (var n = 0; n < length; ++n)
         methodBodies[n].compiled = Function(compileBody(methodBodies[n]));
-    */
     
     //compile(methods[scripts[0].init]);
     return abc;
 }
+*/

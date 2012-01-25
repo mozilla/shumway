@@ -338,12 +338,12 @@ var Multiname = (function () {
     const NAMESPACE_SET      = 0x10;
     const TYPE_PARAMETER     = 0x20;
 
-    function multiname() {
-
+    function multiname(index) {
+        this.index = index;
     }
 
     multiname.prototype.clone = function clone() {
-        var clone = new multiname();
+        var clone = new multiname(this.index);
         clone.flags = this.flags;
         clone.name = this.name;
         clone.namespace = this.namespace;
@@ -531,7 +531,7 @@ var Multiname = (function () {
             return false;
         }
         if (multiname.namespace) {
-            return this.namespace == multiname.namespace;
+            return this.namespace === multiname.namespace;
         } else {
             return multiname.namespaceSet.indexOf(this.namespace) >= 0;
         }
@@ -566,7 +566,7 @@ var Multiname = (function () {
             str += "}::" + this.nameToString();
         }
         return str;
-    }
+    };
 
     return multiname;
 })();
@@ -635,7 +635,7 @@ var ConstantPool = (function constantPool() {
         var multinames = [undefined];
         n = stream.readU30();
         for (i = 1; i < n; ++i) {
-            var multiname = new Multiname(this, stream, multinames);
+            var multiname = new Multiname(i);
             multiname.parse(this, stream, multinames);
             multinames.push(multiname);
         }

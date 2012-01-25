@@ -6,22 +6,22 @@ class Base:
     asc = None
     avm = None
     builtin_abc = None
-    
+
     def __init__(self):
         self.setEnvironmentVariables();
         pass
-    
+
     def setEnvironmentVariables(self):
         if 'ASC' in os.environ:
             self.asc = os.environ['ASC'].strip();
         else:
             print "Environment variable ASC is not defined, set it to asc.jar"
-        
+
         if 'BUILTIN_ABC' in os.environ:
             self.builtin_abc = os.environ['BUILTIN_ABC'].strip();
         else:
             print "Environment variable BUILTIN_ABC is not defined, set it to builtin.abc"
-            
+
         if not self.asc:
             sys.exit();
 
@@ -35,32 +35,34 @@ class Base:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]
             subprocess.call(args)
 
-    def runAvm(self, file, execute = True, trace = False, disassemble = False):
+    def runAvm(self, file, execute = True, trace = False, disassemble = False, comp = False):
         args = ["js", "-m", "-n", "avm.js"];
         if disassemble:
             args.append("-d")
         if not trace:
             args.append("-q")
+        if comp:
+            args.append("-c")
         if execute:
             args.append("-x")
         args.append(file)
         subprocess.call(args)
-            
+
 class Command(Base):
     name = ""
-    
+
     def __init__(self, name):
         Base.__init__(self)
         self.name = name
-    
-    
+
+
 class Asc(Command):
     def __init__(self):
         Command.__init__(self, "asc")
-        
+
     def __repr__(self):
         return self.name
-    
+
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
         parser.add_argument('src', help="source .as file")
@@ -73,10 +75,10 @@ class Asc(Command):
 class Avm(Command):
     def __init__(self):
         Command.__init__(self, "avm")
-        
+
     def __repr__(self):
         return self.name
-    
+
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Runs an .abc file using Shumway AVM')
         parser.add_argument('src', help="source .abc file")
@@ -88,19 +90,33 @@ class Avm(Command):
 class Dis(Command):
     def __init__(self):
         Command.__init__(self, "dis")
-        
+
     def __repr__(self):
         return self.name
-    
+
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Disassembles an .abc file ')
         parser.add_argument('src', help="source .abc file")
         args = parser.parse_args(args)
         print "Disassembling %s" % args.src
         self.runAvm(args.src, execute = False, disassemble = True)
-                
+
+class Compile(Command):
+    def __init__(self):
+        Command.__init__(self, "compile")
+
+    def __repr__(self):
+        return self.name
+
+    def execute(self, args):
+        parser = argparse.ArgumentParser(description='Compiles an .abc file to .js ')
+        parser.add_argument('src', help="source .abc file")
+        args = parser.parse_args(args)
+        print "Compiling %s" % args.src
+        self.runAvm(args.src, execute = False, comp = True)
+
 commands = {}
-for command in [Asc(), Avm(), Dis()]:
+for command in [Asc(), Avm(), Dis(), Compile()]:
     commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()
