@@ -89,9 +89,13 @@ var Scope = (function () {
     return scope;
 })();
 
-function interpretAbc(abc) {
+function interpretAbc(abc, consolePrintFn) {
     var methodInfo = abc.entryPoint;
+
     var global = createGlobalObject(abc.lastScript);
+    if (consolePrintFn)
+      global.print = global.trace = consolePrintFn;
+
     var scope = new Scope();
     scope.push(global);
     var $this = new ASObject();
