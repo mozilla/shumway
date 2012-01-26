@@ -33,6 +33,12 @@
     <button onclick="runAllSwf();">Run All</button><input type="text" id="runAllSwfText" value="0:*" style="width: 50px"/>
     <button onclick="runOneSwf();">Run One</button><input type="text" id="runOneSwfText" value="../swf/tests/swf/1.swf" style="width: 250px"/>
     </p>
+
+    <p>
+    Tamarin: <br>
+    <button onclick="runAllTamarin();">Run All</button><input type="text" id="runAllTamarinText" value="0:*" style="width: 50px"/>
+    <button onclick="runOneTamarin();">Run One</button><input type="text" id="runOneTamarinText" value="../avm2/tests/tamarin/ecma3/Statements/expression.abc" style="width: 250px"/>
+    </p>
     
     <!--  
     
@@ -57,25 +63,28 @@
     <script type="text/javascript" src="../swf/parser.js"></script>
     
     <script type="text/javascript">
-        new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
-            var abc = new AbcFile(new Uint8Array(buffer));
-            var writer = new IndentingWriter(false);
-            abc.trace(writer);
-            interpretAbc(abc);
-        });
-        
-        /* 
-        new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
-            var abc = parseAbcFile(new Uint8Array(buffer));
-            var writer = new IndentingWriter(false);
-            var methodBodies = abc.methodBodies;
-            for (var i = 0; i < methodBodies.length; i++) {
-                traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
-            }
+        var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
+        if (!skipQuickTest) {
+            new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
+                var abc = new AbcFile(new Uint8Array(buffer));
+                var writer = new IndentingWriter(false);
+                abc.trace(writer);
+                interpretAbc(abc);
+            });
             
-            interpretAbc(abc);
-        });
-        */
+            /*
+            new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
+                var abc = parseAbcFile(new Uint8Array(buffer));
+                var writer = new IndentingWriter(false);
+                var methodBodies = abc.methodBodies;
+                for (var i = 0; i < methodBodies.length; i++) {
+                    traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
+                }
+
+                interpretAbc(abc);
+            });
+            */
+        }
         
         function runTest(test, next) {
             try {
@@ -234,7 +243,62 @@
               tests.push(test);
               runTestsAsynchronously(tests);
           }
+
+        /**
+         * Here we specify what needs to be done for each tamarin test cases.
+         */
+        function tamarinRunner(test, buffer) {
+            test.result.pass = true;
+            tryParseTamarinFile(test, buffer);
+        }
+
+        function tryParseTamarinFile(test, buffer) {
+            try {
+                var abc = new AbcFile(new Uint8Array(buffer));
+                var writer = new IndentingWriter(true);
+                abc.trace(writer);
+                var output = "";
+                interpretAbc(abc, function tamarinTestPrint(s) {
+                    output += s;
+                });
+                if (output.indexOf("PASSED!") < 0) {
+                  test.result.pass = false;
+                  test.result.parserFail = "PASSED not found: " + output;
+                }
+            } catch (e) {
+                test.result.pass = false;
+                test.result.parserFail = e.message;
+            }
+        }
+
+        function runAllTamarin() {
+            var tests = [];
+            var range = document.getElementById('runAllTamarinText').value.split(":");
+            new FileReader("../avm2/tests/tamarin.list", "text").readAll(null, function(text) {
+                var files = text.split("\n");
+                var from = parseInt(range[0]);
+                var to = range.length <= 1 ? from + 1 : range[1] == "*" ? files.length : parseInt(range[1]);
+                for (var i = from; i < to; i++) {
+                    if (files[i][0] == '#')
+                      continue; // commented test - skipping
+                    var file = "../avm2/tests/tamarin/" + files[i];
+                    var test = {path: file, execute: tamarinRunner};
+                    test.result = {id: i, name: file, pass: false};
+                    tests.push(test);
+                }
+                runTestsAsynchronously(tests);
+            });
+          }
           
+          function runOneTamarin() {
+              var tests = [];
+              var file = document.getElementById('runOneTamarinText').value;
+              var test = {path: file, execute: tamarinRunner};
+              test.result = {id: 0, name: file, pass: false};
+              tests.push(test);
+              runTestsAsynchronously(tests);
+          }
+
         var testStatusDisplayDiv = null;
         function appendResult(result) {
             if (result.pass) {
@@ -254,6 +318,8 @@
             var table = document.getElementById('results');
             var row = document.createElement("tr");
             for (var val in result) {
+                if (!result.hasOwnProperty(val))
+                  continue;
                 var cell = document.createElement("td");
                 cell.appendChild(document.createTextNode(result[val]));
                 row.appendChild(cell);
