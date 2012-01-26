@@ -17,10 +17,10 @@ class Base:
         else:
             print "Environment variable ASC is not defined, set it to asc.jar"
 
-        if 'BUILTIN_ABC' in os.environ:
-            self.builtin_abc = os.environ['BUILTIN_ABC'].strip();
+        if 'BUILTINABC' in os.environ:
+            self.builtin_abc = os.environ['BUILTINABC'].strip();
         else:
-            print "Environment variable BUILTIN_ABC is not defined, set it to builtin.abc"
+            print "Environment variable BUILTINABC is not defined, set it to builtin.abc"
 
         if not self.asc:
             sys.exit();
