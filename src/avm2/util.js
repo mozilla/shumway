@@ -46,35 +46,54 @@ function unexpected() {
     assert(false);
 }
 
-String.prototype.padRight = function(c, n) {
-    var str = this;
-    if (!c || str.length >= n) {
+(function () {
+    function extendBuiltin(proto, prop, f) {
+        if (!proto[prop]) {
+            Object.defineProperty(proto, prop,
+                                  { value: f, writable: true, configurable: true,
+                                    enumerable: false });
+
+        }
+    }
+
+    var Sp = String.prototype;
+
+    extendBuiltin(Sp, "padRight", function (c, n) {
+        var str = this;
+        if (!c || str.length >= n) {
+            return str;
+        }
+        var max = (n - str.length) / c.length;
+        for (var i = 0; i < max; i++) {
+            str += c;
+        }
         return str;
-    }
-    var max = (n - str.length) / c.length;
-    for (var i = 0; i < max; i++) {
-        str += c;
-    }
-    return str;
-}
+    });
 
-Array.prototype.popMany = function(count) {
-    assert (this.length >= count);
-    var start = this.length - count;
-    var res = this.slice(start, this.length);
-    this.splice(start, count);
-    return res;
-};
+    var Ap = Array.prototype;
 
-Array.prototype.first = function() {
-    assert (this.length > 0);
-    return this[0];
-};
+    extendBuiltin(Ap, "popMany", function (count) {
+        assert (this.length >= count);
+        var start = this.length - count;
+        var res = this.slice(start, this.length);
+        this.splice(start, count);
+        return res;
+    });
 
-Array.prototype.peek = function() {
-    assert (this.length > 0);
-    return this[this.length - 1];
-};
+    extendBuiltin(Ap, "first", function () {
+        assert (this.length > 0);
+        return this[0];
+    });
+
+    extendBuiltin(Ap, "peek", function() {
+        assert (this.length > 0);
+        return this[this.length - 1];
+    });
+
+    extendBuiltin(Ap, "top", function() {
+        return this.length && this[this.length-1];
+    });
+})();
 
 /**
  * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
