@@ -66,24 +66,12 @@
         var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
         if (!skipQuickTest) {
             new FileReader("../avm2/tests/testInterpreter.abc").readAll(null, function (buffer) {
+            // new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
                 var abc = new AbcFile(new Uint8Array(buffer));
                 var writer = new IndentingWriter(false);
                 abc.trace(writer);
                 interpretAbc(abc);
             });
-            
-            /*
-            new FileReader("../avm2/tests/sunspider/crypto-aes.abc").readAll(null, function (buffer) {
-                var abc = parseAbcFile(new Uint8Array(buffer));
-                var writer = new IndentingWriter(false);
-                var methodBodies = abc.methodBodies;
-                for (var i = 0; i < methodBodies.length; i++) {
-                    traceMethodBodyInfo(writer, abc.constantPool, methodBodies[i]);
-                }
-
-                interpretAbc(abc);
-            });
-            */
         }
         
         function runTest(test, next) {
@@ -267,7 +255,8 @@
                 }
             } catch (e) {
                 test.result.pass = false;
-                test.result.parserFail = e.message;
+                test.result.parserFail = e.message ||
+                   ">> ..." + e.stack.substr(200, 200) + "...";
             }
         }
 

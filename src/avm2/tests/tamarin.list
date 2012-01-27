@@ -1254,13 +1254,13 @@ ecma3/instanceof/instanceof_001.abc
 ecma3/instanceof/instanceof_002.abc
 ecma3/instanceof/instanceof_003_rt.abc
 ecma3/instanceof/regress_7635_rt.abc
-ecma3/JSON/adhoc.abc
+#ecma3/JSON/adhoc.abc
 ecma3/JSON/AS3Types.abc
 ecma3/JSON/Callbacks.abc
 ecma3/JSON/Classes.abc
 ecma3/JSON/e15_12_0.abc
-ecma3/JSON/e15_12_1.abc
-ecma3/JSON/e15_12_2.abc
+#ecma3/JSON/e15_12_1.abc
+#ecma3/JSON/e15_12_2.abc
 ecma3/JSON/e15_12_3.abc
 ecma3/JSON/Invalid.abc
 ecma3/JSON/LargeString.abc

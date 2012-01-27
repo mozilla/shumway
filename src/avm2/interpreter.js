@@ -1,42 +1,35 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function injectPropertyOperations(obj) {
-    obj.getProperty = function(multiname) {
-        return this[multiname.name];
-    };
-
-    obj.setProperty = function setProperty(multiname, value) {
-        return this[multiname.name] = value;
-    };
-
-    return obj;
-}
-
-injectPropertyOperations(Object.prototype);
-
 function createGlobalObject(script) {
     var global = new ASObject();
-    global.traits = script.traits;
+    ASObject.applyTraits(global, script.traits);
+
     global.trace = function (val) {
         console.info(val);
     };
+    global.Number = Number;
+    global.Boolean = Boolean;
     global.Date = Date;
     global.Array = Array;
     global.Math = Math;
     global.Object = ASObject;
     global.String = String;
+    global.Function = Function;
     global.RegExp = RegExp;
     global.Namespace = ASNamespace;
     global.parseInt = parseInt;
+    global.NaN = NaN;
+    global.Infinity = Infinity;
+    global.isNaN = isNaN;
     global.print = function (val) {
         console.info(val);
     };
     global.toString = function () {
         return "[global]";
     };
-    global.Capabilities = injectPropertyOperations({
+    global.Capabilities = {
        'playerType': 'AVMPlus'
-    });
+    };
     return global;
 }
 
@@ -128,9 +121,10 @@ function wrap(fn) {
     };
 }
 
-injectPropertyOperations(String);
-
-injectPropertyOperations(Math);
+String.construct = function (obj, args) {
+    assert(args.length == 1);
+    return new String(args[0]);
+};
 
 Date.construct = function(obj, args) {
     switch (args.length) {
@@ -144,6 +138,16 @@ Date.construct = function(obj, args) {
     }
 };
 
+Number.construct = function (obj, args) {
+    assert(args.length == 1);
+    return new Number(args[0]);
+};
+
+Boolean.construct = function (obj, args) {
+    assert(args.length == 1);
+    return new Boolean(args[0]);
+};
+
 RegExp.construct = function (obj, args) {
     assert(args.length == 2);
     return new RegExp(args[0], args[1]);
@@ -153,8 +157,6 @@ var ASObject = (function () {
     var counter = 0;
     
     function asObject() {
-        this.slots = [];
-        this.traits = null;
         this.id = counter++; 
     }
 
@@ -169,7 +171,7 @@ var ASObject = (function () {
                 } 
             }
         }
-        return Object.prototype.getProperty.call(this, multiname);
+        return this[multiname.name];
     };
     
     asObject.prototype.setProperty = function setProperty(multiname, value) {
@@ -182,16 +184,46 @@ var ASObject = (function () {
         }
         return this[multiname.name] = value;
     };
-    
-    asObject.prototype.applyTraits = function applyTraits(traits) {
+
+    asObject.prototype.deleteProperty = function deleteProperty(multiname, value) {
+        if (this.traits) {
+            var trait = findTrait(this.traits, multiname);
+            if (trait) {
+               // assert (trait.isSlot());
+                delete this.slots[trait.slotId];
+            }
+        }
+        delete this[multiname.name];
+    };
+
+
+    asObject.prototype.setSlot = function setSlot(slotId, value) {
+        if (!('slots' in this))
+            this.slots = [];
+        return this.slots[slotId] = value;
+    };
+
+    asObject.prototype.getSlot = function getSlot(slotId) {
+        if (!('slots' in this))
+            return;
+        return this.slots[slotId];
+    };
+
+    asObject.applyTraits = function applyTraits(obj, traits) {
+        if (!('slots' in obj))
+            obj.slots = [];
+        if (!('traits' in obj))
+            obj.traits = [];
+
         for (var i = 0; i < traits.length; i++) {
             var trait = traits[i];
             if (trait.isSlot()) {
-                this.slots[trait.slotId] = trait.value;
+                obj.slots[trait.slotId] = trait.value;
             }
         }
+        obj.traits = obj.traits.concat(traits);
     };
-    
+
     asObject.prototype.toString = function () {
         return "[ASObject " + this.id + "]";
     };
@@ -216,20 +248,20 @@ function createNewClass(abc, scope, classInfo, baseClass) {
     classScope.superClass = baseClass;
 
     var class_ = function() {
-      ASObject.prototype.applyTraits.call(this, classInfo.traits);
-      this.traits = (this.traits || []).concat(classInfo.traits);
+      ASObject.applyTraits(this, classInfo.traits);
 
       new Closure(abc, classInfo.instance.init, classScope).apply(this, arguments);
     };
     class_.prototype = Object.create(baseClass.prototype);
 
     // call static initialization
-    new Closure(abc, classInfo.init, classScope.clone()).apply(null);
+    new Closure(abc, classInfo.init, classScope.clone()).apply(class_);
 
     return class_;
 }
 
 function constructObject(constructor, args) {
+    assert(constructor instanceof Function);
     if ('construct' in constructor)
        return constructor.construct(constructor, args);
     else {
@@ -237,6 +269,27 @@ function constructObject(constructor, args) {
        constructor.apply(obj, args);
        return obj;
     }
+}
+
+function getObjectProperty(obj, multiname) {
+    if (typeof obj === 'object' && 'getProperty' in obj) {
+       return obj.getProperty(multiname);
+    }
+    return obj[multiname.name];
+}
+
+function setObjectProperty(obj, multiname, value) {
+    if (typeof obj === 'object' && 'setProperty' in obj) {
+       return obj.setProperty(multiname, value);
+    }
+    return obj[multiname.name] = value;
+}
+
+function deleteObjectProperty(obj, multiname) {
+    if (typeof obj === 'object' && 'deleteProperty' in obj) {
+        obj.deleteProperty(multiname);
+    }
+    delete obj[multiname.name];
 }
 
 function findTrait(traits, multiname) {
@@ -254,6 +307,11 @@ function toDouble(x) {
 
 function toBoolean(x) {
     return Boolean(x);
+}
+
+function toUint(x) {
+    var obj = x | 0;
+    return obj < 0 ? (obj + 4294967296) : obj;
 }
 
 var traceExecution = inBrowser ? null : new IndentingWriter();
@@ -458,14 +516,18 @@ var Closure = (function () {
                 case OP_pushfalse:
                     stack.push(false)
                     break;
-                case OP_pushnan: notImplemented(); break;
+                case OP_pushnan:
+                    stack.push(NaN)
+                    break;
                 case OP_pop:
                     stack.pop();
                     break;
                 case OP_dup:
                     stack.push(stack.peek());
                     break;
-                case OP_swap:         stack.push(stack.pop(), stack.pop());       break;
+                case OP_swap:
+                    stack.push(stack.pop(), stack.pop());
+                    break;
                 case OP_pushstring: 
                     stack.push(strings[code.readU30()]);
                     break;
@@ -479,7 +541,9 @@ var Closure = (function () {
                     stack.push(doubles[code.readU30()]);
                     break;
                 case OP_pushscope:
-                    scope.push(stack.pop());
+                    obj = stack.pop();
+                    assert(!!obj);
+                    scope.push(obj);
                     break;
                 case OP_pushnamespace: notImplemented(); break;
                 case OP_hasnext2: notImplemented(); break;
@@ -515,7 +579,7 @@ var Closure = (function () {
                     args = stack.popMany(code.readU30());
                     multiname = createMultiname(multiname);
                     obj = stack.pop();
-                    val = obj.getProperty(multiname);
+                    val = getObjectProperty(obj, multiname);
                     if (val instanceof MethodInfo) {
                         val = new Closure(abc, val, scope);
                     }
@@ -546,7 +610,7 @@ var Closure = (function () {
                         assert(false);
                     } else {
                         obj = stack.pop();
-                        stack.push(constructObject(obj.getProperty(multiname), args));
+                        stack.push(constructObject(getObjectProperty(obj, multiname), args));
                     }
                     break;
                 case OP_callsuperid: notImplemented(); break;
@@ -565,7 +629,7 @@ var Closure = (function () {
                     break;
                 case OP_newactivation:
                     obj = new ASObject();
-                    obj.traits = this.methodInfo.traits;
+                    ASObject.applyTraits(obj, this.methodInfo.traits);
                     stack.push(obj);
                     break;
                 case OP_newclass:
@@ -592,7 +656,7 @@ var Closure = (function () {
                     value = stack.pop();
                     multiname = readAndCreateMultiname();
                     obj = stack.pop();
-                    obj.setProperty(multiname, value);
+                    setObjectProperty(obj, multiname, value);
                     break;
                 case OP_getlocal: 
                     stack.push(local[code.readU30()]);
@@ -609,26 +673,34 @@ var Closure = (function () {
                 case OP_getproperty:
                     multiname = readAndCreateMultiname();
                     obj = stack.pop();
-                    stack.push(obj.getProperty(multiname));
+                    stack.push(getObjectProperty(obj, multiname));
                     break;
                 case OP_getouterscope: notImplemented(); break;
                 case OP_initproperty:
                     value = stack.pop();
                     multiname = readAndCreateMultiname();
                     obj = stack.pop();
-                    obj.setProperty(multiname, value);
+                    setObjectProperty(obj, multiname, value);
                     break;
                 case OP_setpropertylate: notImplemented(); break;
-                case OP_deleteproperty: notImplemented(); break;
+                case OP_deleteproperty:
+                    multiname = readAndCreateMultiname();
+                    obj = stack.pop();
+                    deleteObjectProperty(obj, multiname, value);
+                    break;
                 case OP_deletepropertylate: notImplemented(); break;
                 case OP_getslot:
-                    stack.push(stack.pop().slots[code.readU30()]);
+                    obj = stack.pop();
+                    index = code.readU30();
+                    value = obj.getSlot(index);
+                    stack.push(value);
                     break;
                 case OP_setslot: 
                     index = code.readU30();
                     assert(index > 0);
                     value = stack.pop();
-                    stack.pop().slots[index] = value; 
+                    obj = stack.pop();
+                    obj.setSlot(index, value);
                     break;
                 case OP_getglobalslot: notImplemented(); break;
                 case OP_setglobalslot: notImplemented(); break;
@@ -636,14 +708,20 @@ var Closure = (function () {
                 case OP_esc_xelem: notImplemented(); break;
                 case OP_esc_xattr: notImplemented(); break;
                 case OP_convert_i: notImplemented(); break;
-                case OP_convert_u: notImplemented(); break;
+                    stack.push(0|stack.pop());
+                    break;
+                case OP_convert_u:
+                    stack.push(toUint(stack.pop()));
+                    break;
                 case OP_convert_d:
                     stack.push(toDouble(stack.pop()));
                     break;
                 case OP_convert_b:
                     stack.push(toBoolean(stack.pop()));
                     break;
-                case OP_convert_o: notImplemented(); break;
+                case OP_convert_o:
+                    stack.push(Object(stack.pop()));
+                    break;
                 case OP_checkfilter: notImplemented(); break;
                 case OP_convert_f: notImplemented(); break;
                 case OP_unplus: notImplemented(); break;
@@ -655,7 +733,10 @@ var Closure = (function () {
                     break;
                 case OP_coerce_i: notImplemented(); break;
                 case OP_coerce_d: notImplemented(); break;
-                case OP_coerce_s: notImplemented(); break;
+                case OP_coerce_s:
+                    obj = stack.pop();
+                    stack.push(obj == null ? null : stack.pop().toString());
+                    break;
                 case OP_astype: notImplemented(); break;
                 case OP_astypelate: notImplemented(); break;
                 case OP_coerce_u: notImplemented(); break;
@@ -667,7 +748,9 @@ var Closure = (function () {
                     stack.push(stack.pop() + 1);
                     break;
                 case OP_inclocal: notImplemented(); break;
-                case OP_decrement: notImplemented(); break;
+                case OP_decrement:
+                    stack.push(stack.pop() - 1);
+                    break;
                 case OP_declocal: notImplemented(); break;
                 case OP_typeof:
                     obj = stack.pop();
