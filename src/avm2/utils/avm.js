@@ -4,6 +4,7 @@ load("../DataView.js");
 load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");
+load("../analyze.js");
 load("../compiler.js");
 load("../disassembler.js");
 load("../interpreter.js");
@@ -42,6 +43,18 @@ if (disassemble) {
 
 if (compile) {
     print(compileAbc(abc));
+
+    if (!quiet) {
+        /* Spew analysis information if not quiet. */
+        var writer = new IndentingWriter(false);
+        writer.enter("analyses {");
+        abc.methods.forEach(function (method) {
+            if (method.codeAnalysis) {
+                method.codeAnalysis.trace(writer);
+            }
+        });
+        writer.leave("}");
+    }
 }
 
 if (execute) {

@@ -147,9 +147,10 @@ class Compile(Command):
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Compiles an .abc file to .js ')
         parser.add_argument('src', help="source .abc file")
+        parser.add_argument('-trace', action='store_true', help="trace bytecode execution")
         args = parser.parse_args(args)
         print "Compiling %s" % args.src
-        self.runAvm(args.src, execute = False, comp = True)
+        self.runAvm(args.src, trace = args.trace, execute = False, comp = True)
 
 class Test(Command):
     def __init__(self):

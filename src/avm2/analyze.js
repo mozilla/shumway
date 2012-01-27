@@ -1,6 +1,5 @@
 var Bytecode = (function () {
     function Bytecode(code) {
-        this.position = code.position;
         var op = code.readU8();
         this.op = op;
         var i, n;
@@ -16,28 +15,34 @@ var Bytecode = (function () {
             break;
         default:
             var opdesc = opcodeTable[op];
-            if (opdesc) {
-                for (i = 0, n = opdesc.operands.length; i < n; i++) {
-                    var operand = opdesc.operands[i];
-                    var value = 0;
-
-                    switch(operand.size) {
-                    case "u08": this[operand.name] = code.readU8(); break;
-                    case "s16": this[operand.name] = code.readU30Unsafe(); break;
-                    case "s24": this[operand.name] = code.readS24(); break;
-                    case "u30": this[operand.name] = code.readU30(); break;
-                    case "u32": this[operand.name] = code.readU32(); break;
-                    default: assert(false); break;
-                    }
-                }
-            } else {
+            if (!opdesc) {
                 unexpected();
             }
-            break;
-        }
 
-        /* The base of offset operands is the start of the next bytecode. */
-        this.base = code.position;
+            for (i = 0, n = opdesc.operands.length; i < n; i++) {
+                var operand = opdesc.operands[i];
+
+                switch (operand.size) {
+                case "u08":
+                    this[operand.name] = code.readU8();
+                    break;
+                case "s16":
+                    this[operand.name] = code.readU30Unsafe();
+                    break;
+                case "s24":
+                    this[operand.name] = code.readS24();
+                    break;
+                case "u30":
+                    this[operand.name] = code.readU30();
+                    break;
+                case "u32":
+                    this[operand.name] = code.readU32();
+                    break;
+                default:
+                    unexpected();
+                }
+            }
+        }
     }
 
     var Bp = Bytecode.prototype;
@@ -62,9 +67,9 @@ var Bytecode = (function () {
         this.preds.push(pred);
     };
 
-    Bp.trace = function trace(writer, abc) {
+    Bp.toString = function toString() {
         var opdesc = opcodeTable[this.op];
-        var str = ("" + this.position).padRight(' ', 5) + opdesc.name.padRight(' ', 20);
+        var str = opdesc.name.padRight(' ', 20);
         var i, j;
 
         if (this.op === OP_lookupswitch) {
@@ -76,163 +81,19 @@ var Bytecode = (function () {
             for (i = 0, j = opdesc.operands.length; i < j; i++) {
                 var operand = opdesc.operands[i];
                 str += operand.name + ":" + this[operand.name];
-
-                var description;
-                switch(operand.type) {
-                case "": break;
-                case "I": description = abc.constantPool.ints[value]; break;
-                case "U": description = abc.constantPool.uints[value]; break;
-                case "D": description = abc.constantPool.doubles[value]; break;
-                case "S": description = abc.constantPool.strings[value]; break;
-                case "N": description = abc.constantPool.namespaces[value]; break;
-                case "CI": description = abc.classes[value]; break;
-                case "M":
-                    return abc.constantPool.multinames[value];
-                default: description = "?"; break;
-                }
-                if (description) {
-                    str += "(" + description + ")";
-                }
-
                 if (i < j - 1) {
                     str += ", ";
                 }
             }
         }
 
-        if (this.isBlockHead) {
-            if (this.position > 0)
-                writer.leave("}");
-            writer.enter("block " + this.position + " {");
-            writer.writeLn("dominator: " + this.dominator);
-            writer.writeLn("");
-        }
-        writer.writeLn(str);
+        return str;
     }
 
     return Bytecode;
 })();
 
 var Analysis = (function () {
-    function analyzeBytecode(analysis, code) {
-        /* This array is sparse, indexed by offset. */
-        var bytecodesOffset = [];
-        /* This array is dense. */
-        var bytecodes = [];
-
-        while (code.remaining() > 0) {
-            var offset = code.position;
-            var bc = new Bytecode(code);
-            bytecodesOffset[offset] = bc;
-            bytecodes.push(bc);
-        }
-
-        analysis.bytecodesOffset = bytecodesOffset;
-        analysis.bytecodes = bytecodes;
-    }
-
-    function analyzeBasicBlocks(analysis) {
-        var bytecodesOffset = analysis.bytecodesOffset;
-        var bytecodes = analysis.bytecodes;
-        var code;
-        var i, j;
-
-        function doubleLink(pred, succ) {
-            bytecodesOffset[pred].addSucc(succ);
-            bytecodesOffset[succ].addPred(pred);
-        }
-
-        assert(bytecodesOffset);
-        assert(bytecodes);
-
-        bytecodes[0].makeBlockHead();
-        for (i = 0, j = bytecodes.length; i < j; i++) {
-            code = bytecodes[i];
-            switch (code.op) {
-            case OP_lookupswitch:
-                code.offsets.forEach(function (offset) {
-                    bytecodesOffset[code.base + offset].makeBlockHead();
-                });
-                break;
-
-            case OP_jump:
-                bytecodesOffset[code.base + code.offset].makeBlockHead();
-                break;
-
-            case OP_iflt:
-            case OP_ifnlt:
-            case OP_ifle:
-            case OP_ifnlt:
-            case OP_ifnle:
-            case OP_ifgt:
-            case OP_ifge:
-            case OP_ifngt:
-            case OP_ifeq:
-            case OP_ifne:
-            case OP_ifstricteq:
-            case OP_ifstrictne:
-            case OP_iftrue:
-            case OP_iffalse:
-                bytecodesOffset[code.base + code.offset].makeBlockHead();
-                bytecodes[++i].makeBlockHead();
-                break;
-
-            default:;
-            }
-        }
-
-        var start = 0;
-        for (i = 1, j = bytecodes.length; i < j; i++) {
-            if (!bytecodes[i].isBlockHead) {
-                continue;
-            }
-
-            assert(bytecodesOffset[start].isBlockHead);
-            var nextBlockCode = bytecodes[i];
-            var offset = nextBlockCode.position;
-
-            code = bytecodes[i - 1];
-            switch (code.op) {
-            case OP_lookupswitch:
-                code.offsets.forEach(function (offset) {
-                    doubleLink(start, code.base + offset);
-                });
-                break;
-
-            case OP_jump:
-                doubleLink(start, code.base + code.offset);
-                break;
-
-            case OP_iflt:
-            case OP_ifnlt:
-            case OP_ifle:
-            case OP_ifnlt:
-            case OP_ifnle:
-            case OP_ifgt:
-            case OP_ifge:
-            case OP_ifngt:
-            case OP_ifeq:
-            case OP_ifne:
-            case OP_ifstricteq:
-            case OP_ifstrictne:
-            case OP_iftrue:
-            case OP_iffalse:
-                doubleLink(start, code.base + code.offset);
-                doubleLink(start, nextBlockCode.position);
-                break;
-
-            default:
-                doubleLink(start, nextBlockCode.position);
-            }
-
-            bytecodesOffset[start].blockEnd = offset;
-            start = offset;
-        }
-        /* The last block ends one past the end of code. */
-        bytecodesOffset[start].blockEnd = offset + 1;
-
-        analyzeDominance(analysis);
-    }
 
     function intersect(doms, b1, b2) {
         var finger1 = b1;
@@ -248,7 +109,7 @@ var Analysis = (function () {
         return finger1;
     }
 
-    function depthFirstSearch(bytecodesOffset, pre, post) {
+    function depthFirstSearch(bytecodes, pre, post) {
         /* Block 0 is always the root block. */
         var dfs = [0];
         var visited = [];
@@ -256,11 +117,14 @@ var Analysis = (function () {
 
         while (dfs.length) {
             node = dfs[dfs.length - 1];
-            if (node in visited && post){
-                post(dfs.pop());
+            if (node in visited) {
+                dfs.pop();
+                if (post) {
+                    post(node);
+                }
             }
 
-            var succs = bytecodesOffset[node].succs;
+            var succs = bytecodes[node].succs;
             for (var i = 0, j = succs.length; i < j; i++) {
                 if (succs[i] in visited) {
                     continue;
@@ -275,6 +139,101 @@ var Analysis = (function () {
         }
     }
 
+    function analyzeBasicBlocks(bytecodes) {
+        var code;
+        var pc, end;
+
+        function doubleLink(pred, succ) {
+            bytecodes[pred].addSucc(succ);
+            bytecodes[succ].addPred(pred);
+        }
+
+        assert(bytecodes);
+
+        bytecodes[0].makeBlockHead();
+        for (pc = 0, end = bytecodes.length; pc < end; pc++) {
+            code = bytecodes[pc];
+            switch (code.op) {
+            case OP_lookupswitch:
+                code.offsets.forEach(function (offset) {
+                    bytecodes[pc + offset].makeBlockHead();
+                });
+                break;
+
+            case OP_jump:
+                bytecodes[pc + code.offset].makeBlockHead();
+                break;
+
+            case OP_iflt:
+            case OP_ifnlt:
+            case OP_ifle:
+            case OP_ifnlt:
+            case OP_ifnle:
+            case OP_ifgt:
+            case OP_ifge:
+            case OP_ifngt:
+            case OP_ifeq:
+            case OP_ifne:
+            case OP_ifstricteq:
+            case OP_ifstrictne:
+            case OP_iftrue:
+            case OP_iffalse:
+                bytecodes[pc + code.offset].makeBlockHead();
+                bytecodes[++pc].makeBlockHead();
+                break;
+
+            default:;
+            }
+        }
+
+        var start = 0;
+        for (pc = 1, end = bytecodes.length; pc < end; pc++) {
+            if (!bytecodes[pc].isBlockHead) {
+                continue;
+            }
+
+            assert(bytecodes[start].isBlockHead);
+            var nextBlockCode = bytecodes[pc];
+
+            code = bytecodes[pc - 1];
+            switch (code.op) {
+            case OP_lookupswitch:
+                code.offsets.forEach(function (offset) {
+                    doubleLink(start, pc - 1 + offset);
+                });
+                break;
+
+            case OP_jump:
+                doubleLink(start, pc - 1 + code.offset);
+                break;
+
+            case OP_iflt:
+            case OP_ifnlt:
+            case OP_ifle:
+            case OP_ifnlt:
+            case OP_ifnle:
+            case OP_ifgt:
+            case OP_ifge:
+            case OP_ifngt:
+            case OP_ifeq:
+            case OP_ifne:
+            case OP_ifstricteq:
+            case OP_ifstrictne:
+            case OP_iftrue:
+            case OP_iffalse:
+                print(pc - 1 + code.offset);
+                doubleLink(start, pc - 1 + code.offset);
+                doubleLink(start, pc);
+                break;
+
+            default:
+                doubleLink(start, pc);
+            }
+
+            start = pc;
+        }
+    }
+
     /*
      * Calculate the dominance relation.
      *
@@ -282,13 +241,10 @@ var Analysis = (function () {
      *
      * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
      */
-    function analyzeDominance(analysis) {
-        var bytecodesOffset = analysis.bytecodesOffset;
-        assert(bytecodesOffset);
-
+    function analyzeDominance(bytecodes) {
         /* For this algorithm we id blocks by their index in reverse postorder. */
         var blocks = [];
-        depthFirstSearch(bytecodesOffset, null, blocks.push.bind(blocks));
+        depthFirstSearch(bytecodes, null, blocks.push.bind(blocks));
         var n = blocks.length;
         var sortedIndices = {};
         for (var i = 0; i < n; i++) {
@@ -305,7 +261,7 @@ var Analysis = (function () {
 
             /* Iterate all blocks but the starting block in reverse postorder. */
             for (var b = n - 2; b >= 0; b--) {
-                var preds = bytecodesOffset[blocks[b]].preds;
+                var preds = bytecodes[blocks[b]].preds;
                 var newIdom = sortedIndices[preds[0]];
 
                 for (var i = 1, j = preds.length; i < j; i++) {
@@ -324,23 +280,134 @@ var Analysis = (function () {
         }
 
         for (var i = 0; i < n; i++) {
-            bytecodesOffset[blocks[i]].dominator = blocks[doms[i]];
+            bytecodes[blocks[i]].dominator = blocks[doms[i]];
         }
     }
 
-    function Analysis(code) {
-        analyzeBytecode(this, new AbcStream(code));
-        analyzeBasicBlocks(this);
+    function Analysis(codeStream) {
+        /*
+         * Normalize the code stream. The other analyses are run by the user
+         * on demand.
+         */
+        this.analyzeBytecode(new AbcStream(codeStream));
     }
 
     var Ap = Analysis.prototype;
 
-    Ap.trace = function(writer) {
-        this.bytecodes.forEach(function(code) {
-            code.trace(writer);
-        });
-        writer.leave("}");
+    Ap.analyzeBytecode = function analyzeBytecode(codeStream) {
+        /* This array is sparse, indexed by offset. */
+        var bytecodesOffset = [];
+        /* This array is dense. */
+        var bytecodes = [];
+        var code;
+
+        var normalizedOffset = 0;
+        while (codeStream.remaining() > 0) {
+            var pos = codeStream.position;
+            code = new Bytecode(codeStream);
+
+            /* Get absolute offsets for normalization to new indices below. */
+            switch (code.op) {
+            case OP_lookupswitch:
+                code.offsets.map(function (offset) {
+                    return codeStream.position + offset;
+                });
+                break;
+
+            case OP_jump:
+            case OP_iflt:
+            case OP_ifnlt:
+            case OP_ifle:
+            case OP_ifnlt:
+            case OP_ifnle:
+            case OP_ifgt:
+            case OP_ifge:
+            case OP_ifngt:
+            case OP_ifeq:
+            case OP_ifne:
+            case OP_ifstricteq:
+            case OP_ifstrictne:
+            case OP_iftrue:
+            case OP_iffalse:
+                code.offset = codeStream.position + code.offset;
+                break;
+
+            default:;
+            }
+
+            bytecodesOffset[pos] = normalizedOffset++;
+            bytecodes.push(code);
+        }
+
+        for (var pc = 0, end = bytecodes.length; pc < end; pc++) {
+            code = bytecodes[pc];
+            switch (code.op) {
+            case OP_lookupswitch:
+                code.offsets.map(function (offset) {
+                    return bytecodesOffset[offset] - pc;
+                });
+                break;
+
+            case OP_jump:
+            case OP_iflt:
+            case OP_ifnlt:
+            case OP_ifle:
+            case OP_ifnlt:
+            case OP_ifnle:
+            case OP_ifgt:
+            case OP_ifge:
+            case OP_ifngt:
+            case OP_ifeq:
+            case OP_ifne:
+            case OP_ifstricteq:
+            case OP_ifstrictne:
+            case OP_iftrue:
+            case OP_iffalse:
+                code.offset = bytecodesOffset[code.offset] - pc;
+                break;
+
+            default:;
+            }
+        }
+
+        this.bytecodes = bytecodes;
+    };
+
+    Ap.analyzeControlFlow = function analyzeControlFlow() {
+        assert(this.bytecodes);
+
+        var bytecodes = this.bytecodes;
+        analyzeBasicBlocks(bytecodes);
+        analyzeDominance(bytecodes);
     }
 
+    Ap.trace = function(writer) {
+        writer.enter("analysis {");
+
+        var ranControlFlow = !!this.bytecodes[0].isBlockHead;
+
+        for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
+            var code = this.bytecodes[pc];
+
+            if (ranControlFlow && code.isBlockHead) {
+                if (pc > 0) {
+                    writer.leave("}");
+                }
+
+                writer.enter("block " + code.dominator + " >> " + pc +
+                             (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
+            }
+
+            writer.writeLn(("" + pc).padRight(' ', 5) + code);
+
+            if (ranControlFlow && pc === end - 1) {
+                writer.leave("}");
+            }
+        }
+
+        writer.leave("}");
+    };
+
     return Analysis;
+
 })();

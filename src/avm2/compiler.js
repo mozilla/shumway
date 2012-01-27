@@ -90,17 +90,19 @@ function mangleQName(multiname) {
     return multiname.getNamespace(0) + "$$" + multiname.getName();
 }
 
-function compiler(abc) {
+var Compiler = (function () {
+
     const args = "args";
     const localScope = "scope";
     const parentScope = "parentScope";
     const proto = "prototype";
 
     function defaultValue(typeName) {
+        if (typeName === undefined)
+            return "undefined";
+
         /* :XXX: Is this right? */
         switch (typeName.name) {
-        case undefined:
-            return "undefined";
         case "Boolean":
             return "false";
         case "int":
@@ -174,20 +176,29 @@ function compiler(abc) {
                 t.kind === TRAIT_Setter);
     }
 
-    function compileClass(emit, classInfo, i) {
+
+    function Compiler(abc) {
+        this.abc = abc;
+    }
+
+    var Cp = Compiler.prototype;
+
+    Cp.compileClass = function compileClass(emit, classInfo) {
         var instanceInfo = classInfo.instance;
         var itraits = instanceInfo.traits;
         var className = instanceInfo.name.getName();
 
         emit.thunk(function (emit) {
             emit.func(className, 0, function (emit) {
-                itraits.filter(isSlot).forEach(compileSlot.bind(undefined, emit));
+                itraits.filter(isSlot).forEach(this.compileSlot.bind(this, emit));
             });
             emit.decl();
 
+            /*
             emit.expr("abc.classes[" + i + "]");
             emit.expr(className + ".class");
             emit.assign();
+            */
 
             if (instanceInfo.superName) {
                 emit.findProp(localScope, instanceInfo.superName);
@@ -211,13 +222,13 @@ function compiler(abc) {
 
             /* The instance initializer. */
             var tmpEmit = new Emitter;
-            compileMethod(tmpEmit, instanceInfo.init);
+            this.compileMethod(tmpEmit, instanceInfo.init);
             emit.expr(tmpEmit.finish());
             emit.expr(proto + ".init");
             emit.assign();
 
             itraits.filter(isMethod).forEach(function (trait) {
-                compileMethod(tmpEmit, trait.method);
+                this.compileMethod(tmpEmit, trait.method);
                 emit.expr(tmpEmit.finish());
                 emit.setProp(proto, trait.name);
             });
@@ -232,9 +243,9 @@ function compiler(abc) {
             emit.expr(className);
             emit.ret();
         });
-    }
+    };
 
-    function compileSlot(emit, trait) {
+    Cp.compileSlot = function compileSlot(emit, trait) {
         assert(trait.kind === TRAIT_Slot || trait.kind === TRAIT_Const);
 
         if (trait.kind === TRAIT_Slot) {
@@ -252,53 +263,57 @@ function compiler(abc) {
             emit.call(3);
             emit.stmt();
         }
-    }
+    };
 
-    function compileMethod(emit, method, options) {
+    Cp.compileMethod = function compileMethod(emit, method) {
         emit.func(method.name ? method.name.getName() : "", 0, function (emit) {
             emit.ret();
         });
         emit.decl();
-    }
 
-    function compileTraits(emit, traits) {
-        traits.forEach(function (trait, i) {
+        if (!method.codeAnalysis) {
+            var analysis = new Analysis(method.code);
+            analysis.analyzeControlFlow();
+
+            method.codeAnalysis = analysis;
+        }
+    };
+
+    Cp.compileTraits = function compileTraits(emit, traits) {
+        for (var i = 0, j = traits.length; i < j; i++) {
+            var trait = traits[i];
+
             switch (trait.kind) {
             case TRAIT_Slot:
             case TRAIT_Const:
-                compileSlot(emit, trait);
+                this.compileSlot(emit, trait);
                 break;
             case TRAIT_Method:
             case TRAIT_Setter:
             case TRAIT_Getter:
-                compileMethod(emit, trait.method);
+                this.compileMethod(emit, trait.method);
                 break;
             case TRAIT_Class:
-                compileClass(emit, trait.class, i);
+                this.compileClass(emit, trait.class);
                 break;
             default:
                 unexpected();
             }
-        });
-    }
-
-    function compileScript(emit, script) {
-        compileTraits(emit, script.traits);
-    }
-
-    return {
-        /*
-         * We expose compileClass because the interpreter uses it for name
-         * resolution.
-         */
-        compileClass: compileClass,
-        compileScript: compileScript
+        }
     };
-}
+
+    Cp.compileScript = function compileScript(emit, script) {
+        this.compileTraits(emit, script.traits);
+        this.compileMethod(emit, script.init);
+    };
+
+    return Compiler;
+
+})();
 
 function compileAbc(abc) {
+    var cc = new Compiler(abc);
     var emit = new Emitter;
-    var cc = compiler(abc);
     cc.compileScript(emit, abc.lastScript);
     return emit.finish();
 }
