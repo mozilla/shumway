@@ -1,6 +1,42 @@
 #!/usr/bin/env python
 import sys,os.path,os,getopt,time,subprocess,re,argparse
+from subprocess import Popen, PIPE
+import datetime, time, signal
+import pickle
+
 from dis import disassemble
+
+def execute (command, timeout = -1):
+    start = datetime.datetime.now()
+    start_time = time.time()
+    process = Popen([command + "&>tmp.out"], shell=True)
+    
+    print "Running: " + command + " | Timeout: " + str(timeout) + " ",
+    
+    elapsed = 0
+    try:
+        if (timeout >= 0):
+            count = 0
+            while process.poll() is None:
+                time.sleep(0.01)
+                now = datetime.datetime.now()
+                count += 1;
+                if count % 10 == 0:
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                if (now - start).seconds > timeout:
+                    os.kill(process.pid, signal.SIGKILL)
+                    os.waitpid(-1, os.WNOHANG)
+                    print " timed out in " + str((now - start).seconds) + " seconds", 
+                    return None
+    except:
+        print " terminated after " + str((now - start).seconds) + " seconds", 
+        return None
+    
+    print " completed in " + str((now - start).seconds) + " seconds", 
+    output = open('tmp.out', 'r').read();
+    elapsed_time = time.time() - start_time
+    return (output.strip(), elapsed_time);
 
 class Base:
     asc = None
@@ -115,8 +151,56 @@ class Compile(Command):
         print "Compiling %s" % args.src
         self.runAvm(args.src, execute = False, comp = True)
 
+class Test(Command):
+    def __init__(self):
+        Command.__init__(self, "test")
+
+    def __repr__(self):
+        return self.name
+
+    def execute(self, args):
+        parser = argparse.ArgumentParser(description='Runs all tests.')
+        parser.add_argument('src', help=".abc search path")
+        args = parser.parse_args(args)
+        print "Testing %s" % args.src
+        tests = [];
+        for root, subFolders, files in os.walk(args.src):
+            for file in files:
+                if file.endswith(".abc"):
+                    tests.append(os.path.join(root, file))
+        
+        PASS = '\033[92m'
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
+
+        total = len(tests)
+        passed = 0
+        failed = 0
+        count = 0
+        
+        try:
+            for test in tests:
+                print str(count) + " of " + str(total) + ":",
+                count += 1
+                result = execute("js -m -n avm.js -x -q " + test, 2)
+                if result:
+                    output, elapsed = result
+                    if output.find("PASSED") >= 0:
+                        passed += 1
+                        print PASS + " PASSED" + ENDC;
+                    else:
+                        failed += 1
+                        print FAIL + " FAILED"  + ENDC;
+                else:
+                    failed += 1
+                    print FAIL + " FAILED" + ENDC;
+        except:
+            pass
+        
+        print "Results: failed: " + FAIL + str(failed) + ENDC + ", passed: " + PASS + str(passed) + ENDC + " of " + str(total);
+        
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Test()]:
     commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()

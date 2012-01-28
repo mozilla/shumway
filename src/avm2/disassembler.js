@@ -139,12 +139,16 @@ function traceOperands(opcode, abc, code, rewind) {
     rewind = rewind || false;
     var old = code.position;
     var str = "";
-    opcode.operands.forEach(function (op, i) {
-        str += traceOperand(op, abc, code);
-        if (i < opcode.operands.length - 1) {
-            str += ", ";
-        }
-    });
+    if (opcode.operands === null) {
+        str = "null";
+    } else {
+        opcode.operands.forEach(function (op, i) {
+            str += traceOperand(op, abc, code);
+            if (i < opcode.operands.length - 1) {
+                str += ", ";
+            }
+        });
+    }
     if (rewind) {
         code.seek(old);
     }

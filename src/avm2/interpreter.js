@@ -123,8 +123,15 @@ function wrap(fn) {
 }
 
 String.construct = function (obj, args) {
-    assert(args.length == 1);
-    return new String(args[0]);
+    switch (args.length) {
+        case 0:
+            return new String();
+        case 1:
+            return new String(args[0]);
+        default:
+            assert(false);
+        break;
+    }
 };
 
 Date.construct = function(obj, args) {
@@ -140,8 +147,15 @@ Date.construct = function(obj, args) {
 };
 
 Number.construct = function (obj, args) {
-    assert(args.length == 1);
-    return new Number(args[0]);
+    switch (args.length) {
+        case 0:
+            return new Number();
+        case 1:
+            return new Number(args[0]);
+        default:
+            assert(false);
+        break;
+    }
 };
 
 Boolean.construct = function (obj, args) {
@@ -169,10 +183,13 @@ var ASObject = (function () {
                 if (trait.isSlot()) {
                     return this.slots[trait.slotId];
                 } else if (trait.isMethod()) {
-                    /* Method closures were associated with method traits when the class in which they were defined was
-                     * created. */
-                    assert(trait.methodClosure);
-                    return trait.methodClosure;
+                    if (trait.methodClosure) {
+                        /* Method closures were associated with method traits when the class in which they 
+                         * were defined was created. */
+                        return trait.methodClosure;
+                    } else {
+                        return trait.method;
+                    }
                 } 
             }
         }
@@ -314,15 +331,25 @@ function createClass(abc, scope, classInfo, baseClass) {
     return klass;
 }
 
-function createInstance(constructor, args) {
+function createInstance(scope, constructor, args) {
     if (constructor instanceof ASClass) {
         return constructor.createInstance(args);
-    } else if ('construct' in constructor)
+    } else if ('construct' in constructor) {
         return constructor.construct(constructor, args);
-    else if (constructor instanceof Function) {
+    } else if (constructor instanceof Function) {
         var obj = Object.create(constructor.prototype);
         constructor.apply(obj, args);
         return obj;
+    } else if (constructor instanceof MethodInfo) {
+        // TODO: We gotta do something about prototypes here.
+        var obj = new ASObject();
+        new Closure(abc, constructor, scope.clone()).apply(obj);
+        return obj;
+    } else if (constructor instanceof Closure) {
+        // TODO: We gotta do something about prototypes here.
+        var obj = new ASObject();
+        constructor.apply(obj, args);
+        return obj; 
     } else {
         assert(false);
     }
@@ -334,7 +361,6 @@ function createInstance(constructor, args) {
 //       constructor.apply(obj, args);
 //       return obj;
 //    }
-//    
 }
 
 
@@ -584,8 +610,14 @@ var Closure = (function () {
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
                     if ((value1 == value2) === false) jump(offset);
                     break;
-                case OP_ifstricteq: notImplemented(); break;
-                case OP_ifstrictne: notImplemented(); break;
+                case OP_ifstricteq:
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (value1 === value2) jump(offset);
+                    break;
+                case OP_ifstrictne:
+                    offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
+                    if (value1 !== value2) jump(offset);
+                    break;
                 case OP_lookupswitch: notImplemented(); break;
                 case OP_pushwith: notImplemented(); break;
                 case OP_popscope:
@@ -605,7 +637,7 @@ var Closure = (function () {
                     stack.push(code.readU8());
                     break;
                 case OP_pushshort:
-                    stack.push(code.readU30());
+                    stack.push(code.readU30Unsafe());
                     break;
                 case OP_pushtrue:
                     stack.push(true)
@@ -666,7 +698,7 @@ var Closure = (function () {
                 case OP_construct:
                     args = stack.popMany(code.readU30());
                     obj = stack.pop();
-                    stack.push(createInstance(obj, args));
+                    stack.push(createInstance(scope, obj, args));
                     break;
                 case OP_callmethod: notImplemented(); break;
                 case OP_callstatic: notImplemented(); break;
@@ -704,7 +736,7 @@ var Closure = (function () {
                     args = stack.popMany(code.readU30());
                     multiname = createMultiname(multiname);
                     obj = stack.pop();
-                    stack.push(createInstance(getObjectProperty(obj, multiname), args));
+                    stack.push(createInstance(scope, getObjectProperty(obj, multiname), args));
                     break;
                 case OP_callsuperid: notImplemented(); break;
                 case OP_callproplex: notImplemented(); break;
@@ -828,7 +860,7 @@ var Closure = (function () {
                 case OP_coerce_d: notImplemented(); break;
                 case OP_coerce_s:
                     obj = stack.pop();
-                    stack.push(obj == null ? null : stack.pop().toString());
+                    stack.push((obj === null || obj === undefined) ? null : obj.toString());
                     break;
                 case OP_astype: notImplemented(); break;
                 case OP_astypelate: notImplemented(); break;
