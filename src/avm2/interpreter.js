@@ -376,6 +376,13 @@ function createInstance(scope, constructor, args) {
 //    }
 }
 
+function createNewFunction(abc, methodInfo, obj, scope) {
+    var closure = new Closure(abc, methodInfo, scope.clone());
+    var needActivation = !!(methodInfo.flags & METHOD_Activation);
+    return function () {
+        return closure.apply(needActivation ? obj : this, arguments);
+    };
+}
 
 function createNewClass2(abc, scope, classInfo, baseClass) {
     baseClass = baseClass || ASObject;
@@ -408,23 +415,23 @@ function constructObject2(constructor, args) {
 }
 
 function getObjectProperty(obj, multiname) {
-    if (typeof obj === 'object' && 'getProperty' in obj) {
+    if (obj instanceof ASObject)
        return obj.getProperty(multiname);
-    }
+
     return obj[multiname.name];
 }
 
 function setObjectProperty(obj, multiname, value) {
-    if (typeof obj === 'object' && 'setProperty' in obj) {
+    if (obj instanceof ASObject)
        return obj.setProperty(multiname, value);
-    }
+
     return obj[multiname.name] = value;
 }
 
 function deleteObjectProperty(obj, multiname) {
-    if (typeof obj === 'object' && 'deleteProperty' in obj) {
+    if (obj instanceof ASObject)
         obj.deleteProperty(multiname);
-    }
+
     delete obj[multiname.name];
 }
 
@@ -485,7 +492,7 @@ var Closure = (function () {
                 local = local.concat(Array.prototype.slice.call(args, 0, this.paramCount));
 
                 if (this.needRest)
-                    local[this.paramCount + 1] = args.slice(this.paramCount);
+                    local[this.paramCount + 1] = Array.prototype.slice.call(args, this.paramCount);
                 else if (this.needArguments)
                     local[this.paramCount + 1] = args;
             }
@@ -718,7 +725,8 @@ var Closure = (function () {
                 case OP_sf64: notImplemented(); break;
                 case OP_newfunction:
                     methodInfo = abc.methods[code.readU30()];
-                    stack.push(new Closure(abc, methodInfo, scope.clone()));
+                    obj = local[0]; // this
+                    stack.push(createNewFunction(abc, methodInfo, obj, scope));
                     break;
                 case OP_call:
                     args = stack.popMany(code.readU30());
