@@ -57,6 +57,17 @@ var Bytecode = (function () {
         this.preds = [];
     };
 
+    Bp.makeLoopHead = function makeLoopHead(loop) {
+        if (this.isLoopHead) {
+            return;
+        }
+
+        assert(this.isBlockHead);
+
+        this.isLoopHead = true;
+        this.loop = loop;
+    };
+
     Bp.addSucc = function addSucc(succ) {
         assert(this.isBlockHead);
         this.succs.push(succ);
@@ -109,33 +120,39 @@ var Analysis = (function () {
         return finger1;
     }
 
-    function depthFirstSearch(bytecodes, pre, post) {
+    function depthFirstSearch(bytecodes, pre, post, succ) {
         /* Block 0 is always the root block. */
         var dfs = [0];
-        var visited = [];
+        var visited = {};
         var node;
 
         while (dfs.length) {
-            node = dfs[dfs.length - 1];
-            if (node in visited) {
+            node = dfs.peek();
+            if (visited[node]) {
                 dfs.pop();
                 if (post) {
                     post(node);
                 }
             }
 
-            var succs = bytecodes[node].succs;
-            for (var i = 0, j = succs.length; i < j; i++) {
-                if (succs[i] in visited) {
-                    continue;
-                }
-                dfs.push(succs[i]);
-            }
-
-            if (pre) {
+            if (pre && !visited[node]) {
                 pre(node);
             }
-            visited.push(node);
+
+            var succs = bytecodes[node].succs;
+            for (var i = 0, j = succs.length; i < j; i++) {
+                var s = succs[i];
+
+                if (succ) {
+                    succ(s);
+                }
+
+                if (!visited[s]) {
+                    dfs.push(s);
+                }
+            }
+
+            visited[node] = true;
         }
     }
 
@@ -221,7 +238,6 @@ var Analysis = (function () {
             case OP_ifstrictne:
             case OP_iftrue:
             case OP_iffalse:
-                print(pc - 1 + code.offset);
                 doubleLink(start, pc - 1 + code.offset);
                 doubleLink(start, pc);
                 break;
@@ -242,16 +258,16 @@ var Analysis = (function () {
      * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
      */
     function analyzeDominance(bytecodes) {
-        /* For this algorithm we id blocks by their index in reverse postorder. */
+        /* For this algorithm we id blocks by their index in postorder. */
         var blocks = [];
-        depthFirstSearch(bytecodes, null, blocks.push.bind(blocks));
+        depthFirstSearch(bytecodes, null, blocks.push.bind(blocks), null);
         var n = blocks.length;
         var sortedIndices = {};
         for (var i = 0; i < n; i++) {
             sortedIndices[blocks[i]] = i;
         }
 
-        /* The indices in dom is the block's index in sortedIndices, not blocks! */
+        /* The indices in doms is the block's index in sortedIndices, not blocks! */
         var doms = new Array(n);
         doms[n-1] = n-1;
         var changed = true;
@@ -282,6 +298,118 @@ var Analysis = (function () {
         for (var i = 0; i < n; i++) {
             bytecodes[blocks[i]].dominator = blocks[doms[i]];
         }
+    }
+
+    /*
+     * Find the dominator set from immediate dominators.
+     */
+    function dom(bytecodes, offset) {
+        var code = bytecodes[offset];
+
+        assert(code.isBlockHead);
+        assert(code.dominator !== undefined);
+
+        var dom = [offset];
+        do {
+            var idom = code.dominator;
+            dom.push(idom);
+            code = bytecodes[idom];
+        } while (idom !== code.dominator);
+
+        return dom;
+    }
+
+    /*
+     * Find the node that dominates all other nodes in the loop.
+     */
+    function findLoopHeader(loop, doms) {
+        var loopHeader;
+
+        for (var i = 0, j = loop.length; i < j; i++) {
+            /* Candidate loop header. */
+            loopHeader = loop[i];
+
+            for (var k = 0; k < j; k++) {
+                if (doms[k].indexOf(loopHeader) < 0) {
+                    break;
+                }
+            }
+
+            if (k === j && loop.indexOf(loopHeader) >= 0) {
+                return loopHeader;
+            }
+        }
+
+        unexpected();
+    }
+
+    /*
+     * Find strongly connected components and mark them as loops.
+     *
+     * Adobe's asc, like SpiderMonkey, emit loops where the loop header is at
+     * the "bottom", i.e. higher pc:
+     *
+     * i        jump to i+off
+     * i+1      label
+     * i+2      ...
+     * i+3      ...
+     * .        ...
+     * .        ...
+     * i+off    <test condition>
+     * i+off+1  branch to i+1
+     *
+     * The only exception is a do..while, which has a jump to i+2.
+     */
+    function findLoops(bytecodes) {
+        var preId = 0;
+        var loopId = 0;
+
+        var preorder = {};
+        var loop = {};
+        var loops = [];
+        var unconnectedNodes = [];
+        var pendingNodes = [];
+
+        /* Find SCCs by Gabow's algorithm. */
+        depthFirstSearch(bytecodes,
+                         function (v) {
+                             preorder[v] = preId++;
+                             unconnectedNodes.push(v);
+                             pendingNodes.push(v);
+                         },
+                         function (v) {
+                             if (pendingNodes.peek() !== v) {
+                                 return;
+                             }
+
+                             pendingNodes.pop();
+
+                             var l = [];
+                             var doms = [];
+                             do {
+                                 var w = unconnectedNodes.pop();
+                                 loop[w] = loopId;
+
+                                 l.push(w);
+                                 doms.push(dom(bytecodes, w));
+                             } while (w !== v);
+
+                             if (l.length > 1) {
+                                 var header = findLoopHeader(l, doms);
+                                 bytecodes[header].makeLoopHead(l);
+                             }
+
+                             loopId++;
+                         },
+                         function (w) {
+                             if (!preorder[w] || loop[w]) {
+                                 return;
+                             }
+
+                             while (preorder[pendingNodes.peek()] > preorder[w]) {
+                                 pendingNodes.pop();
+                             }
+                         });
     }
 
     function Analysis(codeStream) {
@@ -379,6 +507,7 @@ var Analysis = (function () {
         var bytecodes = this.bytecodes;
         analyzeBasicBlocks(bytecodes);
         analyzeDominance(bytecodes);
+        findLoops(bytecodes);
     }
 
     Ap.trace = function(writer) {
@@ -396,6 +525,15 @@ var Analysis = (function () {
 
                 writer.enter("block " + code.dominator + " >> " + pc +
                              (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
+
+                /*
+                 * Print metainfo on the type of control structure this block
+                 * is.
+                 */
+                if (code.isLoopHead) {
+                    writer.writeLn("loop [" + code.loop.join(",") + "]");
+                    writer.writeLn("");
+                }
             }
 
             writer.writeLn(("" + pc).padRight(' ', 5) + code);
