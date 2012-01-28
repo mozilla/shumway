@@ -20,6 +20,7 @@ function createGlobalObject(script) {
     global.parseInt = parseInt;
     global.NaN = NaN;
     global.Infinity = Infinity;
+    global.undefined = void(0);
     global.isNaN = isNaN;
     global.print = function (val) {
         console.info(val);
@@ -138,8 +139,20 @@ Date.construct = function(obj, args) {
     switch (args.length) {
         case 0:
             return new Date();
+        case 1:
+            return new Date(args[0]);
+        case 2:
+            return new Date(args[0], args[1]);
         case 3:
             return new Date(args[0], args[1], args[2]);
+        case 4:
+            return new Date(args[0], args[1], args[2], args[3]);
+        case 5:
+            return new Date(args[0], args[1], args[2], args[3], args[4]);
+        case 6:
+            return new Date(args[0], args[1], args[2], args[3], args[4], args[5]);
+        case 7:
+            return new Date(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
         default:
             assert(false);
             break;
@@ -524,7 +537,21 @@ var Closure = (function () {
             function readAndCreateMultiname() {
                 return createMultiname(readMultiname());
             }
-            
+
+            function jumpUsingLookupSwitch(value) {
+                var baseLocation = code.pos - 1;
+                var defaultOffset = code.readS24();
+                var caseCount = code.readU30() + 1;
+                // reading all offsets without creating an array
+                var offset = defaultOffset;
+                for (var i = 0; i < caseCount; i++) {
+                    var caseOffset = code.readS24();
+                    if (i == value)
+                        offset = caseOffset;
+                }
+                code.seek(baseLocation + offset);
+            }
+
             while (code.remaining() > 0) {
                 var bc = code.readU8();
                 
@@ -618,7 +645,10 @@ var Closure = (function () {
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
                     if (value1 !== value2) jump(offset);
                     break;
-                case OP_lookupswitch: notImplemented(); break;
+                case OP_lookupswitch:
+                    value = stack.pop();
+                    jumpUsingLookupSwitch(value);
+                    break;
                 case OP_pushwith: notImplemented(); break;
                 case OP_popscope:
                     scope.pop();
@@ -829,10 +859,12 @@ var Closure = (function () {
                     break;
                 case OP_getglobalslot: notImplemented(); break;
                 case OP_setglobalslot: notImplemented(); break;
-                case OP_convert_s: notImplemented(); break;
+                case OP_convert_s:
+                    stack.push("" + stack.pop());
+                    break;
                 case OP_esc_xelem: notImplemented(); break;
                 case OP_esc_xattr: notImplemented(); break;
-                case OP_convert_i: notImplemented(); break;
+                case OP_convert_i:
                     stack.push(0|stack.pop());
                     break;
                 case OP_convert_u:
@@ -957,12 +989,20 @@ var Closure = (function () {
                     value2 = stack.pop(); value1 = stack.pop();
                     stack.push(value1 >= value2);
                     break;
-                case OP_instanceof: notImplemented(); break;
+                case OP_instanceof:
+                    classInfo = stack.pop(); value = stack.pop();
+                    // TODO check/implement interfaces
+                    stack.push(value instanceof classInfo);
+                    break;
                 case OP_istype: notImplemented(); break;
                 case OP_istypelate: notImplemented(); break;
                 case OP_in: notImplemented(); break;
-                case OP_increment_i: notImplemented(); break;
-                case OP_decrement_i: notImplemented(); break;
+                case OP_increment_i:
+                    stack.push(0|(stack.pop() + 1));
+                    break;
+                case OP_decrement_i:
+                    stack.push(0|(stack.pop() - 1));
+                    break;
                 case OP_inclocal_i: notImplemented(); break;
                 case OP_declocal_i: notImplemented(); break;
                 case OP_negate_i: notImplemented(); break;
