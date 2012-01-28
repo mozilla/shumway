@@ -365,8 +365,9 @@ function createInstance(scope, constructor, args) {
 
 function createNewFunction(abc, methodInfo, obj, scope) {
     var closure = new Closure(abc, methodInfo, scope.clone());
+    var needActivation = !!(methodInfo.flags & METHOD_Activation);
     return function () {
-          return closure.apply(this || obj, arguments);
+        return closure.apply(needActivation ? obj : this, arguments);
     };
 }
 
