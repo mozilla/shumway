@@ -120,7 +120,7 @@ var Analysis = (function () {
         return finger1;
     }
 
-    function depthFirstSearch(bytecodes, pre, post, succ) {
+    function dfs(bytecodes, pre, post, succ) {
         /* Block 0 is always the root block. */
         var dfs = [0];
         var visited = {};
@@ -260,7 +260,7 @@ var Analysis = (function () {
     function analyzeDominance(bytecodes) {
         /* For this algorithm we id blocks by their index in postorder. */
         var blocks = [];
-        depthFirstSearch(bytecodes, null, blocks.push.bind(blocks), null);
+        dfs(bytecodes, null, blocks.push.bind(blocks), null);
         var n = blocks.length;
         var sortedIndices = {};
         for (var i = 0; i < n; i++) {
@@ -371,45 +371,45 @@ var Analysis = (function () {
         var pendingNodes = [];
 
         /* Find SCCs by Gabow's algorithm. */
-        depthFirstSearch(bytecodes,
-                         function (v) {
-                             preorder[v] = preId++;
-                             unconnectedNodes.push(v);
-                             pendingNodes.push(v);
-                         },
-                         function (v) {
-                             if (pendingNodes.peek() !== v) {
-                                 return;
-                             }
+        dfs(bytecodes,
+            function (v) {
+                preorder[v] = preId++;
+                unconnectedNodes.push(v);
+                pendingNodes.push(v);
+            },
+            function (v) {
+                if (pendingNodes.peek() !== v) {
+                    return;
+                }
 
-                             pendingNodes.pop();
+                pendingNodes.pop();
 
-                             var l = [];
-                             var doms = [];
-                             do {
-                                 var w = unconnectedNodes.pop();
-                                 loop[w] = loopId;
+                var l = [];
+                var doms = [];
+                do {
+                    var w = unconnectedNodes.pop();
+                    loop[w] = loopId;
 
-                                 l.push(w);
-                                 doms.push(dom(bytecodes, w));
-                             } while (w !== v);
+                    l.push(w);
+                    doms.push(dom(bytecodes, w));
+                } while (w !== v);
 
-                             if (l.length > 1) {
-                                 var header = findLoopHeader(l, doms);
-                                 bytecodes[header].makeLoopHead(l);
-                             }
+                if (l.length > 1) {
+                    var header = findLoopHeader(l, doms);
+                    bytecodes[header].makeLoopHead(l);
+                }
 
-                             loopId++;
-                         },
-                         function (w) {
-                             if (!preorder[w] || loop[w]) {
-                                 return;
-                             }
+                loopId++;
+            },
+            function (w) {
+                if (!preorder[w] || loop[w]) {
+                    return;
+                }
 
-                             while (preorder[pendingNodes.peek()] > preorder[w]) {
-                                 pendingNodes.pop();
-                             }
-                         });
+                while (preorder[pendingNodes.peek()] > preorder[w]) {
+                    pendingNodes.pop();
+                }
+            });
     }
 
     function Analysis(codeStream) {
