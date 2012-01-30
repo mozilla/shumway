@@ -593,7 +593,7 @@ var Closure = (function () {
                 case OP_ifge:
                     offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
                     if (isNaN(value1) || isNaN(value2)) {
-                        if (bc === OP_ifnlt) jump(offse);
+                        if (bc === OP_ifnlt) jump(offset);
                     } else if (value1 < value2 === false) {
                         jump(offset);
                     }
@@ -671,7 +671,7 @@ var Closure = (function () {
                 case OP_pushfloat: notImplemented(); break;
                 case OP_nextvalue: notImplemented(); break;
                 case OP_pushbyte: 
-                    stack.push(code.readU8());
+                    stack.push(code.readS8());
                     break;
                 case OP_pushshort:
                     stack.push(code.readU30Unsafe());

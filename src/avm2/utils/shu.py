@@ -162,6 +162,7 @@ class Test(Command):
     def execute(self, args):
         parser = argparse.ArgumentParser(description='Runs all tests.')
         parser.add_argument('src', help=".abc search path")
+        parser.add_argument('-timeout', default="2", help="timeout (s)")
         args = parser.parse_args(args)
         print "Testing %s" % args.src
         tests = [];
@@ -183,10 +184,10 @@ class Test(Command):
             for test in tests:
                 print str(count) + " of " + str(total) + ":",
                 count += 1
-                result = execute("js -m -n avm.js -x -q " + test, 2)
+                result = execute("js -m -n avm.js -x -q " + test, int(args.timeout))
                 if result:
                     output, elapsed = result
-                    if output.find("PASSED") >= 0:
+                    if output.lower().find("pass") >= 0:
                         passed += 1
                         print PASS + " PASSED" + ENDC;
                     else:

@@ -20,6 +20,9 @@ var AbcStream = (function () {
         readU8: function() {
             return this.bytes[this.pos++];
         },
+        readS8: function() {
+            return this.bytes[this.pos++] << 24 >> 24;
+        },
         readU32: function() {
             return this.readS32() >>> 0;
         },
