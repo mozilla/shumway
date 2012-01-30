@@ -10,16 +10,16 @@ load("../disassembler.js");
 load("../interpreter.js");
 
 if (arguments.length == 0) {
-    printUsage();
-    quit();
+  printUsage();
+  quit();
 }
 
 function printUsage() {
-    print("avm: [-d | -c | -x] file");
-    print("      -d = Disassemble .abc file.");
-    print("      -c = Compile .abc file to .js.");
-    print("      -x = Execute .abc file.");
-    print("      -q = Quiet.");
+  print("avm: [-d | -c | -x] file");
+  print("    -d = Disassemble .abc file.");
+  print("    -c = Compile .abc file to .js.");
+  print("    -x = Execute .abc file.");
+  print("    -q = Quiet.");
 }
 
 var file = arguments[arguments.length - 1];
@@ -31,32 +31,32 @@ var execute = options.indexOf("-x") >= 0;
 var quiet = options.indexOf("-q") >= 0;
 
 if (quiet) {
-    traceExecution = null;
+  traceExecution = null;
 }
 
 var abc = new AbcFile(snarf(file, "binary"));
 var methodBodies = abc.methodBodies;
 
 if (disassemble) {
-    abc.trace(new IndentingWriter(false));
+  abc.trace(new IndentingWriter(false));
 }
 
 if (compile) {
-    print(compileAbc(abc));
+  print(compileAbc(abc));
 
-    if (!quiet) {
-        /* Spew analysis information if not quiet. */
-        var writer = new IndentingWriter(false);
-        writer.enter("analyses {");
-        abc.methods.forEach(function (method) {
-            if (method.codeAnalysis) {
-                method.codeAnalysis.trace(writer);
-            }
-        });
-        writer.leave("}");
-    }
+  if (!quiet) {
+    /* Spew analysis information if not quiet. */
+    var writer = new IndentingWriter(false);
+    writer.enter("analyses {");
+    abc.methods.forEach(function (method) {
+      if (method.codeAnalysis) {
+        method.codeAnalysis.trace(writer);
+      }
+    });
+    writer.leave("}");
+  }
 }
 
 if (execute) {
-    interpretAbc(abc);
+  interpretAbc(abc);
 }

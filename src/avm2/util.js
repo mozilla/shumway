@@ -1,98 +1,97 @@
 var inBrowser = typeof console != "undefined";
 
 if (!inBrowser) {
-    console = {
-        info: print,
-        warn: print
-    };
+  console = {
+    info: print,
+    warn: print
+  };
 }
 
 function backtrace() {
-    try {
-        throw new Error();
-    } catch (e) {
-        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-    }
+  try {
+    throw new Error();
+  } catch (e) {
+    return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
+  }
 }
 
 function error(message) {
-    if (!inBrowser) {
-        console.info(backtrace());
-    }
-    throw new Error(message);
+  if (!inBrowser) {
+    console.info(backtrace());
+  }
+  throw new Error(message);
 }
 
 function assert(condition, message) {
-    if (!condition) {
-        error(message);
-    }
+  if (!condition) {
+    error(message);
+  }
 }
 
 function assertFalse(condition, message) {
-    if (condition) {
-        error(message);
-    }
+  if (condition) {
+    error(message);
+  }
 }
 
 function warning(message) {
-    console.warn(message);
+  console.warn(message);
 }
 
 function notImplemented(message) {
-    assert(false, "Not Implemented" + message);
+  assert(false, "Not Implemented" + message);
 }
 
 function unexpected() {
-    assert(false);
+  assert(false);
 }
 
 (function () {
-    function extendBuiltin(proto, prop, f) {
-        if (!proto[prop]) {
-            Object.defineProperty(proto, prop,
-                                  { value: f, writable: true, configurable: true,
-                                    enumerable: false });
+  function extendBuiltin(proto, prop, f) {
+    if (!proto[prop]) {
+      Object.defineProperty(proto, prop,
+        { value: f, writable: true, configurable: true, enumerable: false });
 
-        }
     }
+  }
 
-    var Sp = String.prototype;
+  var Sp = String.prototype;
 
-    extendBuiltin(Sp, "padRight", function (c, n) {
-        var str = this;
-        if (!c || str.length >= n) {
-            return str;
-        }
-        var max = (n - str.length) / c.length;
-        for (var i = 0; i < max; i++) {
-            str += c;
-        }
-        return str;
-    });
+  extendBuiltin(Sp, "padRight", function (c, n) {
+    var str = this;
+    if (!c || str.length >= n) {
+      return str;
+    }
+    var max = (n - str.length) / c.length;
+    for (var i = 0; i < max; i++) {
+      str += c;
+    }
+    return str;
+  });
 
-    var Ap = Array.prototype;
+  var Ap = Array.prototype;
 
-    extendBuiltin(Ap, "popMany", function (count) {
-        assert (this.length >= count);
-        var start = this.length - count;
-        var res = this.slice(start, this.length);
-        this.splice(start, count);
-        return res;
-    });
+  extendBuiltin(Ap, "popMany", function (count) {
+    assert (this.length >= count);
+    var start = this.length - count;
+    var res = this.slice(start, this.length);
+    this.splice(start, count);
+    return res;
+  });
 
-    extendBuiltin(Ap, "first", function () {
-        assert (this.length > 0);
-        return this[0];
-    });
+  extendBuiltin(Ap, "first", function () {
+    assert (this.length > 0);
+    return this[0];
+  });
 
-    extendBuiltin(Ap, "peek", function() {
-        assert (this.length > 0);
-        return this[this.length - 1];
-    });
+  extendBuiltin(Ap, "peek", function() {
+    assert (this.length > 0);
+    return this[this.length - 1];
+  });
 
-    extendBuiltin(Ap, "top", function() {
-        return this.length && this[this.length-1];
-    });
+  extendBuiltin(Ap, "top", function() {
+    return this.length && this[this.length-1];
+  });
 })();
 
 /**
@@ -107,14 +106,14 @@ function inherit(base, properties) {
 }
 
 function getFlags(value, flags) {
-    var str = "";
-    for (var i = 0; i < flags.length; i++) {
-        if (value & (1 << i)) {
-            str += flags[i] + " ";
-        }
+  var str = "";
+  for (var i = 0; i < flags.length; i++) {
+    if (value & (1 << i)) {
+      str += flags[i] + " ";
     }
-    if (str.length === 0) {
-        return "";
-    }
-    return str.trim();
+  }
+  if (str.length === 0) {
+    return "";
+  }
+  return str.trim();
 }
