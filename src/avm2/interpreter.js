@@ -675,13 +675,13 @@ var Closure = (function () {
           stack.push(code.readU30Unsafe());
           break;
         case OP_pushtrue:
-          stack.push(true)
+          stack.push(true);
           break;
         case OP_pushfalse:
-          stack.push(false)
+          stack.push(false);
           break;
         case OP_pushnan:
-          stack.push(NaN)
+          stack.push(NaN);
           break;
         case OP_pop:
           stack.pop();
