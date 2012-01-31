@@ -21,57 +21,30 @@
         color: #cc0000;
       }
       #menu {
-        border-bottom: 1px solid #b3b3b3;
+        height: 15px;
         padding: 15px 10px;
         text-align: right;
-	height: 15px;
+        border-bottom: 1px solid #b3b3b3;
       }
       #info {
+        height: 15px;
+        padding: 5px 10px;
+        text-align: right;
+        background: #dcdcdc;
         border: 1px #ccc;
         border-style: solid none;
-	padding: 5px 10px;
-	height: 15px;
-        background: #dcdcdc;
-        text-align: right;
-      }
-      #body {
-	position: absolute;
-	top: 73px;
-	bottom: 0;
-	width: 100%;
-      }
-      #graph {
-        position: absolute;
-	top: 0;
-	right: 0;
-	left: 0;
-	bottom: 0;
-        margin: 0 300px 0 280px;
-        padding: 10px;
-        overflow: auto;
-      }
-      #preview {
-        position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-        width: 280px;
-        padding: 10px;
-        border-left: 1px solid #ccc;
-        background: url(preview_bg.png);
-        text-align: center;
       }
       #taglist {
         position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
+        left: 0;
+        top: 73px;
+        bottom: 0;
         margin: 0;
         width: 280px;
         padding: 0;
-        border-right: 1px solid #b3b3b3;
-        background: #ececec;
         overflow: auto;
+        background: #ececec;
+        border-right: 1px solid #b3b3b3;
       }
       #taglist li {
         padding: 10px;
@@ -90,20 +63,37 @@
         width: 30px;
         color: #999;
       }
+      #graph {
+        position: absolute;
+        left: 0;
+        top: 73px;
+        right: 0;
+        bottom: 0;
+        margin: 0 300px 0 280px;
+        padding: 10px;
+        overflow: auto;
+      }
+      #preview {
+        position: absolute;
+        top: 73px;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        padding: 10px;
+        text-align: center;
+        background: url(preview_bg.png);
+        border-left: 1px solid #ccc;
+      }
     </style>
   </head>
   <body>
-    <div id="app">
-      <div id="menu">
-        <h3>Shumway SWF Inspector</h3>
-      </div>
-      <div id="info">Drop a SWF File</div>
-      <div id="body">
-        <ul id="taglist"></ul>
-        <pre id="graph"></pre>
-        <div id="preview"></div>
-      </div>
+    <div id="menu">
+      <h3>Shumway SWF Inspector</h3>
     </div>
+    <div id="info">Drop a SWF File</div>
+    <ul id="taglist"></ul>
+    <pre id="graph"></pre>
+    <div id="preview"></div>
 
     <script src="beautify.js"></script>
     <script src="DataView.js"></script>
