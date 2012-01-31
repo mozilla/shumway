@@ -68,7 +68,7 @@ var CXFORM = {
       redMult: FB('bits'),
       greenMult: FB('bits'),
       blueMult: FB('bits'),
-      alphaMult: ['tag===26', [FB('bits'), '1']]
+      alphaMult: ['tag>4', [FB('bits'), '1']]
     },
     {
       redMult: '1',
@@ -82,7 +82,7 @@ var CXFORM = {
       redAdd: FB('bits'),
       greenAdd: FB('bits'),
       blueAdd: FB('bits'),
-      alphaAdd: ['tag===26', [FB('bits'), '0']]
+      alphaAdd: ['tag>4', [FB('bits'), '0']]
     },
     {
       redAdd: '0',
