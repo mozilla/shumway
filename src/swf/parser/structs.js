@@ -291,14 +291,14 @@ var FILTER_GLOW = {
   ]],
   $3: ['type===4||type===7', [
     { passes: UB(4) },
-    { $$reserved: UB(1) }
+    { $$reserved: UB(4) }
   ]]
 };
 var FILTER_BLUR = {
   blurX: FIXED,
   blurY: FIXED,
   passes: UB(5),
-  $$reserved: UB(5)
+  $$reserved: UB(3)
 };
 var FILTER_CONVOLUTION = {
   columns: UI8,
@@ -342,7 +342,7 @@ var PARAMS = {
   name: STRING
 };
 var FILL_SOLID = {
-  color: ['tag===32||isMorph', [RGBA, RGB]],
+  color: ['tag>22||isMorph', [RGBA, RGB]],
   colorMorph: ['isMorph', [RGBA]]
 };
 var GRADIENT_RECORD = {
