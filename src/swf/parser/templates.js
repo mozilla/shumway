@@ -40,7 +40,7 @@ function readFloat($bytes, $stream) {
   return $stream.getFloat32($stream.pos, $stream.pos += 4);
 }
 function readDouble($bytes, $stream) {
-  return $stream.getFloat64($stream.pos, $stream.pos += 4);
+  return $stream.getFloat64($stream.pos, $stream.pos += 8);
 }
 function readEncodedU32($bytes, $stream) {
   var val = $bytes[$stream.pos++];
