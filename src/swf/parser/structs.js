@@ -168,6 +168,8 @@ var ACTION_PUSH = {
       value: ['type', {
         0: STRING(0),
         1: FLOAT,
+        2: 'null',
+        3: 'undefined',
         4: UI8,
         5: BOOL,
         6: DOUBLE,
