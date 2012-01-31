@@ -90,8 +90,11 @@ var PLACE_OBJECT2 = {
   name: ['hasName', [STRING(0)]],
   clipDepth: ['clip', [UI16]],
   $1: ['hasFilters', [{
-    filterCount: UI8,
-    filters: ANY_FILTER
+    $$count: UI8,
+    filters: {
+      $: ANY_FILTER,
+      count: 'count'
+    }
   }]],
   blendMode: ['blend', [UI8]],
   bmpCache: ['cache', [UI8]],
