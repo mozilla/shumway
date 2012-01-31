@@ -192,7 +192,7 @@ function ShapeFactory(graph) {
       case 18:
       case 19:
         if (fillStyle.type === 16)
-          cmds.push('var g=createLinearGradient(819.2,0,-819.2,0)');
+          cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
         else
           cmds.push('var g=createRadialGradient(0,0,0,0,0,819.2)');
         var j = 0;
