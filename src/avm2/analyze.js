@@ -48,33 +48,31 @@ var Bytecode = (function () {
   var Bp = Bytecode.prototype;
 
   Bp.makeBlockHead = function makeBlockHead() {
-    if (this.isBlockHead) {
+    if (this.succs) {
       return;
     }
 
-    this.isBlockHead = true;
     this.succs = [];
     this.preds = [];
   };
 
   Bp.makeLoopHead = function makeLoopHead(loop) {
-    if (this.isLoopHead) {
+    if (this.loop) {
       return;
     }
 
-    assert(this.isBlockHead);
+    assert(this.succs);
 
-    this.isLoopHead = true;
     this.loop = loop;
   };
 
   Bp.addSucc = function addSucc(succ) {
-    assert(this.isBlockHead);
+    assert(this.succs);
     this.succs.push(succ);
   };
 
   Bp.addPred = function addPred(pred) {
-    assert(this.isBlockHead);
+    assert(this.succs);
     this.preds.push(pred);
   };
 
@@ -205,11 +203,11 @@ var Analysis = (function () {
 
     var start = 0;
     for (pc = 1, end = bytecodes.length; pc < end; pc++) {
-      if (!bytecodes[pc].isBlockHead) {
+      if (!bytecodes[pc].succs) {
         continue;
       }
 
-      assert(bytecodes[start].isBlockHead);
+      assert(bytecodes[start].succs);
       var nextBlockCode = bytecodes[pc];
 
       code = bytecodes[pc - 1];
@@ -306,7 +304,7 @@ var Analysis = (function () {
   function dom(bytecodes, offset) {
     var code = bytecodes[offset];
 
-    assert(code.isBlockHead);
+    assert(code.succs);
     assert(code.dominator !== undefined);
 
     var dom = [offset];
@@ -510,15 +508,25 @@ var Analysis = (function () {
     findLoops(bytecodes);
   }
 
+  /*
+   * Prints a normalized bytecode along with metainfo.
+   *
+   * Basic blocks are identified by the position of the first bytecode in the
+   * block. The format for each blocks, b, is:
+   *   idom(b) >> b -> succ(b) 1, ...
+   *
+   * Loops are identified by:
+   *   loop [loop body block 0, loop body block 1, ...]
+   */
   Ap.trace = function(writer) {
     writer.enter("analysis {");
 
-    var ranControlFlow = !!this.bytecodes[0].isBlockHead;
+    var ranControlFlow = !!this.bytecodes[0].succs;
 
     for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
       var code = this.bytecodes[pc];
 
-      if (ranControlFlow && code.isBlockHead) {
+      if (ranControlFlow && code.succs) {
         if (pc > 0) {
           writer.leave("}");
         }
@@ -526,11 +534,7 @@ var Analysis = (function () {
         writer.enter("block " + code.dominator + " >> " + pc +
                (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
 
-        /*
-         * Print metainfo on the type of control structure this block
-         * is.
-         */
-        if (code.isLoopHead) {
+        if (code.loop) {
           writer.writeLn("loop [" + code.loop.join(",") + "]");
           writer.writeLn("");
         }
