@@ -257,11 +257,13 @@ var EVENT = {
   unload: 'flags>>2&1',
   enterFrame: 'flags>>1&1',
   onload: 'flags&1',
-  $length: UI32,
-  actions: {
-    $: ACTION_RECORD,
-    length: 'length'
-  }
+  $1: ['!eoe', [{
+    $length: UI32,
+    actions: {
+      $: ACTION_RECORD,
+      length: 'length'
+    }
+  }]]
 };
 var FILTER_GLOW = {
   count: ['type===4||type===7', [UI8, '1']],

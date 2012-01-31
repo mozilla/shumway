@@ -100,7 +100,7 @@ var PLACE_OBJECT2 = {
     $$allFlags: ['version>=6', [UI32, UI16]],
     events: {
       $: EVENT,
-      repeat: 'eoe'
+      repeat: '!eoe'
     }
   }]]
 };
