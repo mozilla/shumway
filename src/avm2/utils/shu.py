@@ -18,7 +18,7 @@ def execute (command, timeout = -1):
         if (timeout >= 0):
             count = 0
             while process.poll() is None:
-                time.sleep(0.01)
+                time.sleep(0.2)
                 now = datetime.datetime.now()
                 count += 1;
                 if count % 10 == 0:

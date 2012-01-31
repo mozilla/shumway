@@ -2,8 +2,19 @@
 
 function createGlobalObject(script) {
   var global = new ASObject();
+  var globalScope = new Scope();
+  globalScope.push(global);
+  
   ASObject.applyTraits(global, script.traits);
 
+  for (var i = 0; i < script.traits.length; i++) {
+    var trait = script.traits[i];
+    if (trait.isMethod()) {
+      /* Methods need to be closed over the scope of their declaring script. */
+      trait.methodClosure = new Closure(this.abc, trait.method, null, globalScope.clone()); 
+    }
+  }
+  
   global.trace = function (val) {
     console.info(val);
   };
@@ -54,11 +65,13 @@ var Scope = (function () {
   };
   
   scope.prototype.global = function global() {
+    assert(this.stack.length > 0 && this.stack[0]);
     return this.stack[0];
   };
   
   scope.prototype.scope = function scope(i) {
-    return this.stack[i];
+    // return this.stack[i];
+    return this.stack[(this.stack.length - 1) - i];
   };
   
   scope.prototype.clone = function clone() {
@@ -89,13 +102,11 @@ function interpretAbc(abc, consolePrintFn) {
   var methodInfo = abc.entryPoint;
 
   var global = createGlobalObject(abc.lastScript);
-  if (consolePrintFn)
+  if (consolePrintFn) {
     global.print = global.trace = consolePrintFn;
-
-  var scope = new Scope();
-  scope.push(global);
-  var $this = new ASObject();
-  new Closure(abc, methodInfo, scope).apply($this);
+  }
+  abc.global = global;
+  new Closure(abc, methodInfo, null, null).apply(global);
 }
 
 Array.construct = function (obj, args) {
@@ -301,7 +312,7 @@ var ASClass = (function () {
         var trait = classAndInstanceTraits[i];
         if (trait.isMethod()) {
           /* Methods need to be closed over the scope of their declaring class. */
-          trait.methodClosure = new Closure(this.abc, trait.method, this.classScope); 
+          trait.methodClosure = new Closure(this.abc, trait.method, null, this.classScope); 
         }
       }
       this.instanceTraits = baseClass.instanceTraits.concat(instanceTraits);
@@ -327,7 +338,7 @@ var ASClass = (function () {
   };
   asClass.prototype.construct = function construct(instance) {
     if (this !== ASObjectClass) {
-      new Closure(this.abc, this.classInfo.instance.init, this.classScope).apply(instance, arguments);
+      new Closure(this.abc, this.classInfo.instance.init, null, this.classScope).apply(instance, arguments);
     }
   };
   return asClass;
@@ -340,7 +351,7 @@ function createClass(abc, scope, classInfo, baseClass) {
   baseClass = baseClass || ASObjectClass;
   var klass = new ASClass(abc, baseClass, classInfo, classScope);
   classScope.klass = klass;
-  new Closure(abc, classInfo.init, classScope).apply(klass);
+  new Closure(abc, classInfo.init, null, classScope).apply(klass);
   return klass;
 }
 
@@ -356,7 +367,7 @@ function createInstance(scope, constructor, args) {
   } else if (constructor instanceof MethodInfo) {
     // TODO: We gotta do something about prototypes here.
     var obj = new ASObject();
-    new Closure(abc, constructor, scope.clone()).apply(obj);
+    new Closure(abc, constructor, null, scope.clone()).apply(obj);
     return obj;
   } else if (constructor instanceof Closure) {
     // TODO: We gotta do something about prototypes here.
@@ -376,12 +387,24 @@ function createInstance(scope, constructor, args) {
 //  }
 }
 
+/*
 function createNewFunction(abc, methodInfo, obj, scope) {
   var closure = new Closure(abc, methodInfo, scope.clone());
   var needActivation = !!(methodInfo.flags & METHOD_Activation);
   return function () {
     return closure.apply(needActivation ? obj : this, arguments);
   };
+}
+*/
+
+function createFunctionClosure(abc, methodInfo, obj, scope) {
+  var closure = new Closure(abc, methodInfo, scope.clone(), null);
+  var functionClosure = function () {
+    var obj = this === null || this === undefined ? abc.global : this;
+    return closure.apply(obj, arguments);
+  };
+  functionClosure.toString = function () { return "[function closure " + methodInfo + "]"; };
+  return functionClosure;
 }
 
 function createNewClass2(abc, scope, classInfo, baseClass) {
@@ -392,13 +415,13 @@ function createNewClass2(abc, scope, classInfo, baseClass) {
 
   var cls = function() {
     ASObject.applyTraits(this, classInfo.traits);
-    new Closure(abc, classInfo.instance.init, classScope).apply(this, arguments);
+    new Closure(abc, classInfo.instance.init, null, classScope).apply(this, arguments);
   };
   cls.prototype = Object.create(baseClass.prototype);
   cls.toString = function () { return "[class " + classInfo.instance.name + "]"; }
 
   // call static initialization
-  new Closure(abc, classInfo.init, classScope.clone()).apply(cls);
+  new Closure(abc, classInfo.init, null, classScope.clone()).apply(cls);
 
   return cls;
 }
@@ -461,13 +484,14 @@ if (traceExecution) {
 }
 
 var Closure = (function () {
-  function closure (abc, methodInfo, scope) {
+  function closure (abc, methodInfo, scope, savedScope) {
     this.abc = abc;
     this.methodInfo = methodInfo;
     this.paramCount = methodInfo.params.length;
     this.needRest = !!(methodInfo.flags & METHOD_Needrest);
     this.needArguments = !!(methodInfo.flags & METHOD_Arguments);
-    this.scope = scope;
+    this.savedScope = savedScope;
+    this.scope = scope || new Scope();
   }
   
   closure.prototype = {
@@ -496,6 +520,7 @@ var Closure = (function () {
       }
       var stack = [];
       var scope = this.scope;
+      var savedScope = this.savedScope;
 
       var offset, value2, value1, value, index, multiname, args, obj, classInfo, baseClass;
       var methodInfo, debugFile = null, debugLine = null;
@@ -509,13 +534,23 @@ var Closure = (function () {
        * and then the saved scope stack. 
        */
       function findProperty(multiname, strict) {
+        // Search the scope stack ...
         var res = scope.findProperty(multiname);
-        if (res == null) {
-          assert(!strict, "Property " + multiname + " not found.");
-          return scope.global();
-        } else {
+        if (res !== null) {
           return res;
         }
+        // otherwise search the saved scope stack if there is one ...
+        if (savedScope !== null) {
+          res = savedScope.findProperty(multiname);
+        }
+        if (res !== null) {
+          return res;
+        }
+        // finally, try the global object.
+        if (strict) {
+          assert(abc.global.getProperty(multiname), "Property " + multiname + " not found.");
+        }
+        return abc.global;
       }
 
       function readMultiname() {
@@ -533,6 +568,9 @@ var Closure = (function () {
           } 
           if (multiname.isRuntimeNamespace()) {
             multiname.setNamespace(stack.pop());
+          }
+          if (traceExecution) {
+            traceExecution.writeLn("resolved multiname: " + multiname);
           }
         }
         assert(!multiname.isRuntime());
@@ -600,7 +638,7 @@ var Closure = (function () {
         case OP_ifgt:
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (isNaN(value1) || isNaN(value2)) {
-            if (bc === OP_ifnle) jump(offse);
+            if (bc === OP_ifnle) jump(offset);
           } else if (value2 < value1 === true) {
             jump(offset);
           }
@@ -609,7 +647,7 @@ var Closure = (function () {
         case OP_ifle:
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (isNaN(value1) || isNaN(value2)) {
-            if (bc === OP_ifngt) jump(offse);
+            if (bc === OP_ifngt) jump(offset);
           } else if (value2 < value1 === false) {
             jump(offset);
           }
@@ -618,7 +656,7 @@ var Closure = (function () {
         case OP_iflt: 
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (isNaN(value1) || isNaN(value2)) {
-            if (bc === OP_ifnge) jump(offse);
+            if (bc === OP_ifnge) jump(offset);
           } else if (value1 < value2 === true) {
             jump(offset);
           }
@@ -724,7 +762,7 @@ var Closure = (function () {
         case OP_newfunction:
           methodInfo = abc.methods[code.readU30()];
           obj = local[0]; // this
-          stack.push(createNewFunction(abc, methodInfo, obj, scope));
+          stack.push(createFunctionClosure(abc, methodInfo, obj, scope));
           break;
         case OP_call:
           args = stack.popMany(code.readU30());
@@ -746,7 +784,8 @@ var Closure = (function () {
           obj = stack.pop();
           value = getObjectProperty(obj, multiname);
           if (value instanceof MethodInfo) {
-            value = new Closure(abc, value, scope);
+            assert(false);
+            // value = new Closure(abc, value, null, scope.clone());
           }
           stack.push(value.apply(obj, args));
           break;
@@ -765,7 +804,7 @@ var Closure = (function () {
         case OP_constructsuper:
           obj = local[0]; // this
           args = stack.popMany(code.readU30());
-          stack.push(scope.klass.baseClass.construct(obj, args));
+          stack.push(savedScope.klass.baseClass.construct(obj, args));
           break;
         case OP_constructprop: 
           multiname = multinames[code.readU30()];
@@ -1046,14 +1085,19 @@ var Closure = (function () {
         }
         
         if (traceExecution) {
+          if (savedScope) {
+            traceExecution.enter("savedScope:");
+            traceExecution.writeArray(savedScope.stack);
+            traceExecution.outdent();
+          }
           traceExecution.enter("scope:");
           traceExecution.writeArray(scope.stack);
           traceExecution.outdent();
           traceExecution.enter("local:");
-          traceExecution.writeArray(local);
+          traceExecution.writeArray(local, true);
           traceExecution.outdent();
           traceExecution.enter("stack:");
-          traceExecution.writeArray(stack);
+          traceExecution.writeArray(stack, true);
           traceExecution.outdent();
           traceExecution.outdent();
         }

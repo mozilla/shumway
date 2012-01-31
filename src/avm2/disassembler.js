@@ -35,9 +35,21 @@ var IndentingWriter = (function () {
     }
   };
 
-  indentingWriter.prototype.writeArray = function writeArray(arr) {
+  indentingWriter.prototype.writeArray = function writeArray(arr, detailed) {
+    detailed = detailed || false;
     for (var i = 0, j = arr.length; i < j; i++) {
-      this.writeLn(("" + i).padRight(' ', 3) + arr[i]);
+      var prefix = "";
+      if (detailed) {
+        if (arr[i] === null) {
+          prefix = "null";
+        } else if (arr[i] === undefined) {
+          prefix = "undefined";
+        } else {
+          prefix = arr[i].constructor.name;
+        }
+        prefix += " ";
+      } 
+      this.writeLn(("" + i).padRight(' ', 3) + prefix + arr[i]);
     }
   };
 
