@@ -268,7 +268,7 @@ var EVENT = {
   }]]
 };
 var FILTER_GLOW = {
-  count: ['type===4||type===7', [UI8, '1']],
+  $$count: ['type===4||type===7', [UI8, '1']],
   colors: {
     $: RGBA,
     count: 'count'
