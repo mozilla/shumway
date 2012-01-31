@@ -12,7 +12,8 @@ function fail(msg, context) {
   throw new Error((context ? context + ': ' : '') + msg);
 }
 function assert(cond, msg, context) {
-  if (!cond) fail(msg, context);
+  if (!cond)
+    fail(msg, context);
 }
 
 function colorToString(color) {
