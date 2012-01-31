@@ -68,7 +68,7 @@ function readSb($bytes, $stream, size) {
 }
 var masks = new Uint32Array(33);
 for (var i = 1, mask = 0; i <= 32; ++i)
-  masks[i] = mask = ((mask << 1) | 1) >>> 0;
+  masks[i] = mask = (mask << 1) | 1;
 function readUb($bytes, $stream, size) {
   var buffer = $stream.bitBuffer;
   var bitlen = $stream.bitLength;
@@ -77,7 +77,7 @@ function readUb($bytes, $stream, size) {
     bitlen += 8;
   }
   bitlen -= size;
-  var val = (buffer >> bitlen) & masks[size];
+  var val = (buffer >>> bitlen) & masks[size];
   $stream.bitBuffer = buffer;
   $stream.bitLength = bitlen;
   return val;
