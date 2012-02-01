@@ -21,7 +21,7 @@ for (var i = 0, j = 0, code = 3; i < 29; ++i) {
   code += 1 << (lengthExtraBits[i] = ~~(((j += (i > 4 ? 1 : 0)) / 4) % 6));
 }
 
-for (var i = 0; i < 287; ++i)
+for (var i = 0; i < 288; ++i)
   bitLengths[i] = i < 144 || i > 279 ? 8 : (i < 256 ? 9 : 7);
 var fixedLiteralTable = buildHuffmanTable(bitLengths);
 
@@ -29,29 +29,29 @@ function buildHuffmanTable(bitLengths) {
   var maxBits = max.apply(null, bitLengths);
   var numLengths = bitLengths.length;
   var size = 1 << maxBits;
-  var table = new Uint32Array(size);
+  var codes = new Uint32Array(size);
   for (var code = 0, len = 1, skip = 2; len <= maxBits; code <<= 1, ++len, skip <<= 1) {
-    for (var i = 0; i < numLengths; ++i) {
-      if (bitLengths[i] === len) {
+    for (var val = 0; val < numLengths; ++val) {
+      if (bitLengths[val] === len) {
         var lsb = 0;
-        for (var j = 0; j < len; ++j)
-          lsb = (lsb * 2) + ((code >> j) & 1);
-        for (var k = lsb; k < size; k += skip)
-          table[k] = (len << 16) | i;
+        for (var i = 0; i < len; ++i)
+          lsb = (lsb * 2) + ((code >> i) & 1);
+        for (var i = lsb; i < size; i += skip)
+          codes[i] = (len << 16) | val;
         ++code;
       }
     }
   }
-  return { entries: table, maxBits: maxBits };
+  return { codes: codes, maxBits: maxBits };
 }
 function inflateBlock(bytes, stream, output) {
   var hdr = readBits(bytes, stream, 3);
   switch (hdr >> 1) {
   case 0:
-    stream.bitBuffer = stream.bitLength = 0;
+    stream.align();
     var pos = stream.pos;
-    var len = stream.getUint16(pos);
-    var nlen = stream.getUint16(pos + 2);
+    var len = stream.getUint16(pos, true);
+    var nlen = stream.getUint16(pos + 2, true);
     if ((~nlen & 0xffff) !== len)
       fail('bad uncompressed block length', 'inflate');
     var begin = pos + 4;
@@ -117,7 +117,7 @@ function readBits(bytes, stream, size) {
 function inflate(bytes, stream, output, literalTable, distanceTable) {
   var pos = output.length;
   var sym;
-  while ((sym = decode(bytes, stream, literalTable)) !== 256) {
+  while ((sym = decode(bytes, stream, literalTable, output)) !== 256) {
     if (sym < 256) {
       output[pos++] = sym;
     } else {
@@ -131,7 +131,7 @@ function inflate(bytes, stream, output, literalTable, distanceTable) {
     }
   }
 }
-function decode(bytes, stream, codeTable) {
+function decode(bytes, stream, codeTable, output) {
   var buffer = stream.bitBuffer;
   var bitlen = stream.bitLength;
   var maxBits = codeTable.maxBits;
@@ -139,7 +139,7 @@ function decode(bytes, stream, codeTable) {
     buffer |= bytes[stream.pos++] << bitlen;
     bitlen += 8;
   }
-  var code = codeTable.entries[buffer & ((1 << maxBits) - 1)];
+  var code = codeTable.codes[buffer & ((1 << maxBits) - 1)];
   var len = code >> 16;
   if (!len)
     fail('bad encoding', 'inflate');
