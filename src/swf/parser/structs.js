@@ -408,6 +408,7 @@ var LINE_STYLE = {
   widthMorph: ['isMorph', [UI16]],
   $0: ['hasStrokes', [
     {
+      $$: ALIGN,
       startCapStyle: UB(2),
       $joinStyle: UB(2),
       $hasFill: UB(1),
