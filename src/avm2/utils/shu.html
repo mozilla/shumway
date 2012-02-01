@@ -1,0 +1,53 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Shumway Web Shell</title>
+</head>
+<body>
+    <script type="text/javascript">
+        print = function (message) {
+            console.log(message);
+        };
+        
+        var webShell = true;
+    </script>
+    
+    <script type="text/javascript" src="../util.js"></script>
+    <script type="text/javascript" src="../../tests/file-reader.js"></script>
+    <script type="text/javascript" src="../avm2-runtime.js"></script>
+    <script type="text/javascript" src="../DataView.js"></script>
+    <script type="text/javascript" src="../constants.js"></script>
+    <script type="text/javascript" src="../opcodes.js"></script>
+    <script type="text/javascript" src="../parser.js"></script>
+    <script type="text/javascript" src="../analyze.js"></script>
+    <script type="text/javascript" src="../viz.js"></script>
+    <script type="text/javascript" src="../compiler.js"></script>
+    <script type="text/javascript" src="../disassembler.js"></script>
+    <script type="text/javascript" src="../interpreter.js"></script>
+    
+    <script type="text/javascript">
+        var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
+        if (!skipQuickTest) {
+            new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {
+                var abc = new AbcFile(new Uint8Array(buffer));
+                var writer = new IndentingWriter(false);
+                abc.trace(writer);
+                
+                // interpretAbc(abc);
+                
+                if (true) {
+                  print(compileAbc(abc));
+                  /* Spew analysis information if not quiet. */
+                  var writer = new IndentingWriter(false);
+                  abc.methods.forEach(function (method) {
+                    if (method.codeAnalysis) {
+                      method.codeAnalysis.traceGraphViz(writer);
+                    }
+                  });
+                }
+            });
+        }
+    </script>   
+</body>
+</html>

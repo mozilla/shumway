@@ -1,19 +1,62 @@
 package {
-    /*
-    public class Object {}
-    public class int {}
-    public final class String extends Object {}
-    
-    */
-    
-    function foo() {
-        var x = 42, y = 16, z = 0;
-        function baz() { x++; }
-        baz();
-        function bin() { y++; }
-        bin();
-        trace(x + " " + y);
+    while(c) {
+        if (a) {
+            break;
+        }
+        if (a) {
+            break;
+        }
+        if (a) {
+            break;
+        }
+        if (a) {
+            break;
+        }
+        if (a) {
+            break;
+        }
     }
-    
-    foo();
+
+
+    /*
+    for (i = 0; i < 10; i++) {
+        for (j = 0; j < 10; j++) {
+            if (j == 2) {
+                j -= 2;
+            }
+        }
+        
+        for (k = 0; k < 10; k++) {
+            if (k == 2) {
+                
+            }
+	    }	
+    }
+    for (i = 0; i < 10; i++) {
+        for (j = 0; j < 10; j++) {
+            if (j == 2) {
+                j -= 2;
+                for (i = 0; i < 10; i++) {
+			        for (j = 0; j < 10; j++) {
+			            if (j == 2) {
+			                j -= 2;
+			            }
+			        }
+			        
+			        for (k = 0; k < 10; k++) {
+			            if (k == 2) {
+			                
+			            }
+				    }	
+			    }
+            }
+        }
+        
+        for (k = 0; k < 10; k++) {
+            if (k == 2) {
+                
+            }
+	    }	
+    }
+    */
 }

@@ -177,7 +177,7 @@ var Analysis = (function () {
     visit(root);
   }
 
-  function analyzeBasicBlocks(bytecodes) {
+  function detectBasicBlocks(bytecodes) {
     var code;
     var pc, end;
 
@@ -271,7 +271,7 @@ var Analysis = (function () {
    *
    * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
    */
-  function analyzeDominance(root) {
+  function computeDominance(root) {
     /*
      * For this algorithm we id blocks by their index in postorder. We will
      * change the id to the more familiar reverse postorder after we run the
@@ -398,12 +398,12 @@ var Analysis = (function () {
      * Normalize the code stream. The other analyses are run by the user
      * on demand.
      */
-    this.analyzeBytecode(new AbcStream(codeStream));
+    this.normalizeBytecode(new AbcStream(codeStream));
   }
 
   var Ap = Analysis.prototype;
 
-  Ap.analyzeBytecode = function analyzeBytecode(codeStream) {
+  Ap.normalizeBytecode = function normalizeBytecode(codeStream) {
     /* This array is sparse, indexed by offset. */
     var bytecodesOffset = [];
     /* This array is dense. */
@@ -497,10 +497,10 @@ var Analysis = (function () {
     assert(this.bytecodes);
 
     var bytecodes = this.bytecodes;
-    analyzeBasicBlocks(bytecodes);
-    analyzeDominance(bytecodes[0]);
+    detectBasicBlocks(bytecodes);
+    computeDominance(bytecodes[0]);
     findLoops(bytecodes[0]);
-  }
+  };
 
   /*
    * Prints a normalized bytecode along with metainfo.
@@ -552,6 +552,24 @@ var Analysis = (function () {
     }
 
     writer.leave("}");
+  };
+  
+  Ap.traceGraphViz = function traceGraphViz(writer) {
+    if (!this.bytecodes) {
+      return;
+    }
+    writeGraphViz(writer, this.bytecodes[0],
+      function (n) {
+        return n.blockId;
+      },
+      function (n) {
+        return n.succs ? n.succs : [];
+      }, function (n) {
+        return n.preds ? n.preds : [];
+      }, function (n) {
+        return "Block: " + n.blockId;
+      }
+    );
   };
 
   return Analysis;

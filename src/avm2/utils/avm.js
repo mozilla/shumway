@@ -6,6 +6,7 @@ load("../opcodes.js");
 load("../parser.js");
 load("../analyze.js");
 load("../compiler.js");
+load("../viz.js");
 load("../disassembler.js");
 load("../interpreter.js");
 
@@ -15,10 +16,11 @@ if (arguments.length == 0) {
 }
 
 function printUsage() {
-  print("avm: [-d | -c | -x] file");
+  print("avm: [-d | -c | -x | -v] file");
   print("    -d = Disassemble .abc file.");
   print("    -c = Compile .abc file to .js.");
   print("    -x = Execute .abc file.");
+  print("    -v = Generate GraphViz output.");
   print("    -q = Quiet.");
 }
 
@@ -29,6 +31,7 @@ var disassemble = options.indexOf("-d") >= 0;
 var compile = options.indexOf("-c") >= 0;
 var execute = options.indexOf("-x") >= 0;
 var quiet = options.indexOf("-q") >= 0;
+var viz = options.indexOf("-v") >= 0;
 
 if (quiet) {
   traceExecution = null;
@@ -41,9 +44,18 @@ if (disassemble) {
   abc.trace(new IndentingWriter(false));
 }
 
+if (viz) {
+  compileAbc(abc);
+  var writer = new IndentingWriter(false);
+  abc.methods.forEach(function (method) {
+    if (method.codeAnalysis) {
+      method.codeAnalysis.traceGraphViz(writer);
+    }
+  });
+}
+
 if (compile) {
   print(compileAbc(abc));
-
   if (!quiet) {
     /* Spew analysis information if not quiet. */
     var writer = new IndentingWriter(false);
