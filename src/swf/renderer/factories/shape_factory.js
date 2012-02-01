@@ -185,7 +185,7 @@ function ShapeFactory(graph) {
       }
       switch (fillStyle.type) {
       case 0:
-        cmds.push('fillStyle=' + colorToString(fillStyle.color));
+        cmds.push('fillStyle="' + colorToString(fillStyle.color) + '"');
         cmds.push('fill()');
         break;
       case 16:
@@ -198,8 +198,8 @@ function ShapeFactory(graph) {
         var j = 0;
         var record;
         while (record = fillStyle.records[j++]) {
-          cmds.push('g.addColorStop(' + (record.ratio / 255) + ',' +
-                    colorToString(record.color) + ')');
+          cmds.push('g.addColorStop(' + (record.ratio / 255) + ',"' +
+                    colorToString(record.color) + '")');
         }
         cmds.push('save()');
         var matrix = fillStyle.matrix;
@@ -242,7 +242,7 @@ function ShapeFactory(graph) {
           cmds.push('lineTo(' + edge.dpt + ')');
         prev = edge;
       }
-      cmds.push('strokeStyle=' + colorToString(lineStyle.color));
+      cmds.push('strokeStyle="' + colorToString(lineStyle.color) + '"');
       cmds.push('lineWidth=' + lineStyle.width);
       cmds.push('lineCap="round"');
       cmds.push('lineJoin="round"');

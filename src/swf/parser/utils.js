@@ -17,10 +17,10 @@ function assert(cond, msg, context) {
 }
 
 function colorToString(color) {
-  return '"rgba(' + [
+  return 'rgba(' + [
     color.red,
     color.green,
     color.blue,
-    color.alpha
-  ].join(',') + ')"';
+    color.alpha / 255
+  ].join(',') + ')';
 }
