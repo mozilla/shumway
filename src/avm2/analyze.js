@@ -56,14 +56,14 @@ var Bytecode = (function () {
     this.preds = [];
   };
 
-  Bp.makeLoopHead = function makeLoopHead(succ) {
-    if (this.loopSucc) {
+  Bp.makeLoopHead = function makeLoopHead(loop) {
+    if (this.loop) {
       return;
     }
 
     assert(this.succs);
 
-    this.loopSucc = succ;
+    this.loop = loop;
   };
 
   Bp.addSucc = function addSucc(succ) {
@@ -128,20 +128,13 @@ var Analysis = (function () {
     return finger1;
   }
 
-  function dfs(bytecodes, pre, post) {
-    /* Block 0 is always the root block. */
-    var dfs = [0];
+  function dfs(bytecodes, pre, post, succ) {
     var visited = {};
-    var node;
 
-    while (dfs.length) {
-      node = dfs.peek();
-      if (visited[node]) {
-        dfs.pop();
-        if (post) {
-          post(node);
-        }
-      } else if (pre) {
+    function visit(node) {
+      visited[node] = true;
+
+      if (pre) {
         pre(node);
       }
 
@@ -149,12 +142,18 @@ var Analysis = (function () {
       for (var i = 0, j = succs.length; i < j; i++) {
         var s = succs[i];
         if (!visited[s]) {
-          dfs.push(s);
+          visit(s);
+        } else if (succ) {
+          succ(s);
         }
       }
 
-      visited[node] = true;
+      if (post) {
+        post(node);
+      }
     }
+
+    visit(0);
   }
 
   function analyzeBasicBlocks(bytecodes) {
@@ -179,9 +178,6 @@ var Analysis = (function () {
         break;
 
       case OP_jump:
-        bytecodes[pc + code.offset].makeBlockHead();
-        break;
-
       case OP_iflt:
       case OP_ifnlt:
       case OP_ifle:
@@ -197,7 +193,7 @@ var Analysis = (function () {
       case OP_iftrue:
       case OP_iffalse:
         bytecodes[pc + code.offset].makeBlockHead();
-        bytecodes[++pc].makeBlockHead();
+        bytecodes[pc + 1].makeBlockHead();
         break;
 
       default:;
@@ -264,7 +260,7 @@ var Analysis = (function () {
   function analyzeDominance(bytecodes) {
     /* For this algorithm we id blocks by their index in postorder. */
     var blocks = [];
-    dfs(bytecodes, null, blocks.push.bind(blocks));
+    dfs(bytecodes, null, blocks.push.bind(blocks), null);
     var n = blocks.length;
     var sortedIndices = {};
     for (var i = 0; i < n; i++) {
@@ -273,7 +269,7 @@ var Analysis = (function () {
 
     /* The indices in doms is the block's index in sortedIndices, not blocks! */
     var doms = new Array(n);
-    doms[n-1] = n-1;
+    doms[n - 1] =  n - 1;
     var changed = true;
 
     while (changed) {
@@ -324,33 +320,81 @@ var Analysis = (function () {
   }
 
   /*
-   * Find loops.
-   *
-   * Adobe's asc, like SpiderMonkey, emit loops where the loop header is at
-   * the "bottom", i.e. higher pc:
-   *
-   * i        jump to i+off
-   * i+1      label
-   * i+2      ...
-   * i+3      ...
-   * .        ...
-   * .        ...
-   * i+off    <test condition>
-   * i+off+1  branch to i+1
-   *
-   * The only exception is a do..while, which has a jump to i+2.
-   *
-   * So we don't really need to find SCCs in general, just nodes who branch
-   * back to their immediate dominators. Those nodes' immediate dominators are
-   * loop headers.
+   * Find the node that dominates all other nodes in the loop.
+   */
+  function findLoopHead(loop, doms) {
+    var loopHead;
+
+    for (var i = 0, j = loop.length; i < j; i++) {
+      /* Candidate loop head. */
+      loopHead = loop[i];
+
+      for (var k = 0; k < j; k++) {
+        if (doms[k].indexOf(loopHead) < 0) {
+          break;
+        }
+      }
+
+      if (k === j && loop.indexOf(loopHead) >= 0) {
+        return loopHead;
+      }
+    }
+
+    unexpected();
+  }
+
+  /*
+   * Find strongly connected components and mark them as loops.
    */
   function findLoops(bytecodes) {
-    dfs(bytecodes, null,
-        function (b) {
-          var node = bytecodes[b];
+    var preorderId = 0;
+    var loopId = 0;
 
-          if (node.succs.indexOf(node.dominator) >= 0) {
-            bytecodes[node.dominator].makeLoopHead(b);
+    var preorder = {};
+    var loop = {};
+    var unconnectedNodes = [];
+    var pendingNodes = [];
+
+    /* Find SCCs by Gabow's algorithm in linear time. */
+    dfs(bytecodes,
+
+        function pre(v) {
+          preorder[v] = preorderId++;
+          unconnectedNodes.push(v);
+          pendingNodes.push(v);
+        },
+
+        function post(v) {
+          if (pendingNodes.peek() !== v) {
+            return;
+          }
+
+          pendingNodes.pop();
+
+          var l = [];
+          var doms = [];
+          do {
+            var w = unconnectedNodes.pop();
+            loop[w] = loopId;
+            l.push(w);
+            doms.push(dom(bytecodes, w));
+          } while (w !== v);
+
+          if (l.length > 1) {
+            var header = findLoopHead(l, doms);
+            bytecodes[header].makeLoopHead(l);
+          }
+
+          loopId++;
+        },
+
+        function succ(w) {
+          if (!preorder[w] || loop[w]) {
+            return;
+          }
+
+          while (preorder[pendingNodes.peek()] > preorder[w]) {
+            pendingNodes.pop();
           }
         });
   }
@@ -379,6 +423,11 @@ var Analysis = (function () {
 
       /* Get absolute offsets for normalization to new indices below. */
       switch (code.op) {
+      case OP_nop:
+      case OP_label:
+        bytecodesOffset[pos] = normalizedOffset;
+        continue;
+
       case OP_lookupswitch:
         code.offsets.map(function (offset) {
           return codeStream.position + offset;
@@ -477,11 +526,15 @@ var Analysis = (function () {
           writer.leave("}");
         }
 
-        writer.enter("block " + code.dominator + " >> " + pc +
-               (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
+        if (code.dominator === undefined) {
+          writer.enter("block unreachable {");
+        } else {
+          writer.enter("block " + code.dominator + " >> " + pc +
+                       (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
+        }
 
-        if (code.loopSucc) {
-          writer.writeLn("loop successor " + code.loopSucc);
+        if (code.loop) {
+          writer.writeLn("loop [" + code.loop.join(",") + "]");
           writer.writeLn("");
         }
       }
