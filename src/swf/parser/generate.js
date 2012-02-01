@@ -185,8 +185,8 @@ function generate(struct) {
   if (arguments.length > 1)
     args.splice(2, 0, slice.call(arguments, 1));
   return eval(
-    '(function(' + args.join(',') + '){\nvar $={}\ntry{' +
+    '(function(' + args.join(',') + '){\nvar $={}\n' +
       productions.join('\n') +
-    '\nreturn $}catch(e){debugger}\n})'
+    '\nreturn $\n})'
   );
 }
