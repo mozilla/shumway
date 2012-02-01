@@ -19,5 +19,8 @@ proto.align = function() {
   this.bitBuffer = this.bitLength = 0;
 }
 proto.substream = function(begin, end) {
-  return new Stream(this.buffer, this.byteOffset + begin, end - begin);
+  var stream = Object.create(this);
+  stream.pos = begin;
+  stream.align();
+  return stream;
 }
