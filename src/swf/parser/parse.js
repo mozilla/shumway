@@ -113,8 +113,8 @@ SWF.parse = function(buffer) {
   var fileLength = readUi32(bytes, stream);
 
   // TODO: make decompression progressively
-    if (compressed) {
-      var hdr = stream.getUint16(stream.pos);
+  if (compressed) {
+    var hdr = stream.getUint16(stream.pos);
     stream.pos += 2;
     if ((hdr & 0x0f00) !== 0x0800)
       fail('unknown compression method', 'inflate');
