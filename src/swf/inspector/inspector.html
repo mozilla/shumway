@@ -3,36 +3,34 @@
   <head>
     <meta charset="utf-8">
     <title>SWF Inspector</title>
+    <link type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/themes/base/jquery-ui.css" rel="Stylesheet"/>
     <style>
-      html, body {
-        width: 100%;
-        height: 100%;
-      }
       body {
         margin: 0;
         font-family: helvetica;
         font-size: 13px;
-        color: #444;
+        color: #454545;
       }
       h3 {
         margin: 0;
       }
       .error {
-        color: #cc0000;
+        color: #cd0a0a;
+      }
       }
       #menu {
         height: 15px;
         padding: 15px 10px;
         text-align: right;
-        border-bottom: 1px solid #b3b3b3;
+        border-bottom: 1px solid #aaa;
       }
       #info {
         height: 15px;
         padding: 5px 10px;
         text-align: right;
-        background: #dcdcdc;
-        border: 1px #ccc;
-        border-style: solid none;
+        background: #ccc;
+        border-top: 1px solid #d3d3d3;
+        border-bottom: 1px solid #aaa;
       }
       #taglist {
         position: absolute;
@@ -43,25 +41,25 @@
         width: 280px;
         padding: 0;
         overflow: auto;
-        background: #ececec;
-        border-right: 1px solid #b3b3b3;
+        background: #e6e6e6;
+        border-right: 1px solid #d3d3d3;
       }
       #taglist li {
         padding: 10px;
-        border-bottom: 1px solid #ccc;
+        border-bottom: 1px solid #d3d3d3;
         list-style-type: none;
         cursor: pointer;
       }
       #taglist li:hover {
-        background: #e1e4fd;
+        background: #fbf9ee;
       }
       #taglist li.active {
-        background: #cdd2fd;
+        background: #fcefa1;
       }
       #taglist li > span {
         display: inline-block;
         width: 30px;
-        color: #999;
+        color: #888;
       }
       #graph {
         position: absolute;
@@ -82,7 +80,7 @@
         padding: 10px;
         text-align: center;
         background: url(preview_bg.png);
-        border-left: 1px solid #ccc;
+        border-left: 1px solid #d3d3d3;
       }
     </style>
   </head>
@@ -94,6 +92,9 @@
     <ul id="taglist"></ul>
     <pre id="graph"></pre>
     <div id="preview"></div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
 
     <script src="beautify.js"></script>
     <script src="DataView.js"></script>
@@ -186,76 +187,81 @@
         return map;
       })();
 
-      var info = document.getElementById('info');
-      var taglist = document.getElementById('taglist');
-      var graph = document.getElementById('graph');
-      var preview = document.getElementById('preview');
+      var info = $('#info');
+      var taglist = $('#taglist');
+      var graph = $('#graph');
+      var preview = $('#preview');
 
-      document.body.addEventListener('dragenter', dragenter, false);
-      document.body.addEventListener('dragover', dragover, false);
-      document.body.addEventListener('drop', drop, false);
+      $('body').on('dragenter', dragenter);
+      $('body').on('dragover', dragover);
+      $('body').on('drop', drop);
 
-      function dragenter(e) {
-        e.stopPropagation();
-        e.preventDefault();
+      function dragenter(event) {
+        event.stopPropagation();
+        event.preventDefault();
       }
-      function dragover(e) {
-        e.stopPropagation();
-        e.preventDefault();
+      function dragover(event) {
+        event.stopPropagation();
+        event.preventDefault();
       }
-      function drop(e) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        var file = e.dataTransfer.files[0];
+      function drop(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        var file = event.originalEvent.dataTransfer.files[0];
         var reader = new FileReader();
 
-        reader.onload = (function(e) {
-          taglist.innerHTML = '';
-          graph.innerHTML = '';
-          preview.innerHTML = '';
+        reader.onload = (function(event) {
+          taglist.html('');
+          graph.html('');
+          preview.html('');
 
           console.time('parse');
           try {
             var result = SWF.parse(this.result);
           } catch (e) {
-            info.innerHTML = '<span class="error">' + e.message + '</span>';
+            info.html('<span class="error">' + e.message + '</span>');
             throw e;
           }
           console.timeEnd('parse');
 
           var header = result.header;
           var bounds = header.bounds;
-          info.innerHTML = '<b>' + file.name + '</b>, SWF' + result.version + ', ' +
+          info.html(
+            '<b>' + file.name + '</b>, SWF' + result.version + ', ' +
             ~~header.frameRate + 'fps, ' +
-            ((bounds.xMax - bounds.xMin) / 20) + 'x' + ((bounds.yMax - bounds.yMin) / 20) + 'px';
+            ((bounds.xMax - bounds.xMin) / 20) + 'x' + ((bounds.yMax - bounds.yMin) / 20) + 'px'
+          );
 
           var tags = result.tags;
           var list = '';
           for (var i = 0, tag; tag = tags[i]; ++i) {
-            list += '<li data-num="' + i + '">' +
+            list += '<li data-index="' + i + '">' +
               '<span>' + i + '</span> ' + tagNames[tag.tag] + '</li>';
           }
-          taglist.innerHTML = list;
+          taglist.html(list);
 
           var activeNode;
           function activate(node) {
             if (activeNode)
-              activeNode.classList.remove('active');
-            var tag = tags[node.dataset.num];
-            graph.innerHTML = js_beautify(JSON.stringify(tag));
-            node.classList.add('active');
+              activeNode.removeClass('active');
+            var tag = tags[node.data('index')];
+            graph.html(js_beautify(JSON.stringify(tag)));
+            node.addClass('active');
             activeNode = node;
 
             switch (tag.type) {
             case 'shape':
-              preview.innerHTML = '';
+              preview.html('');
 
-              var canvas = document.createElement('canvas');
+              var canvas = $('<canvas>');
               var bounds = tag.bounds;
-              canvas.width = (bounds.xMax - bounds.xMin) / 20;
-              canvas.height = (bounds.yMax - bounds.yMin) / 20;
-              var ctx = canvas.getContext('2d');
+              var width = (bounds.xMax - bounds.xMin) / 20;
+              var height = (bounds.yMax - bounds.yMin) / 20;
+              canvas.attr('width', width);
+              canvas.attr('height', height);
+              if (width > 280)
+                canvas.css('width', '280px');
+              var ctx = canvas[0].getContext('2d');
 
               console.time('prepare');
               var factory = new ShapeFactory(tag);
@@ -272,17 +278,17 @@
               });
               console.timeEnd('render');
 
-              preview.appendChild(canvas);
+              preview.append(canvas);
               break;
             }
           }
 
-          taglist.onclick = function(e) {
-            activate(e.target);
-          };
+          taglist.on('click', function(event) {
+            activate($(event.target));
+          });
         });
 
-        info.innerHTML = 'Loading ' + file.name + '...';
+        info.html('Loading ' + file.name + '...');
 
         reader.readAsArrayBuffer(file);
       }
