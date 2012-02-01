@@ -554,13 +554,14 @@ var Analysis = (function () {
     writer.leave("}");
   };
   
-  Ap.traceGraphViz = function traceGraphViz(writer) {
+  Ap.traceGraphViz = function traceGraphViz(writer, name, prefix) {
+    prefix = prefix || "";
     if (!this.bytecodes) {
       return;
     }
-    writeGraphViz(writer, this.bytecodes[0],
+    writeGraphViz(writer, name.toString(), this.bytecodes[0],
       function (n) {
-        return n.blockId;
+        return prefix + n.blockId;
       },
       function (n) {
         return n.succs ? n.succs : [];

@@ -47,11 +47,15 @@ if (disassemble) {
 if (viz) {
   compileAbc(abc);
   var writer = new IndentingWriter(false);
+  writer.enter("digraph {");
+  var graph = 0;
   abc.methods.forEach(function (method) {
     if (method.codeAnalysis) {
-      method.codeAnalysis.traceGraphViz(writer);
+      method.codeAnalysis.traceGraphViz(writer, method, "G" + graph + "_");
+      graph += 1;
     }
   });
+  writer.leave("}");
 }
 
 if (compile) {

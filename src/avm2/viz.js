@@ -1,7 +1,13 @@
-function writeGraphViz(writer, root, idFn, succFn, predFn, nameFn) {
+function writeGraphViz(writer, name, root, idFn, succFn, predFn, nameFn) {
   var active = {};
   var visited = {};
   var order = [];
+  
+  function escape(v) {
+    return v;
+  }
+  
+  name = "\"" + escape(name) + "\" ";
   
   function next(node) {
     if (visited[idFn(node)]) {
@@ -16,7 +22,7 @@ function writeGraphViz(writer, root, idFn, succFn, predFn, nameFn) {
   }
   
   next(root);
-  writer.enter("digraph G {");
+  writer.enter("digraph " + name + "{");
   writer.writeLn("node [shape=box, fontname=Consolas, fontsize=11];");
   
   order.forEach(function (node) {
