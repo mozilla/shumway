@@ -56,7 +56,7 @@ function inflateBlock(bytes, stream, output) {
       fail('bad uncompressed block length', 'inflate');
     var begin = pos + 4;
     var end = stream.pos = begin + len;
-    push.apply(output, bytes.subarray(begin, end));
+    push.apply(output, slice.call(bytes, begin, end));
     break;
   case 1:
     inflate(bytes, stream, output, fixedLiteralTable, fixedDistanceTable);
