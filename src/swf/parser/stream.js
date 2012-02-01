@@ -17,10 +17,10 @@ var proto = Stream.prototype = Object.create(DataView.prototype);
 
 proto.align = function() {
   this.bitBuffer = this.bitLength = 0;
-}
+};
 proto.substream = function(begin, end) {
   var stream = Object.create(this);
   stream.pos = begin;
   stream.align();
   return stream;
-}
+};
