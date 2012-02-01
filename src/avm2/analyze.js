@@ -2,6 +2,7 @@ var Bytecode = (function () {
   function Bytecode(code) {
     var op = code.readU8();
     this.op = op;
+
     var i, n;
 
     switch (op) {
@@ -64,27 +65,41 @@ var Bytecode = (function () {
     assert(this.succs);
 
     this.loop = loop;
+    for (var i = 0, j = loop.length; i < j; i++) {
+      loop[i].inLoop = this;
+    }
   };
 
-  Bp.addSucc = function addSucc(succ) {
+  Bp.doubleLink = function doubleLink(target) {
     assert(this.succs);
-    this.succs.push(succ);
+    this.succs.push(target);
+    target.preds.push(this);
   };
 
-  Bp.addPred = function addPred(pred) {
-    assert(this.succs);
-    this.preds.push(pred);
-  };
-
-  Bp.blockType = function blockType() {
-    assert(!!this.succs, "blockType only valid on block headers");
-
-    if (this.loopSucc) {
-      return BLOCK_LOOP;
+  /*
+   * Find the dominator set from immediate dominators.
+   */
+  function dom() {
+    if (this.hasOwnProperty("dom")) {
+      return this.dom;
     }
 
-    return BLOCK_SIMPLE;
-  };
+    assert(this.succs);
+    assert(this.dominator);
+
+    var b = this;
+    var d = [b];
+    do {
+      d.push(b.dominator);
+      b = b.dominator;
+    } while (b !== b.dominator);
+
+    this.dom = d;
+    return d;
+  }
+  Object.defineProperty(Bp, "dom", { get: dom,
+                                     configurable: true,
+                                     enumerable: true });
 
   Bp.toString = function toString() {
     var opdesc = opcodeTable[this.op];
@@ -92,14 +107,20 @@ var Bytecode = (function () {
     var i, j;
 
     if (this.op === OP_lookupswitch) {
-      str += "defaultOffset:" + this.offsets[0];
+      str += "defaultTarget:" + this.targets[0].position;
       for (i = 1, j = this.offsets.length; i < j; i++) {
-        str += ", offset:" + this.offsets[i];
+        str += ", target:" + this.targets[i].position;
       }
     } else {
       for (i = 0, j = opdesc.operands.length; i < j; i++) {
         var operand = opdesc.operands[i];
-        str += operand.name + ":" + this[operand.name];
+
+        if (operand.name === "offset") {
+          str += "target:" + this.target.position;
+        } else {
+          str += operand.name + ":" + this[operand.name];
+        }
+
         if (i < j - 1) {
           str += ", ";
         }
@@ -128,20 +149,20 @@ var Analysis = (function () {
     return finger1;
   }
 
-  function dfs(bytecodes, pre, post, succ) {
+  function dfs(root, pre, post, succ) {
     var visited = {};
 
     function visit(node) {
-      visited[node] = true;
+      visited[node.position] = true;
 
       if (pre) {
         pre(node);
       }
 
-      var succs = bytecodes[node].succs;
+      var succs = node.succs;
       for (var i = 0, j = succs.length; i < j; i++) {
         var s = succs[i];
-        if (!visited[s]) {
+        if (!visited[s.position]) {
           visit(s);
         } else if (succ) {
           succ(s);
@@ -153,17 +174,12 @@ var Analysis = (function () {
       }
     }
 
-    visit(0);
+    visit(root);
   }
 
   function analyzeBasicBlocks(bytecodes) {
     var code;
     var pc, end;
-
-    function doubleLink(pred, succ) {
-      bytecodes[pred].addSucc(succ);
-      bytecodes[succ].addPred(pred);
-    }
 
     assert(bytecodes);
 
@@ -172,8 +188,8 @@ var Analysis = (function () {
       code = bytecodes[pc];
       switch (code.op) {
       case OP_lookupswitch:
-        code.offsets.forEach(function (offset) {
-          bytecodes[pc + offset].makeBlockHead();
+        code.targets.forEach(function (target) {
+          target.makeBlockHead();
         });
         break;
 
@@ -192,7 +208,7 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        bytecodes[pc + code.offset].makeBlockHead();
+        code.target.makeBlockHead();
         bytecodes[pc + 1].makeBlockHead();
         break;
 
@@ -200,28 +216,26 @@ var Analysis = (function () {
       }
     }
 
-    var start = 0;
+    var currentBlock = bytecodes[0];
     for (pc = 1, end = bytecodes.length; pc < end; pc++) {
       if (!bytecodes[pc].succs) {
         continue;
       }
 
-      assert(bytecodes[start].succs);
-      /* Cache how long the basic block is to help iteration. */
-      bytecodes[start].blockLength = pc - start;
-
-      var nextBlockCode = bytecodes[pc];
+      assert(currentBlock.succs);
 
       code = bytecodes[pc - 1];
+      currentBlock.end = code;
+
+      var nextBlock = bytecodes[pc];
+
       switch (code.op) {
       case OP_lookupswitch:
-        code.offsets.forEach(function (offset) {
-          doubleLink(start, pc - 1 + offset);
-        });
+        code.targets.forEach(currentBlock.doubleLink.bind(currentBlock));
         break;
 
       case OP_jump:
-        doubleLink(start, pc - 1 + code.offset);
+        currentBlock.doubleLink(code.target);
         break;
 
       case OP_iflt:
@@ -238,15 +252,15 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        doubleLink(start, pc - 1 + code.offset);
-        doubleLink(start, pc);
+        currentBlock.doubleLink(code.target);
+        currentBlock.doubleLink(nextBlock);
         break;
 
       default:
-        doubleLink(start, pc);
+        currentBlock.doubleLink(nextBlock);
       }
 
-      start = pc;
+      currentBlock = nextBlock;
     }
   }
 
@@ -257,17 +271,19 @@ var Analysis = (function () {
    *
    * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
    */
-  function analyzeDominance(bytecodes) {
-    /* For this algorithm we id blocks by their index in postorder. */
+  function analyzeDominance(root) {
+    /*
+     * For this algorithm we id blocks by their index in postorder. We will
+     * change the id to the more familiar reverse postorder after we run the
+     * algorithm.
+     */
     var blocks = [];
-    dfs(bytecodes, null, blocks.push.bind(blocks), null);
+    dfs(root, null, blocks.push.bind(blocks), null);
     var n = blocks.length;
-    var sortedIndices = {};
     for (var i = 0; i < n; i++) {
-      sortedIndices[blocks[i]] = i;
+      blocks[i].blockId = i;
     }
 
-    /* The indices in doms is the block's index in sortedIndices, not blocks! */
     var doms = new Array(n);
     doms[n - 1] =  n - 1;
     var changed = true;
@@ -277,11 +293,11 @@ var Analysis = (function () {
 
       /* Iterate all blocks but the starting block in reverse postorder. */
       for (var b = n - 2; b >= 0; b--) {
-        var preds = bytecodes[blocks[b]].preds;
-        var newIdom = sortedIndices[preds[0]];
+        var preds = blocks[b].preds;
+        var newIdom = preds[0].blockId;
 
         for (var i = 1, j = preds.length; i < j; i++) {
-          var p = sortedIndices[preds[i]];
+          var p = preds[i].blockId;
 
           if (doms[p]) {
             newIdom = intersect(doms, p, newIdom);
@@ -296,33 +312,16 @@ var Analysis = (function () {
     }
 
     for (var i = 0; i < n; i++) {
-      bytecodes[blocks[i]].dominator = blocks[doms[i]];
+      var block = blocks[i];
+      block.blockId = n - 1 - block.blockId;
+      block.dominator = blocks[doms[i]];
     }
-  }
-
-  /*
-   * Find the dominator set from immediate dominators.
-   */
-  function dom(bytecodes, offset) {
-    var code = bytecodes[offset];
-
-    assert(code.succs);
-    assert(code.dominator !== undefined);
-
-    var dom = [offset];
-    do {
-      var idom = code.dominator;
-      dom.push(idom);
-      code = bytecodes[idom];
-    } while (idom !== code.dominator);
-
-    return dom;
   }
 
   /*
    * Find the node that dominates all other nodes in the loop.
    */
-  function findLoopHead(loop, doms) {
+  function findLoopHead(loop) {
     var loopHead;
 
     for (var i = 0, j = loop.length; i < j; i++) {
@@ -330,7 +329,7 @@ var Analysis = (function () {
       loopHead = loop[i];
 
       for (var k = 0; k < j; k++) {
-        if (doms[k].indexOf(loopHead) < 0) {
+        if (loop[k].dom.indexOf(loopHead) < 0) {
           break;
         }
       }
@@ -346,24 +345,25 @@ var Analysis = (function () {
   /*
    * Find strongly connected components and mark them as loops.
    */
-  function findLoops(bytecodes) {
+  function findLoops(root) {
     var preorderId = 0;
-    var loopId = 0;
 
+    /*
+     * Don't fatten bytecodes with a preorder field, we don't need it outside
+     * of loop detection.
+     */
     var preorder = {};
-    var loop = {};
+    var done = [];
     var unconnectedNodes = [];
     var pendingNodes = [];
 
     /* Find SCCs by Gabow's algorithm in linear time. */
-    dfs(bytecodes,
-
+    dfs(root,
         function pre(v) {
-          preorder[v] = preorderId++;
+          preorder[v.blockId] = preorderId++;
           unconnectedNodes.push(v);
           pendingNodes.push(v);
         },
-
         function post(v) {
           if (pendingNodes.peek() !== v) {
             return;
@@ -372,28 +372,22 @@ var Analysis = (function () {
           pendingNodes.pop();
 
           var l = [];
-          var doms = [];
           do {
             var w = unconnectedNodes.pop();
-            loop[w] = loopId;
             l.push(w);
-            doms.push(dom(bytecodes, w));
+            done.push(w);
           } while (w !== v);
 
           if (l.length > 1) {
-            var header = findLoopHead(l, doms);
-            bytecodes[header].makeLoopHead(l);
+            findLoopHead(l).makeLoopHead(l);
           }
-
-          loopId++;
         },
-
         function succ(w) {
-          if (!preorder[w] || loop[w]) {
+          if (done.indexOf(w) >= 0) {
             return;
           }
 
-          while (preorder[pendingNodes.peek()] > preorder[w]) {
+          while (preorder[pendingNodes.peek().blockId] > preorder[w.blockId]) {
             pendingNodes.pop();
           }
         });
@@ -416,7 +410,6 @@ var Analysis = (function () {
     var bytecodes = [];
     var code;
 
-    var normalizedOffset = 0;
     while (codeStream.remaining() > 0) {
       var pos = codeStream.position;
       code = new Bytecode(codeStream);
@@ -425,13 +418,15 @@ var Analysis = (function () {
       switch (code.op) {
       case OP_nop:
       case OP_label:
-        bytecodesOffset[pos] = normalizedOffset;
+        bytecodesOffset[pos] = bytecodes.length;
         continue;
 
       case OP_lookupswitch:
-        code.offsets.map(function (offset) {
-          return codeStream.position + offset;
-        });
+        code.targets = [];
+        var offsets = code.offsets;
+        for (var i = 0, j = offsets.length; i < j; i++) {
+          offsets[i] += codeStream.position;
+        }
         break;
 
       case OP_jump:
@@ -449,13 +444,15 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.offset = codeStream.position + code.offset;
+        code.offset += codeStream.position;
         break;
 
       default:;
       }
 
-      bytecodesOffset[pos] = normalizedOffset++;
+      /* Cache the position in the bytecode array. */
+      code.position = bytecodes.length;
+      bytecodesOffset[pos] = bytecodes.length;
       bytecodes.push(code);
     }
 
@@ -463,9 +460,11 @@ var Analysis = (function () {
       code = bytecodes[pc];
       switch (code.op) {
       case OP_lookupswitch:
-        code.offsets.map(function (offset) {
-          return bytecodesOffset[offset] - pc;
-        });
+        var offsets = code.offsets;
+        for (var i = 0, j = offsets.length; i < j; i++) {
+          code.targets.push(bytecodes[bytecodesOffset[offsets[i]]]);
+        }
+        code.offsets = undefined;
         break;
 
       case OP_jump:
@@ -483,7 +482,8 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.offset = bytecodesOffset[code.offset] - pc;
+        code.target = bytecodes[bytecodesOffset[code.offset]];
+        code.offset = undefined;
         break;
 
       default:;
@@ -498,8 +498,8 @@ var Analysis = (function () {
 
     var bytecodes = this.bytecodes;
     analyzeBasicBlocks(bytecodes);
-    analyzeDominance(bytecodes);
-    findLoops(bytecodes);
+    analyzeDominance(bytecodes[0]);
+    findLoops(bytecodes[0]);
   }
 
   /*
@@ -514,6 +514,10 @@ var Analysis = (function () {
    */
 
   Ap.trace = function(writer) {
+    function blockId(node) {
+      return node.blockId;
+    }
+
     writer.enter("analysis {");
 
     var ranControlFlow = !!this.bytecodes[0].succs;
@@ -526,15 +530,16 @@ var Analysis = (function () {
           writer.leave("}");
         }
 
-        if (code.dominator === undefined) {
+        if (!code.dominator) {
           writer.enter("block unreachable {");
         } else {
-          writer.enter("block " + code.dominator + " >> " + pc +
-                       (code.succs.length > 0 ? " -> " + code.succs : "") + " {");
+          writer.enter("block " + code.dominator.blockId + " >> " + code.blockId +
+                       (code.succs.length > 0 ? " -> " +
+                        code.succs.map(blockId).join(",") : "") + " {");
         }
 
         if (code.loop) {
-          writer.writeLn("loop [" + code.loop.join(",") + "]");
+          writer.writeLn("loop [" + code.loop.map(blockId).join(",") + "]");
           writer.writeLn("");
         }
       }
