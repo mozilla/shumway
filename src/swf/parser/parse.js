@@ -113,7 +113,7 @@ SWF.parse = function(buffer) {
   stream.pos += 4;
   var fileLength = readUi32(bytes, stream);
   if (compressed) {
-    stream = new Stream(fileLength - 8, stream);
+    stream = new Stream(buffer, stream.pos, fileLength - 8);
     bytes = stream.bytes;
     stream.ensure(21);
   }

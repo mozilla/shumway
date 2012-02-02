@@ -55,8 +55,8 @@ function inflateBlock(sbytes, sstream, dbytes, dstream) {
     assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
     var begin = pos + 4;
     var end = sstream.pos = begin + len;
-    splice.apply(dbytes, [dstream.lastIndex, len].concat(slice.call(sbytes, begin, end)));
-    dstream.lastIndex += len;
+    splice.apply(dbytes, [dstream.realLength, len].concat(slice.call(sbytes, begin, end)));
+    dstream.realLength += len;
     break;
   case 1:
     inflate(sbytes, sstream, dbytes, dstream, fixedLiteralTable, fixedDistanceTable);
@@ -115,7 +115,7 @@ function readBits(bytes, stream, size) {
   return buffer & ((1 << size) - 1);
 }
 function inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable) {
-  var pos = dstream.lastIndex;
+  var pos = dstream.realLength;
   var sym;
   while ((sym = decode(sbytes, sstream, literalTable)) !== 256) {
     if (sym < 256) {
@@ -130,7 +130,7 @@ function inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable) 
         dbytes[pos++] = dbytes[i++];
     }
   }
-  dstream.lastIndex = pos;
+  dstream.realLength = pos;
 }
 function decode(bytes, stream, codeTable) {
   var buffer = stream.bitBuffer;
