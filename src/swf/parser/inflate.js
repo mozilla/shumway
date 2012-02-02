@@ -52,8 +52,7 @@ function inflateBlock(bytes, stream, output) {
     var pos = stream.pos;
     var len = stream.getUint16(pos, true);
     var nlen = stream.getUint16(pos + 2, true);
-    if ((~nlen & 0xffff) !== len)
-      fail('bad uncompressed block length', 'inflate');
+    assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
     var begin = pos + 4;
     var end = stream.pos = begin + len;
     push.apply(output, slice.call(bytes, begin, end));
@@ -141,8 +140,7 @@ function decode(bytes, stream, codeTable, output) {
   }
   var code = codeTable.codes[buffer & ((1 << maxBits) - 1)];
   var len = code >> 16;
-  if (!len)
-    fail('bad encoding', 'inflate');
+  assert(len, 'bad encoding', 'inflate');
   stream.bitBuffer = buffer >>> len;
   stream.bitLength = bitlen - len;
   return code & 0xffff;

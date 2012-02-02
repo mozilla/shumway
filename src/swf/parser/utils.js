@@ -4,9 +4,10 @@ var slice = [].slice;
 var pow = Math.pow;
 var fromCharCode = String.fromCharCode;
 var max = Math.max;
-var push = [].push;
+var splice = [].splice;
 var isArray = Array.isArray;
 var keys = Object.keys;
+var push = [].push;
 
 function fail(msg, context) {
   throw new Error((context ? context + ': ' : '') + msg);

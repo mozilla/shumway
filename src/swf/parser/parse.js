@@ -106,8 +106,8 @@ SWF.parse = function(buffer) {
   var magic2 = bytes[1];
   var magic3 = bytes[2];
   var compressed = magic1 === 67;
-  if (!((magic1 === 70 || compressed) && magic2 === 87 && magic3 === 83))
-    fail('unsupported file format', 'parse');
+  assert((magic1 === 70 || compressed) && magic2 === 87 && magic3 === 83,
+         'unsupported file format', 'parse');
   var version = bytes[3];
   stream.pos += 4;
   var fileLength = readUi32(bytes, stream);
