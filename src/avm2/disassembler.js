@@ -183,12 +183,13 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
     var bc = code.readU8();
     var opcode = opcodeTable[bc];
     var str, defaultOffset, offset, count;
-    str = ("" + code.position).padRight(' ', 5);
+    str = ("" + code.position).padRight(' ', 6);
     switch (bc) {
       case OP_lookupswitch:
         str += opcode.name + ": defaultOffset: " + code.readS24();
-        count = code.readU30() + 1;
-        for (var i = 0; i < count; i++) {
+        var caseCount = code.readU30();
+        str += ", caseCount: " + caseCount;
+        for (var i = 0; i < caseCount + 1; i++) {
           str += " offset: " + code.readS24();
         }
         writer.writeLn(str);

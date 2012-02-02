@@ -6,6 +6,7 @@ load("../opcodes.js");
 load("../parser.js");
 load("../analyze.js");
 load("../compiler.js");
+load("../fuzzer.js");
 load("../viz.js");
 load("../disassembler.js");
 load("../interpreter.js");
@@ -21,6 +22,7 @@ function printUsage() {
   print("    -c = Compile .abc file to .js.");
   print("    -x = Execute .abc file.");
   print("    -v = Generate GraphViz output.");
+  print("    -z = Generate random .as source file.");
   print("    -q = Quiet.");
 }
 
@@ -32,6 +34,12 @@ var compile = options.indexOf("-c") >= 0;
 var execute = options.indexOf("-x") >= 0;
 var quiet = options.indexOf("-q") >= 0;
 var viz = options.indexOf("-v") >= 0;
+var fuzz = options.indexOf("-z") >= 0;
+
+if (fuzz) {
+  var writer = new IndentingWriter(false);
+  var fuzzer = new Fuzzer(writer);
+}
 
 if (quiet) {
   traceExecution = null;

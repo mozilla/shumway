@@ -17,7 +17,7 @@ var Bytecode = (function () {
     default:
       var opdesc = opcodeTable[op];
       if (!opdesc) {
-        unexpected();
+        unexpected("Unknown Op " + op);
       }
 
       for (i = 0, n = opdesc.operands.length; i < n; i++) {
