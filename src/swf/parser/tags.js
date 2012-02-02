@@ -109,6 +109,7 @@ var PLACE_OBJECT2 = {
 };
 
 var REMOVE_OBJECT = {
+  type: '"remove"',
   objectId: ['tag===5', [UI16]],
   depth: UI16
 };
