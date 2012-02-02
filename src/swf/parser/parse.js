@@ -82,6 +82,7 @@ function readTags(bytes, stream, version) {
     var length = tagAndLength & 0x3f;
     if (length === 0x3f)
       length = readUi32(bytes, stream);
+    stream.ensure(length);
     var substream = stream.substream(stream.pos, stream.pos += length);
     var handler = tagHandler[tag];
     var item = handler ? handler(substream.bytes, substream, version, tag) : { };
@@ -111,24 +112,11 @@ SWF.parse = function(buffer) {
   var version = bytes[3];
   stream.pos += 4;
   var fileLength = readUi32(bytes, stream);
-
-  // TODO: make decompression progressively
   if (compressed) {
-    var hdr = stream.getUint16(stream.pos);
-    stream.pos += 2;
-    if ((hdr & 0x0f00) !== 0x0800)
-      fail('unknown compression method', 'inflate');
-    if (hdr % 31)
-      fail('bad FCHECK', 'inflate');
-    if (hdr & 0x20)
-      fail('FDICT bit set', 'inflate');
-    var buffer = [];
-    while (buffer.length < fileLength - 8)
-      inflateBlock(stream.bytes, stream, buffer);
-    stream = new Stream(new Uint8Array(buffer).buffer);
+    stream = new Stream(fileLength - 8, stream);
     bytes = stream.bytes;
+    stream.ensure(21);
   }
-
   var header = readHeader(bytes, stream);
   var tags = readTags(bytes, stream, version);
   return { version: version, header: header, tags: tags };

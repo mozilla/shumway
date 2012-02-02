@@ -44,48 +44,49 @@ function buildHuffmanTable(bitLengths) {
   }
   return { codes: codes, maxBits: maxBits };
 }
-function inflateBlock(bytes, stream, output) {
-  var hdr = readBits(bytes, stream, 3);
-  switch (hdr >> 1) {
+function inflateBlock(sbytes, sstream, dbytes, dstream) {
+  var header = readBits(sbytes, sstream, 3);
+  switch (header >> 1) {
   case 0:
-    stream.align();
-    var pos = stream.pos;
-    var len = stream.getUint16(pos, true);
-    var nlen = stream.getUint16(pos + 2, true);
+    sstream.align();
+    var pos = sstream.pos;
+    var len = sstream.getUint16(pos, true);
+    var nlen = sstream.getUint16(pos + 2, true);
     assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
     var begin = pos + 4;
-    var end = stream.pos = begin + len;
-    push.apply(output, slice.call(bytes, begin, end));
+    var end = sstream.pos = begin + len;
+    splice.apply(dbytes, [dstream.lastIndex, len].concat(slice.call(sbytes, begin, end)));
+    dstream.lastIndex += len;
     break;
   case 1:
-    inflate(bytes, stream, output, fixedLiteralTable, fixedDistanceTable);
+    inflate(sbytes, sstream, dbytes, dstream, fixedLiteralTable, fixedDistanceTable);
     break;
   case 2:
     var bitLengths = [];
-    var numLiteralCodes = readBits(bytes, stream, 5) + 257;
-    var numDistanceCodes = readBits(bytes, stream, 5) + 1;
+    var numLiteralCodes = readBits(sbytes, sstream, 5) + 257;
+    var numDistanceCodes = readBits(sbytes, sstream, 5) + 1;
     var numCodes = numLiteralCodes + numDistanceCodes;
-    var numLengthCodes = readBits(bytes, stream, 4) + 4;
+    var numLengthCodes = readBits(sbytes, sstream, 4) + 4;
     for (var i = 0; i < 19; ++i)
-      bitLengths[codeLengthOrder[i]] = i < numLengthCodes ? readBits(bytes, stream, 3) : 0;
+      bitLengths[codeLengthOrder[i]] = i < numLengthCodes ? readBits(sbytes, sstream, 3) : 0;
     var codeLengthTable = buildHuffmanTable(bitLengths);
     bitLengths = [];
     var i = 0;
     var prev = 0;
     while (i < numCodes) {
       var j = 1;
-      var sym = decode(bytes, stream, codeLengthTable);
+      var sym = decode(sbytes, sstream, codeLengthTable);
       switch(sym){
       case 16:
-        j = readBits(bytes, stream, 2) + 3;
+        j = readBits(sbytes, sstream, 2) + 3;
         sym = prev;
         break;
       case 17:
-        j = readBits(bytes, stream, 3) + 3;
+        j = readBits(sbytes, sstream, 3) + 3;
         sym = 0;
         break;
       case 18:
-        j = readBits(bytes, stream, 7) + 11;
+        j = readBits(sbytes, sstream, 7) + 11;
         sym = 0;
         break;
       default:
@@ -96,7 +97,7 @@ function inflateBlock(bytes, stream, output) {
     }
     var distanceTable = buildHuffmanTable(bitLengths.splice(numLiteralCodes, numDistanceCodes));
     var literalTable = buildHuffmanTable(bitLengths);
-    inflate(bytes, stream, output, literalTable, distanceTable);
+    inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable);
     break;
   default:
      fail('unknown block type', 'inflate');
@@ -113,24 +114,25 @@ function readBits(bytes, stream, size) {
   stream.bitLength = bufflen - size;
   return buffer & ((1 << size) - 1);
 }
-function inflate(bytes, stream, output, literalTable, distanceTable) {
-  var pos = output.length;
+function inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable) {
+  var pos = dstream.lastIndex;
   var sym;
-  while ((sym = decode(bytes, stream, literalTable, output)) !== 256) {
+  while ((sym = decode(sbytes, sstream, literalTable)) !== 256) {
     if (sym < 256) {
-      output[pos++] = sym;
+      dbytes[pos++] = sym;
     } else {
       sym -= 257;
-      var len = lengthCodes[sym] + readBits(bytes, stream, lengthExtraBits[sym]);
-      sym = decode(bytes, stream, distanceTable);
-      var distance = distanceCodes[sym] + readBits(bytes, stream, distanceExtraBits[sym]);
+      var len = lengthCodes[sym] + readBits(sbytes, sstream, lengthExtraBits[sym]);
+      sym = decode(sbytes, sstream, distanceTable);
+      var distance = distanceCodes[sym] + readBits(sbytes, sstream, distanceExtraBits[sym]);
       var i = pos - distance;
       while (len--)
-        output[pos++] = output[i++];
+        dbytes[pos++] = dbytes[i++];
     }
   }
+  dstream.lastIndex = pos;
 }
-function decode(bytes, stream, codeTable, output) {
+function decode(bytes, stream, codeTable) {
   var buffer = stream.bitBuffer;
   var bitlen = stream.bitLength;
   var maxBits = codeTable.maxBits;
