@@ -135,20 +135,6 @@ var Bytecode = (function () {
 
 var Analysis = (function () {
 
-  function intersect(doms, b1, b2) {
-    var finger1 = b1;
-    var finger2 = b2;
-    while (finger1 !== finger2) {
-      while (finger1 < finger2) {
-        finger1 = doms[finger1];
-      }
-      while (finger2 < finger1) {
-        finger2 = doms[finger2];
-      }
-    }
-    return finger1;
-  }
-
   function dfs(root, pre, post, succ) {
     var visited = {};
 
@@ -272,6 +258,25 @@ var Analysis = (function () {
    * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
    */
   function computeDominance(root) {
+    var doms;
+
+    function intersect(doms, b1, b2) {
+      var finger1 = b1;
+      var finger2 = b2;
+      while (finger1 !== finger2) {
+        while (finger1 < finger2) {
+          finger1 = doms[finger1];
+        }
+        while (finger2 < finger1) {
+          finger2 = doms[finger2];
+        }
+      }
+      return finger1;
+    }
+
+    /* The root must not have incoming edges! */
+    assert(root.preds.length === 0);
+
     /*
      * For this algorithm we id blocks by their index in postorder. We will
      * change the id to the more familiar reverse postorder after we run the
@@ -294,7 +299,18 @@ var Analysis = (function () {
       /* Iterate all blocks but the starting block in reverse postorder. */
       for (var b = n - 2; b >= 0; b--) {
         var preds = blocks[b].preds;
+        var j = preds.length;
+
         var newIdom = preds[0].blockId;
+        if (!doms[newIdom]) {
+          for (var i = 1; i < j; i++) {
+            newIdom = preds[i].blockId;
+            if (doms[newIdom]) {
+              break;
+            }
+          }
+        }
+        assert(doms[newIdom]);
 
         for (var i = 1, j = preds.length; i < j; i++) {
           var p = preds[i].blockId;
