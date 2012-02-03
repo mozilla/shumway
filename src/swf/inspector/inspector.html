@@ -268,12 +268,12 @@
 
               console.time('render');
               factory.render(ctx, {
-                scaleX: 1,
-                scaleY: 1,
+                scaleX: 0.05,
+                scaleY: 0.05,
                 skew0: 0,
                 skew1: 0,
-                translateX: -bounds.xMin,
-                translateY: -bounds.yMin
+                translateX: -bounds.xMin / 20,
+                translateY: -bounds.yMin / 20
               });
               console.timeEnd('render');
 
