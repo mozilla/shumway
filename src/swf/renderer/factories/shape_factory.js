@@ -268,7 +268,6 @@ function ShapeFactory(graph) {
   var bounds = graph.bounds;
   this.render = new Function('c,m',
     'with(c){' +
-      'scale(0.05,0.05);' +
       'transform(m.scaleX,m.skew1,m.skew0,m.scaleY,m.translateX,m.translateY);' +
       'fillRule=mozFillRule=webkitFillRule="evenodd";' +
       paths.join(';') +
