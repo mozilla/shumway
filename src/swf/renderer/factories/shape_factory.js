@@ -10,58 +10,123 @@
 /** @const */ var FILL_CLIPPED_BITMAP               = 65;
 /** @const */ var FILL_NONSMOOTHED_REPEATING_BITMAP = 66;
 /** @const */ var FILL_NONSMOOTHED_CLIPPED_BITMAP   = 67;
+
+function morph(start, end) {
+  return start + (end ? '*' + (end / start / 0xffff) + '*r' : '');
+}
+
+function colorToRgba(color, colorMorph) {
+  if (colorMorph) {
+    return 'rgba(' + [
+      morph(color.red, colorMorph.red),
+      morph(color.green, colorMorph.green),
+      morph(color.blue, colorMorph.blue),
+      morph(color.alpha / 255, colorMorph.alpha / 255)
+    ].join(',') + ')';
+  }
+  return 'rgba(' + [
+    color.red,
+    color.green,
+    color.blue,
+    color.alpha / 255
+  ].join(',') + ')';
+}
+
+function matrixToTransform(matrix, matrixMorph) {
+  if (matrixMorph) {
+    return 'transform(' + [
+      morph(matrix.scaleX, matrixMorph.scaleX),
+      morph(matrix.scaleY, matrixMorph.scaleY),
+      morph(matrix.skew0, matrixMorph.skew0),
+      morph(matrix.skew1, matrixMorph.skew1),
+      morph(matrix.translateX, matrixMorph.translateX),
+      morph(matrix.translateY, matrixMorph.translateY)
+    ].join(',') + ')';
+  }
+  return 'transform(' + [
+    matrix.scaleX,
+    matrix.skew0,
+    matrix.skew1,
+    matrix.scaleY,
+    matrix.translateX,
+    matrix.translateY
+  ].join(',') + ')';
+}
+
 function joinCmds() {
   return this.cmds.join(';');
 }
 
 function ShapeFactory(graph) {
   var records = graph.records;
+  var isMorph = graph.isMorph;
+  var recordsMorph = isMorph ? graph.recordsMorph : [];
   var fillStyles = graph.fillStyles;
   var lineStyles = graph.lineStyles;
   var fillOffset = 0;
   var lineOffset = 0;
-  var record;
-  var i = 0;
   var sx = 0;
   var sy = 0;
   var dx = 0;
   var dy = 0;
+  var sxm = 0;
+  var sym = 0;
+  var dxm = 0;
+  var dym = 0;
+  var dpt = '0,0';
   var fill0 = 0;
   var fill1 = 0;
   var line = 0;
   var fillSegments = { };
   var lineEdges = { };
   var edges = [];
-  while (record = records[i++]) {
+  for (var i = 0, record; record = records[i]; ++i) {
+    if (isMorph)
+      var recordMorph = recordsMorph[i];
     if (record.type) {
       sx = dx;
       sy = dy;
+      sxm = dxm;
+      sym = dym;
+      var edge = { i: i, spt: dpt };
       if (record.isStraight) {
         if (record.isGeneral) {
           dx += record.deltaX;
           dy += record.deltaY;
+          if (isMorph) {
+            dxm += recordMorph.deltaX;
+            dym += recordMorph.deltaY;
+          }
         } else if (record.isVertical) {
           dy += record.deltaY;
+          if (isMorph)
+            dym += recordMorph.deltaY;
         } else {
           dx += record.deltaX;
+          if (isMorph)
+            dxm += recordMorph.deltaX;
         }
-        edges.push({
-          i: i,
-          spt: sx + ',' + sy,
-          dpt: dx + ',' + dy
-        });
       } else {
         var cx = sx + record.controlDeltaX;
         var cy = sy + record.controlDeltaY;
         dx = cx + record.anchorDeltaX;
         dy = cy + record.anchorDeltaY;
-        edges.push({
-          i: i,
-          spt: sx + ',' + sy,
-          cpt: cx + ',' + cy,
-          dpt: dx + ',' + dy
-        });
+        if (isMorph) {
+          var cxm = sxm + recordMorph.controlDeltaX;
+          var cym = sym + recordMorph.controlDeltaY;
+          dxm = cxm + recordMorph.anchorDeltaX;
+          dym = cym + recordMorph.anchorDeltaY;
+          edge.cpt = morph(cx, cxm) + ',' + morph(cy, cym);
+        } else {
+          edge.cpt = cx + ',' + cy;
+        }
       }
+      if (isMorph)
+        dpt = morph(dx, dxm) + ',' + morph(dy, dym);
+      else
+        dpt = dx + ',' + dy;
+      edge.dpt = dpt;
+      edges.push(edge);
     } else {
       if (edges.length) {
         if (fill0) {
@@ -71,7 +136,7 @@ function ShapeFactory(graph) {
           list.push({
             i: i,
             spt: edges[0].spt,
-            dpt: dx + ',' + dy,
+            dpt: dpt,
             edges: edges
           });
         }
@@ -112,6 +177,13 @@ function ShapeFactory(graph) {
       if (record.move) {
         dx = record.moveX;
         dy = record.moveY;
+        if (isMorph) {
+          dxm = recordMorph.moveX;
+          dym = recordMorph.moveY;
+          dpt = morph(dx, dxm) + ',' + morph(dy, dym);
+        } else {
+          dpt = dx + ',' + dy;
+        }
       }
     }
   }
@@ -192,8 +264,8 @@ function ShapeFactory(graph) {
         prev = subpath;
       }
       switch (fillStyle.type) {
-        cmds.push('fillStyle="' + colorToString(fillStyle.color) + '"');
       case FILL_SOLID:
+        cmds.push('fillStyle="' + colorToRgba(fillStyle.color, fillStyle.colorMorph) + '"');
         cmds.push('fill()');
         break;
       case FILL_LINEAR_GRADIENT:
@@ -206,19 +278,12 @@ function ShapeFactory(graph) {
         var j = 0;
         var record;
         while (record = fillStyle.records[j++]) {
-          cmds.push('g.addColorStop(' + (record.ratio / 255) + ',"' +
-                    colorToString(record.color) + '")');
+          cmds.push('g.addColorStop(' +
+                    morph(record.ratio / 255, record.ratioMorph / 255) + ',"' +
+                    colorToRgba(record.color, record.colorMorph) + '")');
         }
         cmds.push('save()');
-        var matrix = fillStyle.matrix;
-        cmds.push('transform(' + [
-          matrix.scaleX * 20,
-          matrix.skew0 * 20,
-          matrix.skew1 * 20,
-          matrix.scaleY * 20,
-          matrix.translateX,
-          matrix.translateY
-        ].join(',') + ')');
+        cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
         cmds.push('fillStyle=g');
         cmds.push('fill()');
         cmds.push('restore()');
@@ -250,8 +315,8 @@ function ShapeFactory(graph) {
           cmds.push('lineTo(' + edge.dpt + ')');
         prev = edge;
       }
-      cmds.push('strokeStyle="' + colorToString(lineStyle.color) + '"');
-      cmds.push('lineWidth=' + lineStyle.width);
+      cmds.push('strokeStyle="' + morph(lineStyle.color, lineStyle.colorMorph) + '"');
+      cmds.push('lineWidth=' + morph(lineStyle.width, lineStyle.widthMorph));
       cmds.push('lineCap="round"');
       cmds.push('lineJoin="round"');
       cmds.push('stroke()');
@@ -266,7 +331,7 @@ function ShapeFactory(graph) {
     return a.i - b.i;
   });
   var bounds = graph.bounds;
-  this.render = new Function('c,m',
+  this.render = new Function('c,m,r',
     'with(c){' +
       'transform(m.scaleX,m.skew1,m.skew0,m.scaleY,m.translateX,m.translateY);' +
       'fillRule=mozFillRule=webkitFillRule="evenodd";' +
