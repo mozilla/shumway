@@ -2,6 +2,14 @@
 
 // TODO: implement bitmap fills, morphing, filled and non-scaling strokes
 
+/** @const */ var FILL_SOLID                        = 0;
+/** @const */ var FILL_LINEAR_GRADIENT              = 16;
+/** @const */ var FILL_RADIAL_GRADIENT              = 18;
+/** @const */ var FILL_FOCAL_RADIAL_GRADIENT        = 19;
+/** @const */ var FILL_REPEATING_BITMAP             = 64;
+/** @const */ var FILL_CLIPPED_BITMAP               = 65;
+/** @const */ var FILL_NONSMOOTHED_REPEATING_BITMAP = 66;
+/** @const */ var FILL_NONSMOOTHED_CLIPPED_BITMAP   = 67;
 function joinCmds() {
   return this.cmds.join(';');
 }
@@ -184,14 +192,14 @@ function ShapeFactory(graph) {
         prev = subpath;
       }
       switch (fillStyle.type) {
-      case 0:
         cmds.push('fillStyle="' + colorToString(fillStyle.color) + '"');
+      case FILL_SOLID:
         cmds.push('fill()');
         break;
-      case 16:
-      case 18:
-      case 19:
-        if (fillStyle.type === 16)
+      case FILL_LINEAR_GRADIENT:
+      case FILL_RADIAL_GRADIENT:
+      case FILL_FOCAL_RADIAL_GRADIENT:
+        if (fillStyle.type === FILL_LINEAR_GRADIENT)
           cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
         else
           cmds.push('var g=createRadialGradient(0,0,0,0,0,819.2)');
