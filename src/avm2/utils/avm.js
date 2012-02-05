@@ -67,7 +67,14 @@ if (viz) {
 }
 
 if (compile) {
-  print(compileAbc(abc));
+  try {
+    print(compileAbc(abc));
+  } catch(e) {
+    print(e);
+    print("");
+    print(e.stack);
+  }
+
   if (!quiet) {
     /* Spew analysis information if not quiet. */
     var writer = new IndentingWriter(false);
