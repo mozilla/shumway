@@ -14,24 +14,22 @@
 function morph(start, end) {
   return start + (end ? '*' + (end / start / 0xffff) + '*r' : '');
 }
-
-function colorToRgba(color, colorMorph) {
+function colorToStyle(color, colorMorph) {
   if (colorMorph) {
-    return 'rgba(' + [
+    return '"rgba("+~~(' + [
       morph(color.red, colorMorph.red),
       morph(color.green, colorMorph.green),
       morph(color.blue, colorMorph.blue),
       morph(color.alpha / 255, colorMorph.alpha / 255)
-    ].join(',') + ')';
+    ].join(')+","+~~(') + ')+")"';
   }
-  return 'rgba(' + [
+  return '"rgba(' + [
     color.red,
     color.green,
     color.blue,
     color.alpha / 255
-  ].join(',') + ')';
+  ].join(',') + ')"';
 }
-
 function matrixToTransform(matrix, matrixMorph) {
   if (matrixMorph) {
     return 'transform(' + [
@@ -52,7 +50,6 @@ function matrixToTransform(matrix, matrixMorph) {
     matrix.translateY
   ].join(',') + ')';
 }
-
 function joinCmds() {
   return this.cmds.join(';');
 }
@@ -265,7 +262,7 @@ function ShapeFactory(graph) {
       }
       switch (fillStyle.type) {
       case FILL_SOLID:
-        cmds.push('fillStyle="' + colorToRgba(fillStyle.color, fillStyle.colorMorph) + '"');
+        cmds.push('fillStyle=' + colorToStyle(fillStyle.color, fillStyle.colorMorph));
         cmds.push('fill()');
         break;
       case FILL_LINEAR_GRADIENT:
@@ -275,12 +272,13 @@ function ShapeFactory(graph) {
           cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
         else
           cmds.push('var g=createRadialGradient(0,0,0,0,0,819.2)');
+        var records = fillStyle.records;
         var j = 0;
         var record;
-        while (record = fillStyle.records[j++]) {
+        while (record = records[j++]) {
           cmds.push('g.addColorStop(' +
-                    morph(record.ratio / 255, record.ratioMorph / 255) + ',"' +
-                    colorToRgba(record.color, record.colorMorph) + '")');
+                    morph(record.ratio / 255, isMorph ? record.ratioMorph / 255 : undefined) +
+                    ',' + colorToStyle(record.color, record.colorMorph) + ')');
         }
         cmds.push('save()');
         cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
@@ -315,8 +313,9 @@ function ShapeFactory(graph) {
           cmds.push('lineTo(' + edge.dpt + ')');
         prev = edge;
       }
-      cmds.push('strokeStyle="' + morph(lineStyle.color, lineStyle.colorMorph) + '"');
-      cmds.push('lineWidth=' + morph(lineStyle.width, lineStyle.widthMorph));
+      cmds.push('strokeStyle=' + colorToStyle(lineStyle.color, lineStyle.colorMorph));
+      cmds.push('lineWidth=' +
+                morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined));
       cmds.push('lineCap="round"');
       cmds.push('lineJoin="round"');
       cmds.push('stroke()');
