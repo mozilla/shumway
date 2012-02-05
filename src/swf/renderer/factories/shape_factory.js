@@ -35,19 +35,19 @@ function colorToRgba(color, colorMorph) {
 function matrixToTransform(matrix, matrixMorph) {
   if (matrixMorph) {
     return 'transform(' + [
-      morph(matrix.scaleX, matrixMorph.scaleX),
-      morph(matrix.scaleY, matrixMorph.scaleY),
-      morph(matrix.skew0, matrixMorph.skew0),
-      morph(matrix.skew1, matrixMorph.skew1),
+      morph(matrix.scaleX * 20, matrixMorph.scaleX * 20),
+      morph(matrix.scaleY * 20, matrixMorph.scaleY * 20),
+      morph(matrix.skew0 * 20, matrixMorph.skew0 * 20),
+      morph(matrix.skew1 * 20, matrixMorph.skew1 * 20),
       morph(matrix.translateX, matrixMorph.translateX),
       morph(matrix.translateY, matrixMorph.translateY)
     ].join(',') + ')';
   }
   return 'transform(' + [
-    matrix.scaleX,
-    matrix.skew0,
-    matrix.skew1,
-    matrix.scaleY,
+    matrix.scaleX * 20,
+    matrix.skew0 * 20,
+    matrix.skew1 * 20,
+    matrix.scaleY * 20,
     matrix.translateX,
     matrix.translateY
   ].join(',') + ')';
