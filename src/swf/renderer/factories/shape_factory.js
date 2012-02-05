@@ -12,7 +12,9 @@
 /** @const */ var FILL_NONSMOOTHED_CLIPPED_BITMAP   = 67;
 
 function morph(start, end) {
-  return start + (end ? '*' + (end / start / 0xffff) + '*r' : '');
+  if (end !== undefined && end !== start)
+    return start + '+' + (end - start) + '*r';
+  return start;
 }
 function colorToStyle(color, colorMorph) {
   if (colorMorph) {
