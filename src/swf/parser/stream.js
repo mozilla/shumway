@@ -23,6 +23,7 @@ function Stream(buffer, offset, length) {
   stream.__proto__ = Stream.prototype;
   stream.bytes = bytes;
   stream.pos = 0;
+  stream.end = length;
   stream.bitBuffer = 0;
   stream.bitLength = 0;
   return stream;
@@ -40,9 +41,13 @@ proto.ensure = function(length) {
       inflateBlock(sstream.bytes, sstream, this.bytes, this);
   }
 };
+proto.remain = function() {
+  return this.end - this.pos;
+};
 proto.substream = function(begin, end) {
   var stream = Object.create(this);
   stream.pos = begin;
+  stream.end = end;
   stream.align();
   return stream;
 };
