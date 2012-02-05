@@ -831,7 +831,7 @@ var Analysis = (function () {
         }
         cxx.parentLoops.pop();
 
-        var l = new Control.Loop(body, visit(cxx.break, cx.update({ exit: cxx.break })));
+        var l = new Control.Loop(body, visit(cxx.break, cx));
         return l;
       }
 
