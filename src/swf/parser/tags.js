@@ -23,7 +23,6 @@ var DEFINE_SHAPE = {
     { $2: SHAPE_WITH_STYLE }
   ]]
 };
-
 var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
   actions: {
@@ -31,7 +30,6 @@ var DO_ACTION = {
     repeat: 'action'
   }
 };
-
 var FILE_ATTRIBUTES = {
   $$reserved: UB(1),
   useDirectBlit: UB(1),
@@ -43,7 +41,6 @@ var FILE_ATTRIBUTES = {
   network: UB(1),
   $$pad: UB(24)
 };
-
 var METADATA = {
   metadata: STRING(0)
 };
@@ -114,7 +111,6 @@ var PLACE_OBJECT = {
     }
   ]]
 };
-
 var REMOVE_OBJECT = {
   type: '"remove"',
   objectId: ['tag===5', [UI16]],
