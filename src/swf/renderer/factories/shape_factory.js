@@ -90,18 +90,28 @@ function ShapeFactory(graph) {
         if (record.isGeneral) {
           dx += record.deltaX;
           dy += record.deltaY;
-          if (isMorph) {
-            dxm += recordMorph.deltaX;
-            dym += recordMorph.deltaY;
-          }
         } else if (record.isVertical) {
           dy += record.deltaY;
-          if (isMorph)
-            dym += recordMorph.deltaY;
         } else {
           dx += record.deltaX;
-          if (isMorph)
-            dxm += recordMorph.deltaX;
+        }
+        if (isMorph) {
+          if (recordMorph.isStraight) {
+            if (recordMorph.isGeneral) {
+              dxm += recordMorph.deltaX;
+              dym += recordMorph.deltaY;
+            } else if (recordMorph.isVertical) {
+              dym += recordMorph.deltaY;
+            } else {
+              dxm += recordMorph.deltaX;
+            }
+          } else {
+            var cxm = sxm + recordMorph.controlDeltaX;
+            var cym = sym + recordMorph.controlDeltaY;
+            dxm = cxm + recordMorph.anchorDeltaX;
+            dym = cym + recordMorph.anchorDeltaY;
+            edge.cpt = morph((dx - sx) / 2, cxm) + ',' + morph((dy - sy) / 2, cym);
+          }
         }
       } else {
         var cx = sx + record.controlDeltaX;
@@ -109,10 +119,23 @@ function ShapeFactory(graph) {
         dx = cx + record.anchorDeltaX;
         dy = cy + record.anchorDeltaY;
         if (isMorph) {
-          var cxm = sxm + recordMorph.controlDeltaX;
-          var cym = sym + recordMorph.controlDeltaY;
-          dxm = cxm + recordMorph.anchorDeltaX;
-          dym = cym + recordMorph.anchorDeltaY;
+          if (recordMorph.isStraight) {
+            if (recordMorph.isGeneral) {
+              dxm += recordMorph.deltaX;
+              dym += recordMorph.deltaY;
+            } else if (recordMorph.isVertical) {
+              dym += recordMorph.deltaY;
+            } else {
+              dxm += recordMorph.deltaX;
+            }
+            var cxm = (dxm - sxm) / 2;
+            var cym = (dym - sym) / 2;
+          } else {
+            var cxm = sxm + recordMorph.controlDeltaX;
+            var cym = sym + recordMorph.controlDeltaY;
+            dxm = cxm + recordMorph.anchorDeltaX;
+            dym = cym + recordMorph.anchorDeltaY;
+          }
           edge.cpt = morph(cx, cxm) + ',' + morph(cy, cym);
         } else {
           edge.cpt = cx + ',' + cy;
