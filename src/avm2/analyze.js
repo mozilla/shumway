@@ -612,7 +612,7 @@ var Analysis = (function () {
         null);
   }
 
-  function OverlayContext() {
+  function ControlTreeContext() {
     /*
      * Because of labeled continues and and breaks we need to make a stack of
      * such targets. Note that |continueTargets.top() === exit|.
@@ -624,7 +624,7 @@ var Analysis = (function () {
     this.exit = null;
   }
 
-  OverlayContext.prototype.update = function update(props) {
+  ControlTreeContext.prototype.update = function update(props) {
     var desc = {};
     for (var p in props) {
       desc[p] = {
@@ -637,7 +637,7 @@ var Analysis = (function () {
     return Object.create(this, desc);
   };
 
-  function canOverlayLoop(block, cx, loopCx) {
+  function inducibleLoop(block, cx, loopCx) {
     /* Natural loop information should already be computed. */
     if (!block.loop) {
       return undefined;
@@ -714,7 +714,7 @@ var Analysis = (function () {
    * Returns the original context if trivial conditional, an updated context
    * if neither branch is trivial, undefined otherwise.
    */
-  function canOverlayIf(block, cx, info) {
+  function inducibleIf(block, cx, info) {
     var succs = block.succs;
 
     if (succs.length !== 2) {
@@ -760,7 +760,7 @@ var Analysis = (function () {
     return cx.update({ exit: exit });
   }
 
-  function canOverlaySeq(block, cx) {
+  function inducibleSeq(block, cx) {
     if (block.succs.length > 1) {
       return false;
     }
@@ -806,10 +806,10 @@ var Analysis = (function () {
 
       var info = {};
 
-      if (cxx = canOverlayLoop(block, cx)) {
+      if (cxx = inducibleLoop(block, cx)) {
         /*
          * If we have two succs, we emit an if. Else we emit a seq. This is
-         * safe as |canOverlayLoop| has already checked that the entire loop
+         * safe as |inducibleLoop| has already checked that the entire loop
          * body (including the header) has a single exit node. Note that the
          * entry to the loop body cannot be a continue or a break.
          */
@@ -835,21 +835,21 @@ var Analysis = (function () {
         return l;
       }
 
-      if (cxx = canOverlayIf(block, cx, info)) {
+      if (cxx = inducibleIf(block, cx, info)) {
         return new Control.If(block,
                               visit(info.thenBranch, cxx),
                               info.elseBranch ? visit(info.elseBranch, cxx) : null,
                               info.negated, visit(cxx.exit, cx));
       }
 
-      if (canOverlaySeq(block, cx)) {
+      if (inducibleSeq(block, cx)) {
         return new Control.Seq(block, visit(block.succs.top(), cx));
       }
 
       return new Control.Clusterfuck(block);
     }
 
-    return visit(root, new OverlayContext());
+    return visit(root, new ControlTreeContext());
   }
 
   function Analysis(codeStream) {
