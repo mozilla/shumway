@@ -116,3 +116,6 @@ var REMOVE_OBJECT = {
   objectId: ['tag===5', [UI16]],
   depth: UI16
 };
+var SHOW_FRAME = {
+  type: '"frame"'
+};
