@@ -133,7 +133,7 @@ function defineSprite(bytes, stream, version) {
   };
 }
 
-SWF.parse = function(buffer) {
+SWF.parse = function(buffer, callback) {
   var stream = new Stream(buffer);
   var bytes = stream.bytes;
   var magic1 = bytes[0];
@@ -152,5 +152,11 @@ SWF.parse = function(buffer) {
   }
   var header = readHeader(bytes, stream);
   var tags = readTags(bytes, stream, version);
-  return { version: version, header: header, tags: tags };
+  callback({
+    version: version,
+    bounds: header.bounds,
+    frameRate: header.frameRate,
+    frameCount: header.frameCount,
+    tags: tags
+  });
 };
