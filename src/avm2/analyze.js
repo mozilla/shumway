@@ -612,7 +612,7 @@ var Analysis = (function () {
         null);
   }
 
-  function ControlTreeContext() {
+  function ExtractionContext() {
     /*
      * Because of labeled continues and and breaks we need to make a stack of
      * such targets. Note that |continueTargets.top() === exit|.
@@ -624,7 +624,7 @@ var Analysis = (function () {
     this.exit = null;
   }
 
-  ControlTreeContext.prototype.update = function update(props) {
+  ExtractionContext.prototype.update = function update(props) {
     var desc = {};
     for (var p in props) {
       desc[p] = {
@@ -637,7 +637,7 @@ var Analysis = (function () {
     return Object.create(this, desc);
   };
 
-  function inducibleLoop(block, cx, loopCx) {
+  function inducibleLoop(block, cx) {
     /* Natural loop information should already be computed. */
     if (!block.loop) {
       return undefined;
@@ -698,11 +698,6 @@ var Analysis = (function () {
     if (!mainExit && parentLoops.length > 0) {
       mainExit = parentLoops.top().exit;
     }
-
-    loopCx = cx.update({ break: mainExit,
-                         continue: block,
-                         loop: loop,
-                         exit: block });
 
     return cx.update({ break: mainExit,
                        continue: block,
@@ -849,7 +844,7 @@ var Analysis = (function () {
       return new Control.Clusterfuck(block);
     }
 
-    return visit(root, new ControlTreeContext());
+    return visit(root, new ExtractionContext());
   }
 
   function Analysis(codeStream) {

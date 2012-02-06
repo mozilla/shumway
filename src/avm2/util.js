@@ -50,8 +50,10 @@ function unexpected() {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {
       Object.defineProperty(proto, prop,
-        { value: f, writable: true, configurable: true, enumerable: false });
-
+                            { value: f,
+                              writable: true,
+                              configurable: true,
+                              enumerable: false });
     }
   }
 
