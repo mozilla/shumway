@@ -123,6 +123,9 @@
         width: auto;
         padding-top: 80px;
       }
+      body.inspect #preview > canvas {
+        max-width: 280px;
+      }
     </style>
   </head>
   <body class="timeline">
@@ -280,8 +283,6 @@
         ctx = stage[0].getContext('2d');
         stage.attr('width', frameWidth);
         stage.attr('height', frameHeight);
-        if (frameWidth > 280)
-          stage.css('width', '280px');
 
         info.html(
           '<b>' + file.name + '</b>, SWF' + swf.version + ', ' +
@@ -375,8 +376,6 @@
             var height = (bounds.yMax - bounds.yMin) / 20;
             canvas.attr('width', width);
             canvas.attr('height', height);
-            if (width > 280)
-              canvas.css('width', '280px');
             var ctx = canvas[0].getContext('2d');
             var factory = new ShapeFactory(tag);
             factory.render(ctx, {
