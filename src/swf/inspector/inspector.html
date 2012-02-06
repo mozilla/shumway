@@ -20,7 +20,7 @@
       #menu {
         height: 15px;
         padding: 15px 10px;
-        text-align: right;
+        border-top: 2px solid #888;
         border-bottom: 1px solid #aaa;
       }
       #info {
@@ -31,10 +31,10 @@
         border-top: 1px solid #d3d3d3;
         border-bottom: 1px solid #aaa;
       }
-      #taglist {
+      #sidebar {
         position: absolute;
         left: 0;
-        top: 73px;
+        top: 75px;
         bottom: 0;
         margin: 0;
         width: 280px;
@@ -43,19 +43,20 @@
         background: #e6e6e6;
         border-right: 1px solid #d3d3d3;
       }
-      #taglist li {
+      #sidebar li {
+        height: 14px;
         padding: 10px;
         border-bottom: 1px solid #d3d3d3;
         list-style-type: none;
         cursor: pointer;
       }
-      #taglist li:hover {
+      #sidebar li:hover {
         background: #fbf9ee;
       }
-      #taglist li.active {
+      #sidebar li.active {
         background: #fcefa1;
       }
-      #taglist li > span {
+      #sidebar li > span {
         display: inline-block;
         width: 30px;
         color: #888;
@@ -63,34 +64,85 @@
       #graph {
         position: absolute;
         left: 0;
-        top: 73px;
+        top: 75px;
         right: 0;
         bottom: 0;
-        margin: 0 300px 0 280px;
+        margin: 0 301px 0 281px;
         padding: 10px;
         overflow: auto;
       }
       #preview {
         position: absolute;
-        top: 73px;
+        top: 75px;
         right: 0;
         bottom: 0;
         width: 280px;
         padding: 10px;
         text-align: center;
-        background: url(preview_bg.png);
+        background: url(no_bg.png);
         border-left: 1px solid #d3d3d3;
+      }
+      #timeline {
+        display: none;
+        position: absolute;
+        left: 0;
+        top: 75px;
+        right: 0;
+        margin-left: 281px;
+        height: 70px;
+        overflow: hidden;
+        background: url(timeline_bg.png);
+      }
+      #timeline .unit {
+        position: absolute;
+        bottom: 42px;
+        margin-left: -21px;
+        font-size: smaller;
+      }
+      #playhead {
+        position: absolute;
+        left: -20px;
+        top: -35px;
+        margin: 1px;
+        width: 17px;
+        height: 15px;
+        background: url(playhead.png);
+      }
+      #storyboard {
+        position: absolute;
+        top: 35px;
+        height: 35px;
+        background: url(frame.png);
+        cursor: pointer;
+      }
+      body.timeline #timeline {
+        display: block;
+      }
+      body.timeline #preview {
+        left: 280px;
+        width: auto;
+        padding-top: 80px;
       }
     </style>
   </head>
-  <body>
+  <body class="timeline">
     <div id="menu">
       <h3>Shumway SWF Inspector</h3>
     </div>
     <div id="info">Drop a SWF File</div>
-    <ul id="taglist"></ul>
+    <ul id="sidebar"></ul>
     <pre id="graph"></pre>
     <div id="preview"></div>
+    <div id="timeline">
+      <script>
+        var i = 0;
+        while (i++ < 50)
+          document.write('<div class="unit" style="left:' + (100 * i) + 'px">' + (i * 5) + '</div>');
+      </script>
+      <div id="storyboard">
+        <div id="playhead"></div>
+      </div>
+    </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
@@ -108,8 +160,10 @@
     <script src="../parser/stream.js"></script>
     <script src="../parser/templates.js"></script>
     <script src="../parser/generate.js"></script>
+    <script src="../parser/filter.js"></script>
     <script src="../parser/parse.js"></script>
 
+    <script src="../renderer/render.js"></script>
     <script src="../renderer/factories/shape_factory.js"></script>
 
     <script>
@@ -186,111 +240,186 @@
         return map;
       })();
 
+      var body = $('body');
       var info = $('#info');
-      var taglist = $('#taglist');
+      var sidebar = $('#sidebar');
       var graph = $('#graph');
       var preview = $('#preview');
+      var storyboard = $('#storyboard');
+      var playhead = $('#playhead');
 
-      $('body').on('dragenter', dragenter);
-      $('body').on('dragover', dragover);
-      $('body').on('drop', drop);
+      var stage;
+      var ctx;
+      var activeItem;
 
-      function dragenter(event) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-      function dragover(event) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-      function drop(event) {
-        event.stopPropagation();
-        event.preventDefault();
-        var file = event.originalEvent.dataTransfer.files[0];
+      function readFile(file) {
         var reader = new FileReader();
-
-        reader.onload = (function(event) {
-          taglist.html('');
-          graph.html('');
-          preview.html('');
-
-          console.time('parse');
+        reader.onload = function() {
           try {
-            var result = SWF.parse(this.result);
+            SWF.parse(this.result, function(result) {
+              process(file, result);
+            });
           } catch (e) {
             info.html('<span class="error">' + e.message + '</span>');
             throw e;
           }
-          console.timeEnd('parse');
-
-          var header = result.header;
-          var bounds = header.bounds;
-          info.html(
-            '<b>' + file.name + '</b>, SWF' + result.version + ', ' +
-            ~~header.frameRate + 'fps, ' +
-            ((bounds.xMax - bounds.xMin) / 20) + 'x' + ((bounds.yMax - bounds.yMin) / 20) + 'px'
-          );
-
-          var tags = result.tags;
-          var list = '';
-          for (var i = 0, tag; tag = tags[i]; ++i) {
-            list += '<li data-index="' + i + '">' +
-              '<span>' + i + '</span> ' + tagNames[tag.tag] + '</li>';
-          }
-          taglist.html(list);
-
-          var activeNode;
-          function activate(node) {
-            if (activeNode)
-              activeNode.removeClass('active');
-            var tag = tags[node.data('index')];
-            graph.html(js_beautify(JSON.stringify(tag)));
-            node.addClass('active');
-            activeNode = node;
-
-            switch (tag.type) {
-            case 'shape':
-              preview.html('');
-
-              var canvas = $('<canvas>');
-              var bounds = tag.bounds;
-              var width = (bounds.xMax - bounds.xMin) / 20;
-              var height = (bounds.yMax - bounds.yMin) / 20;
-              canvas.attr('width', width);
-              canvas.attr('height', height);
-              if (width > 280)
-                canvas.css('width', '280px');
-              var ctx = canvas[0].getContext('2d');
-
-              console.time('prepare');
-              var factory = new ShapeFactory(tag);
-              console.timeEnd('prepare');
-
-              console.time('render');
-              factory.render(ctx, {
-                scaleX: 0.05,
-                scaleY: 0.05,
-                skew0: 0,
-                skew1: 0,
-                translateX: -bounds.xMin / 20,
-                translateY: -bounds.yMin / 20
-              });
-              console.timeEnd('render');
-
-              preview.append(canvas);
-              break;
-            }
-          }
-
-          taglist.on('click', function(event) {
-            activate($(event.target));
-          });
-        });
-
-        info.html('Loading ' + file.name + '...');
-
+        }
+        info.html('Reading ' + file.name + '...');
         reader.readAsArrayBuffer(file);
       }
+      function process(file, swf) {
+        sidebar.html('');
+        graph.html('');
+        preview.html('');
+
+        var bounds = swf.bounds;
+        var frameWidth = (bounds.xMax - bounds.xMin) / 20;
+        var frameHeight = (bounds.yMax - bounds.yMin) / 20;
+
+        stage = $('<canvas>');
+        ctx = stage[0].getContext('2d');
+        stage.attr('width', frameWidth);
+        stage.attr('height', frameHeight);
+        if (frameWidth > 280)
+          stage.css('width', '280px');
+
+        info.html(
+          '<b>' + file.name + '</b>, SWF' + swf.version + ', ' +
+          ~~swf.frameRate + 'fps, ' +
+          frameWidth + 'x' + frameHeight + 'px'
+        );
+
+        sidebar.html('');
+        activeItem = $('<li class="active">Main Timeline</li>');
+        activeItem.data('mc', swf);
+        sidebar.append(activeItem);
+
+        (function createItems(mc, level) {
+          var tags = mc.tags;
+          for (var i = 0, tag; tag = tags[i]; ++i) {
+            var item = $(
+              '<li class="level-' + level + '">' +
+                '<span>' + i + '</span> ' + tagNames[tag.tag] +
+              '</li>'
+            );
+            item.data('mc', swf);
+            item.data('tagNum', i);
+            sidebar.append(item);
+            if (tag.tag === 39)
+              createItems(tag, level + 1);
+            else if (tag.tag === 9)
+              stage.css('background', 'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')');
+          }
+        })(swf, 0);
+
+        setTimeline(swf);
+      }
+      function setTimeline(mc) {
+        preview.html('');
+        storyboard.css('width', (20 * mc.frameCount) + 'px');
+        storyboard.data('mc', mc);
+        showFrame(mc, 0);
+        body.removeClass('inspect');
+        body.addClass('timeline');
+      }
+      function showFrame(mc, frameNum) {
+        renderFrame(mc, frameNum);
+        playhead.css('left', (frameNum * 20) + 'px');
+        storyboard.data('currentFrame', frameNum);
+      }
+      function renderFrame(mc, frameNum) {
+        var canvas = ctx.canvas;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var tags = mc.tags;
+        var i = 0;
+        var tag;
+        while (tag = tags[i++]) {
+          if (tag.frameNum === frameNum) {
+            if (tag.displayList)
+              renderDisplayList(tag.displayList, ctx);
+            preview.append(stage);
+            break;
+          }
+        }
+      }
+      function activate(node) {
+        if (activeItem)
+          activeItem.removeClass('active');
+        node.addClass('active');
+        activeItem = node;
+        var mc = node.data('mc');
+        var tagNum = node.data('tagNum');
+        if (tagNum != undefined) {
+          var tag = mc.tags[tagNum];
+          if (tag.tag === 39)
+            setTimeline(tag);
+          else
+            inspect(mc, tag);
+        } else {
+          setTimeline(mc);
+        }
+      }
+      function inspect(mc, tag) {
+        body.removeClass('timeline');
+        body.addClass('inspect');
+        graph.html(js_beautify(JSON.stringify(tag)));
+        preview.html('');
+        if (tag.tag === 1) {
+          renderFrame(mc, tag.frameNum);
+        } else {
+          switch (tag.type) {
+          case 'shape':
+            var canvas = $('<canvas>');
+            var bounds = tag.bounds;
+            var width = (bounds.xMax - bounds.xMin) / 20;
+            var height = (bounds.yMax - bounds.yMin) / 20;
+            canvas.attr('width', width);
+            canvas.attr('height', height);
+            if (width > 280)
+              canvas.css('width', '280px');
+            var ctx = canvas[0].getContext('2d');
+            var factory = new ShapeFactory(tag);
+            factory.render(ctx, {
+              scaleX: 0.05,
+              scaleY: 0.05,
+              skew0: 0,
+              skew1: 0,
+              translateX: -bounds.xMin / 20,
+              translateY: -bounds.yMin / 20
+            }, 0);
+            preview.append(canvas);
+            break;
+          }
+        }
+      }
+
+      body.on('dragenter dragover', function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+      });
+      body.on('drop', function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        readFile(event.originalEvent.dataTransfer.files[0]);
+      });
+      sidebar.on('click', function(event) {
+        if (sidebar.has(event.target))
+          activate($(event.target));
+      });
+      storyboard.on('click', function(event) {
+        var frameNum = ~~((event.pageX - $(event.target).offset().left) / 20);
+        showFrame(storyboard.data('mc'), frameNum);
+      });
+      playhead.draggable({
+        axis: 'x',
+        containment: 'parent',
+        grid: [20, 0],
+        drag: function(event, ui) {
+          var frameNum = ui.position.left / 20;
+          if (storyboard.data('currentFrame') !== frameNum)
+            showFrame(storyboard.data('mc'), frameNum);
+        }
+      });
     </script>
   </body>
 </html>
