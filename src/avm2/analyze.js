@@ -198,7 +198,7 @@ var Bytecode = (function () {
       }
     }
 
-    body.snapshot();
+    body.takeSnapshot();
     this.loop = body;
   }
 
@@ -211,7 +211,7 @@ var Bytecode = (function () {
   Bp.leadsTo = function leadsTo(target) {
     return ((this === target) ||
             (this.frontier.size === 1) &&
-            (this.frontier.members[0] === target));
+            (this.frontier.snapshot[0] === target));
   };
 
   /* Find the dominator set from immediate dominators. */
@@ -338,9 +338,15 @@ var BytecodeSet = (function () {
       }
     },
 
+    /*
+     * If the set has a snapshot, assume it's current and use that to choose
+     * an element. Otherwise choose a key and resolve it.
+     *
+     * NB: It's up to the user to make sure this is not stale before using!
+     */
     choose: function () {
-      if (this.members) {
-        return this.members.top();
+      if (this.snapshot) {
+        return this.snapshot.top();
       }
 
       var backing = this.backing;
@@ -349,9 +355,10 @@ var BytecodeSet = (function () {
 
     /*
      * Snapshot current state into an array for iteration.
+     *
      * NB: It's up to the user to make sure this is not stale before using!
      */
-    snapshot: function () {
+    takeSnapshot: function () {
       var n = this.size;
       var a = new Array(n);
       var i = 0;
@@ -359,7 +366,7 @@ var BytecodeSet = (function () {
       for (var position in backing) {
         a[i++] = backing[position];
       }
-      this.members = a;
+      this.snapshot = a;
     }
   };
 
@@ -594,7 +601,7 @@ var Analysis = (function () {
     for (var b = 0; b < n; b++) {
       block = blocks[b];
       block.blockId = n - 1 - block.blockId;
-      block.frontier.snapshot();
+      block.frontier.takeSnapshot();
     }
   }
 
@@ -645,15 +652,15 @@ var Analysis = (function () {
 
     var loop = block.loop;
     var exits = new BytecodeSet();
-    var loopBody = loop.members;
+    var loopBody = loop.snapshot;
 
     for (var i = 0, j = loopBody.length; i < j; i++) {
       exits.unionArray(loopBody[i].succs);
     }
     exits.difference(loop);
-    exits.snapshot();
+    exits.takeSnapshot();
 
-    var exitNodes = exits.members;
+    var exitNodes = exits.snapshot;
     var parentLoops = cx.parentLoops;
     if (parentLoops.length > 0) {
       for (var i = 0, j = exitNodes.length; i < j; i++) {
@@ -666,8 +673,8 @@ var Analysis = (function () {
         }
       }
 
-      exits.snapshot();
-      exitNodes = exits.members;
+      exits.takeSnapshot();
+      exitNodes = exits.snapshot;
     }
 
     /* There should be a single exit node. */
@@ -961,7 +968,7 @@ var Analysis = (function () {
      * Anything after |findNaturalLoops| should re-snapshot |.loop| upon
      * mutation.
      *
-     * All extant analyses operate on the |.members| array of the above sets.
+     * All extant analyses operate on the |.snapshot| array of the above sets.
      */
 
     detectBasicBlocks(bytecodes);
@@ -1000,11 +1007,11 @@ var Analysis = (function () {
                         code.succs.map(blockId).join(",") : "") + " {");
 
           writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
-          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.members.map(blockId).join(",") + "}");
+          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.snapshot.map(blockId).join(",") + "}");
         }
 
         if (code.loop) {
-          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.members.map(blockId).join(",") + "}");
+          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.snapshot.map(blockId).join(",") + "}");
         }
 
         writer.writeLn("");
