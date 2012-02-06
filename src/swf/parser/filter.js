@@ -15,7 +15,7 @@ function placeFilter(graph, state) {
     state.displayList = displayList = { maxDepth: 0 };
   var depth = graph.depth;
   if (graph.place) {
-   var character = displayList[depth] = { };
+   var character = { };
    character.factory = state.dictionary[graph.objectId];
    character.render = function(ctx) {
      var m = graph.matrix;
@@ -46,6 +46,7 @@ function placeFilter(graph, state) {
     character.ratio = graph.ratio / 0xffff;
   if (depth > displayList.maxDepth)
     displayList.maxDepth = depth;
+  displayList[depth] = character;
 }
 function removeFilter(graph, state) {
   var displayList = state.displayList;
