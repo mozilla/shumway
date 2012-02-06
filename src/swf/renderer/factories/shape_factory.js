@@ -77,7 +77,7 @@ function ShapeFactory(graph) {
   var fill1 = 0;
   var line = 0;
   var fillSegments = { };
-  var lineEdges = { };
+  var lineSegments = { };
   var edges = [];
   for (var i = 0, record; record = records[i]; ++i) {
     if (isMorph)
@@ -175,10 +175,15 @@ function ShapeFactory(graph) {
           });
         }
         if (line) {
-          var list = lineEdges[lineOffset + line];
+          var list = lineSegments[lineOffset + line];
           if (!list)
-            list = lineEdges[lineOffset + line] = [];
-          push.apply(list, edges);
+            list = lineSegments[lineOffset + line] = [];
+          list.push({
+            i: i,
+            spt: edges[0].spt,
+            dpt: dpt,
+            edges: edges
+          });
         }
         edges = [];
       }
@@ -217,8 +222,8 @@ function ShapeFactory(graph) {
     if (!segments)
       continue;
     var map = { };
-    var segment;
     var j = 0;
+    var segment;
     while (segment = segments[j++]) {
       var list = map[segment.spt];
       if (!list)
@@ -226,8 +231,8 @@ function ShapeFactory(graph) {
       list.push(segment);
     }
     var numSegments = segments.length;
-    var count = 0;
     var j = 0;
+    var count = 0;
     while ((segment = segments[j++]) && count < numSegments) {
       if (segment.skip)
         continue;
@@ -257,9 +262,9 @@ function ShapeFactory(graph) {
       var cmds = [];
       var fillStyle = fillStyles[i - 1];
       cmds.push('beginPath()');
-      var prev = { };
       var j = 0;
       var subpath;
+      var prev = { };
       while (subpath = path[j++]) {
         if (subpath.spt !== prev.dpt)
           cmds.push('moveTo(' + subpath.spt + ')');
@@ -293,10 +298,11 @@ function ShapeFactory(graph) {
       case FILL_LINEAR_GRADIENT:
       case FILL_RADIAL_GRADIENT:
       case FILL_FOCAL_RADIAL_GRADIENT:
-        if (fillStyle.type === FILL_LINEAR_GRADIENT)
+        if (fillStyle.type === FILL_LINEAR_GRADIENT) {
           cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
-        else
+        } else {
           cmds.push('var g=createRadialGradient(0,0,0,0,0,819.2)');
+        }
         var records = fillStyle.records;
         var j = 0;
         var record;
@@ -313,42 +319,48 @@ function ShapeFactory(graph) {
         break;
       }
       paths.push({
-        i: path[path.length - 1].i,
+        i: path[0].i,
         cmds: cmds,
         toString: joinCmds
       });
     }
   }
+  var lineStyle;
   var i = 0;
-  while (lineStyles[i++]) {
-    var cmds = [];
-    var edges = lineEdges[i];
-    if (edges) {
-      var lineStyle = lineStyles[i - 1];
-      cmds.push('beginPath()');
+  while (lineStyle = lineStyles[i++]) {
+    var segments = lineSegments[i];
+    if (segments) {
+      var strokeStyle = colorToStyle(lineStyle.color, lineStyle.colorMorph);
+      var lineWidth =
+        morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined);
       var j = 0;
-      var prev = { };
-      var edge;
-      while (edge = edges[j++]) {
-        if (edge.spt !== prev.dpt)
-          cmds.push('moveTo(' + edge.spt + ')');
-        if (edge.cpt)
-          cmds.push('quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
-        else
-          cmds.push('lineTo(' + edge.dpt + ')');
-        prev = edge;
+      var segment;
+      while (segment = segments[j++]) {
+        var edges = segment.edges;
+        var cmds = ['beginPath()'];
+        var k = 0;
+        var edge;
+        var prev = { };
+        while (edge = edges[k++]) {
+          if (edge.spt !== prev.dpt)
+            cmds.push('moveTo(' + edge.spt + ')');
+          if (edge.cpt)
+            cmds.push('quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
+          else
+            cmds.push('lineTo(' + edge.dpt + ')');
+          prev = edge;
+        }
+        cmds.push('strokeStyle=' + strokeStyle);
+        cmds.push('lineWidth=' + lineWidth);
+        cmds.push('lineCap="round"');
+        cmds.push('lineJoin="round"');
+        cmds.push('stroke()');
+        paths.push({
+          i: segment.i,
+          cmds: cmds,
+          toString: joinCmds
+        });
       }
-      cmds.push('strokeStyle=' + colorToStyle(lineStyle.color, lineStyle.colorMorph));
-      cmds.push('lineWidth=' +
-                morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined));
-      cmds.push('lineCap="round"');
-      cmds.push('lineJoin="round"');
-      cmds.push('stroke()');
-      paths.push({
-        i: edges[edges.length - 1].i,
-        cmds: cmds,
-        toString: joinCmds
-      });
     }
   }
   paths.sort(function (a, b) {
