@@ -78,6 +78,7 @@
         bottom: 0;
         width: 280px;
         padding: 10px;
+        overflow: auto;
         text-align: center;
         background: url(no_bg.png);
         border-left: 1px solid #d3d3d3;
@@ -122,6 +123,10 @@
         left: 280px;
         width: auto;
         padding-top: 80px;
+      }
+      body.timeline #preview > canvas {
+        max-width: 550px;
+        max-height: 400px;
       }
       body.inspect #preview > canvas {
         max-width: 280px;
