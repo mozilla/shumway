@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>SWF Inspector</title>
+
     <link type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/themes/base/jquery-ui.css" rel="Stylesheet"/>
     <style>
       body {
@@ -36,30 +37,43 @@
         left: 0;
         top: 75px;
         bottom: 0;
-        margin: 0;
         width: 280px;
-        padding: 0;
         overflow: auto;
         background: #e6e6e6;
         border-right: 1px solid #d3d3d3;
       }
-      #sidebar li {
+      #sidebar ol {
+        margin: 0;
+        width: 100%;
+        padding: 0;
+      }
+      #items > li:first-child {
+        color: #454545;
+        list-style-type: none;
+      }
+      #items li {
+        position: relative;
         height: 14px;
         padding: 10px;
+        color: #888;
         border-bottom: 1px solid #d3d3d3;
-        list-style-type: none;
+        list-style-position: inside;
         cursor: pointer;
       }
-      #sidebar li:hover {
+      #items li:hover {
         background: #fbf9ee;
       }
-      #sidebar li.active {
+      #items li.active {
         background: #fcefa1;
       }
-      #sidebar li > span {
-        display: inline-block;
-        width: 30px;
-        color: #888;
+      #items li > span {
+        position: absolute;
+        left: 50px;
+        color: #454545;
+        pointer-events: none;
+      }
+      #items ol li {
+        padding-left: 25px;
       }
       #graph {
         position: absolute;
@@ -133,12 +147,16 @@
       }
     </style>
   </head>
+
   <body class="timeline">
     <div id="menu">
       <h3>Shumway SWF Inspector</h3>
     </div>
     <div id="info">Drop a SWF File</div>
-    <ul id="sidebar"></ul>
+    <div id="sidebar">
+      <ol id="items" start="-1"></ol>
+    </div>
+
     <pre id="graph"></pre>
     <div id="preview"></div>
     <div id="timeline">
@@ -166,6 +184,7 @@
     <script src="../parser/tags.js"></script>
     <script src="../parser/inflate.js"></script>
     <script src="../parser/stream.js"></script>
+
     <script src="../parser/templates.js"></script>
     <script src="../parser/generate.js"></script>
     <script src="../parser/filter.js"></script>
@@ -251,14 +270,11 @@
       var body = $('body');
       var info = $('#info');
       var sidebar = $('#sidebar');
+      var items = $('#items');
       var graph = $('#graph');
       var preview = $('#preview');
       var storyboard = $('#storyboard');
       var playhead = $('#playhead');
-
-      var stage;
-      var ctx;
-      var activeItem;
 
       function readFile(file) {
         var reader = new FileReader();
@@ -276,7 +292,7 @@
         reader.readAsArrayBuffer(file);
       }
       function process(file, swf) {
-        sidebar.html('');
+        items.html('');
         graph.html('');
         preview.html('');
 
@@ -284,10 +300,13 @@
         var frameWidth = (bounds.xMax - bounds.xMin) / 20;
         var frameHeight = (bounds.yMax - bounds.yMin) / 20;
 
-        stage = $('<canvas>');
-        ctx = stage[0].getContext('2d');
-        stage.attr('width', frameWidth);
-        stage.attr('height', frameHeight);
+        var stage = preview.data('stage');
+        if (!stage) {
+          stage = document.createElement('canvas');
+          preview.data('stage', stage);
+        }
+        stage.width = frameWidth;
+        stage.height = frameHeight;
 
         info.html(
           '<b>' + file.name + '</b>, SWF' + swf.version + ', ' +
@@ -295,93 +314,108 @@
           frameWidth + 'x' + frameHeight + 'px'
         );
 
-        sidebar.html('');
-        activeItem = $('<li class="active">Main Timeline</li>');
-        activeItem.data('mc', swf);
-        sidebar.append(activeItem);
+        items.addClass('incomplete');
+        items.data('context', swf);
+        items.html('');
+        var main = $('<li class="active">Main Timeline</li>');
+        items.append(main);
 
-        (function createItems(mc, level) {
-          var tags = mc.tags;
-          for (var i = 0, tag; tag = tags[i]; ++i) {
-            var item = $(
-              '<li class="level-' + level + '">' +
-                '<span>' + i + '</span> ' + tagNames[tag.tag] +
-              '</li>'
-            );
-            item.data('mc', swf);
-            item.data('tagNum', i);
-            sidebar.append(item);
-            if (tag.tag === 39)
-              createItems(tag, level + 1);
-            else if (tag.tag === 9)
-              stage.css('background', 'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')');
-          }
-        })(swf, 0);
-
-        setTimeline(swf);
+        processTags(50);
+        setupTimeline(swf);
       }
-      function setTimeline(mc) {
+      function processTags(max) {
+        var i = 0;
+        var lists = sidebar.find('ol.incomplete');
+        while (i < max && lists.length) {
+          (function createItems(list) {
+            var tags = list.data('unprocessedTags');
+            if (!tags) {
+              tags = list.data('context').tags.slice();
+              list.data('unprocessedTags', tags);
+            } else if (!tags.length) {
+              return;
+            }
+            for (var j = 0, tag; i < max && (tag = tags.shift()); ++i, ++j) {
+              var item = $('<li><span>' + tagNames[tag.tag] + '</span></li>');
+              item.data('tag', tag);
+              list.append(item);
+              if (tag.tag === 39) {
+                var sublist = $('<ol start="0" class="incomplete"></ol>');
+                sublist.data('context', tag);
+                createItems(sublist);
+                list.append(sublist);
+              } else if (tag.tag === 9) {
+                preview.data('stage').style.background =
+                  'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')';
+              }
+            }
+            if (!tags.length) {
+              list.removeClass('incomplete');
+              list.data('unprocessedTags', null);
+              lists = lists.not(list);
+            }
+          })(lists.last());
+        }
+      }
+      function setupTimeline(context) {
         preview.html('');
-        storyboard.css('width', (20 * mc.frameCount) + 'px');
-        storyboard.data('mc', mc);
-        showFrame(mc, 0);
+        storyboard.css('width', (20 * context.frameCount) + 'px');
+        storyboard.data('context', context);
+        showFrame(context, 0);
         body.removeClass('inspect');
         body.addClass('timeline');
       }
-      function showFrame(mc, frameNum) {
-        renderFrame(mc, frameNum);
+      function showFrame(context, frameNum) {
+        renderFrame(context, frameNum);
         playhead.css('left', (frameNum * 20) + 'px');
-        storyboard.data('currentFrame', frameNum);
+        currentFrame = frameNum;
       }
-      function renderFrame(mc, frameNum) {
-        var canvas = ctx.canvas;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        var tags = mc.tags;
+      function renderFrame(context, frameNum) {
+        var stage = preview.data('stage');
+        var ctx = stage.getContext('2d');
+        ctx.clearRect(0, 0, stage.width, stage.height);
+        var tags = context.tags;
         var i = 0;
         var tag;
         while (tag = tags[i++]) {
           if (tag.frameNum === frameNum) {
             if (tag.displayList)
               renderDisplayList(tag.displayList, ctx);
-            preview.append(stage);
+            preview.append(preview.data('stage'));
             break;
           }
         }
       }
       function activate(node) {
+        var activeItem = sidebar.find('.active');
         if (activeItem)
           activeItem.removeClass('active');
         node.addClass('active');
         activeItem = node;
-        var mc = node.data('mc');
-        var tagNum = node.data('tagNum');
-        if (tagNum != undefined) {
-          var tag = mc.tags[tagNum];
-          if (tag.tag === 39)
-            setTimeline(tag);
-          else
-            inspect(mc, tag);
-        } else {
-          setTimeline(mc);
-        }
+        var context = node.parent().data('context');
+        var tag = node.data('tag');
+        if (!tag || tag.tag === 39)
+          setupTimeline(context);
+        else
+          inspect(context, tag);
       }
-      function inspect(mc, tag) {
+      function inspect(context, tag) {
         body.removeClass('timeline');
         body.addClass('inspect');
         graph.html(js_beautify(JSON.stringify(tag)));
         preview.html('');
         if (tag.tag === 1) {
-          renderFrame(mc, tag.frameNum);
+          renderFrame(context, tag.frameNum);
         } else {
           switch (tag.type) {
           case 'shape':
-            var canvas = $('<canvas>');
+            var canvas = document.createElement('canvas');
             var bounds = tag.bounds;
             var width = (bounds.xMax - bounds.xMin) / 20;
             var height = (bounds.yMax - bounds.yMin) / 20;
-            canvas.attr('width', width);
-            canvas.attr('height', height);
-            var ctx = canvas[0].getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
             var factory = new ShapeFactory(tag);
             factory.render(ctx, {
               scaleX: 0.05,
@@ -406,13 +440,16 @@
         event.preventDefault();
         readFile(event.originalEvent.dataTransfer.files[0]);
       });
-      sidebar.on('click', function(event) {
-        if (sidebar.has(event.target))
-          activate($(event.target));
+      sidebar.on('scroll', function(event) {
+        if (event.target.scrollTop === items.outerHeight() - sidebar.outerHeight())
+          processTags(50);
+      });
+      items.on('click', function(event) {
+        activate($(event.target));
       });
       storyboard.on('click', function(event) {
         var frameNum = ~~((event.pageX - $(event.target).offset().left) / 20);
-        showFrame(storyboard.data('mc'), frameNum);
+        showFrame(storyboard.data('context'), frameNum);
       });
       playhead.draggable({
         axis: 'x',
@@ -420,8 +457,8 @@
         grid: [20, 0],
         drag: function(event, ui) {
           var frameNum = ui.position.left / 20;
-          if (storyboard.data('currentFrame') !== frameNum)
-            showFrame(storyboard.data('mc'), frameNum);
+          if (currentFrame !== frameNum)
+            showFrame(storyboard.data('context'), frameNum);
         }
       });
     </script>
