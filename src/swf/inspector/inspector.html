@@ -47,9 +47,8 @@
         width: 100%;
         padding: 0;
       }
-      #items > li:first-child {
-        color: #454545;
-        list-style-type: none;
+      #items {
+        cursor: pointer;
       }
       #items li {
         position: relative;
@@ -58,13 +57,16 @@
         color: #888;
         border-bottom: 1px solid #d3d3d3;
         list-style-position: inside;
-        cursor: pointer;
       }
       #items li:hover {
         background: #fbf9ee;
       }
       #items li.active {
         background: #fcefa1;
+      }
+      #items > li:first-child {
+        color: #454545;
+        list-style-type: none;
       }
       #items li > span {
         position: absolute;
