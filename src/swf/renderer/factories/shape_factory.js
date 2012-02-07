@@ -112,7 +112,7 @@ function ShapeFactory(graph) {
             var cym = sym + recordMorph.controlDeltaY;
             dxm = cxm + recordMorph.anchorDeltaX;
             dym = cym + recordMorph.anchorDeltaY;
-            edge.cpt = morph((dx - sx) / 2, cxm) + ',' + morph((dy - sy) / 2, cym);
+            edge.cpt = morph(sx + ((dx - sx) / 2), cxm) + ',' + morph(sy + ((dy - sy) / 2), cym);
           }
         }
       } else {
@@ -130,8 +130,8 @@ function ShapeFactory(graph) {
             } else {
               dxm += recordMorph.deltaX;
             }
-            var cxm = (dxm - sxm) / 2;
-            var cym = (dym - sym) / 2;
+            var cxm = sxm + ((dxm - sxm) / 2);
+            var cym = sym + ((dym - sym) / 2);
           } else {
             var cxm = sxm + recordMorph.controlDeltaX;
             var cym = sym + recordMorph.controlDeltaY;
