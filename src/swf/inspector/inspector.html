@@ -106,9 +106,9 @@
         top: 75px;
         right: 0;
         margin-left: 281px;
-        height: 70px;
+        height: 105px;
         overflow: hidden;
-        background: url(timeline_bg.png);
+        background: #e6e6e6 url(timeline_bg.png) repeat-x left bottom;
       }
       #timeline .unit {
         position: absolute;
@@ -116,21 +116,53 @@
         margin-left: -21px;
         font-size: smaller;
       }
+      #controls {
+        padding: 10px;
+        text-align: right;
+      }
+      #controls button {
+        margin-left: 5px;
+        height: 18px;
+        width: 30px;
+        border: 1px solid #aaa;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        background-repeat: no-repeat;
+        background-position: center center;
+      }
+      #controls button:hover {
+        background-color: #fbf9ee;
+      }
+      #controls button:active {
+        background-color: #fcefa1;
+      }
+      #prev {
+        background-image: url(prev.png);
+      }
+      #play {
+        background-image: url(pause.png);
+      }
+      #play.paused {
+        background-image: url(play.png);
+      }
+      #next {
+        background-image: url(next.png);
+      }
+      #storyboard {
+        position: absolute;
+        top: 70px;
+        height: 35px;
+        background: url(frame.png);
+        cursor: pointer;
+      }
       #playhead {
         position: absolute;
         left: -20px;
-        top: -35px;
+        top: -38px;
         margin: 1px;
         width: 17px;
         height: 15px;
         background: url(playhead.png);
-      }
-      #storyboard {
-        position: absolute;
-        top: 35px;
-        height: 35px;
-        background: url(frame.png);
-        cursor: pointer;
       }
       body.timeline #timeline {
         display: block;
@@ -138,7 +170,7 @@
       body.timeline #preview {
         left: 280px;
         width: auto;
-        padding-top: 80px;
+        padding-top: 115px;
       }
       body.timeline #preview > canvas {
         max-width: 550px;
@@ -162,13 +194,18 @@
     <pre id="graph"></pre>
     <div id="preview"></div>
     <div id="timeline">
+      <div id="controls">
+        <button id="prev"/>
+        <button id="play" class="paused"/>
+        <button id="next"/>
+      </div>
       <script>
         var i = 0;
         while (i++ < 50)
           document.write('<div class="unit" style="left:' + (100 * i) + 'px">' + (i * 5) + '</div>');
       </script>
       <div id="storyboard">
-        <div id="playhead"></div>
+        <div id="playhead" class="paused"></div>
       </div>
     </div>
 
@@ -275,6 +312,7 @@
       var items = $('#items');
       var graph = $('#graph');
       var preview = $('#preview');
+      var timeline = $('#timeline');
       var storyboard = $('#storyboard');
       var playhead = $('#playhead');
 
@@ -301,6 +339,8 @@
         var bounds = swf.bounds;
         var frameWidth = (bounds.xMax - bounds.xMin) / 20;
         var frameHeight = (bounds.yMax - bounds.yMin) / 20;
+        
+        timeline.data('frameRate', swf.frameRate);
 
         var stage = preview.data('stage');
         if (!stage) {
@@ -362,7 +402,8 @@
       function setupTimeline(context) {
         preview.html('');
         storyboard.css('width', (20 * context.frameCount) + 'px');
-        storyboard.data('context', context);
+        timeline.data('context', context);
+        timeline.data('frameCount', context.frameCount);
         showFrame(context, 0);
         body.removeClass('inspect');
         body.addClass('timeline');
@@ -370,7 +411,7 @@
       function showFrame(context, frameNum) {
         renderFrame(context, frameNum);
         playhead.css('left', (frameNum * 20) + 'px');
-        currentFrame = frameNum;
+        playhead.data('currentFrame', frameNum);
       }
       function renderFrame(context, frameNum) {
         var stage = preview.data('stage');
@@ -451,7 +492,41 @@
       });
       storyboard.on('click', function(event) {
         var frameNum = ~~((event.pageX - $(event.target).offset().left) / 20);
-        showFrame(storyboard.data('context'), frameNum);
+        showFrame(timeline.data('context'), frameNum);
+      });
+      var paused = true;
+      var interval;
+      $('#prev').on('click', function prev() {
+        var currentFrame = playhead.data('currentFrame');
+        if (currentFrame)
+          showFrame(timeline.data('context'), currentFrame - 1);
+      });
+      $('#play').on('click', function play() {
+        if (paused) {
+          var frameCount = timeline.data('frameCount') || 0;
+          if (frameCount <= 1)
+            return;
+          interval = setInterval(function() {
+            var frameNum = playhead.data('currentFrame') + 1;
+            if (frameNum === frameCount) {
+              play();
+              frameNum = 0;
+            }
+            showFrame(timeline.data('context'), frameNum);
+          }, 1000 / timeline.data('frameRate'));
+          paused = false;
+          $('#play').toggleClass('paused');
+        } else {
+          clearInterval(interval);
+          paused = true;
+          $('#play').toggleClass('paused');
+        }
+      });
+      $('#next').on('click', function next() {
+        var currentFrame = playhead.data('currentFrame');
+        var frameCount = timeline.data('frameCount') || 0;
+        if (currentFrame < frameCount - 1)
+          showFrame(timeline.data('context'), currentFrame + 1);
       });
       playhead.draggable({
         axis: 'x',
@@ -459,8 +534,8 @@
         grid: [20, 0],
         drag: function(event, ui) {
           var frameNum = ui.position.left / 20;
-          if (currentFrame !== frameNum)
-            showFrame(storyboard.data('context'), frameNum);
+          if (playhead.data('currentFrame') !== frameNum)
+            showFrame(timeline.data('context'), frameNum);
         }
       });
     </script>
