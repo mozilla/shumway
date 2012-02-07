@@ -1,15 +1,21 @@
 var Control = (function () {
 
   function formatBlock(block) {
-    return "#" + block.blockId + "#";
+    return "#" + block.blockId;
   }
+
+  var TraceLeave = {
+    trace: function (writer) {
+      writer.leave("}");
+    }
+  };
 
   function Clusterfuck(body) {
     this.body = body;
   }
 
   Clusterfuck.prototype = {
-    trace: function (writer) {
+    trace: function (writer, worklist) {
       writer.writeLn("clusterfuck " + formatBlock(this.body));
     }
   };
@@ -20,11 +26,9 @@ var Control = (function () {
   }
 
   Seq.prototype = {
-    trace: function (writer) {
+    trace: function (writer, worklist) {
       writer.writeLn(formatBlock(this.body));
-      if (this.exit) {
-        this.exit.trace(writer);
-      }
+      this.exit && worklist.push(this.exit);
     }
   };
 
@@ -34,13 +38,11 @@ var Control = (function () {
   }
 
   Loop.prototype = {
-    trace: function (writer) {
+    trace: function (writer, worklist) {
       writer.enter("loop {");
-      this.body.trace(writer);
-      writer.leave("}");
-      if (this.exit) {
-        this.exit.trace(writer);
-      }
+      this.exit && worklist.push(this.exit);
+      worklist.push(TraceLeave);
+      worklist.push(this.body);
     }
   };
 
@@ -52,20 +54,24 @@ var Control = (function () {
     this.exit = exit;
   }
 
-  If.prototype = {
+  var TraceElse = {
     trace: function (writer) {
+      writer.outdent();
+      writer.enter("} else {");
+    }
+  };
+
+  If.prototype = {
+    trace: function (writer, worklist) {
       writer.writeLn(formatBlock(this.cond));
       writer.enter("if" + (this.negated ? " not" : "") + " {");
-      this.then.trace(writer);
+      this.exit && worklist.push(this.exit);
+      worklist.push(TraceLeave);
       if (this.else) {
-        writer.outdent();
-        writer.enter("} else {");
-        this.else.trace(writer);
+        worklist.push(TraceElse);
+        worklist.push(this.else);
       }
-      writer.leave("}");
-      if (this.exit) {
-        this.exit.trace(writer);
-      }
+      worklist.push(this.then);
     }
   };
 
@@ -75,11 +81,7 @@ var Control = (function () {
 
   LabeledBreak.prototype = {
     trace: function (writer) {
-      var str = "break";
-      if (this.target) {
-        str += " to " + formatBlock(this.target);
-      }
-      writer.writeLn(str);
+      writer.writeLn("break to " + formatBlock(this.target));
     }
   };
 
@@ -89,11 +91,7 @@ var Control = (function () {
 
   LabeledContinue.prototype = {
     trace: function (writer) {
-      var str = "continue";
-      if (this.target) {
-        str += " to " + formatBlock(this.target);
-      }
-      writer.writeLn(str);
+      writer.writeLn("continue to " + formatBlock(this.target));
     }
   };
 
@@ -124,6 +122,7 @@ var Control = (function () {
 })();
 
 var Bytecode = (function () {
+
   function Bytecode(code) {
     var op = code.readU8();
     this.op = op;
@@ -263,6 +262,7 @@ var Bytecode = (function () {
   };
 
   return Bytecode;
+
 })();
 
 /*
@@ -378,34 +378,41 @@ var Analysis = (function () {
 
   function dfs(root, pre, post, succ) {
     var visited = {};
+    var pended = {};
+    var worklist = [root];
+    var node;
 
-    function visit(node) {
-      visited[node.position] = true;
+    pended[root.position] = true;
+    while (node = worklist.top()) {
+      if (!visited[node.position]) {
+        visited[node.position] = true;
 
-      if (pre) {
-        pre(node);
+        if (pre) {
+          pre(node);
+        }
+      } else {
+        if (post) {
+          post(node);
+        }
+        worklist.pop();
+        continue;
       }
 
       var succs = node.succs;
       for (var i = 0, j = succs.length; i < j; i++) {
         var s = succs[i];
-        var v = visited[s.position];
+        var p = pended[s.position];
 
         if (succ) {
           succ(node, s, v);
         }
 
-        if (!v) {
-          visit(s);
+        if (!p) {
+          worklist.push(s);
+          pended[s.position] = true;
         }
       }
-
-      if (post) {
-        post(node);
-      }
     }
-
-    visit(root);
   }
 
   function detectBasicBlocks(bytecodes) {
@@ -644,7 +651,11 @@ var Analysis = (function () {
     return Object.create(this, desc);
   };
 
-  function inducibleLoop(block, cx) {
+  /*
+   * Returns a new context updated with loop information if loop is inducible,
+   * undefined otherwise.
+   */
+  function inducibleLoop(block, cx, parentLoops) {
     /* Natural loop information should already be computed. */
     if (!block.loop) {
       return undefined;
@@ -661,7 +672,6 @@ var Analysis = (function () {
     exits.takeSnapshot();
 
     var exitNodes = exits.snapshot;
-    var parentLoops = cx.parentLoops;
     if (parentLoops.length > 0) {
       for (var i = 0, j = exitNodes.length; i < j; i++) {
         var exit = exitNodes[i];
@@ -771,87 +781,166 @@ var Analysis = (function () {
   }
 
   function induceControlTree(root) {
-    function visit(block, cx) {
-      var cxx;
-      var overlay;
+    var conts = [];
+    var parentLoops = [];
+    var cx = new ExtractionContext();
+    var block = root;
 
-      if (block === cx.exit) {
-        return null;
+    const K_LOOP_BODY = 0;
+    const K_LOOP = 1;
+    const K_IF_THEN = 2;
+    const K_IF_ELSE = 3;
+    const K_IF = 4;
+    const K_SEQ = 5;
+
+    var v;
+    for (;;) {
+      v = null;
+
+out:  while (block !== cx.exit) {
+        if (!block) {
+          v = Control.Return;
+          break;
+        }
+
+        if (block === cx.break) {
+          v = Control.Break;
+          break;
+        }
+
+        if (block === cx.continue && cx.continue !== cx.exit) {
+          v = Control.Continue;
+          break;
+        }
+
+        if (cx.loop && !cx.loop.has(block)) {
+          for (var i = 0, j = parentLoops.length; i < j; i++) {
+            var parentLoop = parentLoops[i];
+
+            if (block === parentLoop.break) {
+              v = new Control.LabeledBreak(parentLoop.break);
+              break out;
+            }
+
+            if (block === parentLoop.continue) {
+              v = new Control.LabeledContinue(parentLoop.exit);
+              break out;
+            }
+          }
+        }
+
+        var info = {};
+        if (cxx = inducibleLoop(block, cx, parentLoops)) {
+          conts.push({ kind: K_LOOP_BODY,
+                       next: cxx.break,
+                       cx: cx });
+          parentLoops.push(cxx);
+
+          var succs = block.succs;
+          if (succs === 1) {
+            conts.push({ kind: K_SEQ,
+                         block: block,
+                         cx: cxx });
+            block = succs[0];
+          } else {
+            var branch1 = succs[0];
+            var branch2 = succs[1];
+            if (branch1.leadsTo(cxx.break)) {
+              conts.push({ kind: K_IF_THEN,
+                           cond: block,
+                           join: branch2,
+                           joinCx: cxx,
+                           cx: cxx });
+              block = branch1;
+            } else {
+              conts.push({ kind: K_IF_THEN,
+                           cond: block,
+                           negated: true,
+                           join: branch1,
+                           joinCx: cxx,
+                           cx: cxx });
+              block = branch2;
+            }
+          }
+          cx = cxx;
+        } else if (cxx = inducibleIf(block, cx, info)) {
+          conts.push({ kind: K_IF_THEN,
+                       cond: block,
+                       negated: info.negated,
+                       else: info.elseBranch,
+                       join: cxx.exit,
+                       joinCx: cx,
+                       cx: cxx });
+          block = info.thenBranch;
+          cx = cxx;
+        } else if (inducibleSeq(block, cx)) {
+          conts.push({ kind: K_SEQ,
+                       block: block });
+          block = block.succs.top();
+        } else {
+          v = new Control.Clusterfuck(block);
+          break;
+        }
+      }
+
+      var k;
+out:  while (k = conts.pop()) {
+        switch (k.kind) {
+        case K_LOOP_BODY:
+          block = k.next;
+          cx = k.cx;
+          conts.push({ kind: K_LOOP,
+                       body: v });
+          parentLoops.pop();
+          break out;
+        case K_LOOP:
+          v = new Control.Loop(k.body, v);
+          break;
+        case K_IF_THEN:
+          if (k.else) {
+            block = k.else;
+            cx = k.cx;
+            conts.push({ kind: K_IF_ELSE,
+                         cond: k.cond,
+                         negated: k.negated,
+                         then: v,
+                         join: k.join,
+                         cx: k.joinCx });
+          } else {
+            block = k.join;
+            cx = k.joinCx;
+            conts.push({ kind: K_IF,
+                         cond: k.cond,
+                         negated: k.negated,
+                         then: v });
+          }
+          done = true;
+          break out;
+        case K_IF_ELSE:
+          block = k.join;
+          cx = k.cx;
+          conts.push({ kind: K_IF,
+                       cond: k.cond,
+                       negated: k.negated,
+                       then: k.then,
+                       else: v });
+          done = true;
+          break out;
+        case K_IF:
+          v = new Control.If(k.cond, k.then, k.else, k.negated, v);
+          break;
+        case K_SEQ:
+          v = new Control.Seq(k.block, v);
+          break;
+        default:
+          unexpected();
+        }
       }
 
       if (!block) {
-        return Control.Return;
+        return v;
       }
-
-      if (block === cx.break) {
-        return Control.Break;
-      }
-
-      if (block === cx.continue) {
-        return (cx.continue === cx.exit ? null : Control.Continue);
-      }
-
-      if (cx.loop && !cx.loop.has(block)) {
-        var parentLoops = cx.parentLoops;
-        for (var i = 0, j = parentLoops.length; i < j; i++) {
-          var parentLoop = parentLoops[i];
-
-          if (block === parentLoop.break) {
-            return new Control.LabeledBreak(parentLoop.break);
-          }
-
-          if (block === parentLoop.continue) {
-            return new Control.LabeledContinue(parentLoop.exit);
-          }
-        }
-      }
-
-      var info = {};
-
-      if (cxx = inducibleLoop(block, cx)) {
-        /*
-         * If we have two succs, we emit an if. Else we emit a seq. This is
-         * safe as |inducibleLoop| has already checked that the entire loop
-         * body (including the header) has a single exit node. Note that the
-         * entry to the loop body cannot be a continue or a break.
-         */
-        cxx.parentLoops.push(cxx);
-        var body;
-        var succs = block.succs;
-        if (block.succs === 1) {
-          body = new Control.Seq(block, visit(succs[0], cxx));
-        } else {
-          var branch1 = succs[0];
-          var branch2 = succs[1];
-          if (branch1.leadsTo(cxx.break)) {
-            body = new Control.If(block, visit(branch1, cxx), null, false,
-                                  visit(branch2, cxx));
-          } else {
-            body = new Control.If(block, visit(branch2, cxx), null, true,
-                                  visit(branch1, cxx));
-          }
-        }
-        cxx.parentLoops.pop();
-
-        var l = new Control.Loop(body, visit(cxx.break, cx));
-        return l;
-      }
-
-      if (cxx = inducibleIf(block, cx, info)) {
-        return new Control.If(block,
-                              visit(info.thenBranch, cxx),
-                              info.elseBranch ? visit(info.elseBranch, cxx) : null,
-                              info.negated, visit(cxx.exit, cx));
-      }
-
-      if (inducibleSeq(block, cx)) {
-        return new Control.Seq(block, visit(block.succs.top(), cx));
-      }
-
-      return new Control.Clusterfuck(block);
     }
-
-    return visit(root, new ExtractionContext());
   }
 
   function Analysis(codeStream) {
@@ -1028,7 +1117,10 @@ var Analysis = (function () {
 
     if (this.controlTree) {
       writer.enter("control-tree {");
-      this.controlTree.trace(writer);
+      var worklist = [this.controlTree];
+      while (code = worklist.pop()) {
+        code.trace(writer, worklist);
+      }
       writer.leave("}");
     }
 
