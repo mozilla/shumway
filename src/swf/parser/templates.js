@@ -83,7 +83,7 @@ function readUb($bytes, $stream, size) {
   return val;
 }
 function readFb($bytes, $stream, size) {
-  return readUb($bytes, $stream, size) * pow(2, -16);
+  return readSb($bytes, $stream, size) / 65536;
 }
 function readString($bytes, $stream, length) {
   var codes = [];
