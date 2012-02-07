@@ -301,7 +301,8 @@ function ShapeFactory(graph) {
         if (fillStyle.type === FILL_LINEAR_GRADIENT) {
           cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
         } else {
-          cmds.push('var g=createRadialGradient(0,0,0,0,0,819.2)');
+          var x1 = 819.2 * (fillStyle.focalPoint || 0);
+          cmds.push('var g=createRadialGradient(' + x1 + ',0,0,0,0,819.2)');
         }
         var records = fillStyle.records;
         var j = 0;
