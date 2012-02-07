@@ -225,7 +225,9 @@ var Bytecode = (function () {
       b = b.dominator;
     } while (b !== b.dominator);
 
-    this.dom = d;
+    Object.defineProperty(this, "dom", { value: d,
+                                         configurable: true,
+                                         enumerable: true });
     return d;
   }
   Object.defineProperty(Bp, "dom", { get: dom,
@@ -633,7 +635,6 @@ var Analysis = (function () {
      */
     this.break = null;
     this.continue = null;
-    this.parentLoops = [];
     this.loop = null;
     this.exit = null;
   }
