@@ -20,7 +20,7 @@
       }
       #menu {
         height: 15px;
-        padding: 15px 10px;
+        padding: 10px 10px;
         border-top: 2px solid #888;
         border-bottom: 1px solid #aaa;
       }
@@ -35,7 +35,7 @@
       #sidebar {
         position: absolute;
         left: 0;
-        top: 75px;
+        top: 65px;
         bottom: 0;
         width: 280px;
         overflow: auto;
@@ -80,7 +80,7 @@
       #graph {
         position: absolute;
         left: 0;
-        top: 75px;
+        top: 65px;
         right: 0;
         bottom: 0;
         margin: 0 301px 0 281px;
@@ -89,7 +89,7 @@
       }
       #preview {
         position: absolute;
-        top: 75px;
+        top: 65px;
         right: 0;
         bottom: 0;
         width: 280px;
@@ -103,7 +103,7 @@
         display: none;
         position: absolute;
         left: 0;
-        top: 75px;
+        top: 65px;
         right: 0;
         margin-left: 281px;
         height: 105px;
@@ -120,11 +120,14 @@
         padding: 10px;
         text-align: right;
       }
+      #controls * {
+        vertical-align: middle;
+      }
       #controls button {
         margin-left: 5px;
         height: 18px;
         width: 30px;
-        border: 1px solid #aaa;
+        border: 1px solid #888;
         border-radius: 5px;
         background-color: #f0f0f0;
         background-repeat: no-repeat;
@@ -135,6 +138,13 @@
       }
       #controls button:active {
         background-color: #fcefa1;
+      }
+      #currentframe {
+        width: 35px;
+        height: 12px;
+        padding: 2px;
+        text-align: center;
+        border: 1px solid #888;
       }
       #prev {
         background-image: url(prev.png);
@@ -195,6 +205,7 @@
     <div id="preview"></div>
     <div id="timeline">
       <div id="controls">
+        <input id="currentframe"/>
         <button id="prev"/>
         <button id="play" class="paused"/>
         <button id="next"/>
@@ -313,6 +324,8 @@
       var graph = $('#graph');
       var preview = $('#preview');
       var timeline = $('#timeline');
+      var currentframe = $('#currentframe');
+      var playbtn = $('#play');
       var storyboard = $('#storyboard');
       var playhead = $('#playhead');
 
@@ -320,8 +333,10 @@
         var reader = new FileReader();
         reader.onload = function() {
           try {
+            console.time('process');
             SWF.parse(this.result, function(result) {
               process(file, result);
+              console.timeEnd('process');
             });
           } catch (e) {
             info.html('<span class="error">' + e.message + '</span>');
@@ -404,14 +419,17 @@
         storyboard.css('width', (20 * context.frameCount) + 'px');
         timeline.data('context', context);
         timeline.data('frameCount', context.frameCount);
-        showFrame(context, 0);
+        showFrame(context, 1);
         body.removeClass('inspect');
         body.addClass('timeline');
       }
       function showFrame(context, frameNum) {
-        renderFrame(context, frameNum);
-        playhead.css('left', (frameNum * 20) + 'px');
-        playhead.data('currentFrame', frameNum);
+        if (realFrameNum < 1 || frameNum > timeline.data('frameCount'))
+          frameNum = 1;
+        var realFrameNum = frameNum - 1;
+        renderFrame(context, realFrameNum);
+        playhead.css('left', (realFrameNum * 20) + 'px');
+        currentframe.val(frameNum);
       }
       function renderFrame(context, frameNum) {
         var stage = preview.data('stage');
@@ -460,6 +478,7 @@
             canvas.height = height;
             var ctx = canvas.getContext('2d');
             var factory = new ShapeFactory(tag);
+            console.log(factory.render);
             factory.render(ctx, {
               scaleX: 0.05,
               scaleY: 0.05,
@@ -483,49 +502,53 @@
         event.preventDefault();
         readFile(event.originalEvent.dataTransfer.files[0]);
       });
-      sidebar.on('scroll', function(event) {
+      sidebar.scroll(function(event) {
         if (event.target.scrollTop === items.outerHeight() - sidebar.outerHeight())
           processTags(50);
       });
-      items.on('click', function(event) {
+      items.click(function(event) {
         activate($(event.target));
       });
-      storyboard.on('click', function(event) {
+      storyboard.click(function(event) {
         var frameNum = ~~((event.pageX - $(event.target).offset().left) / 20);
         showFrame(timeline.data('context'), frameNum);
       });
-      var paused = true;
-      var interval;
-      $('#prev').on('click', function prev() {
-        var currentFrame = playhead.data('currentFrame');
-        if (currentFrame)
+      currentframe.change(function() {
+        var frameNum = +currentframe.val();
+        if (isNaN(frameNum))
+          frameNum = 1;
+        showFrame(timeline.data('context'), frameNum);
+      });
+      $('#prev').click(function prev() {
+        var currentFrame = +currentframe.val();
+        if (currentFrame > 1)
           showFrame(timeline.data('context'), currentFrame - 1);
       });
-      $('#play').on('click', function play() {
-        if (paused) {
+      playbtn.click(function play() {
+        if (!play.s) {
           var frameCount = timeline.data('frameCount') || 0;
           if (frameCount <= 1)
             return;
-          interval = setInterval(function() {
-            var frameNum = playhead.data('currentFrame') + 1;
-            if (frameNum === frameCount) {
+          play.interval = setInterval(function() {
+            var frameNum = +currentframe.val() + 1;
+            if (frameNum > frameCount) {
               play();
-              frameNum = 0;
+              frameNum = 1;
             }
             showFrame(timeline.data('context'), frameNum);
           }, 1000 / timeline.data('frameRate'));
-          paused = false;
-          $('#play').toggleClass('paused');
+          play.s = true;
+          playbtn.removeClass('paused');
         } else {
-          clearInterval(interval);
-          paused = true;
-          $('#play').toggleClass('paused');
+          clearInterval(play.interval);
+          play.s = false;
+          playbtn.addClass('paused');
         }
       });
-      $('#next').on('click', function next() {
-        var currentFrame = playhead.data('currentFrame');
+      $('#next').click(function next() {
+        var currentFrame = +currentframe.val();
         var frameCount = timeline.data('frameCount') || 0;
-        if (currentFrame < frameCount - 1)
+        if (currentFrame < frameCount)
           showFrame(timeline.data('context'), currentFrame + 1);
       });
       playhead.draggable({
@@ -534,7 +557,7 @@
         grid: [20, 0],
         drag: function(event, ui) {
           var frameNum = ui.position.left / 20;
-          if (playhead.data('currentFrame') !== frameNum)
+          if (currentframe.val() != frameNum)
             showFrame(timeline.data('context'), frameNum);
         }
       });
