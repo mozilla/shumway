@@ -424,7 +424,7 @@
         body.addClass('timeline');
       }
       function showFrame(context, frameNum) {
-        if (realFrameNum < 1 || frameNum > timeline.data('frameCount'))
+        if (frameNum < 1 || frameNum > timeline.data('frameCount'))
           frameNum = 1;
         var realFrameNum = frameNum - 1;
         renderFrame(context, realFrameNum);
@@ -510,7 +510,7 @@
         activate($(event.target));
       });
       storyboard.click(function(event) {
-        var frameNum = ~~((event.pageX - $(event.target).offset().left) / 20);
+        var frameNum = Math.ceil((event.pageX - $(event.target).offset().left) / 20);
         showFrame(timeline.data('context'), frameNum);
       });
       currentframe.change(function() {
