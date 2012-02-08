@@ -168,7 +168,7 @@
       #playhead {
         position: absolute;
         left: -20px;
-        top: -38px;
+        top: -37px;
         margin: 1px;
         width: 17px;
         height: 15px;
@@ -198,7 +198,7 @@
     </div>
     <div id="info">Drop a SWF File</div>
     <div id="sidebar">
-      <ol id="items" start="-1"></ol>
+      <ol id="items" start="0"></ol>
     </div>
 
     <pre id="graph"></pre>
@@ -237,7 +237,6 @@
 
     <script src="../parser/templates.js"></script>
     <script src="../parser/generate.js"></script>
-    <script src="../parser/filter.js"></script>
     <script src="../parser/parse.js"></script>
 
     <script src="../renderer/render.js"></script>
@@ -333,10 +332,8 @@
         var reader = new FileReader();
         reader.onload = function() {
           try {
-            console.time('process');
             SWF.parse(this.result, function(result) {
               process(file, result);
-              console.timeEnd('process');
             });
           } catch (e) {
             info.html('<span class="error">' + e.message + '</span>');
@@ -397,7 +394,7 @@
               item.data('tag', tag);
               list.append(item);
               if (tag.tag === 39) {
-                var sublist = $('<ol start="0" class="incomplete"></ol>');
+                var sublist = $('<ol class="incomplete"></ol>');
                 sublist.data('context', tag);
                 createItems(sublist);
                 list.append(sublist);
@@ -426,26 +423,16 @@
       function showFrame(context, frameNum) {
         if (frameNum < 1 || frameNum > timeline.data('frameCount'))
           frameNum = 1;
-        var realFrameNum = frameNum - 1;
-        renderFrame(context, realFrameNum);
-        playhead.css('left', (realFrameNum * 20) + 'px');
+        renderFrame(context, frameNum);
+        playhead.css('left', ((frameNum - 1) * 20) + 'px');
         currentframe.val(frameNum);
       }
       function renderFrame(context, frameNum) {
         var stage = preview.data('stage');
         var ctx = stage.getContext('2d');
         ctx.clearRect(0, 0, stage.width, stage.height);
-        var tags = context.tags;
-        var i = 0;
-        var tag;
-        while (tag = tags[i++]) {
-          if (tag.frameNum === frameNum) {
-            if (tag.displayList)
-              renderDisplayList(tag.displayList, ctx);
-            preview.append(preview.data('stage'));
-            break;
-          }
-        }
+        SWF.render(context, ctx, frameNum);
+        preview.append(preview.data('stage'));
       }
       function activate(node) {
         var activeItem = sidebar.find('.active');
@@ -465,7 +452,7 @@
         body.addClass('inspect');
         graph.html(js_beautify(JSON.stringify(tag)));
         preview.html('');
-        if (tag.tag === 1) {
+        if (tag.type === 'frame') {
           renderFrame(context, tag.frameNum);
         } else {
           switch (tag.type) {
@@ -480,12 +467,12 @@
             var factory = new ShapeFactory(tag);
             console.log(factory.render);
             factory.render(ctx, {
-              scaleX: 0.05,
-              scaleY: 0.05,
+              scaleX: 1,
+              scaleY: 1,
               skew0: 0,
               skew1: 0,
-              translateX: -bounds.xMin / 20,
-              translateY: -bounds.yMin / 20
+              translateX: -bounds.xMin,
+              translateY: -bounds.yMin
             }, 0);
             preview.append(canvas);
             break;
@@ -525,7 +512,7 @@
           showFrame(timeline.data('context'), currentFrame - 1);
       });
       playbtn.click(function play() {
-        if (!play.s) {
+        if (!play.ing) {
           var frameCount = timeline.data('frameCount') || 0;
           if (frameCount <= 1)
             return;
@@ -537,11 +524,11 @@
             }
             showFrame(timeline.data('context'), frameNum);
           }, 1000 / timeline.data('frameRate'));
-          play.s = true;
+          play.ing = true;
           playbtn.removeClass('paused');
         } else {
           clearInterval(play.interval);
-          play.s = false;
+          play.ing = false;
           playbtn.addClass('paused');
         }
       });
