@@ -68,8 +68,8 @@ var Control = (function () {
       this.exit && worklist.push(this.exit);
       worklist.push(TraceLeave);
       if (this.else) {
-        worklist.push(TraceElse);
         worklist.push(this.else);
+        worklist.push(TraceElse);
       }
       worklist.push(this.then);
     }
@@ -192,12 +192,12 @@ var Bytecode = (function () {
     while (p = pending.pop()) {
       if (!body.has(p)) {
         p.inLoop = this;
+        //        p.frontier.remove(this);
         body.add(p);
         pending.push.apply(pending, p.preds);
       }
     }
 
-    body.takeSnapshot();
     this.loop = body;
   }
 
@@ -210,7 +210,7 @@ var Bytecode = (function () {
   Bp.leadsTo = function leadsTo(target) {
     return ((this === target) ||
             (this.frontier.size === 1) &&
-            (this.frontier.snapshot[0] === target));
+            (this.frontier.has(target)));
   };
 
   /* Find the dominator set from immediate dominators. */
@@ -329,7 +329,7 @@ var BytecodeSet = (function () {
       }
     },
 
-    difference: function (other) {
+    subtract: function (other) {
       var otherBacking = other.backing;
       var backing = this.backing;
       for (var position in otherBacking) {
@@ -343,14 +343,8 @@ var BytecodeSet = (function () {
     /*
      * If the set has a snapshot, assume it's current and use that to choose
      * an element. Otherwise choose a key and resolve it.
-     *
-     * NB: It's up to the user to make sure this is not stale before using!
      */
     choose: function () {
-      if (this.snapshot) {
-        return this.snapshot.top();
-      }
-
       var backing = this.backing;
       return backing[Object.keys(backing)[0]];
     },
@@ -369,6 +363,12 @@ var BytecodeSet = (function () {
         a[i++] = backing[position];
       }
       this.snapshot = a;
+    },
+
+    /* Convenience function to get an up-to-date snapshot. */
+    flatten: function () {
+      this.takeSnapshot();
+      return this.snapshot;
     }
   };
 
@@ -610,7 +610,6 @@ var Analysis = (function () {
     for (var b = 0; b < n; b++) {
       block = blocks[b];
       block.blockId = n - 1 - block.blockId;
-      block.frontier.takeSnapshot();
     }
   }
 
@@ -629,14 +628,10 @@ var Analysis = (function () {
   }
 
   function ExtractionContext() {
-    /*
-     * Because of labeled continues and and breaks we need to make a stack of
-     * such targets. Note that |continueTargets.top() === exit|.
-     */
     this.break = null;
     this.continue = null;
     this.loop = null;
-    this.exit = null;
+    this.exit = {};
   }
 
   ExtractionContext.prototype.update = function update(props) {
@@ -652,6 +647,19 @@ var Analysis = (function () {
     return Object.create(this, desc);
   };
 
+  function pruneLoopExits(exits, loops) {
+    var exitNodes = exits.flatten();
+    for (var i = 0, j = exitNodes.length; i < j; i++) {
+      var exit = exitNodes[i];
+      for (var k = 0, l = loops.length; k < l; k++) {
+        if (exit.leadsTo(loops[k].break) ||
+            exit.leadsTo(loops[k].continue)) {
+          exits.remove(exit);
+        }
+      }
+    }
+  }
+
   /*
    * Returns a new context updated with loop information if loop is inducible,
    * undefined otherwise.
@@ -663,34 +671,23 @@ var Analysis = (function () {
     }
 
     var loop = block.loop;
-    var exits = new BytecodeSet();
+    loop.takeSnapshot();
     var loopBody = loop.snapshot;
 
+    var exits = new BytecodeSet();
+    exits.unionArray(block.succs);
     for (var i = 0, j = loopBody.length; i < j; i++) {
-      exits.unionArray(loopBody[i].succs);
+      exits.union(loopBody[i].frontier);
     }
-    exits.difference(loop);
-    exits.takeSnapshot();
-
-    var exitNodes = exits.snapshot;
-    if (parentLoops.length > 0) {
-      for (var i = 0, j = exitNodes.length; i < j; i++) {
-        var exit = exitNodes[i];
-        for (var k = 0, l = parentLoops.length; k < l; k++) {
-          if (exit.leadsTo(parentLoops[k].break) ||
-              exit.leadsTo(parentLoops[k].continue)) {
-            exits.remove(exit);
-          }
-        }
-      }
-
-      exits.takeSnapshot();
-      exitNodes = exits.snapshot;
+    exits.subtract(loop);
+    if (exits.size > 0 && parentLoops.length > 0) {
+      pruneLoopExits(exits, parentLoops);
     }
 
     /* There should be a single exit node. */
     var mainExit;
     if (exits.size > 1) {
+      var exitNodes = exits.flatten();
       for (var i = 0, j = exitNodes.length; i < j; i++) {
         mainExit = exitNodes[i];
 
@@ -706,7 +703,7 @@ var Analysis = (function () {
         }
       }
     } else {
-      mainExit = exitNodes.top();
+      mainExit = exits.choose();
     }
 
     if (exits.size > 1 && !mainExit) {
@@ -727,7 +724,7 @@ var Analysis = (function () {
    * Returns the original context if trivial conditional, an updated context
    * if neither branch is trivial, undefined otherwise.
    */
-  function inducibleIf(block, cx, info) {
+  function inducibleIf(block, cx, parentLoops, info) {
     var succs = block.succs;
 
     if (succs.length !== 2) {
@@ -740,33 +737,39 @@ var Analysis = (function () {
     info.negated = false;
 
     if (branch1.leadsTo(exit)) {
-      info.thenBranch = branch2;
+      info.then = branch2;
       info.negated = true;
       return cx;
     } else if (branch2.leadsTo(exit)) {
-      info.thenBranch = branch1;
+      info.then = branch1;
       return cx;
     }
 
     if (branch1.leadsTo(branch2)) {
-      info.thenBranch = branch1;
+      info.then = branch1;
       exit = branch2;
     } else if (branch2.leadsTo(branch1)) {
-      info.thenBranch = branch2;
+      info.then = branch2;
       info.negated = true;
       exit = branch1;
     } else {
-      if (branch1.frontier.size > 1 || branch2.frontier.size > 1) {
+      var exits = new BytecodeSet();
+      exits.union(branch1.frontier);
+      exits.union(branch2.frontier);
+      if (exits.size > 0 && parentLoops.length > 0) {
+        pruneLoopExits(exits, parentLoops);
+      }
+      if (exits.size > 1) {
         return undefined;
       }
+      exit = exits.choose();
 
-      exit = branch1.frontier.choose();
-      if (exit && branch2.frontier.choose() !== exit) {
-        return undefined;
+      info.then = branch2;
+      if (exit) {
+        info.else = branch1;
+      } else {
+        exit = branch1;
       }
-
-      info.thenBranch = branch2;
-      info.elseBranch = branch1;
       info.negated = true;
     }
 
@@ -838,7 +841,7 @@ out:  while (block !== cx.exit) {
           parentLoops.push(cxx);
 
           var succs = block.succs;
-          if (succs === 1) {
+          if (succs.length === 1) {
             conts.push({ kind: K_SEQ,
                          block: block,
                          cx: cxx });
@@ -864,15 +867,15 @@ out:  while (block !== cx.exit) {
             }
           }
           cx = cxx;
-        } else if (cxx = inducibleIf(block, cx, info)) {
+        } else if (cxx = inducibleIf(block, cx, parentLoops, info)) {
           conts.push({ kind: K_IF_THEN,
                        cond: block,
                        negated: info.negated,
-                       else: info.elseBranch,
+                       else: info.else,
                        join: cxx.exit,
                        joinCx: cx,
                        cx: cxx });
-          block = info.thenBranch;
+          block = info.then;
           cx = cxx;
         } else if (inducibleSeq(block, cx)) {
           conts.push({ kind: K_SEQ,
@@ -938,7 +941,7 @@ out:  while (k = conts.pop()) {
         }
       }
 
-      if (!block) {
+      if (conts.length === 0) {
         return v;
       }
     }
@@ -1049,8 +1052,12 @@ out:  while (k = conts.pop()) {
     assert(bytecodes);
 
     /*
-     * There are some assumptions here that must be maintained if you want to
-     * add new analyses:
+     * The full dominance frontier of a node is its |.frontier| union its
+     * |.inLoop|, if |.inLoop| is defined. It's easier for the present
+     * analyses if loop bodies do not have the loop header in its frontiers.
+     *
+     * There are also some assumptions here that must be maintained if you
+     * want to add new analyses:
      *
      * Anything after |computeDominance| should re-snapshot |.frontier| upon
      * mutation.
@@ -1097,11 +1104,15 @@ out:  while (k = conts.pop()) {
                         code.succs.map(blockId).join(",") : "") + " {");
 
           writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
-          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.snapshot.map(blockId).join(",") + "}");
+          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.flatten().map(blockId).join(",") + "}");
+        }
+
+        if (code.inLoop) {
+          writer.writeLn("inloop".padRight(' ', 10) + code.inLoop.blockId);
         }
 
         if (code.loop) {
-          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.snapshot.map(blockId).join(",") + "}");
+          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.flatten().map(blockId).join(",") + "}");
         }
 
         writer.writeLn("");
