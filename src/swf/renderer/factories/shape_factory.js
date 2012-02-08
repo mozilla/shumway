@@ -367,11 +367,11 @@ function ShapeFactory(graph) {
   paths.sort(function (a, b) {
     return a.i - b.i;
   });
-  var bounds = graph.bounds;
   this.render = new Function('c,m,r',
     'with(c){' +
       'save();' +
-      'transform(m.scaleX,m.skew1,m.skew0,m.scaleY,m.translateX,m.translateY);' +
+      'scale(0.05,0.05);' +
+      'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
       'fillRule=mozFillRule=webkitFillRule="evenodd";' +
       paths.join(';') + ';' +
       'restore()' +
