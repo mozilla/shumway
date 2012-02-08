@@ -332,10 +332,6 @@ var BytecodeSet = (function () {
       }
     },
 
-    /*
-     * If the set has a snapshot, assume it's current and use that to choose
-     * an element. Otherwise choose a key and resolve it.
-     */
     choose: function () {
       var backing = this.backing;
       return backing[Object.keys(backing)[0]];
@@ -1042,24 +1038,6 @@ out:  while (k = conts.pop()) {
   Ap.analyzeControlFlow = function analyzeControlFlow() {
     var bytecodes = this.bytecodes;
     assert(bytecodes);
-
-    /*
-     * The full dominance frontier of a node is its |.frontier| union its
-     * |.inLoop|, if |.inLoop| is defined. It's easier for the present
-     * analyses if loop bodies do not have the loop header in its frontiers.
-     *
-     * There are also some assumptions here that must be maintained if you
-     * want to add new analyses:
-     *
-     * Anything after |computeDominance| should re-snapshot |.frontier| upon
-     * mutation.
-     *
-     * Anything after |findNaturalLoops| should re-snapshot |.loop| upon
-     * mutation.
-     *
-     * All extant analyses operate on the |.snapshot| array of the above sets.
-     */
-
     detectBasicBlocks(bytecodes);
     var root = bytecodes[0];
     findNaturalLoops(computeDominance(root));
