@@ -192,7 +192,6 @@ var Bytecode = (function () {
     while (p = pending.pop()) {
       if (!body.has(p)) {
         p.inLoop = this;
-        //        p.frontier.remove(this);
         body.add(p);
         pending.push.apply(pending, p.preds);
       }
@@ -213,26 +212,19 @@ var Bytecode = (function () {
             (this.frontier.has(target)));
   };
 
-  /* Find the dominator set from immediate dominators. */
-  function dom() {
-    assert(this.succs);
+  Bp.dominatedBy = function dominatedBy(d) {
     assert(this.dominator);
 
     var b = this;
-    var d = new BytecodeSet([b]);
     do {
-      d.add(b.dominator);
+      if (b === d) {
+        return true;
+      }
       b = b.dominator;
     } while (b !== b.dominator);
 
-    Object.defineProperty(this, "dom", { value: d,
-                                         configurable: true,
-                                         enumerable: true });
-    return d;
-  }
-  Object.defineProperty(Bp, "dom", { get: dom,
-                                     configurable: true,
-                                     enumerable: true });
+    return false;
+  };
 
   Bp.toString = function toString() {
     var opdesc = opcodeTable[this.op];
@@ -611,20 +603,20 @@ var Analysis = (function () {
       block = blocks[b];
       block.blockId = n - 1 - block.blockId;
     }
+
+    return blocks;
   }
 
-  function findNaturalLoops(root) {
-    dfs(root,
-        null,
-        function post(v) {
-          var succs = v.succs;
-          for (var i = 0, j = succs.length; i < j; i++) {
-            if (v.dom.has(succs[i])) {
-              succs[i].makeLoopHead(v);
-            }
-          }
-        },
-        null);
+  function findNaturalLoops(blocks) {
+    for (var i = 0, j = blocks.length; i < j; i++) {
+      var block = blocks[i];
+      var succs = block.succs;
+      for (var k = 0, l = succs.length; k < l; k++) {
+        if (block.dominatedBy(succs[k])) {
+          succs[k].makeLoopHead(block);
+        }
+      }
+    }
   }
 
   function ExtractionContext() {
@@ -1070,8 +1062,7 @@ out:  while (k = conts.pop()) {
 
     detectBasicBlocks(bytecodes);
     var root = bytecodes[0];
-    computeDominance(root);
-    findNaturalLoops(root);
+    findNaturalLoops(computeDominance(root));
     this.controlTree = induceControlTree(root);
   }
 
