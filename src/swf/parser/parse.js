@@ -72,41 +72,10 @@ for (var tag in tagHandler) {
     tagHandler[tag] = generate(handler, 'version', 'tag');
 }
 
-var tagFilter = {
-  frame: frameFilter,
-  place: placeFilter,
-  remove: removeFilter,
-  shape: shapeFilter
-};
-
-var controlTags = [
-  /* End */               0,
-  /* ShowFrame */         1,
-  /* PlaceObject */       4,
-  /* RemoveObject */      5,
-  /* DoAction */          12,
-  /* StartSound */        15,
-  /* SoundStreamHead */   18,
-  /* SoundStreamBlock */  19,
-  /* PlaceObject2 */      26,
-  /* RemoveObject2 */     28,
-  /* FrameLabel */        43,
-  /* SoundStreamHead2 */  45,
-  /* DoInitAction */      59,
-  /* DoABC */             82
-];
-var isControlTag = { };
-var i = controlTags.length;
-while (i--)
-  isControlTag[controlTags[i]] = true;
-
 var readHeader = generate(MOVIE_HEADER);
-
-var dictionary = { };
 
 function readTags(bytes, stream, version) {
   var tags = [];
-  var state = { dictionary: dictionary };
   do {
     var tagAndLength = readUi16(bytes, stream);
     var tag = tagAndLength >> 6;
@@ -117,8 +86,6 @@ function readTags(bytes, stream, version) {
     var substream = stream.substream(stream.pos, stream.pos += length);
     var handler = tagHandler[tag];
     var item = handler ? handler(substream.bytes, substream, version, tag) : { };
-    if (item.type && tagFilter[item.type])
-      tagFilter[item.type](item, state);
     item.tag = tag;
     tags.push(item);
   } while (tag);
