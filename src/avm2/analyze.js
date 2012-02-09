@@ -724,15 +724,6 @@ var Analysis = (function () {
     var exit = cx.exit;
     info.negated = false;
 
-    if (branch1.leadsTo(exit)) {
-      info.then = branch2;
-      info.negated = true;
-      return cx;
-    } else if (branch2.leadsTo(exit)) {
-      info.then = branch1;
-      return cx;
-    }
-
     if (branch1.leadsTo(branch2)) {
       info.then = branch1;
       exit = branch2;
