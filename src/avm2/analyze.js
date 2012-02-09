@@ -715,10 +715,10 @@ var Analysis = (function () {
    * otherwise.
    *
    * A conditional is inducible iff:
-   *  - It has two successors in the CFG.
-   *  - One branch's exit node is the other branch.
-   *  - The cardinality of the union of its two branchs' exit nodes is at
-   *    most 1, after loop exits of parent loops are pruned.
+   *  - It has two successors in the CFG. And,
+   *   - One branch's exit node is the other branch. Or,
+   *   - The cardinality of the union of its two branchs' exit nodes is at
+   *     most 1, after loop exits of parent loops are pruned.
    *
    * If one branch's exit node is the other branch, the conditional has no
    * else branch and the other branch is the join.
