@@ -6,7 +6,7 @@ var Control = (function () {
 
   Clusterfuck.prototype = {
     trace: function (writer, worklist) {
-      writer.writeLn("clusterfuck " + formatBlock(this.body));
+      writer.writeLn("clusterfuck #" + this.body.blockId);
     }
   };
 
