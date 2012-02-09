@@ -640,6 +640,19 @@ var Analysis = (function () {
   /*
    * Returns a new context updated with loop information if loop is inducible,
    * undefined otherwise.
+   *
+   * Let `loop exit' mean either the continue node or break node of a loop.
+   *
+   * A loop is inducible iff it:
+   *  - Is reducible (single entry node into the cycle).
+   *  - Has at most a single exit node, after loop exits of parent loops are pruned.
+   *
+   * If a loop has no exit nodes, its exit node is set to the exit node of the
+   * parent context.
+   *
+   * For the loop body, its:
+   *  - break node is the loop's single exit node
+   *  - continue node is the loop header
    */
   function inducibleLoop(block, cx, parentLoops) {
     /* Natural loop information should already be computed. */
@@ -688,7 +701,7 @@ var Analysis = (function () {
     }
 
     if (!mainExit && parentLoops.length > 0) {
-      mainExit = parentLoops.top().exit;
+      mainExit = cx.exit;
     }
 
     return cx.update({ break: mainExit,
@@ -698,8 +711,23 @@ var Analysis = (function () {
   }
 
   /*
-   * Returns the original context if trivial conditional, an updated context
-   * if neither branch is trivial, undefined otherwise.
+   * Returns an updated context if a conditional is inducible, undefined
+   * otherwise.
+   *
+   * A conditional is inducible iff:
+   *  - It has two successors in the CFG.
+   *  - One branch's exit node is the other branch.
+   *  - The cardinality of the union of its two branchs' exit nodes is at
+   *    most 1, after loop exits of parent loops are pruned.
+   *
+   * If one branch's exit node is the other branch, the conditional has no
+   * else branch and the other branch is the join.
+   *
+   * If there are no exit nodes, the conditional has no else branch and one of
+   * the branches is the join.
+   *
+   * Otherwise there is a single exit node, one branch is the then branch, the
+   * other the else branch, and the single exit is the join.
    */
   function inducibleIf(block, cx, parentLoops, info) {
     var succs = block.succs;
@@ -744,6 +772,11 @@ var Analysis = (function () {
     return cx.update({ exit: exit });
   }
 
+  /*
+   * Returns true if a sequenced block is inducible, false otherwise.
+   *
+   * A sequence is inducible if the block has at most one successor.
+   */
   function inducibleSeq(block, cx) {
     if (block.succs.length > 1) {
       return false;
@@ -760,6 +793,13 @@ var Analysis = (function () {
     return v[0];
   }
 
+  /*
+   * Induce a tree of control structures from a CFG.
+   *
+   * Algorithm is inspired by [2].
+   *
+   * [2] Moll. Decompilation of LLVM IR.
+   */
   function induceControlTree(root) {
     var conts = [];
     var parentLoops = [];
