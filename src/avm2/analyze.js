@@ -1,15 +1,5 @@
 var Control = (function () {
 
-  function formatBlock(block) {
-    return "#" + block.blockId;
-  }
-
-  var TraceLeave = {
-    trace: function (writer) {
-      writer.leave("}");
-    }
-  };
-
   function Clusterfuck(body) {
     this.body = body;
   }
@@ -20,58 +10,49 @@ var Control = (function () {
     }
   };
 
-  function Seq(body, exit) {
+  function Seq(body) {
     this.body = body;
-    this.exit = exit;
   }
 
   Seq.prototype = {
-    trace: function (writer, worklist) {
-      writer.writeLn(formatBlock(this.body));
-      this.exit && worklist.push(this.exit);
+    trace: function (writer) {
+      var body = this.body;
+      for (var i = 0, j = body.length; i < j; i++) {
+        body[i].trace(writer);
+      }
     }
   };
 
-  function Loop(body, exit) {
+  function Loop(body) {
     this.body = body;
-    this.exit = exit;
   }
 
   Loop.prototype = {
-    trace: function (writer, worklist) {
+    trace: function (writer) {
       writer.enter("loop {");
-      this.exit && worklist.push(this.exit);
-      worklist.push(TraceLeave);
-      worklist.push(this.body);
+      this.body.trace(writer);
+      writer.leave("}");
     }
   };
 
-  function If(cond, then, els, negated, exit) {
+  function If(cond, then, els, negated) {
     this.cond = cond;
     this.then = then;
     this.else = els;
     this.negated = negated;
-    this.exit = exit;
   }
 
-  var TraceElse = {
-    trace: function (writer) {
-      writer.outdent();
-      writer.enter("} else {");
-    }
-  };
-
   If.prototype = {
-    trace: function (writer, worklist) {
-      writer.writeLn(formatBlock(this.cond));
+    trace: function (writer) {
+      this.cond.trace(writer);
       writer.enter("if" + (this.negated ? " not" : "") + " {");
-      this.exit && worklist.push(this.exit);
-      worklist.push(TraceLeave);
+      this.then.trace(writer);
       if (this.else) {
-        worklist.push(this.else);
-        worklist.push(TraceElse);
+        writer.outdent();
+        writer.enter("} else {");
+        this.else.trace(writer);
       }
-      worklist.push(this.then);
+      writer.leave("}");
     }
   };
 
@@ -81,7 +62,7 @@ var Control = (function () {
 
   LabeledBreak.prototype = {
     trace: function (writer) {
-      writer.writeLn("break to " + formatBlock(this.target));
+      writer.writeLn("break to #" + this.target.blockId);
     }
   };
 
@@ -91,7 +72,7 @@ var Control = (function () {
 
   LabeledContinue.prototype = {
     trace: function (writer) {
-      writer.writeLn("continue to " + formatBlock(this.target));
+      writer.writeLn("continue to #" + this.target.blockId);
     }
   };
 
@@ -225,6 +206,14 @@ var Bytecode = (function () {
 
     return false;
   };
+
+  Bp.trace = function trace(writer) {
+    if (!this.succs) {
+      return;
+    }
+
+    writer.writeLn("#" + this.blockId);
+  }
 
   Bp.toString = function toString() {
     var opdesc = opcodeTable[this.op];
@@ -763,6 +752,14 @@ var Analysis = (function () {
     return true;
   }
 
+  function maybeSequence(v) {
+    if (v.length > 0) {
+      return new Control.Seq(v.reverse());
+    }
+
+    return v[0];
+  }
+
   function induceControlTree(root) {
     var conts = [];
     var parentLoops = [];
@@ -776,24 +773,23 @@ var Analysis = (function () {
     const K_IF = 4;
     const K_SEQ = 5;
 
-    var v;
     for (;;) {
-      v = null;
+      var v = [];
 
       pushing:
       while (block !== cx.exit) {
         if (!block) {
-          v = Control.Return;
+          v.push(Control.Return);
           break;
         }
 
         if (block === cx.break) {
-          v = Control.Break;
+          v.push(Control.Break);
           break;
         }
 
         if (block === cx.continue && cx.continue !== cx.exit) {
-          v = Control.Continue;
+          v.push(Control.Continue);
           break;
         }
 
@@ -802,12 +798,12 @@ var Analysis = (function () {
             var parentLoop = parentLoops[i];
 
             if (block === parentLoop.break) {
-              v = new Control.LabeledBreak(parentLoop.break);
+              v.push(new Control.LabeledBreak(parentLoop.break));
               break pushing;
             }
 
             if (block === parentLoop.continue) {
-              v = new Control.LabeledContinue(parentLoop.exit);
+              v.push(new Control.LabeledContinue(parentLoop.exit));
               break pushing;
             }
           }
@@ -862,7 +858,7 @@ var Analysis = (function () {
                        block: block });
           block = block.succs.top();
         } else {
-          v = new Control.Clusterfuck(block);
+          v.push(new Control.Clusterfuck(block));
           break;
         }
       }
@@ -875,11 +871,11 @@ var Analysis = (function () {
           block = k.next;
           cx = k.cx;
           conts.push({ kind: K_LOOP,
-                       body: v });
+                       body: maybeSequence(v) });
           parentLoops.pop();
           break popping;
         case K_LOOP:
-          v = new Control.Loop(k.body, v);
+          v.push(new Control.Loop(k.body));
           break;
         case K_IF_THEN:
           if (k.else) {
@@ -888,7 +884,7 @@ var Analysis = (function () {
             conts.push({ kind: K_IF_ELSE,
                          cond: k.cond,
                          negated: k.negated,
-                         then: v,
+                         then: maybeSequence(v),
                          join: k.join,
                          cx: k.joinCx });
           } else {
@@ -897,9 +893,8 @@ var Analysis = (function () {
             conts.push({ kind: K_IF,
                          cond: k.cond,
                          negated: k.negated,
-                         then: v });
+                         then: maybeSequence(v) });
           }
-          done = true;
           break popping;
         case K_IF_ELSE:
           block = k.join;
@@ -908,14 +903,13 @@ var Analysis = (function () {
                        cond: k.cond,
                        negated: k.negated,
                        then: k.then,
-                       else: v });
-          done = true;
+                       else: maybeSequence(v) });
           break popping;
         case K_IF:
-          v = new Control.If(k.cond, k.then, k.else, k.negated, v);
+          v.push(new Control.If(k.cond, k.then, k.else, k.negated, v));
           break;
         case K_SEQ:
-          v = new Control.Seq(k.block, v);
+          v.push(k.block);
           break;
         default:
           unexpected();
@@ -923,7 +917,7 @@ var Analysis = (function () {
       }
 
       if (conts.length === 0) {
-        return v;
+        return maybeSequence(v);
       }
     }
   }
@@ -1091,10 +1085,7 @@ var Analysis = (function () {
 
     if (this.controlTree) {
       writer.enter("control-tree {");
-      var worklist = [this.controlTree];
-      while (code = worklist.pop()) {
-        code.trace(writer, worklist);
-      }
+      this.controlTree.trace(writer);
       writer.leave("}");
     }
 
