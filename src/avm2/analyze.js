@@ -789,7 +789,8 @@ var Analysis = (function () {
     for (;;) {
       v = null;
 
-out:  while (block !== cx.exit) {
+      pushing:
+      while (block !== cx.exit) {
         if (!block) {
           v = Control.Return;
           break;
@@ -811,12 +812,12 @@ out:  while (block !== cx.exit) {
 
             if (block === parentLoop.break) {
               v = new Control.LabeledBreak(parentLoop.break);
-              break out;
+              break pushing;
             }
 
             if (block === parentLoop.continue) {
               v = new Control.LabeledContinue(parentLoop.exit);
-              break out;
+              break pushing;
             }
           }
         }
@@ -876,7 +877,8 @@ out:  while (block !== cx.exit) {
       }
 
       var k;
-out:  while (k = conts.pop()) {
+      popping:
+      while (k = conts.pop()) {
         switch (k.kind) {
         case K_LOOP_BODY:
           block = k.next;
@@ -884,7 +886,7 @@ out:  while (k = conts.pop()) {
           conts.push({ kind: K_LOOP,
                        body: v });
           parentLoops.pop();
-          break out;
+          break popping;
         case K_LOOP:
           v = new Control.Loop(k.body, v);
           break;
@@ -907,7 +909,7 @@ out:  while (k = conts.pop()) {
                          then: v });
           }
           done = true;
-          break out;
+          break popping;
         case K_IF_ELSE:
           block = k.join;
           cx = k.cx;
@@ -917,7 +919,7 @@ out:  while (k = conts.pop()) {
                        then: k.then,
                        else: v });
           done = true;
-          break out;
+          break popping;
         case K_IF:
           v = new Control.If(k.cond, k.then, k.else, k.negated, v);
           break;
