@@ -786,7 +786,7 @@ var Analysis = (function () {
   }
 
   function maybeSequence(v) {
-    if (v.length > 0) {
+    if (v.length > 1) {
       return new Control.Seq(v.reverse());
     }
 
