@@ -479,6 +479,7 @@ var Analysis = (function () {
 
       currentBlock = nextBlock;
     }
+    currentBlock.end = bytecodes[end - 1];
   }
 
   /*
@@ -1099,6 +1100,7 @@ var Analysis = (function () {
                        (code.succs.length > 0 ? " -> " +
                         code.succs.map(blockId).join(",") : "") + " {");
 
+          writer.writeLn("end".padRight(' ', 10) + code.end.position);
           writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
           writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.flatten().map(blockId).join(",") + "}");
         }
