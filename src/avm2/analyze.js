@@ -181,12 +181,6 @@ var Bytecode = (function () {
     this.loop = body;
   }
 
-  Bp.doubleLink = function doubleLink(target) {
-    assert(this.succs);
-    this.succs.push(target);
-    target.preds.push(this);
-  };
-
   Bp.leadsTo = function leadsTo(target) {
     return ((this === target) ||
             (this.frontier.size === 1) &&
@@ -448,11 +442,13 @@ var Analysis = (function () {
 
       switch (code.op) {
       case OP_lookupswitch:
-        code.targets.forEach(currentBlock.doubleLink.bind(currentBlock));
+        for (var i = 0, j = code.targets.length; i < j; i++) {
+          currentBlock.succs.push(code.targets[i]);
+        }
         break;
 
       case OP_jump:
-        currentBlock.doubleLink(code.target);
+        currentBlock.succs.push(code.target);
         break;
 
       case OP_iflt:
@@ -469,12 +465,14 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        currentBlock.doubleLink(code.target);
-        currentBlock.doubleLink(nextBlock);
+        currentBlock.succs.push(code.target);
+        if (code.target !== nextBlock) {
+          currentBlock.succs.push(nextBlock);
+        }
         break;
 
       default:
-        currentBlock.doubleLink(nextBlock);
+        currentBlock.succs.push(nextBlock);
       }
 
       currentBlock = nextBlock;
@@ -520,6 +518,13 @@ var Analysis = (function () {
     var n = blocks.length;
     for (var i = 0; i < n; i++) {
       block = blocks[i];
+
+      /* Doubly link reachable blocks. */
+      var succs = block.succs;
+      for (var j = 0, k = succs.length; j < k; j++) {
+        succs[j].preds.push(block);
+      }
+
       block.blockId = i;
       block.frontier = new BytecodeSet();
     }
