@@ -513,22 +513,21 @@ var Analysis = (function () {
      * algorithm.
      */
     var blocks = [];
-    var block;
-    dfs(root, null, blocks.push.bind(blocks), null);
+    var postorder = 0;
+    dfs(root, null,
+        function post(block) {
+          blocks.push(block);
+
+          /* Doubly link reachable blocks. */
+          var succs = block.succs;
+          for (var i = 0, j = succs.length; i < j; i++) {
+            succs[i].preds.push(block);
+          }
+
+          block.blockId = postorder++;
+          block.frontier = new BytecodeSet();
+        }, null);
     var n = blocks.length;
-    for (var i = 0; i < n; i++) {
-      block = blocks[i];
-
-      /* Doubly link reachable blocks. */
-      var succs = block.succs;
-      for (var j = 0, k = succs.length; j < k; j++) {
-        succs[j].preds.push(block);
-      }
-
-      block.blockId = i;
-      block.frontier = new BytecodeSet();
-    }
-
     doms = new Array(n);
     doms[n - 1] =  n - 1;
     var changed = true;
@@ -571,7 +570,7 @@ var Analysis = (function () {
     }
 
     for (var b = 0; b < n; b++) {
-      block = blocks[b];
+      var block = blocks[b];
 
       /* Store the immediate dominator. */
       block.dominator = blocks[doms[b]];
