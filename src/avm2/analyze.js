@@ -408,11 +408,11 @@ var Analysis = (function () {
       case OP_iflt:
       case OP_ifnlt:
       case OP_ifle:
-      case OP_ifnlt:
       case OP_ifnle:
       case OP_ifgt:
-      case OP_ifge:
       case OP_ifngt:
+      case OP_ifge:
+      case OP_ifnge:
       case OP_ifeq:
       case OP_ifne:
       case OP_ifstricteq:
@@ -454,11 +454,11 @@ var Analysis = (function () {
       case OP_iflt:
       case OP_ifnlt:
       case OP_ifle:
-      case OP_ifnlt:
       case OP_ifnle:
       case OP_ifgt:
-      case OP_ifge:
       case OP_ifngt:
+      case OP_ifge:
+      case OP_ifnge:
       case OP_ifeq:
       case OP_ifne:
       case OP_ifstricteq:
@@ -1007,11 +1007,11 @@ var Analysis = (function () {
       case OP_iflt:
       case OP_ifnlt:
       case OP_ifle:
-      case OP_ifnlt:
       case OP_ifnle:
       case OP_ifgt:
-      case OP_ifge:
       case OP_ifngt:
+      case OP_ifge:
+      case OP_ifnge:
       case OP_ifeq:
       case OP_ifne:
       case OP_ifstricteq:
@@ -1045,11 +1045,11 @@ var Analysis = (function () {
       case OP_iflt:
       case OP_ifnlt:
       case OP_ifle:
-      case OP_ifnlt:
       case OP_ifnle:
       case OP_ifgt:
-      case OP_ifge:
       case OP_ifngt:
+      case OP_ifge:
+      case OP_ifnge:
       case OP_ifeq:
       case OP_ifne:
       case OP_ifstricteq:
