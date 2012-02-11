@@ -36,15 +36,20 @@
                 
                 // interpretAbc(abc);
                 
+                compileAbc(abc);
+                
                 if (true) {
                   print(compileAbc(abc));
+                  
                   /* Spew analysis information if not quiet. */
+                  /*
                   var writer = new IndentingWriter(false);
                   abc.methods.forEach(function (method) {
                     if (method.codeAnalysis) {
                       method.codeAnalysis.traceGraphViz(writer);
                     }
                   });
+                  */
                 }
             });
         }

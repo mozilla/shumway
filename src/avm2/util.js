@@ -39,7 +39,7 @@ function warning(message) {
 }
 
 function notImplemented(message) {
-  assert(false, "Not Implemented" + message);
+  assert(false, "Not Implemented " + message);
 }
 
 function unexpected() {

@@ -53,11 +53,13 @@ if (disassemble) {
 }
 
 if (viz) {
-  compileAbc(abc);
+  
   var writer = new IndentingWriter(false);
   writer.enter("digraph {");
   var graph = 0;
   abc.methods.forEach(function (method) {
+    method.codeAnalysis = new Analysis(method.code);
+    method.codeAnalysis.analyzeControlFlow();
     if (method.codeAnalysis) {
       method.codeAnalysis.traceGraphViz(writer, method, "G" + graph + "_");
       graph += 1;
