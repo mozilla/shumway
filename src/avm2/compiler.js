@@ -253,6 +253,23 @@ var Compiler = (function () {
     return constant; 
   })();
   
+  /**
+   * Distinguish between literals and string constants.
+   */
+  var Literal = (function () {
+    function literal(value) {
+      this.value = value;
+    }
+    literal.prototype.eval = function eval() {
+      return this.value;
+    };
+    literal.prototype.toString = function toString() {
+      return this.value;
+    }
+    return literal; 
+  })();
+  
+  
   function createVariableName(i) {
     if (i < 26) {
       return String.fromCharCode("a".charCodeAt(0) - 1 + i);
@@ -260,7 +277,8 @@ var Compiler = (function () {
     return "v" + (i - 26);
   }
   
-  function MethodCompilerContext(method) {
+  function MethodCompilerContext(abc, method) {
+    this.abc = abc;
     this.method = method;
     this.worklist = [method.codeAnalysis.controlTree];
     this.state = new State();
@@ -348,6 +366,33 @@ var Compiler = (function () {
       statements.push(statement + ";");
     }
     
+    var multinames = this.abc.constantPool.multinames;
+    
+    var multiname, args, value, obj;
+    
+    function getMultiname(index) {
+      var multiname = multinames[index];
+      return multiname; 
+    }
+    
+    function createMultiname(multiname) {
+      if (multiname.isRuntime()) {
+        multiname = multiname.clone();
+        if (multiname.isRuntimeName()) {
+          multiname.setName(state.stack.pop());
+        } 
+        if (multiname.isRuntimeNamespace()) {
+          multiname.setNamespace(state.stack.pop());
+        }
+      }
+      assert(!multiname.isRuntime());
+      return multiname;
+    }
+    
+    function getAndCreateMultiname(index) {
+      return createMultiname(getMultiname(index));
+    }
+    
     var bytecodes = this.method.codeAnalysis.bytecodes;
     for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
       var bc = bytecodes[bci];
@@ -433,9 +478,13 @@ var Compiler = (function () {
       case OP_callmethod:     notImplemented(); break;
       case OP_callstatic:     notImplemented(); break;
       case OP_callsuper:      notImplemented(); break;
-      case OP_callproperty:   notImplemented(); break;
-      case OP_returnvoid:     statements.push("return;"); break;
-      case OP_returnvalue:    notImplemented(); break;
+      case OP_callproperty:
+        multiname = getAndCreateMultiname(bc.index);
+        args = state.stack.popMany(bc.argCount);
+        emitStatement(state.stack.pop() + "." + multiname.name + "(" + args.join(",") + ")");
+        break;
+      case OP_returnvoid:     emitStatement("return"); break;
+      case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;
       case OP_constructsuper: notImplemented(); break;
       case OP_constructprop:  notImplemented(); break;
       case OP_callsuperid:    notImplemented(); break;
@@ -449,23 +498,35 @@ var Compiler = (function () {
       case OP_applytype:      notImplemented(); break;
       case OP_pushfloat4:     notImplemented(); break;
       case OP_newobject:      notImplemented(); break;
-      case OP_newarray:       notImplemented(); break;
+      case OP_newarray:       state.stack.push(new Literal("[]")); break;
       case OP_newactivation:  notImplemented(); break;
       case OP_newclass:       notImplemented(); break;
       case OP_getdescendants: notImplemented(); break;
       case OP_newcatch:       notImplemented(); break;
-      case OP_findpropstrict: notImplemented(); break;
+      case OP_findpropstrict:
+        multiname = getAndCreateMultiname(bc.index);
+        state.stack.push(new Literal("findProperty(\"" + multiname.name + "\", true)"));
+        break;
       case OP_findproperty:   notImplemented(); break;
       case OP_finddef:        notImplemented(); break;
       case OP_getlex:         notImplemented(); break;
-      case OP_setproperty:    notImplemented(); break;
+      case OP_setproperty:
+        value = state.stack.pop();
+        multiname = getAndCreateMultiname(bc.index);
+        obj = state.stack.pop();
+        emitStatement(obj + "[" + multiname.name + "] = " + value);
+        break;
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
       case OP_getglobalscope: 
         state.getGlobalScope();
         break;
       case OP_getscopeobject:     notImplemented(); break;
-      case OP_getproperty:        notImplemented(); break;
+      case OP_getproperty:
+        multiname = getAndCreateMultiname(bc.index);
+        obj = state.stack.pop();
+        state.stack.push(new Literal(obj + "[" + multiname.name + "]"));
+        break;
       case OP_getouterscope:      notImplemented(); break;
       case OP_initproperty:       notImplemented(); break;
       case OP_setpropertylate:    notImplemented(); break;
@@ -585,7 +646,7 @@ var Compiler = (function () {
   
   compiler.prototype.compileMethod = function compileMethod(method) {
     assert(method.codeAnalysis);
-    var mcx = new MethodCompilerContext(method);
+    var mcx = new MethodCompilerContext(this.abc, method);
     var result = method.codeAnalysis.controlTree.compile(mcx, mcx.state);
     
     function flatten(array, indent) {
@@ -601,7 +662,8 @@ var Compiler = (function () {
       })
       return str;
     }
-    print(flatten(result.statements, "  "));
+    
+    print('\033[92m' + flatten(result.statements, "  ") + '\033[0m');
   }
   
   return compiler;
@@ -609,7 +671,7 @@ var Compiler = (function () {
 
 // :FIXME: Temporary driver.
 function compileAbc(abc) {
-  var compiler = new Compiler();
+  var compiler = new Compiler(abc);
   abc.methods.forEach(function (method) {
     method.codeAnalysis = new Analysis(method.code);
     method.codeAnalysis.analyzeControlFlow();
