@@ -836,7 +836,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes) {
-    var n;
+    var n, i;
     var stream = new AbcStream(bytes);
     checkMagic(stream);
     this.constantPool = new ConstantPool(stream);
