@@ -1141,10 +1141,11 @@ var Analysis = (function () {
 
   Ap.traceGraphViz = function traceGraphViz(writer, name, prefix) {
     prefix = prefix || "";
-    if (!this.bytecodes) {
+    var bytecodes = this.bytecodes;
+    if (!bytecodes) {
       return;
     }
-    writeGraphViz(writer, name.toString(), this.bytecodes[0],
+    writeGraphViz(writer, name.toString(), bytecodes[0],
       function (n) {
         return prefix + n.blockId;
       },
@@ -1153,7 +1154,11 @@ var Analysis = (function () {
       }, function (n) {
         return n.preds ? n.preds : [];
       }, function (n) {
-        return "Block: " + n.blockId;
+        var str = "Block: " + n.blockId + "\\l";
+        for (var bci = n.position; bci <= n.end.position; bci++) {
+          str += bci + ": " + bytecodes[bci] + "\\l";
+        }
+        return str;
       }
     );
   };
