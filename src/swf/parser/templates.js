@@ -89,7 +89,7 @@ function readString($bytes, $stream, length) {
   var codes = [];
   var pos = $stream.pos;
   if (length) {
-    codes = slice.call($bytes, pos, pos + length);
+    codes = slice.call($bytes, pos, pos += length);
   } else {
     length = 0;
     for (var code; code = $bytes[pos++]; length++)
@@ -107,6 +107,6 @@ function readString($bytes, $stream, length) {
 function readBinary($bytes, $stream, size) {
   return $bytes.subarray(
     $stream.pos,
-    $stream.pos = (size ? $stream.pos + size : $stream.byteLength)
+    $stream.pos = (size ? $stream.pos + size : $stream.end)
   );
 }
