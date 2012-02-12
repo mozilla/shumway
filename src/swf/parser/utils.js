@@ -3,6 +3,7 @@
 var slice = [].slice;
 var pow = Math.pow;
 var fromCharCode = String.fromCharCode;
+var min = Math.min;
 var max = Math.max;
 var splice = [].splice;
 var isArray = Array.isArray;
