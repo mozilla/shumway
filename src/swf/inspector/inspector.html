@@ -18,6 +18,9 @@
       .error {
         color: #cd0a0a;
       }
+      .font {
+        font-size: 50px;
+      }
       #menu {
         height: 15px;
         padding: 10px 10px;
@@ -112,7 +115,7 @@
       }
       #timeline .unit {
         position: absolute;
-        bottom: 42px;
+        bottom: 41px;
         margin-left: -21px;
         font-size: smaller;
       }
@@ -123,12 +126,21 @@
       #controls * {
         vertical-align: middle;
       }
-      #controls button {
-        margin-left: 5px;
-        height: 18px;
-        width: 30px;
+      #currentframe {
+        margin-right: 5px;
+        width: 35px;
+        height: 12px;
+        padding: 3px;
+        text-align: center;
         border: 1px solid #888;
-        border-radius: 5px;
+        border-radius: 3px;
+      }
+      #controls button {
+        margin: 0;
+        height: 20px;
+        width: 30px;
+        border-width: 1px;
+        border-color: #888;
         background-color: #f0f0f0;
         background-repeat: no-repeat;
         background-position: center center;
@@ -139,23 +151,22 @@
       #controls button:active {
         background-color: #fcefa1;
       }
-      #currentframe {
-        width: 35px;
-        height: 12px;
-        padding: 2px;
-        text-align: center;
-        border: 1px solid #888;
-      }
       #prev {
+        border-style: solid none solid solid;
+        border-radius: 3px 0 0 3px;
         background-image: url(prev.png);
       }
       #play {
+        width: 25px !important;
+        border-style: solid dotted;
         background-image: url(pause.png);
       }
       #play.paused {
         background-image: url(play.png);
       }
       #next {
+        border-style: solid solid solid none;
+        border-radius: 0 3px 3px 0;
         background-image: url(next.png);
       }
       #storyboard {
@@ -241,6 +252,7 @@
 
     <script src="../renderer/render.js"></script>
     <script src="../renderer/factories/shape_factory.js"></script>
+    <script src="../renderer/factories/font_factory.js"></script>
 
     <script>
       var tagCodes = {
@@ -332,8 +344,12 @@
         var reader = new FileReader();
         reader.onload = function() {
           try {
+            console.time('process');
+            console.time('parse');
             SWF.parse(this.result, function(result) {
+              console.timeEnd('parse');
               process(file, result);
+              console.timeEnd('process');
             });
           } catch (e) {
             info.html('<span class="error">' + e.message + '</span>');
@@ -456,6 +472,26 @@
           renderFrame(context, tag.frameNum);
         } else {
           switch (tag.type) {
+          case 'font':
+            $('head').append(
+              '<style>' +
+                '@font-face{' +
+                  'font-family:"' + tag.name + '";' +
+                  'src:url(' + 'data:font/opentype;base64,' + btoa(FontFactory(tag)) + ');' +
+                '}' +
+              '</style>'
+            );
+            var text = $('<div class="font"></div>');
+            text.css('font-family', tag.name);
+            var codes = tag.codes;
+            var i = 0;
+            var code;
+            var glyphs = '';
+            while (code = codes[i++])
+              glyphs += ' ' + fromCharCode(code) + ' ';
+            text.html(glyphs);
+            preview.append(text);
+            break;
           case 'shape':
             var canvas = document.createElement('canvas');
             var bounds = tag.bounds;
@@ -465,7 +501,6 @@
             canvas.height = height;
             var ctx = canvas.getContext('2d');
             var factory = new ShapeFactory(tag);
-            console.log(factory.render);
             factory.render(ctx, {
               scaleX: 1,
               scaleY: 1,
