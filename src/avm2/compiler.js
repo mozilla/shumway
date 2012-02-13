@@ -53,16 +53,29 @@ var Compiler = (function () {
   Bytecode.prototype.compile = function (mcx, state) {
     return mcx.compileBlock(this, state);
   };
-
+  
   Control.Loop.prototype.compile = function (mcx, state) {
-    var br = this.body.compile(mcx, state);
+    var body = this.body;
     var statements = [];
-    statements.push("while (true) {");
-    statements.push(new Indent(br.statements));
-    statements.push("}");
+    
+    if (body instanceof Control.Seq && 
+        body.first() instanceof Control.If && body.first().isThenBreak()) {
+      ir = body.first().compile(mcx, state);
+      statements.push("while (" + ir.condition.negate() + ") {");
+      statements.push(new Indent(body.slice(1).compile(mcx, state).statements));
+      statements.push("}");
+    } else {
+      statements.push("while (true) {");
+      statements.push(new Indent(body.compile(mcx, state).statements));
+      statements.push("}");
+    }
     return {statements: statements};
   };
 
+  Control.If.prototype.isThenBreak = function () {
+    return this.then === Control.Break && !this.else; 
+  };
+  
   Control.If.prototype.compile = function (mcx, state) {
     var cr = this.cond.compile(mcx, state);
     var tr = this.then.compile(mcx, cr.state.clone());
@@ -79,7 +92,7 @@ var Compiler = (function () {
       statements.push(new Indent(er.statements));
     }
     statements.push("}");
-    return {statements: statements};
+    return {statements: statements, condition: condition};
   };
   
   /**
