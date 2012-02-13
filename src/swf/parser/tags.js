@@ -68,6 +68,7 @@ var DEFINE_FONT2 = {
   ]],
   $$nameLength: UI8,
   name: STRING('nameLength'),
+  resolution: ['tag===75', ['20', '1']],
   $glyphCount: UI16,
   $2: ['wideOffset', [
     {
