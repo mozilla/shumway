@@ -16,7 +16,7 @@ var DEFINE_FONT = {
   }
 };
 var DEFINE_FONT_INFO = {
-  ref: UI16,
+  id: UI16,
   $$nameLength: UI8,
   name: STRING('nameLength'),
   $$reserved: UB(2),
