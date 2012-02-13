@@ -182,9 +182,9 @@ var Bytecode = (function () {
   }
 
   Bp.leadsTo = function leadsTo(target) {
-    return ((this === target) ||
-            (this.frontier.size === 1) &&
-            (this.frontier.has(target)));
+    return (target && ((this === target) ||
+                       (this.frontier.size === 1) &&
+                       (this.frontier.has(target))));
   };
 
   Bp.dominatedBy = function dominatedBy(d) {
@@ -216,7 +216,7 @@ var Bytecode = (function () {
 
     if (this.op === OP_lookupswitch) {
       str += "defaultTarget:" + this.targets[0].position;
-      for (i = 1, j = this.offsets.length; i < j; i++) {
+      for (i = 1, j = this.targets.length; i < j; i++) {
         str += ", target:" + this.targets[i].position;
       }
     } else {
@@ -399,9 +399,10 @@ var Analysis = (function () {
       code = bytecodes[pc];
       switch (code.op) {
       case OP_lookupswitch:
-        code.targets.forEach(function (target) {
-          target.makeBlockHead();
-        });
+        var targets = code.targets;
+        for (var i = 0, j = targets.length; i < j; i++) {
+          targets[i].makeBlockHead();
+        }
         break;
 
       case OP_jump:
@@ -743,7 +744,7 @@ var Analysis = (function () {
 
     var branch1 = succs[0];
     var branch2 = succs[1];
-    var exit = cx.exit;
+    var exit;
     info.negated = false;
 
     if (branch1.leadsTo(branch2)) {
@@ -861,33 +862,23 @@ var Analysis = (function () {
                        cx: cx });
           parentLoops.push(cxx);
 
-          var succs = block.succs;
-          if (succs.length === 1) {
-            conts.push({ kind: K_SEQ,
-                         block: block,
-                         cx: cxx });
-            block = succs[0];
+          var cxxx;
+          if (cxxx = inducibleIf(block, cxx, parentLoops, info)) {
+            conts.push({ kind: K_IF_THEN,
+                         cond: block,
+                         negated: info.negated,
+                         else: info.else,
+                         join: cxxx.exit,
+                         joinCx: cxx,
+                         cx: cxxx });
+            block = info.then;
+            cx = cxxx;
           } else {
-            var branch1 = succs[0];
-            var branch2 = succs[1];
-            if (branch1.leadsTo(cxx.break)) {
-              conts.push({ kind: K_IF_THEN,
-                           cond: block,
-                           join: branch2,
-                           joinCx: cxx,
-                           cx: cxx });
-              block = branch1;
-            } else {
-              conts.push({ kind: K_IF_THEN,
-                           cond: block,
-                           negated: true,
-                           join: branch1,
-                           joinCx: cxx,
-                           cx: cxx });
-              block = branch2;
-            }
+            conts.push({ kind: K_SEQ,
+                         block: block });
+            block = block.succs.top();
+            cx = cxx;
           }
-          cx = cxx;
         } else if (cxx = inducibleIf(block, cx, parentLoops, info)) {
           conts.push({ kind: K_IF_THEN,
                        cond: block,
@@ -999,7 +990,7 @@ var Analysis = (function () {
         code.targets = [];
         var offsets = code.offsets;
         for (var i = 0, j = offsets.length; i < j; i++) {
-          offsets[i] += codeStream.position;
+          offsets[i] += pos;
         }
         break;
 
