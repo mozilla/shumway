@@ -196,7 +196,7 @@ var PLACE_OBJECT = {
       $move: 'flags&1',
       depth: UI16,
       className: ['hasClassName||(place&&hasImage)', [STRING(0)]],
-      objectId: ['place', [UI16]],
+      objId: ['place', [UI16]],
       matrix: ['hasMatrix', [MATRIX]],
       cxform: ['hasCxform', [CXFORM]],
       ratio: ['hasRatio', [UI16]],
@@ -222,7 +222,7 @@ var PLACE_OBJECT = {
     },
     {
       place: '1',
-      objectId: UI16,
+      objId: UI16,
       depth: UI16,
       hasMatrix: '1',
       matrix: MATRIX,
@@ -235,7 +235,7 @@ var PLACE_OBJECT = {
 };
 var REMOVE_OBJECT = {
   type: '"remove"',
-  objectId: ['tag===5', [UI16]],
+  objId: ['tag===5', [UI16]],
   depth: UI16
 };
 var SHOW_FRAME = {
