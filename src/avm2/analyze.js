@@ -637,16 +637,20 @@ var Analysis = (function () {
   };
 
   function pruneLoopExits(exits, loops) {
+    var pruned = false;
     var exitNodes = exits.flatten();
     for (var i = 0, j = exitNodes.length; i < j; i++) {
       var exit = exitNodes[i];
       for (var k = 0, l = loops.length; k < l; k++) {
         if (exit.leadsTo(loops[k].break) ||
             exit.leadsTo(loops[k].continue)) {
+          pruned = true;
           exits.remove(exit);
+          continue;
         }
       }
     }
+    return pruned;
   }
 
   /*
@@ -667,14 +671,9 @@ var Analysis = (function () {
    *  - continue node is the loop header
    */
   function inducibleLoop(block, cx, parentLoops) {
-    /* Natural loop information should already be computed. */
-    if (!block.loop) {
-      return undefined;
-    }
-
     var loop = block.loop;
-    loop.takeSnapshot();
-    var loopBody = loop.snapshot;
+    var loopBody = loop.flatten();
+    var pruned = true;
 
     var exits = new BytecodeSet();
     exits.unionArray(block.succs);
@@ -682,16 +681,21 @@ var Analysis = (function () {
       exits.union(loopBody[i].frontier);
     }
     exits.subtract(loop);
+
+    /* Also prune the current loop header, which can't be the break node. */
+    parentLoops.push({ continue: block });
     if (exits.size > 0 && parentLoops.length > 0) {
-      pruneLoopExits(exits, parentLoops);
+      pruned = pruneLoopExits(exits, parentLoops);
     }
+    parentLoops.pop();
 
     /* There should be a single exit node. */
     var mainExit;
     if (exits.size > 1) {
-      var exitNodes = exits.flatten();
+      var exitNodes = pruned ? exits.flatten() : exits.snapshot;
       for (var i = 0, j = exitNodes.length; i < j; i++) {
         mainExit = exitNodes[i];
+        print(mainExit.blockId);
 
         for (var k = 0, l = exitNodes.length; k < l; k++) {
           if (!exitNodes[k].leadsTo(mainExit)) {
@@ -861,31 +865,41 @@ var Analysis = (function () {
           }
         }
 
-        var info = {};
-        if (cxx = inducibleLoop(block, cx, parentLoops)) {
-          conts.push({ kind: K_LOOP_BODY,
-                       next: cxx.break,
-                       cx: cx });
-          parentLoops.push(cxx);
+        if (block.loop) {
+          if (cxx = inducibleLoop(block, cx, parentLoops)) {
+            conts.push({ kind: K_LOOP_BODY,
+                         next: cxx.break,
+                         cx: cx });
+            parentLoops.push(cxx);
 
-          var cxxx;
-          if (cxxx = inducibleIf(block, cxx, parentLoops, info)) {
-            conts.push({ kind: K_IF_THEN,
-                         cond: block,
-                         negated: info.negated,
-                         else: info.else,
-                         join: cxxx.exit,
-                         joinCx: cxx,
-                         cx: cxxx });
-            block = info.then;
-            cx = cxxx;
-          } else {
-            conts.push({ kind: K_SEQ,
-                         block: block });
-            block = block.succs.top();
-            cx = cxx;
+            var cxxx;
+            if (cxxx = inducibleIf(block, cxx, parentLoops, info)) {
+              conts.push({ kind: K_IF_THEN,
+                           cond: block,
+                           negated: info.negated,
+                           else: info.else,
+                           join: cxxx.exit,
+                           joinCx: cxx,
+                           cx: cxxx });
+              block = info.then;
+              cx = cxxx;
+            } else {
+              conts.push({ kind: K_SEQ,
+                           block: block });
+              block = block.succs.top();
+              cx = cxx;
+            }
+
+            continue;
           }
-        } else if (cxx = inducibleIf(block, cx, parentLoops, info)) {
+
+          /* A non-inducible loop can't be anything else. */
+          v.push(new Control.Clusterfuck(block));
+          break;
+        }
+
+        var info = {};
+        if (cxx = inducibleIf(block, cx, parentLoops, info)) {
           conts.push({ kind: K_IF_THEN,
                        cond: block,
                        negated: info.negated,
@@ -964,21 +978,23 @@ var Analysis = (function () {
     }
   }
 
-  function Analysis(codeStream) {
+  function Analysis(method) {
     /*
      * Normalize the code stream. The other analyses are run by the user
      * on demand.
      */
-    this.normalizeBytecode(new AbcStream(codeStream));
+    this.method = method;
+    this.normalizeBytecode();
   }
 
   var Ap = Analysis.prototype;
 
-  Ap.normalizeBytecode = function normalizeBytecode(codeStream) {
+  Ap.normalizeBytecode = function normalizeBytecode() {
     /* This array is sparse, indexed by offset. */
     var bytecodesOffset = [];
     /* This array is dense. */
     var bytecodes = [];
+    var codeStream = new AbcStream(this.method.code);
     var code;
 
     while (codeStream.remaining() > 0) {
@@ -1062,15 +1078,30 @@ var Analysis = (function () {
     }
 
     this.bytecodes = bytecodes;
+
+    var exceptions = this.method.exceptions;
+    var ex;
+    for (var i = 0, j = exceptions.length; i < j; i++) {
+      ex = exceptions[i];
+      ex.start = bytecodesOffset[ex.start];
+      ex.end = bytecodesOffset[ex.end];
+      ex.target = bytecodesOffset[ex.target];
+    }
   };
 
   Ap.analyzeControlFlow = function analyzeControlFlow() {
+    /* FIXME Exceptions aren't supported. */
+    if (this.method.exceptions.length > 0) {
+      return false;
+    }
+
     var bytecodes = this.bytecodes;
     assert(bytecodes);
     detectBasicBlocks(bytecodes);
     var root = bytecodes[0];
     findNaturalLoops(computeDominance(root));
     this.controlTree = induceControlTree(root);
+    return true;
   }
 
   /*
