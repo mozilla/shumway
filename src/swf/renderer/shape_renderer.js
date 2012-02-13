@@ -56,7 +56,7 @@ function joinCmds() {
   return this.cmds.join(';');
 }
 
-function ShapeFactory(graph) {
+function ShapeRenderer(graph) {
   var records = graph.records;
   var isMorph = graph.isMorph;
   var recordsMorph = isMorph ? graph.recordsMorph : [];
@@ -367,7 +367,7 @@ function ShapeFactory(graph) {
   paths.sort(function (a, b) {
     return a.i - b.i;
   });
-  this.render = new Function('c,m,r',
+  return new Function('c,m,r',
     'with(c){' +
       'save();' +
       'scale(0.05,0.05);' +
