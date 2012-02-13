@@ -19,7 +19,7 @@ function maxPower2(number) {
   return val;
 }
 
-function FontFactory(graph) {
+function defineFont(graph) {
   var tables = { };
 
   var glyphCount = graph.glyphCount;
@@ -138,6 +138,7 @@ function FontFactory(graph) {
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var glyphs = graph.glyphs;
+  var resolution = graph.resolution;
   var offset = 16;
   var i = 0;
   var code;
@@ -161,32 +162,32 @@ function FontFactory(graph) {
         if (record.isStraight) {
           if (record.isGeneral) {
             flags += '\x01';
-            var dx = record.deltaX;
-            var dy = -record.deltaY;
+            var dx = record.deltaX/ resolution;
+            var dy = -record.deltaY/ resolution;
             xCoordinates += toString16(dx);
             yCoordinates += toString16(dy);
             x += dx;
             y += dy;
           } else if (record.isVertical) {
             flags += '\x11';
-            var dy = -record.deltaY;
+            var dy = -record.deltaY/ resolution;
             yCoordinates += toString16(dy);
             y += dy;
           } else {
             flags += '\x21';
-            var dx = record.deltaX;
+            var dx = record.deltaX/ resolution;
             xCoordinates += toString16(dx);
             x += dx;
           }
         } else {
           flags += '\x00';
-          var cx = record.controlDeltaX;
-          var cy = -record.controlDeltaY;
+          var cx = record.controlDeltaX/ resolution;
+          var cy = -record.controlDeltaY/ resolution;
           xCoordinates += toString16(cx);
           yCoordinates += toString16(cy);
           flags += '\x01';
-          var dx = record.anchorDeltaX;
-          var dy = -record.anchorDeltaY;
+          var dx = record.anchorDeltaX/ resolution;
+          var dy = -record.anchorDeltaY/ resolution;
           xCoordinates += toString16(dx);
           yCoordinates += toString16(dy);
           ++endPoint;
@@ -202,8 +203,8 @@ function FontFactory(graph) {
             endPtsOfContours += toString16(endPoint - 1);
           }
           flags += '\x01';
-          var moveX = record.moveX;
-          var moveY = -record.moveY;
+          var moveX = record.moveX/ resolution;
+          var moveY = -record.moveY/ resolution;
           var dx = moveX - x;
           var dy = moveY - y;
           xCoordinates += toString16(dx);
@@ -275,7 +276,7 @@ function FontFactory(graph) {
     '\x00\x08' + // lowestRecPPEM
     '\x00\x02' + // fontDirectionHint
     '\x00\x00' + // indexToLocFormat
-    '\x00\x00'  // glyphDataFormat
+    '\x00\x00' // glyphDataFormat
   ;
 
   var advance = graph.advance;
