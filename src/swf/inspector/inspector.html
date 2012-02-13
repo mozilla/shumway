@@ -250,9 +250,10 @@
     <script src="../parser/generate.js"></script>
     <script src="../parser/parse.js"></script>
 
+    <script src="../renderer/font.js"></script>
+    <script src="../renderer/shape_renderer.js"></script>
+    <script src="../renderer/text_renderer.js"></script>
     <script src="../renderer/render.js"></script>
-    <script src="../renderer/factories/shape_factory.js"></script>
-    <script src="../renderer/factories/font_factory.js"></script>
 
     <script>
       var tagCodes = {
@@ -340,13 +341,18 @@
       var storyboard = $('#storyboard');
       var playhead = $('#playhead');
 
+      var dictionary;
+      var frameRate;
+
       function readFile(file) {
         var reader = new FileReader();
         reader.onload = function() {
           try {
             console.time('process');
             console.time('parse');
-            SWF.parse(this.result, function(result) {
+            SWF.parse(this.result, function(result, dict) {
+              dictionary = dict;
+              frameRate = result.frameRate;
               console.timeEnd('parse');
               process(file, result);
               console.timeEnd('process');
@@ -367,8 +373,6 @@
         var bounds = swf.bounds;
         var frameWidth = (bounds.xMax - bounds.xMin) / 20;
         var frameHeight = (bounds.yMax - bounds.yMin) / 20;
-        
-        timeline.data('frameRate', swf.frameRate);
 
         var stage = preview.data('stage');
         if (!stage) {
@@ -380,7 +384,7 @@
 
         info.html(
           '<b>' + file.name + '</b>, SWF' + swf.version + ', ' +
-          ~~swf.frameRate + 'fps, ' +
+          ~~frameRate + 'fps, ' +
           frameWidth + 'x' + frameHeight + 'px'
         );
 
@@ -447,7 +451,7 @@
         var stage = preview.data('stage');
         var ctx = stage.getContext('2d');
         ctx.clearRect(0, 0, stage.width, stage.height);
-        SWF.render(context, ctx, frameNum);
+        SWF.render(context, dictionary, ctx, frameNum);
         preview.append(preview.data('stage'));
       }
       function activate(node) {
@@ -477,7 +481,7 @@
               '<style>' +
                 '@font-face{' +
                   'font-family:"' + tag.name + '";' +
-                  'src:url(' + 'data:font/opentype;base64,' + btoa(FontFactory(tag)) + ');' +
+                  'src:url(' + 'data:font/opentype;base64,' + btoa(defineFont(tag)) + ');' +
                 '}' +
               '</style>'
             );
@@ -500,8 +504,8 @@
             canvas.width = width;
             canvas.height = height;
             var ctx = canvas.getContext('2d');
-            var factory = new ShapeFactory(tag);
-            factory.render(ctx, {
+            var render = new ShapeRenderer(tag);
+            render(ctx, {
               scaleX: 1,
               scaleY: 1,
               skew0: 0,
@@ -558,7 +562,7 @@
               frameNum = 1;
             }
             showFrame(timeline.data('context'), frameNum);
-          }, 1000 / timeline.data('frameRate'));
+          }, 1000 / frameRate);
           play.ing = true;
           playbtn.removeClass('paused');
         } else {
