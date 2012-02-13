@@ -74,7 +74,7 @@ for (var tag in tagHandler) {
 
 var readHeader = generate(MOVIE_HEADER);
 
-function readTags(bytes, stream, version) {
+function readTags(bytes, stream, version, dictionary) {
   var tags = [];
   do {
     var tagAndLength = readUi16(bytes, stream);
@@ -88,6 +88,16 @@ function readTags(bytes, stream, version) {
     var item = handler ? handler(substream.bytes, substream, version, tag) : { };
     item.tag = tag;
     tags.push(item);
+    if (item.id) {
+      var id = item.id;
+      if (dictionary[id]) {
+        var entry = dictionary[id];
+        entry.__proto__ = item;
+        dictionary[id] = entry;
+      } else {
+        dictionary[id] = item;
+      }
+    }
   } while (tag);
   return tags;
 }
@@ -118,12 +128,13 @@ SWF.parse = function(buffer, callback) {
     stream.ensure(21);
   }
   var header = readHeader(bytes, stream);
-  var tags = readTags(bytes, stream, version);
+  var dictionary = { };
+  var tags = readTags(bytes, stream, version, dictionary);
   callback({
     version: version,
     bounds: header.bounds,
     frameRate: header.frameRate,
     frameCount: header.frameCount,
     tags: tags
-  });
+  }, dictionary);
 };
