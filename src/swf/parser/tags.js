@@ -146,6 +146,18 @@ var DEFINE_SHAPE = {
     { $2: SHAPE_WITH_STYLE }
   ]]
 };
+var DEFINE_TEXT = {
+  type: '"text"',
+  id: UI16,
+  bounds: RECT,
+  matrix: MATRIX,
+  $glyphBits: UI8,
+  $advanceBits: UI8,
+  records: {
+    $: TEXT_RECORD,
+    repeat: '!eot'
+  }
+};
 var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
   actions: {
