@@ -115,10 +115,10 @@ var DEFINE_FONT2 = {
       $: RECT,
       count: 'glyphCount'
     },
-    $kerningCount: UI16,
+    $$kerningCount: UI16,
     kerning: {
       $: KERNING,
-      count: 'glyphCount'
+      count: 'kerningCount'
     }
   }]]
 };
