@@ -1,29 +1,18 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function renderDisplayList(dictionary, displayList, ctx) {
+function renderDisplayList(displayList, ctx) {
   console.time('render');
   var maxDepth = displayList.maxDepth;
   var depth = 0;
   while (depth++ < maxDepth) {
     var character = displayList[depth];
-    if (character) {
-      var factory = dictionary[character.objectId];
-      if (factory)
-        factory.render(ctx, character.matrix, (character.ratio / 0xffff) || 0);
-    }
+    if (character && character.render)
+        character.render(ctx, character.matrix, (character.ratio / 0xffff) || 0);
   }
   console.timeEnd('render');
 }
 
-SWF.render = function(graph, ctx, frameNum) {
-  var dictionary = graph.dictionary;
-  if (!dictionary) {
-    dictionary = { };
-    defineProperty(graph, 'dictionary', {
-      value: dictionary,
-      enumerable: false
-    })
-  }
+SWF.render = function(graph, dictionary, ctx, frameNum) {
   var timeline = graph.timeline;
   if (!timeline) {
     timeline = [];
@@ -34,7 +23,7 @@ SWF.render = function(graph, ctx, frameNum) {
   }
   var frame = timeline[frameNum - 1];
   if (frame) {
-    renderDisplayList(dictionary, frame.displayList, ctx);
+    renderDisplayList(frame.displayList, ctx);
     return;
   }
   var tags = graph.tags;
@@ -52,6 +41,15 @@ SWF.render = function(graph, ctx, frameNum) {
   var tag;
   while (tag = tags[i++]) {
     switch (tag.type) {
+    case 'font':
+      var style = document.head.appendChild(document.createElement('style'));
+      style.innerText =
+        '@font-face{' +
+          'font-family:"' + tag.name + '";' +
+          'src:url(' + 'data:font/opentype;base64,' + btoa(defineFont(tag)) + ')' +
+        '}'
+      ;
+      break;
     case 'frame':
       timeline.push({
         frameNum: currentFrame,
@@ -60,7 +58,7 @@ SWF.render = function(graph, ctx, frameNum) {
         displayList: displayList
       });
       if (currentFrame === frameNum) {
-        renderDisplayList(dictionary, displayList, ctx);
+        renderDisplayList(displayList, ctx);
         return;
       }
       displayList = create(displayList);
@@ -73,7 +71,16 @@ SWF.render = function(graph, ctx, frameNum) {
         for (var prop in tag)
           character[prop] = tag[prop];
       } else {
-        var character = tag;
+        var character = create(tag);
+        var obj = dictionary[tag.objId];
+        switch (obj.type) {
+        case 'shape':
+          character.render = new ShapeRenderer(obj, dictionary);
+          break;
+        case 'text':
+          character.render = new TextRenderer(obj, dictionary);
+          break;
+        }
       }
       displayList[depth] = character;
       if (depth > displayList.maxDepth)
@@ -81,9 +88,6 @@ SWF.render = function(graph, ctx, frameNum) {
       break;
     case 'remove':
       displayList[tag.depth] = undefined;
-      break;
-    case 'shape':
-      dictionary[tag.id] = new ShapeFactory(tag);
       break;
     }
   }

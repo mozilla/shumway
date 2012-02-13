@@ -10,10 +10,10 @@ var tagHandler = {
   /* DefineButton */                  7: undefined,
   /* JPEGTables */                    8: undefined,
   /* SetBackgroundColor */            9: RGB,
-  /* DefineFont */                    10: undefined,
-  /* DefineText */                    11: undefined,
+  /* DefineFont */                    10: DEFINE_FONT,
+  /* DefineText */                    11: DEFINE_TEXT,
   /* DoAction */                      12: DO_ACTION,
-  /* DefineFontInfo */                13: undefined,
+  /* DefineFontInfo */                13: DEFINE_FONT_INFO,
   /* DefineSound */                   14: undefined,
   /* StartSound */                    15: undefined,
   /* DefineButtonSound */             17: undefined,
@@ -27,7 +27,7 @@ var tagHandler = {
   /* PlaceObject2 */                  26: PLACE_OBJECT,
   /* RemoveObject2 */                 28: REMOVE_OBJECT,
   /* DefineShape3 */                  32: DEFINE_SHAPE,
-  /* DefineText2 */                   33: undefined,
+  /* DefineText2 */                   33: DEFINE_TEXT,
   /* DefineButton2 */                 34: undefined,
   /* DefineBitsJPEG3 */               35: undefined,
   /* DefineBitsLossless2 */           36: undefined,
@@ -36,14 +36,14 @@ var tagHandler = {
   /* FrameLabel */                    43: undefined,
   /* SoundStreamHead2 */              45: undefined,
   /* DefineMorphShape */              46: DEFINE_SHAPE,
-  /* DefineFont2 */                   48: undefined,
+  /* DefineFont2 */                   48: DEFINE_FONT2,
   /* ExportAssets */                  56: undefined,
   /* ImportAssets */                  57: undefined,
   /* EnableDebugger */                58: undefined,
   /* DoInitAction */                  59: DO_ACTION,
   /* DefineVideoStream */             60: undefined,
   /* VideoFrame */                    61: undefined,
-  /* DefineFontInfo2 */               62: undefined,
+  /* DefineFontInfo2 */               62: DEFINE_FONT_INFO,
   /* EnableDebugger2 */               64: undefined,
   /* ScriptLimits */                  65: undefined,
   /* SetTabIndex */                   66: undefined,
@@ -52,7 +52,7 @@ var tagHandler = {
   /* ImportAssets2 */                 71: undefined,
   /* DefineFontAlignZones */          73: undefined,
   /* CSMTextSettings */               74: undefined,
-  /* DefineFont3 */                   75: undefined,
+  /* DefineFont3 */                   75: DEFINE_FONT2,
   /* SymbolClass */                   76: undefined,
   /* Metadata */                      77: METADATA,
   /* DefineScalingGrid */             78: undefined,
@@ -74,7 +74,7 @@ for (var tag in tagHandler) {
 
 var readHeader = generate(MOVIE_HEADER);
 
-function readTags(bytes, stream, version) {
+function readTags(bytes, stream, version, dictionary) {
   var tags = [];
   do {
     var tagAndLength = readUi16(bytes, stream);
@@ -88,6 +88,16 @@ function readTags(bytes, stream, version) {
     var item = handler ? handler(substream.bytes, substream, version, tag) : { };
     item.tag = tag;
     tags.push(item);
+    if (item.id) {
+      var id = item.id;
+      if (dictionary[id]) {
+        var entry = dictionary[id];
+        entry.__proto__ = item;
+        dictionary[id] = entry;
+      } else {
+        dictionary[id] = item;
+      }
+    }
   } while (tag);
   return tags;
 }
@@ -118,12 +128,13 @@ SWF.parse = function(buffer, callback) {
     stream.ensure(21);
   }
   var header = readHeader(bytes, stream);
-  var tags = readTags(bytes, stream, version);
+  var dictionary = { };
+  var tags = readTags(bytes, stream, version, dictionary);
   callback({
     version: version,
     bounds: header.bounds,
     frameRate: header.frameRate,
     frameCount: header.frameCount,
     tags: tags
-  });
+  }, dictionary);
 };

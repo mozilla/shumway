@@ -552,44 +552,28 @@ var TEXT_ENTRY = {
   advance: SB('advanceBits')
 };
 var TEXT_RECORD_SETUP = {
-  $hasFont: 'flag>>3&1',
-  $hasColor: 'flag>>2&1',
-  $hasMoveX: 'flag>>1&1',
-  $hasMoveY: 'flag&1',
+  $hasFont: 'flags>>3&1',
+  $hasColor: 'flags>>2&1',
+  $hasMoveX: 'flags>>1&1',
+  $hasMoveY: 'flags&1',
   fontId: ['hasFont', [UI16]],
-  color: {
-    $: ['hasColor', [['tag===33', [RGBA, RGB]]]],
-    merge: true
-  },
+  $0: ['hasColor', [{ color: ['tag===33', [RGBA, RGB]] }]],
   moveX: ['hasMoveX', [SI16]],
   moveY: ['hasMoveY', [SI16]],
-  fontHeight: ['hasFont', [UI16]],
-};
-var TEXT_RECORD_GLYPHS = {
-  $glyphCount: 'flags&0x7f',
-  entries: {
-    $: TEXT_ENTRY,
-    count: 'glyphCount'
-  }
-};
-var TEXT_RECORD_STRING = {
-  $0: TEXT_RECORD_SETUP,
-  $glyphCount: UI8,
-  entries: {
-    $: TEXT_ENTRY,
-    count: 'glyphCount'
-  }
+  fontHeight: ['hasFont', [UI16]]
 };
 var TEXT_RECORD = {
   $$flags: UB(8),
-  eot: '!flags',
-  $0: ['version>=7', [
-    TEXT_RECORD_STRING,
-    {
-      $1: TEXT_RECORD_SETUP,
-      $2: TEXT_RECORD_GLYPHS
+  $eot: '!flags',
+  $0: TEXT_RECORD_SETUP,
+  $1: ['!eot', [{
+    $$tmp: UI8,
+    $glyphCount: ['version>6', ['tmp', 'tmp&0x7f']],
+    entries: {
+      $: TEXT_ENTRY,
+      count: 'glyphCount'
     }
-  ]]
+  }]]
 };
 var ZONE_DATA = {
   coord: FLOAT16,

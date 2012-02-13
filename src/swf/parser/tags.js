@@ -1,5 +1,128 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var DEFINE_FONT = {
+  type: '"font"',
+  id: UI16,
+  $$firstOffset: UI16,
+  $glyphCount: 'firstOffset/2',
+  $$restOffsets: {
+    $: UI16,
+    count: 'glyphCount-1'
+  },
+  offsets: '[firstOffset].concat(restOffsets)',
+  glyphs: {
+    $: SHAPE,
+    count: 'glyphCount'
+  }
+};
+var DEFINE_FONT_INFO = {
+  id: UI16,
+  $$nameLength: UI8,
+  name: STRING('nameLength'),
+  $$reserved: UB(2),
+  smallText: UB(1),
+  shiftJis: UB(1),
+  ansi: UB(1),
+  italic: UB(1),
+  bold: UB(1),
+  $wide: UB(1),
+  $0: ['tag===62', [
+    { language: UI8 },
+    { language: '0' }
+  ]],
+  $1: ['wide', [
+    {
+      codes: {
+        $: UI16,
+        length: '$stream.end-$stream.pos'
+      }
+    },
+    {
+      codes: {
+        $: UI8,
+        count: '$stream.end-$stream.pos'
+      }
+    }
+  ]]
+};
+var DEFINE_FONT2 = {
+  type: '"font"',
+  id: UI16,
+  $hasLayout: UB(1),
+  $0: ['version>5', [
+    { shiftJis: UB(1) },
+    { $$reserved: UB(1) }
+  ]],
+  smallText: UB(1),
+  ansi: UB(1),
+  $wideOffset: UB(1),
+  $wide: UB(1),
+  italic: UB(1),
+  bold: UB(1),
+  $1: ['version>5', [
+    { language: UI8 },
+    {
+      $$reserved: UI8,
+      language: '0'
+    }
+  ]],
+  $$nameLength: UI8,
+  name: STRING('nameLength'),
+  resolution: ['tag===75', ['20', '1']],
+  $glyphCount: UI16,
+  $2: ['wideOffset', [
+    {
+      offsets: {
+        $: UI32,
+        count: 'glyphCount'
+      },
+      mapOffset: UI32
+    },
+    {
+      offsets: {
+        $: UI16,
+        count: 'glyphCount'
+      },
+      mapOffset: UI16
+    }
+  ]],
+  glyphs: {
+    $: SHAPE,
+    count: 'glyphCount'
+  },
+  $3: ['wide', [
+    {
+      codes: {
+        $: UI16,
+        count: 'glyphCount'
+      }
+    },
+    {
+      codes: {
+        $: UI8,
+        count: 'glyphCount'
+      }
+    }
+  ]],
+  $4: ['hasLayout', [{
+    ascent: UI16,
+    descent: UI16,
+    leading: SI16,
+    advance: {
+      $: SI16,
+      count: 'glyphCount'
+    },
+    bounds: {
+      $: RECT,
+      count: 'glyphCount'
+    },
+    $$kerningCount: UI16,
+    kerning: {
+      $: KERNING,
+      count: 'kerningCount'
+    }
+  }]]
+};
 var DEFINE_SHAPE = {
   type: '"shape"',
   id: UI16,
@@ -22,6 +145,18 @@ var DEFINE_SHAPE = {
     },
     { $2: SHAPE_WITH_STYLE }
   ]]
+};
+var DEFINE_TEXT = {
+  type: '"text"',
+  id: UI16,
+  bounds: RECT,
+  matrix: MATRIX,
+  $glyphBits: UI8,
+  $advanceBits: UI8,
+  records: {
+    $: TEXT_RECORD,
+    repeat: '!eot'
+  }
 };
 var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
@@ -74,7 +209,7 @@ var PLACE_OBJECT = {
       $move: 'flags&1',
       depth: UI16,
       className: ['hasClassName||(place&&hasImage)', [STRING(0)]],
-      objectId: ['place', [UI16]],
+      objId: ['place', [UI16]],
       matrix: ['hasMatrix', [MATRIX]],
       cxform: ['hasCxform', [CXFORM]],
       ratio: ['hasRatio', [UI16]],
@@ -100,7 +235,7 @@ var PLACE_OBJECT = {
     },
     {
       place: '1',
-      objectId: UI16,
+      objId: UI16,
       depth: UI16,
       hasMatrix: '1',
       matrix: MATRIX,
@@ -113,7 +248,7 @@ var PLACE_OBJECT = {
 };
 var REMOVE_OBJECT = {
   type: '"remove"',
-  objectId: ['tag===5', [UI16]],
+  objId: ['tag===5', [UI16]],
   depth: UI16
 };
 var SHOW_FRAME = {
