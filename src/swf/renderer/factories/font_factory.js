@@ -23,25 +23,25 @@ function FontFactory(graph) {
   var tables = { };
 
   var glyphCount = graph.glyphCount;
-  var codes = graph.codes;
-  var entries = [];
-  for (var i = 0; i < glyphCount; ++i)
-    entries.push({ index: i, code: codes[i] });
-  entries.sort(function(a, b) {
-    return a.code - b.code;
+  var codes = graph.codes.slice();
+  var glyphIndex = { };
+  for (var i = 0, code; code = codes[i]; ++i)
+    glyphIndex[code] = i;
+  codes.sort(function(a, b) {
+    return a - b;
   });
-  var usFirstCharIndex = entries[0].code;
-  var usLastCharIndex = entries[glyphCount - 1].code;
+  var usFirstCharIndex = codes[0];
+  var usLastCharIndex = codes[codes.length - 1];
   var ranges = [];
   var i = 0;
-  var entry;
-  while (entry = entries[i++]) {
-    var start = entry.code;
+  var code;
+  while (code = codes[i++]) {
+    var start = code;
     var end = start;
-    var indices = [entry.index];
-    while ((entry = entries[i]) && end + 1 === entry.code) {
+    var indices = [i - 1];
+    while ((code = codes[i]) && end + 1 === code) {
       ++end;
-      indices.push(entry.code);
+      indices.push(i);
       ++i;
     }
     ranges.push([start, end, indices]);
@@ -139,8 +139,10 @@ function FontFactory(graph) {
   var loca = '\x00\x00';
   var glyphs = graph.glyphs;
   var offset = 16;
-  for (var i = 0, entry; entry = entries[i]; ++i) {
-    var glyph = glyphs[entry.index];
+  var i = 0;
+  var code;
+  while (code = codes[i++]) {
+    var glyph = glyphs[glyphIndex[code]];
     var records = glyph.records;
     var numberOfContours = 1;
     var endPoint = 0;
@@ -303,6 +305,33 @@ function FontFactory(graph) {
     hmtx += toString16(advance ? advance[i] : 1024) + '\x00\x00';
   tables['hmtx'] = hmtx;
 
+  if (graph.kerning) {
+    var kerning = graph.kerning;
+    var nPairs = kerning.length;
+    var searchRange = maxPower2(nPairs) * 2;
+    var kern =
+      '\x00\x00' + // version
+      '\x00\x01' + // nTables
+      '\x00\x00' + // subtable version
+      toString16(14 + (nPairs * 6)) + // length
+      '\x00\x01' + // coverage
+      toString16(nPairs) +
+      toString16(searchRange) +
+      toString16(Math.log(nPairs) / Math.log(2)) + // entrySelector
+      toString16((2 * nPairs) - searchRange) // rangeShift
+    ;
+    var i = 0;
+    var record;
+    while (record = kerning[i++]) {
+      kern +=
+        toString16(glyphIndex[record.code1]) + // left
+        toString16(glyphIndex[record.code2]) + // right
+        toString16(record.adjustment) // value
+      ;
+    }
+    tables['kern'] = kern;
+  }
+
   tables['loca'] = loca;
 
   tables['maxp'] =
@@ -368,16 +397,19 @@ function FontFactory(graph) {
     '\x00\x00\x00\x00' // maxMemType1
   ;
 
+  var tags = keys(tables);
   var header =
     '\x00\x01\x00\x00' + // version
-    '\x00\x0a' + // numTables
+    toString16(tags.length) + // numTables
     '\x00\x80' + // searchRange
     '\x00\x03' + // entrySelector
     '\x00\x20' // rangeShift
   ;
-  var offset = 160 + header.length;
+  var offset = (tags.length * 16) + header.length;
   var data = '';
-  for (var tag in tables) {
+  var i = 0;
+  var tag;
+  while (tag = tags[i++]) {
     var table = tables[tag];
     var length = table.length;
     var checksum = 0, n = length;
