@@ -737,7 +737,7 @@ var MethodInfo = (function () {
       end: stream.readU30(),
       target: stream.readU30(),
       typename: stream.readU30(),
-      name: stream.readU30()
+      varname: stream.readU30()
     };
   }
 

@@ -4,7 +4,7 @@ function mangleQName(multiname) {
 }
 
 /**
- * Used as a marker to help with source indentation. 
+ * Used as a marker to help with source indentation.
  */
 function Indent(statements) {
   this.statements = statements;
@@ -16,7 +16,7 @@ var Compiler = (function () {
    * as an abstract program state. As control nodes are visited recursively, they construct a tree of
    * statement arrays which if flattened after compilation is done.
    */
-  
+
   Control.LabeledBreak.prototype.compile = function (mcx, state) {
     notImplemented();
   };
@@ -87,14 +87,14 @@ var Compiler = (function () {
     var statements = cr.statements;
     statements.push("if (" + condition + ") {");
     statements.push(new Indent(tr.statements));
-    if (er) {  
+    if (er) {
       statements.push("} else {");
       statements.push(new Indent(er.statements));
     }
     statements.push("}");
     return {statements: statements, condition: condition};
   };
-  
+
   /**
    * Abstract program state.
    */
@@ -121,7 +121,7 @@ var Compiler = (function () {
       var arguments = this.stack.popMany(argumentCount);
       this.stack.push(name + "(" + arguments.join(",") + ")");
     };
-   
+
     state.prototype.trace = function trace(writer) {
       writer.enter("scope:");
       writer.writeArray(this.scope);
@@ -135,7 +135,7 @@ var Compiler = (function () {
     };
     return state;
   })();
-  
+
   /**
    * Describes binary and unary operators.
    */
@@ -146,13 +146,13 @@ var Compiler = (function () {
       this.binary = binary;
       this.conditional = conditional;
     }
-    
+
     operator.ADD = new operator("+", function (l, r) { return l + r; }, true, false);
     operator.SUB = new operator("-", function (l, r) { return l - r; }, true, false);
     operator.MUL = new operator("*", function (l, r) { return l * r; }, true, false);
-    
+
     /* TODO */
-    
+
     operator.SEQ = new operator("===", function (l, r) { return l === r; }, true, true);
     operator.SNE = new operator("!==", function (l, r) { return l !== r; }, true, true);
     operator.EQ = new operator("==", function (l, r) { return l == r; }, true, true);
@@ -161,40 +161,40 @@ var Compiler = (function () {
     operator.GT = new operator(">", function (l, r) { return l > r; }, true, true);
     operator.LT = new operator("<", function (l, r) { return l < r; }, true, true);
     operator.GE = new operator(">=", function (l, r) { return l >= r; }, true, true);
-    
+
     operator.NOT = new operator("!", function (a) { return !a; }, false, true);
-    
+
     function linkOpposites(a, b) {
       a.not = b;
       b.not = a;
     }
-    
+
     linkOpposites(operator.SEQ, operator.SNE);
     linkOpposites(operator.EQ, operator.NE);
     linkOpposites(operator.LE, operator.GT);
     linkOpposites(operator.LT, operator.GE);
-    
+
     operator.prototype.eval = function eval() {
       return this.fn.apply(arguments);
     };
-    
+
     operator.prototype.isConditional = function isConditional() {
       return this.conditional;
     };
-    
+
     operator.prototype.isBinary = function isBinary() {
       return this.binary;
     };
-    
+
     operator.prototype.toString = function toString() {
       return this.name;
     };
-    
+
     return operator;
   })();
-  
+
   /**
-   * As we perform abstract interpretation we create expression trees. Expressions are flattened when they 
+   * As we perform abstract interpretation we create expression trees. Expressions are flattened when they
    * are assigned to local variables. Dealing with expressions this way gives us more flexibility and allows
    * us to perform optimizations.
    */
@@ -231,9 +231,9 @@ var Compiler = (function () {
         return this.operator + this.left;
       }
     }
-    return expression; 
+    return expression;
   })();
-  
+
   /**
    * Wrapper around a named local variable.
    */
@@ -247,9 +247,9 @@ var Compiler = (function () {
     variable.prototype.toString = function toString() {
       return this.name;
     }
-    return variable; 
+    return variable;
   })();
-  
+
   /**
    * Silly wrapper around constants, so that they fit neatly in our expression trees.
    */
@@ -263,9 +263,9 @@ var Compiler = (function () {
     constant.prototype.toString = function toString() {
       return this.value;
     }
-    return constant; 
+    return constant;
   })();
-  
+
   /**
    * Distinguish between literals and string constants.
    */
@@ -279,62 +279,62 @@ var Compiler = (function () {
     literal.prototype.toString = function toString() {
       return this.value;
     }
-    return literal; 
+    return literal;
   })();
-  
-  
+
+
   function createVariableName(i) {
     if (i < 26) {
       return String.fromCharCode("a".charCodeAt(0) - 1 + i);
     }
     return "v" + (i - 26);
   }
-  
+
   function MethodCompilerContext(abc, method) {
     this.abc = abc;
     this.method = method;
-    this.worklist = [method.codeAnalysis.controlTree];
+    this.worklist = [method.analysis.controlTree];
     this.state = new State();
     this.writer = new IndentingWriter();
-    
+
     /* Initialize local variables. */
     this.local = [new Variable("this")];
     for (var i = 1; i < method.localCount; i++) {
       this.local.push(new Variable(createVariableName(i)));
     }
     this.state.local = this.local.slice(0);
-    
+
     this.temporary = [new Variable("t0")];
   }
-  
+
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
     var writer = this.writer;
-    
+
     writer.enter("block " + block.blockId + " [" + block.position + "-" + block.end.position + "] {");
     var statements = [];
-    
+
     this.writer.enter("entryState {");
     state.trace(this.writer);
     this.writer.leave("}");
-    
+
     function emitSetSlot(obj, slotIndex, value) {
       statements.push(obj + "[" + slotIndex + "] = " + value + ";");
     }
-    
+
     var local = this.local;
     var temporary = this.temporary;
-    
+
     function expression(operator) {
       var b = state.stack.pop();
       var a = state.stack.pop();
       state.stack.push(new Expression(a, operator, b));
     }
-    
+
     function setLocal(index) {
       state.local[index] = state.stack.pop();
       flushLocals();
     }
-    
+
     function flushLocals() {
       for (var i = 0; i < local.length; i++) {
         if (local[i] !== state.local[i]) {
@@ -343,10 +343,10 @@ var Compiler = (function () {
         }
       }
     }
-    
-    
+
+
     /**
-     * Stores all stack values into temporaries. At the end of a block, the state stack 
+     * Stores all stack values into temporaries. At the end of a block, the state stack
      * may not be empty. This usually occurs for short-circuited conditional expressions.
      */
     function flushStack() {
@@ -358,11 +358,11 @@ var Compiler = (function () {
         }
       }
     }
-    
+
     var condition = null;
-    
+
     /**
-     * Remembers the branch condition for this block, which is passed and used by the If control 
+     * Remembers the branch condition for this block, which is passed and used by the If control
      * node.
      */
     function setCondition(operator) {
@@ -374,26 +374,26 @@ var Compiler = (function () {
       var a = state.stack.pop();
       condition = new Expression(a, operator, b);
     }
-    
+
     function emitStatement(statement) {
       statements.push(statement + ";");
     }
-    
+
     var multinames = this.abc.constantPool.multinames;
-    
+
     var multiname, args, value, obj;
-    
+
     function getMultiname(index) {
       var multiname = multinames[index];
-      return multiname; 
+      return multiname;
     }
-    
+
     function createMultiname(multiname) {
       if (multiname.isRuntime()) {
         multiname = multiname.clone();
         if (multiname.isRuntimeName()) {
           multiname.setName(state.stack.pop());
-        } 
+        }
         if (multiname.isRuntimeNamespace()) {
           multiname.setNamespace(state.stack.pop());
         }
@@ -401,18 +401,18 @@ var Compiler = (function () {
       assert(!multiname.isRuntime());
       return multiname;
     }
-    
+
     function getAndCreateMultiname(index) {
       return createMultiname(getMultiname(index));
     }
-    
-    var bytecodes = this.method.codeAnalysis.bytecodes;
+
+    var bytecodes = this.method.analysis.bytecodes;
     for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
       var bc = bytecodes[bci];
       var op = bc.op;
-      
+
       writer.enter("bytecode bci: " + bci + ", name: " + opcodeName(op) + " {");
-      
+
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
       case OP_nop:            notImplemented(); break;
@@ -422,7 +422,7 @@ var Compiler = (function () {
       case OP_dxns:           notImplemented(); break;
       case OP_dxnslate:       notImplemented(); break;
       case OP_kill:           notImplemented(); break;
-      case OP_label: 
+      case OP_label:
         /* Do nothing. Used to indicate that this location is the target of a branch, which
          * is only useful for static analysis. */
         break;
@@ -432,14 +432,14 @@ var Compiler = (function () {
       case OP_ifge:           setCondition(Operator.GE); break;
       case OP_ifnle:          setCondition(Operator.GT); break;
       case OP_ifgt:           setCondition(Operator.GT); break;
-      case OP_ifngt:          setCondition(Operator.LE); break; 
+      case OP_ifngt:          setCondition(Operator.LE); break;
       case OP_ifle:           setCondition(Operator.LE); break;
       case OP_ifnge:          setCondition(Operator.LT); break;
       case OP_iflt:           setCondition(Operator.LT); break;
-      case OP_jump: 
+      case OP_jump:
         // NOP
-        break; 
-      case OP_iftrue:         
+        break;
+      case OP_iftrue:
         state.stack.push(new Constant(true));
         setCondition(Operator.EQ);
         break;
@@ -456,7 +456,7 @@ var Compiler = (function () {
       case OP_popscope:       notImplemented(); break;
       case OP_nextname:       notImplemented(); break;
       case OP_hasnext:        notImplemented(); break;
-      case OP_pushnull:       notImplemented(); break; 
+      case OP_pushnull:       notImplemented(); break;
       case OP_pushundefined:  notImplemented(); break;
       case OP_pushfloat:      notImplemented(); break;
       case OP_nextvalue:      notImplemented(); break;
@@ -531,7 +531,7 @@ var Compiler = (function () {
         break;
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
-      case OP_getglobalscope: 
+      case OP_getglobalscope:
         state.getGlobalScope();
         break;
       case OP_getscopeobject:     notImplemented(); break;
@@ -546,7 +546,7 @@ var Compiler = (function () {
       case OP_deleteproperty:     notImplemented(); break;
       case OP_deletepropertylate: notImplemented(); break;
       case OP_getslot:            notImplemented(); break;
-      case OP_setslot: 
+      case OP_setslot:
         value = state.stack.pop();
         obj = state.stack.pop();
         emitSetSlot(obj, bc.slotIndex, value);
@@ -596,7 +596,7 @@ var Compiler = (function () {
       case OP_modulo:         expression(Operator.MOD); break;
       case OP_lshift:         expression(Operator.LSH); break;
       case OP_rshift:         expression(Operator.RSH); break;
-      case OP_urshift:        expression(Operator.URSH); break; 
+      case OP_urshift:        expression(Operator.URSH); break;
       case OP_bitand:         expression(Operator.AND); break;
       case OP_bitor:          expression(Operator.OR); break;
       case OP_bitxor:         expression(Operator.XOR); break;
@@ -638,30 +638,30 @@ var Compiler = (function () {
       default:
         console.info("Not Implemented: " + opcodeName(bc));
       }
-      
+
       state.trace(this.writer);
       this.writer.enter("statements:");
       this.writer.writeArray(statements);
       this.writer.outdent();
       writer.leave("}");
     }
-    
+
     writer.leave("}");
 
     flushStack();
-    
+
     return {state: state, condition: condition, statements: statements};
   };
 
   function compiler(abc) {
-    this.abc = abc;  
+    this.abc = abc;
   };
-  
+
   compiler.prototype.compileMethod = function compileMethod(method) {
-    assert(method.codeAnalysis);
+    assert(method.analysis);
     var mcx = new MethodCompilerContext(this.abc, method);
-    var result = method.codeAnalysis.controlTree.compile(mcx, mcx.state);
-    
+    var result = method.analysis.controlTree.compile(mcx, mcx.state);
+
     function flatten(array, indent) {
       var str = "";
       array.forEach(function (x) {
@@ -675,10 +675,10 @@ var Compiler = (function () {
       })
       return str;
     }
-    
+
     print('\033[92m' + flatten(result.statements, "  ") + '\033[0m');
   }
-  
+
   return compiler;
 })();
 
@@ -686,8 +686,8 @@ var Compiler = (function () {
 function compileAbc(abc) {
   var compiler = new Compiler(abc);
   abc.methods.forEach(function (method) {
-    method.codeAnalysis = new Analysis(method.code);
-    method.codeAnalysis.analyzeControlFlow();
-    compiler.compileMethod(method);
+    method.analysis = new Analysis(method);
+    method.analysis.analyzeControlFlow();
+    //compiler.compileMethod(method);
   });
 }

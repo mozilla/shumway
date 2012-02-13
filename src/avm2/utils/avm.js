@@ -58,10 +58,10 @@ if (viz) {
   writer.enter("digraph {");
   var graph = 0;
   abc.methods.forEach(function (method) {
-    method.codeAnalysis = new Analysis(method.code);
-    method.codeAnalysis.analyzeControlFlow();
-    if (method.codeAnalysis) {
-      method.codeAnalysis.traceGraphViz(writer, method, "G" + graph + "_");
+    method.analysis = new Analysis(method.code);
+    method.analysis.analyzeControlFlow();
+    if (method.analysis) {
+      method.analysis.traceGraphViz(writer, method, "G" + graph + "_");
       graph += 1;
     }
   });
@@ -82,8 +82,8 @@ if (compile) {
     var writer = new IndentingWriter(false);
     writer.enter("analyses {");
     abc.methods.forEach(function (method) {
-      if (method.codeAnalysis) {
-        method.codeAnalysis.trace(writer);
+      if (method.analysis) {
+        method.analysis.trace(writer);
       }
     });
     writer.leave("}");
