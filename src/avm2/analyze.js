@@ -21,9 +21,11 @@ var Control = (function () {
         body[i].trace(writer);
       }
     },
+
     first: function () {
       return this.body[0];
     },
+
     slice: function (begin, end) {
       return new Seq(this.body.slice(begin, end));
     }

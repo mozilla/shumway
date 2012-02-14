@@ -688,6 +688,6 @@ function compileAbc(abc) {
   abc.methods.forEach(function (method) {
     method.analysis = new Analysis(method);
     method.analysis.analyzeControlFlow();
-    //compiler.compileMethod(method);
+    compiler.compileMethod(method);
   });
 }
