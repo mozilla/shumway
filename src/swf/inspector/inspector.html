@@ -71,15 +71,28 @@
       #items li.active {
         background: #fcefa1;
       }
-      #items > li:first-child {
-        color: #454545;
-        list-style-type: none;
+      #items li > div.expander {
+        position: absolute;
+        right: 0px;
+        top: 0;
+        width: 20px;
+        height: 35px;
+        background: url(triangle_w.png) no-repeat center;
+      }
+      #items li > div.expander.collapsed {
+        background-image: url(triangle_s.png);
+      }
+      #items li > div.expander:hover {
+        background-color: #d3d3d3;
       }
       #items li > span {
         position: absolute;
         left: 50px;
         color: #454545;
         pointer-events: none;
+      }
+      #items ol {
+        display: none;
       }
       #items ol li {
         padding-left: 25px;
@@ -404,36 +417,40 @@
       }
       function processTags(max) {
         var i = 0;
-        var lists = sidebar.find('ol.incomplete');
+        var lists = sidebar.find('ol.incomplete').not(':hidden');
         while (i < max && lists.length) {
-          (function createItems(list) {
-            var tags = list.data('unprocessedTags');
-            if (!tags) {
-              tags = list.data('context').tags.slice();
-              list.data('unprocessedTags', tags);
-            } else if (!tags.length) {
-              return;
+          var list = lists.last();
+          var tags = list.data('unprocessedTags');
+          if (!tags) {
+            tags = list.data('context').tags.slice();
+            list.data('unprocessedTags', tags);
+          } else if (!tags.length) {
+            break;
+          }
+          for (var j = 0, tag; i < max && (tag = tags.shift()); ++i, ++j) {
+            var item = $('<li><span>' + tagNames[tag.tag] + '</span></li>');
+            item.data('tag', tag);
+            list.append(item);
+            if (tag.tag === 39) {
+              var sublist =
+                $('<ol start="0" class="incomplete"><li>Sprite Timeline</li></ol>');
+              sublist.data('context', tag);
+              list.append(sublist);
+              var expander = $('<div class="expander"></div>');
+              expander.data('sublist', sublist);
+              item.append(expander);
+            } else if (tag.tag === 9) {
+              preview.data('stage').style.background =
+                'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')';
             }
-            for (var j = 0, tag; i < max && (tag = tags.shift()); ++i, ++j) {
-              var item = $('<li><span>' + tagNames[tag.tag] + '</span></li>');
-              item.data('tag', tag);
-              list.append(item);
-              if (tag.tag === 39) {
-                var sublist = $('<ol class="incomplete"></ol>');
-                sublist.data('context', tag);
-                createItems(sublist);
-                list.append(sublist);
-              } else if (tag.tag === 9) {
-                preview.data('stage').style.background =
-                  'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')';
-              }
-            }
-            if (!tags.length) {
-              list.removeClass('incomplete');
-              list.data('unprocessedTags', null);
-              lists = lists.not(list);
-            }
-          })(lists.last());
+          }
+          if (!tags.length) {
+            list.removeClass('incomplete');
+            list.data('unprocessedTags', null);
+            lists = lists.not(list);
+            if (!list.is(':last-child'))
+              break;
+          }
         }
       }
       function setupTimeline(context) {
@@ -460,19 +477,19 @@
         preview.append(preview.data('stage'));
       }
       function activate(node) {
-        var activeItem = sidebar.find('.active');
         if (!paused)
           playPause();
+        var activeItem = items.find('li.active');
         if (activeItem)
           activeItem.removeClass('active');
         node.addClass('active');
         activeItem = node;
         var context = node.parent().data('context');
         var tag = node.data('tag');
-        if (!tag || tag.tag === 39)
-          setupTimeline(context);
-        else
+        if (tag)
           inspect(context, tag);
+        else
+          setupTimeline(context);
       }
       function inspect(context, tag) {
         body.removeClass('timeline');
@@ -525,6 +542,27 @@
           }
         }
       }
+      function playPause() {
+        if (paused) {
+          var frameCount = timeline.data('frameCount') || 0;
+          if (frameCount <= 1)
+            return;
+          playPause.interval = setInterval(function() {
+            var frameNum = +currentframe.val() + 1;
+            if (frameNum > frameCount) {
+              play();
+              frameNum = 1;
+            }
+            showFrame(timeline.data('context'), frameNum);
+          }, 1000 / frameRate);
+          paused = false;
+          playbtn.removeClass('paused');
+        } else {
+          clearInterval(playPause.interval);
+          paused = true;
+          playbtn.addClass('paused');
+        }
+      }
 
       body.on('dragenter dragover', function(event) {
         event.stopPropagation();
@@ -536,11 +574,23 @@
         readFile(event.originalEvent.dataTransfer.files[0]);
       });
       sidebar.scroll(function(event) {
-        if (event.target.scrollTop === items.outerHeight() - sidebar.outerHeight())
-          processTags(50);
+        var lastItem = sidebar.find('ol.incomplete').not(':hidden').children('li').last();
+        if (lastItem.length) {
+          if (lastItem.position().top < sidebar.outerHeight()) {
+            debugger;
+            processTags(50);
+          }
+        }
       });
       items.click(function(event) {
-        activate($(event.target));
+        var target = $(event.target);
+        if (target.hasClass('expander')) {
+          target.toggleClass('collapsed');
+          target.data('sublist').toggle();
+          processTags(50);
+        } else {
+          activate(target);
+        }
       });
       storyboard.click(function(event) {
         var frameNum = Math.ceil((event.pageX - $(event.target).offset().left) / 20);
