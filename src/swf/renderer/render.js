@@ -7,7 +7,7 @@ function renderDisplayList(displayList, ctx) {
   while (depth++ < maxDepth) {
     var character = displayList[depth];
     if (character && character.render)
-        character.render(ctx, character.matrix, (character.ratio / 0xffff) || 0);
+      character.render(ctx, character.matrix, (character.ratio / 0xffff) || 0);
   }
   console.timeEnd('render');
 }
@@ -72,15 +72,15 @@ SWF.render = function(graph, dictionary, ctx, frameNum) {
           character[prop] = tag[prop];
       } else {
         var character = create(tag);
-        var obj = dictionary[tag.objId];
-        switch (obj.type) {
-        case 'shape':
-          character.render = new ShapeRenderer(obj, dictionary);
-          break;
-        case 'text':
-          character.render = new TextRenderer(obj, dictionary);
-          break;
-        }
+      }
+      var obj = dictionary[character.objId];
+      switch (obj.type) {
+      case 'shape':
+        character.render = new ShapeRenderer(obj, dictionary);
+        break;
+      case 'text':
+        character.render = new TextRenderer(obj, dictionary);
+        break;
       }
       displayList[depth] = character;
       if (depth > displayList.maxDepth)
