@@ -64,8 +64,27 @@ var Control = (function () {
     }
   };
 
-  function Case(cond, body) {
+  /*
+   * Switches Overview
+   *
+   * Because asc can generate both ``spined'' and lookup switches, not all
+   * induced switches will look the same.
+   *
+   * If a Control.Switch has the .determinant property, its determinant is the
+   * block that ends in the lookupswitch, and all its cases have the .index
+   * property for which integer index it matches.
+   *
+   * Otherwise it is a spined switch, and at this point we do not know what
+   * the actual determinant is, and all its cases will instead of the .cond
+   * property, which is the block that branches on the determinant.
+   *
+   * If during compilation it is discovered than not the same determinant is
+   * used, some kind of fixup will be needed.
+   */
+
+  function Case(cond, index, body) {
     this.cond = cond;
+    this.index = index;
     this.body = body;
   }
 
@@ -73,6 +92,8 @@ var Control = (function () {
     trace: function (writer) {
       if (this.cond) {
         writer.writeLn("case #" + this.cond.blockId + ":");
+      } else if (this.index !== undefined && this.index !== null) {
+        writer.writeLn("case " + this.index + ":");
       } else {
         writer.writeLn("default:");
       }
@@ -82,17 +103,19 @@ var Control = (function () {
     }
   };
 
-  function Switch(cases) {
+  function Switch(determinant, cases) {
+    this.determinant = determinant;
     this.cases = cases;
   }
 
   Switch.prototype = {
     trace: function (writer) {
-      writer.enter("switch {");
+      this.determinant && this.determinant.trace(writer);
+      writer.writeLn("switch {");
       for (var i = 0, j = this.cases.length; i < j; i++) {
         this.cases[i].trace(writer);
       }
-      writer.leave("}");
+      writer.writeLn("}");
     }
   };
 
@@ -155,11 +178,13 @@ var Bytecode = (function () {
     switch (op) {
     case OP_lookupswitch:
       /* offsets[0] is the default offset. */
-      this.offsets = [code.readS24()];
+      var defaultOffset = code.readS24();
+      this.offsets = [];
       var n = code.readU30() + 1;
       for (i = 0; i < n; i++) {
         this.offsets.push(code.readS24());
       }
+      this.offsets.push(defaultOffset);
       break;
     default:
       var opdesc = opcodeTable[op];
@@ -262,9 +287,9 @@ var Bytecode = (function () {
     var i, j;
 
     if (this.op === OP_lookupswitch) {
-      str += "defaultTarget:" + this.targets[0].position;
-      for (i = 1, j = this.targets.length; i < j; i++) {
-        str += ", target:" + this.targets[i].position;
+      str += "targets:";
+      for (i = 0, j = this.targets.length; i < j; i++) {
+        str += (i > 0 ? "," : "") + this.targets[i].position;
       }
     } else {
       for (i = 0, j = opdesc.operands.length; i < j; i++) {
@@ -950,8 +975,83 @@ var Analysis = (function () {
     }
     info.cases = cases;
 
-    assert(possibleBreak);
     return cx.update({ break: possibleBreak });
+  }
+
+  /*
+   * Returns an updated context if a lookup switch is inducible, undefined otherwise.
+   *
+   * A lookup switch is inducible iff:
+   *  - It ends in a lookupswitch opcode.
+   *  - The union of all its targets' frontiers, after removing any targets
+   *    themselves that might be in the union, is of size at most 1. This is
+   *    the exit node.
+   *  - For each case body, its break node is the exit node above.
+   */
+  function inducibleLookupSwitch(block, cx, parentLoops, info) {
+    if (block.end.op !== OP_lookupswitch) {
+      return undefined;
+    }
+
+    var targets = block.end.targets;
+    var cases = [];
+    var exits = new BytecodeSet();
+
+    for (var i = 0, j = targets.length; i < j; i++) {
+      var c = targets[i];
+      exits.union(c.frontier);
+      exits.remove(c);
+    }
+
+    if (exits.size > 0 && parentLoops.length > 0) {
+      pruneExitLoops(exits, parentLoops);
+    }
+    if (exits.size > 1) {
+      return undefined;
+    }
+
+    var defaultCase = targets.top();
+    var mainExit = exits.choose();
+
+    for (var i = 0, j = targets.length - 1; i < j; i++) {
+      var c = targets[i];
+
+      if (c === defaultCase) {
+        continue;
+      }
+
+      if (i < j - 1 && c === targets[i + 1]) {
+        cases.push({ index: i });
+        continue;
+      }
+
+      exits = new BytecodeSet();
+      exits.union(c.frontier);
+      if (exits.size > 0 && parentLoops.length > 0) {
+        pruneLoopExits(exits, parentLoops);
+      }
+
+      if (exits.size > 1) {
+        return undefined;
+      }
+
+      var exit = exits.choose();
+
+      if (exit) {
+        if (exit === mainExit) {
+          cases.push({ index: i, body: c });
+        } else {
+          cases.push({ index: i, body: c, exit: exit });
+        }
+      } else {
+        cases.push({ index: i, body: c });
+      }
+    }
+
+    cases.push({ body: defaultCase });
+    info.cases = cases;
+
+    return cx.update({ break: mainExit });
   }
 
   /*
@@ -1054,7 +1154,7 @@ var Analysis = (function () {
             } else {
               conts.push({ kind: K_SEQ,
                            block: block });
-              block = block.succs.top();
+              block = block.succs[0] || null;
               cx = cxx;
             }
 
@@ -1078,21 +1178,50 @@ var Analysis = (function () {
           block = info.then;
           cx = cxx;
         } else if (cxx = inducibleSpinedSwitch(block, cx, parentLoops, info)) {
-          var c = info.cases.pop();
-          conts.push({ kind: K_SWITCH_CASE,
-                       cond: c.cond,
-                       cases: [],
-                       pendingCases: info.cases,
-                       join: cxx.break,
-                       joinCx: cx,
-                       cx: cxx });
-          parentLoops.push(cxx);
-          block = c.body;
-          cx = cxx.update({ exit: c.exit });
+          var c;
+          var cases = [];
+          while (c = info.cases.pop()) {
+            if (c.body) {
+              conts.push({ kind: K_SWITCH_CASE,
+                           cond: c.cond,
+                           cases: cases,
+                           pendingCases: info.cases,
+                           join: cxx.break,
+                           joinCx: cx,
+                           cx: cxx });
+              parentLoops.push(cxx);
+              block = c.body;
+              cx = cxx.update({ exit: c.exit });
+              break;
+            }
+
+            cases.push(new Control.Case(c.cond));
+          }
+        } else if (cxx = inducibleLookupSwitch(block, cx, parentLoops, info)) {
+          var c;
+          var cases = [];
+          while (c = info.cases.pop()) {
+            if (c.body) {
+              conts.push({ kind: K_SWITCH_CASE,
+                           det: block,
+                           index: c.index,
+                           cases: cases,
+                           pendingCases: info.cases,
+                           join: cxx.break,
+                           joinCx: cx,
+                           cx: cxx });
+              parentLoops.push(cxx);
+              block = c.body;
+              cx = cxx.update({ exit: c.exit });
+              break;
+            }
+
+            cases.push(new Control.Case(null, c.index));
+          }
         } else if (inducibleSeq(block, cx)) {
           conts.push({ kind: K_SEQ,
                        block: block });
-          block = block.succs.top();
+          block = block.succs[0] || null;
         } else {
           v.push(new Control.Clusterfuck(block));
           break;
@@ -1145,7 +1274,7 @@ var Analysis = (function () {
           v.push(new Control.If(k.cond, k.then, k.else, k.negated, v));
           break;
         case K_SWITCH_CASE:
-          k.cases.push(new Control.Case(k.cond, maybeSequence(v)));
+          k.cases.push(new Control.Case(k.cond, k.index, maybeSequence(v)));
 
           var c;
           while (c = k.pendingCases.pop()) {
@@ -1153,7 +1282,9 @@ var Analysis = (function () {
               block = c.body;
               cx = k.cx.update({ exit: c.exit });
               conts.push({ kind: K_SWITCH_CASE,
+                           det: k.det,
                            cond: c.cond,
+                           index: c.index,
                            cases: k.cases,
                            pendingCases: k.pendingCases,
                            join: k.join,
@@ -1162,17 +1293,18 @@ var Analysis = (function () {
               break popping;
             }
 
-            k.cases.push(new Control.Case(c.cond));
+            k.cases.push(new Control.Case(c.cond, c.index));
           }
 
           block = k.join;
           cx = k.joinCx;
           conts.push({ kind: K_SWITCH,
+                       det: k.det,
                        cases: k.cases });
           break popping;
         case K_SWITCH:
           k.cases.reverse();
-          v.push(new Control.Switch(k.cases));
+          v.push(new Control.Switch(k.det, k.cases));
           break;
         case K_SEQ:
           v.push(k.block);
