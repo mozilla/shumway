@@ -11,10 +11,6 @@ var defaultTemplateSet = [
   readString, readBinary
 ];
 
-function joinProduction() {
-  return this.production.join('\n');
-}
-
 function generate(struct) {
   var productions = [];
   var varCount = 0;
@@ -175,10 +171,7 @@ function generate(struct) {
       }
       push.apply(production, segment);
     }
-    productions.push({
-      production: production,
-      toString: joinProduction
-    });
+    productions.push(production.join('\n'));
     return context;
   })(struct, '$');
   var args = ['$bytes', '$stream'];
