@@ -109,7 +109,9 @@ InstanceInfo.prototype.trace = function (writer) {
 };
 
 ScriptInfo.prototype.trace = function (writer) {
-  writer.writeLn(this);
+  writer.enter("script " + this + " {");
+  traceArray(writer, "traits", this.traits);
+  writer.leave("}");
 };
 
 Trait.prototype.trace = function (writer) {
