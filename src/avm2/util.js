@@ -92,7 +92,15 @@ function unexpected() {
   });
 
   extendBuiltin(Ap, "top", function() {
-    return this.length && this[this.length-1];
+    return this.length && this[this.length - 1];
+  });
+  
+  extendBuiltin(Ap, "mapWithIndex", function(fn) {
+    var arr = [];
+    for (var i = 0; i < this.length; i++) {
+      arr.push(fn(this[i], i));
+    }
+    return arr;
   });
 })();
 
