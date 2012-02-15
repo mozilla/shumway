@@ -334,12 +334,12 @@ var Namespace = (function () {
  *  name and a namespace matches any of the namespaces in the namespace set.
  */
 var Multiname = (function () {
-  const ATTRIBUTE      = 0x01;
-  const QNAME        = 0x02;
-  const RUNTIME_NAMESPACE  = 0x04;
-  const RUNTIME_NAME     = 0x08;
-  const NAMESPACE_SET    = 0x10;
-  const TYPE_PARAMETER   = 0x20;
+  const ATTRIBUTE         = 0x01;
+  const QNAME             = 0x02;
+  const RUNTIME_NAMESPACE = 0x04;
+  const RUNTIME_NAME      = 0x08;
+  const NAMESPACE_SET     = 0x10;
+  const TYPE_PARAMETER    = 0x20;
 
   function multiname(index) {
     this.index = index;
@@ -548,6 +548,11 @@ var Multiname = (function () {
       return this.isRuntimeName() ? "[]" : this.getName();
     }
   };
+  
+  multiname.prototype.mangle = function mangle() {
+    assert(this.isQName());
+    return this.getNamespace(0) + "$" + this.getName();
+  };
 
   multiname.prototype.toString = function toString() {
     var str = this.isAttribute() ? "@" : "";
@@ -689,39 +694,38 @@ var ConstantPool = (function constantPool() {
 
 var MethodInfo = (function () {
   function methodInfo(constantPool, stream) {
-    var paramcount = stream.readU30();
-    var returntype = stream.readU30();
-    var params = [];
-    for (var i = 0; i < paramcount; ++i)
-      params.push(stream.readU30());
+    var parameterCount = stream.readU30();
+    var returnType = stream.readU30();
+    var parameters = [];
+    for (var i = 0; i < parameterCount; ++i) {
+      parameters.push({type: constantPool.multinames[stream.readU30()]});
+    }
 
     var debugName = constantPool.strings[stream.readU30()];
     var flags = stream.readU8();
 
-    var optionalcount = 0;
+    var optionalCount = 0;
     var optionals = null;
     if (flags & METHOD_HasOptional) {
-      optionalcount = stream.readU30();
+      optionalCount = stream.readU30();
       optionals = [];
-      for (var i = 0; i < optionalcount; ++i) {
+      for (var i = 0; i < optionalCount; ++i) {
         optionals[i] = { val: stream.readU30(), kind:stream.readU8() };
       }
     }
 
     var paramnames = null;
     if (flags & METHOD_HasParamNames) {
-      paramnames = [];
-      for (var i = 0; i < paramcount; ++i) {
-        paramnames[i] = constantPool.strings[stream.readU30()];
+      for (var i = 0; i < parameterCount; ++i) {
+        parameters[i].name = constantPool.strings[stream.readU30()];
       }
     }
 
-    this.debugName = debugName;
-    this.params = params;
-    this.returntype = returntype;
     this.flags = flags;
     this.optionals = optionals;
-    this.paramnames = paramnames;
+    this.debugName = debugName;
+    this.parameters = parameters;
+    this.returnType = returnType;
   }
 
   methodInfo.prototype = {
