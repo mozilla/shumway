@@ -58,7 +58,7 @@ if (viz) {
   writer.enter("digraph {");
   var graph = 0;
   abc.methods.forEach(function (method) {
-    method.analysis = new Analysis(method.code);
+    method.analysis = new Analysis(method);
     method.analysis.analyzeControlFlow();
     if (method.analysis) {
       method.analysis.traceGraphViz(writer, method, "G" + graph + "_");

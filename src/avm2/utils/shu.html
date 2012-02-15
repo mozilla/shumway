@@ -29,28 +29,12 @@
     <script type="text/javascript">
         var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
         if (!skipQuickTest) {
-            new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {
+            new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {  
                 var abc = new AbcFile(new Uint8Array(buffer));
                 var writer = new IndentingWriter(false);
                 abc.trace(writer);
                 
-                // interpretAbc(abc);
-                
                 compileAbc(abc);
-                
-                if (true) {
-                  print(compileAbc(abc));
-                  
-                  /* Spew analysis information if not quiet. */
-                  /*
-                  var writer = new IndentingWriter(false);
-                  abc.methods.forEach(function (method) {
-                    if (method.analysis) {
-                      method.analysis.traceGraphViz(writer);
-                    }
-                  });
-                  */
-                }
             });
         }
     </script>   
