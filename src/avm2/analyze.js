@@ -829,6 +829,27 @@ var Analysis = (function () {
     return cx.update({ exit: exit });
   }
 
+  /*
+   * Returns an updated context if a spined switch is inducible, undefined
+   * otherwise.
+   *
+   * For switches with < 5 cases, asc emits a ``spined switch'', i.e. instead
+   * of a lookupswitch, a series of two-way conditionals is emitted along a
+   * ``spine''. If there are fallthroughts, the spined switch is not
+   * expressible using source-level ifs.
+   *
+   * A spined switch is inducible iff:
+   *  - It has a spine along which each spine node has a frontier of size 2.
+   *  - Each node that dangles off the spine has a frontier of size at most 1.
+   *  - The very last spine node is an inducible if.
+   *  - There is only a single break node. (See below)
+   *
+   * Each node that dangles off the spine is the body of a case, and each
+   * spine node is a case. If one body leads to the next body or is the next
+   * body, it is a fallthrough. Else, it is assumed to lead to the break
+   * node. If a different break node is found further down the spine, the
+   * switch is not structured.
+   */
   function inducibleSpinedSwitch(block, cx, parentLoops, info) {
     var currentCase, prevCase, defaultCase, possibleBreak;
     var spine = block, prevSpine;
