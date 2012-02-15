@@ -205,7 +205,7 @@ var ASObject = (function () {
       var trait = findTrait(this.traits, multiname);
       if (trait) {
         if (trait.isSlot()) {
-          return this.slots[trait.slotId];
+          return this["S" + trait.slotId];
         } else if (trait.isMethod()) {
           if (trait.methodClosure) {
             /* Method closures were associated with method traits when the class in which they 
@@ -225,7 +225,7 @@ var ASObject = (function () {
       var trait = findTrait(this.traits, multiname);
       if (trait) {
          // assert (trait.isSlot());
-        this.slots[trait.slotId] = value;
+        this["S" + trait.slotId] = value;
       }
     }
     return this[multiname.name] = value;
@@ -236,7 +236,7 @@ var ASObject = (function () {
       var trait = findTrait(this.traits, multiname);
       if (trait) {
          // assert (trait.isSlot());
-        delete this.slots[trait.slotId];
+        delete this["S" + trait.slotId];
       }
     }
     delete this[multiname.name];
@@ -244,27 +244,21 @@ var ASObject = (function () {
 
 
   asObject.prototype.setSlot = function setSlot(slotId, value) {
-    if (!('slots' in this))
-      this.slots = [];
-    return this.slots[slotId] = value;
+    return this["S" + slotId] = value;
   };
 
   asObject.prototype.getSlot = function getSlot(slotId) {
-    if (!('slots' in this))
-      return;
-    return this.slots[slotId];
+    return this["S" + slotId];
   };
 
   asObject.applyTraits = function applyTraits(obj, traits) {
-    if (!('slots' in obj))
-      obj.slots = [];
     if (!('traits' in obj))
       obj.traits = [];
 
     for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
       if (trait.isSlot()) {
-        obj.slots[trait.slotId] = trait.value;
+        this["S" + trait.slotId] = trait.value;
       }
     }
     obj.traits = obj.traits.concat(traits);
@@ -487,7 +481,7 @@ var Closure = (function () {
   function closure (abc, methodInfo, scope, savedScope) {
     this.abc = abc;
     this.methodInfo = methodInfo;
-    this.paramCount = methodInfo.params.length;
+    this.paramCount = methodInfo.parameters.length;
     this.needRest = !!(methodInfo.flags & METHOD_Needrest);
     this.needArguments = !!(methodInfo.flags & METHOD_Arguments);
     this.savedScope = savedScope;
