@@ -69,7 +69,7 @@ function defineFont(graph) {
     '\x00\x00\x00\x00' + // ulUnicodeRange2
     '\x00\x00\x00\x00' + // ulUnicodeRange3
     '\x00\x00\x00\x00' + // ulUnicodeRange4
-    '\x4d\x4f\x5a\x21' + // achVendID
+    'ALF ' + // achVendID
     toString16((graph.italic ? 0x01 : 0) | (graph.bold ? 0x20: 0)) + // fsSelection
     toString16(usFirstCharIndex) +
     toString16(usLastCharIndex) +
@@ -354,7 +354,7 @@ function defineFont(graph) {
   ;
 
   var strings = [
-    graph.copyright || 'Unknown', // 0. Copyright
+    graph.copyright || 'Original licence', // 0. Copyright
     graph.name, // 1. Font family
     'Unknown', // 2. Font subfamily
     graph.id, // 3. Unique ID
