@@ -130,11 +130,12 @@ SWF.parse = function(buffer, callback) {
   var header = readHeader(bytes, stream);
   var dictionary = { };
   var tags = readTags(bytes, stream, version, dictionary);
-  callback({
+  var swf = {
     version: version,
     bounds: header.bounds,
     frameRate: header.frameRate,
     frameCount: header.frameCount,
     tags: tags
-  }, dictionary);
+  };
+  callback(swf, dictionary);
 };
