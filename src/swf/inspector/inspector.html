@@ -347,6 +347,7 @@
 
       var dictionary;
       var frameRate;
+      var paused = true;
 
       function readFile(file) {
         var reader = new FileReader();
@@ -460,6 +461,8 @@
       }
       function activate(node) {
         var activeItem = sidebar.find('.active');
+        if (!paused)
+          playPause();
         if (activeItem)
           activeItem.removeClass('active');
         node.addClass('active');
@@ -554,27 +557,7 @@
         if (currentFrame > 1)
           showFrame(timeline.data('context'), currentFrame - 1);
       });
-      playbtn.click(function play() {
-        if (!play.ing) {
-          var frameCount = timeline.data('frameCount') || 0;
-          if (frameCount <= 1)
-            return;
-          play.interval = setInterval(function() {
-            var frameNum = +currentframe.val() + 1;
-            if (frameNum > frameCount) {
-              play();
-              frameNum = 1;
-            }
-            showFrame(timeline.data('context'), frameNum);
-          }, 1000 / frameRate);
-          play.ing = true;
-          playbtn.removeClass('paused');
-        } else {
-          clearInterval(play.interval);
-          play.ing = false;
-          playbtn.addClass('paused');
-        }
-      });
+      playbtn.click(playPause);
       $('#next').click(function next() {
         var currentFrame = +currentframe.val();
         var frameCount = timeline.data('frameCount') || 0;
