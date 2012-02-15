@@ -68,10 +68,10 @@ var opcodeTable = [
   {name:"pop",                operands:"",                 canThrow:false, stackDelta:-1}, //0x29
   {name:"dup",                operands:"",                 canThrow:false, stackDelta:1},  //0x2A
   {name:"swap",               operands:"",                 canThrow:false, stackDelta:0},  //0x2B
-  {name:"pushstring",         operands:"value:u30S",       canThrow:false, stackDelta:1},  //0x2C
-  {name:"pushint",            operands:"value:u30I",       canThrow:false, stackDelta:1},  //0x2D
-  {name:"pushuint",           operands:"value:u30U",       canThrow:false, stackDelta:1},  //0x2E
-  {name:"pushdouble",         operands:"value:u30D",       canThrow:false, stackDelta:1},  //0x2F
+  {name:"pushstring",         operands:"index:u30S",       canThrow:false, stackDelta:1},  //0x2C
+  {name:"pushint",            operands:"index:u30I",       canThrow:false, stackDelta:1},  //0x2D
+  {name:"pushuint",           operands:"index:u30U",       canThrow:false, stackDelta:1},  //0x2E
+  {name:"pushdouble",         operands:"index:u30D",       canThrow:false, stackDelta:1},  //0x2F
   {name:"pushscope",          operands:"",                 canThrow:false, stackDelta:-1}, //0x30
   {name:"pushnamespace",      operands:"index:u30N",       canThrow:false, stackDelta:1},  //0x31
   {name:"hasnext2",           operands:"object:u30,index:u30",          canThrow:true, stackDelta:1},  //0x32
@@ -90,7 +90,7 @@ var opcodeTable = [
   {name:"sf64",               operands:"",                 canThrow:true, stackDelta:-2},  //0x3E
     
   null,  //0x3F
-  {name:"newfunction",        operands:"method:u30MI",     canThrow:true, stackDelta:1},  //0x40
+  {name:"newfunction",        operands:"index:u30MI",      canThrow:true, stackDelta:1},  //0x40
   {name:"call",               operands:"argCount:u30",     canThrow:true, stackDelta:-1}, //0x41
   {name:"construct",          operands:"argCount:u30",     canThrow:true, stackDelta:0},  //0x42
   {name:"callmethod",         operands:"index:u30,argCount:u30",        canThrow:true, stackDelta:0},  //0x43
@@ -140,10 +140,10 @@ var opcodeTable = [
   null,  //0x69
   {name:"deleteproperty",     operands:"index:u30M",       canThrow:true, stackDelta:0},   //0x6A
   null,  //0x6B
-  {name:"getslot",            operands:"slotIndex:u30",    canThrow:true, stackDelta:0},   //0x6C
-  {name:"setslot",            operands:"slotIndex:u30",    canThrow:true, stackDelta:-2},  //0x6D
-  {name:"getglobalslot",      operands:"slotIndex:u30",    canThrow:false, stackDelta:1},  //0x6E
-  {name:"setglobalslot",      operands:"slotIndex:u30",    canThrow:false, stackDelta:-1}, //0x6F
+  {name:"getslot",            operands:"index:u30",        canThrow:true, stackDelta:0},   //0x6C
+  {name:"setslot",            operands:"index:u30",        canThrow:true, stackDelta:-2},  //0x6D
+  {name:"getglobalslot",      operands:"index:u30",        canThrow:false, stackDelta:1},  //0x6E
+  {name:"setglobalslot",      operands:"index:u30",        canThrow:false, stackDelta:-1}, //0x6F
   {name:"convert_s",          operands:"",                 canThrow:true, stackDelta:0},   //0x70
   {name:"esc_xelem",          operands:"",                 canThrow:true, stackDelta:0},   //0x71
   {name:"esc_xattr",          operands:"",                 canThrow:true, stackDelta:0},   //0x72
