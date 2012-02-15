@@ -64,6 +64,38 @@ var Control = (function () {
     }
   };
 
+  function Case(cond, body) {
+    this.cond = cond;
+    this.body = body;
+  }
+
+  Case.prototype = {
+    trace: function (writer) {
+      if (this.cond) {
+        writer.writeLn("case #" + this.cond.blockId + ":");
+      } else {
+        writer.writeLn("default:");
+      }
+      writer.indent();
+      this.body && this.body.trace(writer);
+      writer.outdent();
+    }
+  };
+
+  function Switch(cases) {
+    this.cases = cases;
+  }
+
+  Switch.prototype = {
+    trace: function (writer) {
+      writer.enter("switch {");
+      for (var i = 0, j = this.cases.length; i < j; i++) {
+        this.cases[i].trace(writer);
+      }
+      writer.leave("}");
+    }
+  };
+
   function LabeledBreak(target) {
     this.target = target;
   }
@@ -101,6 +133,8 @@ var Control = (function () {
     Seq: Seq,
     Loop: Loop,
     If: If,
+    Case: Case,
+    Switch: Switch,
     LabeledBreak: LabeledBreak,
     LabeledContinue: LabeledContinue,
     Break: Break,
@@ -194,6 +228,11 @@ var Bytecode = (function () {
                        (this.frontier.size === 1) &&
                        (this.frontier.has(target))));
   };
+
+  Bp.maybeLeadsTo = function maybeLeadsTo(target) {
+    return (target && ((this === target) ||
+                       (this.frontier.has(target))));
+  }
 
   Bp.dominatedBy = function dominatedBy(d) {
     assert(this.dominator);
@@ -697,7 +736,6 @@ var Analysis = (function () {
       var exitNodes = pruned ? exits.flatten() : exits.snapshot;
       for (var i = 0, j = exitNodes.length; i < j; i++) {
         mainExit = exitNodes[i];
-        print(mainExit.blockId);
 
         for (var k = 0, l = exitNodes.length; k < l; k++) {
           if (!exitNodes[k].leadsTo(mainExit)) {
@@ -773,11 +811,12 @@ var Analysis = (function () {
       if (exits.size > 0 && parentLoops.length > 0) {
         pruneLoopExits(exits, parentLoops);
       }
+
       if (exits.size > 1) {
         return undefined;
       }
-      exit = exits.choose();
 
+      exit = exits.choose();
       info.then = branch2;
       if (exit) {
         info.else = branch1;
@@ -788,6 +827,110 @@ var Analysis = (function () {
     }
 
     return cx.update({ exit: exit });
+  }
+
+  function inducibleSpinedSwitch(block, cx, parentLoops, info) {
+    var currentCase, prevCase, defaultCase, possibleBreak;
+    var spine = block, prevSpine;
+    var cases = [];
+
+    while (spine) {
+      var succs = spine.succs;
+
+      if (succs.length !== 2) {
+        return undefined;
+      }
+
+      var branch1 = succs[0];
+      var branch2 = succs[1];
+
+      var cxx, iinfo = {};
+      if (branch1.frontier.size === 2) {
+        prevSpine = spine;
+        spine = branch1;
+        currentCase = branch2;
+      } else if (branch2.frontier.size === 2) {
+        prevSpine = spine;
+        spine = branch2;
+        currentCase = branch1;
+      } else if (cxx = inducibleIf(spine, cx, parentLoops, iinfo)) {
+        if (iinfo.negated) {
+          currentCase = iinfo.else ? iinfo.else : iinfo.exit;
+          defaultCase = iinfo.then;
+        } else {
+          currentCase = iinfo.then;
+          defaultCase = iinfo.else ? iinfo.else : iinfo.exit;
+        }
+
+        if (!possibleBreak) {
+          possibleBreak = cxx.exit;
+        }
+
+        if (possibleBreak !== cxx.exit) {
+          return undefined;
+        }
+      } else {
+        return undefined;
+      }
+
+      if (prevCase === currentCase) {
+        cases.push({ cond: prevSpine, exit: currentCase });
+      } else if (prevCase) {
+        var exits = new BytecodeSet();
+        exits.union(prevCase.frontier);
+        if (exits.size > 0 && parentLoops.length > 0) {
+          pruneLoopExits(exits, parentLoops);
+        }
+
+        if (exits.size > 1) {
+          return undefined;
+        }
+
+        var exit;
+        if (exits.size === 1) {
+          exit = exits.choose();
+
+          if (exit === currentCase) {
+            cases.push({ cond: prevSpine, body: prevCase, exit: currentCase });
+          } else {
+            if (!possibleBreak) {
+              possibleBreak = exit;
+            }
+
+            if (exit !== possibleBreak) {
+              return undefined;
+            }
+
+            cases.push({ cond: prevSpine, body: prevCase });
+          }
+        } else {
+          cases.push({ cond: prevSpine, body: prevCase });
+        }
+      }
+
+      if (defaultCase) {
+        if (currentCase === defaultCase) {
+          cases.push({ cond: spine });
+        } else {
+          cases.push({ cond: spine, body: currentCase });
+        }
+        break;
+      }
+
+      prevCase = currentCase;
+    }
+
+    if (!defaultCase) {
+      return undefined;
+    }
+
+    if (defaultCase !== possibleBreak) {
+      cases.push({ body: defaultCase });
+    }
+    info.cases = cases;
+
+    assert(possibleBreak);
+    return cx.update({ break: possibleBreak });
   }
 
   /*
@@ -830,6 +973,8 @@ var Analysis = (function () {
     const K_IF_ELSE = 3;
     const K_IF = 4;
     const K_SEQ = 5;
+    const K_SWITCH_CASE = 6;
+    const K_SWITCH = 7;
 
     for (;;) {
       var v = [];
@@ -911,6 +1056,18 @@ var Analysis = (function () {
                        cx: cxx });
           block = info.then;
           cx = cxx;
+        } else if (cxx = inducibleSpinedSwitch(block, cx, parentLoops, info)) {
+          var c = info.cases.pop();
+          conts.push({ kind: K_SWITCH_CASE,
+                       cond: c.cond,
+                       cases: [],
+                       pendingCases: info.cases,
+                       join: cxx.break,
+                       joinCx: cx,
+                       cx: cxx });
+          parentLoops.push(cxx);
+          block = c.body;
+          cx = cxx.update({ exit: c.exit });
         } else if (inducibleSeq(block, cx)) {
           conts.push({ kind: K_SEQ,
                        block: block });
@@ -965,6 +1122,36 @@ var Analysis = (function () {
           break popping;
         case K_IF:
           v.push(new Control.If(k.cond, k.then, k.else, k.negated, v));
+          break;
+        case K_SWITCH_CASE:
+          k.cases.push(new Control.Case(k.cond, maybeSequence(v)));
+
+          var c;
+          while (c = k.pendingCases.pop()) {
+            if (c.body) {
+              block = c.body;
+              cx = k.cx.update({ exit: c.exit });
+              conts.push({ kind: K_SWITCH_CASE,
+                           cond: c.cond,
+                           cases: k.cases,
+                           pendingCases: k.pendingCases,
+                           join: k.join,
+                           joinCx: k.joinCx,
+                           cx: k.cx });
+              break popping;
+            }
+
+            k.cases.push(new Control.Case(c.cond));
+          }
+
+          block = k.join;
+          cx = k.joinCx;
+          conts.push({ kind: K_SWITCH,
+                       cases: k.cases });
+          break popping;
+        case K_SWITCH:
+          k.cases.reverse();
+          v.push(new Control.Switch(k.cases));
           break;
         case K_SEQ:
           v.push(k.block);
