@@ -487,9 +487,6 @@ var Analysis = (function () {
       case OP_lookupswitch:
         var targets = code.targets;
         for (var i = 0, j = targets.length; i < j; i++) {
-          if (!targets[i]) {
-            targets[i] = BytecodeInvalid;
-          }
           targets[i].makeBlockHead();
         }
         break;
@@ -509,10 +506,6 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        if (!code.target) {
-          code.target = BytecodeInvalid;
-          break;
-        }
         code.target.makeBlockHead();
         bytecodes[pc + 1].makeBlockHead();
         break;
@@ -531,17 +524,11 @@ var Analysis = (function () {
     case OP_lookupswitch:
       var targets = code.targets;
       for (var i = 0, j = targets.length; i < j; i++) {
-        if (!targets[i]) {
-          targets[i] = BytecodeInvalid;
-        }
         targets[i].makeBlockHead();
       }
       break;
 
     case OP_jump:
-      if (!code.target) {
-        code.target = BytecodeInvalid;
-      }
       code.target.makeBlockHead();
       break;
 
@@ -1478,7 +1465,8 @@ var Analysis = (function () {
       case OP_lookupswitch:
         var offsets = code.offsets;
         for (var i = 0, j = offsets.length; i < j; i++) {
-          code.targets.push(bytecodes[bytecodesOffset[offsets[i]]]);
+          code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
+                            BytecodeInvalid);
         }
         code.offsets = undefined;
         break;
@@ -1498,7 +1486,7 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.target = bytecodes[bytecodesOffset[code.offset]];
+        code.target = bytecodes[bytecodesOffset[code.offset]] || BytecodeInvalid;
         code.offset = undefined;
         break;
 
