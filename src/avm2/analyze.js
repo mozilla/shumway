@@ -881,6 +881,10 @@ var Analysis = (function () {
     var cases = [];
 
     while (spine) {
+      if (spine.end.op !== OP_ifstricteq) {
+        return undefined;
+      }
+
       var succs = spine.succs;
 
       if (succs.length !== 2) {
