@@ -425,9 +425,17 @@ var Analysis = (function () {
    * Internal bytecode used for bogus jumps. They should be emitted as throws
    * so that if control flow ever reaches them, we crash.
    */
-  var BytecodeInvalid = Object.create(Bytecode.prototype);
-  BytecodeInvalid.op = OP_invalid;
-  BytecodeInvalid.position = -1;
+  function getInvalidTarget(cache, offset) {
+    if (cache[offset]) {
+      return cache[offset];
+    }
+
+    var code = Object.create(Bytecode.prototype);
+    code.op = OP_invalid;
+    code.position = offset;
+    cache[offset] = code;
+    return code;
+  }
 
   function dfs(root, pre, post, succ) {
     var visited = {};
@@ -1459,6 +1467,7 @@ var Analysis = (function () {
       bytecodes.push(code);
     }
 
+    var invalidJumps = {};
     for (var pc = 0, end = bytecodes.length; pc < end; pc++) {
       code = bytecodes[pc];
       switch (code.op) {
@@ -1466,7 +1475,7 @@ var Analysis = (function () {
         var offsets = code.offsets;
         for (var i = 0, j = offsets.length; i < j; i++) {
           code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
-                            BytecodeInvalid);
+                            getInvalidTarget(invalidJumps, offsets[i]));
         }
         code.offsets = undefined;
         break;
@@ -1486,7 +1495,8 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.target = bytecodes[bytecodesOffset[code.offset]] || BytecodeInvalid;
+        code.target = (bytecodes[bytecodesOffset[code.offset]] ||
+                       getInvalidTarget(invalidJumps, code.offset));
         code.offset = undefined;
         break;
 
