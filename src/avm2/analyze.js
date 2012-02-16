@@ -177,7 +177,6 @@ var Bytecode = (function () {
 
     switch (op) {
     case OP_lookupswitch:
-      /* offsets[0] is the default offset. */
       var defaultOffset = code.readS24();
       this.offsets = [];
       var n = code.readU30() + 1;
@@ -218,96 +217,91 @@ var Bytecode = (function () {
     }
   }
 
-  var Bp = Bytecode.prototype;
-
-  Bp.makeBlockHead = function makeBlockHead() {
-    if (this.succs) {
-      return;
-    }
-
-    this.succs = [];
-    this.preds = [];
-  };
-
-  Bp.makeLoopHead = function makeLoopHead(backEdge) {
-    if (this.loop && this.loop.has(backEdge) >= 0) {
-      return;
-    }
-
-    var body = new BytecodeSet([this]);
-    var pending = [backEdge];
-    var p;
-    while (p = pending.pop()) {
-      if (!body.has(p)) {
-        p.inLoop = this;
-        body.add(p);
-        pending.push.apply(pending, p.preds);
+  Bytecode.prototype = {
+    makeBlockHead: function makeBlockHead() {
+      if (this.succs) {
+        return;
       }
-    }
 
-    this.loop = body;
-  }
+      this.succs = [];
+      this.preds = [];
+    },
 
-  Bp.leadsTo = function leadsTo(target) {
-    return (target && ((this === target) ||
-                       (this.frontier.size === 1) &&
-                       (this.frontier.has(target))));
-  };
-
-  Bp.maybeLeadsTo = function maybeLeadsTo(target) {
-    return (target && ((this === target) ||
-                       (this.frontier.has(target))));
-  }
-
-  Bp.dominatedBy = function dominatedBy(d) {
-    assert(this.dominator);
-
-    var b = this;
-    do {
-      if (b === d) {
-        return true;
+    makeLoopHead: function makeLoopHead(backEdge) {
+      if (this.loop && this.loop.has(backEdge) >= 0) {
+        return;
       }
-      b = b.dominator;
-    } while (b !== b.dominator);
 
-    return false;
-  };
-
-  Bp.trace = function trace(writer) {
-    if (!this.succs) {
-      return;
-    }
-
-    writer.writeLn("#" + this.blockId);
-  }
-
-  Bp.toString = function toString() {
-    var opdesc = opcodeTable[this.op];
-    var str = opdesc.name.padRight(' ', 20);
-    var i, j;
-
-    if (this.op === OP_lookupswitch) {
-      str += "targets:";
-      for (i = 0, j = this.targets.length; i < j; i++) {
-        str += (i > 0 ? "," : "") + this.targets[i].position;
-      }
-    } else {
-      for (i = 0, j = opdesc.operands.length; i < j; i++) {
-        var operand = opdesc.operands[i];
-
-        if (operand.name === "offset") {
-          str += "target:" + this.target.position;
-        } else {
-          str += operand.name + ":" + this[operand.name];
-        }
-
-        if (i < j - 1) {
-          str += ", ";
+      var body = new BytecodeSet([this]);
+      var pending = [backEdge];
+      var p;
+      while (p = pending.pop()) {
+        if (!body.has(p)) {
+          p.inLoop = this;
+          body.add(p);
+          pending.push.apply(pending, p.preds);
         }
       }
-    }
 
-    return str;
+      this.loop = body;
+    },
+
+    leadsTo: function leadsTo(target) {
+      return (target && ((this === target) ||
+                         (this.frontier.size === 1) &&
+                         (this.frontier.has(target))));
+    },
+
+    dominatedBy: function dominatedBy(d) {
+      assert(this.dominator);
+
+      var b = this;
+      do {
+        if (b === d) {
+          return true;
+        }
+        b = b.dominator;
+      } while (b !== b.dominator);
+
+      return false;
+    },
+
+    trace: function trace(writer) {
+      if (!this.succs) {
+        return;
+      }
+
+      writer.writeLn("#" + this.blockId);
+    },
+
+    toString: function toString() {
+      var opdesc = opcodeTable[this.op];
+      var str = opdesc.name.padRight(' ', 20);
+      var i, j;
+
+      if (this.op === OP_lookupswitch) {
+        str += "targets:";
+        for (i = 0, j = this.targets.length; i < j; i++) {
+          str += (i > 0 ? "," : "") + this.targets[i].position;
+        }
+      } else {
+        for (i = 0, j = opdesc.operands.length; i < j; i++) {
+          var operand = opdesc.operands[i];
+
+          if (operand.name === "offset") {
+            str += "target:" + this.target.position;
+          } else {
+            str += operand.name + ":" + this[operand.name];
+          }
+
+          if (i < j - 1) {
+            str += ", ";
+          }
+        }
+      }
+
+      return str;
+    }
   };
 
   return Bytecode;
@@ -420,6 +414,16 @@ var BytecodeSet = (function () {
 })();
 
 var Analysis = (function () {
+
+  function Unanalyzable(reason) {
+    this.reason = reason;
+  }
+
+  Unanalyzable.prototype = {
+    toString: function () {
+      return "Method is unanalyzable: " + this.reason;
+    }
+  };
 
   /*
    * Internal bytecode used for bogus jumps. They should be emitted as throws
@@ -1164,7 +1168,7 @@ var Analysis = (function () {
    *
    * [2] Moll. Decompilation of LLVM IR.
    */
-  function induceControlTree(root) {
+  function induceControlTree(root, chokeOnClusterfucks) {
     var conts = [];
     var parentLoops = [];
     var cx = new ExtractionContext();
@@ -1244,6 +1248,9 @@ var Analysis = (function () {
           }
 
           /* A non-inducible loop can't be anything else. */
+          if (chokeOnClusterfucks) {
+            throw new Unanalyzable("has clusterfuck");
+          }
           v.push(new Control.Clusterfuck(block));
           break;
         }
@@ -1305,6 +1312,9 @@ var Analysis = (function () {
                        block: block });
           block = block.succs[0] || null;
         } else {
+          if (chokeOnClusterfucks) {
+            throw new Unanalyzable("has clusterfuck");
+          }
           v.push(new Control.Clusterfuck(block));
           break;
         }
@@ -1402,210 +1412,214 @@ var Analysis = (function () {
     }
   }
 
-  function Analysis(method) {
+  function Analysis(method, options) {
     /*
      * Normalize the code stream. The other analyses are run by the user
      * on demand.
      */
     this.method = method;
+    this.options = options || {};
     this.normalizeBytecode();
   }
 
-  var Ap = Analysis.prototype;
+  Analysis.prototype = {
+    normalizeBytecode: function normalizeBytecode() {
+      /* This array is sparse, indexed by offset. */
+      var bytecodesOffset = [];
+      /* This array is dense. */
+      var bytecodes = [];
+      var codeStream = new AbcStream(this.method.code);
+      var code;
 
-  Ap.normalizeBytecode = function normalizeBytecode() {
-    /* This array is sparse, indexed by offset. */
-    var bytecodesOffset = [];
-    /* This array is dense. */
-    var bytecodes = [];
-    var codeStream = new AbcStream(this.method.code);
-    var code;
+      while (codeStream.remaining() > 0) {
+        var pos = codeStream.position;
+        code = new Bytecode(codeStream);
 
-    while (codeStream.remaining() > 0) {
-      var pos = codeStream.position;
-      code = new Bytecode(codeStream);
+        /* Get absolute offsets for normalization to new indices below. */
+        switch (code.op) {
+        case OP_nop:
+        case OP_label:
+          bytecodesOffset[pos] = bytecodes.length;
+          continue;
 
-      /* Get absolute offsets for normalization to new indices below. */
-      switch (code.op) {
-      case OP_nop:
-      case OP_label:
+        case OP_lookupswitch:
+          code.targets = [];
+          var offsets = code.offsets;
+          for (var i = 0, j = offsets.length; i < j; i++) {
+            offsets[i] += pos;
+          }
+          break;
+
+        case OP_jump:
+        case OP_iflt:
+        case OP_ifnlt:
+        case OP_ifle:
+        case OP_ifnle:
+        case OP_ifgt:
+        case OP_ifngt:
+        case OP_ifge:
+        case OP_ifnge:
+        case OP_ifeq:
+        case OP_ifne:
+        case OP_ifstricteq:
+        case OP_ifstrictne:
+        case OP_iftrue:
+        case OP_iffalse:
+          code.offset += codeStream.position;
+          break;
+
+        default:;
+        }
+
+        /* Cache the position in the bytecode array. */
+        code.position = bytecodes.length;
         bytecodesOffset[pos] = bytecodes.length;
-        continue;
-
-      case OP_lookupswitch:
-        code.targets = [];
-        var offsets = code.offsets;
-        for (var i = 0, j = offsets.length; i < j; i++) {
-          offsets[i] += pos;
-        }
-        break;
-
-      case OP_jump:
-      case OP_iflt:
-      case OP_ifnlt:
-      case OP_ifle:
-      case OP_ifnle:
-      case OP_ifgt:
-      case OP_ifngt:
-      case OP_ifge:
-      case OP_ifnge:
-      case OP_ifeq:
-      case OP_ifne:
-      case OP_ifstricteq:
-      case OP_ifstrictne:
-      case OP_iftrue:
-      case OP_iffalse:
-        code.offset += codeStream.position;
-        break;
-
-      default:;
+        bytecodes.push(code);
       }
 
-      /* Cache the position in the bytecode array. */
-      code.position = bytecodes.length;
-      bytecodesOffset[pos] = bytecodes.length;
-      bytecodes.push(code);
-    }
+      var invalidJumps = {};
+      for (var pc = 0, end = bytecodes.length; pc < end; pc++) {
+        code = bytecodes[pc];
+        switch (code.op) {
+        case OP_lookupswitch:
+          var offsets = code.offsets;
+          for (var i = 0, j = offsets.length; i < j; i++) {
+            code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
+                              getInvalidTarget(invalidJumps, offsets[i]));
+          }
+          code.offsets = undefined;
+          break;
 
-    var invalidJumps = {};
-    for (var pc = 0, end = bytecodes.length; pc < end; pc++) {
-      code = bytecodes[pc];
-      switch (code.op) {
-      case OP_lookupswitch:
-        var offsets = code.offsets;
-        for (var i = 0, j = offsets.length; i < j; i++) {
-          code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
-                            getInvalidTarget(invalidJumps, offsets[i]));
+        case OP_jump:
+        case OP_iflt:
+        case OP_ifnlt:
+        case OP_ifle:
+        case OP_ifnle:
+        case OP_ifgt:
+        case OP_ifngt:
+        case OP_ifge:
+        case OP_ifnge:
+        case OP_ifeq:
+        case OP_ifne:
+        case OP_ifstricteq:
+        case OP_ifstrictne:
+        case OP_iftrue:
+        case OP_iffalse:
+          code.target = (bytecodes[bytecodesOffset[code.offset]] ||
+                         getInvalidTarget(invalidJumps, code.offset));
+          code.offset = undefined;
+          break;
+
+        default:;
         }
-        code.offsets = undefined;
-        break;
-
-      case OP_jump:
-      case OP_iflt:
-      case OP_ifnlt:
-      case OP_ifle:
-      case OP_ifnle:
-      case OP_ifgt:
-      case OP_ifngt:
-      case OP_ifge:
-      case OP_ifnge:
-      case OP_ifeq:
-      case OP_ifne:
-      case OP_ifstricteq:
-      case OP_ifstrictne:
-      case OP_iftrue:
-      case OP_iffalse:
-        code.target = (bytecodes[bytecodesOffset[code.offset]] ||
-                       getInvalidTarget(invalidJumps, code.offset));
-        code.offset = undefined;
-        break;
-
-      default:;
       }
-    }
 
-    this.bytecodes = bytecodes;
-  };
+      this.bytecodes = bytecodes;
+    },
 
-  Ap.analyzeControlFlow = function analyzeControlFlow() {
-    /* FIXME Exceptions aren't supported. */
-    if (this.method.exceptions.length > 0) {
-      return false;
-    }
+    analyzeControlFlow: function analyzeControlFlow() {
+      /* FIXME Exceptions aren't supported. */
+      if (this.method.exceptions.length > 0) {
+        throw new Unanalyzable("has exceptions");
+      }
 
-    var bytecodes = this.bytecodes;
-    assert(bytecodes);
-    detectBasicBlocks(bytecodes);
-    var root = bytecodes[0];
-    findNaturalLoops(computeDominance(root));
-    this.controlTree = induceControlTree(root);
-    return true;
-  }
+      var options = this.options;
+      var bytecodes = this.bytecodes;
+      assert(bytecodes);
+      detectBasicBlocks(bytecodes);
+      var root = bytecodes[0];
+      findNaturalLoops(computeDominance(root));
+      this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
+      return true;
+    },
 
-  /*
-   * Prints a normalized bytecode along with metainfo.
-   */
-  Ap.trace = function(writer) {
-    function blockId(node) {
-      return node.blockId;
-    }
+    /*
+     * Prints a normalized bytecode along with metainfo.
+     */
+    trace: function (writer) {
+      function blockId(node) {
+        return node.blockId;
+      }
 
-    writer.enter("analysis {");
-    writer.enter("cfg {");
+      writer.enter("analysis {");
+      writer.enter("cfg {");
 
-    var ranControlFlow = !!this.bytecodes[0].succs;
+      var ranControlFlow = !!this.bytecodes[0].succs;
 
-    for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
-      var code = this.bytecodes[pc];
+      for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
+        var code = this.bytecodes[pc];
 
-      if (ranControlFlow && code.succs) {
-        if (pc > 0) {
+        if (ranControlFlow && code.succs) {
+          if (pc > 0) {
+            writer.leave("}");
+          }
+
+          if (!code.dominator) {
+            writer.enter("block unreachable {");
+          } else {
+            writer.enter("block " + code.blockId +
+                         (code.succs.length > 0 ? " -> " +
+                          code.succs.map(blockId).join(",") : "") + " {");
+
+            writer.writeLn("end".padRight(' ', 10) + code.end.position);
+            writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
+            writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.flatten().map(blockId).join(",") + "}");
+          }
+
+          if (code.inLoop) {
+            writer.writeLn("inloop".padRight(' ', 10) + code.inLoop.blockId);
+          }
+
+          if (code.loop) {
+            writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.flatten().map(blockId).join(",") + "}");
+          }
+
+          writer.writeLn("");
+        }
+
+        writer.writeLn(("" + pc).padRight(' ', 5) + code);
+
+        if (ranControlFlow && pc === end - 1) {
           writer.leave("}");
         }
-
-        if (!code.dominator) {
-          writer.enter("block unreachable {");
-        } else {
-          writer.enter("block " + code.blockId +
-                       (code.succs.length > 0 ? " -> " +
-                        code.succs.map(blockId).join(",") : "") + " {");
-
-          writer.writeLn("end".padRight(' ', 10) + code.end.position);
-          writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
-          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.flatten().map(blockId).join(",") + "}");
-        }
-
-        if (code.inLoop) {
-          writer.writeLn("inloop".padRight(' ', 10) + code.inLoop.blockId);
-        }
-
-        if (code.loop) {
-          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.flatten().map(blockId).join(",") + "}");
-        }
-
-        writer.writeLn("");
       }
 
-      writer.writeLn(("" + pc).padRight(' ', 5) + code);
+      writer.leave("}");
 
-      if (ranControlFlow && pc === end - 1) {
+      if (this.controlTree) {
+        writer.enter("control-tree {");
+        this.controlTree.trace(writer);
         writer.leave("}");
       }
-    }
 
-    writer.leave("}");
-
-    if (this.controlTree) {
-      writer.enter("control-tree {");
-      this.controlTree.trace(writer);
       writer.leave("}");
-    }
+    },
 
-    writer.leave("}");
-  };
-
-  Ap.traceGraphViz = function traceGraphViz(writer, name, prefix) {
-    prefix = prefix || "";
-    var bytecodes = this.bytecodes;
-    if (!bytecodes) {
-      return;
-    }
-    writeGraphViz(writer, name.toString(), bytecodes[0],
-      function (n) {
-        return prefix + n.blockId;
-      },
-      function (n) {
-        return n.succs ? n.succs : [];
-      }, function (n) {
-        return n.preds ? n.preds : [];
-      }, function (n) {
-        var str = "Block: " + n.blockId + "\\l";
-        for (var bci = n.position; bci <= n.end.position; bci++) {
-          str += bci + ": " + bytecodes[bci] + "\\l";
-        }
-        return str;
+    traceGraphViz: function traceGraphViz(writer, name, prefix) {
+      prefix = prefix || "";
+      var bytecodes = this.bytecodes;
+      if (!bytecodes) {
+        return;
       }
-    );
+      writeGraphViz(writer, name.toString(), bytecodes[0],
+                    function (n) {
+                      return prefix + n.blockId;
+                    },
+                    function (n) {
+                      return n.succs ? n.succs : [];
+                    },
+                    function (n) {
+                      return n.preds ? n.preds : [];
+                    },
+                    function (n) {
+                      var str = "Block: " + n.blockId + "\\l";
+                      for (var bci = n.position; bci <= n.end.position; bci++) {
+                        str += bci + ": " + bytecodes[bci] + "\\l";
+                      }
+                      return str;
+                    }
+                   );
+    }
   };
 
   return Analysis;
