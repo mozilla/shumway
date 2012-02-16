@@ -428,7 +428,6 @@ var Analysis = (function () {
   var BytecodeInvalid = Object.create(Bytecode.prototype);
   BytecodeInvalid.op = OP_invalid;
   BytecodeInvalid.position = -1;
-  BytecodeInvalid.blockId = -1;
 
   function dfs(root, pre, post, succ) {
     var visited = {};
@@ -490,9 +489,8 @@ var Analysis = (function () {
         for (var i = 0, j = targets.length; i < j; i++) {
           if (!targets[i]) {
             targets[i] = BytecodeInvalid;
-          } else {
-            targets[i].makeBlockHead();
           }
+          targets[i].makeBlockHead();
         }
         break;
 
@@ -512,10 +510,10 @@ var Analysis = (function () {
       case OP_iftrue:
       case OP_iffalse:
         if (!code.target) {
-          code.op = OP_invalid;
-        } else {
-          code.target.makeBlockHead();
+          code.target = BytecodeInvalid;
+          break;
         }
+        code.target.makeBlockHead();
         bytecodes[pc + 1].makeBlockHead();
         break;
 
@@ -535,18 +533,16 @@ var Analysis = (function () {
       for (var i = 0, j = targets.length; i < j; i++) {
         if (!targets[i]) {
           targets[i] = BytecodeInvalid;
-        } else {
-          targets[i].makeBlockHead();
         }
+        targets[i].makeBlockHead();
       }
       break;
 
     case OP_jump:
       if (!code.target) {
-        code.op = OP_invalid;
-      } else {
-        code.target.makeBlockHead();
+        code.target = BytecodeInvalid;
       }
+      code.target.makeBlockHead();
       break;
 
     case OP_iflt:
