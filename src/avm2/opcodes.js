@@ -269,7 +269,7 @@ var opcodeTable = [
   null,  //0xEA
   null,  //0xEB
   null,  //0xEC
-  null,  //0xED
+  {name:"invalid",            operands:"",                 canThrow:false, stackDelta:0},  //0xED
   null,  //0xEE-wasOP_abs_jump
   {name:"debug",              operands:"debugType:u08,index:u30S,reg:u08,extra:u30",  canThrow:true, stackDelta:0},  //0xEF
   {name:"debugline",          operands:"lineNumber:u30",   canThrow:true, stackDelta:0},  //0xF0

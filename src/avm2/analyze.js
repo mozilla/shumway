@@ -421,6 +421,15 @@ var BytecodeSet = (function () {
 
 var Analysis = (function () {
 
+  /*
+   * Internal bytecode used for bogus jumps. They should be emitted as throws
+   * so that if control flow ever reaches them, we crash.
+   */
+  var BytecodeInvalid = Object.create(Bytecode.prototype);
+  BytecodeInvalid.op = OP_invalid;
+  BytecodeInvalid.position = -1;
+  BytecodeInvalid.blockId = -1;
+
   function dfs(root, pre, post, succ) {
     var visited = {};
     var pended = {};
@@ -467,13 +476,23 @@ var Analysis = (function () {
     assert(bytecodes);
 
     bytecodes[0].makeBlockHead();
-    for (pc = 0, end = bytecodes.length; pc < end; pc++) {
+    for (pc = 0, end = bytecodes.length - 1; pc < end; pc++) {
       code = bytecodes[pc];
       switch (code.op) {
+      case OP_returnvoid:
+      case OP_returnvalue:
+      case OP_throw:
+        bytecodes[pc + 1].makeBlockHead();
+        break;
+
       case OP_lookupswitch:
         var targets = code.targets;
         for (var i = 0, j = targets.length; i < j; i++) {
-          targets[i].makeBlockHead();
+          if (!targets[i]) {
+            targets[i] = BytecodeInvalid;
+          } else {
+            targets[i].makeBlockHead();
+          }
         }
         break;
 
@@ -492,12 +511,61 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.target.makeBlockHead();
+        if (!code.target) {
+          code.op = OP_invalid;
+        } else {
+          code.target.makeBlockHead();
+        }
         bytecodes[pc + 1].makeBlockHead();
         break;
 
       default:;
       }
+    }
+
+    code = bytecodes[end];
+    switch (code.op) {
+    case OP_returnvoid:
+    case OP_returnvalue:
+    case OP_throw:
+      break;
+
+    case OP_lookupswitch:
+      var targets = code.targets;
+      for (var i = 0, j = targets.length; i < j; i++) {
+        if (!targets[i]) {
+          targets[i] = BytecodeInvalid;
+        } else {
+          targets[i].makeBlockHead();
+        }
+      }
+      break;
+
+    case OP_jump:
+      if (!code.target) {
+        code.op = OP_invalid;
+      } else {
+        code.target.makeBlockHead();
+      }
+      break;
+
+    case OP_iflt:
+    case OP_ifnlt:
+    case OP_ifle:
+    case OP_ifnle:
+    case OP_ifgt:
+    case OP_ifngt:
+    case OP_ifge:
+    case OP_ifnge:
+    case OP_ifeq:
+    case OP_ifne:
+    case OP_ifstricteq:
+    case OP_ifstrictne:
+    case OP_iftrue:
+    case OP_iffalse:
+      unexpected("Branch at final block");
+
+    default:;
     }
 
     var currentBlock = bytecodes[0];
@@ -508,12 +576,16 @@ var Analysis = (function () {
 
       assert(currentBlock.succs);
 
-      code = bytecodes[pc - 1];
       currentBlock.end = code;
-
+      code = bytecodes[pc - 1];
       var nextBlock = bytecodes[pc];
 
       switch (code.op) {
+      case OP_returnvoid:
+      case OP_returnvalue:
+      case OP_throw:
+        break;
+
       case OP_lookupswitch:
         for (var i = 0, j = code.targets.length; i < j; i++) {
           currentBlock.succs.push(code.targets[i]);
@@ -550,7 +622,22 @@ var Analysis = (function () {
 
       currentBlock = nextBlock;
     }
-    currentBlock.end = bytecodes[end - 1];
+
+    code = bytecodes[end - 1];
+    switch (code.op) {
+    case OP_lookupswitch:
+      for (var i = 0, j = code.targets.length; i < j; i++) {
+        currentBlock.succs.push(code.targets[i]);
+      }
+      break;
+
+    case OP_jump:
+      currentBlock.succs.push(code.target);
+      break;
+
+    default:;
+    }
+    currentBlock.end = code;
   }
 
   /*
@@ -1008,7 +1095,7 @@ var Analysis = (function () {
     }
 
     if (exits.size > 0 && parentLoops.length > 0) {
-      pruneExitLoops(exits, parentLoops);
+      pruneLoopExits(exits, parentLoops);
     }
     if (exits.size > 1) {
       return undefined;
@@ -1424,15 +1511,6 @@ var Analysis = (function () {
     }
 
     this.bytecodes = bytecodes;
-
-    var exceptions = this.method.exceptions;
-    var ex;
-    for (var i = 0, j = exceptions.length; i < j; i++) {
-      ex = exceptions[i];
-      ex.start = bytecodesOffset[ex.start];
-      ex.end = bytecodesOffset[ex.end];
-      ex.target = bytecodesOffset[ex.target];
-    }
   };
 
   Ap.analyzeControlFlow = function analyzeControlFlow() {

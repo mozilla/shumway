@@ -236,6 +236,7 @@ const OP_setlocal0 = 0xD4;
 const OP_setlocal1 = 0xD5;
 const OP_setlocal2 = 0xD6;
 const OP_setlocal3 = 0xD7;
+const OP_invalid = 0xED;
 const OP_debug = 0xEF;
 const OP_debugline = 0xF0;
 const OP_debugfile = 0xF1;
