@@ -576,8 +576,8 @@ var Analysis = (function () {
 
       assert(currentBlock.succs);
 
-      currentBlock.end = code;
       code = bytecodes[pc - 1];
+      currentBlock.end = code;
       var nextBlock = bytecodes[pc];
 
       switch (code.op) {
