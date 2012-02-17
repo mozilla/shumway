@@ -790,22 +790,26 @@ var createActivation;
 
 function applyTraits(obj, traits) {
   function setProperty(name, slotId, value) {
-    obj["S" + slotId] = value;
-    Object.defineProperty(obj, name, {
-      get: function () {
-        return obj["S" + slotId];
-      },
-      set: function (val) {
-        return obj["S" + slotId] = val;
-      }
-    });
+    if (slotId) {
+      obj["S" + slotId] = value;
+      Object.defineProperty(obj, name, {
+        get: function () {
+          return obj["S" + slotId];
+        },
+        set: function (val) {
+          return obj["S" + slotId] = val;
+        }
+      });
+    } else {
+      obj[name] = value;
+    }
   }
   traits.forEach(function (trait) {
     if (trait.isSlot()) {
       setProperty(trait.name.name, trait.slotId, trait.value);
     } else if (trait.isMethod()) {
-      var closure = createFunction(trait.method).bind(null, obj);
-      setProperty(trait.name.name, trait.slotId, closure);
+      var closure = createFunction(trait.method).bind(null, new Scope(null, obj));
+      setProperty(trait.name.name, undefined, closure);
     } else {
       assert(false);
     }
@@ -890,6 +894,10 @@ var Runtime = (function () {
   };
   
   runtime.prototype.createFunction = function (method) {
+    if (method.compiledMethod) {
+      return method.compiledMethod;
+    }
+    
     method.analysis = new Analysis(method);
     method.analysis.analyzeControlFlow();
     var result = this.compiler.compileMethod(method, true);
@@ -920,7 +928,8 @@ var Runtime = (function () {
     print("Created Function: " + parameters.join(", "));
     print('\033[92m' + flatten(result.statements, "") + '\033[0m');
 
-    return new Function(parameters, flatten(result.statements, ""));
+    method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    return method.compiledMethod;
   };
   return runtime;
 })();
