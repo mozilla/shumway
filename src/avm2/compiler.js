@@ -251,7 +251,7 @@ var Compiler = (function () {
     };
     expression.prototype.toString = function toString() {
       if (this.isBinary()) {
-        return this.left + " " + this.operator + " " + this.right;
+        return "(" + this.left + " " + this.operator + " " + this.right + ")";
       } else {
         return this.operator + this.left;
       }
@@ -354,6 +354,9 @@ var Compiler = (function () {
       return this.value;
     };
     constant.prototype.toString = function toString() {
+      if (typeof this.value === "string") {
+        return JSON.stringify(this.value);
+      }
       return this.value;
     };
     constant.prototype.isEquivalent = function isEquivalent(other) {
@@ -432,7 +435,9 @@ var Compiler = (function () {
     }
     
     this.header = [];
-    this.header.push("var " + this.local.slice(1).join(", "));
+    if (this.local.length > 1) {
+      this.header.push("var " + this.local.slice(1).join(", "));
+    }
     this.header.push("var scope = savedScope;");
   }
 
@@ -464,9 +469,14 @@ var Compiler = (function () {
     var cse = new CSE();
     
     function expression(operator) {
-      var b = state.stack.pop();
-      var a = state.stack.pop();
-      state.stack.push(new Expression(a, operator, b));
+      if (operator.isBinary()) {
+        var b = state.stack.pop();
+        var a = state.stack.pop();
+        state.stack.push(new Expression(a, operator, b));
+      } else {
+        var a = state.stack.pop();
+        state.stack.push(new Expression(a, operator));
+      }
     }
 
     function setLocal(index) {
@@ -570,7 +580,7 @@ var Compiler = (function () {
       var op = bc.op;
 
       if (writer) {
-        writer.enter("bytecode bci: " + bci + ", name: " + opcodeName(op) + " {");
+        writer.enter("bytecode bci: " + bci + ", " + bc +  " {");
       }
 
       switch (op) {
@@ -622,7 +632,7 @@ var Compiler = (function () {
       case OP_nextvalue:      notImplemented(); break;
       case OP_pushbyte:       state.stack.push(new Constant(bc.value)); break;
       case OP_pushshort:      state.stack.push(new Constant(bc.value)); break;
-      case OP_pushstring:     state.stack.push(new Constant("\"" + strings[bc.index]) + "\""); break;
+      case OP_pushstring:     state.stack.push(new Constant(strings[bc.index])); break;
       case OP_pushint:        state.stack.push(new Constant(ints[bc.index])); break;
       case OP_pushuint:       state.stack.push(new Constant(uints[bc.index])); break;
       case OP_pushdouble:     state.stack.push(new Constant(doubles[bc.index])); break;
@@ -667,7 +677,7 @@ var Compiler = (function () {
       case OP_callstatic:     notImplemented(); break;
       case OP_callsuper:      notImplemented(); break;
       case OP_callproperty:
-        multiname = getAndCreateMultiname(multinames[bc.index]);
+        multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
         state.stack.push(new Call(new GetProperty(obj, multiname), "call", [obj].concat(args)));
@@ -675,7 +685,12 @@ var Compiler = (function () {
       case OP_returnvoid:     emitStatement("return"); break;
       case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;
       case OP_constructsuper: notImplemented(); break;
-      case OP_constructprop:  notImplemented(); break;
+      case OP_constructprop:
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        state.stack.push("new " + new GetProperty(obj, multiname) + "()");
+        break;
       case OP_callsuperid:    notImplemented(); break;
       case OP_callproplex:    notImplemented(); break;
       case OP_callinterface:  notImplemented(); break;
@@ -710,7 +725,7 @@ var Compiler = (function () {
         value = state.stack.pop();
         multiname = getAndCreateMultiname(multinames[bc.index]);
         obj = state.stack.pop();
-        emitStatement(obj + "[" + multiname.name + "] = " + value);
+        emitStatement(obj + "." + multiname.name + " = " + value);
         break;
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
@@ -849,7 +864,9 @@ var Compiler = (function () {
 
     flushStack();
     
-    this.header.push("var " + cse.variables.join(", ") + ";");
+    if (cse && cse.variables.length > 0) {
+      this.header.push("var " + cse.variables.join(", ") + ";");
+    }
 
     return {state: state, condition: condition, statements: statements};
   };
@@ -905,11 +922,17 @@ function compileAbc(abc) {
   createFunction = runtime.createFunction.bind(runtime);
   createActivation = runtime.createActivation.bind(runtime);
   
-  var global = {
-    trace: function (val) {
-      console.info('\033[91m' + val + '\033[0m');
-    }
+  var global = {};
+  
+  global.trace = function (val) {
+    console.info('\033[91m' + val + '\033[0m');
   };
+  global.Number = Number;
+  global.Boolean = Boolean;
+  global.Date = Date;
+  global.Array = Array;
+  global.Math = Math;
+  
   applyTraits(global, abc.lastScript.traits);
   
   var fn = runtime.createFunction(abc.entryPoint);
@@ -1008,6 +1031,7 @@ var Runtime = (function () {
       return str;
     }
 
+    print('\033[92m' + flatten(result.statements, "") + '\033[0m');
     method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
     print('\033[92m' + method.compiledMethod + '\033[0m');
     return method.compiledMethod;
