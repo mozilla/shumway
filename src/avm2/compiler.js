@@ -829,6 +829,27 @@ function compileAbc(abc) {
   fn.call(global, null);
 }
 
+/**
+ * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
+ * scope holds a reference to a scope [object] (which may exist on multipe scope chains, thus preventing
+ * us from chaining the scope objects together directly).
+ * 
+ * Scope Operations:
+ * 
+ *  push scope: scope = new Scope(scope, object)
+ *  pop scope: scope = scope.parent
+ *  get global scope: scope.global
+ *  get scope object: scope.object
+ * 
+ * Method closures have a [savedScope] argument which is bound when the closure is created. Since we use a 
+ * linked list of scopes rather than a scope stack, we don't need to clone the scope stack, we can bind 
+ * the closure to the current scope. 
+ * 
+ * The "scope stack" for a method always starts off as empty and methods push and pop scopes on their scope
+ * stack explicitly. If a property is not found on the current scope stack, it is then looked up 
+ * in the [savedScope]. To emulate this we always initialize the [scope] of a method to its [savedScope] when
+ * the method is entered "var scope = savedScope;".
+ */
 var Scope = (function () {
   function scope(parent, object) {
     this.parent = parent;
