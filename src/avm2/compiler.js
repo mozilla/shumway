@@ -256,6 +256,9 @@ var Compiler = (function () {
         return this.operator + this.left;
       }
     }
+    expression.prototype.isEquivalent = function isEquivalent(other) {
+      return false;
+    };
     return expression;
   })();
 
@@ -268,6 +271,9 @@ var Compiler = (function () {
     call.prototype.toString = function toString() {
       var str = this.obj ? this.obj.toString() + "." : "";
       return str + this.name + "(" + this.arguments.join(", ") + ")";
+    };
+    call.prototype.isEquivalent = function isEquivalent(other) {
+      return false;
     };
     return call;
   })();
@@ -284,6 +290,9 @@ var Compiler = (function () {
     findProperty.prototype.toString = function toString() {
       return new Call("scope", "findProperty", [objectConstant(this.multiname), this.strict]).toString();
     };
+    findProperty.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof findProperty && this.multiname === other.multiname && this.strict === other.strict;
+    };
     return findProperty;
   })();
 
@@ -291,13 +300,16 @@ var Compiler = (function () {
     function getProperty(obj, multiname) {
       this.obj = obj;
       this.multiname = multiname;
-    };
+    }
     getProperty.prototype.toString = function toString() {
       return this.obj + "." + this.multiname.name;
     };
+    getProperty.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof getProperty && this.multiname === other.multiname && this.obj.isEquivalent(other.obj);
+    };
     return getProperty;
   })();
-
+  
   /**
    * Wrapper around a named local variable.
    */
@@ -311,9 +323,26 @@ var Compiler = (function () {
     variable.prototype.toString = function toString() {
       return this.name;
     }
+    variable.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof variable && this.name === other.name;
+    };
     return variable;
   })();
-
+  
+  /**
+   * Wrapper around a named local variable.
+   */
+  var GetGlobalScope = (function () {
+    function getGlobalScope() {}
+    getGlobalScope.prototype.toString = function toString() {
+      return "scope.global.object";
+    }
+    getGlobalScope.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof getGlobalScope;
+    };
+    return getGlobalScope;
+  })();
+  
   /**
    * Silly wrapper around constants, so that they fit neatly in our expression trees.
    */
@@ -326,7 +355,10 @@ var Compiler = (function () {
     };
     constant.prototype.toString = function toString() {
       return this.value;
-    }
+    };
+    constant.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof constant && this.value === other.value;
+    };
     return constant;
   })();
 
@@ -347,6 +379,37 @@ var Compiler = (function () {
     return literal; 
   })();
 
+  var CSE = (function () {
+    function cse() {
+      this.variables = [];
+      this.values = [];
+    }
+    
+    cse.prototype.createVariable = function createVariable() {
+      this.variables.push(new Variable("t" + this.variables.length));
+      return this.variables.peek(); 
+    }
+    
+    cse.prototype.get = function get(value) {
+      if (value instanceof Variable || value instanceof Constant) {
+        return value;
+      }
+      var values = this.values;
+      for (var i = values.length - 1; i >= 0; i--) {
+        var other = values[i];
+        if (value.isEquivalent(other)) {
+          assert (other.variable);
+          return other;
+        }
+      }
+      value.variable = this.createVariable();
+      this.values.push(value);
+      return value;
+    };
+    
+    return cse;
+  })();
+  
   function MethodCompilerContext(compiler, method) {
     this.compiler = compiler;
     this.method = method;
@@ -362,12 +425,15 @@ var Compiler = (function () {
     }
     this.state.local = this.local.slice(0);
 
-    this.temporary = [new Variable("t0")];
+    
+    this.temporary = [];
+    for (var i = 0; i < 10; i++) {
+      this.temporary.push(new Variable("s" + i))
+    }
     
     this.header = [];
+    this.header.push("var " + this.local.slice(1).join(", "));
     this.header.push("var scope = savedScope;");
-    
-    this.header.push("var globalScopeObject = savedScope === null ? this : savedScope.global.object; /* Cache Global Scope */");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -395,6 +461,8 @@ var Compiler = (function () {
     var local = this.local;
     var temporary = this.temporary;
 
+    var cse = new CSE();
+    
     function expression(operator) {
       var b = state.stack.pop();
       var a = state.stack.pop();
@@ -449,10 +517,25 @@ var Compiler = (function () {
       statements.push(statement + ";");
     }
     
+    function emitAssignment(variable, expression) {
+      statements.push(variable + " = " + expression + ";");
+    }
+    
     function emitComment(comment) {
       statements.push("/* " + comment + " */");
     }
 
+    function push(value) {
+      assert (value);
+      if (cse) {
+        var otherValue = cse.get(value);
+        if (otherValue === value) {
+          emitAssignment(value.variable, value);
+        }
+        state.stack.push(otherValue.variable);
+      }
+    }
+    
     var abc = this.compiler.abc;
     var ints = abc.constantPool.ints;
     var uints = abc.constantPool.uints;
@@ -460,7 +543,6 @@ var Compiler = (function () {
     var strings = abc.constantPool.strings;
     var methods = abc.methods;
     var multinames = abc.constantPool.multinames;
-    var classes = abc.classes;
 
     var multiname, args, value, obj, res;
 
@@ -481,7 +563,7 @@ var Compiler = (function () {
     function getAndCreateMultiname(multiname) {
       return createMultiname(multiname);
     }
-
+    
     var bytecodes = this.method.analysis.bytecodes;
     for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
       var bc = bytecodes[bci];
@@ -616,11 +698,11 @@ var Compiler = (function () {
       case OP_newcatch:       notImplemented(); break;
       case OP_findpropstrict:
         multiname = getAndCreateMultiname(multinames[bc.index]);
-        state.stack.push(new FindProperty(multiname, true));
+        push(new FindProperty(multiname, true));
         break;
       case OP_findproperty:
         multiname = getAndCreateMultiname(multinames[bc.index]);
-        state.stack.push(new FindProperty(multiname, false));
+        push(new FindProperty(multiname, false));
         break;
       case OP_finddef:        notImplemented(); break;
       case OP_getlex:         notImplemented(); break;
@@ -633,7 +715,7 @@ var Compiler = (function () {
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
       case OP_getglobalscope: 
-        state.stack.push("globalScopeObject");
+        push(new GetGlobalScope());
         break;
       case OP_getscopeobject:
         obj = "scope";
@@ -766,6 +848,8 @@ var Compiler = (function () {
     }
 
     flushStack();
+    
+    this.header.push("var " + cse.variables.join(", ") + ";");
 
     return {state: state, condition: condition, statements: statements};
   };
@@ -823,13 +907,12 @@ function compileAbc(abc) {
   
   var global = {
     trace: function (val) {
-      console.info(val);
+      console.info('\033[91m' + val + '\033[0m');
     }
   };
   applyTraits(global, abc.lastScript.traits);
   
   var fn = runtime.createFunction(abc.entryPoint);
-  print(fn);
   fn.call(global, null);
 }
 
@@ -925,10 +1008,8 @@ var Runtime = (function () {
       return str;
     }
 
-    print("Created Function: " + parameters.join(", "));
-    print('\033[92m' + flatten(result.statements, "") + '\033[0m');
-
     method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    print('\033[92m' + method.compiledMethod + '\033[0m');
     return method.compiledMethod;
   };
   return runtime;
