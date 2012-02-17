@@ -180,6 +180,8 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
 
   var code = new AbcStream(this.code);
 
+  traceArray(writer, "traits", this.traits);
+  
   writer.enter("code {");
   while (code.remaining() > 0) {
     var bc = code.readU8();
