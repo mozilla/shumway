@@ -2,7 +2,7 @@
 
 function createGlobalObject(script) {
   var global = new ASObject();
-  var globalScope = new Scope();
+  var globalScope = new Scope2();
   globalScope.push(global);
   
   ASObject.applyTraits(global, script.traits);
@@ -45,7 +45,7 @@ function createGlobalObject(script) {
   return global;
 }
 
-var Scope = (function () {
+var Scope2 = (function () {
   function scope(original) {
     if (original) {
       this.stack = original.stack.slice(0);
