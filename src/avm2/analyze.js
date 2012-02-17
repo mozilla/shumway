@@ -557,7 +557,10 @@ var Analysis = (function () {
     case OP_ifstrictne:
     case OP_iftrue:
     case OP_iffalse:
-      unexpected("Branch at final block");
+      code.target.makeBlockHead();
+      bytecodes[pc + 1] = getInvalidTarget(null, pc + 1);
+      bytecodes[pc + 1].makeBlockHead();
+      break;
 
     default:;
     }
