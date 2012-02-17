@@ -366,6 +366,8 @@ var Compiler = (function () {
     
     this.header = [];
     this.header.push("var scope = savedScope;");
+    
+    this.header.push("var globalScopeObject = savedScope === null ? this : savedScope.global.object; /* Cache Global Scope */");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -631,7 +633,7 @@ var Compiler = (function () {
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
       case OP_getglobalscope: 
-        state.stack.push("scope.global.object");
+        state.stack.push("globalScopeObject");
         break;
       case OP_getscopeobject:
         obj = "scope";
@@ -787,17 +789,25 @@ var createFunction;
 var createActivation;
 
 function applyTraits(obj, traits) {
+  function setProperty(name, slotId, value) {
+    obj["S" + slotId] = value;
+    Object.defineProperty(obj, name, {
+      get: function () {
+        return obj["S" + slotId];
+      },
+      set: function (val) {
+        return obj["S" + slotId] = val;
+      }
+    });
+  }
   traits.forEach(function (trait) {
     if (trait.isSlot()) {
-      obj["S" + trait.slotId] = trait.value;
-      Object.defineProperty(obj, trait.name.name, {
-        get: function () {
-          return obj["S" + trait.slotId];
-        },
-        set: function (val) {
-          return obj["S" + trait.slotId] = val;
-        }
-      });
+      setProperty(trait.name.name, trait.slotId, trait.value);
+    } else if (trait.isMethod()) {
+      var closure = createFunction(trait.method).bind(null, obj);
+      setProperty(trait.name.name, trait.slotId, closure);
+    } else {
+      assert(false);
     }
   });
 }
