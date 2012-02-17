@@ -732,6 +732,9 @@ var MethodInfo = (function () {
     toString: function toString() {
       var flags = getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|"));
       return (flags ? flags + " " : "") + this.name;
+    },
+    needsActivation: function needsActivation() {
+      return !!(this.flags & METHOD_Activation);
     }
   };
 

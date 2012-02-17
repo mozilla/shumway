@@ -293,7 +293,7 @@ var Compiler = (function () {
       this.multiname = multiname;
     };
     getProperty.prototype.toString = function toString() {
-      return new Call(this.obj, "getProperty", [objectConstant(this.multiname)]).toString();
+      return this.obj + "." + this.multiname.name;
     };
     return getProperty;
   })();
@@ -353,6 +353,7 @@ var Compiler = (function () {
     this.worklist = [method.analysis.controlTree];
     this.state = new State();
     this.writer = new IndentingWriter();
+    
 
     /* Initialize local variables. */
     this.local = [new Variable("this")];
@@ -362,6 +363,9 @@ var Compiler = (function () {
     this.state.local = this.local.slice(0);
 
     this.temporary = [new Variable("t0")];
+    
+    this.header = [];
+    this.header.push("var scope = savedScope;");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -441,6 +445,10 @@ var Compiler = (function () {
 
     function emitStatement(statement) {
       statements.push(statement + ";");
+    }
+    
+    function emitComment(comment) {
+      statements.push("/* " + comment + " */");
     }
 
     var abc = this.compiler.abc;
@@ -537,13 +545,15 @@ var Compiler = (function () {
       case OP_pushtrue:       state.stack.push(new Constant(true)); break;
       case OP_pushfalse:      state.stack.push(new Constant(false)); break;
       case OP_pushnan:        state.stack.push(new Constant(NaN)); break;
-      case OP_pop:            state.stack.pop(); break;
+      case OP_pop:
+        emitStatement(state.stack.pop());
+        break;
       case OP_dup:            state.stack.push(state.stack.peek()); break;
       case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
       case OP_pushscope:
         obj = state.stack.pop();
+        emitStatement("scope = new " + new Call(null, "Scope", ["scope", obj]));
         state.scope.push(obj);
-        emitStatement(new Call("scope", "push", [obj]));
         break;
       case OP_pushnamespace:  notImplemented(); break;
       case OP_hasnext2:       notImplemented(); break;
@@ -558,11 +568,16 @@ var Compiler = (function () {
       case OP_sf32:           notImplemented(); break;
       case OP_sf64:           notImplemented(); break;
       case OP_newfunction:
-        value = new Call(null, "createFunction", [objectConstant(methods[bc.index]), "[\"scope\"]"]);
-        value = new Call(value, "bind", ["null", "scope.clone()"]);
+        value = new Call(null, "createFunction", [objectConstant(methods[bc.index])]);
+        value = new Call(value, "bind", ["null", "scope"]);
         state.stack.push(value);
         break;
-      case OP_call:           notImplemented(); break;
+      case OP_call:
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        print("Args: " + bc.argCount);
+        state.stack.push(new Call(state.stack.pop(), "call", [obj].concat(args)));
+        break;
       case OP_construct:      notImplemented(); break;
       case OP_callmethod:     notImplemented(); break;
       case OP_callstatic:     notImplemented(); break;
@@ -589,7 +604,11 @@ var Compiler = (function () {
       case OP_pushfloat4:     notImplemented(); break;
       case OP_newobject:      notImplemented(); break;
       case OP_newarray:       state.stack.push(new Literal("[]")); break;
-      case OP_newactivation:  notImplemented(); break;
+      case OP_newactivation:
+        assert (this.method.needsActivation());
+        emitStatement("var activation = " + new Call(null, "createActivation", [objectConstant(this.method)]));
+        state.stack.push("activation");
+        break;
       case OP_newclass:       notImplemented(); break;
       case OP_getdescendants: notImplemented(); break;
       case OP_newcatch:       notImplemented(); break;
@@ -612,17 +631,19 @@ var Compiler = (function () {
       case OP_getlocal:       state.pushLocal(bc.index); break;
       case OP_setlocal:       setLocal(bc.index); break;
       case OP_getglobalscope: 
-        if (state.scope.length > 0) {
-          state.stack.push(state.scope[0]);
-        } else {
-          state.stack.push(new Call("scope", "global"));
-        }
+        state.stack.push("scope.global.object");
         break;
-      case OP_getscopeobject:     notImplemented(); break;
+      case OP_getscopeobject:
+        obj = "scope";
+        for (var i = 0; i < bc.index; i++) {
+          obj += ".parent";
+        }
+        state.stack.push(obj + ".object");
+        break;
       case OP_getproperty:
         multiname = getAndCreateMultiname(multinames[bc.index]);
         obj = state.stack.pop();
-        state.stack.push(new Literal(obj + "[" + multiname.name + "]"));
+        state.stack.push(new GetProperty(obj, multiname));
         break;
       case OP_getouterscope:      notImplemented(); break;
       case OP_initproperty:       notImplemented(); break;
@@ -714,9 +735,15 @@ var Compiler = (function () {
       case OP_setlocal3:
         setLocal(op - OP_setlocal0);
         break;
-      case OP_debug:          notImplemented(); break;
-      case OP_debugline:      notImplemented(); break;
-      case OP_debugfile:      notImplemented(); break;
+      case OP_debug:
+        /* NOP */
+        break;
+      case OP_debugline:
+        emitComment("line: " + bc.lineNumber);
+        break;
+      case OP_debugfile:
+        emitComment("file: " + strings[bc.index]);
+        break;
       case OP_bkptline:       notImplemented(); break;
       case OP_timestamp:      notImplemented(); break;
       default:
@@ -748,26 +775,76 @@ var Compiler = (function () {
   compiler.prototype.compileMethod = function compileMethod(method) {
     assert(method.analysis);
     var mcx = new MethodCompilerContext(this, method);
-    return method.analysis.controlTree.compile(mcx, mcx.state);
+    var statements = mcx.header;
+    statements.push(method.analysis.controlTree.compile(mcx, mcx.state).statements);
+    return {statements: statements};
   }
 
   return compiler;
 })();
 
 var createFunction;
+var createActivation;
+
+function applyTraits(obj, traits) {
+  traits.forEach(function (trait) {
+    if (trait.isSlot()) {
+      obj["S" + trait.slotId] = trait.value;
+      Object.defineProperty(obj, trait.name.name, {
+        get: function () {
+          return obj["S" + trait.slotId];
+        },
+        set: function (val) {
+          return obj["S" + trait.slotId] = val;
+        }
+      });
+    }
+  });
+}
 
 function compileAbc(abc) {
   var runtime = new Runtime(abc);
   createFunction = runtime.createFunction.bind(runtime);
-
-  var fn = runtime.createFunction(abc.entryPoint, ["scope"]);
-  var global = createGlobalObject(abc.lastScript);
-  var scope = new Scope();
-  scope.push(global);
-
+  createActivation = runtime.createActivation.bind(runtime);
+  
+  var global = {
+    trace: function (val) {
+      console.info(val);
+    }
+  };
+  applyTraits(global, abc.lastScript.traits);
+  
+  var fn = runtime.createFunction(abc.entryPoint);
   print(fn);
-  fn.call(global, scope);
+  fn.call(global, null);
 }
+
+var Scope = (function () {
+  function scope(parent, object) {
+    this.parent = parent;
+    this.object = object;
+  }
+  
+  Object.defineProperty(scope.prototype, "global", {
+    get: function () {
+      if (this.parent === null) {
+        return this;
+      } else {
+        return this.parent.global;
+      }
+    }
+  });
+  
+  scope.prototype.findProperty = function(multiname, strict) {
+    if (this.object.hasOwnProperty(multiname.name)) {
+      return this.object;
+    } else if (this.parent) {
+      return this.parent.findProperty(multiname, strict);
+    }
+  }
+
+  return scope;
+})();
 
 var Runtime = (function () {
   function runtime(abc) {
@@ -775,12 +852,19 @@ var Runtime = (function () {
     this.compiler = new Compiler(abc);
   }
 
-  runtime.prototype.createFunction = function (method, parameters) {
+  runtime.prototype.createActivation = function (method) {
+    var obj = {};
+    applyTraits(obj, method.traits);
+    return obj;
+  };
+  
+  runtime.prototype.createFunction = function (method) {
     method.analysis = new Analysis(method);
     method.analysis.analyzeControlFlow();
     var result = this.compiler.compileMethod(method, true);
 
-    parameters = parameters.concat(method.parameters.mapWithIndex(function (p, i) {
+    var defaultParameters = ["savedScope"];
+    var parameters = defaultParameters.concat(method.parameters.mapWithIndex(function (p, i) {
       var name = p.name || getLocalVariableName(i);
       if (p.type) {
         name += "_" + p.type.name;
