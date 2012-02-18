@@ -49,7 +49,7 @@ var IndentingWriter = (function () {
         }
         prefix += " ";
       } 
-      this.writeLn(("" + i).padRight(' ', 3) + prefix + arr[i]);
+      this.writeLn(("" + i).padRight(' ', 4) + prefix + arr[i]);
     }
   };
 

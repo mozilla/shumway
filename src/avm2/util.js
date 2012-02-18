@@ -90,6 +90,18 @@ function unexpected() {
     assert (this.length > 0);
     return this[this.length - 1];
   });
+  
+  extendBuiltin(Ap, "empty", function() {
+    return this.length === 0;
+  });
+  
+  extendBuiltin(Ap, "notEmpty", function() {
+    return this.length > 0;
+  });
+  
+  extendBuiltin(Ap, "contains", function(val) {
+    return this.indexOf(val) >= 0;
+  });
 
   extendBuiltin(Ap, "top", function() {
     return this.length && this[this.length - 1];
