@@ -32,7 +32,7 @@ var tagHandler = {
   /* DefineBitsJPEG3 */               35: undefined,
   /* DefineBitsLossless2 */           36: undefined,
   /* DefineEditText */                37: undefined,
-  /* DefineSprite */                  39: defineSprite,
+  /* DefineSprite */                  39: undefined,
   /* FrameLabel */                    43: undefined,
   /* SoundStreamHead2 */              45: undefined,
   /* DefineMorphShape */              46: DEFINE_SHAPE,
@@ -74,8 +74,9 @@ for (var tag in tagHandler) {
 
 var readHeader = generate(MOVIE_HEADER);
 
-function readTags(bytes, stream, version, dictionary) {
-  var tags = [];
+function readTags(context, stream, version, onprogress) {
+  var tags = context.tags;
+  var bytes = stream.bytes;
   do {
     var tagAndLength = readUi16(bytes, stream);
     var tag = tagAndLength >> 6;
@@ -84,33 +85,40 @@ function readTags(bytes, stream, version, dictionary) {
       length = readUi32(bytes, stream);
     stream.ensure(length);
     var substream = stream.substream(stream.pos, stream.pos += length);
-    var handler = tagHandler[tag];
-    var item = handler ? handler(substream.bytes, substream, version, tag) : { };
+    var subbytes = substream.bytes;
+    if (tag === 39) {
+      var item = {
+    type: 'sprite',
+        id: readUi16(subbytes, substream),
+        frameCount: readUi16(subbytes, substream),
+        tags: []
+      };
+      readTags(item, substream, version);
+    } else {
+      var handler = tagHandler[tag];
+      var item = handler ? handler(subbytes, substream, version, tag) : { };
+    }
     item.tag = tag;
     tags.push(item);
-    if (item.id) {
-      var id = item.id;
-      if (dictionary[id]) {
-        var entry = dictionary[id];
-        entry.__proto__ = item;
-        dictionary[id] = entry;
-      } else {
-        dictionary[id] = item;
+    if (tag === 1) {
+      while (stream.getUint16(stream.pos, true) >> 6 === 1) {
+        tags.push(item);
+        stream.pos += 2;
       }
+      if (onprogress)
+        onprogress(context);
+    } else if (onprogress && item.id) {
+      onprogress(context);
     }
   } while (tag);
-  return tags;
 }
 
-function defineSprite(bytes, stream, version) {
-  return {
-    id: readUi16(bytes, stream),
-    frameCount: readUi16(bytes, stream),
-    tags: readTags(bytes, stream, version)
-  };
-}
+SWF.parse = function(buffer, listener) {
+  console.time('parse');
+  
+  if (!listener)
+    listener = { };
 
-SWF.parse = function(buffer, callback) {
   var stream = new Stream(buffer);
   var bytes = stream.bytes;
   var magic1 = bytes[0];
@@ -128,14 +136,20 @@ SWF.parse = function(buffer, callback) {
     stream.ensure(21);
   }
   var header = readHeader(bytes, stream);
-  var dictionary = { };
-  var tags = readTags(bytes, stream, version, dictionary);
   var swf = {
     version: version,
     bounds: header.bounds,
     frameRate: header.frameRate,
     frameCount: header.frameCount,
-    tags: tags
+    tags: []
   };
-  callback(swf, dictionary);
+  if (listener.onstart)
+    listener.onstart(swf);
+
+  readTags(swf, stream, version, listener.onprogress);
+  
+  if (listener.oncomplete)
+    listener.oncomplete(swf);
+    
+  console.timeEnd('parse');
 };
