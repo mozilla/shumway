@@ -19,11 +19,12 @@ function maxPower2(number) {
   return val;
 }
 
-function defineFont(graph) {
+function defineFont(tag, dictionary) {
   var tables = { };
 
-  var glyphCount = graph.glyphCount;
-  var codes = graph.codes.slice();
+  var glyphs = tag.glyphs || dictionary[tag.id].glyphs;
+  var glyphCount = glyphs.length;
+  var codes = tag.codes.slice();
   var glyphIndex = { };
   for (var i = 0, code; code = codes[i]; ++i)
     glyphIndex[code] = i;
@@ -50,7 +51,7 @@ function defineFont(graph) {
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
-    toString16(graph.bold ? 700 : 400) + // usWeightClass
+    toString16(tag.bold ? 700 : 400) + // usWeightClass
     '\x00\x05' + // usWidthClass
     '\x00\x00' + // fstype
     '\x00\x00' + // ySubscriptXSize
@@ -70,14 +71,14 @@ function defineFont(graph) {
     '\x00\x00\x00\x00' + // ulUnicodeRange3
     '\x00\x00\x00\x00' + // ulUnicodeRange4
     'ALF ' + // achVendID
-    toString16((graph.italic ? 0x01 : 0) | (graph.bold ? 0x20: 0)) + // fsSelection
+    toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20: 0)) + // fsSelection
     toString16(usFirstCharIndex) +
     toString16(usLastCharIndex) +
-    toString16(graph.ascent || 1024) + // sTypoAscender
-    toString16(graph.descent || 1024) + // sTypoDescender
+    toString16(tag.ascent || 1024) + // sTypoAscender
+    toString16(tag.descent || 1024) + // sTypoDescender
     '\x00\x00' + // sTypoLineGap
-    toString16(graph.ascent || 1024) + // usWinAscent
-    toString16(graph.descent || 1024) + // usWinDescent
+    toString16(tag.ascent || 1024) + // usWinAscent
+    toString16(tag.descent || 1024) + // usWinDescent
     '\x00\x00\x00\x00' + // ulCodePageRange1
     '\x00\x00\x00\x00' // ulCodePageRange2
   ;
@@ -137,8 +138,7 @@ function defineFont(graph) {
 
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
-  var glyphs = graph.glyphs;
-  var resolution = graph.resolution;
+  var resolution = tag.resolution;
   var offset = 16;
   var i = 0;
   var code;
@@ -272,19 +272,19 @@ function defineFont(graph) {
     toString16(min.apply(null, yMins)) + // yMin
     toString16(max.apply(null, xMaxs)) + // xMax
     toString16(max.apply(null, yMaxs)) + // yMax
-    toString16((graph.italic ? 2 : 0) | (graph.bold ? 1 : 0)) + // macStyle
+    toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
     '\x00\x08' + // lowestRecPPEM
     '\x00\x02' + // fontDirectionHint
     '\x00\x00' + // indexToLocFormat
     '\x00\x00' // glyphDataFormat
   ;
 
-  var advance = graph.advance;
+  var advance = tag.advance;
 
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
-    toString16(graph.ascent || 1024) + // ascender
-    toString16(graph.descent || 1024) + // descender
+    toString16(tag.ascent || 1024) + // ascender
+    toString16(tag.descent || 1024) + // descender
     '\x00\x00' + // lineGap
     toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
@@ -306,8 +306,8 @@ function defineFont(graph) {
     hmtx += toString16(advance ? advance[i] : 1024) + '\x00\x00';
   tables['hmtx'] = hmtx;
 
-  if (graph.kerning) {
-    var kerning = graph.kerning;
+  if (tag.kerning) {
+    var kerning = tag.kerning;
     var nPairs = kerning.length;
     var searchRange = maxPower2(nPairs) * 2;
     var kern =
@@ -354,13 +354,13 @@ function defineFont(graph) {
   ;
 
   var strings = [
-    graph.copyright || 'Original licence', // 0. Copyright
-    graph.name, // 1. Font family
+    tag.copyright || 'Original licence', // 0. Copyright
+    tag.name, // 1. Font family
     'Unknown', // 2. Font subfamily
-    graph.id, // 3. Unique ID
-    graph.name, // 4. Full font name
+    tag.id, // 3. Unique ID
+    tag.name, // 4. Full font name
     '1.0', // 5. Version
-    graph.name.replace(/ /g, ''), // 6. Postscript name
+    tag.name.replace(/ /g, ''), // 6. Postscript name
     'Unknown', // 7. Trademark
     'Unknown', // 8. Manufacturer
     'Unknown' // 9. Designer
@@ -398,25 +398,25 @@ function defineFont(graph) {
     '\x00\x00\x00\x00' // maxMemType1
   ;
 
-  var tags = keys(tables);
+  var names = keys(tables);
   var header =
     '\x00\x01\x00\x00' + // version
-    toString16(tags.length) + // numTables
+    toString16(names.length) + // numTables
     '\x00\x80' + // searchRange
     '\x00\x03' + // entrySelector
     '\x00\x20' // rangeShift
   ;
-  var offset = (tags.length * 16) + header.length;
+  var offset = (names.length * 16) + header.length;
   var data = '';
   var i = 0;
-  var tag;
-  while (tag = tags[i++]) {
-    var table = tables[tag];
+  var name;
+  while (name = names[i++]) {
+    var table = tables[name];
     var length = table.length;
     var checksum = 0, n = length;
     header +=
-      tag +
-      '\x00\x00\x00\x00' +
+      name +
+      '\x00\x00\x00\x00' + // checkSum
       toString32(offset) +
       toString32(length)
     ;
@@ -429,6 +429,16 @@ function defineFont(graph) {
       ++offset;
     offset += length;
   }
+  var otf = header + data;
 
-  return header + data;
+  return {
+    type: 'font',
+    id: tag.id,
+    name: tag.name,
+    codes: tag.codes,
+    style: '@font-face{' +
+  	  'font-family:"' + tag.name + '";' +
+      'src:url(data:font/opentype;base64,' + btoa(otf) + ')' +
+    '}'
+  };
 }

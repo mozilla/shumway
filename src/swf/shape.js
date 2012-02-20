@@ -56,12 +56,12 @@ function joinCmds() {
   return this.cmds.join(';');
 }
 
-function ShapeRenderer(graph) {
-  var records = graph.records;
-  var isMorph = graph.isMorph;
-  var recordsMorph = isMorph ? graph.recordsMorph : [];
-  var fillStyles = graph.fillStyles;
-  var lineStyles = graph.lineStyles;
+function defineShape(tag, dictionary) {
+  var records = tag.records;
+  var isMorph = tag.isMorph;
+  var recordsMorph = isMorph ? tag.recordsMorph : [];
+  var fillStyles = tag.fillStyles;
+  var lineStyles = tag.lineStyles;
   var fillOffset = 0;
   var lineOffset = 0;
   var sx = 0;
@@ -367,14 +367,19 @@ function ShapeRenderer(graph) {
   paths.sort(function (a, b) {
     return a.i - b.i;
   });
-  return new Function('c,m,r',
-    'with(c){' +
-      'save();' +
-      'scale(0.05,0.05);' +
-      'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
-      'fillRule=mozFillRule=webkitFillRule="evenodd";' +
-      paths.join(';') + ';' +
-      'restore()' +
+  return {
+    type: 'character',
+    id: tag.id,
+    bounds: tag.bounds,
+    render: 'function(c,m,r){' +
+      'with(c){' +
+        'save();' +
+        'scale(0.05,0.05);' +
+        'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
+        'fillRule=mozFillRule=webkitFillRule="evenodd";' +
+        paths.join(';') + ';' +
+        'restore()' +
+      '}' +
     '}'
-  );
+  };
 }

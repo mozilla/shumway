@@ -19,3 +19,12 @@ function assert(cond, msg, context) {
   if (!cond)
     fail(msg, context);
 }
+
+function colorToString(color) {
+  return 'rgba(' + [
+    color.red,
+    color.green,
+    color.blue,
+    color.alpha / 255
+  ].join(',') + ')';
+}

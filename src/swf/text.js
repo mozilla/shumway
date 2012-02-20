@@ -1,7 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function TextRenderer(graph, dictionary) {
-  var records = graph.records;
+function defineText(tag, dictionary) {
+  var records = tag.records;
   var cmds = [];
   var x = 0;
   var y = 0;
@@ -15,15 +15,8 @@ function TextRenderer(graph, dictionary) {
       var codes = font.codes;
       cmds.push('font="' + record.fontHeight + 'px ' + font.name + '"');
     }
-    if (record.hasColor) {
-      var color = record.color;
-      cmds.push('fillStyle="rgba(' + [
-        color.red,
-        color.green,
-        color.blue,
-        color.alpha / 255
-      ].join(',') + ')"');
-    }
+    if (record.hasColor)
+      cmds.push('fillStyle="' + colorToString(record.color) + '"');
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)
@@ -37,17 +30,22 @@ function TextRenderer(graph, dictionary) {
       x += entry.advance;
     }
   }
-  var m = graph.matrix;
-  return new Function('c,m,r',
-    'with(c){' +
-      'save();' +
-      'scale(0.05,0.05);' +
-      'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
-      'transform(' +
-        [m.scaleX, m.skew0, m.skew1, m.scaleY, m.translateX, m.translateY].join(',') +
-      ');' +
-      cmds.join(';') + ';' +
-      'restore()' +
+  var m = tag.matrix;
+  return {
+    type: 'character',
+    id: tag.id,
+    bounds: tag.bounds,
+    render: 'function(c,m,r){' +
+      'with(c){' +
+        'save();' +
+        'scale(0.05,0.05);' +
+        'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
+        'transform(' +
+          [m.scaleX, m.skew0, m.skew1, m.scaleY, m.translateX, m.translateY].join(',') +
+        ');' +
+        cmds.join(';') + ';' +
+        'restore()' +
+      '}' +
     '}'
-  );
+  };
 }
