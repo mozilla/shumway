@@ -30,12 +30,13 @@ if (typeof window === 'undefined') {
         self.postMessage(result);
       },
       onprogress: function(result) {
-        var tags = result.tags;
-        var tag = tags[tags.length - 1];
-        var subtags = tag.type === 'frame' ? tags.slice(i) : [tag];
-        var data = cast(subtags, dictionary);
-        i += subtags.length;
-        self.postMessage(data);
+        var tags = result.tags.slice(i);
+        var objects = cast(tags, dictionary);
+        i += tags.length;
+        var j = 0;
+        var obj;
+        while (obj = objects[j++])
+          self.postMessage(obj);
       },
       oncomplete: function(result) {
         self.postMessage(result);
