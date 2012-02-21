@@ -1,7 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var DEFINE_FONT = {
-  type: '"font"',
   id: UI16,
   $$firstOffset: UI16,
   $glyphCount: 'firstOffset/2',
@@ -16,6 +15,7 @@ var DEFINE_FONT = {
   }
 };
 var DEFINE_FONT_INFO = {
+  type: '"font"',
   id: UI16,
   $$nameLength: UI8,
   name: STRING('nameLength'),
