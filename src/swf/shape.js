@@ -52,9 +52,6 @@ function matrixToTransform(matrix, matrixMorph) {
     matrix.translateY
   ].join(',') + ')';
 }
-function joinCmds() {
-  return this.cmds.join(';');
-}
 
 function defineShape(tag, dictionary) {
   var records = tag.records;
@@ -319,11 +316,7 @@ function defineShape(tag, dictionary) {
         cmds.push('restore()');
         break;
       }
-      paths.push({
-        i: path[0].i,
-        cmds: cmds,
-        toString: joinCmds
-      });
+      paths.push({ i: path[0].i, cmds: cmds });
     }
   }
   var lineStyle;
@@ -356,21 +349,22 @@ function defineShape(tag, dictionary) {
         cmds.push('lineCap="round"');
         cmds.push('lineJoin="round"');
         cmds.push('stroke()');
-        paths.push({
-          i: segment.i,
-          cmds: cmds,
-          toString: joinCmds
-        });
+        paths.push({ i: segment.i, cmds: cmds });
       }
     }
   }
   paths.sort(function (a, b) {
     return a.i - b.i;
   });
+  var cmds = [];
+  var i = 0;
+  var path;
+  while (path = paths[i++])
+    cmds.push(path.cmds);
   return {
     type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
-    data: paths.join(';')
+    data: cmds.join(';')
   };
 }
