@@ -95,7 +95,8 @@ var CXFORM = {
 };
 var MOVIE_HEADER = {
   bounds: RECT,
-  frameRate: FIXED8,
+  $$reserved: UI8,
+  frameRate: UI8,
   frameCount: UI16
 };
 var ACTION_GOTO_FRAME = {
