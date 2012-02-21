@@ -70,8 +70,11 @@ if (typeof window === 'undefined') {
     }
   };
 } else {
-  var worker = new Worker('../worker.js');
-  worker.onmessage = function(event) {
-    console.log(event.data);
-  };
+  function work(file, callback) {
+    var worker = new Worker('../worker.js');
+    worker.onmessage = function(event) {
+      callback(event.data);
+    };
+    worker.postMessage(file);  
+  }
 }
