@@ -114,8 +114,6 @@ function readTags(context, stream, version, onprogress) {
 }
 
 SWF.parse = function(buffer, listener) {
-  console.time('parse');
-  
   if (!listener)
     listener = { };
 
@@ -140,16 +138,14 @@ SWF.parse = function(buffer, listener) {
     version: version,
     bounds: header.bounds,
     frameRate: header.frameRate,
-    frameCount: header.frameCount,
-    tags: []
+    frameCount: header.frameCount
   };
   if (listener.onstart)
     listener.onstart(swf);
 
+	swf.tags = [];
   readTags(swf, stream, version, listener.onprogress);
   
   if (listener.oncomplete)
     listener.oncomplete(swf);
-    
-  console.timeEnd('parse');
 };
