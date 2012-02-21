@@ -1,7 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function cast(tags, dictionary) {
-  var objects = [];
+function cast(tags, dictionary, pframes) {
   var pframe = { };
   var i = 0;
   var tag;
@@ -18,15 +17,15 @@ function cast(tags, dictionary) {
         var obj = {
           type: 'clip',
           id: tag.id,
-          pframes: cast(tag.tags)
+          pframes: []
         };
+        cast(tag.tags, dictionary, obj.pframes);
         break;
       case 'text':
         var obj = defineText(tag, dictionary);
         break;
       }
-      dictionary[obj.id] = obj;
-      objects.push(obj);
+      dictionary[tag.id] = obj;
       continue;
     }
     switch (tag.type) {
@@ -35,7 +34,7 @@ function cast(tags, dictionary) {
       if (n > 1)
         pframe.repeat = n;
       pframe.type = 'pframe';
-      objects.push(pframe);
+      pframes.push(pframe);
       pframe = { };
       break;
     case 'place':
@@ -53,5 +52,4 @@ function cast(tags, dictionary) {
       break;
     }
   }
-  return objects;
 };
