@@ -21,7 +21,6 @@ function maxPower2(number) {
 
 function defineFont(tag, dictionary) {
   var tables = { };
-
   var glyphs = tag.glyphs || dictionary[tag.id].glyphs;
   var glyphCount = glyphs.length;
   var codes = tag.codes.slice();
@@ -117,7 +116,6 @@ function defineFont(tag, dictionary) {
     idDelta +
     idRangeOffset
   ;
-
   tables['cmap'] =
     '\x00\x00' + // version
     '\x00\x01' +  // numTables
@@ -135,7 +133,6 @@ function defineFont(tag, dictionary) {
   var yMaxs = [];
   var maxPoints = 0;
   var maxContours = 0;
-
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var resolution = tag.resolution;
@@ -280,7 +277,6 @@ function defineFont(tag, dictionary) {
   ;
 
   var advance = tag.advance;
-
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(tag.ascent || 1024) + // ascender
@@ -436,9 +432,6 @@ function defineFont(tag, dictionary) {
     id: tag.id,
     name: tag.name,
     codes: tag.codes,
-    style: '@font-face{' +
-  	  'font-family:"' + tag.name + '";' +
-      'src:url(data:font/opentype;base64,' + btoa(otf) + ')' +
-    '}'
+    data: otf
   };
 }
