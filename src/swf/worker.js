@@ -25,21 +25,33 @@ if (typeof window === 'undefined') {
   function process(buffer) {
     var dictionary = { };
     var i = 0;
+    var controlTags = [];
     SWF.parse(buffer, {
       onstart: function(result) {
         self.postMessage(result);
       },
       onprogress: function(result) {
         var tags = result.tags.slice(i);
-        var objects = cast(tags, dictionary);
         i += tags.length;
-        var j = 0;
-        var obj;
-        while (obj = objects[j++])
-          self.postMessage(obj);
+        var tag = tags[tags.length - 1];
+        if (tag.id) {
+          cast(tags.splice(-1, 1), dictionary);
+          controlTags.push(tags);
+          self.postMessage(dictionary[tag.id]);
+        } else {
+          var pframes = [];
+          cast(controlTags.concat(tags), dictionary, pframes);
+          controlTags = [];
+          var j = 0;
+          var pframe;
+          while (pframe = pframes[j++])
+            self.postMessage(pframe);
+        }
       },
       oncomplete: function(result) {
         self.postMessage(result);
+        self.postMessage(null);
+        self.close();
       }
     });
   }
