@@ -564,6 +564,7 @@ var TEXT_RECORD_SETUP = {
   fontHeight: ['hasFont', [UI16]]
 };
 var TEXT_RECORD = {
+  $$: ALIGN, 
   $$flags: UB(8),
   $eot: '!flags',
   $0: TEXT_RECORD_SETUP,
