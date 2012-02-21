@@ -24,6 +24,9 @@ function cast(tags, dictionary, pframes) {
       case 'text':
         var obj = defineText(tag, dictionary);
         break;
+      default:
+        dictionary[tag.id] = tag;
+        continue;
       }
       dictionary[tag.id] = obj;
       continue;
