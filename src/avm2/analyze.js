@@ -226,8 +226,13 @@ var Bytecode = (function () {
         return;
       }
 
+      /* CFG edges. */
       this.succs = [];
       this.preds = [];
+
+      /* Dominance relation edges. */
+      this.dominatees = [];
+      this.frontier = new BytecodeDict();
     },
 
     makeLoopHead: function makeLoopHead(backEdge) {
@@ -372,6 +377,17 @@ var BytecodeDict = (function () {
       }
     },
 
+    subtractArray: function (arr) {
+      var backing = this.backing;
+      for (var i = 0, j = arr.length; i < j; i++) {
+        var position = arr[i].position;
+        if (hasOwn(backing, position)) {
+          delete backing[position];
+          this.size--;
+        }
+      }
+    },
+
     subtract: function (other) {
       var otherBacking = other.backing;
       var backing = this.backing;
@@ -443,7 +459,7 @@ var Analysis = (function () {
     return code;
   }
 
-  function dfs(root, pre, post, succ) {
+  function dfs(root, region, pre, post, pendedSucc) {
     var visited = {};
     var pended = {};
     var worklist = [root];
@@ -468,15 +484,15 @@ var Analysis = (function () {
       var succs = node.succs;
       for (var i = 0, j = succs.length; i < j; i++) {
         var s = succs[i];
-        var p = pended[s.position];
-
-        if (succ) {
-          succ(node, s, v);
+        if (!region.has(s)) {
+          continue;
         }
 
-        if (!p) {
+        if (!pended[s.position]) {
           worklist.push(s);
           pended[s.position] = true;
+        } else if (pendedSucc) {
+          pendedSucc(node, s);
         }
       }
     }
@@ -640,6 +656,91 @@ var Analysis = (function () {
     currentBlock.end = code;
   }
 
+  function intersectDominators(doms, b1, b2) {
+    var finger1 = b1;
+    var finger2 = b2;
+    while (finger1 !== finger2) {
+      while (finger1 > finger2) {
+        finger1 = doms[finger1];
+      }
+      while (finger2 > finger1) {
+        finger2 = doms[finger2];
+      }
+    }
+    return finger1;
+  }
+
+  /*
+   * Give block ids to reachable blocks, as well as mark which successors are
+   * back targets.
+   *
+   * Returns a reverse postordering of blocks.
+   */
+  function normalizeReachableBlocks(root) {
+    /* The root must not have incoming edges! */
+    assert(root.preds.length === 0);
+
+    const ONCE = 1;
+    const BUNCH_OF_TIMES = 2;
+
+    var postorder = 0;
+    var blocks = [];
+    var visited = {};
+    var ancestors = {};
+    var worklist = [root];
+    var node;
+
+    ancestors[root.position] = true;
+    while (node = worklist.top()) {
+      if (!visited[node.position]) {
+        visited[node.position] = ONCE;
+        ancestors[node.position] = true;
+      } else {
+        if (visited[node.position] === ONCE) {
+          visited[node.position] = BUNCH_OF_TIMES;
+          blocks.push(node);
+
+          /* Doubly link reachable blocks. */
+          var succs = node.succs;
+          for (var i = 0, j = succs.length; i < j; i++) {
+            succs[i].preds.push(node);
+          }
+
+          node.blockId = postorder++;
+        }
+
+        ancestors[node.position] = false;
+        worklist.pop();
+        continue;
+      }
+
+      var succs = node.succs;
+      for (var i = 0, j = succs.length; i < j; i++) {
+        var s = succs[i];
+        var spos = s.position;
+
+        if (ancestors[s.position]) {
+          if (!node.spbacks) {
+            node.spbacks = [];
+          }
+          node.spbacks.push(s);
+        }
+
+        if (!visited[s.position]) {
+          worklist.push(s);
+        }
+      }
+    }
+
+    /* Fix block id to be reverse postorder (program order). */
+    for (var i = 0, j = blocks.length; i < j; i++) {
+      blocks[i].blockId = j - 1 - blocks[i].blockId;
+    }
+    blocks.reverse();
+
+    return blocks;
+  }
+
   /*
    * Calculate the dominance relation iteratively.
    *
@@ -647,69 +748,31 @@ var Analysis = (function () {
    *
    * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
    */
-  function computeDominance(root) {
-    var doms;
-
-    function intersect(b1, b2) {
-      var finger1 = b1;
-      var finger2 = b2;
-      while (finger1 !== finger2) {
-        while (finger1 < finger2) {
-          finger1 = doms[finger1];
-        }
-        while (finger2 < finger1) {
-          finger2 = doms[finger2];
-        }
-      }
-      return finger1;
-    }
-
-    /* The root must not have incoming edges! */
-    assert(root.preds.length === 0);
-
-    /*
-     * For this algorithm we id blocks by their index in postorder. We will
-     * change the id to the more familiar reverse postorder after we run the
-     * algorithm.
-     */
-    var blocks = [];
-    var postorder = 0;
-    dfs(root, null,
-        function post(block) {
-          blocks.push(block);
-
-          /* Doubly link reachable blocks. */
-          var succs = block.succs;
-          for (var i = 0, j = succs.length; i < j; i++) {
-            succs[i].preds.push(block);
-          }
-
-          block.blockId = postorder++;
-          block.frontier = new BytecodeDict();
-        }, null);
+  function computeDominance(blocks) {
     var n = blocks.length;
-    doms = new Array(n);
-    doms[n - 1] =  n - 1;
+    var doms = new Array(n);
+    doms[0] =  0;
     var changed = true;
 
     while (changed) {
       changed = false;
 
-      /* Iterate all blocks but the starting block in reverse postorder. */
-      for (var b = n - 2; b >= 0; b--) {
+      /* Iterate all blocks but the starting block. */
+      for (var b = 1; b < n; b++) {
         var preds = blocks[b].preds;
         var j = preds.length;
 
         var newIdom = preds[0].blockId;
-        if (!doms[newIdom]) {
+        /* Because 0 is falsy, have to use |in| here. */
+        if (!(newIdom in doms)) {
           for (var i = 1; i < j; i++) {
             newIdom = preds[i].blockId;
-            if (doms[newIdom]) {
+            if (newIdom in doms) {
               break;
             }
           }
         }
-        assert(doms[newIdom]);
+        assert(newIdom in doms);
 
         for (var i = 0; i < j; i++) {
           var p = preds[i].blockId;
@@ -717,8 +780,8 @@ var Analysis = (function () {
             continue;
           }
 
-          if (doms[p]) {
-            newIdom = intersect(p, newIdom);
+          if (p in doms) {
+            newIdom = intersectDominators(doms, p, newIdom);
           }
         }
 
@@ -729,18 +792,22 @@ var Analysis = (function () {
       }
     }
 
-    for (var b = 0; b < n; b++) {
+    blocks[0].dominator = blocks[0];
+    for (var b = 1; b < n; b++) {
       var block = blocks[b];
+      var idom = blocks[doms[b]];
 
       /* Store the immediate dominator. */
-      block.dominator = blocks[doms[b]];
+      block.dominator = idom;
+      idom.dominatees.push(block);
 
       /* Compute the dominance frontier. */
       var preds = block.preds;
       if (preds.length >= 2) {
         for (var i = 0, j = preds.length; i < j; i++) {
           var runner = preds[i];
-          while (runner !== block.dominator) {
+
+          while (runner !== idom) {
             runner.frontier.add(block);
             runner = blocks[doms[runner.blockId]];
           }
@@ -748,22 +815,77 @@ var Analysis = (function () {
       }
     }
 
-    /* Fix block id to be reverse postorder (program order). */
-    for (var b = 0; b < n; b++) {
-      block = blocks[b];
-      block.blockId = n - 1 - block.blockId;
+    /* Assign dominator tree levels. */
+    var worklist = [blocks[0]];
+    blocks[0].level = 0;
+    while (block = worklist.shift()) {
+      var dominatees = block.dominatees;
+      for (var i = 0, j = dominatees.length; i < j; i++) {
+        dominatees[i].level = block.level + 1;
+      }
+      worklist.push.apply(worklist, dominatees);
     }
-
-    return blocks;
   }
 
-  function findNaturalLoops(blocks) {
+  function findSCCs(root, region) {
+    var preorderId = 0;
+
+    var preorder = {};
+    var assigned = {};
+    var unconnectedNodes = [];
+    var pendingNodes = [];
+
+    dfs(root, region,
+
+        function pre(v) {
+          preorder[v] = preorderId++;
+          unconnectedNodes.push(v);
+          pendingNodes.push(v);
+        },
+
+        function post(v) {
+          if (pendingNodes.peek() !== v) {
+            return;
+          }
+          pendingNodes.pop();
+
+          var scc = [];
+          do {
+            var w = unconnectedNodes.pop();
+            assigned[w] = true;
+            scc.push(w);
+          } while (w !== v);
+
+          if (scc.length > 1) {
+            //print("got scc");
+          }
+        },
+
+        function pendedSucc(v, w) {
+          if (assigned[w]) {
+            return;
+          }
+
+          while (preorder[pendingNodes.peek()] > preorder[w]) {
+            pendingNodes.pop();
+          }
+        });
+  }
+
+  function findLoops(blocks, splitLoops) {
     for (var i = 0, j = blocks.length; i < j; i++) {
       var block = blocks[i];
-      var succs = block.succs;
-      for (var k = 0, l = succs.length; k < l; k++) {
-        if (block.dominatedBy(succs[k])) {
-          succs[k].makeLoopHead(block);
+      var spbacks = block.spbacks;
+      if (!spbacks) {
+        continue;
+      }
+
+      for (var k = 0, l = spbacks.length; k < l; k++) {
+        if (block.dominatedBy(spbacks[k])) {
+          spbacks[k].makeLoopHead(block);
+        } else {
+          /* TODO: Loop splitting. */
+          throw new Unanalyzable("irreducible control flow");
         }
       }
     }
@@ -1547,7 +1669,7 @@ var Analysis = (function () {
     },
 
     analyzeControlFlow: function analyzeControlFlow() {
-      /* FIXME Exceptions aren't supported. */
+      /* TODO: Exceptions aren't supported. */
       if (this.method.exceptions.length > 0) {
         throw new Unanalyzable("has exceptions");
       }
@@ -1557,9 +1679,14 @@ var Analysis = (function () {
       assert(bytecodes);
       detectBasicBlocks(bytecodes);
       var root = bytecodes[0];
-      findNaturalLoops(computeDominance(root));
-      this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
+      var blocks = normalizeReachableBlocks(root);
+      computeDominance(blocks);
+      findLoops(blocks, options.splitLoops);
       return true;
+    },
+
+    restructureControlFlow: function restructureControlFlow() {
+      this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
     },
 
     /*
@@ -1624,32 +1751,73 @@ var Analysis = (function () {
       writer.leave("}");
     },
 
-    traceGraphViz: function traceGraphViz(writer, name, prefix) {
+    traceCFG: makeVizTrace([{ fn: function (n) { return n.succs || []; },
+                              style: "" }],
+                           [{ fn: function (n) { return n.preds || []; },
+                              style: "" }]),
+
+    traceDJ: makeVizTrace([{ fn: function (n) { return n.dominatees || []; },
+                             style: "[style=dashed]" },
+                           { fn:
+                             function (n) {
+                               var crosses = new BytecodeDict();
+                               crosses.unionArray(n.succs);
+                               crosses.subtractArray(n.dominatees);
+                               if (n.spbacks) {
+                                 crosses.subtractArray(n.spbacks);
+                               }
+                               return crosses.flatten();
+                             },
+                             style: "" },
+                           { fn: function (n) { return n.spbacks || []; },
+                             style: "[color=red]" }],
+                          [{ fn: function (n) { return n.preds || []; },
+                             style: "" }],
+                          function (writer, idFn) {
+                            var root = this.bytecodes[0];
+                            var worklist = [root]
+                            var n;
+                            var level = root.level;
+                            var currentLevel = [];
+                            while (n = worklist.shift()) {
+                              if (level != n.level) {
+                                writer.writeLn("{rank=same; " +
+                                               currentLevel.map(function (n) {
+                                                 return "block_" + idFn(n);
+                                               }).join(" ") + "}");
+                                currentLevel.length = 0;
+                                level = n.level;
+                              }
+                              currentLevel.push(n);
+                              worklist.push.apply(worklist, n.dominatees);
+                            }
+                          })
+  };
+
+  function makeVizTrace(succFns, predFns, postHook) {
+    return function (writer, name, prefix) {
+      function idFn(n) {
+        return prefix + n.blockId;
+      }
+
       prefix = prefix || "";
       var bytecodes = this.bytecodes;
       if (!bytecodes) {
         return;
       }
-      writeGraphViz(writer, name.toString(), bytecodes[0],
-                    function (n) {
-                      return prefix + n.blockId;
-                    },
-                    function (n) {
-                      return n.succs ? n.succs : [];
-                    },
-                    function (n) {
-                      return n.preds ? n.preds : [];
-                    },
+      writeGraphViz(writer, name.toString(), bytecodes[0], idFn,
+                    function (n) { return n.succs || []; },
+                    succFns, predFns,
                     function (n) {
                       var str = "Block: " + n.blockId + "\\l";
                       for (var bci = n.position; bci <= n.end.position; bci++) {
                         str += bci + ": " + bytecodes[bci] + "\\l";
                       }
                       return str;
-                    }
-                   );
+                    },
+                    postHook && postHook.bind(this, writer, idFn));
     }
-  };
+  }
 
   return Analysis;
 

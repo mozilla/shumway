@@ -61,7 +61,7 @@ if (viz) {
     method.analysis = new Analysis(method);
     method.analysis.analyzeControlFlow();
     if (method.analysis) {
-      method.analysis.traceGraphViz(writer, method, "G" + graph + "_");
+      method.analysis.traceCFG(writer, method, "G" + graph + "_");
       graph += 1;
     }
   });
