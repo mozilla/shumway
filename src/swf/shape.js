@@ -368,18 +368,9 @@ function defineShape(tag, dictionary) {
     return a.i - b.i;
   });
   return {
-    type: 'character',
+    type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
-    render: 'function(c,m,r){' +
-      'with(c){' +
-        'save();' +
-        'scale(0.05,0.05);' +
-        'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
-        'fillRule=mozFillRule=webkitFillRule="evenodd";' +
-        paths.join(';') + ';' +
-        'restore()' +
-      '}' +
-    '}'
+    data: paths.join(';')
   };
 }
