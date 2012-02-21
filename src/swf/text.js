@@ -2,7 +2,20 @@
 
 function defineText(tag, dictionary) {
   var records = tag.records;
-  var cmds = [];
+  var matrix = tag.matrix;
+  var cmds = [
+    'save()', 
+    'transform(' +
+  	  [
+        matrix.scaleX,
+        matrix.skew0,
+        matrix.skew1,
+        matrix.scaleY,
+        matrix.translateX,
+        matrix.translateY
+      ].join(',') +
+    ')'
+  ];
   var x = 0;
   var y = 0;
   var i = 0;
@@ -30,22 +43,11 @@ function defineText(tag, dictionary) {
       x += entry.advance;
     }
   }
-  var m = tag.matrix;
+  cmds.push('restore()');
   return {
-    type: 'character',
+    type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
-    render: 'function(c,m,r){' +
-      'with(c){' +
-        'save();' +
-        'scale(0.05,0.05);' +
-        'if(m)transform(m.scaleX,m.skew0,m.skew1,m.scaleY,m.translateX,m.translateY);' +
-        'transform(' +
-          [m.scaleX, m.skew0, m.skew1, m.scaleY, m.translateX, m.translateY].join(',') +
-        ');' +
-        cmds.join(';') + ';' +
-        'restore()' +
-      '}' +
-    '}'
+    data: cmds.join(';')
   };
 }
