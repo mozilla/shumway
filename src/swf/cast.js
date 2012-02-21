@@ -1,12 +1,11 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 function cast(tags, dictionary) {
-  if (!isArray(tags))
-    tags = [tags];
-  var pframe = { type: 'pframe' };
-  for (var i = 0, tag; tag = tags[i]; ++i) {
-    if (tag.type === 'frame')
-      break;
+  var objects = [];
+  var pframe = { };
+  var i = 0;
+  var tag;
+  while (tag = tags[i++]) {
     if (tag.id) {
       switch (tag.type) {
       case 'font':
@@ -16,41 +15,29 @@ function cast(tags, dictionary) {
         var obj = defineShape(tag, dictionary);
         break;
       case 'sprite':
-        var pframes = [];
-        var subtags = tag.tags;
-        var j = 0;
-        var subtag;
-        var controlTags = [];
-        while (subtag = subtags[j++]) {
-          if (subtag.type === 'frame') {
-            var k = j;
-            do {
-              controlTags.push(subtag);
-              subtag = subtags[k++];
-            } while (subtag && subtag.type === 'frame');
-            j = k;
-            pframes.push(cast(controlTags, dictionary));
-            controlTags = [];
-          } else {
-            controlTags.push(subtag);
-          }
-        }
         var obj = {
           type: 'clip',
           id: tag.id,
-          pframes: pframes
+          pframes: cast(tag.tags)
         };
         break;
       case 'text':
         var obj = defineText(tag, dictionary);
         break;
-      default:
-        var obj = tag;
       }
-      dictionary[tag.id] = obj;
+      dictionary[obj.id] = obj;
+      objects.push(obj);
       continue;
     }
     switch (tag.type) {
+    case 'frame':
+      for (var n = 0; (tag = tags[i]) && tag.type === 'frame'; ++n, ++i);
+      if (n > 1)
+        pframe.repeat = n;
+      pframe.type = 'pframe';
+      objects.push(pframe);
+      pframe = { };
+      break;
     case 'place':
       var entry = { move: tag.move };
       if (tag.place)
@@ -66,10 +53,5 @@ function cast(tags, dictionary) {
       break;
     }
   }
-  if (i === 1 && obj)
-    return obj;
-  for (var n = 0; (tag = tags[i]) && tag.type === 'frame'; ++n, ++i);
-  if (n > 1)
-    pframe.repeat = n;
-  return pframe;
+  return objects;
 };
