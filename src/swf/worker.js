@@ -36,7 +36,7 @@ if (typeof window === 'undefined') {
         var tag = tags[tags.length - 1];
         if (tag.id) {
           cast(tags.splice(-1, 1), dictionary);
-          controlTags.push(tags);
+          push.apply(controlTags, tags);
           self.postMessage(dictionary[tag.id]);
         } else {
           var pframes = cast(controlTags.concat(tags), dictionary);
