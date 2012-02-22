@@ -50,7 +50,6 @@ if (typeof window === 'undefined') {
       oncomplete: function(result) {
         self.postMessage(result);
         self.postMessage(null);
-        self.close();
       }
     });
   }
@@ -81,8 +80,8 @@ if (typeof window === 'undefined') {
     }
   };
 } else {
+  var worker = new Worker('../worker.js');
   function work(file, callback) {
-    var worker = new Worker('../worker.js');
     worker.onmessage = function(event) {
       callback(event.data);
     };
