@@ -39,8 +39,7 @@ if (typeof window === 'undefined') {
           controlTags.push(tags);
           self.postMessage(dictionary[tag.id]);
         } else {
-          var pframes = [];
-          cast(controlTags.concat(tags), dictionary, pframes);
+          var pframes = cast(controlTags.concat(tags), dictionary);
           controlTags = [];
           var j = 0;
           var pframe;

@@ -1,6 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function cast(tags, dictionary, pframes) {
+function cast(tags, dictionary) {
+	var pframes = [];
   var pframe = { };
   var i = 0;
   var tag;
@@ -17,9 +18,8 @@ function cast(tags, dictionary, pframes) {
         var obj = {
           type: 'clip',
           id: tag.id,
-          pframes: []
+          pframes: cast(tag.tags, dictionary)
         };
-        cast(tag.tags, dictionary, obj.pframes);
         break;
       case 'text':
         var obj = defineText(tag, dictionary);
@@ -55,4 +55,5 @@ function cast(tags, dictionary, pframes) {
       break;
     }
   }
+	return pframes;
 };
