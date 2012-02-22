@@ -491,8 +491,7 @@ var Compiler = (function () {
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
-    var writer = this.writer;
-    // writer = false;
+    var writer = typeof(webShell) === undefined ? null : this.writer;
 
     if (writer) {
       writer.enter("block " + block.blockId + ", dom: " + block.dominator.blockId + " [" + block.position + "-" + block.end.position + "] {");
@@ -1085,6 +1084,7 @@ var Scope = (function () {
 })();
 
 var Runtime = (function () {
+  var functionCount = 0;
   function runtime(abc) {
     this.abc = abc;
     this.compiler = new Compiler(abc);
@@ -1129,7 +1129,12 @@ var Runtime = (function () {
     }
 
     print('\033[92m' + flatten(result.statements, "") + '\033[0m');
-    method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    // TODO: Use function constructurs,
+    // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    
+    // Eval hack to give generated functions proper names so that stack traces are helpful.
+    eval("function fn" + functionCount + " (" + parameters.join(", ") + ") { " + flatten(result.statements, "") + " }")
+    method.compiledMethod = eval("fn" + (functionCount++));
     
     print('\033[92m' + method.compiledMethod + '\033[0m');
     return method.compiledMethod;
