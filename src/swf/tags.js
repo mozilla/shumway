@@ -186,6 +186,8 @@ var PLACE_OBJECT = {
       $1: ['tag===70', [
         {
           $$flags: UI16,
+          $hasBackgroundColor: 'flags>>15&1',
+          $hasVisibility: 'flags>>14&1',
           $hasImage: 'flags>>12&1',
           $hasClassName: 'flags>>11&1',
           $cache: 'flags>>10&1',
@@ -208,7 +210,7 @@ var PLACE_OBJECT = {
       $place: 'flags>>1&1',
       $move: 'flags&1',
       depth: UI16,
-      className: ['hasClassName||(place&&hasImage)', [STRING(0)]],
+      className: ['hasClassName', [STRING(0)]],
       objId: ['place', [UI16]],
       matrix: ['hasMatrix', [MATRIX]],
       cxform: ['hasCxform', [CXFORM]],
@@ -232,6 +234,8 @@ var PLACE_OBJECT = {
           repeat: '!eoe'
         }
       }]]
+      backgroundColor: ['hasBackgroundColor', ['ARGB']],
+      visibility: ['hasVisibility', [UI8]]
     },
     {
       place: '1',

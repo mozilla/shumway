@@ -371,7 +371,10 @@ var GRADIENT = {
     $: GRADIENT_RECORD,
     count: 'count'
   },
-  focalPoint: ['type===19', [FIXED8]]
+  $1: ['type===19', [{
+  	focalPoint: FIXED8,
+	focalPointMorph: ['isMorph', [FIXED8]]
+  }]]
 };
 var FILL_GRADIENT = {
   matrix: MATRIX,

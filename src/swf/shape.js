@@ -298,7 +298,10 @@ function defineShape(tag, dictionary) {
         if (fillStyle.type === FILL_LINEAR_GRADIENT) {
           cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
         } else {
-          var x1 = 819.2 * (fillStyle.focalPoint || 0);
+          var x1 = fillStyle.type === FILL_FOCAL_RADIAL_GRADIENT ?
+            '819.2*' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) :
+            '0'
+          ;
           cmds.push('var g=createRadialGradient(' + x1 + ',0,0,0,0,819.2)');
         }
         var records = fillStyle.records;
