@@ -4,8 +4,8 @@ if (typeof window === 'undefined') {
   importScripts(
     'DataView.js',
 
-    'util.js',
     'swf.js',
+    'util.js',
 
     'types.js',
     'structs.js',
