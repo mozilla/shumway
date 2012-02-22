@@ -1024,6 +1024,8 @@ function compileAbc(abc) {
   global.Array = Array;
   global.Math = Math;
   global.Object = Object;
+  global.String = String;
+  global.JS = (function () { return this; }) ();
   
   applyTraits(global, abc.lastScript.traits);
   
@@ -1077,7 +1079,7 @@ var Scope = (function () {
     if (strict) {
       unexpected("Cannot find property " + multiname);
     }
-    return null;
+    return this.global.object;
   }
 
   return scope;
