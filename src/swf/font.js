@@ -13,10 +13,7 @@ function maxPower2(number) {
     val /= 2;
     ++maxPower;
   }
-  val = 2;
-  for (var i = 1; i < maxPower; ++i)
-    val *= 2;
-  return val;
+  return pow(2, maxPower);
 }
 
 function defineFont(tag, dictionary) {

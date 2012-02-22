@@ -39,7 +39,8 @@ function defineText(tag, dictionary) {
     var j = 0;
     var entry;
     while (entry = entries[j++]) {
-      cmds.push('fillText("' + fromCharCode(codes[entry.glyphIndex]) + '",' + x + ',' + y + ')');
+	    var code = codes[entry.glyphIndex];
+      cmds.push('fillText("' + fromCharCode(code) + '",' + x + ',' + y + ')');
       x += entry.advance;
     }
   }
