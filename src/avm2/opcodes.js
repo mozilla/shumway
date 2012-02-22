@@ -6,6 +6,7 @@
  * Type (size) Prefix:
  *    
  *   u08 - a one-byte unsigned integer
+ *   s08 - a one-byte signed integer
  *   s24 - a three byte signed integer
  *   s16 - a variable-length encoded 30-bit unsigned integer value that is casted to a short value
  *   u30 - a variable-length encoded 30-bit unsigned integer value
@@ -60,7 +61,7 @@ var opcodeTable = [
   {name:"pushundefined",      operands:"",                 canThrow:false, stackDelta:1},  //0x21
   null,  //0x22
   {name:"nextvalue",          operands:"",                 canThrow:true, stackDelta:-1},  //0x23
-  {name:"pushbyte",           operands:"value:u08",        canThrow:false, stackDelta:1},  //0x24
+  {name:"pushbyte",           operands:"value:s08",        canThrow:false, stackDelta:1},  //0x24
   {name:"pushshort",          operands:"value:s16",        canThrow:false, stackDelta:1},  //0x25
   {name:"pushtrue",           operands:"",                 canThrow:false, stackDelta:1},  //0x26
   {name:"pushfalse",          operands:"",                 canThrow:false, stackDelta:1},  //0x27

@@ -198,6 +198,9 @@ var Bytecode = (function () {
         case "u08":
           this[operand.name] = code.readU8();
           break;
+        case "s08":
+          this[operand.name] = code.readS8();
+          break;
         case "s16":
           this[operand.name] = code.readU30Unsafe();
           break;
