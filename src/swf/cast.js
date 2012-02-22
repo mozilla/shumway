@@ -16,7 +16,7 @@ function cast(tags, dictionary) {
         break;
       case 'sprite':
         var obj = {
-          type: 'clip',
+          type: 'movieclip',
           id: tag.id,
           pframes: cast(tag.tags, dictionary)
         };
