@@ -33,7 +33,11 @@ function cast(tags, dictionary) {
     }
     switch (tag.type) {
     case 'frame':
-      for (var n = 0; (tag = tags[i]) && tag.type === 'frame'; ++n, ++i);
+      var n = 1;
+      for (; tag = tags[i]; ++n, ++i) {
+        if (tag.type !== 'frame')
+          break;
+      }
       if (n > 1)
         pframe.repeat = n;
       pframe.type = 'pframe';
