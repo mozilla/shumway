@@ -19,7 +19,7 @@ function getLocalVariableName(i) {
   if (i < 26) {
     return String.fromCharCode("a".charCodeAt(0) + i);
   }
-  return "v" + (i - 26);
+  return "l" + (i - 26);
 }
 
 /**
@@ -400,8 +400,8 @@ var Compiler = (function () {
   })();
 
   var VariablePool = (function () {
+    var count = 0;
     function variablePool() {
-      this.count = 0;
       this.used = [];
       this.available = [];
     }
@@ -409,7 +409,7 @@ var Compiler = (function () {
       if (!this.available.empty()) {
         return this.available.pop();
       }
-      var variable = new Variable("v" + this.count++);
+      var variable = new Variable("v" + count++);
       this.used.push(variable);
       return variable;
     };
@@ -1024,6 +1024,7 @@ function compileAbc(abc) {
   global.Date = Date;
   global.Array = Array;
   global.Math = Math;
+  global.Object = Object;
   
   applyTraits(global, abc.lastScript.traits);
   
@@ -1074,6 +1075,10 @@ var Scope = (function () {
     } else if (this.parent) {
       return this.parent.findProperty(multiname, strict);
     }
+    if (strict) {
+      unexpected("Cannot find property " + multiname);
+    }
+    return null;
   }
 
   return scope;
