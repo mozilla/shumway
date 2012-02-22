@@ -40,7 +40,7 @@ var DEFINE_FONT_INFO = {
     {
       codes: {
         $: UI8,
-        count: '$stream.end-$stream.pos'
+        length: '$stream.end-$stream.pos'
       }
     }
   ]]
