@@ -77,8 +77,11 @@ var Compiler = (function () {
     var body = this.body;
     var statements = [];
 
-    if (body instanceof Control.Seq && 
-        body.first() instanceof Control.If && body.first().isThenBreak()) {
+    // TODO: The while condition may have statements, temporarily disabling
+    // this optimization.
+    if (false && body instanceof Control.Seq && 
+        body.first() instanceof Control.If && 
+        body.first().isThenBreak()) {
       ir = body.first().compile(mcx, state);
       statements.push("while (" + ir.condition.negate() + ") {");
       statements.push(new Indent(body.slice(1).compile(mcx, state).statements));
@@ -749,7 +752,7 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        state.stack.push("new " + new GetProperty(obj, multiname) + "()");
+        state.stack.push("new " + new GetProperty(obj, multiname) + "(" + args.join(", ") + ")");
         break;
       case OP_callsuperid:    notImplemented(); break;
       case OP_callproplex:    notImplemented(); break;
@@ -1130,7 +1133,8 @@ var Runtime = (function () {
       return str;
     }
 
-    print('\033[92m' + flatten(result.statements, "") + '\033[0m');
+    // print('\033[92m' + flatten(result.statements, "") + '\033[0m');
+    
     // TODO: Use function constructurs,
     // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
     
