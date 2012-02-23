@@ -3,9 +3,20 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
   var active = {};
   var visited = {};
   var order = [];
+  var loopId = 0;
+  var loopIds = {};
 
   function escape(v) {
     return v;
+  }
+
+  function blockColor(block) {
+    if (!(block.blockId in loopIds)) {
+      return "black";
+    }
+
+    var colors = ["red", "blue", "green", "purple", "orange", "pink"];
+    return colors[loopIds[block.blockId] % colors.length];
   }
 
   name = "\"" + escape(name) + "\" ";
@@ -27,21 +38,31 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
   writer.writeLn("node [shape=box, fontname=Consolas, fontsize=11];");
 
   order.forEach(function (node) {
-    var color = node.loop || node.inLoop ? ", color=red" : "";
-    writer.writeLn("block_" + idFn(node) + " [label=\"" + nameFn(node) + "\"" + color + "];");
+    if (node.loop) {
+      var loopNodes = node.loop.flatten();
+      for (var i = 0, j = loopNodes.length; i < j; i++) {
+        loopIds[loopNodes[i].blockId] = loopId;
+      }
+      loopId++;
+    }
   });
 
   order.forEach(function (node) {
+    writer.writeLn("block_" + idFn(node) + " [label=\"" + nameFn(node) +
+                   "\",color=\"" + blockColor(node) + "\"];");
+  });
+
+  var edges = [];
+  order.forEach(function (node) {
     succFns.forEach(function (succFn) {
       succFn.fn(node).forEach(function (succ) {
-        var edge = "block_" + idFn(node) + " -> " + "block_" + idFn(succ);
-        writer.writeLn(edge + succFn.style + ";");
+        writer.writeLn("block_" + idFn(node) + " -> " + "block_" + idFn(succ) + succFn.style);
       });
     });
   });
 
   if (postHook) {
-    postHook();
+    postHook(writer);
   }
 
   writer.leave("}");

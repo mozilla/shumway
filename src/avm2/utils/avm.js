@@ -53,13 +53,16 @@ if (disassemble) {
 }
 
 if (viz) {
-  
+
   var writer = new IndentingWriter(false);
   writer.enter("digraph {");
   var graph = 0;
+  var opts = { chokeOnClusterfucks: true,
+               splitLoops: true };
   abc.methods.forEach(function (method) {
-    method.analysis = new Analysis(method);
+    method.analysis = new Analysis(method, opts);
     method.analysis.analyzeControlFlow();
+    method.analysis.restructureControlFlow();
     if (method.analysis) {
       method.analysis.traceCFG(writer, method, "G" + graph + "_");
       graph += 1;

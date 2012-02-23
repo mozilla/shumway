@@ -1106,8 +1106,10 @@ var Runtime = (function () {
       return method.compiledMethod;
     }
     
-    method.analysis = new Analysis(method);
+    method.analysis = new Analysis(method, { chokeOnClusterfucks: true,
+                                             splitLoops: true });
     method.analysis.analyzeControlFlow();
+    method.analysis.restructureControlFlow();
     var result = this.compiler.compileMethod(method, true);
 
     var defaultParameters = ["savedScope"];
