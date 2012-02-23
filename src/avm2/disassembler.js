@@ -125,6 +125,7 @@ function traceAbc(writer, abc) {
 function traceOperand(operand, abc, code) {
   var value = 0;
   switch(operand.size) {
+    case "s08": value = code.readS8(); break;
     case "u08": value = code.readU8(); break;
     case "s16": value = code.readU30Unsafe(); break;
     case "s24": value = code.readS24(); break;
@@ -146,7 +147,6 @@ function traceOperand(operand, abc, code) {
     default: description = "?"; break;
   }
   return operand.name + ":" + value + (description === "" ? "" : " (" + description + ")");
-
 }
 
 function traceOperands(opcode, abc, code, rewind) {

@@ -1,4 +1,13 @@
 load("../util.js");
+
+var options = new OptionSet("option(s)");
+
+var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
+var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
+var traceGraphViz = options.register(new Option("traceGraphViz", "v", false, "trace GraphViz output"));
+var execute = options.register(new Option("execute", "x", false, "execute"));
+var help = options.register(new Option("help", "h", false, "prints help"));
+
 load("../avm2-runtime.js");
 load("../DataView.js");
 load("../constants.js");
@@ -11,49 +20,32 @@ load("../viz.js");
 load("../disassembler.js");
 load("../interpreter.js");
 
-if (arguments.length == 0) {
+if (arguments.length === 0) {
   printUsage();
   quit();
 }
 
 function printUsage() {
-  print("avm: [-d | -c | -x | -v] file");
-  print("    -d = Disassemble .abc file.");
-  print("    -c = Compile .abc file to .js.");
-  print("    -x = Execute .abc file.");
-  print("    -v = Generate GraphViz output.");
-  print("    -z = Generate random .as source file.");
-  print("    -q = Quiet.");
+  print("avm: [option(s)] file");
+  options.trace(new IndentingWriter());
 }
 
 var file = arguments[arguments.length - 1];
-var options = arguments.slice(0, arguments.length - 1);
+options.parse(arguments.slice(0, arguments.length - 1));
 
-var disassemble = options.indexOf("-d") >= 0;
-var compile = options.indexOf("-c") >= 0;
-var execute = options.indexOf("-x") >= 0;
-var quiet = options.indexOf("-q") >= 0;
-var viz = options.indexOf("-v") >= 0;
-var fuzz = options.indexOf("-z") >= 0;
-
-if (fuzz) {
-  var writer = new IndentingWriter(false);
-  var fuzzer = new Fuzzer(writer);
-}
-
-if (quiet) {
-  traceExecution = null;
+if (help.value) {
+  printUsage();
+  quit();
 }
 
 var abc = new AbcFile(snarf(file, "binary"));
 var methodBodies = abc.methodBodies;
 
-if (disassemble) {
+if (disassemble.value) {
   abc.trace(new IndentingWriter(false));
 }
 
-if (viz) {
-
+if (traceGraphViz.value) {
   var writer = new IndentingWriter(false);
   writer.enter("digraph {");
   var graph = 0;
@@ -71,16 +63,16 @@ if (viz) {
   writer.leave("}");
 }
 
-if (compile) {
+if (execute.value) {
   try {
-    print(compileAbc(abc));
+    executeAbc(abc);
   } catch(e) {
     print(e);
     print("");
     print(e.stack);
   }
 
-  if (!quiet) {
+  if (traceLevel.value > 1) {
     /* Spew analysis information if not quiet. */
     var writer = new IndentingWriter(false);
     writer.enter("analyses {");
@@ -91,8 +83,4 @@ if (compile) {
     });
     writer.leave("}");
   }
-}
-
-if (execute) {
-  interpretAbc(abc);
 }

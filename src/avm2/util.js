@@ -139,3 +139,59 @@ function getFlags(value, flags) {
   }
   return str.trim();
 }
+
+
+var OptionSet = (function () {
+  function optionSet (name) {
+    this.name = name;
+    this.options = [];
+  }
+  optionSet.prototype.register = function register(option) {
+    this.options.push(option);
+    return option;
+  };
+  optionSet.prototype.parse = function parse(arguments) {
+    var args = arguments.slice(0);
+    this.options.forEach(function (option) {
+      for (var i = 0; i < args.length; i++) {
+        if (args[i] && option.tryParse(args[i])) {
+          args[i] = null;
+        }
+      }
+    });
+  };
+  optionSet.prototype.trace = function trace(writer) {
+    writer.enter(this.name + " {");
+    this.options.forEach(function (option) {
+      option.trace(writer);
+    });
+    writer.leave("}");
+  }
+  return optionSet;
+})();
+
+var Option = (function () {
+  function option(name, shortName, defaultValue, description) {
+    this.name = name;
+    this.shortName = shortName;
+    this.defaultValue = defaultValue;
+    this.value = defaultValue;
+    this.description = description;
+  }
+  option.prototype.trace = function trace(writer) {
+    writer.writeLn(("-" + this.shortName + " (" + this.name + ")").padRight(" ", 20) + " = " + this.value + " [" + this.defaultValue + "]" + " (" + this.description + ")")
+  };
+  option.prototype.tryParse = function tryParse(str) {
+    if (str.indexOf("-" + this.shortName) === 0) {
+      if (str.indexOf("=") >= 0) {
+        this.value = eval(str.slice(str.indexOf("=") + 1).trim()); 
+      } else {
+        this.value = true;
+      }
+      return true;
+    }
+    return false;
+  }
+  return option;
+})();
+

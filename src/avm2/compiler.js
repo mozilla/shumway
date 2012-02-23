@@ -1,3 +1,5 @@
+var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpression Elimination"));
+
 var C = [];
 
 function objectId(obj) {
@@ -495,7 +497,11 @@ var Compiler = (function () {
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
     var writer = typeof(webShell) === undefined ? null : this.writer;
-
+    
+    if (traceLevel.value <= 2) {
+      writer = null;
+    }
+    
     if (writer) {
       writer.enter("block " + block.blockId + ", dom: " + block.dominator.blockId + " [" + block.position + "-" + block.end.position + "] {");
       writer.enter("entryState {");
@@ -1011,7 +1017,7 @@ function applyTraits(obj, traits) {
   });
 }
 
-function compileAbc(abc) {
+function executeAbc(abc) {
   var runtime = new Runtime(abc);
   createFunction = runtime.createFunction.bind(runtime);
   createActivation = runtime.createActivation.bind(runtime);
@@ -1144,7 +1150,9 @@ var Runtime = (function () {
     eval("function fn" + functionCount + " (" + parameters.join(", ") + ") { " + flatten(result.statements, "") + " }")
     method.compiledMethod = eval("fn" + (functionCount++));
     
-    print('\033[92m' + method.compiledMethod + '\033[0m');
+    if (traceLevel.value > 0) {
+      print('\033[92m' + method.compiledMethod + '\033[0m');
+    }
     return method.compiledMethod;
   };
   return runtime;
