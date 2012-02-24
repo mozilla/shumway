@@ -1582,7 +1582,7 @@ var Analysis = (function () {
 
     var targets = block.end.targets;
     var cases = [];
-    var exits = exitsSet(targets, nestedExits);
+    var exits = exitSet(targets, nestedExits);
 
     exits.subtractArray(targets);
 
