@@ -195,3 +195,121 @@ var Option = (function () {
   return option;
 })();
 
+/**
+ * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
+ * assume that all indices are within bounds, and that set operations are applied to equal sized sets. 
+ * Inspired by Maxine's BitMap.
+ * 
+ * TODO: Use a single word for the first 32 elements of a set's domain. A typed array can store for the remaining 
+ * elements in the set. So, the bit set would be represented as a word followed by a word array. This would pay off 
+ * in terms of memory use, but the extra complexity may not pay off.
+ */
+var BitSet = (function () {
+  const ADDRESS_BITS_PER_WORD = 5;
+  const BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+  const BIT_INDEX_MASK = BITS_PER_WORD - 1;
+  function bitSet(length) {
+    this.length = length;
+    this.size = ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD; 
+    this.bits = new Uint32Array(this.size >> ADDRESS_BITS_PER_WORD);
+  }
+  bitSet.prototype.set = function set(i) {
+    this.bits[i >> ADDRESS_BITS_PER_WORD] |= 1 << (i & BIT_INDEX_MASK);
+  };
+  bitSet.prototype.setAll = function setAll() {
+    var bits = this.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] = 0xFFFFFFFF;
+    }
+  };
+  bitSet.prototype.clear = function clear(i) {
+    this.bits[i >> ADDRESS_BITS_PER_WORD] &= ~(1 << (i & BIT_INDEX_MASK));
+  };
+  bitSet.prototype.get = function get(i) {
+    var word = this.bits[i >> ADDRESS_BITS_PER_WORD];
+    return ((word & 1 << (i & BIT_INDEX_MASK))) !== 0;
+  };
+  bitSet.prototype.clearAll = function clearAll() {
+    var bits = this.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] = 0;
+    }
+  };
+  bitSet.prototype.union = function union(other) {
+    var bits = this.bits;
+    var otherBits = other.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] |= otherBits[i];
+    }
+  };
+  bitSet.prototype.intersect = function intersect(other) {
+    var bits = this.bits;
+    var otherBits = other.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] &= otherBits[i];
+    }
+  };
+  bitSet.prototype.subtract = function subtract(other) {
+    var bits = this.bits;
+    var otherBits = other.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] &= ~otherBits[i];
+    }
+  };
+  bitSet.prototype.negate = function negate() {
+    var bits = this.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      bits[i] = ~bits[i];
+    }
+  };
+  bitSet.prototype.forEach = function forEach(fn) {
+    assert (fn); 
+    var bits = this.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      var word = bits[i];
+      if (word) {
+        for (var k = 0; k < BITS_PER_WORD; k++) {
+          if (word & (1 << k)) {
+            fn(i * BITS_PER_WORD + k);
+          }
+        }
+      }
+    }
+  };
+  bitSet.prototype.toArray = function toArray() {
+    /* TODO: Optimize this, if need be. */
+    var set = [];
+    this.forEach(set.push.bind(set));
+    return set;
+  };
+  bitSet.prototype.equals = function equals(other) {
+    if (this.size !== other.size) {
+      return false;
+    }
+    var bits = this.bits;
+    var otherBits = other.bits;
+    for (var i = 0, j = bits.length; i < j; i++) {
+      if (bits[i] !== otherBits[i]) {
+        return false;
+      }
+    }
+    return true;
+  };
+  bitSet.prototype.toBitString = function toBitString() {
+    var str = "";
+    for (var i = 0; i < this.length; i++) {
+      str += this.get(i) ? "1" : "0";
+    }
+    return str;
+  };
+  bitSet.prototype.toString = function toString() {
+    var set = [];
+    for (var i = 0; i < this.length; i++) {
+      if (this.get(i)) {
+        set.push(i);
+      }
+    }
+    return set.join(", ");
+  };
+  return bitSet;
+})();
