@@ -59,14 +59,12 @@ class Base:
             args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]
             subprocess.call(args)
 
-    def runAvm(self, file, execute = True, trace = False, disassemble = False, comp = False):
+    def runAvm(self, file, execute = True, trace = False, disassemble = False):
         args = ["js", "-m", "-n", "avm.js"];
         if disassemble:
             args.append("-d")
         if not trace:
             args.append("-q")
-        if comp:
-            args.append("-c")
         if execute:
             args.append("-x")
         args.append(file)
@@ -138,7 +136,7 @@ class Compile(Command):
         parser.add_argument('-trace', action='store_true', help="trace bytecode execution")
         args = parser.parse_args(args)
         print "Compiling %s" % args.src
-        self.runAvm(args.src, trace = args.trace, execute = False, comp = True)
+        self.runAvm(args.src, trace = args.trace, execute = True)
 
 class Test(Command):
     def __init__(self):

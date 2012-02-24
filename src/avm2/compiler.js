@@ -481,7 +481,6 @@ var Compiler = (function () {
       this.local.push(new Variable(getLocalVariableName(i - 1)));
     }
     this.state.local = this.local.slice(0);
-
     
     this.temporary = [];
     for (var i = 0; i < 10; i++) {
@@ -492,7 +491,6 @@ var Compiler = (function () {
     if (this.local.length > 1) {
       this.header.push("var " + this.local.slice(1).join(", ") + ";");
     }
-    this.header.push("var scope = savedScope;");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -731,14 +729,12 @@ var Compiler = (function () {
       case OP_sf32:           notImplemented(); break;
       case OP_sf64:           notImplemented(); break;
       case OP_newfunction:
-        value = new Call(null, "createFunction", [objectConstant(methods[bc.index])]);
-        value = new Call(value, "bind", ["null", "scope"]);
+        value = new Call(null, "createFunction", [objectConstant(methods[bc.index]), "scope"]);
         state.stack.push(value);
         break;
       case OP_call:
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        print("Args: " + bc.argCount);
         state.stack.push(new Call(state.stack.pop(), "call", [obj].concat(args)));
         break;
       case OP_construct:      notImplemented(); break;
@@ -969,10 +965,15 @@ var Compiler = (function () {
     this.abc = abc;
   };
 
-  compiler.prototype.compileMethod = function compileMethod(method) {
+  compiler.prototype.compileMethod = function compileMethod(method, scope) {
     assert(method.analysis);
     var mcx = new MethodCompilerContext(this, method);
     var statements = mcx.header;
+    
+    if (scope) {
+      statements.push("var scope = " + objectConstant(scope));
+    }
+    
     var body = method.analysis.controlTree.compile(mcx, mcx.state).statements;
     
     var usedVariables = mcx.variablePool.used; 
@@ -1009,7 +1010,7 @@ function applyTraits(obj, traits) {
     if (trait.isSlot()) {
       setProperty(trait.name.name, trait.slotId, trait.value);
     } else if (trait.isMethod()) {
-      var closure = createFunction(trait.method).bind(null, new Scope(null, obj));
+      var closure = createFunction(trait.method, new Scope(null, obj));
       setProperty(trait.name.name, undefined, closure);
     } else {
       assert(false);
@@ -1039,7 +1040,7 @@ function executeAbc(abc) {
   
   applyTraits(global, abc.lastScript.traits);
   
-  var fn = runtime.createFunction(abc.entryPoint);
+  var fn = runtime.createFunction(abc.entryPoint, null);
   fn.call(global, null);
 }
 
@@ -1055,14 +1056,15 @@ function executeAbc(abc) {
  *  get global scope: scope.global
  *  get scope object: scope.object
  * 
- * Method closures have a [savedScope] argument which is bound when the closure is created. Since we use a 
+ * Method closures have a [savedScope] property which is bound when the closure is created. Since we use a 
  * linked list of scopes rather than a scope stack, we don't need to clone the scope stack, we can bind 
  * the closure to the current scope. 
  * 
  * The "scope stack" for a method always starts off as empty and methods push and pop scopes on their scope
  * stack explicitly. If a property is not found on the current scope stack, it is then looked up 
  * in the [savedScope]. To emulate this we always initialize the [scope] of a method to its [savedScope] when
- * the method is entered "var scope = savedScope;".
+ * the method is entered using "var scope = savedScope;", the savedScope is actually stored in the object 
+ * constants table, so it's more like "var scope = C[112];". 
  */
 var Scope = (function () {
   function scope(parent, object) {
@@ -1108,7 +1110,7 @@ var Runtime = (function () {
     return obj;
   };
   
-  runtime.prototype.createFunction = function (method) {
+  runtime.prototype.createFunction = function (method, scope) {
     if (method.compiledMethod) {
       return method.compiledMethod;
     }
@@ -1117,16 +1119,15 @@ var Runtime = (function () {
                                              splitLoops: true });
     method.analysis.analyzeControlFlow();
     method.analysis.restructureControlFlow();
-    var result = this.compiler.compileMethod(method, true);
+    var result = this.compiler.compileMethod(method, scope);
 
-    var defaultParameters = ["savedScope"];
-    var parameters = defaultParameters.concat(method.parameters.mapWithIndex(function (p, i) {
+    var parameters = method.parameters.mapWithIndex(function (p, i) {
       var name = p.name || getLocalVariableName(i);
       if (p.type) {
         name += "_" + p.type.name;
       }
       return name;
-    }));
+    });
 
     function flatten(array, indent) {
       var str = "";
@@ -1142,8 +1143,6 @@ var Runtime = (function () {
       return str;
     }
 
-    // print('\033[92m' + flatten(result.statements, "") + '\033[0m');
-    
     // TODO: Use function constructurs,
     // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
     
@@ -1154,6 +1153,7 @@ var Runtime = (function () {
     if (traceLevel.value > 0) {
       print('\033[92m' + method.compiledMethod + '\033[0m');
     }
+    
     return method.compiledMethod;
   };
   return runtime;
