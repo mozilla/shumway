@@ -11,7 +11,8 @@ def execute (command, timeout = -1):
     start_time = time.time()
     process = Popen([command + "&>tmp.out"], shell=True)
     
-    print "Running: " + command + " | Timeout: " + str(timeout) + " ",
+    # print "Running: " + command + " | Timeout: " + str(timeout) + " ",
+    # print "Running: " + command,
     
     elapsed = 0
     try:
@@ -30,12 +31,13 @@ def execute (command, timeout = -1):
                     print " timed out in " + str((now - start).seconds) + " seconds", 
                     return None
     except:
-        print " terminated after " + str((now - start).seconds) + " seconds", 
+        print " terminated after " + str((now - start).microseconds / 1000) + " milliseconds", 
         return None
     
-    print " completed in " + str((now - start).seconds) + " seconds", 
-    output = open('tmp.out', 'r').read();
+    process.wait();
     elapsed_time = time.time() - start_time
+    # print "| completed in " + str(round(elapsed_time * 1000, 2)) + " milliseconds", 
+    output = open('tmp.out', 'r').read();
     return (output.strip(), elapsed_time);
 
 class Base:
@@ -179,27 +181,54 @@ class Test(Command):
         passed = 0
         failed = 0
         count = 0
-        
+
+        shuElapsed = 0
+        avmElapsed = 0
+                  
+        if False:
+          try:
+              for test in tests:
+                  print str(count) + " of " + str(total) + ":",
+                  count += 1
+                  result = execute("js -m -n avm.js -x " + test, int(0))
+                  if result:
+                      output, elapsed = result
+                      shuElapsed += elapsed
+                      if output.lower().find("pass") >= 0:
+                          passed += 1
+                          print PASS + " PASSED" + ENDC
+                      else:
+                          failed += 1
+                          print FAIL + " FAILED"  + ENDC
+                  else:
+                      failed += 1
+                      print FAIL + " FAILED" + ENDC
+          except:
+              pass
+          
         try:
-            for test in tests:
-                print str(count) + " of " + str(total) + ":",
-                count += 1
-                result = execute("js -m -n avm.js -x -q " + test, int(args.timeout))
-                if result:
-                    output, elapsed = result
-                    if output.lower().find("pass") >= 0:
-                        passed += 1
-                        print PASS + " PASSED" + ENDC;
-                    else:
-                        failed += 1
-                        print FAIL + " FAILED"  + ENDC;
-                else:
-                    failed += 1
-                    print FAIL + " FAILED" + ENDC;
+          for test in tests:
+              print str(count) + " of " + str(total) + ": " + test,
+              count += 1
+              shuResult = execute("js -m -n avm.js -x " + test, int(-1))
+              avmResult = execute("avmshell " + test, int(-1))
+              if shuResult[0] == avmResult[0]:
+                passed += 1
+                shuElapsed += shuResult[1]
+                avmElapsed += avmResult[1]
+                print PASS + " PASSED",
+                print "shu: " + str(round(shuResult[1] * 1000, 2)) + " milliseconds,",
+                print "avm: " + str(round(avmResult[1] * 1000, 2)) + " milliseconds,",
+                print str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC
+              else:
+                failed += 1
+                print FAIL + " FAILED"  + ENDC
         except:
-            pass
+          pass
         
-        print "Results: failed: " + FAIL + str(failed) + ENDC + ", passed: " + PASS + str(passed) + ENDC + " of " + str(total);
+        print "Results: failed: " + FAIL + str(failed) + ENDC + ", passed: " + PASS + str(passed) + ENDC + " of " + str(total),
+        print " shuElapsed: " + str(round(shuElapsed * 1000, 2)) + " milliseconds";
+        print " avmElapsed: " + str(round(avmElapsed * 1000, 2)) + " milliseconds"; 
         
 commands = {}
 for command in [Asc(), Avm(), Dis(), Compile(), Test()]:
