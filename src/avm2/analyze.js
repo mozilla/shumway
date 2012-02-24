@@ -1243,7 +1243,7 @@ var Analysis = (function () {
     for (var i = 0, j = loopBody.length; i < j; i++) {
       var succs = loopBody[i].succs;
       for (var k = 0, l = succs.length; k < l; k++) {
-        succ[k].frontier.size > 0 && exits.add(s);
+        succs[k].frontier.size > 0 && exits.add(succs[k]);
       }
     }
     exits.subtract(loop);
