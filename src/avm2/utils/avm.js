@@ -72,7 +72,7 @@ if (execute.value) {
     print(e.stack);
   }
 
-  if (traceLevel.value > 1) {
+  if (traceLevel.value > 4) {
     /* Spew analysis information if not quiet. */
     var writer = new IndentingWriter(false);
     writer.enter("analyses {");

@@ -14,6 +14,12 @@
     </script>
     
     <script type="text/javascript" src="../util.js"></script>
+    
+    <script type="text/javascript">
+      var options = new OptionSet("option(s)");
+      var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
+    </script>    
+        
     <script type="text/javascript" src="../../tests/file-reader.js"></script>
     <script type="text/javascript" src="../avm2-runtime.js"></script>
     <script type="text/javascript" src="../DataView.js"></script>
@@ -27,6 +33,7 @@
     <script type="text/javascript" src="../interpreter.js"></script>
     
     <script type="text/javascript">
+        
         var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
         if (!skipQuickTest) {
             new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {  
@@ -34,7 +41,7 @@
                 var writer = new IndentingWriter(false);
                 abc.trace(writer);
                 
-                compileAbc(abc);
+                executeAbc(abc);
             });
         }
     </script>   

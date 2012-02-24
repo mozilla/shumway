@@ -50,7 +50,7 @@ class Base:
             sys.exit();
 
     def runAsc(self, file, createSwf = False, builtin = False):
-        args = ["java", "-jar", self.asc]
+        args = ["java", "-jar", self.asc, "-d"]
         if builtin:
             args.extend(["-import", self.builtin_abc])
         args.append(file);
