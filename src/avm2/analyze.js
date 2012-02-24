@@ -220,44 +220,13 @@ var Bytecode = (function () {
     }
   }
 
-  function intersectExistingDominators(b1, b2) {
-    var finger1 = b1;
-    var finger2 = b2;
-    while (finger1 !== finger2) {
-      var id1 = finger1.original ? finger1.original.blockId : finger1.blockId;
-      var id2 = finger2.original ? finger2.original.blockId : finger2.blockId;
-
-      /*
-       * If we happen to try to intersect a split node with the original,
-       * break the tie arbitrarily.
-       */
-      while (id1 === id2) {
-        if (finger1.original) {
-          finger1 = finger1.dominator;
-          id1 = finger1.original ? finger1.original.blockId : finger1.blockId;
-        } else {
-          finger2 = finger2.dominator;
-          id2 = finger2.original ? finger2.original.blockId : finger2.blockId;
-        }
-      }
-
-      while (id1 > id2) {
-        finger1 = finger1.dominator;
-        id1 = finger1.original ? finger1.original.blockId : finger1.blockId;
-      }
-      while (id2 > id1) {
-        finger2 = finger2.dominator;
-        id2 = finger2.original ? finger2.original.blockId : finger2.blockId;
-      }
-    }
-    return finger1;
-  }
-
   Bytecode.prototype = {
-    makeBlockHead: function makeBlockHead() {
+    makeBlockHead: function makeBlockHead(id) {
       if (this.succs) {
-        return;
+        return id;
       }
+
+      this.blockId = id;
 
       /* CFG edges. */
       this.succs = [];
@@ -266,6 +235,8 @@ var Bytecode = (function () {
       /* Dominance relation edges. */
       this.dominatees = [];
       this.frontier = new BlockDict();
+
+      return id + 1;
     },
 
     makeLoopHead: function makeLoopHead(backEdge) {
@@ -324,31 +295,6 @@ var Bytecode = (function () {
         for (var i = 0, j = doms.length; i < j; i++) {
           node.weight += doms[i].weight;
         }
-      }
-    },
-
-    recomputeDominator: function recomputeDominator() {
-      var preds = this.preds;
-      if (preds.length === 0) {
-        return;
-      }
-
-      var oldIdom = this.dominator;
-      var newIdom = preds[0];
-      for (var i = 1, j = preds.length; i < j; i++) {
-        newIdom = intersectExistingDominators(newIdom, preds[i]);
-      }
-
-      if (newIdom !== oldIdom) {
-        if (oldIdom) {
-          var ds = oldIdom.dominatees;
-          ds[ds.indexOf(this)] = ds[ds.length - 1];
-          ds.pop();
-          oldIdom.weight = undefined;
-        }
-        newIdom.dominatees.push(this);
-        newIdom.weight = undefined;
-        this.dominator = newIdom;
       }
     },
 
@@ -425,7 +371,8 @@ var SplitBlock = (function () {
   function SplitBlock(code, newId) {
     assert(code.blockId);
 
-    this.original = code.original ? code.original : code;
+    this.original = code;
+    this.position = code.position;
     this.end = code.end;
     this.blockId = newId;
 
@@ -434,13 +381,13 @@ var SplitBlock = (function () {
     this.dominatees = [];
     this.frontier = new BlockDict();
 
-    this.weight = code.weight;
     this.level = code.level;
   }
 
   SplitBlock.prototype = Object.create(Bytecode.prototype);
   var Sbp = SplitBlock.prototype;
   Sbp.toString = function toString() {
+    return this.blockId + " (" + this.original.blockId + ")";
     return "split of #" + this.original.blockId;
   };
 
@@ -604,23 +551,24 @@ var Analysis = (function () {
   function detectBasicBlocks(bytecodes) {
     var code;
     var pc, end;
+    var id = 0;
 
     assert(bytecodes);
 
-    bytecodes[0].makeBlockHead();
+    id = bytecodes[0].makeBlockHead(id);
     for (pc = 0, end = bytecodes.length - 1; pc < end; pc++) {
       code = bytecodes[pc];
       switch (code.op) {
       case OP_returnvoid:
       case OP_returnvalue:
       case OP_throw:
-        bytecodes[pc + 1].makeBlockHead();
+        id = bytecodes[pc + 1].makeBlockHead(id);
         break;
 
       case OP_lookupswitch:
         var targets = code.targets;
         for (var i = 0, j = targets.length; i < j; i++) {
-          targets[i].makeBlockHead();
+          id = targets[i].makeBlockHead(id);
         }
         break;
 
@@ -639,8 +587,8 @@ var Analysis = (function () {
       case OP_ifstrictne:
       case OP_iftrue:
       case OP_iffalse:
-        code.target.makeBlockHead();
-        bytecodes[pc + 1].makeBlockHead();
+        id = code.target.makeBlockHead(id);
+        id = bytecodes[pc + 1].makeBlockHead(id);
         break;
 
       default:;
@@ -657,12 +605,12 @@ var Analysis = (function () {
     case OP_lookupswitch:
       var targets = code.targets;
       for (var i = 0, j = targets.length; i < j; i++) {
-        targets[i].makeBlockHead();
+        id = targets[i].makeBlockHead(id);
       }
       break;
 
     case OP_jump:
-      code.target.makeBlockHead();
+      id = code.target.makeBlockHead(id);
       break;
 
     case OP_iflt:
@@ -679,9 +627,9 @@ var Analysis = (function () {
     case OP_ifstrictne:
     case OP_iftrue:
     case OP_iffalse:
-      code.target.makeBlockHead();
+      id = code.target.makeBlockHead(id);
       bytecodes[pc + 1] = getInvalidTarget(null, pc + 1);
-      bytecodes[pc + 1].makeBlockHead();
+      id = bytecodes[pc + 1].makeBlockHead(id);
       break;
 
     default:;
@@ -757,6 +705,8 @@ var Analysis = (function () {
     default:;
     }
     currentBlock.end = code;
+
+    return id;
   }
 
   function intersectDominators(doms, b1, b2) {
@@ -779,82 +729,57 @@ var Analysis = (function () {
    *
    * Returns a reverse postordering of blocks.
    */
-  function normalizeReachableBlocks(root) {
-    /* The root must not have incoming edges! */
+  function normalizeReachableBlocks(root, noLinking) {
+    /* The root must not have preds! */
     assert(root.preds.length === 0);
 
     const ONCE = 1;
     const BUNCH_OF_TIMES = 2;
 
-    var postorder = 0;
     var blocks = [];
     var visited = {};
     var ancestors = {};
-    var spbacksPending = {};
     var worklist = [root];
     var node;
+    var level = root.level || 0;
 
-    ancestors[root.position] = true;
+    ancestors[root.blockId] = true;
     while (node = worklist.top()) {
-      if (visited[node.position]) {
-        if (visited[node.position] === ONCE) {
-          visited[node.position] = BUNCH_OF_TIMES;
+      if (visited[node.blockId]) {
+        if (visited[node.blockId] === ONCE) {
+          visited[node.blockId] = BUNCH_OF_TIMES;
           blocks.push(node);
 
-          /* Doubly link reachable blocks. */
-          var succs = node.succs;
-          for (var i = 0, j = succs.length; i < j; i++) {
-            succs[i].preds.push(node);
+          if (!noLinking) {
+            /* Doubly link reachable blocks. */
+            var succs = node.succs;
+            for (var i = 0, j = succs.length; i < j; i++) {
+              succs[i].preds.push(node);
+            }
           }
-
-          node.blockId = postorder++;
         }
 
-        ancestors[node.position] = false;
+        ancestors[node.blockId] = false;
         worklist.pop();
         continue;
       }
 
-      visited[node.position] = ONCE;
-      ancestors[node.position] = true;
+      visited[node.blockId] = ONCE;
+      ancestors[node.blockId] = true;
 
       var succs = node.succs;
       for (var i = 0, j = succs.length; i < j; i++) {
         var s = succs[i];
-
-        if (ancestors[s.position]) {
-          /*
-           * At this point the block ids aren't finalized yet, so we just
-           * remember to add |s| later to the spbacks set when the ids are
-           * finalized.
-           */
-          if (!spbacksPending[node.position]) {
-            spbacksPending[node.position] = [];
-          }
-          spbacksPending[node.position].push(s);
+        if (s.level < level) {
+          continue;
         }
 
-        if (!visited[s.position]) {
-          worklist.push(s);
-        }
+        ancestors[s.blockId] && node.addSpback(s);
+        !visited[s.blockId] && worklist.push(s);
       }
     }
 
-    /* Fix block id to be reverse postorder (program order). */
-    var j = blocks.length - 1;
-    for (var i = blocks.length - 1; i >= 0; i--) {
-      node = blocks[i];
-      node.blockId = j - node.blockId;
-
-      if (spbacksPending[node.position]) {
-        var spbacks = new BlockDict();
-        spbacks.unionArray(spbacksPending[node.position]);
-        node.spbacks = spbacks;
-      }
-    }
-    blocks.reverse();
-
-    return blocks;
+    return blocks.reverse();
   }
 
   /*
@@ -864,10 +789,31 @@ var Analysis = (function () {
    *
    * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
    */
-  function computeDominance(blocks) {
+  function computeDominance(blocks, redoms) {
     var n = blocks.length;
     var doms = new Array(n);
     doms[0] =  0;
+
+    /* Blocks must be given to us in reverse postorder. */
+    var rpo = {};
+    for (var b = 0; b < n; b++) {
+      rpo[blocks[b].blockId] = b;
+    }
+
+    if (redoms) {
+      for (var b = 1; b < n; b++) {
+        var block = blocks[b];
+        var idom = block.dominator;
+
+        if (redoms.has(block) || !idom ||
+            !(rpo[idom.blockId] in doms)) {
+          continue;
+        }
+
+        doms[rpo[block.blockId]] = rpo[idom.blockId];
+      }
+    }
+
     var changed = true;
 
     while (changed) {
@@ -878,11 +824,11 @@ var Analysis = (function () {
         var preds = blocks[b].preds;
         var j = preds.length;
 
-        var newIdom = preds[0].blockId;
+        var newIdom = rpo[preds[0].blockId];
         /* Because 0 is falsy, have to use |in| here. */
         if (!(newIdom in doms)) {
           for (var i = 1; i < j; i++) {
-            newIdom = preds[i].blockId;
+            newIdom = rpo[preds[i].blockId];
             if (newIdom in doms) {
               break;
             }
@@ -891,7 +837,7 @@ var Analysis = (function () {
         assert(newIdom in doms);
 
         for (var i = 0; i < j; i++) {
-          var p = preds[i].blockId;
+          var p = rpo[preds[i].blockId];
           if (p === newIdom) {
             continue;
           }
@@ -920,7 +866,7 @@ var Analysis = (function () {
 
     /* Assign dominator tree levels. */
     var worklist = [blocks[0]];
-    blocks[0].level = 0;
+    blocks[0].level || (blocks[0].level = 0);
     while (block = worklist.shift()) {
       var dominatees = block.dominatees;
       for (var i = 0, j = dominatees.length; i < j; i++) {
@@ -945,40 +891,6 @@ var Analysis = (function () {
             runner = runner.dominator;
           }
         }
-      }
-    }
-  }
-
-  /*
-   * Re-mark spback edges for the subgraph at root's level and below.
-   */
-  function markSpbacks(root) {
-    var level = root.level;
-    var ancestors = {};
-    var visited = {};
-    var worklist = [root];
-    var node;
-
-    ancestors[root.blockId] = true;
-    while (node = worklist.top()) {
-      if (visited[node.blockId]) {
-        ancestors[node.blockId] = false;
-        worklist.pop();
-        continue;
-      }
-
-      visited[node.blockId] = true;
-      ancestors[node.blockId] = true;
-
-      var succs = node.succs;
-      for (var i = 0, j = succs.length; i < j; i++) {
-        var s = succs[i];
-        if (s.level < level) {
-          continue;
-        }
-
-        ancestors[s.blockId] && node.addSpback(s);
-        !visited[s.blockId] && worklist.push(s);
       }
     }
   }
@@ -1011,8 +923,7 @@ var Analysis = (function () {
             if (u.loop && (!loop || u.loop.size > loop.size)) {
               loop = u.loop;
             }
-            /* NB: Has to be unshifted for postorder! */
-            scc.unshift(u);
+            scc.push(u);
           } while (u !== node);
 
           if (scc.length > 1 && !(loop && loop.equalsArray(scc))) {
@@ -1079,13 +990,11 @@ var Analysis = (function () {
     return max;
   }
 
-  function splitSCC(head, scc, newBlockId) {
+  function splitSCC(head, scc, redoms, newBlockId) {
     var clones = [];
     var cloneMap = new BlockDict();
     var headDomain = {};
     var clone, original;
-    var pendedRedoms = {};
-    var pendingRedoms = [];
 
     for (var i = 0, j = scc.length; i < j; i++) {
       if (scc[i].dominatedBy(head)) {
@@ -1114,15 +1023,14 @@ var Analysis = (function () {
           /* The edge goes to somewhere outside. */
           clone.succs[k] = node;
           node.preds.push(clone);
-
-          !pendedRedoms[node.blockId] && pendingRedoms.push(node);
+          redoms.add(node);
         }
-
-        original.spbacks = undefined;
       }
 
       nodes = original.preds;
       original.preds = [];
+      delete original.dominator;
+
       for (var k = 0, l = nodes.length; k < l; k++) {
         node = nodes[k];
 
@@ -1137,19 +1045,12 @@ var Analysis = (function () {
            */
           clone.preds.push(node);
           node.succs[node.succs.indexOf(original)] = clone;
-          node.spbacks && node.spbacks.remove(original);
+          node.weight = undefined;
         } else {
           /* The edge comes from somewhere outside. */
           original.preds.push(node);
         }
       }
-
-      original.recomputeDominator();
-      clone.recomputeDominator();
-    }
-
-    for (var i = 0, j = pendingRedoms.length; i < j; i++) {
-      pendingRedoms[i].recomputeDominator();
     }
 
     return clones;
@@ -1164,31 +1065,37 @@ var Analysis = (function () {
    *     Splitting vs DJ-Graphs.
    */
   function splitLoops(cc, irreducibles) {
-    /* Go bottom-up. */
-    levelSort(irreducibles);
-
+    var worklist = levelSort(irreducibles.flatten());
     var top;
-    while (top = irreducibles.pop()) {
+    while (top = worklist.pop()) {
+      irreducibles.remove(top);
+
       var sccs = findUnnaturalSCCs(top);
-      var allBlocks = [];
+      if (sccs.length === 0) {
+        continue;
+      }
+
+      var redoms = new BlockDict();
+      var topDomain = [];
       for (var i = 0, j = sccs.length; i < j; i++) {
         var scc = sccs[i];
         var head = maxWeightNode(top, scc);
         if (head) {
-          var clones = splitSCC(head, scc, cc.blocks.length);
-          allBlocks.push.apply(allBlocks, scc);
-          allBlocks.push.apply(allBlocks, clones);
-          cc.blocks.push.apply(cc.blocks, clones);
+          var clones = splitSCC(head, scc, redoms, cc.lastBlockId);
+          cc.lastBlockId += clones.length;
+          topDomain.push.apply(topDomain, scc);
+          topDomain.push.apply(topDomain, clones);
         }
       }
 
-      /* Recur on the region and split any additional irreducible loops. */
-      markSpbacks(top);
-      irreducibles.push.apply(irreducibles, findLoops(allBlocks));
+      cc.reanalyzeControlFlow(redoms);
+
+      irreducibles.union(findLoops(topDomain, false));
+      worklist = levelSort(irreducibles.flatten());
     }
   }
 
-  function findLoops(blocks) {
+  function findLoops(blocks, markNaturals) {
     var irreducibles = new BlockDict();
 
     for (var i = 0, j = blocks.length; i < j; i++) {
@@ -1204,7 +1111,7 @@ var Analysis = (function () {
 
         if (spbacks.has(s)) {
           if (block.dominatedBy(s)) {
-            s.makeLoopHead(block);
+            markNaturals && s.makeLoopHead(block);
           } else {
             irreducibles.add(s.dominator);
           }
@@ -1212,7 +1119,7 @@ var Analysis = (function () {
       }
     }
 
-    return irreducibles.flatten();
+    return irreducibles;
   }
 
   function ExitsStack() {
@@ -1277,7 +1184,9 @@ var Analysis = (function () {
 
     for (var i = 0, j = body.length; i < j; i++) {
       var node = body[i];
-      !nestedExits.exits.has(node) && exits.union(node.frontier);
+      if (!nestedExits.exits.has(node) && node.frontier.size > 0) {
+        exits.union(node.frontier);
+      }
     }
 
     if (exits.size > 0) {
@@ -1331,13 +1240,15 @@ var Analysis = (function () {
     var exits = new BlockDict();
     exits.unionArray(block.succs);
     for (var i = 0, j = loopBody.length; i < j; i++) {
-      exits.unionArray(loopBody[i].succs);
+      if (!loopBody[i].leadsTo(block)) {
+        exits.unionArray(loopBody[i].succs);
+      }
     }
     exits.subtract(loop);
 
     /* Also prune the current loop header, which can't be the break node. */
     nestedExits.push({ continue: block });
-    if (exits.size > 0 && nestedExits.size > 0) {
+    if (exits.size > 0) {
       pruned = pruneNestedExits(exits, nestedExits);
     }
     nestedExits.pop();
@@ -1425,15 +1336,19 @@ var Analysis = (function () {
 
       exit = exits.choose();
 
-      if (exit === branch2) {
+      var viaBranch1 = exit ? branch1.frontier.has(exit) : false;
+      var viaBranch2 = exit ? branch2.frontier.has(exit) : false;
+
+      if (!viaBranch2) {
+        info.then = branch2;
+        info.negated = true;
+        exit = branch1;
+      } else if (!viaBranch1 && viaBranch2) {
         info.then = branch1;
+        exit = branch2;
       } else {
         info.then = branch2;
-        if (exit) {
-          info.else = branch1;
-        } else {
-          exit = branch1;
-        }
+        info.else = branch1;
         info.negated = true;
       }
     }
@@ -2004,23 +1919,38 @@ var Analysis = (function () {
 
       var bytecodes = this.bytecodes;
       assert(bytecodes);
-      detectBasicBlocks(bytecodes);
-      var blocks = normalizeReachableBlocks(bytecodes[0]);
+      this.lastBlockId = detectBasicBlocks(bytecodes);
+      var blocks = normalizeReachableBlocks(bytecodes[0], false);
       computeDominance(blocks);
       this.blocks = blocks;
-      this.startOfSplits = blocks.length;
+    },
+
+    reanalyzeControlFlow: function reanalyzeControlFlow(redoms) {
+      var blocks = this.blocks;
+
+      /* Reset computed information. */
+      for (var i = 0, j = blocks.length; i < j; i++) {
+        var block = blocks[i];
+        block.dominatees.length = 0;
+        block.spbacks && delete block.spbacks;
+      }
+
+      blocks = normalizeReachableBlocks(this.bytecodes[0], true);
+      computeDominance(blocks, redoms);
+      this.blocks = blocks;
     },
 
     restructureControlFlow: function restructureControlFlow() {
       var options = this.options;
       var root = this.bytecodes[0];
-      var irreducibles = findLoops(this.blocks);
-      if (irreducibles.length > 0) {
+      var irreducibles = findLoops(this.blocks, false);
+      if (irreducibles.size > 0) {
         if (!options.splitLoops) {
           throw new Unanalyzable("has irreducible loops");
         }
         splitLoops(this, irreducibles);
       }
+      findLoops(this.blocks, true);
 
       computeFrontiers(this.blocks);
       this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
@@ -2061,6 +1991,9 @@ var Analysis = (function () {
       var ranControlFlow = !!this.bytecodes[0].succs;
 
       for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
+        /*
+         * FIXME: Doesn't display split blocks.
+         */
         var code = this.bytecodes[pc];
 
         if (ranControlFlow && code.succs) {
@@ -2076,13 +2009,6 @@ var Analysis = (function () {
         if (ranControlFlow && pc === end - 1) {
           writer.leave("}");
         }
-      }
-
-      for (var i = this.startOfSplits, j = this.blocks.length; i < j; i++) {
-        var code = this.blocks[i];
-        traceBlockHeader(writer, code);
-        writer.writeLn(code);
-        writer.leave("}");
       }
 
       writer.leave("}");
@@ -2159,7 +2085,8 @@ var Analysis = (function () {
                     succFns, predFns,
                     function (n) {
                       if (n.original) {
-                        return "Split: " + n.original.blockId + "\\l";
+                        return ("Split: " + n.blockId + " of " +
+                                n.original.blockId + "\\l");
                       }
 
                       var str = "Block: " + n.blockId + "\\l";
