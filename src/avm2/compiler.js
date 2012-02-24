@@ -19,7 +19,7 @@ function registerObject(obj) {
 
 function getLocalVariableName(i) {
   if (i < 26) {
-    return String.fromCharCode("a".charCodeAt(0) + i);
+    return "l" + String.fromCharCode("A".charCodeAt(0) + i);
   }
   return "l" + (i - 26);
 }
@@ -475,11 +475,17 @@ var Compiler = (function () {
     this.writer = new IndentingWriter();
     this.variablePool = new VariablePool();
 
-    /* Initialize local variables. */
+    /* Initialize local variables. First declare the [this] reference, then ... */
     this.local = [new Variable("this")];
-    for (var i = 1; i < method.localCount; i++) {
-      this.local.push(new Variable(getLocalVariableName(i - 1)));
+    /* push the method's parameters, followed by ... */ 
+    for (var i = 0; i < method.parameters.length; i++) {
+      this.local.push(new Variable(method.parameters[i].name));
     }
+    /* push the method's remaining locals.*/
+    for (var i = method.parameters.length; i < method.localCount; i++) {
+      this.local.push(new Variable(getLocalVariableName(i)));
+    }
+    
     this.state.local = this.local.slice(0);
     
     this.temporary = [];
@@ -559,7 +565,7 @@ var Compiler = (function () {
      * may not be empty. This usually occurs for short-circuited conditional expressions.
      */
     function flushStack() {
-      assert (state.stack.length <= 1);
+      // assert (state.stack.length <= 2, "Stack Length is " + state.stack.length);
       for (var i = 0; i < state.stack.length; i++) {
         if (state.stack[i] !== temporary[i]) {
           emitStatement(temporary[i] + " = " + state.stack[i]);
@@ -641,7 +647,7 @@ var Compiler = (function () {
       var op = bc.op;
 
       if (writer) {
-        writer.enter("bytecode bci: " + bci + ", " + bc +  " {");
+        writer.enter("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition +", " + bc +  " {");
       }
 
       switch (op) {
@@ -737,7 +743,11 @@ var Compiler = (function () {
         obj = state.stack.pop();
         state.stack.push(new Call(state.stack.pop(), "call", [obj].concat(args)));
         break;
-      case OP_construct:      notImplemented(); break;
+      case OP_construct:
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        state.stack.push("new " + obj + "(" + args.join(", ") + ")");
+        break;
       case OP_callmethod:     notImplemented(); break;
       case OP_callstatic:     notImplemented(); break;
       case OP_callsuper:      notImplemented(); break;
@@ -1036,6 +1046,7 @@ function executeAbc(abc) {
   global.Math = Math;
   global.Object = Object;
   global.String = String;
+  global.RegExp = RegExp;
   global.JS = (function () { return this; }) ();
   
   applyTraits(global, abc.lastScript.traits);
@@ -1121,12 +1132,8 @@ var Runtime = (function () {
     method.analysis.restructureControlFlow();
     var result = this.compiler.compileMethod(method, scope);
 
-    var parameters = method.parameters.mapWithIndex(function (p, i) {
-      var name = p.name || getLocalVariableName(i);
-      if (p.type) {
-        name += "_" + p.type.name;
-      }
-      return name;
+    var parameters = method.parameters.map(function (p) {
+      return p.name;
     });
 
     function flatten(array, indent) {

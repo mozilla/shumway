@@ -697,7 +697,7 @@ var MethodInfo = (function () {
     var parameterCount = stream.readU30();
     var returnType = stream.readU30();
     var parameters = [];
-    for (var i = 0; i < parameterCount; ++i) {
+    for (var i = 0; i < parameterCount; i++) {
       parameters.push({type: constantPool.multinames[stream.readU30()]});
     }
 
@@ -709,15 +709,23 @@ var MethodInfo = (function () {
     if (flags & METHOD_HasOptional) {
       optionalCount = stream.readU30();
       optionals = [];
-      for (var i = 0; i < optionalCount; ++i) {
+      for (var i = 0; i < optionalCount; i++) {
         optionals[i] = { val: stream.readU30(), kind:stream.readU8() };
       }
     }
 
     var paramnames = null;
     if (flags & METHOD_HasParamNames) {
-      for (var i = 0; i < parameterCount; ++i) {
+      for (var i = 0; i < parameterCount; i++) {
         parameters[i].name = constantPool.strings[stream.readU30()];
+      }
+    } else {
+      function getParameterName(i) {
+        assert (i < 26);
+        return "p" + String.fromCharCode("A".charCodeAt(0) + i);
+      }
+      for (var i = 0; i < parameterCount; i++) {
+        parameters[i].name = getParameterName(i);
       }
     }
 
