@@ -597,7 +597,7 @@ var Analysis = (function () {
     var code = Object.create(Bytecode.prototype);
     code.op = OP_invalid;
     code.position = offset;
-    cache[offset] = code;
+    cache && (cache[offset] = code);
     return code;
   }
 
@@ -1265,6 +1265,28 @@ var Analysis = (function () {
     return Object.create(this, desc);
   };
 
+  function exitSet(body, nestedExits) {
+    var exits = new BlockDict();
+
+    if (nestedExits.size === 0) {
+      for (var i = 0, j = body.length; i < j; i++) {
+        exits.union(body[i].frontier);
+      }
+      return exits;
+    }
+
+    for (var i = 0, j = body.length; i < j; i++) {
+      var node = body[i];
+      !nestedExits.exits.has(node) && exits.union(node.frontier);
+    }
+
+    if (exits.size > 0) {
+      pruneNestedExits(exits, nestedExits);
+    }
+
+    return exits;
+  }
+
   function pruneNestedExits(exits, nestedExits) {
     var pruned = false;
     var exitNodes = exits.flatten();
@@ -1274,8 +1296,7 @@ var Analysis = (function () {
       var exit = exitNodes[i];
       for (var k = 0, l = nestedExitNodes.length; k < l; k++) {
         var nestedExit = nestedExitNodes[k].target;
-        if ((allowTailDuplication &&
-             (exit.leadsTo(nestedExit) || nestedExit.leadsTo(exit))) ||
+        if ((allowTailDuplication && exit.leadsTo(nestedExit)) ||
             exit === nestedExit) {
           pruned = true;
           exits.remove(exit);
@@ -1396,13 +1417,7 @@ var Analysis = (function () {
       info.negated = true;
       exit = branch1;
     } else {
-      var exits = new BlockDict();
-      exits.union(branch1.frontier);
-      exits.union(branch2.frontier);
-
-      if (exits.size > 0 && nestedExits.size > 0) {
-        pruneNestedExits(exits, nestedExits);
-      }
+      var exits = exitSet([branch1, branch2], nestedExits);
 
       if (exits.size > 1) {
         return undefined;
@@ -1498,11 +1513,7 @@ var Analysis = (function () {
       if (prevCase === currentCase) {
         cases.push({ cond: prevSpine, exit: currentCase });
       } else if (prevCase) {
-        var exits = new BlockDict();
-        exits.union(prevCase.frontier);
-        if (exits.size > 0 && nestedExits.size > 0) {
-          pruneNestedExits(exits, nestedExits);
-        }
+        var exits = exitSet([prevCase], nestedExits);
 
         if (exits.size > 1) {
           return undefined;
@@ -1571,17 +1582,14 @@ var Analysis = (function () {
 
     var targets = block.end.targets;
     var cases = [];
-    var exits = new BlockDict();
+    var exits = exitsSet(targets, nestedExits);
 
-    for (var i = 0, j = targets.length; i < j; i++) {
-      var c = targets[i];
-      exits.union(c.frontier);
-      exits.remove(c);
-    }
+    exits.subtractArray(targets);
 
     if (exits.size > 0 && nestedExits.size > 0) {
       pruneNestedExits(exits, nestedExits);
     }
+
     if (exits.size > 1) {
       return undefined;
     }
@@ -1601,11 +1609,7 @@ var Analysis = (function () {
         continue;
       }
 
-      exits = new BlockDict();
-      exits.union(c.frontier);
-      if (exits.size > 0 && nestedExits.size > 0) {
-        pruneNestedExits(exits, nestedExits);
-      }
+      exits = exitSet([c], nestedExits);
 
       if (exits.size > 1) {
         return undefined;
