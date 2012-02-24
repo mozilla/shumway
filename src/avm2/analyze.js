@@ -1715,28 +1715,6 @@ var Analysis = (function () {
                            cx: cx });
               nestedExits.push(cxx);
               loopBodyCx = cxx;
-
-              isLoopHead = true;
-              continue;
-
-              var cxxx;
-              if (cxxx = inducibleIf(block, cxx, nestedExits, info)) {
-                conts.push({ kind: K_IF_THEN,
-                             cond: block,
-                             negated: info.negated,
-                             else: info.else,
-                             join: cxxx.exit,
-                             joinCx: cxx,
-                             cx: cxxx });
-                block = info.then;
-                cx = cxxx;
-              } else {
-                conts.push({ kind: K_SEQ,
-                             block: block });
-                block = block.succs[0] || null;
-                cx = cxx;
-              }
-
               continue;
             }
 
