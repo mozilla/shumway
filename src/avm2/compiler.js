@@ -1025,7 +1025,8 @@ function executeAbc(abc) {
   var global = {};
   
   global.print = global.trace = function (val) {
-    console.info('\033[91m' + val + '\033[0m');
+    // console.info('\033[91m' + val + '\033[0m');
+    console.info(val);
   };
   global.Number = Number;
   global.Boolean = Boolean;
