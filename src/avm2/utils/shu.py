@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import sys,os.path,os,getopt,time,subprocess,re,argparse
+import sys,os.path,os,getopt,time,subprocess,re,argparse,threading
+
 from subprocess import Popen, PIPE
 import datetime, time, signal
 import pickle
@@ -7,38 +8,23 @@ import pickle
 from dis import disassemble
 
 def execute (command, timeout = -1):
-    start = datetime.datetime.now()
-    start_time = time.time()
-    process = Popen([command + "&>tmp.out"], shell=True)
-    
-    # print "Running: " + command + " | Timeout: " + str(timeout) + " ",
-    # print "Running: " + command,
-    
-    elapsed = 0
-    try:
-        if (timeout >= 0):
-            count = 0
-            while process.poll() is None:
-                time.sleep(0.2)
-                now = datetime.datetime.now()
-                count += 1;
-                if count % 10 == 0:
-                    sys.stdout.write(".")
-                    sys.stdout.flush()
-                if (now - start).seconds > timeout:
-                    os.kill(process.pid, signal.SIGKILL)
-                    os.waitpid(-1, os.WNOHANG)
-                    print " timed out in " + str((now - start).seconds) + " seconds", 
-                    return None
-    except:
-        print " terminated after " + str((now - start).microseconds / 1000) + " milliseconds", 
-        return None
-    
-    process.wait();
-    elapsed_time = time.time() - start_time
-    # print "| completed in " + str(round(elapsed_time * 1000, 2)) + " milliseconds", 
-    output = open('tmp.out', 'r').read();
-    return (output.strip(), elapsed_time);
+  start_time = time.time()
+  # print "run: " + command
+  process = [None]
+  def target():
+    process[0] = Popen([command + "&>tmp.out"], shell=True)
+    process[0].communicate();
+  
+  thread = threading.Thread(target=target)
+  thread.start()
+  thread.join(timeout)
+  if thread.is_alive():
+    process[0].terminate()
+    thread.join()
+  
+  elapsed_time = time.time() - start_time
+  output = open('tmp.out', 'r').read();
+  return (output.strip(), elapsed_time);
 
 class Base:
     asc = None
@@ -173,6 +159,8 @@ class Test(Command):
                 if file.endswith(".abc"):
                     tests.append(os.path.join(root, file))
         
+        INFO = '\033[94m'
+        WARN = '\033[93m'
         PASS = '\033[92m'
         FAIL = '\033[91m'
         ENDC = '\033[0m'
@@ -210,16 +198,20 @@ class Test(Command):
           for test in tests:
               print str(count) + " of " + str(total) + ": " + test,
               count += 1
-              shuResult = execute("js -m -n avm.js -x " + test, int(-1))
-              avmResult = execute("avmshell " + test, int(-1))
+              shuResult = execute("js -m -n avm.js -x " + test, int(5))
+              avmResult = execute("avmshell " + test, int(5))
+              if not shuResult or not avmResult:
+                continue
+              
               if shuResult[0] == avmResult[0]:
                 passed += 1
                 shuElapsed += shuResult[1]
                 avmElapsed += avmResult[1]
-                print PASS + " PASSED",
+                print PASS + " PASSED" + ENDC,
                 print "shu: " + str(round(shuResult[1] * 1000, 2)) + " milliseconds,",
                 print "avm: " + str(round(avmResult[1] * 1000, 2)) + " milliseconds,",
-                print str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC
+                ratio = round(avmResult[1] / shuResult[1], 2)
+                print (WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC
               else:
                 failed += 1
                 print FAIL + " FAILED"  + ENDC
@@ -227,8 +219,9 @@ class Test(Command):
           pass
         
         print "Results: failed: " + FAIL + str(failed) + ENDC + ", passed: " + PASS + str(passed) + ENDC + " of " + str(total),
-        print " shuElapsed: " + str(round(shuElapsed * 1000, 2)) + " milliseconds";
-        print " avmElapsed: " + str(round(avmElapsed * 1000, 2)) + " milliseconds"; 
+        print "shuElapsed: " + str(round(shuElapsed * 1000, 2)) + " milliseconds",
+        print "avmElapsed: " + str(round(avmElapsed * 1000, 2)) + " milliseconds",
+        print str(round(avmElapsed / shuElapsed, 2)) + "x faster" + ENDC 
         
 commands = {}
 for command in [Asc(), Avm(), Dis(), Compile(), Test()]:
