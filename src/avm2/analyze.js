@@ -172,6 +172,7 @@ var Bytecode = (function () {
   function Bytecode(code) {
     var op = code.readU8();
     this.op = op;
+    this.originalPosition  = code.position;
 
     var i, n;
 
