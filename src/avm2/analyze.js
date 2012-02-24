@@ -1240,8 +1240,9 @@ var Analysis = (function () {
     var exits = new BlockDict();
     exits.unionArray(block.succs);
     for (var i = 0, j = loopBody.length; i < j; i++) {
-      if (!loopBody[i].leadsTo(block)) {
-        exits.unionArray(loopBody[i].succs);
+      var succs = loopBody[i].succs;
+      for (var k = 0, l = succs.length; k < l; k++) {
+        succ[k].frontier.size > 0 && exits.add(s);
       }
     }
     exits.subtract(loop);
