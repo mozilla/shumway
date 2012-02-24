@@ -508,6 +508,17 @@ var BlockDict = (function () {
       }
     },
 
+    equalsArray: function (arr) {
+      var backing = this.backing;
+      for (var i = 0, j = arr.length; i < j; i++) {
+        if (!hasOwn(backing, arr[i].blockId)) {
+          return false;
+        }
+      }
+
+      return true;
+    },
+
     subtractArray: function (arr) {
       var backing = this.backing;
       for (var i = 0, j = arr.length; i < j; i++) {
@@ -579,7 +590,7 @@ var Analysis = (function () {
    * so that if control flow ever reaches them, we crash.
    */
   function getInvalidTarget(cache, offset) {
-    if (cache[offset]) {
+    if (cache && cache[offset]) {
       return cache[offset];
     }
 
@@ -973,9 +984,10 @@ var Analysis = (function () {
   }
 
   /*
-   * Find all SCCs at or below the level of some root.
+   * Find all SCCs at or below the level of some root that are not already
+   * natural loops.
    */
-  function findSCCs(root) {
+  function findUnnaturalSCCs(root) {
     var preorderId = 1;
     var preorder = {};
     var assigned = {};
@@ -992,14 +1004,18 @@ var Analysis = (function () {
           pendingNodes.pop();
 
           var scc = [];
+          var loop = null;
           do {
             var u = unconnectedNodes.pop();
             assigned[u.blockId] = true;
+            if (u.loop && (!loop || u.loop.size > loop.size)) {
+              loop = u.loop;
+            }
             /* NB: Has to be unshifted for postorder! */
             scc.unshift(u);
           } while (u !== node);
 
-          if (scc.length > 1) {
+          if (scc.length > 1 && !(loop && loop.equalsArray(scc))) {
             sccs.push(scc);
           }
         }
@@ -1043,11 +1059,6 @@ var Analysis = (function () {
     var msed = [];
     for (var i = 0, j = scc.length; i < j; i++) {
       var node = scc[i];
-
-      /* We don't care about natural loops. */
-      if (node.loop) {
-        return null;
-      }
 
       if (node.level === top.level + 1) {
         node.weight || node.computeWeight();
@@ -1105,11 +1116,9 @@ var Analysis = (function () {
           node.preds.push(clone);
 
           !pendedRedoms[node.blockId] && pendingRedoms.push(node);
-
-          if (original.spbacks && original.spbacks.has(node)) {
-            clone.addSpback(node);
-          }
         }
+
+        original.spbacks = undefined;
       }
 
       nodes = original.preds;
@@ -1160,7 +1169,7 @@ var Analysis = (function () {
 
     var top;
     while (top = irreducibles.pop()) {
-      var sccs = findSCCs(top);
+      var sccs = findUnnaturalSCCs(top);
       var allBlocks = [];
       for (var i = 0, j = sccs.length; i < j; i++) {
         var scc = sccs[i];
@@ -1265,7 +1274,8 @@ var Analysis = (function () {
       var exit = exitNodes[i];
       for (var k = 0, l = nestedExitNodes.length; k < l; k++) {
         var nestedExit = nestedExitNodes[k].target;
-        if ((allowTailDuplication && exit.leadsTo(nestedExit)) ||
+        if ((allowTailDuplication &&
+             (exit.leadsTo(nestedExit) || nestedExit.leadsTo(exit))) ||
             exit === nestedExit) {
           pruned = true;
           exits.remove(exit);
@@ -1389,6 +1399,7 @@ var Analysis = (function () {
       var exits = new BlockDict();
       exits.union(branch1.frontier);
       exits.union(branch2.frontier);
+
       if (exits.size > 0 && nestedExits.size > 0) {
         pruneNestedExits(exits, nestedExits);
       }
@@ -1662,6 +1673,7 @@ var Analysis = (function () {
     const K_SWITCH_CASE = 6;
     const K_SWITCH = 7;
 
+    var loopBodyCx = null;
     for (;;) {
       var v = [];
 
@@ -1672,55 +1684,69 @@ var Analysis = (function () {
           break;
         }
 
-        if (block === cx.break) {
-          v.push(Control.Break);
-          break;
-        }
+        if (loopBodyCx) {
+          /*
+           * Don't try to match breaks/continues and loop heads if we just
+           * matched one, since cx.exit will be set to the head (i.e. this
+           * node).
+           */
+          cx = loopBodyCx;
+          loopBodyCx = null;
+        } else {
+          if (block === cx.break) {
+            v.push(Control.Break);
+            break;
+          }
 
-        if (block === cx.continue && cx.continue !== cx.exit) {
-          v.push(Control.Continue);
-          break;
-        }
+          if (block === cx.continue && cx.continue !== cx.exit) {
+            v.push(Control.Continue);
+            break;
+          }
 
-        if (nestedExits.exits.has(block)) {
-          v.push(nestedExits.exits.get(block));
-          break;
-        }
+          if (nestedExits.exits.has(block)) {
+            v.push(nestedExits.exits.get(block));
+            break;
+          }
 
-        if (block.loop) {
-          if (cxx = inducibleLoop(block, cx, nestedExits)) {
-            conts.push({ kind: K_LOOP_BODY,
-                         next: cxx.break,
-                         cx: cx });
-            nestedExits.push(cxx);
+          if (block.loop) {
+            if (cxx = inducibleLoop(block, cx, nestedExits)) {
+              conts.push({ kind: K_LOOP_BODY,
+                           next: cxx.break,
+                           cx: cx });
+              nestedExits.push(cxx);
+              loopBodyCx = cxx;
 
-            var cxxx;
-            if (cxxx = inducibleIf(block, cxx, nestedExits, info)) {
-              conts.push({ kind: K_IF_THEN,
-                           cond: block,
-                           negated: info.negated,
-                           else: info.else,
-                           join: cxxx.exit,
-                           joinCx: cxx,
-                           cx: cxxx });
-              block = info.then;
-              cx = cxxx;
-            } else {
-              conts.push({ kind: K_SEQ,
-                           block: block });
-              block = block.succs[0] || null;
-              cx = cxx;
+              isLoopHead = true;
+              continue;
+
+              var cxxx;
+              if (cxxx = inducibleIf(block, cxx, nestedExits, info)) {
+                conts.push({ kind: K_IF_THEN,
+                             cond: block,
+                             negated: info.negated,
+                             else: info.else,
+                             join: cxxx.exit,
+                             joinCx: cxx,
+                             cx: cxxx });
+                block = info.then;
+                cx = cxxx;
+              } else {
+                conts.push({ kind: K_SEQ,
+                             block: block });
+                block = block.succs[0] || null;
+                cx = cxx;
+              }
+
+              continue;
             }
 
-            continue;
+            /* A non-inducible loop can't be anything else. */
+            if (chokeOnClusterfucks) {
+              throw new Unanalyzable("has non-inducible loop clusterfuck on " + block.blockId);
+            }
+            v.push(new Control.Clusterfuck(block));
+            break;
           }
-
-          /* A non-inducible loop can't be anything else. */
-          if (chokeOnClusterfucks) {
-            throw new Unanalyzable("has non-inducible loop clusterfuck on " + block.blockId);
-          }
-          v.push(new Control.Clusterfuck(block));
-          break;
         }
 
         var info = {};
