@@ -32,7 +32,9 @@ function Indent(statements) {
 }
 
 var Compiler = (function () {
-
+  
+  var controlWriter = false ? new IndentingWriter() : null;
+  
   /* Attach compile method to each control structure node. These thread a compilation context as well
    * as an abstract program state. As control nodes are visited recursively, they construct a tree of
    * statement arrays which if flattened after compilation is done.
@@ -47,15 +49,24 @@ var Compiler = (function () {
   };
 
   Control.Break.compile = function (mcx, state) {
-    return {statements: ["break;"]};
+    controlWriter && controlWriter.enter("Break {");
+    var res = {statements: ["break;"], state: state};
+    controlWriter && controlWriter.leave("}");
+    return res;
   };
 
   Control.Continue.compile = function (mcx, state) {
-    return {statements: ["continue;"]};
+    controlWriter && controlWriter.enter("Continue {");
+    var res = {statements: ["continue;"], state: state};
+    controlWriter && controlWriter.leave("}");
+    return res;
   };
 
   Control.Return.compile = function (mcx, state) {
-    return {statements: []};
+    controlWriter && controlWriter.enter("Return {");
+    var res = {statements: [], state: state};
+    controlWriter && controlWriter.leave("}");
+    return res;
   };
 
   Control.Clusterfuck.prototype.compile = function (mcx, state) {
@@ -63,19 +74,42 @@ var Compiler = (function () {
   };
 
   Control.Seq.prototype.compile = function (mcx, state) {
+    if (controlWriter) {
+      controlWriter.enter("Sequence {");
+    }
     var statements = [];
     this.body.forEach(function (block) {
+      controlWriter && controlWriter.writeLn("entryState: " + state);
       var result = block.compile(mcx, state);
+      state = result.state; 
       statements.push(result.statements);
     });
-    return {statements: statements};
+    if (controlWriter) {
+      controlWriter.writeLn("exitState:  " + state);
+      controlWriter.leave("}");
+    }
+    return {statements: statements, state: state};
   };
 
   Bytecode.prototype.compile = function (mcx, state) {
-    return mcx.compileBlock(this, state);
+    if (controlWriter) {
+      controlWriter.enter("Block {");
+      controlWriter.writeLn("entryState: " + state);
+    }
+    var res = mcx.compileBlock(this, state);
+    if (controlWriter) {
+      controlWriter.writeLn("exitState:  " + res.state);
+      controlWriter.leave("}");
+    }
+    return res;
   };
 
   Control.Loop.prototype.compile = function (mcx, state) {
+    if (controlWriter) {
+      controlWriter.enter("Loop {");
+      controlWriter.writeLn("entryState: " + state);
+    }
+    
     var body = this.body;
     var statements = [];
 
@@ -93,7 +127,11 @@ var Compiler = (function () {
       statements.push(new Indent(body.compile(mcx, state).statements));
       statements.push("}");
     }
-    return {statements: statements};
+    if (controlWriter) {
+      controlWriter.writeLn("exitState:  " + state);
+      controlWriter.leave("}");
+    }
+    return {statements: statements, state: state};
   };
 
   Control.If.prototype.isThenBreak = function () {
@@ -101,11 +139,24 @@ var Compiler = (function () {
   };
 
   Control.If.prototype.compile = function (mcx, state) {
+    if (controlWriter) {
+      controlWriter.enter("If {");
+      controlWriter.writeLn("entryState: " + state);
+    }
+    
+    controlWriter && controlWriter.enter("Condition {");
     var cr = this.cond.compile(mcx, state);
+    controlWriter && controlWriter.leave("}");
+    
+    controlWriter && controlWriter.enter("Then {");
     var tr = this.then.compile(mcx, cr.state.clone());
+    controlWriter && controlWriter.leave("}");
+    
     var er = null;
     if (this.else) {
+      controlWriter && controlWriter.enter("Else {");
       er = this.else.compile(mcx, cr.state.clone());
+      controlWriter && controlWriter.leave("}");
     }
     var condition = this.negated ? cr.condition.negate() : cr.condition;
     var statements = cr.statements;
@@ -116,17 +167,24 @@ var Compiler = (function () {
       statements.push(new Indent(er.statements));
     }
     statements.push("}");
-    return {statements: statements, condition: condition};
+    var exitState = tr.state;
+    if (controlWriter) {
+      controlWriter.writeLn("exitState:  " + exitState);
+      controlWriter.leave("}");
+    }
+    return {statements: statements, condition: condition, state: exitState};
   };
 
   /**
    * Abstract program state.
    */
   var State = (function () {
+    var stateCounter = 0;
     function state() {
       this.local = [];
       this.stack = [];
       this.scope = [];
+      this.id = stateCounter ++;
     }
     state.prototype.clone = function clone() {
       var s = new State();
@@ -144,6 +202,7 @@ var Compiler = (function () {
     };
 
     state.prototype.trace = function trace(writer) {
+      writer.writeLn("id: " + stateCounter)
       writer.enter("scope:");
       writer.writeArray(this.scope);
       writer.outdent();
@@ -154,6 +213,12 @@ var Compiler = (function () {
       writer.writeArray(this.stack);
       writer.outdent();
     };
+    
+    state.prototype.toString = function toString() {
+      return "id: " + this.id + ", scope: [" + this.scope.join(", ") + 
+             "], local: [" + this.local.join(", ") + "], stack: [" + this.stack.join(", ") + "]"; 
+    };
+    
     return state;
   })();
 
@@ -181,7 +246,6 @@ var Compiler = (function () {
     operator.LSH = new operator("<<", function (l, r) { return l << r; }, true, false);
     operator.RSH = new operator(">>", function (l, r) { return l >> r; }, true, false);
     operator.URSH = new operator(">>>", function (l, r) { return l >>> r; }, true, false);
-    /* TODO */
 
     operator.SEQ = new operator("===", function (l, r) { return l === r; }, true, true);
     operator.SNE = new operator("!==", function (l, r) { return l !== r; }, true, true);
@@ -472,7 +536,6 @@ var Compiler = (function () {
     this.method = method;
     this.worklist = [method.analysis.controlTree];
     this.state = new State();
-    this.writer = new IndentingWriter();
     this.variablePool = new VariablePool();
 
     /* Initialize local variables. First declare the [this] reference, then ... */
@@ -500,7 +563,7 @@ var Compiler = (function () {
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
-    var writer = typeof(webShell) === undefined ? null : this.writer;
+    var writer = this.compiler.writer;
     
     if (traceLevel.value <= 2) {
       writer = null;
@@ -520,7 +583,7 @@ var Compiler = (function () {
     }
 
     function setSlot(obj, index, value) {
-      assert (state.stack.length == 0);
+      // assert (state.stack.length == 0);
       statements.push(obj + ".S" + index + " = " + value +";");
     }
 
@@ -621,7 +684,7 @@ var Compiler = (function () {
     var methods = abc.methods;
     var multinames = abc.constantPool.multinames;
 
-    var multiname, args, value, obj, res, ns, name;
+    var multiname, args, value, obj, res, ns, name, classInfo, baseClass;
 
     function createMultiname(multiname) {
       if (multiname.isRuntime()) {
@@ -692,10 +755,23 @@ var Compiler = (function () {
       case OP_ifstricteq:     setCondition(Operator.SEQ); break;
       case OP_ifstrictne:     setCondition(Operator.SNE); break;
       case OP_lookupswitch:   notImplemented(); break;
-      case OP_pushwith:       notImplemented(); break;
-      case OP_popscope:       notImplemented(); break;
-      case OP_nextname:       notImplemented(); break;
-      case OP_hasnext:        notImplemented(); break;
+      case OP_pushwith:
+        obj = state.stack.pop();
+        emitStatement("scope = new " + new Call(null, "Scope", ["scope", obj]));
+        break;
+      case OP_popscope:
+        emitStatement("scope = scope.parent");
+        break;
+      case OP_nextname:
+        // TODO: Temporary implementation, totally broken. 
+        state.stack.pop();
+        state.stack.pop();
+        state.stack.push(new Constant("TODO"));
+        break;
+      case OP_hasnext:
+        // TODO: Temporary implementation, totally broken.
+        state.stack.push(new Constant(false));
+        break;
       case OP_pushnull:       state.stack.push(new Constant(null)); break;
       case OP_pushundefined:  state.stack.push(new Constant(undefined)); break;
       case OP_pushfloat:      notImplemented(); break;
@@ -723,7 +799,10 @@ var Compiler = (function () {
         state.scope.push(obj);
         break;
       case OP_pushnamespace:  notImplemented(); break;
-      case OP_hasnext2:       notImplemented(); break;
+      case OP_hasnext2:
+        // TODO: Temporary implementation, totally broken.
+        state.stack.push(new Constant(false));
+        break;
       case OP_li8:            notImplemented(); break;
       case OP_li16:           notImplemented(); break;
       case OP_li32:           notImplemented(); break;
@@ -776,14 +855,20 @@ var Compiler = (function () {
       case OP_sxi16:          notImplemented(); break;
       case OP_applytype:      notImplemented(); break;
       case OP_pushfloat4:     notImplemented(); break;
-      case OP_newobject:      notImplemented(); break;
+      case OP_newobject:
+        assert (bc.argCount === 0);
+        state.stack.push("{}"); 
+        break;
       case OP_newarray:       state.stack.push("[" + state.stack.popMany(bc.argCount) + "]"); break;
       case OP_newactivation:
         assert (this.method.needsActivation());
         emitStatement("var activation = " + new Call(null, "createActivation", [objectConstant(this.method)]));
         state.stack.push("activation");
         break;
-      case OP_newclass:       notImplemented(); break;
+      case OP_newclass:
+        value = new Call(null, "createClass", [objectConstant(abc.classes[bc.index]), state.stack.pop()]);
+        state.stack.push(value);
+        break;
       case OP_getdescendants: notImplemented(); break;
       case OP_newcatch:       notImplemented(); break;
       case OP_findpropstrict:
@@ -844,7 +929,16 @@ var Compiler = (function () {
         }
         break;
       case OP_getouterscope:      notImplemented(); break;
-      case OP_initproperty:       notImplemented(); break;
+      case OP_initproperty:
+        value = state.stack.pop();
+        multiname = multinames[bc.index];
+        if (!multiname.isRuntime()) {
+          obj = state.stack.pop();
+          emitStatement(obj + "." + multiname.name + " = " + value);
+        } else {
+          notImplemented();
+        }
+        break;
       case OP_setpropertylate:    notImplemented(); break;
       case OP_deleteproperty:     notImplemented(); break;
       case OP_deletepropertylate: notImplemented(); break;
@@ -872,12 +966,18 @@ var Compiler = (function () {
       case OP_convert_f:      notImplemented(); break;
       case OP_unplus:         notImplemented(); break;
       case OP_convert_f4:     notImplemented(); break;
-      case OP_coerce:         notImplemented(); break;
+      case OP_coerce:
+        // TODO: 
+        break;
       case OP_coerce_b:       notImplemented(); break;
       case OP_coerce_a:       /* NOP */ break;
       case OP_coerce_i:       notImplemented(); break;
       case OP_coerce_d:       notImplemented(); break;
-      case OP_coerce_s:       notImplemented(); break;
+      case OP_coerce_s:
+        // TODO: Temporary implementation, totally broken.
+        obj = state.stack.pop();
+        state.stack.push(obj + " === null || " + obj + " === undefined ? null : " + obj + ".toString()");
+        break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
       case OP_coerce_u:       notImplemented(); break;
@@ -893,7 +993,9 @@ var Compiler = (function () {
         expression(Operator.SUB);
         break;
       case OP_declocal:       notImplemented(); break;
-      case OP_typeof:         notImplemented(); break;
+      case OP_typeof:
+        state.stack.push("typeof " + state.stack.pop());
+        break;
       case OP_not:            expression(Operator.NOT); break;
       case OP_bitnot:         expression(Operator.BITWISE_NOT); break;
       case OP_add_d:          notImplemented(); break;
@@ -914,9 +1016,19 @@ var Compiler = (function () {
       case OP_lessequals:     expression(Operator.LE); break;
       case OP_greaterthan:    expression(Operator.GT); break;
       case OP_greaterequals:  expression(Operator.GE); break;
-      case OP_instanceof:     notImplemented(); break;
+      case OP_instanceof:
+        // TODO: Temporary implementation, totally broken.
+        state.stack.pop();
+        state.stack.pop();
+        state.stack.push(new Constant(true));
+        break;
       case OP_istype:         notImplemented(); break;
-      case OP_istypelate:     notImplemented(); break;
+      case OP_istypelate:
+        // TODO: Temporary implementation, totally broken.
+        state.stack.pop();
+        state.stack.pop();
+        state.stack.push(new Constant(true));
+        break;
       case OP_in:             notImplemented(); break;
       case OP_increment_i:    notImplemented(); break;
       case OP_decrement_i:    notImplemented(); break;
@@ -972,6 +1084,7 @@ var Compiler = (function () {
   };
 
   function compiler(abc) {
+    this.writer = typeof(webShell) === undefined ? null : new IndentingWriter();    
     this.abc = abc;
   };
 
@@ -998,6 +1111,7 @@ var Compiler = (function () {
 })();
 
 var createFunction;
+var createClass;
 var createActivation;
 
 function applyTraits(obj, traits) {
@@ -1023,13 +1137,14 @@ function applyTraits(obj, traits) {
       var closure = createFunction(trait.method, new Scope(null, obj));
       setProperty(trait.name.name, undefined, closure);
     } else {
-      assert(false);
+      // assert(false, trait);
     }
   });
 }
 
 function executeAbc(abc) {
   var runtime = new Runtime(abc);
+  createClass = runtime.createClass.bind(runtime);
   createFunction = runtime.createFunction.bind(runtime);
   createActivation = runtime.createActivation.bind(runtime);
   
@@ -1048,6 +1163,20 @@ function executeAbc(abc) {
   global.String = String;
   global.RegExp = RegExp;
   global.JS = (function () { return this; }) ();
+  
+  global.parseInt = parseInt;
+  
+  global.Capabilities = {
+    'playerType': 'AVMPlus'
+  };
+  
+  global.Namespace = (function() {
+    function namespace() {
+      this.prefix = arguments.length > 1 ? arguments[0] : undefined;
+      this.uri = arguments.length == 1 ? arguments[0] : arguments[1];
+    }
+    return namespace;
+  })();
   
   applyTraits(global, abc.lastScript.traits);
   
@@ -1119,6 +1248,10 @@ var Runtime = (function () {
     var obj = {};
     applyTraits(obj, method.traits);
     return obj;
+  };
+  
+  runtime.prototype.createClass = function (classInfo, baseClass) {
+    
   };
   
   runtime.prototype.createFunction = function (method, scope) {

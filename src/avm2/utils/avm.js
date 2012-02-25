@@ -13,11 +13,11 @@ load("../DataView.js");
 load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");
+load("../disassembler.js");
 load("../analyze.js");
 load("../compiler.js");
 load("../fuzzer.js");
 load("../viz.js");
-load("../disassembler.js");
 load("../interpreter.js");
 
 if (arguments.length === 0) {

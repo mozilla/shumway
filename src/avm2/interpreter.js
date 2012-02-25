@@ -280,7 +280,6 @@ var ASNamespace = (function() {
     this.prefix = arguments.length > 1 ? arguments[0] : undefined;
     this.uri = arguments.length == 1 ? arguments[0] : arguments[1];
   }
-  // namespace.prototype = Object.create(ASObject.prototype);
   return namespace;
 })();
 
@@ -340,7 +339,7 @@ var ASClass = (function () {
   
 var ASObjectClass = new ASClass();
 
-function createClass(abc, scope, classInfo, baseClass) {
+function createClass2(abc, scope, classInfo, baseClass) {
   var classScope = scope.clone();
   baseClass = baseClass || ASObjectClass;
   var klass = new ASClass(abc, baseClass, classInfo, classScope);
@@ -349,7 +348,7 @@ function createClass(abc, scope, classInfo, baseClass) {
   return klass;
 }
 
-function createInstance(scope, constructor, args) {
+function createInstance2(scope, constructor, args) {
   if (constructor instanceof ASClass) {
     return constructor.createInstance(args);
   } else if ('construct' in constructor) {
