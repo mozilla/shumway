@@ -10,6 +10,7 @@ var tagHandler = {
   /* DefineButton */                  7: undefined,
   /* JPEGTables */                    8: undefined,
   /* SetBackgroundColor */            9: RGB,
+  /* SetBackgroundColor */            9: SET_BACKGROUND_COLOR,
   /* DefineFont */                    10: DEFINE_FONT,
   /* DefineText */                    11: DEFINE_TEXT,
   /* DoAction */                      12: DO_ACTION,

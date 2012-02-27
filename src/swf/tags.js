@@ -255,6 +255,10 @@ var REMOVE_OBJECT = {
   objId: ['tag===5', [UI16]],
   depth: UI16
 };
+var SET_BACKGROUND_COLOR = {
+  type: '"background"',
+  color: RGB
+};
 var SHOW_FRAME = {
   type: '"frame"'
 };
