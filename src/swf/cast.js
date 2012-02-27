@@ -49,9 +49,11 @@ function cast(tags, dictionary) {
       pframe = { };
       break;
     case 'place':
-      var entry = { move: tag.move };
+      var entry = { };
       if (tag.place)
         entry.id = tag.objId;
+      if (tag.move)
+        entry.move = true;
       if (tag.hasMatrix)
         entry.matrix = tag.matrix;
       if (tag.hasRatio)
