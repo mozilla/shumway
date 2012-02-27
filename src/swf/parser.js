@@ -69,10 +69,10 @@ var tagHandler = {
 for (var tag in tagHandler) {
   var handler = tagHandler[tag];
   if (typeof handler === 'object')
-    tagHandler[tag] = generate(handler, 'version', 'tag');
+    tagHandler[tag] = generateParser(handler, 'version', 'tag');
 }
 
-var readHeader = generate(MOVIE_HEADER);
+var readHeader = generateParser(MOVIE_HEADER);
 
 function readTags(context, stream, version, onprogress) {
   var tags = context.tags;

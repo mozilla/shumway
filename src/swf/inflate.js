@@ -75,7 +75,7 @@ function inflateBlock(sbytes, sstream, dbytes, dstream) {
     var prev = 0;
     while (i < numCodes) {
       var j = 1;
-      var sym = decode(sbytes, sstream, codeLengthTable);
+      var sym = readCode(sbytes, sstream, codeLengthTable);
       switch(sym){
       case 16:
         j = readBits(sbytes, sstream, 2) + 3;
@@ -117,13 +117,13 @@ function readBits(bytes, stream, size) {
 function inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable) {
   var pos = dstream.realLength;
   var sym;
-  while ((sym = decode(sbytes, sstream, literalTable)) !== 256) {
+  while ((sym = readCode(sbytes, sstream, literalTable)) !== 256) {
     if (sym < 256) {
       dbytes[pos++] = sym;
     } else {
       sym -= 257;
       var len = lengthCodes[sym] + readBits(sbytes, sstream, lengthExtraBits[sym]);
-      sym = decode(sbytes, sstream, distanceTable);
+      sym = readCode(sbytes, sstream, distanceTable);
       var distance = distanceCodes[sym] + readBits(sbytes, sstream, distanceExtraBits[sym]);
       var i = pos - distance;
       while (len--)
@@ -132,7 +132,7 @@ function inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable) 
   }
   dstream.realLength = pos;
 }
-function decode(bytes, stream, codeTable) {
+function readCode(bytes, stream, codeTable) {
   var buffer = stream.bitBuffer;
   var bitlen = stream.bitLength;
   var maxBits = codeTable.maxBits;

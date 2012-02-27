@@ -11,7 +11,7 @@ var defaultTemplateSet = [
   readString, readBinary
 ];
 
-function generate(struct) {
+function generateParser(struct) {
   var productions = [];
   var varCount = 0;
   (function produce(struct, context) {

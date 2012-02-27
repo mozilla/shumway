@@ -13,8 +13,8 @@ if (typeof window === 'undefined') {
     'inflate.js',
     'stream.js',
     'templates.js',
-    'generate.js',
-    'parse.js',
+    'generator.js',
+    'parser.js',
 
     'font.js',
     'shape.js',
@@ -81,7 +81,7 @@ if (typeof window === 'undefined') {
   };
 } else {
   var worker = new Worker('../worker.js');
-  function work(file, callback) {
+  function startWorking(file, callback) {
     worker.onmessage = function(event) {
       callback(event.data);
     };
