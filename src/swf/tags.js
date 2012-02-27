@@ -161,7 +161,7 @@ var DEFINE_TEXT = {
 var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
   actions: {
-    $: ACTION_RECORD,
+    $: ACTION,
     repeat: 'action'
   }
 };

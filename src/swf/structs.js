@@ -209,7 +209,7 @@ var ACTION_GOTO_FRAME2 = {
   play: UB(1),
   sceneBias: ['hasSceneBias', [UI16]]
 };
-var ACTION_RECORD = {
+var ACTION = {
   $action: UI8,
   $hasData: 'action>>7',
   $0: ['hasData', [{
@@ -263,7 +263,7 @@ var EVENT = {
   $1: ['!eoe', [{
     $length: UI32,
     actions: {
-      $: ACTION_RECORD,
+      $: ACTION,
       length: 'length'
     }
   }]]
