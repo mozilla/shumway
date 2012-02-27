@@ -18,6 +18,7 @@ function cast(tags, dictionary) {
         var obj = {
           type: 'movieclip',
           id: tag.id,
+          frameCount: tag.frameCount,
           pframes: cast(tag.tags, dictionary)
         };
         break;
