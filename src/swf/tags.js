@@ -233,7 +233,7 @@ var PLACE_OBJECT = {
           $: EVENT,
           repeat: '!eoe'
         }
-      }]]
+      }]],
       backgroundColor: ['hasBackgroundColor', ['ARGB']],
       visibility: ['hasVisibility', [UI8]]
     },
