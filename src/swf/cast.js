@@ -32,6 +32,9 @@ function cast(tags, dictionary) {
       continue;
     }
     switch (tag.type) {
+    case 'background':
+      pframe.bgcolor = colorToString(tag.color);
+      break;
     case 'frame':
       var n = 1;
       for (; tag = tags[i]; ++n, ++i) {
