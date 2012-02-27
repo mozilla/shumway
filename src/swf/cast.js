@@ -1,7 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 function cast(tags, dictionary) {
-	var pframes = [];
+  var pframes = [];
   var pframe = { };
   var i = 0;
   var tag;
@@ -59,5 +59,5 @@ function cast(tags, dictionary) {
       break;
     }
   }
-	return pframes;
+  return pframes;
 };

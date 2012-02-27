@@ -88,7 +88,7 @@ function readTags(context, stream, version, onprogress) {
     var subbytes = substream.bytes;
     if (tag === 39) {
       var item = {
-    type: 'sprite',
+        type: 'sprite',
         id: readUi16(subbytes, substream),
         frameCount: readUi16(subbytes, substream),
         tags: []
