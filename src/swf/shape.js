@@ -363,7 +363,7 @@ function defineShape(tag, dictionary) {
   var i = 0;
   var path;
   while (path = paths[i++])
-    cmds.push(path.cmds);
+    push.apply(cmds, path.cmds);
   return {
     type: 'shape',
     id: tag.id,
