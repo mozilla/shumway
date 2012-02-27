@@ -34,13 +34,13 @@ var DEFINE_FONT_INFO = {
     {
       codes: {
         $: UI16,
-        length: '$stream.end-$stream.pos'
+        length: '$stream.remain()'
       }
     },
     {
       codes: {
         $: UI8,
-        length: '$stream.end-$stream.pos'
+        length: '$stream.remain()'
       }
     }
   ]]
