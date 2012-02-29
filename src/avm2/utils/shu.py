@@ -19,7 +19,20 @@ def execute (command, timeout = -1):
   thread.start()
   thread.join(timeout)
   if thread.is_alive():
-    process[0].terminate()
+    # Popen with "shell=True" returns the pid of the shell rather than that of the spawned process, 
+    # so if the process hangs killing the shell won't kill the process. We need to do this nasty
+    # hack to kill the child processes. The "ps eo pid,pgid,ppid" command lists the processes and
+    # their pid / parent pid relationships.
+    
+    # Kill All Child Processes
+    for row in [map(int,ps.split()) for ps in os.popen("ps eo pid,pgid,ppid").readlines()[1:]]:
+      if row[2] == process[0].pid:
+        os.kill(row[0], signal.SIGKILL)
+        os.waitpid(-1, os.WNOHANG)
+        
+    # Kill Process
+    os.kill(process[0].pid, signal.SIGKILL)
+    os.waitpid(-1, os.WNOHANG)
     thread.join()
   
   elapsed_time = time.time() - start_time
@@ -170,34 +183,14 @@ class Test(Command):
 
         shuElapsed = 0
         avmElapsed = 0
-                  
-        if False:
-          try:
-              for test in tests:
-                  print str(count) + " of " + str(total) + ":",
-                  count += 1
-                  result = execute("js -m -n avm.js -x " + test, int(0))
-                  if result:
-                      output, elapsed = result
-                      shuElapsed += elapsed
-                      if output.lower().find("pass") >= 0:
-                          passed += 1
-                          print PASS + " PASSED" + ENDC
-                      else:
-                          failed += 1
-                          print FAIL + " FAILED"  + ENDC
-                  else:
-                      failed += 1
-                      print FAIL + " FAILED" + ENDC
-          except:
-              pass
-          
+                    
         try:
           for test in tests:
               print str(count) + " of " + str(total) + ": " + test,
               count += 1
               shuResult = execute("js -m -n avm.js -x " + test, int(2))
               avmResult = execute("avmshell " + test, int(2))
+              
               if not shuResult or not avmResult:
                 continue
               
