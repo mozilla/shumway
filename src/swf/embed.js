@@ -60,15 +60,16 @@ SWF.embed = function (file, container, onstart, oncomplete) {
   startWorking(file, function(obj) {
     if (obj) {
       if (!root) {
-        root = create(new MovieClipPrototype({
+        var proto = create(new MovieClipPrototype({
           frameCount: obj.frameCount,
           pframes: pframes
         }, dictionary));
-        frameRate = obj.frameRate;
+        root = proto.constructor();
         var bounds = obj.bounds;
         canvas.width = (bounds.xMax - bounds.xMin) / 20;
         canvas.height = (bounds.yMax - bounds.yMin) / 20;
         container.appendChild(canvas);
+        frameRate = obj.frameRate;
         if (onstart)
           onstart(root);
       }

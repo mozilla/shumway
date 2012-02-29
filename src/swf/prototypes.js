@@ -1,17 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-var MovieClipPrototype = function(obj, dictionary, ctx) {
+var MovieClipPrototype = function(obj, dictionary) {
   var totalFrames = obj.frameCount || 1;
   var pframes = obj.pframes || [];
   var frame = null;
   var currentPframe = 0;
   var timeline = [];
   var framesLoaded = 0;
-  var currentFrame = 0;
 
   function ensure(frameNum) {
-    if (frameNum > totalFrames)
-      frameNum = totalFrames;
     var n = timeline.length;
     while (n < frameNum) {
       frame = create(frame);
@@ -36,20 +33,32 @@ var MovieClipPrototype = function(obj, dictionary, ctx) {
         var entry = pframe[depth];
         depth -= 0x4001;
         if (entry) {
-          if (entry.move) {
-            var character = create(frame[depth]);
-          } else if (entry.id in dictionary) {
-            if (dictionary[entry.id] === null) {
-              setTimeout(complete, frame, pframe, depths);
-              return;
+          var initObj = entry.move ? frame[depth] : { };
+          var id = entry.id;
+          if (id) {
+            if (id in dictionary) {
+              if (dictionary[id] === null) {
+                setTimeout(complete, frame, pframe, depths);
+                return;
+              }
+              var proto = dictionary[id];
+              if (proto.constructor !== Object)
+                var character = proto.constructor();
+              else
+                var character = create(proto);
+            } else {
+              fail('unknown object id ' + id, 'movieclip');
             }
-            var character = create(dictionary[entry.id]);
           } else {
-            fail('unknown object id ' + entry.id, 'movieclip');
+            var character = create(initObj);
           }
-          character.transform = { matrix: entry.matrix };
+          var initXform = initObj.transform || { };
+          character.transform = {
+            matrix: entry.matrix || initXform.matrix,
+            colorTransform: entry.cxform || initXform.colorTransform
+          };
           if (character.draw)
-            character.ratio = entry.ratio || 0;
+            character.ratio = entry.ratio || initObj.ratio || 0;
           frame[depth] = character;
         } else {
           frame[depth] = entry;
@@ -61,62 +70,87 @@ var MovieClipPrototype = function(obj, dictionary, ctx) {
     ++framesLoaded;
     var i = framesLoaded;
     var frm;
-    while (frm = timeline[++i]) {
+    while (frm = timeline[i++]) {
       if (frm.incomplete)
         break;
       ++framesLoaded;
     }
   }
 
-  var paused = false;
-
-  function play() {
-    paused = false;
-  }
-  function stop() {
-    paused = true;
-  }
-  function gotoFrame(frame) {
-    var frameNum = frame;
-    if (frameNum > totalFrames)
-      frameNum = totalFrames;
-    ensure(frameNum);
-    if (frameNum > framesLoaded)
-      frameNum = framesLoaded;
-    currentFrame = frameNum;
-  }
-  function gotoAndPlay(frame) {
-    play();
-    gotoFrame(frame);
-  }
-  function gotoAndStop(frame) {
-    stop();
-    gotoFrame(frame);
-  }
-
-  this.gotoAndPlay = gotoAndPlay;
-  this.gotoAndStop = gotoAndStop;
-  this.nextFrame = function() {
-    if (this === render) {
-      var frameNum = currentFrame;
-      if (!paused) {
-        ++frameNum;
-        if (frameNum > totalFrames)
-          frameNum = 1;
-        gotoAndPlay(frameNum);
-      }
-      var ctx = arguments[0];
-      render(timeline[frameNum - 1], ctx);
+  this.constructor = function MovieClip() {
+    if (this instanceof MovieClip)
       return;
+
+    var currentFrame = 0;
+    var paused = false;
+
+    function gotoFrame(frame) {
+      var frameNum = frame;
+      if (frameNum > totalFrames)
+        frameNum = totalFrames;
+      ensure(frameNum);
+      if (frameNum > framesLoaded)
+        frameNum = framesLoaded;
+      currentFrame = frameNum;
     }
-    gotoAndStop(currentFrame + 1);
-  };
-  this.play = play;
-  this.prevFrame = function() {
-    var frameNum = currentFrame - 1;
-    if (frameNum < 1)
-      frameNum = 1;
-    gotoAndStop(frameNum);
-  };
-  this.stop = stop;
+
+    var proto = create(this);
+    var instance = create(proto, {
+      _currentframe: {
+        get: function() {
+          return currentFrame;
+        }
+      },
+      _framesloaded: {
+        get: function() {
+          return framesLoaded;
+        }
+      },
+      _totalframes: {
+        get: function() {
+          return totalFrames;
+        }
+      }
+    });
+
+    proto.gotoAndPlay = function(frame) {
+      if (this !== instance)
+        return;
+      paused = false;
+      gotoFrame(frame);
+    };
+    proto.gotoAndStop = function (frame) {
+      if (this !== instance)
+        return;
+      paused = true;
+      gotoFrame(frame);
+    };
+    proto.nextFrame = function() {
+      if (this !== instance) {
+        if (this === render) {
+          if (!paused)
+            gotoFrame(currentFrame + 1);
+          var ctx = arguments[0];
+          render(timeline[currentFrame - 1], ctx);
+        }
+        return;
+      }
+      this.gotoAndStop(currentFrame + 1);
+    };
+    proto.play = function() {
+      if (this !== instance)
+        return;
+      paused = false;
+    };
+    proto.prevFrame = function() {
+      this.gotoAndStop(currentFrame - 1);
+    };
+    proto.stop = function() {
+      if (this !== instance)
+        return;
+      paused = true;
+    };
+
+    return instance;
+  }
 };
