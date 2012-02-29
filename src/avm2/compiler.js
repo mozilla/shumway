@@ -1,20 +1,28 @@
 var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpression Elimination"));
 
-var C = [];
+/**
+ * To embed object references in compiled code we index into globally accessible constant table [$C].
+ * This table maintains an unique set of object references, each of which holds its own position in
+ * the constant table, thus providing for fast lookup. To embed a reference to an object [k] we call
+ * [objectConstant(k)] which may generate the literal "$C[12]".
+ */
+
+var $C = [];
 
 function objectId(obj) {
   assert(obj);
   if (obj.hasOwnProperty("objectId")) {
     return obj.objectId;
   }
-  return registerObject(obj);
+  var id = $C.length;
+  Object.defineProperty(obj, "objectId", {value: id, writable: false, enumerable: false});
+  $C.push(obj);
+  return id;
 }
 
-function registerObject(obj) {
-  var id = C.length;
-  Object.defineProperty(obj, "objectId", {value: id, writable: false, enumerable: false});
-  C.push(obj);
-  return id;
+function objectConstant(obj) {
+  assert (obj !== undefined);
+  return "$C[" + objectId(obj) + "]";
 }
 
 function getLocalVariableName(i) {
@@ -33,6 +41,7 @@ function Indent(statements) {
 
 var Compiler = (function () {
   
+  /* Print coarse level state vectors at control node boundaries. */ 
   var controlWriter = false ? new IndentingWriter() : null;
   
   /* Attach compile method to each control structure node. These thread a compilation context as well
@@ -348,11 +357,6 @@ var Compiler = (function () {
     return call;
   })();
 
-  function objectConstant(obj) {
-    assert (obj !== undefined);
-    return "C[" + objectId(obj) + "]";
-  }
-
   var FindProperty = (function () {
     function findProperty(multiname, strict) {
       this.multiname = multiname;
@@ -469,6 +473,9 @@ var Compiler = (function () {
     return literal; 
   })();
 
+  /**
+   * Keeps track of a pool of variables that may be reused.
+   */
   var VariablePool = (function () {
     var count = 0;
     function variablePool() {
@@ -490,6 +497,13 @@ var Compiler = (function () {
     return variablePool;
   })();
   
+  /**
+   * Common subexpression elimination is only used to CSE scope lookups for now, 
+   * use it more aggressively. Each basic block maintains a list of values which
+   * are checked whenever new values are added to the list. If a [equivalent] value
+   * already exists in the list, the old value is returned. The values are first 
+   * looked up in the current list, then in the parent's (immediate dominator) list.  
+   */
   var CSE = (function () {
     function cse(parent, variablePool) {
       this.parent = parent;
@@ -543,6 +557,9 @@ var Compiler = (function () {
     return "(" + Array.prototype.slice.call(arguments, 0).map(literal).join(", ") + ")"; 
   }
   
+  /**
+   * Local state for compiling a method.
+   */
   function MethodCompilerContext(compiler, method, scope) {
     this.compiler = compiler;
     this.method = method;
@@ -553,20 +570,16 @@ var Compiler = (function () {
 
     /* Initialize local variables. First declare the [this] reference, then ... */
     this.local = [new Variable("this")];
+    
     /* push the method's parameters, followed by ... */ 
     for (var i = 0; i < method.parameters.length; i++) {
       this.local.push(new Variable(method.parameters[i].name));
     }
+    
     /* push the method's remaining locals.*/
     for (var i = method.parameters.length; i < method.localCount; i++) {
       this.local.push(new Variable(getLocalVariableName(i)));
     }
-    
-    if (this.needRest)
-      local[this.paramCount + 1] = Array.prototype.slice.call(args, this.paramCount);
-    else if (this.needArguments)
-      local[this.paramCount + 1] = args;
-    
     
     this.state.local = this.local.slice(0);
     
@@ -1156,6 +1169,17 @@ var Compiler = (function () {
 var createFunction;
 var createActivation;
 
+/**
+ * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
+ * every slotted trait we create two properties: one to hold the actual value, one to hold 
+ * a getter/setter that reads the actual value. For instance, for the slot trait "7:Age" we
+ * generated three properties: "S7" to hold the actual value, and an "Age" getter/setter pair
+ * that mutate the "S7" property. The invariant we want to maintain is [obj.S7 === obj.Age].
+ * 
+ * This means that there are two ways to get to any slotted trait, a fast way and a slow way.
+ * I guess we should profile and find out which type of access is more common (by slotId or 
+ * by name). 
+ */
 function applyTraits(obj, traits) {
   function setProperty(name, slotId, value) {
     if (slotId) {
@@ -1333,6 +1357,10 @@ Object.construct = function () {
 
 Object.instanceTraits = [];
 
+/**
+ * This may go away, it was orignally meant to separate the runtime environments of two
+ * different scripts, but it may not be needed.
+ */
 var Runtime = (function () {
   var functionCount = 0;
   function runtime(abc) {
