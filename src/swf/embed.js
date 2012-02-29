@@ -50,7 +50,7 @@ function definePrototype(dictionary, obj, ctx) {
   dictionary[obj.id] = proto;
 }
 
-SWF.embed = function (file, container, onstart) {
+SWF.embed = function (file, container, onstart, oncomplete) {
   var root = null;
   var frameRate;
   var pframes = [];
@@ -79,6 +79,8 @@ SWF.embed = function (file, container, onstart) {
           canvas.style.background = obj.bgcolor;
         pframes.push(obj);
       }
+    } else if (oncomplete) {
+      oncomplete(root, obj);
     } else {
       renderMovieClip(root, frameRate, ctx);
     }
