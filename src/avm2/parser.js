@@ -180,6 +180,10 @@ var Trait = (function () {
   trait.prototype.isMethod = function isMethod() {
     return this.kind === TRAIT_Method;
   };
+  
+  trait.prototype.isClass = function isClass() {
+    return this.kind === TRAIT_Class;
+  };
 
   trait.prototype.toString = function toString() {
     var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
@@ -743,6 +747,12 @@ var MethodInfo = (function () {
     },
     needsActivation: function needsActivation() {
       return !!(this.flags & METHOD_Activation);
+    },
+    needsRest: function needsRest() {
+      return !!(this.flags & METHOD_Needrest);
+    },
+    needsArguments: function needsArguments() {
+      return !!(this.flags & METHOD_Arguments);
     }
   };
 

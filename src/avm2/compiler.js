@@ -349,6 +349,7 @@ var Compiler = (function () {
   })();
 
   function objectConstant(obj) {
+    assert (obj !== undefined);
     return "C[" + objectId(obj) + "]";
   }
 
@@ -530,10 +531,22 @@ var Compiler = (function () {
     
     return cse;
   })();
+
+  function literal(obj) {
+    if (obj instanceof Array) {
+      return "[" + obj.map(literal).join(", ") + "]";
+    }
+    return obj.toString();
+  }
   
-  function MethodCompilerContext(compiler, method) {
+  function argumentList() {
+    return "(" + Array.prototype.slice.call(arguments, 0).map(literal).join(", ") + ")"; 
+  }
+  
+  function MethodCompilerContext(compiler, method, scope) {
     this.compiler = compiler;
     this.method = method;
+    this.scope = scope;
     this.worklist = [method.analysis.controlTree];
     this.state = new State();
     this.variablePool = new VariablePool();
@@ -549,6 +562,12 @@ var Compiler = (function () {
       this.local.push(new Variable(getLocalVariableName(i)));
     }
     
+    if (this.needRest)
+      local[this.paramCount + 1] = Array.prototype.slice.call(args, this.paramCount);
+    else if (this.needArguments)
+      local[this.paramCount + 1] = args;
+    
+    
     this.state.local = this.local.slice(0);
     
     this.temporary = [];
@@ -557,8 +576,20 @@ var Compiler = (function () {
     }
     
     this.header = [];
+    
+    var parameterCount = method.parameters.length;
+    if (method.needsRest()) {
+      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, " + parameterCount + ");");
+    } else if (method.needsArguments()) {
+      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, 0);");
+    }
+    
     if (this.local.length > 1) {
       this.header.push("var " + this.local.slice(1).join(", ") + ";");
+    }
+    
+    if (scope) {
+      this.header.push("var scope = " + objectConstant(scope));
     }
   }
 
@@ -583,14 +614,14 @@ var Compiler = (function () {
     }
 
     function setSlot(obj, index, value) {
-      // assert (state.stack.length == 0);
+      flushStack();
       statements.push(obj + ".S" + index + " = " + value +";");
     }
 
+    var scope = this.scope;
     var local = this.local;
     var temporary = this.temporary;
 
-    var parentCSE = null;
     if (block.dominator === block) {
       block.cse = new CSE(null, this.variablePool); 
     } else {
@@ -702,6 +733,14 @@ var Compiler = (function () {
 
     function getAndCreateMultiname(multiname) {
       return createMultiname(multiname);
+    }
+    
+    function classObject() {
+      return objectConstant(scope) + ".object";
+    }
+    
+    function superClassObject() {
+      return classObject() + ".baseClass";
     }
     
     var bytecodes = this.method.analysis.bytecodes;
@@ -838,12 +877,16 @@ var Compiler = (function () {
         break;
       case OP_returnvoid:     emitStatement("return"); break;
       case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;
-      case OP_constructsuper: notImplemented(); break;
+      case OP_constructsuper:
+        obj = state.stack[0];
+        args = state.stack.popMany(bc.argCount);
+        emitStatement(superClassObject() + ".construct" + argumentList.apply(null, args));
+        break;
       case OP_constructprop:
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        state.stack.push("new " + new GetProperty(obj, multiname) + "(" + args.join(", ") + ")");
+        state.stack.push("new " + new GetProperty(obj, multiname) + argumentList.apply(null, args));
         break;
       case OP_callsuperid:    notImplemented(); break;
       case OP_callproplex:    notImplemented(); break;
@@ -866,7 +909,7 @@ var Compiler = (function () {
         state.stack.push("activation");
         break;
       case OP_newclass:
-        value = new Call(null, "createClass", [objectConstant(abc.classes[bc.index]), state.stack.pop()]);
+        value = new Call(null, "createClass", [objectConstant(abc.classes[bc.index]), state.stack.pop(), "scope"]);
         state.stack.push(value);
         break;
       case OP_getdescendants: notImplemented(); break;
@@ -1068,7 +1111,11 @@ var Compiler = (function () {
       if (writer) {
         state.trace(writer);
         writer.enter("statements:");
-        writer.writeArray(statements);
+        if (statements.length > 10) {
+          writer.writeArray(statements.slice(statements.length - 10));
+        } else {
+          writer.writeArray(statements);
+        }
         writer.outdent();
         writer.leave("}");
       }
@@ -1090,12 +1137,8 @@ var Compiler = (function () {
 
   compiler.prototype.compileMethod = function compileMethod(method, scope) {
     assert(method.analysis);
-    var mcx = new MethodCompilerContext(this, method);
+    var mcx = new MethodCompilerContext(this, method, scope);
     var statements = mcx.header;
-    
-    if (scope) {
-      statements.push("var scope = " + objectConstant(scope));
-    }
     
     var body = method.analysis.controlTree.compile(mcx, mcx.state).statements;
     
@@ -1111,7 +1154,6 @@ var Compiler = (function () {
 })();
 
 var createFunction;
-var createClass;
 var createActivation;
 
 function applyTraits(obj, traits) {
@@ -1136,15 +1178,16 @@ function applyTraits(obj, traits) {
     } else if (trait.isMethod()) {
       var closure = createFunction(trait.method, new Scope(null, obj));
       setProperty(trait.name.name, undefined, closure);
+    } else if (trait.isClass()) {
+      setProperty(trait.name.name, trait.slotId, null);
     } else {
-      // assert(false, trait);
+      assert(false, trait);
     }
   });
 }
 
 function executeAbc(abc) {
   var runtime = new Runtime(abc);
-  createClass = runtime.createClass.bind(runtime);
   createFunction = runtime.createFunction.bind(runtime);
   createActivation = runtime.createActivation.bind(runtime);
   
@@ -1237,6 +1280,59 @@ var Scope = (function () {
   return scope;
 })();
 
+/**
+ * ActionScript Classes are modeled as constructor functions (class objects) which hold additional properties:
+ *
+ * [scope]: a scope object holding the current class object
+ *
+ * [baseClass]: a reference to the base class object
+ *
+ * [instanceTraits]: an accumulated set of traits that are to be applied to instances of this class
+ *
+ * [prototype]: the prototype object of this constructor function  is populated with the set of instance traits, 
+ *   when instances are of this class are created, their __proto__ is set to this object thus inheriting this 
+ *   default set of properties.
+ *
+ * [construct]: a reference to the class object itself, this is used when invoking the constructor with an already
+ *   constructed object (i.e. constructsuper)
+ *
+ * additionaly, the class object also has a set of class traits applied to it which are visible via scope lookups.
+ */
+function createClass(classInfo, baseClass, scope) {
+  scope = new Scope(scope, null);
+  
+  var cls = createFunction(classInfo.instance.init, scope);
+  scope.object = cls;
+  
+  cls.scope = scope;
+  cls.classInfo = classInfo;
+  cls.baseClass = baseClass;
+  
+  if (baseClass) {
+    cls.instanceTraits = baseClass.instanceTraits.concat(classInfo.instance.traits);
+  } else {
+    cls.instanceTraits = classInfo.instance.traits;
+    assert (cls.instanceTraits);
+  }
+  
+  cls.prototype = {};
+  applyTraits(cls.prototype, cls.instanceTraits);
+  applyTraits(cls, classInfo.traits);
+  
+  /* Call the static constructor. */
+  createFunction(classInfo.init, this.scope).call(cls);
+  cls.construct = cls;
+  return cls;
+}
+
+/* Extend builtin Objects so they behave as classes. */
+
+Object.construct = function () {
+  /* NOP */
+};
+
+Object.instanceTraits = [];
+
 var Runtime = (function () {
   var functionCount = 0;
   function runtime(abc) {
@@ -1250,11 +1346,7 @@ var Runtime = (function () {
     return obj;
   };
   
-  runtime.prototype.createClass = function (classInfo, baseClass) {
-    
-  };
-  
-  runtime.prototype.createFunction = function (method, scope) {
+  runtime.prototype.createFunction = function (method, scope)  {
     if (method.compiledMethod) {
       return method.compiledMethod;
     }
@@ -1287,7 +1379,11 @@ var Runtime = (function () {
     // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
     
     // Eval hack to give generated functions proper names so that stack traces are helpful.
-    eval("function fn" + functionCount + " (" + parameters.join(", ") + ") { " + flatten(result.statements, "") + " }")
+    var body = flatten(result.statements, "");
+    if (functionCount == 13) {
+      body = "stop();" + body;
+    }
+    eval("function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }")
     method.compiledMethod = eval("fn" + (functionCount++));
     
     if (traceLevel.value > 0) {
@@ -1298,3 +1394,7 @@ var Runtime = (function () {
   };
   return runtime;
 })();
+
+function stop() {
+  var breakpoint = 0; /* SET BREAKPOINT HERE */
+}

@@ -37,7 +37,8 @@
         var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
         if (!skipQuickTest) {
             // new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {
-            new FileReader("../tests/sunspider/crypto-md5.abc").readAll(null, function (buffer) {
+            // new FileReader("../tests/sunspider/access-nbody.abc").readAll(null, function (buffer) {
+            new FileReader("../tests/tamarin/spidermonkey/js1_2/Array/general1.abc").readAll(null, function (buffer) {
                 var abc = new AbcFile(new Uint8Array(buffer));
                 var writer = new IndentingWriter(false);
                 // abc.trace(writer);

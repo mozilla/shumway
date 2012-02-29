@@ -283,61 +283,9 @@ var ASNamespace = (function() {
   return namespace;
 })();
 
-var ASClass = (function () {
-  function asClass(abc, baseClass, classInfo, classScope) {
-    this.abc = abc;
-    if (baseClass) {
-      this.baseClass = baseClass;
-      this.classInfo = classInfo;
-      this.classScope = classScope;
-      this.name = classInfo.instance.name;
-      
-      var classTraits = classInfo.traits;
-      var instanceTraits = classInfo.instance.traits;
-      var classAndInstanceTraits = classTraits.concat(instanceTraits);
-      
-      /* Apply class traits to this class, these are the static traits, not instance traits. */
-      ASObject.applyTraits(this, classTraits);
-      
-      /* Methods should have access the static properties of their declaring class, thus we must wrap
-       * method traits in closures that have the same scope as the class in which they are declared. */
-      for (var i = 0; i < classAndInstanceTraits.length; i++) {
-        var trait = classAndInstanceTraits[i];
-        if (trait.isMethod()) {
-          /* Methods need to be closed over the scope of their declaring class. */
-          trait.methodClosure = new Closure(this.abc, trait.method, null, this.classScope); 
-        }
-      }
-      this.instanceTraits = baseClass.instanceTraits.concat(instanceTraits);
-    } else {
-      this.name = "ASObject";
-      this.instanceTraits = [];
-    }
-    this.prototype = this;
-  }
-  asClass.prototype = Object.create(ASObject.prototype);
-  asClass.prototype.toString = function () {
-    if (this.baseClass) {
-      return "[class " + this.name + " extends " + this.baseClass.name + "]";
-    } else {
-      return "[class " + this.name + "]";
-    }
-  };
-  asClass.prototype.createInstance = function createInstance() {
-    var instance = new ASObject(this);
-    ASObject.applyTraits(instance, this.instanceTraits);
-    this.construct(instance);
-    return instance;
-  };
-  asClass.prototype.construct = function construct(instance) {
-    if (this !== ASObjectClass) {
-      new Closure(this.abc, this.classInfo.instance.init, null, this.classScope).apply(instance, arguments);
-    }
-  };
-  return asClass;
-})();
+
   
-var ASObjectClass = new ASClass();
+// var ASObjectClass = new ASClass();
 
 function createClass2(abc, scope, classInfo, baseClass) {
   var classScope = scope.clone();
