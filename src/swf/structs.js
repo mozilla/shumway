@@ -384,7 +384,8 @@ var FILL_GRADIENT = {
 var FILL_BITMAP = {
   bitmapId: UI16,
   matrix: MATRIX,
-  matrixMorph: ['isMorph', [MATRIX]]
+  matrixMorph: ['isMorph', [MATRIX]],
+  repeat: 'type===64||type===67'
 };
 var FILL_STYLE = {
   $type: UI8,
