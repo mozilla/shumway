@@ -11,6 +11,9 @@ function cast(tags, dictionary) {
       case 'font':
         var obj = defineFont(tag, dictionary);
         break;
+      case 'jpeg':
+        var obj = defineJpeg(tag);
+        break;
       case 'shape':
         var obj = defineShape(tag, dictionary);
         break;
