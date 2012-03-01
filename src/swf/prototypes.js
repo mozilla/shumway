@@ -37,8 +37,8 @@ var MovieClipPrototype = function(obj, dictionary) {
           var id = entry.id;
           if (id) {
             if (id in dictionary) {
-              if (dictionary[id] === null) {
-                setTimeout(complete, frame, pframe, depths);
+              if (dictionary[id] == undefined) {
+                setTimeout(complete, 0, frame, pframe, depths);
                 return;
               }
               var proto = dictionary[id];

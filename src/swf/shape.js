@@ -212,6 +212,7 @@ function defineShape(tag, dictionary) {
     }
   }
   var paths = [];
+  var dependencies = [];
   var i = 0;
   while (fillStyles[i++]) {
     var path = [];
@@ -378,10 +379,13 @@ function defineShape(tag, dictionary) {
   var path;
   while (path = paths[i++])
     push.apply(cmds, path.cmds);
-  return {
+  var shape = {
     type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
     data: cmds.join(';')
   };
+  if (dependencies.length)
+    shape.require = dependencies;
+  return shape;
 }

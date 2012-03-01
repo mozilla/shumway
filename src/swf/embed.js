@@ -4,7 +4,17 @@ var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
+function defer(func, startTime) {
+  if (!startTime)
+    startTime = +new Date;
+  else if (+new Date - startTime > 1000)
+    fail('timeout', 'defer');
+  if (!func())
+    setTimeout(defer, 0, func, startTime);
+}
+
 function definePrototype(dictionary, obj, ctx) {
+  var id = obj.id;
   var proto;
   switch (obj.type) {
   case 'font':
@@ -20,34 +30,55 @@ function definePrototype(dictionary, obj, ctx) {
         style.cssRules.length
       );
       ctx.font = obj.name;
-      (function defer() {
-        if (ctx.measureText(charset).width !== defaultWidth)
-          dictionary[obj.id] = obj;
-        else
-          setTimeout(defer);
-      })();
+      defer(function() {
+        if (ctx.measureText(charset).width !== defaultWidth) {
+          dictionary[id] = obj;
+          return true;
+        }
+      });
     }
     break;
   case 'image':
     var img = new Image;
     img.src = 'data:' + obj.mimeType + ';base64,' + btoa(obj.data);
     img.onload = function() {
-      var proto = create(obj);
+      proto = create(obj);
       proto.img = img;
-      dictionary[obj.id] = proto;
+      dictionary[id] = proto;
     };
     break;
   case 'movieclip':
-    var proto = new MovieClipPrototype(obj, dictionary);
+    proto = new MovieClipPrototype(obj, dictionary);
     break;
   case 'shape':
-    var proto = create(obj);
-    proto.draw = (new Function('d,c,r',
-      'with(c){' + obj.data + '}'
-    )).bind(null, dictionary);
+    var dependencies;
+    if (obj.require)
+      dependencies = obj.require.slice();
+    defer(function () {
+      if (dependencies) {
+        var i = 0;
+        var objId;
+        while (objId = dependencies[i++]) {
+          if (objId in dictionary) {
+            if (dictionary[objId] == undefined)
+              return false;
+            dependencies.pop();
+          } else {
+            fail('unknown object id ' + objId, 'embed');
+          }
+        }
+      }
+      proto = create(obj);
+      proto.draw = (new Function('d,c,r',
+        'with(c){' + obj.data + '}'
+      )).bind(null, dictionary);
+      dictionary[id] = proto;
+      return true;
+    });
     break;
   }
-  dictionary[obj.id] = proto;
+  if (!(id in dictionary))
+    dictionary[id] = proto;
 }
 
 SWF.embed = function (file, container, onstart, oncomplete) {

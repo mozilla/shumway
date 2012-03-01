@@ -16,6 +16,7 @@ function defineText(tag, dictionary) {
       ].join(',') +
     ')'
   ];
+  var dependencies = [];
   var x = 0;
   var y = 0;
   var i = 0;
@@ -27,6 +28,7 @@ function defineText(tag, dictionary) {
       var font = dictionary[record.fontId];
       var codes = font.codes;
       cmds.push('font="' + record.fontHeight + 'px ' + font.name + '"');
+      dependencies.push(record.fontId);
     }
     if (record.hasColor)
       cmds.push('fillStyle="' + colorToString(record.color) + '"');
@@ -45,10 +47,13 @@ function defineText(tag, dictionary) {
     }
   }
   cmds.push('restore()');
-  return {
+  var shape = {
     type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
     data: cmds.join(';')
   };
+  if (dependencies.length)
+    shape.require = dependencies;
+  return shape;
 }
