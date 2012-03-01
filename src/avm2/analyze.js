@@ -54,7 +54,7 @@ var Control = (function () {
     trace: function (writer) {
       this.cond.trace(writer);
       writer.enter("if" + (this.negated ? " not" : "") + " {");
-      this.then.trace(writer);
+      this.then && this.then.trace(writer);
       if (this.else) {
         writer.outdent();
         writer.enter("} else {");
@@ -119,6 +119,41 @@ var Control = (function () {
     }
   };
 
+  function LabelSwitch(cases) {
+    this.cases = cases;
+  }
+
+  LabelSwitch.prototype = {
+    trace: function (writer) {
+      for (var i = 0, j = this.cases.length; i < j; i++) {
+        this.cases[i].trace(writer);
+      }
+    }
+  };
+
+  function LabelCase(label, body) {
+    this.label = label;
+    this.body = body;
+  }
+
+  LabelCase.prototype = {
+    trace: function (writer) {
+      writer.enter("if (label is " + this.label + ") {");
+      this.body && this.body.trace(writer);
+      writer.leave("}");
+    }
+  };
+
+  function SetLabel(target) {
+    this.target = target;
+  }
+
+  SetLabel.prototype = {
+    trace: function (writer) {
+      writer.writeLn("label = " + this.target.blockId);
+    }
+  };
+
   function LabeledBreak(target) {
     this.target = target;
   }
@@ -158,6 +193,9 @@ var Control = (function () {
     If: If,
     Case: Case,
     Switch: Switch,
+    LabelSwitch: LabelSwitch,
+    LabelCase: LabelCase,
+    SetLabel: SetLabel,
     LabeledBreak: LabeledBreak,
     LabeledContinue: LabeledContinue,
     Break: Break,
@@ -172,7 +210,7 @@ var Bytecode = (function () {
   function Bytecode(code) {
     var op = code.readU8();
     this.op = op;
-    this.originalPosition  = code.position;
+    this.originalPosition = code.position;
 
     var i, n;
 
@@ -247,11 +285,11 @@ var Bytecode = (function () {
 
       if (!this.loop) {
         this.loop = new BlockDict();
+        this.loop.add(this);
       }
       var body = this.loop;
       var pending = [backEdge];
       var p;
-      body.add(this);
       while (p = pending.pop()) {
         if (!body.has(p)) {
           body.add(p);
@@ -301,7 +339,7 @@ var Bytecode = (function () {
 
     leadsTo: function leadsTo(target) {
       return (target && ((this === target) ||
-                         (this.frontier.size === 1) &&
+                         //(this.frontier.size === 1) &&
                          (this.frontier.has(target))));
     },
 
@@ -362,41 +400,6 @@ var Bytecode = (function () {
 })();
 
 /*
- * Original blocks are just the bytecodes themselves.
- *
- * Split blocks point back into the bytecode array but have no content
- * themselves.
- */
-var SplitBlock = (function () {
-
-  function SplitBlock(code, newId) {
-    assert(code.blockId);
-
-    this.original = code;
-    this.position = code.position;
-    this.end = code.end;
-    this.blockId = newId;
-
-    this.succs = [];
-    this.preds = [];
-    this.dominatees = [];
-    this.frontier = new BlockDict();
-
-    this.level = code.level;
-  }
-
-  SplitBlock.prototype = Object.create(Bytecode.prototype);
-  var Sbp = SplitBlock.prototype;
-  Sbp.toString = function toString() {
-    return this.blockId + " (" + this.original.blockId + ")";
-    return "split of #" + this.original.blockId;
-  };
-
-  return SplitBlock;
-
-})();
-
-/*
  * It's only sane to use this data structure for bytecodes within the same
  * bytecode stream, since block ids are used as keys.
  */
@@ -412,6 +415,21 @@ var BlockDict = (function () {
   }
 
   BlockDict.prototype = {
+    contains: function (other) {
+      if (other.size > this.size) {
+        return false;
+      }
+
+      var otherBacking = other.backing;
+      var backing = this.backing;
+      for (var blockId in otherBacking) {
+        if (!hasOwn(backing, blockId)) {
+          return false;
+        }
+      }
+      return true;
+    },
+
     has: function (x) {
       return hasOwn(this.backing, x.blockId);
     },
@@ -428,10 +446,16 @@ var BlockDict = (function () {
     },
 
     remove: function (x) {
+      if (!x) {
+        return false;
+      }
+
       if (hasOwn(this.backing, x.blockId)) {
         delete this.backing[x.blockId];
         this.size--;
+        return true;
       }
+      return false;
     },
 
     unionArray: function (arr) {
@@ -439,9 +463,9 @@ var BlockDict = (function () {
       for (var i = 0, j = arr.length; i < j; i++) {
         var blockId = arr[i].blockId;
         if (!hasOwn(backing, blockId)) {
+          backing[blockId] = arr[i];
           this.size++;
         }
-        backing[blockId] = arr[i];
       }
     },
 
@@ -450,9 +474,20 @@ var BlockDict = (function () {
       var backing = this.backing;
       for (var blockId in otherBacking) {
         if (!hasOwn(backing, blockId)) {
+          backing[blockId] = otherBacking[blockId];
           this.size++;
         }
-        backing[blockId] = otherBacking[blockId];
+      }
+    },
+
+    intersect: function (other) {
+      var otherBacking = other.backing;
+      var backing = this.backing;
+      for (var blockId in backing) {
+        if (!hasOwn(otherBacking, blockId)) {
+          delete backing[blockId];
+          this.size--;
+        }
       }
     },
 
@@ -531,6 +566,33 @@ var Analysis = (function () {
     toString: function () {
       return "Method is unanalyzable: " + this.reason;
     }
+  };
+
+  /*
+   * Original blocks are just the bytecodes themselves.
+   *
+   * Split blocks point back into the bytecode array but have no content
+   * themselves.
+   */
+  function SplitBlock(code, newId) {
+    assert(code.blockId);
+
+    this.original = code;
+    this.position = code.position;
+    this.end = code.end;
+    this.blockId = newId;
+
+    this.succs = [];
+    this.preds = [];
+    this.dominatees = [];
+    this.frontier = new BlockDict();
+
+    this.level = code.level;
+  }
+
+  SplitBlock.prototype = Object.create(Bytecode.prototype);
+  SplitBlock.prototype.toString = function toString() {
+    return "split of #" + this.original.blockId;
   };
 
   /*
@@ -961,12 +1023,6 @@ var Analysis = (function () {
     return sccs;
   }
 
-  function levelSort(nodes) {
-    return nodes.sort(function (a, b) {
-      return b.level - a.level;
-    });
-  }
-
   function maxWeightNode(top, scc) {
     var msed = [];
     for (var i = 0, j = scc.length; i < j; i++) {
@@ -1057,46 +1113,7 @@ var Analysis = (function () {
     return clones;
   }
 
-  /*
-   * Split irreducible SCCs recursively.
-   *
-   * Algorithm from [3].
-   *
-   * [3] Unger and Mueller. Handling Irreducible Loops: Optimized Node
-   *     Splitting vs DJ-Graphs.
-   */
-  function splitLoops(cc, irreducibles) {
-    var worklist = levelSort(irreducibles.flatten());
-    var top;
-    while (top = worklist.pop()) {
-      irreducibles.remove(top);
-
-      var sccs = findUnnaturalSCCs(top);
-      if (sccs.length === 0) {
-        continue;
-      }
-
-      var redoms = new BlockDict();
-      var topDomain = [];
-      for (var i = 0, j = sccs.length; i < j; i++) {
-        var scc = sccs[i];
-        var head = maxWeightNode(top, scc);
-        if (head) {
-          var clones = splitSCC(head, scc, redoms, cc.lastBlockId);
-          cc.lastBlockId += clones.length;
-          topDomain.push.apply(topDomain, scc);
-          topDomain.push.apply(topDomain, clones);
-        }
-      }
-
-      cc.reanalyzeControlFlow(redoms);
-
-      irreducibles.union(findLoops(topDomain, false));
-      worklist = levelSort(irreducibles.flatten());
-    }
-  }
-
-  function findLoops(blocks, markNaturals) {
+  function findIrreducibleLoops(blocks) {
     var irreducibles = new BlockDict();
 
     for (var i = 0, j = blocks.length; i < j; i++) {
@@ -1110,12 +1127,8 @@ var Analysis = (function () {
       for (var k = 0, l = succs.length; k < l; k++) {
         var s = succs[k];
 
-        if (spbacks.has(s)) {
-          if (block.dominatedBy(s)) {
-            markNaturals && s.makeLoopHead(block);
-          } else {
-            irreducibles.add(s.dominator);
-          }
+        if (spbacks.has(s) && !block.dominatedBy(s)) {
+          irreducibles.add(s.dominator);
         }
       }
     }
@@ -1123,194 +1136,55 @@ var Analysis = (function () {
     return irreducibles;
   }
 
-  function ExitsStack() {
-    this.stack = [];
-    this.exits = new BlockDict();
-    this.size = 0;
-  }
-
-  ExitsStack.prototype = {
-    push: function (xs) {
-      this.stack.push(xs);
-      var b = xs.break;
-      var c = xs.continue;
-      b && this.exits.add(b, new Control.LabeledBreak(b));
-      c && this.exits.add(c, new Control.LabeledBreak(c));
-      this.exits.takeSnapshot();
-      this.size++;
-    },
-
-    pop: function () {
-      var xs = this.stack.pop();
-      if (xs) {
-        var b = xs.break;
-        var c = xs.continue;
-        b && this.exits.remove(b);
-        c && this.exits.remove(c);
-        this.exits.takeSnapshot();
-        this.size--;
-      }
-    }
-  };
-
   function ExtractionContext() {
-    this.break = null;
-    this.continue = null;
-    this.loop = null;
-    this.exit = {};
+    this.exit = null;
   }
 
-  ExtractionContext.prototype.update = function update(props) {
-    var desc = {};
-    for (var p in props) {
-      desc[p] = {
-        value: props[p],
-        writable: true,
-        enumerable: true,
-        configurable: true
-      };
-    }
-    return Object.create(this, desc);
-  };
-
-  function exitSet(body, nestedExits) {
-    var exits = new BlockDict();
-
-    if (nestedExits.size === 0) {
-      for (var i = 0, j = body.length; i < j; i++) {
-        exits.union(body[i].frontier);
+  ExtractionContext.prototype = {
+    update: function update(props) {
+      var desc = {};
+      for (var p in props) {
+        desc[p] = {
+          value: props[p],
+          writable: true,
+          enumerable: true,
+          configurable: true
+        };
       }
-      return exits;
+      return Object.create(this, desc);
     }
+  }
+
+  function exitSet(body, cx) {
+    var exits = new BlockDict();
 
     for (var i = 0, j = body.length; i < j; i++) {
-      var node = body[i];
-      if (!nestedExits.exits.has(node) && node.frontier.size > 0) {
-        exits.union(node.frontier);
-      }
-    }
+      var b = body[i];
 
-    if (exits.size > 0) {
-      pruneNestedExits(exits, nestedExits);
-    }
-
-    return exits;
-  }
-
-  function pruneNestedExits(exits, nestedExits) {
-    var pruned = false;
-    var exitNodes = exits.flatten();
-    var allowTailDuplication = exits.size !== 1;
-    var nestedExitNodes = nestedExits.exits.snapshot;
-    for (var i = 0, j = exitNodes.length; i < j; i++) {
-      var exit = exitNodes[i];
-      for (var k = 0, l = nestedExitNodes.length; k < l; k++) {
-        var nestedExit = nestedExitNodes[k].target;
-        if ((allowTailDuplication && exit.leadsTo(nestedExit)) ||
-            exit === nestedExit) {
-          pruned = true;
-          exits.remove(exit);
+      if (cx.exit) {
+        if (b === cx.exit || (cx.exit.size && cx.exit.has(b))) {
+          continue;
         }
       }
+
+      exits.union(b.frontier);
     }
-    return pruned;
-  }
 
-  /*
-   * Returns a new context updated with loop information if loop is inducible,
-   * undefined otherwise.
-   *
-   * Let `loop exit' mean either the continue node or break node of a loop.
-   *
-   * A loop is inducible iff it:
-   *  - Is reducible (single entry node into the cycle).
-   *  - Has at most a single exit node, after loop exits of parent loops are pruned.
-   *
-   * If a loop has no exit nodes, its exit node is set to the exit node of the
-   * parent context.
-   *
-   * For the loop body, its:
-   *  - break node is the loop's single exit node
-   *  - continue node is the loop header
-   */
-  function inducibleLoop(block, cx, nestedExits) {
-    var loop = block.loop;
-    var loopBody = loop.flatten();
-    var pruned = true;
-
-    var exits = new BlockDict();
-    exits.unionArray(block.succs);
-    for (var i = 0, j = loopBody.length; i < j; i++) {
-      var succs = loopBody[i].succs;
-      for (var k = 0, l = succs.length; k < l; k++) {
-        succs[k].frontier.size > 0 && exits.add(succs[k]);
+    if (cx.exit) {
+      if (cx.exit.size) {
+        exits.subtract(cx.exit)
+      } else {
+        exits.remove(cx.exit);
       }
     }
-    exits.subtract(loop);
 
-    /* Also prune the current loop header, which can't be the break node. */
-    nestedExits.push({ continue: block });
-    if (exits.size > 0) {
-      pruned = pruneNestedExits(exits, nestedExits);
-    }
-    nestedExits.pop();
+    cx.continue && exits.remove(cx.continue);
+    cx.loop && exits.intersect(cx.loop);
 
-    /* There should be a single exit node. */
-    var mainExit;
-    if (exits.size > 1) {
-      var exitNodes = pruned ? exits.flatten() : exits.snapshot;
-      for (var i = 0, j = exitNodes.length; i < j; i++) {
-        mainExit = exitNodes[i];
-
-        for (var k = 0, l = exitNodes.length; k < l; k++) {
-          if (!exitNodes[k].leadsTo(mainExit)) {
-            mainExit = null;
-            break;
-          }
-        }
-
-        if (mainExit) {
-          break;
-        }
-      }
-    } else {
-      mainExit = exits.choose();
-    }
-
-    if (exits.size > 1 && !mainExit) {
-      return undefined;
-    }
-
-    if (!mainExit && nestedExits.size > 0) {
-      mainExit = cx.exit;
-    }
-
-    return cx.update({ break: mainExit,
-                       continue: block,
-                       loop: loop,
-                       exit: block });
+    return exits.size <= 1 ? exits.choose() : exits;
   }
 
-  /*
-   * Returns an updated context if a conditional is inducible, undefined
-   * otherwise.
-   *
-   * A conditional is inducible iff:
-   *  - It has two successors in the CFG. And,
-   *   - One branch's exit node is the other branch. Or,
-   *   - The cardinality of the union of its two branchs' exit nodes is at
-   *     most 1, after loop exits of parent loops are pruned.
-   *
-   * If one branch's exit node is the other branch, the conditional has no
-   * else branch and the other branch is the join.
-   *
-   * If there are no exit nodes, the conditional has no else branch and one of
-   * the branches is the join.
-   *
-   * Otherwise there is a single exit node, one branch is the then branch, the
-   * other the else branch, and the single exit is the join.
-   */
-  function inducibleIf(block, cx, nestedExits, info) {
+  function inducibleIf(block, cx, info) {
     var succs = block.succs;
 
     if (succs.length !== 2) {
@@ -1319,46 +1193,36 @@ var Analysis = (function () {
 
     var branch1 = succs[0];
     var branch2 = succs[1];
-    var exit;
-    info.negated = false;
+    var exit = exitSet([branch1, branch2], cx);
 
-    if (branch1.leadsTo(branch2)) {
+    /* Simple heuristic to stop some long if-else cascades. */
+    var via1 = false;
+    var via2 = false;
+    if (cx.loop) {
+      via1 = !cx.loop.has(branch1);
+      via2 = !cx.loop.has(branch2);
+    }
+
+    if (via1) {
       info.then = branch1;
+      info.negated = false;
       exit = branch2;
-    } else if (branch2.leadsTo(branch1)) {
+    } else if (via2) {
       info.then = branch2;
       info.negated = true;
       exit = branch1;
     } else {
-      var exits = exitSet([branch1, branch2], nestedExits);
-
-      if (exits.size > 1) {
-        return undefined;
-      }
-
-      exit = exits.choose();
-
-      var viaBranch1 = exit ? branch1.frontier.has(exit) : false;
-      var viaBranch2 = exit ? branch2.frontier.has(exit) : false;
-
-      if (!viaBranch2) {
-        info.then = branch2;
-        info.negated = true;
-        exit = branch1;
-      } else if (!viaBranch1 && viaBranch2) {
-        info.then = branch1;
-        exit = branch2;
-      } else {
-        info.then = branch2;
-        info.else = branch1;
-        info.negated = true;
-      }
+      info.then = branch1;
+      info.else = branch2;
+      info.negated = false;
     }
 
-    return cx.update({ exit: exit });
+    return exit ? cx.update({ exit: exit }) : cx;
   }
 
   /*
+   * FIXME: Stale code.
+   *
    * Returns an updated context if a spined switch is inducible, undefined
    * otherwise.
    *
@@ -1379,13 +1243,13 @@ var Analysis = (function () {
    * node. If a different break node is found further down the spine, the
    * switch is not structured.
    */
-  function inducibleSpinedSwitch(block, cx, nestedExits, info) {
+  function inducibleSpinedSwitch(block, cx, info) {
     var currentCase, prevCase, defaultCase, possibleBreak;
     var spine = block, prevSpine;
     var cases = [];
 
     while (spine) {
-      if (spine.end.op !== OP_ifstricteq) {
+      if (!spine.end || spine.end.op !== OP_ifstricteq) {
         return undefined;
       }
 
@@ -1407,7 +1271,7 @@ var Analysis = (function () {
         prevSpine = spine;
         spine = branch2;
         currentCase = branch1;
-      } else if (cxx = inducibleIf(spine, cx, nestedExits, iinfo)) {
+      } else if (cxx = inducibleIf(spine, cx, iinfo)) {
         if (iinfo.negated) {
           currentCase = iinfo.else ? iinfo.else : iinfo.exit;
           defaultCase = iinfo.then;
@@ -1430,7 +1294,7 @@ var Analysis = (function () {
       if (prevCase === currentCase) {
         cases.push({ cond: prevSpine, exit: currentCase });
       } else if (prevCase) {
-        var exits = exitSet([prevCase], nestedExits);
+        var exits = exitSet(prevCase, cx);
 
         if (exits.size > 1) {
           return undefined;
@@ -1483,6 +1347,8 @@ var Analysis = (function () {
   }
 
   /*
+   * FIXME: Stale code.
+   *
    * Returns an updated context if a lookup switch is inducible, undefined otherwise.
    *
    * A lookup switch is inducible iff:
@@ -1492,20 +1358,16 @@ var Analysis = (function () {
    *    the exit node.
    *  - For each case body, its break node is the exit node above.
    */
-  function inducibleLookupSwitch(block, cx, nestedExits, info) {
-    if (block.end.op !== OP_lookupswitch) {
+  function inducibleLookupSwitch(block, cx, info) {
+    if (!block.end || block.end.op !== OP_lookupswitch) {
       return undefined;
     }
 
     var targets = block.end.targets;
     var cases = [];
-    var exits = exitSet(targets, nestedExits);
+    var exits = exitSet(targets, cx);
 
     exits.subtractArray(targets);
-
-    if (exits.size > 0 && nestedExits.size > 0) {
-      pruneNestedExits(exits, nestedExits);
-    }
 
     if (exits.size > 1) {
       return undefined;
@@ -1526,7 +1388,7 @@ var Analysis = (function () {
         continue;
       }
 
-      exits = exitSet([c], nestedExits);
+      exits = exitSet(c, cx);
 
       if (exits.size > 1) {
         return undefined;
@@ -1581,9 +1443,9 @@ var Analysis = (function () {
    */
   function induceControlTree(root, chokeOnClusterfucks) {
     var conts = [];
-    var nestedExits = new ExitsStack();
     var cx = new ExtractionContext();
     var block = root;
+    var prevBlock;
 
     const K_LOOP_BODY = 0;
     const K_LOOP = 1;
@@ -1593,16 +1455,40 @@ var Analysis = (function () {
     const K_SEQ = 5;
     const K_SWITCH_CASE = 6;
     const K_SWITCH = 7;
+    const K_LABEL_CASE = 8;
+    const K_LABEL_SWITCH = 9;
 
     var loopBodyCx = null;
     for (;;) {
       var v = [];
 
       pushing:
-      while (block !== cx.exit) {
-        if (!block) {
-          v.push(Control.Return);
-          break;
+      while (block) {
+        if (block.size) {
+          var blocks = block.flatten();
+          var exit = exitSet(blocks, cx);
+          cxx = exit ? cx.update({ exit: exit }) : cx;
+          block = blocks.pop();
+          conts.push({ kind: K_LABEL_CASE,
+                       label: block.blockId,
+                       cases: [],
+                       pendingCases: blocks,
+                       join: cxx.exit,
+                       joinCx: cx,
+                       cx: cxx });
+          cx = cxx;
+          continue;
+        }
+
+        if (cx.exit) {
+          if (block === cx.exit) {
+            break;
+          }
+
+          if (cx.exit.size && cx.exit.has(block)) {
+            v.push(new Control.SetLabel(block));
+            break;
+          }
         }
 
         if (loopBodyCx) {
@@ -1614,42 +1500,34 @@ var Analysis = (function () {
           cx = loopBodyCx;
           loopBodyCx = null;
         } else {
-          if (block === cx.break) {
+          if (cx.loop && !cx.loop.has(block)) {
             v.push(Control.Break);
+            v.push(new Control.SetLabel(block));
+            cx.loopExit.add(block);
             break;
           }
 
-          if (block === cx.continue && cx.continue !== cx.exit) {
+          if (block === cx.continue) {
             v.push(Control.Continue);
             break;
           }
 
-          if (nestedExits.exits.has(block)) {
-            v.push(nestedExits.exits.get(block));
-            break;
-          }
-
           if (block.loop) {
-            if (cxx = inducibleLoop(block, cx, nestedExits)) {
-              conts.push({ kind: K_LOOP_BODY,
-                           next: cxx.break,
-                           cx: cx });
-              nestedExits.push(cxx);
-              loopBodyCx = cxx;
-              continue;
-            }
-
-            /* A non-inducible loop can't be anything else. */
-            if (chokeOnClusterfucks) {
-              throw new Unanalyzable("has non-inducible loop clusterfuck on " + block.blockId);
-            }
-            v.push(new Control.Clusterfuck(block));
-            break;
+            /* |loopExit| will be added to as we leave the loop. */
+            cxx = cx.update({ loopExit: new BlockDict(),
+                              continue: block,
+                              loop: block.loop,
+                              exit: block });
+            loopBodyCx = cxx;
+            conts.push({ kind: K_LOOP_BODY,
+                         loopExit: cxx.loopExit,
+                         cx: cx });
+            continue;
           }
         }
 
         var info = {};
-        if (cxx = inducibleIf(block, cx, nestedExits, info)) {
+        if (cxx = inducibleIf(block, cx, info)) {
           conts.push({ kind: K_IF_THEN,
                        cond: block,
                        negated: info.negated,
@@ -1659,7 +1537,8 @@ var Analysis = (function () {
                        cx: cxx });
           block = info.then;
           cx = cxx;
-        } else if (cxx = inducibleSpinedSwitch(block, cx, nestedExits, info)) {
+          /*
+        } else if (cxx = inducibleSpinedSwitch(block, cx, info)) {
           var c;
           var cases = [];
           while (c = info.cases.pop()) {
@@ -1671,7 +1550,6 @@ var Analysis = (function () {
                            join: cxx.break,
                            joinCx: cx,
                            cx: cxx });
-              nestedExits.push(cxx);
               block = c.body;
               cx = cxx.update({ exit: c.exit });
               break;
@@ -1679,7 +1557,7 @@ var Analysis = (function () {
 
             cases.push(new Control.Case(c.cond));
           }
-        } else if (cxx = inducibleLookupSwitch(block, cx, nestedExits, info)) {
+        } else if (cxx = inducibleLookupSwitch(block, cx, info)) {
           var c;
           var cases = [];
           while (c = info.cases.pop()) {
@@ -1692,14 +1570,14 @@ var Analysis = (function () {
                            join: cxx.break,
                            joinCx: cx,
                            cx: cxx });
-              nestedExits.push(cxx);
               block = c.body;
               cx = cxx.update({ exit: c.exit });
               break;
             }
 
             cases.push(new Control.Case(null, c.index));
-          }
+            }
+          */
         } else if (inducibleSeq(block, cx)) {
           conts.push({ kind: K_SEQ,
                        block: block });
@@ -1713,16 +1591,19 @@ var Analysis = (function () {
         }
       }
 
+      if (!block) {
+        v.push(Control.Return);
+      }
+
       var k;
       popping:
       while (k = conts.pop()) {
         switch (k.kind) {
         case K_LOOP_BODY:
-          block = k.next;
+          block = k.loopExit.size <= 1 ? k.loopExit.choose() : k.loopExit;
           cx = k.cx;
           conts.push({ kind: K_LOOP,
                        body: maybeSequence(v) });
-          nestedExits.pop();
           break popping;
         case K_LOOP:
           v.push(new Control.Loop(k.body));
@@ -1758,6 +1639,9 @@ var Analysis = (function () {
         case K_IF:
           v.push(new Control.If(k.cond, k.then, k.else, k.negated, v));
           break;
+        case K_SEQ:
+          v.push(k.block);
+          break;
         case K_SWITCH_CASE:
           k.cases.push(new Control.Case(k.cond, k.index, maybeSequence(v)));
 
@@ -1786,14 +1670,34 @@ var Analysis = (function () {
           conts.push({ kind: K_SWITCH,
                        det: k.det,
                        cases: k.cases });
-          nestedExits.pop();
           break popping;
         case K_SWITCH:
           k.cases.reverse();
           v.push(new Control.Switch(k.det, k.cases));
           break;
-        case K_SEQ:
-          v.push(k.block);
+        case K_LABEL_CASE:
+          k.cases.push(new Control.LabelCase(k.label, maybeSequence(v)));
+          block = k.pendingCases.pop();
+          cx = k.cx;
+          if (block) {
+            conts.push({ kind: K_LABEL_CASE,
+                         label: block.blockId,
+                         cases: k.cases,
+                         pendingCases: k.pendingCases,
+                         join: k.join,
+                         joinCx: k.joinCx,
+                         cx: k.cx });
+            break popping;
+          }
+
+          block = k.join;
+          cx = k.joinCx;
+          conts.push({ kind: K_LABEL_SWITCH,
+                       cases: k.cases });
+          break popping;
+        case K_LABEL_SWITCH:
+          k.cases.reverse();
+          v.push(new Control.LabelSwitch(k.cases));
           break;
         default:
           unexpected();
@@ -1923,10 +1827,12 @@ var Analysis = (function () {
 
       var bytecodes = this.bytecodes;
       assert(bytecodes);
-      this.lastBlockId = detectBasicBlocks(bytecodes);
+      this.nextBlockId = detectBasicBlocks(bytecodes);
       var blocks = normalizeReachableBlocks(bytecodes[0], false);
       computeDominance(blocks);
       this.blocks = blocks;
+
+      this.ranAnalyzeControlFlow = true;
     },
 
     reanalyzeControlFlow: function reanalyzeControlFlow(redoms) {
@@ -1944,17 +1850,102 @@ var Analysis = (function () {
       this.blocks = blocks;
     },
 
+    /*
+     * Split irreducible SCCs recursively.
+     *
+     * Algorithm from [3].
+     *
+     * [3] Unger and Mueller. Handling Irreducible Loops: Optimized Node
+     *     Splitting vs DJ-Graphs.
+     */
+    splitLoops: function splitLoops() {
+      if (!this.ranAnalyzeControlFlow) {
+        this.analyzeControlFlow();
+      }
+
+      var options = this.options;
+
+      var irreducibles = findIrreducibleLoops(this.blocks);
+      if (irreducibles.size <= 0) {
+        this.ranSplitLoops = true;
+        return;
+      }
+
+      if (!options.splitLoops) {
+        throw new Unanalyzable("has irreducible loops");
+      }
+
+      var worklist = levelSort(irreducibles.flatten());
+      var top;
+      while (top = worklist.pop()) {
+        irreducibles.remove(top);
+
+        var sccs = findUnnaturalSCCs(top);
+        if (sccs.length === 0) {
+          continue;
+        }
+
+        var redoms = new BlockDict();
+        var topDomain = [];
+        for (var i = 0, j = sccs.length; i < j; i++) {
+          var scc = sccs[i];
+          var head = maxWeightNode(top, scc);
+          if (head) {
+            var clones = splitSCC(head, scc, redoms, this.nextBlockId);
+            this.nextBlockId += clones.length;
+            topDomain.push.apply(topDomain, scc);
+            topDomain.push.apply(topDomain, clones);
+          }
+        }
+
+        this.reanalyzeControlFlow(redoms);
+
+        irreducibles.union(findIrreducibleLoops(topDomain));
+        worklist = levelSort(irreducibles.flatten());
+      }
+
+      this.ranSplitLoops = true;
+    },
+
+    /*
+     * Mark all natural loops with a set of all nodes in the loop body.
+     */
+    markNaturalLoops: function markNaturalLoops() {
+      if (!this.ranSplitLoops) {
+        this.splitLoops();
+      }
+
+      var blocks = this.blocks;
+      var naturals = new BlockDict();
+
+      for (var i = 0, j = blocks.length; i < j; i++) {
+        var block = blocks[i];
+        var spbacks = block.spbacks;
+        if (!spbacks) {
+          continue;
+        }
+
+        var succs = block.succs;
+        for (var k = 0, l = succs.length; k < l; k++) {
+          var s = succs[k];
+
+          if (spbacks.has(s) && block.dominatedBy(s)) {
+            s.makeLoopHead(block);
+            naturals.add(s);
+          }
+        }
+      }
+
+      this.ranMarkNaturalLoops = true;
+    },
+
     restructureControlFlow: function restructureControlFlow() {
+      if (!this.ranMarkNaturalLoops) {
+        this.markNaturalLoops();
+      }
+
       var options = this.options;
       var root = this.bytecodes[0];
-      var irreducibles = findLoops(this.blocks, false);
-      if (irreducibles.size > 0) {
-        if (!options.splitLoops) {
-          throw new Unanalyzable("has irreducible loops");
-        }
-        splitLoops(this, irreducibles);
-      }
-      findLoops(this.blocks, true);
 
       computeFrontiers(this.blocks);
       this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
@@ -1968,53 +1959,43 @@ var Analysis = (function () {
         return node.blockId;
       }
 
-      function traceBlockHeader(writer, code) {
-        if (!code.dominator) {
+      function traceBlock(block) {
+        if (!block.dominator) {
           writer.enter("block unreachable {");
         } else {
-          writer.enter("block " + code.blockId +
-                       (code.succs.length > 0 ? " -> " +
-                        code.succs.map(blockId).join(",") : "") + " {");
+          writer.enter("block " + block.blockId +
+                       (block.succs.length > 0 ? " -> " +
+                        block.succs.map(blockId).join(",") : "") + " {");
 
-          writer.writeLn("preds".padRight(' ', 10) + code.preds.map(blockId).join(","));
-          writer.writeLn("idom".padRight(' ', 10) + code.dominator.blockId);
-          writer.writeLn("frontier".padRight(' ', 10) + "{" + code.frontier.flatten().map(blockId).join(",") + "}");
-          writer.writeLn("weight".padRight(' ', 10) + (code.weight || "0"));
+          writer.writeLn("preds".padRight(' ', 10) + block.preds.map(blockId).join(","));
+          writer.writeLn("idom".padRight(' ', 10) + block.dominator.blockId);
+          writer.writeLn("domcs".padRight(' ', 10) + block.dominatees.map(blockId).join(","));
+          writer.writeLn("frontier".padRight(' ', 10) + "{" + block.frontier.flatten().map(blockId).join(",") + "}");
+          writer.writeLn("weight".padRight(' ', 10) + (block.weight || "0"));
         }
 
-        if (code.loop) {
-          writer.writeLn("loop".padRight(' ', 10) + "{" + code.loop.flatten().map(blockId).join(",") + "}");
+        if (block.loop) {
+          writer.writeLn("loop".padRight(' ', 10) + "{" + block.loop.flatten().map(blockId).join(",") + "}");
         }
 
         writer.writeLn("");
+
+        if (block.position >= 0) {
+          for (var bci = block.position; bci <= block.end.position; bci++) {
+            writer.writeLn(("" + bci).padRight(' ', 5) + bytecodes[bci]);
+          }
+        } else {
+          writer.writeLn("abstract");
+        }
+
+        writer.leave("}");
       }
+
+      var bytecodes = this.bytecodes;
 
       writer.enter("analysis {");
       writer.enter("cfg {");
-
-      var ranControlFlow = !!this.bytecodes[0].succs;
-
-      for (var pc = 0, end = this.bytecodes.length; pc < end; pc++) {
-        /*
-         * FIXME: Doesn't display split blocks.
-         */
-        var code = this.bytecodes[pc];
-
-        if (ranControlFlow && code.succs) {
-          if (pc > 0) {
-            writer.leave("}");
-          }
-
-          traceBlockHeader(writer, code);
-        }
-
-        writer.writeLn(("" + pc).padRight(' ', 5) + code);
-
-        if (ranControlFlow && pc === end - 1) {
-          writer.leave("}");
-        }
-      }
-
+      this.blocks.forEach(traceBlock);
       writer.leave("}");
 
       if (this.controlTree) {
@@ -2058,6 +2039,10 @@ var Analysis = (function () {
                             var level = root.level;
                             var currentLevel = [];
                             while (n = worklist.shift()) {
+                              if (!n.level) {
+                                continue;
+                              }
+
                               if (level != n.level) {
                                 writer.writeLn("{rank=same; " +
                                                currentLevel.map(function (n) {
