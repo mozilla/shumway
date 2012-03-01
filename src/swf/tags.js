@@ -1,5 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var DEFINE_BITMAP = {
+  type: "'bitmap'",
+  id: UI16,
+  $format: UI8,
+  width: UI16,
+  height: UI16,
+  colorTableSize: ['format===3', [UI8]],
+  data: BINARY(0)
+};
 var DEFINE_FONT = {
   id: UI16,
   $$firstOffset: UI16,
@@ -122,6 +131,19 @@ var DEFINE_FONT2 = {
       count: 'kerningCount'
     }
   }]]
+};
+var DEFINE_JPEG = {
+  type: '"jpeg"',
+  id: UI16,
+  $0: ['tag>21', [
+    {
+      $$alphaDataOffset: UI32,
+      deblock: ['tag===90', [FIXED8]],
+      imgData: BINARY('alphaDataOffset'),
+      alphaData: BINARY(0)
+    },
+    { imgData: BINARY(0) }
+  ]]
 };
 var DEFINE_SHAPE = {
   type: '"shape"',
