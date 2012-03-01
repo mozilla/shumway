@@ -7,7 +7,6 @@ var tagHandler = {
   /* PlaceObject */                   4: PLACE_OBJECT,
   /* RemoveObject */                  5: REMOVE_OBJECT,
   /* DefineButton */                  7: undefined,
-  /* SetBackgroundColor */            9: RGB,
   /* DefineBits */                    6: DEFINE_JPEG,
   /* JPEGTables */                    8: DEFINE_JPEG,
   /* SetBackgroundColor */            9: SET_BACKGROUND_COLOR,
@@ -144,7 +143,7 @@ SWF.parse = function(buffer, listener) {
   if (listener.onstart)
     listener.onstart(swf);
 
-	swf.tags = [];
+  swf.tags = [];
   readTags(swf, stream, version, listener.onprogress);
   
   if (listener.oncomplete)
