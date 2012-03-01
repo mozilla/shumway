@@ -372,8 +372,8 @@ var GRADIENT = {
     count: 'count'
   },
   $1: ['type===19', [{
-  	focalPoint: FIXED8,
-	focalPointMorph: ['isMorph', [FIXED8]]
+    focalPoint: FIXED8,
+    focalPointMorph: ['isMorph', [FIXED8]]
   }]]
 };
 var FILL_GRADIENT = {
