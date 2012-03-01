@@ -82,12 +82,13 @@ function definePrototype(dictionary, obj, ctx) {
 }
 
 SWF.embed = function (file, container, onstart, oncomplete) {
-  var root = null;
+  var root;
   var frameRate;
   var pframes = [];
   var dictionary = { };
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
+  var result;
   startWorking(file, function(obj) {
     if (obj) {
       if (!root) {
@@ -111,10 +112,11 @@ SWF.embed = function (file, container, onstart, oncomplete) {
           canvas.style.background = obj.bgcolor;
         pframes.push(obj);
       }
-    } else if (oncomplete) {
-      oncomplete(root, obj);
+      result = obj;
     } else {
       renderMovieClip(root, frameRate, ctx);
+      if (oncomplete)
+        oncomplete(root, result);
     }
   });
 }
