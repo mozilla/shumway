@@ -4,15 +4,6 @@ var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
-function defer(func, startTime) {
-  if (!startTime)
-    startTime = +new Date;
-  else if (+new Date - startTime > 1000)
-    fail('timeout', 'defer');
-  if (!func())
-    setTimeout(defer, 0, func, startTime);
-}
-
 function definePrototype(dictionary, obj, ctx) {
   var id = obj.id;
   var proto;

@@ -22,7 +22,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         ++n;
       }
       var depths = keys(pframe);
-      complete(frame, pframe, depths);
+      defer(complete, [frame, pframe, depths]);
     }
   }
 
@@ -37,10 +37,8 @@ var MovieClipPrototype = function(obj, dictionary) {
           var id = entry.id;
           if (id) {
             if (id in dictionary) {
-              if (dictionary[id] == undefined) {
-                setTimeout(complete, 0, frame, pframe, depths);
-                return;
-              }
+              if (dictionary[id] == undefined)
+                return false;
               var proto = dictionary[id];
               if (proto.constructor !== Object)
                 var character = proto.constructor();
@@ -75,6 +73,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         break;
       ++framesLoaded;
     }
+    return true;
   }
 
   this.constructor = function MovieClip() {

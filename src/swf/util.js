@@ -19,6 +19,14 @@ function assert(cond, msg, context) {
   if (!cond)
     fail(msg, context);
 }
+function defer(func, args, startTime) {
+  if (!startTime)
+    startTime = +new Date;
+  else if (+new Date - startTime > 1000)
+    fail('timeout', 'defer');
+  if (!func.apply(null, args || []))
+    setTimeout(defer, 0, func, args, startTime);
+}
 
 function colorToString(color) {
   return 'rgba(' + [
