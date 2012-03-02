@@ -31,47 +31,6 @@ var globalObject = function () {
 }();
 
 /**
- * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
- * every slotted trait we create two properties: one to hold the actual value, one to hold 
- * a getter/setter that reads the actual value. For instance, for the slot trait "7:Age" we
- * generated three properties: "S7" to hold the actual value, and an "Age" getter/setter pair
- * that mutate the "S7" property. The invariant we want to maintain is [obj.S7 === obj.Age].
- * 
- * This means that there are two ways to get to any slotted trait, a fast way and a slow way.
- * I guess we should profile and find out which type of access is more common (by slotId or 
- * by name). 
- */
-function applyTraits(obj, traits) {
-  function setProperty(name, slotId, value) {
-    if (slotId) {
-      obj["S" + slotId] = value;
-      Object.defineProperty(obj, name, {
-        get: function () {
-          return obj["S" + slotId];
-        },
-        set: function (val) {
-          return obj["S" + slotId] = val;
-        }
-      });
-    } else {
-      obj[name] = value;
-    }
-  }
-  traits.forEach(function (trait) {
-    if (trait.isSlot()) {
-      setProperty(trait.name.name, trait.slotId, trait.value);
-    } else if (trait.isMethod()) {
-      var closure = createFunction(trait.method, new Scope(null, obj));
-      setProperty(trait.name.name, undefined, closure);
-    } else if (trait.isClass()) {
-      setProperty(trait.name.name, trait.slotId, null);
-    } else {
-      assert(false, trait);
-    }
-  });
-}
-
-/**
  * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
  * scope holds a reference to a scope [object] (which may exist on multipe scope chains, thus preventing
  * us from chaining the scope objects together directly).
@@ -136,7 +95,7 @@ var Runtime = (function () {
 
   runtime.prototype.createActivation = function (method) {
     var obj = {};
-    applyTraits(obj, method.traits);
+    this.applyTraits(obj, method.traits);
     return obj;
   };
   
@@ -223,8 +182,8 @@ var Runtime = (function () {
     }
     
     cls.prototype = {};
-    applyTraits(cls.prototype, cls.instanceTraits);
-    applyTraits(cls, classInfo.traits);
+    this.applyTraits(cls.prototype, cls.instanceTraits);
+    this.applyTraits(cls, classInfo.traits);
     
     /* Call the static constructor. */
     this.createFunction(classInfo.init, this.scope).call(cls);
@@ -236,6 +195,47 @@ var Runtime = (function () {
   Object.construct = function () { /* NOP */ };
   Object.instanceTraits = [];
   
+  /**
+   * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
+   * every slotted trait we create two properties: one to hold the actual value, one to hold 
+   * a getter/setter that reads the actual value. For instance, for the slot trait "7:Age" we
+   * generated three properties: "S7" to hold the actual value, and an "Age" getter/setter pair
+   * that mutate the "S7" property. The invariant we want to maintain is [obj.S7 === obj.Age].
+   * 
+   * This means that there are two ways to get to any slotted trait, a fast way and a slow way.
+   * I guess we should profile and find out which type of access is more common (by slotId or 
+   * by name). 
+   */
+  runtime.prototype.applyTraits = function applyTraits(obj, traits) {
+    function setProperty(name, slotId, value) {
+      if (slotId) {
+        obj["S" + slotId] = value;
+        Object.defineProperty(obj, name, {
+          get: function () {
+            return obj["S" + slotId];
+          },
+          set: function (val) {
+            return obj["S" + slotId] = val;
+          }
+        });
+      } else {
+        obj[name] = value;
+      }
+    }
+    traits.forEach(function (trait) {
+      if (trait.isSlot()) {
+        setProperty(trait.name.name, trait.slotId, trait.value);
+      } else if (trait.isMethod()) {
+        var closure = this.createFunction(trait.method, new Scope(null, obj));
+        setProperty(trait.name.name, undefined, closure);
+      } else if (trait.isClass()) {
+        setProperty(trait.name.name, trait.slotId, null);
+      } else {
+        assert(false, trait);
+      }
+    }.bind(this));
+  };
+  
   return runtime;
 })();
 
@@ -245,7 +245,7 @@ var Runtime = (function () {
 function createEntryPoint(abc, global) {
   assert (!abc.hasOwnProperty("runtime"));
   abc.runtime = new Runtime(abc);
-  applyTraits(global, abc.lastScript.traits);
+  abc.runtime.applyTraits(global, abc.lastScript.traits);
   return abc.runtime.createFunction(abc.lastScript.entryPoint, null);
 }
 
