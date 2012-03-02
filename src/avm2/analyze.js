@@ -1360,7 +1360,16 @@ var Analysis = (function () {
           loopBodyCx = null;
         } else {
           if (cx.loop && !cx.loop.has(block)) {
-            v.push(Control.Break);
+            if (cx.break) {
+              /*
+               * We are breaking out of a loop inside another break
+               * environment, like a switch, so we should break directly out
+               * of the loop.
+               */
+              v.push(new Control.LabeledBreak(cx.continue));
+            } else {
+              v.push(Control.Break);
+            }
             v.push(new Control.SetLabel(block));
             cx.loopExit.add(block);
             break;
