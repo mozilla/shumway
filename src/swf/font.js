@@ -132,7 +132,7 @@ function defineFont(tag, dictionary) {
   var maxContours = 0;
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
-  var resolution = tag.resolution;
+  var resolution = tag.resolution || 1;
   var offset = 16;
   var i = 0;
   var code;
@@ -156,32 +156,32 @@ function defineFont(tag, dictionary) {
         if (record.isStraight) {
           if (record.isGeneral) {
             flags += '\x01';
-            var dx = record.deltaX/ resolution;
-            var dy = -record.deltaY/ resolution;
+            var dx = record.deltaX / resolution;
+            var dy = -record.deltaY / resolution;
             xCoordinates += toString16(dx);
             yCoordinates += toString16(dy);
             x += dx;
             y += dy;
           } else if (record.isVertical) {
             flags += '\x11';
-            var dy = -record.deltaY/ resolution;
+            var dy = -record.deltaY / resolution;
             yCoordinates += toString16(dy);
             y += dy;
           } else {
             flags += '\x21';
-            var dx = record.deltaX/ resolution;
+            var dx = record.deltaX / resolution;
             xCoordinates += toString16(dx);
             x += dx;
           }
         } else {
           flags += '\x00';
-          var cx = record.controlDeltaX/ resolution;
-          var cy = -record.controlDeltaY/ resolution;
+          var cx = record.controlDeltaX / resolution;
+          var cy = -record.controlDeltaY / resolution;
           xCoordinates += toString16(cx);
           yCoordinates += toString16(cy);
           flags += '\x01';
-          var dx = record.anchorDeltaX/ resolution;
-          var dy = -record.anchorDeltaY/ resolution;
+          var dx = record.anchorDeltaX / resolution;
+          var dy = -record.anchorDeltaY / resolution;
           xCoordinates += toString16(dx);
           yCoordinates += toString16(dy);
           ++endPoint;
@@ -197,8 +197,8 @@ function defineFont(tag, dictionary) {
             endPtsOfContours += toString16(endPoint - 1);
           }
           flags += '\x01';
-          var moveX = record.moveX/ resolution;
-          var moveY = -record.moveY/ resolution;
+          var moveX = record.moveX / resolution;
+          var moveY = -record.moveY / resolution;
           var dx = moveX - x;
           var dy = moveY - y;
           xCoordinates += toString16(dx);
@@ -346,14 +346,17 @@ function defineFont(tag, dictionary) {
     '\x00\x00' // maxComponentDepth
   ;
 
+  var uniqueId = (+new Date) + '';
+  var fontName = tag.name;
+  var psName = fontName.replace(/ /g, '');
   var strings = [
     tag.copyright || 'Original licence', // 0. Copyright
-    tag.name, // 1. Font family
+    fontName, // 1. Font family
     'Unknown', // 2. Font subfamily
-    tag.id, // 3. Unique ID
-    tag.name, // 4. Full font name
+    uniqueId, // 3. Unique ID
+    fontName, // 4. Full font name
     '1.0', // 5. Version
-    tag.name.replace(/ /g, ''), // 6. Postscript name
+    psName, // 6. Postscript name
     'Unknown', // 7. Trademark
     'Unknown', // 8. Manufacturer
     'Unknown' // 9. Designer
@@ -427,7 +430,7 @@ function defineFont(tag, dictionary) {
   return {
     type: 'font',
     id: tag.id,
-    name: tag.name,
+    name: psName + uniqueId,
     codes: tag.codes,
     data: otf
   };

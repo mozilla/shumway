@@ -11,8 +11,6 @@ function definePrototype(dictionary, obj, ctx) {
   case 'font':
     var charset = fromCharCode.apply(null, obj.codes);
     if (charset) {
-      var ctx = (document.createElement('canvas')).getContext('2d');
-      var defaultWidth = ctx.measureText(charset).width;
       style.insertRule(
         '@font-face{' +
           'font-family:"' + obj.name + '";' +
@@ -20,12 +18,13 @@ function definePrototype(dictionary, obj, ctx) {
         '}',
         style.cssRules.length
       );
-      ctx.font = obj.name;
+      var ctx = (document.createElement('canvas')).getContext('2d');
+      ctx.font = '1024px "' + obj.name + '"';
+      var defaultWidth = ctx.measureText(charset).width;
       defer(function() {
-        if (ctx.measureText(charset).width !== defaultWidth) {
-          dictionary[id] = obj;
+        if (ctx.measureText(charset).width === defaultWidth)
           return true;
-        }
+        dictionary[id] = obj;
       });
     }
     break;

@@ -27,7 +27,7 @@ function defineText(tag, dictionary) {
     if (record.hasFont) {
       var font = dictionary[record.fontId];
       var codes = font.codes;
-      cmds.push('font="' + record.fontHeight + 'px ' + font.name + '"');
+      cmds.push('font="' + record.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(record.fontId);
     }
     if (record.hasColor)
