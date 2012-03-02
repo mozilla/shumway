@@ -64,35 +64,14 @@ var Control = (function () {
     }
   };
 
-  /*
-   * Switches Overview
-   *
-   * Because asc can generate both ``spined'' and lookup switches, not all
-   * induced switches will look the same.
-   *
-   * If a Control.Switch has the .determinant property, its determinant is the
-   * block that ends in the lookupswitch, and all its cases have the .index
-   * property for which integer index it matches.
-   *
-   * Otherwise it is a spined switch, and at this point we do not know what
-   * the actual determinant is, and all its cases will instead of the .cond
-   * property, which is the block that branches on the determinant.
-   *
-   * If during compilation it is discovered than not the same determinant is
-   * used, some kind of fixup will be needed.
-   */
-
-  function Case(cond, index, body) {
-    this.cond = cond;
+  function Case(index, body) {
     this.index = index;
     this.body = body;
   }
 
   Case.prototype = {
     trace: function (writer) {
-      if (this.cond) {
-        writer.writeLn("case #" + this.cond.blockId + ":");
-      } else if (this.index !== undefined && this.index !== null) {
+      if (this.index >= 0) {
         writer.writeLn("case " + this.index + ":");
       } else {
         writer.writeLn("default:");
@@ -337,12 +316,6 @@ var Bytecode = (function () {
       }
     },
 
-    leadsTo: function leadsTo(target) {
-      return (target && ((this === target) ||
-                         //(this.frontier.size === 1) &&
-                         (this.frontier.has(target))));
-    },
-
     dominatedBy: function dominatedBy(d) {
       assert(this.dominator);
 
@@ -366,6 +339,7 @@ var Bytecode = (function () {
     },
 
     toString: function toString() {
+      if (this.blockId >= 0) return this.blockId;
       var opdesc = opcodeTable[this.op];
       var str = opdesc.name.padRight(' ', 20);
       var i, j;
@@ -633,6 +607,7 @@ var Analysis = (function () {
         for (var i = 0, j = targets.length; i < j; i++) {
           id = targets[i].makeBlockHead(id);
         }
+        id = bytecodes[pc + 1].makeBlockHead(id);
         break;
 
       case OP_jump:
@@ -979,7 +954,7 @@ var Analysis = (function () {
           pendingNodes.pop();
 
           var scc = [];
-          var loop = null;
+          var loop;
           do {
             var u = unconnectedNodes.pop();
             assigned[u.blockId] = true;
@@ -1035,7 +1010,7 @@ var Analysis = (function () {
     }
 
     var maxWeight = 0;
-    var max = null;
+    var max;
     for (var i = 0, j = msed.length; i < j; i++) {
       var node = msed[i];
       if (node.weight > maxWeight) {
@@ -1155,28 +1130,35 @@ var Analysis = (function () {
     }
   }
 
+  function pruneExit(blocks, exit) {
+    if (exit) {
+      if (exit.size) {
+        blocks.subtract(exit);
+      } else {
+        blocks.remove(exit);
+      }
+    }
+  }
+
+  function isExit(block, exit) {
+    return exit && (block === exit || (exit.size && exit.has(block)));
+  }
+
   function exitSet(body, cx) {
     var exits = new BlockDict();
 
     for (var i = 0, j = body.length; i < j; i++) {
       var b = body[i];
 
-      if (cx.exit) {
-        if (b === cx.exit || (cx.exit.size && cx.exit.has(b))) {
-          continue;
-        }
+      if (isExit(b, cx.exit) || isExit(b, cx.break)) {
+        continue;
       }
 
       exits.union(b.frontier);
     }
 
-    if (cx.exit) {
-      if (cx.exit.size) {
-        exits.subtract(cx.exit)
-      } else {
-        exits.remove(cx.exit);
-      }
-    }
+    pruneExit(cx.exit);
+    pruneExit(cx.break);
 
     cx.continue && exits.remove(cx.continue);
     cx.loop && exits.intersect(cx.loop);
@@ -1188,242 +1170,106 @@ var Analysis = (function () {
     var succs = block.succs;
 
     if (succs.length !== 2) {
-      return undefined;
+      return null;
     }
 
     var branch1 = succs[0];
     var branch2 = succs[1];
-    var exit = exitSet([branch1, branch2], cx);
 
-    /* Simple heuristic to stop some long if-else cascades. */
-    var via1 = false;
-    var via2 = false;
-    if (cx.loop) {
-      via1 = !cx.loop.has(branch1);
-      via2 = !cx.loop.has(branch2);
-    }
-
-    if (via1) {
+    /*
+     * Try heuristic for triangle ifs first as to avoid unnecessary
+     * labeling.
+     */
+    if (branch1.frontier.size === 1 &&
+        branch1.frontier.has(branch2)) {
       info.then = branch1;
       info.negated = false;
       exit = branch2;
-    } else if (via2) {
+    } else if (branch2.frontier.size === 1 &&
+               branch2.frontier.has(branch1)) {
       info.then = branch2;
       info.negated = true;
       exit = branch1;
     } else {
-      info.then = branch1;
-      info.else = branch2;
-      info.negated = false;
+      var exit = exitSet([branch1, branch2], cx);
+
+      /* Simple heuristic to stop some long if-else cascades. */
+      var via1 = false;
+      var via2 = false;
+      if (cx.loop) {
+        via1 = !cx.loop.has(branch1);
+        via2 = !cx.loop.has(branch2);
+      }
+
+      if (via1) {
+        info.then = branch1;
+        info.negated = false;
+        exit = branch2;
+      } else if (via2) {
+        info.then = branch2;
+        info.negated = true;
+        exit = branch1;
+      } else {
+        info.then = branch1;
+        info.else = branch2;
+        info.negated = false;
+      }
     }
 
     return exit ? cx.update({ exit: exit }) : cx;
   }
 
-  /*
-   * FIXME: Stale code.
-   *
-   * Returns an updated context if a spined switch is inducible, undefined
-   * otherwise.
-   *
-   * For switches with < 5 cases, asc emits a ``spined switch'', i.e. instead
-   * of a lookupswitch, a series of two-way conditionals is emitted along a
-   * ``spine''. If there are fallthroughts, the spined switch is not
-   * expressible using source-level ifs.
-   *
-   * A spined switch is inducible iff:
-   *  - It has a spine along which each spine node has a frontier of size 2.
-   *  - Each node that dangles off the spine has a frontier of size at most 1.
-   *  - The very last spine node is an inducible if.
-   *  - There is only a single break node. (See below)
-   *
-   * Each node that dangles off the spine is the body of a case, and each
-   * spine node is a case. If one body leads to the next body or is the next
-   * body, it is a fallthrough. Else, it is assumed to lead to the break
-   * node. If a different break node is found further down the spine, the
-   * switch is not structured.
-   */
-  function inducibleSpinedSwitch(block, cx, info) {
-    var currentCase, prevCase, defaultCase, possibleBreak;
-    var spine = block, prevSpine;
-    var cases = [];
-
-    while (spine) {
-      if (!spine.end || spine.end.op !== OP_ifstricteq) {
-        return undefined;
-      }
-
-      var succs = spine.succs;
-
-      if (succs.length !== 2) {
-        return undefined;
-      }
-
-      var branch1 = succs[0];
-      var branch2 = succs[1];
-
-      var cxx, iinfo = {};
-      if (branch1.frontier.size === 2) {
-        prevSpine = spine;
-        spine = branch1;
-        currentCase = branch2;
-      } else if (branch2.frontier.size === 2) {
-        prevSpine = spine;
-        spine = branch2;
-        currentCase = branch1;
-      } else if (cxx = inducibleIf(spine, cx, iinfo)) {
-        if (iinfo.negated) {
-          currentCase = iinfo.else ? iinfo.else : iinfo.exit;
-          defaultCase = iinfo.then;
-        } else {
-          currentCase = iinfo.then;
-          defaultCase = iinfo.else ? iinfo.else : iinfo.exit;
-        }
-
-        if (!possibleBreak) {
-          possibleBreak = cxx.exit;
-        }
-
-        if (possibleBreak !== cxx.exit) {
-          return undefined;
-        }
-      } else {
-        return undefined;
-      }
-
-      if (prevCase === currentCase) {
-        cases.push({ cond: prevSpine, exit: currentCase });
-      } else if (prevCase) {
-        var exits = exitSet(prevCase, cx);
-
-        if (exits.size > 1) {
-          return undefined;
-        }
-
-        var exit;
-        if (exits.size === 1) {
-          exit = exits.choose();
-
-          if (exit === currentCase) {
-            cases.push({ cond: prevSpine, body: prevCase, exit: currentCase });
-          } else {
-            if (!possibleBreak) {
-              possibleBreak = exit;
-            }
-
-            if (exit !== possibleBreak) {
-              return undefined;
-            }
-
-            cases.push({ cond: prevSpine, body: prevCase });
-          }
-        } else {
-          cases.push({ cond: prevSpine, body: prevCase });
-        }
-      }
-
-      if (defaultCase) {
-        if (currentCase === defaultCase) {
-          cases.push({ cond: spine });
-        } else {
-          cases.push({ cond: spine, body: currentCase });
-        }
-        break;
-      }
-
-      prevCase = currentCase;
-    }
-
-    if (!defaultCase) {
-      return undefined;
-    }
-
-    if (defaultCase !== possibleBreak) {
-      cases.push({ body: defaultCase });
-    }
-    info.cases = cases;
-
-    return cx.update({ break: possibleBreak });
-  }
-
-  /*
-   * FIXME: Stale code.
-   *
-   * Returns an updated context if a lookup switch is inducible, undefined otherwise.
-   *
-   * A lookup switch is inducible iff:
-   *  - It ends in a lookupswitch opcode.
-   *  - The union of all its targets' frontiers, after removing any targets
-   *    themselves that might be in the union, is of size at most 1. This is
-   *    the exit node.
-   *  - For each case body, its break node is the exit node above.
-   */
   function inducibleLookupSwitch(block, cx, info) {
     if (!block.end || block.end.op !== OP_lookupswitch) {
-      return undefined;
+      return null;
     }
 
-    var targets = block.end.targets;
     var cases = [];
-    var exits = exitSet(targets, cx);
-
-    exits.subtractArray(targets);
-
-    if (exits.size > 1) {
-      return undefined;
-    }
-
+    var targets = block.end.targets;
+    var exits = new BlockDict();
     var defaultCase = targets.top();
-    var mainExit = exits.choose();
 
-    for (var i = 0, j = targets.length - 1; i < j; i++) {
-      var c = targets[i];
+    cases.unshift({ body: defaultCase });
 
-      if (c === defaultCase) {
+    var c = defaultCase;
+    var nextCase = defaultCase;
+    for (var i = targets.length - 2; i >= 0; i--) {
+      if (targets[i] === defaultCase) {
         continue;
       }
 
-      if (i < j - 1 && c === targets[i + 1]) {
-        cases.push({ index: i });
+      nextCase = c;
+      c = targets[i];
+
+      if (c === nextCase) {
+        cases.unshift({ index: i });
         continue;
       }
 
-      exits = exitSet(c, cx);
-
-      if (exits.size > 1) {
-        return undefined;
-      }
-
-      var exit = exits.choose();
-
-      if (exit) {
-        if (exit === mainExit) {
-          cases.push({ index: i, body: c });
+      var cexit = exitSet([c], cx);
+      if (nextCase && cexit) {
+        if (cexit === nextCase) {
+          cases.unshift({ index: i, body: c, exit: nextCase });
+        } else if (cexit.has(nextCase)) {
+          cexit.remove(nextCase);
+          exits.union(cexit);
+          cases.unshift({ index: i, body: c, exit: nextCase });
         } else {
-          cases.push({ index: i, body: c, exit: exit });
+          exits.add(cexit);
+          cases.unshift({ index: i, body: c });
         }
       } else {
-        cases.push({ index: i, body: c });
+        cases.unshift({ index: i, body: c });
       }
     }
 
-    cases.push({ body: defaultCase });
     info.cases = cases;
 
-    return cx.update({ break: mainExit });
-  }
-
-  /*
-   * Returns true if a sequenced block is inducible, false otherwise.
-   *
-   * A sequence is inducible if the block has at most one successor.
-   */
-  function inducibleSeq(block, cx) {
-    if (block.succs.length > 1) {
-      return false;
+    var exit = exits.size <= 1 ? exits.choose() : exits;
+    if (exit) {
+      return cx.update({ break: exit, exit: exit });
     }
-
-    return true;
+    return cx.update({ break: exit });
   }
 
   function maybeSequence(v) {
@@ -1458,7 +1304,7 @@ var Analysis = (function () {
     const K_LABEL_CASE = 8;
     const K_LABEL_SWITCH = 9;
 
-    var loopBodyCx = null;
+    var loopBodyCx;
     for (;;) {
       var v = [];
 
@@ -1473,7 +1319,7 @@ var Analysis = (function () {
                        label: block.blockId,
                        cases: [],
                        pendingCases: blocks,
-                       join: cxx.exit,
+                       join: exit,
                        joinCx: cx,
                        cx: cxx });
           cx = cxx;
@@ -1486,6 +1332,19 @@ var Analysis = (function () {
           }
 
           if (cx.exit.size && cx.exit.has(block)) {
+            v.push(new Control.SetLabel(block));
+            break;
+          }
+        }
+
+        if (cx.break) {
+          if (block === cx.break) {
+            v.push(Control.Break);
+            break;
+          }
+
+          if (cx.break.size && cx.break.has(block)) {
+            v.push(Control.Break);
             v.push(new Control.SetLabel(block));
             break;
           }
@@ -1532,31 +1391,11 @@ var Analysis = (function () {
                        cond: block,
                        negated: info.negated,
                        else: info.else,
-                       join: cxx.exit,
+                       join: (cx.exit === cxx.exit ? null : cxx.exit),
                        joinCx: cx,
                        cx: cxx });
           block = info.then;
           cx = cxx;
-          /*
-        } else if (cxx = inducibleSpinedSwitch(block, cx, info)) {
-          var c;
-          var cases = [];
-          while (c = info.cases.pop()) {
-            if (c.body) {
-              conts.push({ kind: K_SWITCH_CASE,
-                           cond: c.cond,
-                           cases: cases,
-                           pendingCases: info.cases,
-                           join: cxx.break,
-                           joinCx: cx,
-                           cx: cxx });
-              block = c.body;
-              cx = cxx.update({ exit: c.exit });
-              break;
-            }
-
-            cases.push(new Control.Case(c.cond));
-          }
         } else if (cxx = inducibleLookupSwitch(block, cx, info)) {
           var c;
           var cases = [];
@@ -1567,21 +1406,27 @@ var Analysis = (function () {
                            index: c.index,
                            cases: cases,
                            pendingCases: info.cases,
-                           join: cxx.break,
+                           join: (cx.exit === cxx.exit ? null : cxx.exit),
                            joinCx: cx,
                            cx: cxx });
               block = c.body;
-              cx = cxx.update({ exit: c.exit });
+              cx = c.exit ? cxx.update({ exit: c.exit }) : cxx;
               break;
             }
 
-            cases.push(new Control.Case(null, c.index));
-            }
-          */
-        } else if (inducibleSeq(block, cx)) {
+            cases.push(new Control.Case(c.index));
+          }
+        } else if (block.succs.length <= 1) {
           conts.push({ kind: K_SEQ,
                        block: block });
-          block = block.succs[0] || null;
+
+          if (block.end.op === OP_returnvoid ||
+              block.end.op === OP_returnvalue) {
+            v.push(Control.Return);
+            break;
+          }
+
+          block = block.succs[0];
         } else {
           if (chokeOnClusterfucks) {
             throw new Unanalyzable("has clusterfuck on " + block.blockId);
@@ -1589,10 +1434,6 @@ var Analysis = (function () {
           v.push(new Control.Clusterfuck(block));
           break;
         }
-      }
-
-      if (!block) {
-        v.push(Control.Return);
       }
 
       var k;
@@ -1643,16 +1484,15 @@ var Analysis = (function () {
           v.push(k.block);
           break;
         case K_SWITCH_CASE:
-          k.cases.push(new Control.Case(k.cond, k.index, maybeSequence(v)));
+          k.cases.push(new Control.Case(k.index, maybeSequence(v)));
 
           var c;
           while (c = k.pendingCases.pop()) {
             if (c.body) {
               block = c.body;
-              cx = k.cx.update({ exit: c.exit });
+              cx = c.exit ? k.cx.update({ exit: c.exit }) : k.cx;
               conts.push({ kind: K_SWITCH_CASE,
                            det: k.det,
-                           cond: c.cond,
                            index: c.index,
                            cases: k.cases,
                            pendingCases: k.pendingCases,
@@ -1662,7 +1502,7 @@ var Analysis = (function () {
               break popping;
             }
 
-            k.cases.push(new Control.Case(c.cond, c.index));
+            k.cases.push(new Control.Case(c.index));
           }
 
           block = k.join;
