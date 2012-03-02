@@ -22,56 +22,54 @@ var MovieClipPrototype = function(obj, dictionary) {
         ++n;
       }
       var depths = keys(pframe);
-      defer(complete, [frame, pframe, depths]);
-    }
-  }
-
-  function complete(frame, pframe, depths) {
-    var depth;
-    while (depth = depths[0]) {
-      if (+depth) {
-        var entry = pframe[depth];
-        depth -= 0x4001;
-        if (entry) {
-          var initObj = entry.move ? frame[depth] : { };
-          var id = entry.id;
-          if (id) {
-            if (id in dictionary) {
-              if (dictionary[id] === null)
-                return true;
-              var proto = dictionary[id];
-              if (proto.constructor !== Object)
-                var character = proto.constructor();
-              else
-                var character = create(proto);
+      defer(function() {
+        var depth;
+        while (depth = depths[0]) {
+          if (+depth) {
+            var entry = pframe[depth];
+            depth -= 0x4001;
+            if (entry) {
+              var initObj = entry.move ? frame[depth] : { };
+              var id = entry.id;
+              if (id) {
+                if (id in dictionary) {
+                  if (dictionary[id] === null)
+                    return true;
+                  var proto = dictionary[id];
+                  if (proto.constructor !== Object)
+                    var character = proto.constructor();
+                  else
+                    var character = create(proto);
+                } else {
+                  fail('unknown object id ' + id, 'movieclip');
+                }
+              } else {
+                var character = create(initObj);
+              }
+              var initXform = initObj.transform || { };
+              character.transform = {
+                matrix: entry.matrix || initXform.matrix,
+                colorTransform: entry.cxform || initXform.colorTransform
+              };
+              if (character.draw)
+                character.ratio = entry.ratio || 0;
+              frame[depth] = character;
             } else {
-              fail('unknown object id ' + id, 'movieclip');
+              frame[depth] = entry;
             }
-          } else {
-            var character = create(initObj);
           }
-          var initXform = initObj.transform || { };
-          character.transform = {
-            matrix: entry.matrix || initXform.matrix,
-            colorTransform: entry.cxform || initXform.colorTransform
-          };
-          if (character.draw)
-            character.ratio = entry.ratio || initObj.ratio || 0;
-          frame[depth] = character;
-        } else {
-          frame[depth] = entry;
+          depths.shift();
         }
-      }
-      depths.shift();
-    }
-    delete frame.incomplete;
-    ++framesLoaded;
-    var i = framesLoaded;
-    var frm;
-    while (frm = timeline[i++]) {
-      if (frm.incomplete)
-        break;
-      ++framesLoaded;
+        delete frame.incomplete;
+        ++framesLoaded;
+        var i = framesLoaded;
+        var frm;
+        while (frm = timeline[i++]) {
+          if (frm.incomplete)
+            break;
+          ++framesLoaded;
+        }
+      });
     }
   }
 

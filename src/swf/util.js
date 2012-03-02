@@ -19,13 +19,13 @@ function assert(cond, msg, context) {
   if (!cond)
     fail(msg, context);
 }
-function defer(func, args, startTime) {
+function defer(func, startTime) {
   if (!startTime)
     startTime = +new Date;
   else if (+new Date - startTime > 1000)
     fail('timeout', 'defer');
-  if (func.apply(null, args || []))
-    setTimeout(defer, 0, func, args, startTime);
+  if (func())
+    setTimeout(defer, 0, func, startTime);
 }
 
 function colorToString(color) {
