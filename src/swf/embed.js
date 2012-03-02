@@ -77,11 +77,12 @@ function definePrototype(dictionary, obj, ctx) {
 
 SWF.embed = function (file, container, onstart, oncomplete) {
   var root;
-  var frameRate;
   var pframes = [];
   var dictionary = { };
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
+  var frameRate;
+  var plays;
   var result;
   startWorking(file, function(obj) {
     if (obj) {
@@ -98,19 +99,21 @@ SWF.embed = function (file, container, onstart, oncomplete) {
         frameRate = obj.frameRate;
         if (onstart)
           onstart(root);
-      }
-      if (obj.id) {
+      } else if (obj.id) {
         definePrototype(dictionary, obj, ctx);
       } else if (obj.type === 'pframe') {
         if (obj.bgcolor)
           canvas.style.background = obj.bgcolor;
         pframes.push(obj);
+        if (!plays) {
+          renderMovieClip(root, frameRate, ctx);
+          plays = true;
+        }
+      } else {
+        result = obj;
       }
-      result = obj;
-    } else {
-      renderMovieClip(root, frameRate, ctx);
-      if (oncomplete)
-        oncomplete(root, result);
+    } else if (oncomplete) {
+      oncomplete(root, result);
     }
   });
-}
+};
