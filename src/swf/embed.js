@@ -6,7 +6,6 @@ var style = document.styleSheets[0];
 
 function definePrototype(dictionary, obj, ctx) {
   var id = obj.id;
-  var proto;
   switch (obj.type) {
   case 'font':
     var charset = fromCharCode.apply(null, obj.codes);
@@ -32,13 +31,19 @@ function definePrototype(dictionary, obj, ctx) {
     var img = new Image;
     img.src = 'data:' + obj.mimeType + ';base64,' + btoa(obj.data);
     img.onload = function() {
-      proto = create(obj);
+      var proto = create(obj);
       proto.img = img;
       dictionary[id] = proto;
     };
     break;
   case 'movieclip':
-    proto = new MovieClipPrototype(obj, dictionary);
+    defer(function () {
+      for (var i = 1; i < id; ++i) {
+        if (i in dictionary && dictionary[i] === null)
+          return true;
+      }
+      dictionary[id] = new MovieClipPrototype(obj, dictionary);
+    });
     break;
   case 'shape':
     var dependencies;
@@ -50,25 +55,24 @@ function definePrototype(dictionary, obj, ctx) {
         var objId;
         while (objId = dependencies[i++]) {
           if (objId in dictionary) {
-            if (dictionary[objId] == undefined)
-              return false;
+            if (dictionary[objId] === null)
+              return true;
             dependencies.pop();
           } else {
             fail('unknown object id ' + objId, 'embed');
           }
         }
       }
-      proto = create(obj);
+      var proto = create(obj);
       proto.draw = (new Function('d,c,r',
         'with(c){' + obj.data + '}'
       )).bind(null, dictionary);
       dictionary[id] = proto;
-      return true;
     });
     break;
   }
   if (!(id in dictionary))
-    dictionary[id] = proto;
+    dictionary[id] = null;
 }
 
 SWF.embed = function (file, container, onstart, oncomplete) {

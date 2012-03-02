@@ -37,8 +37,8 @@ var MovieClipPrototype = function(obj, dictionary) {
           var id = entry.id;
           if (id) {
             if (id in dictionary) {
-              if (dictionary[id] == undefined)
-                return false;
+              if (dictionary[id] === null)
+                return true;
               var proto = dictionary[id];
               if (proto.constructor !== Object)
                 var character = proto.constructor();
@@ -73,7 +73,6 @@ var MovieClipPrototype = function(obj, dictionary) {
         break;
       ++framesLoaded;
     }
-    return true;
   }
 
   this.constructor = function MovieClip() {
