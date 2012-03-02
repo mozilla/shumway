@@ -81,15 +81,34 @@ var Compiler = (function () {
   Control.Clusterfuck.prototype.compile = function (mcx, state) {
     notImplemented();
   };
+  
+  Control.SetLabel.prototype.compile = function (mcx, state) {
+    return {statements: ["var $label = " + this.target.blockId + ";"], state: state};
+  };
+  
+  Control.LabelSwitch.prototype.compile = function (mcx, state) {
+    var statements = [];
+    var firstCase = true;
+    this.cases.forEach(function (item) {
+      statements.push((firstCase ? "if" : "else if") + "($label === " + item.label + ") {")
+      firstCase = false;
+      if (item.body) {
+        var result = item.body.compile(mcx, state);
+        statements.push(result.statements);
+      }
+      statements.push("}");
+    });
+    return {statements: statements, state: state};
+  };
 
   Control.Seq.prototype.compile = function (mcx, state) {
     if (controlWriter) {
       controlWriter.enter("Sequence {");
     }
     var statements = [];
-    this.body.forEach(function (block) {
+    this.body.forEach(function (item) {
       controlWriter && controlWriter.writeLn("entryState: " + state);
-      var result = block.compile(mcx, state);
+      var result = item.compile(mcx, state);
       state = result.state; 
       statements.push(result.statements);
     });
@@ -97,6 +116,7 @@ var Compiler = (function () {
       controlWriter.writeLn("exitState:  " + state);
       controlWriter.leave("}");
     }
+    // TODO: Figure out exit state.
     return {statements: statements, state: state};
   };
 
@@ -157,9 +177,12 @@ var Compiler = (function () {
     var cr = this.cond.compile(mcx, state);
     controlWriter && controlWriter.leave("}");
     
-    controlWriter && controlWriter.enter("Then {");
-    var tr = this.then.compile(mcx, cr.state.clone());
-    controlWriter && controlWriter.leave("}");
+    var tr = null;
+    if (this.then) {
+      controlWriter && controlWriter.enter("Then {");
+      tr = this.then.compile(mcx, cr.state.clone());
+      controlWriter && controlWriter.leave("}");
+    }
     
     var er = null;
     if (this.else) {
@@ -167,16 +190,21 @@ var Compiler = (function () {
       er = this.else.compile(mcx, cr.state.clone());
       controlWriter && controlWriter.leave("}");
     }
+    
+    assert (tr || er);
+    
     var condition = this.negated ? cr.condition.negate() : cr.condition;
     var statements = cr.statements;
     statements.push("if (" + condition + ") {");
-    statements.push(new Indent(tr.statements));
+    if (tr) {
+      statements.push(new Indent(tr.statements));
+    }
     if (er) {
       statements.push("} else {");
       statements.push(new Indent(er.statements));
     }
     statements.push("}");
-    var exitState = tr.state;
+    var exitState = (tr || er).state;
     if (controlWriter) {
       controlWriter.writeLn("exitState:  " + exitState);
       controlWriter.leave("}");
@@ -190,44 +218,32 @@ var Compiler = (function () {
   var State = (function () {
     var stateCounter = 0;
     function state() {
-      this.local = [];
       this.stack = [];
       this.scope = [];
       this.id = stateCounter ++;
     }
     state.prototype.clone = function clone() {
       var s = new State();
-      s.local = this.local.slice(0);
       s.stack = this.stack.slice(0);
       s.scope = this.scope.slice(0);
       return s;
-    };
-    state.prototype.pushLocal = function pushLocal(index) {
-      this.stack.push(this.local[index]);
     };
     state.prototype.callExpression = function callExpression(name, argumentCount) {
       var arguments = this.stack.popMany(argumentCount);
       this.stack.push(name + "(" + arguments.join(",") + ")");
     };
-
     state.prototype.trace = function trace(writer) {
       writer.writeLn("id: " + stateCounter)
       writer.enter("scope:");
       writer.writeArray(this.scope);
       writer.outdent();
-      writer.enter("local:");
-      writer.writeArray(this.local);
-      writer.outdent();
       writer.enter("stack:");
       writer.writeArray(this.stack);
       writer.outdent();
     };
-    
     state.prototype.toString = function toString() {
-      return "id: " + this.id + ", scope: [" + this.scope.join(", ") + 
-             "], local: [" + this.local.join(", ") + "], stack: [" + this.stack.join(", ") + "]"; 
+      return "id: " + this.id + ", scope: [" + this.scope.join(", ") + "], stack: [" + this.stack.join(", ") + "]"; 
     };
-    
     return state;
   })();
 
@@ -621,8 +637,6 @@ var Compiler = (function () {
       this.local.push(new Variable(getLocalVariableName(i)));
     }
     
-    this.state.local = this.local.slice(0);
-    
     this.temporary = [];
     for (var i = 0; i < 10; i++) {
       this.temporary.push(new Variable("s" + i))
@@ -786,7 +800,7 @@ var Compiler = (function () {
     var methods = abc.methods;
     var multinames = abc.constantPool.multinames;
 
-    var multiname, args, value, obj, res, ns, name, classInfo, baseClass;
+    var multiname, args, value, obj, ns, name;
 
     function createMultiname(multiname) {
       if (multiname.isRuntime()) {
@@ -1007,7 +1021,7 @@ var Compiler = (function () {
           emitStatement(obj + "[" + name + "] = " + value);
         }
         break;
-      case OP_getlocal:       state.pushLocal(bc.index); break;
+      case OP_getlocal:       pushValue(local[bc.index]); break;
       case OP_setlocal:       setLocal(bc.index); break;
       case OP_getglobalscope: 
         pushValue(new GetGlobalScope());
@@ -1150,7 +1164,7 @@ var Compiler = (function () {
       case OP_getlocal1:
       case OP_getlocal2:
       case OP_getlocal3:
-        state.pushLocal(op - OP_getlocal0);
+        pushValue(local[op - OP_getlocal0]);
         break;
       case OP_setlocal0:
       case OP_setlocal1:
@@ -1191,7 +1205,6 @@ var Compiler = (function () {
     }
 
     flushStack();
-    // flushLocals();
     
     return {state: state, condition: condition, statements: statements};
   };
