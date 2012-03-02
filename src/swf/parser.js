@@ -107,7 +107,7 @@ function readTags(context, stream, version, onprogress) {
       }
       if (onprogress)
         onprogress(context);
-    } else if (onprogress && item.id) {
+    } else if (onprogress && 'id' in item) {
       onprogress(context);
     }
   } while (tag);

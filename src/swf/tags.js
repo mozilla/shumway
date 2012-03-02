@@ -134,7 +134,7 @@ var DEFINE_FONT2 = {
 };
 var DEFINE_JPEG = {
   type: '"jpeg"',
-  id: UI16,
+  id: ['tag===8', ['0', UI16]],
   $0: ['tag>21', [
     {
       $$alphaDataOffset: UI32,

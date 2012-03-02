@@ -6,13 +6,13 @@ function cast(tags, dictionary) {
   var i = 0;
   var tag;
   while (tag = tags[i++]) {
-    if (tag.id) {
+    if ('id' in tag) {
       switch (tag.type) {
       case 'font':
         var obj = defineFont(tag, dictionary);
         break;
       case 'jpeg':
-        var obj = defineJpeg(tag);
+        var obj = defineJpeg(tag, dictionary);
         break;
       case 'shape':
         var obj = defineShape(tag, dictionary);
@@ -29,8 +29,7 @@ function cast(tags, dictionary) {
         var obj = defineText(tag, dictionary);
         break;
       default:
-        dictionary[tag.id] = tag;
-        continue;
+        var obj = tag;
       }
       dictionary[tag.id] = obj;
       continue;
