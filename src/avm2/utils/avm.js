@@ -8,7 +8,6 @@ var traceGraphViz = options.register(new Option("traceGraphViz", "v", false, "tr
 var execute = options.register(new Option("execute", "x", false, "execute"));
 var help = options.register(new Option("help", "h", false, "prints help"));
 
-load("../avm2-runtime.js");
 load("../DataView.js");
 load("../constants.js");
 load("../opcodes.js");
@@ -16,6 +15,7 @@ load("../parser.js");
 load("../disassembler.js");
 load("../analyze.js");
 load("../compiler.js");
+load("../runtime.js");
 load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
@@ -65,7 +65,7 @@ if (traceGraphViz.value) {
 
 if (execute.value) {
   try {
-    executeAbc(abc);
+    executeAbc(abc, globalObject);
   } catch(e) {
     print(e);
     print("");

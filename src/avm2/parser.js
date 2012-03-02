@@ -919,13 +919,6 @@ var AbcFile = (function () {
     get lastScript() {
       assert (this.scripts.length > 0);
       return this.scripts[this.scripts.length - 1];
-    },
-    /**
-     * Returns the entry point method for this Abc file. According to the spec, this is the
-     * method associated with the last script in the file.
-     */
-    get entryPoint() {
-      return this.lastScript.entryPoint;
     }
   };
 
