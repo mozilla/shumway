@@ -9,7 +9,6 @@ var splice = [].splice;
 var isArray = Array.isArray;
 var keys = Object.keys;
 var push = [].push;
-var defineProperty = Object.defineProperty;
 var create = Object.create;
 
 function fail(msg, context) {
