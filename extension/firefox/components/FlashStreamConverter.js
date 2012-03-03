@@ -91,6 +91,14 @@ ChromeActions.prototype = {
     oXHR.open("GET", data, true);
     oXHR.responseType = "arraybuffer";
 
+    var element = this.window.frameElement;
+    if (element) {
+      // Setting the referer uri, some site doing checks if swf is embedded
+      // on the original page.
+      var documentURI = element.ownerDocument.location.href;
+      oXHR.setRequestHeader("Referer", documentURI);
+    }
+
     oXHR.onreadystatechange = function (oEvent) {
       if (oXHR.readyState === 4) {
         if (oXHR.status === 200) {
