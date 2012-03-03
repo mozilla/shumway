@@ -32,7 +32,7 @@ var globalObject = function () {
 
 /**
  * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
- * scope holds a reference to a scope [object] (which may exist on multipe scope chains, thus preventing
+ * scope holds a reference to a scope [object] (which may exist on multiple scope chains, thus preventing
  * us from chaining the scope objects together directly).
  * 
  * Scope Operations:
@@ -48,9 +48,15 @@ var globalObject = function () {
  * 
  * The "scope stack" for a method always starts off as empty and methods push and pop scopes on their scope
  * stack explicitly. If a property is not found on the current scope stack, it is then looked up 
- * in the [savedScope]. To emulate this we always initialize the [scope] of a method to its [savedScope] when
- * the method is entered using "var scope = savedScope;", the savedScope is actually stored in the object 
- * constants table, so it's more like "var scope = C[112];". 
+ * in the [savedScope]. To emulate this we actually wrap every generated function in a closure, such as
+ * 
+ *  function fnClosure(scope) {
+ *    return function fn() {
+ *      ... scope;
+ *    };
+ *  }
+ *  
+ * When functions are created, we bind the function to the current scope, using fnClosure.bind(null, this)();
  */
 var Scope = (function () {
   function scope(parent, object) {
@@ -100,15 +106,15 @@ var Runtime = (function () {
   };
   
   runtime.prototype.createFunction = function (method, scope)  {
-    if (method.compiledMethod) {
-      return method.compiledMethod;
+    if (method.compiledMethodClosure) {
+      return method.compiledMethodClosure.bind(null, scope)();
     }
     
     method.analysis = new Analysis(method, { chokeOnClusterfucks: true,
                                              splitLoops: true });
     method.analysis.analyzeControlFlow();
     method.analysis.restructureControlFlow();
-    var result = this.compiler.compileMethod(method, scope);
+    var result = this.compiler.compileMethod(method);
 
     var parameters = method.parameters.map(function (p) {
       return p.name;
@@ -131,19 +137,26 @@ var Runtime = (function () {
     // TODO: Use function constructurs,
     // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
     
-    // Eval hack to give generated functions proper names so that stack traces are helpful.
+    /* Hook to set breakpoints in compiled code. */
     var body = flatten(result.statements, "");
     if (functionCount == 13) {
       body = "stop();" + body;
     }
-    eval("function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }")
-    method.compiledMethod = eval("fn" + (functionCount++));
+    
+    // Eval hack to give generated functions proper names so that stack traces are helpful.
+    eval("function fnClosure" + functionCount + "(" + SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }")
+    method.compiledMethodClosure = eval("fnClosure" + functionCount);
     
     if (traceLevel.value > 0) {
-      print('\033[92m' + method.compiledMethod + '\033[0m');
+      /* Unfortunately inner functions are not pretty-printed by the JS engine, so here we recompile the
+       * inner function by itself just for pretty printing purposes.
+       */
+      eval ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
+      print('\033[92m' + eval("fnSource" + functionCount) + '\033[0m');
     }
     
-    return method.compiledMethod;
+    functionCount ++;
+    return method.compiledMethodClosure.bind(null, scope)();
   };
   
   /**

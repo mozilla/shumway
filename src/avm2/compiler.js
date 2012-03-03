@@ -9,6 +9,8 @@ var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpr
 
 var $C = [];
 
+var SCOPE_NAME = "$S";
+
 function objectId(obj) {
   assert(obj);
   if (obj.hasOwnProperty("objectId")) {
@@ -392,7 +394,7 @@ var Compiler = (function () {
       this.strict = strict;
     };
     findProperty.prototype.toString = function toString() {
-      return new Call("scope", "findProperty", [objectConstant(this.multiname), this.strict]).toString();
+      return new Call(SCOPE_NAME, "findProperty", [objectConstant(this.multiname), this.strict]).toString();
     };
     findProperty.prototype.isEquivalent = function isEquivalent(other) {
       return other instanceof findProperty && this.multiname === other.multiname && this.strict === other.strict;
@@ -467,7 +469,7 @@ var Compiler = (function () {
   var GetGlobalScope = (function () {
     function getGlobalScope() {}
     getGlobalScope.prototype.toString = function toString() {
-      return "scope.global.object";
+      return SCOPE_NAME + ".global.object";
     }
     getGlobalScope.prototype.isEquivalent = function isEquivalent(other) {
       return other instanceof getGlobalScope;
@@ -616,10 +618,9 @@ var Compiler = (function () {
   /**
    * Local state for compiling a method.
    */
-  function MethodCompilerContext(compiler, method, scope) {
+  function MethodCompilerContext(compiler, method) {
     this.compiler = compiler;
     this.method = method;
-    this.scope = scope;
     this.worklist = [method.analysis.controlTree];
     this.state = new State();
     this.variablePool = new VariablePool();
@@ -658,10 +659,6 @@ var Compiler = (function () {
     if (this.temporary.length > 1) {
       this.header.push("var " + this.temporary.slice(0).join(", ") + ";");
     }
-    
-    if (scope) {
-      this.header.push("var scope = " + objectConstant(scope));
-    }
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -689,7 +686,6 @@ var Compiler = (function () {
       statements.push(obj + ".S" + index + " = " + value +";");
     }
 
-    var scope = this.scope;
     var local = this.local;
     var temporary = this.temporary;
 
@@ -821,7 +817,7 @@ var Compiler = (function () {
     }
     
     function classObject() {
-      return objectConstant(scope) + ".object";
+      return SCOPE_NAME + ".object";
     }
     
     function superClassObject() {
@@ -878,10 +874,10 @@ var Compiler = (function () {
       case OP_lookupswitch:   notImplemented(); break;
       case OP_pushwith:
         obj = state.stack.pop();
-        emitStatement("scope = new Scope" + argumentList("scope", obj));
+        emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
         break;
       case OP_popscope:
-        emitStatement("scope = scope.parent");
+        emitStatement(SCOPE_NAME + " = " + SCOPE_NAME + ".parent");
         break;
       case OP_nextname:
         // TODO: Temporary implementation, totally broken. 
@@ -911,7 +907,7 @@ var Compiler = (function () {
       case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
       case OP_pushscope:
         obj = state.stack.pop();
-        emitStatement("scope = new Scope" + argumentList("scope", obj));
+        emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
         state.scope.push(obj);
         break;
       case OP_pushnamespace:  notImplemented(); break;
@@ -930,7 +926,7 @@ var Compiler = (function () {
       case OP_sf32:           notImplemented(); break;
       case OP_sf64:           notImplemented(); break;
       case OP_newfunction:
-        pushValue(objectConstant(abc) + ".runtime.createFunction" + argumentList(objectConstant(methods[bc.index]), "scope"));
+        pushValue(objectConstant(abc) + ".runtime.createFunction" + argumentList(objectConstant(methods[bc.index]), SCOPE_NAME));
         break;
       case OP_call:
         args = state.stack.popMany(bc.argCount);
@@ -989,7 +985,7 @@ var Compiler = (function () {
         pushValue("activation");
         break;
       case OP_newclass:
-        pushValue(objectConstant(abc) + ".runtime.createClass" + argumentList(objectConstant(abc.classes[bc.index]), state.stack.pop(), "scope"));
+        pushValue(objectConstant(abc) + ".runtime.createClass" + argumentList(objectConstant(abc.classes[bc.index]), state.stack.pop(), SCOPE_NAME));
         break;
       case OP_getdescendants: notImplemented(); break;
       case OP_newcatch:       notImplemented(); break;
@@ -1027,7 +1023,7 @@ var Compiler = (function () {
         pushValue(new GetGlobalScope());
         break;
       case OP_getscopeobject:
-        obj = "scope";
+        obj = SCOPE_NAME;
         for (var i = 0; i < bc.index; i++) {
           obj += ".parent";
         }
@@ -1214,9 +1210,9 @@ var Compiler = (function () {
     this.abc = abc;
   };
 
-  compiler.prototype.compileMethod = function compileMethod(method, scope) {
+  compiler.prototype.compileMethod = function compileMethod(method) {
     assert(method.analysis);
-    var mcx = new MethodCompilerContext(this, method, scope);
+    var mcx = new MethodCompilerContext(this, method);
     var statements = mcx.header;
     
     var body = method.analysis.controlTree.compile(mcx, mcx.state).statements;
