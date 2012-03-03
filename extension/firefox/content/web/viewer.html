@@ -38,6 +38,7 @@
 
         function runViewer() {
           var res = FirefoxCom.request('getUrl', null);
+          console.log("params " + FirefoxCom.request('getParams', null));
           FirefoxCom.request('loadFile', res);
         }
 

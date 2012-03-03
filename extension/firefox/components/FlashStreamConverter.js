@@ -53,6 +53,27 @@ ChromeActions.prototype = {
   getUrl: function getUrl(data) {
     return this.url;
   },
+  getParams: function getParams() {
+    var element = this.window.frameElement;
+    var params = {};
+    if (element) {
+      var tagName = element.nodeName;
+      if (tagName == 'EMBED') {
+        for (var i = 0; i < element.attributes.length; ++i) {
+          params[element.attributes[i].localName] = element.attributes[i].nodeValue;
+        }
+      } else {
+        for (var i = 0; i < element.childNodes.length; ++i) {
+          var paramElement = element.childNodes[i];
+          if (paramElement.nodeType != 1 ||
+              paramElement.nodeName != 'PARAM') continue;
+
+          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+        }
+      }
+    }
+    return JSON.stringify(params);
+  },
   loadFile: function loadFile(data) {
     var url = data;
     if (url != this.url) {
@@ -154,7 +175,6 @@ FlashStreamConverter.prototype = {
 
     let actions = Object.create(ChromeActions.prototype);
     actions.url = originalURI.spec;
-
 
     // Setup a global listener waiting for the next DOM to be created and verfiy
     // that its the one we want by its URL. When the correct DOM is found create
