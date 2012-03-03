@@ -59,7 +59,9 @@ if (typeof window === 'undefined') {
   self.onmessage = function(event) {
     if (typeof event.data === 'object') {
       var file = event.data;
-      if (self.FileReaderSync) {
+      if (file instanceof Uint8Array) {
+        process(file.buffer);
+      } else if (self.FileReaderSync) {
         var reader = new FileReaderSync;
         var result = reader.readAsArrayBuffer(file);
         process(result);
@@ -82,7 +84,8 @@ if (typeof window === 'undefined') {
     }
   };
 } else {
-  var worker = new Worker('../worker.js');
+  var workerPath = 'workerPath' in SWF ? SWF.workerPath : '../worker.js';
+  var worker = new Worker(workerPath);
   function startWorking(file, callback) {
     worker.onmessage = function(event) {
       callback(event.data);
