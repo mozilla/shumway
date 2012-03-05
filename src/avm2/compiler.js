@@ -10,6 +10,7 @@ var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpr
 var $C = [];
 
 var SCOPE_NAME = "$S";
+var SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
 
 function objectId(obj) {
   assert(obj);
@@ -659,6 +660,8 @@ var Compiler = (function () {
     if (this.temporary.length > 1) {
       this.header.push("var " + this.temporary.slice(0).join(", ") + ";");
     }
+    
+    this.header.push("var " + SCOPE_NAME + " = " + SAVED_SCOPE_NAME + ";");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -689,11 +692,13 @@ var Compiler = (function () {
     var local = this.local;
     var temporary = this.temporary;
 
-    if (block.dominator === block) {
-      block.cse = new CSE(null, this.variablePool); 
-    } else {
-      assert (block.dominator.cse, "Dominator should have a CSE map.");
-      block.cse = new CSE(block.dominator.cse, this.variablePool);
+    if (enableCSE.value) {
+      if (block.dominator === block) {
+        block.cse = new CSE(null, this.variablePool); 
+      } else {
+        assert (block.dominator.cse, "Dominator should have a CSE map.");
+        block.cse = new CSE(block.dominator.cse, this.variablePool);
+      }
     }
     
     function expression(operator) {
@@ -711,7 +716,11 @@ var Compiler = (function () {
       if (typeof value === "string") {
         value = new Literal(value);
       }
-      state.stack.push(value);
+      if (enableCSE.value && value instanceof FindProperty) {
+        cseValue(value)
+      } else {
+        state.stack.push(value);
+      }
     }
     
     function setLocal(index) {
@@ -777,7 +786,7 @@ var Compiler = (function () {
       statements.push("/* " + comment + " */");
     }
     
-    function pushExpression(value) {
+    function cseValue(value) {
       assert (value);
       if (block.cse) {
         var otherValue = block.cse.get(value, true);
@@ -817,7 +826,7 @@ var Compiler = (function () {
     }
     
     function classObject() {
-      return SCOPE_NAME + ".object";
+      return SAVED_SCOPE_NAME + ".object";
     }
     
     function superClassObject() {
@@ -931,7 +940,8 @@ var Compiler = (function () {
       case OP_call:
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue(new Call(state.stack.pop(), "call", [obj].concat(args)));
+        // pushValue(new Call(state.stack.pop(), "call", [obj].concat(args)));
+        pushValue(state.stack.pop() + argumentList.apply(null, args));
         break;
       case OP_construct:
         args = state.stack.popMany(bc.argCount);
@@ -945,7 +955,8 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue(new Call(new GetProperty(obj, multiname), "call", [obj].concat(args)));
+        pushValue(new GetProperty(obj, multiname) + argumentList.apply(null, args));
+        // pushValue(new Call(new GetProperty(obj, multiname), "call", [obj].concat(args)));
         break;
       case OP_returnvoid:     emitStatement("return"); break;
       case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;

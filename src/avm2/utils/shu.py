@@ -188,7 +188,7 @@ class Test(Command):
           for test in tests:
               print str(count) + " of " + str(total) + ": " + test,
               count += 1
-              shuResult = execute("js -m -n avm.js -x " + test, int(4))
+              shuResult = execute("js -m -n avm.js -x -cse " + test, int(4))
               avmResult = execute("avmshell " + test, int(4))
               
               if not shuResult or not avmResult:

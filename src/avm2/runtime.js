@@ -144,7 +144,7 @@ var Runtime = (function () {
     }
     
     // Eval hack to give generated functions proper names so that stack traces are helpful.
-    eval("function fnClosure" + functionCount + "(" + SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }")
+    eval("function fnClosure" + functionCount + "(" + SAVED_SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }")
     method.compiledMethodClosure = eval("fnClosure" + functionCount);
     
     if (traceLevel.value > 0) {
