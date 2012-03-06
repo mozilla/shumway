@@ -41,7 +41,7 @@ proto.ensure = function(length) {
       inflateBlock(sstream.bytes, sstream, this.bytes, this);
   }
 };
-proto.remain = function() {
+proto.remaining = function() {
   return this.end - this.pos;
 };
 proto.substream = function(begin, end) {
