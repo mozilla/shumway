@@ -1,11 +1,5 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function toString16(val) {
-  return fromCharCode((val >> 8) & 0xff, val & 0xff);
-}
-function toString32(val) {
-  return toString16(val >> 16) + toString16(val);
-}
 function maxPower2(num) {
   var maxPower = 0;
   var val = num;

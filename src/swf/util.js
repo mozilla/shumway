@@ -30,3 +30,9 @@ function defer(func, startTime) {
 function toStringRgba(color) {
   return 'rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')';
 }
+function toString16(val) {
+  return fromCharCode((val >> 8) & 0xff, val & 0xff);
+}
+function toString32(val) {
+  return toString16(val >> 16) + toString16(val);
+}
