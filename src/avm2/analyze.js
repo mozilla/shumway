@@ -1639,6 +1639,70 @@ var Analysis = (function () {
     }
   }
 
+  function transformBreaks(root, breakTo) {
+    if (root === Control.Break) {
+      return new Control.LongBreak(breakTo);
+    }
+
+    var worklist = [root];
+    var node;
+
+    /* It doesn't matter how we iterate this. */
+    while (node = worklist.pop()) {
+      switch (node.kind) {
+      case Control.SEQ:
+        var body = node.body;
+        for (var i = 0, j = body.length; i < j; i++) {
+          if (body[i] === Control.Break) {
+            body[i] = new Control.LongBreak(breakTo);
+          } else if (body[i].kind) {
+            worklist.push(body[i]);
+          }
+        }
+        break;
+
+      case Control.LOOP:
+        if (node.body === Control.Break) {
+          node.body = new Control.LongBreak(breakTo);
+        }
+        worklist.push(node.body);
+        break;
+
+      case Control.IF:
+        if (node.then) {
+          if (node.then === Control.Break) {
+            node.then = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(node.then);
+          }
+        }
+
+        if (node.else) {
+          if (node.else === Control.Break) {
+            node.else = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(node.else);
+          }
+        }
+        break;
+
+      case Control.SWITCH:
+      case Control.LABEL_SWITCH:
+        var cases = node.cases;
+        for (var i = 0, j = cases.length; i < j; i++) {
+          if (cases[i].body === Control.Break) {
+            cases[i].body = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(cases[i].body);
+          }
+        }
+        break;
+      }
+    }
+
+    return root;
+  }
+
   function massageControlTree(root) {
     var worklist = [root];
     var hoists = [];
@@ -1689,14 +1753,16 @@ var Analysis = (function () {
           break;
 
         case Control.SET_LABEL:
-          var exit = next === Control.Break ? cx.break : cx.exit;
+          var precedesBreak = next === Control.Break;
+          var exit = precedesBreak ? cx.break : cx.exit;
           if (exit.kind === Control.LABEL_SWITCH) {
             var c = exit.labelMap[node.label];
             if (!c) {
               node.prune = true;
             } else {
               node.maybeTransplant = true;
-              exit.comeFroms[node.label].push({ setLabel: node })
+              exit.comeFroms[node.label].push({ setLabel: node,
+                                                precedesBreak: precedesBreak });
             }
           } else {
             node.prune = true;
@@ -1767,7 +1833,7 @@ var Analysis = (function () {
             node.prune = true;
           }
 
-          addHoists(hoists, cx.exit, box.cx.breakTo);
+          addHoists(hoists, cx.exit);
           cx = box.cx;
           break;
 
@@ -1836,7 +1902,7 @@ var Analysis = (function () {
             compact(cases);
           }
 
-          addHoists(hoists, cx.exit, box.cx.breakTo);
+          addHoists(hoists, cx.exit);
           cx = box.cx;
           break;
         }
@@ -1845,39 +1911,54 @@ var Analysis = (function () {
       next = node;
     }
 
+    /*
+     * Hoist label cases up into their environments, outermost first in
+     * nesting order.
+     */
     if (hoists.length > 0) {
       var currentLS = hoists[0].labelSwitch;
 
       for (var i = hoists.length - 1; i >= 0; i--) {
         var hoist = hoists[i];
-        var sl = hoist.setLabel;
         var ls = hoist.labelSwitch;
         var c = ls.cases[hoist.index];
         var transplant = c.body;
+        var transplantBase = hoist.setLabel.maybeTransplantBase;
+        var transplantKey = hoist.setLabel.maybeTransplantKey;
 
-        sl.maybeTransplantBase[sl.maybeTransplantKey] = transplant;
-        ls.cases[hoist.index] = undefined;
+        if (ls.breakTo) {
+          transplant = transformBreaks(transplant, ls.breakTo);
+        }
 
         if (transplant.kind === Control.SEQ) {
           var tbody = transplant.body;
-          /* TODO: Can we optimize this unwrapping without array splicing? */
-          while (tbody.top().kind === Control.SEQ) {
-            tbody = tbody.top().body;
-          }
           var tend = tbody.top();
 
-          if (tend === Control.Break) {
-            tbody[tbody.length - 1] = new Control.LongBreak(ls.breakTo);
-            tend = tbody.top();
-          }
+          if (transplantBase.length) {
+            hoist.precedesBreak && transplantBase.pop();
+            transplantBase.pop();
 
-          if (tend.kind === Control.LONG_BREAK) {
-            /* The transplant base has to be a seq that ends in break. */
-            assert(sl.maybeTransplantBase.length);
-            assert(sl.maybeTransplantBase.top() === Control.Break);
-            sl.maybeTransplantBase.pop();
+            /* Append the transplant body if it's already a sequence. */
+            transplantBase.push.apply(transplantBase, tbody);
+
+            /*
+             * If we hoist something that terminates control or breaks out to an
+             * outer loop, pop the break.
+             */
+            if (tend && (tend.kind !== Control.LONG_BREAK &&
+                         tend !== Control.Return &&
+                         tend !== Control.Continue) &&
+                hoist.precedesBreak) {
+              transplantBase.push(Control.Break);
+            }
+          } else {
+            transplantBase[transplantKey] = transplant;
           }
+        } else {
+          transplantBase[transplantKey] = transplant;
         }
+
+        ls.cases[hoist.index] = undefined;
 
         if (ls !== currentLS) {
           compact(currentLS.cases);
