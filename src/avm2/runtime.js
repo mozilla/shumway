@@ -11,7 +11,9 @@ var globalObject = function () {
   global.Object = Object;
   global.String = String;
   global.RegExp = RegExp;
-  global.JS =  (function() { return this || (1,eval)('this') })(); 
+  global.Function = Function;
+  global.undefined = undefined;
+  global.JS = (function() { return this || (1,eval)('this') })(); 
   
   global.parseInt = parseInt;
   
@@ -26,6 +28,10 @@ var globalObject = function () {
     }
     return namespace;
   })();
+  
+  global.toString = function () {
+    return "[object global]";
+  };
   
   return global;
 }();
@@ -106,8 +112,30 @@ var Runtime = (function () {
   };
   
   runtime.prototype.createFunction = function (method, scope)  {
+    /**
+     * TODO: This is terrible, we overwrite the default implementation of call/apply because 
+     * we need to pass the globalObject whenever call/apply is passed null or undefined for the
+     * [this] pointer. We could solve this by merging the AS global object with the JS global 
+     * object, but that may open up another bag of warms.
+     */
+    function overwriteCallAndApply(fn) {
+      fn.apply = function ($this, args) {
+        if ($this === null || $this === undefined) {
+          $this = globalObject;
+        }
+        return Function.prototype.apply.apply(fn, [$this, args]);
+      };
+      fn.call = function ($this) {
+        if ($this === null || $this === undefined) {
+          $this = globalObject;
+        }
+        return Function.prototype.apply.apply(fn, [$this, Array.prototype.slice.call(arguments).slice(1)]);
+      };
+      return fn;
+    }
+    
     if (method.compiledMethodClosure) {
-      return method.compiledMethodClosure.bind(null, scope)();
+      return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
     }
     
     method.analysis = new Analysis(method, { chokeOnClusterfucks: true,
@@ -156,7 +184,7 @@ var Runtime = (function () {
     }
     
     functionCount ++;
-    return method.compiledMethodClosure.bind(null, scope)();
+    return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
   };
   
   /**
