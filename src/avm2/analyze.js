@@ -1123,7 +1123,7 @@ var Analysis = (function () {
            */
           clone.preds.push(node);
           node.succs[node.succs.indexOf(original)] = clone;
-          node.weight = undefined;
+          delete node.weight;
         } else {
           /* The edge comes from somewhere outside. */
           original.preds.push(node);
@@ -1916,8 +1916,6 @@ var Analysis = (function () {
      * nesting order.
      */
     if (hoists.length > 0) {
-      var currentLS = hoists[0].labelSwitch;
-
       for (var i = hoists.length - 1; i >= 0; i--) {
         var hoist = hoists[i];
         var ls = hoist.labelSwitch;
@@ -1959,13 +1957,16 @@ var Analysis = (function () {
         }
 
         ls.cases[hoist.index] = undefined;
+        ls.shouldCompact = true;
+      }
 
-        if (ls !== currentLS) {
-          compact(currentLS.cases);
-          currentLS = ls;
+      for (var i = hoists.length - 1; i >= 0; i--) {
+        var ls = hoists[i].labelSwitch;
+        if (ls.shouldCompact) {
+          compact(ls.cases);
+          delete ls.shouldCompact;
         }
       }
-      compact(currentLS.cases);
     }
   }
 
@@ -2046,7 +2047,7 @@ var Analysis = (function () {
             code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
                               getInvalidTarget(invalidJumps, offsets[i]));
           }
-          code.offsets = undefined;
+          delete code.offsets;
           break;
 
         case OP_jump:
@@ -2066,7 +2067,7 @@ var Analysis = (function () {
         case OP_iffalse:
           code.target = (bytecodes[bytecodesOffset[code.offset]] ||
                          getInvalidTarget(invalidJumps, code.offset));
-          code.offset = undefined;
+          delete code.offset;
           break;
 
         default:;
