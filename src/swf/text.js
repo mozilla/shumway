@@ -31,7 +31,7 @@ function defineText(tag, dictionary) {
       dependencies.push(record.fontId);
     }
     if (record.hasColor)
-      cmds.push('fillStyle="' + colorToString(record.color) + '"');
+      cmds.push('fillStyle="' + toStringRgba(record.color) + '"');
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)

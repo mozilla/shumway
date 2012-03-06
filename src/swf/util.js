@@ -27,11 +27,6 @@ function defer(func, startTime) {
     setTimeout(defer, 0, func, startTime);
 }
 
-function colorToString(color) {
-  return 'rgba(' + [
-    color.red,
-    color.green,
-    color.blue,
-    color.alpha / 255
-  ].join(',') + ')';
+function toStringRgba(color) {
+  return 'rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')';
 }

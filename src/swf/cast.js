@@ -36,7 +36,7 @@ function cast(tags, dictionary) {
     }
     switch (tag.type) {
     case 'background':
-      pframe.bgcolor = colorToString(tag.color);
+      pframe.bgcolor = toStringRgba(tag.color);
       break;
     case 'frame':
       var n = 1;

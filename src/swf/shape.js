@@ -25,12 +25,7 @@ function colorToStyle(color, colorMorph) {
       morph(color.alpha / 255, colorMorph.alpha / 255)
     ].join(')+","+~~(') + ')+")"';
   }
-  return '"rgba(' + [
-    color.red,
-    color.green,
-    color.blue,
-    color.alpha / 255
-  ].join(',') + ')"';
+  return '"' + toStringRgba(color) + '"';
 }
 function matrixToTransform(matrix, matrixMorph) {
   if (matrixMorph) {
