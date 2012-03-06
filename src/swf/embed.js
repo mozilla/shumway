@@ -72,7 +72,10 @@ function definePrototype(dictionary, obj) {
     dictionary[id] = null;
 }
 
-SWF.embed = function (file, container, onstart, oncomplete) {
+SWF.embed = function (file, container, options) {
+  if (!options)
+    options = { };
+
   var result;
   var root;
   var dictionary = { };
@@ -95,8 +98,8 @@ SWF.embed = function (file, container, onstart, oncomplete) {
         canvas.height = (bounds.yMax - bounds.yMin) / 20;
         container.appendChild(canvas);
         frameRate = obj.frameRate;
-        if (onstart)
-          onstart(root);
+        if (options.onstart)
+          options.onstart(root);
       } else if (obj.id) {
         definePrototype(dictionary, obj);
       } else if (obj.type === 'pframe') {
@@ -110,8 +113,8 @@ SWF.embed = function (file, container, onstart, oncomplete) {
       } else {
         result = obj;
       }
-    } else if (oncomplete) {
-      oncomplete(root, result);
+    } else if (options.oncomplete) {
+      options.oncomplete(root, result);
     }
   });
 };
