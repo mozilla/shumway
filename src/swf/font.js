@@ -6,9 +6,9 @@ function toString16(val) {
 function toString32(val) {
   return toString16(val >> 16) + toString16(val);
 }
-function maxPower2(number) {
+function maxPower2(num) {
   var maxPower = 0;
-  var val = number;
+  var val = num;
   while (val >= 2) {
     val /= 2;
     ++maxPower;
@@ -18,8 +18,6 @@ function maxPower2(number) {
 
 function defineFont(tag, dictionary) {
   var tables = { };
-  var glyphs = tag.glyphs || dictionary[tag.id].glyphs;
-  var glyphCount = glyphs.length;
   var codes = tag.codes.slice();
   var glyphIndex = { };
   for (var i = 0, code; code = codes[i]; ++i)
@@ -27,8 +25,6 @@ function defineFont(tag, dictionary) {
   codes.sort(function(a, b) {
     return a - b;
   });
-  var usFirstCharIndex = codes[0];
-  var usLastCharIndex = codes[codes.length - 1];
   var ranges = [];
   var i = 0;
   var code;
@@ -44,6 +40,8 @@ function defineFont(tag, dictionary) {
     ranges.push([start, end, indices]);
   }
 
+  var ascent = tag.ascent;
+  var descent = tag.descent;
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
@@ -68,13 +66,13 @@ function defineFont(tag, dictionary) {
     '\x00\x00\x00\x00' + // ulUnicodeRange4
     'ALF ' + // achVendID
     toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20: 0)) + // fsSelection
-    toString16(usFirstCharIndex) +
-    toString16(usLastCharIndex) +
-    toString16(tag.ascent || 1024) + // sTypoAscender
-    toString16(tag.descent || 1024) + // sTypoDescender
+    toString16(codes[0]) + // usFirstCharIndex
+    toString16(codes[codes.length - 1]) + // usLastCharIndex
+    toString16(ascent || 1024) + // sTypoAscender
+    toString16(descent || 1024) + // sTypoDescender
     '\x00\x00' + // sTypoLineGap
-    toString16(tag.ascent || 1024) + // usWinAscent
-    toString16(tag.descent || 1024) + // usWinDescent
+    toString16(ascent || 1024) + // usWinAscent
+    toString16(descent || 1024) + // usWinDescent
     '\x00\x00\x00\x00' + // ulCodePageRange1
     '\x00\x00\x00\x00' // ulCodePageRange2
   ;
@@ -105,7 +103,7 @@ function defineFont(tag, dictionary) {
     '\x00\x00' + // language
     toString16(segCount * 2) + // segCountX2
     toString16(searchRange) +
-    toString16(Math.log(segCount) / Math.log(2)) + // entrySelector
+    toString16(log(segCount) / log(2)) + // entrySelector
     toString16(rangeShift) +
     endCount +
     '\x00\x00' + // reservedPad
@@ -124,16 +122,17 @@ function defineFont(tag, dictionary) {
     format314
   ;
 
-  var xMins = [];
-  var xMaxs = [];
-  var yMins = [];
-  var yMaxs = [];
-  var maxPoints = 0;
-  var maxContours = 0;
+  var glyphs = tag.glyphs || dictionary[tag.id].glyphs;
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var resolution = tag.resolution || 1;
   var offset = 16;
+  var maxPoints = 0;
+  var xMins = [];
+  var xMaxs = [];
+  var yMins = [];
+  var yMaxs = [];
+  var maxContours = 0;
   var i = 0;
   var code;
   while (code = codes[i++]) {
@@ -142,15 +141,15 @@ function defineFont(tag, dictionary) {
     var numberOfContours = 1;
     var endPoint = 0;
     var endPtsOfContours = '';
+    var flags = '';
+    var xCoordinates = '';
+    var yCoordinates = '';
     var x = 0;
     var y = 0;
     var xMin = 1024;
     var xMax = -1024;
     var yMin = 1024;
     var yMax = -1024;
-    var flags = '';
-    var xCoordinates = '';
-    var yCoordinates = '';
     for (var j = 0, record; record = records[j]; ++j) {
       if (record.type) {
         if (record.isStraight) {
@@ -274,10 +273,11 @@ function defineFont(tag, dictionary) {
   ;
 
   var advance = tag.advance;
+  var glyphCount = glyphs.length;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
-    toString16(tag.ascent || 1024) + // ascender
-    toString16(tag.descent || 1024) + // descender
+    toString16(ascent || 1024) + // ascender
+    toString16(descent || 1024) + // descender
     '\x00\x00' + // lineGap
     toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
@@ -311,7 +311,7 @@ function defineFont(tag, dictionary) {
       '\x00\x01' + // coverage
       toString16(nPairs) +
       toString16(searchRange) +
-      toString16(Math.log(nPairs) / Math.log(2)) + // entrySelector
+      toString16(log(nPairs) / log(2)) + // entrySelector
       toString16((2 * nPairs) - searchRange) // rangeShift
     ;
     var i = 0;
@@ -395,21 +395,21 @@ function defineFont(tag, dictionary) {
   ;
 
   var names = keys(tables);
+  var numTables = names.length;
   var header =
     '\x00\x01\x00\x00' + // version
-    toString16(names.length) + // numTables
+    toString16(numTables) +
     '\x00\x80' + // searchRange
     '\x00\x03' + // entrySelector
     '\x00\x20' // rangeShift
   ;
-  var offset = (names.length * 16) + header.length;
   var data = '';
+  var offset = (numTables * 16) + header.length;
   var i = 0;
   var name;
   while (name = names[i++]) {
     var table = tables[name];
     var length = table.length;
-    var checksum = 0, n = length;
     header +=
       name +
       '\x00\x00\x00\x00' + // checkSum

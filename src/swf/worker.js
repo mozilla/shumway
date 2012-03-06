@@ -24,8 +24,8 @@ if (typeof window === 'undefined') {
   );
 
   function process(buffer) {
-    var dictionary = { };
     var i = 0;
+    var dictionary = { };
     var controlTags = [];
     SWF.parse(buffer, {
       onstart: function(result) {

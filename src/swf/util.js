@@ -1,15 +1,16 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-var slice = [].slice;
-var pow = Math.pow;
-var fromCharCode = String.fromCharCode;
-var min = Math.min;
-var max = Math.max;
-var splice = [].splice;
-var isArray = Array.isArray;
-var keys = Object.keys;
-var push = [].push;
 var create = Object.create;
+var keys = Object.keys;
+var isArray = Array.isArray;
+var fromCharCode = String.fromCharCode;
+var log = Math.log;
+var max = Math.max;
+var min = Math.min;
+var pow = Math.pow;
+var push = [].push;
+var slice = [].slice;
+var splice = [].splice;
 
 function fail(msg, context) {
   throw new Error((context ? context + ': ' : '') + msg);
@@ -21,8 +22,7 @@ function assert(cond, msg, context) {
 function defer(func, startTime) {
   if (!startTime)
     startTime = +new Date;
-  else if (+new Date - startTime > 1000)
-    fail('timeout', 'defer');
+  assert(+new Date - startTime < 1000, 'timeout', 'defer');
   if (func())
     setTimeout(defer, 0, func, startTime);
 }

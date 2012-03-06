@@ -54,13 +54,10 @@ function definePrototype(dictionary, obj) {
         var i = 0;
         var objId;
         while (objId = dependencies[i++]) {
-          if (objId in dictionary) {
-            if (dictionary[objId] === null)
-              return true;
-            dependencies.pop();
-          } else {
-            fail('unknown object id ' + objId, 'embed');
-          }
+          assert(objId in dictionary, 'unknown object id ' + objId, 'embed');
+          if (dictionary[objId] === null)
+            return true;
+          dependencies.pop();
         }
       }
       var proto = create(obj);
@@ -76,14 +73,15 @@ function definePrototype(dictionary, obj) {
 }
 
 SWF.embed = function (file, container, onstart, oncomplete) {
+  var result;
   var root;
-  var pframes = [];
   var dictionary = { };
+  var pframes = [];
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
   var frameRate;
   var plays;
-  var result;
+
   startWorking(file, function(obj) {
     if (obj) {
       if (!root) {

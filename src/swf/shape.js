@@ -1,6 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-// TODO: implement bitmap fills, morphing, filled and non-scaling strokes
+// TODO: implement filled and non-scaling strokes
 
 /** @const */ var FILL_SOLID                        = 0;
 /** @const */ var FILL_LINEAR_GRADIENT              = 16;
@@ -54,8 +54,6 @@ function defineShape(tag, dictionary) {
   var recordsMorph = isMorph ? tag.recordsMorph : [];
   var fillStyles = tag.fillStyles;
   var lineStyles = tag.lineStyles;
-  var fillOffset = 0;
-  var lineOffset = 0;
   var sx = 0;
   var sy = 0;
   var dx = 0;
@@ -65,12 +63,14 @@ function defineShape(tag, dictionary) {
   var dxm = 0;
   var dym = 0;
   var dpt = '0,0';
+  var edges = [];
+  var fillSegments = { };
+  var lineSegments = { };
+  var fillOffset = 0;
+  var lineOffset = 0;
   var fill0 = 0;
   var fill1 = 0;
   var line = 0;
-  var fillSegments = { };
-  var lineSegments = { };
-  var edges = [];
   for (var i = 0, record; record = records[i]; ++i) {
     if (isMorph)
       var recordMorph = recordsMorph[i];
@@ -233,7 +233,6 @@ function defineShape(tag, dictionary) {
       segment.skip = true;
       ++count;
       var spt = segment.spt;
-      var dpt = segment.dpt;
       var list = map[spt];
       var k = list.length;
       while (k--) {
@@ -242,6 +241,7 @@ function defineShape(tag, dictionary) {
           break;
         }
       }
+      var dpt = segment.dpt;
       while (dpt !== spt && (list = map[dpt]) != false) {
         segment = list.shift();
         subpath.push(segment);
@@ -253,7 +253,6 @@ function defineShape(tag, dictionary) {
     }
     if (path.length) {
       var cmds = [];
-      var fillStyle = fillStyles[i - 1];
       cmds.push('beginPath()');
       var j = 0;
       var subpath;
@@ -283,6 +282,7 @@ function defineShape(tag, dictionary) {
         }
         prev = subpath;
       }
+      var fillStyle = fillStyles[i - 1];
       switch (fillStyle.type) {
       case FILL_SOLID:
         cmds.push('fillStyle=' + colorToStyle(fillStyle.color, fillStyle.colorMorph));
