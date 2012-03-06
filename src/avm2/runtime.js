@@ -13,6 +13,8 @@ var globalObject = function () {
   global.RegExp = RegExp;
   global.Function = Function;
   global.undefined = undefined;
+  global.NaN = NaN;
+  global.Infinity = Infinity;
   global.JS = (function() { return this || (1,eval)('this') })(); 
   
   global.parseInt = parseInt;

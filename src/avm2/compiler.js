@@ -284,6 +284,9 @@ var Compiler = (function () {
     operator.NOT = new operator("!", function (a) { return !a; }, false, true);
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false, true);
     operator.NEG = new operator("-", function (a) { return -a; }, false, true);
+    
+    operator.TRUE = new operator("!!", function (a) { return !!a; }, false, true);
+    operator.FALSE = new operator("!", function (a) { return !a; }, false, true);
 
     function linkOpposites(a, b) {
       a.not = b;
@@ -294,6 +297,7 @@ var Compiler = (function () {
     linkOpposites(operator.EQ, operator.NE);
     linkOpposites(operator.LE, operator.GT);
     linkOpposites(operator.LT, operator.GE);
+    linkOpposites(operator.TRUE, operator.FALSE);
 
     operator.prototype.eval = function eval() {
       return this.fn.apply(arguments);
@@ -495,6 +499,9 @@ var Compiler = (function () {
       }
       if (this.value === null) {
         return "null";
+      }
+      if (this.value === 0 && 1 / this.value === -Infinity) {
+        return "-0";
       }
       return this.value;
     };
@@ -867,12 +874,10 @@ var Compiler = (function () {
         // NOP
         break;
       case OP_iftrue:
-        pushValue(new Constant(true));
-        setCondition(Operator.EQ);
+        setCondition(Operator.TRUE);
         break;
       case OP_iffalse:
-        pushValue(new Constant(false));
-        setCondition(Operator.EQ);
+        setCondition(Operator.FALSE);
         break;
       case OP_ifeq:           setCondition(Operator.EQ); break;
       case OP_ifne:           setCondition(Operator.NE); break;
