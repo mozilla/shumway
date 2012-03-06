@@ -4,7 +4,7 @@ var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
-function definePrototype(dictionary, obj, ctx) {
+function definePrototype(dictionary, obj) {
   var id = obj.id;
   switch (obj.type) {
   case 'font':
@@ -100,7 +100,7 @@ SWF.embed = function (file, container, onstart, oncomplete) {
         if (onstart)
           onstart(root);
       } else if (obj.id) {
-        definePrototype(dictionary, obj, ctx);
+        definePrototype(dictionary, obj);
       } else if (obj.type === 'pframe') {
         if (obj.bgcolor)
           canvas.style.background = obj.bgcolor;
