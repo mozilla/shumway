@@ -52,11 +52,11 @@ var Compiler = (function () {
    * statement arrays which if flattened after compilation is done.
    */
 
-  Control.LabeledBreak.prototype.compile = function (mcx, state) {
+  Control.LongBreak.prototype.compile = function (mcx, state) {
     notImplemented();
   };
 
-  Control.LabeledContinue.prototype.compile = function (mcx) {
+  Control.LongContinue.prototype.compile = function (mcx) {
     notImplemented();
   };
 
