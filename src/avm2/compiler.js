@@ -222,13 +222,13 @@ var Compiler = (function () {
     var stateCounter = 0;
     function state() {
       this.stack = [];
-      this.scope = [];
+      this.scopeHeight = 0;
       this.id = stateCounter ++;
     }
     state.prototype.clone = function clone() {
       var s = new State();
       s.stack = this.stack.slice(0);
-      s.scope = this.scope.slice(0);
+      s.scopeHeight = this.scopeHeight;
       return s;
     };
     state.prototype.callExpression = function callExpression(name, argumentCount) {
@@ -237,9 +237,7 @@ var Compiler = (function () {
     };
     state.prototype.trace = function trace(writer) {
       writer.writeLn("id: " + stateCounter)
-      writer.enter("scope:");
-      writer.writeArray(this.scope);
-      writer.outdent();
+      writer.writeLn("scopeHeight: " + this.scopeHeight);
       writer.enter("stack:");
       writer.writeArray(this.stack);
       writer.outdent();
@@ -882,11 +880,15 @@ var Compiler = (function () {
       case OP_ifstrictne:     setCondition(Operator.SNE); break;
       case OP_lookupswitch:   notImplemented(); break;
       case OP_pushwith:
+        flushStack();
         obj = state.stack.pop();
         emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
+        state.scopeHeight += 1;
         break;
       case OP_popscope:
+        flushStack();
         emitStatement(SCOPE_NAME + " = " + SCOPE_NAME + ".parent");
+        state.scopeHeight -= 1;
         break;
       case OP_nextname:
         // TODO: Temporary implementation, totally broken. 
@@ -915,9 +917,10 @@ var Compiler = (function () {
       case OP_dup:            duplicate(state.stack.pop()); break;
       case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
       case OP_pushscope:
+        flushStack();
         obj = state.stack.pop();
         emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
-        state.scope.push(obj);
+        state.scopeHeight += 1;
         break;
       case OP_pushnamespace:  notImplemented(); break;
       case OP_hasnext2:
@@ -1013,6 +1016,7 @@ var Compiler = (function () {
       case OP_setproperty:
         value = state.stack.pop();
         multiname = multinames[bc.index];
+        flushStack();
         if (!multiname.isRuntime()) {
           obj = state.stack.pop();
           emitStatement(obj + "." + multiname.name + " = " + value);
@@ -1035,7 +1039,7 @@ var Compiler = (function () {
         break;
       case OP_getscopeobject:
         obj = SCOPE_NAME;
-        for (var i = 0; i < bc.index; i++) {
+        for (var i = 0; i < (state.scopeHeight - 1) - bc.index; i++) {
           obj += ".parent";
         }
         pushValue(obj + ".object");

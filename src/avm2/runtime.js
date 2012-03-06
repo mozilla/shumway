@@ -125,12 +125,14 @@ var Runtime = (function () {
         }
         return Function.prototype.apply.apply(fn, [$this, args]);
       };
+      /* Temporarily disable this because it prevents the Chrome debugger from stepping into callees.
       fn.call = function ($this) {
         if ($this === null || $this === undefined) {
           $this = globalObject;
         }
         return Function.prototype.apply.apply(fn, [$this, Array.prototype.slice.call(arguments).slice(1)]);
       };
+      */
       return fn;
     }
     
