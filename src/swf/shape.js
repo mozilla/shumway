@@ -71,9 +71,7 @@ function defineShape(tag, dictionary) {
   var fill0 = 0;
   var fill1 = 0;
   var line = 0;
-  for (var i = 0, record; record = records[i]; ++i) {
-    if (isMorph)
-      var recordMorph = recordsMorph[i];
+  for (var i = 0, j = 0, record; record = records[i]; ++i) {
     if (record.type) {
       sx = dx;
       sy = dy;
@@ -90,6 +88,7 @@ function defineShape(tag, dictionary) {
           dx += record.deltaX;
         }
         if (isMorph) {
+          var recordMorph = recordsMorph[j++];
           if (recordMorph.isStraight) {
             if (recordMorph.isGeneral) {
               dxm += recordMorph.deltaX;
@@ -113,6 +112,7 @@ function defineShape(tag, dictionary) {
         dx = cx + record.anchorDeltaX;
         dy = cy + record.anchorDeltaY;
         if (isMorph) {
+          var recordMorph = recordsMorph[j++];
           if (recordMorph.isStraight) {
             if (recordMorph.isGeneral) {
               dxm += recordMorph.deltaX;
@@ -197,6 +197,7 @@ function defineShape(tag, dictionary) {
         dx = record.moveX;
         dy = record.moveY;
         if (isMorph) {
+          var recordMorph = recordsMorph[j++];  
           dxm = recordMorph.moveX;
           dym = recordMorph.moveY;
           dpt = morph(dx, dxm) + ',' + morph(dy, dym);
