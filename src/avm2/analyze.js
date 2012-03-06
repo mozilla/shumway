@@ -1295,7 +1295,7 @@ var Analysis = (function () {
       if (nextCase && cexit) {
         if (cexit === nextCase) {
           cases.unshift({ index: i, body: c, exit: nextCase });
-        } else if (cexit.has(nextCase)) {
+        } else if (cexit.size && cexit.has(nextCase)) {
           cexit.remove(nextCase);
           exits.union(cexit);
           cases.unshift({ index: i, body: c, exit: nextCase });
