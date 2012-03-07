@@ -980,7 +980,12 @@ var Compiler = (function () {
         pushValue("new (" + new GetProperty(obj, multiname) + ")" + argumentList.apply(null, args));
         break;
       case OP_callsuperid:    notImplemented(); break;
-      case OP_callproplex:    notImplemented(); break;
+      case OP_callproplex:
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        pushValue(new Call(new GetProperty(obj, multiname), "call", [null].concat(args)));
+        break;
       case OP_callinterface:  notImplemented(); break;
       case OP_callsupervoid:  notImplemented(); break;
       case OP_callpropvoid:   notImplemented(); break;
