@@ -1371,17 +1371,6 @@ var Analysis = (function () {
           continue;
         }
 
-        if (cx.exit) {
-          if (block === cx.exit) {
-            break;
-          }
-
-          if (cx.exit.size && cx.exit.has(block)) {
-            v.push(new Control.SetLabel(block));
-            break;
-          }
-        }
-
         if (cx.break) {
           if (block === cx.break) {
             v.push(Control.Break);
@@ -1390,6 +1379,17 @@ var Analysis = (function () {
 
           if (cx.break.size && cx.break.has(block)) {
             v.push(Control.Break);
+            v.push(new Control.SetLabel(block));
+            break;
+          }
+        }
+
+        if (cx.exit) {
+          if (block === cx.exit) {
+            break;
+          }
+
+          if (cx.exit.size && cx.exit.has(block)) {
             v.push(new Control.SetLabel(block));
             break;
           }
