@@ -32,17 +32,14 @@ var MovieClipPrototype = function(obj, dictionary) {
               var initObj = entry.move ? frame[depth] : { };
               var id = entry.id;
               if (id) {
-                if (id in dictionary) {
-                  if (dictionary[id] === null)
-                    return true;
-                  var proto = dictionary[id];
-                  if (proto.constructor !== Object)
-                    var character = proto.constructor();
-                  else
-                    var character = create(proto);
-                } else {
-                  fail('unknown object id ' + id, 'movieclip');
-                }
+                assert(id in dictionary, 'unknown object id ' + id, 'movieclip');
+                if (dictionary[id] === null)
+                  return true;
+                var proto = dictionary[id];
+                if (proto.constructor !== Object)
+                  var character = proto.constructor();
+                else
+                  var character = create(proto);
               } else {
                 var character = create(initObj);
               }

@@ -43,13 +43,13 @@ var DEFINE_FONT_INFO = {
     {
       codes: {
         $: UI16,
-        length: '$stream.remain()'
+        length: '$stream.remaining()'
       }
     },
     {
       codes: {
         $: UI8,
-        length: '$stream.remain()'
+        length: '$stream.remaining()'
       }
     }
   ]]
@@ -265,7 +265,7 @@ var PLACE_OBJECT = {
       depth: UI16,
       hasMatrix: '1',
       matrix: MATRIX,
-      $1: ['$stream.remain()', [{
+      $1: ['$stream.remaining()', [{
         hasCxform: '1',
         cxform: CXFORM
       }]]

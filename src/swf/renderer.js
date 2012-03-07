@@ -37,8 +37,8 @@ function render(displayList, ctx) {
 }
 function renderMovieClip(mc, rate, ctx) {
   ctx.scale(0.05, 0.05);
-  var maxDelay = 1000 / rate;
   var frameTime = 0;
+  var maxDelay = 1000 / rate;
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {

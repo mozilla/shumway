@@ -1,6 +1,19 @@
 var Control = (function () {
 
+  const CLUSTERFUCK = 0;
+  const SEQ = 1;
+  const LOOP = 2;
+  const IF = 3;
+  const CASE = 4;
+  const SWITCH = 5;
+  const LABEL_CASE = 6;
+  const LABEL_SWITCH = 7;
+  const SET_LABEL = 8;
+  const LONG_BREAK = 9;
+  const LONG_CONTINUE = 10;
+
   function Clusterfuck(body) {
+    this.kind = CLUSTERFUCK;
     this.body = body;
   }
 
@@ -11,6 +24,7 @@ var Control = (function () {
   };
 
   function Seq(body) {
+    this.kind = SEQ;
     this.body = body;
   }
 
@@ -31,12 +45,17 @@ var Control = (function () {
     }
   };
 
-  function Loop(body) {
+  function Loop(head, body) {
+    this.kind = LOOP;
+    this.head = head;
     this.body = body;
   }
 
   Loop.prototype = {
     trace: function (writer) {
+      if (this.head.needsLabel) {
+        writer.writeLn("L" + this.head.blockId + ":");
+      }
       writer.enter("loop {");
       this.body.trace(writer);
       writer.leave("}");
@@ -44,6 +63,7 @@ var Control = (function () {
   };
 
   function If(cond, then, els, negated) {
+    this.kind = IF;
     this.cond = cond;
     this.then = then;
     this.else = els;
@@ -65,6 +85,7 @@ var Control = (function () {
   };
 
   function Case(index, body) {
+    this.kind = CASE;
     this.index = index;
     this.body = body;
   }
@@ -83,13 +104,19 @@ var Control = (function () {
   };
 
   function Switch(determinant, cases) {
+    this.kind = SWITCH;
     this.determinant = determinant;
     this.cases = cases;
   }
 
   Switch.prototype = {
     trace: function (writer) {
-      this.determinant && this.determinant.trace(writer);
+      if (this.determinant) {
+        this.determinant.trace(writer);
+        if (this.determinant.needsLabel) {
+          writer.writeLn("L" + this.determinant.blockId + ":");
+        }
+      }
       writer.writeLn("switch {");
       for (var i = 0, j = this.cases.length; i < j; i++) {
         this.cases[i].trace(writer);
@@ -98,19 +125,8 @@ var Control = (function () {
     }
   };
 
-  function LabelSwitch(cases) {
-    this.cases = cases;
-  }
-
-  LabelSwitch.prototype = {
-    trace: function (writer) {
-      for (var i = 0, j = this.cases.length; i < j; i++) {
-        this.cases[i].trace(writer);
-      }
-    }
-  };
-
   function LabelCase(label, body) {
+    this.kind = LABEL_CASE;
     this.label = label;
     this.body = body;
   }
@@ -123,33 +139,51 @@ var Control = (function () {
     }
   };
 
+  function LabelSwitch(cases) {
+    this.kind = LABEL_SWITCH;
+    this.cases = cases;
+  }
+
+  LabelSwitch.prototype = {
+    trace: function (writer) {
+      for (var i = 0, j = this.cases.length; i < j; i++) {
+        this.cases[i].trace(writer);
+      }
+    }
+  };
+
   function SetLabel(target) {
-    this.target = target;
+    this.kind = SET_LABEL;
+    this.label = target.blockId;
   }
 
   SetLabel.prototype = {
     trace: function (writer) {
-      writer.writeLn("label = " + this.target.blockId);
+      writer.writeLn("label = " + this.label);
     }
   };
 
-  function LabeledBreak(target) {
+  function LongBreak(target) {
+    this.kind = LONG_BREAK;
+    target.needsLabel = true;
     this.target = target;
   }
 
-  LabeledBreak.prototype = {
+  LongBreak.prototype = {
     trace: function (writer) {
-      writer.writeLn("break to #" + this.target.blockId);
+      writer.writeLn("break L" + this.target.blockId);
     }
   };
 
-  function LabeledContinue(target) {
+  function LongContinue(target) {
+    this.kind = LONG_CONTINUE;
+    target.needsLabel = true;
     this.target = target;
   }
 
-  LabeledContinue.prototype = {
+  LongContinue.prototype = {
     trace: function (writer) {
-      writer.writeLn("continue to #" + this.target.blockId);
+      writer.writeLn("continue L" + this.target.blockId);
     }
   };
 
@@ -166,17 +200,29 @@ var Control = (function () {
   var Return = nullaryControl("return");
 
   return {
+    CLUSTERFUCK: CLUSTERFUCK,
+    SEQ: SEQ,
+    LOOP: LOOP,
+    IF: IF,
+    CASE: CASE,
+    SWITCH: SWITCH,
+    LABEL_CASE: LABEL_CASE,
+    LABEL_SWITCH: LABEL_SWITCH,
+    SET_LABEL: SET_LABEL,
+    LONG_BREAK: LONG_BREAK,
+    LONG_CONTINUE: LONG_CONTINUE,
+
     Clusterfuck: Clusterfuck,
     Seq: Seq,
     Loop: Loop,
     If: If,
     Case: Case,
     Switch: Switch,
-    LabelSwitch: LabelSwitch,
     LabelCase: LabelCase,
+    LabelSwitch: LabelSwitch,
     SetLabel: SetLabel,
-    LabeledBreak: LabeledBreak,
-    LabeledContinue: LabeledContinue,
+    LongBreak: LongBreak,
+    LongContinue: LongContinue,
     Break: Break,
     Continue: Continue,
     Return: Return
@@ -1077,7 +1123,7 @@ var Analysis = (function () {
            */
           clone.preds.push(node);
           node.succs[node.succs.indexOf(original)] = clone;
-          node.weight = undefined;
+          delete node.weight;
         } else {
           /* The edge comes from somewhere outside. */
           original.preds.push(node);
@@ -1112,7 +1158,6 @@ var Analysis = (function () {
   }
 
   function ExtractionContext() {
-    this.exit = null;
   }
 
   ExtractionContext.prototype = {
@@ -1250,7 +1295,7 @@ var Analysis = (function () {
       if (nextCase && cexit) {
         if (cexit === nextCase) {
           cases.unshift({ index: i, body: c, exit: nextCase });
-        } else if (cexit.has(nextCase)) {
+        } else if (cexit.size && cexit.has(nextCase)) {
           cexit.remove(nextCase);
           exits.union(cexit);
           cases.unshift({ index: i, body: c, exit: nextCase });
@@ -1326,17 +1371,6 @@ var Analysis = (function () {
           continue;
         }
 
-        if (cx.exit) {
-          if (block === cx.exit) {
-            break;
-          }
-
-          if (cx.exit.size && cx.exit.has(block)) {
-            v.push(new Control.SetLabel(block));
-            break;
-          }
-        }
-
         if (cx.break) {
           if (block === cx.break) {
             v.push(Control.Break);
@@ -1345,6 +1379,17 @@ var Analysis = (function () {
 
           if (cx.break.size && cx.break.has(block)) {
             v.push(Control.Break);
+            v.push(new Control.SetLabel(block));
+            break;
+          }
+        }
+
+        if (cx.exit) {
+          if (block === cx.exit) {
+            break;
+          }
+
+          if (cx.exit.size && cx.exit.has(block)) {
             v.push(new Control.SetLabel(block));
             break;
           }
@@ -1360,7 +1405,16 @@ var Analysis = (function () {
           loopBodyCx = null;
         } else {
           if (cx.loop && !cx.loop.has(block)) {
-            v.push(Control.Break);
+            if (cx.break) {
+              /*
+               * We are breaking out of a loop inside another break
+               * environment, like a switch, so we should break directly out
+               * of the loop.
+               */
+              v.push(new Control.LongBreak(cx.continue));
+            } else {
+              v.push(Control.Break);
+            }
             v.push(new Control.SetLabel(block));
             cx.loopExit.add(block);
             break;
@@ -1379,6 +1433,7 @@ var Analysis = (function () {
                               exit: block });
             loopBodyCx = cxx;
             conts.push({ kind: K_LOOP_BODY,
+                         head: block,
                          loopExit: cxx.loopExit,
                          cx: cx });
             continue;
@@ -1444,10 +1499,11 @@ var Analysis = (function () {
           block = k.loopExit.size <= 1 ? k.loopExit.choose() : k.loopExit;
           cx = k.cx;
           conts.push({ kind: K_LOOP,
+                       head: k.head,
                        body: maybeSequence(v) });
           break popping;
         case K_LOOP:
-          v.push(new Control.Loop(k.body));
+          v.push(new Control.Loop(k.head, k.body));
           break;
         case K_IF_THEN:
           if (k.else) {
@@ -1550,6 +1606,370 @@ var Analysis = (function () {
     }
   }
 
+  function compact(a) {
+    var k = 0;
+    outer:
+    for (var i = 0, j = a.length; i < j; i++) {
+      while (!a[i]) {
+        i++;
+        if (i === j) {
+          break outer;
+        }
+      }
+      a[k++] = a[i];
+    }
+    a.length = k;
+  }
+
+  function addHoists(hoists, exit, breakTo) {
+    if (!exit || exit.kind !== Control.LABEL_SWITCH) {
+      return;
+    }
+
+    exit.breakTo = breakTo;
+
+    var cases = exit.cases;
+    for (var i = 0, j = cases.length; i < j; i++) {
+      var cf = exit.comeFroms[cases[i].label];
+      if (cf.length === 1) {
+        cf[0].labelSwitch = exit;
+        cf[0].index = i;
+        hoists.push(cf[0]);
+      }
+    }
+  }
+
+  function transformBreaks(root, breakTo) {
+    if (root === Control.Break) {
+      return new Control.LongBreak(breakTo);
+    }
+
+    var worklist = [root];
+    var node;
+
+    /* It doesn't matter how we iterate this. */
+    while (node = worklist.pop()) {
+      switch (node.kind) {
+      case Control.SEQ:
+        var body = node.body;
+        for (var i = 0, j = body.length; i < j; i++) {
+          if (body[i] === Control.Break) {
+            body[i] = new Control.LongBreak(breakTo);
+          } else if (body[i].kind) {
+            worklist.push(body[i]);
+          }
+        }
+        break;
+
+      case Control.LOOP:
+        if (node.body === Control.Break) {
+          node.body = new Control.LongBreak(breakTo);
+        }
+        worklist.push(node.body);
+        break;
+
+      case Control.IF:
+        if (node.then) {
+          if (node.then === Control.Break) {
+            node.then = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(node.then);
+          }
+        }
+
+        if (node.else) {
+          if (node.else === Control.Break) {
+            node.else = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(node.else);
+          }
+        }
+        break;
+
+      case Control.SWITCH:
+      case Control.LABEL_SWITCH:
+        var cases = node.cases;
+        for (var i = 0, j = cases.length; i < j; i++) {
+          if (cases[i].body === Control.Break) {
+            cases[i].body = new Control.LongBreak(breakTo);
+          } else {
+            worklist.push(cases[i].body);
+          }
+        }
+        break;
+      }
+    }
+
+    return root;
+  }
+
+  function massageControlTree(root) {
+    var worklist = [root];
+    var hoists = [];
+    var cx = new ExtractionContext();
+    var node, next;
+
+    while (node = worklist.pop()) {
+      if (!node.delay) {
+        switch (node.kind) {
+        case Control.SEQ:
+          worklist.push({ delay: node });
+          worklist.push.apply(worklist, node.body);
+          break;
+
+        case Control.LOOP:
+          worklist.push({ delay: node, cx: cx });
+          worklist.push(node.body);
+          cx = cx.update({ break: next, breakTo: node.head });
+          break;
+
+        case Control.IF:
+          worklist.push({ delay: node, cx: cx });
+          node.then && worklist.push(node.then);
+          node.else && worklist.push(node.else);
+          cx = cx.update({ exit: next });
+          break;
+
+        case Control.CASE:
+          worklist.push({ delay: node });
+          worklist.push(node.body);
+          break;
+
+        case Control.SWITCH:
+          worklist.push({ delay: node, cx: cx });
+          worklist.push.apply(worklist, node.cases);
+          cx = cx.update({ break: next, breakTo: node.head });
+          break;
+
+        case Control.LABEL_CASE:
+          worklist.push({ delay: node });
+          node.body && worklist.push(node.body);
+          break;
+
+        case Control.LABEL_SWITCH:
+          worklist.push({ delay: node, cx: cx });
+          worklist.push.apply(worklist, node.cases);
+          cx = cx.update({ exit: next });
+          break;
+
+        case Control.SET_LABEL:
+          var precedesBreak = next === Control.Break;
+          var exit = precedesBreak ? cx.break : cx.exit;
+          if (exit.kind === Control.LABEL_SWITCH) {
+            var c = exit.labelMap[node.label];
+            if (!c) {
+              node.prune = true;
+            } else {
+              node.maybeTransplant = true;
+              exit.comeFroms[node.label].push({ setLabel: node,
+                                                precedesBreak: precedesBreak });
+            }
+          } else {
+            node.prune = true;
+          }
+          break;
+        }
+      } else {
+        var box = node;
+        node = node.delay;
+
+        switch (node.kind) {
+        case Control.SEQ:
+          var body = node.body;
+          var allPruned = true;
+          var shouldCompact = false;
+
+          for (var i = 0, j = body.length; i < j; i++) {
+            if (body[i].maybeTransplant) {
+              body[i].maybeTransplantBase = body;
+              body[i].maybeTransplantKey = i;
+              allPruned = false;
+            } else if (body[i].prune) {
+              body[i] = undefined;
+              shouldCompact = true;
+            } else {
+              allPruned = false;
+            }
+          }
+
+          if (allPruned) {
+            node.prune = true;
+          } else if (shouldCompact) {
+            compact(body);
+          }
+          break;
+
+        case Control.LOOP:
+          addHoists(hoists, cx.break, box.cx.breakTo);
+          cx =  box.cx;
+          break;
+
+        case Control.IF:
+          if (node.then) {
+            if (node.then.maybeTransplant) {
+              node.then.maybeTransplantBase = node;
+              node.then.maybeTransplantKey = "then";
+            } else if (node.then.prune) {
+              node.then = undefined;
+            }
+          }
+
+          if (node.else) {
+            if (node.else.maybeTransplant) {
+              node.else.maybeTransplantBase = node;
+              node.else.maybeTransplantKey = "else";
+            } else if (node.else.prune) {
+              node.else = undefined;
+            }
+          }
+
+          if (!node.then) {
+            node.negated = !node.negated;
+            node.then = node.else;
+            node.else = undefined;
+          }
+
+          if (!node.then) {
+            node.prune = true;
+          }
+
+          addHoists(hoists, cx.exit);
+          cx = box.cx;
+          break;
+
+        case Control.CASE:
+          if (node.body.maybeTransplant) {
+            node.body.maybeTransplantBase = node;
+            node.body.maybeTransplantKey = "body";
+          } else if (node.body.prune) {
+            node.body = undefined;
+          }
+
+          /*
+           * NB: DO NOT PRUNE EMPTY CASES! We need them for fallthrough.
+           *
+           * We never prune breaks, so |node.body| should always be defined if
+           * there's a break.
+           */
+          break;
+
+        case Control.SWITCH:
+          addHoists(hoists, cx.break, box.cx.breakTo);
+          cx = box.cx;
+          break;
+
+        case Control.LABEL_CASE:
+          if (node.body) {
+            if (node.body.maybeTransplant) {
+              node.body.maybeTransplantBase = node;
+              node.body.maybeTransplantKey = "body";
+            } else if (node.body.prune) {
+              node.body = undefined;
+            }
+          }
+
+          if (!node.body) {
+            node.prune = true;
+          }
+          break;
+
+        case Control.LABEL_SWITCH:
+          var cases = node.cases;
+          var labelMap = {};
+          var comeFroms = {};
+          var allPruned = true;
+          var shouldCompact = false;
+
+          for (var i = 0, j = cases.length; i < j; i++) {
+            var c = cases[i];
+            if (c.prune) {
+              cases[i] = undefined;
+              shouldCompact = true;
+            } else {
+              allPruned = false;
+            }
+
+            labelMap[c.label] = cases[i];
+            comeFroms[c.label] = [];
+          }
+
+          node.labelMap = labelMap;
+          node.comeFroms = comeFroms;
+
+          if (allPruned) {
+            node.prune = true;
+          } else if (shouldCompact) {
+            compact(cases);
+          }
+
+          addHoists(hoists, cx.exit);
+          cx = box.cx;
+          break;
+        }
+      }
+
+      next = node;
+    }
+
+    /*
+     * Hoist label cases up into their environments, outermost first in
+     * nesting order.
+     */
+    if (hoists.length > 0) {
+      for (var i = hoists.length - 1; i >= 0; i--) {
+        var hoist = hoists[i];
+        var ls = hoist.labelSwitch;
+        var c = ls.cases[hoist.index];
+        var transplant = c.body;
+        var transplantBase = hoist.setLabel.maybeTransplantBase;
+        var transplantKey = hoist.setLabel.maybeTransplantKey;
+
+        if (ls.breakTo) {
+          transplant = transformBreaks(transplant, ls.breakTo);
+        }
+
+        if (transplant.kind === Control.SEQ) {
+          var tbody = transplant.body;
+          var tend = tbody.top();
+
+          if (transplantBase.length) {
+            hoist.precedesBreak && transplantBase.pop();
+            transplantBase.pop();
+
+            /* Append the transplant body if it's already a sequence. */
+            transplantBase.push.apply(transplantBase, tbody);
+
+            /*
+             * If we hoist something that terminates control or breaks out to an
+             * outer loop, pop the break.
+             */
+            if (tend && (tend.kind !== Control.LONG_BREAK &&
+                         tend !== Control.Return &&
+                         tend !== Control.Continue) &&
+                hoist.precedesBreak) {
+              transplantBase.push(Control.Break);
+            }
+          } else {
+            transplantBase[transplantKey] = transplant;
+          }
+        } else {
+          transplantBase[transplantKey] = transplant;
+        }
+
+        ls.cases[hoist.index] = undefined;
+        ls.shouldCompact = true;
+      }
+
+      for (var i = hoists.length - 1; i >= 0; i--) {
+        var ls = hoists[i].labelSwitch;
+        if (ls.shouldCompact) {
+          compact(ls.cases);
+          delete ls.shouldCompact;
+        }
+      }
+    }
+  }
+
   function Analysis(method, options) {
     /*
      * Normalize the code stream. The other analyses are run by the user
@@ -1627,7 +2047,7 @@ var Analysis = (function () {
             code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
                               getInvalidTarget(invalidJumps, offsets[i]));
           }
-          code.offsets = undefined;
+          delete code.offsets;
           break;
 
         case OP_jump:
@@ -1647,7 +2067,7 @@ var Analysis = (function () {
         case OP_iffalse:
           code.target = (bytecodes[bytecodesOffset[code.offset]] ||
                          getInvalidTarget(invalidJumps, code.offset));
-          code.offset = undefined;
+          delete code.offset;
           break;
 
         default:;
@@ -1789,6 +2209,7 @@ var Analysis = (function () {
 
       computeFrontiers(this.blocks);
       this.controlTree = induceControlTree(root, options.chokeOnClusterfucks);
+      massageControlTree(this.controlTree);
     },
 
     /*

@@ -10,6 +10,7 @@ var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpr
 var $C = [];
 
 var SCOPE_NAME = "$S";
+var SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
 
 function objectId(obj) {
   assert(obj);
@@ -51,11 +52,11 @@ var Compiler = (function () {
    * statement arrays which if flattened after compilation is done.
    */
 
-  Control.LabeledBreak.prototype.compile = function (mcx, state) {
+  Control.LongBreak.prototype.compile = function (mcx, state) {
     notImplemented();
   };
 
-  Control.LabeledContinue.prototype.compile = function (mcx) {
+  Control.LongContinue.prototype.compile = function (mcx) {
     notImplemented();
   };
 
@@ -85,7 +86,7 @@ var Compiler = (function () {
   };
   
   Control.SetLabel.prototype.compile = function (mcx, state) {
-    return {statements: ["var $label = " + this.target.blockId + ";"], state: state};
+    return {statements: ["var $label = " + this.label + ";"], state: state};
   };
   
   Control.LabelSwitch.prototype.compile = function (mcx, state) {
@@ -165,6 +166,25 @@ var Compiler = (function () {
     return {statements: statements, state: state};
   };
 
+  Control.Switch.prototype.compile = function (mcx, state) {
+    var result = this.determinant.compile(mcx, state);
+    var statements = result.statements;
+    statements.push("switch (" + result.state.stack.peek() + ") {");
+    this.cases.forEach(function (item) {
+      if (item.index !== undefined) {
+        statements.push("case " + item.index + ":");
+      } else {
+        statements.push("default:");
+      }
+      if (item.body) {
+        result = item.body.compile(mcx, state);
+        statements.push(result.statements);
+      }
+    });
+    statements.push("}");
+    return {statements: statements, state: state}; 
+  };
+  
   Control.If.prototype.isThenBreak = function () {
     return this.then === Control.Break && !this.else; 
   };
@@ -221,13 +241,13 @@ var Compiler = (function () {
     var stateCounter = 0;
     function state() {
       this.stack = [];
-      this.scope = [];
+      this.scopeHeight = 0;
       this.id = stateCounter ++;
     }
     state.prototype.clone = function clone() {
       var s = new State();
       s.stack = this.stack.slice(0);
-      s.scope = this.scope.slice(0);
+      s.scopeHeight = this.scopeHeight;
       return s;
     };
     state.prototype.callExpression = function callExpression(name, argumentCount) {
@@ -236,9 +256,7 @@ var Compiler = (function () {
     };
     state.prototype.trace = function trace(writer) {
       writer.writeLn("id: " + stateCounter)
-      writer.enter("scope:");
-      writer.writeArray(this.scope);
-      writer.outdent();
+      writer.writeLn("scopeHeight: " + this.scopeHeight);
       writer.enter("stack:");
       writer.writeArray(this.stack);
       writer.outdent();
@@ -285,6 +303,9 @@ var Compiler = (function () {
     operator.NOT = new operator("!", function (a) { return !a; }, false, true);
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false, true);
     operator.NEG = new operator("-", function (a) { return -a; }, false, true);
+    
+    operator.TRUE = new operator("!!", function (a) { return !!a; }, false, true);
+    operator.FALSE = new operator("!", function (a) { return !a; }, false, true);
 
     function linkOpposites(a, b) {
       a.not = b;
@@ -295,6 +316,7 @@ var Compiler = (function () {
     linkOpposites(operator.EQ, operator.NE);
     linkOpposites(operator.LE, operator.GT);
     linkOpposites(operator.LT, operator.GE);
+    linkOpposites(operator.TRUE, operator.FALSE);
 
     operator.prototype.eval = function eval() {
       return this.fn.apply(arguments);
@@ -497,6 +519,9 @@ var Compiler = (function () {
       if (this.value === null) {
         return "null";
       }
+      if (this.value === 0 && 1 / this.value === -Infinity) {
+        return "-0";
+      }
       return this.value;
     };
     constant.prototype.isEquivalent = function isEquivalent(other) {
@@ -659,6 +684,8 @@ var Compiler = (function () {
     if (this.temporary.length > 1) {
       this.header.push("var " + this.temporary.slice(0).join(", ") + ";");
     }
+    
+    this.header.push("var " + SCOPE_NAME + " = " + SAVED_SCOPE_NAME + ";");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
@@ -689,11 +716,13 @@ var Compiler = (function () {
     var local = this.local;
     var temporary = this.temporary;
 
-    if (block.dominator === block) {
-      block.cse = new CSE(null, this.variablePool); 
-    } else {
-      assert (block.dominator.cse, "Dominator should have a CSE map.");
-      block.cse = new CSE(block.dominator.cse, this.variablePool);
+    if (enableCSE.value) {
+      if (block.dominator === block) {
+        block.cse = new CSE(null, this.variablePool); 
+      } else {
+        assert (block.dominator.cse, "Dominator should have a CSE map.");
+        block.cse = new CSE(block.dominator.cse, this.variablePool);
+      }
     }
     
     function expression(operator) {
@@ -711,7 +740,11 @@ var Compiler = (function () {
       if (typeof value === "string") {
         value = new Literal(value);
       }
-      state.stack.push(value);
+      if (enableCSE.value && value instanceof FindProperty) {
+        cseValue(value)
+      } else {
+        state.stack.push(value);
+      }
     }
     
     function setLocal(index) {
@@ -777,7 +810,7 @@ var Compiler = (function () {
       statements.push("/* " + comment + " */");
     }
     
-    function pushExpression(value) {
+    function cseValue(value) {
       assert (value);
       if (block.cse) {
         var otherValue = block.cse.get(value, true);
@@ -817,7 +850,7 @@ var Compiler = (function () {
     }
     
     function classObject() {
-      return SCOPE_NAME + ".object";
+      return SAVED_SCOPE_NAME + ".object";
     }
     
     function superClassObject() {
@@ -836,7 +869,7 @@ var Compiler = (function () {
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
       case OP_nop:            notImplemented(); break;
-      case OP_throw:          notImplemented(); break;
+      case OP_throw:          notImplemented("throw"); break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
       case OP_dxns:           notImplemented(); break;
@@ -860,24 +893,28 @@ var Compiler = (function () {
         // NOP
         break;
       case OP_iftrue:
-        pushValue(new Constant(true));
-        setCondition(Operator.EQ);
+        setCondition(Operator.TRUE);
         break;
       case OP_iffalse:
-        pushValue(new Constant(false));
-        setCondition(Operator.EQ);
+        setCondition(Operator.FALSE);
         break;
       case OP_ifeq:           setCondition(Operator.EQ); break;
       case OP_ifne:           setCondition(Operator.NE); break;
       case OP_ifstricteq:     setCondition(Operator.SEQ); break;
       case OP_ifstrictne:     setCondition(Operator.SNE); break;
-      case OP_lookupswitch:   notImplemented(); break;
+      case OP_lookupswitch:
+        // notImplemented(); 
+        break;
       case OP_pushwith:
+        flushStack();
         obj = state.stack.pop();
         emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
+        state.scopeHeight += 1;
         break;
       case OP_popscope:
+        flushStack();
         emitStatement(SCOPE_NAME + " = " + SCOPE_NAME + ".parent");
+        state.scopeHeight -= 1;
         break;
       case OP_nextname:
         // TODO: Temporary implementation, totally broken. 
@@ -906,9 +943,10 @@ var Compiler = (function () {
       case OP_dup:            duplicate(state.stack.pop()); break;
       case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
       case OP_pushscope:
+        flushStack();
         obj = state.stack.pop();
         emitStatement(SCOPE_NAME + " = new Scope" + argumentList(SCOPE_NAME, obj));
-        state.scope.push(obj);
+        state.scopeHeight += 1;
         break;
       case OP_pushnamespace:  notImplemented(); break;
       case OP_hasnext2:
@@ -931,7 +969,8 @@ var Compiler = (function () {
       case OP_call:
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue(new Call(state.stack.pop(), "call", [obj].concat(args)));
+        // pushValue(new Call(state.stack.pop(), "call", [obj].concat(args)));
+        pushValue(state.stack.pop() + argumentList.apply(null, args));
         break;
       case OP_construct:
         args = state.stack.popMany(bc.argCount);
@@ -945,7 +984,8 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue(new Call(new GetProperty(obj, multiname), "call", [obj].concat(args)));
+        pushValue(new GetProperty(obj, multiname) + argumentList.apply(null, args));
+        // pushValue(new Call(new GetProperty(obj, multiname), "call", [obj].concat(args)));
         break;
       case OP_returnvoid:     emitStatement("return"); break;
       case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;
@@ -961,7 +1001,12 @@ var Compiler = (function () {
         pushValue("new (" + new GetProperty(obj, multiname) + ")" + argumentList.apply(null, args));
         break;
       case OP_callsuperid:    notImplemented(); break;
-      case OP_callproplex:    notImplemented(); break;
+      case OP_callproplex:
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        pushValue(new Call(new GetProperty(obj, multiname), "call", [null].concat(args)));
+        break;
       case OP_callinterface:  notImplemented(); break;
       case OP_callsupervoid:  notImplemented(); break;
       case OP_callpropvoid:   notImplemented(); break;
@@ -1002,6 +1047,7 @@ var Compiler = (function () {
       case OP_setproperty:
         value = state.stack.pop();
         multiname = multinames[bc.index];
+        flushStack();
         if (!multiname.isRuntime()) {
           obj = state.stack.pop();
           emitStatement(obj + "." + multiname.name + " = " + value);
@@ -1024,7 +1070,7 @@ var Compiler = (function () {
         break;
       case OP_getscopeobject:
         obj = SCOPE_NAME;
-        for (var i = 0; i < bc.index; i++) {
+        for (var i = 0; i < (state.scopeHeight - 1) - bc.index; i++) {
           obj += ".parent";
         }
         pushValue(obj + ".object");
@@ -1058,7 +1104,16 @@ var Compiler = (function () {
         }
         break;
       case OP_setpropertylate:    notImplemented(); break;
-      case OP_deleteproperty:     notImplemented(); break;
+      case OP_deleteproperty:
+        multiname = multinames[bc.index];
+        if (!multiname.isRuntime()) {
+          obj = state.stack.pop();
+          pushValue("deleteProperty" + argumentList(obj, objectConstant(multiname)));
+          flushStack();
+        } else {
+          notImplemented();
+        }
+        break;
       case OP_deletepropertylate: notImplemented(); break;
       case OP_getslot:            getSlot(state.stack.pop(), bc.index); break;
       case OP_setslot: 
@@ -1071,14 +1126,10 @@ var Compiler = (function () {
       case OP_convert_s:      notImplemented(); break;
       case OP_esc_xelem:      notImplemented(); break;
       case OP_esc_xattr:      notImplemented(); break;
-      case OP_convert_i:      notImplemented(); break;
-      case OP_convert_u:      notImplemented(); break;
-      case OP_convert_d:
-        pushValue("toDouble" + argumentList(state.stack.pop()));
-        break;
-      case OP_convert_b:
-        /* NOP state.callExpression("toBoolean", 1); */
-        break;
+      case OP_convert_i:      pushValue("toInt" + argumentList(state.stack.pop())); break;
+      case OP_convert_u:      pushValue("toUint" + argumentList(state.stack.pop())); break;
+      case OP_convert_d:      pushValue("toDouble" + argumentList(state.stack.pop())); break;
+      case OP_convert_b:      pushValue("toBoolean" + argumentList(state.stack.pop())); break;
       case OP_convert_o:      notImplemented(); break;
       case OP_checkfilter:    notImplemented(); break;
       case OP_convert_f:      notImplemented(); break;
@@ -1140,7 +1191,12 @@ var Compiler = (function () {
         state.stack.pop();
         pushValue(new Constant(true));
         break;
-      case OP_istype:         notImplemented(); break;
+      case OP_istype:
+        value = state.stack.pop();
+        multiname = multinames[bc.index];
+        assert (!multiname.isRuntime());
+        pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, objectConstant(multiname)));
+        break;
       case OP_istypelate:
         // TODO: Temporary implementation, totally broken.
         state.stack.pop();

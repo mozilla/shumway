@@ -4,7 +4,7 @@ var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
-function definePrototype(dictionary, obj, ctx) {
+function definePrototype(dictionary, obj) {
   var id = obj.id;
   switch (obj.type) {
   case 'font':
@@ -54,13 +54,10 @@ function definePrototype(dictionary, obj, ctx) {
         var i = 0;
         var objId;
         while (objId = dependencies[i++]) {
-          if (objId in dictionary) {
-            if (dictionary[objId] === null)
-              return true;
-            dependencies.pop();
-          } else {
-            fail('unknown object id ' + objId, 'embed');
-          }
+          assert(objId in dictionary, 'unknown object id ' + objId, 'embed');
+          if (dictionary[objId] === null)
+            return true;
+          dependencies.pop();
         }
       }
       var proto = create(obj);
@@ -75,15 +72,19 @@ function definePrototype(dictionary, obj, ctx) {
     dictionary[id] = null;
 }
 
-SWF.embed = function (file, container, onstart, oncomplete) {
+SWF.embed = function (file, container, options) {
+  if (!options)
+    options = { };
+
+  var result;
   var root;
-  var pframes = [];
   var dictionary = { };
+  var pframes = [];
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
   var frameRate;
   var plays;
-  var result;
+
   startWorking(file, function(obj) {
     if (obj) {
       if (!root) {
@@ -97,10 +98,10 @@ SWF.embed = function (file, container, onstart, oncomplete) {
         canvas.height = (bounds.yMax - bounds.yMin) / 20;
         container.appendChild(canvas);
         frameRate = obj.frameRate;
-        if (onstart)
-          onstart(root);
+        if (options.onstart)
+          options.onstart(root);
       } else if (obj.id) {
-        definePrototype(dictionary, obj, ctx);
+        definePrototype(dictionary, obj);
       } else if (obj.type === 'pframe') {
         if (obj.bgcolor)
           canvas.style.background = obj.bgcolor;
@@ -112,8 +113,8 @@ SWF.embed = function (file, container, onstart, oncomplete) {
       } else {
         result = obj;
       }
-    } else if (oncomplete) {
-      oncomplete(root, result);
+    } else if (options.oncomplete) {
+      options.oncomplete(root, result);
     }
   });
 };

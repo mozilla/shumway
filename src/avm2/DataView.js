@@ -80,10 +80,9 @@
     getFloat32: function getFloat32(offset, le) {
       return get(this, Float32Array, 4, offset, le);
     },
-    getFloat64: function getFloat32(offset, le) {
+    getFloat64: function getFloat64(offset, le) {
       return get(this, Float64Array, 8, offset, le);
     },
-
     
     setInt8: function setInt8(offset, value) {
       set(this, Int8Array, 1, offset, value);

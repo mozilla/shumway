@@ -6,7 +6,7 @@ function defineText(tag, dictionary) {
   var cmds = [
     'save()', 
     'transform(' +
-  	  [
+      [
         matrix.scaleX,
         matrix.skew0,
         matrix.skew1,
@@ -31,17 +31,16 @@ function defineText(tag, dictionary) {
       dependencies.push(record.fontId);
     }
     if (record.hasColor)
-      cmds.push('fillStyle="' + colorToString(record.color) + '"');
+      cmds.push('fillStyle="' + toStringRgba(record.color) + '"');
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)
       y = record.moveY;
     var entries = record.entries;
-    var text = '';
     var j = 0;
     var entry;
     while (entry = entries[j++]) {
-	    var code = codes[entry.glyphIndex];
+      var code = codes[entry.glyphIndex];
       cmds.push('fillText("' + fromCharCode(code) + '",' + x + ',' + y + ')');
       x += entry.advance;
     }

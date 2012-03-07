@@ -1,3 +1,25 @@
+function toDouble(x) {
+  return Number(x);
+}
+
+function toBoolean(x) {
+  return Boolean(x);
+}
+
+function toUint(x) {
+  var obj = x | 0;
+  return obj < 0 ? (obj + 4294967296) : obj;
+}
+
+function toInt(x) {
+  return parseInt(x);
+}
+
+function deleteProperty(obj, multiname) {
+  // TODO: This is not correct.
+  return delete obj[multiname.name];
+}
+
 var globalObject = function () {
   var global = {};
   global.print = global.trace = function (val) {
@@ -11,7 +33,11 @@ var globalObject = function () {
   global.Object = Object;
   global.String = String;
   global.RegExp = RegExp;
-  global.JS =  (function() { return this || (1,eval)('this') })(); 
+  global.Function = Function;
+  global.undefined = undefined;
+  global.NaN = NaN;
+  global.Infinity = Infinity;
+  global.JS = (function() { return this || (1,eval)('this') })(); 
   
   global.parseInt = parseInt;
   
@@ -26,6 +52,10 @@ var globalObject = function () {
     }
     return namespace;
   })();
+  
+  global.toString = function () {
+    return "[object global]";
+  };
   
   return global;
 }();
@@ -106,8 +136,32 @@ var Runtime = (function () {
   };
   
   runtime.prototype.createFunction = function (method, scope)  {
+    /**
+     * TODO: This is terrible, we overwrite the default implementation of call/apply because 
+     * we need to pass the globalObject whenever call/apply is passed null or undefined for the
+     * [this] pointer. We could solve this by merging the AS global object with the JS global 
+     * object, but that may open up another bag of warms.
+     */
+    function overwriteCallAndApply(fn) {
+      fn.apply = function ($this, args) {
+        if ($this === null || $this === undefined) {
+          $this = globalObject;
+        }
+        return Function.prototype.apply.apply(fn, [$this, args]);
+      };
+      /* Temporarily disable this because it prevents the Chrome debugger from stepping into callees.
+      fn.call = function ($this) {
+        if ($this === null || $this === undefined) {
+          $this = globalObject;
+        }
+        return Function.prototype.apply.apply(fn, [$this, Array.prototype.slice.call(arguments).slice(1)]);
+      };
+      */
+      return fn;
+    }
+    
     if (method.compiledMethodClosure) {
-      return method.compiledMethodClosure.bind(null, scope)();
+      return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
     }
     
     method.analysis = new Analysis(method, { chokeOnClusterfucks: true,
@@ -144,7 +198,7 @@ var Runtime = (function () {
     }
     
     // Eval hack to give generated functions proper names so that stack traces are helpful.
-    eval("function fnClosure" + functionCount + "(" + SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }")
+    eval("function fnClosure" + functionCount + "(" + SAVED_SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }")
     method.compiledMethodClosure = eval("fnClosure" + functionCount);
     
     if (traceLevel.value > 0) {
@@ -156,7 +210,7 @@ var Runtime = (function () {
     }
     
     functionCount ++;
-    return method.compiledMethodClosure.bind(null, scope)();
+    return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
   };
   
   /**
@@ -249,6 +303,9 @@ var Runtime = (function () {
     }.bind(this));
   };
   
+  runtime.prototype.isType = function isType(value, multiname) {
+    return true;
+  };
   return runtime;
 })();
 

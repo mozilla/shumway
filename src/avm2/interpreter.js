@@ -406,19 +406,6 @@ function findTrait(traits, multiname) {
   return null;
 };
 
-function toDouble(x) {
-  return Number(x);
-}
-
-function toBoolean(x) {
-  return Boolean(x);
-}
-
-function toUint(x) {
-  var obj = x | 0;
-  return obj < 0 ? (obj + 4294967296) : obj;
-}
-
 var traceExecution = inBrowser ? null : new IndentingWriter();
 if (traceExecution) {
   traceExecution.tab = "     ";
