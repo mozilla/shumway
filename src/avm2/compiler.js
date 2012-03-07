@@ -86,7 +86,7 @@ var Compiler = (function () {
   };
   
   Control.SetLabel.prototype.compile = function (mcx, state) {
-    return {statements: ["var $label = " + this.target.blockId + ";"], state: state};
+    return {statements: ["var $label = " + this.label + ";"], state: state};
   };
   
   Control.LabelSwitch.prototype.compile = function (mcx, state) {
@@ -166,6 +166,25 @@ var Compiler = (function () {
     return {statements: statements, state: state};
   };
 
+  Control.Switch.prototype.compile = function (mcx, state) {
+    var result = this.determinant.compile(mcx, state);
+    var statements = result.statements;
+    statements.push("switch (" + result.state.stack.peek() + ") {");
+    this.cases.forEach(function (item) {
+      if (item.index !== undefined) {
+        statements.push("case " + item.index + ":");
+      } else {
+        statements.push("default:");
+      }
+      if (item.body) {
+        result = item.body.compile(mcx, state);
+        statements.push(result.statements);
+      }
+    });
+    statements.push("}");
+    return {statements: statements, state: state}; 
+  };
+  
   Control.If.prototype.isThenBreak = function () {
     return this.then === Control.Break && !this.else; 
   };
@@ -850,7 +869,7 @@ var Compiler = (function () {
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
       case OP_nop:            notImplemented(); break;
-      case OP_throw:          notImplemented(); break;
+      case OP_throw:          notImplemented("throw"); break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
       case OP_dxns:           notImplemented(); break;
@@ -883,7 +902,9 @@ var Compiler = (function () {
       case OP_ifne:           setCondition(Operator.NE); break;
       case OP_ifstricteq:     setCondition(Operator.SEQ); break;
       case OP_ifstrictne:     setCondition(Operator.SNE); break;
-      case OP_lookupswitch:   notImplemented(); break;
+      case OP_lookupswitch:
+        // notImplemented(); 
+        break;
       case OP_pushwith:
         flushStack();
         obj = state.stack.pop();
@@ -1083,7 +1104,16 @@ var Compiler = (function () {
         }
         break;
       case OP_setpropertylate:    notImplemented(); break;
-      case OP_deleteproperty:     notImplemented(); break;
+      case OP_deleteproperty:
+        multiname = multinames[bc.index];
+        if (!multiname.isRuntime()) {
+          obj = state.stack.pop();
+          pushValue("deleteProperty" + argumentList(obj, objectConstant(multiname)));
+          flushStack();
+        } else {
+          notImplemented();
+        }
+        break;
       case OP_deletepropertylate: notImplemented(); break;
       case OP_getslot:            getSlot(state.stack.pop(), bc.index); break;
       case OP_setslot: 
@@ -1096,14 +1126,10 @@ var Compiler = (function () {
       case OP_convert_s:      notImplemented(); break;
       case OP_esc_xelem:      notImplemented(); break;
       case OP_esc_xattr:      notImplemented(); break;
-      case OP_convert_i:      notImplemented(); break;
-      case OP_convert_u:      notImplemented(); break;
-      case OP_convert_d:
-        pushValue("toDouble" + argumentList(state.stack.pop()));
-        break;
-      case OP_convert_b:
-        /* NOP state.callExpression("toBoolean", 1); */
-        break;
+      case OP_convert_i:      pushValue("toInt" + argumentList(state.stack.pop())); break;
+      case OP_convert_u:      pushValue("toUint" + argumentList(state.stack.pop())); break;
+      case OP_convert_d:      pushValue("toDouble" + argumentList(state.stack.pop())); break;
+      case OP_convert_b:      pushValue("toBoolean" + argumentList(state.stack.pop())); break;
       case OP_convert_o:      notImplemented(); break;
       case OP_checkfilter:    notImplemented(); break;
       case OP_convert_f:      notImplemented(); break;
@@ -1165,7 +1191,12 @@ var Compiler = (function () {
         state.stack.pop();
         pushValue(new Constant(true));
         break;
-      case OP_istype:         notImplemented(); break;
+      case OP_istype:
+        value = state.stack.pop();
+        multiname = multinames[bc.index];
+        assert (!multiname.isRuntime());
+        pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, objectConstant(multiname)));
+        break;
       case OP_istypelate:
         // TODO: Temporary implementation, totally broken.
         state.stack.pop();

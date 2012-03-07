@@ -1,3 +1,25 @@
+function toDouble(x) {
+  return Number(x);
+}
+
+function toBoolean(x) {
+  return Boolean(x);
+}
+
+function toUint(x) {
+  var obj = x | 0;
+  return obj < 0 ? (obj + 4294967296) : obj;
+}
+
+function toInt(x) {
+  return parseInt(x);
+}
+
+function deleteProperty(obj, multiname) {
+  // TODO: This is not correct.
+  return delete obj[multiname.name];
+}
+
 var globalObject = function () {
   var global = {};
   global.print = global.trace = function (val) {
@@ -281,6 +303,9 @@ var Runtime = (function () {
     }.bind(this));
   };
   
+  runtime.prototype.isType = function isType(value, multiname) {
+    return true;
+  };
   return runtime;
 })();
 
