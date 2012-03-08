@@ -13,16 +13,19 @@ from dis import disassemble
 def execute (command, timeout = -1):
   start_time = time.time()
   # print "run: " + command
-  process = [None]
+  processPid = [None]
   tmp = tempfile.mkstemp(text=True)
   os.close(tmp[0])
   def target():
-    process[0] = Popen([command + "&>" + tmp[1]], shell=True)
-    process[0].communicate();
+    process = Popen([command + "&>" + tmp[1]], shell=True)
+    processPid[0] = process.pid;
+    process.communicate();
 
   thread = threading.Thread(target=target)
   thread.start()
+  # print "Timeout", timeout
   thread.join(timeout)
+  time.sleep(2)
   if thread.is_alive():
     # Popen with "shell=True" returns the pid of the shell rather than that of the spawned process,
     # so if the process hangs killing the shell won't kill the process. We need to do this nasty
@@ -31,12 +34,12 @@ def execute (command, timeout = -1):
 
     # Kill All Child Processes
     for row in [map(int,ps.split()) for ps in os.popen("ps eo pid,pgid,ppid").readlines()[1:]]:
-      if row[2] == process[0].pid:
+      if row[2] == processPid[0]:
         os.kill(row[0], signal.SIGKILL)
         os.waitpid(-1, os.WNOHANG)
 
     # Kill Process
-    os.kill(process[0].pid, signal.SIGKILL)
+    os.kill(processPid[0], signal.SIGKILL)
     os.waitpid(-1, os.WNOHANG)
     thread.join()
 
