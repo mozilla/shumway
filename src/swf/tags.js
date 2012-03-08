@@ -52,7 +52,8 @@ var DEFINE_FONT_INFO = {
         length: '$stream.remaining()'
       }
     }
-  ]]
+  ]],
+  incomplete: '1'
 };
 var DEFINE_FONT2 = {
   type: '"font"',
