@@ -521,12 +521,6 @@ var SHAPE_WITH_STYLE = {
     repeat: '!eos'
   }
 };
-var XRGB = {
-  $$pad: UI8,
-  red: UI8,
-  green: UI8,
-  blue: UI8
-};
 var MORPH_SHAPE_WITH_STYLE = {
   $0: STYLES,
   records: {

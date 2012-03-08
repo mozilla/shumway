@@ -33,6 +33,9 @@ function toStringRgba(color) {
 function toString16(val) {
   return fromCharCode((val >> 8) & 0xff, val & 0xff);
 }
+function toString16Le(val) {
+  return fromCharCode(val & 0xff, (val >> 8) & 0xff);
+}
 function toString32(val) {
   return toString16(val >> 16) + toString16(val);
 }
@@ -71,11 +74,9 @@ var crcTable = [
 
 function crc32(data){
   var crc = -1;
-  var a = 0;
-  var b = 0;
   for (var i = 0, n = data.length; i < n; ++i) {
-    a = (crc ^ data.charCodeAt(i)) & 0xff;
-    b = crcTable[a]; 
+    var a = (crc ^ data.charCodeAt(i)) & 0xff;
+    var b = crcTable[a]; 
     crc = (crc >>> 8) ^ b;
   } 
   return crc ^ -1;

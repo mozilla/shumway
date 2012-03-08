@@ -7,7 +7,7 @@ var DEFINE_BITMAP = {
   width: UI16,
   height: UI16,
   colorTableSize: ['format===3', [UI8]],
-  data: BINARY(0)
+  bmpData: BINARY(0)
 };
 var DEFINE_FONT = {
   id: UI16,
@@ -133,18 +133,26 @@ var DEFINE_FONT2 = {
     }
   }]]
 };
-var DEFINE_JPEG = {
-  type: '"jpeg"',
-  id: ['tag===8', ['0', UI16]],
+var DEFINE_IMAGE = {
+  type: '"image"',
+  id: UI16,
   $0: ['tag>21', [
     {
       $$alphaDataOffset: UI32,
       deblock: ['tag===90', [FIXED8]],
-      imgData: BINARY('alphaDataOffset'),
+      $imgData: BINARY('alphaDataOffset'),
       alphaData: BINARY(0)
     },
-    { imgData: BINARY(0) }
-  ]]
+    { $imgData: BINARY(0) }
+  ]],
+    0xffd8: '"image/jpeg"',
+    0x8950: '"image/png"',
+  }],
+  incomplete: ['tag===6', ['1']]
+};
+var DEFINE_JPEG_TABLES = {
+  id: '0',
+  imgData: BINARY(0)
 };
 var DEFINE_SHAPE = {
   type: '"shape"',

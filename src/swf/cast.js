@@ -8,6 +8,9 @@ function cast(tags, dictionary) {
   while (tag = tags[i++]) {
     if ('id' in tag) {
       switch (tag.type) {
+      case 'bitmap':
+        var obj = defineBitmap(tag, dictionary);
+        break;
       case 'font':
         var obj = defineFont(tag, dictionary);
         break;

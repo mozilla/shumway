@@ -7,8 +7,8 @@ var tagHandler = {
   /* PlaceObject */                   4: PLACE_OBJECT,
   /* RemoveObject */                  5: REMOVE_OBJECT,
   /* DefineButton */                  7: undefined,
-  /* DefineBits */                    6: DEFINE_JPEG,
-  /* JPEGTables */                    8: DEFINE_JPEG,
+  /* DefineBits */                    6: DEFINE_IMAGE,
+  /* JPEGTables */                    8: DEFINE_JPEG_TABLES,
   /* SetBackgroundColor */            9: SET_BACKGROUND_COLOR,
   /* DefineFont */                    10: DEFINE_FONT,
   /* DefineText */                    11: DEFINE_TEXT,
@@ -20,7 +20,7 @@ var tagHandler = {
   /* SoundStreamHead */               18: undefined,
   /* SoundStreamBlock */              19: undefined,
   /* DefineBitsLossless */            20: DEFINE_BITMAP,
-  /* DefineBitsJPEG2 */               21: DEFINE_JPEG,
+  /* DefineBitsJPEG2 */               21: DEFINE_IMAGE,
   /* DefineShape2 */                  22: DEFINE_SHAPE,
   /* DefineButtonCxform */            23: undefined,
   /* Protect */                       24: undefined,
@@ -29,7 +29,7 @@ var tagHandler = {
   /* DefineShape3 */                  32: DEFINE_SHAPE,
   /* DefineText2 */                   33: DEFINE_TEXT,
   /* DefineButton2 */                 34: undefined,
-  /* DefineBitsJPEG3 */               35: DEFINE_JPEG,
+  /* DefineBitsJPEG3 */               35: DEFINE_IMAGE,
   /* DefineBitsLossless2 */           36: DEFINE_BITMAP,
   /* DefineEditText */                37: undefined,
   /* DefineSprite */                  39: undefined,
@@ -63,7 +63,7 @@ var tagHandler = {
   /* DefineBinaryData */              87: undefined,
   /* DefineFontName */                88: undefined,
   /* StartSound2 */                   89: undefined,
-  /* DefineBitsJPEG4 */               90: DEFINE_JPEG,
+  /* DefineBitsJPEG4 */               90: DEFINE_IMAGE,
   /* DefineFont4 */                   91: undefined
 };
 for (var tag in tagHandler) {

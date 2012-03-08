@@ -16,6 +16,7 @@ if (typeof window === 'undefined') {
     'generator.js',
     'parser.js',
 
+    'bitmap.js',
     'font.js',
     'image.js',
     'shape.js',
