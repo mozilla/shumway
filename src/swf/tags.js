@@ -146,8 +146,10 @@ var DEFINE_IMAGE = {
     },
     { $imgData: BINARY(0) }
   ]],
+  mimeType: ['imgData[0]<<8|imgData[1]', {
     0xffd8: '"image/jpeg"',
     0x8950: '"image/png"',
+    0x4749: '"image/gif"'
   }],
   incomplete: ['tag===6', ['1']]
 };
