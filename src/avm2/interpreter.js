@@ -1,20 +1,18 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
-
 function createGlobalObject(script) {
   var global = new ASObject();
   var globalScope = new Scope2();
   globalScope.push(global);
-  
+
   ASObject.applyTraits(global, script.traits);
 
   for (var i = 0; i < script.traits.length; i++) {
     var trait = script.traits[i];
     if (trait.isMethod()) {
       /* Methods need to be closed over the scope of their declaring script. */
-      trait.methodClosure = new Closure(this.abc, trait.method, null, globalScope.clone()); 
+      trait.methodClosure = new Closure(this.abc, trait.method, null, globalScope.clone());
     }
-  }
-  
+  };
+
   global.trace = function (val) {
     console.info(val);
   };
@@ -23,7 +21,7 @@ function createGlobalObject(script) {
   global.Date = Date;
   global.Array = Array;
   global.Math = Math;
-  global.Object = ASObjectClass; 
+  global.Object = ASObjectClass;
   global.String = String;
   global.Function = Function;
   global.RegExp = RegExp;
@@ -40,7 +38,7 @@ function createGlobalObject(script) {
     return "[global]";
   };
   global.Capabilities = {
-     'playerType': 'AVMPlus'
+    'playerType': 'AVMPlus'
   };
   return global;
 }
@@ -55,29 +53,28 @@ var Scope2 = (function () {
       this.klass = null;
     }
   }
-  
   scope.prototype.push = function push(val) {
     this.stack.push(val);
   };
-  
+
   scope.prototype.pop = function pop() {
     return this.stack.pop();
   };
-  
+
   scope.prototype.global = function global() {
     assert(this.stack.length > 0 && this.stack[0]);
     return this.stack[0];
   };
-  
+
   scope.prototype.scope = function scope(i) {
     // return this.stack[i];
     return this.stack[(this.stack.length - 1) - i];
   };
-  
+
   scope.prototype.clone = function clone() {
     return new Scope(this);
   };
-  
+
   scope.prototype.findProperty = function findProperty(multiname) {
     var stack = this.stack;
     for (var i = stack.length - 1; i >= 0; i--) {
@@ -94,7 +91,6 @@ var Scope2 = (function () {
     }
     return null;
   };
-  
   return scope;
 })();
 
@@ -129,7 +125,7 @@ Array.prototype.popMany = function(count) {
 };
 
 function wrap(fn) {
-  return function () { 
+  return function () {
     return fn.apply(null, Array.prototype.slice.call(arguments, 0));
   };
 }
@@ -194,7 +190,7 @@ RegExp.construct = function (obj, args) {
 
 var ASObject = (function () {
   var counter = 0;
-  
+
   function asObject(klass) {
     this.klass = klass || ASObjectClass;
     this.id = counter++;
@@ -208,18 +204,17 @@ var ASObject = (function () {
           return this["S" + trait.slotId];
         } else if (trait.isMethod()) {
           if (trait.methodClosure) {
-            /* Method closures were associated with method traits when the class in which they 
+            /* Method closures were associated with method traits when the class in which they
              * were defined was created. */
             return trait.methodClosure;
           } else {
             return trait.method;
           }
-        } 
+        }
       }
     }
     return this[multiname.name];
   };
-  
   asObject.prototype.setProperty = function setProperty(multiname, value) {
     if (this.traits) {
       var trait = findTrait(this.traits, multiname);
@@ -267,11 +262,11 @@ var ASObject = (function () {
   asObject.prototype.toString = function () {
     return "[ASObject " + this.id + " " + this.klass.name + "]";
   };
-  
+
   asObject.toString = function () {
     return "[class ASObject]";
   };
-  
+
   return asObject;
 })();
 
@@ -283,8 +278,6 @@ var ASNamespace = (function() {
   return namespace;
 })();
 
-
-  
 // var ASObjectClass = new ASClass();
 
 function createClass2(abc, scope, classInfo, baseClass) {
@@ -314,7 +307,7 @@ function createInstance2(scope, constructor, args) {
     // TODO: We gotta do something about prototypes here.
     var obj = new ASObject();
     constructor.apply(obj, args);
-    return obj; 
+    return obj;
   } else {
     assert(false);
   }
@@ -421,7 +414,7 @@ var Closure = (function () {
     this.savedScope = savedScope;
     this.scope = scope || new Scope();
   }
-  
+
   closure.prototype = {
     toString: function toString() {
       return "[closure " + this.methodInfo + "]";
@@ -456,10 +449,10 @@ var Closure = (function () {
       function jump (offset) {
         code.seek(code.pos + offset);
       }
-      
+
       /**
        * Finds the object with a property that matches the given multiname. This first searches the scope stack,
-       * and then the saved scope stack. 
+       * and then the saved scope stack.
        */
       function findProperty(multiname, strict) {
         // Search the scope stack ...
@@ -484,7 +477,7 @@ var Closure = (function () {
       function readMultiname() {
         return multinames[code.readU30()];
       }
-      
+
       /**
        * Creates a multiname by fetching the name and namespace from the stack if necessary.
        */
@@ -493,7 +486,7 @@ var Closure = (function () {
           multiname = multiname.clone();
           if (multiname.isRuntimeName()) {
             multiname.setName(stack.pop());
-          } 
+          }
           if (multiname.isRuntimeNamespace()) {
             multiname.setNamespace(stack.pop());
           }
@@ -504,7 +497,7 @@ var Closure = (function () {
         assert(!multiname.isRuntime());
         return multiname;
       }
-      
+
       function readAndCreateMultiname() {
         return createMultiname(readMultiname());
       }
@@ -525,14 +518,14 @@ var Closure = (function () {
 
       while (code.remaining() > 0) {
         var bc = code.readU8();
-        
+
         function notImplemented() {
           assert (false, "Not Implemented: " + opcodeName(bc));
         }
 
         if (traceExecution) {
-          var debugInfo = debugFile && debugLine ? debugFile + ":" + debugLine : ""; 
-          traceExecution.enter(String(code.position).padRight(' ', 5) + opcodeName(bc) + " " + 
+          var debugInfo = debugFile && debugLine ? debugFile + ":" + debugLine : "";
+          traceExecution.enter(String(code.position).padRight(' ', 5) + opcodeName(bc) + " " +
                      traceOperands(opcodeTable[bc], abc, code, true) + " " + debugInfo);
         }
 
@@ -547,7 +540,7 @@ var Closure = (function () {
         case OP_kill:
           local[code.readU30()] = undefined;
           break;
-        case OP_label: 
+        case OP_label:
           /* Do nothing. Used to indicate that this location is the target of a branch, which
            * is only useful for static analysis. */
           break;
@@ -571,7 +564,7 @@ var Closure = (function () {
             jump(offset);
           }
           break;
-        case OP_ifngt: 
+        case OP_ifngt:
         case OP_ifle:
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (isNaN(value1) || isNaN(value2)) {
@@ -581,7 +574,7 @@ var Closure = (function () {
           }
           break;
         case OP_ifnge:
-        case OP_iflt: 
+        case OP_iflt:
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (isNaN(value1) || isNaN(value2)) {
             if (bc === OP_ifnge) jump(offset);
@@ -589,7 +582,7 @@ var Closure = (function () {
             jump(offset);
           }
           break;
-        case OP_jump: 
+        case OP_jump:
           jump(code.readS24());
           break;
         case OP_iftrue:
@@ -604,7 +597,7 @@ var Closure = (function () {
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if (value1 == value2) jump(offset);
           break;
-        case OP_ifne: 
+        case OP_ifne:
           offset = code.readS24(); value2 = stack.pop(); value1 = stack.pop();
           if ((value1 == value2) === false) jump(offset);
           break;
@@ -626,15 +619,15 @@ var Closure = (function () {
           break;
         case OP_nextname: notImplemented(); break;
         case OP_hasnext: notImplemented(); break;
-        case OP_pushnull: 
-          stack.push(null); 
+        case OP_pushnull:
+          stack.push(null);
           break;
         case OP_pushundefined:
           stack.push(undefined);
           break;
         case OP_pushfloat: notImplemented(); break;
         case OP_nextvalue: notImplemented(); break;
-        case OP_pushbyte: 
+        case OP_pushbyte:
           stack.push(code.readS8());
           break;
         case OP_pushshort:
@@ -658,16 +651,16 @@ var Closure = (function () {
         case OP_swap:
           stack.push(stack.pop(), stack.pop());
           break;
-        case OP_pushstring: 
+        case OP_pushstring:
           stack.push(strings[code.readU30()]);
           break;
-        case OP_pushint: 
+        case OP_pushint:
           stack.push(ints[code.readU30()]);
           break;
-        case OP_pushuint: 
+        case OP_pushuint:
           stack.push(uints[code.readU30()]);
           break;
-        case OP_pushdouble: 
+        case OP_pushdouble:
           stack.push(doubles[code.readU30()]);
           break;
         case OP_pushscope:
@@ -717,7 +710,7 @@ var Closure = (function () {
           }
           stack.push(value.apply(obj, args));
           break;
-        case OP_returnvoid: 
+        case OP_returnvoid:
         case OP_returnvoid:
           if (traceExecution) {
             traceExecution.outdent();
@@ -734,7 +727,7 @@ var Closure = (function () {
           args = stack.popMany(code.readU30());
           stack.push(savedScope.klass.baseClass.construct(obj, args));
           break;
-        case OP_constructprop: 
+        case OP_constructprop:
           multiname = multinames[code.readU30()];
           args = stack.popMany(code.readU30());
           multiname = createMultiname(multiname);
@@ -752,7 +745,7 @@ var Closure = (function () {
         case OP_applytype: notImplemented(); break;
         case OP_pushfloat4: notImplemented(); break;
         case OP_newobject: notImplemented(); break;
-        case OP_newarray: 
+        case OP_newarray:
           stack.push(stack.popMany(code.readU32()));
           break;
         case OP_newactivation:
@@ -763,7 +756,7 @@ var Closure = (function () {
         case OP_newclass:
           classInfo = classes[code.readU30()];
           baseClass = stack.pop();
-          /* At this point, the scope stack contains all the scopes of all the base classes, 
+          /* At this point, the scope stack contains all the scopes of all the base classes,
            * which is now saved by the created class closure.
            */
           stack.push(createClass(abc, scope, classInfo, baseClass));
@@ -780,13 +773,13 @@ var Closure = (function () {
           break;
         case OP_finddef: notImplemented(); break;
         case OP_getlex: notImplemented(); break;
-        case OP_setproperty: 
+        case OP_setproperty:
           value = stack.pop();
           multiname = readAndCreateMultiname();
           obj = stack.pop();
           setObjectProperty(obj, multiname, value);
           break;
-        case OP_getlocal: 
+        case OP_getlocal:
           stack.push(local[code.readU30()]);
           break;
         case OP_setlocal:
@@ -823,7 +816,7 @@ var Closure = (function () {
           value = obj.getSlot(index);
           stack.push(value);
           break;
-        case OP_setslot: 
+        case OP_setslot:
           index = code.readU30();
           assert(index > 0);
           value = stack.pop();
@@ -858,7 +851,7 @@ var Closure = (function () {
         case OP_convert_f4: notImplemented(); break;
         case OP_coerce: notImplemented(); break;
         case OP_coerce_b: notImplemented(); break;
-        case OP_coerce_a: 
+        case OP_coerce_a:
           // NOP
           break;
         case OP_coerce_i: notImplemented(); break;
@@ -874,7 +867,7 @@ var Closure = (function () {
         case OP_negate:
           stack.push(-stack.pop());
           break;
-        case OP_increment: 
+        case OP_increment:
           stack.push(stack.pop() + 1);
           break;
         case OP_inclocal: notImplemented(); break;
@@ -887,7 +880,7 @@ var Closure = (function () {
           // TODO XML|XMLList
           stack.push(typeof obj);
           break;
-        case OP_not: 
+        case OP_not:
           stack.push(!stack.pop());
           break;
         case OP_bitnot:
@@ -902,7 +895,7 @@ var Closure = (function () {
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 - value2);
           break;
-        case OP_multiply: 
+        case OP_multiply:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 * value2);
           break;
@@ -914,15 +907,15 @@ var Closure = (function () {
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 % value2);
           break;
-        case OP_lshift: 
+        case OP_lshift:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 << value2);
           break;
-        case OP_rshift: 
+        case OP_rshift:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 >> value2);
           break;
-        case OP_urshift: 
+        case OP_urshift:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 >>> value2);
           break;
@@ -930,7 +923,7 @@ var Closure = (function () {
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 & value2);
           break;
-        case OP_bitor: 
+        case OP_bitor:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 | value2);
           break;
@@ -946,7 +939,7 @@ var Closure = (function () {
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 === value2);
           break;
-        case OP_lessthan: 
+        case OP_lessthan:
           value2 = stack.pop(); value1 = stack.pop();
           stack.push(value1 < value2);
           break;
@@ -1000,8 +993,8 @@ var Closure = (function () {
           code.readU8();
           code.readU30();
           break;
-        case OP_debugline: 
-          debugLine = code.readU30(); 
+        case OP_debugline:
+          debugLine = code.readU30();
           break;
         case OP_debugfile:
           debugFile = strings[code.readU30()];
@@ -1011,7 +1004,6 @@ var Closure = (function () {
         default:
           console.info("Not Implemented: " + opcodeName(bc));
         }
-        
         if (traceExecution) {
           if (savedScope) {
             traceExecution.enter("savedScope:");
@@ -1029,7 +1021,6 @@ var Closure = (function () {
           traceExecution.outdent();
           traceExecution.outdent();
         }
-        
       }
     }
   };
