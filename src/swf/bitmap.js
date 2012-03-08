@@ -5,25 +5,27 @@
 /** @const */ var FORMAT_24BPP        = 5;
 
 function defineBitmap(tag) {
-  var bmpData = tag.bmpData;
   var width = tag.width;
   var height = tag.height;
+  var hasAlpha = tag.hasAlpha;
   var plte = '';
   var trns = '';
   var literals = '';
+
+  var bmpData = tag.bmpData;
   switch (tag.format) {
   case FORMAT_COLORMAPPED:
     var colorType = '\x03';
-    var pixelCount = width * height;
+    var bytesPerLine = width + (width % 4);
     var colorTableSize = tag.colorTableSize;
-    var paletteSize = colorTableSize * (tag.tag === 36 ? 4 : 3);
-    var stream = new Stream(bmpData, 0, paletteSize + pixelCount, 'C');
+    var paletteSize = colorTableSize * (tag.hasAlpha ? 4 : 3);
+    var stream = new Stream(bmpData, 0, paletteSize + (bytesPerLine * height), 'C');
     var bytes = stream.bytes;
     var pos = 0;
 
     var palette = '';
     stream.ensure(paletteSize);
-    if (tag.tag === 36) {
+    if (hasAlpha) {
       var alphaValues = '';
       while (pos < colorTableSize) {
         palette += fromCharCode(bytes[pos++], bytes[pos++], bytes[pos++]);
@@ -37,45 +39,45 @@ function defineBitmap(tag) {
     plte = createPngChunk('PLTE', palette);
 
     for (var i = 0; i < height; ++i) {
-      stream.ensure(width);
+      stream.ensure(bytesPerLine);
       var begin = pos;
       var end = begin + width;
       var scanline = slice.call(bytes, begin, end);
       literals += '\x00' + fromCharCode.apply(null, scanline);
-      pos += width;
+      pos += bytesPerLine;
     }
     break;
   case FORMAT_15BPP:
     var colorType = '\x02';
-    var bytesPerLine = width * 2;
+    var bytesPerLine = (width * 2) + ((width * 2) % 4);
     var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
-    var bytes = stream.bytes;
     var pos = 0;
     for (var y = 0; y < height; ++y) {
       literals += '\x00';
       stream.ensure(bytesPerLine);
       for (var x = 0; x < width; ++x) {
-        var hi = bytes[pos++];
-        var lo = bytes[pos++];
-        literals += fromCharCode((hi >> 2) & 0x05, ((hi & 0x02) << 3) | (hi & 0x02), lo & 0x05);
+        var word = stream.getUint16(pos);
+        pos += 2;
+        literals += fromCharCode((word >> 10) & 0x05, (word >> 5) & 0x05, word & 0x05);
       }
-      pos += ((bytesPerLine + 3) & ~3) - bytesPerLine;
+      pos += bytesPerLine;
     }
     break;
   case FORMAT_24BPP:
     var colorType = '\x06';
     var bytesPerLine = width * 4;
     var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
-    var bytes = stream.bytes;
     var pos = 0;
+    var alphaMask = hasAlpha ? 0 : 0xff;
     for (var y = 0; y < height; ++y) {
       stream.ensure(bytesPerLine);
       literals += '\x00';
       for (var x = 0; x < width; ++x) {
-        var alpha = bytes[pos++];
-        literals += fromCharCode(bytes[pos++], bytes[pos++], bytes[pos++], alpha);
+        var xrgba = stream.getUint32(pos);
+        pos += 4;
+        var rgba = (pixel << 8) | ((pixel >> 24) | alphaMask);
+        literals += toString32(rgba);
       }
-      pos += ((bytesPerLine + 3) & ~3) - bytesPerLine;
     }
     break;
   }

@@ -54,6 +54,11 @@ function defineShape(tag, dictionary) {
   var recordsMorph = isMorph ? tag.recordsMorph : [];
   var fillStyles = tag.fillStyles;
   var lineStyles = tag.lineStyles;
+  var fillSegments = { };
+  var lineSegments = { };
+  var paths = [];
+  var dependencies = [];
+
   var sx = 0;
   var sy = 0;
   var dx = 0;
@@ -64,8 +69,6 @@ function defineShape(tag, dictionary) {
   var dym = 0;
   var dpt = '0,0';
   var edges = [];
-  var fillSegments = { };
-  var lineSegments = { };
   var fillOffset = 0;
   var lineOffset = 0;
   var fill0 = 0;
@@ -207,8 +210,7 @@ function defineShape(tag, dictionary) {
       }
     }
   }
-  var paths = [];
-  var dependencies = [];
+
   var i = 0;
   while (fillStyles[i++]) {
     var path = [];
@@ -333,8 +335,9 @@ function defineShape(tag, dictionary) {
       paths.push({ i: path[0].i, cmds: cmds });
     }
   }
-  var lineStyle;
+
   var i = 0;
+  var lineStyle;
   while (lineStyle = lineStyles[i++]) {
     var segments = lineSegments[i];
     if (segments) {
@@ -367,6 +370,7 @@ function defineShape(tag, dictionary) {
       }
     }
   }
+
   paths.sort(function (a, b) {
     return a.i - b.i;
   });

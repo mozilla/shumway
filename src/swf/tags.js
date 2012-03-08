@@ -6,6 +6,7 @@ var DEFINE_BITMAP = {
   $format: UI8,
   width: UI16,
   height: UI16,
+  hasAlpha: 'tag===36',
   colorTableSize: ['format===3', [UI8]],
   bmpData: BINARY(0)
 };

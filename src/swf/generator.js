@@ -21,6 +21,7 @@ function generateParser(struct) {
     } else if (!context) {
       context = '$' + varCount++;
     }
+
     var production = [];
     for (var field in struct) {
       var type = struct[field];
@@ -31,6 +32,7 @@ function generateParser(struct) {
       } else {
         var options = { };
       }
+
       var merge = false;
       var hide = false;
       var refer = false;
@@ -53,6 +55,7 @@ function generateParser(struct) {
         if (!hide)
           segment.push(context + '.' + field + '=');
       }
+    
       if (options.count || options.length || options.repeat) {
         if (refer) {
           var listVar = field;
@@ -113,6 +116,7 @@ function generateParser(struct) {
           break;
         case 'object':
           var shared = segment.splice(0).join('');
+
           function branch(struct) {
             var obj = produce(struct, merge ? context : refer && field);
             var init = shared;
@@ -124,6 +128,7 @@ function generateParser(struct) {
             segment.push(init);
             segment.push(productions.pop());
           }
+
           if (isArray(type)) {
             var expr = type[0];
             assert(expr != undefined, 'missing control expression', 'generate');
