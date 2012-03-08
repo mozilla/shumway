@@ -59,8 +59,8 @@ if (typeof window === 'undefined') {
   self.onmessage = function(event) {
     if (typeof event.data === 'object') {
       var file = event.data;
-      if (file instanceof Uint8Array) {
-        process(file.buffer);
+      if (file instanceof ArrayBuffer) {
+        process(file);
       } else if (self.FileReaderSync) {
         var reader = new FileReaderSync;
         var result = reader.readAsArrayBuffer(file);

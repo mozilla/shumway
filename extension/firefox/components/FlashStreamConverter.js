@@ -104,8 +104,7 @@ ChromeActions.prototype = {
         if (oXHR.status === 200) {
           var arrayBuffer = oXHR.response;
           if (arrayBuffer) {
-            var byteArray = new Uint8Array(arrayBuffer);
-            win.postMessage({callback:"loadFile", url: url, array: byteArray}, "*");
+            win.postMessage({callback:"loadFile", url: url, array: arrayBuffer}, "*");
           }
         } else {
           win.postMessage({callback:"loadFile", url: url, error: oXHR.statusText}, "*");
