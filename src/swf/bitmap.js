@@ -4,6 +4,17 @@
 /** @const */ var FORMAT_15BPP        = 4;
 /** @const */ var FORMAT_24BPP        = 5;
 
+function rgbToString(bytes, pos) {
+  var red = bytes[pos];
+  var green = bytes[pos + 1];
+  var blue = bytes[pos + 2];
+  return fromCharCode(red, green, blue);
+}
+function argbToString(bytes, pos) {
+  var alpha = bytes[pos];
+  return rgbToString(bytes, pos + 1) + fromCharCode(alpha);
+}
+
 function defineBitmap(tag) {
   var width = tag.width;
   var height = tag.height;
@@ -28,20 +39,15 @@ function defineBitmap(tag) {
     if (hasAlpha) {
       var alphaValues = '';
       while (pos < colorTableSize) {
-        var red = bytes[pos++];
-        var green = bytes[pos++];
-        var blue = bytes[pos++];
-        var alpha = bytes[pos++];
-        palette += fromCharCode(red, green, blue);
-        alphaValues += fromCharCode(alpha);
+        palette += rgbToString(bytes, pos);
+        pos += 3;
+        alphaValues += fromCharCode(bytes[pos++]);
       }
       trns = createPngChunk('tRNS', alphaValues);
     } else {
       while (pos < colorTableSize) {
-        var red = bytes[pos++];
-        var green = bytes[pos++];
-        var blue = bytes[pos++];
-        palette += fromCharCode(red, green, blue);
+        palette += rgbToString(bytes, pos);
+        pos += 3;
       }
     }
     plte = createPngChunk('PLTE', palette);
@@ -75,19 +81,25 @@ function defineBitmap(tag) {
     }
     break;
   case FORMAT_24BPP:
-    var colorType = '\x06';
+    if (hasAlpha) {
+      var colorType = '\x06';
+      var padding = 0;
+      var pxToString = argbToString;
+    } else {
+      var colorType = '\x02';
+      var padding = 1;
+      var pxToString = rgbToString;
+    }
     var bytesPerLine = width * 4;
     var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
     var pos = 0;
-    var alphaMask = hasAlpha ? 0 : 0xff;
     for (var y = 0; y < height; ++y) {
       stream.ensure(bytesPerLine);
       literals += '\x00';
       for (var x = 0; x < width; ++x) {
-        var xrgba = stream.getUint32(pos);
-        pos += 4;
-        var rgba = (pixel << 8) | ((pixel >> 24) | alphaMask);
-        literals += toString32(rgba);
+        pos += pad;
+        literals += pxToString(bytes, pos);
+        pos += 3;
       }
     }
     break;
