@@ -56,7 +56,7 @@ var tagHandler = {
   /* SymbolClass */                   76: undefined,
   /* Metadata */                      77: METADATA,
   /* DefineScalingGrid */             78: undefined,
-  /* DoABC */                         82: undefined,
+  /* DoABC */                         82: DO_ABC,
   /* DefineShape4 */                  83: DEFINE_SHAPE,
   /* DefineMorphShape2 */             84: DEFINE_SHAPE,
   /* DefineSceneAndFrameLabelData */  86: undefined,

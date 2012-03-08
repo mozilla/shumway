@@ -189,6 +189,11 @@ var DEFINE_TEXT = {
     repeat: '!eot'
   }
 };
+var DO_ABC = {
+  flags: UI32,
+  name: STRING(0),
+  data: BINARY(0)
+};
 var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
   actions: {
