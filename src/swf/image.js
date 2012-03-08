@@ -6,7 +6,7 @@ for (var i = 0; i < 256; ++i)
   alphaValues.push(i);
 var trns = createPngChunk('tRNS', fromCharCode.apply(null, alphaValues));
 
-function defineJpeg(tag, dictionary) {
+function defineImage(tag, dictionary) {
   var imgData = tag.imgData;
   var mimeType;
   var mask;

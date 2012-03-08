@@ -17,7 +17,7 @@ if (typeof window === 'undefined') {
     'parser.js',
 
     'font.js',
-    'jpeg.js',
+    'image.js',
     'shape.js',
     'text.js',
     'cast.js'
