@@ -28,13 +28,21 @@ function defineBitmap(tag) {
     if (hasAlpha) {
       var alphaValues = '';
       while (pos < colorTableSize) {
-        palette += fromCharCode(bytes[pos++], bytes[pos++], bytes[pos++]);
-        alphaValues += fromCharCode(bytes[pos++]);
+        var red = bytes[pos++];
+        var green = bytes[pos++];
+        var blue = bytes[pos++];
+        var alpha = bytes[pos++];
+        palette += fromCharCode(red, green, blue);
+        alphaValues += fromCharCode(alpha);
       }
       trns = createPngChunk('tRNS', alphaValues);
     } else {
-      while (pos < colorTableSize)
-        palette += fromCharCode(bytes[pos++], bytes[pos++], bytes[pos++]);
+      while (pos < colorTableSize) {
+        var red = bytes[pos++];
+        var green = bytes[pos++];
+        var blue = bytes[pos++];
+        palette += fromCharCode(red, green, blue);
+      }
     }
     plte = createPngChunk('PLTE', palette);
 
@@ -58,7 +66,10 @@ function defineBitmap(tag) {
       for (var x = 0; x < width; ++x) {
         var word = stream.getUint16(pos);
         pos += 2;
-        literals += fromCharCode((word >> 10) & 0x05, (word >> 5) & 0x05, word & 0x05);
+        var red = (word >> 10) & 0x0;
+        var green = (word >> 5) & 0x05;
+        var blue = word & 0x05;
+        literals += fromCharCode(red, green, blue);
       }
       pos += bytesPerLine;
     }
