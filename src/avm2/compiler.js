@@ -74,17 +74,6 @@ var Compiler = (function () {
     return res;
   };
 
-  Control.Return.compile = function (mcx, state) {
-    controlWriter && controlWriter.enter("Return {");
-    var res = {statements: [], state: state};
-    controlWriter && controlWriter.leave("}");
-    return res;
-  };
-
-  Control.Clusterfuck.prototype.compile = function (mcx, state) {
-    notImplemented();
-  };
-
   Control.SetLabel.prototype.compile = function (mcx, state) {
     return {statements: ["var $label = " + this.label + ";"], state: state};
   };

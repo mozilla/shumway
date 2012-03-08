@@ -164,9 +164,7 @@ var Runtime = (function () {
       return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
     }
     
-    method.analysis = new Analysis(method, { chokeOnClusterfucks: true,
-                                             splitLoops: true });
-    method.analysis.analyzeControlFlow();
+    method.analysis = new Analysis(method, { massage: true });
     method.analysis.restructureControlFlow();
     var result = this.compiler.compileMethod(method);
 

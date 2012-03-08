@@ -3,7 +3,6 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
   var active = {};
   var visited = {};
   var order = [];
-  var loopId = 0;
   var loopIds = {};
 
   function escape(v) {
@@ -11,12 +10,12 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
   }
 
   function blockColor(block) {
-    if (!(block.blockId in loopIds)) {
+    if (!(block.bid in loopIds)) {
       return "black";
     }
 
     var colors = ["red", "blue", "green", "purple", "orange", "pink"];
-    return colors[loopIds[block.blockId] % colors.length];
+    return colors[loopIds[block.bid] % colors.length];
   }
 
   name = "\"" + escape(name) + "\" ";
@@ -39,11 +38,10 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
 
   order.forEach(function (node) {
     if (node.loop) {
-      var loopNodes = node.loop.flatten();
+      var loopNodes = node.loop.body.flatten();
       for (var i = 0, j = loopNodes.length; i < j; i++) {
-        loopIds[loopNodes[i].blockId] = loopId;
+        loopIds[loopNodes[i].bid] = node.loop.id;
       }
-      loopId++;
     }
   });
 
@@ -56,7 +54,10 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
   order.forEach(function (node) {
     succFns.forEach(function (succFn) {
       succFn.fn(node).forEach(function (succ) {
-        writer.writeLn("block_" + idFn(node) + " -> " + "block_" + idFn(succ) + succFn.style);
+        writer.writeLn("block_" + idFn(node) + " -> " + "block_" + idFn(succ) +
+                       " [" + (succFn.style ? succFn.style + "," : "") +
+                       "color=\"" + (blockColor(node) === blockColor(succ) ?
+                                     blockColor(node) : "black") + "\"];");
       });
     });
   });
