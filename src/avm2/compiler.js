@@ -43,10 +43,10 @@ function Indent(statements) {
 }
 
 var Compiler = (function () {
-  
-  /* Print coarse level state vectors at control node boundaries. */ 
+
+  /* Print coarse level state vectors at control node boundaries. */
   var controlWriter = false ? new IndentingWriter() : null;
-  
+
   /* Attach compile method to each control structure node. These thread a compilation context as well
    * as an abstract program state. As control nodes are visited recursively, they construct a tree of
    * statement arrays which if flattened after compilation is done.
@@ -84,11 +84,11 @@ var Compiler = (function () {
   Control.Clusterfuck.prototype.compile = function (mcx, state) {
     notImplemented();
   };
-  
+
   Control.SetLabel.prototype.compile = function (mcx, state) {
     return {statements: ["var $label = " + this.label + ";"], state: state};
   };
-  
+
   Control.LabelSwitch.prototype.compile = function (mcx, state) {
     var statements = [];
     var firstCase = true;
@@ -112,7 +112,7 @@ var Compiler = (function () {
     this.body.forEach(function (item) {
       controlWriter && controlWriter.writeLn("entryState: " + state);
       var result = item.compile(mcx, state);
-      state = result.state; 
+      state = result.state;
       statements.push(result.statements);
     });
     if (controlWriter) {
@@ -141,14 +141,14 @@ var Compiler = (function () {
       controlWriter.enter("Loop {");
       controlWriter.writeLn("entryState: " + state);
     }
-    
+
     var body = this.body;
     var statements = [];
 
     // TODO: The while condition may have statements, temporarily disabling
     // this optimization.
-    if (false && body instanceof Control.Seq && 
-        body.first() instanceof Control.If && 
+    if (false && body instanceof Control.Seq &&
+        body.first() instanceof Control.If &&
         body.first().isThenBreak()) {
       ir = body.first().compile(mcx, state);
       statements.push("while (" + ir.condition.negate() + ") {");
@@ -182,11 +182,11 @@ var Compiler = (function () {
       }
     });
     statements.push("}");
-    return {statements: statements, state: state}; 
+    return {statements: statements, state: state};
   };
-  
+
   Control.If.prototype.isThenBreak = function () {
-    return this.then === Control.Break && !this.else; 
+    return this.then === Control.Break && !this.else;
   };
 
   Control.If.prototype.compile = function (mcx, state) {
@@ -194,27 +194,27 @@ var Compiler = (function () {
       controlWriter.enter("If {");
       controlWriter.writeLn("entryState: " + state);
     }
-    
+
     controlWriter && controlWriter.enter("Condition {");
     var cr = this.cond.compile(mcx, state);
     controlWriter && controlWriter.leave("}");
-    
+
     var tr = null;
     if (this.then) {
       controlWriter && controlWriter.enter("Then {");
       tr = this.then.compile(mcx, cr.state.clone());
       controlWriter && controlWriter.leave("}");
     }
-    
+
     var er = null;
     if (this.else) {
       controlWriter && controlWriter.enter("Else {");
       er = this.else.compile(mcx, cr.state.clone());
       controlWriter && controlWriter.leave("}");
     }
-    
+
     assert (tr || er);
-    
+
     var condition = this.negated ? cr.condition.negate() : cr.condition;
     var statements = cr.statements;
     statements.push("if (" + condition + ") {");
@@ -262,7 +262,7 @@ var Compiler = (function () {
       writer.outdent();
     };
     state.prototype.toString = function toString() {
-      return "id: " + this.id + ", scope: [" + this.scope.join(", ") + "], stack: [" + this.stack.join(", ") + "]"; 
+      return "id: " + this.id + ", scope: [" + this.scope.join(", ") + "], stack: [" + this.stack.join(", ") + "]";
     };
     return state;
   })();
@@ -303,7 +303,7 @@ var Compiler = (function () {
     operator.NOT = new operator("!", function (a) { return !a; }, false, true);
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false, true);
     operator.NEG = new operator("-", function (a) { return -a; }, false, true);
-    
+
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false, true);
     operator.FALSE = new operator("!", function (a) { return !a; }, false, true);
 
@@ -444,7 +444,7 @@ var Compiler = (function () {
     };
     return getProperty;
   })();
-  
+
   var GetPropertyRuntime = (function () {
     function getPropertyRuntime(obj, ns, name) {
       this.obj = obj;
@@ -462,7 +462,7 @@ var Compiler = (function () {
     };
     return getPropertyRuntime;
   })();
-  
+
   /**
    * Wrapper around a named local variable.
    */
@@ -484,7 +484,7 @@ var Compiler = (function () {
     };
     return variable;
   })();
-  
+
   /**
    * Wrapper around a named local variable.
    */
@@ -501,7 +501,7 @@ var Compiler = (function () {
     };
     return getGlobalScope;
   })();
-  
+
   /**
    * Silly wrapper around constants, so that they fit neatly in our expression trees.
    */
@@ -549,7 +549,7 @@ var Compiler = (function () {
     literal.prototype.isPure = function isPure() {
       return false;
     };
-    return literal; 
+    return literal;
   })();
 
   /**
@@ -575,13 +575,13 @@ var Compiler = (function () {
     };
     return variablePool;
   })();
-  
+
   /**
-   * Common subexpression elimination is only used to CSE scope lookups for now, 
+   * Common subexpression elimination is only used to CSE scope lookups for now,
    * use it more aggressively. Each basic block maintains a list of values which
    * are checked whenever new values are added to the list. If a [equivalent] value
-   * already exists in the list, the old value is returned. The values are first 
-   * looked up in the current list, then in the parent's (immediate dominator) list.  
+   * already exists in the list, the old value is returned. The values are first
+   * looked up in the current list, then in the parent's (immediate dominator) list.
    */
   var CSE = (function () {
     function cse(parent, variablePool) {
@@ -589,10 +589,10 @@ var Compiler = (function () {
       this.variablePool = variablePool;
       this.values = [];
     }
-    
+
     /**
      * Finds and returns an equivalent value or returns null if not found.
-     * If [allocate] is true, then if an equivalent value is not found the 
+     * If [allocate] is true, then if an equivalent value is not found the
      * a variable is allocated for the current value and the original value
      * is returned.
      */
@@ -611,7 +611,7 @@ var Compiler = (function () {
       if (this.parent) {
         var otherValue = this.parent.get(value, false);
         if (otherValue) {
-          return otherValue; 
+          return otherValue;
         }
       }
       if (!allocate) {
@@ -621,7 +621,7 @@ var Compiler = (function () {
       this.values.push(value);
       return value;
     };
-    
+
     return cse;
   })();
 
@@ -631,15 +631,15 @@ var Compiler = (function () {
     }
     return obj.toString();
   }
-  
+
   function valueList() {
     return Array.prototype.slice.call(arguments, 0).map(literal).join(", ");
   }
-  
+
   function argumentList() {
-    return "(" + valueList.apply(null, arguments) + ")"; 
+    return "(" + valueList.apply(null, arguments) + ")";
   }
-  
+
   /**
    * Local state for compiling a method.
    */
@@ -652,49 +652,49 @@ var Compiler = (function () {
 
     /* Initialize local variables. First declare the [this] reference, then ... */
     this.local = [new Variable("this")];
-    
-    /* push the method's parameters, followed by ... */ 
+
+    /* push the method's parameters, followed by ... */
     for (var i = 0; i < method.parameters.length; i++) {
       this.local.push(new Variable(method.parameters[i].name));
     }
-    
+
     /* push the method's remaining locals.*/
     for (var i = method.parameters.length; i < method.localCount; i++) {
       this.local.push(new Variable(getLocalVariableName(i)));
     }
-    
+
     this.temporary = [];
     for (var i = 0; i < 10; i++) {
       this.temporary.push(new Variable("s" + i))
     }
-    
+
     this.header = [];
-    
+
     var parameterCount = method.parameters.length;
     if (method.needsRest()) {
       this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, " + parameterCount + ");");
     } else if (method.needsArguments()) {
       this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, 0);");
     }
-    
+
     if (this.local.length > 1) {
       this.header.push("var " + this.local.slice(1).join(", ") + ";");
     }
-    
+
     if (this.temporary.length > 1) {
       this.header.push("var " + this.temporary.slice(0).join(", ") + ";");
     }
-    
+
     this.header.push("var " + SCOPE_NAME + " = " + SAVED_SCOPE_NAME + ";");
   }
 
   MethodCompilerContext.prototype.compileBlock = function compileBlock(block, state) {
     var writer = this.compiler.writer;
-    
+
     if (traceLevel.value <= 2) {
       writer = null;
     }
-    
+
     if (writer) {
       writer.enter("block " + block.blockId + ", dom: " + block.dominator.blockId + " [" + block.position + "-" + block.end.position + "] {");
       writer.enter("entryState {");
@@ -718,13 +718,13 @@ var Compiler = (function () {
 
     if (enableCSE.value) {
       if (block.dominator === block) {
-        block.cse = new CSE(null, this.variablePool); 
+        block.cse = new CSE(null, this.variablePool);
       } else {
         assert (block.dominator.cse, "Dominator should have a CSE map.");
         block.cse = new CSE(block.dominator.cse, this.variablePool);
       }
     }
-    
+
     function expression(operator) {
       if (operator.isBinary()) {
         var b = state.stack.pop();
@@ -746,28 +746,28 @@ var Compiler = (function () {
         state.stack.push(value);
       }
     }
-    
+
     function setLocal(index) {
       var value = state.stack.pop();
       flushStack();
       emitStatement(local[index] + " = " + value);
     }
-    
+
     function duplicate(value) {
       var temp = temporary[state.stack.length];
       state.stack.push("(" + temp + " = " + value + ")");
       state.stack.push(temp);
     }
-    
+
     function popValue() {
       emitStatement(state.stack.pop());
     }
-    
+
     function kill(index) {
       flushStack();
       emitStatement(local[index] + " = " + new Constant(undefined));
     }
-    
+
     /**
      * Stores all stack values into temporaries. At the end of a block, the state stack
      * may not be empty. This usually occurs for short-circuited conditional expressions.
@@ -801,15 +801,15 @@ var Compiler = (function () {
     function emitStatement(statement) {
       statements.push(statement + ";");
     }
-    
+
     function emitAssignment(variable, expression) {
       statements.push(variable + " = " + expression + ";");
     }
-    
+
     function emitComment(comment) {
       statements.push("/* " + comment + " */");
     }
-    
+
     function cseValue(value) {
       assert (value);
       if (block.cse) {
@@ -820,7 +820,7 @@ var Compiler = (function () {
         state.stack.push(otherValue.variable);
       }
     }
-    
+
     var abc = this.compiler.abc;
     var ints = abc.constantPool.ints;
     var uints = abc.constantPool.uints;
@@ -848,15 +848,15 @@ var Compiler = (function () {
     function getAndCreateMultiname(multiname) {
       return createMultiname(multiname);
     }
-    
+
     function classObject() {
       return SAVED_SCOPE_NAME + ".object";
     }
-    
+
     function superClassObject() {
       return classObject() + ".baseClass";
     }
-    
+
     var bytecodes = this.method.analysis.bytecodes;
     for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
       var bc = bytecodes[bci];
@@ -875,7 +875,7 @@ var Compiler = (function () {
       case OP_dxns:           notImplemented(); break;
       case OP_dxnslate:       notImplemented(); break;
       case OP_kill:           kill(bc.index); break;
-      case OP_label: 
+      case OP_label:
         /* Do nothing. Used to indicate that this location is the target of a branch, which
          * is only useful for static analysis. */
         break;
@@ -903,7 +903,7 @@ var Compiler = (function () {
       case OP_ifstricteq:     setCondition(Operator.SEQ); break;
       case OP_ifstrictne:     setCondition(Operator.SNE); break;
       case OP_lookupswitch:
-        // notImplemented(); 
+        // notImplemented();
         break;
       case OP_pushwith:
         flushStack();
@@ -917,7 +917,7 @@ var Compiler = (function () {
         state.scopeHeight -= 1;
         break;
       case OP_nextname:
-        // TODO: Temporary implementation, totally broken. 
+        // TODO: Temporary implementation, totally broken.
         state.stack.pop();
         state.stack.pop();
         pushValue(new Constant("TODO"));
@@ -1021,7 +1021,7 @@ var Compiler = (function () {
           var pair = state.stack.popMany(2);
           nameValuePairs.push(pair[0] + ": " + pair[1]);
         }
-        pushValue("{" + nameValuePairs.join(", ") + "}"); 
+        pushValue("{" + nameValuePairs.join(", ") + "}");
         break;
       case OP_newarray:       pushValue("[" + state.stack.popMany(bc.argCount) + "]"); break;
       case OP_newactivation:
@@ -1065,7 +1065,7 @@ var Compiler = (function () {
         break;
       case OP_getlocal:       pushValue(local[bc.index]); break;
       case OP_setlocal:       setLocal(bc.index); break;
-      case OP_getglobalscope: 
+      case OP_getglobalscope:
         pushValue(new GetGlobalScope());
         break;
       case OP_getscopeobject:
@@ -1116,7 +1116,7 @@ var Compiler = (function () {
         break;
       case OP_deletepropertylate: notImplemented(); break;
       case OP_getslot:            getSlot(state.stack.pop(), bc.index); break;
-      case OP_setslot: 
+      case OP_setslot:
         value = state.stack.pop();
         obj = state.stack.pop();
         setSlot(obj, bc.index, value);
@@ -1136,7 +1136,7 @@ var Compiler = (function () {
       case OP_unplus:         notImplemented(); break;
       case OP_convert_f4:     notImplemented(); break;
       case OP_coerce:
-        // TODO: 
+        // TODO:
         break;
       case OP_coerce_b:       notImplemented(); break;
       case OP_coerce_a:       /* NOP */ break;
@@ -1257,12 +1257,12 @@ var Compiler = (function () {
     }
 
     flushStack();
-    
+
     return {state: state, condition: condition, statements: statements};
   };
 
   function compiler(abc) {
-    this.writer = typeof(webShell) === undefined ? null : new IndentingWriter();    
+    this.writer = typeof(webShell) === undefined ? null : new IndentingWriter();
     this.abc = abc;
   };
 
@@ -1270,10 +1270,10 @@ var Compiler = (function () {
     assert(method.analysis);
     var mcx = new MethodCompilerContext(this, method);
     var statements = mcx.header;
-    
+
     var body = method.analysis.controlTree.compile(mcx, mcx.state).statements;
-    
-    var usedVariables = mcx.variablePool.used; 
+
+    var usedVariables = mcx.variablePool.used;
     if (usedVariables.notEmpty()) {
       statements.push("var " + usedVariables.join(", ") + ";");
     }
