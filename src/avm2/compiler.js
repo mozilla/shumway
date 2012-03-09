@@ -93,7 +93,7 @@ var Compiler = (function () {
     var statements = [];
     var firstCase = true;
     this.cases.forEach(function (item) {
-      statements.push((firstCase ? "if" : "else if") + "($label === " + item.label + ") {")
+      statements.push((firstCase ? "if" : "else if") + "($label === " + item.label + ") {");
       firstCase = false;
       if (item.body) {
         var result = item.body.compile(mcx, state);
@@ -545,7 +545,7 @@ var Compiler = (function () {
     };
     literal.prototype.toString = function toString() {
       return this.value;
-    }
+    };
     literal.prototype.isPure = function isPure() {
       return false;
     };
@@ -741,7 +741,7 @@ var Compiler = (function () {
         value = new Literal(value);
       }
       if (enableCSE.value && value instanceof FindProperty) {
-        cseValue(value)
+        cseValue(value);
       } else {
         state.stack.push(value);
       }
@@ -1009,7 +1009,13 @@ var Compiler = (function () {
         break;
       case OP_callinterface:  notImplemented(); break;
       case OP_callsupervoid:  notImplemented(); break;
-      case OP_callpropvoid:   notImplemented(); break;
+      case OP_callpropvoid:
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        assert(!multiname.isRuntime());
+        emitStatement(new GetProperty(obj, multiname) + argumentList.apply(null, args));
+        break;
       case OP_sxi1:           notImplemented(); break;
       case OP_sxi8:           notImplemented(); break;
       case OP_sxi16:          notImplemented(); break;

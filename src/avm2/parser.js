@@ -1,5 +1,3 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
-
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
@@ -177,10 +175,14 @@ var Trait = (function () {
     return this.kind === TRAIT_Slot;
   };
 
+  trait.prototype.isConstant = function isConstant() {
+    return this.kind === TRAIT_Const;
+  };
+
   trait.prototype.isMethod = function isMethod() {
     return this.kind === TRAIT_Method;
   };
-  
+
   trait.prototype.isClass = function isClass() {
     return this.kind === TRAIT_Class;
   };
@@ -552,8 +554,8 @@ var Multiname = (function () {
       return this.isRuntimeName() ? "[]" : this.getName();
     }
   };
-  
-  multiname.prototype.mangle = function mangle() {
+
+  multiname.prototype.getQualifiedName = function getQualifiedName() {
     assert(this.isQName());
     return this.getNamespace(0) + "$" + this.getName();
   };
