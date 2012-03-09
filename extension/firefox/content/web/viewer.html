@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+      <script src="../swf/swf.js"></script>
+      <script>
+        SWF.workerPath = "../swf/worker.js";
+      </script>
+      <script src="../swf/util.js"></script>
+      <script src="../swf/worker.js"></script>
+      <script src="../swf/prototypes.js"></script>
+      <script src="../swf/embed.js"></script>
+      <script src="../swf/renderer.js"></script>
+      <script>
+        var FirefoxCom = (function FirefoxComClosure() {
+          return {
+            /**
+             * Creates an event that hopefully the extension is listening for and will
+             * synchronously respond to.
+             * @param {String} action The action to trigger.
+             * @param {String} data Optional data to send.
+             * @return {*} The response.
+             */
+            request: function(action, data) {
+              var request = document.createTextNode('');
+              request.setUserData('action', action, null);
+              request.setUserData('data', data, null);
+              document.documentElement.appendChild(request);
+
+              var sender = document.createEvent('Events');
+              sender.initEvent('shumway.message', true, false);
+              request.dispatchEvent(sender);
+              var response = request.getUserData('response');
+              document.documentElement.removeChild(request);
+              return response;
+            }
+          };
+        })();
+
+        function runViewer() {
+          var res = FirefoxCom.request('getUrl', null);
+          console.log("params " + FirefoxCom.request('getParams', null));
+          FirefoxCom.request('loadFile', res);
+        }
+
+        addEventListener("message", function handlerMessage(e) {
+          var args = e.data;
+          switch (args.callback) {
+            case "loadFile":
+              parseSwf(args.url, args.array);
+              break;
+          }
+        }, true);
+
+        function parseSwf(url, file) {
+          console.log("Parsing " + url + "...");
+          SWF.embed(file, document.getElementById("viewer"));
+        }
+        
+      </script>
+    </head>
+
+  <body onload="runViewer()">
+      <div id="viewer" style="position:fixed;left:0;top:0;bottom:0;right:0;background-color:pink;"></div>      
+  </body>
+</html>
