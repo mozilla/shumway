@@ -38,9 +38,9 @@ function writeGraphViz(writer, name, root, idFn, orderFn,
 
   order.forEach(function (node) {
     if (node.loop) {
-      var loopNodes = node.loop.body.flatten();
+      var loopNodes = node.loop.body.toArray();
       for (var i = 0, j = loopNodes.length; i < j; i++) {
-        loopIds[loopNodes[i].bid] = node.loop.id;
+        loopIds[loopNodes[i]] = node.loop.id;
       }
     }
   });
