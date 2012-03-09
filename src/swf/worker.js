@@ -1,6 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 if (typeof window === 'undefined') {
+  print = function (message) {
+      console.log(message);
+  };
+  var webShell = true;
+  importScripts('../avm2/util.js');
+  var options = new OptionSet("option(s)");
+  var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
+
   importScripts(
     'DataView.js',
 
@@ -21,7 +29,17 @@ if (typeof window === 'undefined') {
     'image.js',
     'shape.js',
     'text.js',
-    'cast.js'
+    'cast.js',
+
+    '../avm2/constants.js',
+    '../avm2/opcodes.js',
+    '../avm2/parser.js',
+    '../avm2/analyze.js',
+    '../avm2/viz.js',
+    '../avm2/compiler.js',
+    '../avm2/runtime.js',
+    '../avm2/disassembler.js',
+    '../avm2/interpreter.js'
   );
 
   function process(buffer) {
@@ -60,7 +78,9 @@ if (typeof window === 'undefined') {
   self.onmessage = function(event) {
     if (typeof event.data === 'object') {
       var file = event.data;
-      if (self.FileReaderSync) {
+      if (file instanceof ArrayBuffer) {
+        process(file);
+      } else if (self.FileReaderSync) {
         var reader = new FileReaderSync;
         var result = reader.readAsArrayBuffer(file);
         process(result);
@@ -83,7 +103,8 @@ if (typeof window === 'undefined') {
     }
   };
 } else {
-  var worker = new Worker('../worker.js');
+  var workerPath = 'workerPath' in SWF ? SWF.workerPath : '../worker.js';
+  var worker = new Worker(workerPath);
   function startWorking(file, callback) {
     worker.onmessage = function(event) {
       callback(event.data);
