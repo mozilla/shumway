@@ -656,7 +656,7 @@ var CONDITION = {
   leave: UB(1),
   enter: UB(1),
   actions: {
-    $: ACTION_RECORD,
+    $: ACTION,
     repeat: 'action'
   }
 };
