@@ -1,37 +1,11 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+/** @define {string} */ var workerScripts = 'DataView.js,util.js,swf.js,\
+types.js,structs.js,tags.js,inflate.js,stream.js,templates.js,generator.js,\
+parser.js,bitmap.js,font.js,image.js,shape.js,text.js,cast.js';
+
 if (typeof window === 'undefined') {
-  print = function (message) {
-      console.log(message);
-  };
-  var webShell = true;
-  importScripts('../avm2/util.js');
-  var options = new OptionSet("option(s)");
-  var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
-
-  importScripts(
-    'DataView.js',
-
-    'swf.js',
-    'util.js',
-
-    'types.js',
-    'structs.js',
-    'tags.js',
-    'inflate.js',
-    'stream.js',
-    'templates.js',
-    'generator.js',
-    'parser.js',
-
-    'bitmap.js',
-    'font.js',
-    'image.js',
-    'shape.js',
-    'text.js',
-    'cast.js',
-
-  );
+  importScripts.apply(null, workerScripts.split(','));
 
   function process(buffer) {
     var i = 0;
@@ -94,8 +68,9 @@ if (typeof window === 'undefined') {
     }
   };
 } else {
-  var workerPath = 'workerPath' in SWF ? SWF.workerPath : '../worker.js';
-  var worker = new Worker(workerPath);
+  var path = SWF.workerPath || 'worker.js';
+  var worker = new Worker(path);
+
   function startWorking(file, callback) {
     worker.onmessage = function(event) {
       callback(event.data);
