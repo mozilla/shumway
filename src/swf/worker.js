@@ -24,6 +24,15 @@ if (typeof window === 'undefined') {
           push.apply(controlTags, tags);
           if (tag.id)
             self.postMessage(dictionary[tag.id]);
+        } else if ('ref' in tag) {
+          var id = tag.ref;
+          assert(id in dictionary, 'undefined object', 'ref');
+          var obj = create(dictionary[id]);
+          for (var prop in tag) {
+            if (prop !== 'id' && prop !== 'ref')
+              obj[prop] = tag[prop];
+          }
+          dictionary[id] = obj;
         } else {
           var pframes = cast(controlTags.concat(tags), dictionary);
           controlTags = [];
