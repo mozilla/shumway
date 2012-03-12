@@ -1,40 +1,65 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function cast(tags, dictionary) {
+function cast(tags, dictionary, declare) {
   var pframes = [];
   var pframe = { };
   var i = 0;
   var tag;
   while (tag = tags[i++]) {
     if ('id' in tag) {
+      var factory = null;
+      var obj = null;
       switch (tag.type) {
       case 'bitmap':
-        var obj = defineBitmap(tag, dictionary);
+        var factory = defineBitmap;
         break;
       case 'font':
-        var obj = defineFont(tag, dictionary);
+        var factory = defineFont;
         break;
       case 'image':
-        var obj = defineImage(tag, dictionary);
+        var factory = defineImage;
+        break;
         break;
       case 'shape':
-        var obj = defineShape(tag, dictionary);
+        var factory = defineShape;
         break;
       case 'sprite':
-        var obj = {
+        var dependencies = [];
+        obj = {
           type: 'sprite',
           id: tag.id,
           frameCount: tag.frameCount,
-          pframes: cast(tag.tags, dictionary)
+          require: dependencies,
+          pframes: cast(tag.tags, dictionary, function(obj) {
+            dependencies.push(obj.id);
+            declare(obj);
+          })
         };
         break;
       case 'text':
-        var obj = defineText(tag, dictionary);
+        var factory = defineText;
         break;
       default:
-        var obj = tag;
+        fail('unknown object type', 'cast');
       }
-      dictionary[tag.id] = obj;
+
+      var id = tag.id - 0x4001;
+      dictionary[id] = tag;
+      defineProperty(dictionary, tag.id, {
+        get: (function(id, factory, obj) {
+          var undeclared = true;
+          return function() {
+            if (undeclared) {
+              if (!obj)
+                obj = factory(dictionary[id], dictionary);
+              if (obj.id)
+                declare(obj);
+              undeclared = false;
+            }
+            return obj;
+          };
+        })(id, factory, obj)
+      });
       continue;
     }
     switch (tag.type) {
@@ -55,8 +80,11 @@ function cast(tags, dictionary) {
       break;
     case 'place':
       var entry = { };
-      if (tag.place)
-        entry.id = tag.objId;
+      if (tag.place) {
+        var obj = dictionary[tag.objId];
+        assert(obj, 'undefined object', 'place');
+        entry.id = obj.id;
+      }
       if (tag.move)
         entry.move = true;
       if (tag.hasMatrix)
@@ -71,4 +99,4 @@ function cast(tags, dictionary) {
     }
   }
   return pframes;
-};
+}

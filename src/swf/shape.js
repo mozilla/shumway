@@ -322,14 +322,16 @@ function defineShape(tag, dictionary) {
       case FILL_NONSMOOTHED_REPEATING_BITMAP:
       case FILL_NONSMOOTHED_CLIPPED_BITMAP:
         var repetition = fillStyle.repeat ? 'repeat' : 'no-repeat';
-        cmds.push('var p=createPattern(d[' + fillStyle.bitmapId + '].img,"' + repetition + '")');
+        var bitmap = dictionary[fillStyle.bitmapId];
+        assert(bitmap, 'undefined bitmap', 'shape');
+        cmds.push('var p=createPattern(d[' + bitmap.id + '].img,"' + repetition + '")');
         cmds.push('save()');
         cmds.push('scale(0.05,0.05)');
         cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
         cmds.push('fillStyle=p');
         cmds.push('fill()');
         cmds.push('restore()');
-        dependencies.push(fillStyle.bitmapId);
+        dependencies.push(bitmap.id);
         break;
       }
       paths.push({ i: path[0].i, cmds: cmds });

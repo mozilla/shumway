@@ -11,6 +11,7 @@ if (typeof window === 'undefined') {
     var i = 0;
     var dictionary = { };
     var controlTags = [];
+
     SWF.parse(buffer, {
       onstart: function(result) {
         self.postMessage(result);
@@ -20,12 +21,10 @@ if (typeof window === 'undefined') {
         i += tags.length;
         var tag = tags[tags.length - 1];
         if ('id' in tag) {
-          cast(tags.splice(-1, 1), dictionary);
+          cast(tags.splice(-1, 1), dictionary, declare);
           push.apply(controlTags, tags);
-          if (tag.id)
-            self.postMessage(dictionary[tag.id]);
         } else if ('ref' in tag) {
-          var id = tag.ref;
+          var id = tag.ref - 0x4001;
           assert(id in dictionary, 'undefined object', 'ref');
           var obj = create(dictionary[id]);
           for (var prop in tag) {
@@ -47,6 +46,10 @@ if (typeof window === 'undefined') {
         self.postMessage(null);
       }
     });
+  }
+  function declare(obj) {
+    if (obj.id)
+      self.postMessage(obj);
   }
 
   self.onmessage = function(event) {
