@@ -31,15 +31,6 @@ if (typeof window === 'undefined') {
     'text.js',
     'cast.js',
 
-    '../avm2/constants.js',
-    '../avm2/opcodes.js',
-    '../avm2/parser.js',
-    '../avm2/analyze.js',
-    '../avm2/viz.js',
-    '../avm2/compiler.js',
-    '../avm2/runtime.js',
-    '../avm2/disassembler.js',
-    '../avm2/interpreter.js'
   );
 
   function process(buffer) {
