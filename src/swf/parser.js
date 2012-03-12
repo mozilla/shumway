@@ -69,7 +69,7 @@ var tagHandler = {
 for (var tag in tagHandler) {
   var handler = tagHandler[tag];
   if (typeof handler === 'object')
-    tagHandler[tag] = generateParser(handler, 'version', 'tag');
+    tagHandler[tag] = generateParser(handler, 'version', 'tagCode');
 }
 
 var readHeader = generateParser(MOVIE_HEADER);
@@ -78,44 +78,46 @@ function readTags(context, stream, version, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
   do {
-    var tagAndLength = readUi16(bytes, stream);
-    var tag = tagAndLength >> 6;
-    var length = tagAndLength & 0x3f;
+    var tagCodeAndLength = readUi16(bytes, stream);
+    var tagCode = tagCodeAndLength >> 6;
+    var length = tagCodeAndLength & 0x3f;
     if (length === 0x3f)
       length = readUi32(bytes, stream);
     stream.ensure(length);
     var substream = stream.substream(stream.pos, stream.pos += length);
     var subbytes = substream.bytes;
-    if (tag === 39) {
-      var item = {
-        type: 'sprite',
-        id: readUi16(subbytes, substream),
-        frameCount: readUi16(subbytes, substream),
-        tags: []
-      };
-      readTags(item, substream, version);
+    var tag = { code: tagCode };
+
+    if (tagCode === 39) {
+      tag.type = 'sprite';
+      tag.id = readUi16(subbytes, substream);
+      tag.frameCount = readUi16(subbytes, substream);
+      tag.tags = [];
+      readTags(tag, substream, version);
     } else {
-      var handler = tagHandler[tag];
-      var item = handler ? handler(subbytes, substream, version, tag) : { };
+      var handler = tagHandler[tagCode];
+      if (handler)
+        handler(subbytes, substream, tag, version, tagCode);
     }
-    item.tag = tag;
-    tags.push(item);
-    if (tag === 1) {
+
+    tags.push(tag);
+
+    if (tagCode === 1) {
       while (stream.getUint16(stream.pos, true) >> 6 === 1) {
-        tags.push(item);
+        tags.push(tag);
         stream.pos += 2;
       }
       if (onprogress)
         onprogress(context);
-    } else if (onprogress && ('id' in item || 'ref' in item)) {
+    } else if (onprogress && ('id' in tag || 'ref' in tag)) {
       onprogress(context);
     }
-  } while (tag);
+  } while (tagCode);
 }
 
-SWF.parse = function(buffer, listener) {
-  if (!listener)
-    listener = { };
+SWF.parse = function(buffer, options) {
+  if (!options)
+    options = { };
 
   var stream = new Stream(buffer);
   var bytes = stream.bytes;
@@ -128,24 +130,21 @@ SWF.parse = function(buffer, listener) {
   var version = bytes[3];
   stream.pos += 4;
   var fileLength = readUi32(bytes, stream);
+
   if (compressed) {
     stream = new Stream(buffer, 8, fileLength - 8, 'C');
     bytes = stream.bytes;
     stream.ensure(21);
   }
-  var header = readHeader(bytes, stream);
-  var swf = {
-    version: version,
-    bounds: header.bounds,
-    frameRate: header.frameRate,
-    frameCount: header.frameCount
-  };
-  if (listener.onstart)
-    listener.onstart(swf);
+
+  var swf = { version: version };
+  readHeader(bytes, stream, swf);
+  if (options.onstart)
+    options.onstart(swf);
 
   swf.tags = [];
-  readTags(swf, stream, version, listener.onprogress);
+  readTags(swf, stream, version, options.onprogress);
   
-  if (listener.oncomplete)
-    listener.oncomplete(swf);
+  if (options.oncomplete)
+    options.oncomplete(swf);
 };

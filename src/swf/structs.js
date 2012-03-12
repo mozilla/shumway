@@ -385,7 +385,7 @@ var FILL_BITMAP = {
   bitmapId: UI16,
   matrix: MATRIX,
   matrixMorph: ['isMorph', [MATRIX]],
-  repeat: 'type===64||type===67'
+  condition: 'type===64||type===67'
 };
 var FILL_STYLE = {
   $type: UI8,
@@ -511,26 +511,26 @@ var SHAPE = {
   $0: STYLE_BITS,
   records: {
     $: SHAPE_RECORD,
-    repeat: '!eos'
+    condition: '!eos'
   }
 };
 var SHAPE_WITH_STYLE = {
   $0: STYLES,
   records: {
     $: SHAPE_RECORD,
-    repeat: '!eos'
+    condition: '!eos'
   }
 };
 var MORPH_SHAPE_WITH_STYLE = {
   $0: STYLES,
   records: {
     $: SHAPE_RECORD,
-    repeat: '!eos'
+    condition: '!eos'
   },
   $1: STYLE_BITS,
   recordsMorph: {
     $: SHAPE_RECORD,
-    repeat: '!eos'
+    condition: '!eos'
   }
 };
 var KERNING = {

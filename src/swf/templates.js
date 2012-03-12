@@ -57,7 +57,7 @@ function readEncodedU32($bytes, $stream) {
     return val;
   return val | ($bytes[$stream.pos++] << 28);
 }
-function bool($bytes, $stream) {
+function readBool($bytes, $stream) {
   return !!$bytes[$stream.pos++];
 }
 function align($bytes, $stream) {

@@ -236,7 +236,7 @@ var DO_ACTION = {
   spriteId: ['tag===59', [UI16]],
   actions: {
     $: ACTION,
-    repeat: 'action'
+    condition: 'action'
   }
 };
 var FILE_ATTRIBUTES = {
@@ -305,7 +305,7 @@ var PLACE_OBJECT = {
         $$allFlags: ['version>=6', [UI32, UI16]],
         events: {
           $: EVENT,
-          repeat: '!eoe'
+          condition: '!eoe'
         }
       }]],
       backgroundColor: ['hasBackgroundColor', ['ARGB']],

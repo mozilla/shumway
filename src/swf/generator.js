@@ -1,19 +1,18 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var defaultTemplateSet = [
-  readSi8, readSi16, readSi32,
-  readUi8, readUi16, readUi32,
-  readFixed, readFixed8, readFloat16, readFloat, readDouble,
-  readEncodedU32,
-  bool,
-  align,
-  readSb, readUb, readFb,
-  readString, readBinary
+  readSi8, readSi16, readSi32, readUi8, readUi16, readUi32, readFixed,
+  readFixed8, readFloat16, readFloat, readDouble, readEncodedU32, readBool,
+  align, readSb, readUb, readFb, readString, readBinary
 ];
+
+var rtemplate = /^function\s*(.*)\s*\(([^\)]*)\)\s*{\s*([\s\S]*.)\s*}$/;
+var rinlinable = /^return\s*([^;]*)$/;
 
 function generateParser(struct) {
   var productions = [];
   var varCount = 0;
+
   (function produce(struct, context) {
     if (typeof struct !== 'object' || '$' in struct) {
       struct = { $$: struct };
@@ -55,8 +54,8 @@ function generateParser(struct) {
         if (!hide)
           segment.push(context + '.' + field + '=');
       }
-    
-      if (options.count || options.length || options.repeat) {
+
+      if (options.count || 'length' in options || options.condition) {
         if (refer) {
           var listVar = field;
         } else {
@@ -68,9 +67,12 @@ function generateParser(struct) {
           var countVar = '$' + varCount++;
           segment.push('var ' + countVar + '=' + options.count);
           segment.push('while(' + countVar + '--){');
-        } else if (options.length) {
+        } else if ('length' in options) {
           var endVar = '$' + varCount++;
-          segment.push('var ' + endVar + '=$stream.pos+' + options.length + '');
+          var length = options.length;
+          if (length <= 0)
+            length = '$stream.remaining()+' + length;
+          segment.push('var ' + endVar + '=$stream.pos+' + length + '');
           segment.push('while($stream.pos<' + endVar + '){');
         } else {
           segment.push('do{');
@@ -85,26 +87,27 @@ function generateParser(struct) {
           segment.push(productions.pop());
           segment.push(')}');
         }
-        if (options.repeat)
-          segment.push('while(' + options.repeat + ')');
+        if (options.condition)
+          segment.push('while(' + options.condition + ')');
       } else {
         switch (typeof type) {
         case 'number':
           var template = defaultTemplateSet[type];
           assert(template, 'unknown type', 'generate');
           if (typeof template === 'function') {
-            var terms = /^function\s*(.*)\s*\(([^\)]*)\)\s*{\s*([\s\S]*.)\s*}$/.exec(template);
+            var terms = rtemplate.exec(template);
             var name = terms[1];
             var params = terms[2].split(', ');
             var body = terms[3].split('\n');
             var inline = true;
-            if (template.length > 2) {
+            var argc = params.length - 2;
+            if (argc) {
               var args = options.args;
-              assert(args && args.length >= params.length - 2,'missing arguments', 'generate');
+              assert(args && args.length >= argc, 'missing arguments', 'generate');
               params.splice(2, args.length, args);
               inline = false;
             }
-            if (inline && /^return\s*([^;]*)/.test(body))
+            if (inline && rinlinable.test(body))
               type = RegExp.$1;
             else
               type = name + '(' + params.join(',') + ')';
@@ -131,9 +134,9 @@ function generateParser(struct) {
 
           if (isArray(type)) {
             var expr = type[0];
-            assert(expr != undefined, 'missing control expression', 'generate');
+            assert(expr, 'invalid control expression', 'generate');
             var branches = type[1];
-            assert(typeof branches === 'object', 'missing alternatives', 'generate');
+            assert(typeof branches === 'object', 'invalid alternatives', 'generate');
             if (isArray(branches)) {
               assert(branches.length <= 2, 'too many alternatives', 'generate');
               segment.push('if(' + expr + '){');
@@ -162,8 +165,6 @@ function generateParser(struct) {
               segment.push('default:');
               if ('unknown' in branches)
                 branch(branches.unknown);
-              else
-                segment.push('fail("invalid case value", "parse")');
               segment.push('}');
             }
           } else {
@@ -179,12 +180,15 @@ function generateParser(struct) {
     productions.push(production.join('\n'));
     return context;
   })(struct, '$');
-  var args = ['$bytes', '$stream'];
+  
+  var args = ['$bytes', '$stream', '$'];
   if (arguments.length > 1)
-    args.splice(2, 0, slice.call(arguments, 1));
+    push.apply(args, slice.call(arguments, 1));
   return eval(
-    '(function(' + args.join(',') + '){\nvar $={}\n' +
-      productions.join('\n') +
-    '\nreturn $\n})'
+    '(function(' + args.join(',') + '){\n' +
+      '$||($={})\n' +
+      productions.join('\n') + '\n' +
+      'return $\n' +
+    '})'
   );
 }
