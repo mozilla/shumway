@@ -11,6 +11,7 @@ var DEFINE_BITMAP = {
   bmpData: BINARY(0)
 };
 var DEFINE_FONT = {
+  type: '"font"',
   id: UI16,
   $$firstOffset: UI16,
   $glyphCount: 'firstOffset/2',
@@ -23,38 +24,6 @@ var DEFINE_FONT = {
     $: SHAPE,
     count: 'glyphCount'
   }
-};
-var DEFINE_FONT_INFO = {
-  type: '"font"',
-  id: UI16,
-  $$nameLength: UI8,
-  name: STRING('nameLength'),
-  $$reserved: UB(2),
-  smallText: UB(1),
-  shiftJis: UB(1),
-  ansi: UB(1),
-  italic: UB(1),
-  bold: UB(1),
-  $wide: UB(1),
-  $0: ['tag===62', [
-    { language: UI8 },
-    { language: '0' }
-  ]],
-  $1: ['wide', [
-    {
-      codes: {
-        $: UI16,
-        length: '$stream.remaining()'
-      }
-    },
-    {
-      codes: {
-        $: UI8,
-        length: '$stream.remaining()'
-      }
-    }
-  ]],
-  incomplete: '1'
 };
 var DEFINE_FONT2 = {
   type: '"font"',
@@ -133,6 +102,41 @@ var DEFINE_FONT2 = {
       count: 'kerningCount'
     }
   }]]
+};
+var DEFINE_FONT_INFO = {
+  ref: UI16,
+  $$nameLength: UI8,
+  name: STRING('nameLength'),
+  $$reserved: UB(2),
+  smallText: UB(1),
+  shiftJis: UB(1),
+  ansi: UB(1),
+  italic: UB(1),
+  bold: UB(1),
+  $wide: UB(1),
+  $0: ['tagCode===62', [
+    { language: UI8 },
+    { language: '0' }
+  ]],
+  $1: ['wide', [
+    {
+      codes: {
+        $: UI16,
+        length: 0
+      }
+    },
+    {
+      codes: {
+        $: UI8,
+        length: 0
+      }
+    }
+  ]]
+};
+var DEFINE_FONT_NAME = {
+  ref: UI16,
+  name: STRING(0),
+  copyright: STRING(0)
 };
 var DEFINE_IMAGE = {
   type: '"image"',

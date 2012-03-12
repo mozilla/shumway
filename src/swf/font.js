@@ -116,7 +116,7 @@ function defineFont(tag, dictionary) {
     format314
   ;
 
-  var glyphs = tag.incomplete ? dictionary[tag.id].glyphs : tag.glyphs;
+  var glyphs = tag.glyphs;
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var resolution = tag.resolution || 1;

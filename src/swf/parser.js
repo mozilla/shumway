@@ -61,7 +61,7 @@ var tagHandler = {
   /* DefineMorphShape2 */             84: DEFINE_SHAPE,
   /* DefineSceneAndFrameLabelData */  86: undefined,
   /* DefineBinaryData */              87: undefined,
-  /* DefineFontName */                88: undefined,
+  /* DefineFontName */                88: DEFINE_FONT_NAME,
   /* StartSound2 */                   89: undefined,
   /* DefineBitsJPEG4 */               90: DEFINE_IMAGE,
   /* DefineFont4 */                   91: undefined
