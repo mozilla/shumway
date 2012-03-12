@@ -333,6 +333,8 @@ function defineShape(tag, dictionary) {
         cmds.push('restore()');
         dependencies.push(bitmap.id);
         break;
+      default:
+        fail('invalid fill style', 'shape');
       }
       paths.push({ i: path[0].i, cmds: cmds });
     }

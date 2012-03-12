@@ -51,8 +51,8 @@ function defineImage(tag, dictionary) {
     } while (i < n);
     var alphaData = tag.alphaData;
     if (alphaData) {
-      assert(width && height, 'could not determine image dimension', 'jpeg');
-      
+      assert(width && height, 'bad image', 'jpeg');
+
       var ihdr =
         toString32(width) +
         toString32(height) +

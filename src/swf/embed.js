@@ -54,7 +54,7 @@ function definePrototype(dictionary, obj) {
         var i = 0;
         var objId;
         while (objId = dependencies[i++]) {
-          assert(objId in dictionary, 'unknown object id ' + objId, 'embed');
+          assert(objId in dictionary, 'unknown object', 'require');
           if (dictionary[objId] === null)
             return true;
           dependencies.pop();
@@ -67,6 +67,8 @@ function definePrototype(dictionary, obj) {
       dictionary[id] = proto;
     });
     break;
+  default:
+    fail('unknown object type', 'define');
   }
   if (!(id in dictionary))
     dictionary[id] = null;

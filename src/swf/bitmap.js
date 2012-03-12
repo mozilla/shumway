@@ -103,6 +103,8 @@ function defineBitmap(tag) {
       }
     }
     break;
+  default:
+    fail('invalid format', 'bitmap');
   }
 
   var ihdr =

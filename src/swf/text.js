@@ -26,6 +26,7 @@ function defineText(tag, dictionary) {
       break;
     if (record.hasFont) {
       var font = dictionary[record.fontId];
+      assert(font, 'undefined font', 'label');
       var codes = font.codes;
       cmds.push('font="' + record.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(record.fontId);
@@ -41,6 +42,7 @@ function defineText(tag, dictionary) {
     var entry;
     while (entry = entries[j++]) {
       var code = codes[entry.glyphIndex];
+      assert(code, 'undefined glyph', 'label');
       cmds.push('fillText("' + fromCharCode(code) + '",' + x + ',' + y + ')');
       x += entry.advance;
     }
