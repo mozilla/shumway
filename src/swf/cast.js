@@ -22,7 +22,7 @@ function cast(tags, dictionary) {
         break;
       case 'sprite':
         var obj = {
-          type: 'movieclip',
+          type: 'sprite',
           id: tag.id,
           frameCount: tag.frameCount,
           pframes: cast(tag.tags, dictionary)

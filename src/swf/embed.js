@@ -36,7 +36,7 @@ function definePrototype(dictionary, obj) {
       dictionary[id] = proto;
     };
     break;
-  case 'movieclip':
+  case 'sprite':
     defer(function () {
       for (var i = 1; i < id; ++i) {
         if (i in dictionary && dictionary[i] === null)
