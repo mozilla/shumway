@@ -1,6 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var create = Object.create;
+var defineProperty = Object.defineProperty;
 var keys = Object.keys;
 var isArray = Array.isArray;
 var fromCharCode = String.fromCharCode;
