@@ -124,7 +124,7 @@ function defineBitmap(tag) {
     toString16Le(len) +
     toString16Le(nlen) +
     literals +
-    '\x00\x00\x00\x00' // checksum
+    toString32(adler32(literals)) // checksum
   ;
 
   var data =

@@ -86,3 +86,13 @@ function createPngChunk(type, data) {
   var body = type + data;
   return toString32(data.length) + body + toString32(crc32(body));
 }
+ 
+function adler32(data) {
+  var a = 1;
+  var b = 0;
+  for (var i = 0, n = data.length; i < n; ++i) {
+    a = (a + (data.charCodeAt(i) & 0xff)) % 65521;
+    b = (b + a) % 65521;
+  }
+  return (b << 16) | a;
+}

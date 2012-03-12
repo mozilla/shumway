@@ -82,7 +82,7 @@ function defineImage(tag, dictionary) {
         toString16Le(len) +
         toString16Le(nlen) +
         literals +
-        '\x00\x00\x00\x00' // checksum
+        toString32(adler32(literals)) // checksum
       ;
 
       mask =
