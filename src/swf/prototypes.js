@@ -22,6 +22,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         ++n;
       }
       var depths = keys(pframe);
+
       defer(function() {
         var depth;
         while (depth = depths[0]) {
@@ -32,7 +33,7 @@ var MovieClipPrototype = function(obj, dictionary) {
               var initObj = entry.move ? frame[depth] : { };
               var id = entry.id;
               if (id) {
-                assert(id in dictionary, 'unknown object id ' + id, 'movieclip');
+                assert(id in dictionary, 'unknown object', 'place');
                 if (dictionary[id] === null)
                   return true;
                 var proto = dictionary[id];

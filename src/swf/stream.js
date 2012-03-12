@@ -20,7 +20,9 @@ function Stream(buffer, offset, length, compression) {
     assert(!(header % 31), 'bad FCHECK', 'inflate');
     assert(!(header & 0x20), 'FDICT bit set', 'inflate');
     sstream.pos += 2;
-    stream.ensure = function(length) {
+    var proto = create(StreamPrototype);
+
+    proto.ensure = function(length) {
       var index = this.pos + length;
       while (this.realLength < index)
         inflateBlock(sstream.bytes, sstream, this.bytes, this);
@@ -29,9 +31,10 @@ function Stream(buffer, offset, length, compression) {
     var bytes = new Uint8Array(buffer, offset, length);
     var stream = new DataView(buffer, offset, length);
     stream.realLength = length;
+    var proto = StreamPrototype;
   }
 
-  stream.__proto__ = Stream.prototype;
+  stream.__proto__ = proto;
   stream.bytes = bytes;
   stream.pos = 0;
   stream.end = length;
@@ -39,16 +42,16 @@ function Stream(buffer, offset, length, compression) {
   stream.bitLength = 0;
   return stream;
 }
-var proto = Stream.prototype = create(DataView.prototype);
 
-proto.align = function() {
+var StreamPrototype = create(DataView.prototype);
+StreamPrototype.align = function() {
   this.bitBuffer = this.bitLength = 0;
 };
-proto.ensure = function() { };
-proto.remaining = function() {
+StreamPrototype.ensure = function() { };
+StreamPrototype.remaining = function() {
   return this.end - this.pos;
 };
-proto.substream = function(begin, end) {
+StreamPrototype.substream = function(begin, end) {
   var stream = create(this);
   stream.pos = begin;
   stream.end = end;

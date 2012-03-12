@@ -29,7 +29,7 @@ function defineText(tag, dictionary) {
       assert(font, 'undefined font', 'label');
       var codes = font.codes;
       cmds.push('font="' + record.fontHeight + 'px \'' + font.name + '\'"');
-      dependencies.push(record.fontId);
+      dependencies.push(font.id);
     }
     if (record.hasColor)
       cmds.push('fillStyle="' + toStringRgba(record.color) + '"');
@@ -52,7 +52,7 @@ function defineText(tag, dictionary) {
     type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
-    data: cmds.join(';')
+    data: cmds.join('\n')
   };
   if (dependencies.length)
     shape.require = dependencies;

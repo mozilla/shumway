@@ -30,7 +30,8 @@ function defineBitmap(tag) {
     var bytesPerLine = width + (width % 4);
     var colorTableSize = tag.colorTableSize;
     var paletteSize = colorTableSize * (tag.hasAlpha ? 4 : 3);
-    var stream = new Stream(bmpData, 0, paletteSize + (bytesPerLine * height), 'C');
+    var datalen = paletteSize + (bytesPerLine * height);
+    var stream = new Stream(bmpData, 0, datalen, 'C');
     var bytes = stream.bytes;
     var pos = 0;
 
@@ -52,7 +53,7 @@ function defineBitmap(tag) {
     }
     plte = createPngChunk('PLTE', palette);
 
-    for (var i = 0; i < height; ++i) {
+    while (pos < datalen) {
       stream.ensure(bytesPerLine);
       var begin = pos;
       var end = begin + width;
@@ -92,14 +93,15 @@ function defineBitmap(tag) {
     }
     var bytesPerLine = width * 4;
     var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
+    var bytes = stream.bytes;
     var pos = 0;
     for (var y = 0; y < height; ++y) {
       stream.ensure(bytesPerLine);
       literals += '\x00';
       for (var x = 0; x < width; ++x) {
-        pos += pad;
+        pos += padding;
         literals += pxToString(bytes, pos);
-        pos += 3;
+        pos += 4 - padding;
       }
     }
     break;

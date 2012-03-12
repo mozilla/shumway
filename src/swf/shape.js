@@ -285,6 +285,7 @@ function defineShape(tag, dictionary) {
         }
         prev = subpath;
       }
+
       var fillStyle = fillStyles[i - 1];
       switch (fillStyle.type) {
       case FILL_SOLID:
@@ -336,6 +337,7 @@ function defineShape(tag, dictionary) {
       default:
         fail('invalid fill style', 'shape');
       }
+
       paths.push({ i: path[0].i, cmds: cmds });
     }
   }
@@ -387,7 +389,7 @@ function defineShape(tag, dictionary) {
     type: 'shape',
     id: tag.id,
     bounds: tag.bounds,
-    data: cmds.join(';')
+    data: cmds.join('\n')
   };
   if (dependencies.length)
     shape.require = dependencies;

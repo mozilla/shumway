@@ -20,6 +20,7 @@ function definePrototype(dictionary, obj) {
       var ctx = (document.createElement('canvas')).getContext('2d');
       ctx.font = '1024px "' + obj.name + '"';
       var defaultWidth = ctx.measureText(charset).width;
+
       defer(function() {
         if (ctx.measureText(charset).width === defaultWidth)
           return true;
@@ -49,6 +50,7 @@ function definePrototype(dictionary, obj) {
     var dependencies;
     if (obj.require)
       dependencies = obj.require.slice();
+
     defer(function () {
       if (dependencies) {
         var i = 0;
@@ -62,7 +64,9 @@ function definePrototype(dictionary, obj) {
       }
       var proto = create(obj);
       proto.draw = (new Function('d,c,r',
-        'with(c){' + obj.data + '}'
+        'with(c){\n' +
+          obj.data + '\n' +
+        '}'
       )).bind(null, dictionary);
       dictionary[id] = proto;
     });

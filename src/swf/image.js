@@ -12,9 +12,10 @@ function getUint16(buff, pos) {
 
 function defineImage(tag, dictionary) {
   var imgData = tag.imgData;
+  var data = '';
   var mask;
+
   if (tag.mimeType === 'image/jpeg') {
-    var data = '';
     var width = 0;
     var height = 0;
     var i = 2;
@@ -45,7 +46,9 @@ function defineImage(tag, dictionary) {
       var codes = slice.call(imgData, begin, i);
       var numChunks = codes.length / 65536;
       for (var j = 0; j < numChunks; ++j) {
-        var chunk = codes.slice(j * 65536, (j + 1) * 65536);
+        var begin = j * 65536;
+        var end = begin + 65536;
+        var chunk = codes.slice(begin, end);
         data += fromCharCode.apply(null, chunk);
       }
     } while (i < n);
@@ -95,18 +98,23 @@ function defineImage(tag, dictionary) {
       ;
     }
     if (tag.incomplete) {
-      var header = dictionary[0].data;
+      var tables = dictionary[0];
+      assert(tables, 'missing tables', 'jpeg');
+      var header = tables.data;
       data = header.substr(0, header.length - 2) + data;
     } else {
       data = '\xff\xd8' + data;
     }
   } else {
-    var numChunks = imageData.length / 65536;
+    var numChunks = imgData.length / 65536;
     for (var i = 0; i < numChunks; ++i) {
-      var chunk = slice.call(imgData, i * 65536, (i + 1) * 65536);
+      var begin = i * 65536;
+      var end = begin + 65536;
+      var chunk = slice.call(imgData, begin, end);
       data += fromCharCode.apply(null, chunk);
     }
   }
+
   var img = {
     type: 'image',
     id: tag.id,

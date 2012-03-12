@@ -99,7 +99,9 @@ function readString($bytes, $stream, length) {
   var numChunks = length / 65536;
   var str = '';
   for (var i = 0; i < numChunks; ++i) {
-    var chunk = codes.slice(i * 65536, (i + 1) * 65536);
+    var begin = i * 65536;
+    var end = begin + 65536;
+    var chunk = codes.slice(begin, end);
     str += fromCharCode.apply(null, chunk);
   }
   return decodeURIComponent(escape(str.replace('\0', '', 'g')));
