@@ -3,7 +3,6 @@
 var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 
 function render(displayList, ctx) {
-  ctx.clearRect(0, 0, ctx.canvas.width * 20, ctx.canvas.height * 20);
   var depths = [];
   var i = 0;
   for (depths[i++] in displayList);
@@ -36,14 +35,22 @@ function render(displayList, ctx) {
   }
 }
 function renderMovieClip(mc, rate, ctx) {
-  ctx.scale(0.05, 0.05);
   var frameTime = 0;
   var maxDelay = 1000 / rate;
+  var frameWidth = ctx.canvas.width;
+  var frameHeight = ctx.canvas.height;
+
+  ctx.mozFillRule = 'evenodd';
+ 
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
+      ctx.clearRect(0, 0, frameWidth, frameHeight);
+      ctx.save();
+      ctx.scale(0.05, 0.05);
       mc.nextFrame.call(render, ctx);
+      ctx.restore();
     }
     requestAnimationFrame(draw);
   })();
