@@ -12,7 +12,7 @@ for (var i = 0, j = 0, code = 1; i < 30; ++i) {
 var bitLengths = [];
 for (var i = 0; i < 32; ++i)
   bitLengths[i] = 5;
-var fixedDistanceTable = buildHuffmanTable(bitLengths);
+var fixedDistanceTable = makeHuffmanTable(bitLengths);
 
 var lengthCodes = [];
 var lengthExtraBits = [];
@@ -23,9 +23,9 @@ for (var i = 0, j = 0, code = 3; i < 29; ++i) {
 
 for (var i = 0; i < 288; ++i)
   bitLengths[i] = i < 144 || i > 279 ? 8 : (i < 256 ? 9 : 7);
-var fixedLiteralTable = buildHuffmanTable(bitLengths);
+var fixedLiteralTable = makeHuffmanTable(bitLengths);
 
-function buildHuffmanTable(bitLengths) {
+function makeHuffmanTable(bitLengths) {
   var maxBits = max.apply(null, bitLengths);
   var numLengths = bitLengths.length;
   var size = 1 << maxBits;
@@ -69,7 +69,7 @@ function inflateBlock(sbytes, sstream, dbytes, dstream) {
     var numLengthCodes = readBits(sbytes, sstream, 4) + 4;
     for (var i = 0; i < 19; ++i)
       bitLengths[codeLengthOrder[i]] = i < numLengthCodes ? readBits(sbytes, sstream, 3) : 0;
-    var codeLengthTable = buildHuffmanTable(bitLengths);
+    var codeLengthTable = makeHuffmanTable(bitLengths);
     bitLengths = [];
     var i = 0;
     var prev = 0;
@@ -95,8 +95,8 @@ function inflateBlock(sbytes, sstream, dbytes, dstream) {
       while (j--)
         bitLengths[i++] = sym;
     }
-    var distanceTable = buildHuffmanTable(bitLengths.splice(numLiteralCodes, numDistanceCodes));
-    var literalTable = buildHuffmanTable(bitLengths);
+    var distanceTable = makeHuffmanTable(bitLengths.splice(numLiteralCodes, numDistanceCodes));
+    var literalTable = makeHuffmanTable(bitLengths);
     inflate(sbytes, sstream, dbytes, dstream, literalTable, distanceTable);
     break;
   default:
