@@ -6,7 +6,7 @@ var DEFINE_BITMAP = {
   $format: UI8,
   width: UI16,
   height: UI16,
-  hasAlpha: 'tag===36',
+  hasAlpha: 'tagCode===36',
   colorTableSize: ['format===3', [UI8]],
   bmpData: BINARY(0)
 };
@@ -48,7 +48,7 @@ var DEFINE_FONT2 = {
   ]],
   $$nameLength: UI8,
   name: STRING('nameLength'),
-  resolution: ['tag===75', ['20']],
+  resolution: ['tagCode===75', ['20']],
   $glyphCount: UI16,
   $2: ['wideOffset', [
     {
@@ -141,10 +141,10 @@ var DEFINE_FONT_NAME = {
 var DEFINE_IMAGE = {
   type: '"image"',
   id: UI16,
-  $0: ['tag>21', [
+  $0: ['tagCode>21', [
     {
       $$alphaDataOffset: UI32,
-      deblock: ['tag===90', [FIXED8]],
+      deblock: ['tagCode===90', [FIXED8]],
       $imgData: BINARY('alphaDataOffset'),
       alphaData: BINARY(0)
     },
@@ -153,13 +153,16 @@ var DEFINE_IMAGE = {
   mimeType: ['imgData[0]<<8|imgData[1]', {
     0xffd8: '"image/jpeg"',
     0x8950: '"image/png"',
-    0x4749: '"image/gif"'
+    0x4749: '"image/gif"',
+    unknown: '"application/octet-stream"'
   }],
-  incomplete: ['tag===6', ['1']]
+  incomplete: ['tagCode===6', ['1']]
 };
 var DEFINE_JPEG_TABLES = {
   id: '0',
-  imgData: BINARY(0)
+  imgData: BINARY(0),
+  mimeType: '"application/octet-stream"'
+};
 var DEFINE_LABEL = {
   type: '"label"',
   id: UI16,
@@ -176,9 +179,9 @@ var DEFINE_SHAPE = {
   type: '"shape"',
   id: UI16,
   bounds: RECT,
-  $isMorph: 'tag===46||tag===84',
+  $isMorph: 'tagCode===46||tagCode===84',
   boundsMorph: ['isMorph', [RECT]],
-  $hasStrokes: 'tag===83||tag===84',
+  $hasStrokes: 'tagCode===83||tagCode===84',
   $0: ['hasStrokes', [{
     strokeBounds: RECT,
     strokeBoundsMorph: ['isMorph', [RECT]],
@@ -237,7 +240,7 @@ var DO_ABC = {
   data: BINARY(0)
 };
 var DO_ACTION = {
-  spriteId: ['tag===59', [UI16]],
+  spriteId: ['tagCode===59', [UI16]],
   actions: {
     $: ACTION,
     condition: 'action'
@@ -259,11 +262,19 @@ var METADATA = {
 };
 var PLACE_OBJECT = {
   type: '"place"',
-  $0: ['tag>4', [
+  $0: ['tagCode>4', [
     {
-      $1: ['tag===70', [
+      $$flags: ['tagCode>26', [UI16, UI8]],
+      $hasEvents: 'flags>>7&1',
+      $clip: 'flags>>6&1',
+      $hasName: 'flags>>5&1',
+      $hasRatio: 'flags>>4&1',
+      $hasCxform: 'flags>>3&1',
+      $hasMatrix: 'flags>>2&1',
+      $place: 'flags>>1&1',
+      $move: 'flags&1',
+      $1: ['tagCode===70', [
         {
-          $$flags: UI16,
           $hasBackgroundColor: 'flags>>15&1',
           $hasVisibility: 'flags>>14&1',
           $hasImage: 'flags>>12&1',
@@ -273,20 +284,11 @@ var PLACE_OBJECT = {
           $hasFilters: 'flags>>8&1',
         },
         {
-          $$flags: UI8,
           $cache: '0',
           $blend: '0',
           $hasFilters: '0'
         }
       ]],
-      $hasEvents: 'flags>>7&1',
-      $clip: 'flags>>6&1',
-      $hasName: 'flags>>5&1',
-      $hasRatio: 'flags>>4&1',
-      $hasCxform: 'flags>>3&1',
-      $hasMatrix: 'flags>>2&1',
-      $place: 'flags>>1&1',
-      $move: 'flags&1',
       depth: UI16,
       className: ['hasClassName', [STRING(0)]],
       objId: ['place', [UI16]],
@@ -330,7 +332,7 @@ var PLACE_OBJECT = {
 };
 var REMOVE_OBJECT = {
   type: '"remove"',
-  objId: ['tag===5', [UI16]],
+  objId: ['tagCode===5', [UI16]],
   depth: UI16
 };
 var SET_BACKGROUND_COLOR = {

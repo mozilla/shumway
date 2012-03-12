@@ -68,7 +68,7 @@ var CXFORM = {
       redMult: FB('bits'),
       greenMult: FB('bits'),
       blueMult: FB('bits'),
-      alphaMult: ['tag>4', [FB('bits'), '1']]
+      alphaMult: ['tagCode>4', [FB('bits'), '1']]
     },
     {
       redMult: '1',
@@ -82,7 +82,7 @@ var CXFORM = {
       redAdd: FB('bits'),
       greenAdd: FB('bits'),
       blueAdd: FB('bits'),
-      alphaAdd: ['tag>4', [FB('bits'), '0']]
+      alphaAdd: ['tagCode>4', [FB('bits'), '0']]
     },
     {
       redAdd: '0',
@@ -131,7 +131,6 @@ var ACTION_DEFINE_FUNCTION2 = {
   $$paramCount: UI16,
   $regCount: UI8,
   $$flags: UI16,
-  preloadGlobal: 'flags>>8&1',
   preloadParent: 'flags>>7&1',
   preloadRoot: 'flags>>6&1',
   suppressSuper: 'flags>>5&1',
@@ -140,6 +139,7 @@ var ACTION_DEFINE_FUNCTION2 = {
   preloadArguments: 'flags>>2&1',
   suppressThis: 'flags>>1&1',
   preloadThis: 'flags&1',
+  preloadGlobal: 'flags>>8&1',
   params: {
     $: STRING(0),
     count: 'paramCount'
@@ -237,21 +237,6 @@ var ACTION = {
 var EVENT = {
   $$flags: ['version>=6', [UI32, UI16]],
   $eoe: '!flags',
-  $0: ['version>=6', [
-    {
-      construct: ['version>=7', ['flags>>18&1', '0']],
-      keyPress: 'flags>>17&1',
-      dragOut: 'flags>>16&1',
-      dragOver: 'flags>>15&1',
-      rollOut: 'flags>>14&1',
-      rollOver: 'flags>>13&1',
-      releaseOutside: 'flags>>12&1',
-      release: 'flags>>11&1',
-      press: 'flags>>10&1',
-      initialize: 'flags>>9&1',
-    }
-  ]],
-  data: 'flags>>8&1',
   keyUp: 'flags>>7&1',
   keyDown: 'flags>>6&1',
   mouseUp: 'flags>>5&1',
@@ -260,6 +245,21 @@ var EVENT = {
   unload: 'flags>>2&1',
   enterFrame: 'flags>>1&1',
   onload: 'flags&1',
+  $0: ['version>=6', [
+    {
+      dragOver: 'flags>>15&1',
+      rollOut: 'flags>>14&1',
+      rollOver: 'flags>>13&1',
+      releaseOutside: 'flags>>12&1',
+      release: 'flags>>11&1',
+      press: 'flags>>10&1',
+      initialize: 'flags>>9&1',
+      data: 'flags>>8&1',
+      construct: ['version>=7', ['flags>>18&1', '0']],
+      keyPress: 'flags>>17&1',
+      dragOut: 'flags>>16&1'
+    }
+  ]],
   $1: ['!eoe', [{
     $length: UI32,
     actions: {
@@ -347,19 +347,19 @@ var PARAMS = {
   name: STRING
 };
 var FILL_SOLID = {
-  color: ['tag>22||isMorph', [RGBA, RGB]],
+  color: ['tagCode>22||isMorph', [RGBA, RGB]],
   colorMorph: ['isMorph', [RGBA]]
 };
 var GRADIENT_RECORD = {
   ratio: UI8,
-  color: ['tag>22', [RGBA, RGB]],
+  color: ['tagCode>22', [RGBA, RGB]],
   $0: ['isMorph', [{
     ratioMorph: UI8,
     colorMorph: RGBA
   }]]
 };
 var GRADIENT = {
-  $0: ['tag===83', [
+  $0: ['tagCode===83', [
     {
       spreadMode: UB(2),
       interpolationMode: UB(2)
@@ -402,7 +402,7 @@ var FILL_STYLE = {
 };
 var FILL_STYLE_ARRAY = {
   $$tmp: UI8,
-  $$count: ['tag>2&&tmp===255', [UI16, 'tmp']],
+  $$count: ['tagCode>2&&tmp===255', [UI16, 'tmp']],
   fillStyles: {
     $: FILL_STYLE,
     count: 'count'
@@ -433,14 +433,14 @@ var LINE_STYLE = {
       ]]
     },
     {
-      color: ['tag>22', [RGBA, RGB]],
+      color: ['tagCode>22', [RGBA, RGB]],
       colorMorph: ['isMorph', [RGBA]]
     }
   ]]
 };
 var LINE_STYLE_ARRAY = {
   $$tmp: UI8,
-  $$count: ['tag>2&&tmp===255', [UI16, 'tmp']],
+  $$count: ['tagCode>2&&tmp===255', [UI16, 'tmp']],
   lineStyles: {
     $: LINE_STYLE,
     count: 'count'
@@ -457,7 +457,7 @@ var STYLES = {
   $2: STYLE_BITS
 };
 var SHAPE_RECORD_SETUP = {
-  $hasNewStyles: ['tag>2', ['flags>>4', '0']],
+  $hasNewStyles: ['tagCode>2', ['flags>>4', '0']],
   $hasLineStyle: 'flags>>3&1',
   $hasFillStyle1: 'flags>>2&1',
   $hasFillStyle0: 'flags>>1&1',
@@ -553,10 +553,10 @@ var TEXT_ENTRY = {
 var TEXT_RECORD_SETUP = {
   $hasFont: 'flags>>3&1',
   $hasColor: 'flags>>2&1',
-  $hasMoveX: 'flags>>1&1',
-  $hasMoveY: 'flags&1',
+  $hasMoveY: 'flags>>1&1',
+  $hasMoveX: 'flags&1',
   fontId: ['hasFont', [UI16]],
-  $0: ['hasColor', [{ color: ['tag===33', [RGBA, RGB]] }]],
+  $0: ['hasColor', [{ color: ['tagCode===33', [RGBA, RGB]] }]],
   moveX: ['hasMoveX', [SI16]],
   moveY: ['hasMoveY', [SI16]],
   fontHeight: ['hasFont', [UI16]]
@@ -581,7 +581,7 @@ var ZONE_DATA = {
 };
 var ZONE_ARRAY = {
   $count: UI8,
-  data: {
+  zoneData: {
     $: ZONE_DATA,
     count: 'count'
   },
@@ -631,32 +631,34 @@ var BUTTON = {
   stateDown: 'flags>>2&1',
   stateOver: 'flags>>1&1',
   stateUp: 'flags&1',
-  $1: ['!eob', {
+  $1: ['!eob', [{
     buttonId: UI16,
     depth: UI16,
     matrix: MATRIX,
-    cxform: ['tag===34', [CXFORM]],
+    cxform: ['tagCode===34', [CXFORM]],
     $2: ['hasFilters', [{
       filterCount: UI8,
       filters: ANY_FILTER
     }]],
     blendMode: ['blend', [UI8]]
-  }]
+  }]]
 };
 var CONDITION = {
-  length: UI16,
-  key: UB(7),
-  menuLeave: UB(1),
-  menuEnter: UB(1),
-  releaseOutside: UB(1),
-  dragEnter: UB(1),
-  dragLeave: UB(1),
-  releaseInside: UB(1),
-  push: UB(1),
-  leave: UB(1),
-  enter: UB(1),
-  actions: {
-    $: ACTION,
-    repeat: 'action'
-  }
+  $$length: UI16,
+  $0: ['length', [{
+    key: UB(7),
+    menuLeave: UB(1),
+    menuEnter: UB(1),
+    releaseOutside: UB(1),
+    dragEnter: UB(1),
+    dragLeave: UB(1),
+    releaseInside: UB(1),
+    push: UB(1),
+    leave: UB(1),
+    enter: UB(1),
+    actions: {
+      $: ACTION,
+      condition: 'action'
+    }
+  }]]
 };
