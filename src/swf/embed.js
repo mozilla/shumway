@@ -71,6 +71,9 @@ function definePrototype(dictionary, obj) {
       dictionary[id] = proto;
     });
     break;
+  case 'text':
+    dictionary[id] = obj;
+    break;
   default:
     fail('unknown object type', 'define');
   }

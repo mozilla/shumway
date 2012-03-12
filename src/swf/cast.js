@@ -19,6 +19,8 @@ function cast(tags, dictionary, declare) {
       case 'image':
         var factory = defineImage;
         break;
+      case 'label':
+        var factory = defineLabel;
         break;
       case 'shape':
         var factory = defineShape;

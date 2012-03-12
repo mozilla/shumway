@@ -156,6 +156,17 @@ var DEFINE_IMAGE = {
 var DEFINE_JPEG_TABLES = {
   id: '0',
   imgData: BINARY(0)
+var DEFINE_LABEL = {
+  type: '"label"',
+  id: UI16,
+  bounds: RECT,
+  matrix: MATRIX,
+  $glyphBits: UI8,
+  $advanceBits: UI8,
+  records: {
+    $: TEXT_RECORD,
+    condition: '!eot'
+  }
 };
 var DEFINE_SHAPE = {
   type: '"shape"',
@@ -184,13 +195,37 @@ var DEFINE_TEXT = {
   type: '"text"',
   id: UI16,
   bounds: RECT,
-  matrix: MATRIX,
-  $glyphBits: UI8,
-  $advanceBits: UI8,
-  records: {
-    $: TEXT_RECORD,
-    repeat: '!eot'
-  }
+  $$flags: UI16,
+  $hasText: 'flags>>7&1',
+  wordWrap: 'flags>>6&1',
+  multiline: 'flags>>5&1',
+  password: 'flags>>4&1',
+  readonly: 'flags>>3&1',
+  $hasColor: 'flags>>20&1',
+  $hasMaxLength: 'flags>>1&1',
+  $hasFont: 'flags&1',
+  $hasFontClass: 'flags>>15&1',
+  autoSize: 'flags>>14&1',
+  $hasLayout: 'flags>>13&1',
+  noSelect: 'flags>>12&1',
+  border: 'flags>>11&1',
+  wasStatic: 'flags>>10&1',
+  html: 'flags>>9&1',
+  useOutlines: 'flags>>8&1',
+  fontId: ['hasFont', [UI16]],
+  fontClass: ['hasFontClass', [STRING(0)]],
+  fontHeight: ['hasFont', [UI16]],
+  color: ['hasColor', [RGBA]],
+  maxLength: ['hasMaxLength', [UI16]],
+  $0: ['hasLayout', [{
+    align: UI8,
+    leftMargin: UI16,
+    rightMargin: UI16,
+    indent: SI16,
+    leading: SI16
+  }]],
+  variableName: STRING(0),
+  intialText: ['hasText', [STRING(0)]]
 };
 var DO_ABC = {
   flags: UI32,
