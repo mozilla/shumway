@@ -1280,50 +1280,22 @@ var Analysis = (function () {
     },
 
     massageControlTree: function massageControlTree() {
-      function massageSeq(nodes, exit, cont, br) {
-        for (var i = nodes.length - 1; i >= 0; i--) {
-          nodes[i] = massage(nodes[i], nodes[i + 1], exit, cont, br);
-        }
-
-        var k = 0;
-        for (var i = 0, j = nodes.length; i < j; i++) {
-          if (nodes[i]) {
-            nodes[k++] = nodes[i];
-          }
-        }
-        nodes.length = k;
-
-        return k ? nodes : null;
-      }
-
-      function massageCases(nodes, labelMap, exit, cont, br) {
-        var body, node;
-        var k = 0;
-        for (var i = 0, j = nodes.length; i < j; i++) {
-          node = nodes[i];
-          if (body = massage(node.body, null, exit, cont, br)) {
-            node.body = body;
-            nodes[k++] = node;
-          } else if (labelMap) {
-            var label = node.label;
-            if (label.length) {
-              for (var k = 0, l = c.label.length; k < l; k++) {
-                delete labelMap[c.label[k]];
-              }
-            } else {
-              delete labelMap[c.label];
-            }
-          }
-        }
-        nodes.length = k;
-        return k ? nodes : null;
-      }
-
       function massage(node, next, exit, cont, br) {
         switch (node.kind) {
         case Control.SEQ:
-          node.body = massageSeq(node.body, exit, cont, br);
-          return node.body ? node : null;
+          var body = node.body;
+          for (var i = body.length - 1; i >= 0; i--) {
+            body[i] = massage(body[i], body[i + 1], exit, cont, br);
+          }
+
+          var k = 0;
+          for (var i = 0, j = body.length; i < j; i++) {
+            if (body[i]) {
+              body[k++] = body[i];
+            }
+          }
+          body.length = k;
+          return k ? node : null;
 
         case Control.LOOP:
           node.body = massage(node.body, null, null, node.body, next);
@@ -1341,12 +1313,38 @@ var Analysis = (function () {
           return node.then ? node : null;
 
         case Control.SWITCH:
-          node.cases = massageCases(node.cases, null, null, null, next);
-          return node.cases ? node : null;
+          var cases = node.cases;
+          for (var i = 0, j = cases.length; i < j; i++) {
+            var c = cases[i];
+            if (c.body) {
+              c.body = massage(c.body, null, exit, cont, br);
+            }
+          }
+          return node;
 
         case Control.LABEL_SWITCH:
-          node.cases = massageCases(node.cases, node.labelMap, next, cont, br);
-          return node.cases ? node : null;
+          var labelMap = node.labelMap;
+          var cases = node.cases;
+          var c, body;
+          var k = 0;
+          for (var i = 0, j = cases.length; i < j; i++) {
+            c = cases[i];
+            if (body = massage(c.body, null, exit, cont, br)) {
+              c.body = body;
+              cases[k++] = c;
+            } else {
+              var label = c.label;
+              if (label.length) {
+                for (var k = 0, l = label.length; k < l; k++) {
+                  delete labelMap[label[k]];
+                }
+              } else {
+                delete labelMap[label]
+              }
+            }
+          }
+          cases.length = k;
+          return k ? node : null;
 
         case Control.EXIT:
           if (exit && exit.kind === Control.LABEL_SWITCH) {
