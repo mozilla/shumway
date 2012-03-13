@@ -377,6 +377,20 @@ function BitSetFunctor(length) {
       return true;
     },
 
+    contains: function contains(other) {
+      if (this.size !== other.size) {
+        return false;
+      }
+      var bits = this.bits;
+      var otherBits = other.bits;
+      for (var i = 0, j = bits.length; i < j; i++) {
+        if ((bits[i] | otherBits[i]) !== bits[i]) {
+          return false;
+        }
+      }
+      return true;
+    },
+
     toBitString: function toBitString() {
       var str = "";
       for (var i = 0; i < length; i++) {

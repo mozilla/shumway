@@ -7,11 +7,9 @@ var Control = (function () {
   const SWITCH = 5;
   const LABEL_CASE = 6;
   const LABEL_SWITCH = 7;
-  const SET_LABEL = 8;
-  const LONG_BREAK = 9;
-  const LONG_CONTINUE = 10;
-
-  var freshLabel = 0;
+  const EXIT = 8;
+  const BREAK = 9;
+  const CONTINUE = 10;
 
   function Seq(body) {
     this.kind = SEQ;
@@ -35,30 +33,25 @@ var Control = (function () {
     }
   };
 
-  function Loop(body, needsLabel) {
+  function Loop(body) {
     this.kind = LOOP;
     this.body = body;
-    this.needsLabel = needsLabel;
   }
 
   Loop.prototype = {
     trace: function (writer) {
-      if (this.needsLabel) {
-        this.label = freshLabel++;
-        writer.writeLn("L" + this.label + ":");
-      }
       writer.enter("loop {");
       this.body.trace(writer);
       writer.leave("}");
     }
   };
 
-  function If(cond, then, els, negated) {
+  function If(cond, then, els) {
     this.kind = IF;
     this.cond = cond;
     this.then = then;
     this.else = els;
-    this.negated = negated;
+    this.negated = false;
   }
 
   If.prototype = {
@@ -102,13 +95,7 @@ var Control = (function () {
 
   Switch.prototype = {
     trace: function (writer) {
-      if (this.determinant) {
-        this.determinant.trace(writer);
-        if (this.determinant.needsLabel) {
-          this.label = freshLabel++
-          writer.writeLn("L" + this.label + ":");
-        }
-      }
+      this.determinant.trace(writer);
       writer.writeLn("switch {");
       for (var i = 0, j = this.cases.length; i < j; i++) {
         this.cases[i].trace(writer);
@@ -135,7 +122,20 @@ var Control = (function () {
     }
   };
 
-  function LabelSwitch(cases, labelMap) {
+  function LabelSwitch(cases) {
+    var labelMap = {};
+
+    for (var i = 0, j = cases.length; i < j; i++) {
+      var c = cases[i];
+      if (c.label.length) {
+        for (var k = 0, l = c.label.length; k < l; k++) {
+          labelMap[c.label[k]] = c;
+        }
+      } else {
+        labelMap[c.label] = c;
+      }
+    }
+
     this.kind = LABEL_SWITCH;
     this.cases = cases;
     this.labelMap = labelMap;
@@ -149,51 +149,43 @@ var Control = (function () {
     }
   };
 
-  function SetLabel(target) {
-    this.kind = SET_LABEL;
-    this.label = target.bid;
+  function Exit(label) {
+    this.kind = EXIT;
+    this.label = label;
   }
 
-  SetLabel.prototype = {
+  Exit.prototype = {
     trace: function (writer) {
       writer.writeLn("label = " + this.label);
     }
   };
 
-  function LongBreak(target) {
-    this.kind = LONG_BREAK;
-    target.needsLabel = true;
-    this.target = target;
+  function Break(label, head) {
+    this.kind = BREAK;
+    this.label = label;
+    this.head = head;
+    this.ambiguous = true;
   }
 
-  LongBreak.prototype = {
+  Break.prototype = {
     trace: function (writer) {
-      writer.writeLn("break L" + this.target.label);
+      this.ambiguous && writer.writeLn("label = " + this.label);
+      writer.writeLn("break");
     }
   };
 
-  function LongContinue(target) {
-    this.kind = LONG_CONTINUE;
-    target.needsLabel = true;
-    this.target = target;
+  function Continue(label, head) {
+    this.kind = CONTINUE;
+    this.label = label;
+    this.head = head;
   }
 
-  LongContinue.prototype = {
+  Continue.prototype = {
     trace: function (writer) {
-      writer.writeLn("continue L" + this.target.label);
+      writer.writeLn("label = " + this.label);
+      writer.writeLn("continue");
     }
   };
-
-  function nullaryControl(name) {
-    var c = {};
-    c.trace = function (writer) {
-      writer.writeLn(name);
-    }
-    return c;
-  };
-
-  var Break = nullaryControl("break");
-  var Continue = nullaryControl("continue");
 
   return {
     SEQ: SEQ,
@@ -203,9 +195,9 @@ var Control = (function () {
     SWITCH: SWITCH,
     LABEL_CASE: LABEL_CASE,
     LABEL_SWITCH: LABEL_SWITCH,
-    SET_LABEL: SET_LABEL,
-    LONG_BREAK: LONG_BREAK,
-    LONG_CONTINUE: LONG_CONTINUE,
+    EXIT: EXIT,
+    BREAK: BREAK,
+    CONTINUE: CONTINUE,
 
     Seq: Seq,
     Loop: Loop,
@@ -214,9 +206,7 @@ var Control = (function () {
     Switch: Switch,
     LabelCase: LabelCase,
     LabelSwitch: LabelSwitch,
-    SetLabel: SetLabel,
-    LongBreak: LongBreak,
-    LongContinue: LongContinue,
+    Exit: Exit,
     Break: Break,
     Continue: Continue
   };
@@ -849,10 +839,7 @@ var Analysis = (function () {
         }
       }
 
-      const BlockSet = this.BlockSet;
-
       blocks[0].dominator = blocks[0];
-      blocks[0].frontier = new BlockSet();
       for (var b = 1; b < n; b++) {
         var block = blocks[b];
         var idom = blocks[doms[b]];
@@ -861,8 +848,7 @@ var Analysis = (function () {
         block.dominator = idom;
         idom.dominatees.push(block);
 
-        /* Make the frontier set. */
-        block.frontier = new BlockSet();
+        block.npreds = block.preds.length;
       }
 
       /* Assign dominator tree levels. */
@@ -878,7 +864,13 @@ var Analysis = (function () {
     },
 
     computeFrontiers: function computeFrontiers() {
+      const BlockSet = this.BlockSet;
       var blocks = this.blocks;
+
+      for (var b = 0, n = blocks.length; b < n; b++) {
+        blocks[b].frontier = new BlockSet();
+      }
+
       for (var b = 1, n = blocks.length; b < n; b++) {
         var block = blocks[b];
         var preds = block.preds;
@@ -909,7 +901,7 @@ var Analysis = (function () {
       this.detectBasicBlocks();
       this.normalizeReachableBlocks();
       this.computeDominance();
-      this.computeFrontiers();
+      //this.computeFrontiers();
 
       this.ranAnalyzeControlFlow = true;
     },
@@ -1008,20 +1000,14 @@ var Analysis = (function () {
       function LoopInfo(scc, loopId) {
         var body = new BlockSet();
         body.setBlocks(scc);
-
-        var exit = new BlockSet();
-        for (var i = 0, j = scc.length; i < j; i++) {
-          exit.setBlocks(scc[i].succs);
-        }
-        exit.subtract(body);
-
         body.recount();
-        exit.recount();
 
         this.id = loopId;
         this.body = body;
-        this.exit = exit;
+        this.exit = new BlockSet();
+        this.save = {};
         this.head = new BlockSet();
+        this.npreds = 0;
       }
 
       var heads = findLoopHeads(this.blocks);
@@ -1045,11 +1031,26 @@ var Analysis = (function () {
           var scc = sccs[i];
           var loop = new LoopInfo(scc, loopId++);
           for (var k = 0, l = scc.length; k < l; k++) {
-            if (scc[k].level === top.level + 1 && !scc[k].loop) {
-              scc[k].loop = loop;
-              loop.head.set(scc[k].bid);
+            var h = scc[k];
+            if (h.level === top.level + 1 && !h.loop) {
+              h.loop = loop;
+              loop.head.set(h.bid);
+
+              var preds = h.preds;
+              for (var pi = 0, pj = preds.length; pi < pj; pi++) {
+                loop.body.get(preds[pi].bid) && h.npreds--;
+              }
+              loop.npreds += h.npreds;
             }
           }
+
+          for (var k = 0, l = scc.length; k < l; k++) {
+            var h = scc[k];
+            if (h.level === top.level + 1) {
+              h.npreds = loop.npreds;
+            }
+          }
+
           loop.head.recount();
         }
       }
@@ -1057,975 +1058,316 @@ var Analysis = (function () {
       this.ranMarkLoops = true;
     },
 
-    /* Induce a tree of control structures from a CFG.
-     *
-     * Algorithm is inspired by [2], but we do not split nodes.
-     *
-     * [2] Moll. Decompilation of LLVM IR.
-     */
     induceControlTree: function induceControlTree() {
       const BlockSet = this.BlockSet;
 
-      function ExtractionContext() {
+      function maybe(exit, save) {
+        exit.recount();
+        if (exit.count === 0) {
+          return null;
+        }
+        exit.save = save;
+        return exit;
       }
 
-      ExtractionContext.prototype = {
-        update: function update(props) {
-          var desc = {};
-          var n = 0;
-          for (var p in props) {
-            if (!props[p]) {
+      function induce(head, exit, save,
+                      loop, inLoopHead,
+                      lookupSwitch, fallthrough) {
+        var v = [];
+
+        while (head) {
+          if (head.count > 1) {
+            var exit2 = new BlockSet();
+            var save2 = {};
+
+            var cases = [];
+            var heads = head.members();
+
+            for (var i = 0, j = heads.length; i < j; i++) {
+              var h = heads[i];
+              var bid = h.bid;
+              var c;
+
+              if (h.loop && head.contains(h.loop.head)) {
+                var loop2 = h.loop;
+                if (!loop2.induced) {
+                  var lheads = loop2.head.members();
+                  var lheadsave = 0;
+
+                  for (k = 0, l = lheads.length; k < l; k++) {
+                    lheadsave += head.save[lheads[k].bid];
+                  }
+
+                  if (h.npreds - lheadsave > 0) {
+                    /*
+                     * Don't even enter the loop if we're just going to exit
+                     * anyways.
+                     */
+                    h.npreds -= head.save[bid];
+                    h.save = head.save[bid];
+                    c = induce(h, exit2, save2, loop);
+                    cases.push(new Control.LabelCase(bid, c));
+                  } else {
+                    for (k = 0, l = lheads.length; k < l; k++) {
+                      var lh = lheads[k];
+                      var lbid = lh.bid;
+                      lh.npreds -= lheadsave;
+                      lh.save = lheadsave;
+                    }
+                    c = induce(h, exit2, save2, loop);
+                    cases.push(new Control.LabelCase(loop2.head.toArray(), c));
+                    loop2.induced = true;
+                  }
+                }
+              } else {
+                h.npreds -= head.save[bid];
+                h.save = head.save[bid];
+                c = induce(h, exit2, save2, loop);
+                cases.push(new Control.LabelCase(bid, c));
+              }
+            }
+
+            var k = 0;
+            for (var i = 0, j = cases.length; i < j; i++) {
+              var c = cases[i];
+              var bid = c.label;
+              if (exit2.get(bid) && heads[i].npreds - save2[bid] > 0) {
+                save[bid] = (save[bid] || 0) + head.save[bid];
+                exit.set(bid);
+              } else {
+                cases[k++] = c;
+              }
+            }
+            cases.length = k;
+
+            if (cases.length === 0) {
+              break;
+            }
+
+            v.push(new Control.LabelSwitch(cases));
+
+            head = maybe(exit2, save2);
+            continue;
+          }
+
+          var h, bid;
+          if (head.count === 1) {
+            h = head.choose();
+            bid = h.bid;
+            h.npreds -= head.save[bid];
+            h.save = head.save[bid];
+          } else {
+            h = head;
+            bid = h.bid;
+          }
+
+          if (inLoopHead) {
+            inLoopHead = false;
+          } else {
+            if (loop && !loop.body.get(h)) {
+              h.npreds += h.save;
+              loop.exit.set(bid);
+              loop.save[bid] = (loop.save[bid] || 0) + h.save;
+              v.push(new Control.Break(bid, loop));
+              break;
+            }
+
+            if (loop && h.loop === loop) {
+              h.npreds += h.save;
+              v.push(new Control.Continue(bid, loop));
+              break;
+            }
+
+            if (h === fallthrough) {
+              break;
+            }
+
+            if (h.npreds > 0) {
+              h.npreds += h.save;
+              save[bid] = (save[bid] || 0) + h.save;
+              exit.set(bid);
+              v.push((lookupSwitch ?
+                      new Control.Break(bid, lookupSwitch) :
+                      new Control.Exit(bid)));
+              break;
+            }
+
+            if (h.loop) {
+              var l = h.loop;
+
+              var body;
+              if (l.head.count === 1) {
+                body = induce(l.head.choose(), null, null, l, true);
+              } else {
+                var lcases = [];
+                var lheads = l.head.members();
+
+                for (var i = 0, j = lheads.length; i < j; i++) {
+                  var lh = lheads[i];
+                  var lbid = lh.bid;
+                  var c = induce(lh, null, null, l, true);
+                  lcases.push(new Control.LabelCase(lbid, c));
+                }
+
+                body = new Control.LabelSwitch(lcases);
+              }
+
+              v.push(new Control.Loop(body));
+              head = maybe(l.exit, l.save);
               continue;
             }
-
-            desc[p] = {
-              value: props[p],
-              writable: true,
-              enumerable: true,
-              configurable: true
-            };
-            n++;
           }
 
-          if (props === 0) {
-            return this;
-          }
+          var succs = h.succs;
+          if (h.end.op === OP_lookupswitch) {
+            var exit2 = new BlockSet();
+            var save2 = {};
 
-          return Object.create(this, desc);
-        }
-      };
+            var cases = [];
+            var targets = h.end.targets;
 
-      function exitSet(body, cx) {
-        var exit = new BlockSet();
-
-        for (var i = 0, j = body.length; i < j; i++) {
-          var b = body[i];
-          var bbid = b.bid;
-
-          if ((cx.exit && cx.exit.get(bbid)) ||
-              (cx.break && cx.break.get(bbid)) ||
-              (cx.loop && cx.loop.head.get(bbid))) {
-            continue;
-          }
-
-          /*
-           * NB: We destructively prune loop heads from the frontier of those
-           * heads!
-           */
-          if (b.loop) {
-            b.frontier.subtract(b.loop.head);
-          }
-
-          exit.union(b.frontier);
-        }
-
-        /* OPTIMIZEME: Can we not iterate over this somehow? */
-        exit.forEachBlock(function (b) {
-          b.loop && exit.union(b.loop.head);
-        });
-
-        cx.exit && exit.subtract(cx.exit);
-        cx.break && exit.subtract(cx.break);
-        if (cx.loop) {
-          exit.intersect(cx.loop.body);
-          exit.subtract(cx.loop.head);
-        }
-
-        exit.recount();
-        return exit.count ? exit : null;
-      }
-
-      function inducibleIf(block, cx, info) {
-        var succs = block.succs;
-
-        if (succs.length !== 2) {
-          return null;
-        }
-
-        var branch1 = succs[0];
-        var branch2 = succs[1];
-
-        /*
-         * Try heuristic for triangle ifs first as to avoid unnecessary
-         * labeling.
-         */
-        if (branch1.frontier.count === 1 &&
-            branch1.frontier.get(branch2.bid)) {
-          info.then = branch1;
-          info.negated = false;
-          exit = BlockSet.singleton(branch2);
-        } else if (branch2.frontier.count === 1 &&
-                   branch2.frontier.get(branch1.bid)) {
-          info.then = branch2;
-          info.negated = true;
-          exit = BlockSet.singleton(branch1);
-        } else {
-          var exit = exitSet([branch1, branch2], cx);
-
-          /* Simple heuristic to stop some long if-else cascades. */
-          var via1 = false;
-          var via2 = false;
-          if (cx.loop) {
-            via1 = !cx.loop.body.get(branch1.bid);
-            via2 = !cx.loop.body.get(branch2.bid);
-          }
-
-          if (via1) {
-            info.then = branch1;
-            info.negated = false;
-            exit = BlockSet.singleton(branch2);
-          } else if (via2) {
-            info.then = branch2;
-            info.negated = true;
-            exit = BlockSet.singleton(branch1);
-          } else {
-            info.then = branch1;
-            info.else = branch2;
-            info.negated = false;
-          }
-        }
-
-        return cx.update({ exit: exit });
-      }
-
-      function inducibleLookupSwitch(block, cx, info) {
-        if (block.end.op !== OP_lookupswitch) {
-          return null;
-        }
-
-        var cases = [];
-        var targets = block.end.targets;
-        var exit = new BlockSet();
-        var defaultCase = targets.top();
-
-        cases.unshift({ body: defaultCase });
-
-        var c = defaultCase;
-        var nextCase = defaultCase;
-        for (var i = targets.length - 2; i >= 0; i--) {
-          if (targets[i] === defaultCase) {
-            continue;
-          }
-
-          nextCase = c;
-          c = targets[i];
-
-          if (c === nextCase) {
-            cases.unshift({ index: i });
-            continue;
-          }
-
-          var cexit = exitSet([c], cx);
-          if (nextCase && cexit) {
-            if (cexit.get(nextCase.bid)) {
-              cases.unshift({ index: i, body: c, exit: BlockSet.singleton(nextCase) });
-              cexit.clear(nextCase.bid);
-            } else {
-              cases.unshift({ index: i, body: c });
+            for (var i = targets.length - 1; i >= 0; i--) {
+              var t = targets[i];
+              t.npreds -= 1;
+              t.save = 1;
+              var c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
+              cases.unshift(new Control.Case(i, c));
             }
-            exit.union(cexit);
+
+            /* The last case is the default case. */
+            cases.top().index = undefined;
+
+            v.push(new Control.Switch(h, cases));
+            head = maybe(exit2, save2);
+          } else if (succs.length === 2) {
+            var exit2 = new BlockSet();
+            var save2 = {};
+
+            var branch1 = succs[0];
+            var branch2 = succs[1];
+
+            branch1.npreds -= 1;
+            branch1.save = 1;
+            var c1 = induce(branch1, exit2, save2, loop);
+
+            branch2.npreds -= 1;
+            branch2.save = 1;
+            var c2 = induce(branch2, exit2, save2, loop);
+
+            v.push(new Control.If(h, c1, c2));
+            head = maybe(exit2, save2);
           } else {
-            cases.unshift({ index: i, body: c });
-            cexit && exit.union(cexit);
+            v.push(h);
+            head = succs[0];
+            if (head) {
+              head.npreds -= 1;
+              head.save = 1;
+            }
           }
         }
 
-        info.cases = cases;
-        exit.recount();
-        exit = exit.count ? exit : null;
-
-        return cx.update({ break: exit, exit: exit });
-      }
-
-      function maybeSequence(v) {
         if (v.length > 1) {
-          return new Control.Seq(v.reverse());
+          return new Control.Seq(v);
         }
+
         return v[0];
       }
 
-      function joinOf(cx, cxx) {
-        if (cx.exit === cxx.exit) {
-          return null;
-        }
-        return cxx.exit;
-      }
-
-      function labelOf(block) {
-        if (block.loop) {
-          var label = block.loop.head.toArray();
-          if (label.length === 1) {
-            return label[0];
-          }
-          return label;
-        } else {
-          return block.bid;
-        }
-      }
-
       var root = this.blocks[0];
-      var conts = [];
-      var cx = new ExtractionContext();
-      var block = root;
-
-      const K_LOOP_BODY = 0;
-      const K_LOOP = 1;
-      const K_IF_THEN = 2;
-      const K_IF_ELSE = 3;
-      const K_IF = 4;
-      const K_SEQ = 5;
-      const K_SWITCH_CASE = 6;
-      const K_SWITCH = 7;
-      const K_LABEL_CASE = 8;
-      const K_LABEL_SWITCH = 9;
-
-      var loopBodyCx;
-      for (;;) {
-        var v = [];
-
-        pushing:
-        while (block) {
-          if (block.count === 1) {
-            block = block.choose();
-          }
-
-          if (block.count) {
-            var blocks = block.members();
-            if (loopBodyCx) {
-              block = blocks.pop();
-              conts.push({ kind: K_LABEL_CASE,
-                           label: block.bid,
-                           labelMap: {},
-                           cases: [],
-                           pendingCases: blocks,
-                           loopBodyCx: loopBodyCx });
-            } else {
-              var loopMap = {};
-              var entries = [];
-              var exit = exitSet(blocks, cx);
-
-              for (var i = 0, j = blocks.length; i < j; i++) {
-                var b = blocks[i];
-                if (exit && exit.get(b.bid)) {
-                  continue;
-                }
-
-                if (b.loop) {
-                  if (!(b.loop.id in loopMap)) {
-                    loopMap[b.loop.id] = true;
-                    entries.push(b);
-                  }
-                } else {
-                  entries.push(b);
-                }
-              }
-
-              block = entries.pop();
-              cxx = cx.update({ exit: exit });
-              conts.push({ kind: K_LABEL_CASE,
-                           label: labelOf(block),
-                           labelMap: {},
-                           cases: [],
-                           pendingCases: entries,
-                           join: exit,
-                           joinCx: cx,
-                           cx: cxx });
-              cx = cxx;
-            }
-
-            continue;
-          }
-
-          if (loopBodyCx) {
-            /*
-             * Don't try to match breaks/continues and loop heads if we just
-             * matched one, since cx.exit will be set to the head (i.e. this
-             * node).
-             */
-            cx = loopBodyCx;
-            loopBodyCx = null;
-          } else {
-            var bbid = block.bid;
-
-            if (cx.loop && cx.loop.exit.get(bbid)) {
-              if (cx.break) {
-                /*
-                 * We are breaking out of a loop inside another break
-                 * environment, like a switch, so we should break directly out
-                 * of the loop.
-                 */
-                v.push(new Control.LongBreak(cx.loop));
-              } else {
-                v.push(Control.Break);
-              }
-
-              if (cx.loop.exit.count > 1) {
-                v.push(new Control.SetLabel(block));
-              }
-
-              break;
-            }
-
-            if (cx.break && cx.break.get(bbid)) {
-              v.push(Control.Break);
-              if (cx.break.count > 1) {
-                v.push(new Control.SetLabel(block));
-              }
-              break;
-            }
-
-            if (cx.exit && cx.exit.get(bbid)) {
-              if (cx.exit.count > 1) {
-                v.push(new Control.SetLabel(block));
-              }
-              break;
-            }
-
-            if (block.loop) {
-              var loop = block.loop;
-              if (loop === cx.loop) {
-                v.push(Control.Continue);
-                if (loop.head.count > 1) {
-                  v.push(new Control.SetLabel(block));
-                }
-                break;
-              }
-
-              block = loop.head;
-              loopBodyCx = cx.update({ loop: loop, exit: loop.head });
-              conts.push({ kind: K_LOOP_BODY,
-                           loop: loop,
-                           cx: cx });
-              continue;
-            }
-          }
-
-          var info = {};
-          if (cxx = inducibleIf(block, cx, info)) {
-            conts.push({ kind: K_IF_THEN,
-                         cond: block,
-                         negated: info.negated,
-                         else: info.else,
-                         join: joinOf(cx, cxx),
-                         joinCx: cx,
-                         cx: cxx });
-            block = info.then;
-            cx = cxx;
-          } else if (cxx = inducibleLookupSwitch(block, cx, info)) {
-            var c;
-            var cases = [];
-            while (c = info.cases.pop()) {
-              if (c.body) {
-                conts.push({ kind: K_SWITCH_CASE,
-                             det: block,
-                             index: c.index,
-                             cases: cases,
-                             pendingCases: info.cases,
-                             join: joinOf(cx, cxx),
-                             joinCx: cx,
-                             cx: cxx });
-                block = c.body;
-                cx = cxx.update({ exit: c.exit });
-                break;
-              }
-
-              cases.push(new Control.Case(c.index));
-            }
-          } else if (block.succs.length <= 1) {
-            conts.push({ kind: K_SEQ,
-                         block: block });
-
-            block = block.succs[0];
-          } else {
-            throw new Unanalyzable("has clusterfuck on " + block.bid);
-          }
-        }
-
-        var k;
-        popping:
-        while (k = conts.pop()) {
-          switch (k.kind) {
-          case K_LOOP_BODY:
-            var loop = k.loop;
-            block = loop.exit;
-            cx = k.cx;
-            conts.push({ kind: K_LOOP,
-                         loop: loop,
-                         body: maybeSequence(v) });
-            break popping;
-          case K_LOOP:
-            v.push(new Control.Loop(k.body, k.loop.needsLabel));
-            break;
-          case K_IF_THEN:
-            if (k.else) {
-              block = k.else;
-              cx = k.cx;
-              conts.push({ kind: K_IF_ELSE,
-                           cond: k.cond,
-                           negated: k.negated,
-                           then: maybeSequence(v),
-                           join: k.join,
-                           cx: k.joinCx });
-            } else {
-              block = k.join;
-              cx = k.joinCx;
-              conts.push({ kind: K_IF,
-                           cond: k.cond,
-                           negated: k.negated,
-                           then: maybeSequence(v) });
-            }
-            break popping;
-          case K_IF_ELSE:
-            block = k.join;
-            cx = k.cx;
-            conts.push({ kind: K_IF,
-                         cond: k.cond,
-                         negated: k.negated,
-                         then: k.then,
-                         else: maybeSequence(v) });
-            break popping;
-          case K_IF:
-            v.push(new Control.If(k.cond, k.then, k.else, k.negated, v));
-            break;
-          case K_SEQ:
-            v.push(k.block);
-            break;
-          case K_SWITCH_CASE:
-            k.cases.push(new Control.Case(k.index, maybeSequence(v)));
-
-            var c;
-            while (c = k.pendingCases.pop()) {
-              if (c.body) {
-                block = c.body;
-                cx = k.cx.update({ exit: c.exit });
-                conts.push({ kind: K_SWITCH_CASE,
-                             det: k.det,
-                             index: c.index,
-                             cases: k.cases,
-                             pendingCases: k.pendingCases,
-                             join: k.join,
-                             joinCx: k.joinCx,
-                             cx: k.cx });
-                break popping;
-              }
-
-              k.cases.push(new Control.Case(c.index));
-            }
-
-            block = k.join;
-            cx = k.joinCx;
-            conts.push({ kind: K_SWITCH,
-                         det: k.det,
-                         cases: k.cases });
-            break popping;
-          case K_SWITCH:
-            k.cases.reverse();
-            v.push(new Control.Switch(k.det, k.cases));
-            break;
-          case K_LABEL_CASE:
-            var c = new Control.LabelCase(k.label, maybeSequence(v));
-            k.cases.push(c);
-            if (k.label.length) {
-              var label = k.label;
-              for (var i = 0, j = label.length; i < j; i++) {
-                k.labelMap[label[i]] = c;
-              }
-            } else {
-              k.labelMap[k.label] = c;
-            }
-
-            block = k.pendingCases.pop();
-            if (block) {
-              if (k.loopBodyCx) {
-                loopBodyCx = k.loopBodyCx;
-                conts.push({ kind: K_LABEL_CASE,
-                             label: block.bid,
-                             labelMap: k.labelMap,
-                             cases: k.cases,
-                             pendingCases: k.pendingCases,
-                             join: k.join,
-                             joinCx: k.joinCx,
-                             loopBodyCx: k.loopBodyCx });
-              } else {
-                cx = k.cx;
-                conts.push({ kind: K_LABEL_CASE,
-                             label: labelOf(block),
-                             labelMap: k.labelMap,
-                             cases: k.cases,
-                             pendingCases: k.pendingCases,
-                             join: k.join,
-                             joinCx: k.joinCx,
-                             cx: cx });
-              }
-
-              break popping;
-            }
-
-            block = k.join;
-            cx = k.joinCx;
-            conts.push({ kind: K_LABEL_SWITCH,
-                         labelMap: k.labelMap,
-                         cases: k.cases });
-            break popping;
-          case K_LABEL_SWITCH:
-            k.cases.reverse();
-            v.push(new Control.LabelSwitch(k.cases, k.labelMap));
-            break;
-          default:
-            unexpected();
-          }
-        }
-
-        if (conts.length === 0) {
-          this.controlTree = maybeSequence(v);
-          return;
-        }
-      }
+      this.controlTree = induce(root, new BlockSet(), {});
     },
 
     massageControlTree: function massageControlTree() {
-      function MassageContext() {
-      }
-
-      MassageContext.prototype = {
-        update: function update(props) {
-          var desc = {};
-          for (var p in props) {
-            desc[p] = {
-              value: props[p],
-              writable: true,
-              enumerable: true,
-              configurable: true
-            };
-          }
-
-          return Object.create(this, desc);
+      function massageSeq(nodes, exit, cont, br) {
+        for (var i = nodes.length - 1; i >= 0; i--) {
+          nodes[i] = massage(nodes[i], nodes[i + 1], exit, cont, br);
         }
-      }
 
-      function compact(a) {
         var k = 0;
-        outer:
-        for (var i = 0, j = a.length; i < j; i++) {
-          while (!a[i]) {
-            i++;
-            if (i === j) {
-              break outer;
-            }
-          }
-          a[k++] = a[i];
-        }
-        a.length = k;
-      }
-
-      function addHoists(hoists, exit, breakTo, continueTo) {
-        if (!exit || exit.kind !== Control.LABEL_SWITCH) {
-          return;
-        }
-
-        exit.breakTo = breakTo;
-        exit.continueTo = continueTo;
-
-        var cases = exit.cases;
-        for (var i = 0, j = cases.length; i < j; i++) {
-          if (!cases[i].label.length) {
-            var cf = exit.comeFroms[cases[i].label];
-            if (cf.length === 1 && !cf.pendingHoist) {
-              cf[0].labelSwitch = exit;
-              cf[0].index = i;
-              hoists.push(cf[0]);
-              cf.pendingHoist = true;
-            }
+        for (var i = 0, j = nodes.length; i < j; i++) {
+          if (nodes[i]) {
+            nodes[k++] = nodes[i];
           }
         }
+        nodes.length = k;
+
+        return k ? nodes : null;
       }
 
-      function transformTerminators(root, breakTo, continueTo) {
-        if (root === Control.Break) {
-          return new Control.LongBreak(breakTo);
-        } else if (continueTo && root === Control.Continue) {
-          return new Control.LongContinue(continueTo);
-        }
-
-        var worklist = [root];
-        var node;
-
-        /* It doesn't matter what order we iterate this in. */
-        while (node = worklist.pop()) {
-          switch (node.kind) {
-          case Control.SEQ:
-            var body = node.body;
-            for (var i = 0, j = body.length; i < j; i++) {
-              if (body[i] === Control.Break) {
-                body[i] = new Control.LongBreak(breakTo);
-              } else if (continueTo && body[i] === Control.Continue) {
-                body[i] = new Control.LongContinue(continueTo);
-              } else if (body[i].kind) {
-                worklist.push(body[i]);
-              }
-            }
-            break;
-
-          case Control.LOOP:
-            if (node.body === Control.Break) {
-              node.body = new Control.LongBreak(breakTo);
-            } else if (continueTo && node.body === Control.Continue) {
-              node.body = new Control.LongContinue(continueTo);
-            }
-            worklist.push(node.body);
-            break;
-
-          case Control.IF:
-            if (node.then) {
-              if (node.then === Control.Break) {
-                node.then = new Control.LongBreak(breakTo);
-              } else if (continueTo && node.then === Control.Continue) {
-                node.then = new Control.LongContinue(continueTo);
-              } else {
-                worklist.push(node.then);
-              }
-            }
-
-            if (node.else) {
-              if (node.else === Control.Break) {
-                node.else = new Control.LongBreak(breakTo);
-              } else if (continueTo && node.else === Control.Continue) {
-                node.else = new Control.LongContinue(continueTo);
-              } else {
-                worklist.push(node.else);
-              }
-            }
-            break;
-
-          case Control.SWITCH:
-          case Control.LABEL_SWITCH:
-            var cases = node.cases;
-            for (var i = 0, j = cases.length; i < j; i++) {
-              if (cases[i].body === Control.Break) {
-                cases[i].body = new Control.LongBreak(breakTo);
-              } else if (continueTo && cases[i].body === Control.Continue) {
-                cases[i].body = new Control.LongContinue(continueTo);
-              } else {
-                worklist.push(cases[i].body);
-              }
-            }
-            break;
-          }
-        }
-
-        return root;
-      }
-
-      function terminatesControl(block) {
-        if (!block.end) {
-          return false;
-        }
-
-        var op = block.end.op;
-        return (op === OP_returnvoid ||
-                op === OP_returnvalue ||
-                op === OP_throw);
-      }
-
-      var worklist = [this.controlTree];
-      var hoists = [];
-      var cx = new MassageContext();
-      var node, next;
-
-      while (node = worklist.pop()) {
-        if (!node.delay) {
-          switch (node.kind) {
-          case Control.SEQ:
-            worklist.push({ delay: node });
-            worklist.push.apply(worklist, node.body);
-            next = null;
-            break;
-
-          case Control.LOOP:
-            worklist.push({ delay: node, cx: cx });
-            cx = cx.update({ break: next, breakTo: node, continueTo: node });
-            if (node.body.kind === Control.LABEL_SWITCH) {
-              worklist.push({ delay: node.body, cx: cx });
-              worklist.push.apply(worklist, node.body.cases);
-              cx = cx.update({ exit: node });
-            } else {
-              worklist.push(node.body);
-            }
-            next = null;
-            break;
-
-          case Control.IF:
-            worklist.push({ delay: node, cx: cx });
-            node.then && worklist.push(node.then);
-            node.else && worklist.push(node.else);
-            cx = cx.update({ exit: next });
-            next = null;
-            break;
-
-          case Control.CASE:
-            worklist.push({ delay: node });
-            worklist.push(node.body);
-            next = null;
-            break;
-
-          case Control.SWITCH:
-            worklist.push({ delay: node, cx: cx });
-            worklist.push.apply(worklist, node.cases);
-            cx = cx.update({ break: next, breakTo: node });
-            next = null;
-            break;
-
-          case Control.LABEL_CASE:
-            worklist.push({ delay: node });
-            node.body && worklist.push(node.body);
-            next = null;
-            break;
-
-          case Control.LABEL_SWITCH:
-            worklist.push({ delay: node, cx: cx });
-            worklist.push.apply(worklist, node.cases);
-            cx = cx.update({ exit: next });
-            next = null;
-            break;
-
-          case Control.SET_LABEL:
-            var precedesBreak = next === Control.Break;
-            var exit = precedesBreak ? cx.break : cx.exit;
-
-            if (exit && exit.kind === Control.LABEL_SWITCH) {
-              if (!(node.label in exit.labelMap)) {
-                node.prune = true;
-              } else {
-                node.maybeTransplant = true;
-                exit.comeFroms[node.label].push({ setLabel: node,
-                                                  precedesBreak: precedesBreak });
-              }
-            } else if (exit && exit.kind === Control.LOOP &&
-                       exit.body.kind === Control.LABEL_SWITCH) {
-              if (!(node.label in exit.body.labelMap)) {
-                node.prune = true;
+      function massageCases(nodes, labelMap, exit, cont, br) {
+        var body, node;
+        var k = 0;
+        for (var i = 0, j = nodes.length; i < j; i++) {
+          node = nodes[i];
+          if (body = massage(node.body, null, exit, cont, br)) {
+            node.body = body;
+            nodes[k++] = node;
+          } else if (labelMap) {
+            var label = node.label;
+            if (label.length) {
+              for (var k = 0, l = c.label.length; k < l; k++) {
+                delete labelMap[c.label[k]];
               }
             } else {
-              node.prune = true;
+              delete labelMap[c.label];
             }
-
-            next = node;
-            break;
-
-          default:
-            next = node;
-          }
-        } else {
-          var box = node;
-          node = node.delay;
-          next = node;
-
-          switch (node.kind) {
-          case Control.SEQ:
-            var body = node.body;
-            var allPruned = true;
-            var shouldCompact = false;
-
-            for (var i = 0, j = body.length; i < j; i++) {
-              if (body[i].maybeTransplant) {
-                body[i].maybeTransplantBase = body;
-                body[i].maybeTransplantKey = i;
-                allPruned = false;
-              } else if (body[i].prune) {
-                body[i] = undefined;
-                shouldCompact = true;
-              } else {
-                allPruned = false;
-              }
-            }
-
-            if (allPruned) {
-              node.prune = true;
-            } else if (shouldCompact) {
-              compact(body);
-            }
-            break;
-
-          case Control.LOOP:
-            addHoists(hoists, cx.break, box.cx.breakTo, box.cx.continueTo);
-            cx =  box.cx;
-            break;
-
-          case Control.IF:
-            if (node.then && node.then.prune) {
-              node.then = undefined;
-            }
-
-            if (!node.then) {
-              node.negated = !node.negated;
-              node.then = node.else;
-              node.else = undefined;
-            }
-
-            if (!node.then) {
-              node.prune = true;
-            } else {
-              if (node.then.maybeTransplant) {
-                node.then.maybeTransplantBase = node;
-                node.then.maybeTransplantKey = "then";
-              }
-
-              if (node.else) {
-                if (node.else.maybeTransplant) {
-                  node.else.maybeTransplantBase = node;
-                  node.else.maybeTransplantKey = "else";
-                } else if (node.else.prune) {
-                  node.else = undefined;
-                }
-              }
-            }
-
-            addHoists(hoists, cx.exit);
-            cx = box.cx;
-            break;
-
-          case Control.CASE:
-            if (node.body.maybeTransplant) {
-              node.body.maybeTransplantBase = node;
-              node.body.maybeTransplantKey = "body";
-            } else if (node.body.prune) {
-              node.body = undefined;
-            }
-
-            /*
-             * NB: DO NOT PRUNE EMPTY CASES! We need them for fallthrough.
-             *
-             * We never prune breaks, so |node.body| should always be defined if
-             * there's a break.
-             */
-            break;
-
-          case Control.SWITCH:
-            addHoists(hoists, cx.break, box.cx.breakTo);
-            cx = box.cx;
-            break;
-
-          case Control.LABEL_CASE:
-            if (node.body) {
-              if (node.body.maybeTransplant) {
-                node.body.maybeTransplantBase = node;
-                node.body.maybeTransplantKey = "body";
-              } else if (node.body.prune) {
-                node.body = undefined;
-              }
-            }
-
-            if (!node.body) {
-              node.prune = true;
-            }
-            break;
-
-          case Control.LABEL_SWITCH:
-            var cases = node.cases;
-            var labelMap = node.labelMap;
-            var comeFroms = {};
-            var allPruned = true;
-            var shouldCompact = false;
-
-            for (var i = 0, j = cases.length; i < j; i++) {
-              var c = cases[i];
-              if (c.prune) {
-                cases[i] = undefined;
-                delete labelMap[c.label];
-                shouldCompact = true;
-              } else {
-                allPruned = false;
-              }
-
-              if (c.label.length) {
-                var label = c.label;
-                for (var k = 0, l = label.length; k < l; k++) {
-                  comeFroms[label[k]] = [];
-                }
-              } else {
-                comeFroms[c.label] = [];
-              }
-            }
-
-            node.comeFroms = comeFroms;
-
-            if (allPruned) {
-              node.prune = true;
-            } else if (shouldCompact) {
-              compact(cases);
-            }
-
-            addHoists(hoists, cx.exit);
-            cx = box.cx;
-            break;
           }
         }
+        nodes.length = k;
+        return k ? nodes : null;
       }
 
-      /*
-       * Hoist label cases up into their environments, outermost first in
-       * nesting order.
-       */
-      if (hoists.length > 0) {
-        for (var i = hoists.length - 1; i >= 0; i--) {
-          var hoist = hoists[i];
-          var ls = hoist.labelSwitch;
-          var c = ls.cases[hoist.index];
-          var transplant = c.body;
-          var transplantBase = hoist.setLabel.maybeTransplantBase;
-          var transplantKey = hoist.setLabel.maybeTransplantKey;
+      function massage(node, next, exit, cont, br) {
+        switch (node.kind) {
+        case Control.SEQ:
+          node.body = massageSeq(node.body, exit, cont, br);
+          return node.body ? node : null;
 
-          if (ls.breakTo) {
-            transplant = transformTerminators(transplant,
-                                              ls.breakTo, ls.continueTo);
+        case Control.LOOP:
+          node.body = massage(node.body, null, null, node.body, next);
+          return node;
+
+        case Control.IF:
+          node.then = massage(node.then, null, next, cont, br);
+          node.else = massage(node.else, null, next, cont, br);
+          if (!node.then) {
+            node.then = node.else;
+            node.else = null;
+            node.negated = true;
           }
+          return node.then ? node : null;
 
-          if (transplant.kind === Control.SEQ) {
-            var tbody = transplant.body;
-            var tend = tbody.top();
+        case Control.SWITCH:
+          node.cases = massageCases(node.cases, null, null, null, next);
+          return node.cases ? node : null;
 
-            if (transplantBase.length) {
-              hoist.precedesBreak && transplantBase.pop();
-              transplantBase.pop();
+        case Control.LABEL_SWITCH:
+          node.cases = massageCases(node.cases, node.labelMap, next, cont, br);
+          return node.cases ? node : null;
 
-              /* Append the transplant body if it's already a sequence. */
-              transplantBase.push.apply(transplantBase, tbody);
+        case Control.CONTINUE:
+          exit = cont;
+          /* Fallthrough. */
+        case Control.EXIT:
+          if (exit && exit.kind === Control.LABEL_SWITCH) {
+            return exit.labelMap[node.label] ? node : null;
+          }
+          return null;
 
-              /*
-               * If we hoist something that terminates control or breaks out to an
-               * outer loop, pop the break.
-               */
-              if (tend && (tend.kind !== Control.LONG_BREAK &&
-                           tend.kind !== Control.LONG_CONTINUE &&
-                           !terminatesControl(tend)) &&
-                  hoist.precedesBreak) {
-                transplantBase.push(Control.Break);
-              }
-            } else {
-              transplantBase[transplantKey] = transplant;
-            }
+        case Control.BREAK:
+          if (br && br.kind === Control.LABEL_SWITCH) {
+            node.ambiguous = node.label in br.labelMap;
           } else {
-            transplantBase[transplantKey] = transplant;
-            if (hoist.precedesBreak &&
-                (transplant.kind === Control.LONG_BREAK ||
-                 transplant.kind === Control.LONG_CONTINUE ||
-                 terminatesControl(transplant))) {
-              transplantBase.pop();
-            }
+            node.ambiguous = false;
           }
+          return node;
 
-          ls.cases[hoist.index] = undefined;
-          ls.shouldCompact = true;
-        }
-
-        for (var i = hoists.length - 1; i >= 0; i--) {
-          var ls = hoists[i].labelSwitch;
-          if (ls.shouldCompact) {
-            compact(ls.cases);
-            delete ls.shouldCompact;
-          }
+        default:
+          return node;
         }
       }
+
+      this.controlTree = massage(this.controlTree);
     },
 
     restructureControlFlow: function restructureControlFlow() {
@@ -2055,10 +1397,12 @@ var Analysis = (function () {
                        (block.succs.length > 0 ? " -> " +
                         block.succs.map(bid).join(",") : "") + " {");
 
-          writer.writeLn("preds".padRight(' ', 10) + block.preds.map(bid).join(","));
+          writer.writeLn("npreds".padRight(' ', 10) + block.npreds);
           writer.writeLn("idom".padRight(' ', 10) + block.dominator.bid);
           writer.writeLn("domcs".padRight(' ', 10) + block.dominatees.map(bid).join(","));
-          writer.writeLn("frontier".padRight(' ', 10) + "{" + block.frontier.toArray().join(",") + "}");
+          if (block.frontier) {
+            writer.writeLn("frontier".padRight(' ', 10) + "{" + block.frontier.toArray().join(",") + "}");
+          }
           writer.writeLn("level".padRight(' ', 10) + block.level);
         }
 
@@ -2067,6 +1411,7 @@ var Analysis = (function () {
           writer.writeLn("  id".padRight(' ', 10) + block.loop.id);
           writer.writeLn("  head".padRight(' ', 10) + "{" + block.loop.head.toArray().join(",") + "}");
           writer.writeLn("  exit".padRight(' ', 10) + "{" + block.loop.exit.toArray().join(",") + "}");
+          writer.writeLn("  npreds".padRight(' ', 10) + block.loop.npreds);
         }
 
         writer.writeLn("");
@@ -2075,8 +1420,6 @@ var Analysis = (function () {
           for (var bci = block.position; bci <= block.end.position; bci++) {
             writer.writeLn(("" + bci).padRight(' ', 5) + bytecodes[bci]);
           }
-        } else {
-          writer.writeLn("abstract");
         }
 
         writer.leave("}");
@@ -2164,11 +1507,9 @@ var Analysis = (function () {
                     succFns, predFns,
                     function (n) {
                       var str = "Block: " + n.bid + "\\l";
-                      /*
                       for (var bci = n.position; bci <= n.end.position; bci++) {
                         str += bci + ": " + bytecodes[bci] + "\\l";
                       }
-                      */
                       return str;
                     },
                     postHook && postHook.bind(this, idFn));
