@@ -3,564 +3,59 @@
   <head>
     <meta charset="utf-8">
     <title>SWF Inspector</title>
-
     <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
       body {
         margin: 0;
-        font-family: helvetica;
-        font-size: 13px;
-        color: #454545;
-      }
-      h3 {
-        margin: 0;
-      }
-      .error {
-        color: #cd0a0a;
-      }
-      .font {
-        font-size: 50px;
-      }
-      #menu {
-        height: 15px;
-        padding: 10px 10px;
-        border-top: 2px solid #888;
-        border-bottom: 1px solid #aaa;
-      }
-      #info {
-        height: 15px;
-        padding: 5px 10px;
-        text-align: right;
-        background: #ccc;
-        border-top: 1px solid #d3d3d3;
-        border-bottom: 1px solid #aaa;
-      }
-      #sidebar {
-        position: absolute;
-        left: 0;
-        top: 65px;
-        bottom: 0;
-        width: 280px;
-        overflow: auto;
-        background: #e6e6e6;
-        border-right: 1px solid #d3d3d3;
-      }
-      #sidebar ol {
-        margin: 0;
-        width: 100%;
-        padding: 0;
-      }
-      #items {
-        cursor: pointer;
-      }
-      #items li {
-        position: relative;
-        height: 14px;
-        padding: 10px;
-        color: #888;
-        border-bottom: 1px solid #d3d3d3;
-        list-style-position: inside;
-      }
-      #items li:first-child {
-        color: #454545;
-        list-style-type: none;
-      }
-      #items li:hover {
-        background: #fbf9ee;
-      }
-      #items li.active {
-        background: #fcefa1;
-      }
-      #items li > div.expander {
-        position: absolute;
-        right: 0px;
-        top: 0;
-        width: 20px;
-        height: 35px;
-        background: url(triangle_w.png) no-repeat center;
-      }
-      #items li > div.expander.collapsed {
-        background-image: url(triangle_s.png);
-      }
-      #items li > div.expander:hover {
-        background-color: #d3d3d3;
-      }
-      #items li > span {
-        position: absolute;
-        left: 50px;
-        color: #454545;
-        pointer-events: none;
-      }
-      #items ol {
-        display: none;
-      }
-      #items ol li {
-        padding-left: 25px;
-      }
-      #graph {
-        position: absolute;
-        left: 0;
-        top: 65px;
-        right: 0;
-        bottom: 0;
-        margin: 0 301px 0 281px;
-        padding: 10px;
-        overflow: auto;
-      }
-      #preview {
-        position: absolute;
-        top: 65px;
-        right: 0;
-        bottom: 0;
-        width: 280px;
-        padding: 10px;
-        overflow: auto;
-        text-align: center;
-        background: url(no_bg.png);
-        border-left: 1px solid #d3d3d3;
-      }
-      #timeline {
-        display: none;
-        position: absolute;
-        left: 0;
-        top: 65px;
-        right: 0;
-        margin-left: 281px;
-        height: 105px;
-        overflow: hidden;
-        background: #e6e6e6 url(timeline.png) repeat-x left bottom;
-      }
-      #timeline .unit {
-        position: absolute;
-        bottom: 41px;
-        margin-left: -21px;
-        font-size: smaller;
-      }
-      #controls {
-        padding: 10px;
-        text-align: right;
-      }
-      #controls * {
-        vertical-align: middle;
-      }
-      #currentframe {
-        margin-right: 5px;
-        width: 35px;
-        height: 12px;
-        padding: 3px;
-        text-align: center;
-        border: 1px solid #888;
-        border-radius: 3px;
-      }
-      #controls button {
-        margin: 0;
-        height: 20px;
-        width: 30px;
-        border-width: 1px;
-        border-color: #888;
-        background-color: #f0f0f0;
-        background-repeat: no-repeat;
-        background-position: center center;
-      }
-      #controls button:hover {
-        background-color: #fbf9ee;
-      }
-      #controls button:active {
-        background-color: #fcefa1;
-      }
-      #prev {
-        border-style: solid none solid solid;
-        border-radius: 3px 0 0 3px;
-        background-image: url(prev.png);
-      }
-      #play {
-        width: 25px !important;
-        border-style: solid dotted;
-        background-image: url(pause.png);
-      }
-      #play.paused {
-        background-image: url(play.png);
-      }
-      #next {
-        border-style: solid solid solid none;
-        border-radius: 0 3px 3px 0;
-        background-image: url(next.png);
-      }
-      #storyboard {
-        position: absolute;
-        top: 70px;
-        height: 35px;
-        background: url(frame.png);
-        cursor: pointer;
-      }
-      #playhead {
-        position: absolute;
-        left: -20px;
-        top: -37px;
-        margin: 1px;
-        width: 17px;
-        height: 15px;
-        background: url(playhead.png);
-      }
-      body.timeline #timeline {
-        display: block;
-      }
-      body.timeline #preview {
-        left: 280px;
-        width: auto;
-        padding-top: 115px;
-      }
-      body.timeline #preview > canvas {
-        max-width: 550px;
-        max-height: 400px;
-      }
-      body.inspect #preview > canvas {
-        max-width: 280px;
       }
     </style>
   </head>
-
-  <body class="timeline">
-    <div id="menu">
-      <h3>Shumway SWF Inspector</h3>
-    </div>
-    <div id="info">Drop a SWF File</div>
-    <div id="sidebar">
-      <ol id="items" start="0"></ol>
-    </div>
-
-    <pre id="graph"></pre>
-    <div id="preview"></div>
-    <div id="timeline">
-      <div id="controls">
-        <input id="currentframe"/>
-        <button id="prev"/>
-        <button id="play" class="paused"/>
-        <button id="next"/>
-      </div>
-      <script>
-        var i = 0;
-        while (i++ < 50)
-          document.write('<div class="unit" style="left:' + (100 * i) + 'px">' + (i * 5) + '</div>');
-      </script>
-      <div id="storyboard">
-        <div id="playhead" class="paused"></div>
-      </div>
-    </div>
+  <body>
+    <div id="stage"></div>
 
     <script src="jquery.min.js"></script>
-    <script src="jquery-ui.min.js"></script>
 
-    <script src="beautify.js"></script>
-    <script src="DataView.js"></script>
-
-    <script src="../swf.js"></script>
-
-    <script src="../parser/utils.js"></script>
-    <script src="../parser/types.js"></script>
-    <script src="../parser/structs.js"></script>
-    <script src="../parser/tags.js"></script>
-    <script src="../parser/inflate.js"></script>
-    <script src="../parser/stream.js"></script>
-
-    <script src="../parser/templates.js"></script>
-    <script src="../parser/generate.js"></script>
-    <script src="../parser/parse.js"></script>
-
-    <script src="../renderer/font.js"></script>
-    <script src="../renderer/shape_renderer.js"></script>
-    <script src="../renderer/text_renderer.js"></script>
-    <script src="../renderer/render.js"></script>
+    <script src="../src/swf/util.js"></script>
+    <script src="../src/swf/swf.js"></script>
+    <script>
+      SWF.workerPath = "../src/swf/worker.js";
+    </script>
+    <script src="../src/swf/worker.js"></script>
+    <script src="../src/swf/prototypes.js"></script>
+    <script src="../src/swf/embed.js"></script>
+    <script src="../src/swf/renderer.js"></script>
 
     <script>
-      var tagCodes = {
-        End: 0,
-        ShowFrame: 1,
-        DefineShape: 2,
-        PlaceObject: 4,
-        RemoveObject: 5,
-        DefineBits: 6,
-        DefineButton: 7,
-        JPEGTables: 8,
-        SetBackgroundColor: 9,
-        DefineFont: 10,
-        DefineText: 11,
-        DoAction: 12,
-        DefineFontInfo: 13,
-        DefineSound: 14,
-        StartSound: 15,
-        DefineButtonSound: 17,
-        SoundStreamHead: 18,
-        SoundStreamBlock: 19,
-        DefineBitsLossless: 20,
-        DefineBitsJPEG2: 21,
-        DefineShape2: 22,
-        DefineButtonCxform: 23,
-        Protect: 24,
-        PlaceObject2: 26,
-        RemoveObject2: 28,
-        DefineShape3: 32,
-        DefineText2: 33,
-        DefineButton2: 34,
-        DefineBitsJPEG3: 35,
-        DefineBitsLossless2: 36,
-        DefineEditText: 37,
-        DefineSprite: 39,
-        FrameLabel: 43,
-        SoundStreamHead2: 45,
-        DefineMorphShape: 46,
-        DefineFont2: 48,
-        ExportAssets: 56,
-        ImportAssets: 57,
-        EnableDebugger: 58,
-        DoInitAction: 59,
-        DefineVideoStream: 60,
-        VideoFrame: 61,
-        DefineFontInfo2: 62,
-        EnableDebugger2: 64,
-        ScriptLimits: 65,
-        SetTabIndex: 66,
-        FileAttributes: 69,
-        PlaceObject3: 70,
-        ImportAssets2: 71,
-        DefineFontAlignZones: 73,
-        CSMTextSettings: 74,
-        DefineFont3: 75,
-        SymbolClass: 76,
-        Metadata: 77,
-        DefineScalingGrid: 78,
-        DoABC: 82,
-        DefineShape4: 83,
-        DefineMorphShape2: 84,
-        DefineSceneAndFrameLabelData: 86,
-        DefineBinaryData: 87,
-        DefineFontName: 88,
-        StartSound2: 89,
-        DefineBitsJPEG4: 90,
-        DefineFont4: 91,
+      window.print = function (msg) {
+        console.log(msg);
       };
-      var tagNames = (function() {
-        var map = { };
-        for (var name in tagCodes)
-          map[tagCodes[name]] = name;
-        return map;
-      })();
+      var webShell = true;
+    </script>
+    <script src="../src/avm2/util.js"></script>
+    <script>
+      var options = new OptionSet('option(s)');
+      var traceLevel = options.register(new Option('traceLevel', 't', 0, 'trace level'));
+    </script>
+    <script src="../src/avm2/constants.js"></script>
+    <script src="../src/avm2/opcodes.js"></script>
+    <script src="../src/avm2/parser.js"></script>
+    <script src="../src/avm2/analyze.js"></script>
+    <script src="../src/avm2/compiler.js"></script>
+    <script src="../src/avm2/runtime.js"></script>
 
+    <script>
       var body = $('body');
-      var info = $('#info');
-      var sidebar = $('#sidebar');
-      var items = $('#items');
-      var graph = $('#graph');
-      var preview = $('#preview');
-      var timeline = $('#timeline');
-      var currentframe = $('#currentframe');
-      var playbtn = $('#play');
-      var storyboard = $('#storyboard');
-      var playhead = $('#playhead');
-
-      var dictionary;
-      var frameRate;
-      var paused = true;
+      var stage = $('#stage');
 
       function readFile(file) {
         var reader = new FileReader();
         reader.onload = function() {
-          try {
-            console.time('process');
-            console.time('parse');
-            SWF.parse(this.result, function(result, dict) {
-              dictionary = dict;
-              frameRate = result.frameRate;
-              console.timeEnd('parse');
-              process(file, result);
-              console.timeEnd('process');
-            });
-          } catch (e) {
-            info.html('<span class="error">' + e.message + '</span>');
-            throw e;
-          }
+          SWF.embed(this.result, stage[0]);
         }
-        info.html('Reading ' + file.name + '...');
         reader.readAsArrayBuffer(file);
-      }
-      function process(file, swf) {
-        items.html('');
-        graph.html('');
-        preview.html('');
-
-        var bounds = swf.bounds;
-        var frameWidth = (bounds.xMax - bounds.xMin) / 20;
-        var frameHeight = (bounds.yMax - bounds.yMin) / 20;
-
-        var stage = preview.data('stage');
-        if (!stage) {
-          stage = document.createElement('canvas');
-          preview.data('stage', stage);
-        }
-        stage.width = frameWidth;
-        stage.height = frameHeight;
-
-        info.html(
-          '<b>' + file.name + '</b>, SWF' + swf.version + ', ' +
-          ~~frameRate + 'fps, ' +
-          frameWidth + 'x' + frameHeight + 'px'
-        );
-
-        items.addClass('incomplete');
-        items.data('context', swf);
-        items.html('');
-        var main = $('<li class="active">Main Timeline</li>');
-        items.append(main);
-
-        processTags(50);
-        setupTimeline(swf);
-      }
-      function processTags(max) {
-        var i = 0;
-        var lists = sidebar.find('ol.incomplete').not(':hidden');
-        while (i < max && lists.length) {
-          var list = lists.last();
-          var tags = list.data('unprocessedTags');
-          if (!tags) {
-            tags = list.data('context').tags.slice();
-            list.data('unprocessedTags', tags);
-          } else if (!tags.length) {
-            break;
-          }
-          for (var j = 0, tag; i < max && (tag = tags.shift()); ++i, ++j) {
-            var item = $('<li><span>' + tagNames[tag.tag] + '</span></li>');
-            item.data('tag', tag);
-            list.append(item);
-            if (tag.tag === 39) {
-              var sublist =
-                $('<ol start="0" class="incomplete"><li>Sprite Timeline</li></ol>');
-              sublist.data('context', tag);
-              list.append(sublist);
-              var expander = $('<div class="expander"></div>');
-              expander.data('sublist', sublist);
-              item.append(expander);
-            } else if (tag.tag === 9) {
-              preview.data('stage').style.background =
-                'rgb(' + [tag.red, tag.green, tag.blue].join(',') + ')';
-            }
-          }
-          if (!tags.length) {
-            list.removeClass('incomplete');
-            list.data('unprocessedTags', null);
-            lists = lists.not(list);
-            if (!list.is(':last-child'))
-              break;
-          }
-        }
-      }
-      function setupTimeline(context) {
-        preview.html('');
-        storyboard.css('width', (20 * context.frameCount) + 'px');
-        timeline.data('context', context);
-        timeline.data('frameCount', context.frameCount);
-        showFrame(context, 1);
-        body.removeClass('inspect');
-        body.addClass('timeline');
-      }
-      function showFrame(context, frameNum) {
-        if (frameNum < 1 || frameNum > timeline.data('frameCount'))
-          frameNum = 1;
-        renderFrame(context, frameNum);
-        playhead.css('left', ((frameNum - 1) * 20) + 'px');
-        currentframe.val(frameNum);
-      }
-      function renderFrame(context, frameNum) {
-        var stage = preview.data('stage');
-        var ctx = stage.getContext('2d');
-        ctx.clearRect(0, 0, stage.width, stage.height);
-        SWF.render(context, dictionary, ctx, frameNum);
-        preview.append(preview.data('stage'));
-      }
-      function activate(node) {
-        if (!paused)
-          playPause();
-        var activeItem = items.find('li.active');
-        if (activeItem)
-          activeItem.removeClass('active');
-        node.addClass('active');
-        activeItem = node;
-        var context = node.parent().data('context');
-        var tag = node.data('tag');
-        if (tag)
-          inspect(context, tag);
-        else
-          setupTimeline(context);
-      }
-      function inspect(context, tag) {
-        body.removeClass('timeline');
-        body.addClass('inspect');
-        graph.html(js_beautify(JSON.stringify(tag)));
-        preview.html('');
-        if (tag.type === 'frame') {
-          renderFrame(context, tag.frameNum);
-        } else {
-          switch (tag.type) {
-          case 'font':
-            $('head').append(
-              '<style>' +
-                '@font-face{' +
-                  'font-family:"' + tag.name + '";' +
-                  'src:url(' + 'data:font/opentype;base64,' + btoa(defineFont(tag)) + ');' +
-                '}' +
-              '</style>'
-            );
-            var text = $('<div class="font"></div>');
-            text.css('font-family', tag.name);
-            var codes = tag.codes;
-            var i = 0;
-            var code;
-            var glyphs = '';
-            while (code = codes[i++])
-              glyphs += ' ' + fromCharCode(code) + ' ';
-            text.html(glyphs);
-            preview.append(text);
-            break;
-          case 'shape':
-            var canvas = document.createElement('canvas');
-            var bounds = tag.bounds;
-            var width = (bounds.xMax - bounds.xMin) / 20;
-            var height = (bounds.yMax - bounds.yMin) / 20;
-            canvas.width = width;
-            canvas.height = height;
-            var ctx = canvas.getContext('2d');
-            var render = new ShapeRenderer(tag);
-            render(ctx, {
-              scaleX: 1,
-              scaleY: 1,
-              skew0: 0,
-              skew1: 0,
-              translateX: -bounds.xMin,
-              translateY: -bounds.yMin
-            }, 0);
-            preview.append(canvas);
-            break;
-          }
-        }
-      }
-      function playPause() {
-        if (paused) {
-          var frameCount = timeline.data('frameCount') || 0;
-          if (frameCount <= 1)
-            return;
-          playPause.interval = setInterval(function() {
-            var frameNum = +currentframe.val() + 1;
-            if (frameNum > frameCount) {
-              play();
-              frameNum = 1;
-            }
-            showFrame(timeline.data('context'), frameNum);
-          }, 1000 / frameRate);
-          paused = false;
-          playbtn.removeClass('paused');
-        } else {
-          clearInterval(playPause.interval);
-          paused = true;
-          playbtn.addClass('paused');
-        }
       }
 
       body.on('dragenter dragover', function(event) {
@@ -570,58 +65,8 @@
       body.on('drop', function(event) {
         event.stopPropagation();
         event.preventDefault();
-        readFile(event.originalEvent.dataTransfer.files[0]);
-      });
-      sidebar.scroll(function(event) {
-        var lastItem = sidebar.find('ol.incomplete').not(':hidden').children('li').last();
-        if (lastItem.length) {
-          if (lastItem.position().top < sidebar.outerHeight()) {
-            debugger;
-            processTags(50);
-          }
-        }
-      });
-      items.click(function(event) {
-        var target = $(event.target);
-        if (target.hasClass('expander')) {
-          target.toggleClass('collapsed');
-          target.data('sublist').toggle();
-          processTags(50);
-        } else {
-          activate(target);
-        }
-      });
-      storyboard.click(function(event) {
-        var frameNum = Math.ceil((event.pageX - $(event.target).offset().left) / 20);
-        showFrame(timeline.data('context'), frameNum);
-      });
-      currentframe.change(function() {
-        var frameNum = +currentframe.val();
-        if (isNaN(frameNum))
-          frameNum = 1;
-        showFrame(timeline.data('context'), frameNum);
-      });
-      $('#prev').click(function prev() {
-        var currentFrame = +currentframe.val();
-        if (currentFrame > 1)
-          showFrame(timeline.data('context'), currentFrame - 1);
-      });
-      playbtn.click(playPause);
-      $('#next').click(function next() {
-        var currentFrame = +currentframe.val();
-        var frameCount = timeline.data('frameCount') || 0;
-        if (currentFrame < frameCount)
-          showFrame(timeline.data('context'), currentFrame + 1);
-      });
-      playhead.draggable({
-        axis: 'x',
-        containment: 'parent',
-        grid: [20, 0],
-        drag: function(event, ui) {
-          var frameNum = ui.position.left / 20;
-          if (currentframe.val() != frameNum)
-            showFrame(timeline.data('context'), frameNum);
-        }
+        var file = event.originalEvent.dataTransfer.files[0];
+        readFile(file);
       });
     </script>
   </body>
