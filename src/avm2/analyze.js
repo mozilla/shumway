@@ -1188,9 +1188,9 @@ var Analysis = (function () {
               h.npreds += h.save;
               save[bid] = (save[bid] || 0) + h.save;
               exit.set(bid);
-              v.push((lookupSwitch ?
-                      new Control.Break(bid, lookupSwitch) :
-                      new Control.Exit(bid)));
+              v.push(lookupSwitch ?
+                     new Control.Break(bid, lookupSwitch) :
+                     new Control.Exit(bid));
               break;
             }
 
