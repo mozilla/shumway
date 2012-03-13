@@ -178,12 +178,14 @@ var Control = (function () {
     this.kind = CONTINUE;
     this.label = label;
     this.head = head;
+    this.ambiguous = true;
+    this.redundant = false;
   }
 
   Continue.prototype = {
     trace: function (writer) {
-      writer.writeLn("label = " + this.label);
-      writer.writeLn("continue");
+      this.ambiguous && writer.writeLn("label = " + this.label);
+      this.redundant && writer.writeLn("continue");
     }
   };
 
@@ -1164,7 +1166,7 @@ var Analysis = (function () {
           if (inLoopHead) {
             inLoopHead = false;
           } else {
-            if (loop && !loop.body.get(h)) {
+            if (loop && !loop.body.get(bid)) {
               h.npreds += h.save;
               loop.exit.set(bid);
               loop.save[bid] = (loop.save[bid] || 0) + h.save;
@@ -1330,6 +1332,7 @@ var Analysis = (function () {
         case Control.IF:
           node.then = massage(node.then, null, next, cont, br);
           node.else = massage(node.else, null, next, cont, br);
+
           if (!node.then) {
             node.then = node.else;
             node.else = null;
@@ -1345,9 +1348,6 @@ var Analysis = (function () {
           node.cases = massageCases(node.cases, node.labelMap, next, cont, br);
           return node.cases ? node : null;
 
-        case Control.CONTINUE:
-          exit = cont;
-          /* Fallthrough. */
         case Control.EXIT:
           if (exit && exit.kind === Control.LABEL_SWITCH) {
             return exit.labelMap[node.label] ? node : null;
@@ -1360,6 +1360,15 @@ var Analysis = (function () {
           } else {
             node.ambiguous = false;
           }
+          return node;
+
+        case Control.CONTINUE:
+          if (cont && cont.kind === Control.LABEL_SWITCH) {
+            node.ambiguous = node.label in cont.labelMap;
+          } else {
+            node.ambiguous = false;
+          }
+          node.redundant = !!exit;
           return node;
 
         default:
@@ -1420,6 +1429,8 @@ var Analysis = (function () {
           for (var bci = block.position; bci <= block.end.position; bci++) {
             writer.writeLn(("" + bci).padRight(' ', 5) + bytecodes[bci]);
           }
+        } else {
+          writer.writeLn("abstract");
         }
 
         writer.leave("}");
@@ -1507,9 +1518,11 @@ var Analysis = (function () {
                     succFns, predFns,
                     function (n) {
                       var str = "Block: " + n.bid + "\\l";
+                      /*
                       for (var bci = n.position; bci <= n.end.position; bci++) {
                         str += bci + ": " + bytecodes[bci] + "\\l";
                       }
+                      */
                       return str;
                     },
                     postHook && postHook.bind(this, idFn));

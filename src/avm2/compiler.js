@@ -52,29 +52,33 @@ var Compiler = (function () {
    * statement arrays which if flattened after compilation is done.
    */
 
-  Control.LongBreak.prototype.compile = function (mcx, state) {
-    notImplemented();
-  };
-
-  Control.LongContinue.prototype.compile = function (mcx) {
-    notImplemented();
-  };
-
-  Control.Break.compile = function (mcx, state) {
+  Control.Break.prototype.compile = function (mcx, state) {
     controlWriter && controlWriter.enter("Break {");
-    var res = {statements: ["break;"], state: state};
+    var statements = [];
+    if (this.ambiguous) {
+      statements.push(["var $label = " + this.label + ";"]);
+    }
+    statements.push("break;");
+    var res = {statements: statements, state: state};
     controlWriter && controlWriter.leave("}");
     return res;
   };
 
-  Control.Continue.compile = function (mcx, state) {
+  Control.Continue.prototype.compile = function (mcx, state) {
     controlWriter && controlWriter.enter("Continue {");
-    var res = {statements: ["continue;"], state: state};
+    var statements = [];
+    if (this.ambiguous) {
+      statements.push(["var $label = " + this.label + ";"]);
+    }
+    if (this.redundant) {
+      statements.push("continue;");
+    }
+    var res = {statements: statements, state: state};
     controlWriter && controlWriter.leave("}");
     return res;
   };
 
-  Control.SetLabel.prototype.compile = function (mcx, state) {
+  Control.Exit.prototype.compile = function (mcx, state) {
     return {statements: ["var $label = " + this.label + ";"], state: state};
   };
 
