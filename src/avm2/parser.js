@@ -175,6 +175,10 @@ var Trait = (function () {
     return this.kind === TRAIT_Slot;
   };
 
+  trait.prototype.isConst = function isConst() {
+    return this.kind === TRAIT_Const;
+  };
+
   trait.prototype.isConstant = function isConstant() {
     return this.kind === TRAIT_Const;
   };
@@ -557,7 +561,23 @@ var Multiname = (function () {
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     assert(this.isQName());
-    return this.getNamespace(0) + "$" + this.getName();
+    if (this.namespace.isPublic()) {
+      return this.getName();
+    } else {
+      return this.namespace + "$" + this.getName();
+    }
+  };
+
+  /**
+   * Creates a QName from this multiname.
+   */
+  multiname.prototype.getQName = function getQName(namespaceIndex) {
+    assert (namespaceIndex < this.namespaceCount());
+    var multiname = new Multiname(undefined);
+    multiname.name = this.name;
+    multiname.namespace = this.getNamespace(namespaceIndex);
+    multiname.flags = QNAME;
+    return multiname;
   };
 
   multiname.prototype.toString = function toString() {

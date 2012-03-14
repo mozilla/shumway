@@ -25,7 +25,7 @@ def execute (command, timeout = -1):
   thread.start()
   # print "Timeout", timeout
   thread.join(timeout)
-  time.sleep(2)
+  # time.sleep(2)
   if thread.is_alive():
     # Popen with "shell=True" returns the pid of the shell rather than that of the spawned process,
     # so if the process hangs killing the shell won't kill the process. We need to do this nasty
@@ -214,6 +214,7 @@ class Test(Command):
           counts['shuElapsed'] += shuResult[1]
           counts['avmElapsed'] += avmResult[1]
           out.append(PASS + " PASSED" + ENDC)
+          out.append("(%d of %d)" % (counts['passed'], counts['count']));
           out.append("shu: " + str(round(shuResult[1] * 1000, 2)) + " ms,")
           out.append("avm: " + str(round(avmResult[1] * 1000, 2)) + " ms,")
           ratio = round(avmResult[1] / shuResult[1], 2)
