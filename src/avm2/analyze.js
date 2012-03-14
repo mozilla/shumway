@@ -179,13 +179,13 @@ var Control = (function () {
     this.label = label;
     this.head = head;
     this.ambiguous = true;
-    this.redundant = false;
+    this.necessary = true;
   }
 
   Continue.prototype = {
     trace: function (writer) {
       this.ambiguous && writer.writeLn("label = " + this.label);
-      this.redundant && writer.writeLn("continue");
+      this.necessary && writer.writeLn("continue");
     }
   };
 
@@ -1280,12 +1280,12 @@ var Analysis = (function () {
     },
 
     massageControlTree: function massageControlTree() {
-      function massage(node, next, exit, cont, br) {
+      function massage(node, exit, cont, br) {
         switch (node.kind) {
         case Control.SEQ:
           var body = node.body;
           for (var i = body.length - 1; i >= 0; i--) {
-            body[i] = massage(body[i], body[i + 1], exit, cont, br);
+            body[i] = massage(body[i], body[i + 1] || exit, cont, br);
           }
 
           var k = 0;
@@ -1298,12 +1298,12 @@ var Analysis = (function () {
           return k ? node : null;
 
         case Control.LOOP:
-          node.body = massage(node.body, null, null, node.body, next);
+          node.body = massage(node.body, null, node.body, exit);
           return node;
 
         case Control.IF:
-          node.then = massage(node.then, null, next, cont, br);
-          node.else = massage(node.else, null, next, cont, br);
+          node.then = massage(node.then, exit, cont, br);
+          node.else = massage(node.else, exit, cont, br);
 
           if (!node.then) {
             node.then = node.else;
@@ -1317,7 +1317,7 @@ var Analysis = (function () {
           for (var i = 0, j = cases.length; i < j; i++) {
             var c = cases[i];
             if (c.body) {
-              c.body = massage(c.body, null, exit, cont, br);
+              c.body = massage(c.body, exit, cont, br);
             }
           }
           return node;
@@ -1329,7 +1329,7 @@ var Analysis = (function () {
           var k = 0;
           for (var i = 0, j = cases.length; i < j; i++) {
             c = cases[i];
-            if (body = massage(c.body, null, exit, cont, br)) {
+            if (body = massage(c.body, exit, cont, br)) {
               c.body = body;
               cases[k++] = c;
             } else {
@@ -1339,7 +1339,7 @@ var Analysis = (function () {
                   delete labelMap[label[k]];
                 }
               } else {
-                delete labelMap[label]
+                delete labelMap[label];
               }
             }
           }
@@ -1366,7 +1366,7 @@ var Analysis = (function () {
           } else {
             node.ambiguous = false;
           }
-          node.redundant = !!exit;
+          node.necessary = !!exit;
           return node;
 
         default:

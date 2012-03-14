@@ -70,7 +70,7 @@ var Compiler = (function () {
     if (this.ambiguous) {
       statements.push(["var $label = " + this.label + ";"]);
     }
-    if (this.redundant) {
+    if (this.necessary) {
       statements.push("continue;");
     }
     var res = {statements: statements, state: state};
