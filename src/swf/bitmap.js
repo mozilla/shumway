@@ -12,7 +12,13 @@ function rgbToString(bytes, pos) {
 }
 function argbToString(bytes, pos) {
   var alpha = bytes[pos];
-  return rgbToString(bytes, pos + 1) + fromCharCode(alpha);
+  if (alpha == 0)
+    return '\x00\x00\x00\x00';
+  // RGB values are alpha pre-multiplied
+  var red = 0 | (bytes[pos + 1] * 255 / alpha);
+  var green = 0 | (bytes[pos + 2] * 255 / alpha);
+  var blue = 0 | (bytes[pos + 3] * 255 / alpha);
+  return fromCharCode(red, green, blue, alpha);
 }
 
 function defineBitmap(tag) {
@@ -73,9 +79,11 @@ function defineBitmap(tag) {
       for (var x = 0; x < width; ++x) {
         var word = stream.getUint16(pos);
         pos += 2;
-        var red = (word >> 10) & 0x0;
-        var green = (word >> 5) & 0x05;
-        var blue = word & 0x05;
+        // extract color components and changing value range
+        // from 0..31 to 0..255
+        var red = 0 | (8.2258064516129 * ((word >> 10) & 0x1F));
+        var green = 0 | (8.2258064516129 * ((word >> 5) & 0x1F));
+        var blue = 0 | (8.2258064516129 * (word & 0x1F));
         literals += fromCharCode(red, green, blue);
       }
       pos += bytesPerLine;
