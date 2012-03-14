@@ -3,6 +3,7 @@
 /** @const */ var FORMAT_COLORMAPPED  = 3;
 /** @const */ var FORMAT_15BPP        = 4;
 /** @const */ var FORMAT_24BPP        = 5;
+/** @const */ var FACTOR_5BBP         = 255 / 31;
 
 function rgbToString(bytes, pos) {
   var red = bytes[pos];
@@ -12,12 +13,12 @@ function rgbToString(bytes, pos) {
 }
 function argbToString(bytes, pos) {
   var alpha = bytes[pos];
-  if (alpha == 0)
+  if (!alpha)
     return '\x00\x00\x00\x00';
-  // RGB values are alpha pre-multiplied
-  var red = 0 | (bytes[pos + 1] * 255 / alpha);
-  var green = 0 | (bytes[pos + 2] * 255 / alpha);
-  var blue = 0 | (bytes[pos + 3] * 255 / alpha);
+  // RGB values are alpha pre-multiplied (per SWF spec).
+  var red = 0 | ((bytes[pos + 1] * 255) / alpha);
+  var green = 0 | ((bytes[pos + 2] * 255) / alpha);
+  var blue = 0 | ((bytes[pos + 3] * 255) / alpha);
   return fromCharCode(red, green, blue, alpha);
 }
 
@@ -81,9 +82,9 @@ function defineBitmap(tag) {
         pos += 2;
         // Extracting RGB color components and changing values range
         // from 0..31 to 0..255.
-        var red = 0 | (8.2258064516129 * ((word >> 10) & 0x1F));
-        var green = 0 | (8.2258064516129 * ((word >> 5) & 0x1F));
-        var blue = 0 | (8.2258064516129 * (word & 0x1F));
+        var red = 0 | (FACTOR_5BBP * ((word >> 10) & 0x1f));
+        var green = 0 | (FACTOR_5BBP * ((word >> 5) & 0x1f));
+        var blue = 0 | (FACTOR_5BBP * (word & 0x1f));
         literals += fromCharCode(red, green, blue);
       }
       pos += bytesPerLine;
