@@ -79,8 +79,8 @@ function defineBitmap(tag) {
       for (var x = 0; x < width; ++x) {
         var word = stream.getUint16(pos);
         pos += 2;
-        // extract color components and changing value range
-        // from 0..31 to 0..255
+        // Extracting RGB color components and changing values range
+        // from 0..31 to 0..255.
         var red = 0 | (8.2258064516129 * ((word >> 10) & 0x1F));
         var green = 0 | (8.2258064516129 * ((word >> 5) & 0x1F));
         var blue = 0 | (8.2258064516129 * (word & 0x1F));
