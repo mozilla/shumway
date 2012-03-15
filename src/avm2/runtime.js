@@ -39,6 +39,19 @@ var globalObject = function () {
   global.Infinity = Infinity;
   global.JS = (function() { return this || (1,eval)('this'); })();
 
+  function defineReadOnlyProperty(obj, name, value) {
+    Object.defineProperty(obj, name,
+      { value: value, writable: false, configurable: false, enumerable: false });
+  }
+
+  global.int = {};
+  defineReadOnlyProperty(global.int, "MIN_VALUE", -0x80000000);
+  defineReadOnlyProperty(global.int, "MAX_VALUE", 0x7fffffff);
+
+  global.uint = {};
+  defineReadOnlyProperty(global.uint, "MIN_VALUE", 0);
+  defineReadOnlyProperty(global.uint, "MAX_VALUE", 0x7fffffff);
+
   global.parseInt = parseInt;
 
   global.Capabilities = {
@@ -138,7 +151,7 @@ var Scope = (function () {
 })();
 
 /**
- * Resolve the [multiname] to a QName in the specified [obj], this is a linear that uses [hasOwnProperty]
+ * Resolve the [multiname] to a QName in the specified [obj], this is a linear search that uses [hasOwnProperty]
  * with the qualified name.
  */
 function resolveMultiname(obj, multiname, checkPrototype) {
