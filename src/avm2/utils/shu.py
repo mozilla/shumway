@@ -68,6 +68,12 @@ class Base:
     else:
       print "Environment variable BUILTINABC is not defined, set it to builtin.abc"
 
+    if 'AVM' in os.environ:
+      self.avm = os.environ['AVM']
+    else:
+      print "Environment variable AVM is not defined, set it to avmshell"
+
+
     if not self.asc:
       sys.exit();
 
@@ -192,11 +198,15 @@ class Test(Command):
     ENDC = '\033[0m'
 
     total = tests.qsize()
-    counts = { 'passed': 0,
-           'failed': 0,
-           'count': 0,
-           'shuElapsed': 0,
-           'avmElapsed': 0 }
+    counts = {
+      'passed': 0,
+      'almost': 0,
+      'kindof': 0,
+      'failed': 0,
+      'count': 0,
+      'shuElapsed': 0,
+      'avmElapsed': 0
+    }
 
     def runTest(tests, counts):
       while tests.qsize() > 0:
@@ -204,7 +214,7 @@ class Test(Command):
         out = [str(total - tests.qsize()) + " of " + str(total) + ": " + test]
         counts['count'] += 1
         shuResult = execute("js -m -n avm.js -x -cse " + test, int(args.timeout))
-        avmResult = execute("avmshell " + test, int(args.timeout))
+        avmResult = execute(self.avm + " " + test, int(args.timeout))
 
         if not shuResult or not avmResult:
           continue
@@ -214,14 +224,24 @@ class Test(Command):
           counts['shuElapsed'] += shuResult[1]
           counts['avmElapsed'] += avmResult[1]
           out.append(PASS + " PASSED" + ENDC)
-          out.append("(%d of %d)" % (counts['passed'], counts['count']));
-          out.append("shu: " + str(round(shuResult[1] * 1000, 2)) + " ms,")
-          out.append("avm: " + str(round(avmResult[1] * 1000, 2)) + " ms,")
-          ratio = round(avmResult[1] / shuResult[1], 2)
-          out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC)
         else:
-          counts['failed'] += 1
-          out.append(FAIL + " FAILED"  + ENDC)
+          if "PASSED" in shuResult[0] and not "FAILED" in shuResult[0]:
+            counts['almost'] += 1
+            counts['passed'] += 1
+            out.append(INFO + " ALMOST"  + ENDC)
+          elif "PASSED" in shuResult[0] and "FAILED" in shuResult[0]:
+            counts['kindof'] += 1
+            counts['passed'] += 1
+            out.append(WARN + " KINDOF"  + ENDC)
+          else:
+            counts['failed'] += 1
+            out.append(FAIL + " FAILED"  + ENDC)
+
+        out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
+        out.append("shu: " + str(round(shuResult[1] * 1000, 2)) + " ms,")
+        out.append("avm: " + str(round(avmResult[1] * 1000, 2)) + " ms,")
+        ratio = round(avmResult[1] / shuResult[1], 2)
+        out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC)
         sys.stdout.write(" ".join(out) + "\n")
         sys.stdout.flush()
         tests.task_done()
