@@ -737,7 +737,8 @@ var Compiler = (function () {
       if (typeof value === "string") {
         value = new Literal(value);
       }
-      if (enableCSE.value && value instanceof FindProperty) {
+      if (enableCSE.value &&
+          (value instanceof FindProperty || value instanceof GetGlobalScope)) {
         cseValue(value);
       } else {
         state.stack.push(value);
