@@ -242,3 +242,8 @@ const OP_debugline = 0xF0;
 const OP_debugfile = 0xF1;
 const OP_bkptline = 0xF2;
 const OP_timestamp = 0xF3;
+
+const INT_MIN_VALUE = -0x80000000;
+const INT_MAX_VALUE = 0x7fffffff;
+const UINT_MIN_VALUE = 0;
+const UINT_MAX_VALUE = 0xffffffff;

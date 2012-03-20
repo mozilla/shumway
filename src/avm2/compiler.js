@@ -707,7 +707,7 @@ var Compiler = (function () {
 
     function setSlot(obj, index, value) {
       flushStack();
-      statements.push(obj + ".S" + index + " = " + value +";");
+      statements.push(obj + ".S" + index + " = " + value + ";");
     }
 
     var local = this.local;
@@ -828,7 +828,7 @@ var Compiler = (function () {
     var multinames = abc.constantPool.multinames;
     var runtime = abc.runtime;
     var savedScope = this.savedScope;
-    var multiname, args, value, obj, ns, name;
+    var multiname, args, value, obj, ns, name, type;
 
     function createMultiname(multiname) {
       if (multiname.isRuntime()) {
@@ -878,6 +878,11 @@ var Compiler = (function () {
         return obj + "." + obj.multiname.getQualifiedName();
       }
       return "getProperty" + argumentList(obj, objectConstant(multiname));
+    }
+
+    function toInt32() {
+      pushValue(new Constant(0));
+      expression(Operator.OR); 
     }
 
     var bytecodes = this.method.analysis.bytecodes;
@@ -1226,14 +1231,21 @@ var Compiler = (function () {
         pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, objectConstant(multiname)));
         break;
       case OP_istypelate:
-        // TODO: Temporary implementation, totally broken.
-        state.stack.pop();
-        state.stack.pop();
-        pushValue(new Constant(true));
+        type = state.stack.pop();
+        value = state.stack.pop();
+        pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, type));
         break;
       case OP_in:             notImplemented(); break;
-      case OP_increment_i:    notImplemented(); break;
-      case OP_decrement_i:    notImplemented(); break;
+      case OP_increment_i:
+        toInt32();
+        pushValue(new Constant(1));
+        expression(Operator.ADD);
+        break;
+      case OP_decrement_i:
+        toInt32();
+        pushValue(new Constant(1));
+        expression(Operator.SUB);
+        break;
       case OP_inclocal_i:     notImplemented(); break;
       case OP_declocal_i:     notImplemented(); break;
       case OP_negate_i:       notImplemented(); break;

@@ -45,12 +45,12 @@ var globalObject = function () {
   }
 
   global.int = {};
-  defineReadOnlyProperty(global.int, "MIN_VALUE", -0x80000000);
-  defineReadOnlyProperty(global.int, "MAX_VALUE", 0x7fffffff);
+  defineReadOnlyProperty(global.int, "MIN_VALUE", INT_MIN_VALUE);
+  defineReadOnlyProperty(global.int, "MAX_VALUE", INT_MAX_VALUE);
 
   global.uint = {};
-  defineReadOnlyProperty(global.uint, "MIN_VALUE", 0);
-  defineReadOnlyProperty(global.uint, "MAX_VALUE", 0x7fffffff);
+  defineReadOnlyProperty(global.uint, "MIN_VALUE", UINT_MIN_VALUE);
+  defineReadOnlyProperty(global.uint, "MAX_VALUE", UINT_MAX_VALUE);
 
   global.parseInt = parseInt;
 
@@ -334,11 +334,48 @@ var Runtime = (function () {
    * This means that there are two ways to get to any slotted trait, a fast way and a slow way.
    * I guess we should profile and find out which type of access is more common (by slotId or
    * by name).
+   *
+   * Moreover, traits may be typed which means that type coercion must happen whenever values
+   * are stored in traints. To do this, we introduce yet another level of indirection. In the
+   * above example, if "Age" is of type "int" then we store the real value in the property "$S7",
+   * and use a setter in the property "S7" to do the type coersion.
    */
   runtime.prototype.applyTraits = function applyTraits(obj, traits) {
-    function setProperty(name, slotId, value) {
+    function getCoerceFunction(typeName) {
+      if (typeName.name === "int") {
+        return function (x) {
+          return x | 0;
+        };
+      } else if (typeName.name === "uint") {
+        return function (x) {
+          return x >>> 0;
+        };
+      } else if (typeName.name === "String") {
+        return function (x) {
+          return Object(x).toString();
+        };
+      } else {
+        notImplemented("Cannot coerce " + typeName);
+        return undefined;
+      }
+    }
+
+    function setProperty(name, slotId, value, typeName) {
       if (slotId) {
-        obj["S" + slotId] = value;
+        if (!typeName) {
+          obj["S" + slotId] = value;
+        } else {
+          obj["$S" + slotId] = value;
+          var coerce = getCoerceFunction(typeName);
+          Object.defineProperty(obj, "S" + slotId, {
+            get: function () {
+              return obj["$S" + slotId];
+            },
+            set: function (val) {
+              return obj["$S" + slotId] = coerce(val);
+            }
+          });
+        }
         Object.defineProperty(obj, name, {
           get: function () {
             return obj["S" + slotId];
@@ -353,7 +390,7 @@ var Runtime = (function () {
     }
     traits.forEach(function (trait) {
       if (trait.isSlot() || trait.isConst()) {
-      setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value);
+        setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, trait.typeName);
       } else if (trait.isMethod()) {
         var closure = this.createFunction(trait.method, new Scope(null, obj));
         setProperty(trait.name.getQualifiedName(), undefined, closure);
@@ -365,8 +402,19 @@ var Runtime = (function () {
     }.bind(this));
   };
 
-  runtime.prototype.isType = function isType(value, multiname) {
-    return true;
+  runtime.prototype.isType = function isType(value, type) {
+    if (typeof value === 'number') {
+      if ((value | 0) !== value) {
+        return false;
+      }
+      if (type === globalObject.int) {
+        return (value & 0xffffffff) === value;
+      } else if (type === globalObject.uint) {
+        return value >= 0 && value <= UINT_MAX_VALUE;
+      }
+      notImplemented();
+    }
+    return false;
   };
 
   return runtime;
