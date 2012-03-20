@@ -331,16 +331,6 @@ var Bytecode = (function () {
 
 var Analysis = (function () {
 
-  function Unanalyzable(reason) {
-    this.reason = reason;
-  }
-
-  Unanalyzable.prototype = {
-    toString: function () {
-      return "Method is unanalyzable: " + this.reason;
-    }
-  };
-
   function blockSetClass(length, blockById) {
     var BlockSet = BitSetFunctor(length);
 
@@ -482,8 +472,6 @@ var Analysis = (function () {
     this.options = options || {};
     this.normalizeBytecode();
   }
-
-  Analysis.Unanalyzable = Unanalyzable;
 
   Analysis.prototype = {
     normalizeBytecode: function normalizeBytecode() {
@@ -944,9 +932,7 @@ var Analysis = (function () {
     analyzeControlFlow: function analyzeControlFlow() {
       /* TODO: Exceptions aren't supported. */
       if (this.method.exceptions.length > 0) {
-        // TODO: Temporarily disabled this exeption so that we may execute the test suite harness,
-        // albeit incorrectly.
-        // throw new Unanalyzable("has exceptions");
+        //return false;
       }
 
       assert(this.bytecodes);
@@ -955,13 +941,15 @@ var Analysis = (function () {
       this.computeDominance();
       //this.computeFrontiers();
 
-      this.ranAnalyzeControlFlow = true;
+      this.analyzedControlFlow = true;
+      return true;
     },
 
     markLoops: function markLoops() {
-      if (!this.ranAnalyzeControlFlow) {
-        this.analyzeControlFlow();
+      if (!this.analyzedControlFlow && !this.analyzeControlFlow()) {
+        return false;
       }
+
 
       const BlockSet = this.BlockSet;
 
@@ -1064,7 +1052,8 @@ var Analysis = (function () {
 
       var heads = findLoopHeads(this.blocks);
       if (heads.length <= 0) {
-        return;
+        this.markedLoops = true;
+        return true;
       }
 
       var worklist = heads.sort(function (a, b) {
@@ -1107,7 +1096,8 @@ var Analysis = (function () {
         }
       }
 
-      this.ranMarkLoops = true;
+      this.markedLoops = true;
+      return true;
     },
 
     induceControlTree: function induceControlTree() {
@@ -1428,14 +1418,17 @@ var Analysis = (function () {
     },
 
     restructureControlFlow: function restructureControlFlow() {
-      if (!this.ranMarkLoops) {
-        this.markLoops();
+      if (!this.markedLoops && !this.markLoops()) {
+        return false;
       }
 
       this.induceControlTree();
       if (this.options.massage) {
         this.massageControlTree();
       }
+
+      this.restructuredControlFlow = true;
+      return true;
     },
 
     /*
