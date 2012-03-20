@@ -364,61 +364,111 @@ var Analysis = (function () {
 
     var Bsp = BlockSet.prototype;
 
-    Bsp.forEachBlock = function forEach(fn) {
-      assert (fn);
-      var byId = blockById;
-      var bits = this.bits;
-      for (var i = 0, j = bits.length; i < j; i++) {
-        var word = bits[i];
+    if (BlockSet.singleword) {
+      Bsp.forEachBlock = function forEach(fn) {
+        assert (fn);
+        var byId = blockById;
+        var word = this.bits;
         if (word) {
           for (var k = 0; k < BITS_PER_WORD; k++) {
             if (word & (1 << k)) {
-              fn(byId[i * BITS_PER_WORD + k]);
+              fn(byId[k]);
             }
           }
         }
-      }
-    },
+      },
 
-    Bsp.choose = function choose() {
-      var byId = blockById;
-      var bits = this.bits;
-      for (var i = 0, j = bits.length; i < j; i++) {
-        var word = bits[i];
+      Bsp.choose = function choose() {
+        var byId = blockById;
+        var word = this.bits;
         if (word) {
           for (var k = 0; k < BITS_PER_WORD; k++) {
             if (word & (1 << k)) {
-              return byId[i * BITS_PER_WORD + k];
+              return byId[k];
             }
           }
         }
-      }
-    };
+      };
 
-    Bsp.members = function members() {
-      var byId = blockById;
-      var set = [];
-      var bits = this.bits;
-      for (var i = 0, j = bits.length; i < j; i++) {
-        var word = bits[i];
+      Bsp.members = function members() {
+        var byId = blockById;
+        var set = [];
+        var word = this.bits;
         if (word) {
           for (var k = 0; k < BITS_PER_WORD; k++) {
             if (word & (1 << k)) {
-              set.push(byId[i * BITS_PER_WORD + k]);
+              set.push(byId[k]);
             }
           }
         }
-      }
-      return set;
-    };
+        return set;
+      };
 
-    Bsp.setBlocks = function setBlocks(bs) {
-      var bits = this.bits;
-      for (var i = 0, j = bs.length; i < j; i++) {
-        var id = bs[i].bid;
-        bits[id >> ADDRESS_BITS_PER_WORD] |= 1 << (id & BIT_INDEX_MASK);
-      }
-    };
+      Bsp.setBlocks = function setBlocks(bs) {
+        var bits = this.bits;
+        for (var i = 0, j = bs.length; i < j; i++) {
+          var id = bs[i].bid;
+          bits |= 1 << (id & BIT_INDEX_MASK);
+        }
+        this.bits = bits;
+      };
+    } else {
+      Bsp.forEachBlock = function forEach(fn) {
+        assert (fn);
+        var byId = blockById;
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var word = bits[i];
+          if (word) {
+            for (var k = 0; k < BITS_PER_WORD; k++) {
+              if (word & (1 << k)) {
+                fn(byId[i * BITS_PER_WORD + k]);
+              }
+            }
+          }
+        }
+      },
+
+      Bsp.choose = function choose() {
+        var byId = blockById;
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var word = bits[i];
+          if (word) {
+            for (var k = 0; k < BITS_PER_WORD; k++) {
+              if (word & (1 << k)) {
+                return byId[i * BITS_PER_WORD + k];
+              }
+            }
+          }
+        }
+      };
+
+      Bsp.members = function members() {
+        var byId = blockById;
+        var set = [];
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var word = bits[i];
+          if (word) {
+            for (var k = 0; k < BITS_PER_WORD; k++) {
+              if (word & (1 << k)) {
+                set.push(byId[i * BITS_PER_WORD + k]);
+              }
+            }
+          }
+        }
+        return set;
+      };
+
+      Bsp.setBlocks = function setBlocks(bs) {
+        var bits = this.bits;
+        for (var i = 0, j = bs.length; i < j; i++) {
+          var id = bs[i].bid;
+          bits[id >> ADDRESS_BITS_PER_WORD] |= 1 << (id & BIT_INDEX_MASK);
+        }
+      };
+    }
 
     return BlockSet;
   }

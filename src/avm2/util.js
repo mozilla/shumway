@@ -200,9 +200,7 @@ var Option = (function () {
  * assume that all indices are within bounds, and that set operations are applied to equal sized sets.
  * Inspired by Maxine's BitMap.
  *
- * TODO: Use a single word for the first 32 elements of a set's domain. A typed array can store for the remaining
- * elements in the set. So, the bit set would be represented as a word followed by a word array. This would pay off
- * in terms of memory use, but the extra complexity may not pay off.
+ * If the set fits in a single word, a single int is used.
  */
 function BitSetFunctor(length) {
   const ADDRESS_BITS_PER_WORD = 5;
@@ -213,15 +211,28 @@ function BitSetFunctor(length) {
   function BitSet() {
     /* How many bits are set. */
     this.count = 0;
+    /* Do we need to recompute the count? */
     this.dirty = 0;
     /* Size of the bit array. */
     this.size = SIZE;
+    /* The word array. */
     this.bits = new Uint32Array(SIZE >> ADDRESS_BITS_PER_WORD);
   }
 
-  BitSet.ADDRESS_BITS_PER_WORD = ADDRESS_BITS_PER_WORD;
-  BitSet.BITS_PER_WORD = BITS_PER_WORD;
-  BitSet.BIT_INDEX_MASK = BIT_INDEX_MASK;
+  function BitSetS() {
+    this.count = 0;
+    this.dirty = 0;
+    this.size = SIZE;
+    this.bits = 0;
+  }
+
+  var singleword = (SIZE >> ADDRESS_BITS_PER_WORD) === 1
+  var Ctor = singleword ? BitSetS : BitSet;
+
+  Ctor.ADDRESS_BITS_PER_WORD = ADDRESS_BITS_PER_WORD;
+  Ctor.BITS_PER_WORD = BITS_PER_WORD;
+  Ctor.BIT_INDEX_MASK = BIT_INDEX_MASK;
+  Ctor.singleword = singleword;
 
   BitSet.prototype = {
     recount: function recount() {
@@ -410,5 +421,117 @@ function BitSetFunctor(length) {
     }
   };
 
-  return BitSet;
+  BitSetS.prototype = {
+    recount: function recount() {
+      if (!this.dirty) {
+        return;
+      }
+
+      var c = 0;
+      var v = this.bits;
+      v = v - ((v >> 1) & 0x55555555);
+      v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+      c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+
+      this.count = c;
+      this.dirty = 0;
+    },
+
+    set: function set(i) {
+      var old = this.bits;
+      var b = old | (1 << (i & BIT_INDEX_MASK));
+      this.bits = b;
+      this.dirty |= old ^ b;
+    },
+
+    setAll: function setAll() {
+      this.bits = 0xFFFFFFFF;
+      this.count = this.size;
+      this.dirty = 0;
+    },
+
+    clear: function clear(i) {
+      var old = this.bits;
+      var b = old & ~(1 << (i & BIT_INDEX_MASK));
+      this.bits = b;
+      this.dirty |= old ^ b;
+    },
+
+    get: function get(i) {
+      return ((this.bits & 1 << (i & BIT_INDEX_MASK))) !== 0;
+    },
+
+    clearAll: function clearAll() {
+      this.bits = 0;
+      this.count = 0;
+      this.dirty = 0;
+    },
+
+    union: function union(other) {
+      var old = this.bits;
+      var b = old | other.bits;
+      this.bits = b;
+      this.dirty = old ^ b;
+    },
+
+    intersect: function intersect(other) {
+      var old = this.bits;
+      var b = old & other.bits;
+      this.bits = b;
+      this.dirty = old ^ b;
+    },
+
+    subtract: function subtract(other) {
+      var old = this.bits;
+      var b = old & ~other.bits;
+      this.bits = b;
+      this.dirty = old ^ b;
+    },
+
+    negate: function negate() {
+      var old = this.bits;
+      var b = ~old;
+      this.bits = b;
+      this.dirty = old ^ b;
+    },
+
+    forEach: function forEach(fn) {
+      assert (fn);
+      var word = this.bits;
+      if (word) {
+        for (var k = 0; k < BITS_PER_WORD; k++) {
+          if (word & (1 << k)) {
+            fn(k);
+          }
+        }
+      }
+    },
+
+    toArray: function toArray() {
+      var set = [];
+      var word = this.bits;
+      if (word) {
+        for (var k = 0; k < BITS_PER_WORD; k++) {
+          if (word & (1 << k)) {
+            set.push(k);
+          }
+        }
+      }
+      return set;
+    },
+
+    equals: function equals(other) {
+      return this.bits === other.bits;
+    },
+
+    contains: function contains(other) {
+      var bits = this.bits;
+      return (bits | other.bits) === bits;
+    },
+
+    toBitString: BitSet.prototype.toBitString,
+    toString: BitSet.prototype.toString
+  };
+
+  return Ctor;
 };
