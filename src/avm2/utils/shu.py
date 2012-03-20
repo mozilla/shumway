@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys,os.path,os,getopt,time,subprocess,re,argparse,threading
 
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 import datetime, time, signal
 import pickle
 import Queue
@@ -12,40 +12,27 @@ from dis import disassemble
 
 def execute (command, timeout = -1):
   start_time = time.time()
-  # print "run: " + command
+  # print "run: ", command
   processPid = [None]
-  tmp = tempfile.mkstemp(text=True)
-  os.close(tmp[0])
+  stdoutOutput = [None]
+  stderrOutput = [None]
   def target():
-    process = Popen([command + "&>" + tmp[1]], shell=True)
+    process = Popen(command, stdout=PIPE, stderr=STDOUT, close_fds=True)
     processPid[0] = process.pid;
-    process.communicate();
+    (stdoutOutput[0], stderrOutput[0]) = process.communicate();
 
   thread = threading.Thread(target=target)
   thread.start()
   # print "Timeout", timeout
   thread.join(timeout)
-  # time.sleep(2)
   if thread.is_alive():
-    # Popen with "shell=True" returns the pid of the shell rather than that of the spawned process,
-    # so if the process hangs killing the shell won't kill the process. We need to do this nasty
-    # hack to kill the child processes. The "ps eo pid,pgid,ppid" command lists the processes and
-    # their pid / parent pid relationships.
-
-    # Kill All Child Processes
-    for row in [map(int,ps.split()) for ps in os.popen("ps eo pid,pgid,ppid").readlines()[1:]]:
-      if row[2] == processPid[0]:
-        os.kill(row[0], signal.SIGKILL)
-        os.waitpid(-1, os.WNOHANG)
-
     # Kill Process
     os.kill(processPid[0], signal.SIGKILL)
     os.waitpid(-1, os.WNOHANG)
     thread.join()
 
   elapsed_time = time.time() - start_time
-  output = open(tmp[1], 'r').read();
-  os.unlink(tmp[1])
+  output = stdoutOutput[0]
   return (output.strip(), elapsed_time);
 
 class Base:
@@ -177,7 +164,7 @@ class Test(Command):
     parser = argparse.ArgumentParser(description='Runs all tests.')
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
-    parser.add_argument('-t', '--timeout', type=int, default=2, help="timeout (s)")
+    parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
     args = parser.parse_args(args)
     print "Testing %s" % args.src
 
@@ -213,8 +200,8 @@ class Test(Command):
         test = tests.get()
         out = [str(total - tests.qsize()) + " of " + str(total) + ": " + test]
         counts['count'] += 1
-        shuResult = execute("js -m -n avm.js -x -cse " + test, int(args.timeout))
-        avmResult = execute(self.avm + " " + test, int(args.timeout))
+        shuResult = execute(["js", "-m", "-n", "avm.js", "-x", "-cse", test], int(args.timeout))
+        avmResult = execute([self.avm, test], int(args.timeout))
 
         if not shuResult or not avmResult:
           continue
