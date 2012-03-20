@@ -16,8 +16,11 @@ function toInt(x) {
 }
 
 function deleteProperty(obj, multiname) {
-  // TODO: This is not correct.
-  return delete obj[multiname.getQualifiedName()];
+  var resolved = resolveMultiname(obj, multiname, false);
+  if (resolved) {
+    return delete obj[resolved.getQualifiedName()];
+  }
+  return false;
 }
 
 var globalObject = function () {
@@ -44,13 +47,31 @@ var globalObject = function () {
       { value: value, writable: false, configurable: false, enumerable: false });
   }
 
-  global.int = {};
+  global.int = {
+    coerce: function (x) {
+      return x | 0;
+    }
+  };
+
   defineReadOnlyProperty(global.int, "MIN_VALUE", INT_MIN_VALUE);
   defineReadOnlyProperty(global.int, "MAX_VALUE", INT_MAX_VALUE);
 
-  global.uint = {};
+  global.uint = {
+    coerce: function (x) {
+      return x >>> 0;
+    }
+  };
+
   defineReadOnlyProperty(global.uint, "MIN_VALUE", UINT_MIN_VALUE);
   defineReadOnlyProperty(global.uint, "MAX_VALUE", UINT_MAX_VALUE);
+
+  global.String.coerce = function (x) {
+    return Object(x).toString();
+  };
+
+  global.Object.coerce = function (x) {
+    return Object(x);
+  };
 
   global.parseInt = parseInt;
 
@@ -72,6 +93,11 @@ var globalObject = function () {
 
   return global;
 }();
+
+function getTypeByName(multiname) {
+  assert (globalObject.hasOwnProperty(multiname.name), "Cannot find type " + multiname);
+  return globalObject[multiname.name];
+}
 
 /**
  * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
@@ -338,24 +364,15 @@ var Runtime = (function () {
    * Moreover, traits may be typed which means that type coercion must happen whenever values
    * are stored in traints. To do this, we introduce yet another level of indirection. In the
    * above example, if "Age" is of type "int" then we store the real value in the property "$S7",
-   * and use a setter in the property "S7" to do the type coersion.
+   * and use a setter in the property "S7" to do the type coercion.
    */
   runtime.prototype.applyTraits = function applyTraits(obj, traits) {
-    function getCoerceFunction(typeName) {
-      if (typeName.name === "int") {
-        return function (x) {
-          return x | 0;
-        };
-      } else if (typeName.name === "uint") {
-        return function (x) {
-          return x >>> 0;
-        };
-      } else if (typeName.name === "String") {
-        return function (x) {
-          return Object(x).toString();
-        };
+    function getCoercionFunction(typeName) {
+      var fn = getTypeByName(typeName).coerce;
+      if (fn) {
+        return fn;
       } else {
-        notImplemented("Cannot coerce " + typeName);
+        notImplemented("Coercion to " + typeName);
         return undefined;
       }
     }
@@ -366,7 +383,7 @@ var Runtime = (function () {
           obj["S" + slotId] = value;
         } else {
           obj["$S" + slotId] = value;
-          var coerce = getCoerceFunction(typeName);
+          var coerce = getCoercionFunction(typeName);
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
               return obj["$S" + slotId];

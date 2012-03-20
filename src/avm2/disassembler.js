@@ -127,7 +127,7 @@ function traceOperand(operand, abc, code) {
   switch(operand.size) {
     case "s08": value = code.readS8(); break;
     case "u08": value = code.readU8(); break;
-    case "s16": value = code.readU30Unsafe(); break;
+    case "s16": value = code.readS16(); break;
     case "s24": value = code.readS24(); break;
     case "u30": value = code.readU30(); break;
     case "u32": value = code.readU32(); break;

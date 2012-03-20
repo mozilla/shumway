@@ -251,7 +251,7 @@ var Bytecode = (function () {
           this[operand.name] = code.readS8();
           break;
         case "s16":
-          this[operand.name] = code.readU30Unsafe();
+          this[operand.name] = code.readS16();
           break;
         case "s24":
           this[operand.name] = code.readS24();

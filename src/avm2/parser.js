@@ -34,6 +34,9 @@ var AbcStream = (function () {
     readU30Unsafe: function() {
       return this.readU32();
     },
+    readS16: function() {
+      return (this.readU30Unsafe() << 16) >> 16;
+    },
     /**
      * Read a variable-length encoded 32-bit signed integer. The value may use one to five bytes (little endian),
      * each contributing 7 bits. The most significant bit of each byte indicates that the next byte is part of
