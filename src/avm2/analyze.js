@@ -1385,8 +1385,8 @@ var Analysis = (function () {
             } else {
               var label = c.label;
               if (label.length) {
-                for (var k = 0, l = label.length; k < l; k++) {
-                  delete labelMap[label[k]];
+                for (var n = 0, m = label.length; n < m; n++) {
+                  delete labelMap[label[n]];
                 }
               } else {
                 delete labelMap[label];
@@ -1417,7 +1417,7 @@ var Analysis = (function () {
             node.ambiguous = false;
           }
           node.necessary = !!exit;
-          return node;
+          return (node.necessary || node.ambiguous) ? node : null;
 
         default:
           return node;
