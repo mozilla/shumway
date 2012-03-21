@@ -15,6 +15,14 @@ function toInt(x) {
   return parseInt(x);
 }
 
+function typeOf(x) {
+  var type = typeof x;
+  if (type === "object") {
+    return typeof (x.valueOf());
+  }
+  return type;
+}
+
 function deleteProperty(obj, multiname) {
   var resolved = resolveMultiname(obj, multiname, false);
   if (resolved) {
@@ -34,7 +42,7 @@ var globalObject = function () {
   global.Array = Array;
   global.Math = Math;
   global.Object = Object;
-  global.String = String;
+  global.String = global.string = String;
   global.RegExp = RegExp;
   global.Function = Function;
   global.undefined = undefined;
@@ -47,30 +55,75 @@ var globalObject = function () {
       { value: value, writable: false, configurable: false, enumerable: false });
   }
 
-  global.int = {
-    coerce: function (x) {
-      return x | 0;
-    }
+  global.int = function int(x) {
+    return Number(x) | 0;
+  };
+
+  global.int.coerce = function (x) {
+    return Number(x) | 0;
   };
 
   defineReadOnlyProperty(global.int, "MIN_VALUE", INT_MIN_VALUE);
   defineReadOnlyProperty(global.int, "MAX_VALUE", INT_MAX_VALUE);
 
-  global.uint = {
-    coerce: function (x) {
-      return x >>> 0;
-    }
+  global.uint = function uint(x) {
+    return Number(x) >>> 0;
+  };
+
+  global.uint.coerce = function (x) {
+      return Number(x) >>> 0;
   };
 
   defineReadOnlyProperty(global.uint, "MIN_VALUE", UINT_MIN_VALUE);
   defineReadOnlyProperty(global.uint, "MAX_VALUE", UINT_MAX_VALUE);
 
-  global.String.coerce = function (x) {
+  global.String.coerce = function(x) {
     return Object(x).toString();
   };
 
-  global.Object.coerce = function (x) {
-    return Object(x);
+  global.Object.coerce = function(x) {
+    return x;
+  };
+
+  global.Number.coerce = function(x) {
+    return Number(x);
+  };
+
+  global.Boolean.coerce = function(x) {
+    return Boolean(x);
+  };
+
+  defineReadOnlyProperty(global.Number, "E", 2.718281828459045);
+  defineReadOnlyProperty(global.Number, "PI", 3.141592653589793);
+  defineReadOnlyProperty(global.Number, "LN2", 0.6931471805599453);
+  defineReadOnlyProperty(global.Number, "LN10", 2.302585092994046);
+  defineReadOnlyProperty(global.Number, "LOG2E", 1.442695040888963387);
+  defineReadOnlyProperty(global.Number, "LOG10E", 0.4342944819032518);
+  defineReadOnlyProperty(global.Number, "SQRT2", 1.4142135623730951);
+  defineReadOnlyProperty(global.Number, "SQRT1_2", 0.7071067811865476);
+
+  defineReadOnlyProperty(global.Number, "abs", Math.abs);
+  defineReadOnlyProperty(global.Number, "acos", Math.acos);
+  defineReadOnlyProperty(global.Number, "asin", Math.asin);
+  defineReadOnlyProperty(global.Number, "atan", Math.atan);
+  defineReadOnlyProperty(global.Number, "ceil", Math.ceil);
+  defineReadOnlyProperty(global.Number, "cos", Math.cos);
+  defineReadOnlyProperty(global.Number, "exp", Math.exp);
+  defineReadOnlyProperty(global.Number, "floor", Math.floor);
+  defineReadOnlyProperty(global.Number, "log", Math.log);
+  defineReadOnlyProperty(global.Number, "round", Math.round);
+  defineReadOnlyProperty(global.Number, "sin", Math.sin);
+  defineReadOnlyProperty(global.Number, "sqrt", Math.sqrt);
+  defineReadOnlyProperty(global.Number, "tan", Math.tan);
+  defineReadOnlyProperty(global.Number, "atan2", Math.atan2);
+  defineReadOnlyProperty(global.Number, "pow", Math.pow);
+
+  defineReadOnlyProperty(global.Number, "min", Math.min);
+  defineReadOnlyProperty(global.Number, "max", Math.max);
+
+
+  global.Function.coerce = function(x) {
+    return x;
   };
 
   global.parseInt = parseInt;
@@ -87,8 +140,16 @@ var globalObject = function () {
     return namespace;
   })();
 
-  global.toString = function () {
+  global.toString = function() {
     return "[object global]";
+  };
+
+  global.getQualifiedClassName = function(x) {
+    return Object(x).constructor.name;
+  };
+
+  global.ArgumentError = function () {
+    
   };
 
   return global;
@@ -144,6 +205,7 @@ var Scope = (function () {
   });
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
+    // print("Looking for : " + multiname);
     for (var i = 0; i < multiname.namespaceCount(); i++) {
       if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
         return this.object;

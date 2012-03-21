@@ -1196,7 +1196,7 @@ var Compiler = (function () {
         break;
       case OP_declocal:       notImplemented(); break;
       case OP_typeof:
-        pushValue("typeof " + state.stack.pop());
+        pushValue("typeOf" + argumentList(state.stack.pop()));
         break;
       case OP_not:            expression(Operator.NOT); break;
       case OP_bitnot:         expression(Operator.BITWISE_NOT); break;
