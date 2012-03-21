@@ -9,8 +9,8 @@ var enableCSE = options.register(new Option("cse", "cse", false, "Common Subexpr
 
 var $C = [];
 
-var SCOPE_NAME = "$S";
-var SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
+const SCOPE_NAME = "$S";
+const SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
 
 function objectId(obj) {
   assert(obj);

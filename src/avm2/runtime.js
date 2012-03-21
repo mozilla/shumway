@@ -276,10 +276,15 @@ function getProperty(obj, multiname) {
  * Execution context for a script.
  */
 var Runtime = (function () {
+  const FUNCTION_TOO_HOT = 10;
+  const jsGlobal = globalObject.JS;
+
   var functionCount = 0;
+
   function runtime(abc) {
     this.abc = abc;
     this.compiler = new Compiler(abc);
+    this.interpreter = new Interpreter(abc);
   }
 
   runtime.prototype.createActivation = function (method) {
@@ -288,41 +293,43 @@ var Runtime = (function () {
     return obj;
   };
 
-  runtime.prototype.createFunction = function (method, scope)  {
-    /**
-     * TODO: This is terrible, we overwrite the default implementation of call/apply because
-     * we need to pass the globalObject whenever call/apply is passed null or undefined for the
-     * [this] pointer. We could solve this by merging the AS global object with the JS global
-     * object, but that may open up another bag of warms.
-     */
-    function overwriteCallAndApply(fn) {
-      fn.apply = function ($this, args) {
-        if ($this === null || $this === undefined) {
-          $this = globalObject;
-        }
-        return Function.prototype.apply.apply(fn, [$this, args]);
+  runtime.prototype.createFunction = function (method, scope) {
+    function closeOverScope(fn, scope) {
+      return function () {
+        Array.prototype.unshift.call(arguments, scope);
+        return fn.apply(this === jsGlobal ? globalObject : this, arguments);
       };
-      /* Temporarily disable this because it prevents the Chrome debugger from stepping into callees.
-      fn.call = function ($this) {
-        if ($this === null || $this === undefined) {
-          $this = globalObject;
-        }
-        return Function.prototype.apply.apply(fn, [$this, Array.prototype.slice.call(arguments).slice(1)]);
-      };
-      */
-      return fn;
     }
 
-    if (method.compiledMethodClosure) {
-      return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
+    if (!method.analysis) {
+      var interpreter = this.interpreter;
+      method.analysis = new Analysis(method, { massage: true });
+      method.hotness = 0;
+      // FIXME: interpreter broken d:v
+      //method.interpretedClosure = interpreter.interpretMethod.bind(interpreter, method);
     }
-    method.analysis = new Analysis(method, { massage: true });
+
+    /**
+     * A crude heuristic for when to JIT methods. Each call to the function
+     * has a weight of 2. Each backedge taken inside the method has a weight
+     * of 1. If the sum of both counts exceed a threshold, we compile the
+     * function.
+     */
+    if (method.hotness <= FUNCTION_TOO_HOT) {
+      //return overwriteCallAndApply(method.interpretedClosure(scope));
+    }
+
+    if (method.compiledMethod) {
+      return closeOverScope(method.compiledMethod, scope);
+    }
+
     method.analysis.restructureControlFlow();
     var result = this.compiler.compileMethod(method, scope);
 
     var parameters = method.parameters.map(function (p) {
       return p.name;
     });
+    parameters.unshift(SAVED_SCOPE_NAME);
 
     function flatten(array, indent) {
       var str = "";
@@ -338,18 +345,13 @@ var Runtime = (function () {
       return str;
     }
 
-    // TODO: Use function constructurs,
-    // method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
 
     /* Hook to set breakpoints in compiled code. */
     var body = flatten(result.statements, "");
     if (functionCount == 13) {
       body = "stop();" + body;
     }
-
-    // Eval hack to give generated functions proper names so that stack traces are helpful.
-    eval("function fnClosure" + functionCount + "(" + SAVED_SCOPE_NAME + ") { return function fn" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }; }");
-    method.compiledMethodClosure = eval("fnClosure" + functionCount);
 
     if (traceLevel.value > 0) {
       /* Unfortunately inner functions are not pretty-printed by the JS engine, so here we recompile the
@@ -359,8 +361,8 @@ var Runtime = (function () {
       print('\033[92m' + eval("fnSource" + functionCount) + '\033[0m');
     }
 
-    functionCount ++;
-    return overwriteCallAndApply(method.compiledMethodClosure.bind(null, scope)());
+    functionCount++;
+    return closeOverScope(method.compiledMethod, scope);
   };
 
   /**
