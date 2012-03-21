@@ -284,7 +284,7 @@ var Runtime = (function () {
   function runtime(abc) {
     this.abc = abc;
     this.compiler = new Compiler(abc);
-    this.interpreter = new Interpreter(abc);
+    //this.interpreter = new Interpreter(abc);
   }
 
   runtime.prototype.createActivation = function (method) {

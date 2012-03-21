@@ -669,9 +669,9 @@ var Compiler = (function () {
 
     var parameterCount = method.parameters.length;
     if (method.needsRest()) {
-      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, " + parameterCount + ");");
+      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, " + (parameterCount + 1) + ");");
     } else if (method.needsArguments()) {
-      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, 0);");
+      this.header.push(this.local[parameterCount + 1] + " = Array.prototype.slice.call(arguments, 1);");
     }
 
     if (this.local.length > 1) {
