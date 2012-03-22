@@ -48,7 +48,7 @@ var IndentingWriter = (function () {
           prefix = arr[i].constructor.name;
         }
         prefix += " ";
-      } 
+      }
       this.writeLn(("" + i).padRight(' ', 4) + prefix + arr[i]);
     }
   };

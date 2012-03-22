@@ -483,7 +483,6 @@ var Runtime = (function () {
 
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
-    cls.construct = cls;
 
     /* We need a way to call |new| .apply-style for the interpreter. */
     cls.constructInstance = (function () {
@@ -501,7 +500,6 @@ var Runtime = (function () {
   };
 
   /* Extend builtin Objects so they behave as classes. */
-  Object.construct = function () { /* NOP */ };
   Object.instanceTraits = new Traits([]);
   Object.instanceTraits.verified = true;
   Object.instanceTraits.lastSlotId = 0;

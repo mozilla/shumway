@@ -1017,9 +1017,9 @@ var Compiler = (function () {
       case OP_returnvoid:     emitStatement("return"); break;
       case OP_returnvalue:    emitStatement("return " + state.stack.pop()); break;
       case OP_constructsuper:
-        obj = state.stack[0];
         args = state.stack.popMany(bc.argCount);
-        emitStatement(superClassObject() + ".construct" + argumentList.apply(null, args));
+        obj = state.stack.pop();
+        emitStatement(superClassObject() + ".call" + argumentList.apply(null, [obj].concat(args)));
         break;
       case OP_constructprop:
         multiname = multinames[bc.index];
