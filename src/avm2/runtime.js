@@ -1,3 +1,7 @@
+const ALWAYS_INTERPRET = 0x1;
+const FALLBACK_INTERPRET = 0x2;
+const HEURISTIC_JIT = 0x4;
+
 function defineReadOnlyProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
 }
@@ -310,47 +314,41 @@ function getProperty(obj, multiname) {
  * Execution context for a script.
  */
 var Runtime = (function () {
-  const FUNCTION_TOO_HOT = 10;
-  const jsGlobal = globalObject.JS;
-
   var functionCount = 0;
 
-  function runtime(abc) {
+  function runtime(abc, mode) {
     this.abc = abc;
+    this.mode = mode;
     this.compiler = new Compiler(abc);
     //this.interpreter = new Interpreter(abc);
   }
 
   runtime.prototype.createActivation = function (method) {
-    var obj = {};
-    this.applyTraits(obj, method.traits);
-    return obj;
+    return Object.create(method.activationPrototype);
   };
 
   runtime.prototype.createFunction = function (method, scope) {
     function closeOverScope(fn, scope) {
       return function () {
         Array.prototype.unshift.call(arguments, scope);
-        return fn.apply(this === jsGlobal ? globalObject : this, arguments);
+        return fn.apply(this === globalObject.JS ? globalObject : this, arguments);
       };
     }
 
-    if (!method.analysis) {
-      var interpreter = this.interpreter;
-      method.analysis = new Analysis(method, { massage: true });
-      method.hotness = 0;
-      // FIXME: interpreter broken d:v
-      //method.interpretedClosure = interpreter.interpretMethod.bind(interpreter, method);
+    const mode = this.mode;
+
+    if (!method.activationPrototype) {
+      method.activationPrototype = this.applyTraits({}, method.traits);
     }
 
-    /**
-     * A crude heuristic for when to JIT methods. Each call to the function
-     * has a weight of 2. Each backedge taken inside the method has a weight
-     * of 1. If the sum of both counts exceed a threshold, we compile the
-     * function.
-     */
-    if (method.hotness <= FUNCTION_TOO_HOT) {
-      //return overwriteCallAndApply(method.interpretedClosure(scope));
+    if (!method.analysis) {
+      method.analysis = new Analysis(method, { massage: true });
+    }
+
+    if (mode === ALWAYS_INTERPRET ||
+        (mode === FALLBACK_INTERPRET && method.exceptions.length > 0)) {
+      //var interpreter = this.interpreter;
+      //return interpreter.interpretMethod.bind(interpreter, method, scope);
     }
 
     if (method.compiledMethod) {
@@ -427,26 +425,46 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
 
-    if (baseClass) {
-      cls.instanceTraits = baseClass.instanceTraits.concat(classInfo.instance.traits);
-    } else {
-      cls.instanceTraits = classInfo.instance.traits;
-      assert (cls.instanceTraits);
+    var freshSlot = baseClass ? baseClass.freshSlot : 1;
+    var instanceTraits = classInfo.instance.traits;
+    for (var i = 0, j = instanceTraits.length; i < j; i++) {
+      instanceTraits[i].slotId = freshSlot++;
     }
+    cls.instanceTraits = instanceTraits;
+    cls.freshSlot = freshSlot;
+    assert(instanceTraits);
 
-    cls.prototype = {};
-    this.applyTraits(cls.prototype, cls.instanceTraits);
+    cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
+
+    this.applyTraits(cls.prototype, instanceTraits);
     this.applyTraits(cls, classInfo.traits);
 
     /* Call the static constructor. */
     this.createFunction(classInfo.init, this.scope).call(cls);
     cls.construct = cls;
+
+    /* We need a way to call |new| .apply-style for the interpreter. */
+    cls.constructInstance = (function () {
+      function c(args) {
+        return cls.apply(this, args);
+      }
+      c.prototype = cls.prototype;
+
+      return function (args) {
+        return new c(args);
+      };
+    })();
+
     return cls;
   };
 
   /* Extend builtin Objects so they behave as classes. */
   Object.construct = function () { /* NOP */ };
   Object.instanceTraits = [];
+  Object.freshSlot = 1;
+  Object.constructInstance = function (args) {
+    return new Object(args[0]);
+  };
 
   /**
    * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
@@ -484,19 +502,19 @@ var Runtime = (function () {
           var coerce = getCoercionFunction(typeName);
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
-              return obj["$S" + slotId];
+              return this["$S" + slotId];
             },
             set: function (val) {
-              return obj["$S" + slotId] = coerce(val);
+              return this["$S" + slotId] = coerce(val);
             }
           });
         }
         Object.defineProperty(obj, name, {
           get: function () {
-            return obj["S" + slotId];
+            return this["S" + slotId];
           },
           set: function (val) {
-            return obj["S" + slotId] = val;
+            return this["S" + slotId] = val;
           }
         });
       } else {
@@ -515,6 +533,8 @@ var Runtime = (function () {
         assert(false, trait);
       }
     }.bind(this));
+
+    return obj;
   };
 
   runtime.prototype.isType = function isType(value, type) {
@@ -538,9 +558,9 @@ var Runtime = (function () {
 /**
  * Initializes an abc file's runtime and traits, and returns the entryPoint function.
  */
-function createEntryPoint(abc, global) {
+function createEntryPoint(abc, global, mode) {
   assert (!abc.hasOwnProperty("runtime"));
-  abc.runtime = new Runtime(abc);
+  abc.runtime = new Runtime(abc, mode);
   abc.runtime.applyTraits(global, abc.lastScript.traits);
   return abc.runtime.createFunction(abc.lastScript.entryPoint, null);
 }
@@ -549,7 +569,7 @@ function createEntryPoint(abc, global) {
  * This is the main entry point to the VM. To re-execute an abc file, call [createEntryPoint] once and
  * cache its result for repeated evaluation;
  */
-function executeAbc(abc, global) {
-  var fn = createEntryPoint(abc, global);
+function executeAbc(abc, global, mode) {
+  var fn = createEntryPoint(abc, global, mode);
   fn.call(global, null);
 }
