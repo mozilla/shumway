@@ -214,11 +214,9 @@ class Test(Command):
         else:
           if "PASSED" in shuResult[0] and not "FAILED" in shuResult[0]:
             counts['almost'] += 1
-            counts['passed'] += 1
             out.append(INFO + " ALMOST"  + ENDC)
           elif "PASSED" in shuResult[0] and "FAILED" in shuResult[0]:
             counts['kindof'] += 1
-            counts['passed'] += 1
             out.append(WARN + " KINDOF"  + ENDC)
           else:
             counts['failed'] += 1
