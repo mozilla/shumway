@@ -65,6 +65,11 @@ function cast(tags, dictionary, declare) {
       continue;
     }
     switch (tag.type) {
+    case 'abc':
+      if (!pframe.abcBlocks)
+        pframe.abcBlocks = [];
+      pframe.abcBlocks.push(tag.data);
+      break;
     case 'background':
       pframe.bgcolor = toStringRgba(tag.color);
       break;

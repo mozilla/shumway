@@ -235,6 +235,7 @@ var DEFINE_TEXT = {
   initialText: ['hasText', [STRING(0)]]
 };
 var DO_ABC = {
+  type: '"abc"',
   flags: UI32,
   name: STRING(0),
   data: BINARY(0)

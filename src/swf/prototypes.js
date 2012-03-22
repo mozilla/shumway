@@ -6,6 +6,7 @@ var MovieClipPrototype = function(obj, dictionary) {
   var frame = null;
   var currentPframe = 0;
   var timeline = [];
+  var frameActions = { };
   var framesLoaded = 0;
 
   function ensure(frameNum) {
@@ -58,6 +59,19 @@ var MovieClipPrototype = function(obj, dictionary) {
           }
           depths.shift();
         }
+
+        if (pframe.abcBlocks) {
+          var actions = frameActions[framesLoaded] = [];
+          var blocks = pframe.abcBlocks;
+          var i = 0;
+          var block;
+          while (block = blocks[i++]) {
+            actions[i] = (function(abc, global) {
+              executeAbc(abc, global);
+            }).bind(new AbcFile(block));
+          }
+        }
+
         delete frame.incomplete;
         ++framesLoaded;
         var i = framesLoaded;
@@ -125,7 +139,15 @@ var MovieClipPrototype = function(obj, dictionary) {
           if (!paused)
             gotoFrame(currentFrame + 1);
           var ctx = arguments[0];
-          render(timeline[currentFrame - 1], ctx);
+          var frameIndex = currentFrame - 1;
+          render(timeline[frameIndex], ctx);
+          if (frameActions[frameIndex]) {
+            var actions = frameActions[frameIndex];
+            var i = 0;
+            var action;
+            while (action = actions[i++])
+              action({ });
+          }
         }
         return;
       }
