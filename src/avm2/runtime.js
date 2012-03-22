@@ -19,11 +19,11 @@ function defineGetterAndSetter(obj, name, getter, setter) {
 const GET_ACCESSOR = "$get";
 const SET_ACCESSOR = "$set";
 
-defineReadOnlyProperty(Array.prototype, GET_ACCESSOR, function (i) {
+defineReadOnlyProperty(Object.prototype, GET_ACCESSOR, function (i) {
   return this[i];
 });
 
-defineReadOnlyProperty(Array.prototype, SET_ACCESSOR, function (i, v) {
+defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
   this[i] = v;
 });
 
@@ -425,6 +425,7 @@ var Runtime = (function () {
       return str;
     }
 
+    console.info(flatten(result.statements, ""));
     method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
 
     /* Hook to set breakpoints in compiled code. */

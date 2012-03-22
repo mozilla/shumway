@@ -512,13 +512,10 @@ var Compiler = (function () {
       if (typeof this.value === "string") {
         return JSON.stringify(this.value);
       }
-      if (this.value === null) {
-        return "null";
-      }
       if (this.value === 0 && 1 / this.value === -Infinity) {
         return "-0";
       }
-      return this.value;
+      return literal(this.value);
     };
     constant.prototype.isEquivalent = function isEquivalent(other) {
       return other instanceof constant && this.value === other.value;
@@ -622,7 +619,11 @@ var Compiler = (function () {
   })();
 
   function literal(obj) {
-    if (obj instanceof Array) {
+    if (obj === null) {
+      return "null";
+    } else if (obj === undefined) {
+      return "undefined";
+    } else if (obj instanceof Array) {
       return "[" + obj.map(literal).join(", ") + "]";
     }
     return obj.toString();
