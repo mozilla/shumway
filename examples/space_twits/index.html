@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Space Twits in Action Script</title>
+<link href='http://fonts.googleapis.com/css?family=Bangers' rel='stylesheet' type='text/css'>
+<link href='twits.css' rel='stylesheet' type='text/css'>
+</head>
+<body>
+    <script type="text/javascript">
+        print = function (message) {
+            console.log(message);
+        };
+        
+        var webShell = true;
+    </script>
+    
+    <script type="text/javascript" src="../../src/avm2/util.js"></script>
+    
+    <script type="text/javascript">
+      var options = new OptionSet("option(s)");
+      var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
+    </script>    
+    
+    <script type="text/javascript" src="../../src/tests/file-reader.js"></script>    
+    <script type="text/javascript" src="../../src/avm2/DataView.js"></script>
+    <script type="text/javascript" src="../../src/avm2/constants.js"></script>
+    <script type="text/javascript" src="../../src/avm2/opcodes.js"></script>
+    <script type="text/javascript" src="../../src/avm2/parser.js"></script>
+    <script type="text/javascript" src="../../src/avm2/analyze.js"></script>
+    <script type="text/javascript" src="../../src/avm2/viz.js"></script>
+    <script type="text/javascript" src="../../src/avm2/compiler.js"></script>
+    <script type="text/javascript" src="../../src/avm2/runtime.js"></script>
+    <script type="text/javascript" src="../../src/avm2/disassembler.js"></script>
+    <script type="text/javascript" src="../../src/avm2/interpreter.js"></script>
+    
+    <div id="title">Space Twits in Shumway</div>
+
+    <div id="game">
+    <canvas id="scene" width="400" height="300"></canvas>
+    <div id="scoreboard"><span class="label">Score:</span> <span id="score">0</span></div>
+    </div>
+    
+    <div id="credits">
+    Background: <a href="http://www.eso.org/public/images/eso0839a/">ESO/ Mario Nonino, Piero Rosati and the ESO GOODS Team</a>
+    </div>
+    
+    <script type="text/javascript">
+        // globalObject = function () { return this; }();
+        globalObject.window = window;
+        globalObject.document = document;
+        new FileReader("twits.abc").readAll(null, function (buffer) {
+            var abc = new AbcFile(new Uint8Array(buffer));
+            var writer = new IndentingWriter(false);
+            executeAbc(abc, globalObject);
+        });
+    </script>
+    
+    <script>
+    (function() {
+        function loadImages(sources, cb) {
+            var n = sources.length, loaded = 0, images = [];
+            for (var i = 0; i < n; i++) {
+                var image = images[i] = new Image();
+                image.onload = function() {
+                    if (++loaded >= n)
+                        cb(images);
+                };
+                image.src = sources[i];
+            }
+        }
+		console.log(globalObject);
+        var canvas = document.getElementById("scene");
+        loadImages(["spaceShip.png", "alien.png", "shot.png"], function(images) {
+          globalObject.play(canvas.getContext("2d"), canvas.width, canvas.height, {
+                spaceShip: images[0],
+                alien: images[1],
+                shot: images[2]
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+body {
+    font-family: Bangers;
+    background: url(galaxies.jpg) black;
+    color: red;
+}
+#title {
+    width: 400px;
+    margin: 50px auto 50px auto;
+    text-align: center;
+    font-family: Bangers;
+    font-size: 48pt;
+}
+#game {
+    width: 400px;
+    margin: 0 auto;
+}
+#scene {
+    -moz-border-radius: 1em;
+    -ie-border-radius: 1em;
+    -o-border-radius: 1em;
+    -webkit-border-radius: 1em;
+    border-radius: 1em;
+    background-color: white;
+    margin-bottom: 10px;
+}
+#scoreboard {
+    font-size: 16pt;
+}
+.label {
+    font-weight: bold;
+}
+#credits {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    text-align: left;
+    padding: 20px;
+}
+#credits, #credits a {    
+    font-family: Helvetica, Arial, swiss;
+    font-size: 10pt;
+    font-weight: bold;
+    color: #555;
+
+}
