@@ -9,17 +9,17 @@
         print = function (message) {
             console.log(message);
         };
-        
+
         var webShell = true;
     </script>
-    
+
     <script type="text/javascript" src="../util.js"></script>
-    
+
     <script type="text/javascript">
       var options = new OptionSet("option(s)");
       var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
-    </script>    
-        
+    </script>
+
     <script type="text/javascript" src="../../tests/file-reader.js"></script>
     <script type="text/javascript" src="../DataView.js"></script>
     <script type="text/javascript" src="../constants.js"></script>
@@ -31,21 +31,16 @@
     <script type="text/javascript" src="../runtime.js"></script>
     <script type="text/javascript" src="../disassembler.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
-    
+
     <script type="text/javascript">
-        
         var skipQuickTest = document.location.href.indexOf("skipquicktest=true") >= 0;
         if (!skipQuickTest) {
-            // new FileReader("../tests/testInterpreter.abc").readAll(null, function (buffer) {
-            // new FileReader("../tests/sunspider/access-nbody.abc").readAll(null, function (buffer) {
-            new FileReader("../tests/tamarin/spidermonkey/js1_2/Array/general1.abc").readAll(null, function (buffer) {
+            var path = "../tests/regress/play.abc";
+            new FileReader(path).readAll(null, function (buffer) {
                 var abc = new AbcFile(new Uint8Array(buffer));
-                var writer = new IndentingWriter(false);
-                // abc.trace(writer);
-                
                 executeAbc(abc, globalObject);
             });
         }
-    </script>   
+    </script>
 </body>
 </html>

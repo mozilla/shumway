@@ -84,7 +84,7 @@ ConstantPool.prototype.trace = function (writer) {
       writer.enter("namespaces {");
       this.namespaces.forEach(function (ns, i) {
         writer.writeLn(("" + i).padRight(' ', 3) +
-                 (ns ? ns.nameAndKind() : "*"));
+                 (ns ? ns.toString() : "*"));
       });
       writer.leave("}");
     } else if (this[key] instanceof Array) {

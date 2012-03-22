@@ -265,7 +265,9 @@ var Scope = (function () {
   scope.prototype.findProperty = function findProperty(multiname, strict) {
     // print("Looking for : " + multiname);
     for (var i = 0; i < multiname.namespaceCount(); i++) {
-      if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
+      // if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
+      // The object may have 
+      if (multiname.getQName(i).getQualifiedName() in this.object) {
         return this.object;
       }
     }
@@ -480,7 +482,7 @@ var Runtime = (function () {
     this.applyTraits(cls, classInfo.traits);
 
     /* Call the static constructor. */
-    this.createFunction(classInfo.init, this.scope).call(cls);
+    this.createFunction(classInfo.init, scope).call(cls);
     cls.construct = cls;
 
     /* We need a way to call |new| .apply-style for the interpreter. */

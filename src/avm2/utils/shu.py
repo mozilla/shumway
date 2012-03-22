@@ -109,6 +109,26 @@ class Asc(Command):
     print "Compiling %s" % args.src
     self.runAsc(args.src, args.swf, builtin = args.builtin)
 
+class Ascreg(Command):
+  def __init__(self):
+    Command.__init__(self, "ascreg")
+
+  def __repr__(self):
+    return self.name
+
+  def execute(self, args):
+    parser = argparse.ArgumentParser(description='Compiles all the source files in the test/regress directory using the asc.jar compiler.')
+    args = parser.parse_args(args)
+    print "Compiling Tests"
+    tests = [];
+    for root, subFolders, files in os.walk("../tests/regress"):
+      for file in files:
+        if file.endswith(".as") and file != "harness.as":
+          tests.append(os.path.join(root, file))
+    for test in tests:
+      args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, "-in", "../tests/regress/harness.as", test]
+      subprocess.call(args)
+
 class Avm(Command):
   def __init__(self):
     Command.__init__(self, "avm")
@@ -249,7 +269,7 @@ class Test(Command):
       print str(round(counts['avmElapsed'] / counts['shuElapsed'], 2)) + "x faster" + ENDC
 
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile(), Test()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Test(), Ascreg()]:
   commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()

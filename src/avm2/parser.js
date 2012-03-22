@@ -216,23 +216,23 @@ var Trait = (function () {
       case TRAIT_Function: // TODO
         break;
     }
-  }
+  };
 
   return trait;
 })();
 
 var Namespace = (function () {
 
-  const PUBLIC       = 0x00;
-  const PROTECTED      = 0x01;
-  const PACKAGE_INTERNAL   = 0x02;
-  const PRIVATE      = 0x04;
-  const EXPLICIT       = 0x08;
-  const STATIC_PROTECTED   = 0x10;
+  const PUBLIC                    = 0x00;
+  const PROTECTED                 = 0x01;
+  const PACKAGE_INTERNAL          = 0x02;
+  const PRIVATE                   = 0x04;
+  const EXPLICIT                  = 0x08;
+  const STATIC_PROTECTED          = 0x10;
 
   function namespace(constantPool, stream) {
     this.kind = stream.readU8();
-    this.name = constantPool.strings[stream.readU30()];
+    this.name = constantPool.strings[stream.readU30()].replace(/\./gi,"$"); /* No dots. */
 
     switch(this.kind) {
       case CONSTANT_Namespace:
@@ -276,41 +276,30 @@ var Namespace = (function () {
     return this.name;
   };
 
-  namespace.prototype.nameAndKind = function nameAndKind() {
-    var kind;
-
-    switch (this.kind) {
-    case CONSTANT_Namespace:
-      kind = "namespace";
-      break;
-    case CONSTANT_PackageNamespace:
-      kind = "package";
-      break;
-    case CONSTANT_PackageInternalNs:
-      kind = "_package";
-      break;
-    case CONSTANT_ProtectedNamespace:
-      kind = "protected";
-      break;
-    case CONSTANT_ExplicitNamespace:
-      kind = "explicit";
-      break;
-    case CONSTANT_StaticProtectedNs:
-      kind = "static";
-      break;
-    case CONSTANT_PrivateNs:
-      kind = "private";
-      break;
-    default:
-      unexpected();
-    }
-
-    return this.toString() + " (" + kind + ")";
-  }
-
   namespace.prototype.toString = function toString() {
-    return this.type === PRIVATE ? "private" : this.name;
-  }
+    switch(this.type) {
+    case PUBLIC:
+      return this.name;
+    case PROTECTED:
+      assert (this.name);
+      return "protected$" + this.name;
+    case PACKAGE_INTERNAL:
+      assert (!this.name);
+      return "packageInternal";
+    case PRIVATE:
+      assert (this.name);
+      return "private$" + this.name ;
+    case EXPLICIT:
+      assert (!this.name);
+      return "explicit";
+    case STATIC_PROTECTED:
+      assert (this.name);
+      return "staticProtected$" + this.name;
+      // return this.name;
+    default:
+      unexpected("Type: " + this.type);
+    }
+  };
 
   return namespace;
 })();
@@ -371,7 +360,7 @@ var Multiname = (function () {
     clone.namespaceSet = this.namespaceSet;
     clone.typeParameter = this.typeParameter;
     return clone;
-  }
+  };
 
   multiname.prototype.parse = function parse(constantPool, stream, multinames) {
     var index = 0;
@@ -516,7 +505,7 @@ var Multiname = (function () {
 
   multiname.prototype.isRuntime = function isRuntime() {
     return this.flags & (RUNTIME_NAME | RUNTIME_NAMESPACE);
-  }
+  };
 
   multiname.prototype.isQName = function isQName() {
     return this.flags & QNAME;
