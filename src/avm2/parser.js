@@ -117,13 +117,18 @@ var AbcStream = (function () {
   return abcStream;
 })();
 
+function Traits(traits) {
+  this.traits = traits;
+  this.verified = false;
+}
+
 function parseTraits(constantPool, stream, methods, classes) {
   var count = stream.readU30();
   var traits = [];
   for (var i = 0; i < count; i++) {
     traits.push(new Trait(constantPool, stream, methods, classes));
   }
-  return traits;
+  return new Traits(traits);
 }
 
 var Trait = (function () {

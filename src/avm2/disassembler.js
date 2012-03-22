@@ -96,21 +96,25 @@ ConstantPool.prototype.trace = function (writer) {
   writer.leave("}");
 };
 
+Traits.prototype.trace = function (writer) {
+  traceArray(writer, "traits", this.traits);
+};
+
 ClassInfo.prototype.trace = function (writer) {
   writer.enter("class " + this.init + "{");
-  traceArray(writer, "traits", this.traits);
+  this.traits.trace(writer);
   writer.leave("}");
 };
 
 InstanceInfo.prototype.trace = function (writer) {
   writer.enter("instance " + this + " {");
-  traceArray(writer, "traits", this.traits);
+  this.traits.trace(writer);
   writer.leave("}");
 };
 
 ScriptInfo.prototype.trace = function (writer) {
   writer.enter("script " + this + " {");
-  traceArray(writer, "traits", this.traits);
+  this.traits.trace(writer);
   writer.leave("}");
 };
 
@@ -180,8 +184,8 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
 
   var code = new AbcStream(this.code);
 
-  traceArray(writer, "traits", this.traits);
-  
+  this.traits.trace(writer);
+
   writer.enter("code {");
   while (code.remaining() > 0) {
     var bc = code.readU8();

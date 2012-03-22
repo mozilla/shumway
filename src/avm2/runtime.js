@@ -352,6 +352,16 @@ function setProperty(obj, multiname, value) {
 var Runtime = (function () {
   var functionCount = 0;
 
+  function VerifyError(m) {
+    this.m = m;
+  }
+
+  VerifyError.prototype = {
+    toString: function () {
+      return this.m;
+    }
+  };
+
   function runtime(abc, mode) {
     this.abc = abc;
     this.mode = mode;
@@ -457,22 +467,16 @@ var Runtime = (function () {
     var cls = this.createFunction(classInfo.instance.init, scope);
     scope.object = cls;
 
+    var instanceTraits = classInfo.instance.traits;
+
     cls.scope = scope;
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
-
-    var freshSlot = baseClass ? baseClass.freshSlot : 1;
-    var instanceTraits = classInfo.instance.traits;
-    for (var i = 0, j = instanceTraits.length; i < j; i++) {
-      instanceTraits[i].slotId = freshSlot++;
-    }
     cls.instanceTraits = instanceTraits;
-    cls.freshSlot = freshSlot;
-    assert(instanceTraits);
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
 
-    this.applyTraits(cls.prototype, instanceTraits);
+    this.applyTraits(cls.prototype, instanceTraits, baseClass.instanceTraits);
     this.applyTraits(cls, classInfo.traits);
 
     /* Call the static constructor. */
@@ -496,8 +500,9 @@ var Runtime = (function () {
 
   /* Extend builtin Objects so they behave as classes. */
   Object.construct = function () { /* NOP */ };
-  Object.instanceTraits = [];
-  Object.freshSlot = 1;
+  Object.instanceTraits = new Traits([]);
+  Object.instanceTraits.verified = true;
+  Object.instanceTraits.lastSlotId = 0;
   Object.constructInstance = function (args) {
     return new Object(args[0]);
   };
@@ -518,9 +523,33 @@ var Runtime = (function () {
    * above example, if "Age" is of type "int" then we store the real value in the property "$S7",
    * and use a setter in the property "S7" to do the type coercion.
    */
-  runtime.prototype.applyTraits = function applyTraits(obj, traits) {
+  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits) {
+    function computeAndVerifySlotIds(traits, base) {
+      assert(!base || base.verified);
+
+      var baseSlotId = base ? base.lastSlotId : 0;
+      var freshSlotId = baseSlotId;
+
+      var ts = traits.traits;
+      for (var i = 0, j = ts.length; i < j; i++) {
+        var trait = ts[i];
+        if (trait.isSlot() || trait.isConst() || trait.isClass()) {
+          if (!trait.slotId) {
+            trait.slotId = ++freshSlotId;
+          }
+
+          if (trait.slotId <= baseSlotId) {
+            throw new VerifyError("bad slot id");
+          }
+        }
+      }
+
+      traits.verified = true;
+      traits.lastSlotId = freshSlotId;
+    }
+
     function setProperty(name, slotId, value, typeName) {
-      if (slotId !== undefined) {
+      if (slotId) {
         if (!typeName || getTypeByName(typeName) === null) {
           obj["S" + slotId] = value;
         } else {
@@ -548,7 +577,14 @@ var Runtime = (function () {
         obj[name] = value;
       }
     }
-    traits.forEach(function (trait) {
+
+    if (!traits.verified) {
+      computeAndVerifySlotIds(traits, baseTraits);
+    }
+
+    var ts = traits.traits;
+    for (var i = 0, j = ts.length; i < j; i++) {
+      var trait = ts[i];
       if (trait.isSlot() || trait.isConst()) {
         setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, trait.typeName);
       } else if (trait.isMethod()) {
@@ -559,7 +595,7 @@ var Runtime = (function () {
       } else {
         assert(false, trait);
       }
-    }.bind(this));
+    }
 
     return obj;
   };
@@ -578,6 +614,8 @@ var Runtime = (function () {
     }
     return false;
   };
+
+  runtime.VerifyError = VerifyError;
 
   return runtime;
 })();
