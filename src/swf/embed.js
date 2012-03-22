@@ -47,6 +47,7 @@ function definePrototype(dictionary, obj) {
     });
     break;
   case 'shape':
+  case 'text':
     var dependencies;
     if (obj.require)
       dependencies = obj.require.slice();
@@ -67,12 +68,9 @@ function definePrototype(dictionary, obj) {
         'with(c){\n' +
           obj.data + '\n' +
         '}'
-      )).bind(null, dictionary);
+      )).bind(obj, dictionary);
       dictionary[id] = proto;
     });
-    break;
-  case 'text':
-    dictionary[id] = obj;
     break;
   default:
     fail('unknown object type', 'define');

@@ -208,7 +208,7 @@ var DEFINE_TEXT = {
   multiline: 'flags>>5&1',
   password: 'flags>>4&1',
   readonly: 'flags>>3&1',
-  $hasColor: 'flags>>20&1',
+  $hasColor: 'flags>>2&1',
   $hasMaxLength: 'flags>>1&1',
   $hasFont: 'flags&1',
   $hasFontClass: 'flags>>15&1',
@@ -232,7 +232,7 @@ var DEFINE_TEXT = {
     leading: SI16
   }]],
   variableName: STRING(0),
-  intialText: ['hasText', [STRING(0)]]
+  initialText: ['hasText', [STRING(0)]]
 };
 var DO_ABC = {
   flags: UI32,
