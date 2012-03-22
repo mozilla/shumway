@@ -425,7 +425,6 @@ var Runtime = (function () {
       return str;
     }
 
-    console.info(flatten(result.statements, ""));
     method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
 
     /* Hook to set breakpoints in compiled code. */
