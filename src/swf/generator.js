@@ -6,7 +6,7 @@ var defaultTemplateSet = [
   align, readSb, readUb, readFb, readString, readBinary
 ];
 
-var rtemplate = /^function\s*(.*)\s*\(([^\)]*)\)\s*{\s*([\s\S]*.)\s*}$/;
+var rtemplate = /^function\s*(.*)\s*\(([^)]*)\)\s*{\s*([\s\S]*.)\s*}$/;
 var rinlinable = /^return\s*([^;]*)$/;
 
 function generateParser(struct) {

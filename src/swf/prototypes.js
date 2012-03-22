@@ -113,7 +113,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       paused = false;
       gotoFrame(frame);
     };
-    proto.gotoAndStop = function (frame) {
+    proto.gotoAndStop = function(frame) {
       if (this !== instance)
         return;
       paused = true;

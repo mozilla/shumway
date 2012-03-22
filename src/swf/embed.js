@@ -38,7 +38,7 @@ function definePrototype(dictionary, obj) {
     };
     break;
   case 'sprite':
-    defer(function () {
+    defer(function() {
       for (var i = 1; i < id; ++i) {
         if (i in dictionary && dictionary[i] === null)
           return true;
@@ -52,7 +52,7 @@ function definePrototype(dictionary, obj) {
     if (obj.require)
       dependencies = obj.require.slice();
 
-    defer(function () {
+    defer(function() {
       if (dependencies) {
         var i = 0;
         var objId;
@@ -79,7 +79,7 @@ function definePrototype(dictionary, obj) {
     dictionary[id] = null;
 }
 
-SWF.embed = function (file, container, options) {
+SWF.embed = function(file, container, options) {
   if (!options)
     options = { };
 

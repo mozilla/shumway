@@ -7,7 +7,7 @@ parser.js,bitmap.js,font.js,image.js,label.js,shape.js,text.js,cast.js';
 if (typeof window === 'undefined') {
   importScripts.apply(null, workerScripts.split(','));
 
-  function process(buffer) {
+  function process (buffer) {
     var i = 0;
     var dictionary = { };
     var controlTags = [];
