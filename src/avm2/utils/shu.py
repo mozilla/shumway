@@ -118,13 +118,19 @@ class Ascreg(Command):
 
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Compiles all the source files in the test/regress directory using the asc.jar compiler.')
+    parser.add_argument('src', default="../tests/regress", help="source .as file")
     args = parser.parse_args(args)
     print "Compiling Tests"
+
     tests = [];
-    for root, subFolders, files in os.walk("../tests/regress"):
-      for file in files:
-        if file.endswith(".as") and file != "harness.as":
-          tests.append(os.path.join(root, file))
+    if os.path.isdir(args.src):
+      for root, subFolders, files in os.walk("../tests/regress"):
+        for file in files:
+          if file.endswith(".as") and file != "harness.as":
+            tests.append(os.path.join(root, file))
+    else:
+      tests.append(os.path.abspath(args.src))
+
     for test in tests:
       args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, "-in", "../tests/regress/harness.as", test]
       subprocess.call(args)
