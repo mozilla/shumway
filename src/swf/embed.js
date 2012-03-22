@@ -100,11 +100,14 @@ SWF.embed = function(file, container, options) {
           pframes: pframes
         }, dictionary));
         root = proto.constructor();
+
         var bounds = obj.bounds;
         canvas.width = (bounds.xMax - bounds.xMin) / 20;
         canvas.height = (bounds.yMax - bounds.yMin) / 20;
         container.appendChild(canvas);
+
         frameRate = obj.frameRate;
+
         if (options.onstart)
           options.onstart(root);
       } else if (obj.id) {
@@ -112,6 +115,19 @@ SWF.embed = function(file, container, options) {
       } else if (obj.type === 'pframe') {
         if (obj.bgcolor)
           canvas.style.background = obj.bgcolor;
+
+        if (obj.abcBlocks) {
+          var blocks = obj.abcBlocks;
+          var i = 0;
+          var block;
+          while (block = blocks[i++]) {
+            var abc = new AbcFile(block);
+            var global = { };
+            executeAbc(abc, global);
+            console.log(global);
+          }
+        }
+
         pframes.push(obj);
         if (!plays) {
           renderMovieClip(root, frameRate, ctx);
