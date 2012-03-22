@@ -2,17 +2,17 @@
  * Provides a definition of AVM2 Bytecodes. Operands for each bytecode operation are pairs of (name:type) and are
  * delimited by commas. There are several possible types, which are represented using a size prefix followed by an
  * optional semantic suffix.
- * 
+ *
  * Type (size) Prefix:
- *    
+ *
  *   u08 - a one-byte unsigned integer
  *   s08 - a one-byte signed integer
  *   s24 - a three byte signed integer
  *   s16 - a variable-length encoded 30-bit unsigned integer value that is casted to a short value
  *   u30 - a variable-length encoded 30-bit unsigned integer value
- *  
+ *
  * Type (semantic) Suffix:
- * 
+ *
  *     I - an index into the integer constant pool
  *     U - an index into the unsigned integer constant pool
  *     D - an index into the doubles constant pool
@@ -21,7 +21,7 @@
  *     M - an index into the multiname constant pool
  *    CI - an index into the class info list
  *    EI - an index into the exception info list
- *    MI - an index into the method info list 
+ *    MI - an index into the method info list
  */
 
 var opcodeTable = [
@@ -76,7 +76,7 @@ var opcodeTable = [
   {name:"pushscope",          operands:"",                 canThrow:false, stackDelta:-1}, //0x30
   {name:"pushnamespace",      operands:"index:u30N",       canThrow:false, stackDelta:1},  //0x31
   {name:"hasnext2",           operands:"object:u30,index:u30",          canThrow:true, stackDelta:1},  //0x32
-    
+
   {name:"lix8",               operands:null,               canThrow:true, stackDelta:0, internal:true},  //0x33
   {name:"lix16",              operands:null,               canThrow:true, stackDelta:0, internal:true},  //0x34
   {name:"li8",                operands:"",                 canThrow:true, stackDelta:0},   //0x35
@@ -89,7 +89,7 @@ var opcodeTable = [
   {name:"si32",               operands:"",                 canThrow:true, stackDelta:-2},  //0x3C
   {name:"sf32",               operands:"",                 canThrow:true, stackDelta:-2},  //0x3D
   {name:"sf64",               operands:"",                 canThrow:true, stackDelta:-2},  //0x3E
-    
+
   null,  //0x3F
   {name:"newfunction",        operands:"index:u30MI",      canThrow:true, stackDelta:1},  //0x40
   {name:"call",               operands:"argCount:u30",     canThrow:true, stackDelta:-1}, //0x41
@@ -110,7 +110,7 @@ var opcodeTable = [
   {name:"sxi1",               operands:"",                 canThrow:false, stackDelta:0},  //0x50
   {name:"sxi8",               operands:"",                 canThrow:false, stackDelta:0},  //0x51
   {name:"sxi16",              operands:"",                 canThrow:false, stackDelta:0},  //0x52
-  {name:"applytype",          operands:"value:u30",        canThrow:true, stackDelta:0},   //0x53
+  {name:"applytype",          operands:"argCount:u30",     canThrow:true, stackDelta:0},   //0x53
   {name:"pushfloat4",         operands:null,               canThrow:false, stackDelta:1},  //0x54
   {name:"newobject",          operands:"argCount:u30",     canThrow:true, stackDelta:1},   //0x55
   {name:"newarray",           operands:"argCount:u30",     canThrow:true, stackDelta:1},   //0x56
@@ -120,11 +120,11 @@ var opcodeTable = [
   {name:"newcatch",           operands:"index:u30EI",      canThrow:true, stackDelta:1},   //0x5A
   {name:"findpropglobalstrict", operands:null,             canThrow:true, stackDelta:0, internal:true},  //0x5B
   {name:"findpropglobal",     operands:null,               canThrow:true, stackDelta:0, internal:true},  //0x5C
-    
+
     /**
      * This searches the scope stack, and then the saved scope stack in the current method closure for a property
      * with the name specified by the multiname. If property is unresolved, then an exception is thrown, or
-     * in case of "findproperty" the global object is pushed on the stack.  
+     * in case of "findproperty" the global object is pushed on the stack.
      */
   {name:"findpropstrict",     operands:"index:u30M",       canThrow:true, stackDelta:1},   //0x5D
   {name:"findproperty",       operands:"index:u30M",       canThrow:true, stackDelta:1},   //0x5E
@@ -291,7 +291,7 @@ var opcodeTable = [
   null   //0xFF
 ];
 
-/** 
+/**
  * Performs additional operations on the opcodeTable such as expanding the operands into objects.
  */
 (function processOpcodeTable() {

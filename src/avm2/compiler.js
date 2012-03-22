@@ -448,7 +448,7 @@ var Compiler = (function () {
       this.name = name;
     }
     getPropertyRuntime.prototype.toString = function toString() {
-      return this.obj + "[" + this.name + "]";
+      return this.obj + "." + GET_ACCESSOR + "(" + this.name + ")";
     };
     getPropertyRuntime.prototype.isEquivalent = function isEquivalent(other) {
       return other instanceof getPropertyRuntime && this.ns === other.ns && this.name === other.name;
@@ -828,7 +828,7 @@ var Compiler = (function () {
     var multinames = abc.constantPool.multinames;
     var runtime = abc.runtime;
     var savedScope = this.savedScope;
-    var multiname, args, value, obj, ns, name, type;
+    var multiname, args, value, obj, ns, name, type, factory;
 
     function createMultiname(multiname) {
       if (multiname.isRuntime()) {
@@ -1046,7 +1046,12 @@ var Compiler = (function () {
       case OP_sxi1:           notImplemented(); break;
       case OP_sxi8:           notImplemented(); break;
       case OP_sxi16:          notImplemented(); break;
-      case OP_applytype:      notImplemented(); break;
+      case OP_applytype:
+        args = state.stack.popMany(bc.argCount);
+        factory = state.stack.pop();
+        pushValue("applyType" + argumentList(factory, args));
+        flushStack();
+        break;
       case OP_pushfloat4:     notImplemented(); break;
       case OP_newobject:
         var nameValuePairs = [];
@@ -1093,7 +1098,7 @@ var Compiler = (function () {
             ns = state.stack.pop();
           }
           obj = state.stack.pop();
-          emitStatement(obj + "[" + name + "] = " + value);
+          emitStatement(obj + "." + SET_ACCESSOR + "(" + name + ", " + value + ")");
         }
         break;
       case OP_getlocal:       pushValue(local[bc.index]); break;

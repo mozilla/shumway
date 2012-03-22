@@ -1,3 +1,28 @@
+function defineReadOnlyProperty(obj, name, value) {
+  Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
+}
+
+function defineGetterAndSetter(obj, name, getter, setter) {
+  Object.defineProperty(obj, name, { get: getter, set: setter });
+}
+
+/**
+ * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
+ * the [] operator has different semantics depending on whether the receiver is an Array or Vector. For the
+ * latter we need to coerce values whenever they are stored.
+ */
+
+const GET_ACCESSOR = "$get";
+const SET_ACCESSOR = "$set";
+
+defineReadOnlyProperty(Array.prototype, GET_ACCESSOR, function (i) {
+  return this[i];
+});
+
+defineReadOnlyProperty(Array.prototype, SET_ACCESSOR, function (i, v) {
+  this[i] = v;
+});
+
 function toDouble(x) {
   return Number(x);
 }
@@ -31,6 +56,20 @@ function deleteProperty(obj, multiname) {
   return false;
 }
 
+function applyType(factory, types) {
+  if (factory === globalObject.Vector) {
+    assert (types.length === 1);
+    return Vector(types[0]);
+  }
+  notImplemented();
+  return undefined;
+}
+
+
+function Vector(type) {
+  return Array;
+}
+
 var globalObject = function () {
   var global = {};
   global.print = global.trace = function (val) {
@@ -49,11 +88,6 @@ var globalObject = function () {
   global.NaN = NaN;
   global.Infinity = Infinity;
   global.JS = (function() { return this || (1,eval)('this'); })();
-
-  function defineReadOnlyProperty(obj, name, value) {
-    Object.defineProperty(obj, name,
-      { value: value, writable: false, configurable: false, enumerable: false });
-  }
 
   global.int = function int(x) {
     return Number(x) | 0;
@@ -148,9 +182,9 @@ var globalObject = function () {
     return Object(x).constructor.name;
   };
 
-  global.ArgumentError = function () {
-    
-  };
+  global.ArgumentError = function () {};
+
+  global.Vector = Vector;
 
   return global;
 }();
