@@ -45,6 +45,9 @@ function toInt(x) {
 }
 
 function typeOf(x) {
+  if (x === null) {
+    return typeof x;
+  }
   var type = typeof x;
   if (type === "object") {
     return typeof (x.valueOf());
@@ -69,10 +72,21 @@ function applyType(factory, types) {
   return undefined;
 }
 
-
 function Vector(type) {
-  return Array;
+  function vector() {
+    this.push.apply(this, arguments);
+  }
+  vector.prototype = Object.create(Array.prototype);
+  return vector;
 }
+
+Vector.coerce = function(x) {
+  return x;
+};
+
+Array.coerce = function(x) {
+  return x;
+};
 
 var globalObject = function () {
   var global = {};
@@ -91,7 +105,13 @@ var globalObject = function () {
   global.undefined = undefined;
   global.NaN = NaN;
   global.Infinity = Infinity;
-  global.JS = (function() { return this || (1,eval)('this'); })();
+  global.JS = (function() { return this || (1, eval)('this'); })();
+  global.XML = function(xml) {
+    this.xml = xml;
+  };
+  global.XML.prototype.toString = function() {
+    return this.xml;
+  };
 
   global.int = function int(x) {
     return Number(x) | 0;
@@ -310,6 +330,22 @@ function getProperty(obj, multiname) {
   return undefined;
 }
 
+function setProperty(obj, multiname, value) {
+  if (multiname.isQName()) {
+    obj[multiname.getQualifiedName()] = value;
+  } else {
+    var resolved = resolveMultiname(obj, multiname, true);
+    if (resolved) {
+      obj[resolved.getQualifiedName()] = value;
+    } else {
+      // If we can't resolve the multiname, we're probably adding a dynamic
+      // property, so just go ahead and use its name directly.
+      assert (multiname.getNamespace(0).isPublic());
+      obj[multiname.name] = value;
+    }
+  }
+}
+
 /**
  * Execution context for a script.
  */
@@ -483,23 +519,14 @@ var Runtime = (function () {
    * and use a setter in the property "S7" to do the type coercion.
    */
   runtime.prototype.applyTraits = function applyTraits(obj, traits) {
-    function getCoercionFunction(typeName) {
-      var fn = getTypeByName(typeName).coerce;
-      if (fn) {
-        return fn;
-      } else {
-        notImplemented("Coercion to " + typeName);
-        return undefined;
-      }
-    }
-
     function setProperty(name, slotId, value, typeName) {
-      if (slotId) {
-        if (!typeName) {
+      if (slotId !== undefined) {
+        if (!typeName || getTypeByName(typeName) === null) {
           obj["S" + slotId] = value;
         } else {
           obj["$S" + slotId] = value;
-          var coerce = getCoercionFunction(typeName);
+          var coerce = getTypeByName(typeName).coerce;
+          assert (coerce, "No coercion function for type " + typeName);
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
               return this["$S" + slotId];

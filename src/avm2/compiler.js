@@ -1088,7 +1088,7 @@ var Compiler = (function () {
         flushStack();
         if (!multiname.isRuntime()) {
           obj = state.stack.pop();
-          emitStatement(obj + "." + multiname.name + " = " + value);
+          emitStatement("setProperty" + argumentList(obj, objectConstant(multiname), value));
         } else {
           ns = name = null;
           if (multiname.isRuntimeName()) {
@@ -1136,7 +1136,7 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         if (!multiname.isRuntime()) {
           obj = state.stack.pop();
-          emitStatement(obj + "." + multiname.name + " = " + value);
+          emitStatement("setProperty" + argumentList(obj, objectConstant(multiname), value));
         } else {
           notImplemented();
         }
