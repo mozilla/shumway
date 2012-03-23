@@ -82,7 +82,7 @@ var Interpreter = (function () {
         return multiname;
       }
 
-      var args, obj, index, multiname, ns, name;
+      var args, obj, index, multiname, ns, name, res;
       var bytecodes = method.analysis.bytecodes;
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         var bc = bytecodes[pc];
@@ -162,10 +162,18 @@ var Interpreter = (function () {
           scopeHeight--;
           break;
         case OP_nextname:
-          notImplemented();
+          index = stack.pop();
+          obj = stack.pop();
+          stack.push(nextName(obj, index));
           break;
         case OP_hasnext:
           notImplemented();
+          break;
+        case OP_hasnext2:
+          res = hasNext2(locals[bc.object], locals[bc.index]);
+          locals[bc.object] = res.object;
+          locals[bc.index] = res.index;
+          stack.push(!!res.index);
           break;
         case OP_pushnull:
           stack.push(null);
@@ -214,9 +222,6 @@ var Interpreter = (function () {
           scopeHeight++;
           break;
         case OP_pushnamespace:  notImplemented(); break;
-        case OP_hasnext2:
-          notImplemented();
-          break;
         case OP_li8:            notImplemented(); break;
         case OP_li16:           notImplemented(); break;
         case OP_li32:           notImplemented(); break;
