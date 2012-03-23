@@ -191,8 +191,9 @@ class Test(Command):
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
+    parser.add_argument('-i', '--interpret', action='store_true', help="always interpret")
     args = parser.parse_args(args)
-    print "Testing %s" % args.src
+    print "Testing %s (%s)" % (args.src, "interpreted" if args.interpret else "compiled")
 
     tests = Queue.Queue();
 
@@ -226,7 +227,13 @@ class Test(Command):
         test = tests.get()
         out = [str(total - tests.qsize()) + " of " + str(total) + ": " + test]
         counts['count'] += 1
-        shuResult = execute(["js", "-m", "-n", "avm.js", "-x", "-cse", test], int(args.timeout))
+        shuCommand = ["js", "-m", "-n", "avm.js", "-x"]
+        if args.interpret:
+          shuCommand.append("-i")
+        else:
+          shuCommand.append("-cse")
+        shuCommand.append(test)
+        shuResult = execute(shuCommand, int(args.timeout))
         avmResult = execute([self.avm, test], int(args.timeout))
 
         if not shuResult or not avmResult:
