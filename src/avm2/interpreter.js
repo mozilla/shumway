@@ -2,6 +2,15 @@ var Interpreter = (function () {
 
   const Operator = Compiler.Operator;
 
+  /**
+   * N.B. These operators are two-part in that they require you to negate the
+   * result, so they can't be straightforwardly used for compilation.
+   */
+  const NLT = new Operator("!<", function (l, r) { return !(l < r); }, true, true);
+  const NLE = new Operator("!<=", function (l, r) { return !(l <= r); }, true, true);
+  const NGT = new Operator("!>", function (l, r) { return !(l > r); }, true, true);
+  const NGE = new Operator("!>=", function (l, r) { return !(l >= r); }, true, true);
+
   function Interpreter(abc) {
     this.abc = abc;
   }
@@ -92,18 +101,26 @@ var Interpreter = (function () {
         case OP_lf32x4:         notImplemented(); break;
         case OP_sf32x4:         notImplemented(); break;
         case OP_ifnlt:
+          pc = branchBinary(NLT, bc, pc);
+          continue;
         case OP_ifge:
           pc = branchBinary(Operator.GE, bc, pc);
           continue;
         case OP_ifnle:
+          pc = branchBinary(NLE, bc, pc);
+          continue;
         case OP_ifgt:
           pc = branchBinary(Operator.GT, bc, pc);
           continue;
         case OP_ifngt:
+          pc = branchBinary(NGT, bc, pc);
+          continue;
         case OP_ifle:
           pc = branchBinary(Operator.LE, bc, pc);
           continue;
         case OP_ifnge:
+          pc = branchBinary(NGE, bc, pc);
+          continue;
         case OP_iflt:
           pc = branchBinary(Operator.LT, bc, pc);
           continue;
@@ -429,7 +446,7 @@ var Interpreter = (function () {
           stack.push(typeof stack.pop());
           break;
         case OP_not:
-          evaluateUnary(Operator.NOT);
+          evaluateUnary(Operator.FALSE);
           break;
         case OP_bitnot:
           evaluateUnary(Operator.BITWISE_NOT);

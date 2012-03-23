@@ -293,7 +293,6 @@ var Compiler = (function () {
     operator.GT = new operator(">", function (l, r) { return l > r; }, true, true);
     operator.LT = new operator("<", function (l, r) { return l < r; }, true, true);
     operator.GE = new operator(">=", function (l, r) { return l >= r; }, true, true);
-    operator.NOT = new operator("!", function (a) { return !a; }, false, true);
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false, true);
     operator.NEG = new operator("-", function (a) { return -a; }, false, true);
 
@@ -305,10 +304,13 @@ var Compiler = (function () {
       b.not = a;
     }
 
+    /**
+     * Note that arithmetic comparisons aren't partial orders and cannot be
+     * negated to each other.
+     */
+
     linkOpposites(operator.SEQ, operator.SNE);
     linkOpposites(operator.EQ, operator.NE);
-    linkOpposites(operator.LE, operator.GT);
-    linkOpposites(operator.LT, operator.GE);
     linkOpposites(operator.TRUE, operator.FALSE);
 
     operator.prototype.eval = function eval() {
@@ -350,7 +352,13 @@ var Compiler = (function () {
       if (this.operator === Operator.EQ && this.right instanceof Constant && this.right.value === false) {
         return this.left;
       }
-      return new expression(this.left, this.operator.not, this.right);
+      if (this.operator === Operator.FALSE) {
+        return this.left;
+      }
+      if (this.operator.not) {
+        return new expression(this.left, this.operator.not, this.right);
+      }
+      return new expression(this, Operator.FALSE);
     };
     expression.prototype.isBinary = function isBinary() {
       return !!this.right;
@@ -797,6 +805,11 @@ var Compiler = (function () {
       condition = new Expression(a, operator, b);
     }
 
+    function setNegatedCondition(operator) {
+      setCondition(operator);
+      condition = new Expression(condition, Operator.FALSE);
+    }
+
     function emitStatement(statement) {
       statements.push(statement + ";");
     }
@@ -887,13 +900,13 @@ var Compiler = (function () {
       case OP_kill:           kill(bc.index); break;
       case OP_lf32x4:         notImplemented(); break;
       case OP_sf32x4:         notImplemented(); break;
-      case OP_ifnlt:          setCondition(Operator.GE); break;
+      case OP_ifnlt:          setNegatedCondition(Operator.LT); break;
       case OP_ifge:           setCondition(Operator.GE); break;
-      case OP_ifnle:          setCondition(Operator.GT); break;
+      case OP_ifnle:          setNegatedCondition(Operator.LE); break;
       case OP_ifgt:           setCondition(Operator.GT); break;
-      case OP_ifngt:          setCondition(Operator.LE); break;
+      case OP_ifngt:          setNegatedCondition(Operator.GT); break;
       case OP_ifle:           setCondition(Operator.LE); break;
-      case OP_ifnge:          setCondition(Operator.LT); break;
+      case OP_ifnge:          setNegatedCondition(Operator.GE); break;
       case OP_iflt:           setCondition(Operator.LT); break;
       case OP_jump:
         // NOP
@@ -1187,7 +1200,7 @@ var Compiler = (function () {
       case OP_typeof:
         pushValue("typeOf" + argumentList(state.stack.pop()));
         break;
-      case OP_not:            expression(Operator.NOT); break;
+      case OP_not:            expression(Operator.FALSE); break;
       case OP_bitnot:         expression(Operator.BITWISE_NOT); break;
       case OP_add_d:          notImplemented(); break;
       case OP_add:            expression(Operator.ADD); break;
