@@ -368,7 +368,7 @@ var Runtime = (function () {
     this.abc = abc;
     this.mode = mode;
     this.compiler = new Compiler(abc);
-    //this.interpreter = new Interpreter(abc);
+    this.interpreter = new Interpreter(abc);
   }
 
   runtime.prototype.createActivation = function (method) {
@@ -395,8 +395,11 @@ var Runtime = (function () {
 
     if (mode === ALWAYS_INTERPRET ||
         (mode === FALLBACK_INTERPRET && method.exceptions.length > 0)) {
-      //var interpreter = this.interpreter;
-      //return interpreter.interpretMethod.bind(interpreter, method, scope);
+      var interpreter = this.interpreter;
+      return function () {
+        return interpreter.interpretMethod(this === globalObject.JS ? globalObject : this,
+                                           method, scope);
+      };
     }
 
     if (method.compiledMethod) {

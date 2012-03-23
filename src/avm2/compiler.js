@@ -865,7 +865,7 @@ var Compiler = (function () {
 
     function toInt32() {
       pushValue(new Constant(0));
-      expression(Operator.OR); 
+      expression(Operator.OR);
     }
 
     var bytecodes = this.method.analysis.bytecodes;
@@ -879,17 +879,12 @@ var Compiler = (function () {
 
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
-      case OP_nop:            notImplemented(); break;
       case OP_throw:          notImplemented("throw"); break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
       case OP_dxns:           notImplemented(); break;
       case OP_dxnslate:       notImplemented(); break;
       case OP_kill:           kill(bc.index); break;
-      case OP_label:
-        /* Do nothing. Used to indicate that this location is the target of a branch, which
-         * is only useful for static analysis. */
-        break;
       case OP_lf32x4:         notImplemented(); break;
       case OP_sf32x4:         notImplemented(); break;
       case OP_ifnlt:          setCondition(Operator.GE); break;
@@ -1314,6 +1309,8 @@ var Compiler = (function () {
     statements.push(body);
     return {statements: statements};
   };
+
+  compiler.operator = Operator;
 
   return compiler;
 })();

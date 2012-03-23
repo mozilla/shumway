@@ -6,6 +6,8 @@ var disassemble = options.register(new Option("disassemble", "d", false, "disass
 var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
 var traceGraphViz = options.register(new Option("traceGraphViz", "v", false, "trace GraphViz output"));
 var execute = options.register(new Option("execute", "x", false, "execute"));
+var alwaysInterpret = options.register(new Option("alwaysInterpret", "i", false, "always interpret"));
+var fallbackInterpret = options.register(new Option("fallbackInterpret", "b", false, "fallback interpret"));
 var help = options.register(new Option("help", "h", false, "prints help"));
 
 load("../DataView.js");
@@ -49,8 +51,7 @@ if (traceGraphViz.value) {
   var writer = new IndentingWriter(false);
   writer.enter("digraph {");
   var graph = 0;
-  var opts = { chokeOnClusterfucks: true,
-               splitLoops: true };
+  var opts = { massage: true };
   abc.methods.forEach(function (method) {
     method.analysis = new Analysis(method, opts);
     method.analysis.analyzeControlFlow();
@@ -65,7 +66,13 @@ if (traceGraphViz.value) {
 
 if (execute.value) {
   try {
-    executeAbc(abc, globalObject);
+    var mode;
+    if (alwaysInterpret.value) {
+      mode = ALWAYS_INTERPRET;
+    } else if (fallbackInterpret.value) {
+      mode = FALLBACK_INTERPRET;
+    }
+    executeAbc(abc, globalObject, mode);
   } catch(e) {
     print(e);
     print("");

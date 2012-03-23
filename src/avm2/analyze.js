@@ -932,7 +932,7 @@ var Analysis = (function () {
     analyzeControlFlow: function analyzeControlFlow() {
       /* TODO: Exceptions aren't supported. */
       if (this.method.exceptions.length > 0) {
-        //return false;
+        return false;
       }
 
       assert(this.bytecodes);

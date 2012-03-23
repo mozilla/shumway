@@ -61,7 +61,8 @@ function traceArray(writer, name, array, abc) {
     return;
   }
   writer.enter(name + " {");
-  array.forEach(function (a) {
+  array.forEach(function (a, idx) {
+    writer.writeLn(idx);
     a.trace(writer, abc);
   });
   writer.leave("}");
