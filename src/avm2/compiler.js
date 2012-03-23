@@ -1310,7 +1310,7 @@ var Compiler = (function () {
     return {statements: statements};
   };
 
-  compiler.operator = Operator;
+  compiler.Operator = Operator;
 
   return compiler;
 })();

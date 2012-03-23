@@ -7,7 +7,7 @@ var Interpreter = (function () {
   }
 
   Interpreter.prototype = {
-    interpretMethod: function interpretMethod($this, method, savedScope) {
+    interpretMethod: function interpretMethod($this, method, savedScope, args) {
       assert(method.analysis);
 
       const abc = this.abc;
@@ -27,32 +27,36 @@ var Interpreter = (function () {
       const Apslice = [].slice;
       var parameterCount = method.parameters.length;
 
-      locals.push.apply(locals, Apslice.call(arguments, 0, parameterCount));
+      locals.push.apply(locals, Apslice.call(args, 0, parameterCount));
 
       if (method.needsRest()) {
-        locals.push(Apslice.call(arguments, parameterCount));
+        locals.push(Apslice.call(args, parameterCount));
       } else if (method.needsArguments()) {
-        locals.push(Apslice.call(arguments, 0));
+        locals.push(Apslice.call(args, 0));
+      }
+
+      function applyNew(constructor, args) {
+        return new (constructor.bind.apply(constructor, [,].concat(args)));
       }
 
       function evaluateBinary(operator) {
         var b = stack.pop();
         var a = stack.pop();
-        stack.push(operator.eval(a, b));
+        stack.push(operator.fn(a, b));
       }
 
       function evaluateUnary(operator) {
-        stack.push(operator.eval(stack.pop()));
+        stack.push(operator.fn(stack.pop()));
       }
 
       function branchBinary(operator, bc, pc) {
         var b = stack.pop();
         var a = stack.pop();
-        return operator.eval(a, b) ? bc.target.position : pc + 1;
+        return operator.fn(a, b) ? bc.target.position : pc + 1;
       }
 
       function branchUnary(operator, bc, pc) {
-        return operator.eval(stack.pop()) ? bc.target.position : pc + 1;
+        return operator.fn(stack.pop()) ? bc.target.position : pc + 1;
       }
 
       function createMultiname(multiname) {
@@ -75,7 +79,7 @@ var Interpreter = (function () {
         var bc = bytecodes[pc];
         var op = bc.op;
 
-        switch (bc.op) {
+        switch (op) {
         case OP_bkpt:           notImplemented(); break;
         case OP_throw:          notImplemented("throw"); break;
         case OP_getsuper:       notImplemented(); break;
@@ -217,7 +221,7 @@ var Interpreter = (function () {
         case OP_construct:
           args = stack.popMany(bc.argCount);
           obj = stack.pop();
-          stack.push(obj.constructInstance(args));
+          stack.push(applyNew(obj, args));
           break;
         case OP_callmethod:     notImplemented(); break;
         case OP_callstatic:     notImplemented(); break;
@@ -242,7 +246,7 @@ var Interpreter = (function () {
           // TODO: runtime multiname
           args = stack.popMany(bc.argCount);
           obj = stack.pop();
-          stack.push(getProperty(obj, multiname).constructInstance(args));
+          stack.push(applyNew(getProperty(obj, multiname), args));
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:

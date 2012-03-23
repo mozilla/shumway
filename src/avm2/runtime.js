@@ -398,7 +398,7 @@ var Runtime = (function () {
       var interpreter = this.interpreter;
       return function () {
         return interpreter.interpretMethod(this === globalObject.JS ? globalObject : this,
-                                           method, scope);
+                                           method, scope, arguments);
       };
     }
 
@@ -487,18 +487,6 @@ var Runtime = (function () {
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
 
-    /* We need a way to call |new| .apply-style for the interpreter. */
-    cls.constructInstance = (function () {
-      function c(args) {
-        return cls.apply(this, args);
-      }
-      c.prototype = cls.prototype;
-
-      return function (args) {
-        return new c(args);
-      };
-    })();
-
     return cls;
   };
 
@@ -506,9 +494,6 @@ var Runtime = (function () {
   Object.instanceTraits = new Traits([]);
   Object.instanceTraits.verified = true;
   Object.instanceTraits.lastSlotId = 0;
-  Object.constructInstance = function (args) {
-    return new Object(args[0]);
-  };
 
   /**
    * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
