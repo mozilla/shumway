@@ -34,6 +34,12 @@ function assertFalse(condition, message) {
   }
 }
 
+function assertNotImplemented(condition, message) {
+  if (!condition) {
+    error(message);
+  }
+}
+
 function warning(message) {
   console.warn(message);
 }

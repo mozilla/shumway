@@ -831,24 +831,6 @@ var Compiler = (function () {
     var savedScope = this.savedScope;
     var multiname, args, value, obj, ns, name, type, factory;
 
-    function createMultiname(multiname) {
-      if (multiname.isRuntime()) {
-        multiname = multiname.clone();
-        if (multiname.isRuntimeName()) {
-          multiname.setName(state.stack.pop());
-        }
-        if (multiname.isRuntimeNamespace()) {
-          multiname.setNamespace(state.stack.pop());
-        }
-      }
-      assert(!multiname.isRuntime());
-      return multiname;
-    }
-
-    function getAndCreateMultiname(multiname) {
-      return createMultiname(multiname);
-    }
-
     function classObject() {
       return SAVED_SCOPE_NAME + ".object";
     }
@@ -1074,15 +1056,21 @@ var Compiler = (function () {
       case OP_getdescendants: notImplemented(); break;
       case OP_newcatch:       notImplemented(); break;
       case OP_findpropstrict:
-        multiname = getAndCreateMultiname(multinames[bc.index]);
+        multiname = multinames[bc.index];
+        assertNotImplemented (!multiname.isRuntime());
         pushValue(findProperty(multiname, true));
         break;
       case OP_findproperty:
-        multiname = getAndCreateMultiname(multinames[bc.index]);
+        multiname = multinames[bc.index];
+        assertNotImplemented (!multiname.isRuntime());
         pushValue(findProperty(multiname, false));
         break;
       case OP_finddef:        notImplemented(); break;
-      case OP_getlex:         notImplemented(); break;
+      case OP_getlex:
+        multiname = multinames[bc.index];
+        assert (!multiname.isRuntime());
+        pushValue(getProperty(findProperty(multiname, true), multiname));
+        break;
       case OP_setproperty:
         value = state.stack.pop();
         multiname = multinames[bc.index];
