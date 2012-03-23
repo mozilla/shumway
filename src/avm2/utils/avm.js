@@ -7,7 +7,6 @@ var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"
 var traceGraphViz = options.register(new Option("traceGraphViz", "v", false, "trace GraphViz output"));
 var execute = options.register(new Option("execute", "x", false, "execute"));
 var alwaysInterpret = options.register(new Option("alwaysInterpret", "i", false, "always interpret"));
-var fallbackInterpret = options.register(new Option("fallbackInterpret", "b", false, "fallback interpret"));
 var help = options.register(new Option("help", "h", false, "prints help"));
 
 load("../DataView.js");
@@ -69,8 +68,6 @@ if (execute.value) {
     var mode;
     if (alwaysInterpret.value) {
       mode = ALWAYS_INTERPRET;
-    } else if (fallbackInterpret.value) {
-      mode = FALLBACK_INTERPRET;
     }
     executeAbc(abc, globalObject, mode);
   } catch(e) {

@@ -1,6 +1,5 @@
 const ALWAYS_INTERPRET = 0x1;
-const FALLBACK_INTERPRET = 0x2;
-const HEURISTIC_JIT = 0x4;
+const HEURISTIC_JIT = 0x2;
 
 function defineReadOnlyProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
@@ -383,6 +382,13 @@ var Runtime = (function () {
       };
     }
 
+    function interpretedMethod(interpreter, method, scope) {
+      return function () {
+        return interpreter.interpretMethod(this === globalObject.JS ? globalObject : this,
+                                           method, scope, arguments);
+      };
+    }
+
     const mode = this.mode;
 
     if (!method.activationPrototype) {
@@ -393,20 +399,18 @@ var Runtime = (function () {
       method.analysis = new Analysis(method, { massage: true });
     }
 
-    if (mode === ALWAYS_INTERPRET ||
-        (mode === FALLBACK_INTERPRET && method.exceptions.length > 0)) {
-      var interpreter = this.interpreter;
-      return function () {
-        return interpreter.interpretMethod(this === globalObject.JS ? globalObject : this,
-                                           method, scope, arguments);
-      };
+    if (mode === ALWAYS_INTERPRET) {
+      return interpretedMethod(this.interpreter, method, scope);
     }
 
     if (method.compiledMethod) {
       return closeOverScope(method.compiledMethod, scope);
     }
 
-    method.analysis.restructureControlFlow();
+    if (!method.analysis.restructureControlFlow()) {
+      return interpretedMethod(this.interpreter, method, scope);
+    }
+
     var result = this.compiler.compileMethod(method, scope);
 
     var parameters = method.parameters.map(function (p) {

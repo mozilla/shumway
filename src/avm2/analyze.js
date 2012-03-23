@@ -950,7 +950,6 @@ var Analysis = (function () {
         return false;
       }
 
-
       const BlockSet = this.BlockSet;
 
       /*
