@@ -824,7 +824,7 @@ var Compiler = (function () {
     var multinames = abc.constantPool.multinames;
     var runtime = abc.runtime;
     var savedScope = this.savedScope;
-    var multiname, args, value, obj, ns, name, type, factory;
+    var multiname, args, value, obj, ns, name, type, factory, index;
 
     function classObject() {
       return SAVED_SCOPE_NAME + ".object";
@@ -918,14 +918,22 @@ var Compiler = (function () {
         state.scopeHeight -= 1;
         break;
       case OP_nextname:
-        // TODO: Temporary implementation, totally broken.
-        state.stack.pop();
-        state.stack.pop();
-        pushValue(new Constant("TODO"));
+        index = state.stack.pop();
+        obj = state.stack.pop();
+        pushValue("nextName" + argumentList(obj, index));
         break;
       case OP_hasnext:
         // TODO: Temporary implementation, totally broken.
         pushValue(new Constant(false));
+        break;
+      case OP_hasnext2:
+        flushStack();
+        obj = local[bc.object];
+        index = local[bc.index];
+        emitStatement(temporary[0] + " = hasNext2" + argumentList(obj, index));
+        emitStatement(local[bc.object] + " = " + temporary[0] + ".object");
+        emitStatement(local[bc.index] + " = " + temporary[0] + ".index");
+        pushValue(temporary[0] + ".index");
         break;
       case OP_pushnull:       pushValue(new Constant(null)); break;
       case OP_pushundefined:  pushValue(new Constant(undefined)); break;
@@ -950,10 +958,6 @@ var Compiler = (function () {
         state.scopeHeight += 1;
         break;
       case OP_pushnamespace:  notImplemented(); break;
-      case OP_hasnext2:
-        // TODO: Temporary implementation, totally broken.
-        pushValue(new Constant(false));
-        break;
       case OP_li8:            notImplemented(); break;
       case OP_li16:           notImplemented(); break;
       case OP_li32:           notImplemented(); break;

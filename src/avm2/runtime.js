@@ -26,6 +26,27 @@ defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
   this[i] = v;
 });
 
+/**
+ * Gets the next name index of an object. Index |zero| is actually not an index,
+ * but rather an indicator that no such index exists.
+ */
+defineReadOnlyProperty(Object.prototype, "nextNameIndex", function (index) {
+  if (index < Object.keys(this).length) {
+    return index + 1;
+  }
+  return 0;
+});
+
+/**
+ * Gets the nextName after the specified |index|, which you would expect to be index + 1, but
+ * it's actually index - 1;
+ */
+defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
+  var keys = Object.keys(this);
+  assert (index > 0 && index < keys.length + 1);
+  return keys[index - 1];
+});
+
 function toDouble(x) {
   return Number(x);
 }
@@ -215,6 +236,48 @@ var globalObject = function () {
 function getTypeByName(multiname) {
   assert (globalObject.hasOwnProperty(multiname.name), "Cannot find type " + multiname);
   return globalObject[multiname.name];
+}
+
+function nextName(obj, index) {
+  return obj.nextName(index);
+}
+
+/**
+ * Determine if the given object has any more properties after the specified |index| in the given |obj|
+ * and if so, return the next index or |zero| otherwise. If the |obj| has no more properties then continue
+ * the search in |obj.__proto__|. This function returns an updated index and object to be used during
+ * iteration.
+ *
+ * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+ *
+ * index = 0;
+ * while (true) {
+ *   (obj, index) = hasNext2(obj, index);
+ *   if (index) { #1
+ *     x = nextName(obj, index); #2
+ *   } else {
+ *     break;
+ *   }
+ * }
+ *
+ * #1 If we return zero, the iteration stops.
+ * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
+ * me two hours of my life that I will probably never get back.
+ *
+ * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
+ */
+function hasNext2(obj, index) {
+  assert (obj);
+  assert (index >= 0);
+
+  var nextNameIndex = obj.nextNameIndex(index);
+  if (!nextNameIndex) {
+    obj = obj.__proto__;
+    index = obj ? obj.nextNameIndex(0) : 0;
+  } else {
+    index = nextNameIndex;
+  }
+  return {index: index, object: obj};
 }
 
 /**
