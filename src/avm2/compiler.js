@@ -392,25 +392,6 @@ var Compiler = (function () {
     return expression;
   })();
 
-  var Call = (function () {
-    function call(obj, name, arguments) {
-      this.obj = obj;
-      this.name = name;
-      this.arguments = arguments || [];
-    }
-    call.prototype.toString = function toString() {
-      var str = this.obj ? this.obj.toString() + "." : "";
-      return str + this.name + "(" + this.arguments.join(", ") + ")";
-    };
-    call.prototype.isEquivalent = function isEquivalent(other) {
-      return false;
-    };
-    call.prototype.isPure = function isPure() {
-      return false;
-    };
-    return call;
-  })();
-
   var FindProperty = (function () {
     function findProperty(multiname, strict) {
       this.multiname = multiname;
@@ -518,6 +499,7 @@ var Compiler = (function () {
     };
     constant.prototype.toString = function toString() {
       if (typeof this.value === "string") {
+        // TODO: Don't embed large strings.
         return JSON.stringify(this.value);
       }
       if (this.value === 0 && 1 / this.value === -Infinity) {
@@ -1023,7 +1005,7 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue(new Call(getProperty(obj, multiname), "call", [null].concat(args)));
+        pushValue(getProperty(obj, multiname) + ".call" + argumentList.apply(null, [obj].concat(args)));
         break;
       case OP_callinterface:  notImplemented(); break;
       case OP_callsupervoid:  notImplemented(); break;
