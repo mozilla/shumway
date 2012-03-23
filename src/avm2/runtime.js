@@ -432,10 +432,13 @@ var Runtime = (function () {
       return str;
     }
 
-    method.compiledMethod = new Function(parameters, flatten(result.statements, ""));
+    var body = flatten(result.statements, "");
+    if (traceLevel.value > 4) {
+      print('\033[93m' + body + '\033[0m');
+    }
+    method.compiledMethod = new Function(parameters, body);
 
     /* Hook to set breakpoints in compiled code. */
-    var body = flatten(result.statements, "");
     if (functionCount == 13) {
       body = "stop();" + body;
     }
