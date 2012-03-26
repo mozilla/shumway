@@ -286,7 +286,7 @@ var Namespace = (function () {
       assert (this.name);
       return "protected$" + this.name;
     case PACKAGE_INTERNAL:
-      assert (this.name);
+      assert (this.name || this.name === "");
       return "packageInternal$" + this.name;
     case PRIVATE:
       assert (this.name);

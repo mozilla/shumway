@@ -710,7 +710,7 @@ var Runtime = (function () {
 function createEntryPoint(abc, global, mode) {
   assert (!abc.hasOwnProperty("runtime"));
   abc.runtime = new Runtime(abc, mode);
-  abc.runtime.applyTraits(global, abc.lastScript.traits, null);
+  abc.runtime.applyTraits(global, abc.lastScript.traits, null, null);
   return abc.runtime.createFunction(abc.lastScript.entryPoint, null);
 }
 
