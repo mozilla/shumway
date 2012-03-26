@@ -200,7 +200,7 @@ var Trait = (function () {
   };
 
   trait.prototype.toString = function toString() {
-    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name;
+    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name.getQualifiedName();
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
@@ -264,6 +264,8 @@ var Namespace = (function () {
       default:
         unexpected();
     }
+
+    this.debugName = this.toString();
   }
 
   namespace.prototype.isPublic = function isPublic() {
@@ -284,8 +286,8 @@ var Namespace = (function () {
       assert (this.name);
       return "protected$" + this.name;
     case PACKAGE_INTERNAL:
-      assert (!this.name);
-      return "packageInternal";
+      assert (this.name);
+      return "packageInternal$" + this.name;
     case PRIVATE:
       assert (this.name);
       return "private$" + this.name ;
@@ -558,7 +560,7 @@ var Multiname = (function () {
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     assert(this.isQName());
-    if (this.namespace.isPublic()) {
+    if (this.namespace.isPublic() && this.namespace.name === "") {
       return this.getName();
     } else {
       return this.namespace + "$" + this.getName();
@@ -566,7 +568,8 @@ var Multiname = (function () {
   };
 
   /**
-   * Creates a QName from this multiname.
+   * Creates a QName from this multiname, this is super slow so we should either
+   * cache the result or use it rarely.
    */
   multiname.prototype.getQName = function getQName(namespaceIndex) {
     assert (namespaceIndex < this.namespaceCount());

@@ -45,7 +45,7 @@ var Interpreter = (function () {
       }
 
       function applyNew(constructor, args) {
-        return new (constructor.bind.apply(constructor, [,].concat(args)));
+        return new (Function.bind.apply(constructor, [,].concat(args)));
       }
 
       function evaluateBinary(operator) {
@@ -249,8 +249,8 @@ var Interpreter = (function () {
         case OP_callstatic:     notImplemented(); break;
         case OP_callsuper:      notImplemented(); break;
         case OP_callproperty:
-          multiname = multinames[bc.index];
           args = stack.popMany(bc.argCount);
+          multiname = createMultiname(multinames[bc.index]);
           obj = stack.pop();
           stack.push(getProperty(obj, multiname).apply(obj, args));
           break;
@@ -264,25 +264,23 @@ var Interpreter = (function () {
           savedScope.object.baseClass.apply(obj, args);
           break;
         case OP_constructprop:
-          multiname = multinames[bc.index];
-          // TODO: runtime multiname
           args = stack.popMany(bc.argCount);
+          multiname = createMultiname(multinames[bc.index]);
           obj = stack.pop();
           stack.push(applyNew(getProperty(obj, multiname), args));
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:
-          multiname = multinames[bc.index];
           args = stack.popMany(bc.argCount);
+          multiname = createMultiname(multinames[bc.index]);
           obj = stack.pop();
           stack.push(getProperty(obj, multiname).apply(null, args));
           break;
         case OP_callinterface:  notImplemented(); break;
         case OP_callsupervoid:  notImplemented(); break;
         case OP_callpropvoid:
-          multiname = multinames[bc.index];
-          // TODO: runtime multiname
           args = stack.popMany(bc.argCount);
+          multiname = createMultiname(multinames[bc.index]);
           obj = stack.pop();
           getProperty(obj, multiname).apply(null, args);
           break;
@@ -328,18 +326,23 @@ var Interpreter = (function () {
           value = stack.pop();
           multiname = multinames[bc.index];
           if (!multiname.isRuntime()) {
-            obj = stack.pop();
-            setProperty(obj, multiname, value);
+            setProperty(stack.pop(), multiname, value);
           } else {
-            ns = name = null;
+            name = ns = null;
             if (multiname.isRuntimeName()) {
               name = stack.pop();
             }
             if (multiname.isRuntimeNamespace()) {
-              ns = stack.pop();
+              notImplemented();
             }
             obj = stack.pop();
-            obj.$set(name, value);
+            if (typeof name === "number") {
+              obj[SET_ACCESSOR](name, value);
+            } else {
+              multiname = multiname.clone();
+              multiname.setName(name);
+              setProperty(obj, multiname);
+            }
           }
           break;
         case OP_getlocal:
@@ -361,30 +364,31 @@ var Interpreter = (function () {
         case OP_getproperty:
           multiname = multinames[bc.index];
           if (!multiname.isRuntime()) {
-            obj = stack.pop();
-            stack.push(getProperty(obj, multiname));
+            stack.push(getProperty(stack.pop(), multiname));
           } else {
-            ns = name = null;
+            name = ns = null;
             if (multiname.isRuntimeName()) {
               name = stack.pop();
             }
             if (multiname.isRuntimeNamespace()) {
-              ns = stack.pop();
+              notImplemented();
             }
             obj = stack.pop();
-            stack.push(obj.$get(name));
+            if (typeof name === "number") {
+              stack.push(obj[GET_ACCESSOR](name));
+            } else {
+              multiname = multiname.clone();
+              multiname.setName(name);
+              stack.push(getProperty(obj, multiname));
+            }
           }
           break;
         case OP_getouterscope:      notImplemented(); break;
         case OP_setpropertylate:    notImplemented(); break;
         case OP_deleteproperty:
-          multiname = multinames[bc.index];
-          if (!multiname.isRuntime()) {
-            obj = stack.pop();
-            deleteProperty(obj, multiname);
-          } else {
-            notImplemented();
-          }
+          multiname = createMultiname(multinames[bc.index]);
+          obj = stack.pop();
+          deleteProperty(obj, multiname);
           break;
         case OP_deletepropertylate: notImplemented(); break;
         case OP_getslot:

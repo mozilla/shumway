@@ -249,8 +249,8 @@ var globalObject = function () {
 }();
 
 function getTypeByName(multiname) {
-  assert (globalObject.hasOwnProperty(multiname.name), "Cannot find type " + multiname);
-  return globalObject[multiname.name];
+  assert (globalObject.hasOwnProperty(multiname.getQualifiedName()), "Cannot find type " + multiname);
+  return globalObject[multiname.getQualifiedName()];
 }
 
 function nextName(obj, index) {
@@ -399,7 +399,11 @@ function resolveMultiname(obj, multiname, checkPrototype) {
 
 function getProperty(obj, multiname) {
   if (multiname.isQName()) {
-    return obj[multiname.getQualifiedName()];
+    if (typeof multiname.name === "number") {
+      return obj[GET_ACCESSOR](multiname.name);
+    } else {
+      return obj[multiname.getQualifiedName()];
+    }
   } else {
     var resolved = resolveMultiname(obj, multiname, true);
     if (resolved) {
@@ -411,7 +415,11 @@ function getProperty(obj, multiname) {
 
 function setProperty(obj, multiname, value) {
   if (multiname.isQName()) {
-    obj[multiname.getQualifiedName()] = value;
+    if (typeof multiname.name === "number") {
+      obj[SET_ACCESSOR](multiname.name, value);
+    } else {
+      obj[multiname.getQualifiedName()] = value;
+    }
   } else {
     var resolved = resolveMultiname(obj, multiname, true);
     if (resolved) {
@@ -420,6 +428,8 @@ function setProperty(obj, multiname, value) {
       // If we can't resolve the multiname, we're probably adding a dynamic
       // property, so just go ahead and use its name directly.
       assert (multiname.getNamespace(0).isPublic());
+      // TODO: Remove assertion when we're certain it will never fail.
+      assert (multiname.getQName(0).getQualifiedName() === multiname.name);
       obj[multiname.name] = value;
     }
   }
