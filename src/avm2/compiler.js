@@ -1144,7 +1144,7 @@ var Compiler = (function () {
         break;
       case OP_getglobalslot:  notImplemented(); break;
       case OP_setglobalslot:  notImplemented(); break;
-      case OP_convert_s:      notImplemented(); break;
+      case OP_convert_s:      pushValue("toString" + argumentList(state.stack.pop())); break;
       case OP_esc_xelem:      notImplemented(); break;
       case OP_esc_xattr:      notImplemented(); break;
       case OP_convert_i:      pushValue("toInt" + argumentList(state.stack.pop())); break;
@@ -1163,11 +1163,7 @@ var Compiler = (function () {
       case OP_coerce_a:       /* NOP */ break;
       case OP_coerce_i:       notImplemented(); break;
       case OP_coerce_d:       notImplemented(); break;
-      case OP_coerce_s:
-        // TODO: Temporary implementation, totally broken.
-        obj = state.stack.pop();
-        pushValue(obj + " === null || " + obj + " === undefined ? null : " + obj + ".toString()");
-        break;
+      case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
       case OP_coerce_u:       notImplemented(); break;

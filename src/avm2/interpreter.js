@@ -398,7 +398,9 @@ var Interpreter = (function () {
           break;
         case OP_getglobalslot:  notImplemented(); break;
         case OP_setglobalslot:  notImplemented(); break;
-        case OP_convert_s:      notImplemented(); break;
+        case OP_convert_s:
+          stack.push(toString(stack.pop()));
+          break;
         case OP_esc_xelem:      notImplemented(); break;
         case OP_esc_xattr:      notImplemented(); break;
         case OP_convert_i:
@@ -426,9 +428,7 @@ var Interpreter = (function () {
         case OP_coerce_i:       notImplemented(); break;
         case OP_coerce_d:       notImplemented(); break;
         case OP_coerce_s:
-          // TODO: Temporary implementation, totally broken.
-          obj = stack.pop();
-          stack.push(obj === null || obj === undefined ? null : obj.toString());
+          stack.push(coerceString(stack.pop()));
           break;
         case OP_astype:         notImplemented(); break;
         case OP_astypelate:     notImplemented(); break;

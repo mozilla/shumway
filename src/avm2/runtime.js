@@ -64,6 +64,21 @@ function toInt(x) {
   return parseInt(x);
 }
 
+function toString(x) {
+  return new String(x);
+}
+
+/**
+ * Similar to |toString| but returns |null| for |null| or |undefined| instead
+ * of "null" or "undefined".
+ */
+function coerceString(x) {
+  if (!x) {
+    return null;
+  }
+  return new String(x);
+}
+
 function typeOf(x) {
   if (x === null) {
     return typeof x;
