@@ -566,8 +566,8 @@ var Runtime = (function () {
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
 
-    this.applyTraits(cls.prototype, instanceTraits, baseClass.instanceTraits);
-    this.applyTraits(cls, classInfo.traits);
+    this.applyTraits(cls.prototype, instanceTraits, baseClass.instanceTraits, scope);
+    this.applyTraits(cls, classInfo.traits, null, scope);
 
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
@@ -596,7 +596,7 @@ var Runtime = (function () {
    * above example, if "Age" is of type "int" then we store the real value in the property "$S7",
    * and use a setter in the property "S7" to do the type coercion.
    */
-  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits) {
+  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope) {
     function computeAndVerifySlotIds(traits, base) {
       assert(!base || base.verified);
 
@@ -661,7 +661,8 @@ var Runtime = (function () {
       if (trait.isSlot() || trait.isConst()) {
         setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, trait.typeName);
       } else if (trait.isMethod()) {
-        var closure = this.createFunction(trait.method, new Scope(null, obj));
+        assert (scope !== undefined);
+        var closure = this.createFunction(trait.method, new Scope(scope, obj));
         setProperty(trait.name.getQualifiedName(), undefined, closure);
       } else if (trait.isClass()) {
         setProperty(trait.name.getQualifiedName(), trait.slotId, null);
@@ -699,7 +700,7 @@ var Runtime = (function () {
 function createEntryPoint(abc, global, mode) {
   assert (!abc.hasOwnProperty("runtime"));
   abc.runtime = new Runtime(abc, mode);
-  abc.runtime.applyTraits(global, abc.lastScript.traits);
+  abc.runtime.applyTraits(global, abc.lastScript.traits, null);
   return abc.runtime.createFunction(abc.lastScript.entryPoint, null);
 }
 
