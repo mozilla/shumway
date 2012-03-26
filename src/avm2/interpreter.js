@@ -147,7 +147,7 @@ var Interpreter = (function () {
           continue;
         case OP_lookupswitch:
           index = stack.pop();
-          if (index >= bc.targets.length) {
+          if (index < 0 || index >= bc.targets.length) {
             /* The last target is the default. */
             index = bc.targets.length - 1;
           }
