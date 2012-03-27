@@ -584,7 +584,7 @@ var Multiname = (function () {
     } else if (this.isRuntimeNamespace()) {
       str += "[]::" + this.nameToString();
     } else if (this.namespaces.length === 1 && this.isQName()) {
-      str += this.namespace + "::";
+      str += this.namespaces[0] + "::";
       str += this.nameToString();
     } else {
       str += "{";
