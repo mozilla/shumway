@@ -475,7 +475,7 @@ var Multiname = (function () {
         var nsset = constantPool.namespaceSets[index];
         if (nsset.length === 1) {
           setQName();
-          this.namespace = nsset[0];
+          this.namespaces = nsset;
         } else {
           setNamespaceSet(nsset);
         }
