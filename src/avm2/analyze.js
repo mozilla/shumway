@@ -545,16 +545,18 @@ var Analysis = (function () {
       }
 
       var invalidJumps = {};
+      var newOffset;
       for (var pc = 0, end = bytecodes.length; pc < end; pc++) {
         code = bytecodes[pc];
         switch (code.op) {
         case OP_lookupswitch:
           var offsets = code.offsets;
           for (var i = 0, j = offsets.length; i < j; i++) {
-            code.targets.push(bytecodes[bytecodesOffset[offsets[i]]] ||
+            newOffset = bytecodesOffset[offsets[i]];
+            code.targets.push(bytecodes[newOffset] ||
                               getInvalidTarget(invalidJumps, offsets[i]));
+            offsets[i] = newOffset;
           }
-          delete code.offsets;
           break;
 
         case OP_jump:
@@ -572,9 +574,10 @@ var Analysis = (function () {
         case OP_ifstrictne:
         case OP_iftrue:
         case OP_iffalse:
-          code.target = (bytecodes[bytecodesOffset[code.offset]] ||
+          newOffset = bytecodesOffset[code.offset];
+          code.target = (bytecodes[newOffset] ||
                          getInvalidTarget(invalidJumps, code.offset));
-          delete code.offset;
+          code.offset = newOffset;
           break;
 
         default:;
@@ -582,6 +585,18 @@ var Analysis = (function () {
       }
 
       this.bytecodes = bytecodes;
+
+      /**
+       * Normalize exceptions table to use new offsets.
+       */
+      var exceptions = this.method.exceptions;
+      for (var i = 0, j = exceptions.length; i < j; i++) {
+        var ex = exceptions[i];
+        ex.start = bytecodesOffset[ex.start];
+        ex.end = bytecodesOffset[ex.end];
+        ex.offset = bytecodesOffset[ex.target];
+        ex.target = bytecodes[ex.offset];
+      }
     },
 
     detectBasicBlocks: function detectBasicBlocks() {

@@ -778,14 +778,18 @@ var MethodInfo = (function () {
     }
   };
 
-  function parseException(stream) {
-    return {
+  function parseException(constantPool, stream) {
+    var multinames = constantPool.multinames;
+    var ex = {
       start: stream.readU30(),
       end: stream.readU30(),
       target: stream.readU30(),
-      typename: stream.readU30(),
-      varname: stream.readU30()
+      typeName: multinames[stream.readU30()],
+      varName: multinames[stream.readU30()]
     };
+    assert(!ex.typeName || !ex.typeName.isRuntime());
+    assert(!ex.varName || ex.varName.isQName());
+    return ex;
   }
 
   methodInfo.parseBody = function parseBody(constantPool, methods, stream) {
@@ -804,7 +808,7 @@ var MethodInfo = (function () {
     var exceptions = [];
     var exceptionCount = stream.readU30();
     for (var i = 0; i < exceptionCount; ++i) {
-      exceptions.push(parseException(stream));
+      exceptions.push(parseException(constantPool, stream));
     }
     info.exceptions = exceptions;
     info.traits = parseTraits(constantPool, stream, methods);
