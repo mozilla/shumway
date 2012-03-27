@@ -139,9 +139,6 @@ var Trait = (function () {
 
     this.kind = tag & 0x0F;
     this.attributes = (tag >> 4) & 0x0F;
-    if (!this.name.isQName()) {
-      this.name = this.name.getQName(0);
-    }
     assert(this.name.isQName(), "Name must be a QName: " + this.name + ", kind: " + this.kind);
 
     switch (this.kind) {
@@ -475,7 +472,13 @@ var Multiname = (function () {
         }
         index = stream.readU30();
         assert(index != 0);
-        setNamespaceSet(constantPool.namespaceSets[index]);
+        var nsset = constantPool.namespaceSets[index];
+        if (nsset.length === 1) {
+          setQName();
+          this.namespace = nsset[0];
+        } else {
+          setNamespaceSet(nsset);
+        }
         setAttribute(this.kind === CONSTANT_MultinameA);
         break;
       case CONSTANT_MultinameL: case CONSTANT_MultinameLA:

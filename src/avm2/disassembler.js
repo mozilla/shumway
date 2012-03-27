@@ -62,7 +62,6 @@ function traceArray(writer, name, array, abc) {
   }
   writer.enter(name + " {");
   array.forEach(function (a, idx) {
-    // writer.writeLn(idx);
     a.trace(writer, abc);
   });
   writer.leave("}");
@@ -176,7 +175,7 @@ function traceOperands(opcode, abc, code, rewind) {
 
 MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
-  writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|")));
+  writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
 
   if (!this.code) {
     writer.leave("}");
