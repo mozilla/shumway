@@ -72,13 +72,14 @@ var Interpreter = (function () {
 
       function createMultiname(multiname) {
         if (multiname.isRuntime()) {
-          multiname = multiname.clone();
+          var namespaces = multiname.namespaces, name = multiname.name;
           if (multiname.isRuntimeName()) {
-            multiname.setName(stack.pop());
+            name = stack.pop();
           }
           if (multiname.isRuntimeNamespace()) {
-            multiname.setNamespace(stack.pop());
+            namespaces = [stack.pop()];
           }
+          multiname = new Multiname(namespaces, name);
         }
         assert(!multiname.isRuntime());
         return multiname;

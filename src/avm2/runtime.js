@@ -341,9 +341,8 @@ var Scope = (function () {
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
     // print("Looking for : " + multiname);
-    for (var i = 0; i < multiname.namespaceCount(); i++) {
+    for (var i = 0; i < multiname.namespaces.length; i++) {
       // if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
-      // The object may have 
       if (multiname.getQName(i).getQualifiedName() in this.object) {
         return this.object;
       }
@@ -382,7 +381,7 @@ var Scope = (function () {
 function resolveMultiname(obj, multiname, checkPrototype) {
   assert (!multiname.isQName(), "We shouldn't resolve already resolved names.");
   obj = Object(obj);
-  for (var i = 0; i < multiname.namespaceCount(); i++) {
+  for (var i = 0, count = multiname.namespaces.length; i < count; i++) {
     var name = multiname.getQName(i);
     if (checkPrototype) {
       if (name.getQualifiedName() in obj) {
@@ -427,7 +426,7 @@ function setProperty(obj, multiname, value) {
     } else {
       // If we can't resolve the multiname, we're probably adding a dynamic
       // property, so just go ahead and use its name directly.
-      assert (multiname.getNamespace(0).isPublic());
+      assert (multiname.namespaces[0].isPublic());
       // TODO: Remove assertion when we're certain it will never fail.
       assert (multiname.getQName(0).getQualifiedName() === multiname.name);
       obj[multiname.name] = value;

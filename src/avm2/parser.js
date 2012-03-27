@@ -134,12 +134,15 @@ function parseTraits(constantPool, stream, methods, classes) {
 var Trait = (function () {
   function trait(constantPool, stream, methods, classes) {
     this.name = constantPool.multinames[stream.readU30()];
-    assert(this.name.isQName());
 
     var tag = stream.readU8();
 
     this.kind = tag & 0x0F;
     this.attributes = (tag >> 4) & 0x0F;
+    if (!this.name.isQName()) {
+      this.name = this.name.getQName(0);
+    }
+    assert(this.name.isQName(), "Name must be a QName: " + this.name + ", kind: " + this.kind);
 
     switch (this.kind) {
       case TRAIT_Slot:
@@ -256,7 +259,6 @@ var Namespace = (function () {
             this.type = STATIC_PROTECTED;
             break;
         }
-
         break;
       case CONSTANT_PrivateNs:
         this.type = PRIVATE;
@@ -265,7 +267,35 @@ var Namespace = (function () {
         unexpected();
     }
 
-    this.debugName = this.toString();
+    function suffix(prefix, name) {
+      return prefix + (name ? "$" + name : "");
+    }
+
+    switch(this.type) {
+    case PUBLIC:
+      this.qualifiedName = this.name;
+      break;
+    case PROTECTED:
+      this.qualifiedName = suffix("protected", this.name);
+      break;
+    case PACKAGE_INTERNAL:
+      this.qualifiedName = suffix("packageInternal", this.name);
+      break;
+    case PRIVATE:
+      this.qualifiedName = suffix("private", this.name);
+      break;
+    case EXPLICIT:
+      assert (!this.name);
+      this.qualifiedName = suffix("explicit", this.name);
+      break;
+    case STATIC_PROTECTED:
+      assert (this.name);
+      this.qualifiedName = suffix("staticProtected", this.name);
+      break;
+    default:
+      unexpected("Type: " + this.type);
+      break;
+    }
   }
 
   namespace.prototype.isPublic = function isPublic() {
@@ -279,32 +309,19 @@ var Namespace = (function () {
   };
 
   namespace.prototype.toString = function toString() {
-    switch(this.type) {
-    case PUBLIC:
-      return this.name;
-    case PROTECTED:
-      assert (this.name);
-      return "protected$" + this.name;
-    case PACKAGE_INTERNAL:
-      assert (this.name || this.name === "");
-      return "packageInternal$" + this.name;
-    case PRIVATE:
-      assert (this.name);
-      return "private$" + this.name ;
-    case EXPLICIT:
-      assert (!this.name);
-      return "explicit";
-    case STATIC_PROTECTED:
-      assert (this.name);
-      return "staticProtected$" + this.name;
-      // return this.name;
-    default:
-      unexpected("Type: " + this.type);
-    }
+    return this.qualifiedName;
   };
 
   return namespace;
 })();
+
+function getQualifiedName(ns, name) {
+  if (ns.isPublic() && ns.name === "") {
+    return name;
+  } else {
+    return ns.qualifiedName + "$" + name;
+  }
+}
 
 /**
  * Section 2.3 and 4.4.3
@@ -350,18 +367,19 @@ var Multiname = (function () {
   const NAMESPACE_SET     = 0x10;
   const TYPE_PARAMETER    = 0x20;
 
-  function multiname(index) {
-    this.index = index;
+  function multiname(namespaces, name, flags) {
+    this.namespaces = namespaces;
+    this.name = name;
+    if (flags !== undefined) {
+      this.flags = flags;
+    } else if (namespaces && name) {
+      assert (namespaces.length === 1 && name);
+      this.flags = QNAME;
+    }
   }
 
   multiname.prototype.clone = function clone() {
-    var clone = new multiname(this.index);
-    clone.flags = this.flags;
-    clone.name = this.name;
-    clone.namespace = this.namespace;
-    clone.namespaceSet = this.namespaceSet;
-    clone.typeParameter = this.typeParameter;
-    return clone;
+    return new multiname(this.namespaces, this.name, this.flags);
   };
 
   multiname.prototype.parse = function parse(constantPool, stream, multinames) {
@@ -371,7 +389,7 @@ var Multiname = (function () {
 
     var setAnyNamespace = function() {
       this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE);
-      this.namespace = null;
+      this.namespaces = null;
     }.bind(this);
 
     var setAnyName = function() {
@@ -399,14 +417,14 @@ var Multiname = (function () {
     var setRuntimeNamespace = function() {
       this.flags |= RUNTIME_NAMESPACE;
       this.flags &= ~(NAMESPACE_SET);
-      this.namespace = null;
+      this.namespaces = null;
     }.bind(this);
 
     var setNamespaceSet = function(namespaceSet) {
       assert(namespaceSet != null);
       this.flags &= ~(RUNTIME_NAMESPACE);
       this.flags |= NAMESPACE_SET;
-      this.namespaceSet = namespaceSet;
+      this.namespaces = namespaceSet;
     }.bind(this);
 
     var setTypeParameter = function(typeParameter) {
@@ -420,7 +438,7 @@ var Multiname = (function () {
         if (index === 0) {
           setAnyNamespace();
         } else {
-          this.namespace = constantPool.namespaces[index];
+          this.namespaces = [constantPool.namespaces[index]];
         }
         index = stream.readU30();
         if (index === 0) {
@@ -494,7 +512,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {
-    return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespace === null;
+    return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespaces === null;
   };
 
   multiname.prototype.isRuntimeName = function isRuntimeName() {
@@ -513,10 +531,6 @@ var Multiname = (function () {
     return this.flags & QNAME;
   };
 
-  multiname.prototype.namespaceCount = function namespaceCount() {
-    return (this.namespaceSet && (this.flags & NAMESPACE_SET)) ? this.namespaceSet.length : 1;
-  };
-
   multiname.prototype.getName = function getName() {
     assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
@@ -525,29 +539,6 @@ var Multiname = (function () {
   multiname.prototype.setName = function setName(name) {
     this.flags &= ~(RUNTIME_NAME);
     this.name = name;
-  };
-
-  multiname.prototype.getNamespace = function getNamespace(i) {
-    assert(!this.isRuntimeNamespace() && !this.isAnyNamespace());
-    if (this.flags & NAMESPACE_SET) {
-      return this.namespaceSet != null ? this.namespaceSet[i] : null;
-    } else {
-      assert(i === 0);
-      return this.namespace;
-    }
-  };
-
-  multiname.prototype.matches = function matches(multiname) {
-    assert(this.isQName() && !this.isRuntime());
-    if (this.name != multiname.name) {
-      return false;
-    }
-    if (multiname.namespace) {
-      return this.namespace === multiname.namespace;
-    } else {
-      return multiname.namespaceSet.indexOf(this.namespace) >= 0;
-    }
-    return this.name;
   };
 
   multiname.prototype.nameToString = function nameToString() {
@@ -560,24 +551,27 @@ var Multiname = (function () {
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     assert(this.isQName());
-    if (this.namespace.isPublic() && this.namespace.name === "") {
+    var ns = this.namespaces[0];
+    if (ns.isPublic() && ns.name === "") {
       return this.getName();
     } else {
-      return this.namespace + "$" + this.getName();
+      return ns + "$" + this.getName();
     }
   };
 
   /**
-   * Creates a QName from this multiname, this is super slow so we should either
-   * cache the result or use it rarely.
+   * Creates a QName from this multiname.
    */
-  multiname.prototype.getQName = function getQName(namespaceIndex) {
-    assert (namespaceIndex < this.namespaceCount());
-    var multiname = new Multiname(undefined);
-    multiname.name = this.name;
-    multiname.namespace = this.getNamespace(namespaceIndex);
-    multiname.flags = QNAME;
-    return multiname;
+  multiname.prototype.getQName = function getQName(index) {
+    assert (index >= 0 && index < this.namespaces.length);
+    if (!this.cache) {
+      this.cache = [];
+    }
+    var name = this.cache[index];
+    if (!name) {
+      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, QNAME);
+    }
+    return name;
   };
 
   multiname.prototype.toString = function toString() {
@@ -586,13 +580,13 @@ var Multiname = (function () {
       str += "*::" + this.nameToString();
     } else if (this.isRuntimeNamespace()) {
       str += "[]::" + this.nameToString();
-    } else if (this.namespaceCount() === 1 && this.isQName()) {
+    } else if (this.namespaces.length === 1 && this.isQName()) {
       str += this.namespace + "::";
       str += this.nameToString();
     } else {
       str += "{";
-      for (var i = 0, count = this.namespaceCount(); i < count; i++) {
-        str += this.getNamespace(i);
+      for (var i = 0, count = this.namespaces.length; i < count; i++) {
+        str += this.namespaces[i];
         if (i + 1 < count) {
           str += ",";
         }

@@ -62,7 +62,7 @@ function traceArray(writer, name, array, abc) {
   }
   writer.enter(name + " {");
   array.forEach(function (a, idx) {
-    writer.writeLn(idx);
+    // writer.writeLn(idx);
     a.trace(writer, abc);
   });
   writer.leave("}");
@@ -72,7 +72,7 @@ AbcFile.prototype.trace = function trace(writer) {
   this.constantPool.trace(writer);
   traceArray(writer, "classes", this.classes);
   traceArray(writer, "instances", this.instances);
-  traceArray(writer, "metadata", this.metadata);
+  // traceArray(writer, "metadata", this.metadata);
   traceArray(writer, "scripts", this.scripts);
   traceArray(writer, "methods", this.methods, this);
 };
