@@ -350,7 +350,7 @@ var Interpreter = (function () {
               } else {
                 multiname = multiname.clone();
                 multiname.setName(name);
-                setProperty(obj, multiname);
+                setProperty(obj, multiname, value);
               }
             }
             break;
