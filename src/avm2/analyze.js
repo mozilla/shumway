@@ -164,12 +164,11 @@ var Control = (function () {
     this.kind = BREAK;
     this.label = label;
     this.head = head;
-    this.ambiguous = true;
   }
 
   Break.prototype = {
     trace: function (writer) {
-      this.ambiguous && writer.writeLn("label = " + this.label);
+      this.label && writer.writeLn("label = " + this.label);
       writer.writeLn("break");
     }
   };
@@ -178,13 +177,12 @@ var Control = (function () {
     this.kind = CONTINUE;
     this.label = label;
     this.head = head;
-    this.ambiguous = true;
     this.necessary = true;
   }
 
   Continue.prototype = {
     trace: function (writer) {
-      this.ambiguous && writer.writeLn("label = " + this.label);
+      this.label && writer.writeLn("label = " + this.label);
       this.necessary && writer.writeLn("continue");
     }
   };
@@ -1402,26 +1400,33 @@ var Analysis = (function () {
 
         case Control.EXIT:
           if (exit && exit.kind === Control.LABEL_SWITCH) {
-            return exit.labelMap[node.label] ? node : null;
+            if (!(node.label in exit.labelMap)) {
+              node.label = -1;
+            }
+            return node;
           }
           return null;
 
         case Control.BREAK:
           if (br && br.kind === Control.LABEL_SWITCH) {
-            node.ambiguous = node.label in br.labelMap;
+            if (!(node.label in br.labelMap)) {
+              node.label = -1;
+            }
           } else {
-            node.ambiguous = false;
+            delete node.label;
           }
           return node;
 
         case Control.CONTINUE:
           if (cont && cont.kind === Control.LABEL_SWITCH) {
-            node.ambiguous = node.label in cont.labelMap;
+            if (!(node.label in cont.labelMap)) {
+              node.label = -1;
+            }
           } else {
-            node.ambiguous = false;
+            delete node.label;
           }
           node.necessary = !!exit;
-          return (node.necessary || node.ambiguous) ? node : null;
+          return (node.necessary || node.label) ? node : null;
 
         default:
           return node;

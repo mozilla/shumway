@@ -55,7 +55,7 @@ var Compiler = (function () {
   Control.Break.prototype.compile = function (mcx, state) {
     controlWriter && controlWriter.enter("Break {");
     var statements = [];
-    if (this.ambiguous) {
+    if (this.label) {
       statements.push(["var $label = " + this.label + ";"]);
     }
     statements.push("break;");
@@ -67,7 +67,7 @@ var Compiler = (function () {
   Control.Continue.prototype.compile = function (mcx, state) {
     controlWriter && controlWriter.enter("Continue {");
     var statements = [];
-    if (this.ambiguous) {
+    if (this.label) {
       statements.push(["var $label = " + this.label + ";"]);
     }
     if (this.necessary) {
