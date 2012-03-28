@@ -545,8 +545,8 @@ var Interpreter = (function () {
           }
 
           pc++;
-        } catch (e if e === runtime.exception) {
-          if (exceptions.length < 1) {
+        } catch (e) {
+          if (e !== runtime.exception || exceptions.length < 1) {
             throw e;
           }
 
