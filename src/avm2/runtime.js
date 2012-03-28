@@ -420,15 +420,21 @@ function setProperty(obj, multiname, value) {
       obj[multiname.getQualifiedName()] = value;
     }
   } else {
-    var resolved = resolveMultiname(obj, multiname, true);
+    var resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
     if (resolved) {
       obj[resolved.getQualifiedName()] = value;
     } else {
       // If we can't resolve the multiname, we're probably adding a dynamic
       // property, so just go ahead and use its name directly.
-      assert (multiname.namespaces[0].isPublic(), multiname);
-      // TODO: Remove assertion when we're certain it will never fail.
-      assert (multiname.getQName(0).getQualifiedName() === multiname.name);
+      // TODO: Remove assertion and loop when we're certain it will never fail.
+      var publicNSIndex;
+      for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
+        if (multiname.namespaces[i].isPublic()) {
+          publicNSIndex = i;
+          break;
+        }
+      }
+      assert(multiname.getQName(publicNSIndex).getQualifiedName() === multiname.name);
       obj[multiname.name] = value;
     }
   }
