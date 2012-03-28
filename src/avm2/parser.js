@@ -370,8 +370,12 @@ var Multiname = (function () {
     if (flags !== undefined) {
       this.flags = flags;
     } else if (namespaces && name) {
-      assert (namespaces.length === 1 && name);
-      this.flags = QNAME;
+      if (namespaces.length === 1) {
+        this.flags = QNAME;
+      } else {
+        assert (namespaces.length > 1);
+        this.flags = NAMESPACE_SET;
+      }
     }
   }
 

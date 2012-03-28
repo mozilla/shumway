@@ -426,7 +426,7 @@ function setProperty(obj, multiname, value) {
     } else {
       // If we can't resolve the multiname, we're probably adding a dynamic
       // property, so just go ahead and use its name directly.
-      assert (multiname.namespaces[0].isPublic());
+      assert (multiname.namespaces[0].isPublic(), multiname);
       // TODO: Remove assertion when we're certain it will never fail.
       assert (multiname.getQName(0).getQualifiedName() === multiname.name);
       obj[multiname.name] = value;

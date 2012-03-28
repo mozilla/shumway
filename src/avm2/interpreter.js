@@ -334,26 +334,8 @@ var Interpreter = (function () {
           case OP_initproperty:
           case OP_setproperty:
             value = stack.pop();
-            multiname = multinames[bc.index];
-            if (!multiname.isRuntime()) {
-              setProperty(stack.pop(), multiname, value);
-            } else {
-              name = ns = null;
-              if (multiname.isRuntimeName()) {
-                name = stack.pop();
-              }
-              if (multiname.isRuntimeNamespace()) {
-                notImplemented();
-              }
-              obj = stack.pop();
-              if (typeof name === "number") {
-                obj[SET_ACCESSOR](name, value);
-              } else {
-                multiname = multiname.clone();
-                multiname.setName(name);
-                setProperty(obj, multiname, value);
-              }
-            }
+            multiname = createMultiname(multinames[bc.index]);
+            setProperty(stack.pop(), multiname, value);
             break;
           case OP_getlocal:
             stack.push(locals[bc.index]);
@@ -372,26 +354,8 @@ var Interpreter = (function () {
             stack.push(obj.object);
             break;
           case OP_getproperty:
-            multiname = multinames[bc.index];
-            if (!multiname.isRuntime()) {
-              stack.push(getProperty(stack.pop(), multiname));
-            } else {
-              name = ns = null;
-              if (multiname.isRuntimeName()) {
-                name = stack.pop();
-              }
-              if (multiname.isRuntimeNamespace()) {
-                notImplemented();
-              }
-              obj = stack.pop();
-              if (typeof name === "number") {
-                stack.push(obj[GET_ACCESSOR](name, value));
-              } else {
-                multiname = multiname.clone();
-                multiname.setName(name);
-                stack.push(getProperty(obj, multiname));
-              }
-            }
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(getProperty(stack.pop(), multiname));
             break;
           case OP_getouterscope:      notImplemented(); break;
           case OP_setpropertylate:    notImplemented(); break;
