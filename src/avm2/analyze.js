@@ -462,7 +462,7 @@ var Analysis = (function () {
   }
 
   function Analysis(method, options) {
-    /*
+    /**
      * Normalize the code stream. The other analyses are run by the user
      * on demand.
      */
@@ -473,7 +473,7 @@ var Analysis = (function () {
 
   Analysis.prototype = {
     normalizeBytecode: function normalizeBytecode() {
-      /*
+      /**
        * Internal bytecode used for bogus jumps. They should be emitted as throws
        * so that if control flow ever reaches them, we crash.
        */
@@ -820,7 +820,7 @@ var Analysis = (function () {
       this.blocks = blocks.reverse();
     },
 
-    /*
+    /**
      * Calculate the dominance relation iteratively.
      *
      * Algorithm is from [1].
@@ -965,7 +965,7 @@ var Analysis = (function () {
 
       const BlockSet = this.BlockSet;
 
-      /*
+      /**
        * Find all SCCs at or below the level of some root that are not already
        * natural loops.
        */
@@ -1153,7 +1153,7 @@ var Analysis = (function () {
                   }
 
                   if (h.npreds - lheadsave > 0) {
-                    /*
+                    /**
                      * Don't even enter the loop if we're just going to exit
                      * anyways.
                      */
@@ -1450,7 +1450,7 @@ var Analysis = (function () {
       return true;
     },
 
-    /*
+    /**
      * Prints a normalized bytecode along with metainfo.
      */
     trace: function (writer) {
