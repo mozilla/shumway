@@ -461,6 +461,12 @@ var Runtime = (function () {
     this.mode = mode;
     this.compiler = new Compiler(abc);
     this.interpreter = new Interpreter(abc);
+
+    /**
+     * All runtime exceptions are boxed in this object to tag them as having
+     * originated from within the VM.
+     */
+    this.exception = { value: null };
   }
 
   runtime.prototype.createActivation = function (method) {

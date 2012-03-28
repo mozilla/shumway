@@ -97,7 +97,8 @@ var Interpreter = (function () {
           switch (op) {
           case OP_bkpt:           notImplemented(); break;
           case OP_throw:
-            throw stack.pop();
+            runtime.exception.value = stack.pop();
+            throw runtime.exception;
           case OP_getsuper:       notImplemented(); break;
           case OP_setsuper:       notImplemented(); break;
           case OP_dxns:           notImplemented(); break;
@@ -544,16 +545,17 @@ var Interpreter = (function () {
           }
 
           pc++;
-        } catch (e) {
+        } catch (e if e === runtime.exception) {
           if (exceptions.length < 1) {
             throw e;
           }
 
+          var ev = e.value;
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
                 (!handler.typeName ||
-                 runtime.isType(e, getTypeByName(handler.typeName)))) {
+                 runtime.isType(ev, getTypeByName(handler.typeName)))) {
               if (!handler.scopeObject) {
                 if (handler.varName) {
                   var varTrait = Object.create(Trait.prototype);
@@ -569,7 +571,7 @@ var Interpreter = (function () {
               scope = savedScope;
               scopeHeight = 0;
               stack.length = 0;
-              stack.push(e);
+              stack.push(ev);
               pc = handler.offset;
               continue interpret;
             }

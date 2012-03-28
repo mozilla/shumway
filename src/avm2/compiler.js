@@ -874,7 +874,12 @@ var Compiler = (function () {
 
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
-      case OP_throw:          notImplemented("throw"); break;
+      case OP_throw:
+        emitStatement(temporary[0] + " = " +
+                      objectConstant(abc) + ".runtime.exception");
+        emitStatement(temporary[0] + ".value = " + state.stack.pop());
+        emitStatement("throw " + temporary[0]);
+        break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
       case OP_dxns:           notImplemented(); break;
