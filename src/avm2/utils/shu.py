@@ -64,14 +64,19 @@ class Base:
     if not self.asc:
       sys.exit();
 
-  def runAsc(self, file, createSwf = False, builtin = False):
-    args = ["java", "-jar", self.asc, "-d"]
+  def runAsc(self, files, createSwf = False, builtin = False):
+    args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
+            "macromedia.asc.embedding.ScriptCompiler", "-d"]
     if builtin:
       args.extend(["-import", self.builtin_abc])
-    args.append(file);
+    outf = os.path.splitext(files[-1])[0]
+    args.extend(["-out", outf])
+    args.extend(files);
+    print(args)
     subprocess.call(args)
     if createSwf:
-      args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d", file]
+      args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d"]
+      args.extend(files)
       subprocess.call(args)
 
   def runAvm(self, file, execute = True, trace = False, disassemble = False):
@@ -102,7 +107,7 @@ class Asc(Command):
 
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
-    parser.add_argument('src', help="source .as file")
+    parser.add_argument('src', nargs='+', help="source .as file")
     parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
     parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
     args = parser.parse_args(args)
