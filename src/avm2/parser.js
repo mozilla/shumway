@@ -199,8 +199,16 @@ var Trait = (function () {
     return this.kind === TRAIT_Class;
   };
 
+  trait.prototype.isGetter = function isGetter() {
+    return this.kind === TRAIT_Getter;
+  };
+
+  trait.prototype.isSetter = function isSetter() {
+    return this.kind === TRAIT_Setter;
+  };
+
   trait.prototype.toString = function toString() {
-    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name.getQualifiedName();
+    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name.getQualifiedName() + ", kind: " + this.kind;
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
@@ -776,6 +784,9 @@ var MethodInfo = (function () {
     },
     needsArguments: function needsArguments() {
       return !!(this.flags & METHOD_Arguments);
+    },
+    isNative: function isNative() {
+      return !!(this.flags & METHOD_Native);
     }
   };
 
@@ -795,6 +806,7 @@ var MethodInfo = (function () {
 
   methodInfo.parseBody = function parseBody(constantPool, methods, stream) {
     var info = methods[stream.readU30()];
+    assert (!info.isNative());
     info.maxStack = stream.readU30();
     info.localCount = stream.readU30();
     info.initScopeDepth = stream.readU30();
