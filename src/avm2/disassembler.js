@@ -101,7 +101,7 @@ Traits.prototype.trace = function (writer) {
 };
 
 ClassInfo.prototype.trace = function (writer) {
-  writer.enter("class " + this.init + "{");
+  writer.enter("class " + this + " {");
   this.traits.trace(writer);
   writer.leave("}");
 };

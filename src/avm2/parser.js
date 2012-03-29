@@ -871,7 +871,7 @@ var InstanceInfo = (function () {
       str += " extends " + this.superName;
     }
     return str;
-  }
+  };
   return instanceInfo;
 })();
 
@@ -879,7 +879,7 @@ var ClassInfo = (function () {
   function classInfo(constantPool, methods, instance, stream) {
     this.init = methods[stream.readU30()];
     this.traits = parseTraits(constantPool, stream, methods);
-    this.instance = instance
+    this.instance = instance;
   }
   return classInfo;
 })();
