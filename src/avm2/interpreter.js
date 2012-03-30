@@ -30,7 +30,7 @@ var Interpreter = (function () {
 
       var exceptions = method.exceptions;
 
-      var locals = [$this === globalObject.JS ? globalObject : $this];
+      var locals = [$this];
       var scope = savedScope;
       var scopeHeight = 0;
       var stack = [];
@@ -361,7 +361,7 @@ var Interpreter = (function () {
           case OP_getouterscope:      notImplemented(); break;
           case OP_setpropertylate:    notImplemented(); break;
           case OP_deleteproperty:
-            multiname =createMultiname(multinames[bc.index]);
+            multiname = createMultiname(multinames[bc.index]);
             obj = stack.pop();
             deleteProperty(obj, multiname);
             break;

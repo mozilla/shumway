@@ -1,6 +1,8 @@
 const ALWAYS_INTERPRET = 0x1;
 const HEURISTIC_JIT = 0x2;
 
+const jsGlobal = (function() { return this || (1, eval)('this'); })();
+
 function defineReadOnlyProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
 }
@@ -99,7 +101,7 @@ function deleteProperty(obj, multiname) {
 }
 
 function applyType(factory, types) {
-  if (factory === globalObject.Vector) {
+  if (factory === builtins.Vector) {
     assert (types.length === 1);
     return Vector(types[0]);
   }
@@ -123,7 +125,7 @@ Array.coerce = function(x) {
   return x;
 };
 
-var globalObject = function () {
+var builtins = function () {
   var global = {};
   global.print = global.trace = function (val) {
     console.info(val);
@@ -248,11 +250,6 @@ var globalObject = function () {
   return global;
 }();
 
-function getTypeByName(multiname) {
-  assert (globalObject.hasOwnProperty(multiname.getQualifiedName()), "Cannot find type " + multiname);
-  return globalObject[multiname.getQualifiedName()];
-}
-
 function nextName(obj, index) {
   return obj.nextName(index);
 }
@@ -327,21 +324,12 @@ var Scope = (function () {
   function scope(parent, object) {
     this.parent = parent;
     this.object = object;
+    this.global = parent ? parent.global : this;
   }
-
-  Object.defineProperty(scope.prototype, "global", {
-    get: function () {
-      if (this.parent === null) {
-        return this;
-      } else {
-        return this.parent.global;
-      }
-    }
-  });
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
     // print("Looking for : " + multiname);
-    for (var i = 0; i < multiname.namespaces.length; i++) {
+    for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
       // if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
       if (multiname.getQName(i).getQualifiedName() in this.object) {
         return this.object;
@@ -349,6 +337,10 @@ var Scope = (function () {
     }
     if (this.parent) {
       return this.parent.findProperty(multiname, strict);
+    }
+    var obj;
+    if (obj = toplevel.findProperty(multiname)) {
+      return obj;
     }
     if (strict) {
       unexpected("Cannot find property " + multiname);
@@ -368,7 +360,7 @@ var Scope = (function () {
     if (this.parent) {
       return this.parent.resolveMultiname(multiname);
     }
-    return null;
+    return toplevel.resolveMultiname(multiname);
   };
 
   return scope;
@@ -441,6 +433,111 @@ function setProperty(obj, multiname, value) {
 }
 
 /**
+ * Global object for a script.
+ */
+var Global = (function () {
+
+  function Global(runtime, traits) {
+    runtime.applyTraits(this, traits);
+  }
+
+  Global.prototype = {
+    getProperty: function getProperty(multiname) {
+      for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
+        var qname = multiname.getQName(i).getQualifiedName();
+        if (this.hasOwnProperty(qname)) {
+          return this[qname];
+        }
+      }
+      return undefined;
+    },
+  };
+
+  return Global;
+
+})();
+
+/**
+ * Toplevel that keeps track of all parsed ABCs and caches stuff.
+ */
+const toplevel = (function () {
+
+  function Toplevel() {
+    /* All ABCs that have been parsed. */
+    this.abcs = [];
+
+    // TODO: Caching
+  }
+
+  Toplevel.prototype = {
+    getTypeByName: function getTypeByName(multiname) {
+      var abcs = this.abcs;
+      for (var i = 0, j = abcs.length; i < j; i++) {
+        var abc = abcs[i];
+        var scripts = abc.scripts;
+        for (var k = 0, l = scripts.length; k < l; k++) {
+          var script = scripts[k];
+          var prop;
+          if (prop = script.global.getProperty(multiname)) {
+            if (!script.executed) {
+              executeScript(abc, script);
+            }
+            return prop;
+          }
+        }
+      }
+      unexpected("Cannot find type " + multiname);
+    },
+
+    findProperty: function findProperty(multiname) {
+      var abcs = this.abcs;
+      for (var i = 0, j = abcs.length; i < j; i++) {
+        var abc = abcs[i];
+        var scripts = abc.scripts;
+        for (var k = 0, l = scripts.length; k < l; k++) {
+          var script = scripts[k];
+          if (script.global.getProperty(multiname)) {
+            if (!script.executed) {
+              executeScript(abc, script);
+            }
+            return script.global;
+          }
+        }
+      }
+      return null;
+    },
+
+    resolveMultiname: function resolveMultiname(multiname) {
+      var abcs = this.abcs;
+      for (var i = 0, j = abcs.length; i < j; i++) {
+        var abc = abcs[i];
+        var scripts = abc.scripts;
+        for (var k = 0, l = scripts.length; k < l; k++) {
+          var resolved = resolveMultiname(scripts[k].global, multiname);
+          /* XXX: Do we need this check here? */
+          if (!script.executed) {
+            executeScript(abc, script);
+          }
+          if (resolved) {
+            return resolved;
+          }
+        }
+      }
+      return null;
+    }
+  };
+
+
+  var toplevel = new Toplevel();
+  /* FIXME: Only in place until we can run playerglobals. */
+  builtins.__proto__ = Global.prototype;
+  toplevel.abcs.push({ scripts: [{ global: builtins,
+                                   executed: true }] });
+  return toplevel;
+
+})();
+
+/**
  * Execution context for a script.
  */
 var Runtime = (function () {
@@ -466,7 +563,7 @@ var Runtime = (function () {
      * All runtime exceptions are boxed in this object to tag them as having
      * originated from within the VM.
      */
-    this.exception = { value: null };
+    this.exception = { value: undefined };
   }
 
   runtime.prototype.createActivation = function (method) {
@@ -477,25 +574,26 @@ var Runtime = (function () {
     function closeOverScope(fn, scope) {
       return function () {
         Array.prototype.unshift.call(arguments, scope);
-        return fn.apply(this === globalObject.JS ? globalObject : this, arguments);
+        var global = (this === jsGlobal ? scope.global.object : this);
+        return fn.apply(global, arguments);
       };
     }
 
     function interpretedMethod(interpreter, method, scope) {
       return function () {
-        return interpreter.interpretMethod(this === globalObject.JS ? globalObject : this,
-                                           method, scope, arguments);
+        var global = (this === jsGlobal ? scope.global.object : this);
+        return interpreter.interpretMethod(global, method, scope, arguments);
       };
     }
 
     const mode = this.mode;
 
-    if (!method.activationPrototype) {
-      method.activationPrototype = this.applyTraits({}, method.traits);
-    }
-
+    /**
+     * We use not having an analysis to mean "not initialized".
+     */
     if (!method.analysis) {
       method.analysis = new Analysis(method, { massage: true });
+      method.activationPrototype = this.applyTraits({}, method.traits);
     }
 
     if (mode === ALWAYS_INTERPRET) {
@@ -644,11 +742,11 @@ var Runtime = (function () {
 
     function setProperty(name, slotId, value, typeName) {
       if (slotId) {
-        if (!typeName || getTypeByName(typeName) === null) {
+        if (!typeName || toplevel.getTypeByName(typeName) === null) {
           obj["S" + slotId] = value;
         } else {
           obj["$S" + slotId] = value;
-          var coerce = getTypeByName(typeName).coerce;
+          var coerce = toplevel.getTypeByName(typeName).coerce;
           assert (coerce, "No coercion function for type " + typeName);
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
@@ -700,9 +798,9 @@ var Runtime = (function () {
       if ((value | 0) !== value) {
         return false;
       }
-      if (type === globalObject.int) {
+      if (type === builtins.int) {
         return (value & 0xffffffff) === value;
-      } else if (type === globalObject.uint) {
+      } else if (type === builtins.uint) {
         return value >= 0 && value <= UINT_MAX_VALUE;
       }
       notImplemented();
@@ -715,21 +813,35 @@ var Runtime = (function () {
   return runtime;
 })();
 
-/**
- * Initializes an abc file's runtime and traits, and returns the entryPoint function.
- */
-function createEntryPoint(abc, global, mode) {
-  assert (!abc.hasOwnProperty("runtime"));
-  abc.runtime = new Runtime(abc, mode);
-  abc.runtime.applyTraits(global, abc.lastScript.traits, null, null);
-  return abc.runtime.createFunction(abc.lastScript.entryPoint, null);
+function executeScript(abc, script) {
+  abc.runtime.createFunction(script.init, null).call(script.global);
+  script.executed = true;
 }
 
 /**
  * This is the main entry point to the VM. To re-execute an abc file, call [createEntryPoint] once and
  * cache its result for repeated evaluation;
  */
-function executeAbc(abc, global, mode) {
-  var fn = createEntryPoint(abc, global, mode);
-  fn.call(global, null);
+function executeAbc(abc, mode) {
+  prepareAbc(abc, toplevel);
+  executeScript(abc, abc.lastScript);
+}
+
+function prepareAbc(abc, toplevel) {
+  toplevel.abcs.push(abc);
+
+  var runtime = new Runtime(abc, mode);
+  abc.runtime = runtime;
+
+  /**
+   * Initialize all the scripts inside the abc block and their globals in
+   * reverse order, since some content depends on the last script being
+   * initialized first or some shit.
+   */
+  var scripts = abc.scripts;
+  for (var i = scripts.length - 1; i >= 0; i--) {
+    var script = scripts[i];
+    var global = new Global(runtime, script.traits);
+    script.global = global;
+  }
 }

@@ -38,7 +38,7 @@
             var path = "../tests/regress/play.abc";
             new FileReader(path).readAll(null, function (buffer) {
                 var abc = new AbcFile(new Uint8Array(buffer));
-                executeAbc(abc, globalObject);
+                executeAbc(abc);
             });
         }
     </script>

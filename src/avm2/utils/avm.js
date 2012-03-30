@@ -69,7 +69,7 @@ if (execute.value) {
     if (alwaysInterpret.value) {
       mode = ALWAYS_INTERPRET;
     }
-    executeAbc(abc, globalObject, mode);
+    executeAbc(abc, mode);
   } catch(e) {
     print(e);
     print("");
