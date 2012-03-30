@@ -142,32 +142,32 @@ var Trait = (function () {
     assert(this.name.isQName(), "Name must be a QName: " + this.name + ", kind: " + this.kind);
 
     switch (this.kind) {
-      case TRAIT_Slot:
-      case TRAIT_Const:
-        this.slotId = stream.readU30();
-        this.typeName = constantPool.multinames[stream.readU30()];
-        var valueIndex = stream.readU30();
-        this.value = null;
-        if (valueIndex != 0) {
-          this.value = constantPool.getValue(stream.readU8(), valueIndex);
-        }
-        break;
-      case TRAIT_Method:
-      case TRAIT_Setter:
-      case TRAIT_Getter:
-        this.dispId = stream.readU30();
-        this.method = methods[stream.readU30()];
-        this.method.name = this.name;
-        break;
-      case TRAIT_Class:
-        this.slotId = stream.readU30();
-        assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
-        this.class = classes[stream.readU30()];
-        break;
-      case TRAIT_Function: // TODO
-        this.slotId = stream.readU30();
-        this.method = methods[stream.readU30()];
-        break;
+    case TRAIT_Slot:
+    case TRAIT_Const:
+      this.slotId = stream.readU30();
+      this.typeName = constantPool.multinames[stream.readU30()];
+      var valueIndex = stream.readU30();
+      this.value = null;
+      if (valueIndex != 0) {
+        this.value = constantPool.getValue(stream.readU8(), valueIndex);
+      }
+      break;
+    case TRAIT_Method:
+    case TRAIT_Setter:
+    case TRAIT_Getter:
+      this.dispId = stream.readU30();
+      this.method = methods[stream.readU30()];
+      this.method.name = this.name;
+      break;
+    case TRAIT_Class:
+      this.slotId = stream.readU30();
+      assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
+      this.class = classes[stream.readU30()];
+      break;
+    case TRAIT_Function: // TODO
+      this.slotId = stream.readU30();
+      this.method = methods[stream.readU30()];
+      break;
     }
 
     if (this.attributes & ATTR_Metadata) {
@@ -804,7 +804,7 @@ var MethodInfo = (function () {
     return ex;
   }
 
-  methodInfo.parseBody = function parseBody(constantPool, methods, stream) {
+  methodInfo.parseBody = function parseBody(constantPool, stream, methods) {
     var info = methods[stream.readU30()];
     assert (!info.isNative());
     info.maxStack = stream.readU30();
@@ -887,7 +887,6 @@ var ClassInfo = (function () {
 var ScriptInfo = (function scriptInfo() {
   function scriptInfo(constantPool, methods, classes, stream) {
     this.init = methods[stream.readU30()];
-    this.methods = methods;
     this.traits = parseTraits(constantPool, stream, methods, classes);
   }
   scriptInfo.prototype = {
@@ -942,7 +941,7 @@ var AbcFile = (function () {
     // Method body info just live inside methods
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      MethodInfo.parseBody(this.constantPool, this.methods, stream);
+      MethodInfo.parseBody(this.constantPool, stream, this.methods);
     }
   }
 
