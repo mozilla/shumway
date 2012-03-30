@@ -360,6 +360,8 @@ var Scope = (function () {
     if (this.parent) {
       return this.parent.resolveMultiname(multiname);
     }
+    // FIXME: This doesn't work since it also returns what global it's found
+    // in. When is this used?
     return toplevel.resolveMultiname(multiname);
   };
 
@@ -441,18 +443,6 @@ var Global = (function () {
     runtime.applyTraits(this, traits);
   }
 
-  Global.prototype = {
-    getProperty: function getProperty(multiname) {
-      for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
-        var qname = multiname.getQName(i).getQualifiedName();
-        if (this.hasOwnProperty(qname)) {
-          return this[qname];
-        }
-      }
-      return undefined;
-    },
-  };
-
   return Global;
 
 })();
@@ -471,55 +461,41 @@ const toplevel = (function () {
 
   Toplevel.prototype = {
     getTypeByName: function getTypeByName(multiname) {
-      var abcs = this.abcs;
-      for (var i = 0, j = abcs.length; i < j; i++) {
-        var abc = abcs[i];
-        var scripts = abc.scripts;
-        for (var k = 0, l = scripts.length; k < l; k++) {
-          var script = scripts[k];
-          var prop;
-          if (prop = script.global.getProperty(multiname)) {
-            if (!script.executed) {
-              executeScript(abc, script);
-            }
-            return prop;
-          }
-        }
+      var resolved = this.resolveMultiname(multiname);
+      if (resolved) {
+        return resolved.object[resolved.name.getQualifiedName()];
       }
       unexpected("Cannot find type " + multiname);
     },
 
     findProperty: function findProperty(multiname) {
+      var resolved = this.resolveMultiname(multiname);
+      if (resolved) {
+        return resolved.object;
+      }
+      return null;
+    },
+
+    resolveMultiname: function _resolveMultiname(multiname) {
       var abcs = this.abcs;
       for (var i = 0, j = abcs.length; i < j; i++) {
         var abc = abcs[i];
         var scripts = abc.scripts;
         for (var k = 0, l = scripts.length; k < l; k++) {
           var script = scripts[k];
-          if (script.global.getProperty(multiname)) {
+          var global = script.global;
+
+          if (multiname.isQName() &&
+              script.global.hasOwnProperty(multiname.getQualifiedName())) {
+            return { object: global, name: multiname };
+          }
+
+          var resolved = resolveMultiname(global, multiname, false);
+          if (resolved) {
             if (!script.executed) {
               executeScript(abc, script);
             }
-            return script.global;
-          }
-        }
-      }
-      return null;
-    },
-
-    resolveMultiname: function resolveMultiname(multiname) {
-      var abcs = this.abcs;
-      for (var i = 0, j = abcs.length; i < j; i++) {
-        var abc = abcs[i];
-        var scripts = abc.scripts;
-        for (var k = 0, l = scripts.length; k < l; k++) {
-          var resolved = resolveMultiname(scripts[k].global, multiname);
-          /* XXX: Do we need this check here? */
-          if (!script.executed) {
-            executeScript(abc, script);
-          }
-          if (resolved) {
-            return resolved;
+            return { object: global, name: resolved };
           }
         }
       }
