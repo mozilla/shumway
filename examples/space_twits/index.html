@@ -33,7 +33,14 @@
     <script type="text/javascript" src="../../src/avm2/interpreter.js"></script>
     <script type="text/javascript" src="../../src/avm2/runtime.js"></script>
     <script type="text/javascript" src="../../src/avm2/disassembler.js"></script>
-    
+
+    <script src="../../src/swf/util.js"></script>
+    <script src="../../src/swf/swf.js"></script>
+    <script>
+      SWF.workerPath = "../../src/swf/worker.js";
+    </script>
+    <script src="../../src/swf/worker.js"></script>
+
     <div id="title">Space Twits in Shumway</div>
 
     <div id="game">
@@ -58,21 +65,58 @@
     
     <script>
     (function() {
-        function loadImages(sources, cb) {
-            var n = sources.length, loaded = 0, images = [];
-            for (var i = 0; i < n; i++) {
-                var image = images[i] = new Image();
-                image.onload = function() {
+        var head = document.head;
+        head.insertBefore(document.createElement("style"), head.firstChild);
+        var style = document.styleSheets[0];
+        function loadAssets(ids, cb) {
+            var n = ids.length, loaded = 0, images = [], fonts = [],  i;
+            startWorking("../../examples/space_twits/twits.swf", function (obj) {
+              if (obj && obj.id && (i = ids.indexOf(obj.id)) > -1) {
+                switch (obj.type) {
+                  case "font":
+                    style.insertRule(
+                      "@font-face{" +
+                        "font-family:'" + obj.name + "';" +
+                        "src:url(data:font/opentype;base64," + btoa(obj.data) + ")" +
+                      "}",
+                      style.cssRules.length
+                    );
+                    fonts.push(obj.name);
                     if (++loaded >= n)
-                        cb(images);
-                };
-                image.src = sources[i];
-            }
+                      cb(images, fonts);
+                    break;
+                  case "image":
+                  case "shape":
+                    var image = images[i] = new Image();
+                    image.onload = function() {
+                      if (++loaded >= n)
+                        cb(images, fonts);
+                    };
+                    if (obj.type === "shape") {
+                      var canvas = document.createElement("canvas");
+                      var bounds = obj.bounds;
+                      canvas.width = (bounds.xMax - bounds.xMin) / 50;
+                      canvas.height = (bounds.yMax - bounds.yMin) / 50;
+                      var ctx = canvas.getContext("2d");
+                      ctx.scale(0.02, 0.02);
+                      (new Function("d,c,r",
+                        "with(c){\n" +
+                          obj.data + "\n" +
+                          "}"
+                      ))({ }, ctx, 0);
+                      image.src = canvas.toDataURL();
+                    } else {
+                      image.src = "data:" + obj.mimeType + ";base64," + btoa(obj.data);
+                    }
+                    break;
+                }
+              }
+            });
         }
-	console.log(globalObject);
-        var canvas = document.getElementById("scene");
-        loadImages(["spaceShip.png", "alien.png", "shot.png"], function(images) {
-          globalObject.private$twits$js$0$play(canvas.getContext("2d"), canvas.width, canvas.height, {
+        var stage = document.getElementById("scene");
+        loadAssets([7, 2, 10, 13], function(images, fonts) {
+          //document.body.style.fontFamily = document.getElementById("title").style.fontFamily = fonts[0];
+          globalObject.private$twits$js$0$play(stage.getContext("2d"), stage.width, stage.height, {
                 spaceShip: images[0],
                 alien: images[1],
                 shot: images[2]
