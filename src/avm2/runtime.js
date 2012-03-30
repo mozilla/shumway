@@ -465,7 +465,7 @@ const toplevel = (function () {
       if (resolved) {
         return resolved.object[resolved.name.getQualifiedName()];
       }
-      unexpected("Cannot find type " + multiname);
+      return unexpected("Cannot find type " + multiname);
     },
 
     findProperty: function findProperty(multiname) {
@@ -547,6 +547,12 @@ var Runtime = (function () {
   };
 
   runtime.prototype.createFunction = function (method, scope) {
+    if (method.isNative()) {
+      return function() {
+        print("Calling undefined native method: " + method);
+      };
+    }
+
     function closeOverScope(fn, scope) {
       return function () {
         Array.prototype.unshift.call(arguments, scope);
@@ -661,7 +667,8 @@ var Runtime = (function () {
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
 
-    this.applyTraits(cls.prototype, instanceTraits, baseClass.instanceTraits, scope);
+    var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
+    this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
     this.applyTraits(cls, classInfo.traits, null, scope);
 
     /* Call the static constructor. */
@@ -716,14 +723,13 @@ var Runtime = (function () {
       traits.lastSlotId = freshSlotId;
     }
 
-    function setProperty(name, slotId, value, typeName) {
+    function setProperty(name, slotId, value, type) {
       if (slotId) {
-        if (!typeName || toplevel.getTypeByName(typeName) === null) {
+        if (!type || !type.coerce) {
           obj["S" + slotId] = value;
         } else {
           obj["$S" + slotId] = value;
-          var coerce = toplevel.getTypeByName(typeName).coerce;
-          assert (coerce, "No coercion function for type " + typeName);
+          var coerce = type.coerce;
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
               return this["$S" + slotId];
@@ -733,6 +739,10 @@ var Runtime = (function () {
             }
           });
         }
+        if (name === "length") {
+          return;
+        }
+        assert (!(name in obj), "Name " + name + " already exists in " + obj);
         Object.defineProperty(obj, name, {
           get: function () {
             return this["S" + slotId];
@@ -754,8 +764,9 @@ var Runtime = (function () {
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
       if (trait.isSlot() || trait.isConst()) {
-        setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, trait.typeName);
-      } else if (trait.isMethod()) {
+        var type = trait.typeName ? toplevel.getTypeByName(trait.typeName) : null;
+        setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
+      } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
         var closure = this.createFunction(trait.method, new Scope(scope, obj));
         setProperty(trait.name.getQualifiedName(), undefined, closure);
