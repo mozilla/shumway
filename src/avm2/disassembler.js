@@ -1,3 +1,5 @@
+var filter = options.register(new Option("filter", "f", "pciMsm", "constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods"));
+
 var IndentingWriter = (function () {
   function indentingWriter(suppressOutput) {
     this.tab = "  ";
@@ -68,12 +70,24 @@ function traceArray(writer, name, array, abc) {
 }
 
 AbcFile.prototype.trace = function trace(writer) {
-  this.constantPool.trace(writer);
-  traceArray(writer, "classes", this.classes);
-  traceArray(writer, "instances", this.instances);
-  // traceArray(writer, "metadata", this.metadata);
-  traceArray(writer, "scripts", this.scripts);
-  traceArray(writer, "methods", this.methods, this);
+  if (filter.value.indexOf("p") >= 0) {
+    this.constantPool.trace(writer);
+  }
+  if (filter.value.indexOf("c") >= 0) {
+    traceArray(writer, "classes", this.classes);
+  }
+  if (filter.value.indexOf("i") >= 0) {
+    traceArray(writer, "instances", this.instances);
+  }
+  if (filter.value.indexOf("M") >= 0) {
+    // traceArray(writer, "metadata", this.metadata);
+  }
+  if (filter.value.indexOf("s") >= 0) {
+    traceArray(writer, "scripts", this.scripts);
+  }
+  if (filter.value.indexOf("m") >= 0) {
+    traceArray(writer, "methods", this.methods, this);
+  }
 };
 
 ConstantPool.prototype.trace = function (writer) {
