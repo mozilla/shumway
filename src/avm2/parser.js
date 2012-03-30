@@ -117,9 +117,9 @@ var AbcStream = (function () {
   return abcStream;
 })();
 
-function Traits(traits) {
+function Traits(traits, verified) {
   this.traits = traits;
-  this.verified = false;
+  this.verified = verified === undefined ? false : verified;
 }
 
 function parseTraits(constantPool, stream, methods, classes) {
