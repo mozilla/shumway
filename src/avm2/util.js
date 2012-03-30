@@ -172,7 +172,7 @@ var OptionSet = (function () {
       option.trace(writer);
     });
     writer.leave("}");
-  }
+  };
   return optionSet;
 })();
 
@@ -185,7 +185,7 @@ var Option = (function () {
     this.description = description;
   }
   option.prototype.trace = function trace(writer) {
-    writer.writeLn(("-" + this.shortName + " (" + this.name + ")").padRight(" ", 20) + " = " + this.value + " [" + this.defaultValue + "]" + " (" + this.description + ")")
+    writer.writeLn(("-" + this.shortName + " (" + this.name + ")").padRight(" ", 20) + " = " + this.value + " [" + this.defaultValue + "]" + " (" + this.description + ")");
   };
   option.prototype.tryParse = function tryParse(str) {
     if (str.indexOf("-" + this.shortName) === 0) {
@@ -197,7 +197,7 @@ var Option = (function () {
       return true;
     }
     return false;
-  }
+  };
   return option;
 })();
 
