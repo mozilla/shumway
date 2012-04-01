@@ -16,10 +16,18 @@ load("../parser.js");
 load("../disassembler.js");
 load("../analyze.js");
 load("../compiler.js");
+load("../native.js");
 load("../runtime.js");
 load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
+
+/* TODO: Load SWF code to parse ABCs from playerglobals.swf.
+var swfScripts = 'util.js,swf.js,types.js,structs.js,tags.js,inflate.js,stream.js,templates.js,' +
+                 'generator.js,parser.js,bitmap.js,font.js,image.js,label.js,shape.js,text.js,cast.js';
+
+load.apply(null, swfScripts.split(',').map(function (file) { return "../../swf/" + file; }));
+*/
 
 if (arguments.length === 0) {
   printUsage();
@@ -39,7 +47,7 @@ if (help.value) {
   quit();
 }
 
-var abc = new AbcFile(snarf(file, "binary"));
+var abc = new AbcFile(snarf(file, "binary"), file);
 var methodBodies = abc.methodBodies;
 
 if (disassemble.value) {
@@ -64,6 +72,10 @@ if (traceGraphViz.value) {
 }
 
 if (execute.value) {
+  for (var i = 0; i < 300; i++) {
+    var libPath = "../playerGlobal/library-" + i + ".abc";
+    prepareAbc(new AbcFile(snarf(libPath, "binary"), libPath), ALWAYS_INTERPRET);
+  }
   try {
     var mode;
     if (alwaysInterpret.value) {

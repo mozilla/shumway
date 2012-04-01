@@ -240,7 +240,7 @@ var Namespace = (function () {
 
   function namespace(constantPool, stream) {
     this.kind = stream.readU8();
-    this.name = constantPool.strings[stream.readU30()].replace(/\./gi,"$"); /* No dots. */
+    this.name = constantPool.strings[stream.readU30()].replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
 
     switch(this.kind) {
       case CONSTANT_Namespace:
@@ -278,7 +278,7 @@ var Namespace = (function () {
 
     switch(this.type) {
     case PUBLIC:
-      this.qualifiedName = this.name;
+      this.qualifiedName = suffix("public", this.name);
       break;
     case PROTECTED:
       this.qualifiedName = suffix("protected", this.name);
@@ -320,6 +320,7 @@ var Namespace = (function () {
   return namespace;
 })();
 
+/*
 function getQualifiedName(ns, name) {
   if (ns.isPublic() && ns.name === "") {
     return name;
@@ -327,6 +328,7 @@ function getQualifiedName(ns, name) {
     return ns.qualifiedName + "$" + name;
   }
 }
+*/
 
 /**
  * Section 2.3 and 4.4.3
@@ -568,7 +570,7 @@ var Multiname = (function () {
     assert(this.isQName());
     var ns = this.namespaces[0];
     if (ns.isPublic() && ns.name === "") {
-      return this.getName();
+      return "public$" + this.getName();
     } else {
       return ns + "$" + this.getName();
     }
@@ -888,6 +890,7 @@ var ScriptInfo = (function scriptInfo() {
   function scriptInfo(constantPool, methods, classes, stream) {
     this.init = methods[stream.readU30()];
     this.traits = parseTraits(constantPool, stream, methods, classes);
+    this.traits.verified = true;
   }
   scriptInfo.prototype = {
     get entryPoint() {
@@ -898,7 +901,9 @@ var ScriptInfo = (function scriptInfo() {
 })();
 
 var AbcFile = (function () {
-  function abcFile(bytes) {
+  function abcFile(bytes, name) {
+    this.name = name;
+
     var n, i;
     var stream = new AbcStream(bytes);
     checkMagic(stream);
@@ -957,6 +962,9 @@ var AbcFile = (function () {
     get lastScript() {
       assert (this.scripts.length > 0);
       return this.scripts[this.scripts.length - 1];
+    },
+    toString: function () {
+      return this.name;
     }
   };
 

@@ -1,3 +1,7 @@
+var traceScope = options.register(new Option("traceScope", "ts", false, "trace scope execution"));
+var traceToplevel = options.register(new Option("traceToplevel", "ttl", false, "trace top level execution"));
+var traceExecution = options.register(new Option("traceExecution", "tx", false, "trace script execution"));
+
 const ALWAYS_INTERPRET = 0x1;
 const HEURISTIC_JIT = 0x2;
 
@@ -10,6 +14,15 @@ function defineReadOnlyProperty(obj, name, value) {
 function defineGetterAndSetter(obj, name, getter, setter) {
   Object.defineProperty(obj, name, { get: getter, set: setter });
 }
+
+defineGetterAndSetter(Object, "public$prototype",
+  function () {
+    return this.prototype;
+  },
+  function (p) {
+    this.prototype = p;
+  }
+);
 
 /**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
@@ -48,6 +61,15 @@ defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
   assert (index > 0 && index < keys.length + 1);
   return keys[index - 1];
 });
+
+var builtinClasses = (function () {
+  var builtins = {};
+  // TODO: Figure out why adding Function here blows the stack.
+  [Object, Number, String, Array, Boolean].forEach(function (cls) {
+    builtins[cls.name] = cls;
+  });
+  return builtins;
+})();
 
 function toDouble(x) {
   return Number(x);
@@ -101,7 +123,7 @@ function deleteProperty(obj, multiname) {
 }
 
 function applyType(factory, types) {
-  if (factory === builtins.Vector) {
+  if (factory === toplevel.Vector) {
     assert (types.length === 1);
     return Vector(types[0]);
   }
@@ -203,9 +225,11 @@ var Scope = (function () {
   }
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
-    // print("Looking for : " + multiname);
+    if (traceScope.value) {
+      print("Scope Find Property: " + multiname);
+    }
+    assert (this.object);
     for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
-      // if (this.object.hasOwnProperty(multiname.getQName(i).getQualifiedName())) {
       if (multiname.getQName(i).getQualifiedName() in this.object) {
         return this.object;
       }
@@ -214,7 +238,7 @@ var Scope = (function () {
       return this.parent.findProperty(multiname, strict);
     }
     var obj;
-    if (obj = toplevel.findProperty(multiname)) {
+    if ((obj = toplevel.findProperty(multiname, strict, true))) {
       return obj;
     }
     if (strict) {
@@ -240,6 +264,14 @@ var Scope = (function () {
     return toplevel.resolveMultiname(multiname);
   };
 
+  scope.prototype.trace = function () {
+    var current = this;
+    while (current) {
+      print(current.object + (current.object ? " - " + current.object.debugName : ""));
+      current = current.parent;
+    }
+  };
+
   return scope;
 })();
 
@@ -248,7 +280,7 @@ var Scope = (function () {
  * with the qualified name.
  */
 function resolveMultiname(obj, multiname, checkPrototype) {
-  assert (!multiname.isQName(), "We shouldn't resolve already resolved names.");
+  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: " + multiname);
   obj = Object(obj);
   for (var i = 0, count = multiname.namespaces.length; i < count; i++) {
     var name = multiname.getQName(i);
@@ -303,8 +335,8 @@ function setProperty(obj, multiname, value) {
           break;
         }
       }
-      assert(multiname.getQName(publicNSIndex).getQualifiedName() === multiname.name);
-      obj[multiname.name] = value;
+      assert(multiname.getQName(publicNSIndex).getQualifiedName() === "public$" + multiname.name);
+      obj["public$" + multiname.name] = value;
     }
   }
 }
@@ -313,13 +345,12 @@ function setProperty(obj, multiname, value) {
  * Global object for a script.
  */
 var Global = (function () {
-
-  function Global(runtime, traits) {
-    runtime.applyTraits(this, traits);
+  function Global(runtime, script) {
+    script.global = this;
+    runtime.applyTraits(this, script.traits, undefined, new Scope(null, this));
+    script.loaded = true;
   }
-
   return Global;
-
 })();
 
 /**
@@ -335,23 +366,40 @@ const toplevel = (function () {
   }
 
   Toplevel.prototype = {
-    getTypeByName: function getTypeByName(multiname) {
-      var resolved = this.resolveMultiname(multiname);
+    getTypeByName: function getTypeByName(multiname, strict, execute) {
+      var resolved = this.resolveMultiname(multiname, execute);
       if (resolved) {
         return resolved.object[resolved.name.getQualifiedName()];
       }
-      return unexpected("Cannot find type " + multiname);
+      if (strict) {
+        return unexpected("Cannot find type " + multiname);
+      } else {
+        return null;
+      }
     },
 
-    findProperty: function findProperty(multiname) {
-      var resolved = this.resolveMultiname(multiname);
+    findProperty: function findProperty(multiname, strict, execute) {
+      if (traceToplevel.value) {
+        print("Toplevel Find Property: " + multiname);
+      }
+      var resolved = this.resolveMultiname(multiname, execute);
       if (resolved) {
         return resolved.object;
+      }
+      if (strict) {
+        return unexpected("Cannot find property " + multiname);
+      } else {
+        return null;
       }
       return null;
     },
 
-    resolveMultiname: function _resolveMultiname(multiname) {
+    resolveMultiname: function _resolveMultiname(multiname, execute) {
+      function ensureScriptIsExecuted(abc, script) {
+        if (!script.executed && !script.executing) {
+          executeScript(abc, script);
+        }
+      }
       var abcs = this.abcs;
       for (var i = 0, j = abcs.length; i < j; i++) {
         var abc = abcs[i];
@@ -359,18 +407,26 @@ const toplevel = (function () {
         for (var k = 0, l = scripts.length; k < l; k++) {
           var script = scripts[k];
           var global = script.global;
-
-          if (multiname.isQName() &&
-              script.global.hasOwnProperty(multiname.getQualifiedName())) {
-            return { object: global, name: multiname };
-          }
-
-          var resolved = resolveMultiname(global, multiname, false);
-          if (resolved) {
-            if (!script.executed) {
-              executeScript(abc, script);
+          if (multiname.isQName()) {
+            if (script.global.hasOwnProperty(multiname.getQualifiedName())) {
+              if (traceToplevel.value) {
+                print("Toplevel Resolved Multiname: " + multiname + " in " + abc + ", script: " + k);
+                print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
+                print("Value is: " + script.global[multiname.getQualifiedName()]);
+              }
+              if (execute) {
+                ensureScriptIsExecuted(abc, script);
+              }
+              return { object: global, name: multiname };
             }
-            return { object: global, name: resolved };
+          } else {
+            var resolved = resolveMultiname(global, multiname, false);
+            if (resolved) {
+              if (execute) {
+                ensureScriptIsExecuted(abc, script);
+              }
+              return { object: global, name: resolved };
+            }
           }
         }
       }
@@ -381,9 +437,9 @@ const toplevel = (function () {
 
   var toplevel = new Toplevel();
   /* FIXME: Only in place until we can run playerglobals. */
-  builtins.__proto__ = Global.prototype;
-  toplevel.abcs.push({ scripts: [{ global: builtins,
-                                   executed: true }] });
+  // builtins.__proto__ = Global.prototype;
+  // toplevel.abcs.push({ scripts: [{ global: builtins,
+  //                                 executed: true }] });
   return toplevel;
 
 })();
@@ -423,9 +479,10 @@ var Runtime = (function () {
 
   runtime.prototype.createFunction = function (method, scope) {
     if (method.isNative()) {
-      return function() {
-        print("Calling undefined native method: " + method);
-      };
+      return natives[method.name.getQualifiedName()] ||
+        function() {
+          print("Calling undefined native method: " + method);
+        };
     }
 
     function closeOverScope(fn, scope) {
@@ -470,6 +527,7 @@ var Runtime = (function () {
     var parameters = method.parameters.map(function (p) {
       return p.name;
     });
+
     parameters.unshift(SAVED_SCOPE_NAME);
 
     function flatten(array, indent) {
@@ -529,8 +587,13 @@ var Runtime = (function () {
    */
   runtime.prototype.createClass = function createClass(classInfo, baseClass, scope) {
     scope = new Scope(scope, null);
+    var className = classInfo.instance.name.name;
+    if (traceExecution.value) {
+      print("Creating class " + className  + (builtinClasses[className] ? " replaced with builtin " + builtinClasses[className].name : ""));
+    }
 
-    var cls = this.createFunction(classInfo.instance.init, scope);
+    var cls = builtinClasses[className] || this.createFunction(classInfo.instance.init, scope);
+    cls.debugName = "Class: " + className;
     scope.object = cls;
 
     var instanceTraits = classInfo.instance.traits;
@@ -541,6 +604,7 @@ var Runtime = (function () {
     cls.instanceTraits = instanceTraits;
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
+    cls.prototype.debugName = "Class.prototype: " + className;
 
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
@@ -572,6 +636,9 @@ var Runtime = (function () {
    * are stored in traints. To do this, we introduce yet another level of indirection. In the
    * above example, if "Age" is of type "int" then we store the real value in the property "$S7",
    * and use a setter in the property "S7" to do the type coercion.
+   *
+   * The |scope| must be passed in if the traits include method traits, which have to be bound to
+   * a scope.
    */
   runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope) {
     function computeAndVerifySlotIds(traits, base) {
@@ -599,34 +666,43 @@ var Runtime = (function () {
     }
 
     function setProperty(name, slotId, value, type) {
+      // print("Setting Property: " + name + ", slot: " + slotId + ", in: " + obj.debugName);
       if (slotId) {
-        if (!type || !type.coerce) {
-          obj["S" + slotId] = value;
-        } else {
-          obj["$S" + slotId] = value;
-          var coerce = type.coerce;
+        if (name in obj) {
+          assert (!type || !type.coerce);
           Object.defineProperty(obj, "S" + slotId, {
             get: function () {
-              return this["$S" + slotId];
+              return this[name];
             },
             set: function (val) {
-              return this["$S" + slotId] = coerce(val);
+              return this[name];
+            }
+          });
+        } else {
+          if (!type || !type.coerce) {
+            obj["S" + slotId] = value;
+          } else {
+            obj["$S" + slotId] = value;
+            var coerce = type.coerce;
+            Object.defineProperty(obj, "S" + slotId, {
+              get: function () {
+                return this["$S" + slotId];
+              },
+              set: function (val) {
+                return this["$S" + slotId] = coerce(val);
+              }
+            });
+          }
+          Object.defineProperty(obj, name, {
+            get: function () {
+              return this["S" + slotId];
+            },
+            set: function (val) {
+              return this["S" + slotId] = val;
             }
           });
         }
-        if (name === "length") {
-          return;
-        }
-        assert (!(name in obj), "Name " + name + " already exists in " + obj);
-        Object.defineProperty(obj, name, {
-          get: function () {
-            return this["S" + slotId];
-          },
-          set: function (val) {
-            return this["S" + slotId] = val;
-          }
-        });
-      } else {
+      } else if (!(name in obj)) {
         obj[name] = value;
       }
     }
@@ -639,7 +715,7 @@ var Runtime = (function () {
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
       if (trait.isSlot() || trait.isConst()) {
-        var type = trait.typeName ? toplevel.getTypeByName(trait.typeName) : null;
+        var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
         setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
@@ -660,12 +736,12 @@ var Runtime = (function () {
       if ((value | 0) !== value) {
         return false;
       }
-      if (type === builtins.int) {
+      if (type === builtinClasses.int) {
         return (value & 0xffffffff) === value;
-      } else if (type === builtins.uint) {
+      } else if (type === builtinClasses.uint) {
         return value >= 0 && value <= UINT_MAX_VALUE;
       }
-      notImplemented();
+      notImplemented(type);
     }
     return false;
   };
@@ -676,6 +752,14 @@ var Runtime = (function () {
 })();
 
 function executeScript(abc, script) {
+  if (disassemble.value) {
+    abc.trace(new IndentingWriter(false));
+  }
+  if (traceExecution.value) {
+    print("Executing : " + abc + ", script: " + script);
+  }
+  assert (!script.executing && !script.executed);
+  script.executing = true;
   abc.runtime.createFunction(script.init, null).call(script.global);
   script.executed = true;
 }
@@ -685,11 +769,14 @@ function executeScript(abc, script) {
  * cache its result for repeated evaluation;
  */
 function executeAbc(abc, mode) {
-  prepareAbc(abc, toplevel);
+  prepareAbc(abc, mode);
   executeScript(abc, abc.lastScript);
 }
 
-function prepareAbc(abc, toplevel) {
+function prepareAbc(abc, mode) {
+  if (traceExecution.value) {
+    print("Loading: " + abc);
+  }
   toplevel.abcs.push(abc);
 
   var runtime = new Runtime(abc, mode);
@@ -703,7 +790,6 @@ function prepareAbc(abc, toplevel) {
   var scripts = abc.scripts;
   for (var i = scripts.length - 1; i >= 0; i--) {
     var script = scripts[i];
-    var global = new Global(runtime, script.traits);
-    script.global = global;
+    var global = new Global(runtime, script);
   }
 }
