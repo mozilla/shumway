@@ -191,8 +191,10 @@ var Option = (function () {
     if (str.indexOf("-" + this.shortName) === 0) {
       if (str.indexOf("=") >= 0) {
         this.value = eval(str.slice(str.indexOf("=") + 1).trim());
-      } else {
+      } else if (str == "-" + this.shortName) {
         this.value = true;
+      } else {
+        return false;
       }
       return true;
     }
