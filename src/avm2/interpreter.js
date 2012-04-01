@@ -1,3 +1,6 @@
+var traceInterpreter = options.register(new Option("traceInterpreter", "ti", 0, "trace interpreter execution"));
+
+
 var Interpreter = (function () {
 
   const Operator = Compiler.Operator;
@@ -405,9 +408,7 @@ var Interpreter = (function () {
           case OP_coerce_i:       notImplemented(); break;
           case OP_coerce_d:       notImplemented(); break;
           case OP_coerce_s:
-            // TODO: Temporary implementation, totally broken.
-            obj = stack.pop();
-            stack.push(obj === null || obj === undefined ? null : obj.toString());
+            stack.push(coerceString(stack.pop()));
             break;
           case OP_astype:         notImplemented(); break;
           case OP_astypelate:     notImplemented(); break;
@@ -535,8 +536,14 @@ var Interpreter = (function () {
             break;
           case OP_debug:
           case OP_debugline:
+            if (traceInterpreter.value > 0) {
+              print("line: " + bc.lineNumber);
+            }
+            break;
           case OP_debugfile:
-            /* NOP */
+            if (traceInterpreter.value > 0) {
+              print("file: " + strings[bc.index]);
+            }
             break;
           case OP_bkptline:       notImplemented(); break;
           case OP_timestamp:      notImplemented(); break;
