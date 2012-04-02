@@ -301,15 +301,14 @@ function resolveMultiname(obj, multiname, checkPrototype) {
 }
 
 function getProperty(obj, multiname) {
+  if (typeof multiname.name === "number") {
+    return obj[GET_ACCESSOR](multiname.name);
+  }
   if (multiname.isQName()) {
-    if (typeof multiname.name === "number") {
-      return obj[GET_ACCESSOR](multiname.name);
-    } else {
-      if (tracePropertyAccess.value) {
-        print("getProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
-      }
-      return obj[multiname.getQualifiedName()];
+    if (tracePropertyAccess.value) {
+      print("getProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
     }
+    return obj[multiname.getQualifiedName()];
   } else {
     var resolved = resolveMultiname(obj, multiname, true);
     if (resolved) {
@@ -323,15 +322,15 @@ function getProperty(obj, multiname) {
 }
 
 function setProperty(obj, multiname, value) {
+  if (typeof multiname.name === "number") {
+    obj[SET_ACCESSOR](multiname.name, value);
+    return;
+  }
   if (multiname.isQName()) {
-    if (typeof multiname.name === "number") {
-      obj[SET_ACCESSOR](multiname.name, value);
-    } else {
-      if (tracePropertyAccess.value) {
-        print("setProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
-      }
-      obj[multiname.getQualifiedName()] = value;
+    if (tracePropertyAccess.value) {
+      print("setProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
     }
+    obj[multiname.getQualifiedName()] = value;
   } else {
     var resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
     if (resolved) {
