@@ -2,6 +2,7 @@ var traceScope = options.register(new Option("traceScope", "ts", false, "trace s
 var traceToplevel = options.register(new Option("traceToplevel", "ttl", false, "trace top level execution"));
 var traceClasses = options.register(new Option("traceClasses", "tc", false, "trace class creation"));
 var traceExecution = options.register(new Option("traceExecution", "tx", false, "trace script execution"));
+var tracePropertyAccess = options.register(new Option("tracePropertyAccess", "tpa", false, "trace property access"));
 
 const ALWAYS_INTERPRET = 0x1;
 const HEURISTIC_JIT = 0x2;
@@ -60,6 +61,16 @@ var builtinClasses = (function () {
   [Object, Number, String, Array, Boolean].forEach(function (cls) {
     builtins[cls.name] = cls;
   });
+
+
+  builtins.int = function int(x) {
+    return Number(x) | 0;
+  };
+
+  builtins.uint = function uint(x) {
+    return Number(x) >>> 0;
+  };
+
   return builtins;
 })();
 
@@ -217,8 +228,8 @@ var Scope = (function () {
   }
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
-    if (traceScope.value) {
-      print("Scope Find Property: " + multiname);
+    if (traceScope.value || tracePropertyAccess.value) {
+      print("scopeFindProperty: " + multiname);
     }
     assert (this.object);
     for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
@@ -294,13 +305,17 @@ function getProperty(obj, multiname) {
     if (typeof multiname.name === "number") {
       return obj[GET_ACCESSOR](multiname.name);
     } else {
+      if (tracePropertyAccess.value) {
+        print("getProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
+      }
       return obj[multiname.getQualifiedName()];
     }
   } else {
     var resolved = resolveMultiname(obj, multiname, true);
     if (resolved) {
-      print("resolved " + resolved);
-      print(obj[resolved.getQualifiedName()]);
+      if (tracePropertyAccess.value) {
+        print("getProperty: resolved multiname: " + resolved + " value: " + obj[resolved.getQualifiedName()]);
+      }
       return obj[resolved.getQualifiedName()];
     }
   }
@@ -312,11 +327,17 @@ function setProperty(obj, multiname, value) {
     if (typeof multiname.name === "number") {
       obj[SET_ACCESSOR](multiname.name, value);
     } else {
+      if (tracePropertyAccess.value) {
+        print("setProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
+      }
       obj[multiname.getQualifiedName()] = value;
     }
   } else {
     var resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
     if (resolved) {
+      if (tracePropertyAccess.value) {
+        print("setProperty: resolved multiname: " + resolved + " value: " + value);
+      }
       obj[resolved.getQualifiedName()] = value;
     } else {
       // If we can't resolve the multiname, we're probably adding a dynamic
@@ -328,6 +349,9 @@ function setProperty(obj, multiname, value) {
           publicNSIndex = i;
           break;
         }
+      }
+      if (tracePropertyAccess.value) {
+        print("setProperty: adding public: " + multiname + " value: " + value);
       }
       assert(multiname.getQName(publicNSIndex).getQualifiedName() === "public$" + multiname.name);
       obj["public$" + multiname.name] = value;
@@ -599,14 +623,18 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
     cls.instanceTraits = instanceTraits;
+
+    /**
+     * Each AS3 class needs its own explicit public prototype.
+     */
     defineGetterAndSetter(cls, "public$prototype",
-                          function () {
-                            return this.prototype;
-                          },
-                          function (p) {
-                            this.prototype = p;
-                          }
-                         );
+      function () {
+        return this.prototype;
+      },
+      function (p) {
+        this.prototype = p;
+      }
+    );
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
     cls.prototype.debugName = "[class " + className + "].prototype";
