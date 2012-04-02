@@ -1,8 +1,11 @@
 var natives = {
-  "public$trace": function (message) {
+  "public$trace": function trace(message) {
     print(message);
   },
-  "staticProtected$Object$_setPropertyIsEnumerable": function (obj, name, isEnum) {
+  "staticProtected$Object$_setPropertyIsEnumerable": function _setPropertyIsEnumerable(obj, name, isEnum) {
     Object.defineProperty(obj, name, {enumerable: isEnum});
+  },
+  "private$Number$_minValue": function _minValue() {
+    return Number.MIN_VALUE;
   }
 };
