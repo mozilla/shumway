@@ -481,7 +481,7 @@ var Runtime = (function () {
     if (method.isNative()) {
       return natives[method.name.getQualifiedName()] ||
         function() {
-          print("Calling undefined native method: " + method);
+          print("Calling undefined native method: " + method.name.getQualifiedName());
         };
     }
 
@@ -593,7 +593,7 @@ var Runtime = (function () {
     }
 
     var cls = builtinClasses[className] || this.createFunction(classInfo.instance.init, scope);
-    cls.debugName = "Class: " + className;
+    cls.debugName = "[class " + className + "]";
     scope.object = cls;
 
     var instanceTraits = classInfo.instance.traits;
@@ -604,7 +604,7 @@ var Runtime = (function () {
     cls.instanceTraits = instanceTraits;
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
-    cls.prototype.debugName = "Class.prototype: " + className;
+    cls.prototype.debugName = "[class " + className + "].prototype";
 
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
