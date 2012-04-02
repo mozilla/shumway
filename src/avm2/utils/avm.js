@@ -72,7 +72,7 @@ if (traceGraphViz.value) {
 }
 
 if (execute.value) {
-  for (var i = 0; i < 300; i++) {
+  for (var i = 0; i < 375; i++) {
     var libPath = "../playerGlobal/library-" + i + ".abc";
     prepareAbc(new AbcFile(snarf(libPath, "binary"), libPath), ALWAYS_INTERPRET);
   }
