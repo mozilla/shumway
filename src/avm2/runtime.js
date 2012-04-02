@@ -1,5 +1,6 @@
 var traceScope = options.register(new Option("traceScope", "ts", false, "trace scope execution"));
 var traceToplevel = options.register(new Option("traceToplevel", "ttl", false, "trace top level execution"));
+var traceClasses = options.register(new Option("traceClasses", "tc", false, "trace class creation"));
 var traceExecution = options.register(new Option("traceExecution", "tx", false, "trace script execution"));
 
 const ALWAYS_INTERPRET = 0x1;
@@ -14,15 +15,6 @@ function defineReadOnlyProperty(obj, name, value) {
 function defineGetterAndSetter(obj, name, getter, setter) {
   Object.defineProperty(obj, name, { get: getter, set: setter });
 }
-
-defineGetterAndSetter(Object, "public$prototype",
-  function () {
-    return this.prototype;
-  },
-  function (p) {
-    this.prototype = p;
-  }
-);
 
 /**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
@@ -307,6 +299,8 @@ function getProperty(obj, multiname) {
   } else {
     var resolved = resolveMultiname(obj, multiname, true);
     if (resolved) {
+      print("resolved " + resolved);
+      print(obj[resolved.getQualifiedName()]);
       return obj[resolved.getQualifiedName()];
     }
   }
@@ -362,6 +356,8 @@ const toplevel = (function () {
     /* All ABCs that have been parsed. */
     this.abcs = [];
 
+    /* Classes that have been loaded. */
+    this.loadedClasses = [];
     // TODO: Caching
   }
 
@@ -459,6 +455,7 @@ var Runtime = (function () {
       return this.m;
     }
   };
+
 
   function runtime(abc, mode) {
     this.abc = abc;
@@ -602,6 +599,14 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
     cls.instanceTraits = instanceTraits;
+    defineGetterAndSetter(cls, "public$prototype",
+                          function () {
+                            return this.prototype;
+                          },
+                          function (p) {
+                            this.prototype = p;
+                          }
+                         );
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
     cls.prototype.debugName = "[class " + className + "].prototype";
@@ -609,6 +614,19 @@ var Runtime = (function () {
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
     this.applyTraits(cls, classInfo.traits, null, scope);
+
+    if (traceClasses.value) {
+      toplevel.loadedClasses.push(cls);
+      var writer = new IndentingWriter();
+      writer.enter(cls.debugName + " {");
+      writer.enter("instance");
+      writer.writeArray(Object.keys(cls.prototype));
+      writer.leave("");
+      writer.enter("static");
+      writer.writeArray(Object.keys(cls));
+      writer.leave("");
+      writer.leave("}");
+    }
 
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
@@ -771,6 +789,21 @@ function executeScript(abc, script) {
 function executeAbc(abc, mode) {
   prepareAbc(abc, mode);
   executeScript(abc, abc.lastScript);
+  if (traceClasses.value) {
+    var writer = new IndentingWriter();
+    writer.enter("Loaded Classes");
+    toplevel.loadedClasses.forEach(function (cls) {
+      writer.enter(cls.debugName + " {");
+      writer.enter("instance");
+      writer.writeArray(Object.keys(cls.prototype));
+      writer.leave("");
+      writer.enter("static");
+      writer.writeArray(Object.keys(cls));
+      writer.leave("");
+      writer.leave("}");
+    });
+    writer.leave("");
+  }
 }
 
 function prepareAbc(abc, mode) {
