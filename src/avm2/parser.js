@@ -122,17 +122,22 @@ function Traits(traits, verified) {
   this.verified = verified === undefined ? false : verified;
 }
 
-function parseTraits(constantPool, stream, methods, classes) {
+function parseTraits(abc, stream) {
   var count = stream.readU30();
   var traits = [];
   for (var i = 0; i < count; i++) {
-    traits.push(new Trait(constantPool, stream, methods, classes));
+    traits.push(new Trait(abc, stream));
   }
   return new Traits(traits);
 }
 
 var Trait = (function () {
-  function trait(constantPool, stream, methods, classes) {
+  function trait(abc, stream) {
+    const constantPool = abc.constantPool;
+    const methods = abc.methods;
+    const classes = abc.classes;
+    const metadata = abc.metadata;
+
     this.name = constantPool.multinames[stream.readU30()];
 
     var tag = stream.readU8();
@@ -171,11 +176,11 @@ var Trait = (function () {
     }
 
     if (this.attributes & ATTR_Metadata) {
-      var metadata = [];
-      var metadatacount = stream.readU30();
-      for (var i = 0; i < metadatacount; ++i)
-        metadata.push(stream.readU30());
-      this.metadata = metadata;
+      var traitMetadata = [];
+      for (var i = 0, j = stream.readU30(); i < j; i++) {
+        traitMetadata.push(metadata[stream.readU30()]);
+      }
+      this.metadata = traitMetadata;
     }
   }
 
@@ -730,7 +735,9 @@ var ConstantPool = (function constantPool() {
 })();
 
 var MethodInfo = (function () {
-  function methodInfo(constantPool, stream) {
+  function methodInfo(abc, stream) {
+    const constantPool = abc.constantPool;
+
     var parameterCount = stream.readU30();
     var returnType = stream.readU30();
     var parameters = [];
@@ -792,8 +799,9 @@ var MethodInfo = (function () {
     }
   };
 
-  function parseException(constantPool, stream) {
-    var multinames = constantPool.multinames;
+  function parseException(abc, stream) {
+    const multinames = abc.constantPool.multinames;
+
     var ex = {
       start: stream.readU30(),
       end: stream.readU30(),
@@ -806,7 +814,10 @@ var MethodInfo = (function () {
     return ex;
   }
 
-  methodInfo.parseBody = function parseBody(constantPool, stream, methods) {
+  methodInfo.parseBody = function parseBody(abc, stream) {
+    const constantPool = abc.constantPool;
+    const methods = abc.methods;
+
     var info = methods[stream.readU30()];
     assert (!info.isNative());
     info.maxStack = stream.readU30();
@@ -823,33 +834,43 @@ var MethodInfo = (function () {
     var exceptions = [];
     var exceptionCount = stream.readU30();
     for (var i = 0; i < exceptionCount; ++i) {
-      exceptions.push(parseException(constantPool, stream));
+      exceptions.push(parseException(abc, stream));
     }
     info.exceptions = exceptions;
-    info.traits = parseTraits(constantPool, stream, methods);
+    info.traits = parseTraits(abc, stream);
   };
 
   return methodInfo;
 })();
 
 var MetaDataInfo = (function () {
-  function metaDataInfo(constantPool, stream) {
-    var name = stream.readU30();
-    var itemcount = stream.readU30();
 
+  function metaDataInfo(abc, stream) {
+    const strings = abc.constantPool.strings;
+    this.name = strings[stream.readU30()];
     var items = [];
-    for (var i = 0; i < itemcount; ++i) {
-      items[i] = { key: stream.readU30(), value: stream.readU30() };
+    for (var i = 0, j = stream.readU30(); i < j; ++i) {
+      items[i] = { key: strings[stream.readU30()],
+                   value: strings[stream.readU30()] };
     }
-
-    this.name = name;
     this.items = items;
   }
+
+  metaDataInfo.prototype = {
+    toString: function toString() {
+      return "[" + this.name + "]";
+    }
+  };
+
   return metaDataInfo;
+
 })();
 
 var InstanceInfo = (function () {
-  function instanceInfo(constantPool, methods, stream) {
+  function instanceInfo(abc, stream) {
+    const constantPool = abc.constantPool;
+    const methods = abc.methods;
+
     this.name = constantPool.multinames[stream.readU30()];
     assert(this.name.isQName());
     this.superName = constantPool.multinames[stream.readU30()];
@@ -864,7 +885,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods);
+    this.traits = parseTraits(abc, stream, methods);
   }
   instanceInfo.prototype.toString = function toString() {
     var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
@@ -878,18 +899,18 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
-  function classInfo(constantPool, methods, instance, stream) {
-    this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods);
+  function classInfo(abc, instance, stream) {
+    this.init = abc.methods[stream.readU30()];
+    this.traits = parseTraits(abc, stream);
     this.instance = instance;
   }
   return classInfo;
 })();
 
 var ScriptInfo = (function scriptInfo() {
-  function scriptInfo(constantPool, methods, classes, stream) {
-    this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods, classes);
+  function scriptInfo(abc, stream) {
+    this.init = abc.methods[stream.readU30()];
+    this.traits = parseTraits(abc, stream);
     this.traits.verified = true;
   }
   scriptInfo.prototype = {
@@ -913,40 +934,40 @@ var AbcFile = (function () {
     this.methods = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      this.methods.push(new MethodInfo(this.constantPool, stream));
+      this.methods.push(new MethodInfo(this, stream));
     }
 
     // MetaData Infos
     this.metadata = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      this.metadata.push(new MetaDataInfo(this.constantPool, stream));
+      this.metadata.push(new MetaDataInfo(this, stream));
     }
 
     // Instance Infos
     this.instances = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      this.instances.push(new InstanceInfo(this.constantPool, this.methods, stream));
+      this.instances.push(new InstanceInfo(this, stream));
     }
 
     // Class Infos
     this.classes = [];
     for (i = 0; i < n; ++i) {
-      this.classes.push(new ClassInfo(this.constantPool, this.methods, this.instances[i], stream));
+      this.classes.push(new ClassInfo(this, this.instances[i], stream));
     }
 
     // Script Infos
     this.scripts = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      this.scripts.push(new ScriptInfo(this.constantPool, this.methods, this.classes, stream));
+      this.scripts.push(new ScriptInfo(this, stream));
     }
 
     // Method body info just live inside methods
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      MethodInfo.parseBody(this.constantPool, stream, this.methods);
+      MethodInfo.parseBody(this, stream);
     }
   }
 

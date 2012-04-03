@@ -29,6 +29,7 @@
     <script type="text/javascript" src="../analyze.js"></script>
     <script type="text/javascript" src="../viz.js"></script>
     <script type="text/javascript" src="../compiler.js"></script>
+    <script type="text/javascript" src="../native.js"></script>
     <script type="text/javascript" src="../runtime.js"></script>
     <script type="text/javascript" src="../disassembler.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
@@ -42,7 +43,7 @@
               run(i + 1);
             });
           } else {
-            var path = "../tests/testInterpreter.abc";
+            var path = "sunspider/access-nbody.abc";
             new FileReader(path).readAll(null, function (buffer) {
               var abc = new AbcFile(new Uint8Array(buffer), path);
               executeAbc(abc, ALWAYS_INTERPRET);
