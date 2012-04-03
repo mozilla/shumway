@@ -18,6 +18,14 @@ function defineGetterAndSetter(obj, name, getter, setter) {
 }
 
 /**
+ * Each AS3 object needs its own explicit public prototype. We fast-path
+ * public prototypes to the actual prototype property on the underlying JS
+ * object, but we need to add a placeholder here so multinames can be
+ * resolved.
+ */
+defineReadOnlyProperty(Function.prototype, "public$prototype", null);
+
+/**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
  * the [] operator has different semantics depending on whether the receiver is an Array or Vector. For the
  * latter we need to coerce values whenever they are stored.
@@ -57,11 +65,9 @@ defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
 
 var builtinClasses = (function () {
   var builtins = {};
-  // TODO: Figure out why adding Function here blows the stack.
-  [Object, Number, String, Array, Boolean].forEach(function (cls) {
+  [Object, Function, Number, String, Array, Boolean].forEach(function (cls) {
     builtins[cls.name] = cls;
   });
-
 
   builtins.int = function int(x) {
     return Number(x) | 0;
@@ -658,14 +664,6 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
     cls.instanceTraits = instanceTraits;
-
-    /**
-     * Each AS3 class needs its own explicit public prototype. We fast-path
-     * public prototypes to the actual prototype property on the underlying JS
-     * object, but we need to add a placeholder here so multinames can be
-     * resolved.
-     */
-    cls.public$prototype = null;
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
     cls.prototype.debugName = "[class " + className + "].prototype";
