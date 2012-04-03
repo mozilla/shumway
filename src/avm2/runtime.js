@@ -714,7 +714,6 @@ var Runtime = (function () {
     cls.instanceTraits = instanceTraits;
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
-    cls.prototype.debugName = "[class " + className + "].prototype";
 
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
