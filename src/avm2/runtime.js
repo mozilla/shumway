@@ -727,6 +727,8 @@ var Runtime = (function () {
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
 
+    /* Patch builtin functions */
+    patchBuiltinClass(cls);
     return cls;
   };
 
