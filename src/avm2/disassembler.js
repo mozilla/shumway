@@ -80,7 +80,7 @@ AbcFile.prototype.trace = function trace(writer) {
     traceArray(writer, "instances", this.instances);
   }
   if (filter.value.indexOf("M") >= 0) {
-    // traceArray(writer, "metadata", this.metadata);
+    traceArray(writer, "metadata", this.metadata);
   }
   if (filter.value.indexOf("s") >= 0) {
     traceArray(writer, "scripts", this.scripts);
@@ -120,6 +120,14 @@ ClassInfo.prototype.trace = function (writer) {
   writer.leave("}");
 };
 
+MetaDataInfo.prototype.trace = function (writer) {
+  writer.enter(this + " {");
+  this.items.forEach(function (item) {
+    writer.writeLn((item.key ? item.key + ": " : "") + "\"" + item.value + "\"");
+  });
+  writer.leave("}");
+}
+
 InstanceInfo.prototype.trace = function (writer) {
   writer.enter("instance " + this + " {");
   this.traits.trace(writer);
@@ -133,6 +141,11 @@ ScriptInfo.prototype.trace = function (writer) {
 };
 
 Trait.prototype.trace = function (writer) {
+  if (this.metadata) {
+    this.metadata.forEach(function (md) {
+      md.trace(writer);
+    });
+  }
   writer.writeLn(this);
 };
 
