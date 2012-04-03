@@ -300,24 +300,53 @@ function resolveMultiname(obj, multiname, checkPrototype) {
   return null;
 }
 
+/**
+ * Magical Properties Overview
+ *
+ * There are certain properties that are special both in AVM and in the JS
+ * engine with matching semantics that we do not want to build wrapper getters
+ * and setters for. We directly access these properties via the underlying JS
+ * property without any namespace prefixes.
+ *
+ * NB: These properties, except numeric ones, are still _looked up_ with
+ * namespace prefixes. For instance, in Array, we still set a pair of get/set
+ * functions for |public$length|, even though when we get/set it, we go
+ * directly to the underlying |length|.
+ *
+ * The list:
+ *  - numeric properties on anything
+ *  - public::prototype on anything
+ *  - public::length on Arrays
+ */
+
 function getProperty(obj, multiname) {
   if (typeof multiname.name === "number") {
     return obj[GET_ACCESSOR](multiname.name);
   }
+
+  var resolved;
   if (multiname.isQName()) {
-    if (tracePropertyAccess.value) {
-      print("getProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
-    }
-    return obj[multiname.getQualifiedName()];
+    resolved = multiname;
   } else {
-    var resolved = resolveMultiname(obj, multiname, true);
-    if (resolved) {
-      if (tracePropertyAccess.value) {
-        print("getProperty: resolved multiname: " + resolved + " value: " + obj[resolved.getQualifiedName()]);
-      }
-      return obj[resolved.getQualifiedName()];
-    }
+    resolved = resolveMultiname(obj, multiname, true);
   }
+
+  if (resolved) {
+    if (tracePropertyAccess.value) {
+      print("getProperty: multiname: " + resolved + " value: " + obj[resolved.getQualifiedName()]);
+    }
+
+    var name = resolved.name;
+    if (name === "prototype" && resolved.namespaces[0].isPublic()) {
+      return obj.prototype;
+    }
+    if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
+      return obj.length;
+    }
+
+    return obj[resolved.getQualifiedName()];
+  }
+
   return undefined;
 }
 
@@ -326,35 +355,42 @@ function setProperty(obj, multiname, value) {
     obj[SET_ACCESSOR](multiname.name, value);
     return;
   }
+
+  var resolved;
   if (multiname.isQName()) {
-    if (tracePropertyAccess.value) {
-      print("setProperty: multiname: " + multiname + " value: " + obj[multiname.getQualifiedName()]);
-    }
-    obj[multiname.getQualifiedName()] = value;
+    resolved = multiname;
   } else {
-    var resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
-    if (resolved) {
-      if (tracePropertyAccess.value) {
-        print("setProperty: resolved multiname: " + resolved + " value: " + value);
+    resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
+  }
+
+  if (!resolved) {
+    // If we can't resolve the multiname, we're probably adding a dynamic
+    // property, so just go ahead and use its name directly.
+    // TODO: Remove assertion and loop when we're certain it will never fail.
+    var publicNSIndex;
+    for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
+      if (multiname.namespaces[i].isPublic()) {
+        resolved = multiname.getQName(i);
+        break;
       }
-      obj[resolved.getQualifiedName()] = value;
-    } else {
-      // If we can't resolve the multiname, we're probably adding a dynamic
-      // property, so just go ahead and use its name directly.
-      // TODO: Remove assertion and loop when we're certain it will never fail.
-      var publicNSIndex;
-      for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
-        if (multiname.namespaces[i].isPublic()) {
-          publicNSIndex = i;
-          break;
-        }
-      }
-      if (tracePropertyAccess.value) {
-        print("setProperty: adding public: " + multiname + " value: " + value);
-      }
-      assert(multiname.getQName(publicNSIndex).getQualifiedName() === "public$" + multiname.name);
-      obj["public$" + multiname.name] = value;
     }
+    if (tracePropertyAccess.value) {
+      print("setProperty: adding public: " + multiname + " value: " + value);
+    }
+    assert(resolved);
+  }
+
+  if (tracePropertyAccess.value) {
+    print("setProperty: resolved multiname: " + resolved + " value: " + value);
+  }
+
+  var name = resolved.name;
+  if (name === "prototype" && resolved.namespaces[0].isPublic()) {
+    obj.prototype = value;
+  } else if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
+    obj.length = value;
+  } else {
+    obj[resolved.getQualifiedName()] = value;
   }
 }
 
@@ -624,16 +660,12 @@ var Runtime = (function () {
     cls.instanceTraits = instanceTraits;
 
     /**
-     * Each AS3 class needs its own explicit public prototype.
+     * Each AS3 class needs its own explicit public prototype. We fast-path
+     * public prototypes to the actual prototype property on the underlying JS
+     * object, but we need to add a placeholder here so multinames can be
+     * resolved.
      */
-    defineGetterAndSetter(cls, "public$prototype",
-      function () {
-        return this.prototype;
-      },
-      function (p) {
-        this.prototype = p;
-      }
-    );
+    cls.public$prototype = null;
 
     cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
     cls.prototype.debugName = "[class " + className + "].prototype";
