@@ -530,7 +530,7 @@ const toplevel = (function () {
       }
       writer.enter("Loaded Classes");
       this.loadedClasses.forEach(function (cls) {
-        var description = cls.debugName + (cls.baseClass ? " extends " + cls.baseClass.debugName : ""); 
+        var description = cls.debugName + (cls.baseClass ? " extends " + cls.baseClass.debugName : "");
         writer.enter(description + " {");
         writer.enter("instance");
         traceProperties(cls.prototype);
@@ -782,7 +782,7 @@ var Runtime = (function () {
     }
 
     function setProperty(name, slotId, value, type) {
-      // print("Setting Property: " + name + ", slot: " + slotId + ", in: " + obj.debugName);
+      // print("Defining Trait: " + name + ", slot: " + slotId + ", in: " + obj.debugName);
       if (slotId) {
         if (name in obj) {
           assert (!type || !type.coerce);
