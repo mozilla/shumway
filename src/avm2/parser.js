@@ -176,9 +176,10 @@ var Trait = (function () {
     }
 
     if (this.attributes & ATTR_Metadata) {
-      var traitMetadata = [];
+      var traitMetadata = {};
       for (var i = 0, j = stream.readU30(); i < j; i++) {
-        traitMetadata.push(metadata[stream.readU30()]);
+        var md = metadata[stream.readU30()];
+        traitMetadata[md.name] = md;
       }
       this.metadata = traitMetadata;
     }
@@ -848,12 +849,29 @@ var MetaDataInfo = (function () {
   function metaDataInfo(abc, stream) {
     const strings = abc.constantPool.strings;
     this.name = strings[stream.readU30()];
+
+    var itemcount = stream.readU30();
     var items = [];
-    for (var i = 0, j = stream.readU30(); i < j; ++i) {
-      items[i] = { key: strings[stream.readU30()],
-                   value: strings[stream.readU30()] };
+    var dict = {};
+    var keys = [];
+    var values = [];
+
+    for (var i = 0; i < itemcount; i++) {
+      keys[i] = strings[stream.readU30()];
+    }
+    for (var i = 0; i < itemcount; i++) {
+      values[i] = strings[stream.readU30()];
+    }
+
+    for (var i = 0; i < itemcount; i++) {
+      var item = { key: keys[i], value: values[i] };
+      items[i] = item;
+      if (item.key) {
+        dict[item.key] = item.value;
+      }
     }
     this.items = items;
+    this.dict = dict;
   }
 
   metaDataInfo.prototype = {
@@ -922,8 +940,11 @@ var ScriptInfo = (function scriptInfo() {
 })();
 
 var AbcFile = (function () {
-  function abcFile(bytes, name) {
+  function abcFile(bytes, name, allowNatives) {
     this.name = name;
+
+    /* Only library code can have natives. */
+    this.allowNatives = allowNatives;
 
     var n, i;
     var stream = new AbcStream(bytes);
