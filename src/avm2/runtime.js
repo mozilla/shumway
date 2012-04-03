@@ -423,6 +423,7 @@ const toplevel = (function () {
 
     /* Classes that have been loaded. */
     this.loadedClasses = [];
+
     // TODO: Caching
   }
 
@@ -492,9 +493,56 @@ const toplevel = (function () {
         }
       }
       return null;
+    },
+
+    traceLoadedClasses: function () {
+      var writer = new IndentingWriter();
+      function traceProperties(obj) {
+        for (var key in obj) {
+          var str = key;
+          var descriptor = Object.getOwnPropertyDescriptor(obj, key);
+          if (descriptor) {
+            if (descriptor.get) {
+              str += " getter";
+            }
+            if (descriptor.set) {
+              str += " setter";
+            }
+            if (descriptor.value) {
+              var value = obj[key];
+              if (value instanceof Scope) {
+                str += ": ";
+                var scope = value;
+                while (scope) {
+                  assert (scope.object);
+                  str += scope.object.debugName + " ";
+                  scope = scope.parent;
+                }
+              } else if (value instanceof Function) {
+                str += ": " + value.name ? value.name : "untitled";
+              } else if (value) {
+                str += ": " + value;
+              }
+            }
+          }
+          writer.writeLn(str);
+        }
+      }
+      writer.enter("Loaded Classes");
+      this.loadedClasses.forEach(function (cls) {
+        var description = cls.debugName + (cls.baseClass ? " extends " + cls.baseClass.debugName : ""); 
+        writer.enter(description + " {");
+        writer.enter("instance");
+        traceProperties(cls.prototype);
+        writer.leave("");
+        writer.enter("static");
+        traceProperties(cls);
+        writer.leave("");
+        writer.leave("}");
+      });
+      writer.leave("");
     }
   };
-
 
   var toplevel = new Toplevel();
   /* FIXME: Only in place until we can run playerglobals. */
@@ -674,15 +722,7 @@ var Runtime = (function () {
 
     if (traceClasses.value) {
       toplevel.loadedClasses.push(cls);
-      var writer = new IndentingWriter();
-      writer.enter(cls.debugName + " {");
-      writer.enter("instance");
-      writer.writeArray(Object.keys(cls.prototype));
-      writer.leave("");
-      writer.enter("static");
-      writer.writeArray(Object.keys(cls));
-      writer.leave("");
-      writer.leave("}");
+      toplevel.traceLoadedClasses();
     }
 
     /* Call the static constructor. */
@@ -847,19 +887,7 @@ function executeAbc(abc, mode) {
   prepareAbc(abc, mode);
   executeScript(abc, abc.lastScript);
   if (traceClasses.value) {
-    var writer = new IndentingWriter();
-    writer.enter("Loaded Classes");
-    toplevel.loadedClasses.forEach(function (cls) {
-      writer.enter(cls.debugName + " {");
-      writer.enter("instance");
-      writer.writeArray(Object.keys(cls.prototype));
-      writer.leave("");
-      writer.enter("static");
-      writer.writeArray(Object.keys(cls));
-      writer.leave("");
-      writer.leave("}");
-    });
-    writer.leave("");
+    toplevel.traceLoadedClasses();
   }
 }
 
