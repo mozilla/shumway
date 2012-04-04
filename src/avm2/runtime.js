@@ -65,7 +65,7 @@ defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
 
 var builtinClasses = (function () {
   var builtins = {};
-  [Object, Function, Number, String, Array, Boolean].forEach(function (cls) {
+  [Object, Function, Number, String, Array, Boolean, Date].forEach(function (cls) {
     builtins[cls.name] = cls;
   });
 
