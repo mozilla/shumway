@@ -357,6 +357,7 @@ function getProperty(obj, multiname) {
 }
 
 function setProperty(obj, multiname, value) {
+  assert (obj);
   if (typeof multiname.name === "number") {
     obj[SET_ACCESSOR](multiname.name, value);
     return;
@@ -588,12 +589,7 @@ var Runtime = (function () {
   };
 
   runtime.prototype.createFunction = function (method, scope) {
-    if (method.isNative()) {
-      return natives[method.name.getQualifiedName()] ||
-        function() {
-          print("Calling undefined native method: " + method.name.getQualifiedName());
-        };
-    }
+    assert(!method.isNative(), "Method should have a builtin: " + method.name);
 
     function closeOverScope(fn, scope) {
       return function () {
@@ -728,7 +724,8 @@ var Runtime = (function () {
     this.createFunction(classInfo.init, scope).call(cls);
 
     /* Patch builtin functions */
-    patchBuiltinClass(cls);
+    patchClassBuiltins(cls);
+
     return cls;
   };
 
@@ -781,7 +778,7 @@ var Runtime = (function () {
       traits.lastSlotId = freshSlotId;
     }
 
-    function setProperty(name, slotId, value, type) {
+    function defineProperty(name, slotId, value, type) {
       // print("Defining Trait: " + name + ", slot: " + slotId + ", in: " + obj.debugName);
       if (slotId) {
         if (name in obj) {
@@ -830,15 +827,16 @@ var Runtime = (function () {
     var ts = traits.traits;
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
+      assert (trait.holder);
       if (trait.isSlot() || trait.isConst()) {
         var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
-        setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
+        defineProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
-        var closure = this.createFunction(trait.method, new Scope(scope, obj));
-        setProperty(trait.name.getQualifiedName(), undefined, closure);
+        var closure = getBuiltin(trait) || this.createFunction(trait.method, new Scope(scope, obj));
+        defineProperty(trait.name.getQualifiedName(), undefined, closure);
       } else if (trait.isClass()) {
-        setProperty(trait.name.getQualifiedName(), trait.slotId, null);
+        defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
       } else {
         assert(false, trait);
       }
