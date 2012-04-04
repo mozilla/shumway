@@ -122,19 +122,19 @@ function Traits(traits, verified) {
   this.verified = verified === undefined ? false : verified;
 }
 
-function parseTraits(constantPool, stream, methods, classes) {
+function parseTraits(constantPool, stream, methods, classes, holder) {
   var count = stream.readU30();
   var traits = [];
   for (var i = 0; i < count; i++) {
-    traits.push(new Trait(constantPool, stream, methods, classes));
+    traits.push(new Trait(constantPool, stream, methods, classes, holder));
   }
   return new Traits(traits);
 }
 
 var Trait = (function () {
-  function trait(constantPool, stream, methods, classes) {
+  function trait(constantPool, stream, methods, classes, holder) {
+    this.holder = holder;
     this.name = constantPool.multinames[stream.readU30()];
-
     var tag = stream.readU8();
 
     this.kind = tag & 0x0F;
@@ -826,7 +826,7 @@ var MethodInfo = (function () {
       exceptions.push(parseException(constantPool, stream));
     }
     info.exceptions = exceptions;
-    info.traits = parseTraits(constantPool, stream, methods);
+    info.traits = parseTraits(constantPool, stream, methods, undefined, info);
   };
 
   return methodInfo;
@@ -864,7 +864,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods);
+    this.traits = parseTraits(constantPool, stream, methods, undefined, this);
   }
   instanceInfo.prototype.toString = function toString() {
     var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
@@ -880,7 +880,7 @@ var InstanceInfo = (function () {
 var ClassInfo = (function () {
   function classInfo(constantPool, methods, instance, stream) {
     this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods);
+    this.traits = parseTraits(constantPool, stream, methods, undefined, this);
     this.instance = instance;
   }
   return classInfo;
@@ -889,7 +889,7 @@ var ClassInfo = (function () {
 var ScriptInfo = (function scriptInfo() {
   function scriptInfo(constantPool, methods, classes, stream) {
     this.init = methods[stream.readU30()];
-    this.traits = parseTraits(constantPool, stream, methods, classes);
+    this.traits = parseTraits(constantPool, stream, methods, classes, this);
     this.traits.verified = true;
   }
   scriptInfo.prototype = {
