@@ -541,10 +541,7 @@ var Runtime = (function () {
 
   runtime.prototype.createFunction = function (method, scope) {
     if (method.isNative()) {
-      return natives[method.name.getQualifiedName()] ||
-        function() {
-          print("Calling undefined native method: " + method.name.getQualifiedName());
-        };
+      unexpected("Loaded code cannot have natives");
     }
 
     function closeOverScope(fn, scope) {
@@ -670,6 +667,10 @@ var Runtime = (function () {
 
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
+
+    if (className === "Object") {
+      print("applying static traits Obj");
+    }
     this.applyTraits(cls, classInfo.traits, null, scope);
 
     if (traceClasses.value) {
@@ -794,9 +795,62 @@ var Runtime = (function () {
         setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
-        var closure = this.createFunction(trait.method, new Scope(scope, obj));
+
+        var method = trait.method;
+        var closure;
+        if (method.isNative() && this.abc.allowNatives) {
+          /**
+           * We can get the native metadata from two places: either a [native]
+           * metadata directly attached to the method trait, or from a
+           * [native] metadata attached to the encompassing class.
+           *
+           * XXX: I'm choosing for the per-method [native] to override
+           * [native] on the class if both are present.
+           */
+          var nativeMetadata = trait.metadata.native;
+          var nativeProp;
+          if (nativeMetadata) {
+            nativeProp = nativeMetadata.items[0].value.split(".");
+          } else if (traits.nativeClass) {
+            var nativeClass = traits.nativeClass.dict;
+            if (!nativeClass.cls) {
+              unexpected("Native class without `cls'");
+            }
+
+            if (baseTraits) {
+              nativeProp = [nativeClass.cls, "prototype", method.name.name];
+            } else {
+              nativeProp = [nativeClass.cls, method.name.name];
+            }
+          } else {
+            unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
+          }
+
+          //print("native prop: " + nativeProp.join("."));
+
+          var p = natives;
+          for (var k = 0, l = nativeProp.length; k < l; k++) {
+            p = natives[nativeProp[k]];
+          }
+
+          /* Let, let, my kingdom for let! */
+          closure = p || (function (method) {
+            return function() {
+              print("Calling undefined native method: " + method.name.getQualifiedName());
+            };
+          })(method);
+        } else {
+          closure = this.createFunction(trait.method, new Scope(scope, obj));
+        }
+
         setProperty(trait.name.getQualifiedName(), undefined, closure);
       } else if (trait.isClass()) {
+        if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
+          var cls = trait.class;
+          var nativeClass = trait.metadata.native;
+          cls.instance.traits.nativeClass = nativeClass;
+          cls.traits.nativeClass = nativeClass;
+        }
         setProperty(trait.name.getQualifiedName(), trait.slotId, null);
       } else {
         assert(false, trait);
