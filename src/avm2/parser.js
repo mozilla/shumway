@@ -244,38 +244,53 @@ var Namespace = (function () {
   const EXPLICIT                  = 0x08;
   const STATIC_PROTECTED          = 0x10;
 
+  /**
+   * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
+   * wart".
+   */
+  const MIN_API_MARK              = 0xe294;
+  const MAX_API_MARK              = 0xf8ff;
+
   function namespace(constantPool, stream) {
     this.kind = stream.readU8();
     this.name = constantPool.strings[stream.readU30()].replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
 
     switch(this.kind) {
-      case CONSTANT_Namespace:
-      case CONSTANT_PackageNamespace:
+    case CONSTANT_Namespace:
+    case CONSTANT_PackageNamespace:
+    case CONSTANT_PackageInternalNs:
+    case CONSTANT_ProtectedNamespace:
+    case CONSTANT_ExplicitNamespace:
+    case CONSTANT_StaticProtectedNs:
+      this.type = PUBLIC;
+      switch(this.kind) {
       case CONSTANT_PackageInternalNs:
+        this.type = PACKAGE_INTERNAL;
+        break;
       case CONSTANT_ProtectedNamespace:
+        this.type = PROTECTED;
+        break;
       case CONSTANT_ExplicitNamespace:
+        this.type = EXPLICIT;
+        break;
       case CONSTANT_StaticProtectedNs:
-        this.type = PUBLIC;
-        switch(this.kind) {
-          case CONSTANT_PackageInternalNs:
-            this.type = PACKAGE_INTERNAL;
-            break;
-          case CONSTANT_ProtectedNamespace:
-            this.type = PROTECTED;
-            break;
-          case CONSTANT_ExplicitNamespace:
-            this.type = EXPLICIT;
-            break;
-          case CONSTANT_StaticProtectedNs:
-            this.type = STATIC_PROTECTED;
-            break;
+        this.type = STATIC_PROTECTED;
+        break;
+      }
+      if (this.type === PUBLIC && this.name) {
+        /* Strip the api version mark for now. */
+        var n = this.name.length - 1;
+        var mark = this.name.charCodeAt(n);
+        if (mark > MIN_API_MARK) {
+          this.name = this.name.substring(0, n - 1);
         }
-        break;
-      case CONSTANT_PrivateNs:
-        this.type = PRIVATE;
-        break;
-      default:
-        unexpected();
+      }
+      break;
+    case CONSTANT_PrivateNs:
+      this.type = PRIVATE;
+      break;
+    default:
+      unexpected();
     }
 
     function suffix(prefix, name) {
