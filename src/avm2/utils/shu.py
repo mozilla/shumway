@@ -64,12 +64,17 @@ class Base:
     if not self.asc:
       sys.exit();
 
-  def runAsc(self, files, createSwf = False, builtin = False):
-    args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
-            "macromedia.asc.embedding.ScriptCompiler", "-d"]
+  def runAsc(self, files, createSwf = False, builtin = False, multiple = False):
+    if multiple:
+      args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
+              "macromedia.asc.embedding.ScriptCompiler", "-d"]
+    else:
+      args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-jar", self.asc, "-d"]
+
     if builtin:
       args.extend(["-import", self.builtin_abc])
     outf = os.path.splitext(files[-1])[0]
+
     args.extend(["-out", outf])
     args.extend(files);
     print(args)
@@ -109,10 +114,11 @@ class Asc(Command):
     parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
     parser.add_argument('src', nargs='+', help="source .as file")
     parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
+    parser.add_argument('-multiple', action='store_true', help='compile multiple scripts into one .abc file')
     parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
     args = parser.parse_args(args)
     print "Compiling %s" % args.src
-    self.runAsc(args.src, args.swf, builtin = args.builtin)
+    self.runAsc(args.src, args.swf, builtin = args.builtin, multiple = args.multiple)
 
 class Ascreg(Command):
   def __init__(self):
