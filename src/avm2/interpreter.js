@@ -90,9 +90,14 @@ var Interpreter = (function () {
 
       var args, obj, index, multiname, ns, name, res;
       var bytecodes = method.analysis.bytecodes;
+      var sourcePosition = {file: undefined, line: undefined};
 
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
+        if (traceInterpreter.value > 0) {
+          print("position: " + sourcePosition.file + ": " + sourcePosition.line);
+        }
+
         try {
           var bc = bytecodes[pc];
           var op = bc.op;
@@ -536,14 +541,10 @@ var Interpreter = (function () {
             break;
           case OP_debug:
           case OP_debugline:
-            if (traceInterpreter.value > 0) {
-              print("line: " + bc.lineNumber);
-            }
+            sourcePosition.line = bc.lineNumber;
             break;
           case OP_debugfile:
-            if (traceInterpreter.value > 0) {
-              print("file: " + strings[bc.index]);
-            }
+            sourcePosition.file = strings[bc.index];
             break;
           case OP_bkptline:       notImplemented(); break;
           case OP_timestamp:      notImplemented(); break;
