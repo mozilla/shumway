@@ -9,22 +9,6 @@ const HEURISTIC_JIT = 0x2;
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
-function defineReadOnlyProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
-}
-
-function defineGetterAndSetter(obj, name, getter, setter) {
-  Object.defineProperty(obj, name, { get: getter, set: setter });
-}
-
-/**
- * Each AS3 object needs its own explicit public prototype. We fast-path
- * public prototypes to the actual prototype property on the underlying JS
- * object, but we need to add a placeholder here so multinames can be
- * resolved.
- */
-defineReadOnlyProperty(Function.prototype, "public$prototype", null);
-
 /**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
  * the [] operator has different semantics depending on whether the receiver is an Array or Vector. For the
@@ -62,23 +46,6 @@ defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
   assert (index > 0 && index < keys.length + 1);
   return keys[index - 1];
 });
-
-var builtinClasses = (function () {
-  var builtins = {};
-  [Object, Function, Number, String, Array, Boolean].forEach(function (cls) {
-    builtins[cls.name] = cls;
-  });
-
-  builtins.int = function int(x) {
-    return Number(x) | 0;
-  };
-
-  builtins.uint = function uint(x) {
-    return Number(x) >>> 0;
-  };
-
-  return builtins;
-})();
 
 function toDouble(x) {
   return Number(x);
@@ -306,25 +273,6 @@ function resolveMultiname(obj, multiname, checkPrototype) {
   return null;
 }
 
-/**
- * Magical Properties Overview
- *
- * There are certain properties that are special both in AVM and in the JS
- * engine with matching semantics that we do not want to build wrapper getters
- * and setters for. We directly access these properties via the underlying JS
- * property without any namespace prefixes.
- *
- * NB: These properties, except numeric ones, are still _looked up_ with
- * namespace prefixes. For instance, in Array, we still set a pair of get/set
- * functions for |public$length|, even though when we get/set it, we go
- * directly to the underlying |length|.
- *
- * The list:
- *  - numeric properties on anything
- *  - public::prototype on anything
- *  - public::length on Arrays
- */
-
 function getProperty(obj, multiname) {
   if (typeof multiname.name === "number") {
     return obj[GET_ACCESSOR](multiname.name);
@@ -340,14 +288,6 @@ function getProperty(obj, multiname) {
   if (resolved) {
     if (tracePropertyAccess.value) {
       print("getProperty: multiname: " + resolved + " value: " + obj[resolved.getQualifiedName()]);
-    }
-
-    var name = resolved.name;
-    if (name === "prototype" && resolved.namespaces[0].isPublic()) {
-      return obj.prototype;
-    }
-    if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
-      return obj.length;
     }
 
     return obj[resolved.getQualifiedName()];
@@ -390,14 +330,7 @@ function setProperty(obj, multiname, value) {
     print("setProperty: resolved multiname: " + resolved + " value: " + value);
   }
 
-  var name = resolved.name;
-  if (name === "prototype" && resolved.namespaces[0].isPublic()) {
-    obj.prototype = value;
-  } else if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
-    obj.length = value;
-  } else {
-    obj[resolved.getQualifiedName()] = value;
-  }
+  obj[resolved.getQualifiedName()] = value;
 }
 
 /**
@@ -497,10 +430,6 @@ const toplevel = (function () {
 
 
   var toplevel = new Toplevel();
-  /* FIXME: Only in place until we can run playerglobals. */
-  // builtins.__proto__ = Global.prototype;
-  // toplevel.abcs.push({ scripts: [{ global: builtins,
-  //                                 executed: true }] });
   return toplevel;
 
 })();
@@ -648,10 +577,15 @@ var Runtime = (function () {
     scope = new Scope(scope, null);
     var className = classInfo.instance.name.name;
     if (traceExecution.value) {
-      print("Creating class " + className  + (builtinClasses[className] ? " replaced with builtin " + builtinClasses[className].name : ""));
+      print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.items[0].value : ""));
     }
 
-    var cls = builtinClasses[className] || this.createFunction(classInfo.instance.init, scope);
+    var cls;
+    if (classInfo.native) {
+      cls = natives.get(classInfo.native.items[0].value);
+    } else {
+      cls = this.createFunction(classInfo.instance.init, scope);
+    }
     cls.debugName = "[class " + className + "]";
     scope.object = cls;
 
@@ -667,10 +601,6 @@ var Runtime = (function () {
 
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
     this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
-
-    if (className === "Object") {
-      print("applying static traits Obj");
-    }
     this.applyTraits(cls, classInfo.traits, null, scope);
 
     if (traceClasses.value) {
@@ -692,10 +622,11 @@ var Runtime = (function () {
     return cls;
   };
 
-  /* Extend builtin Objects so they behave as classes. */
+  /* Extend builtin Objects so they behave as classes.
   Object.instanceTraits = new Traits([]);
   Object.instanceTraits.verified = true;
   Object.instanceTraits.lastSlotId = 0;
+  */
 
   /**
    * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
@@ -807,34 +738,27 @@ var Runtime = (function () {
            * XXX: I'm choosing for the per-method [native] to override
            * [native] on the class if both are present.
            */
-          var nativeMetadata = trait.metadata.native;
           var nativeProp;
-          if (nativeMetadata) {
-            nativeProp = nativeMetadata.items[0].value.split(".");
+          if (trait.metadata) {
+            nativeProp = trait.metadata.native.items[0].value;
           } else if (traits.nativeClass) {
-            var nativeClass = traits.nativeClass.dict;
-            if (!nativeClass.cls) {
-              unexpected("Native class without `cls'");
+            var nativeClass = traits.nativeClass.items[0].value;
+            if (!nativeClass) {
+              unexpected("Native class without value");
             }
 
+            nativeProp = nativeClass;
             if (baseTraits) {
-              nativeProp = [nativeClass.cls, "prototype", method.name.name];
-            } else {
-              nativeProp = [nativeClass.cls, method.name.name];
+              nativeProp += ".prototype"
             }
+
+            nativeProp += "." + method.name.name;
           } else {
             unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
           }
 
-          //print("native prop: " + nativeProp.join("."));
-
-          var p = natives;
-          for (var k = 0, l = nativeProp.length; k < l; k++) {
-            p = natives[nativeProp[k]];
-          }
-
           /* Let, let, my kingdom for let! */
-          closure = p || (function (method) {
+          closure = natives.get(nativeProp) || (function (method) {
             return function() {
               print("Calling undefined native method: " + method.name.getQualifiedName());
             };
@@ -843,11 +767,19 @@ var Runtime = (function () {
           closure = this.createFunction(trait.method, new Scope(scope, obj));
         }
 
-        setProperty(trait.name.getQualifiedName(), undefined, closure);
+        var qn = trait.name.getQualifiedName();
+        if (trait.isGetter()) {
+          defineGetter(obj, qn, closure);
+        } else if (trait.isSetter()) {
+          defineSetter(obj, qn, closure);
+        } else {
+          setProperty(qn, undefined, closure);
+        }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
           var cls = trait.class;
           var nativeClass = trait.metadata.native;
+          cls.native = nativeClass;
           cls.instance.traits.nativeClass = nativeClass;
           cls.traits.nativeClass = nativeClass;
         }
@@ -931,9 +863,14 @@ function prepareAbc(abc, mode) {
    * reverse order, since some content depends on the last script being
    * initialized first or some shit.
    */
+  var native = natives.get.bind(natives);
   var scripts = abc.scripts;
   for (var i = scripts.length - 1; i >= 0; i--) {
     var script = scripts[i];
     var global = new Global(runtime, script);
+
+    if (abc.allowNatives) {
+      global.public$native = native;
+    }
   }
 }

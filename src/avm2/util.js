@@ -52,6 +52,22 @@ function unexpected() {
   assert(false);
 }
 
+function defineReadOnlyProperty(obj, name, value) {
+  Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
+}
+
+function defineGetter(obj, name, getter) {
+  Object.defineProperty(obj, name, { get: getter,
+                                     configurable: true,
+                                     enumerable: true });
+}
+
+function defineSetter(obj, name, setter) {
+  Object.defineProperty(obj, name, { set: setter,
+                                     configurable: true,
+                                     enumerable: true });
+}
+
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {
