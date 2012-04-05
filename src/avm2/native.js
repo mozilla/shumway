@@ -1,6 +1,28 @@
-/**
- * Object class static natives.
- */
+var Class = (function () {
+
+  function Class(name, instance, coerce) {
+    this.debugName = "[class " + name + "]";
+    this.instance = instance;
+
+    /**
+     * Coercions are done by calling the class like a function.
+     * If no coercion is specified, act as identity.
+     */
+    if (coerce) {
+      this.call = function (_, value) {
+        return coerce(value);
+      };
+    } else {
+      this.call = function (_, value) {
+        return value;
+      };
+    }
+  }
+
+  Class.instance = Class;
+
+  return Class;
+})();
 
 const natives = (function () {
 
@@ -24,8 +46,17 @@ const natives = (function () {
   /**
    * Object.as
    */
-  Object._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
+  var ObjectClass = new Class("Object", Object, Object);
+
+  ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
     Object.defineProperty(obj, name, { enumerable: isEnum });
+  }
+
+  /**
+   * Class.as
+   */
+  function getInstancePrototype() {
+    return this.instance.prototype;
   }
 
   /**
@@ -33,22 +64,22 @@ const natives = (function () {
    */
   function getPrototype() {
     return this.prototype;
-  };
+  }
 
   function setPrototype(p) {
     this.prototype = p;
-  };
+  }
 
   /**
    * Array.as
    */
   function getLength() {
     return this.length;
-  };
+  }
 
   function setLength(l) {
     this.length = l;
-  };
+  }
 
   /**
    * Number.as
@@ -65,6 +96,7 @@ const natives = (function () {
     /**
      * Getters/setters used by several classes.
      */
+    getInstancePrototype: getInstancePrototype,
     getPrototype: getPrototype,
     setPrototype: setPrototype,
     getLength: getLength,
@@ -96,14 +128,15 @@ const natives = (function () {
     /**
      * Classes.
      */
-    Object: Object,
-    Function: Function,
-    Boolean: Boolean,
-    String: String,
-    Number: Number,
-    int: int,
-    uint: uint,
-    Array: Array
+    ObjectClass: ObjectClass,
+    Class: Class,
+    FunctionClass: new Class("Function", Function, Function),
+    BooleanClass: new Class("Boolean", Boolean, Boolean),
+    StringClass: new Class("String", String, String),
+    NumberClass: new Class("Number", Number, Number),
+    intClass: new Class("int", int, int),
+    uintClass: new Class("uint", uint, uint),
+    ArrayClass: new Class("Array", Array)
   };
 
   return new Natives(backing);

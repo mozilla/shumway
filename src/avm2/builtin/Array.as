@@ -38,7 +38,7 @@
 
 package
 {
-  [native("Array")]
+  [native("ArrayClass")]
   public dynamic class Array extends Object
   {
     // option flags for sort and sortOn

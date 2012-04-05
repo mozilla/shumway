@@ -49,7 +49,8 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      function applyNew(constructor, args) {
+      function applyNew(classOrFunction, args) {
+        var constructor = classOrFunction.instance || classOrFunction;
         return new (Function.bind.apply(constructor, [,].concat(args)));
       }
 
@@ -272,7 +273,7 @@ var Interpreter = (function () {
           case OP_constructsuper:
             args = stack.popMany(bc.argCount);
             obj = stack.pop();
-            savedScope.object.baseClass.apply(obj, args);
+            savedScope.object.baseClass.instance.apply(obj, args);
             break;
           case OP_constructprop:
             args = stack.popMany(bc.argCount);

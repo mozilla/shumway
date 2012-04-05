@@ -38,7 +38,7 @@
 
 package
 {
-  [native("Function")]
+  [native("FunctionClass")]
   dynamic public class Function
   {
     // Function.length = 1 per ES3
@@ -58,7 +58,6 @@ package
 
     prototype.toLocaleString = prototype.toString = function():String
     {
-      var f:Function = this
       return "function Function() {}"
     }
 

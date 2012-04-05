@@ -40,7 +40,7 @@ package
 {
   include "api-versions.as"
 
-  [native("Object")]
+  [native("ObjectClass")]
   public dynamic class Object
   {
     // Object.length = 1 per ES3

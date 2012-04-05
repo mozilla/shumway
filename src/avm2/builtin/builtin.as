@@ -43,7 +43,7 @@
 // at once, in the order of includes below.
 
 include "Object.as"
-// include "Class.as"
+include "Class.as"
 include "Function.as"
 // include "Namespace.as"
 include "Boolean.as"

@@ -580,13 +580,16 @@ var Runtime = (function () {
       print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.items[0].value : ""));
     }
 
-    var cls;
+    var cls, instance;
     if (classInfo.native) {
+      /* Natives must already be Classes. */
       cls = natives.get(classInfo.native.items[0].value);
+      instance = cls.instance;
     } else {
-      cls = this.createFunction(classInfo.instance.init, scope);
+      instance = this.createFunction(classInfo.instance.init, scope);
+      instance.prototype = baseClass ? Object.create(baseClass.instance.prototype) : {};
+      cls = new Class(className, instance);
     }
-    cls.debugName = "[class " + className + "]";
     scope.object = cls;
 
     var instanceTraits = classInfo.instance.traits;
@@ -596,27 +599,25 @@ var Runtime = (function () {
     cls.baseClass = baseClass;
     cls.instanceTraits = instanceTraits;
 
-    cls.prototype = baseClass ? Object.create(baseClass.prototype) : {};
-
     var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
-    this.applyTraits(cls.prototype, instanceTraits, baseTraits, scope);
+    this.applyTraits(instance.prototype, instanceTraits, baseTraits, scope);
     this.applyTraits(cls, classInfo.traits, null, scope);
+
+    /* Call the static constructor. */
+    this.createFunction(classInfo.init, scope).call(cls);
 
     if (traceClasses.value) {
       toplevel.loadedClasses.push(cls);
       var writer = new IndentingWriter();
       writer.enter(cls.debugName + " {");
       writer.enter("instance");
-      writer.writeArray(Object.keys(cls.prototype));
+      writer.writeArray(Object.keys(instance.prototype));
       writer.leave("");
       writer.enter("static");
       writer.writeArray(Object.keys(cls));
       writer.leave("");
       writer.leave("}");
     }
-
-    /* Call the static constructor. */
-    this.createFunction(classInfo.init, scope).call(cls);
 
     return cls;
   };
@@ -748,7 +749,7 @@ var Runtime = (function () {
 
             nativeProp = nativeClass;
             if (baseTraits) {
-              nativeProp += ".prototype"
+              nativeProp += ".instance.prototype"
             }
 
             nativeProp += "." + method.name.name;
@@ -837,7 +838,7 @@ function executeAbc(abc, mode) {
     toplevel.loadedClasses.forEach(function (cls) {
       writer.enter(cls.debugName + " {");
       writer.enter("instance");
-      writer.writeArray(Object.keys(cls.prototype));
+      writer.writeArray(Object.keys(cls.instance.prototype));
       writer.leave("");
       writer.enter("static");
       writer.writeArray(Object.keys(cls));
