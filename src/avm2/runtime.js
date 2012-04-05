@@ -622,12 +622,6 @@ var Runtime = (function () {
     return cls;
   };
 
-  /* Extend builtin Objects so they behave as classes.
-  Object.instanceTraits = new Traits([]);
-  Object.instanceTraits.verified = true;
-  Object.instanceTraits.lastSlotId = 0;
-  */
-
   /**
    * Apply a set of traits to an object. Slotted traits may alias named properties, thus for
    * every slotted trait we create two properties: one to hold the actual value, one to hold

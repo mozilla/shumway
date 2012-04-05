@@ -22,6 +22,7 @@ var Class = (function () {
   Class.instance = Class;
 
   return Class;
+
 })();
 
 const natives = (function () {
