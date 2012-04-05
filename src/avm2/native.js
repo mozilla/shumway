@@ -17,7 +17,6 @@ var builtins = {
     },
     "private$String$_replace": {
       value: function (self, pattern, repl) {
-        print ("WWWW " + pattern + " - " + repl + " - " + self);
         return String.prototype.replace.call(self, pattern, repl);
       }
     },
