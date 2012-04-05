@@ -25,6 +25,14 @@ function defineGetterAndSetter(obj, name, getter, setter) {
  */
 defineReadOnlyProperty(Function.prototype, "public$prototype", null);
 
+
+[Array, String, Function].forEach(function (obj) {
+  defineGetterAndSetter(obj.prototype, "public$length",
+    function () { return this.length; }, function (v) { this.length = v; }
+  );
+});
+
+
 /**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
  * the [] operator has different semantics depending on whether the receiver is an Array or Vector. For the
@@ -65,7 +73,7 @@ defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
 
 var builtinClasses = (function () {
   var builtins = {};
-  [Object, Function, Number, String, Array, Boolean, Date].forEach(function (cls) {
+  [Object, Function, Number, String, Array, Boolean, Date, RegExp].forEach(function (cls) {
     builtins[cls.name] = cls;
   });
 
@@ -106,7 +114,7 @@ function toString(x) {
  * of "null" or "undefined".
  */
 function coerceString(x) {
-  if (!x) {
+  if (x === null || x === undefined) {
     return null;
   }
   return new String(x);
@@ -346,9 +354,6 @@ function getProperty(obj, multiname) {
     if (name === "prototype" && resolved.namespaces[0].isPublic()) {
       return obj.prototype;
     }
-    if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
-      return obj.length;
-    }
 
     return obj[resolved.getQualifiedName()];
   }
@@ -394,8 +399,6 @@ function setProperty(obj, multiname, value) {
   var name = resolved.name;
   if (name === "prototype" && resolved.namespaces[0].isPublic()) {
     obj.prototype = value;
-  } else if (name === "length" && resolved.namespaces[0].isPublic() && obj instanceof Array) {
-    obj.length = value;
   } else {
     obj[resolved.getQualifiedName()] = value;
   }
@@ -846,6 +849,11 @@ var Runtime = (function () {
   };
 
   runtime.prototype.isType = function isType(value, type) {
+    if (value !== null && typeof value === 'object') {
+      // print("BABBY " + value + " type " + type + " --- " + (value.constructor === type));
+      return value.constructor === type;
+    }
+
     if (typeof value === 'number') {
       if ((value | 0) !== value) {
         return false;

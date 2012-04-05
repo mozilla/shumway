@@ -7,26 +7,64 @@ var builtins = {
     }
   },
   "public$String": {
-    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": { instance: true, value: String.prototype.charCodeAt }
+    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": { instance: true, value: String.prototype.charCodeAt },
+    "public$http$$$adobe$com$AS3$2006$builtin$fromCharCode": { value: String.fromCharCode },
+    "public$http$$$adobe$com$AS3$2006$builtin$charAt": { instance: true, value: String.prototype.charAt },
+    "private$String$_split": {
+      value: function (self, delimiter, limit) {
+        return String.prototype.split.call(self, delimiter, limit);
+      }
+    },
+    "private$String$_replace": {
+      value: function (self, pattern, repl) {
+        print ("WWWW " + pattern + " - " + repl + " - " + self);
+        return String.prototype.replace.call(self, pattern, repl);
+      }
+    },
+    "public$http$$$adobe$com$AS3$2006$builtin$substring": { instance: true, value: String.prototype.substring }
   },
   "public$Array": {
     "public$http$$$adobe$com$AS3$2006$builtin$push": { instance: true, value: Array.prototype.push },
-    "private$Array$_slice": { value: Array.prototype.slice },
-    "private$Array$_concat": { value: Array.prototype.concat }
+    "private$Array$_slice": {
+      value: function (self, startIndex, endIndex) {
+        return Array.prototype.slice.call(self, startIndex, endIndex);
+      }
+    },
+    "private$Array$_concat": {
+      value: function (self, array) {
+        return Array.prototype.concat.apply(self, array);
+      }
+    }
   },
   "public$Number": {
     "private$Number$_minValue": {
       value: function _minValue() {
         return Number.MIN_VALUE;
       }
+    },
+    "private$Number$_numberToString": {
+      value: function _numberToString(number) {
+        return Number(number).toString();
+      }
     }
   },
   "public$Math": {
     "public$floor": { value: Math.floor },
-    "public$sqrt": { value: Math.sqrt }
+    "public$sqrt": { value: Math.sqrt },
+    "public$ceil": { value: Math.ceil },
+    "public$abs": { value: Math.abs },
+    "public$max": { value: Math.max },
+    "public$min": { value: Math.min }
   },
   "public$Date": {
     "public$http$$$adobe$com$AS3$2006$builtin$getTime": { instance: true, value: Date.prototype.getTime }
+  },
+  "public$Error": {
+    "public$getErrorMessage": {
+      value: function(errorID) {
+        return "ERROR: " + errorID;
+      }
+    }
   },
   "script": {
     "public$trace": {
@@ -34,9 +72,11 @@ var builtins = {
         print(message);
       }
     },
-    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": {
-      value: String.prototype.charCodeAt
-    }
+    "public$parseInt": { value: parseInt }
+
+//    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": {
+//      value: String.prototype.charCodeAt
+//    }
   }
 };
 
@@ -69,6 +109,7 @@ function getBuiltin(trait) {
     }
   }
   if (method.isNative()) {
+    // print("HERE? " + methodName + " in " + groupName);
     return function() {
       print("Calling undefined native method: " + methodName + " in group: " + groupName + " instance: " + instance);
     };
