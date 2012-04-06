@@ -238,12 +238,14 @@ var Trait = (function () {
 
 var Namespace = (function () {
 
-  const PUBLIC                    = 0x00;
-  const PROTECTED                 = 0x01;
-  const PACKAGE_INTERNAL          = 0x02;
-  const PRIVATE                   = 0x04;
-  const EXPLICIT                  = 0x08;
-  const STATIC_PROTECTED          = 0x10;
+  var kinds = {};
+  kinds[CONSTANT_Namespace] = "public";
+  kinds[CONSTANT_PackageNamespace] ="public";
+  kinds[CONSTANT_PackageInternalNs] = "packageInternal";
+  kinds[CONSTANT_PrivateNs] = "private";
+  kinds[CONSTANT_ProtectedNamespace] =  "protected";
+  kinds[CONSTANT_ExplicitNamespace] =  "explicit";
+  kinds[CONSTANT_StaticProtectedNs] =  "staticProtected";
 
   /**
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
@@ -252,82 +254,50 @@ var Namespace = (function () {
   const MIN_API_MARK              = 0xe294;
   const MAX_API_MARK              = 0xf8ff;
 
-  function namespace(constantPool, stream) {
-    this.kind = stream.readU8();
-    this.name = constantPool.strings[stream.readU30()].replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
-
-    switch(this.kind) {
-    case CONSTANT_Namespace:
-    case CONSTANT_PackageNamespace:
-    case CONSTANT_PackageInternalNs:
-    case CONSTANT_ProtectedNamespace:
-    case CONSTANT_ExplicitNamespace:
-    case CONSTANT_StaticProtectedNs:
-      this.type = PUBLIC;
-      switch(this.kind) {
-      case CONSTANT_PackageInternalNs:
-        this.type = PACKAGE_INTERNAL;
-        break;
-      case CONSTANT_ProtectedNamespace:
-        this.type = PROTECTED;
-        break;
-      case CONSTANT_ExplicitNamespace:
-        this.type = EXPLICIT;
-        break;
-      case CONSTANT_StaticProtectedNs:
-        this.type = STATIC_PROTECTED;
-        break;
-      }
-      if (this.type === PUBLIC && this.name) {
-        /* Strip the api version mark for now. */
-        var n = this.name.length - 1;
-        var mark = this.name.charCodeAt(n);
-        if (mark > MIN_API_MARK) {
-          this.name = this.name.substring(0, n - 1);
-        }
-      }
-      break;
-    case CONSTANT_PrivateNs:
-      this.type = PRIVATE;
-      break;
-    default:
-      unexpected();
-    }
-
-    function suffix(prefix, name) {
-      return prefix + (name ? "$" + name : "");
-    }
-
-    switch(this.type) {
-    case PUBLIC:
-      this.qualifiedName = suffix("public", this.name);
-      break;
-    case PROTECTED:
-      this.qualifiedName = suffix("protected", this.name);
-      break;
-    case PACKAGE_INTERNAL:
-      this.qualifiedName = suffix("packageInternal", this.name);
-      break;
-    case PRIVATE:
-      this.qualifiedName = suffix("private", this.name);
-      break;
-    case EXPLICIT:
-      assert (!this.name);
-      this.qualifiedName = suffix("explicit", this.name);
-      break;
-    case STATIC_PROTECTED:
-      assert (this.name);
-      this.qualifiedName = suffix("staticProtected", this.name);
-      break;
-    default:
-      unexpected("Type: " + this.type);
-      break;
+  function namespace(kind, name) {
+    if (kind !== undefined && name !== undefined) {
+      this.kind = kind;
+      this.name = name;
+      buildNamespace.call(this);
     }
   }
 
+  namespace.prototype.parse = function parse(constantPool, stream) {
+    this.kind = stream.readU8();
+    this.name = constantPool.strings[stream.readU30()];
+    buildNamespace.call(this);
+  };
+
+  function buildNamespace() {
+    this.name = this.name.replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
+
+    if (this.isPublic() && this.name) {
+      /* Strip the api version mark for now. */
+      var n = this.name.length - 1;
+      var mark = this.name.charCodeAt(n);
+      if (mark > MIN_API_MARK) {
+        this.name = this.name.substring(0, n - 1);
+      }
+    }
+    assert (kinds[this.kind]);
+    this.qualifiedName = kinds[this.kind] + (this.name ? "$" + this.name : "");
+  };
+
+  namespace.kindFromString = function kindFromString(str) {
+    for (kind in kinds) {
+      if (kinds[kind] === str) {
+        return kind;
+      }
+    }
+    return unexpected(str);
+  };
+
+  namespace.createNamespace = function createNamespace(name) {
+    return new namespace(CONSTANT_Namespace, name);
+  };
+
   namespace.prototype.isPublic = function isPublic() {
-    // TODO: Broken
-    return this.type === PUBLIC;
+    return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
   };
 
   namespace.prototype.getURI = function getURI() {
@@ -635,6 +605,13 @@ var Multiname = (function () {
     return str;
   };
 
+  multiname.fromQualifiedName = function fromQualifiedName(name) {
+    name = name.split("$");
+    var kind = Namespace.kindFromString(name[0]);
+    var namespace = new Namespace(kind, name.slice(1, name.length - 1).join("$"));
+    return new multiname([namespace], name[name.length - 1]);
+  };
+
   return multiname;
 })();
 
@@ -679,7 +656,9 @@ var ConstantPool = (function constantPool() {
     var namespaces = [undefined];
     n = stream.readU30();
     for (i = 1; i < n; ++i) {
-      namespaces.push(new Namespace(this, stream));
+      var namespace = new Namespace();
+      namespace.parse(this, stream);
+      namespaces.push(namespace);
     }
 
     // namespace sets
