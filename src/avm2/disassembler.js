@@ -1,21 +1,22 @@
 var filter = options.register(new Option("filter", "f", "pciMsm", "constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods"));
 
 var IndentingWriter = (function () {
-  function indentingWriter(suppressOutput) {
+  function indentingWriter(suppressOutput, out) {
     this.tab = "  ";
     this.padding = "";
     this.suppressOutput = suppressOutput;
+    this.out = out || console;
   }
 
   indentingWriter.prototype.writeLn = function writeLn(str) {
     if (!this.suppressOutput) {
-      console.info(this.padding + str);
+      this.out.info(this.padding + str);
     }
   };
 
   indentingWriter.prototype.enter = function enter(str) {
     if (!this.suppressOutput) {
-      console.info(this.padding + str);
+      this.out.info(this.padding + str);
     }
     this.indent();
   };
@@ -23,7 +24,7 @@ var IndentingWriter = (function () {
   indentingWriter.prototype.leave = function leave(str) {
     this.outdent();
     if (!this.suppressOutput) {
-      console.info(this.padding + str);
+      this.out.info(this.padding + str);
     }
   };
 
@@ -126,7 +127,7 @@ MetaDataInfo.prototype.trace = function (writer) {
     writer.writeLn((item.key ? item.key + ": " : "") + "\"" + item.value + "\"");
   });
   writer.leave("}");
-}
+};
 
 InstanceInfo.prototype.trace = function (writer) {
   writer.enter("instance " + this + " {");
@@ -142,8 +143,8 @@ ScriptInfo.prototype.trace = function (writer) {
 
 Trait.prototype.trace = function (writer) {
   if (this.metadata) {
-    for each (var md in this.metadata) {
-      md.trace(writer);
+    for (var i = 0; i < this.metadata.length; i++) {
+      this.metadata[i].trace(writer);
     }
   }
   writer.writeLn(this);
