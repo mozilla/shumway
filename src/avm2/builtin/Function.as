@@ -54,17 +54,24 @@ package
 
     // E262 {DontEnum, DontDelete, ReadOnly}
     [native("getLength")]
-    public native function get length():int
+    public native function get length():int;
+
+    //[API(CONFIG::VM_INTERNAL)]
+    [compat]
+    public static function createEmptyFunction():Function
+    {
+      return function() {}
+    }
 
     prototype.toLocaleString = prototype.toString = function():String
     {
       return "function Function() {}"
     }
 
-    AS3 native function call(thisArg=void 0, ...args)
+    AS3 native function call(thisArg=void 0, ...args);
     prototype.call = native("Function.prototype.call");
 
-    AS3 native function apply(thisArg=void 0, argArray=void 0)
+    AS3 native function apply(thisArg=void 0, argArray=void 0);
     prototype.apply = native("Function.prototype.apply");
 
     _dontEnumPrototype(prototype);

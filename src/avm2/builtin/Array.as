@@ -54,41 +54,64 @@ package
     [native("setLength")]
     public native function set length(newLength:uint);
 
+    [compat]
+    private function set_length(newLength:*, altLength:uint) {}
+
     // Array.length = 1 per ES3
     public static const length:int = 1;
 
+    // Dummy constructor
+    public function Array(...args) {}
+
+    [compat]
+    private static native function _join(o, sep):String;
     AS3 native function join(sep=void 0):String;
     prototype.join = native("Array.prototype.join");
 
+    [compat]
+    private static native function _pop(o);
     AS3 native function pop();
     prototype.pop = native("Array.prototype.pop");
 
     prototype.toString = native("Array.prototype.toString");
     prototype.toLocaleString = native("Array.prototype.toLocaleString");
 
-    AS3 native function push(...args):uint
+    AS3 native function push(...args):uint;
     prototype.push = native("Array.prototype.push");
 
+    [compat]
+    private static native function _reverse(o);
     AS3 native function reverse():Array;
     prototype.reverse = native("Array.prototype.reverse");
 
+    [compat]
+    private static native function _concat(o, args:Array):Array;
     AS3 native function concat(...args):Array;
     prototype.concat = native("Array.prototype.concat");
 
+    [compat]
+    private static native function _shift(o);
     AS3 native function shift();
     prototype.shift = native("Array.prototype.shift");
 
+    [compat]
+    private static native function _slice(o, A:Number, B:Number):Array;
     AS3 native function slice(A=0, B=0xffffffff):Array;
     prototype.slice = native("Array.prototype.slice");
 
-    native AS3 function unshift(...args):uint
+    [compat]
+    private static native function _unshift(o, args:Array):uint;
+    native AS3 function unshift(...args):uint;
     prototype.unshift = native("Array.prototype.unshift");
 
+    [compat]
+    private static native function _splice(o, args:Array):Array;
     AS3 native function splice(...args);
     prototype.splice = native("Array.prototype.splice");
 
     // FIXME: What are AS sort and sortOn?
-    private static native function _sort(o, args:Array)
+    [compat]
+    private static native function _sort(o, args:Array);
     AS3 function sort(...args)
     {
       return _sort (this, args);
@@ -96,9 +119,10 @@ package
     prototype.sort = function(...args)
     {
       return _sort (this, args);
-    }
+    };
 
-    private static native function _sortOn(o, names, options)
+    [compat]
+    private static native function _sortOn(o, names, options);
     AS3 function sortOn(names, options=0, ...ignored)
     {
       // this is our own addition so we don't have to make names be optional
@@ -107,27 +131,41 @@ package
     prototype.sortOn = function(names, options=0, ...ignored)
     {
       return _sortOn(this, names, options)
-    }
+    };
 
+    [compat]
+    private static native function _indexOf (o, searchElement, fromIndex:int):int;
     AS3 native function indexOf(searchElement, fromIndex=0):int;
     prototype.indexOf = native("Array.prototype.indexOf");
 
-    AS3 native function lastIndexOf(searchElement, fromIndex=0x7fffffff):int
+    [compat]
+    private static native function _lastIndexOf (o, searchElement, fromIndex:int=0):int;
+    AS3 native function lastIndexOf(searchElement, fromIndex=0x7fffffff):int;
     prototype.lastIndexOf = native("Array.prototype.lastIndexOf");
 
-    AS3 native function every(callback:Function, thisObject=null):Boolean
+    [compat]
+    private static native function _every(o, callback:Function, thisObject):Boolean;
+    AS3 native function every(callback:Function, thisObject=null):Boolean;
     prototype.every = native("Array.prototype.every");
 
-    AS3 native function filter(callback:Function, thisObject=null):Array
+    [compat]
+    private static native function _filter(o, callback:Function, thisObject):Array;
+    AS3 native function filter(callback:Function, thisObject=null):Array;
     prototype.filter = native("Array.prototype.filter");
 
-    AS3 native function forEach(callback:Function, thisObject=null):void
+    [compat]
+    private static native function _forEach(o, callback:Function, thisObject):void;
+    AS3 native function forEach(callback:Function, thisObject=null):void;
     prototype.forEach = native("Array.prototype.forEach");
 
-    AS3 native function map(callback:Function, thisObject=null):Array
+    [compat]
+    private native static function _map(o, callback:Function, thisObject):Array;
+    AS3 native function map(callback:Function, thisObject=null):Array;
     prototype.map = native("Array.prototype.map");
 
-    AS3 native function some(callback:Function, thisObject=null):Boolean
+    [compat]
+    private static native function _some(o, callback:Function, thisObject):Boolean;
+    AS3 native function some(callback:Function, thisObject=null):Boolean;
     prototype.some = native("Array.prototype.some");
 
     _dontEnumPrototype(prototype);

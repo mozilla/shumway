@@ -1,5 +1,3 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
-/* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -39,394 +37,198 @@
 
 package
 {
-    [native(cls="DateClass", gc="exact", instance="DateObject", methods="auto", construct="override")]
-    public dynamic class Date
-    {
-        // Date.length = 7 per ES3
-        // E262 {ReadOnly, DontDelete, DontEnum }
-        public static const length:int = 7
+  [native("DateClass")]
+  public dynamic class Date
+  {
+    // Date.length = 7 per ES3
+    // E262 {ReadOnly, DontDelete, DontEnum }
+    public static const length:int = 7;
 
-        public native static function parse(s):Number
-        public native static function UTC(year, month, date=1, hours=0, minutes=0, seconds=0, ms=0, ... rest):Number
+    public native static function parse(s):Number;
+    public native static function UTC(year, month, date=1, hours=0, minutes=0, seconds=0, ms=0, ... rest):Number;
 
-        AS3 native function valueOf():Number
-        private native function _toString(index:int):String
-        private native function _setTime(value:Number):Number
-        private native function _get(index:int):Number
+    AS3 native function valueOf():Number;
 
-        AS3 function setTime(t=void 0):Number
-        {
-            return _setTime(t)
-        }
+    [compat]
+    private native function _toString(index:int):String;
+    [compat]
+    private native function _setTime(value:Number):Number;
+    [compat]
+    private native function _get(index:int):Number;
 
-        prototype.setTime = function(t=void 0):Number
-        {
-            var d:Date = this
-            return d._setTime(t)
-        }
+    AS3 native function setTime(t=void 0):Number;
 
-        prototype.valueOf = function()
-        {
-            var d:Date = this
-            return d.AS3::valueOf()
-        }
+    prototype.setTime = native("Date.prototype.setTime");
+    prototype.valueOf = native("Date.prototype.valueOf");
 
-        AS3 function toString():String              { return _toString(0) }
-        AS3 function toDateString():String          { return _toString(1) }
-        AS3 function toTimeString():String          { return _toString(2) }
-        AS3 function toLocaleString():String        { return _toString(3) }
-        AS3 function toLocaleDateString():String    { return _toString(4) }
-        AS3 function toLocaleTimeString():String    { return _toString(5) }
-        AS3 function toUTCString():String           { return _toString(6) }
+    AS3 native function toString():String;
+    AS3 native function toDateString():String;
+    AS3 native function toTimeString():String;
+    AS3 native function toLocaleString():String;
+    AS3 native function toLocaleDateString():String;
+    AS3 native function toLocaleTimeString():String;
+    AS3 native function toUTCString():String;
 
-        AS3 native function getUTCFullYear():Number
-        AS3 native function getUTCMonth():Number
-        AS3 native function getUTCDate():Number
-        AS3 native function getUTCDay():Number
-        AS3 native function getUTCHours():Number
-        AS3 native function getUTCMinutes():Number
-        AS3 native function getUTCSeconds():Number
-        AS3 native function getUTCMilliseconds():Number
-        AS3 native function getFullYear():Number
-        AS3 native function getMonth():Number
-        AS3 native function getDate():Number
-        AS3 native function getDay():Number
-        AS3 native function getHours():Number
-        AS3 native function getMinutes():Number
-        AS3 native function getSeconds():Number
-        AS3 native function getMilliseconds():Number
-        AS3 native function getTimezoneOffset():Number
-        AS3 native function getTime():Number
+    AS3 native function getUTCFullYear():Number;
+    AS3 native function getUTCMonth():Number;
+    AS3 native function getUTCDate():Number;
+    AS3 native function getUTCDay():Number;
+    AS3 native function getUTCHours():Number;
+    AS3 native function getUTCMinutes():Number;
+    AS3 native function getUTCSeconds():Number;
+    AS3 native function getUTCMilliseconds():Number;
+    AS3 native function getFullYear():Number;
+    AS3 native function getMonth():Number;
+    AS3 native function getDate():Number;
+    AS3 native function getDay():Number;
+    AS3 native function getHours():Number;
+    AS3 native function getMinutes():Number;
+    AS3 native function getSeconds():Number;
+    AS3 native function getMilliseconds():Number;
+    AS3 native function getTimezoneOffset():Number;
+    AS3 native function getTime():Number;
 
-        private native function _setFullYear(...rest):Number
-        private native function _setMonth(...rest):Number
-        private native function _setDate(...rest):Number
-        private native function _setHours(...rest):Number
-        private native function _setMinutes(...rest):Number
-        private native function _setSeconds(...rest):Number
-        private native function _setMilliseconds(...rest):Number
+    [compat]
+    private native function _setFullYear(...rest):Number;
+    [compat]
+    private native function _setMonth(...rest):Number;
+    [compat]
+    private native function _setDate(...rest):Number;
+    [compat]
+    private native function _setHours(...rest):Number;
+    [compat]
+    private native function _setMinutes(...rest):Number;
+    [compat]
+    private native function _setSeconds(...rest):Number;
+    [compat]
+    private native function _setMilliseconds(...rest):Number;
 
-        private native function _setUTCFullYear(...rest0):Number
-        private native function _setUTCMonth(...rest):Number
-        private native function _setUTCDate(...rest):Number
-        private native function _setUTCHours(...rest):Number
-        private native function _setUTCMinutes(...rest):Number
-        private native function _setUTCSeconds(...rest):Number
-        private native function _setUTCMilliseconds(...rest):Number
+    [compat]
+    private native function _setUTCFullYear(...rest0):Number;
+    [compat]
+    private native function _setUTCMonth(...rest):Number;
+    [compat]
+    private native function _setUTCDate(...rest):Number;
+    [compat]
+    private native function _setUTCHours(...rest):Number;
+    [compat]
+    private native function _setUTCMinutes(...rest):Number;
+    [compat]
+    private native function _setUTCSeconds(...rest):Number;
+    [compat]
+    private native function _setUTCMilliseconds(...rest):Number;
 
-        AS3 function setFullYear(year=void 0, month=void 0, date=void 0):Number { return _setFullYear.AS3::apply(this, arguments); }
-        AS3 function setMonth(month=void 0, date=void 0):Number { return _setMonth.AS3::apply(this, arguments); }
-        AS3 function setDate(date=void 0):Number { return _setDate.AS3::apply(this, arguments); }
-        AS3 function setHours(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number { return _setHours.AS3::apply(this, arguments); }
-        AS3 function setMinutes(min=void 0, sec=void 0, ms=void 0):Number { return _setMinutes.AS3::apply(this, arguments); }
-        AS3 function setSeconds(sec=void 0, ms=void 0):Number { return _setSeconds.AS3::apply(this, arguments); }
-        AS3 function setMilliseconds(ms=void 0):Number { return _setMilliseconds.AS3::apply(this, arguments); }
+    AS3 native function setFullYear(year=void 0, month=void 0, date=void 0):Number;
+    AS3 native function setMonth(month=void 0, date=void 0):Number;
+    AS3 native function setDate(date=void 0):Number;
+    AS3 native function setHours(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number;
+    AS3 native function setMinutes(min=void 0, sec=void 0, ms=void 0):Number;
+    AS3 native function setSeconds(sec=void 0, ms=void 0):Number;
+    AS3 native function setMilliseconds(ms=void 0):Number;
+    AS3 native function setUTCFullYear(year=void 0, month=void 0, date=void 0):Number;
+    AS3 native function setUTCMonth(month=void 0, date=void 0):Number;
+    AS3 native function setUTCDate(date=void 0):Number;
+    AS3 native function setUTCHours(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number;
+    AS3 native function setUTCMinutes(min=void 0, sec=void 0, ms=void 0):Number;
+    AS3 native function setUTCSeconds(sec=void 0, ms=void 0):Number;
+    AS3 native function setUTCMilliseconds(ms=void 0):Number;
 
-        AS3 function setUTCFullYear(year=void 0, month=void 0, date=void 0):Number { return _setUTCFullYear.AS3::apply(this, arguments); }
-        AS3 function setUTCMonth(month=void 0, date=void 0):Number { return _setUTCMonth.AS3::apply(this, arguments); }
-        AS3 function setUTCDate(date=void 0):Number { return _setUTCDate.AS3::apply(this, arguments); }
-        AS3 function setUTCHours(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number { return _setUTCHours.AS3::apply(this, arguments); }
-        AS3 function setUTCMinutes(min=void 0, sec=void 0, ms=void 0):Number { return _setUTCMinutes.AS3::apply(this, arguments); }
-        AS3 function setUTCSeconds(sec=void 0, ms=void 0):Number { return _setUTCSeconds.AS3::apply(this, arguments); }
-        AS3 function setUTCMilliseconds(ms=void 0):Number { return _setUTCMilliseconds.AS3::apply(this, arguments); }
+    prototype.toString = native("Date.prototype.toString");
+    prototype.toDateString = native("Date.prototype.toDateString");
+    prototype.toTimeString = native("Date.prototype.toTimeString");
+    prototype.toLocaleString = native("Date.prototype.toLocaleString");
+    prototype.toLocaleDateString = native("Date.prototype.toLocaleDateString");
+    prototype.toLocaleTimeString = native("Date.prototype.toLocaleTimeString");
+    prototype.toUTCString = native("Date.prototype.toUTCString");
+    // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
+    // the native JS one obviously is.
+    prototype.toJSON = native("Date.prototype.toJSON");
+    prototype.getUTCFullYear = native("Date.prototype.getUTCFullYear");
+    prototype.getUTCMonth = native("Date.prototype.getUTCMonth");
+    prototype.getUTCDate = native("Date.prototype.getUTCDate");
+    prototype.getUTCDay = native("Date.prototype.getUTCDay");
+    prototype.getUTCHours = native("Date.prototype.getUTCHours");
+    prototype.getUTCMinutes = native("Date.prototype.getUTCMinutes");
+    prototype.getUTCSeconds = native("Date.prototype.getUTCSeconds");
+    prototype.getUTCMilliseconds = native("Date.prototype.getUTCMilliseconds");
+    prototype.getFullYear = native("Date.prototype.getFullYear");
+    prototype.getMonth = native("Date.prototype.getMonth");
+    prototype.getDate = native("Date.prototype.getDate");
+    prototype.getDay = native("Date.prototype.getDay");
+    prototype.getHours = native("Date.prototype.getHours");
+    prototype.getMinutes = native("Date.prototype.getMinutes");
+    prototype.getSeconds = native("Date.prototype.getSeconds");
+    prototype.getMilliseconds = native("Date.prototype.getMilliseconds");
+    prototype.getTimezoneOffset = native("Date.prototype.getTimezoneOffset");
+    prototype.getTime = native("Date.prototype.getTime");
+    prototype.setFullYear = native("Date.prototype.setFullYear");
+    prototype.setMonth = native("Date.prototype.setMonth");
+    prototype.setDate = native("Date.prototype.setDate");
+    prototype.setHours = native("Date.prototype.setHours");
+    prototype.setMinutes = native("Date.prototype.setMinutes");
+    prototype.setSeconds = native("Date.prototype.setSeconds");
+    prototype.setMilliseconds = native("Date.prototype.setMilliseconds");
+    prototype.setUTCFullYear = native("Date.prototype.setUTCFullYear");
+    prototype.setUTCMonth = native("Date.prototype.setUTCMonth");
+    prototype.setUTCDate = native("Date.prototype.setUTCDate");
+    prototype.setUTCHours = native("Date.prototype.setUTCHours");
+    prototype.setUTCMinutes = native("Date.prototype.setUTCMinutes");
+    prototype.setUTCSeconds = native("Date.prototype.setUTCSeconds");
+    prototype.setUTCMilliseconds = native("Date.prototype.setUTCMilliseconds");
 
-        prototype.toString = function():String
-        {
-            var d:Date = this
-            return d._toString(0)
-        }
-        prototype.toDateString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toDateString()
-        }
-        prototype.toTimeString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toTimeString()
-        }
-        prototype.toLocaleString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toLocaleString()
-        }
-        prototype.toLocaleDateString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toLocaleDateString()
-        }
-        prototype.toLocaleTimeString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toLocaleTimeString()
-        }
-        prototype.toUTCString = function():String
-        {
-            var d:Date = this
-            return d.AS3::toUTCString()
-        }
+    public function get fullYear():Number { return AS3::getFullYear(); }
+    public function set fullYear(value:Number) { AS3::setFullYear(value); }
 
-        // Note: this is not ES5 compliant, because we do not have a
-        // toISOString method in Date for toJSON to dynamically lookup.  The
-        // most obvious/useful choice made here to produce an output that our
-        // Date constructor can parse; i.e., AS3::toString().
-        //
-        // Note: clients are free to replace with method returning non-string
-        prototype.toJSON = function(k:String):*
-        {
-            var d:Date = this;
-            return d.AS3::toString();
-        }
+    public function get month():Number { return AS3::getMonth(); }
+    public function set month(value:Number) { AS3::setMonth(value); }
 
-        prototype.getUTCFullYear = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCFullYear()
-        }
+    public function get date():Number { return AS3::getDate(); }
+    public function set date(value:Number) { AS3::setDate(value); }
 
-        prototype.getUTCMonth = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCMonth()
-        }
+    public function get hours():Number { return AS3::getHours(); }
+    public function set hours(value:Number) { AS3::setHours(value); }
 
-        prototype.getUTCDate = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCDate()
-        }
+    public function get minutes():Number { return AS3::getMinutes(); }
+    public function set minutes(value:Number) { AS3::setMinutes(value); }
 
-        prototype.getUTCDay = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCDay()
-        }
+    public function get seconds():Number { return AS3::getSeconds(); }
+    public function set seconds(value:Number) { AS3::setSeconds(value); }
 
-        prototype.getUTCHours = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCHours()
-        }
+    public function get milliseconds():Number { return AS3::getMilliseconds(); }
+    public function set milliseconds(value:Number) { AS3::setMilliseconds(value); }
 
-        prototype.getUTCMinutes = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCMinutes()
-        }
+    public function get fullYearUTC():Number { return AS3::getUTCFullYear(); }
+    public function set fullYearUTC(value:Number) { AS3::setUTCFullYear(value); }
 
-        prototype.getUTCSeconds = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCSeconds()
-        }
+    public function get monthUTC():Number { return AS3::getUTCMonth(); }
+    public function set monthUTC(value:Number) { AS3::setUTCMonth(value); }
 
-        prototype.getUTCMilliseconds = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getUTCMilliseconds()
-        }
+    public function get dateUTC():Number { return AS3::getUTCDate(); }
+    public function set dateUTC(value:Number) { AS3::setUTCDate(value); }
 
-        prototype.getFullYear = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getFullYear()
-        }
+    public function get hoursUTC():Number { return AS3::getUTCHours(); }
+    public function set hoursUTC(value:Number) { AS3::setUTCHours(value); }
 
-        prototype.getMonth = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getMonth()
-        }
+    public function get minutesUTC():Number { return AS3::getUTCMinutes(); }
+    public function set minutesUTC(value:Number) { AS3::setUTCMinutes(value); }
 
-        prototype.getDate = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getDate()
-        }
+    public function get secondsUTC():Number { return AS3::getUTCSeconds(); }
+    public function set secondsUTC(value:Number) { AS3::setUTCSeconds(value); }
 
-        prototype.getDay = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getDay()
-        }
+    public function get millisecondsUTC():Number { return AS3::getUTCMilliseconds(); }
+    public function set millisecondsUTC(value:Number) { AS3::setUTCMilliseconds(value); }
 
-        prototype.getHours = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getHours()
-        }
+    public function get time():Number { return AS3::getTime(); }
+    public function set time(value:Number) { AS3::setTime(value); }
 
-        prototype.getMinutes = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getMinutes()
-        }
-
-        prototype.getSeconds = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getSeconds()
-        }
-
-        prototype.getMilliseconds = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getMilliseconds()
-        }
-
-        prototype.getTimezoneOffset = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getTimezoneOffset()
-        }
-
-        prototype.getTime = function():Number
-        {
-            var d:Date = this
-            return d.AS3::getTime()
-        }
-
-        prototype.setFullYear = function(year=void 0, month=void 0, date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setFullYear.AS3::apply(d, arguments);
-        }
-        prototype.setMonth = function(month=void 0, date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setMonth.AS3::apply(d, arguments);
-        }
-        prototype.setDate = function(date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setDate.AS3::apply(d, arguments);
-        }
-        prototype.setHours = function(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setHours.AS3::apply(d, arguments);
-        }
-        prototype.setMinutes = function(min=void 0, sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setMinutes.AS3::apply(d, arguments);
-        }
-        prototype.setSeconds = function(sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setSeconds.AS3::apply(d, arguments);
-        }
-        prototype.setMilliseconds = function(ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setMilliseconds.AS3::apply(d, arguments);
-        }
-
-        prototype.setUTCFullYear = function(year=void 0, month=void 0, date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCFullYear.AS3::apply(d, arguments);
-        }
-        prototype.setUTCMonth = function(month=void 0, date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCMonth.AS3::apply(d, arguments);
-        }
-        prototype.setUTCDate = function(date=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCDate.AS3::apply(d, arguments);
-        }
-        prototype.setUTCHours = function(hour=void 0, min=void 0, sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCHours.AS3::apply(d, arguments);
-        }
-        prototype.setUTCMinutes = function(min=void 0, sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCMinutes.AS3::apply(d, arguments);
-        }
-        prototype.setUTCSeconds = function(sec=void 0, ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCSeconds.AS3::apply(d, arguments);
-        }
-        prototype.setUTCMilliseconds = function(ms=void 0):Number
-        {
-            var d:Date = this
-            return d.AS3::setUTCMilliseconds.AS3::apply(d, arguments);
-        }
-
-        public function get fullYear():Number { return AS3::getFullYear(); }
-        public function set fullYear(value:Number) { AS3::setFullYear(value); }
-
-        public function get month():Number { return AS3::getMonth(); }
-        public function set month(value:Number) { AS3::setMonth(value); }
-
-        public function get date():Number { return AS3::getDate(); }
-        public function set date(value:Number) { AS3::setDate(value); }
-
-        public function get hours():Number { return AS3::getHours(); }
-        public function set hours(value:Number) { AS3::setHours(value); }
-
-        public function get minutes():Number { return AS3::getMinutes(); }
-        public function set minutes(value:Number) { AS3::setMinutes(value); }
-
-        public function get seconds():Number { return AS3::getSeconds(); }
-        public function set seconds(value:Number) { AS3::setSeconds(value); }
-
-        public function get milliseconds():Number { return AS3::getMilliseconds(); }
-        public function set milliseconds(value:Number) { AS3::setMilliseconds(value); }
-
-        public function get fullYearUTC():Number { return AS3::getUTCFullYear(); }
-        public function set fullYearUTC(value:Number) { AS3::setUTCFullYear(value); }
-
-        public function get monthUTC():Number { return AS3::getUTCMonth(); }
-        public function set monthUTC(value:Number) { AS3::setUTCMonth(value); }
-
-        public function get dateUTC():Number { return AS3::getUTCDate(); }
-        public function set dateUTC(value:Number) { AS3::setUTCDate(value); }
-
-        public function get hoursUTC():Number { return AS3::getUTCHours(); }
-        public function set hoursUTC(value:Number) { AS3::setUTCHours(value); }
-
-        public function get minutesUTC():Number { return AS3::getUTCMinutes(); }
-        public function set minutesUTC(value:Number) { AS3::setUTCMinutes(value); }
-
-        public function get secondsUTC():Number { return AS3::getUTCSeconds(); }
-        public function set secondsUTC(value:Number) { AS3::setUTCSeconds(value); }
-
-        public function get millisecondsUTC():Number { return AS3::getUTCMilliseconds(); }
-        public function set millisecondsUTC(value:Number) { AS3::setUTCMilliseconds(value); }
-
-        public function get time():Number { return AS3::getTime(); }
-        public function set time(value:Number) { AS3::setTime(value); }
-
-        public function get timezoneOffset():Number { return AS3::getTimezoneOffset(); }
-        public function get day():Number { return AS3::getDay(); }
-        public function get dayUTC():Number { return AS3::getUTCDay(); }
+    public function get timezoneOffset():Number { return AS3::getTimezoneOffset(); }
+    public function get day():Number { return AS3::getDay(); }
+    public function get dayUTC():Number { return AS3::getUTCDay(); }
 
 
-        // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-        // The code for the actual ctor is in DateClass::construct in the avmplus
-        public function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0)
-        {}
+    // Dummy constructor
+    public function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0) {}
 
-
-        // These are not part of ECMA-262, and thus we will not be exposing
-        // them via the new-style get/set functions (this is provided here
-        // just to let you know we didn't overlook them)
-        //public function get year():Number { return getYear(); }
-        //public function get yearUTC():Number { return getUTCYear(); }
-
-        // The following older ECMA and/or AS2 functions are not supported since
-        // they are not Y2K compliant (only get/set 2 digits)
-        // getYear
-        // setYear
-        // getUTCYear
-        // setUTCYear
-
-        _dontEnumPrototype(prototype);
-    }
+    _dontEnumPrototype(prototype);
+  }
 }

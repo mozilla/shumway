@@ -49,9 +49,8 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      function applyNew(classOrFunction, args) {
-        var constructor = classOrFunction.instance || classOrFunction;
-        return new (Function.bind.apply(constructor, [,].concat(args)));
+      function applyNew(constructor, args) {
+        return new (Function.bind.apply(constructor.instance, [,].concat(args)));
       }
 
       function evaluateBinary(operator) {

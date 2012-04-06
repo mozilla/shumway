@@ -43,13 +43,16 @@ package
   {
     // Boolean.length = 1 per ES3
     // E262 {ReadOnly, DontDelete, DontEnum }
-    public static const length:int = 1
+    public static const length:int = 1;
 
-    AS3 native function toString()
-    AS3 native function valueOf()
+    AS3 native function toString();
+    AS3 native function valueOf();
 
     prototype.toString = native("Boolean.prototype.toString");
     prototype.valueOf = native("Boolean.prototype.valueOf");
+
+    // Dummy constructor
+    public function Boolean(value = void 0) {}
 
     _dontEnumPrototype(prototype);
   }

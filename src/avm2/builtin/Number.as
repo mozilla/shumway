@@ -133,6 +133,20 @@ package
     [native("Math.random")]
     public native static function random ():Number;
 
+    [compat]
+    private static const DTOSTR_FIXED:int = 1;
+    [compat]
+    private static const DTOSTR_PRECISION:int = 2;
+    [compat]
+    private static const DTOSTR_EXPONENTIAL:int = 3;
+
+    [compat]
+    private static native function _numberToString(n:Number, radix:int):String;
+    [compat]
+    private static native function _convert(n:Number, precision:int, mode:int):String;
+    [compat]
+    private static native function _minValue():Number;
+
     AS3 native function toString(radix=10):String
     AS3 native function valueOf():Number
 
@@ -162,6 +176,14 @@ package
     // E262 {ReadOnly, DontDelete, DontEnum }
     public static const length:int = 1
 
+    //
+    // NB: We _don't_ maintain slot-compatibility with AVM here, since we
+    // don't want to box ints.
+    //
+
+    // Dummy constructor
+    public function int(value = 0) {}
+
     _dontEnumPrototype(prototype);
   }
 
@@ -174,7 +196,15 @@ package
 
     // Number.length = 1 per ES3
     // E262 {ReadOnly, DontDelete, DontEnum}
-    public static const length:int = 1
+    public static const length:int = 1;
+
+    //
+    // NB: We _don't_ maintain slot-compatibility with AVM here, since we
+    // don't want to box uints.
+    //
+
+    // Dummy constructor
+    public function uint(value = 0) {}
 
     _dontEnumPrototype(prototype);
   }

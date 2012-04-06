@@ -1,22 +1,27 @@
 var Class = (function () {
 
-  function Class(name, instance, coerce) {
+  function Class(name, instance, callable) {
     this.debugName = "[class " + name + "]";
     this.instance = instance;
 
     /**
-     * Coercions are done by calling the class like a function.
-     * If no coercion is specified, act as identity.
+     * Classes can be called like functions. For user-defined classes this is
+     * coercion, for some of the builtins they behave like their counterparts
+     * in JS.
      */
-    if (coerce) {
-      this.call = function (_, value) {
-        return coerce(value);
+    if (callable) {
+      this.call = function ($this) {
+        return callable.apply($this, arguments);
       };
+      this.apply = function ($this, args) {
+        return callable.apply($this, args);
+      }
     } else {
-      this.call = function (_, value) {
-        return value;
+      this.call = this.apply = function () {
+        notImplemented("class callable call");
       };
     }
+
   }
 
   Class.instance = Class;
@@ -122,9 +127,14 @@ const natives = (function () {
     escape: escape,
     unescape: unescape,
     isXMLName: isXMLName,
-    "NaN": NaN,
-    "Infinity": Infinity,
-    "undefined": void 0,
+    // "NaN": NaN,
+    // "Infinity": Infinity,
+    // "undefined": void 0,
+
+    /**
+     * Math.as
+     */
+    Math: Math,
 
     /**
      * Classes.
@@ -137,7 +147,10 @@ const natives = (function () {
     NumberClass: new Class("Number", Number, Number),
     intClass: new Class("int", int, int),
     uintClass: new Class("uint", uint, uint),
-    ArrayClass: new Class("Array", Array)
+    ArrayClass: new Class("Array", Array, Array),
+
+    DateClass: new Class("Date", Date, Date),
+    MathClass: new Class("Math")
   };
 
   return new Natives(backing);

@@ -44,7 +44,7 @@ package
   {
     // {DontEnum,DontDelete,ReadOnly}
     [native("getInstancePrototype")]
-    public native final function get prototype()
+    public native final function get prototype();
 
     // Class.length = 1 per ES3
     // E262 {ReadOnly, DontDelete, DontEnum }

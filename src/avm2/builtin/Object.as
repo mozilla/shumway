@@ -45,14 +45,22 @@ package
   {
     // Object.length = 1 per ES3
     // E262 {ReadOnly, DontDelete, DontEnum }
-    public static const length:int = 1
+    public static const length:int = 1;
 
-    protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
+    [compat]
+    private static native function _hasOwnProperty(o, V:String):Boolean;
+    [compat]
+    private static native function _propertyIsEnumerable(o, V:String):Boolean;
+    protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void;
+    [compat]
+    private static native function _isPrototypeOf(o, V):Boolean;
+    [compat]
+    private static native function _toString(o):String;
 
     // We can native these directly to the JS Object counterparts.
     AS3 native function isPrototypeOf(V=void 0):Boolean;
     AS3 native function hasOwnProperty(V=void 0):Boolean;
-    AS3 native function propertyIsEnumerable(V=void 0):Boolean
+    AS3 native function propertyIsEnumerable(V=void 0):Boolean;
 
     protected static function _dontEnumPrototype(proto:Object):void
     {

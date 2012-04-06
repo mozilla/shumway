@@ -400,9 +400,12 @@ const toplevel = (function () {
         var scripts = abc.scripts;
         for (var k = 0, l = scripts.length; k < l; k++) {
           var script = scripts[k];
+          if (!script.loaded) {
+            continue;
+          }
           var global = script.global;
           if (multiname.isQName()) {
-            if (script.global.hasOwnProperty(multiname.getQualifiedName())) {
+            if (global.hasOwnProperty(multiname.getQualifiedName())) {
               if (traceToplevel.value) {
                 print("Toplevel Resolved Multiname: " + multiname + " in " + abc + ", script: " + k);
                 print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
@@ -474,18 +477,22 @@ var Runtime = (function () {
     }
 
     function closeOverScope(fn, scope) {
-      return function () {
+      var fn = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
         return fn.apply(global, arguments);
       };
+      fn.instance = fn;
+      return fn;
     }
 
     function interpretedMethod(interpreter, method, scope) {
-      return function () {
+      var fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
         return interpreter.interpretMethod(global, method, scope, arguments);
       };
+      fn.instance = fn;
+      return fn;
     }
 
     const mode = this.mode;
@@ -580,30 +587,32 @@ var Runtime = (function () {
       print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.items[0].value : ""));
     }
 
+    var baseTraits = baseClass ? baseClass.instance.traits : new Traits([], true);
+
     var cls, instance;
     if (classInfo.native) {
       /* Natives must already be Classes. */
       cls = natives.get(classInfo.native.items[0].value);
-      instance = cls.instance;
+      if (instance = cls.instance) {
+        /* Math doesn't have an instance, for example. */
+        instance.traits = classInfo.instance.traits;
+        this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
+      }
     } else {
       instance = this.createFunction(classInfo.instance.init, scope);
       instance.prototype = baseClass ? Object.create(baseClass.instance.prototype) : {};
+      instance.traits = classInfo.instance.traits;
+      this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
       cls = new Class(className, instance);
     }
+
     scope.object = cls;
-
-    var instanceTraits = classInfo.instance.traits;
-
     cls.scope = scope;
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
-    cls.instanceTraits = instanceTraits;
 
-    var baseTraits = baseClass ? baseClass.instanceTraits : new Traits([], true);
-    this.applyTraits(instance.prototype, instanceTraits, baseTraits, scope);
+    /* Apply the static traits and call the static constructor. */
     this.applyTraits(cls, classInfo.traits, null, scope);
-
-    /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
 
     if (traceClasses.value) {
@@ -716,6 +725,7 @@ var Runtime = (function () {
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
       if (trait.isSlot() || trait.isConst()) {
+        // FIXME: coercions broken
         var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
         setProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
@@ -734,9 +744,16 @@ var Runtime = (function () {
            */
           var nativeProp;
           if (trait.metadata) {
-            nativeProp = trait.metadata.native.items[0].value;
+            /**
+             * Natives marked as [compat] mean that they're kept for
+             * slot-for-slot compatibility with the original AS code. We can
+             * just assign null to those.
+             *
+             * XXX: Do we need slot-for-slot compatibility?
+             */
+            nativeProp = trait.metadata.compat ? null : trait.metadata.native.items[0].value;
           } else if (traits.nativeClass) {
-            var nativeClass = traits.nativeClass.items[0].value;
+            var nativeClass = traits.nativeClass.dict.via || traits.nativeClass.items[0].value;
             if (!nativeClass) {
               unexpected("Native class without value");
             }
@@ -751,12 +768,16 @@ var Runtime = (function () {
             unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
           }
 
-          /* Let, let, my kingdom for let! */
-          closure = natives.get(nativeProp) || (function (method) {
-            return function() {
-              print("Calling undefined native method: " + method.name.getQualifiedName());
-            };
-          })(method);
+          if (nativeProp) {
+            /* Let, let, my kingdom for let! */
+            closure = natives.get(nativeProp) || (function (method) {
+              return function() {
+                print("Calling undefined native method: " + method.name.getQualifiedName());
+              };
+            })(method);
+          } else {
+            closure = null;
+          }
         } else {
           closure = this.createFunction(trait.method, new Scope(scope, obj));
         }
@@ -824,7 +845,7 @@ function executeScript(abc, script) {
  * cache its result for repeated evaluation;
  */
 function executeAbc(abc, mode) {
-  prepareAbc(abc, mode);
+  loadAbc(abc, mode);
   executeScript(abc, abc.lastScript);
   if (traceClasses.value) {
     var writer = new IndentingWriter();
@@ -843,7 +864,7 @@ function executeAbc(abc, mode) {
   }
 }
 
-function prepareAbc(abc, mode) {
+function loadAbc(abc, mode) {
   if (traceExecution.value) {
     print("Loading: " + abc);
   }

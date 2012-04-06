@@ -53,35 +53,35 @@ package
 
   // {DontEnum} length=1
   [native("decodeURI")]
-  public native function decodeURI(uri:String="undefined"):String
+  public native function decodeURI(uri:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("decodeURIComponent")]
-  public native function decodeURIComponent(uri:String="undefined"):String
+  public native function decodeURIComponent(uri:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("encodeURI")]
-  public native function encodeURI(uri:String="undefined"):String
+  public native function encodeURI(uri:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("encodeURIComponent")]
-  public native function encodeURIComponent(uri:String="undefined"):String
+  public native function encodeURIComponent(uri:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("isNaN")]
-  public native function isNaN(n:Number = void 0):Boolean
+  public native function isNaN(n:Number = void 0):Boolean;
 
   // {DontEnum} length=1
   [native("isFinite")]
-  public native function isFinite(n:Number = void 0):Boolean
+  public native function isFinite(n:Number = void 0):Boolean;
 
   // {DontEnum} length=1
   [native("parseInt")]
-  public native function parseInt(s:String = "NaN", radix:int=0):Number
+  public native function parseInt(s:String = "NaN", radix:int=0):Number;
 
   // {DontEnum} length=1
   [native("parseFloat")]
-  public native function parseFloat(str:String = "NaN"):Number
+  public native function parseFloat(str:String = "NaN"):Number;
 
 
   /**
@@ -91,15 +91,15 @@ package
 
   // {DontEnum} length=1
   [native("escape")]
-  public native function escape(s:String="undefined"):String
+  public native function escape(s:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("unescape")]
-  public native function unescape(s:String="undefined"):String
+  public native function unescape(s:String="undefined"):String;
 
   // {DontEnum} length=1
   [native("isXMLName")]
-  public native function isXMLName(str=void 0):Boolean    // moved here from XML.as
+  public native function isXMLName(str=void 0):Boolean;    // moved here from XML.as
 
   // value properties of global object (ECMA 15.1.1)
 
@@ -110,15 +110,15 @@ package
   // The initial value of NaN is NaN (section 8.5).
   // E262 { DontEnum, DontDelete}
   // E327 { DontEnum, DontDelete, ReadOnly}
-  public const NaN:Number = native("NaN");
+  public const NaN:Number = NaN;
 
   // The initial value of Infinity is +8 (section 8.5).
   // E262 { DontEnum, DontDelete}
   // E327 { DontEnum, DontDelete, ReadOnly}
-  public const Infinity:Number = native("Infinity");
+  public const Infinity:Number = 1/0;
 
   // The initial value of undefined is undefined (section 8.1).
   // E262 { DontEnum, DontDelete}
   // E327 { DontEnum, DontDelete, ReadOnly}
-  public const undefined = native("undefined")
+  public const undefined = void 0;
 }
