@@ -756,7 +756,7 @@ var MethodInfo = (function () {
     const constantPool = abc.constantPool;
 
     var parameterCount = stream.readU30();
-    var returnType = stream.readU30();
+    var returnType = constantPool.multinames[stream.readU30()];
     var parameters = [];
     for (var i = 0; i < parameterCount; i++) {
       parameters.push({type: constantPool.multinames[stream.readU30()]});
