@@ -35,11 +35,14 @@
     <script type="text/javascript" src="../interpreter.js"></script>
 
     <script type="text/javascript">
+        new FileReader("../generated/builtin.abc").readAll(null, function (buffer) {
+          executeAbc(new AbcFile(new Uint8Array(buffer), path, true), ALWAYS_INTERPRET);
+        });
+
         var libs = [];
         for (var i = 0; i < 375; i++) {
           libs.push("../playerGlobal/library-" + i + ".abc");
         }
-        libs.push("../generated/builtin.abc");
         function run() {
           if (libs.length) {
             var path = libs.pop();

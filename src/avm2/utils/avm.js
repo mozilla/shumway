@@ -76,8 +76,8 @@ if (execute.value) {
   //   var libPath = "../playerGlobal/library-" + i + ".abc";
   //   prepareAbc(new AbcFile(snarf(libPath, "binary"), libPath, true), ALWAYS_INTERPRET);
   // }
-  executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
   try {
+    executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
     var mode;
     if (alwaysInterpret.value) {
       mode = ALWAYS_INTERPRET;

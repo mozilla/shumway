@@ -835,7 +835,7 @@ var Runtime = (function () {
         } else if (trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
-          setProperty(qn, undefined, closure);
+          defineProperty(qn, undefined, closure);
         }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
@@ -845,7 +845,7 @@ var Runtime = (function () {
           cls.instance.traits.nativeClass = nativeClass;
           cls.traits.nativeClass = nativeClass;
         }
-        setProperty(trait.name.getQualifiedName(), trait.slotId, null);
+        defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
       } else {
         assert(false, trait);
       }
