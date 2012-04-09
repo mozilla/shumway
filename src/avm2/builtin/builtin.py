@@ -79,9 +79,9 @@ configs = " ".join(sys.argv[1:])
 #
 # We're ignoring some serialization for now
 #
-print asc + " -builtin -out builtin builtin.as Math.as Date.as " + configs
+print asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as " + configs
 
-os.system(asc + " -builtin -out builtin builtin.as Math.as Date.as " + configs)
+os.system(asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as " + configs)
 
 rm("builtin.h")
 rm("builtin.cpp")

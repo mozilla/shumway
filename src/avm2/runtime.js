@@ -443,17 +443,6 @@ const toplevel = (function () {
 var Runtime = (function () {
   var functionCount = 0;
 
-  function VerifyError(m) {
-    this.m = m;
-  }
-
-  VerifyError.prototype = {
-    toString: function () {
-      return this.m;
-    }
-  };
-
-
   function runtime(abc, mode) {
     this.abc = abc;
     this.mode = mode;
@@ -588,7 +577,6 @@ var Runtime = (function () {
     }
 
     var baseTraits = baseClass ? baseClass.instance.traits : new Traits([], true);
-
     var cls, instance;
     if (classInfo.native) {
       /* Natives must already be Classes. */
@@ -598,12 +586,19 @@ var Runtime = (function () {
         instance.traits = classInfo.instance.traits;
         this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
       }
+
+      /**
+       * Usually native classes ignore the constructor defined in AS, if
+       * any. Native classes that need to execute the AS instance constructor
+       * need to get it via |instanceInit|.
+       */
+      cls.instanceInit = this.createFunction(classInfo.instance.init, scope);
     } else {
       instance = this.createFunction(classInfo.instance.init, scope);
       instance.prototype = baseClass ? Object.create(baseClass.instance.prototype) : {};
       instance.traits = classInfo.instance.traits;
       this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
-      cls = new Class(className, instance);
+      cls = new Class(className, Class.passthroughInstance(instance));
     }
 
     scope.object = cls;
@@ -666,7 +661,7 @@ var Runtime = (function () {
           }
 
           if (trait.slotId <= baseSlotId) {
-            throw new VerifyError("bad slot id");
+            throw new natives.VerifyErrorClass.instance("bad slot id");
           }
         }
       }
@@ -821,8 +816,6 @@ var Runtime = (function () {
     }
     return false;
   };
-
-  runtime.VerifyError = VerifyError;
 
   return runtime;
 })();

@@ -1,30 +1,62 @@
 var Class = (function () {
 
-  function Class(name, instance, callable) {
+  const CALL_IS_NEW = 1;
+
+  function Class(name, setInstance, setCallAndApply) {
     this.debugName = "[class " + name + "]";
-    this.instance = instance;
+
+    if (setInstance) {
+      setInstance(this);
+    }
 
     /**
      * Classes can be called like functions. For user-defined classes this is
      * coercion, for some of the builtins they behave like their counterparts
      * in JS.
      */
-    if (callable) {
-      this.call = function ($this) {
-        return callable.apply($this, arguments);
-      };
-      this.apply = function ($this, args) {
-        return callable.apply($this, args);
-      }
+    if (setCallAndApply) {
+      setCallAndApply(this);
     } else {
       this.call = this.apply = function () {
         notImplemented("class callable call");
       };
     }
-
   }
 
   Class.instance = Class;
+
+  Class.passthroughInstance = function passthroughInstance(instance) {
+    return function (cls) {
+      cls.instance = instance;
+    };
+  };
+
+  Class.seminativeInstance = function seminativeInstance(cls) {
+    cls.instance = function () {
+      cls.instanceInit.apply(this, arguments);
+    };
+  };
+
+  Class.passthroughCallable = function passthroughCallable(callable) {
+    return function (cls) {
+      cls.call = function ($this) {
+        Array.prototype.pop.call(arguments);
+        return callable.apply($this, arguments);
+      };
+      cls.apply = function ($this, args) {
+        return callable.apply($this, args);
+      }
+    }
+  };
+
+  Class.constructingCallable = function constructingCallable(cls) {
+    cls.call = function ($this) {
+      return new Function.bind.apply(cls.instance, arguments);
+    };
+    cls.apply = function ($this, args) {
+      return new Function.bind.apply(cls.instance, [$this].concat(args));
+    };
+  };
 
   return Class;
 
@@ -47,12 +79,15 @@ const natives = (function () {
     }
   }
 
-  var P;
+  const I = Class.passthroughInstance;
+  const C = Class.passthroughCallable;
+  const SI = Class.seminativeInstance;
+  const CC = Class.constructingCallable;
 
   /**
    * Object.as
    */
-  var ObjectClass = new Class("Object", Object, Object);
+  var ObjectClass = new Class("Object", I(Object), C(Object));
 
   ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
     Object.defineProperty(obj, name, { enumerable: isEnum });
@@ -141,15 +176,28 @@ const natives = (function () {
      */
     ObjectClass: ObjectClass,
     Class: Class,
-    FunctionClass: new Class("Function", Function, Function),
-    BooleanClass: new Class("Boolean", Boolean, Boolean),
-    StringClass: new Class("String", String, String),
-    NumberClass: new Class("Number", Number, Number),
-    intClass: new Class("int", int, int),
-    uintClass: new Class("uint", uint, uint),
-    ArrayClass: new Class("Array", Array, Array),
+    FunctionClass: new Class("Function", I(Function), C(Function)),
+    BooleanClass: new Class("Boolean", I(Boolean), C(Boolean)),
+    StringClass: new Class("String", I(String), C(String)),
+    NumberClass: new Class("Number", I(Number), C(Number)),
+    intClass: new Class("int", I(int), C(int)),
+    uintClass: new Class("uint", I(uint), C(uint)),
+    ArrayClass: new Class("Array", I(Array), C(Array)),
 
-    DateClass: new Class("Date", Date, Date),
+    ErrorClass: new Class("Error", SI, CC),
+    DefinitionErrorClass: new Class("DefinitionError", SI, CC),
+    EvalErrorClass: new Class("EvalError", SI, CC),
+    RangeErrorClass: new Class("RangeError", SI, CC),
+    ReferenceErrorClass: new Class("ReferenceError", SI, CC),
+    SecurityErrorClass: new Class("SecurityError", SI, CC),
+    SyntaxErrorClass: new Class("SyntaxError", SI, CC),
+    TypeErrorClass: new Class("TypeError", SI, CC),
+    URIErrorClass: new Class("URIError", SI, CC),
+    VerifyErrorClass: new Class("VerifyError", SI, CC),
+    UninitializedErrorClass: new Class("UninitializedError", SI, CC),
+    ArgumentErrorClass: new Class("ArgumentError", SI, CC),
+
+    DateClass: new Class("Date", I(Date), C(Date)),
     MathClass: new Class("Math")
   };
 
