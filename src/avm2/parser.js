@@ -899,6 +899,7 @@ var InstanceInfo = (function () {
     this.init = methods[stream.readU30()];
     this.traits = parseTraits(abc, stream, this);
   }
+
   instanceInfo.prototype.toString = function toString() {
     var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
     var str = (flags ? flags + " " : "") + this.name;

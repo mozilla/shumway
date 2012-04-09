@@ -60,14 +60,9 @@ class Base:
 
     if 'GLOBALABC' in os.environ:
       self.global_abc = os.environ['GLOBALABC'].strip();
-    else:
-      print "Environment variable GLOBALABC is not defined, set it to global.abc, which comes with Alchemy under flashlibs/"
 
     if 'PLAYERGLOBALABC' in os.environ:
       self.player_global_abc = os.environ['PLAYERGLOBALABC'].strip();
-    else:
-      print "Environment variable PLAYERGLOBALABC is not defined, set it to playerglobal.abc, which comes with Alchemy under flashlibs/"
-
 
     if 'AVM' in os.environ:
       self.avm = os.environ['AVM']

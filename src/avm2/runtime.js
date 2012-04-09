@@ -9,37 +9,6 @@ const HEURISTIC_JIT = 0x2;
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
-<<<<<<< HEAD
-=======
-function defineReadOnlyProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
-}
-
-function defineGetterAndSetter(obj, name, getter, setter) {
-  Object.defineProperty(obj, name, { get: getter, set: setter });
-}
-
-function defineNonEnumerableProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value, writable: true, configurable: true, enumerable: false });
-}
-
-/**
- * Each AS3 object needs its own explicit public prototype. We fast-path
- * public prototypes to the actual prototype property on the underlying JS
- * object, but we need to add a placeholder here so multinames can be
- * resolved.
- */
-defineReadOnlyProperty(Function.prototype, "public$prototype", null);
-
-
-[Array, String, Function].forEach(function (obj) {
-  defineGetterAndSetter(obj.prototype, "public$length",
-    function () { return this.length; }, function (v) { this.length = v; }
-  );
-});
-
-
->>>>>>> Define traits as non enumerable properties.
 /**
  * Override the [] operator by wrapping it in accessor (get/set) functions. This is necessary because in AS3,
  * the [] operator has different semantics depending on whether the receiver is an Array or Vector. For the
