@@ -45,7 +45,7 @@
         }
         function run() {
           if (libs.length) {
-            var path = libs.pop();
+            var path = libs.shift();
             new FileReader(path).readAll(null, function (buffer) {
               prepareAbc(new AbcFile(new Uint8Array(buffer), path, true), ALWAYS_INTERPRET);
               run();
