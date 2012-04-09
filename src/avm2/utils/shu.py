@@ -55,6 +55,20 @@ class Base:
     else:
       print "Environment variable BUILTINABC is not defined, set it to builtin.abc"
 
+    # The builtin.abc cannot be combined with the playerglobal.abc file that comes with Alchemy, thus we need
+    # this other global.abc library.
+
+    if 'GLOBALABC' in os.environ:
+      self.global_abc = os.environ['GLOBALABC'].strip();
+    else:
+      print "Environment variable GLOBALABC is not defined, set it to global.abc, which comes with Alchemy under flashlibs/"
+
+    if 'PLAYERGLOBALABC' in os.environ:
+      self.player_global_abc = os.environ['PLAYERGLOBALABC'].strip();
+    else:
+      print "Environment variable PLAYERGLOBALABC is not defined, set it to playerglobal.abc, which comes with Alchemy under flashlibs/"
+
+
     if 'AVM' in os.environ:
       self.avm = os.environ['AVM']
     else:
@@ -64,7 +78,7 @@ class Base:
     if not self.asc:
       sys.exit();
 
-  def runAsc(self, files, createSwf = False, builtin = False, multiple = False):
+  def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, multiple = False):
     if multiple:
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
               "macromedia.asc.embedding.ScriptCompiler", "-d"]
@@ -73,6 +87,13 @@ class Base:
 
     if builtin:
       args.extend(["-import", self.builtin_abc])
+
+    if _global:
+      args.extend(["-import", self.global_abc])
+
+    if playerGlobal:
+      args.extend(["-import", self.player_global_abc])
+
     outf = os.path.splitext(files[-1])[0]
 
     args.extend(["-out", outf])
@@ -114,11 +135,13 @@ class Asc(Command):
     parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
     parser.add_argument('src', nargs='+', help="source .as file")
     parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
+    parser.add_argument('-globals', action='store_true', help='import global.abc')
+    parser.add_argument('-playerGlobal', action='store_true', help='import playerGlobal.abc')
     parser.add_argument('-multiple', action='store_true', help='compile multiple scripts into one .abc file')
     parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
     args = parser.parse_args(args)
     print "Compiling %s" % args.src
-    self.runAsc(args.src, args.swf, builtin = args.builtin, multiple = args.multiple)
+    self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  multiple = args.multiple)
 
 class Ascreg(Command):
   def __init__(self):
