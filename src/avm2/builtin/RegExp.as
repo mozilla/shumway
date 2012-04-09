@@ -48,25 +48,17 @@ package
     public static const length:int = 1;
 
     // {RO,DD,DE} properties of RegExp instances
-    [native("getSource")]
     public native function get source():String;
-    [native("getGlobal")]
     public native function get global():Boolean;
-    [native("getIgnoreCase")]
     public native function get ignoreCase():Boolean;
-    [native("getMultiline")]
     public native function get multiline():Boolean;
 
     // {DD,DE} properties of RegExp instances
-    [native("getLastIndex")]
     public native function get lastIndex():int;
-    [native("setLastIndex")]
     public native function set lastIndex(i:int);
 
     // AS3 specific properties {RO,DD,DE}
-    [native("getDotall")]
     public native function get dotall():Boolean;
-    [native("getExtended")]
     public native function get extended():Boolean;
 
     prototype.toString = function():String

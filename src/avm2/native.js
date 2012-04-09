@@ -58,6 +58,10 @@ var Class = (function () {
     };
   };
 
+  Class.getters = {
+    prototype: function () { return this.instance.prototype; }
+  };
+
   return Class;
 
 })();
@@ -91,13 +95,6 @@ const natives = (function () {
 
   ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
     Object.defineProperty(obj, name, { enumerable: isEnum });
-  }
-
-  /**
-   * Class.as
-   */
-  function getInstancePrototype() {
-    return this.instance.prototype;
   }
 
   /**
@@ -142,7 +139,6 @@ const natives = (function () {
    *
    * TODO: /x not supported
    */
-
   function ASRegExp(pattern, flags) {
     if (flags) {
       var re;
@@ -162,49 +158,28 @@ const natives = (function () {
   }
   ASRegExp.prototype = RegExp.prototype;
 
-  function getSource() {
-    return this.source;
-  }
-  function getGlobal() {
-    return this.global;
-  }
-  function getIgnoreCase() {
-    return this.ignoreCase;
-  }
-  function getMultiline() {
-    return this.multiline;
-  }
-  function getLastIndex() {
-    return this.lastIndex;
-  }
-  function setLastIndex(i) {
-    this.lastIndex = i;
-  }
-  function getDotall() {
-    return this.dotall;
-  }
-  function getExtended() {
-    // TODO: Extended not supported
-    return false;
-  }
+  ASRegExp.getters = {
+    source: function () { return this.source; },
+    global: function () { return this.global; },
+    ignoreCase: function () { return this.ignoreCase; },
+    multiline: function () { return this.multiline; },
+    lastIndex: function () { return this.lastIndex; },
+    dotall: function () { return this.dotall; },
+    extended: function () { return this.extended; }
+  };
+
+  ASRegExp.setters = {
+    lastIndex: function (i) { this.lastIndex = i; }
+  };
 
   var backing = {
     /**
      * Getters/setters used by several classes.
      */
-    getInstancePrototype: getInstancePrototype,
     getPrototype: getPrototype,
     setPrototype: setPrototype,
     getLength: getLength,
     setLength: setLength,
-    getSource: getSource,
-    getGlobal: getGlobal,
-    getIgnoreCase: getIgnoreCase,
-    getMultiline: getMultiline,
-    getLastIndex: getLastIndex,
-    setLastIndex: setLastIndex,
-    getDotall: getDotall,
-    getExtended: getExtended,
 
     /**
      * Shell toplevel.

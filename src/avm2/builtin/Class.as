@@ -43,7 +43,6 @@ package
   public dynamic class Class
   {
     // {DontEnum,DontDelete,ReadOnly}
-    [native("getInstancePrototype")]
     public native final function get prototype();
 
     // Class.length = 1 per ES3

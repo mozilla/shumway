@@ -755,7 +755,19 @@ var Runtime = (function () {
 
             nativeProp = nativeClass;
             if (baseTraits) {
-              nativeProp += ".instance.prototype"
+              if (trait.isGetter()) {
+                nativeProp += ".instance.getters";
+              } else if (trait.isSetter()) {
+                nativeProp += ".instance.setters";
+              } else {
+                nativeProp += ".instance.prototype";
+              }
+            } else {
+              if (trait.isGetter()) {
+                nativeProp += ".getters";
+              } else if (trait.isSetter()) {
+                nativeProp += ".setters";
+              }
             }
 
             nativeProp += "." + method.name.name;
