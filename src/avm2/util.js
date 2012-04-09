@@ -53,7 +53,10 @@ function unexpected() {
 }
 
 function defineReadOnlyProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value, writable: false, configurable: false, enumerable: false });
+  Object.defineProperty(obj, name, { value: value,
+                                     writable: false,
+                                     configurable: false,
+                                     enumerable: false });
 }
 
 function defineGetter(obj, name, getter) {
@@ -66,6 +69,14 @@ function defineSetter(obj, name, setter) {
   Object.defineProperty(obj, name, { set: setter,
                                      configurable: true,
                                      enumerable: true });
+}
+
+
+function defineNonEnumerableProperty(obj, name, value) {
+  Object.defineProperty(obj, name, { value: value,
+                                     writable: true,
+                                     configurable: true,
+                                     enumerable: false });
 }
 
 (function () {
