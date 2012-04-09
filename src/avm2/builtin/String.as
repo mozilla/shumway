@@ -49,7 +49,7 @@ package
     String.fromCharCode = native("String.fromCharCode");
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    native[("getLength")]
+    [native("getLength")]
     public native function get length():int;
 
     [compat]
