@@ -71,7 +71,7 @@ if len(sys.argv) == 1:
     print('To compile the builtins without float/float4 support:');
     print('    >$ ./builtin.py -config CONFIG::VMCFG_FLOAT=false');
     exit(1);
-    
+
 configs = " ".join(sys.argv[1:])
 
 # print asc + " -builtin -apiversioning -out builtin builtin.as Math.as Error.as Date.as RegExp.as JSON.as XML.as IDataInput.as IDataOutput.as ByteArray.as Proxy.as flash_net_classes.as Dictionary.as IDynamicPropertyOutput.as IDynamicPropertyWriter.as DynamicPropertyOutput.as ObjectInput.as ObjectOutput.as IExternalizable.as ObjectEncoding.as " + configs
@@ -79,9 +79,9 @@ configs = " ".join(sys.argv[1:])
 #
 # We're ignoring some serialization for now
 #
-print asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as " + configs
+print asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as " + configs
 
-os.system(asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as " + configs)
+os.system(asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as " + configs)
 
 rm("builtin.h")
 rm("builtin.cpp")

@@ -39,68 +39,57 @@
 
 package
 {
-    [native(cls="RegExpClass", gc="exact", instance="RegExpObject", methods="auto", construct="override")]
-    public dynamic class RegExp
+  [native("RegExpClass")]
+  public dynamic class RegExp
+  {
+    // RegExp.length = 1 per ES3
+
+    // E262 {ReadOnly, DontDelete, DontEnum }
+    public static const length:int = 1;
+
+    // {RO,DD,DE} properties of RegExp instances
+    [native("getSource")]
+    public native function get source():String;
+    [native("getGlobal")]
+    public native function get global():Boolean;
+    [native("getIgnoreCase")]
+    public native function get ignoreCase():Boolean;
+    [native("getMultiline")]
+    public native function get multiline():Boolean;
+
+    // {DD,DE} properties of RegExp instances
+    [native("getLastIndex")]
+    public native function get lastIndex():int;
+    [native("setLastIndex")]
+    public native function set lastIndex(i:int);
+
+    // AS3 specific properties {RO,DD,DE}
+    [native("getDotall")]
+    public native function get dotall():Boolean;
+    [native("getExtended")]
+    public native function get extended():Boolean;
+
+    prototype.toString = function():String
     {
-        // RegExp.length = 1 per ES3
+      var r:RegExp = this // TypeError if not
+      var out:String = "/" + r.source + "/"
+      if (r.global)       out += "g"
+      if (r.ignoreCase)   out += "i"
+      if (r.multiline)    out += "m"
+      if (r.dotall)       out += "s"
+      if (r.extended)     out += "x"
+      return out
+    };
 
-        // E262 {ReadOnly, DontDelete, DontEnum }
-        public static const length:int = 1
+    AS3 native function exec(s:String="");
+    prototype.exec = native("RegExp.prototype.exec");
 
-        // {RO,DD,DE} properties of RegExp instances
-        public native function get source():String
-        public native function get global():Boolean
-        public native function get ignoreCase():Boolean
-        public native function get multiline():Boolean
+    AS3 native function test(s:String="");
+    prototype.test = native("RegExp.prototype.test");
 
-        // {DD,DE} properties of RegExp instances
-        public native function get lastIndex():int
-        public native function set lastIndex(i:int)
+    // Dummy constructor
+    public function RegExp(pattern = void 0, options = void 0) {}
 
-        // AS3 specific properties {RO,DD,DE}
-        public native function get dotall():Boolean
-        public native function get extended():Boolean
-
-        prototype.toString = function():String
-        {
-            var r:RegExp = this // TypeError if not
-            var out:String = "/" + r.source + "/"
-            if (r.global)       out += "g"
-            if (r.ignoreCase)   out += "i"
-            if (r.multiline)    out += "m"
-            if (r.dotall)       out += "s"
-            if (r.extended)     out += "x"
-            return out
-        }
-
-        AS3 native function exec(s:String="")
-
-        prototype.exec = function(s="")
-        {
-            // arg not typed String, so that null and undefined convert
-            // to "null" and "undefined", respectively
-            var r:RegExp = this // TypeError if not
-            return r.AS3::exec(String(s))
-        }
-
-        AS3 function test(s:String=""):Boolean
-        {
-            return AS3::exec(s) != null
-        }
-
-        prototype.test = function(s=""):Boolean
-        {
-            // arg not typed String, so that null and undefined convert
-            // to "null" and "undefined", respectively
-            var r:RegExp = this
-            return r.AS3::test(String(s))
-        }
-
-        // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-        // The code for the actual ctor is in RegExpClass::construct in the avmplus
-        public function RegExp(pattern = void 0, options = void 0)
-        {}
-
-        _dontEnumPrototype(prototype);
-    }
+    _dontEnumPrototype(prototype);
+  }
 }

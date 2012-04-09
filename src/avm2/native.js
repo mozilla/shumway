@@ -133,6 +133,61 @@ const natives = (function () {
     return Number(x) >>> 0;
   }
 
+  /**
+   * RegExp.as
+   *
+   * AS RegExp adds two new flags:
+   *  /s (dotall)   - makes . also match \n
+   *  /x (extended) - allows different formatting of regexp
+   *
+   * TODO: /x not supported
+   */
+
+  function ASRegExp(pattern, flags) {
+    if (flags) {
+      var re;
+
+      if (flags.indexOf("s") >= 0) {
+        pattern = pattern.replace(/\./, "(.|\n)");
+        flags[flags.indexOf("s")] = flags[flags.length - 1];
+        flags = flags.substr(0, flags.length - 1);
+        re = new RegExp(pattern, flags);
+        re.dotall = true;
+      }
+
+      return re;
+    }
+
+    return new RegExp(pattern, flags);
+  }
+  ASRegExp.prototype = RegExp.prototype;
+
+  function getSource() {
+    return this.source;
+  }
+  function getGlobal() {
+    return this.global;
+  }
+  function getIgnoreCase() {
+    return this.ignoreCase;
+  }
+  function getMultiline() {
+    return this.multiline;
+  }
+  function getLastIndex() {
+    return this.lastIndex;
+  }
+  function setLastIndex(i) {
+    this.lastIndex = i;
+  }
+  function getDotall() {
+    return this.dotall;
+  }
+  function getExtended() {
+    // TODO: Extended not supported
+    return false;
+  }
+
   var backing = {
     /**
      * Getters/setters used by several classes.
@@ -142,6 +197,14 @@ const natives = (function () {
     setPrototype: setPrototype,
     getLength: getLength,
     setLength: setLength,
+    getSource: getSource,
+    getGlobal: getGlobal,
+    getIgnoreCase: getIgnoreCase,
+    getMultiline: getMultiline,
+    getLastIndex: getLastIndex,
+    setLastIndex: setLastIndex,
+    getDotall: getDotall,
+    getExtended: getExtended,
 
     /**
      * Shell toplevel.
@@ -162,14 +225,17 @@ const natives = (function () {
     escape: escape,
     unescape: unescape,
     isXMLName: isXMLName,
-    // "NaN": NaN,
-    // "Infinity": Infinity,
-    // "undefined": void 0,
 
     /**
-     * Math.as
+     * Vias.
      */
+    Function: Function,
+    String: String,
+    Array: Array,
+    Number: Number,
     Math: Math,
+    Date: Date,
+    RegExp: RegExp,
 
     /**
      * Classes.
@@ -198,7 +264,8 @@ const natives = (function () {
     ArgumentErrorClass: new Class("ArgumentError", SI, CC),
 
     DateClass: new Class("Date", I(Date), C(Date)),
-    MathClass: new Class("Math")
+    MathClass: new Class("Math"),
+    RegExpClass: new Class("RegExp", I(ASRegExp), C(ASRegExp))
   };
 
   return new Natives(backing);
