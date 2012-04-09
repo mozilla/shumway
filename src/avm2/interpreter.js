@@ -50,7 +50,7 @@ var Interpreter = (function () {
       }
 
       function applyNew(constructor, args) {
-        return new (Function.bind.apply(constructor, [,].concat(args)));
+        return new (Function.bind.apply(constructor.instance, [,].concat(args)));
       }
 
       function evaluateBinary(operator) {
@@ -277,7 +277,7 @@ var Interpreter = (function () {
           case OP_constructsuper:
             args = stack.popMany(bc.argCount);
             obj = stack.pop();
-            savedScope.object.baseClass.apply(obj, args);
+            savedScope.object.baseClass.instance.apply(obj, args);
             break;
           case OP_constructprop:
             args = stack.popMany(bc.argCount);

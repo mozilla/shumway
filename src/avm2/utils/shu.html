@@ -16,7 +16,7 @@
     <script type="text/javascript" src="../util.js"></script>
 
     <script type="text/javascript">
-      var options = new OptionSet("option(s)");      
+      var options = new OptionSet("option(s)");
       var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
       var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
     </script>
@@ -39,12 +39,12 @@
         for (var i = 0; i < 375; i++) {
           libs.push("../playerGlobal/library-" + i + ".abc");
         }
-        libs.push("../native.abc");
+        libs.push("../generated/builtin.abc");
         function run() {
           if (libs.length) {
             var path = libs.pop();
             new FileReader(path).readAll(null, function (buffer) {
-              prepareAbc(new AbcFile(new Uint8Array(buffer), path), ALWAYS_INTERPRET);
+              prepareAbc(new AbcFile(new Uint8Array(buffer), path, true), ALWAYS_INTERPRET);
               run();
             });
           } else {

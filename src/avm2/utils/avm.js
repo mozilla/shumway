@@ -72,11 +72,11 @@ if (traceGraphViz.value) {
 }
 
 if (execute.value) {
-  for (var i = 0; i < 375; i++) {
-    var libPath = "../playerGlobal/library-" + i + ".abc";
-    prepareAbc(new AbcFile(snarf(libPath, "binary"), libPath), ALWAYS_INTERPRET);
-  }
-  prepareAbc(new AbcFile(snarf("../native.abc", "binary"), "../native.abc"), ALWAYS_INTERPRET);
+  // for (var i = 0; i < 375; i++) {
+  //   var libPath = "../playerGlobal/library-" + i + ".abc";
+  //   prepareAbc(new AbcFile(snarf(libPath, "binary"), libPath, true), ALWAYS_INTERPRET);
+  // }
+  executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
   try {
     var mode;
     if (alwaysInterpret.value) {

@@ -1,136 +1,258 @@
-var builtins = {
-  "public$Object": {
-    "staticProtected$Object$_setPropertyIsEnumerable": {
-      value: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        Object.defineProperty(obj, name, {enumerable: isEnum});
-      }
-    }
-  },
-  "public$String": {
-    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": { instance: true, value: String.prototype.charCodeAt },
-    "public$http$$$adobe$com$AS3$2006$builtin$fromCharCode": { value: String.fromCharCode },
-    "public$http$$$adobe$com$AS3$2006$builtin$charAt": { instance: true, value: String.prototype.charAt },
-    "private$String$_split": {
-      value: function (self, delimiter, limit) {
-        return String.prototype.split.call(self, delimiter, limit);
-      }
-    },
-    "private$String$_replace": {
-      value: function (self, pattern, repl) {
-        return String.prototype.replace.call(self, pattern, repl);
-      }
-    },
-    "public$http$$$adobe$com$AS3$2006$builtin$substring": { instance: true, value: String.prototype.substring }
-  },
-  "public$Array": {
-    "public$http$$$adobe$com$AS3$2006$builtin$push": { instance: true, value: Array.prototype.push },
-    "private$Array$_slice": {
-      value: function (self, startIndex, endIndex) {
-        return Array.prototype.slice.call(self, startIndex, endIndex);
-      }
-    },
-    "private$Array$_concat": {
-      value: function (self, array) {
-        return Array.prototype.concat.apply(self, array);
-      }
-    }
-  },
-  "public$Number": {
-    "private$Number$_minValue": {
-      value: function _minValue() {
-        return Number.MIN_VALUE;
-      }
-    },
-    "private$Number$_numberToString": {
-      value: function _numberToString(number) {
-        return Number(number).toString();
-      }
-    }
-  },
-  "public$Math": {
-    "public$floor": { value: Math.floor },
-    "public$sqrt": { value: Math.sqrt },
-    "public$ceil": { value: Math.ceil },
-    "public$abs": { value: Math.abs },
-    "public$max": { value: Math.max },
-    "public$min": { value: Math.min }
-  },
-  "public$Date": {
-    "public$http$$$adobe$com$AS3$2006$builtin$getTime": { instance: true, value: Date.prototype.getTime }
-  },
-  "public$Error": {
-    "public$getErrorMessage": {
-      value: function(errorID) {
-        return "ERROR: " + errorID;
-      }
-    }
-  },
-  "script": {
-    "public$trace": {
-      value: function trace(message) {
-        print(message);
-      }
-    },
-    "public$parseInt": { value: parseInt }
+var Class = (function () {
 
-//    "public$http$$$adobe$com$AS3$2006$builtin$charCodeAt": {
-//      value: String.prototype.charCodeAt
-//    }
-  }
-};
+  function Class(name, setInstance, setCallAndApply) {
+    this.debugName = "[class " + name + "]";
 
-function getBuiltin(trait) {
-  var method = trait.method;
-  var groupName;
-  var instance = undefined;
-  if (trait.holder instanceof ScriptInfo) {
-    groupName = "script";
-  } else if (trait.holder instanceof InstanceInfo) {
-    groupName = trait.holder.name.getQualifiedName();
-    instance = true;
-  } else if (trait.holder instanceof ClassInfo) {
-    groupName = trait.holder.instance.name.getQualifiedName();
-  } else {
-    groupName = "public";
-  }
-  var methodName = method.name.getQualifiedName();
-  var methods = builtins[groupName];
-  if (methods) {
-    var builtin = methods[methodName];
-    if (builtin && methods.hasOwnProperty(methodName) && builtin.instance === instance) {
-      /* Because we add AS3 properties to Object.prototype, we cause all objects (JS and AS) to
-       * inherit these properties. We need to make sure that the methodName property is really defined
-       * in the builtin map, and not in the Object.prototype. */
-      if (traceExecution.value) {
-        print("intercepted builtin: " + (builtin.instance ? " instance " : "") + methodName + " in class " + groupName + " val: " + builtin.value);
-      }
-      return builtin.value;
+    if (setInstance) {
+      setInstance(this);
+    }
+
+    /**
+     * Classes can be called like functions. For user-defined classes this is
+     * coercion, for some of the builtins they behave like their counterparts
+     * in JS.
+     */
+    if (setCallAndApply) {
+      setCallAndApply(this);
+    } else {
+      this.call = this.apply = function () {
+        notImplemented("class callable call");
+      };
     }
   }
-  if (method.isNative()) {
-    // print("HERE? " + methodName + " in " + groupName);
-    return function() {
-      print("Calling undefined native method: " + methodName + " in group: " + groupName + " instance: " + instance);
+
+  Class.instance = Class;
+
+  Class.passthroughInstance = function passthroughInstance(instance) {
+    return function (cls) {
+      cls.instance = instance;
     };
-  }
-  return null;
-}
+  };
 
-function patchClassBuiltins(cls) {
-  var className = cls.classInfo.instance.name.getQualifiedName();
-  var methods = builtins[className];
-  if (!methods) {
-    return;
-  }
-  Object.keys(methods).forEach(function (builtinName) {
-    var builtin = methods[builtinName];
-    var obj = builtin.instance ? cls.prototype : cls;
-    assert (builtinName in obj);
-    obj[builtinName] = builtin.value;
-    if (traceExecution.value) {
-      print("patched: " + (builtin.instance ? " instance " : "") + builtinName + " in class " + className);
+  Class.seminativeInstance = function seminativeInstance(cls) {
+    cls.instance = function () {
+      cls.instanceInit.apply(this, arguments);
+    };
+  };
+
+  Class.passthroughCallable = function passthroughCallable(callable) {
+    return function (cls) {
+      cls.call = function ($this) {
+        Array.prototype.pop.call(arguments);
+        return callable.apply($this, arguments);
+      };
+      cls.apply = function ($this, args) {
+        return callable.apply($this, args);
+      }
     }
-  });
-}
+  };
 
+  Class.constructingCallable = function constructingCallable(cls) {
+    cls.call = function ($this) {
+      return new Function.bind.apply(cls.instance, arguments);
+    };
+    cls.apply = function ($this, args) {
+      return new Function.bind.apply(cls.instance, [$this].concat(args));
+    };
+  };
 
+  Class.getters = {
+    prototype: function () { return this.instance.prototype; }
+  };
+
+  return Class;
+
+})();
+
+const natives = (function () {
+
+  function Natives(backing) {
+    this.backing = backing;
+  }
+
+  Natives.prototype = {
+    get: function (p) {
+      var chain = p.split(".");
+      var v = this.backing;
+      for (var i = 0, j = chain.length; i < j; i++) {
+        v = v && v[chain[i]];
+      }
+      return v;
+    }
+  }
+
+  const I = Class.passthroughInstance;
+  const C = Class.passthroughCallable;
+  const SI = Class.seminativeInstance;
+  const CC = Class.constructingCallable;
+
+  /**
+   * Object.as
+   */
+  var ObjectClass = new Class("Object", I(Object), C(Object));
+
+  ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
+    Object.defineProperty(obj, name, { enumerable: isEnum });
+  }
+
+  /**
+   * Function.as
+   */
+  function getPrototype() {
+    return this.prototype;
+  }
+
+  function setPrototype(p) {
+    this.prototype = p;
+  }
+
+  /**
+   * Array.as
+   */
+  function getLength() {
+    return this.length;
+  }
+
+  function setLength(l) {
+    this.length = l;
+  }
+
+  /**
+   * Number.as
+   */
+  function int(x) {
+    return Number(x) | 0;
+  }
+
+  function uint(x) {
+    return Number(x) >>> 0;
+  }
+
+  /**
+   * RegExp.as
+   *
+   * AS RegExp adds two new flags:
+   *  /s (dotall)   - makes . also match \n
+   *  /x (extended) - allows different formatting of regexp
+   *
+   * TODO: Should we support extended at all? Or even dotall?
+   */
+  function ASRegExp(pattern, flags) {
+    function stripFlag(flags, c) {
+      flags[flags.indexOf(c)] = flags[flags.length - 1];
+      return flags.substr(0, flags.length - 1);
+    }
+
+    if (flags) {
+      var re;
+      var extraProps = {};
+
+      if (flags.indexOf("s") >= 0) {
+        pattern = pattern.replace(/\./, "(.|\n)");
+        flags = stripFlags(flags, "s");
+        extraProps.push({ key: "dotall", value: true });
+      }
+
+      re = new RegExp(pattern, flags);
+
+      for (var i = 0, j = extraProps.length; i < j; i++) {
+        var prop = extraProps[i];
+        re[prop.key] = prop.value;
+      }
+
+      return re;
+    }
+
+    return new RegExp(pattern, flags);
+  }
+  ASRegExp.prototype = RegExp.prototype;
+
+  ASRegExp.getters = {
+    source: function () { return this.source; },
+    global: function () { return this.global; },
+    ignoreCase: function () { return this.ignoreCase; },
+    multiline: function () { return this.multiline; },
+    lastIndex: function () { return this.lastIndex; },
+    dotall: function () { return this.dotall; },
+    extended: function () { return this.extended; }
+  };
+
+  ASRegExp.setters = {
+    lastIndex: function (i) { this.lastIndex = i; }
+  };
+
+  var backing = {
+    /**
+     * Getters/setters used by several classes.
+     */
+    getPrototype: getPrototype,
+    setPrototype: setPrototype,
+    getLength: getLength,
+    setLength: setLength,
+
+    /**
+     * Shell toplevel.
+     */
+    print: print,
+
+    /**
+     * actionscript.lang.as
+     */
+    decodeURI: decodeURI,
+    decodeURIComponent: decodeURIComponent,
+    encodeURI: encodeURI,
+    encodeURIComponent: encodeURIComponent,
+    isNaN: isNaN,
+    isFinite: isFinite,
+    parseInt: parseInt,
+    parseFloat: parseFloat,
+    escape: escape,
+    unescape: unescape,
+    isXMLName: isXMLName,
+
+    /**
+     * Vias.
+     */
+    Function: Function,
+    String: String,
+    Array: Array,
+    Number: Number,
+    Math: Math,
+    Date: Date,
+    RegExp: RegExp,
+
+    /**
+     * Classes.
+     */
+    ObjectClass: ObjectClass,
+    Class: Class,
+    FunctionClass: new Class("Function", I(Function), C(Function)),
+    BooleanClass: new Class("Boolean", I(Boolean), C(Boolean)),
+    StringClass: new Class("String", I(String), C(String)),
+    NumberClass: new Class("Number", I(Number), C(Number)),
+    intClass: new Class("int", I(int), C(int)),
+    uintClass: new Class("uint", I(uint), C(uint)),
+    ArrayClass: new Class("Array", I(Array), C(Array)),
+
+    ErrorClass: new Class("Error", SI, CC),
+    DefinitionErrorClass: new Class("DefinitionError", SI, CC),
+    EvalErrorClass: new Class("EvalError", SI, CC),
+    RangeErrorClass: new Class("RangeError", SI, CC),
+    ReferenceErrorClass: new Class("ReferenceError", SI, CC),
+    SecurityErrorClass: new Class("SecurityError", SI, CC),
+    SyntaxErrorClass: new Class("SyntaxError", SI, CC),
+    TypeErrorClass: new Class("TypeError", SI, CC),
+    URIErrorClass: new Class("URIError", SI, CC),
+    VerifyErrorClass: new Class("VerifyError", SI, CC),
+    UninitializedErrorClass: new Class("UninitializedError", SI, CC),
+    ArgumentErrorClass: new Class("ArgumentError", SI, CC),
+
+    DateClass: new Class("Date", I(Date), C(Date)),
+    MathClass: new Class("Math"),
+    RegExpClass: new Class("RegExp", I(ASRegExp), C(ASRegExp))
+  };
+
+  return new Natives(backing);
+
+})();
+>>>>>>> custom-builtin

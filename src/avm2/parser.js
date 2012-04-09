@@ -139,7 +139,6 @@ var Trait = (function () {
     const metadata = abc.metadata;
 
     this.holder = holder;
-
     this.name = constantPool.multinames[stream.readU30()];
     var tag = stream.readU8();
 
