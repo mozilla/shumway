@@ -137,18 +137,29 @@ const natives = (function () {
    *  /s (dotall)   - makes . also match \n
    *  /x (extended) - allows different formatting of regexp
    *
-   * TODO: /x not supported
+   * TODO: Should we support extended at all? Or even dotall?
    */
   function ASRegExp(pattern, flags) {
+    function stripFlag(flags, c) {
+      flags[flags.indexOf(c)] = flags[flags.length - 1];
+      return flags.substr(0, flags.length - 1);
+    }
+
     if (flags) {
       var re;
+      var extraProps = {};
 
       if (flags.indexOf("s") >= 0) {
         pattern = pattern.replace(/\./, "(.|\n)");
-        flags[flags.indexOf("s")] = flags[flags.length - 1];
-        flags = flags.substr(0, flags.length - 1);
-        re = new RegExp(pattern, flags);
-        re.dotall = true;
+        flags = stripFlags(flags, "s");
+        extraProps.push({ key: "dotall", value: true });
+      }
+
+      re = new RegExp(pattern, flags);
+
+      for (var i = 0, j = extraProps.length; i < j; i++) {
+        var prop = extraProps[i];
+        re[prop.key] = prop.value;
       }
 
       return re;

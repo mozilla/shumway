@@ -150,7 +150,9 @@ package
     AS3 native function toString(radix=10):String
     AS3 native function valueOf():Number
 
-    prototype.toLocaleString = prototype.toString = native("Number.prototype.toLocaleString");
+    // AS (incorrectly) makes toLocaleString === toString.
+    prototype.toLocaleString = native("Number.prototype.toLocaleString");
+    prototype.toString = native("Number.prototype.toString");
     prototype.valueOf = native("Number.prototype.valueOf");
 
     AS3 native function toExponential(p=0):String
