@@ -468,7 +468,9 @@ var Analysis = (function () {
      */
     this.method = method;
     this.options = options || {};
-    this.normalizeBytecode();
+    if (this.method.code) {
+      this.normalizeBytecode();
+    }
   }
 
   Analysis.prototype = {

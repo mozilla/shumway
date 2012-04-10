@@ -538,7 +538,9 @@ var Runtime = (function () {
      */
     if (!method.analysis) {
       method.analysis = new Analysis(method, { massage: true });
-      method.activationPrototype = this.applyTraits({}, method.traits);
+      if (method.traits) {
+        method.activationPrototype = this.applyTraits({}, method.traits);
+      }
     }
 
     if (mode === ALWAYS_INTERPRET) {
