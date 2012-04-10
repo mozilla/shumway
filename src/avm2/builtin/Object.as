@@ -40,7 +40,7 @@ package
 {
   include "api-versions.as"
 
-  [native("ObjectClass")]
+  [jsnative("ObjectClass")]
   public dynamic class Object
   {
     // Object.length = 1 per ES3
@@ -84,11 +84,11 @@ package
     //[API(CONFIG::VM_INTERNAL)]
     public static function _init()
     {
-      prototype.hasOwnProperty = native("Object.prototype.hasOwnProperty");
-      prototype.setPropertyIsEnumerable = native("Object.prototype.setPropertyIsEnumerable");
-      prototype.isPrototypeOf = native("Object.prototype.isPrototypeOf");
-      prototype.toString = native("Object.prototype.toString");
-      prototype.valueOf = native("Object.prototype.valueOf");
+      prototype.hasOwnProperty = jsnative("Object.prototype.hasOwnProperty");
+      prototype.setPropertyIsEnumerable = jsnative("Object.prototype.setPropertyIsEnumerable");
+      prototype.isPrototypeOf = jsnative("Object.prototype.isPrototypeOf");
+      prototype.toString = jsnative("Object.prototype.toString");
+      prototype.valueOf = jsnative("Object.prototype.valueOf");
     }
   }
 

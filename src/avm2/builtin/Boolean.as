@@ -38,7 +38,7 @@
 
 package
 {
-  [native("BooleanClass")]
+  [jsnative("BooleanClass")]
   public final class Boolean extends Object
   {
     // Boolean.length = 1 per ES3
@@ -48,8 +48,8 @@ package
     AS3 native function toString();
     AS3 native function valueOf();
 
-    prototype.toString = native("Boolean.prototype.toString");
-    prototype.valueOf = native("Boolean.prototype.valueOf");
+    prototype.toString = jsnative("Boolean.prototype.toString");
+    prototype.valueOf = jsnative("Boolean.prototype.valueOf");
 
     // Dummy constructor
     public function Boolean(value = void 0) {}

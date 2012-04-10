@@ -38,7 +38,7 @@
 
 package
 {
-  [native("NumberClass")]
+  [jsnative("NumberClass")]
   public final class Number
   {
     // Number.length = 1 per ES3
@@ -49,8 +49,8 @@ package
     public static const NaN               :Number = 0/0;
     public static const NEGATIVE_INFINITY :Number = -1/0;
     public static const POSITIVE_INFINITY :Number = 1/0;
-    public static const MIN_VALUE         :Number = native("Number.MIN_VALUE");
-    public static const MAX_VALUE         :Number = native("Number.MAX_VALUE");
+    public static const MIN_VALUE         :Number = jsnative("Number.MIN_VALUE");
+    public static const MAX_VALUE         :Number = jsnative("Number.MAX_VALUE");
 
     // The following constants correspond to the constants on Math, but we add them to Number to make
     // Number, float, and float4 behave similarly.
@@ -73,64 +73,64 @@ package
 
     // The following methods correspond to the methods on Math, but we add them to Number to make
     // Number, float, and float4 behave similarly.
-    [native("Math.abs")]
+    [jsnative("Math.abs")]
     //[API(CONFIG::SWF_16)]
     public native static function abs   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.acos")]
+    [jsnative("Math.acos")]
     public native static function acos  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.asin")]
+    [jsnative("Math.asin")]
     public native static function asin  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.atan")]
+    [jsnative("Math.atan")]
     public native static function atan  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.ceil")]
+    [jsnative("Math.ceil")]
     public native static function ceil  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.cos")]
+    [jsnative("Math.cos")]
     public native static function cos   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.exp")]
+    [jsnative("Math.exp")]
     public native static function exp   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.floor")]
+    [jsnative("Math.floor")]
     public native static function floor (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.log")]
+    [jsnative("Math.log")]
     public native static function log   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.round")]
+    [jsnative("Math.round")]
     public native static function round (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.sin")]
+    [jsnative("Math.sin")]
     public native static function sin   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.sqrt")]
+    [jsnative("Math.sqrt")]
     public native static function sqrt  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.tan")]
+    [jsnative("Math.tan")]
     public native static function tan   (x:Number)   :Number;
 
     //[API(CONFIG::SWF_16)]
-    [native("Math.atan2")]
+    [jsnative("Math.atan2")]
     public native static function atan2 (y:Number, x:Number):Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.pow")]
+    [jsnative("Math.pow")]
     public native static function pow   (x:Number, y:Number):Number;
 
     // max() and min() follow Math, for now; float does it differently however, 
     // requiring zero or more arguments and having "length" properties of value zero.
     //[API(CONFIG::SWF_16)]
-    [native("Math.max")]
+    [jsnative("Math.max")]
     public native static function max    (x:Number = NEGATIVE_INFINITY, y:Number = NEGATIVE_INFINITY, ... rest):Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.min")]
+    [jsnative("Math.min")]
     public native static function min    (x:Number = POSITIVE_INFINITY, y:Number = POSITIVE_INFINITY, ... rest):Number;
 
     //[API(CONFIG::SWF_16)]
-    [native("Math.random")]
+    [jsnative("Math.random")]
     public native static function random ():Number;
 
     [compat]
@@ -151,23 +151,23 @@ package
     AS3 native function valueOf():Number
 
     // AS (incorrectly) makes toLocaleString === toString.
-    prototype.toLocaleString = native("Number.prototype.toLocaleString");
-    prototype.toString = native("Number.prototype.toString");
-    prototype.valueOf = native("Number.prototype.valueOf");
+    prototype.toLocaleString = jsnative("Number.prototype.toLocaleString");
+    prototype.toString = jsnative("Number.prototype.toString");
+    prototype.valueOf = jsnative("Number.prototype.valueOf");
 
     AS3 native function toExponential(p=0):String
-    prototype.toExponential = native("Number.prototype.toExponential");
+    prototype.toExponential = jsnative("Number.prototype.toExponential");
 
     AS3 native function toPrecision(p=0):String
-    prototype.toPrecision = native("Number.prototype.toPrecision");
+    prototype.toPrecision = jsnative("Number.prototype.toPrecision");
 
     AS3 native function toFixed(p=0):String
-    prototype.toFixed = native("Number.prototype.toFixed");
+    prototype.toFixed = jsnative("Number.prototype.toFixed");
 
     _dontEnumPrototype(prototype);
   }
 
-  [native("intClass")]
+  [jsnative("intClass")]
   public final class int
   {
     // based on Number: E262 {ReadOnly, DontDelete, DontEnum}
@@ -189,7 +189,7 @@ package
     _dontEnumPrototype(prototype);
   }
 
-  [native("uintClass")]
+  [jsnative("uintClass")]
   public final class uint
   {
     // based on Number: E262 {ReadOnly, DontDelete, DontEnum}

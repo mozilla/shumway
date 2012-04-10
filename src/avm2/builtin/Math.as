@@ -39,7 +39,7 @@ package
 {
 
   // MathClass has no instance and is not callable.
-  [native("MathClass", via="Math")]
+  [jsnative("MathClass", via="Math")]
   public final class Math
   {
     // the value properties of math are {DontEnum,DontDelete,ReadOnly}

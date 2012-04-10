@@ -37,7 +37,7 @@
 
 package
 {
-  [native("DateClass")]
+  [jsnative("DateClass")]
   public dynamic class Date
   {
     // Date.length = 7 per ES3
@@ -58,8 +58,8 @@ package
 
     AS3 native function setTime(t=void 0):Number;
 
-    prototype.setTime = native("Date.prototype.setTime");
-    prototype.valueOf = native("Date.prototype.valueOf");
+    prototype.setTime = jsnative("Date.prototype.setTime");
+    prototype.valueOf = jsnative("Date.prototype.valueOf");
 
     AS3 native function toString():String;
     AS3 native function toDateString():String;
@@ -133,48 +133,48 @@ package
     AS3 native function setUTCSeconds(sec=void 0, ms=void 0):Number;
     AS3 native function setUTCMilliseconds(ms=void 0):Number;
 
-    prototype.toString = native("Date.prototype.toString");
-    prototype.toDateString = native("Date.prototype.toDateString");
-    prototype.toTimeString = native("Date.prototype.toTimeString");
-    prototype.toLocaleString = native("Date.prototype.toLocaleString");
-    prototype.toLocaleDateString = native("Date.prototype.toLocaleDateString");
-    prototype.toLocaleTimeString = native("Date.prototype.toLocaleTimeString");
-    prototype.toUTCString = native("Date.prototype.toUTCString");
+    prototype.toString = jsnative("Date.prototype.toString");
+    prototype.toDateString = jsnative("Date.prototype.toDateString");
+    prototype.toTimeString = jsnative("Date.prototype.toTimeString");
+    prototype.toLocaleString = jsnative("Date.prototype.toLocaleString");
+    prototype.toLocaleDateString = jsnative("Date.prototype.toLocaleDateString");
+    prototype.toLocaleTimeString = jsnative("Date.prototype.toLocaleTimeString");
+    prototype.toUTCString = jsnative("Date.prototype.toUTCString");
     // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
     // the native JS one obviously is.
-    prototype.toJSON = native("Date.prototype.toJSON");
-    prototype.getUTCFullYear = native("Date.prototype.getUTCFullYear");
-    prototype.getUTCMonth = native("Date.prototype.getUTCMonth");
-    prototype.getUTCDate = native("Date.prototype.getUTCDate");
-    prototype.getUTCDay = native("Date.prototype.getUTCDay");
-    prototype.getUTCHours = native("Date.prototype.getUTCHours");
-    prototype.getUTCMinutes = native("Date.prototype.getUTCMinutes");
-    prototype.getUTCSeconds = native("Date.prototype.getUTCSeconds");
-    prototype.getUTCMilliseconds = native("Date.prototype.getUTCMilliseconds");
-    prototype.getFullYear = native("Date.prototype.getFullYear");
-    prototype.getMonth = native("Date.prototype.getMonth");
-    prototype.getDate = native("Date.prototype.getDate");
-    prototype.getDay = native("Date.prototype.getDay");
-    prototype.getHours = native("Date.prototype.getHours");
-    prototype.getMinutes = native("Date.prototype.getMinutes");
-    prototype.getSeconds = native("Date.prototype.getSeconds");
-    prototype.getMilliseconds = native("Date.prototype.getMilliseconds");
-    prototype.getTimezoneOffset = native("Date.prototype.getTimezoneOffset");
-    prototype.getTime = native("Date.prototype.getTime");
-    prototype.setFullYear = native("Date.prototype.setFullYear");
-    prototype.setMonth = native("Date.prototype.setMonth");
-    prototype.setDate = native("Date.prototype.setDate");
-    prototype.setHours = native("Date.prototype.setHours");
-    prototype.setMinutes = native("Date.prototype.setMinutes");
-    prototype.setSeconds = native("Date.prototype.setSeconds");
-    prototype.setMilliseconds = native("Date.prototype.setMilliseconds");
-    prototype.setUTCFullYear = native("Date.prototype.setUTCFullYear");
-    prototype.setUTCMonth = native("Date.prototype.setUTCMonth");
-    prototype.setUTCDate = native("Date.prototype.setUTCDate");
-    prototype.setUTCHours = native("Date.prototype.setUTCHours");
-    prototype.setUTCMinutes = native("Date.prototype.setUTCMinutes");
-    prototype.setUTCSeconds = native("Date.prototype.setUTCSeconds");
-    prototype.setUTCMilliseconds = native("Date.prototype.setUTCMilliseconds");
+    prototype.toJSON = jsnative("Date.prototype.toJSON");
+    prototype.getUTCFullYear = jsnative("Date.prototype.getUTCFullYear");
+    prototype.getUTCMonth = jsnative("Date.prototype.getUTCMonth");
+    prototype.getUTCDate = jsnative("Date.prototype.getUTCDate");
+    prototype.getUTCDay = jsnative("Date.prototype.getUTCDay");
+    prototype.getUTCHours = jsnative("Date.prototype.getUTCHours");
+    prototype.getUTCMinutes = jsnative("Date.prototype.getUTCMinutes");
+    prototype.getUTCSeconds = jsnative("Date.prototype.getUTCSeconds");
+    prototype.getUTCMilliseconds = jsnative("Date.prototype.getUTCMilliseconds");
+    prototype.getFullYear = jsnative("Date.prototype.getFullYear");
+    prototype.getMonth = jsnative("Date.prototype.getMonth");
+    prototype.getDate = jsnative("Date.prototype.getDate");
+    prototype.getDay = jsnative("Date.prototype.getDay");
+    prototype.getHours = jsnative("Date.prototype.getHours");
+    prototype.getMinutes = jsnative("Date.prototype.getMinutes");
+    prototype.getSeconds = jsnative("Date.prototype.getSeconds");
+    prototype.getMilliseconds = jsnative("Date.prototype.getMilliseconds");
+    prototype.getTimezoneOffset = jsnative("Date.prototype.getTimezoneOffset");
+    prototype.getTime = jsnative("Date.prototype.getTime");
+    prototype.setFullYear = jsnative("Date.prototype.setFullYear");
+    prototype.setMonth = jsnative("Date.prototype.setMonth");
+    prototype.setDate = jsnative("Date.prototype.setDate");
+    prototype.setHours = jsnative("Date.prototype.setHours");
+    prototype.setMinutes = jsnative("Date.prototype.setMinutes");
+    prototype.setSeconds = jsnative("Date.prototype.setSeconds");
+    prototype.setMilliseconds = jsnative("Date.prototype.setMilliseconds");
+    prototype.setUTCFullYear = jsnative("Date.prototype.setUTCFullYear");
+    prototype.setUTCMonth = jsnative("Date.prototype.setUTCMonth");
+    prototype.setUTCDate = jsnative("Date.prototype.setUTCDate");
+    prototype.setUTCHours = jsnative("Date.prototype.setUTCHours");
+    prototype.setUTCMinutes = jsnative("Date.prototype.setUTCMinutes");
+    prototype.setUTCSeconds = jsnative("Date.prototype.setUTCSeconds");
+    prototype.setUTCMilliseconds = jsnative("Date.prototype.setUTCMilliseconds");
 
     public function get fullYear():Number { return AS3::getFullYear(); }
     public function set fullYear(value:Number) { AS3::setFullYear(value); }

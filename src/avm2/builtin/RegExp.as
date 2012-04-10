@@ -1,5 +1,3 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
-/* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -39,7 +37,7 @@
 
 package
 {
-  [native("RegExpClass")]
+  [jsnative("RegExpClass")]
   public dynamic class RegExp
   {
     // RegExp.length = 1 per ES3
@@ -74,10 +72,10 @@ package
     };
 
     AS3 native function exec(s:String="");
-    prototype.exec = native("RegExp.prototype.exec");
+    prototype.exec = jsnative("RegExp.prototype.exec");
 
     AS3 native function test(s:String="");
-    prototype.test = native("RegExp.prototype.test");
+    prototype.test = jsnative("RegExp.prototype.test");
 
     // Dummy constructor
     public function RegExp(pattern = void 0, options = void 0) {}

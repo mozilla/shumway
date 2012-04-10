@@ -38,7 +38,7 @@
 
 package
 {
-  [native("FunctionClass")]
+  [jsnative("FunctionClass")]
   dynamic public class Function
   {
     // Function.length = 1 per ES3
@@ -47,13 +47,13 @@ package
 
     // E262 {DontDelete}
     // JS {DontEnum,DontDelete}
-    [native("getPrototype")]
+    [jsnative("getPrototype")]
     public native function get prototype();
-    [native("setPrototype")]
+    [jsnative("setPrototype")]
     public native function set prototype(p);
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    [native("getLength")]
+    [jsnative("getLength")]
     public native function get length():int;
 
     //[API(CONFIG::VM_INTERNAL)]
@@ -69,10 +69,10 @@ package
     }
 
     AS3 native function call(thisArg=void 0, ...args);
-    prototype.call = native("Function.prototype.call");
+    prototype.call = jsnative("Function.prototype.call");
 
     AS3 native function apply(thisArg=void 0, argArray=void 0);
-    prototype.apply = native("Function.prototype.apply");
+    prototype.apply = jsnative("Function.prototype.apply");
 
     _dontEnumPrototype(prototype);
   }

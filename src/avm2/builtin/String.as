@@ -38,7 +38,7 @@
 
 package
 {
-  [native("StringClass")]
+  [jsnative("StringClass")]
   public final class String extends Object
   {
     // String.length = 1 per ES3
@@ -46,83 +46,83 @@ package
     public static const length:int = 1;
 
     AS3 native static function fromCharCode(...charcodes):String;
-    String.fromCharCode = native("String.fromCharCode");
+    String.fromCharCode = jsnative("String.fromCharCode");
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    [native("getLength")]
+    [jsnative("getLength")]
     public native function get length():int;
 
     [compat]
     private native function _indexOf(s:String, i:int=0):int;
     AS3 native function indexOf(s:String="undefined", i:Number=0):int;
-    prototype.indexOf = native("String.prototype.indexOf");
+    prototype.indexOf = jsnative("String.prototype.indexOf");
 
     [compat]
     private native function _lastIndexOf(s:String, i:int=0x7fffffff):int;
     AS3 native function lastIndexOf(s:String="undefined", i:Number=0x7FFFFFFF):int;
-    prototype.lastIndexOf = native("String.prototype.lastIndexOf");
+    prototype.lastIndexOf = jsnative("String.prototype.lastIndexOf");
 
     AS3 native function charAt(i:Number=0):String;
-    prototype.charAt = native("String.prototype.charAt");
+    prototype.charAt = jsnative("String.prototype.charAt");
 
     AS3 native function charCodeAt(i:Number=0):Number;
-    prototype.charCodeAt = native("String.prototype.charCodeAt");
+    prototype.charCodeAt = jsnative("String.prototype.charCodeAt");
 
     AS3 native function concat(...args):String;
-    prototype.concat = native("String.prototype.concat");
+    prototype.concat = jsnative("String.prototype.concat");
 
     AS3 native function localeCompare(other:*=void 0):int;
-    prototype.localeCompare = native("String.prototype.localeCompare");
+    prototype.localeCompare = jsnative("String.prototype.localeCompare");
 
     [compat]
     private static native function _match(s:String, p):Array;
     AS3 native function match(p=void 0):Array;
-    prototype.match = native("String.prototype.match");
+    prototype.match = jsnative("String.prototype.match");
 
     [compat]
     private static native function _replace(s:String, p, repl):String;
     AS3 native function replace(p=void 0, repl=void 0):String;
-    prototype.replace = native("String.prototype.replace");
+    prototype.replace = jsnative("String.prototype.replace");
 
     [compat]
     private static native function _search(s:String, p):int;
     AS3 native function search(p=void 0):int;
-    prototype.search = native("String.prototype.search");
+    prototype.search = jsnative("String.prototype.search");
 
     [compat]
     private native function _slice(start:int=0, end:int=0x7fffffff):String;
     AS3 native function slice(start:Number=0, end:Number=0x7fffffff):String;
-    prototype.slice = native("String.prototype.slice");
+    prototype.slice = jsnative("String.prototype.slice");
 
     [compat]
     private static native function _split(s:String, delim, limit:uint):Array;
     AS3 native function split(delim=void 0, limit=0xffffffff):Array;
-    prototype.split = native("String.prototype.split");
+    prototype.split = jsnative("String.prototype.split");
 
     [compat]
     private native function _substring(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substring(start:Number=0, end:Number=0x7fffffff):String;
-    prototype.substring = native("String.prototype.substring");
+    prototype.substring = jsnative("String.prototype.substring");
 
     [compat]
     private native function _substr(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substr(start:Number=0, len:Number=0x7fffffff):String;
-    prototype.substr = native("String.prototype.substr");
+    prototype.substr = jsnative("String.prototype.substr");
 
     AS3 native function toLowerCase():String;
     AS3 native function toLocaleLowerCase():String;
-    prototype.toLowerCase = prototype.toLocaleLowerCase = native("String.prototype.toLowerCase");
+    prototype.toLowerCase = prototype.toLocaleLowerCase = jsnative("String.prototype.toLowerCase");
 
     AS3 native function toUpperCase():String;
     AS3 native function toLocaleUpperCase():String;
 
-    prototype.toUpperCase = prototype.toLocaleUpperCase = native("String.prototype.toUpperCase");
+    prototype.toUpperCase = prototype.toLocaleUpperCase = jsnative("String.prototype.toUpperCase");
 
     AS3 native function toString();
     AS3 native function valueOf();
 
-    prototype.toString = native("String.prototype.toString");
-    prototype.valueOf = native("String.prototype.valueOf");
+    prototype.toString = jsnative("String.prototype.toString");
+    prototype.valueOf = jsnative("String.prototype.valueOf");
 
     // Dummy constructor
     public function String(value = "") {}

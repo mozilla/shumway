@@ -773,12 +773,12 @@ var Runtime = (function () {
         var closure;
         if (method.isNative() && this.abc.allowNatives) {
           /**
-           * We can get the native metadata from two places: either a [native]
+           * We can get the native metadata from two places: either a [jsnative]
            * metadata directly attached to the method trait, or from a
-           * [native] metadata attached to the encompassing class.
+           * [jsnative] metadata attached to the encompassing class.
            *
-           * XXX: I'm choosing for the per-method [native] to override
-           * [native] on the class if both are present.
+           * XXX: I'm choosing for the per-method [jsnative] to override
+           * [jsnative] on the class if both are present.
            */
           var nativeProp;
           if (trait.metadata) {
@@ -789,7 +789,7 @@ var Runtime = (function () {
              *
              * XXX: Do we need slot-for-slot compatibility?
              */
-            nativeProp = trait.metadata.compat ? null : trait.metadata.native.items[0].value;
+            nativeProp = trait.metadata.compat ? null : trait.metadata.jsnative.items[0].value;
           } else if (traits.nativeClass) {
             var nativeClass = traits.nativeClass.dict.via || traits.nativeClass.items[0].value;
             if (!nativeClass) {
@@ -841,9 +841,9 @@ var Runtime = (function () {
           defineProperty(qn, undefined, closure);
         }
       } else if (trait.isClass()) {
-        if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
+        if (trait.metadata && trait.metadata.jsnative && this.abc.allowNatives) {
           var cls = trait.class;
-          var nativeClass = trait.metadata.native;
+          var nativeClass = trait.metadata.jsnative;
           cls.native = nativeClass;
           cls.instance.traits.nativeClass = nativeClass;
           cls.traits.nativeClass = nativeClass;
@@ -926,7 +926,7 @@ function loadAbc(abc, mode) {
     var global = new Global(runtime, script);
 
     if (abc.allowNatives) {
-      global.public$native = native;
+      global.public$jsnative = native;
     }
   }
 }

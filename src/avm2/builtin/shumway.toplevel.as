@@ -1,7 +1,7 @@
 package {
-  [native("print")]
+  [jsnative("print")]
   public native function trace(s);
 
-  [native("print")]
+  [jsnative("print")]
   public native function print(s);
 }
