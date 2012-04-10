@@ -41,8 +41,8 @@
 package
 {
     // instancegc protocol is custom (primitive value).
-    
-    [native(cls="NamespaceClass", classgc="exact", instance="Namespace", methods="auto", construct="override")]
+    // [native(cls="NamespaceClass", classgc="exact", instance="Namespace", methods="auto", construct="override")]
+    [jsnative("NamespaceClass")]
     public final class Namespace
     {
         // E262 {ReadOnly,DontDelete,DontEnum}

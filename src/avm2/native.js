@@ -181,6 +181,27 @@ const natives = (function () {
     lastIndex: function (i) { this.lastIndex = i; }
   };
 
+  /**
+   * Namespace.as
+   */
+
+  function ASNamespace (prefix, uri) {
+    this.prefix = prefix;
+    this.uri = uri;
+  }
+
+  /**
+   * Capabilities.as
+   */
+
+  function Capabilities () {}
+
+  var CapabilitiesClass = new Class("Capabilities", I(Capabilities), C(Capabilities));
+
+  CapabilitiesClass.getters = {
+    playerType: function () { return "AVMPlus"; }
+  };
+
   var backing = {
     /**
      * Getters/setters used by several classes.
@@ -251,7 +272,10 @@ const natives = (function () {
 
     DateClass: new Class("Date", I(Date), C(Date)),
     MathClass: new Class("Math"),
-    RegExpClass: new Class("RegExp", I(ASRegExp), C(ASRegExp))
+    RegExpClass: new Class("RegExp", I(ASRegExp), C(ASRegExp)),
+
+    CapabilitiesClass: CapabilitiesClass,
+    NamespaceClass: new Class("Namespace", I(Namespace), C(Namespace))
   };
 
   return new Natives(backing);

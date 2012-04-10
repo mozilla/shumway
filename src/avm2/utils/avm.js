@@ -78,6 +78,8 @@ if (execute.value) {
   // }
   try {
     executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
+    executeAbc(new AbcFile(snarf("../generated/playerGlobal.abc", "binary"), "playerGlobal.abc", true), ALWAYS_INTERPRET);
+
     var mode;
     if (alwaysInterpret.value) {
       mode = ALWAYS_INTERPRET;
