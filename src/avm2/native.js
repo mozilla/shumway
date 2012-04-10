@@ -43,8 +43,8 @@ var Class = (function () {
       };
       cls.apply = function ($this, args) {
         return callable.apply($this, args);
-      }
-    }
+      };
+    };
   };
 
   Class.constructingCallable = function constructingCallable(cls) {
@@ -79,7 +79,7 @@ const natives = (function () {
       }
       return v;
     }
-  }
+  };
 
   const I = Class.passthroughInstance;
   const C = Class.passthroughCallable;
@@ -93,7 +93,7 @@ const natives = (function () {
 
   ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
     Object.defineProperty(obj, name, { enumerable: isEnum });
-  }
+  };
 
   /**
    * Function.as
@@ -208,7 +208,9 @@ const natives = (function () {
     parseFloat: parseFloat,
     escape: escape,
     unescape: unescape,
-    isXMLName: isXMLName,
+    isXMLName: typeof (isXMLName) !== "undefined" ? isXMLName : function () {
+      notImplemented("Chrome doesn't support isXMLName.");
+    },
 
     /**
      * Vias.

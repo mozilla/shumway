@@ -143,8 +143,8 @@ ScriptInfo.prototype.trace = function (writer) {
 
 Trait.prototype.trace = function (writer) {
   if (this.metadata) {
-    for each (var md in this.metadata) {
-      md.trace(writer);
+    for (var key in this.metadata) {
+      this.metadata[key].trace(writer);
     }
   }
   writer.writeLn(this);
