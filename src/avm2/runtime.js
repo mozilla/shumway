@@ -777,9 +777,11 @@ var Runtime = (function () {
            * [native] on the class if both are present.
            */
           var closureMaker;
-          if (trait.metadata && trait.metadata.native) {
-            if (closureMaker = natives.get(trait.metadata.native.items[0].value)) {
-              closure = closureMaker(scope);
+          if (trait.metadata) {
+            if (!trait.metadata.compat && trait.metadata.native) {
+              if (closureMaker = natives.get(trait.metadata.native.items[0].value)) {
+                closure = closureMaker(scope);
+              }
             }
           } else if (nativeClass) {
             // TODO: Refactor
@@ -798,15 +800,15 @@ var Runtime = (function () {
               } else if (trait.isSetter()) {
                 base = nativeClass.setters;
               } else {
-                base = nativeClass;
+                base = nativeClass.statics;
               }
             }
 
             /**
              * At this point the native class already had the scope, so we
-             * don't need to close over this again.
+             * don't need to close over the method again.
              */
-            closure = base[method.name.name];
+            closure = base ? base[method.name.name] : null;
           } else {
             unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
           }

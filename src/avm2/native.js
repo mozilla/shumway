@@ -77,9 +77,11 @@ const natives = (function () {
   function ObjectClass(scope, instance) {
     var c = new Class("Object", Object, C(Object));
 
-    c._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
-      Object.defineProperty(obj, name, { enumerable: isEnum });
-    }
+    c.statics = {
+      _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
+        Object.defineProperty(obj, name, { enumerable: isEnum });
+      }
+    };
 
     return c;
   }
@@ -111,6 +113,7 @@ const natives = (function () {
     var c = new Class("String", String, C(String));
 
     c.getters = { length: function () { return this.length; } };
+    c.statics = { fromCharCode: String.fromCharCode };
 
     return c;
   }
@@ -155,26 +158,7 @@ const natives = (function () {
    */
   function MathClass(scope, instance) {
     var c = new Class("Math");
-
-    c.abs = Math.abs;
-    c.acos = Math.acos;
-    c.asin = Math.asin;
-    c.atan = Math.atan;
-    c.ceil = Math.ceil;
-    c.cos = Math.cos;
-    c.exp = Math.exp;
-    c.floor = Math.floor;
-    c.log = Math.log;
-    c.round = Math.round;
-    c.sin = Math.sin;
-    c.sqrt = Math.sqrt;
-    c.tan = Math.tan;
-    c.atan2 = Math.atan2;
-    c.pow = Math.pow;
-    c.max = Math.max;
-    c.min = Math.min;
-    c.random = Math.random;
-
+    c.statics = Math;
     return c;
   }
 
@@ -183,10 +167,7 @@ const natives = (function () {
    */
   function DateClass(scope, instance) {
     var c = new Class("Date", Date, C(Date));
-
-    c.parse = Date.parse;
-    c.UTC = Date.UTC;
-
+    c.statics = Date;
     return c;
   }
 
