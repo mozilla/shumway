@@ -484,31 +484,3 @@ const natives = (function () {
   return new Natives(backing);
 
 })();
-
-var proxies = {};
-
-function createProxy(cls) {
-  var className = cls.classInfo.instance.name.getQualifiedName();
-  var proxy = null;
-  if (!(proxy = proxies[className])) {
-    return;
-  }
-  proxy = proxy(cls);
-  for (var key in proxy) {
-    assert (proxy.hasOwnProperty(key));
-    if (!proxy.hasOwnProperty(key)) {
-      continue;
-    }
-    var index = key.indexOf("$");
-    var prefix = key.slice(0, index);
-    var name = key.slice(index + 1);
-    if (prefix === "static") {
-      // assert (!cls.hasOwnProperty(name));
-      Object.defineProperty(cls, name, {value: proxy[key], enumerable: false});
-    } else if (prefix === "instance") {
-      Object.defineProperty(cls.prototype, name, {value: proxy[key], enumerable: false});
-    } else {
-      unexpected(prefix);
-    }
-  }
-}
