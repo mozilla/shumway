@@ -256,7 +256,7 @@ var Namespace = (function () {
   function namespace(kind, uri) {
     if (kind !== undefined && uri !== undefined) {
       this.kind = kind;
-      this.uri = uri;
+      this.originalUri = this.uri = name;
       buildNamespace.call(this);
     }
   }
@@ -319,6 +319,10 @@ var Namespace = (function () {
       c.qualifiedName = this.qualifiedName;
       c.prefix = this.prefix;
     }
+  };
+
+  namespace.prototype.getAccessModifier = function getAccessModifier() {
+    return kinds[this.kind];
   };
 
   return namespace;
@@ -593,6 +597,11 @@ var Multiname = (function () {
       name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, QNAME);
     }
     return name;
+  };
+
+  multiname.prototype.getAccessModifier = function getAccessModifier() {
+    assert (this.isQName());
+    return this.namespaces[0].getAccessModifier();
   };
 
   multiname.prototype.toString = function toString() {
