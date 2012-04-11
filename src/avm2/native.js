@@ -239,32 +239,33 @@ const natives = (function () {
     return c;
   }
 
-  function constant(x) {
-    return function () {
-      return x;
-    };
-  }
-
   /**
    * Namespace.as
    */
+  function NamespaceClass(scope, instance) {
+    function ASNamespace(prefix, uri) {
+      this.prefix = prefix;
+      this.uri = uri;
+    }
 
-  function ASNamespace (prefix, uri) {
-    this.prefix = prefix;
-    this.uri = uri;
+    return new Class("Namespace", ASNamespace, C(ASNamespace));
   }
 
   /**
    * Capabilities.as
    */
+  function CapabilitiesClass(scope, instance) {
+    function Capabilities () {}
+    var c = new Class("Capabilities", Capabilities, C(Capabilities));
+    c.getters = { playerType: function () { return "AVMPlus"; } };
+    return c;
+  }
 
-  function Capabilities () {}
-
-  var CapabilitiesClass = new Class("Capabilities", I(Capabilities), C(Capabilities));
-
-  CapabilitiesClass.getters = {
-    playerType: function () { return "AVMPlus"; }
-  };
+  function constant(x) {
+    return function () {
+      return x;
+    };
+  }
 
   var backing = {
     /**
@@ -304,8 +305,8 @@ const natives = (function () {
      * Classes.
      */
     ObjectClass: ObjectClass,
-
     Class: constant(Class),
+    NamespaceClass: NamespaceClass,
     FunctionClass: FunctionClass,
     BooleanClass: BooleanClass,
     StringClass: StringClass,
@@ -329,10 +330,9 @@ const natives = (function () {
 
     DateClass: DateClass,
     MathClass: MathClass,
-    RegExpClass: RegExpClass
+    RegExpClass: RegExpClass,
 
-    CapabilitiesClass: CapabilitiesClass,
-    NamespaceClass: new Class("Namespace", I(Namespace), C(Namespace))
+    CapabilitiesClass: CapabilitiesClass
   };
 
   return new Natives(backing);
