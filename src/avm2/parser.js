@@ -769,9 +769,10 @@ var MethodInfo = (function () {
     var optionals = null;
     if (flags & METHOD_HasOptional) {
       optionalCount = stream.readU30();
-      optionals = [];
-      for (var i = 0; i < optionalCount; i++) {
-        optionals[i] = { val: stream.readU30(), kind:stream.readU8() };
+      assert (parameterCount >= optionalCount);
+      for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
+        var valueIndex = stream.readU30();
+        parameters[i].value = constantPool.getValue(stream.readU8(), valueIndex);
       }
     }
 
