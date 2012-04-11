@@ -38,7 +38,7 @@
 
 package
 {
-  [jsnative("ArrayClass")]
+  [native(cls="ArrayClass")]
   public dynamic class Array extends Object
   {
     // option flags for sort and sortOn
@@ -49,9 +49,7 @@ package
     public static const NUMERIC:uint = 16;
 
     // E262 {DontEnum, DontDelete}
-    [jsnative("getLength")]
     public native function get length():uint;
-    [jsnative("setLength")]
     public native function set length(newLength:uint);
 
     [compat]

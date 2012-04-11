@@ -38,7 +38,7 @@
 
 package
 {
-  [jsnative("FunctionClass")]
+  [native(cls="FunctionClass")]
   dynamic public class Function
   {
     // Function.length = 1 per ES3
@@ -47,13 +47,10 @@ package
 
     // E262 {DontDelete}
     // JS {DontEnum,DontDelete}
-    [jsnative("getPrototype")]
     public native function get prototype();
-    [jsnative("setPrototype")]
     public native function set prototype(p);
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    [jsnative("getLength")]
     public native function get length():int;
 
     //[API(CONFIG::VM_INTERNAL)]

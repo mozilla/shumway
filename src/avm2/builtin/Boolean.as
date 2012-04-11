@@ -38,7 +38,7 @@
 
 package
 {
-  [jsnative("BooleanClass")]
+  [native(cls="BooleanClass")]
   public final class Boolean extends Object
   {
     // Boolean.length = 1 per ES3

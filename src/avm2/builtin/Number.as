@@ -38,7 +38,7 @@
 
 package
 {
-  [jsnative("NumberClass")]
+  [native(cls="NumberClass")]
   public final class Number
   {
     // Number.length = 1 per ES3
@@ -73,64 +73,64 @@ package
 
     // The following methods correspond to the methods on Math, but we add them to Number to make
     // Number, float, and float4 behave similarly.
-    [jsnative("Math.abs")]
+    [native("Math.abs")]
     //[API(CONFIG::SWF_16)]
     public native static function abs   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.acos")]
+    [native("Math.acos")]
     public native static function acos  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.asin")]
+    [native("Math.asin")]
     public native static function asin  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.atan")]
+    [native("Math.atan")]
     public native static function atan  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.ceil")]
+    [native("Math.ceil")]
     public native static function ceil  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.cos")]
+    [native("Math.cos")]
     public native static function cos   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.exp")]
+    [native("Math.exp")]
     public native static function exp   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.floor")]
+    [native("Math.floor")]
     public native static function floor (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.log")]
+    [native("Math.log")]
     public native static function log   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.round")]
+    [native("Math.round")]
     public native static function round (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.sin")]
+    [native("Math.sin")]
     public native static function sin   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.sqrt")]
+    [native("Math.sqrt")]
     public native static function sqrt  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.tan")]
+    [native("Math.tan")]
     public native static function tan   (x:Number)   :Number;
 
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.atan2")]
+    [native("Math.atan2")]
     public native static function atan2 (y:Number, x:Number):Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.pow")]
+    [native("Math.pow")]
     public native static function pow   (x:Number, y:Number):Number;
 
     // max() and min() follow Math, for now; float does it differently however, 
     // requiring zero or more arguments and having "length" properties of value zero.
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.max")]
+    [native("Math.max")]
     public native static function max    (x:Number = NEGATIVE_INFINITY, y:Number = NEGATIVE_INFINITY, ... rest):Number;
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.min")]
+    [native("Math.min")]
     public native static function min    (x:Number = POSITIVE_INFINITY, y:Number = POSITIVE_INFINITY, ... rest):Number;
 
     //[API(CONFIG::SWF_16)]
-    [jsnative("Math.random")]
+    [native("Math.random")]
     public native static function random ():Number;
 
     [compat]
@@ -167,7 +167,7 @@ package
     _dontEnumPrototype(prototype);
   }
 
-  [jsnative("intClass")]
+  [native(cls="intClass")]
   public final class int
   {
     // based on Number: E262 {ReadOnly, DontDelete, DontEnum}
@@ -189,7 +189,7 @@ package
     _dontEnumPrototype(prototype);
   }
 
-  [jsnative("uintClass")]
+  [native(cls="uintClass")]
   public final class uint
   {
     // based on Number: E262 {ReadOnly, DontDelete, DontEnum}

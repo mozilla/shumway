@@ -38,7 +38,7 @@
 
 package
 {
-  [jsnative("StringClass")]
+  [native(cls="StringClass")]
   public final class String extends Object
   {
     // String.length = 1 per ES3
@@ -49,7 +49,6 @@ package
     String.fromCharCode = jsnative("String.fromCharCode");
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    [jsnative("getLength")]
     public native function get length():int;
 
     [compat]

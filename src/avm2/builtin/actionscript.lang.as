@@ -52,35 +52,35 @@ package
    */
 
   // {DontEnum} length=1
-  [jsnative("decodeURI")]
+  [native("decodeURI")]
   public native function decodeURI(uri:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("decodeURIComponent")]
+  [native("decodeURIComponent")]
   public native function decodeURIComponent(uri:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("encodeURI")]
+  [native("encodeURI")]
   public native function encodeURI(uri:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("encodeURIComponent")]
+  [native("encodeURIComponent")]
   public native function encodeURIComponent(uri:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("isNaN")]
+  [native("isNaN")]
   public native function isNaN(n:Number = void 0):Boolean;
 
   // {DontEnum} length=1
-  [jsnative("isFinite")]
+  [native("isFinite")]
   public native function isFinite(n:Number = void 0):Boolean;
 
   // {DontEnum} length=1
-  [jsnative("parseInt")]
+  [native("parseInt")]
   public native function parseInt(s:String = "NaN", radix:int=0):Number;
 
   // {DontEnum} length=1
-  [jsnative("parseFloat")]
+  [native("parseFloat")]
   public native function parseFloat(str:String = "NaN"):Number;
 
 
@@ -90,15 +90,15 @@ package
    */
 
   // {DontEnum} length=1
-  [jsnative("escape")]
+  [native("escape")]
   public native function escape(s:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("unescape")]
+  [native("unescape")]
   public native function unescape(s:String="undefined"):String;
 
   // {DontEnum} length=1
-  [jsnative("isXMLName")]
+  [native("isXMLName")]
   public native function isXMLName(str=void 0):Boolean;    // moved here from XML.as
 
   // value properties of global object (ECMA 15.1.1)

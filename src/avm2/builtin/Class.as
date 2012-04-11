@@ -39,7 +39,7 @@
 package
 {
   //pseudo-final - no user class can extend Class
-  [jsnative("Class")]
+  [native(cls="Class")]
   public dynamic class Class
   {
     // {DontEnum,DontDelete,ReadOnly}

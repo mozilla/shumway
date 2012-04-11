@@ -522,7 +522,7 @@ var Runtime = (function () {
       return fn;
     }
 
-    function interpretedMethod(interpreter, method, scope) {
+    function interpretedMethod(interpreter, method, scope, nativeClass) {
       var fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
         return interpreter.interpretMethod(global, method, scope, arguments);
@@ -622,32 +622,27 @@ var Runtime = (function () {
     scope = new Scope(scope, null);
     var className = classInfo.instance.name.name;
     if (traceExecution.value) {
-      print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.items[0].value : ""));
+      print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.dict.cls : ""));
     }
 
     var baseTraits = baseClass ? baseClass.instance.traits : new Traits([], true);
     var cls, instance;
     if (classInfo.native) {
-      /* Natives must already be Classes. */
-      cls = natives.get(classInfo.native.items[0].value);
+      var nativeClassMaker = natives.get(classInfo.native.dict.cls);
+      cls = nativeClassMaker(scope, this.createFunction(classInfo.instance.init, scope));
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
         instance.traits = classInfo.instance.traits;
-        this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
+        this.applyTraits(instance.prototype, instance.traits, baseTraits, scope, cls);
       }
-
-      /**
-       * Usually native classes ignore the constructor defined in AS, if
-       * any. Native classes that need to execute the AS instance constructor
-       * need to get it via |instanceInit|.
-       */
-      cls.instanceInit = this.createFunction(classInfo.instance.init, scope);
+      this.applyTraits(cls, classInfo.traits, null, scope, cls);
     } else {
       instance = this.createFunction(classInfo.instance.init, scope);
       instance.prototype = baseClass ? Object.create(baseClass.instance.prototype) : {};
       instance.traits = classInfo.instance.traits;
       this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
-      cls = new Class(className, Class.passthroughInstance(instance));
+      cls = new Class(className, instance);
+      this.applyTraits(cls, classInfo.traits, null, scope);
     }
 
     scope.object = cls;
@@ -655,8 +650,7 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
 
-    /* Apply the static traits and call the static constructor. */
-    this.applyTraits(cls, classInfo.traits, null, scope);
+    /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
 
     if (traceClasses.value) {
@@ -686,7 +680,7 @@ var Runtime = (function () {
    * The |scope| must be passed in if the traits include method traits, which have to be bound to
    * a scope.
    */
-  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope) {
+  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope, nativeClass) {
     function computeAndVerifySlotIds(traits, base) {
       assert(!base || base.verified);
 
@@ -772,66 +766,67 @@ var Runtime = (function () {
         assert (scope !== undefined);
 
         var method = trait.method;
-        var closure;
+        var closure = null;
         if (method.isNative() && this.abc.allowNatives) {
           /**
-           * We can get the native metadata from two places: either a [jsnative]
+           * We can get the native metadata from two places: either a [native]
            * metadata directly attached to the method trait, or from a
-           * [jsnative] metadata attached to the encompassing class.
+           * [native] metadata attached to the encompassing class.
            *
-           * XXX: I'm choosing for the per-method [jsnative] to override
-           * [jsnative] on the class if both are present.
+           * XXX: I'm choosing for the per-method [native] to override
+           * [native] on the class if both are present.
            */
-          var nativeProp;
-          if (trait.metadata) {
-            /**
-             * Natives marked as [compat] mean that they're kept for
-             * slot-for-slot compatibility with the original AS code. We can
-             * just assign null to those.
-             *
-             * XXX: Do we need slot-for-slot compatibility?
-             */
-            nativeProp = trait.metadata.compat ? null : trait.metadata.jsnative.items[0].value;
-          } else if (traits.nativeClass) {
-            var nativeClass = traits.nativeClass.dict.via || traits.nativeClass.items[0].value;
-            if (!nativeClass) {
-              unexpected("Native class without value");
+          var closureMaker;
+          if (trait.metadata && trait.metadata.native) {
+            if (closureMaker = natives.get(trait.metadata.native.items[0].value)) {
+              closure = closureMaker(scope);
             }
-
-            nativeProp = nativeClass;
+          } else if (nativeClass) {
+            // TODO: Refactor
+            var base;
             if (baseTraits) {
               if (trait.isGetter()) {
-                nativeProp += ".instance.getters";
+                base = nativeClass.getters;
               } else if (trait.isSetter()) {
-                nativeProp += ".instance.setters";
+                base = nativeClass.setters;
               } else {
-                nativeProp += ".instance.prototype";
+                base = nativeClass.instance.prototype;
               }
             } else {
               if (trait.isGetter()) {
-                nativeProp += ".getters";
+                base = nativeClass.getters;
               } else if (trait.isSetter()) {
-                nativeProp += ".setters";
+                base = nativeClass.setters;
+              } else {
+                base = nativeClass;
               }
             }
 
-            nativeProp += "." + method.name.name;
+            /**
+             * At this point the native class already had the scope, so we
+             * don't need to close over this again.
+             */
+            closure = base[method.name.name];
           } else {
             unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
           }
 
-          if (nativeProp) {
-            /* Let, let, my kingdom for let! */
-            closure = natives.get(nativeProp) || (function (method) {
+          /**
+           * Natives marked as [compat] mean that they're kept for
+           * slot-for-slot compatibility with the original AS code. We can
+           * just assign null to those.
+           *
+           * XXX: Do we need slot-for-slot compatibility?
+           */
+          if (!closure && !(trait.metadata && trait.metadata.compat)) {
+            closure = (function (method) {
               return function() {
                 print("Calling undefined native method: " + method.name.getQualifiedName());
               };
             })(method);
-          } else {
-            closure = null;
           }
         } else {
-          closure = this.createFunction(trait.method, new Scope(scope, obj));
+          closure = this.createFunction(trait.method, scope);
         }
 
         var qn = trait.name.getQualifiedName();
@@ -843,12 +838,8 @@ var Runtime = (function () {
           defineProperty(qn, undefined, closure);
         }
       } else if (trait.isClass()) {
-        if (trait.metadata && trait.metadata.jsnative && this.abc.allowNatives) {
-          var cls = trait.class;
-          var nativeClass = trait.metadata.jsnative;
-          cls.native = nativeClass;
-          cls.instance.traits.nativeClass = nativeClass;
-          cls.traits.nativeClass = nativeClass;
+        if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
+          trait.class.native = trait.metadata.native;
         }
         defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
       } else {

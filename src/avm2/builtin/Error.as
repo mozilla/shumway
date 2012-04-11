@@ -37,7 +37,7 @@
 
 package
 {
-  [jsnative("ErrorClass")]
+  [native(cls="ErrorClass")]
   public dynamic class Error
   {
     prototype.name = "Error";
@@ -122,7 +122,7 @@ package
     }
   }
 
-  [jsnative("DefinitionErrorClass")]
+  [native(cls="DefinitionErrorClass")]
   public dynamic class DefinitionError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -136,7 +136,7 @@ package
     }
   }
 
-  [jsnative("EvalErrorClass")]
+  [native(cls="EvalErrorClass")]
   public dynamic class EvalError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -150,7 +150,7 @@ package
     }
   }
 
-  [jsnative("RangeErrorClass")]
+  [native(cls="RangeErrorClass")]
   public dynamic class RangeError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -164,7 +164,7 @@ package
     }
   }
 
-  [jsnative("ReferenceErrorClass")]
+  [native(cls="ReferenceErrorClass")]
   public dynamic class ReferenceError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -178,7 +178,7 @@ package
     }
   }
 
-  [jsnative("SecurityErrorClass")]
+  [native(cls="SecurityErrorClass")]
   public dynamic class SecurityError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -192,7 +192,7 @@ package
     }
   }
 
-  [jsnative("SyntaxErrorClass")]
+  [native(cls="SyntaxErrorClass")]
   public dynamic class SyntaxError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -206,7 +206,7 @@ package
     }
   }
 
-  [jsnative("TypeErrorClass")]
+  [native(cls="TypeErrorClass")]
   public dynamic class TypeError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -220,7 +220,7 @@ package
     }
   }
 
-  [jsnative("URIErrorClass")]
+  [native(cls="URIErrorClass")]
   public dynamic class URIError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -234,7 +234,7 @@ package
     }
   }
 
-  [jsnative("VerifyErrorClass")]
+  [native(cls="VerifyErrorClass")]
   public dynamic class VerifyError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -248,7 +248,7 @@ package
     }
   }
 
-  [jsnative("UninitializedErrorClass")]
+  [native(cls="UninitializedErrorClass")]
   public dynamic class UninitializedError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }
@@ -262,7 +262,7 @@ package
     }
   }
 
-  [jsnative("ArgumentErrorClass")]
+  [native(cls="ArgumentErrorClass")]
   public dynamic class ArgumentError extends Error
   {
     // E262 {ReadOnly, DontDelete, DontEnum }

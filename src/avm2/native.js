@@ -1,19 +1,18 @@
 var Class = (function () {
 
-  function Class(name, setInstance, setCallAndApply) {
+  function Class(name, instance, callable) {
     this.debugName = "[class " + name + "]";
 
-    if (setInstance) {
-      setInstance(this);
-    }
+    this.instance = instance;
 
     /**
      * Classes can be called like functions. For user-defined classes this is
      * coercion, for some of the builtins they behave like their counterparts
      * in JS.
      */
-    if (setCallAndApply) {
-      setCallAndApply(this);
+    if (callable) {
+      this.call = callable.call;
+      this.apply = callable.apply;
     } else {
       this.call = this.apply = function () {
         notImplemented("class callable call");
@@ -23,42 +22,30 @@ var Class = (function () {
 
   Class.instance = Class;
 
-  Class.passthroughInstance = function passthroughInstance(instance) {
-    return function (cls) {
-      cls.instance = instance;
-    };
-  };
-
-  Class.seminativeInstance = function seminativeInstance(cls) {
-    cls.instance = function () {
-      cls.instanceInit.apply(this, arguments);
-    };
-  };
-
-  Class.passthroughCallable = function passthroughCallable(callable) {
-    return function (cls) {
-      cls.call = function ($this) {
+  Class.passthroughCallable = function passthroughCallable(f) {
+    return {
+      call: function ($this) {
         Array.prototype.pop.call(arguments);
-        return callable.apply($this, arguments);
-      };
-      cls.apply = function ($this, args) {
-        return callable.apply($this, args);
-      };
+        return f.apply($this, arguments);
+      },
+      apply: function ($this, args) {
+        return f.apply($this, args);
+      }
     };
   };
 
-  Class.constructingCallable = function constructingCallable(cls) {
-    cls.call = function ($this) {
-      return new Function.bind.apply(cls.instance, arguments);
-    };
-    cls.apply = function ($this, args) {
-      return new Function.bind.apply(cls.instance, [$this].concat(args));
+  Class.constructingCallable = function constructingCallable(instance) {
+    return {
+      call: function ($this) {
+        return new Function.bind.apply(instance, arguments);
+      },
+      apply: function ($this, args) {
+      return new Function.bind.apply(instance, [$this].concat(args));
+      }
     };
   };
 
-  Class.getters = {
-    prototype: function () { return this.instance.prototype; }
-  };
+  Class.getters = { prototype: function () { return this.instance.prototype; } };
 
   return Class;
 
@@ -81,51 +68,135 @@ const natives = (function () {
     }
   };
 
-  const I = Class.passthroughInstance;
   const C = Class.passthroughCallable;
-  const SI = Class.seminativeInstance;
   const CC = Class.constructingCallable;
 
   /**
    * Object.as
    */
-  var ObjectClass = new Class("Object", I(Object), C(Object));
+  function ObjectClass(scope, instance) {
+    var c = new Class("Object", Object, C(Object));
 
-  ObjectClass._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
-    Object.defineProperty(obj, name, { enumerable: isEnum });
-  };
+    c._setPropertyIsEnumerable = function _setPropertyIsEnumerable(obj, name, isEnum) {
+      Object.defineProperty(obj, name, { enumerable: isEnum });
+    }
+
+    return c;
+  }
+
+  /**
+   * Boolean.as
+   */
+  function BooleanClass(scope, instance) {
+    return new Class("Boolean", Boolean, C(Boolean));
+  }
 
   /**
    * Function.as
    */
-  function getPrototype() {
-    return this.prototype;
+  function FunctionClass(scope, instance) {
+    var c = new Class("Function", Function, C(Function));
+
+    c.getters = { prototype: function () { return this.prototype; },
+                  length: function () { return this.length; } };
+    c.setters = { prototype: function (p) { this.prototype = p; } };
+
+    return c;
   }
 
-  function setPrototype(p) {
-    this.prototype = p;
+  /**
+   * String.as
+   */
+  function StringClass(scope, instance) {
+    var c = new Class("String", String, C(String));
+
+    c.getters = { length: function () { return this.length; } };
+
+    return c;
   }
 
   /**
    * Array.as
    */
-  function getLength() {
-    return this.length;
-  }
+  function ArrayClass(scope, instance) {
+    var c = new Class("Array", Array, C(Array));
 
-  function setLength(l) {
-    this.length = l;
+    c.getters = { length: function() { return this.length; } };
+    c.setters = { length: function(l) { this.length = l; } };
+
+    return c;
   }
 
   /**
    * Number.as
    */
-  function int(x) {
-    return Number(x) | 0;
+  function NumberClass(scope, instance) {
+    return new Class("Number", Number, C(Number));
   }
 
-  function uint(x) {
-    return Number(x) >>> 0;
+  function intClass(scope, instance) {
+    function int(x) {
+      return Number(x) | 0;
+    }
+
+    return new Class("int", int, C(int));
+  }
+
+  function uintClass(scope, instance) {
+    function uint(x) {
+      return Number(x) >>> 0;
+    }
+
+    return new Class("uint", uint, C(uint));
+  }
+
+  /**
+   * Math.as
+   */
+  function MathClass(scope, instance) {
+    var c = new Class("Math");
+
+    c.abs = Math.abs;
+    c.acos = Math.acos;
+    c.asin = Math.asin;
+    c.atan = Math.atan;
+    c.ceil = Math.ceil;
+    c.cos = Math.cos;
+    c.exp = Math.exp;
+    c.floor = Math.floor;
+    c.log = Math.log;
+    c.round = Math.round;
+    c.sin = Math.sin;
+    c.sqrt = Math.sqrt;
+    c.tan = Math.tan;
+    c.atan2 = Math.atan2;
+    c.pow = Math.pow;
+    c.max = Math.max;
+    c.min = Math.min;
+    c.random = Math.random;
+
+    return c;
+  }
+
+  /**
+   * Date.as
+   */
+  function DateClass(scope, instance) {
+    var c = new Class("Date", Date, C(Date));
+
+    c.parse = Date.parse;
+    c.UTC = Date.UTC;
+
+    return c;
+  }
+
+  /**
+   * Error.as
+   */
+  function makeErrorClass(name) {
+    return function (scope, instance) {
+      return new Class(name, instance, CC(instance));
+    }
   }
 
   /**
@@ -137,49 +208,61 @@ const natives = (function () {
    *
    * TODO: Should we support extended at all? Or even dotall?
    */
-  function ASRegExp(pattern, flags) {
-    function stripFlag(flags, c) {
-      flags[flags.indexOf(c)] = flags[flags.length - 1];
-      return flags.substr(0, flags.length - 1);
-    }
-
-    if (flags) {
-      var re;
-      var extraProps = {};
-
-      if (flags.indexOf("s") >= 0) {
-        pattern = pattern.replace(/\./, "(.|\n)");
-        flags = stripFlags(flags, "s");
-        extraProps.push({ key: "dotall", value: true });
+  function RegExpClass(scope, instance) {
+    function ASRegExp(pattern, flags) {
+      function stripFlag(flags, c) {
+        flags[flags.indexOf(c)] = flags[flags.length - 1];
+        return flags.substr(0, flags.length - 1);
       }
 
-      re = new RegExp(pattern, flags);
+      if (flags) {
+        var re;
+        var extraProps = {};
 
-      for (var i = 0, j = extraProps.length; i < j; i++) {
-        var prop = extraProps[i];
-        re[prop.key] = prop.value;
+        if (flags.indexOf("s") >= 0) {
+          pattern = pattern.replace(/\./, "(.|\n)");
+          flags = stripFlags(flags, "s");
+          extraProps.push({ key: "dotall", value: true });
+        }
+
+        re = new RegExp(pattern, flags);
+
+        for (var i = 0, j = extraProps.length; i < j; i++) {
+          var prop = extraProps[i];
+          re[prop.key] = prop.value;
+        }
+
+        return re;
       }
 
-      return re;
+      return new RegExp(pattern, flags);
     }
+    ASRegExp.prototype = RegExp.prototype;
 
-    return new RegExp(pattern, flags);
+    var c = new Class("RegExp", ASRegExp, C(ASRegExp));
+
+    c.getters = {
+      source: function () { return this.source; },
+      global: function () { return this.global; },
+      ignoreCase: function () { return this.ignoreCase; },
+      multiline: function () { return this.multiline; },
+      lastIndex: function () { return this.lastIndex; },
+      dotall: function () { return this.dotall; },
+      extended: function () { return this.extended; }
+    };
+
+    c.setters = {
+      lastIndex: function (i) { this.lastIndex = i; }
+    };
+
+    return c;
   }
-  ASRegExp.prototype = RegExp.prototype;
 
-  ASRegExp.getters = {
-    source: function () { return this.source; },
-    global: function () { return this.global; },
-    ignoreCase: function () { return this.ignoreCase; },
-    multiline: function () { return this.multiline; },
-    lastIndex: function () { return this.lastIndex; },
-    dotall: function () { return this.dotall; },
-    extended: function () { return this.extended; }
-  };
-
-  ASRegExp.setters = {
-    lastIndex: function (i) { this.lastIndex = i; }
-  };
+  function constant(x) {
+    return function () {
+      return x;
+    };
+  }
 
   /**
    * Namespace.as
@@ -204,34 +287,26 @@ const natives = (function () {
 
   var backing = {
     /**
-     * Getters/setters used by several classes.
-     */
-    getPrototype: getPrototype,
-    setPrototype: setPrototype,
-    getLength: getLength,
-    setLength: setLength,
-
-    /**
      * Shell toplevel.
      */
-    print: print,
+    print: constant(print),
 
     /**
      * actionscript.lang.as
      */
-    decodeURI: decodeURI,
-    decodeURIComponent: decodeURIComponent,
-    encodeURI: encodeURI,
-    encodeURIComponent: encodeURIComponent,
-    isNaN: isNaN,
-    isFinite: isFinite,
-    parseInt: parseInt,
-    parseFloat: parseFloat,
-    escape: escape,
-    unescape: unescape,
-    isXMLName: typeof (isXMLName) !== "undefined" ? isXMLName : function () {
+    decodeURI: constant(decodeURI),
+    decodeURIComponent: constant(decodeURIComponent),
+    encodeURI: constant(encodeURI),
+    encodeURIComponent: constant(encodeURIComponent),
+    isNaN: constant(isNaN),
+    isFinite: constant(isFinite),
+    parseInt: constant(parseInt),
+    parseFloat: constant(parseFloat),
+    escape: constant(escape),
+    unescape: constant(unescape),
+    isXMLName: constant(typeof (isXMLName) !== "undefined" ? isXMLName : function () {
       notImplemented("Chrome doesn't support isXMLName.");
-    },
+    }),
 
     /**
      * Vias.
@@ -248,31 +323,32 @@ const natives = (function () {
      * Classes.
      */
     ObjectClass: ObjectClass,
-    Class: Class,
-    FunctionClass: new Class("Function", I(Function), C(Function)),
-    BooleanClass: new Class("Boolean", I(Boolean), C(Boolean)),
-    StringClass: new Class("String", I(String), C(String)),
-    NumberClass: new Class("Number", I(Number), C(Number)),
-    intClass: new Class("int", I(int), C(int)),
-    uintClass: new Class("uint", I(uint), C(uint)),
-    ArrayClass: new Class("Array", I(Array), C(Array)),
 
-    ErrorClass: new Class("Error", SI, CC),
-    DefinitionErrorClass: new Class("DefinitionError", SI, CC),
-    EvalErrorClass: new Class("EvalError", SI, CC),
-    RangeErrorClass: new Class("RangeError", SI, CC),
-    ReferenceErrorClass: new Class("ReferenceError", SI, CC),
-    SecurityErrorClass: new Class("SecurityError", SI, CC),
-    SyntaxErrorClass: new Class("SyntaxError", SI, CC),
-    TypeErrorClass: new Class("TypeError", SI, CC),
-    URIErrorClass: new Class("URIError", SI, CC),
-    VerifyErrorClass: new Class("VerifyError", SI, CC),
-    UninitializedErrorClass: new Class("UninitializedError", SI, CC),
-    ArgumentErrorClass: new Class("ArgumentError", SI, CC),
+    Class: constant(Class),
+    FunctionClass: FunctionClass,
+    BooleanClass: BooleanClass,
+    StringClass: StringClass,
+    NumberClass: NumberClass,
+    intClass: intClass,
+    uintClass: uintClass,
+    ArrayClass: ArrayClass,
 
-    DateClass: new Class("Date", I(Date), C(Date)),
-    MathClass: new Class("Math"),
-    RegExpClass: new Class("RegExp", I(ASRegExp), C(ASRegExp)),
+    ErrorClass: makeErrorClass("Error"),
+    DefinitionErrorClass: makeErrorClass("DefinitionError"),
+    EvalErrorClass: makeErrorClass("EvalError"),
+    RangeErrorClass: makeErrorClass("RangeError"),
+    ReferenceErrorClass: makeErrorClass("ReferenceError"),
+    SecurityErrorClass: makeErrorClass("SecurityError"),
+    SyntaxErrorClass: makeErrorClass("SyntaxError"),
+    TypeErrorClass: makeErrorClass("TypeError"),
+    URIErrorClass: makeErrorClass("URIError"),
+    VerifyErrorClass: makeErrorClass("VerifyError"),
+    UninitializedErrorClass: makeErrorClass("UninitializedError"),
+    ArgumentErrorClass: makeErrorClass("ArgumentError"),
+
+    DateClass: DateClass,
+    MathClass: MathClass,
+    RegExpClass: RegExpClass
 
     CapabilitiesClass: CapabilitiesClass,
     NamespaceClass: new Class("Namespace", I(Namespace), C(Namespace))
