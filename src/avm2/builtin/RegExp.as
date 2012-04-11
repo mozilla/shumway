@@ -37,7 +37,7 @@
 
 package
 {
-  [jsnative("RegExpClass")]
+  [native(cls="RegExpClass")]
   public dynamic class RegExp
   {
     // RegExp.length = 1 per ES3
@@ -72,10 +72,10 @@ package
     };
 
     AS3 native function exec(s:String="");
-    prototype.exec = jsnative("RegExp.prototype.exec");
+    prototype.exec = unsafeJSNative("RegExp.prototype.exec");
 
     AS3 native function test(s:String="");
-    prototype.test = jsnative("RegExp.prototype.test");
+    prototype.test = unsafeJSNative("RegExp.prototype.test");
 
     // Dummy constructor
     public function RegExp(pattern = void 0, options = void 0) {}

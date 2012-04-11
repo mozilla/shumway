@@ -49,8 +49,8 @@ package
     public static const NaN               :Number = 0/0;
     public static const NEGATIVE_INFINITY :Number = -1/0;
     public static const POSITIVE_INFINITY :Number = 1/0;
-    public static const MIN_VALUE         :Number = jsnative("Number.MIN_VALUE");
-    public static const MAX_VALUE         :Number = jsnative("Number.MAX_VALUE");
+    public static const MIN_VALUE         :Number = unsafeJSNative("Number.MIN_VALUE");
+    public static const MAX_VALUE         :Number = unsafeJSNative("Number.MAX_VALUE");
 
     // The following constants correspond to the constants on Math, but we add them to Number to make
     // Number, float, and float4 behave similarly.
@@ -151,18 +151,18 @@ package
     AS3 native function valueOf():Number
 
     // AS (incorrectly) makes toLocaleString === toString.
-    prototype.toLocaleString = jsnative("Number.prototype.toLocaleString");
-    prototype.toString = jsnative("Number.prototype.toString");
-    prototype.valueOf = jsnative("Number.prototype.valueOf");
+    prototype.toLocaleString = unsafeJSNative("Number.prototype.toLocaleString");
+    prototype.toString = unsafeJSNative("Number.prototype.toString");
+    prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
 
     AS3 native function toExponential(p=0):String
-    prototype.toExponential = jsnative("Number.prototype.toExponential");
+    prototype.toExponential = unsafeJSNative("Number.prototype.toExponential");
 
     AS3 native function toPrecision(p=0):String
-    prototype.toPrecision = jsnative("Number.prototype.toPrecision");
+    prototype.toPrecision = unsafeJSNative("Number.prototype.toPrecision");
 
     AS3 native function toFixed(p=0):String
-    prototype.toFixed = jsnative("Number.prototype.toFixed");
+    prototype.toFixed = unsafeJSNative("Number.prototype.toFixed");
 
     _dontEnumPrototype(prototype);
   }

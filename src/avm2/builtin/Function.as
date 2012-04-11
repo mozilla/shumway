@@ -66,10 +66,10 @@ package
     }
 
     AS3 native function call(thisArg=void 0, ...args);
-    prototype.call = jsnative("Function.prototype.call");
+    prototype.call = unsafeJSNative("Function.prototype.call");
 
     AS3 native function apply(thisArg=void 0, argArray=void 0);
-    prototype.apply = jsnative("Function.prototype.apply");
+    prototype.apply = unsafeJSNative("Function.prototype.apply");
 
     _dontEnumPrototype(prototype);
   }

@@ -290,7 +290,7 @@ const natives = (function () {
     }),
 
     /**
-     * Vias.
+     * Unsafes for directly hooking up prototype.
      */
     Function: Function,
     String: String,

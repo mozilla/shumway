@@ -48,8 +48,8 @@ package
     AS3 native function toString();
     AS3 native function valueOf();
 
-    prototype.toString = jsnative("Boolean.prototype.toString");
-    prototype.valueOf = jsnative("Boolean.prototype.valueOf");
+    prototype.toString = unsafeJSNative("Boolean.prototype.toString");
+    prototype.valueOf = unsafeJSNative("Boolean.prototype.valueOf");
 
     // Dummy constructor
     public function Boolean(value = void 0) {}

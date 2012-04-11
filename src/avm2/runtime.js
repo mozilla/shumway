@@ -910,7 +910,7 @@ function loadAbc(abc, mode) {
     var global = new Global(runtime, script);
 
     if (abc.allowNatives) {
-      global.public$jsnative = native;
+      global.public$unsafeJSNative = native;
     }
   }
 }

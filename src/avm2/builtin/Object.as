@@ -84,11 +84,11 @@ package
     //[API(CONFIG::VM_INTERNAL)]
     public static function _init()
     {
-      prototype.hasOwnProperty = jsnative("Object.prototype.hasOwnProperty");
-      prototype.setPropertyIsEnumerable = jsnative("Object.prototype.setPropertyIsEnumerable");
-      prototype.isPrototypeOf = jsnative("Object.prototype.isPrototypeOf");
-      prototype.toString = jsnative("Object.prototype.toString");
-      prototype.valueOf = jsnative("Object.prototype.valueOf");
+      prototype.hasOwnProperty = unsafeJSNative("Object.prototype.hasOwnProperty");
+      prototype.setPropertyIsEnumerable = unsafeJSNative("Object.prototype.setPropertyIsEnumerable");
+      prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
+      prototype.toString = unsafeJSNative("Object.prototype.toString");
+      prototype.valueOf = unsafeJSNative("Object.prototype.valueOf");
     }
   }
 
