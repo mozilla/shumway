@@ -253,33 +253,27 @@ var Namespace = (function () {
   const MIN_API_MARK              = 0xe294;
   const MAX_API_MARK              = 0xf8ff;
 
-  function namespace(kind, name) {
-    if (kind !== undefined && name !== undefined) {
+  function namespace(kind, uri) {
+    if (kind !== undefined && uri !== undefined) {
       this.kind = kind;
-      this.name = name;
+      this.uri = uri;
       buildNamespace.call(this);
     }
   }
 
-  namespace.prototype.parse = function parse(constantPool, stream) {
-    this.kind = stream.readU8();
-    this.name = constantPool.strings[stream.readU30()];
-    buildNamespace.call(this);
-  };
-
   function buildNamespace() {
-    this.name = this.name.replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
+    this.uri = this.uri.replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
 
-    if (this.isPublic() && this.name) {
+    if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
-      var n = this.name.length - 1;
-      var mark = this.name.charCodeAt(n);
+      var n = this.uri.length - 1;
+      var mark = this.uri.charCodeAt(n);
       if (mark > MIN_API_MARK) {
-        this.name = this.name.substring(0, n - 1);
+        this.uri = this.uri.substring(0, n - 1);
       }
     }
     assert (kinds[this.kind]);
-    this.qualifiedName = kinds[this.kind] + (this.name ? "$" + this.name : "");
+    this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   };
 
   namespace.kindFromString = function kindFromString(str) {
@@ -291,21 +285,40 @@ var Namespace = (function () {
     return unexpected(str);
   };
 
-  namespace.createNamespace = function createNamespace(name) {
-    return new namespace(CONSTANT_Namespace, name);
+  namespace.createNamespace = function createNamespace(uri) {
+    return new namespace(CONSTANT_Namespace, uri);
   };
 
-  namespace.prototype.isPublic = function isPublic() {
-    return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
-  };
+  namespace.prototype = {
+    parse: function parse(constantPool, stream) {
+      this.kind = stream.readU8();
+      this.uri = constantPool.strings[stream.readU30()];
+      buildNamespace.call(this);
+    },
 
-  namespace.prototype.getURI = function getURI() {
-    // TODO: Broken
-    return this.name;
-  };
+    isPublic: function isPublic() {
+      return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
+    },
 
-  namespace.prototype.toString = function toString() {
-    return this.qualifiedName;
+    getPrefix: function getPrefix() {
+      return this.prefix;
+    },
+
+    getURI: function getURI() {
+      return this.uri;
+    },
+
+    toString: function toString() {
+      return this.qualifiedName;
+    },
+
+    clone: function clone() {
+      var c = new Namespace();
+      c.kind = this.kind;
+      c.uri = this.uri;
+      c.qualifiedName = this.qualifiedName;
+      c.prefix = this.prefix;
+    }
   };
 
   return namespace;

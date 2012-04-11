@@ -359,12 +359,42 @@ const natives = (function () {
    * Namespace.as
    */
   function NamespaceClass(scope, instance) {
-    function ASNamespace(prefix, uri) {
-      this.prefix = prefix;
-      this.uri = uri;
-    }
+    function ASNamespace(prefixValue, uriValue) {
+      if (uriValue === undefined) {
+        uriValue = prefixValue;
+        prefixValue = undefined;
+      }
 
-    return new Class("Namespace", ASNamespace, C(ASNamespace));
+      // TODO: when uriValue is a QName
+      if (prefixValue !== undefined) {
+        if (typeof isXMLName === "function") {
+          prefixValue = String(prefixValue);
+        }
+
+        uriValue = String(uriValue);
+      } else if (uriValue !== undefined) {
+        if (uriValue.constructor === Namespace) {
+          return uriValue.clone();
+        }
+      }
+
+      /**
+       * XXX: Not sure if this is right for whatever E4X bullshit this is used
+       * for.
+       */
+      var ns = Namespace.createNamespace(uriValue);
+      ns.prefix = prefixValue;
+
+      return ns;
+    }
+    ASNamespace.prototype = Namespace.prototype;
+
+    var c = new Class("Namespace", ASNamespace, C(ASNamespace));
+
+    c.getters = { prefix: Namespace.prototype.getPrefix,
+                  uri: Namespace.prototype.getURI };
+
+    return c;
   }
 
   /**
