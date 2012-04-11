@@ -318,11 +318,11 @@ var Namespace = (function () {
       c.uri = this.uri;
       c.qualifiedName = this.qualifiedName;
       c.prefix = this.prefix;
-    }
-  };
+    },
 
-  namespace.prototype.getAccessModifier = function getAccessModifier() {
-    return kinds[this.kind];
+    getAccessModifier: function getAccessModifier() {
+      return kinds[this.kind];
+    }
   };
 
   return namespace;

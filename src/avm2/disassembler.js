@@ -286,7 +286,7 @@ function traceSource(writer, abc) {
         traceMetadata(trait.metadata);
         var str;
         var accessModifier = trait.name.getAccessModifier();
-        var namespaceName = trait.name.namespaces[0].originalName;
+        var namespaceName = trait.name.namespaces[0].originalUri;
         if (namespaceName) {
           if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
             namespaceName = "AS3";
