@@ -1,3 +1,119 @@
+/**
+ * Shumway ships with its own version of the AS3 builtin library, which
+ * maintains interface compatibility with the stock builtin library, viz. the
+ * same members in the same order.
+ *
+ * Shumway also uses the [native] metadata tag but interprets them
+ * differently. Metadata can _only_ be attached to slots. The asc compiler is
+ * laughably bad at parsing metadata tags in light of semicolon insertion, so
+ * be sure to semicolon-terminate everything.
+ *
+ * Using [native] on methods
+ * ---------------------------
+ *
+ * The [native] metadata can be attached to methods. The VM ignores them unless
+ * the method is also marked as native:
+ *
+ *   class C {
+ *     ...
+ *
+ *     [native("fooInJS")]
+ *     public native function foo();
+ *
+ *     ...
+ *   }
+ *
+ * This marks the instance method |foo| as the native function |fooInJS|. Note
+ * the string inside [native] is _not_ arbitrary JavaScript.
+ *
+ * The VM keeps an object of exported natives, |natives|. Whenever something
+ * via [native] is looked up, it is only looked up in the |natives|
+ * object. The above code looks up |natives.fooInJS|.
+ *
+ * Implementing native methods
+ * ---------------------------
+ *
+ * Native methods may need to do scope lookups in the scope where it is
+ * defined in ActionScript. Because of this, all native methods must be
+ * implemented as functions that take a scope and returns the actual native
+ * function, so the implementation can close over the scope. For the above
+ * example,
+ *
+ *   natives.fooInJS = function fooInJS(scope) {
+ *     return function () {
+ *       // actual code here
+ *     };
+ *   };
+ *
+ * Using [native] on classes
+ * ---------------------------
+ *
+ * Entire classes can be made native by prefixing the class definition with
+ * [native]:
+ *
+ *   [native(cls="CClass")]
+ *   class C {
+ *     ...
+ *
+ *     public native function foo(i)
+ *
+ *     ...
+ *   }
+ *
+ * The cls= syntax is to maintain parity with how it's done in Tamarin, in
+ * case we need to run stock player globals but plug in our native classes.
+ *
+ * This lets the VM automatically resolve native methods that don't have their
+ * own [native].
+ *
+ * For a native class |CClass|, resolution on a method |m| is done as follows.
+ *
+ *   If |m| is a...
+ *
+ *     instance method - |CClass.instance.prototype.m|
+ *     static method   - |CClass.statics.m|
+ *     getter          - |CClass.getters.m|
+ *     setter          - |CClass.setters.m|
+ *
+ * Implementing native classes
+ * ---------------------------
+ *
+ * Like native methods, native classes also may need to do scope lookups. It
+ * might also need to run the ActionScript instance constructor, so native
+ * classes are implemented as functions taking a scope and the instance
+ * constructor and returns a |Class| object.
+ *
+ * Classes in ActionScript may be called like functions. For builtin classes,
+ * this often is the same as constructing an instance of that class,
+ * viz. |Array(0)| is the same as |new Array(0)|. For user-defined classes,
+ * this is usually coercion. The |callable| argument in the |Class|
+ * constructor, if non-null, must contain |call| and a |apply| properties,
+ * which are functions to be used for calling the class as a function.
+ *
+ * Convenience callables are provided via |Class.passthroughCallable|, which
+ * takes a function |f| and uses it as the callable, and
+ * |Class.constructingCallable|, which takes a function |instance| and uses it
+ * to construct a new instance when the class is called.
+ *
+ * For the above example, we would write:
+ *
+ *   natives.CClass = function CClass(scope, instance) {
+ *     function CInstance() {
+ *       // If we wanted to call the AS constructor we would do
+ *       // |instance.apply(this, arguments)|
+ *     }
+ *
+ *     CInstance.prototype = {
+ *       foo: function foo() {
+ *         // code for public native function foo
+ *       }
+ *     };
+ *
+ *     // Pass no callable for now, in the future we might do coercion.
+ *     return new Class("C", CInstance);
+ *   };
+ */
+
 var Class = (function () {
 
   function Class(name, instance, callable) {
