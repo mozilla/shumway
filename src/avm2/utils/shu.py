@@ -73,10 +73,11 @@ class Base:
     if not self.asc:
       sys.exit();
 
-  def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, multiple = False):
-    if multiple:
+  def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, sc = False):
+    if sc:
+      outf = os.path.splitext(files[-1])[0]
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
-              "macromedia.asc.embedding.ScriptCompiler", "-d"]
+              "macromedia.asc.embedding.ScriptCompiler", "-d", "-out", outf]
     else:
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-jar", self.asc, "-d"]
 
@@ -89,9 +90,6 @@ class Base:
     if playerGlobal:
       args.extend(["-import", self.player_global_abc])
 
-    outf = os.path.splitext(files[-1])[0]
-
-    args.extend(["-out", outf])
     args.extend(files);
     print(args)
     subprocess.call(args)
@@ -99,6 +97,10 @@ class Base:
       args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d"]
       args.extend(files)
       subprocess.call(args)
+
+    if sc:
+      os.remove(outf + ".cpp")
+      os.remove(outf + ".h")
 
   def runAvm(self, file, execute = True, trace = False, disassemble = False):
     args = ["js", "-m", "-n", "avm.js"];
@@ -132,11 +134,11 @@ class Asc(Command):
     parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
     parser.add_argument('-globals', action='store_true', help='import global.abc')
     parser.add_argument('-playerGlobal', action='store_true', help='import playerGlobal.abc')
-    parser.add_argument('-multiple', action='store_true', help='compile multiple scripts into one .abc file')
+    parser.add_argument('-sc', action='store_true', help='use embedding.ScriptCompiler (needed to compile multiple scripts into one .abc file)')
     parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
     args = parser.parse_args(args)
     print "Compiling %s" % args.src
-    self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  multiple = args.multiple)
+    self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  sc = args.sc)
 
 class Ascreg(Command):
   def __init__(self):
