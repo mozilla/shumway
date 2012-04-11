@@ -1,4 +1,4 @@
-var filter = options.register(new Option("filter", "f", "pciMsm", "constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods"));
+var filter = options.register(new Option("filter", "f", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods"));
 
 var IndentingWriter = (function () {
   function indentingWriter(suppressOutput, out) {
@@ -88,6 +88,9 @@ AbcFile.prototype.trace = function trace(writer) {
   }
   if (filter.value.indexOf("m") >= 0) {
     traceArray(writer, "methods", this.methods, this);
+  }
+  if (filter.value.indexOf("S") >= 0) {
+    traceSource(writer, this);
   }
 };
 
@@ -249,4 +252,121 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
   }
   writer.leave("}");
   writer.leave("}");
+}
+
+function traceSource(writer, abc) {
+  function getSignature(method) {
+    function literal(value) {
+      if (value === undefined) {
+        return "undefined";
+      } else if (value === null) {
+        return "null";
+      } else if (typeof (value) === "string") {
+        return "\"" + value + "\"";
+      } else {
+        return String(value);
+      }
+    }
+    return method.parameters.map(function (x) {
+      var str = x.name;
+      if (x.typeName) {
+        str += ":" + x.typeName.getName();
+      }
+      if (x.value !== undefined) {
+        str += "=" + literal(x.value);
+      }
+      return str;
+    }).join(", ");
+  }
+
+  abc.scripts.forEach(function (script) {
+    traceTraits(script.traits);
+    function traceTraits(traits, isStatic) {
+      traits.traits.forEach(function (trait) {
+        traceMetadata(trait.metadata);
+        var str;
+        var accessModifier = trait.name.getAccessModifier();
+        var namespaceName = trait.name.namespaces[0].originalName;
+        if (namespaceName) {
+          if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
+            namespaceName = "AS3";
+          }
+          if (accessModifier === "public") {
+            str = namespaceName;
+          } else {
+            str = accessModifier;
+          }
+        } else {
+          str = accessModifier;
+        }
+        if (isStatic) {
+          str += " static";
+        }
+        if (trait.isSlot() || trait.isConst()) {
+          if (trait.isConst()) {
+            str += " const";
+          }
+          str += " " + trait.name.getName();
+          if (trait.typeName) {
+            str += ":" + trait.typeName.getName();
+          }
+          if (trait.value) {
+            str += " = " + trait.value;
+          }
+          writer.writeLn(str + ";");
+        } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+          var method = trait.method;
+          if (method.isNative()) {
+            str += " native";
+          }
+          str += " function";
+          str += trait.isGetter() ? " get" : (trait.isSetter() ? " set" : "");
+          str += " " + trait.name.getName();
+          str += "(" + getSignature(method) + ")";
+          str += method.returnType ? ":" + method.returnType.getName() : "";
+          if (method.isNative()) {
+            writer.writeLn(str + ";");
+          } else {
+            writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
+          }
+        } else if (trait.isClass()) {
+          traceClass(trait.class);
+        } else {
+          var str = trait.name.getAccessModifier() + " " + trait.name.getName();
+          writer.writeLn(str);
+        }
+      });
+    }
+
+    function traceClass(cls) {
+      var name = cls.instance.name;
+      var str = name.getAccessModifier() + " class " + name.getName();
+      if (cls.instance.superName) {
+        str += " extends " + cls.instance.superName.getName();
+      }
+      if (cls.instance.interfaces.length) {
+        str += " implements " + cls.instance.interfaces.map(function (x) {
+          return x.getName();
+        }).join(", ");
+      }
+      writer.enter(str + " {");
+      writer.writeLn("public function " + name.getName() + "(" + getSignature(cls.instance.init) + ") {}");
+      traceTraits(cls.traits, true);
+      traceTraits(cls.instance.traits);
+      writer.leave("}");
+    }
+
+    function traceMetadata(metadata) {
+      for (var key in metadata) {
+        if (key.indexOf("__") === 0) {
+          continue;
+        }
+        writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
+          var str = m.key ? m.key + "=" : "";
+          return str + "\"" + m.value + "\"";
+        }).join(", ") + ")]");
+      }
+    }
+
+  });
 }
