@@ -74,6 +74,8 @@
  *     static method   - |CClass.statics.m|
  *     getter          - |CClass.getters.m|
  *     setter          - |CClass.setters.m|
+ *     static getter   - |CClass.staticGetters.m|
+ *     static setter   - |CClass.staticSetters.m|
  *
  * Implementing native classes
  * ---------------------------

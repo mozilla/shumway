@@ -794,12 +794,22 @@ var Runtime = (function () {
             }
           } else if (nativeClass) {
             var base;
-            if (trait.isGetter()) {
-              base = nativeClass.getters;
-            } else if (trait.isSetter()) {
-              base = nativeClass.setters;
+            if (baseTraits) {
+              if (trait.isGetter()) {
+                base = nativeClass.getters;
+              } else if (trait.isSetter()) {
+                base = nativeClass.setters;
+              } else {
+                base = nativeClass.instance.prototype;
+              }
             } else {
-              base = baseTraits ? nativeClass.instance.prototype : nativeClass.statics;
+              if (trait.isGetter()) {
+                base = nativeClass.staticGetters;
+              } else if (trait.isSetter()) {
+                base = nativeClass.staticSetters;
+              } else {
+                base = nativeClass.statics;
+              }
             }
 
             /**
