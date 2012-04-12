@@ -256,7 +256,7 @@ var Namespace = (function () {
   function namespace(kind, uri) {
     if (kind !== undefined && uri !== undefined) {
       this.kind = kind;
-      this.originalUri = this.uri = name;
+      this.originalURI = this.uri = name;
       buildNamespace.call(this);
     }
   }
@@ -292,7 +292,7 @@ var Namespace = (function () {
   namespace.prototype = {
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();
-      this.uri = constantPool.strings[stream.readU30()];
+      this.originalURI = this.uri = constantPool.strings[stream.readU30()];
       buildNamespace.call(this);
     },
 
@@ -923,14 +923,20 @@ var InstanceInfo = (function () {
     this.traits = parseTraits(abc, stream, this);
   }
 
-  instanceInfo.prototype.toString = function toString() {
-    var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
-    var str = (flags ? flags + " " : "") + this.name;
-    if (this.superName) {
-      str += " extends " + this.superName;
-    }
-    return str;
+  instanceInfo.prototype = {
+    toString: function toString() {
+      var flags = getFlags(this.flags & 8, "sealed|final|interface|protected".split("|"));
+      var str = (flags ? flags + " " : "") + this.name;
+      if (this.superName) {
+        str += " extends " + this.superName;
+      }
+      return str;
+    },
+    isFinal: function isFinal() { return this.flags & CONSTANT_ClassFinal; },
+    isSealed: function isSealed() { return this.flags & CONSTANT_ClassSealed; },
+    isInterface: function isInterface() { return this.flags & CONSTANT_ClassInterface; }
   };
+
   return instanceInfo;
 })();
 

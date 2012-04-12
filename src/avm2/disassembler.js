@@ -255,25 +255,28 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
 }
 
 function traceSource(writer, abc) {
-  function getSignature(method) {
-    function literal(value) {
-      if (value === undefined) {
-        return "undefined";
-      } else if (value === null) {
-        return "null";
-      } else if (typeof (value) === "string") {
-        return "\"" + value + "\"";
-      } else {
-        return String(value);
-      }
+  function literal(value) {
+    if (value === undefined) {
+      return "undefined";
+    } else if (value === null) {
+      return "null";
+    } else if (typeof (value) === "string") {
+      return "\"" + value + "\"";
+    } else {
+      return String(value);
     }
+  }
+
+  function getSignature(method, excludeTypesAndDefaultValues) {
     return method.parameters.map(function (x) {
       var str = x.name;
-      if (x.typeName) {
-        str += ":" + x.typeName.getName();
-      }
-      if (x.value !== undefined) {
-        str += "=" + literal(x.value);
+      if (!excludeTypesAndDefaultValues) {
+        if (x.type) {
+          str += ":" + x.type.getName();
+        }
+        if (x.value !== undefined) {
+          str += "=" + literal(x.value);
+        }
       }
       return str;
     }).join(", ");
@@ -283,10 +286,9 @@ function traceSource(writer, abc) {
     traceTraits(script.traits);
     function traceTraits(traits, isStatic) {
       traits.traits.forEach(function (trait) {
-        traceMetadata(trait.metadata);
         var str;
         var accessModifier = trait.name.getAccessModifier();
-        var namespaceName = trait.name.namespaces[0].originalUri;
+        var namespaceName = trait.name.namespaces[0].originalURI;
         if (namespaceName) {
           if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
             namespaceName = "AS3";
@@ -303,6 +305,7 @@ function traceSource(writer, abc) {
           str += " static";
         }
         if (trait.isSlot() || trait.isConst()) {
+          traceMetadata(trait.metadata);
           if (trait.isConst()) {
             str += " const";
           }
@@ -311,10 +314,11 @@ function traceSource(writer, abc) {
             str += ":" + trait.typeName.getName();
           }
           if (trait.value) {
-            str += " = " + trait.value;
+            str += " = " + literal(trait.value);
           }
           writer.writeLn(str + ";");
         } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+          traceMetadata(trait.metadata);
           var method = trait.method;
           if (method.isNative()) {
             str += " native";
@@ -330,17 +334,81 @@ function traceSource(writer, abc) {
             writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
           }
         } else if (trait.isClass()) {
+          var className = trait.class.instance.name;
+          writer.enter("package " + className.namespaces[0].originalURI + " {");
+          traceMetadata(trait.metadata);
           traceClass(trait.class);
+          writer.leave("}");
+          traceClassStub(trait);
         } else {
-          var str = trait.name.getAccessModifier() + " " + trait.name.getName();
-          writer.writeLn(str);
+          notImplemented();
         }
       });
     }
 
+    function traceClassStub(trait) {
+      var cls = trait.class;
+      var name = cls.instance.name;
+      var native = trait.metadata.native;
+      if (!native) {
+        return;
+      }
+      writer.enter("Shumway Stub {");
+      writer.enter("function " + native.dict.cls + "(scope, instance) {");
+      writer.writeLn("function " + name.getName() + "() {};");
+      writer.writeLn("var c = new Class(\"" + name.getName() + "\", " +
+                     name.getName() + ", C(" + name.getName() + "));");
+
+      function traceTraits(traits, isStatic) {
+        traits.traits.forEach(function (trait) {
+          var traitName = trait.name.getName();
+          if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+            var method = trait.method;
+            if (method.isNative()) {
+              var str = "";
+              if (isStatic) {
+                str += "statics";
+              } else if (trait.isGetter()) {
+                str += "getters";
+              } else if (trait.isSetter()) {
+                str += "setters";
+              } else if (trait.isMethod()) {
+                str += "methods";
+              }
+              if (trait.method.parameters.length) {
+                writer.writeLn("// Signature: " + getSignature(trait.method) + " -> " + trait.method.returnType.getName());
+              }
+              str += "." + traitName + " = function " + traitName + "(" + getSignature(trait.method, true) + ") {";
+              writer.enter(str);
+              writer.leave("}");
+            }
+          }
+        });
+      }
+
+      writer.writeLn("var statics = c.statics = {};");
+      writer.writeLn("var getters = c.getters = {};");
+      writer.writeLn("var setters = c.setters = {};");
+      writer.writeLn("var methods = instance.prototype;");
+      traceTraits(cls.traits, true);
+      traceTraits(cls.instance.traits);
+
+      writer.writeLn("return c;");
+      writer.leave("}");
+      writer.leave("}");
+    }
+
     function traceClass(cls) {
       var name = cls.instance.name;
-      var str = name.getAccessModifier() + " class " + name.getName();
+      var str = name.getAccessModifier();
+      if (cls.instance.isFinal()) {
+        str += " final";
+      }
+      if (!cls.instance.isSealed()) {
+        str += " dynamic";
+      }
+      str += cls.instance.isInterface() ? " interface " : " class ";
+      str += name.getName();
       if (cls.instance.superName) {
         str += " extends " + cls.instance.superName.getName();
       }
