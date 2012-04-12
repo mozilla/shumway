@@ -367,13 +367,14 @@ function traceSource(writer, abc) {
             if (method.isNative()) {
               var str = "";
               if (isStatic) {
-                str += "statics";
-              } else if (trait.isGetter()) {
-                str += "getters";
+                str += "s";
+              }
+              if (trait.isGetter()) {
+                str += "g";
               } else if (trait.isSetter()) {
-                str += "setters";
+                str += "s";
               } else if (trait.isMethod()) {
-                str += "methods";
+                str += "m";
               }
               if (trait.method.parameters.length) {
                 writer.writeLn("// Signature: " + getSignature(trait.method) + " -> " + trait.method.returnType.getName());
@@ -386,10 +387,14 @@ function traceSource(writer, abc) {
         });
       }
 
-      writer.writeLn("var statics = c.statics = {};");
-      writer.writeLn("var getters = c.getters = {};");
-      writer.writeLn("var setters = c.setters = {};");
-      writer.writeLn("var methods = instance.prototype;");
+      writer.writeLn("var m = instance.prototype;");
+      writer.writeLn("var g = c.getters = {};");
+      writer.writeLn("var s = c.setters = {};");
+
+      writer.writeLn("var sm = c.statics = {};");
+      writer.writeLn("var sg = c.staticGetters = {};");
+      writer.writeLn("var ss = c.staticSetters = {};");
+
       traceTraits(cls.traits, true);
       traceTraits(cls.instance.traits);
 
