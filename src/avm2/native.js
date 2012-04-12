@@ -123,8 +123,10 @@ var Class = (function () {
 
     this.debugName = name;
 
-    this.instance = instance;
-    instance.prototype.public$constructor = this;
+    if (instance) {
+      this.instance = instance;
+      instance.prototype.public$constructor = this;
+    }
 
     /**
      * Classes can be called like functions. For user-defined classes this is
