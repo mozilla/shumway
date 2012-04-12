@@ -256,7 +256,7 @@ var Scope = (function () {
  * with the qualified name.
  */
 function resolveMultiname(obj, multiname, checkPrototype) {
-  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: " + multiname);
+  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: " + multiname.qualifiedName);
   obj = Object(obj);
   for (var i = 0, count = multiname.namespaces.length; i < count; i++) {
     var name = multiname.getQName(i);
@@ -745,7 +745,7 @@ var Runtime = (function () {
             enumerable: false
           });
         }
-      } else if (!(name in obj)) {
+      } else if (!obj.hasOwnProperty(name)) {
         defineNonEnumerableProperty(obj, name, value);
       }
     }
@@ -869,7 +869,7 @@ function executeScript(abc, script) {
     abc.trace(new IndentingWriter(false));
   }
   if (traceExecution.value) {
-    print("Executing : " + abc + ", script: " + script);
+    print("Executing : " + abc.name);
   }
   assert (!script.executing && !script.executed);
   script.executing = true;
@@ -891,7 +891,7 @@ function executeAbc(abc, mode) {
 
 function loadAbc(abc, mode) {
   if (traceExecution.value) {
-    print("Loading: " + abc);
+    print("Loading: " + abc.name);
   }
   toplevel.abcs.push(abc);
 

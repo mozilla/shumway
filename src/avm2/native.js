@@ -117,7 +117,7 @@
 var Class = (function () {
 
   function Class(name, instance, callable) {
-    this.debugName = "[class " + name + "]";
+    this.debugName = name;
 
     this.instance = instance;
 
@@ -135,6 +135,12 @@ var Class = (function () {
       };
     }
   }
+
+  Class.prototype = {
+    toString: function () {
+      return "[class " + this.debugName + "]";
+    }
+  };
 
   Class.instance = Class;
 
@@ -182,6 +188,27 @@ const natives = (function () {
       }
       return v;
     }
+  };
+
+  /**
+   * To get |toString| and |valueOf| to work transparently, as in without
+   * reimplementing stuff like trace and +.
+   */
+  const originalObjectToString = Object.prototype.toString;
+  const originalObjectValueOf = Object.prototype.valueOf;
+
+  Object.prototype.toString = function () {
+    if ("public$toString" in this) {
+      return this.public$toString();
+    }
+    return originalObjectToString.call(this);
+  };
+
+  Object.prototype.valueOf = function () {
+    if ("public$valueOf" in this) {
+      return this.public$valueOf();
+    }
+    return originalObjectValueOf.call(this);
   };
 
   const C = Class.passthroughCallable;
@@ -418,6 +445,12 @@ const natives = (function () {
      * Shell toplevel.
      */
     print: constant(print),
+
+    /**
+     * To prevent unbounded recursion.
+     */
+    originalObjectToString: originalObjectToString,
+    originalObjectValueOf: originalObjectValueOf,
 
     /**
      * actionscript.lang.as

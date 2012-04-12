@@ -580,7 +580,7 @@ var Multiname = (function () {
     if (ns.isPublic() && ns.name === "") {
       return "public$" + this.getName();
     } else {
-      return ns + "$" + this.getName();
+      return ns.qualifiedName + "$" + this.getName();
     }
   };
 
@@ -611,12 +611,12 @@ var Multiname = (function () {
     } else if (this.isRuntimeNamespace()) {
       str += "[]::" + this.nameToString();
     } else if (this.namespaces.length === 1 && this.isQName()) {
-      str += this.namespaces[0] + "::";
+      str += this.namespaces[0].qualifiedName + "::";
       str += this.nameToString();
     } else {
       str += "{";
       for (var i = 0, count = this.namespaces.length; i < count; i++) {
-        str += this.namespaces[i];
+        str += this.namespaces[i].qualifiedName;
         if (i + 1 < count) {
           str += ",";
         }

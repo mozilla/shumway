@@ -87,8 +87,8 @@ package
       prototype.hasOwnProperty = unsafeJSNative("Object.prototype.hasOwnProperty");
       prototype.setPropertyIsEnumerable = unsafeJSNative("Object.prototype.setPropertyIsEnumerable");
       prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
-      prototype.toString = unsafeJSNative("Object.prototype.toString");
-      prototype.valueOf = unsafeJSNative("Object.prototype.valueOf");
+      prototype.toString = unsafeJSNative("originalObjectToString");
+      prototype.valueOf = unsafeJSNative("originalObjectValueOf");
     }
   }
 
