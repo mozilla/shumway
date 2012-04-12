@@ -120,6 +120,7 @@ var Class = (function () {
     this.debugName = name;
 
     this.instance = instance;
+    this.instance.prototype.public$constructor = this;
 
     /**
      * Classes can be called like functions. For user-defined classes this is
@@ -137,6 +138,7 @@ var Class = (function () {
   }
 
   Class.prototype = {
+    public$constructor: Class,
     toString: function () {
       return "[class " + this.debugName + "]";
     }

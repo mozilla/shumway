@@ -519,6 +519,7 @@ var Runtime = (function () {
         return fn.apply(global, arguments);
       };
       fn.instance = fn;
+      fn.prototype.public$constructor = fn;
       return fn;
     }
 
@@ -528,6 +529,7 @@ var Runtime = (function () {
         return interpreter.interpretMethod(global, method, scope, arguments);
       };
       fn.instance = fn;
+      fn.prototype.public$constructor = fn;
       return fn;
     }
 
