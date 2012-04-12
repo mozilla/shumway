@@ -364,7 +364,7 @@ var Interpreter = (function () {
             break;
           case OP_getproperty:
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(getProperty(stack.pop(), multiname));
+            stack.push(getProperty(stack.pop(), multiname, true));
             break;
           case OP_getouterscope:      notImplemented(); break;
           case OP_setpropertylate:    notImplemented(); break;

@@ -117,10 +117,14 @@
 var Class = (function () {
 
   function Class(name, instance, callable) {
+    function defaultCallable() {
+      notImplemented("class callable");
+    }
+
     this.debugName = name;
 
     this.instance = instance;
-    this.instance.prototype.public$constructor = this;
+    instance.prototype.public$constructor = this;
 
     /**
      * Classes can be called like functions. For user-defined classes this is
@@ -128,12 +132,11 @@ var Class = (function () {
      * in JS.
      */
     if (callable) {
-      this.call = callable.call;
-      this.apply = callable.apply;
+      defineNonEnumerableProperty(this, "call", callable.call);
+      defineNonEnumerableProperty(this, "apply", callable.apply);
     } else {
-      this.call = this.apply = function () {
-        notImplemented("class callable call");
-      };
+      defineNonEnumerableProperty(this, "call", defaultCallable);
+      defineNonEnumerableProperty(this, "apply", defaultCallable);
     }
   }
 
@@ -174,6 +177,12 @@ var Class = (function () {
   return Class;
 
 })();
+
+function MethodClosure($this, fn) {
+  var bound = fn.bind($this);
+  defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+  defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+}
 
 const natives = (function () {
 
@@ -249,6 +258,10 @@ const natives = (function () {
     c.setters = { prototype: function (p) { this.prototype = p; } };
 
     return c;
+  }
+
+  function MethodClosureClass(scope, instance) {
+    return new Class("MethodClosure", MethodClosure);
   }
 
   /**
@@ -489,6 +502,7 @@ const natives = (function () {
     Class: constant(Class),
     NamespaceClass: NamespaceClass,
     FunctionClass: FunctionClass,
+    MethodClosureClass: MethodClosureClass,
     BooleanClass: BooleanClass,
     StringClass: StringClass,
     NumberClass: NumberClass,

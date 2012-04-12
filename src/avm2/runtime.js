@@ -273,7 +273,7 @@ function resolveMultiname(obj, multiname, checkPrototype) {
   return null;
 }
 
-function getProperty(obj, multiname) {
+function getProperty(obj, multiname, bind) {
   if (typeof multiname.name === "number") {
     return obj[GET_ACCESSOR](multiname.name);
   }
@@ -286,11 +286,18 @@ function getProperty(obj, multiname) {
   }
 
   if (resolved) {
+    var prop = obj[resolved.getQualifiedName()];
+
     if (tracePropertyAccess.value) {
-      print("getProperty: multiname: " + resolved + " value: " + obj[resolved.getQualifiedName()]);
+      print("getProperty: multiname: " + resolved + " value: " + (prop && prop.toString()));
     }
 
-    return obj[resolved.getQualifiedName()];
+    if (bind && prop && prop.isMethod) {
+      // OPTIMIZEME: could optimize to a separate function
+      return new MethodClosure(obj, prop);
+    }
+
+    return prop;
   }
 
   return undefined;
@@ -820,6 +827,11 @@ var Runtime = (function () {
           }
         } else {
           closure = this.createFunction(trait.method, scope);
+        }
+
+        /* Identify this as a method for auto-binding via MethodClosure. */
+        if (closure) {
+          closure.isMethod = true;
         }
 
         var qn = trait.name.getQualifiedName();

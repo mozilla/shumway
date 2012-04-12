@@ -75,17 +75,14 @@ package
   }
 }
 
-// FIXME: WTF is this?
-// not dynamic
+[native(cls="MethodClosureClass")]
 final class MethodClosure extends Function
 {
-  override public function get prototype()
-  {
-    return null
+  override public function get prototype() {
+    return null;
   }
 
-  override public function set prototype(p)
-  {
+  override public function set prototype(p) {
     Error.throwError( ReferenceError, 1074 /*kConstWriteError*/, "prototype", "MethodClosure" );
   }
 }
