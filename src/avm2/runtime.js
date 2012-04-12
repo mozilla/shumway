@@ -347,7 +347,7 @@ function setProperty(obj, multiname, value) {
 var Global = (function () {
   function Global(runtime, script) {
     script.global = this;
-    runtime.applyTraits(this, script.traits, undefined, new Scope(null, this));
+    runtime.applyTraits(this, script.traits, null, new Scope(null, this));
     script.loaded = true;
   }
   return Global;
@@ -526,7 +526,7 @@ var Runtime = (function () {
         return fn.apply(global, arguments);
       };
       closure.instance = closure;
-      closure.prototype.public$constructor = closure;
+      defineNonEnumerableProperty(closure.prototype, "public$constructor", closure);
       return closure;
     }
 
@@ -536,7 +536,7 @@ var Runtime = (function () {
         return interpreter.interpretMethod(global, method, scope, arguments);
       };
       fn.instance = fn;
-      fn.prototype.public$constructor = fn;
+      defineNonEnumerableProperty(fn.prototype, "public$constructor", fn);
       return fn;
     }
 
@@ -628,39 +628,45 @@ var Runtime = (function () {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   runtime.prototype.createClass = function createClass(classInfo, baseClass, scope) {
-    if (classInfo.instance.isInterface()) {
+    var ii = classInfo.instance;
+    if (ii.isInterface()) {
       return this.createInterface(classInfo);
     }
+
     scope = new Scope(scope, null);
-    var ii = classInfo.instance;
+
     var className = ii.name.name;
     if (traceExecution.value) {
       print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.dict.cls : ""));
     }
-    var baseTraits = baseClass ? baseClass.instance.traits : new Traits([], true);
+
+    /**
+     * Make the class and apply traits.
+     *
+     * User-defined classes should always have a base class, so we can save on
+     * a few conditionals.
+     */
     var cls, instance;
     if (classInfo.native) {
-      var nativeClassMaker = natives.get(classInfo.native.dict.cls);
-      cls = nativeClassMaker(scope, this.createFunction(classInfo.instance.init, scope));
+      /* Some natives classes need this, like Error. */
+      var makeNativeClass = natives.get(classInfo.native.dict.cls);
+      cls = makeNativeClass(scope, this.createFunction(classInfo.instance.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
-        instance.traits = classInfo.instance.traits;
-        this.applyTraits(instance.prototype, instance.traits, baseTraits, scope, cls);
+        this.applyTraits(instance.prototype, classInfo.instance.traits,
+                         baseClass ? baseClass.info.instance.traits : null,
+                         scope, cls.nativeMethods);
       }
-      this.applyTraits(cls, classInfo.traits, null, scope, cls);
+      this.applyTraits(cls, classInfo.traits, null, scope, cls.nativeStatics);
     } else {
       instance = this.createFunction(classInfo.instance.init, scope);
-      instance.prototype = baseClass ? Object.create(baseClass.instance.prototype) : {};
-      instance.traits = classInfo.instance.traits;
-      this.applyTraits(instance.prototype, instance.traits, baseTraits, scope);
       cls = new Class(className, instance);
+      cls.extend(baseClass);
+      this.applyTraits(instance.prototype, classInfo.instance.traits,
+                       baseClass.info.instance.traits, scope);
       this.applyTraits(cls, classInfo.traits, null, scope);
     }
-
     scope.object = cls;
-    cls.scope = scope;
-    cls.classInfo = classInfo;
-    cls.baseClass = baseClass;
 
     /**
      * Apply interface traits recursively, creating getters for interface names. For,
@@ -695,25 +701,29 @@ var Runtime = (function () {
      * Luckily, interface methods are always public.
      */
     (function applyInterfaceTraits(interfaces) {
-      interfaces.forEach(function (name) {
-        var ci = toplevel.getTypeByName(name, true, true).classInfo;
+      for (var i = 0, j = interfaces.length; i < j; i++) {
+        var iname = interfaces[i];
+        var ci = toplevel.getTypeByName(iname, true, true).classInfo;
         var ii = ci.instance;
         applyInterfaceTraits(ii.interfaces);
         ii.traits.traits.forEach(function (trait) {
-          (function (name) {
-            Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
-              get: function () {
-                return this[name];
-              },
-              enumerable: false
-            });
-          })("public$" + trait.name.getName());
+          var name = "public$" + trait.name.getName();
+          Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
+            get: new Function("return this." + name),
+            enumerable: false
+          });
         });
-      });
+      }
     })(ii.interfaces);
 
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
+
+    /**
+     * Hang on to stuff we need.
+     */
+    cls.scope = scope;
+    cls.info = classInfo;
 
     if (traceClasses.value) {
       toplevel.loadedClasses.push(cls);
@@ -759,7 +769,7 @@ var Runtime = (function () {
    * The |scope| must be passed in if the traits include method traits, which have to be bound to
    * a scope.
    */
-  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope, nativeClass) {
+  runtime.prototype.applyTraits = function applyTraits(obj, traits, baseTraits, scope, classNatives) {
     function computeAndVerifySlotIds(traits, base) {
       assert(!base || base.verified);
 
@@ -775,6 +785,7 @@ var Runtime = (function () {
           }
 
           if (trait.slotId <= baseSlotId) {
+            // FIXME: broken
             throw new natives.VerifyErrorClass.instance("bad slot id");
           }
         }
@@ -855,38 +866,25 @@ var Runtime = (function () {
            * XXX: I'm choosing for the per-method [native] to override
            * [native] on the class if both are present.
            */
-          var closureMaker;
+          var makeClosure;
           if (trait.metadata) {
             if (!trait.metadata.compat && trait.metadata.native) {
-              if (closureMaker = natives.get(trait.metadata.native.items[0].value)) {
-                closure = closureMaker(scope);
+              if (makeClosure = natives.get(trait.metadata.native.items[0].value)) {
+                closure = makeClosure(scope);
               }
             }
-          } else if (nativeClass) {
-            var base;
-            if (baseTraits) {
-              if (trait.isGetter()) {
-                base = nativeClass.getters;
-              } else if (trait.isSetter()) {
-                base = nativeClass.setters;
-              } else {
-                base = nativeClass.instance.prototype;
-              }
-            } else {
-              if (trait.isGetter()) {
-                base = nativeClass.staticGetters;
-              } else if (trait.isSetter()) {
-                base = nativeClass.staticSetters;
-              } else {
-                base = nativeClass.statics;
-              }
-            }
-
+          } else if (classNatives) {
             /**
              * At this point the native class already had the scope, so we
              * don't need to close over the method again.
              */
-            closure = base ? base[method.name.name] : null;
+            var k = method.name.name;
+            if (trait.isGetter()) {
+              k = "get " + k;
+            } else if (trait.isSetter()) {
+              k = "set " + k;
+            }
+            closure = classNatives[k];
           } else {
             unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
           }

@@ -28,7 +28,7 @@
  *
  * The VM keeps an object of exported natives, |natives|. Whenever something
  * via [native] is looked up, it is only looked up in the |natives|
- * object. The above code looks up |natives.fooInJS|.
+ * object. The above code looks up |natives.backing.fooInJS|.
  *
  * Implementing native methods
  * ---------------------------
@@ -39,7 +39,7 @@
  * function, so the implementation can close over the scope. For the above
  * example,
  *
- *   natives.fooInJS = function fooInJS(scope) {
+ *   natives.backing.fooInJS = function fooInJS(scope) {
  *     return function () {
  *       // actual code here
  *     };
@@ -70,20 +70,20 @@
  *
  *   If |m| is a...
  *
- *     instance method - |CClass.instance.prototype.m|
- *     static method   - |CClass.statics.m|
- *     getter          - |CClass.getters.m|
- *     setter          - |CClass.setters.m|
- *     static getter   - |CClass.staticGetters.m|
- *     static setter   - |CClass.staticSetters.m|
+ *     instance method - |CClass.nativeMethods.m|
+ *     static method   - |CClass.nativeStatics.m|
+ *     getter          - |CClass.nativeMethods["get m"]|
+ *     setter          - |CClass.nativeMethods["set m"]|
+ *     static getter   - |CClass.nativeStatics["get m"]|
+ *     static setter   - |CClass.nativeStatics["set m"]|
  *
  * Implementing native classes
  * ---------------------------
  *
  * Like native methods, native classes also may need to do scope lookups. It
  * might also need to run the ActionScript instance constructor, so native
- * classes are implemented as functions taking a scope and the instance
- * constructor and returns a |Class| object.
+ * classes are implemented as functions taking a scope, the instance
+ * constructor, and the base class, and returns a |Class| object.
  *
  * Classes in ActionScript may be called like functions. For builtin classes,
  * this often is the same as constructing an instance of that class,
@@ -97,22 +97,32 @@
  * |Class.constructingCallable|, which takes a function |instance| and uses it
  * to construct a new instance when the class is called.
  *
+ * IMPORTANT! Inheritance must be done _manually_ by calling |extend|. This
+ *            _clobbers_ the old instance prototype!
+ *
  * For the above example, we would write:
  *
- *   natives.CClass = function CClass(scope, instance) {
+ *   natives.backing.CClass = function CClass(scope, instance, baseClass) {
  *     function CInstance() {
  *       // If we wanted to call the AS constructor we would do
  *       // |instance.apply(this, arguments)|
  *     }
  *
- *     CInstance.prototype = {
- *       foo: function foo() {
- *         // code for public native function foo
- *       }
+ *     // Pass no callable for now, in the future we might do coercion.
+ *     var c = new Class("C", CInstance);
+ *
+ *     // Inherit. This overwrites |CInstance.prototype|!
+ *     c.extend(baseClass);
+ *
+ *     // Define the "foo" function.
+ *     CInstance.prototype.foo = function foo() {
+ *       // code for public native function foo
  *     };
  *
- *     // Pass no callable for now, in the future we might do coercion.
- *     return new Class("C", CInstance);
+ *     // Export everything in CInstance.prototype.
+ *     c.nativeMethods = CInstance.prototype;
+ *
+ *     return c;
  *   };
  */
 
@@ -139,7 +149,7 @@ var Class = (function () {
 
     if (instance) {
       this.instance = instance;
-      instance.prototype.public$constructor = this;
+      defineNonEnumerableProperty(instance.prototype, "public$constructor", this);
     }
 
     /**
@@ -157,11 +167,16 @@ var Class = (function () {
   }
 
   Class.prototype = {
-    public$constructor: Class,
+    extend: function (baseClass) {
+      this.instance.prototype = Object.create(baseClass.instance.prototype);
+      this.baseClass = baseClass;
+    },
+
     toString: function () {
       return "[class " + this.debugName + "]";
     }
   };
+  defineNonEnumerableProperty(Class.prototype, "public$constructor", Class);
 
   Class.instance = Class;
 
@@ -188,7 +203,9 @@ var Class = (function () {
     };
   };
 
-  Class.getters = { prototype: function () { return this.instance.prototype; } };
+  Class.nativeMethods = {
+    "get prototype": function () { return this.instance.prototype; }
+  };
 
   return Class;
 
@@ -244,10 +261,11 @@ const natives = (function () {
   /**
    * Object.as
    */
-  function ObjectClass(scope, instance) {
+  function ObjectClass(scope, instance, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
-    c.statics = {
+    c.nativeMethods = Object.prototype;
+    c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
         Object.defineProperty(obj, name, { enumerable: isEnum });
       }
@@ -259,35 +277,46 @@ const natives = (function () {
   /**
    * Boolean.as
    */
-  function BooleanClass(scope, instance) {
-    return new Class("Boolean", Boolean, C(Boolean));
+  function BooleanClass(scope, instance, baseClass) {
+    var c = new Class("Boolean", Boolean, C(Boolean));
+    c.baseClass = baseClass;
+    c.nativeMethods = Boolean.prototype;
+    return c;
   }
 
   /**
    * Function.as
    */
-  function FunctionClass(scope, instance) {
+  function FunctionClass(scope, instance, baseClass) {
     var c = new Class("Function", Function, C(Function));
+    c.baseClass = baseClass;
 
-    c.getters = { prototype: function () { return this.prototype; },
-                  length: function () { return this.length; } };
-    c.setters = { prototype: function (p) { this.prototype = p; } };
+    var m = Object.create(Function.prototype);
+    m["get prototype"] = function () { return this.prototype; };
+    m["set prototype"] = function (p) { this.prototype = p; };
+    m["get length"] = function () { return this.length; };
+    c.nativeMethods = m;
 
     return c;
   }
 
-  function MethodClosureClass(scope, instance) {
-    return new Class("MethodClosure", MethodClosure);
+  function MethodClosureClass(scope, instance, baseClass) {
+    var c = new Class("MethodClosure", MethodClosure);
+    c.extend(baseClass);
+    return c;
   }
 
   /**
    * String.as
    */
-  function StringClass(scope, instance) {
+  function StringClass(scope, instance, baseClass) {
     var c = new Class("String", String, C(String));
+    c.baseClass = baseClass;
 
-    c.getters = { length: function () { return this.length; } };
-    c.statics = { fromCharCode: String.fromCharCode };
+    var m = Object.create(String.prototype);
+    m["get length"] = function () { return this.length; };
+    c.nativeMethods = m;
+    c.nativeStatics = String;
 
     return c;
   }
@@ -295,11 +324,14 @@ const natives = (function () {
   /**
    * Array.as
    */
-  function ArrayClass(scope, instance) {
+  function ArrayClass(scope, instance, baseClass) {
     var c = new Class("Array", Array, C(Array));
+    c.baseClass = baseClass;
 
-    c.getters = { length: function() { return this.length; } };
-    c.setters = { length: function(l) { this.length = l; } };
+    var m = Object.create(Array.prototype);
+    m["get length"] = function() { return this.length; };
+    m["set length"] = function(l) { this.length = l; };
+    c.nativeMethods = m;
 
     return c;
   }
@@ -307,41 +339,51 @@ const natives = (function () {
   /**
    * Number.as
    */
-  function NumberClass(scope, instance) {
-    return new Class("Number", Number, C(Number));
+  function NumberClass(scope, instance, baseClass) {
+    var c = new Class("Number", Number, C(Number));
+    c.baseClass = baseClass;
+    c.nativeMethods = Number.prototype;
+    return c;
   }
 
-  function intClass(scope, instance) {
+  function intClass(scope, instance, baseClass) {
     function int(x) {
       return Number(x) | 0;
     }
 
-    return new Class("int", int, C(int));
+    var c = new Class("int", int, C(int));
+    c.baseClass = baseClass;
+    return c;
   }
 
-  function uintClass(scope, instance) {
+  function uintClass(scope, instance, baseClass) {
     function uint(x) {
       return Number(x) >>> 0;
     }
 
-    return new Class("uint", uint, C(uint));
+    var c = new Class("uint", uint, C(uint));
+    c.baseClass = baseClass;
+    return c;
   }
 
   /**
    * Math.as
    */
-  function MathClass(scope, instance) {
+  function MathClass(scope, instance, baseClass) {
     var c = new Class("Math");
-    c.statics = Math;
+    c.baseClass = baseClass;
+    c.nativeStatics = Math;
     return c;
   }
 
   /**
    * Date.as
    */
-  function DateClass(scope, instance) {
+  function DateClass(scope, instance, baseClass) {
     var c = new Class("Date", Date, C(Date));
-    c.statics = Date;
+    c.baseClass = baseClass;
+    c.nativeMethods = Date.prototype;
+    c.nativeStatics = Date;
     return c;
   }
 
@@ -349,8 +391,10 @@ const natives = (function () {
    * Error.as
    */
   function makeErrorClass(name) {
-    return function (scope, instance) {
-      return new Class(name, instance, CC(instance));
+    return function (scope, instance, baseClass) {
+      var c = new Class(name, instance, CC(instance));
+      c.extend(baseClass);
+      return c;
     }
   }
 
@@ -363,7 +407,7 @@ const natives = (function () {
    *
    * TODO: Should we support extended at all? Or even dotall?
    */
-  function RegExpClass(scope, instance) {
+  function RegExpClass(scope, instance, baseClass) {
     function ASRegExp(pattern, flags) {
       function stripFlag(flags, c) {
         flags[flags.indexOf(c)] = flags[flags.length - 1];
@@ -395,20 +439,18 @@ const natives = (function () {
     ASRegExp.prototype = RegExp.prototype;
 
     var c = new Class("RegExp", ASRegExp, C(ASRegExp));
+    c.baseClass = baseClass;
 
-    c.getters = {
-      source: function () { return this.source; },
-      global: function () { return this.global; },
-      ignoreCase: function () { return this.ignoreCase; },
-      multiline: function () { return this.multiline; },
-      lastIndex: function () { return this.lastIndex; },
-      dotall: function () { return this.dotall; },
-      extended: function () { return this.extended; }
-    };
-
-    c.setters = {
-      lastIndex: function (i) { this.lastIndex = i; }
-    };
+    var m = Object.create(RegExp.prototype);
+    m["get global"] = function () { return this.global; };
+    m["get source"] = function () { return this.source; };
+    m["get ignoreCase"] = function () { return this.ignoreCase; };
+    m["get multiline"] = function () { return this.multiline; };
+    m["get lastIndex"] = function () { return this.lastIndex; };
+    m["set lastIndex"] = function (i) { this.lastIndex = i; };
+    m["get dotall"] = function () { return this.dotall; };
+    m["get extended"] = function () { return this.extended; };
+    c.nativeMethods = m;
 
     return c;
   }
@@ -416,7 +458,7 @@ const natives = (function () {
   /**
    * Namespace.as
    */
-  function NamespaceClass(scope, instance) {
+  function NamespaceClass(scope, instance, baseClass) {
     function ASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
@@ -445,12 +487,17 @@ const natives = (function () {
 
       return ns;
     }
-    ASNamespace.prototype = Namespace.prototype;
+
+    var Np = Namespace.prototype;
+    ASNamespace.prototype = Np;
 
     var c = new Class("Namespace", ASNamespace, C(ASNamespace));
+    c.baseClass = baseClass;
 
-    c.getters = { prefix: Namespace.prototype.getPrefix,
-                  uri: Namespace.prototype.getURI };
+    c.nativeMethods = {
+      "get prefix": Np.getPrefix,
+      "get uri": Np.getURI
+    };
 
     return c;
   }
@@ -458,10 +505,13 @@ const natives = (function () {
   /**
    * Capabilities.as
    */
-  function CapabilitiesClass(scope, instance) {
+  function CapabilitiesClass(scope, instance, baseClass) {
     function Capabilities () {}
     var c = new Class("Capabilities", Capabilities, C(Capabilities));
-    c.getters = { playerType: function () { return "AVMPlus"; } };
+    c.extend(baseClass);
+    c.nativeStatics = {
+      "get playerType": function () { return "AVMPlus"; }
+    };
     return c;
   }
 
