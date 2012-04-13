@@ -794,7 +794,7 @@ var Runtime = (function () {
               return this[name];
             },
             set: function (val) {
-              return this[name];
+              this[name] = value;
             },
             enumerable: false
           });
