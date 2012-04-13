@@ -937,7 +937,6 @@ var Runtime = (function () {
 
   runtime.prototype.isType = function isType(value, type) {
     if (value !== null && typeof value === 'object') {
-      // print("BABBY " + value + " type " + type + " --- " + (value.constructor === type));
       return value.constructor === type;
     }
 
