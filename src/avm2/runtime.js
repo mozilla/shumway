@@ -649,7 +649,7 @@ var Runtime = (function () {
     var cls, instance;
     if (classInfo.native) {
       /* Some natives classes need this, like Error. */
-      var makeNativeClass = natives.get(classInfo.native.dict.cls);
+      var makeNativeClass = getNative(classInfo.native.dict.cls);
       cls = makeNativeClass(scope, this.createFunction(classInfo.instance.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
@@ -869,7 +869,7 @@ var Runtime = (function () {
           var makeClosure;
           if (trait.metadata) {
             if (!trait.metadata.compat && trait.metadata.native) {
-              if (makeClosure = natives.get(trait.metadata.native.items[0].value)) {
+              if (makeClosure = getNative(trait.metadata.native.items[0].value)) {
                 closure = makeClosure(scope);
               }
             }
@@ -994,14 +994,13 @@ function loadAbc(abc, mode) {
    * reverse order, since some content depends on the last script being
    * initialized first or some shit.
    */
-  var native = natives.get.bind(natives);
   var scripts = abc.scripts;
   for (var i = scripts.length - 1; i >= 0; i--) {
     var script = scripts[i];
     var global = new Global(runtime, script);
 
     if (abc.allowNatives) {
-      global.public$unsafeJSNative = native;
+      global.public$unsafeJSNative = getNative;
     }
   }
 }

@@ -28,7 +28,7 @@
  *
  * The VM keeps an object of exported natives, |natives|. Whenever something
  * via [native] is looked up, it is only looked up in the |natives|
- * object. The above code looks up |natives.backing.fooInJS|.
+ * object. The above code looks up |natives.fooInJS|.
  *
  * Implementing native methods
  * ---------------------------
@@ -39,7 +39,7 @@
  * function, so the implementation can close over the scope. For the above
  * example,
  *
- *   natives.backing.fooInJS = function fooInJS(scope) {
+ *   natives.fooInJS = function fooInJS(scope) {
  *     return function () {
  *       // actual code here
  *     };
@@ -102,7 +102,7 @@
  *
  * For the above example, we would write:
  *
- *   natives.backing.CClass = function CClass(scope, instance, baseClass) {
+ *   natives.CClass = function CClass(scope, instance, baseClass) {
  *     function CInstance() {
  *       // If we wanted to call the AS constructor we would do
  *       // |instance.apply(this, arguments)|
@@ -218,21 +218,6 @@ function MethodClosure($this, fn) {
 }
 
 const natives = (function () {
-
-  function Natives(backing) {
-    this.backing = backing;
-  }
-
-  Natives.prototype = {
-    get: function (p) {
-      var chain = p.split(".");
-      var v = this.backing;
-      for (var i = 0, j = chain.length; i < j; i++) {
-        v = v && v[chain[i]];
-      }
-      return v;
-    }
-  };
 
   /**
    * To get |toString| and |valueOf| to work transparently, as in without
@@ -521,7 +506,7 @@ const natives = (function () {
     };
   }
 
-  var backing = {
+  return {
     /**
      * Shell toplevel.
      */
@@ -596,6 +581,13 @@ const natives = (function () {
     CapabilitiesClass: CapabilitiesClass
   };
 
-  return new Natives(backing);
-
 })();
+
+function getNative(p) {
+  var chain = p.split(".");
+  var v = natives;
+  for (var i = 0, j = chain.length; i < j; i++) {
+    v = v && v[chain[i]];
+  }
+  return v;
+}
