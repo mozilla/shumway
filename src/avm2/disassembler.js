@@ -269,8 +269,8 @@ function traceSource(writer, abc) {
     }
   }
 
-  function getSignature(method, excludeTypesAndDefaultValues) {
-    return method.parameters.map(function (x) {
+  function getSignature(mi, excludeTypesAndDefaultValues) {
+    return mi.parameters.map(function (x) {
       var str = x.name;
       if (!excludeTypesAndDefaultValues) {
         if (x.type) {
@@ -321,16 +321,16 @@ function traceSource(writer, abc) {
           writer.writeLn(str + ";");
         } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
           traceMetadata(trait.metadata);
-          var method = trait.method;
-          if (method.isNative()) {
+          var mi = trait.methodInfo;
+          if (mi.isNative()) {
             str += " native";
           }
           str += " function";
           str += trait.isGetter() ? " get" : (trait.isSetter() ? " set" : "");
           str += " " + trait.name.getName();
-          str += "(" + getSignature(method) + ")";
-          str += method.returnType ? ":" + method.returnType.getName() : "";
-          if (method.isNative()) {
+          str += "(" + getSignature(mi) + ")";
+          str += mi.returnType ? ":" + mi.returnType.getName() : "";
+          if (mi.isNative()) {
             writer.writeLn(str + ";");
           } else {
             if (isInterface) {
@@ -340,10 +340,10 @@ function traceSource(writer, abc) {
             }
           }
         } else if (trait.isClass()) {
-          var className = trait.class.instance.name;
+          var className = trait.classInfo.instanceInfo.name;
           writer.enter("package " + className.namespaces[0].originalURI + " {");
           traceMetadata(trait.metadata);
-          traceClass(trait.class);
+          traceClass(trait.classInfo);
           writer.leave("}");
           traceClassStub(trait);
         } else {
@@ -353,85 +353,97 @@ function traceSource(writer, abc) {
     }
 
     function traceClassStub(trait) {
-      var cls = trait.class;
-      var name = cls.instance.name;
+      var ci = trait.classInfo;
+      var ii = ci.instanceInfo;
+      var name = ii.name.getName();
       var native = trait.metadata ? trait.metadata.native : null;
       if (!native) {
         return;
       }
       writer.enter("Shumway Stub {");
-      writer.enter("function " + native.cls + "(scope, instance) {");
-      writer.writeLn("function " + name.getName() + "() {};");
-      writer.writeLn("var c = new Class(\"" + name.getName() + "\", " +
-                     name.getName() + ", C(" + name.getName() + "));");
+      writer.enter("function " + native.cls + "(scope, instance, baseClass) {");
+      writer.writeLn("function " + name + "() {};");
+      writer.writeLn("var c = new Class(\"" + name + "\", " + name +
+                     ", Class.passthroughCallable(" + name + "));");
+      writer.writeLn("//");
+      writer.writeLn("// WARNING! This sets: ")
+      writer.writeLn("//   " + name + ".prototype = " +
+                     "Object.create(baseClass.instance.prototype)");
+      writer.writeLn("//");
+      writer.writeLn("// If you want to manage prototypes manually, do this instead:");
+      writer.writeLn("//   c.baseClass = baseClass");
+      writer.writeLn("//");
+      writer.writeLn("c.extend(baseClass);");
 
       function traceTraits(traits, isStatic) {
         traits.traits.forEach(function (trait) {
           var traitName = trait.name.getName();
           if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-            var method = trait.method;
-            if (method.isNative()) {
-              var str = "";
-              if (isStatic) {
-                str += "s";
-              }
-              if (trait.isGetter()) {
-                str += "g";
-              } else if (trait.isSetter()) {
-                str += "s";
-              } else if (trait.isMethod()) {
-                str += "m";
-              }
-              if (trait.method.parameters.length) {
+            var mi = trait.methodInfo;
+            if (mi.isNative()) {
+              var str = isStatic ? "s" : "m";
+              if (mi.parameters.length) {
                 var returnTypeStr = "";
-                if (trait.method.returnType) {
-                  returnTypeStr = " -> " + trait.method.returnType.getName();
+                if (mi.returnType) {
+                  returnTypeStr = " -> " + mi.returnType.getName();
                 }
-                writer.writeLn("// Signature: " + getSignature(trait.method) + returnTypeStr);
+                writer.writeLn("// Signature: " + getSignature(mi) + returnTypeStr);
               }
-              str += "." + traitName + " = function " + traitName + "(" + getSignature(trait.method, true) + ")";
+              var prop;
+              if (trait.isGetter()) {
+                prop = "[\"get " + traitName + "\"]";
+              } else if (trait.isSetter()) {
+                prop = "[\"set " + traitName + "\"]";
+              } else {
+                prop = "." + traitName;
+              }
+              str += prop + " = function " + traitName + "(" + getSignature(mi, true) + ")";
               writer.writeLn(str + " { notImplemented(); }");
             }
           }
         });
       }
 
-      writer.writeLn("var m = instance.prototype, g = c.getters = {}, s = c.setters = {};");
-      writer.writeLn("var sm = c.statics = {}, sg = c.staticGetters = {}, ss = c.staticSetters = {};");
+      writer.writeLn("var m = " + name + ".prototype;");
+      writer.writeLn("var s = {};");
 
-      traceTraits(cls.traits, true);
-      traceTraits(cls.instance.traits);
+      traceTraits(ci.traits, true);
+      traceTraits(ii.traits);
+
+      writer.writeLn("c.nativeMethods = m;");
+      writer.writeLn("c.nativeStatics = s;");
 
       writer.writeLn("return c;");
       writer.leave("}");
       writer.leave("}");
     }
 
-    function traceClass(cls) {
-      var name = cls.instance.name;
+    function traceClass(ci) {
+      var ii = ci.instanceInfo;
+      var name = ii.name;
       var str = name.getAccessModifier();
-      if (cls.instance.isFinal()) {
+      if (ii.isFinal()) {
         str += " final";
       }
-      if (!cls.instance.isSealed()) {
+      if (!ii.isSealed()) {
         str += " dynamic";
       }
-      str += cls.instance.isInterface() ? " interface " : " class ";
+      str += ii.isInterface() ? " interface " : " class ";
       str += name.getName();
-      if (cls.instance.superName) {
-        str += " extends " + cls.instance.superName.getName();
+      if (ii.superName) {
+        str += " extends " + ii.superName.getName();
       }
-      if (cls.instance.interfaces.length) {
-        str += " implements " + cls.instance.interfaces.map(function (x) {
+      if (ii.interfaces.length) {
+        str += " implements " + ii.interfaces.map(function (x) {
           return x.getName();
         }).join(", ");
       }
       writer.enter(str + " {");
-      if (!cls.instance.isInterface()) {
-        writer.writeLn("public function " + name.getName() + "(" + getSignature(cls.instance.init) + ") {}");
+      if (!ii.isInterface()) {
+        writer.writeLn("public function " + name.getName() + "(" + getSignature(ii.init) + ") {}");
       }
-      traceTraits(cls.traits, true, cls.instance.isInterface());
-      traceTraits(cls.instance.traits, false, cls.instance.isInterface());
+      traceTraits(ci.traits, true, ii.isInterface());
+      traceTraits(ii.traits, false, ii.isInterface());
       writer.leave("}");
     }
 
