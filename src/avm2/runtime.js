@@ -637,7 +637,7 @@ var Runtime = (function () {
 
     var className = ii.name.name;
     if (traceExecution.value) {
-      print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.dict.cls : ""));
+      print("Creating class " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
 
     /**

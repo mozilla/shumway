@@ -869,28 +869,27 @@ var MetaDataInfo = (function () {
     const strings = abc.constantPool.strings;
     this.name = strings[stream.readU30()];
 
-    var itemcount = stream.readU30();
+    var itemCount = stream.readU30();
     var items = [];
-    var dict = {};
     var keys = [];
     var values = [];
 
-    for (var i = 0; i < itemcount; i++) {
+    for (var i = 0; i < itemCount; i++) {
       keys[i] = strings[stream.readU30()];
     }
-    for (var i = 0; i < itemcount; i++) {
+
+    for (var i = 0; i < itemCount; i++) {
       values[i] = strings[stream.readU30()];
     }
 
-    for (var i = 0; i < itemcount; i++) {
-      var item = { key: keys[i], value: values[i] };
-      items[i] = item;
+    for (var i = 0; i < itemCount; i++) {
+      var item = items[i] = { key: keys[i], value: values[i] };
       if (item.key) {
-        dict[item.key] = item.value;
+        assert (!this.hasOwnProperty(item.key));
+        this[item.key] = item.value;
       }
     }
     this.items = items;
-    this.dict = dict;
   }
 
   metaDataInfo.prototype = {

@@ -360,7 +360,7 @@ function traceSource(writer, abc) {
         return;
       }
       writer.enter("Shumway Stub {");
-      writer.enter("function " + native.dict.cls + "(scope, instance) {");
+      writer.enter("function " + native.cls + "(scope, instance) {");
       writer.writeLn("function " + name.getName() + "() {};");
       writer.writeLn("var c = new Class(\"" + name.getName() + "\", " +
                      name.getName() + ", C(" + name.getName() + "));");
