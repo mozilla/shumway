@@ -520,14 +520,14 @@ var Runtime = (function () {
     assert(!method.isNative(), "Method should have a builtin: " + method.name);
 
     function closeOverScope(fn, scope) {
-      var fn = function () {
+      var closure = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
         return fn.apply(global, arguments);
       };
-      fn.instance = fn;
-      fn.prototype.public$constructor = fn;
-      return fn;
+      closure.instance = closure;
+      closure.prototype.public$constructor = closure;
+      return closure;
     }
 
     function interpretedMethod(interpreter, method, scope, nativeClass) {
