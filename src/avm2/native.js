@@ -116,6 +116,18 @@
  *   };
  */
 
+var Interface = (function () {
+  function Interface(name) {
+    this.name = name;
+  }
+  Interface.prototype = {
+    toString: function () {
+      return "[interface " + this.name + "]";
+    }
+  };
+  return Interface;
+})();
+
 var Class = (function () {
 
   function Class(name, instance, callable) {

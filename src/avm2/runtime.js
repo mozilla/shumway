@@ -628,12 +628,15 @@ var Runtime = (function () {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   runtime.prototype.createClass = function createClass(classInfo, baseClass, scope) {
+    if (classInfo.instance.isInterface()) {
+      return this.createInterface(classInfo);
+    }
     scope = new Scope(scope, null);
-    var className = classInfo.instance.name.name;
+    var ii = classInfo.instance;
+    var className = ii.name.name;
     if (traceExecution.value) {
       print("Creating class " + className  + (classInfo.native ? " replaced with native " + classInfo.native.dict.cls : ""));
     }
-
     var baseTraits = baseClass ? baseClass.instance.traits : new Traits([], true);
     var cls, instance;
     if (classInfo.native) {
@@ -659,6 +662,56 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
     cls.baseClass = baseClass;
 
+    /**
+     * Apply interface traits recursively, creating getters for interface names. For,
+     * instance:
+     *
+     * interface IA {
+     *   function foo();
+     * }
+     *
+     * interface IB implements IA {
+     *   function bar();
+     * }
+     *
+     * class C implements IB {
+     *   function foo() { ... }
+     *   function bar() { ... }
+     * }
+     *
+     * var a:IA = new C();
+     * a.foo(); // callprop IA$foo
+     *
+     * var b:IB = new C();
+     * b.foo(); // callprop IB:foo
+     * b.bar(); // callprop IB:bar
+     *
+     * So, class C must have getters for:
+     *
+     * IA$foo -> public$foo
+     * IB$foo -> public$foo
+     * IB$bar -> public$bar
+     *
+     * Luckily, interface methods are always public.
+     */
+    (function applyInterfaceTraits(interfaces) {
+      interfaces.forEach(function (name) {
+        var ci = toplevel.getTypeByName(name, true, true).classInfo;
+        var ii = ci.instance;
+        applyInterfaceTraits(ii.interfaces);
+        ii.traits.traits.forEach(function (trait) {
+          (function (name) {
+            Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
+              get: function () {
+                return this[name];
+              },
+              enumerable: false
+            });
+          })("public$" + trait.name.getName());
+        });
+      });
+    })(ii.interfaces);
+
     /* Call the static constructor. */
     this.createFunction(classInfo.init, scope).call(cls);
 
@@ -668,6 +721,23 @@ var Runtime = (function () {
     }
 
     return cls;
+  };
+
+  runtime.prototype.createInterface = function createInterface(classInfo) {
+    var ii = classInfo.instance;
+    assert (ii.isInterface());
+    if (traceExecution.value) {
+      var str = "Creating interface " + ii.name;
+      if (ii.interfaces.length) {
+        str += " implements " + ii.interfaces.map(function (name) {
+          return name.getName();
+        }).join(", ");
+      }
+      print(str);
+    }
+    var interface = new Interface(ii.name);
+    interface.classInfo = classInfo;
+    return interface;
   };
 
   /**
