@@ -289,6 +289,8 @@ var Namespace = (function () {
     return new namespace(CONSTANT_Namespace, uri);
   };
 
+  namespace.PUBLIC = namespace.createNamespace();
+
   namespace.prototype = {
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();

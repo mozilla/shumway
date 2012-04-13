@@ -785,8 +785,9 @@ var Runtime = (function () {
           }
 
           if (trait.slotId <= baseSlotId) {
-            // FIXME: broken
-            throw new natives.VerifyErrorClass.instance("bad slot id");
+            /* XXX: Hope we don't throw while doing builtins. */
+            var VerifyErrorName = new Multiname([Namespace.PUBLIC], "VerifyError");
+            throw new (toplevel.getTypeByName(VerifyErrorName, true)).instance("bad slot id");
           }
         }
       }
