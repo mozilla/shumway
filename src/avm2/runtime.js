@@ -709,7 +709,7 @@ var Runtime = (function () {
         ii.traits.traits.forEach(function (trait) {
           var name = "public$" + trait.name.getName();
           Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
-            get: new Function("return this." + name),
+            get: function () { return this[name]; },
             enumerable: false
           });
         });
