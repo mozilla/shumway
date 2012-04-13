@@ -516,8 +516,9 @@ var Runtime = (function () {
     return Object.create(method.activationPrototype);
   };
 
-  runtime.prototype.createFunction = function (method, scope) {
-    assert(!method.isNative(), "Method should have a builtin: " + method.name);
+  runtime.prototype.createFunction = function (methodInfo, scope) {
+    var mi = methodInfo;
+    assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     function closeOverScope(fn, scope) {
       var closure = function () {
@@ -530,10 +531,10 @@ var Runtime = (function () {
       return closure;
     }
 
-    function interpretedMethod(interpreter, method, scope, nativeClass) {
+    function interpretedMethod(interpreter, methodInfo, scope, nativeClass) {
       var fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
-        return interpreter.interpretMethod(global, method, scope, arguments);
+        return interpreter.interpretMethod(global, methodInfo, scope, arguments);
       };
       fn.instance = fn;
       defineNonEnumerableProperty(fn.prototype, "public$constructor", fn);
@@ -545,28 +546,28 @@ var Runtime = (function () {
     /**
      * We use not having an analysis to mean "not initialized".
      */
-    if (!method.analysis) {
-      method.analysis = new Analysis(method, { massage: true });
-      if (method.traits) {
-        method.activationPrototype = this.applyTraits({}, method.traits);
+    if (!mi.analysis) {
+      mi.analysis = new Analysis(mi, { massage: true });
+      if (mi.traits) {
+        mi.activationPrototype = this.applyTraits({}, mi.traits);
       }
     }
 
     if (mode === ALWAYS_INTERPRET) {
-      return interpretedMethod(this.interpreter, method, scope);
+      return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    if (method.compiledMethod) {
-      return closeOverScope(method.compiledMethod, scope);
+    if (mi.compiledMethod) {
+      return closeOverScope(mi.compiledMethod, scope);
     }
 
-    if (!method.analysis.restructureControlFlow()) {
-      return interpretedMethod(this.interpreter, method, scope);
+    if (!mi.analysis.restructureControlFlow()) {
+      return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var result = this.compiler.compileMethod(method, scope);
+    var result = this.compiler.compileMethod(mi, scope);
 
-    var parameters = method.parameters.map(function (p) {
+    var parameters = mi.parameters.map(function (p) {
       return p.name;
     });
 
@@ -590,7 +591,7 @@ var Runtime = (function () {
     if (traceLevel.value > 4) {
       print('\033[93m' + body + '\033[0m');
     }
-    method.compiledMethod = new Function(parameters, body);
+    mi.compiledMethod = new Function(parameters, body);
 
     /* Hook to set breakpoints in compiled code. */
     if (functionCount == 13) {
@@ -606,7 +607,7 @@ var Runtime = (function () {
     }
 
     functionCount++;
-    return closeOverScope(method.compiledMethod, scope);
+    return closeOverScope(mi.compiledMethod, scope);
   };
 
   /**
@@ -628,14 +629,16 @@ var Runtime = (function () {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   runtime.prototype.createClass = function createClass(classInfo, baseClass, scope) {
-    var ii = classInfo.instance;
+    var ci = classInfo;
+    var ii = ci.instanceInfo;
+
     if (ii.isInterface()) {
       return this.createInterface(classInfo);
     }
 
     scope = new Scope(scope, null);
 
-    var className = ii.name.name;
+    var className = ii.name.getName();
     if (traceExecution.value) {
       print("Creating class " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
@@ -647,24 +650,22 @@ var Runtime = (function () {
      * a few conditionals.
      */
     var cls, instance;
-    if (classInfo.native) {
+    var bii = baseClass ? baseClass.classInfo.instanceInfo : null;
+    if (ci.native) {
       /* Some natives classes need this, like Error. */
-      var makeNativeClass = getNative(classInfo.native.dict.cls);
-      cls = makeNativeClass(scope, this.createFunction(classInfo.instance.init, scope), baseClass);
+      var makeNativeClass = getNative(ci.native.cls);
+      cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
-        this.applyTraits(instance.prototype, classInfo.instance.traits,
-                         baseClass ? baseClass.info.instance.traits : null,
-                         scope, cls.nativeMethods);
+        this.applyTraits(instance.prototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
       }
-      this.applyTraits(cls, classInfo.traits, null, scope, cls.nativeStatics);
+      this.applyTraits(cls, ci.traits, null, scope, cls.nativeStatics);
     } else {
-      instance = this.createFunction(classInfo.instance.init, scope);
+      instance = this.createFunction(ii.init, scope);
       cls = new Class(className, instance);
       cls.extend(baseClass);
-      this.applyTraits(instance.prototype, classInfo.instance.traits,
-                       baseClass.info.instance.traits, scope);
-      this.applyTraits(cls, classInfo.traits, null, scope);
+      this.applyTraits(instance.prototype, ii.traits, bii.traits, scope);
+      this.applyTraits(cls, ci.traits, null, scope);
     }
     scope.object = cls;
 
@@ -704,7 +705,7 @@ var Runtime = (function () {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var iname = interfaces[i];
         var ci = toplevel.getTypeByName(iname, true, true).classInfo;
-        var ii = ci.instance;
+        var ii = ci.instanceInfo;
         applyInterfaceTraits(ii.interfaces);
         ii.traits.traits.forEach(function (trait) {
           var name = "public$" + trait.name.getName();
@@ -723,7 +724,7 @@ var Runtime = (function () {
      * Hang on to stuff we need.
      */
     cls.scope = scope;
-    cls.info = classInfo;
+    cls.classInfo = classInfo;
 
     if (traceClasses.value) {
       toplevel.loadedClasses.push(cls);
@@ -734,7 +735,7 @@ var Runtime = (function () {
   };
 
   runtime.prototype.createInterface = function createInterface(classInfo) {
-    var ii = classInfo.instance;
+    var ii = classInfo.instanceInfo;
     assert (ii.isInterface());
     if (traceExecution.value) {
       var str = "Creating interface " + ii.name;
@@ -855,10 +856,9 @@ var Runtime = (function () {
         defineProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
-
-        var method = trait.method;
+        var mi = trait.methodInfo;
         var closure = null;
-        if (method.isNative() && this.abc.allowNatives) {
+        if (mi.isNative() && this.abc.allowNatives) {
           /**
            * We can get the native metadata from two places: either a [native]
            * metadata directly attached to the method trait, or from a
@@ -879,7 +879,7 @@ var Runtime = (function () {
              * At this point the native class already had the scope, so we
              * don't need to close over the method again.
              */
-            var k = method.name.name;
+            var k = mi.name.getName();
             if (trait.isGetter()) {
               k = "get " + k;
             } else if (trait.isSetter()) {
@@ -887,7 +887,7 @@ var Runtime = (function () {
             }
             closure = classNatives[k];
           } else {
-            unexpected("Native method without [native] metadata: " + method.name.getQualifiedName());
+            unexpected("Native method without [native] metadata: " + mi.name.getQualifiedName());
           }
 
           /**
@@ -898,14 +898,14 @@ var Runtime = (function () {
            * XXX: Do we need slot-for-slot compatibility?
            */
           if (!closure && !(trait.metadata && trait.metadata.compat)) {
-            closure = (function (method) {
+            closure = (function (mi) {
               return function() {
-                print("Calling undefined native method: " + method.name.getQualifiedName());
+                print("Calling undefined native method: " + mi.name.getQualifiedName());
               };
-            })(method);
+            })(mi);
           }
         } else {
-          closure = this.createFunction(trait.method, scope);
+          closure = this.createFunction(mi, scope);
         }
 
         /* Identify this as a method for auto-binding via MethodClosure. */
@@ -923,7 +923,7 @@ var Runtime = (function () {
         }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
-          trait.class.native = trait.metadata.native;
+          trait.classInfo.native = trait.metadata.native;
         }
         defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
       } else {

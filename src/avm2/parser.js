@@ -161,17 +161,17 @@ var Trait = (function () {
     case TRAIT_Setter:
     case TRAIT_Getter:
       this.dispId = stream.readU30();
-      this.method = methods[stream.readU30()];
-      this.method.name = this.name;
+      this.methodInfo = methods[stream.readU30()];
+      this.methodInfo.name = this.name;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
       assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
-      this.class = classes[stream.readU30()];
+      this.classInfo = classes[stream.readU30()];
       break;
     case TRAIT_Function: // TODO
       this.slotId = stream.readU30();
-      this.method = methods[stream.readU30()];
+      this.methodInfo = methods[stream.readU30()];
       break;
     }
 
@@ -222,10 +222,10 @@ var Trait = (function () {
       case TRAIT_Method:
       case TRAIT_Setter:
       case TRAIT_Getter:
-        return str + ", method: " + this.method + ", dispId: " + this.dispId;
+        return str + ", method: " + this.methodInfo + ", dispId: " + this.dispId;
         break;
       case TRAIT_Class:
-        return str + ", slotId: " + this.slotId + ", class: " + this.class;
+        return str + ", slotId: " + this.slotId + ", class: " + this.classInfo;
         break;
       case TRAIT_Function: // TODO
         break;
@@ -942,10 +942,10 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
-  function classInfo(abc, instance, stream) {
+  function classInfo(abc, instanceInfo, stream) {
     this.init = abc.methods[stream.readU30()];
     this.traits = parseTraits(abc, stream, this);
-    this.instance = instance;
+    this.instanceInfo = instanceInfo;
   }
   return classInfo;
 })();
