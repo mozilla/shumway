@@ -172,6 +172,15 @@ var Class = (function () {
       this.baseClass = baseClass;
     },
 
+    makeSimpleNativeAccessors: function makeSimpleNativeAccessors(prefix, props) {
+      const nativeMethods = this.nativeMethods;
+      props.forEach(function (prop) {
+        nativeMethods[prefix + " " + prop] = function () {
+          return this[prop];
+        };
+      });
+    },
+
     toString: function () {
       return "[class " + this.debugName + "]";
     }

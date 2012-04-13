@@ -11,48 +11,34 @@ function MovieClip() {
   this.isPlaying = false;
 }
 
-var p = MovieClip.prototype = new Sprite;
-p.play = function () { notImplemented(); };
-p.stop = function () { notImplemented(); };
-p.nextFrame = function () { notImplemented(); };
-p.prevFrame = function () { notImplemented(); };
-p.gotoAndPlay = function (frame, scene) { notImplemented(); };
-p.gotoAndStop = function (frame, scene) { notImplemented(); };
-p.addFrameScript = function () { notImplemented(); };
-p.prevScene = function () { notImplemented(); };
-p.nextScene = function () { notImplemented(); };
-
 natives.MovieClipClass = function (scope, instance, baseClass) {
-  var c = new Class("MovieClip", MovieClip, C(MovieClip));
+  var c = new Class("MovieClip", MovieClip, Class.passthroughCallable(MovieClip));
   c.extend(baseClass);
 
-  c.getters = [
-    "currentFrame",
-    "framesLoaded",
-    "totalFrames",
-    "trackAsMenu",
-    "scenes",
-    "currentScene",
-    "currentLabel",
-    "currentFrameLabel",
-    "enabled",
-    "isPlaying"
-  ].reduce(function (getters, prop) {
-    getters[prop] = function () {
-      return this[prop];
-    };
-    return getters;
-  }, {});
+  var p = MovieClip.prototype;
+  p.play = function () { notImplemented(); };
+  p.stop = function () { notImplemented(); };
+  p.nextFrame = function () { notImplemented(); };
+  p.prevFrame = function () { notImplemented(); };
+  p.gotoAndPlay = function (frame, scene) { notImplemented(); };
+  p.gotoAndStop = function (frame, scene) { notImplemented(); };
+  p.addFrameScript = function () { notImplemented(); };
+  p.prevScene = function () { notImplemented(); };
+  p.nextScene = function () { notImplemented(); };
 
-  c.setters = [
-    "trackAsMenu",
-    "enabled"
-  ].reduce(function (setters, prop) {
-    setters[prop] = function (v) {
-      return this[prop] = v;
-    };
-    return setters;
-  }, {});
+  c.nativeMethods = p;
+  c.makeSimpleNativeAccessors("get", [ "currentFrame",
+                                       "framesLoaded",
+                                       "totalFrames",
+                                       "trackAsMenu",
+                                       "scenes",
+                                       "currentScene",
+                                       "currentLabel",
+                                       "currentFrameLabel",
+                                       "enabled",
+                                       "isPlaying" ]);
+  c.makeSimpleNativeAccessors("set", [ "trackAsMenu",
+                                       "enabled" ]);
 
   return c;
 };

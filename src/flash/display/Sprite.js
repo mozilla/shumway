@@ -7,42 +7,28 @@ function Sprite() {
   this.soundTransform = null;
 }
 
-var p = Sprite.prototype = new DisplayObjectContainer;
-p.startDrag = function (lockCenter, bounds) { notImplemented(); };
-p.stopDrag = function () { notImplemented(); };
-p.startTouchDrag = function (touchPointID, lockCenter, bounds) { notImplemented(); };
-p.stopTouchDrag = function () { notImplemented(); };
-p.constructChildren = function () { notImplemented(); };
-
 natives.SpriteClass = function (scope, instance, baseClass) {
-  var c = new Class("Sprite", Sprite, C(Sprite));
+  var c = new Class("Sprite", Sprite, Class.passthroughCallable(Sprite));
   c.extend(baseClass);
 
-  c.getters = [
-    "graphics",
-    "buttonMode",
-    "dropTarget",
-    "hitArea",
-    "useHandCursor",
-    "soundTransform"
-  ].reduce(function (getters, prop) {
-    getters[prop] = function () {
-      return this[prop];
-    };
-    return getters;
-  }, {});
+  var p = Sprite.prototype;
+  p.startDrag = function (lockCenter, bounds) { notImplemented(); };
+  p.stopDrag = function () { notImplemented(); };
+  p.startTouchDrag = function (touchPointID, lockCenter, bounds) { notImplemented(); };
+  p.stopTouchDrag = function () { notImplemented(); };
+  p.constructChildren = function () { notImplemented(); };
 
-  c.setters = [
-    "buttonMode",
-    "hitArea",
-    "useHandCursor",
-    "soundTransform"
-  ].reduce(function (setters, prop) {
-    setters[prop] = function (v) {
-      return this[prop] = v;
-    };
-    return setters;
-  }, {});
+  c.nativeMethods = p;
+  c.makeSimpleNativeAccessors("get", [ "graphics",
+                                       "buttonMode",
+                                       "dropTarget",
+                                       "hitArea",
+                                       "useHandCursor",
+                                       "soundTransform" ]);
+  c.makeSimpleNativeAccessors("set", [ "buttonMode",
+                                       "hitArea",
+                                       "useHandCursor",
+                                       "soundTransform" ]);
 
   return c;
 };
