@@ -35,31 +35,22 @@
     <script type="text/javascript" src="../interpreter.js"></script>
 
     <script type="text/javascript">
-        new FileReader("../generated/builtin.abc").readAll(null, function (buffer) {
-          executeAbc(new AbcFile(new Uint8Array(buffer), path, true), ALWAYS_INTERPRET);
-        });
-
-        var libs = [];
-        for (var i = 0; i < 375; i++) {
-          libs.push("../playerGlobal/library-" + i + ".abc");
+      var abcs = [];
+      abcs.push("../generated/builtin.abc");
+      abcs.push("../generated/playerGlobal.abc");
+      abcs.push("../tests/testInterpreter.abc");
+      var mode;
+ //     mode = ALWAYS_INTERPRET;
+      function executeNext() {
+        if (abcs.length) {
+          var path = abcs.shift();
+          new FileReader(path).readAll(null, function (buffer) {
+            executeAbc(new AbcFile(new Uint8Array(buffer), path, true), mode);
+            executeNext();
+          });
         }
-        function run() {
-          if (libs.length) {
-            var path = libs.shift();
-            new FileReader(path).readAll(null, function (buffer) {
-              prepareAbc(new AbcFile(new Uint8Array(buffer), path, true), ALWAYS_INTERPRET);
-              run();
-            });
-          } else {
-            // var path = "../tests/testInterpreter.abc";
-            var path = "../tests/sunspider/access-nbody.abc";
-            new FileReader(path).readAll(null, function (buffer) {
-              var abc = new AbcFile(new Uint8Array(buffer), path);
-              executeAbc(abc, ALWAYS_INTERPRET);
-            });
-          }
-        }
-        run();
+      }
+      executeNext();
     </script>
 </body>
 </html>

@@ -1,41 +1,39 @@
-/*
 package {
-  // var b64pad  = "";
-  
-  function binl2b64(binarray) {
-    var tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    var str = "";
-    for(var i = 0; i < 4; i += 1)
-    {
-      for(var j = 0; j < 4; j += 1)
-      {
-        if(i) str += b64pad;
-        else str += b64pad;
-      }
+  public interface IA {
+    function foo();
+  }
+
+  public interface IB extends IA {
+    function bar();
+  }
+
+  public interface IC extends IB {
+    function car();
+  }
+
+  public interface ID extends IC {
+    function fuz();
+  }
+
+  public class C implements ID {
+    public function foo() {
+      trace("C::foo");
     }
-    return str;
+    public function bar() {
+      trace("C::bar");
+    }
+    public function car() {
+      trace("C::car");
+    }
+    public function fuz() {
+      trace("C::fuz");
+    }
   }
-  
-  // binl2b64("AA");
+
+  var a:IA = new C();
+  a.foo();
+
+  var b:IB = new C();
+  b.foo();
+  b.bar();
 }
-*/
-
-var sum = 0;
-for(var i = 0; i < 4; i += 1) {
-  for(var j = 0; j < 4; j += 1) {
-    sum += i + j;
-  }
-}
-
-for(var i = 0; i < 100000000; i += 1) {
-  sum ++;
-}
-
-
-function foo(bar, boo) {
-  sum += bar + boo;
-}
-
-foo(1, 2);
-
-trace("Result " + sum);
