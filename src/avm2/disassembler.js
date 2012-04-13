@@ -147,7 +147,9 @@ ScriptInfo.prototype.trace = function (writer) {
 Trait.prototype.trace = function (writer) {
   if (this.metadata) {
     for (var key in this.metadata) {
-      this.metadata[key].trace(writer);
+      if (this.metadata.hasOwnProperty(key)) {
+        this.metadata[key].trace(writer);
+      }
     }
   }
   writer.writeLn(this);
@@ -284,7 +286,7 @@ function traceSource(writer, abc) {
 
   abc.scripts.forEach(function (script) {
     traceTraits(script.traits);
-    function traceTraits(traits, isStatic) {
+    function traceTraits(traits, isStatic, isInterface) {
       traits.traits.forEach(function (trait) {
         var str;
         var accessModifier = trait.name.getAccessModifier();
@@ -331,7 +333,11 @@ function traceSource(writer, abc) {
           if (method.isNative()) {
             writer.writeLn(str + ";");
           } else {
-            writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
+            if (isInterface) {
+              writer.writeLn(str + ";");
+            } else {
+              writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
+            }
           }
         } else if (trait.isClass()) {
           var className = trait.class.instance.name;
@@ -349,7 +355,7 @@ function traceSource(writer, abc) {
     function traceClassStub(trait) {
       var cls = trait.class;
       var name = cls.instance.name;
-      var native = trait.metadata.native;
+      var native = trait.metadata ? trait.metadata.native : null;
       if (!native) {
         return;
       }
@@ -377,23 +383,21 @@ function traceSource(writer, abc) {
                 str += "m";
               }
               if (trait.method.parameters.length) {
-                writer.writeLn("// Signature: " + getSignature(trait.method) + " -> " + trait.method.returnType.getName());
+                var returnTypeStr = "";
+                if (trait.method.returnType) {
+                  returnTypeStr = " -> " + trait.method.returnType.getName();
+                }
+                writer.writeLn("// Signature: " + getSignature(trait.method) + returnTypeStr);
               }
-              str += "." + traitName + " = function " + traitName + "(" + getSignature(trait.method, true) + ") {";
-              writer.enter(str);
-              writer.leave("}");
+              str += "." + traitName + " = function " + traitName + "(" + getSignature(trait.method, true) + ")";
+              writer.writeLn(str + " { notImplemented(); }");
             }
           }
         });
       }
 
-      writer.writeLn("var m = instance.prototype;");
-      writer.writeLn("var g = c.getters = {};");
-      writer.writeLn("var s = c.setters = {};");
-
-      writer.writeLn("var sm = c.statics = {};");
-      writer.writeLn("var sg = c.staticGetters = {};");
-      writer.writeLn("var ss = c.staticSetters = {};");
+      writer.writeLn("var m = instance.prototype, g = c.getters = {}, s = c.setters = {};");
+      writer.writeLn("var sm = c.statics = {}, sg = c.staticGetters = {}, ss = c.staticSetters = {};");
 
       traceTraits(cls.traits, true);
       traceTraits(cls.instance.traits);
@@ -423,21 +427,25 @@ function traceSource(writer, abc) {
         }).join(", ");
       }
       writer.enter(str + " {");
-      writer.writeLn("public function " + name.getName() + "(" + getSignature(cls.instance.init) + ") {}");
-      traceTraits(cls.traits, true);
-      traceTraits(cls.instance.traits);
+      if (!cls.instance.isInterface()) {
+        writer.writeLn("public function " + name.getName() + "(" + getSignature(cls.instance.init) + ") {}");
+      }
+      traceTraits(cls.traits, true, cls.instance.isInterface());
+      traceTraits(cls.instance.traits, false, cls.instance.isInterface());
       writer.leave("}");
     }
 
     function traceMetadata(metadata) {
       for (var key in metadata) {
-        if (key.indexOf("__") === 0) {
-          continue;
+        if (metadata.hasOwnProperty(key)) {
+          if (key.indexOf("__") === 0) {
+            continue;
+          }
+          writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
+            var str = m.key ? m.key + "=" : "";
+            return str + "\"" + m.value + "\"";
+          }).join(", ") + ")]");
         }
-        writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
-          var str = m.key ? m.key + "=" : "";
-          return str + "\"" + m.value + "\"";
-        }).join(", ") + ")]");
       }
     }
 
