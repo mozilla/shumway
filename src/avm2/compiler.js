@@ -984,7 +984,7 @@ var Compiler = (function () {
       case OP_construct:
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue("new " + obj + argumentList.apply(null, args));
+        pushValue("new (" + obj + ".instance)" + argumentList.apply(null, args));
         break;
       case OP_callmethod:     notImplemented(); break;
       case OP_callstatic:     notImplemented(); break;
@@ -1007,7 +1007,7 @@ var Compiler = (function () {
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        pushValue("new (" + getProperty(obj, multiname) + ")" + argumentList.apply(null, args));
+        pushValue("new (" + getProperty(obj, multiname) + ".instance)" + argumentList.apply(null, args));
         break;
       case OP_callsuperid:    notImplemented(); break;
       case OP_callproplex:
