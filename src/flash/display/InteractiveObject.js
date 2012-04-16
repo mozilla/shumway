@@ -9,30 +9,38 @@ function InteractiveObject() {
   this.contextMenu = null;
 }
 
-natives.InteractiveObjectClass = function (scope, instance, baseClass) {
-  var c = new Class("InteractiveObject", InteractiveObject, Class.passthroughCallable(InteractiveObject));
-  c.extend(baseClass);
+var p = InteractiveObject.prototype = new DisplayObject;
+p.requestSoftKeyboard = function () { notImplemented(); };
 
-  var p = InteractiveObject.prototype;
-  p.requestSoftKeyboard = function () { notImplemented(); };
+natives.InteractiveObjectClass = function (scope, instance, baseClass) {
+  var c = new Class(
+    "InteractiveObject",
+    InteractiveObject,
+    Class.passthroughCallable(InteractiveObject)
+  );
+  c.baseClass = baseClass;
 
   c.nativeMethods = p;
-  c.makeSimpleNativeAccessors("get", [ "tabEnabled",
-                                       "tabIndex",
-                                       "focusRect",
-                                       "mouseEnabled",
-                                       "doubleClickEnabled",
-                                       "accessibilityImplementation",
-                                       "needsSoftKeyboard",
-                                       "contextMenu" ]);
-  c.makeSimpleNativeAccessors("set", [ "tabEnabled",
-                                       "tabIndex",
-                                       "focusRect",
-                                       "mouseEnabled",
-                                       "doubleClickEnabled",
-                                       "accessibilityImplementation",
-                                       "needsSoftKeyboard",
-                                       "contextMenu" ]);
-
+  c.makeSimpleNativeAccessors("get", ["tabEnabled",
+                                      "tabIndex",
+                                      "focusRect",
+                                      "mouseEnabled",
+                                      "doubleClickEnabled",
+                                      "accessibilityImplementation",
+                                      "needsSoftKeyboard",
+                                      "contextMenu"]);
+  c.makeSimpleNativeAccessors("set", ["tabEnabled",
+                                      "tabIndex",
+                                      "focusRect",
+                                      "mouseEnabled",
+                                      "doubleClickEnabled",
+                                      "accessibilityImplementation",
+                                      "needsSoftKeyboard",
+                                      "contextMenu"]);
   return c;
 };
+
+
+  MovieClip Inheritance Sprite Inheritance DisplayObjectContainer Inheritance InteractiveObject Inheritance DisplayObject Inheritance
+
+  EventDispatcher->DisplayObject->InteractiveObject->DisplayObjectContainer->Sprite->MovieClip

@@ -31,75 +31,73 @@ function DisplayObject() {
   this.accessibilityProperties = null;
 }
 
+var p = DisplayObject.prototype = new EventDispatcher;
+p.globalToLocal = function (point) { notImplemented(); };
+p.localToGlobal = function (point) { notImplemented(); };
+p.getBounds = function (targetCoordinateSpace) { notImplemented(); };
+p.getRect = function (targetCoordinateSpace) { notImplemented(); };
+p._hitTest = function (use_xy, x, y, useShape, hitTestObject) { notImplemented(); };
+p.globalToLocal3D = function (point) { notImplemented(); };
+p.local3DToGlobal = function (point3d) { notImplemented(); };
+
 natives.DisplayObjectClass = function (scope, instance, baseClass) {
   var c = new Class("DisplayObject", DisplayObject, Class.passthroughCallable(DisplayObject));
-  c.extend(baseClass);
-
-  var p = DisplayObject.prototype;
-  p.globalToLocal = function (point) { notImplemented(); };
-  p.localToGlobal = function (point) { notImplemented(); };
-  p.getBounds = function (targetCoordinateSpace) { notImplemented(); };
-  p.getRect = function (targetCoordinateSpace) { notImplemented(); };
-  p._hitTest = function (use_xy, x, y, useShape, hitTestObject) { notImplemented(); };
-  p.globalToLocal3D = function (point) { notImplemented(); };
-  p.local3DToGlobal = function (point3d) { notImplemented(); };
-
+  c.baseClass = baseClass;
   c.nativeMethods = p;
-  c.makeSimpleNativeAccessors("get", [ "root",
-                                       "stage",
-                                       "name",
-                                       "parent",
-                                       "mask",
-                                       "visible",
-                                       "x",
-                                       "y",
-                                       "z",
-                                       "scaleX",
-                                       "scaleY",
-                                       "ScaleZ",
-                                       "mouseX",
-                                       "mouseY",
-                                       "rotation",
-                                       "rotationX",
-                                       "rotationY",
-                                       "rotationZ",
-                                       "alpha",
-                                       "width",
-                                       "height",
-                                       "cacheAsBitmap",
-                                       "opaqueBackground",
-                                       "scrollRect",
-                                       "filters",
-                                       "blendMode",
-                                       "transform",
-                                       "scale9Grid",
-                                       "loaderInfo",
-                                       "accessibilityProperties" ]);
-  c.makeSimpleNativeAccessors("set", [ "name",
-                                       "mask",
-                                       "visible",
-                                       "x",
-                                       "y",
-                                       "z",
-                                       "scaleX",
-                                       "scaleY",
-                                       "scaleZ",
-                                       "rotation",
-                                       "rotationX",
-                                       "rotationY",
-                                       "rotationZ",
-                                       "alpha",
-                                       "width",
-                                       "height",
-                                       "cacheAsBitmap",
-                                       "opaqueBackground",
-                                       "scrollRect",
-                                       "filters",
-                                       "blendMode",
-                                       "transform",
-                                       "scale9Grid",
-                                       "accessibilityProperties",
-                                       "blendShader" ]);
-
+  c.makeSimpleNativeAccessors("get", ["root",
+                                      "stage",
+                                      "name",
+                                      "parent",
+                                      "mask",
+                                      "visible",
+                                      "x",
+                                      "y",
+                                      "z",
+                                      "scaleX",
+                                      "scaleY",
+                                      "ScaleZ",
+                                      "mouseX",
+                                      "mouseY",
+                                      "rotation",
+                                      "rotationX",
+                                      "rotationY",
+                                      "rotationZ",
+                                      "alpha",
+                                      "width",
+                                      "height",
+                                      "cacheAsBitmap",
+                                      "opaqueBackground",
+                                      "scrollRect",
+                                      "filters",
+                                      "blendMode",
+                                      "transform",
+                                      "scale9Grid",
+                                      "loaderInfo",
+                                      "accessibilityProperties"]);
+  c.makeSimpleNativeAccessors("set", ["name",
+                                      "mask",
+                                      "visible",
+                                      "x",
+                                      "y",
+                                      "z",
+                                      "scaleX",
+                                      "scaleY",
+                                      "scaleZ",
+                                      "rotation",
+                                      "rotationX",
+                                      "rotationY",
+                                      "rotationZ",
+                                      "alpha",
+                                      "width",
+                                      "height",
+                                      "cacheAsBitmap",
+                                      "opaqueBackground",
+                                      "scrollRect",
+                                      "filters",
+                                      "blendMode",
+                                      "transform",
+                                      "scale9Grid",
+                                      "accessibilityProperties",
+                                      "blendShader"]);
   return c;
 };
