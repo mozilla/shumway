@@ -517,7 +517,7 @@ var Runtime = (function () {
   };
 
   runtime.prototype.createFunction = function (methodInfo, scope) {
-    var mi = methodInfo;
+    const mi = methodInfo;
     assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     function closeOverScope(fn, scope) {
@@ -531,10 +531,25 @@ var Runtime = (function () {
       return closure;
     }
 
+    var hasDefaults = false;
+    const defaults = mi.parameters.map(function (p) {
+      if (p.value) {
+        hasDefaults = true;
+      }
+      return p.value;
+    });
+
     function interpretedMethod(interpreter, methodInfo, scope) {
       var fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
-        return interpreter.interpretMethod(global, methodInfo, scope, arguments);
+        var args;
+        if (hasDefaults && arguments.length < defaults.length) {
+          args = Array.prototype.slice.call(arguments);
+          args = args.concat(defaults.slice(arguments.length - defaults.length));
+        } else {
+          args = arguments;
+        }
+        return interpreter.interpretMethod(global, methodInfo, scope, args);
       };
       fn.instance = fn;
       defineNonEnumerableProperty(fn.prototype, "public$constructor", fn);
@@ -565,12 +580,11 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var result = this.compiler.compileMethod(mi, scope);
+    var result = this.compiler.compileMethod(mi, hasDefaults, scope);
 
     var parameters = mi.parameters.map(function (p) {
       return p.name;
     });
-
     parameters.unshift(SAVED_SCOPE_NAME);
 
     function flatten(array, indent) {

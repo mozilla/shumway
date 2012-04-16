@@ -1295,17 +1295,34 @@ var Compiler = (function () {
     this.abc = abc;
   };
 
-  compiler.prototype.compileMethod = function compileMethod(method, scope) {
-    assert(method.analysis);
-    var mcx = new MethodCompilerContext(this, method, scope);
+  compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
+    var mi = methodInfo;
+    assert(mi.analysis);
+
+    var mcx = new MethodCompilerContext(this, mi, scope);
     var statements = mcx.header;
 
-    var body = method.analysis.controlTree.compile(mcx, mcx.state).statements;
+    var body = mi.analysis.controlTree.compile(mcx, mcx.state).statements;
 
     var usedVariables = mcx.variablePool.used;
     if (usedVariables.notEmpty()) {
       statements.push("var " + usedVariables.join(", ") + ";");
     }
+
+    if (hasDefaults) {
+      statements.push("const nargs = arguments.length;");
+      mi.parameters.forEach(function (p, i) {
+        if (p.value) {
+          /**
+           * We do i + 2 because the first argument to compiled functions is
+           * always the saved scope.
+           */
+          statements.push("if (nargs < " + (i + 2) + ") { " +
+                          p.name + " = " + new Constant(p.value) + "; }");
+        }
+      });
+    }
+
     statements.push(body);
     return {statements: statements};
   };
