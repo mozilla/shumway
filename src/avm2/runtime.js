@@ -531,7 +531,7 @@ var Runtime = (function () {
       return closure;
     }
 
-    function interpretedMethod(interpreter, methodInfo, scope, nativeClass) {
+    function interpretedMethod(interpreter, methodInfo, scope) {
       var fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
         return interpreter.interpretMethod(global, methodInfo, scope, arguments);
