@@ -179,7 +179,7 @@ var Trait = (function () {
       var traitMetadata = {};
       for (var i = 0, j = stream.readU30(); i < j; i++) {
         var md = metadata[stream.readU30()];
-        traitMetadata[md.name] = md;
+        traitMetadata[md.tagName] = md;
       }
       this.metadata = traitMetadata;
     }
@@ -867,7 +867,7 @@ var MetaDataInfo = (function () {
 
   function metaDataInfo(abc, stream) {
     const strings = abc.constantPool.strings;
-    this.name = strings[stream.readU30()];
+    this.tagName = strings[stream.readU30()];
 
     var itemCount = stream.readU30();
     var items = [];
@@ -894,7 +894,7 @@ var MetaDataInfo = (function () {
 
   metaDataInfo.prototype = {
     toString: function toString() {
-      return "[" + this.name + "]";
+      return "[" + this.tagName + "]";
     }
   };
 
