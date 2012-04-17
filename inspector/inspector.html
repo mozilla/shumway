@@ -34,22 +34,53 @@
       };
       var webShell = true;
     </script>
+    <script src="../src/avm2/DataView.js"></script>
     <script src="../src/avm2/util.js"></script>
     <script>
-      var options = new OptionSet('option(s)');
-      var traceLevel = options.register(new Option('traceLevel', 't', 0, 'trace level'));
+      var options = new OptionSet("option(s)");
+      var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
+      var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
     </script>
     <script src="../src/avm2/constants.js"></script>
     <script src="../src/avm2/opcodes.js"></script>
     <script src="../src/avm2/parser.js"></script>
+    <script src="../src/avm2/disassembler.js"></script>
     <script src="../src/avm2/analyze.js"></script>
     <script src="../src/avm2/compiler.js"></script>
-    <script src="../src/avm2/disassembler.js"></script>
+    <script src="../src/avm2/native.js"></script>
     <script src="../src/avm2/runtime.js"></script>
+    <script src="../src/avm2/interpreter.js"></script>
 
     <script>
-      var body = $('body');
-      var stage = $('#stage');
+      var abcFiles = [];
+      var filesLoaded = 0;
+      ["builtin.abc", "playerGlobal.abc"].forEach(function (v, i, a) {
+          var xhr = new XMLHttpRequest;
+          xhr.open("GET", "../src/avm2/generated/" + v);
+          xhr.responseType = "arraybuffer";
+          xhr.onload = function () {
+            abcFiles[i] = new AbcFile(new Uint8Array(this.response), v, true);
+            if (++filesLoaded === a.length) {
+              abcFiles.forEach(function (abc) {
+                executeAbc(abc, ALWAYS_INTERPRET);
+              });
+            }
+          }
+          xhr.send();
+      });
+    </script>
+
+    <script src="../src/flash/events/EventDispatcher.js"></script>
+    <script src="../src/flash/display/DisplayObject.js"></script>
+    <script src="../src/flash/display/InteractiveObject.js"></script>
+    <script src="../src/flash/display/DisplayObjectContainer.js"></script>
+    <script src="../src/flash/display/Graphics.js"></script>
+    <script src="../src/flash/display/Sprite.js"></script>
+    <script src="../src/flash/display/MovieClip.js"></script>
+
+    <script>
+      var body = $("body");
+      var stage = $("#stage");
 
       function readFile(file) {
         var reader = new FileReader();
@@ -59,11 +90,11 @@
         reader.readAsArrayBuffer(file);
       }
 
-      body.on('dragenter dragover', function(event) {
+      body.on("dragenter dragover", function(event) {
         event.stopPropagation();
         event.preventDefault();
       });
-      body.on('drop', function(event) {
+      body.on("drop", function(event) {
         event.stopPropagation();
         event.preventDefault();
         var file = event.originalEvent.dataTransfer.files[0];
