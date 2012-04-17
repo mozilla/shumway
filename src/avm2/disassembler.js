@@ -310,6 +310,8 @@ function traceSource(writer, abc) {
           traceMetadata(trait.metadata);
           if (trait.isConst()) {
             str += " const";
+          } else {
+            str += " var";
           }
           str += " " + trait.name.getName();
           if (trait.typeName) {
@@ -322,6 +324,9 @@ function traceSource(writer, abc) {
         } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
           traceMetadata(trait.metadata);
           var mi = trait.methodInfo;
+          if (trait.attributes & ATTR_Override) {
+            str += " override";
+          }
           if (mi.isNative()) {
             str += " native";
           }
@@ -430,7 +435,7 @@ function traceSource(writer, abc) {
       }
       str += ii.isInterface() ? " interface " : " class ";
       str += name.getName();
-      if (ii.superName) {
+      if (ii.superName && ii.superName.getName() !== "Object") {
         str += " extends " + ii.superName.getName();
       }
       if (ii.interfaces.length) {
