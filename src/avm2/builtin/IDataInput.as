@@ -1,5 +1,3 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 4 -*- */
-/* vi: set ts=4 sw=4 expandtab: (add to ~/.vimrc: set modeline modelines=5) */
 /* ***** BEGIN LICENSE BLOCK *****
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
@@ -37,21 +35,46 @@
  *
  * ***** END LICENSE BLOCK ***** */
 
+package flash.utils
+{
+  // Need to include this because IDataInput.as is not included into builtin.as.
+  include "api-versions.as";
 
-// each class is in its own file, we include them all here
-// so they end up in a single script that initializes all
-// at once, in the order of includes below.
+  public interface IDataInput
+  {
+    function readBytes(bytes:ByteArray,
+                       offset:uint=0,
+                       length:uint=0):void;
+    function readBoolean():Boolean;
+    function readByte():int;
+    function readUnsignedByte():uint;
+    function readShort():int;
+    function readUnsignedShort():uint;
+    function readInt():int;
+    function readUnsignedInt():uint;
+    function readFloat():Number;
+    function readDouble():Number;
+    function readMultiByte(length:uint, charSet:String):String;
+    function readUTF():String;
+    function readUTFBytes(length:uint):String;
+    function get bytesAvailable():uint;
+    function readObject():*;
 
-include "Object.as"
-include "Class.as"
-include "Function.as"
-include "Namespace.as"
-include "Boolean.as"
-include "Number.as"
-// include "Float.as"
-include "String.as"
-include "Array.as"
-include "actionscript.lang.as"
-include "shumway.toplevel.as"
-include "Vector.as"
-include "DescribeType.as"
+    function get objectEncoding():uint;
+    function set objectEncoding(version:uint):void;
+
+    function get endian():String;
+    function set endian(type:String):void;
+  }
+
+  /**
+   * Like IDataInput but provides readFloat4() additionally.
+   */
+  //[API(CONFIG::SWF_16)]
+  CONFIG::VMCFG_FLOAT
+  public interface IDataInput2 extends IDataInput
+  {
+    function readFloat4(): float4;
+  }
+
+}

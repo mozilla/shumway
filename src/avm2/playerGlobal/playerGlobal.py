@@ -74,10 +74,10 @@ if len(sys.argv) == 1:
 
 configs = " ".join(sys.argv[1:])
 
-os.system(asc + " -builtin ../generated/builtin.abc -out playerGlobal Capabilities.as " + configs)
+os.system(asc + " -builtin ../generated/builtin.abc -out playerGlobal Capabilities.as IEventDispatcher.as EventDispatcher.as Event.as IBitmapDrawable.as DisplayObject.as DisplayObjectContainer.as InteractiveObject.as Stage.as Point.as Rectangle.as Transform.as Matrix.as ColorTransform.as Matrix3D.as PerspectiveProjection.as Vector3D.as LoaderInfo.as AccessibilityProperties.as ShaderData.as Shader.as ApplicationDomain.as Loader.as UncaughtErrorEvents.as AccessibilityImplementation.as ContextMenu.as NativeMenu.as ContextMenuClipboardItems.as ContextMenuBuiltInItems.as URLRequest.as TextSnapshot.as LoaderContext.as SecurityDomain.as Sprite.as Graphics.as IGraphicsStroke.as IGraphicsFill.as IGraphicsPath.as BitmapData.as BitmapFilter.as SoundTransform.as MovieClip.as Scene.as " + configs)
 
-rm("builtin.h")
-rm("builtin.cpp")
+rm("playerGlobal.h")
+rm("playerGlobal.cpp")
 mv("playerGlobal.abc", "../generated/playerGlobal.abc")
 
 print("Done.")

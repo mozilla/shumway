@@ -343,6 +343,68 @@ const natives = (function () {
   }
 
   /**
+   * Vector.as
+   */
+  function VectorClass(scope, instance, baseClass) {
+    // TODO: Not implemented
+    var c = new Class("Vector", Array, C(Array));
+    c.baseClass = baseClass;
+
+    var m = Array.prototype;
+    c.nativeMethods = m;
+
+    return c;
+  }
+
+  function ObjectVectorClass(scope, instance, baseClass) {
+    // TODO: Not implemented
+    var c = new Class("Vector$object", Array, C(Array));
+    c.baseClass = baseClass;
+
+    var m = Array.prototype;
+    c.nativeMethods = m;
+    c.nativeStatics = {};
+
+    return c;
+  }
+
+  function IntVectorClass(scope, instance, baseClass) {
+    // TODO: Not implemented
+    var c = new Class("Vector$int", Array, C(Array));
+    c.baseClass = baseClass;
+
+    var m = Array.prototype;
+    c.nativeMethods = m;
+    c.nativeStatics = {};
+
+    return c;
+  }
+
+  function UIntVectorClass(scope, instance, baseClass) {
+    // TODO: Not implemented
+    var c = new Class("Vector$uint", Array, C(Array));
+    c.baseClass = baseClass;
+
+    var m = Array.prototype;
+    c.nativeMethods = m;
+    c.nativeStatics = {};
+
+    return c;
+  }
+
+  function DoubleVectorClass(scope, instance, baseClass) {
+    // TODO: Not implemented
+    var c = new Class("Vector$double", Array, C(Array));
+    c.baseClass = baseClass;
+
+    var m = Array.prototype;
+    c.nativeMethods = m;
+    c.nativeStatics = {};
+
+    return c;
+  }
+
+  /**
    * Number.as
    */
   function NumberClass(scope, instance, baseClass) {
@@ -591,6 +653,11 @@ const natives = (function () {
     intClass: intClass,
     uintClass: uintClass,
     ArrayClass: ArrayClass,
+    VectorClass: VectorClass,
+    ObjectVectorClass: ObjectVectorClass,
+    IntVectorClass: IntVectorClass,
+    UIntVectorClass: UIntVectorClass,
+    DoubleVectorClass: DoubleVectorClass,
 
     ErrorClass: makeErrorClass("Error"),
     DefinitionErrorClass: makeErrorClass("DefinitionError"),
