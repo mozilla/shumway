@@ -103,6 +103,9 @@ function cast(tags, dictionary, declare) {
     case 'remove':
       pframe[tag.depth] = null;
       break;
+    case 'symbols':
+      pframe.symbols = tag.references;
+      break;
     }
   }
   return pframes;

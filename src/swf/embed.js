@@ -126,6 +126,22 @@ SWF.embed = function(file, container, options) {
           }
         }
 
+        if (obj.symbols) {
+          var symbols = obj.symbols;
+          var i = 0;
+          var sym;
+          while (sym = symbols[i++]) {
+            if (!sym.id) {
+              var mainTimelineName = new Multiname(
+                [Namespace.PUBLIC],
+                sym.name.replace(/\./g, '::')
+              );
+              var mainTimeline =
+                new toplevel.getTypeByName(mainTimelineName, true).instance;
+            }
+          }
+        }
+
         pframes.push(obj);
         if (!plays) {
           renderMovieClip(root, frameRate, ctx);

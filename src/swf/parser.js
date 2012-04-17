@@ -53,7 +53,7 @@ var tagHandler = {
   /* DefineFontAlignZones */          73: undefined,
   /* CSMTextSettings */               74: undefined,
   /* DefineFont3 */                   75: DEFINE_FONT2,
-  /* SymbolClass */                   76: undefined,
+  /* SymbolClass */                   76: SYMBOL_CLASS,
   /* Metadata */                      77: METADATA,
   /* DefineScalingGrid */             78: undefined,
   /* DoABC */                         82: DO_ABC,
