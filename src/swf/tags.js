@@ -343,3 +343,14 @@ var SET_BACKGROUND_COLOR = {
 var SHOW_FRAME = {
   type: '"frame"'
 };
+var SYMBOL_CLASS = {
+  type: '"symbols"',
+  $$symbolCount: UI16,
+  references: {
+    $: {
+      id: UI16,
+      name: STRING(0)
+    },
+    count: 'symbolCount'
+  }
+};
