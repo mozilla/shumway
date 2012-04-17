@@ -369,7 +369,7 @@ const toplevel = (function () {
     /* Classes that have been loaded. */
     this.loadedClasses = [];
 
-    // TODO: Caching
+    // TODO: Caching.
   }
 
   Toplevel.prototype = {
