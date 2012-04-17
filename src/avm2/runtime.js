@@ -886,16 +886,12 @@ var Runtime = (function () {
            * XXX: I'm choosing for the per-method [native] to override
            * [native] on the class if both are present.
            */
-          if (trait.metadata) {
-            if (!trait.metadata.compat) {
-              var nativeTag = trait.metadata.native || trait.metadata.unsafeJSNative;
-              if (nativeTag) {
-                closure = getNative(nativeTag.items[0].value);
-                if (closure && trait.metadata.native) {
-                  closure = closure(scope);
-                }
-              }
-            }
+          var md = trait.metadata;
+          if (md && md.native) {
+            var makeClosure = getNative(md.native.items[0].value);
+            closure = makeClosure && makeClosure(scope);
+          } else if (md && md.unsafeJSNative) {
+            closure = getNative(md.unsafeJSNative.items[0].value);
           } else if (classNatives) {
             /**
              * At this point the native class already had the scope, so we
@@ -908,37 +904,28 @@ var Runtime = (function () {
               k = "set " + k;
             }
             closure = classNatives[k];
-          } else {
-            unexpected("Native method without [native] metadata: " + mi.name.getQualifiedName());
           }
 
-          /**
-           * Natives marked as [compat] mean that they're kept for
-           * slot-for-slot compatibility with the original AS code. We can
-           * just assign null to those.
-           *
-           * XXX: Do we need slot-for-slot compatibility?
-           */
-          if (!closure && !(trait.metadata && trait.metadata.compat)) {
-            closure = (function (mi) {
-              return function() {
-                print("Calling undefined native method: " + mi.name.getQualifiedName());
-              };
-            })(mi);
-          }
+
         } else {
           closure = this.createFunction(mi, scope);
         }
 
-        /* Identify this as a method for auto-binding via MethodClosure. */
-        if (closure) {
-          closure.isMethod = true;
+        if (!closure) {
+          closure = (function (mi) {
+            return function() {
+              print("Calling undefined native method: " + mi.name.getQualifiedName());
+            };
+          })(mi);
         }
 
+        /* Identify this as a method for auto-binding via MethodClosure. */
+        closure.isMethod = true;
+
         var qn = trait.name.getQualifiedName();
-        if (closure && trait.isGetter()) {
+        if (trait.isGetter()) {
           defineGetter(obj, qn, closure);
-        } else if (closure && trait.isSetter()) {
+        } else if (trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
           defineProperty(qn, undefined, closure);
