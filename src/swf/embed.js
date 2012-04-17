@@ -132,12 +132,13 @@ SWF.embed = function(file, container, options) {
           var sym;
           while (sym = symbols[i++]) {
             if (!sym.id) {
+              var nameParts = sym.name.split(".");
+              var ns = Namespace.createNamespace(nameParts[0]);
               var mainTimelineName = new Multiname(
-                [Namespace.PUBLIC],
-                sym.name.replace(/\./g, '::')
+                [ns], nameParts[1]
               );
               var mainTimeline =
-                new toplevel.getTypeByName(mainTimelineName, true).instance;
+                new (toplevel.getTypeByName(mainTimelineName, true)).instance;
             }
           }
         }

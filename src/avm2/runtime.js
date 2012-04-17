@@ -936,9 +936,9 @@ var Runtime = (function () {
         }
 
         var qn = trait.name.getQualifiedName();
-        if (trait.isGetter()) {
+        if (closure && trait.isGetter()) {
           defineGetter(obj, qn, closure);
-        } else if (trait.isSetter()) {
+        } else if (closure && trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
           defineProperty(qn, undefined, closure);

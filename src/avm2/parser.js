@@ -254,9 +254,12 @@ var Namespace = (function () {
   const MAX_API_MARK              = 0xf8ff;
 
   function namespace(kind, uri) {
-    if (kind !== undefined && uri !== undefined) {
+    if (kind !== undefined) {
+      if (uri === undefined) {
+        uri = "";
+      }
       this.kind = kind;
-      this.originalURI = this.uri = name;
+      this.originalURI = this.uri = uri;
       buildNamespace.call(this);
     }
   }
@@ -288,8 +291,6 @@ var Namespace = (function () {
   namespace.createNamespace = function createNamespace(uri) {
     return new namespace(CONSTANT_Namespace, uri);
   };
-
-  namespace.PUBLIC = namespace.createNamespace();
 
   namespace.prototype = {
     parse: function parse(constantPool, stream) {
@@ -326,6 +327,8 @@ var Namespace = (function () {
       return kinds[this.kind];
     }
   };
+
+  namespace.PUBLIC = namespace.createNamespace();
 
   return namespace;
 })();
