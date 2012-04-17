@@ -39,8 +39,3 @@ natives.InteractiveObjectClass = function (scope, instance, baseClass) {
                                       "contextMenu"]);
   return c;
 };
-
-
-  MovieClip Inheritance Sprite Inheritance DisplayObjectContainer Inheritance InteractiveObject Inheritance DisplayObject Inheritance
-
-  EventDispatcher->DisplayObject->InteractiveObject->DisplayObjectContainer->Sprite->MovieClip
