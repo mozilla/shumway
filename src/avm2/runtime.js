@@ -289,7 +289,7 @@ function getProperty(obj, multiname, bind) {
     var prop = obj[resolved.getQualifiedName()];
 
     if (tracePropertyAccess.value) {
-      print("getProperty: multiname: " + resolved + " value: " + (prop && prop.toString()));
+      print("getProperty: multiname: " + resolved + " value: " + prop);
     }
 
     if (bind && prop && prop.isMethod) {
@@ -686,8 +686,7 @@ var Runtime = (function () {
     scope.object = cls;
 
     /**
-     * Apply interface traits recursively, creating getters for interface names. For,
-     * instance:
+     * Apply interface traits recursively, creating getters for interface names. For instance:
      *
      * interface IA {
      *   function foo();
