@@ -1,5 +1,5 @@
 function Sprite() {
-  this.graphics = new Grapics;
+  this.graphics = new Graphics;
   this.buttonMode = false;
   this.dropTarget = null;
   this.hitArea = null;
