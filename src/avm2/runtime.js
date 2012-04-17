@@ -278,6 +278,10 @@ function getProperty(obj, multiname, bind) {
     return obj[GET_ACCESSOR](multiname.name);
   }
 
+  if (tracePropertyAccess.value) {
+    print("getProperty: multiname: " + multiname);
+  }
+
   var resolved;
   if (multiname.isQName()) {
     resolved = multiname;
@@ -289,7 +293,7 @@ function getProperty(obj, multiname, bind) {
     var prop = obj[resolved.getQualifiedName()];
 
     if (tracePropertyAccess.value) {
-      print("getProperty: multiname: " + resolved + " value: " + prop);
+      print("getProperty: multiname: " + resolved + " some value: " + !!prop);
     }
 
     if (bind && prop && prop.isMethod) {
@@ -813,7 +817,7 @@ var Runtime = (function () {
     }
 
     function defineProperty(name, slotId, value, type) {
-      // print("Defining Trait: " + name + ", slot: " + slotId + ", in: " + obj.debugName);
+      // print("Defining Trait: " + name + ", slot: " + slotId + ", value: " + value);
       if (slotId) {
         if (name in obj) {
           assert (!type || !type.coerce);

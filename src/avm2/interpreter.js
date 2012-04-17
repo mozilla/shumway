@@ -371,7 +371,7 @@ var Interpreter = (function () {
           case OP_deleteproperty:
             multiname = createMultiname(multinames[bc.index]);
             obj = stack.pop();
-            deleteProperty(obj, multiname);
+            stack.push(deleteProperty(obj, multiname));
             break;
           case OP_deletepropertylate: notImplemented(); break;
           case OP_getslot:
