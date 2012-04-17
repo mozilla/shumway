@@ -400,6 +400,16 @@ const natives = (function () {
     return function (scope, instance, baseClass) {
       var c = new Class(name, instance, CC(instance));
       c.extend(baseClass);
+      c.nativeMethods = {
+        getStackTrace: function () {
+          return "TODO: geStackTrace";
+        }
+      };
+      c.nativeStatics = {
+        getErrorMessage: function() {
+          return "TODO: getErrorMessage";
+        }
+      };
       return c;
     }
   }
@@ -599,8 +609,24 @@ const natives = (function () {
     MathClass: MathClass,
     RegExpClass: RegExpClass,
 
-    CapabilitiesClass: CapabilitiesClass
-  };
+    CapabilitiesClass: CapabilitiesClass,
+
+
+    /**
+     * DescribeType.as
+     */
+    getQualifiedClassName: constant(function (value) {
+      if (typeof (value) === "number") {
+        if ((value | 0) === value) {
+          return "int";
+        } else {
+          return "Number";
+        }
+      } else {
+        return notImplemented(value);
+      }
+    })
+  }
 
 })();
 

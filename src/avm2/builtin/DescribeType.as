@@ -40,6 +40,8 @@
 package avmplus
 {
     use namespace AS3;
+
+    /*
     // -------------- internal --------------
 
     [native("DescribeTypeClass::describeTypeJSON")]
@@ -227,9 +229,10 @@ package avmplus
         return x;
     }
 
-    [native("DescribeTypeClass::getQualifiedClassName")]
+    */
+    [native("getQualifiedClassName")]
     public native function getQualifiedClassName(value:*):String;
 
-    [native("DescribeTypeClass::getQualifiedSuperclassName")]
+    [native("getQualifiedSuperclassName")]
     public native function getQualifiedSuperclassName(value:*):String;
 }

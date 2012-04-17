@@ -73,64 +73,64 @@ package
 
     // The following methods correspond to the methods on Math, but we add them to Number to make
     // Number, float, and float4 behave similarly.
-    [native("Math.abs")]
+    [unsafeJSNative("Math.abs")]
     //[API(CONFIG::SWF_16)]
     public native static function abs   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.acos")]
+    [unsafeJSNative("Math.acos")]
     public native static function acos  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.asin")]
+    [unsafeJSNative("Math.asin")]
     public native static function asin  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.atan")]
+    [unsafeJSNative("Math.atan")]
     public native static function atan  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.ceil")]
+    [unsafeJSNative("Math.ceil")]
     public native static function ceil  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.cos")]
+    [unsafeJSNative("Math.cos")]
     public native static function cos   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.exp")]
+    [unsafeJSNative("Math.exp")]
     public native static function exp   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.floor")]
+    [unsafeJSNative("Math.floor")]
     public native static function floor (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.log")]
+    [unsafeJSNative("Math.log")]
     public native static function log   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.round")]
+    [unsafeJSNative("Math.round")]
     public native static function round (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.sin")]
+    [unsafeJSNative("Math.sin")]
     public native static function sin   (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.sqrt")]
+    [unsafeJSNative("Math.sqrt")]
     public native static function sqrt  (x:Number)   :Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.tan")]
+    [unsafeJSNative("Math.tan")]
     public native static function tan   (x:Number)   :Number;
 
     //[API(CONFIG::SWF_16)]
-    [native("Math.atan2")]
+    [unsafeJSNative("Math.atan2")]
     public native static function atan2 (y:Number, x:Number):Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.pow")]
+    [unsafeJSNative("Math.pow")]
     public native static function pow   (x:Number, y:Number):Number;
 
-    // max() and min() follow Math, for now; float does it differently however, 
+    // max() and min() follow Math, for now; float does it differently however,
     // requiring zero or more arguments and having "length" properties of value zero.
     //[API(CONFIG::SWF_16)]
-    [native("Math.max")]
+    [unsafeJSNative("Math.max")]
     public native static function max    (x:Number = NEGATIVE_INFINITY, y:Number = NEGATIVE_INFINITY, ... rest):Number;
     //[API(CONFIG::SWF_16)]
-    [native("Math.min")]
+    [unsafeJSNative("Math.min")]
     public native static function min    (x:Number = POSITIVE_INFINITY, y:Number = POSITIVE_INFINITY, ... rest):Number;
 
     //[API(CONFIG::SWF_16)]
-    [native("Math.random")]
+    [unsafeJSNative("Math.random")]
     public native static function random ():Number;
 
     [compat]

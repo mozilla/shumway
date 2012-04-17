@@ -883,11 +883,14 @@ var Runtime = (function () {
            * XXX: I'm choosing for the per-method [native] to override
            * [native] on the class if both are present.
            */
-          var makeClosure;
           if (trait.metadata) {
-            if (!trait.metadata.compat && trait.metadata.native) {
-              if (makeClosure = getNative(trait.metadata.native.items[0].value)) {
-                closure = makeClosure(scope);
+            if (!trait.metadata.compat) {
+              var nativeTag = trait.metadata.native || trait.metadata.unsafeJSNative;
+              if (nativeTag) {
+                closure = getNative(nativeTag.items[0].value);
+                if (closure && trait.metadata.native) {
+                  closure = closure(scope);
+                }
               }
             }
           } else if (classNatives) {
