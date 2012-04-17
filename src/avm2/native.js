@@ -220,11 +220,23 @@ var Class = (function () {
 
 })();
 
-function MethodClosure($this, fn) {
-  var bound = fn.bind($this);
-  defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
-  defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
-}
+var MethodClosure = (function () {
+
+  function MethodClosure($this, fn) {
+    var bound = fn.bind($this);
+    defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+    defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+  }
+
+  MethodClosure.prototype = {
+    toString: function () {
+      return "function Function() {}";
+    }
+  };
+
+  return MethodClosure;
+
+})();
 
 const natives = (function () {
 
@@ -285,10 +297,10 @@ const natives = (function () {
     var c = new Class("Function", Function, C(Function));
     c.baseClass = baseClass;
 
-    var m = Object.create(Function.prototype);
-    m["get prototype"] = function () { return this.prototype; };
-    m["set prototype"] = function (p) { this.prototype = p; };
-    m["get length"] = function () { return this.length; };
+    var m = Function.prototype;
+    defineNonEnumerableProperty(m, "get prototype", function () { return this.prototype; });
+    defineNonEnumerableProperty(m, "set prototype", function (p) { this.prototype = p; });
+    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     c.nativeMethods = m;
 
     return c;
@@ -307,8 +319,8 @@ const natives = (function () {
     var c = new Class("String", String, C(String));
     c.baseClass = baseClass;
 
-    var m = Object.create(String.prototype);
-    m["get length"] = function () { return this.length; };
+    var m = String.prototype;
+    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     c.nativeMethods = m;
     c.nativeStatics = String;
 
@@ -322,9 +334,9 @@ const natives = (function () {
     var c = new Class("Array", Array, C(Array));
     c.baseClass = baseClass;
 
-    var m = Object.create(Array.prototype);
-    m["get length"] = function() { return this.length; };
-    m["set length"] = function(l) { this.length = l; };
+    var m = Array.prototype;
+    defineNonEnumerableProperty(m, "get length", function() { return this.length; });
+    defineNonEnumerableProperty(m, "set length", function(l) { this.length = l; });
     c.nativeMethods = m;
 
     return c;
@@ -435,15 +447,15 @@ const natives = (function () {
     var c = new Class("RegExp", ASRegExp, C(ASRegExp));
     c.baseClass = baseClass;
 
-    var m = Object.create(RegExp.prototype);
-    m["get global"] = function () { return this.global; };
-    m["get source"] = function () { return this.source; };
-    m["get ignoreCase"] = function () { return this.ignoreCase; };
-    m["get multiline"] = function () { return this.multiline; };
-    m["get lastIndex"] = function () { return this.lastIndex; };
-    m["set lastIndex"] = function (i) { this.lastIndex = i; };
-    m["get dotall"] = function () { return this.dotall; };
-    m["get extended"] = function () { return this.extended; };
+    var m = RegExp.prototype;
+    defineNonEnumerableProperty(m, "get global", function () { return this.global; });
+    defineNonEnumerableProperty(m, "get source", function () { return this.source; });
+    defineNonEnumerableProperty(m, "get ignoreCase", function () { return this.ignoreCase; });
+    defineNonEnumerableProperty(m, "get multiline", function () { return this.multiline; });
+    defineNonEnumerableProperty(m, "get lastIndex", function () { return this.lastIndex; });
+    defineNonEnumerableProperty(m, "set lastIndex", function (i) { this.lastIndex = i; });
+    defineNonEnumerableProperty(m, "get dotall", function () { return this.dotall; });
+    defineNonEnumerableProperty(m, "get extended", function () { return this.extended; });
     c.nativeMethods = m;
 
     return c;

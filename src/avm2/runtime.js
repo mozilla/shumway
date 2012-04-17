@@ -459,11 +459,13 @@ const toplevel = (function () {
                 var scope = value;
                 while (scope) {
                   assert (scope.object);
-                  str += scope.object.debugName + " ";
-                  scope = scope.parent;
+                  str += scope.object.debugName || "T";
+                  if (scope = scope.parent) {
+                    str += " <: ";
+                  };
                 }
               } else if (value instanceof Function) {
-                str += ": " + value.name ? value.name : "untitled";
+                str += ": " + (value.name ? value.name : "untitled");
               } else if (value) {
                 str += ": " + value;
               }
