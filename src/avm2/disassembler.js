@@ -286,7 +286,7 @@ function traceSource(writer, abc) {
 
   abc.scripts.forEach(function (script) {
     traceTraits(script.traits);
-    function traceTraits(traits, isStatic, isInterface) {
+    function traceTraits(traits, isStatic, inInterfaceNamespace) {
       traits.traits.forEach(function (trait) {
         var str;
         var accessModifier = trait.name.getAccessModifier();
@@ -296,7 +296,7 @@ function traceSource(writer, abc) {
             namespaceName = "AS3";
           }
           if (accessModifier === "public") {
-            str = namespaceName;
+            str = inInterfaceNamespace === namespaceName ? "" : namespaceName;
           } else {
             str = accessModifier;
           }
@@ -333,7 +333,7 @@ function traceSource(writer, abc) {
           if (mi.isNative()) {
             writer.writeLn(str + ";");
           } else {
-            if (isInterface) {
+            if (inInterfaceNamespace) {
               writer.writeLn(str + ";");
             } else {
               writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
@@ -341,10 +341,10 @@ function traceSource(writer, abc) {
           }
         } else if (trait.isClass()) {
           var className = trait.classInfo.instanceInfo.name;
-          writer.enter("package " + className.namespaces[0].originalURI + " {");
+          writer.enter("package " + className.namespaces[0].originalURI + " {\n");
           traceMetadata(trait.metadata);
           traceClass(trait.classInfo);
-          writer.leave("}");
+          writer.leave("\n}");
           traceClassStub(trait);
         } else {
           notImplemented();
@@ -442,8 +442,12 @@ function traceSource(writer, abc) {
       if (!ii.isInterface()) {
         writer.writeLn("public function " + name.getName() + "(" + getSignature(ii.init) + ") {}");
       }
-      traceTraits(ci.traits, true, ii.isInterface());
-      traceTraits(ii.traits, false, ii.isInterface());
+      var interfaceNamespace;
+      if (ii.isInterface()) {
+        interfaceNamespace = name.namespaces[0].originalURI + ":" + name.name;
+      }
+      traceTraits(ci.traits, true, interfaceNamespace);
+      traceTraits(ii.traits, false, interfaceNamespace);
       writer.leave("}");
     }
 
