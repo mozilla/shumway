@@ -66,10 +66,10 @@ print("Building playerGlobal...")
 # https://bugzilla.mozilla.org/show_bug.cgi?id=697977
 if len(sys.argv) == 1:
     print('To build the float/float4 enabled builtins pass the following:');
-    print('    >$ ./builtin.py -config CONFIG::VMCFG_FLOAT=true -abcfuture');
+    print('    >$ ./playerGlobal.py -config CONFIG::VMCFG_FLOAT=true -abcfuture');
     print('');
     print('To compile the builtins without float/float4 support:');
-    print('    >$ ./builtin.py -config CONFIG::VMCFG_FLOAT=false');
+    print('    >$ ./playerGlobal.py -config CONFIG::VMCFG_FLOAT=false');
     exit(1);
 
 configs = " ".join(sys.argv[1:])
