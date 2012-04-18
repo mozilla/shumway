@@ -285,7 +285,7 @@ var Namespace = (function () {
         return kind;
       }
     }
-    return unexpected(str);
+    return assert (false, "Cannot find kind " + str);
   };
 
   namespace.createNamespace = function createNamespace(uri) {
@@ -329,6 +329,39 @@ var Namespace = (function () {
   };
 
   namespace.PUBLIC = namespace.createNamespace();
+
+  var simpleNameCache = {};
+
+  /**
+   * Creates a set of namespaces from one or more comma delimited simple names. For example:
+   *
+   * flash.display
+   * private flash.display
+   * [flash.display, private flash.display]
+   *
+   */
+  namespace.fromSimpleName = function fromSimpleName(simpleName) {
+    if (simpleName in simpleNameCache) {
+      return simpleNameCache[simpleName];
+    }
+    var namespaceNames;
+    if (simpleName.indexOf("[") === 0) {
+      assert (simpleName[simpleName.length - 1] === "]");
+      namespaceNames = simpleName.substring(1, simpleName.length - 1).split(",");
+    } else {
+      namespaceNames = [simpleName];
+    }
+    return simpleNameCache[simpleName] = namespaceNames.map(function (name) {
+      name = name.trim();
+      var kindName = "public";
+      var uri = name;
+      if (name.indexOf(" ") > 0) {
+        kindName = name.substring(0, name.indexOf(" "));
+        uri = name.substring(name.indexOf(" ") + 1);
+      }
+      return new namespace(namespace.kindFromString(kindName), uri);
+    });
+  };
 
   return namespace;
 })();
@@ -631,11 +664,29 @@ var Multiname = (function () {
     return str;
   };
 
-  multiname.fromQualifiedName = function fromQualifiedName(name) {
-    name = name.split("$");
-    var kind = Namespace.kindFromString(name[0]);
-    var namespace = new Namespace(kind, name.slice(1, name.length - 1).join("$"));
-    return new multiname([namespace], name[name.length - 1]);
+  var simpleNameCache = {};
+
+  /**
+   * Creates a multiname from a simple names qualified with one ore more namespaces, for example:
+   * flash.display.Graphics
+   * private flash.display.Graphics
+   * [private flash.display, private flash, public].Graphics
+   */
+  multiname.fromSimpleName = function fromSimpleName(simpleName) {
+    assert (simpleName);
+    if (simpleName in simpleNameCache) {
+      return simpleNameCache[simpleName];
+    }
+
+    var nameIndex = simpleName.lastIndexOf(".");
+    if (nameIndex >= 0) {
+      var name = simpleName.substring(nameIndex + 1).trim();
+      var namespace = simpleName.substring(0, nameIndex);
+    } else {
+      name = simpleName;
+      namespace = "";
+    }
+    return simpleNameCache[simpleName] = new multiname(Namespace.fromSimpleName(namespace), name);
   };
 
   return multiname;

@@ -104,6 +104,10 @@ function defineNonEnumerableProperty(obj, name, value) {
     return str;
   });
 
+  extendBuiltin(Sp, "trim", function () {
+	  return this.replace(/^\s+|\s+$/g,"");
+  });
+
   var Ap = Array.prototype;
 
   extendBuiltin(Ap, "popMany", function (count) {
