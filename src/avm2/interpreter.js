@@ -339,7 +339,12 @@ var Interpreter = (function () {
             stack.push(scope.findProperty(multiname, false));
             break;
           case OP_finddef:        notImplemented(); break;
-          case OP_getlex:         notImplemented(); break;
+          case OP_getlex:
+            // TODO: Cache the resolved multiname so it doesn't have to be
+            // resolved again in getProperty
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(getProperty(scope.findProperty(multiname, true), multiname, true));
+            break;
           case OP_initproperty:
           case OP_setproperty:
             value = stack.pop();
