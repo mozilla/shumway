@@ -298,7 +298,7 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(multinames[bc.index]);
             obj = stack.pop();
-            getProperty(obj, multiname).apply(null, args);
+            getProperty(obj, multiname).apply(obj, args);
             break;
           case OP_sxi1:           notImplemented(); break;
           case OP_sxi8:           notImplemented(); break;
