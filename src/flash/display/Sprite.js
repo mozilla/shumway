@@ -1,5 +1,5 @@
 function Sprite() {
-  this.graphics = new Graphics;
+  this.graphics = null;
   this.buttonMode = false;
   this.dropTarget = null;
   this.hitArea = null;
@@ -18,8 +18,17 @@ natives.SpriteClass = function (scope, instance, baseClass) {
   var c = new Class("Sprite", Sprite, Class.passthroughCallable(Sprite));
   c.baseClass = baseClass;
   c.nativeMethods = p;
-  c.makeSimpleNativeAccessors("get", ["graphics",
-                                      "buttonMode",
+
+  c.nativeMethods["get graphics"] = function () {
+    if (!this.graphics) {
+      var ns = Namespace.createNamespace('flash.display');
+      var mn = new Multiname([ns], 'Graphics');
+      this.graphics = new (toplevel.getTypeByName(mn, true, true).instance);
+    }
+    return this.graphics;
+  };
+
+  c.makeSimpleNativeAccessors("get", ["buttonMode",
                                       "dropTarget",
                                       "hitArea",
                                       "useHandCursor",
