@@ -23,9 +23,11 @@ natives.SpriteClass = function (scope, instance, baseClass) {
 
   c.nativeMethods["get graphics"] = function () {
     if (!this.graphics) {
-      var ns = Namespace.createNamespace('flash.display');
-      var mn = new Multiname([ns], 'Graphics');
-      this.graphics = new (toplevel.getTypeByName(mn, true, true).instance);
+      this.graphics = new (toplevel.getTypeByName(
+        Multiname.fromSimpleName("flash.display.Graphics"),
+        true,
+        true
+      ).instance);
     }
     return this.graphics;
   };
