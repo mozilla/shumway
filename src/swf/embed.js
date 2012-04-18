@@ -122,7 +122,7 @@ SWF.embed = function(file, container, options) {
           var block;
           while (block = blocks[i++]) {
             var abc = new AbcFile(block);
-            executeAbc(abc);
+            executeAbc(abc, ALWAYS_INTERPRET);
           }
         }
 
