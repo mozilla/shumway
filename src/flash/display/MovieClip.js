@@ -11,14 +11,18 @@ function MovieClip() {
   this.isPlaying = false;
 }
 
-var p = MovieClip.prototype =  new Sprite;
+var p = MovieClip.prototype = new Sprite;
 p.play = function () { notImplemented(); };
 p.stop = function () { notImplemented(); };
 p.nextFrame = function () { notImplemented(); };
 p.prevFrame = function () { notImplemented(); };
 p.gotoAndPlay = function (frame, scene) { notImplemented(); };
 p.gotoAndStop = function (frame, scene) { notImplemented(); };
-p.addFrameScript = function () { notImplemented(); };
+
+p.addFrameScript = function () {
+  arguments[1].call(this);
+};
+
 p.prevScene = function () { notImplemented(); };
 p.nextScene = function () { notImplemented(); };
 
