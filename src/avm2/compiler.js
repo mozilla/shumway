@@ -1023,7 +1023,7 @@ var Compiler = (function () {
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
         assert(!multiname.isRuntime());
-        emitStatement(getProperty(obj, multiname) + argumentList.apply(null, args));
+        emitStatement(getProperty(obj, multiname) + ".call" + argumentList.apply(null, [obj].concat(args)));
         break;
       case OP_sxi1:           notImplemented(); break;
       case OP_sxi8:           notImplemented(); break;
