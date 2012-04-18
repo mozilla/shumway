@@ -1,10 +1,10 @@
 function Loader() { }
-Loader.cloneParams = function(LoaderContext) { notImplemented(); };
+Loader.cloneParams = function (LoaderContext) { notImplemented(); };
 
-var p = Loader.prototype = new DisplayObjectContainer;
-p._getJPEGLoaderContextdeblockingfilter = function(context) { notImplemented(); };
+Loader.prototype = new DisplayObjectContainer;
+Loader.prototype._getJPEGLoaderContextdeblockingfilter = function (context) { notImplemented(); };
 
-p._loadBytes = function(bytes,
+Loader.prototype._loadBytes = function (bytes,
                         checkPolicyFile,
                         applicationDomain,
                         securityDomain,
@@ -16,12 +16,12 @@ p._loadBytes = function(bytes,
   notImplemented();
 };
 
-p._unload = function(halt, gc) { notImplemented(); };
-p._close = function() { notImplemented(); };
-p._getUncaughtErrorEvents = function() { notImplemented(); };
-p._setUncaughtErrorEvents = function(value) { notImplemented(); };
+Loader.prototype._unload = function (halt, gc) { notImplemented(); };
+Loader.prototype._close = function () { notImplemented(); };
+Loader.prototype._getUncaughtErrorEvents = function () { notImplemented(); };
+Loader.prototype._setUncaughtErrorEvents = function (value) { notImplemented(); };
 
-p._load = function(request,
+Loader.prototype._load = function (request,
                    checkPolicyFile,
                    applicationDomain,
                    securityDomain,

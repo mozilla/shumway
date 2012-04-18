@@ -11,25 +11,25 @@ function MovieClip() {
   this.isPlaying = false;
 }
 
-var p = MovieClip.prototype = new Sprite;
-p.play = function () { notImplemented(); };
-p.stop = function () { notImplemented(); };
-p.nextFrame = function () { notImplemented(); };
-p.prevFrame = function () { notImplemented(); };
-p.gotoAndPlay = function (frame, scene) { notImplemented(); };
-p.gotoAndStop = function (frame, scene) { notImplemented(); };
+MovieClip.prototype = new Sprite;
+MovieClip.prototype.play = function () { notImplemented(); };
+MovieClip.prototype.stop = function () { notImplemented(); };
+MovieClip.prototype.nextFrame = function () { notImplemented(); };
+MovieClip.prototype.prevFrame = function () { notImplemented(); };
+MovieClip.prototype.gotoAndPlay = function (frame, scene) { notImplemented(); };
+MovieClip.prototype.gotoAndStop = function (frame, scene) { notImplemented(); };
 
-p.addFrameScript = function () {
+MovieClip.prototype.addFrameScript = function () {
   arguments[1].call(this);
 };
 
-p.prevScene = function () { notImplemented(); };
-p.nextScene = function () { notImplemented(); };
+MovieClip.prototype.prevScene = function () { notImplemented(); };
+MovieClip.prototype.nextScene = function () { notImplemented(); };
 
 natives.MovieClipClass = function (scope, instance, baseClass) {
   var c = new Class("MovieClip", MovieClip, Class.passthroughCallable(MovieClip));
   c.baseClass = baseClass;
-  c.nativeMethods = p;
+  c.nativeMethods = MovieClip.prototype;
   c.makeSimpleNativeAccessors("get", ["currentFrame",
                                       "framesLoaded",
                                       "totalFrames",

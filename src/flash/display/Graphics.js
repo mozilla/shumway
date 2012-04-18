@@ -2,16 +2,15 @@ function Graphics() {
   this.statements = [];
 }
 
-var p = Graphics.prototype;
-p.clear = function () {
+Graphics.prototype.clear = function () {
   this.statements = [];
 }
 
-p.beginFill = function (color, alpha) {
+Graphics.prototype.beginFill = function (color, alpha) {
   this.statements.push('fillStyle=' + toStringRgba(color));
 };
 
-p.beginGradientFill = function (type,
+Graphics.prototype.beginGradientFill = function (type,
                                 colors,
                                 alphas,
                                 ratios,
@@ -22,9 +21,11 @@ p.beginGradientFill = function (type,
   notImplemented();
 };
 
-p.beginBitmapFill = function (bitmap, matrix, repeat, smooth) { notImplemented(); };
-p.beginShaderFill = function (shader, matrix) { notImplemented(); };
-p.lineGradientStyle = function (type,
+Graphics.prototype.beginBitmapFill = function (bitmap, matrix, repeat, smooth) {
+  notImplemented();
+};
+Graphics.prototype.beginShaderFill = function (shader, matrix) { notImplemented(); };
+Graphics.prototype.lineGradientStyle = function (type,
                                 colors,
                                 alphas,
                                 ratios,
@@ -35,7 +36,7 @@ p.lineGradientStyle = function (type,
   notImplemented();
 };
 
-p.lineStyle = function (thickness,
+Graphics.prototype.lineStyle = function (thickness,
                         color,
                         alpha,
                         pixelHinting,
@@ -51,51 +52,57 @@ p.lineStyle = function (thickness,
   s.push('miterLimit=' + miterLimit);
 };
 
-p.drawRect = function (x, y, width, height) {
+Graphics.prototype.drawRect = function (x, y, width, height) {
   this.statements.push('drawRect(' + [x, y, width, height].join(',') + ')');
 };
 
-p.drawRoundRect = function (x, y, width, height, ellipseWidth, ellipseHeight) {
+Graphics.prototype.drawRoundRect = function (x, y, width, height, ellipseWidth, ellipseHeight) {
   notImplemented();
 };
 
-p.drawRoundRectComplex = function (x, y,
+Graphics.prototype.drawRoundRectComplex = function (x, y,
                                    width, height,
                                    topLeftRadius, topRightRadius,
                                    bottomLeftRadius, bottomRightRadius) {
   notImplemented();
 };
 
-p.moveTo = function (x, y) {
+Graphics.prototype.moveTo = function (x, y) {
   this.statements.push('moveTo(' + x + ',' + y + ')');
 };
 
-p.lineTo = function (x, y) {
+Graphics.prototype.lineTo = function (x, y) {
   this.statements.push('lineTo(' + x + ',' + y + ')');
 };
 
-p.curveTo = function (controlX, controlY, anchorX, anchorY) {
+Graphics.prototype.curveTo = function (controlX, controlY, anchorX, anchorY) {
   this.statements.push('quadraticCurveTo(' + slice.call(arguments).join(',') + ')');
 };
 
-p.cubicCurveTo = function (controlX1, controlY1, controlX2, controlY2, anchorX, anchorY) {
+Graphics.prototype.cubicCurveTo = function (controlX1, controlY1,
+                                            controlX2, controlY2,
+                                            anchorX, anchorY) {
   this.statements.push('bezierCurveTo(' + slice.call(arguments).join(',') + ')');
 };
 
-p.endFill = function () {
+Graphics.prototype.endFill = function () {
   this.statements.push('fill()');
   this.statements.push('stroke()');
 };
 
-p.copyFrom = function (sourceGraphics) { notImplemented(); };
-p.lineBitmapStyle = function (bitmap, matrix, repeat, smooth) { notImplemented(); };
-p.lineShaderStyle = function (shader, matrix) { notImplemented(); };
-p.drawPath = function (commands, data, winding) { notImplemented(); };
-p.drawTriangles = function (vertices, indices, uvtData, culling) { notImplemented(); };
+Graphics.prototype.copyFrom = function (sourceGraphics) { notImplemented(); };
+Graphics.prototype.lineBitmapStyle = function (bitmap, matrix, repeat, smooth) {
+  notImplemented();
+};
+Graphics.prototype.lineShaderStyle = function (shader, matrix) { notImplemented(); };
+Graphics.prototype.drawPath = function (commands, data, winding) { notImplemented(); };
+Graphics.prototype.drawTriangles = function (vertices, indices, uvtData, culling) {
+  notImplemented();
+};
 
 natives.GraphicsClass = function (scope, instance, baseClass) {
   var c = new Class("Graphics", Graphics, Class.passthroughCallable(Graphics));
   c.baseClass = baseClass;
-  c.nativeMethods = p;
+  c.nativeMethods = Graphics.prototype;
   return c;
 };

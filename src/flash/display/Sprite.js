@@ -7,17 +7,19 @@ function Sprite() {
   this.soundTransform = null;
 }
 
-var p = Sprite.prototype = new DisplayObjectContainer;
-p.startDrag = function (lockCenter, bounds) { notImplemented(); };
-p.stopDrag = function () { notImplemented(); };
-p.startTouchDrag = function (touchPointID, lockCenter, bounds) { notImplemented(); };
-p.stopTouchDrag = function () { notImplemented(); };
-p.constructChildren = function () { notImplemented(); };
+Sprite.prototype = new DisplayObjectContainer;
+Sprite.prototype.startDrag = function (lockCenter, bounds) { notImplemented(); };
+Sprite.prototype.stopDrag = function () { notImplemented(); };
+Sprite.prototype.startTouchDrag = function (touchPointID, lockCenter, bounds) {
+  notImplemented();
+};
+Sprite.prototype.stopTouchDrag = function () { notImplemented(); };
+Sprite.prototype.constructChildren = function () { notImplemented(); };
 
 natives.SpriteClass = function (scope, instance, baseClass) {
   var c = new Class("Sprite", Sprite, Class.passthroughCallable(Sprite));
   c.baseClass = baseClass;
-  c.nativeMethods = p;
+  c.nativeMethods = Sprite.prototype;
 
   c.nativeMethods["get graphics"] = function () {
     if (!this.graphics) {

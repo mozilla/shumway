@@ -5,21 +5,25 @@ function DisplayObjectContainer() {
   this.mouseChildren = false;
 }
 
-var p = DisplayObjectContainer.prototype = new InteractiveObject;
-p.addChild = function (child) { notImplemented(); };
-p.addChildAt = function (child, index) { notImplemented(); };
-p.removeChild = function (child) { notImplemented(); };
-p.removeChildAt = function (index) { notImplemented(); };
-p.getChildIndex = function (child) { notImplemented(); };
-p.setChildIndex = function (child, index) { notImplemented(); };
-p.getChildAt = function (index) { notImplemented(); };
-p.getChildByName = function (name) { notImplemented(); };
-p.contains = function (child) { notImplemented(); };
-p.swapChildrenAt = function (index1, index2) { notImplemented(); };
-p.swapChildren = function (child1, child2) { notImplemented(); };
-p.removeChildren = function (beginIndex, endIndex) { notImplemented(); };
-p.getObjectsUnderPoint = function (point) { notImplemented(); };
-p.areInaccessibleObjectsUnderPoint = function (point) { notImplemented(); };
+DisplayObjectContainer.prototype = new InteractiveObject;
+DisplayObjectContainer.prototype.addChild = function (child) { notImplemented(); };
+DisplayObjectContainer.prototype.addChildAt = function (child, index) { notImplemented(); };
+DisplayObjectContainer.prototype.removeChild = function (child) { notImplemented(); };
+DisplayObjectContainer.prototype.removeChildAt = function (index) { notImplemented(); };
+DisplayObjectContainer.prototype.getChildIndex = function (child) { notImplemented(); };
+DisplayObjectContainer.prototype.setChildIndex = function (child, index) { notImplemented(); };
+DisplayObjectContainer.prototype.getChildAt = function (index) { notImplemented(); };
+DisplayObjectContainer.prototype.getChildByName = function (name) { notImplemented(); };
+DisplayObjectContainer.prototype.contains = function (child) { notImplemented(); };
+DisplayObjectContainer.prototype.swapChildrenAt = function (index1, index2) { notImplemented(); };
+DisplayObjectContainer.prototype.swapChildren = function (child1, child2) { notImplemented(); };
+DisplayObjectContainer.prototype.removeChildren = function (beginIndex, endIndex) {
+  notImplemented();
+};
+DisplayObjectContainer.prototype.getObjectsUnderPoint = function (point) { notImplemented(); };
+DisplayObjectContainer.prototype.areInaccessibleObjectsUnderPoint = function (point) {
+  notImplemented();
+};
 
 natives.ContainerClass = function (scope, instance, baseClass) {
   var c = new Class(
@@ -28,7 +32,7 @@ natives.ContainerClass = function (scope, instance, baseClass) {
     Class.passthroughCallable(DisplayObjectContainer)
   );
   c.baseClass = baseClass;
-  c.nativeMethods = p;
+  c.nativeMethods = DisplayObjectContainer.prototype;
   c.makeSimpleNativeAccessors("get", ["numChildren",
                                       "textSnapshot",
                                       "dropTarget",

@@ -9,8 +9,8 @@ function InteractiveObject() {
   this.contextMenu = null;
 }
 
-var p = InteractiveObject.prototype = new DisplayObject;
-p.requestSoftKeyboard = function () { notImplemented(); };
+InteractiveObject.prototype = new DisplayObject;
+InteractiveObject.prototype.requestSoftKeyboard = function () { notImplemented(); };
 
 natives.InteractiveObjectClass = function (scope, instance, baseClass) {
   var c = new Class(
@@ -19,8 +19,7 @@ natives.InteractiveObjectClass = function (scope, instance, baseClass) {
     Class.passthroughCallable(InteractiveObject)
   );
   c.baseClass = baseClass;
-
-  c.nativeMethods = p;
+  c.nativeMethods = InteractiveObject.prototype;
   c.makeSimpleNativeAccessors("get", ["tabEnabled",
                                       "tabIndex",
                                       "focusRect",

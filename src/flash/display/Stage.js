@@ -1,15 +1,15 @@
 function Stage() { }
 Stage.kInvalidParamError = 2004;
 
-var p = Stage.prototype = new DisplayObjectContainer;
-p.invalidate = function() { notImplemented(); }
-p.isFocusInaccessible = function() { notImplemented(); }
-p.set_displayState = function(value) { notImplemented(); }
-p.get_simulatedFullScreenWidth = function() { notImplemented(); }
-p.get_simulatedFullScreenHeight = function() { notImplemented(); }
-p.removeChildAt = function(index) { notImplemented(); }
-p.swapChildrenAt = function(index1, index2) { notImplemented(); }
-p.requireOwnerPermissions = function() { notImplemented(); }
+Stage.prototype = new DisplayObjectContainer;
+Stage.prototype.invalidate = function () { notImplemented(); }
+Stage.prototype.isFocusInaccessible = function () { notImplemented(); }
+Stage.prototype.set_displayState = function (value) { notImplemented(); }
+Stage.prototype.get_simulatedFullScreenWidth = function () { notImplemented(); }
+Stage.prototype.get_simulatedFullScreenHeight = function () { notImplemented(); }
+Stage.prototype.removeChildAt = function (index) { notImplemented(); }
+Stage.prototype.swapChildrenAt = function (index1, index2) { notImplemented(); }
+Stage.prototype.requireOwnerPermissions = function () { notImplemented(); }
 
 natives.StageClass = function (scope, instance, baseClass) {
   var c = new Class("Stage", Stage, Class.passthroughCallable(Stage));

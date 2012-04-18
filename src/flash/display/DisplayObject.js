@@ -31,19 +31,21 @@ function DisplayObject() {
   this.accessibilityProperties = null;
 }
 
-var p = DisplayObject.prototype = new EventDispatcher;
-p.globalToLocal = function (point) { notImplemented(); };
-p.localToGlobal = function (point) { notImplemented(); };
-p.getBounds = function (targetCoordinateSpace) { notImplemented(); };
-p.getRect = function (targetCoordinateSpace) { notImplemented(); };
-p._hitTest = function (use_xy, x, y, useShape, hitTestObject) { notImplemented(); };
-p.globalToLocal3D = function (point) { notImplemented(); };
-p.local3DToGlobal = function (point3d) { notImplemented(); };
+DisplayObject.prototype = new EventDispatcher;
+DisplayObject.prototype.globalToLocal = function (point) { notImplemented(); };
+DisplayObject.prototype.localToGlobal = function (point) { notImplemented(); };
+DisplayObject.prototype.getBounds = function (targetCoordinateSpace) { notImplemented(); };
+DisplayObject.prototype.getRect = function (targetCoordinateSpace) { notImplemented(); };
+DisplayObject.prototype._hitTest = function (use_xy, x, y, useShape, hitTestObject) {
+  notImplemented();
+};
+DisplayObject.prototype.globalToLocal3D = function (point) { notImplemented(); };
+DisplayObject.prototype.local3DToGlobal = function (point3d) { notImplemented(); };
 
 natives.DisplayObjectClass = function (scope, instance, baseClass) {
   var c = new Class("DisplayObject", DisplayObject, Class.passthroughCallable(DisplayObject));
   c.baseClass = baseClass;
-  c.nativeMethods = p;
+  c.nativeMethods = DisplayObject.prototype;
   c.makeSimpleNativeAccessors("get", ["root",
                                       "stage",
                                       "name",
