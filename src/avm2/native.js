@@ -604,6 +604,7 @@ const natives = (function () {
      * Shell toplevel.
      */
     print: constant(print),
+    notImplemented: constant(notImplemented),
 
     /**
      * To prevent unbounded recursion.
