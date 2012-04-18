@@ -1,6 +1,5 @@
 var traceInterpreter = options.register(new Option("traceInterpreter", "ti", 0, "trace interpreter execution"));
 
-
 var Interpreter = (function () {
 
   const Operator = Compiler.Operator;
