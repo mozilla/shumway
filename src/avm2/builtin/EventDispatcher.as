@@ -10,13 +10,13 @@ package flash.events {
 
     public native function addEventListener(type:String, listener:Function, useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false):void;
     public native function removeEventListener(type:String, listener:Function, useCapture:Boolean=false):void;
-    public function dispatchEvent(event:Event):Boolean { notImplemented("dispatchEvent"); }
+    public native function dispatchEvent(event:Event):Boolean;
     public native function hasEventListener(type:String):Boolean;
     public native function willTrigger(type:String):Boolean;
     private native function dispatchEventFunction(event:Event):Boolean;
-    private function dispatchHttpStatusEvent(status:uint, responseLocation:String, headers:String):void { notImplemented("dispatchHttpStatusEvent"); }
+    private native function dispatchHttpStatusEvent(status:uint, responseLocation:String, headers:String):void;
 
-    public function toString():String { notImplemented("toString"); }
+    public native function toString():String;
   }
 
 }

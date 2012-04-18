@@ -15,12 +15,17 @@ EventDispatcher.prototype.addEventListener = function (type,
 EventDispatcher.prototype.removeEventListener = function (type, listener, useCapture) {
   notImplemented();
 };
-
+EventDispatcher.prototype.dispatchEvent = function (event) {
+  notImplemented();
+};
 EventDispatcher.prototype.hasEventListener = function (type) {
   notImplemented();
 };
 EventDispatcher.prototype.willTrigger = function (type) { notImplemented(); };
 EventDispatcher.prototype.dispatchEventFunction = function (event) {
+  notImplemented();
+};
+EventDispatcher.prototype.dispatchHttpStatusEvent = function (status, responseLocation, headers) {
   notImplemented();
 };
 
