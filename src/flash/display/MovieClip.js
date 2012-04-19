@@ -1,4 +1,5 @@
 function MovieClip() {
+  this.frameScripts = {};
   this.currentFrame = 0;
   this.framesLoaded = 0;
   this.totalFrames = 0;
@@ -12,15 +13,48 @@ function MovieClip() {
 }
 
 MovieClip.prototype = new Sprite;
-MovieClip.prototype.play = function () { notImplemented(); };
-MovieClip.prototype.stop = function () { notImplemented(); };
-MovieClip.prototype.nextFrame = function () { notImplemented(); };
-MovieClip.prototype.prevFrame = function () { notImplemented(); };
-MovieClip.prototype.gotoAndPlay = function (frame, scene) { notImplemented(); };
-MovieClip.prototype.gotoAndStop = function (frame, scene) { notImplemented(); };
+
+MovieClip.prototype.play = function () {
+  this.isPlaying = true;
+};
+
+MovieClip.prototype.stop = function () {
+  this.isPlaying = false;
+};
+
+MovieClip.prototype.nextFrame = function () {
+  this.gotoFrame(this.currentFrame + 1);
+};
+
+MovieClip.prototype.prevFrame = function () {
+  this.gotoFrame(this.currentFrame - 1);
+};
+
+MovieClip.prototype.gotoFrame = function (frame, scene) {
+  if (frame > this.framesLoaded) {
+    frame = this.framesLoaded;
+  } else if (frame < 1) {
+    frame = 1;
+  }
+  this.currentFrame = frame;
+  if (this.frameScripts[frame - 1])
+    this.frameScripts[frame].call(this);
+};
+
+MovieClip.prototype.gotoAndPlay = function (frame, scene) {
+  this.isPlaying = true;
+  this.gotoFrame(frame, scene);
+};
+
+MovieClip.prototype.gotoAndStop = function (frame, scene) {
+  this.isPlaying = false;
+  this.gotoFrame(frame, scene);
+};
 
 MovieClip.prototype.addFrameScript = function () {
-  arguments[1].call(this);
+  for (var i = 0, n = arguments.length; i < n; i += 2) {
+    this.frameScripts[arguments[i]] = arguments[i + 1];
+  }
 };
 
 MovieClip.prototype.prevScene = function () { notImplemented(); };
