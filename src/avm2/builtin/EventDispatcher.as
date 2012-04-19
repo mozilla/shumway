@@ -16,7 +16,9 @@ package flash.events {
     private native function dispatchEventFunction(event:Event):Boolean;
     private native function dispatchHttpStatusEvent(status:uint, responseLocation:String, headers:String):void;
 
-    public native function toString():String;
+    public function toString():String {
+      return Object.prototype.toString.call(this);
+    }
   }
 
 }
