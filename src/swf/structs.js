@@ -141,10 +141,14 @@ var ACTION_DEFINE_FUNCTION2 = {
   preloadThis: 'flags&1',
   preloadGlobal: 'flags>>8&1',
   params: {
-    $: STRING(0),
+    $: {
+      register: UI8,
+      paramName: STRING(0)
+    },
     count: 'paramCount'
   },
-  length: UI16
+  $$length:UI16,
+  actions: SUBACTIONS('length')
 };
 var ACTION_TRY = {
   $$reserved: UB(5),
@@ -160,10 +164,11 @@ var ACTION_TRY = {
   ]]
 };
 var ACTION_WITH = {
-  length: UI16
+  $$length:UI16,
+  actions: SUBACTIONS('length')
 };
 var ACTION_PUSH = {
-  $0: {
+  values: {
     $: {
       $type: UI8,
       value: ['type', {
@@ -198,7 +203,8 @@ var ACTION_DEFINE_FUNCTION = {
     $: STRING(0),
     count: 'paramCount'
   },
-  length: UI16
+  $$length:UI16,
+  actions: SUBACTIONS('length')
 };
 var ACTION_IF = {
   offset: SI16
@@ -208,6 +214,9 @@ var ACTION_GOTO_FRAME2 = {
   $hasSceneBias: UB(1),
   play: UB(1),
   sceneBias: ['hasSceneBias', [UI16]]
+};
+var ACTION_WAIT_FOR_FRAME2 = {
+  skip: UI8
 };
 var ACTION = {
   $action: UI8,
@@ -222,6 +231,7 @@ var ACTION = {
       138: ACTION_WAIT_FOR_FRAME,
       139: ACTION_SET_TARGET,
       140: ACTION_GOTO_LABEL,
+      141: ACTION_WAIT_FOR_FRAME2,
       142: ACTION_DEFINE_FUNCTION2,
       143: ACTION_TRY,
       148: ACTION_WITH,
@@ -256,16 +266,14 @@ var EVENT = {
       initialize: 'flags>>9&1',
       data: 'flags>>8&1',
       construct: ['version>=7', ['flags>>18&1', '0']],
-      keyPress: 'flags>>17&1',
+      $keyPress: 'flags>>17&1',
       dragOut: 'flags>>16&1'
     }
   ]],
   $1: ['!eoe', [{
     $length: UI32,
-    actions: {
-      $: ACTION,
-      length: 'length'
-    }
+    keyCode: ['keyPress', [UI8, null]],
+    actions: SUBACTIONS('length - (keyPress ? 1 : 0)')
   }]]
 };
 var FILTER_GLOW = {

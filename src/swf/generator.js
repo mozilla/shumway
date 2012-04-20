@@ -118,6 +118,11 @@ function generateParser(struct) {
           segment.push(type);
           break;
         case 'object':
+          if (type instanceof ExternalCall) {
+            segment.push(type.fn + '(' + type.args + ')');
+            break;
+          }
+
           var shared = segment.splice(0).join('');
 
           function branch(struct) {

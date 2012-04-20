@@ -70,6 +70,14 @@ function cast(tags, dictionary, declare) {
         pframe.abcBlocks = [];
       pframe.abcBlocks.push(tag.data);
       break;
+    case 'actions':
+      if (!pframe.initActions)
+        pframe.initActions = {};
+      if (tag.spriteId)
+        pframe.initActions[tag.spriteId] = tag.actions;
+      else
+        pframe.actions = tag.actions;
+      break;
     case 'background':
       pframe.bgcolor = toStringRgba(tag.color);
       break;
@@ -89,7 +97,7 @@ function cast(tags, dictionary, declare) {
       var entry = { };
       if (tag.place) {
         var obj = dictionary[tag.objId];
-        assert(obj, 'undefined object', 'place');
+        assert(obj, 'undefined object' + tag.objId + " ," + tag.place, 'place');
         entry.id = obj.id;
       }
       if (tag.move)

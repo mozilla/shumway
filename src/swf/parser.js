@@ -69,10 +69,27 @@ var tagHandler = {
 for (var tag in tagHandler) {
   var handler = tagHandler[tag];
   if (typeof handler === 'object')
-    tagHandler[tag] = generateParser(handler, 'version', 'tagCode');
+    tagHandler[tag] = generateParser(handler, 'version', 'tagCode', 'actionreader');
 }
 
 var readHeader = generateParser(MOVIE_HEADER);
+var readAction = generateParser(ACTION, 'version', 'actionreader');
+
+function readActions(context, stream, version) {
+  var bytes = stream.bytes;
+  var actions = [];
+  while (stream.pos < stream.end) {
+    var action = readAction(bytes, stream, null, version, function(length) {
+      var actionsStream = stream.substream(stream.pos,
+        length ? stream.pos + length : stream.end);
+      var actions = readActions(context, actionsStream);
+      stream.pos = actionsStream.pos;
+      return actions;
+    });
+    actions.push(action);
+  }
+  return actions;
+}
 
 function readTags(context, stream, version, onprogress) {
   var tags = context.tags;
@@ -97,7 +114,13 @@ function readTags(context, stream, version, onprogress) {
     } else {
       var handler = tagHandler[tagCode];
       if (handler)
-        handler(subbytes, substream, tag, version, tagCode);
+        handler(subbytes, substream, tag, version, tagCode, function(length) {
+          var actionsStream = substream.substream(substream.pos,
+            length ? substream.pos + length : substream.end);
+          var actions = readActions(context, actionsStream, version);
+          substream.pos = actionsStream.pos;
+          return actions;
+        });
     }
 
     tags.push(tag);
