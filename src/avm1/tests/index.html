@@ -1,0 +1,27 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests for AVM1</title>
+  <link rel="stylesheet" href="../../../utils/mocha/mocha.css" />
+  <script src="../../../inspector/jquery.min.js"></script>
+  <script src="../../../utils/expect/expect.js"></script>
+  <script src="../../../utils/mocha/mocha.js"></script>
+  <script>mocha.setup('bdd')</script>
+
+  <script src="../stream.js"></script>
+  <script src="../interpreter.js"></script>
+
+  <script src="test.stream.js"></script>
+  <script src="test.interpreter.js"></script>
+
+  <script>
+    $(function(){
+      mocha
+        .run()
+    })
+  </script>
+</head>
+<body>
+  <div id="mocha"></div>
+</body>
+</html>
