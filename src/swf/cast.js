@@ -71,10 +71,10 @@ function cast(tags, dictionary, declare) {
       pframe.abcBlocks.push(tag.data);
       break;
     case 'actions':
-      if (!pframe.initActions)
-        pframe.initActions = {};
+      if (!pframe.initActionsData)
+        pframe.initActionsData = {};
       if (tag.spriteId)
-        pframe.initActions[tag.spriteId] = tag.actions;
+        pframe.initActionsData[tag.spriteId] = tag.actionsData;
       else
         pframe.actionsData = tag.actionsData;
       break;
