@@ -31,3 +31,12 @@ var UB      = createFlexibleType(15);
 var FB      = createFlexibleType(16);
 var STRING  = createFlexibleType(17);
 var BINARY  = createFlexibleType(18);
+
+function ExternalCall(fn, args) {
+  this.fn = fn;
+  this.args = args;
+}
+
+var SUBACTIONS = function(args) {
+  return new ExternalCall('actionreader', args);
+};

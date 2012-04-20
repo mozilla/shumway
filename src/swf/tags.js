@@ -241,6 +241,7 @@ var DO_ABC = {
   data: BINARY(0)
 };
 var DO_ACTION = {
+  type: '"actions"',
   spriteId: ['tagCode===59', [UI16]],
   actions: {
     $: ACTION,
