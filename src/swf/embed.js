@@ -139,6 +139,13 @@ SWF.embed = function(file, container, options) {
             }
           }
         }
+        /*
+        if (obj.actionsData) {
+          // TODO is it the right "when the ShowFrame tag is encountered" place?
+          var avm1Context = { swfVersion: 11 };
+          executeActions(obj.actionsData, avm1Context);
+        }
+        */
 
         pframes.push(obj);
         if (!plays) {
