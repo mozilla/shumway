@@ -99,141 +99,6 @@ var MOVIE_HEADER = {
   frameRate: UI8,
   frameCount: UI16
 };
-var ACTION_GOTO_FRAME = {
-  frameNum: UI16
-};
-var ACTION_GET_URL = {
-  url: STRING(0),
-  target: STRING(0)
-};
-var ACTION_STORE_REGISTER = {
-  register: UI8
-};
-var ACTION_CONSTANT_POOL = {
-  $$count: UI16,
-  constants: {
-    $: STRING(0),
-    count: 'count'
-  }
-};
-var ACTION_WAIT_FOR_FRAME = {
-  frameNum: UI16,
-  skip: UI8
-};
-var ACTION_SET_TARGET = {
-  target: STRING(0)
-};
-var ACTION_GOTO_LABEL = {
-  label: STRING(0)
-};
-var ACTION_DEFINE_FUNCTION2 = {
-  name: STRING(0),
-  $$paramCount: UI16,
-  $regCount: UI8,
-  $$flags: UI16,
-  preloadParent: 'flags>>7&1',
-  preloadRoot: 'flags>>6&1',
-  suppressSuper: 'flags>>5&1',
-  preloadSuper: 'flags>>4&1',
-  suppressArguments: 'flags>>3&1',
-  preloadArguments: 'flags>>2&1',
-  suppressThis: 'flags>>1&1',
-  preloadThis: 'flags&1',
-  preloadGlobal: 'flags>>8&1',
-  params: {
-    $: STRING(0),
-    count: 'paramCount'
-  },
-  length: UI16
-};
-var ACTION_TRY = {
-  $$reserved: UB(5),
-  $catchInRegister: UB(1),
-  hasFinally: UB(1),
-  hasCatch: UB(1),
-  trySize: UI16,
-  catchSize: UI16,
-  finallySize: UI16,
-  $0: ['catchInRegister', [
-    { catchRegister: UI8 },
-    { catchName: STRING(0) }
-  ]]
-};
-var ACTION_WITH = {
-  length: UI16
-};
-var ACTION_PUSH = {
-  $0: {
-    $: {
-      $type: UI8,
-      value: ['type', {
-        0: STRING(0),
-        1: FLOAT,
-        2: 'null',
-        3: 'undefined',
-        4: UI8,
-        5: BOOL,
-        6: DOUBLE,
-        7: SI32,
-        8: UI8,
-        9: UI16
-      }]
-    },
-    length: 'length'
-  }
-};
-var ACTION_JUMP = {
-  offset: SI16
-};
-var ACTION_GET_URL2 = {
-  sendVarsMethod: UB(2),
-  $$reserved: UB(4),
-  loadTarget: UB(1),
-  loadVariables: UB(1)
-};
-var ACTION_DEFINE_FUNCTION = {
-  name: STRING(0),
-  $$paramCount: UI16,
-  params: {
-    $: STRING(0),
-    count: 'paramCount'
-  },
-  length: UI16
-};
-var ACTION_IF = {
-  offset: SI16
-};
-var ACTION_GOTO_FRAME2 = {
-  $$reserved: UB(6),
-  $hasSceneBias: UB(1),
-  play: UB(1),
-  sceneBias: ['hasSceneBias', [UI16]]
-};
-var ACTION = {
-  $action: UI8,
-  $hasData: 'action>>7',
-  $0: ['hasData', [{
-    $$length: UI16,
-    $1: ['action', {
-      129: ACTION_GOTO_FRAME,
-      131: ACTION_GET_URL,
-      135: ACTION_STORE_REGISTER,
-      136: ACTION_CONSTANT_POOL,
-      138: ACTION_WAIT_FOR_FRAME,
-      139: ACTION_SET_TARGET,
-      140: ACTION_GOTO_LABEL,
-      142: ACTION_DEFINE_FUNCTION2,
-      143: ACTION_TRY,
-      148: ACTION_WITH,
-      150: ACTION_PUSH,
-      153: ACTION_JUMP,
-      154: ACTION_GET_URL2,
-      155: ACTION_DEFINE_FUNCTION,
-      157: ACTION_IF,
-      unknown: BINARY('length')
-    }]
-  }]]
-};
 var EVENT = {
   $$flags: ['version>=6', [UI32, UI16]],
   $eoe: '!flags',
@@ -256,16 +121,14 @@ var EVENT = {
       initialize: 'flags>>9&1',
       data: 'flags>>8&1',
       construct: ['version>=7', ['flags>>18&1', '0']],
-      keyPress: 'flags>>17&1',
+      $keyPress: 'flags>>17&1',
       dragOut: 'flags>>16&1'
     }
   ]],
   $1: ['!eoe', [{
     $length: UI32,
-    actions: {
-      $: ACTION,
-      length: 'length'
-    }
+    keyCode: ['keyPress', [UI8, null]],
+    actionsData: BINARY('length - (keyPress ? 1 : 0)')
   }]]
 };
 var FILTER_GLOW = {
@@ -656,9 +519,6 @@ var CONDITION = {
     push: UB(1),
     leave: UB(1),
     enter: UB(1),
-    actions: {
-      $: ACTION,
-      condition: 'action'
-    }
+    data: BINARY(0)
   }]]
 };

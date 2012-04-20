@@ -241,11 +241,9 @@ var DO_ABC = {
   data: BINARY(0)
 };
 var DO_ACTION = {
+  type: '"actions"',
   spriteId: ['tagCode===59', [UI16]],
-  actions: {
-    $: ACTION,
-    condition: 'action'
-  }
+  actionsData: BINARY(0)
 };
 var FILE_ATTRIBUTES = {
   $$reserved: UB(1),
