@@ -70,6 +70,14 @@ function cast(tags, dictionary, declare) {
         pframe.abcBlocks = [];
       pframe.abcBlocks.push(tag.data);
       break;
+    case 'actions':
+      if (!pframe.initActionsData)
+        pframe.initActionsData = {};
+      if (tag.spriteId)
+        pframe.initActionsData[tag.spriteId] = tag.actionsData;
+      else
+        pframe.actionsData = tag.actionsData;
+      break;
     case 'background':
       pframe.bgcolor = toStringRgba(tag.color);
       break;
