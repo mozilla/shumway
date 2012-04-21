@@ -142,8 +142,11 @@ SWF.embed = function(file, container, options) {
         /*
         if (obj.actionsData) {
           // TODO is it the right "when the ShowFrame tag is encountered" place?
-          var as2Context = new AS2Context(11); // shall be static for flash instance
-          executeActions(obj.actionsData, as2Context);
+          var swfVersion = 11;
+          var as2Context = new AS2Context(swfVersion); // attached to the document
+          var timelineObj = {}; // attached to the timeline
+          timelineObj['this'] = timelineObj;
+          executeActions(obj.actionsData, as2Context, as2Context.initialScope.create(timelineObj));
         }
         */
 

@@ -1,32 +1,35 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-/*
-var context_sample = {
-  gotoFrame: function(frameNumber) {},
-  swfVersion: 3
-}
-*/
-
-function isMovieClip(obj) {
-  return obj instanceof MovieClip;
-}
-
-function executeActions(actionsData, context, activation) {
+function executeActions(actionsData, context, scopeContainer, registers) {
   function defineFunction(functionName, parametersNames, registerAllocation, actionsData) {
-    functions[functionName] = {
+    scope[functionName] = {
       params: parametersNames,
       registerAllocation: registerAllocation || [],
       actionsData: actionsData
     };
   }
+  function findInScopes(name, location) {
+    for (var p = scopeContainer; p; p = p.next) {
+      if (name in p.scope) {
+        if (location) {
+          location.scopeContainer = p;
+          location.scope = p.scope;
+        }
+        return p.scope[name];
+      }
+    }
+    return;
+  }
   function getFunction(functionName) {
-    var fn = functions[functionName];
+    var fn = scope[functionName];
     if (!fn) throw 'Function "' + functionName + '" is not found';
     if (!fn.wrapped) {
       fn.wrapped = (function() {
-        var locals = {};
+        var newScope = {};
+        var newScopeContainer = scopeContainer.create(newScope);
+
         for (var i = 0; i < arguments.length || i < fn.params.length; i++)
-          locals[fn.params[i]] = arguments[i];
+          newScope[fn.params[i]] = arguments[i];
         var regs = [];
         for (var i = 0; i < fn.registerAllocation.length; i++) {
           var registerAllocation = fn.registerAllocation[i];
@@ -38,32 +41,30 @@ function executeActions(actionsData, context, activation) {
             // TODO
           }
         }
-        return executeActions(fn.actionsData, context, {
-          locals: locals,
-          scope: scope,
-          self: this,
-          registers: regs
-        });
+
+        return executeActions(fn.actionsData, context, newScopeContainer, regs);
       });
     }
     return fn.wrapped;
   }
   function getObjectByName(objectName) {
+    throw 'Not implemented';
   }
   function deleteProperty(propertyName) {
+    throw 'Not implemented';
   }
   function getVariable(variableName) {
+    throw 'Not implemented';
   }
   function setVariable(variableName, value) {
+    throw 'Not implemented';
   }
 
   var stream = new ActionsDataStream(actionsData, context.swfVersion);
   var _global = context._global;
   var functions = {};
-  var scope = activation && activation.scope ? activation.scope : _global;
   var stack = [];
-  var locals = activation && activation.locals ? activation.locals : {};
-  var registers = activation && activation.registers ? activation.registers : [];
+  var scope = scopeContainer.scope;
   var constantPool;
   var isSwfVersion5 = context.swfVersion >= 5;
   while (stream.position < stream.end) {
@@ -407,11 +408,11 @@ function executeActions(actionsData, context, activation) {
       case 0x3C: // ActionDefineLocal
         var value = stack.pop();
         var name = stack.pop();
-        locals[name] = value;
+        scope[name] = value;
         break;
       case 0x41: // ActionDefineLocal2
         var name = stack.pop();
-        locals[name] = void(0);
+        scope[name] = void(0);
         break;
       case 0x3A: // ActionDelete
         var name = stack.pop();
@@ -426,8 +427,7 @@ function executeActions(actionsData, context, activation) {
         var objectName = stack.pop();
         stack.push(null);
         var obj = getObjectByName(objectName);
-        if (!('slots' in obj)) throw 'Not implemented: slots';
-        for (var name in obj.slots)
+        for (var name in obj)
           stack.push(name);
         break;
       case 0x49: // ActionEquals2
@@ -581,10 +581,9 @@ function executeActions(actionsData, context, activation) {
         stack.push(obj instanceof constr);
         break;
       case 0x55: // ActionEnumerate2
+        var obj = stack.pop();
         stack.push(null);
-        var obj = getObjectByName(objectName);
-        if (!('slots' in obj)) throw 'Not implemented: slots';
-        for (var name in obj.slots)
+        for (var name in obj)
           stack.push(name);
         break;
       case 0x66: // ActionStrictEquals

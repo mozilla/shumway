@@ -1,23 +1,31 @@
 ﻿/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+function isMovieClip(obj) {
+  return obj instanceof MovieClip;
+}
+
+function AS2ScopeListItem(scope, next) {
+  this.scope = scope;
+  this.next = next;
+}
+AS2ScopeListItem.prototype = {
+  create: function (scope) {
+    return new AS2ScopeListItem(scope, this);
+  }
+};
+
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
   this._global = new AS2Globals(this);
+  this.initialScope = new AS2ScopeListItem(this._global, null);
 }
 AS2Context.prototype = Object.create(null, {
 });
 
-function AS2Scope(parent) {
-  this.$parent = parent;
-}
-AS2Scope.prototype = Object.create(null,  {
-});
-
 function AS2Globals(context) {
-  AS2Scope.call(this, null);
   this.$context = context;
 }
-AS2Globals.prototype = Object.create(AS2Scope.prototype, {
+AS2Globals.prototype = Object.create(null, {
   $asfunction: function(link) {
    throw 'Not implemented';
   },
