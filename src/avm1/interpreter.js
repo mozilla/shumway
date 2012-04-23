@@ -1,32 +1,35 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-/*
-var context_sample = {
-  gotoFrame: function(frameNumber) {},
-  swfVersion: 3
-}
-*/
-
-function isMovieClip(obj) {
-  return obj instanceof MovieClip;
-}
-
-function executeActions(actionsData, context, activation) {
+function executeActions(actionsData, context, scopeContainer, registers) {
   function defineFunction(functionName, parametersNames, registerAllocation, actionsData) {
-    functions[functionName] = {
+    scope[functionName] = {
       params: parametersNames,
       registerAllocation: registerAllocation || [],
       actionsData: actionsData
     };
   }
+  function findInScopes(name, location) {
+    for (var p = scopeContainer; p; p = p.next) {
+      if (name in p.scope) {
+        if (location) {
+          location.scopeContainer = p;
+          location.scope = p.scope;
+        }
+        return p.scope[name];
+      }
+    }
+    return;
+  }
   function getFunction(functionName) {
-    var fn = functions[functionName];
+    var fn = scope[functionName];
     if (!fn) throw 'Function "' + functionName + '" is not found';
     if (!fn.wrapped) {
       fn.wrapped = (function() {
-        var params = {};
+        var newScope = {};
+        var newScopeContainer = scopeContainer.create(newScope);
+
         for (var i = 0; i < arguments.length || i < fn.params.length; i++)
-          params[fn.params[i]] = arguments[i];
+          newScope[fn.params[i]] = arguments[i];
         var regs = [];
         for (var i = 0; i < fn.registerAllocation.length; i++) {
           var registerAllocation = fn.registerAllocation[i];
@@ -38,23 +41,30 @@ function executeActions(actionsData, context, activation) {
             // TODO
           }
         }
-        return executeActions(fn.actionsData, context, {
-          parameters: params,
-          registers: regs
-        });
+
+        return executeActions(fn.actionsData, context, newScopeContainer, regs);
       });
     }
     return fn.wrapped;
   }
-  function getContextByName(contextName) {
+  function getObjectByName(objectName) {
+    throw 'Not implemented';
+  }
+  function deleteProperty(propertyName) {
+    throw 'Not implemented';
+  }
+  function getVariable(variableName) {
+    throw 'Not implemented';
+  }
+  function setVariable(variableName, value) {
+    throw 'Not implemented';
   }
 
   var stream = new ActionsDataStream(actionsData, context.swfVersion);
-  var _global = {};
+  var _global = context._global;
   var functions = {};
   var stack = [];
-  var variables = activation && activation.parameters ? activation.parameters : {};
-  var registers = activation && activation.registers ? activation.registers : [];
+  var scope = scopeContainer.scope;
   var constantPool;
   var isSwfVersion5 = context.swfVersion >= 5;
   while (stream.position < stream.end) {
@@ -66,43 +76,43 @@ function executeActions(actionsData, context, activation) {
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
         var frame = stream.readUI16();
-        context.gotoFrame(frame);
+        _global.gotoAndPlay(frame);
         break;
       case 0x83: // ActionGetURL
         var urlString = stream.readString();
         var targetString = stream.readString();
-        context.getURL(urlString, targetString);
+        _global.getURL(urlString, targetString);
         break;
       case 0x04: // ActionNextFrame
-        context.nextFrame();
+        _global.nextFrame();
         break;
       case 0x05: // ActionPreviousFrame
-        context.prevFrame();
+        _global.prevFrame();
         break;
       case 0x06: // ActionPlay
-        context.play();
+        _global.play();
         break;
       case 0x07: // ActionStop
-        context.stop();
+        _global.stop();
         break;
       case 0x08: // ActionToggleQuality
-        context.toggleHighQuality();
+        _global.toggleHighQuality();
         break;
       case 0x09: // ActionStopSounds
-        context.stopAllSounds();
+        _global.stopAllSounds();
         break;
       case 0x8A: // ActionWaitForFrame
         var frame = stream.readUI16();
         var skipCount = stream.readUI8();
-        context.waitForFrame(frame, skipCount);
+        _global.waitForFrame(frame, skipCount);
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
-        context.setTarget(targetName);
+        _global.setTarget(targetName);
         break;
       case 0x8C: // ActionGoToLabel
         var label = stream.readString();
-        context.gotoLabel(label);
+        _global.gotoLabel(label);
         break;
       // SWF 4 actions
       case 0x96: // ActionPush
@@ -205,6 +215,7 @@ function executeActions(actionsData, context, activation) {
         break;
       case 0x14: // ActionStringLength
       case 0x31: // ActionMBStringLength
+        stack.push(_global.length(stack.pop()));
         var sa = '' + stack.pop();
         stack.push(sa.length);
         break;
@@ -214,16 +225,16 @@ function executeActions(actionsData, context, activation) {
         stack.push(b + a);
         break;
       case 0x15: // ActionStringExtract
+        var count = stack.pop();
+        var index = stack.pop();
+        var value = stack.pop();
+        stack.push(_global.substring(value, index, count));
+        break;
       case 0x35: // ActionMBStringExtract
         var count = stack.pop();
         var index = stack.pop();
-        if (index !== (0 | index) || count !== (0 | count)) {
-          // index or count are not integers, the result is the empty string.
-          stack.push('');
-          break;
-        }
-        var sa = '' + stack.pop();
-        stack.push(sa.substr(index, count));
+        var value = stack.pop();
+        stack.push(_global.mbsubstring(value, index, count));
         break;
       case 0x29: // ActionStringLess
         var sa = '' + stack.pop();
@@ -232,16 +243,19 @@ function executeActions(actionsData, context, activation) {
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x18: // ActionToInteger
-        stack.push(0|stack.pop());
+        stack.push(_global.int(stack.pop()));
         break;
       case 0x32: // ActionCharToAscii
+        stack.push(_global.chr(stack.pop()));
+        break;
       case 0x36: // ActionMBCharToAscii
-        var sa = '' + stack.pop();
-        stack.push(sa.charCodeAt(0));
+        stack.push(_global.mbchr(stack.pop()));
         break;
       case 0x33: // ActionAsciiToChar
+        stack.push(_global.ord(stack.pop()));
+        break;
       case 0x37: // ActionMBAsciiToChar
-        stack.push(String.fromCharCode(stack.pop()));
+        stack.push(_global.mbord(stack.pop()));
         break;
       case 0x99: // ActionJump
         var branchOffset = stream.readSI16();
@@ -255,68 +269,67 @@ function executeActions(actionsData, context, activation) {
         break;
       case 0x9E: // ActionCall
         var label = stack.pop();
-        var frame = getContextByName(label).getFrame(label);
-        if (frame)
-          frame.executeActions();
+        _global.call(label);
         break;
       case 0x1C: // ActionGetVariable
         var variableName = '' + stack.pop();
-        stack.push(getContextByName(variableName).getVariable(variableName));
+        stack.push(getVariable(variableName));
         break;
       case 0x1D: // ActionSetVariable
         var value = stack.pop();
         var variableName = '' + stack.pop();
-        getContextByName(variableName).setVariable(variableName, value);
+        setVariable(variableName, value);
         break;
       case 0x9A: // ActionGetURL2
         var flags = stream.readUI8();
-        var sendVarsMethod;
+        var method;
         switch ((flags >> 6) & 3) {
           case 1:
-            sendVarsMethod = 'GET';
+            method = 'GET';
             break;
           case 2:
-            sendVarsMethod  = 'POST';
+            method  = 'POST';
             break;
         }
-        var loadTarget = !!(flags & 2);
-        var loadVariables = !!(flags & 1);
+        var loadMethod = !!(flags & 2) ?
+          (!!(flags & 1) ? _global.loadVariables : _global.loadMovie) :
+          (!!(flags & 1) ? _global.loadVariablesNum : _global.loadMovieNum);
         var target = stack.pop();
         var url = stack.pop();
-        context.getUrl2(target, url, sendVarsMethod,
-          loadTarget, loadVariables);
+        loadMethod.call(_global, url, target, method);
         break;
       case 0x9F: // ActionGotoFrame2
         var flags = stream.readUI8();
-        var sceneBias = !!(flags & 2) ? stream.readUI16() : 0;
-        var play = !!(flags & 1);
-        var label = stack.pop();
-        getContextByName(label).gotoFrame2(label, play, sceneBias);
+        var gotoParams = [stack.pop()];
+        if (!!(flags & 2))
+          gotoParams.push(stream.readUI16());
+        var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
+        gotoMethod.apply(_global, gotoParams);
         break;
       case 0x20: // ActionSetTarget2
         var target = stack.pop();
-        context.setTarget(target);
+        _global.setTarget(target);
         break;
       case 0x22: // ActionGetProperty
         var index = stack.pop();
         var target = stack.pop();
-        stack.push(context.getProperty(target, index));
+        stack.push(_global.getProperty(target, index));
         break;
       case 0x23: // ActionSetProperty
         var value = stack.pop();
         var index = stack.pop();
         var target = stack.pop();
-        context.setProperty(target, index, value);
+        _global.setProperty(target, index, value);
         break;
       case 0x24: // ActionCloneSprite
         var depth = stack.pop();
         var target = stack.pop();
         var source = stack.pop();
-        context.cloneSprite(source, target, depth);
+        _global.duplicateMovieClip(source, target, depth);
         break;
       case 0x25: // ActionRemoveSprite
         var target = stack.pop();
-        context.removeSprite(target);
+        _global.unloadMovie(target);
         break;
       case 0x27: // ActionStartDrag
         var target = stack.pop();
@@ -327,25 +340,30 @@ function executeActions(actionsData, context, activation) {
           y1: stack.pop(),
           x1: stack.pop()
         };
-        context.startDrag(target, lockcenter, constrain);
+        dragParams = [target, lockcenter];
+        if (constrain) {
+          dragParams = dragParams.push(constrain.x1, constrain.y1,
+            constrain.x2, constrain.y2);
+        }
+        _global.startDrag.apply(_global, dragParams);
         break;
       case 0x28: // ActionEndDrag
-        context.endDrag();
+        _global.stopDrag();
         break;
       case 0x8D: // ActionWaitForFrame2
         var skipCount = stream.readUI8();
         var label = stack.pop();
-        context.waitForFrame(label, skipCount);
+        _global.waitForFrame(label, skipCount);
         break;
       case 0x26: // ActionTrace
         var value = stack.pop();
-        context.trace(value);
+        _global.trace(value);
         break;
       case 0x34: // ActionGetTime
-        stack.push(context.getTime());
+        stack.push(_global.getTime());
         break;
       case 0x30: // ActionRandomNumber
-        stack.push(0 | (Math.random() * stack.pop()));
+        stack.push(_global.random(stack.pop()));
         break;
       // SWF 5
       case 0x3D: // ActionCallFunction
@@ -390,11 +408,11 @@ function executeActions(actionsData, context, activation) {
       case 0x3C: // ActionDefineLocal
         var value = stack.pop();
         var name = stack.pop();
-        variables[name] = value;
+        scope[name] = value;
         break;
       case 0x41: // ActionDefineLocal2
         var name = stack.pop();
-        variables[name] = void(0);
+        scope[name] = void(0);
         break;
       case 0x3A: // ActionDelete
         var name = stack.pop();
@@ -403,14 +421,13 @@ function executeActions(actionsData, context, activation) {
         break;
       case 0x3B: // ActionDelete2
         var name = stack.pop();
-        context.deleteProperty(name);
+        deleteProperty(name);
         break;
       case 0x46: // ActionEnumerate
         var objectName = stack.pop();
         stack.push(null);
-        var obj = context.getObjectByName(objectName);
-        if (!('slots' in obj)) throw 'Not implemented: slots';
-        for (var name in obj.slots)
+        var obj = getObjectByName(objectName);
+        for (var name in obj)
           stack.push(name);
         break;
       case 0x49: // ActionEquals2
@@ -455,7 +472,7 @@ function executeActions(actionsData, context, activation) {
         break;
       case 0x40: // ActionNewObject
         var objectName = stack.pop();
-        var obj = context.getObjectByName(objectName);
+        var obj = getObjectByName(objectName);
         var numArgs = stack.pop();
         var args = [];
         for (var i = 0; i < numArgs; i++)
@@ -564,10 +581,9 @@ function executeActions(actionsData, context, activation) {
         stack.push(obj instanceof constr);
         break;
       case 0x55: // ActionEnumerate2
+        var obj = stack.pop();
         stack.push(null);
-        var obj = context.getObjectByName(objectName);
-        if (!('slots' in obj)) throw 'Not implemented: slots';
-        for (var name in obj.slots)
+        for (var name in obj)
           stack.push(name);
         break;
       case 0x66: // ActionStrictEquals
