@@ -48,16 +48,54 @@ function executeActions(actionsData, context, scopeContainer, registers) {
     return fn.wrapped;
   }
   function getObjectByName(objectName) {
+    // objectName "can include slash-path or dot-path syntax"
     throw 'Not implemented';
   }
   function deleteProperty(propertyName) {
-    throw 'Not implemented';
+    for (var p = scopeContainer; p; p = p.next) {
+      if (propertyName in p.scope) {
+        delete p.scope[propertyName];
+        break;
+      }
+    }
   }
   function getVariable(variableName) {
-    throw 'Not implemented';
+    // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
+    if (variableName.indexOf(':') >= 0)
+      throw 'Not implemented: getting variable from the different context';
+
+    for (var p = scopeContainer; p; p = p.next) {
+      if (propertyName in p.scope) {
+        return p.scope[propertyName];
+      }
+    }
   }
   function setVariable(variableName, value) {
-    throw 'Not implemented';
+    if (variableName.indexOf(':') >= 0)
+      throw 'Not implemented: setting variable in the different context';
+
+    scope[variableName] = value;
+  }
+  function processWith(obj, withBlock) {
+    var newScopeContainer = scopeContainer.create(obj);
+    executeActions(withBlock, context, newScopeContainer, registers);
+  }
+  function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
+                      tryBlock, catchBlock, finallyBlock) {
+    try {
+      executeActions(tryBlock, context, scopeContainer, registers);
+    } catch (e) {
+      if (!catchBlockFlag)
+        throw e;
+      if (typeof catchTarget === 'string')
+        scope[catchTarget] = e;
+      else
+        registers[catchTarget] = e;
+      executeActions(catchBlock, context, scopeContainer, registers);
+    } finally {
+      if (finallyBlockFlag)
+        executeActions(finallyBlock, context, scopeContainer, registers);
+    }
   }
 
   var stream = new ActionsDataStream(actionsData, context.swfVersion);
@@ -496,7 +534,8 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         var codeSize = stream.readUI16();
         var obj = stack.pop();
         nextPosition += codeSize;
-        throw 'Not implemented'; // TODO
+        processWith(obj, stream.readBytes(codeSize));
+        break;
       case 0x4A: // ActionToNumber
         stack.push(+stack.pop());
         break;
@@ -643,6 +682,43 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         defineFunction(functionName, functionParams, registerAllocation,
           stream.readBytes(codeSize));
         break;
+      case 0x69: // ActionExtends
+        var constrSuper = stack.pop();
+        var constrSub = stack.pop();
+        var obj = Object.create(constrSuper.prototype, {
+          constructor: { value: constrSub, enumerable: false }
+        });
+        constrSub.prototype = obj;
+        break;
+      case 0x2B: // ActionCastOp
+        var obj =  stack.pop();
+        var constr = stack.pop();
+        stack.push(obj instanceof constr ? obj : null);
+        break;
+      case 0x2C: // ActionImplementsOp
+        var constr = stack.pop();
+        var interfacesCount = stack.pop();
+        var interfaces = [];
+        for (var i = 0; i < interfacesCount; i++)
+          interfaces.push(stack.pop());
+        constr.$interfaces = interfaces;
+        break;
+      case 0x8F: // ActionTry
+        var flags = stream.readUI8();
+        var catchIsRegisterFlag = !!(flags & 4);
+        var finallyBlockFlag = !!(flags & 2);
+        var catchBlockFlag = !!(flags & 1);
+        var trySize = stream.readUI16();
+        var catchSize = stream.readU16();
+        var finallySize = stream.readU16();
+        var catchTarget = catchIsRegisterFlag ? stream.readUI8() : stream.readString();
+        nextPosition += trySize + catchSize + finallySize;
+        processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
+          stream.readBytes(trySize), stream.readBytes(catchSize), stream.readBytes(finallySize));
+        break;
+      case 0x2A: // ActionThrow
+        var obj = stack.pop();
+        throw obj;
       case 0: // End of actions
         return;
       default:
