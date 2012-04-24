@@ -22,8 +22,8 @@ function definePrototype(dictionary, obj) {
       var defaultWidth = ctx.measureText(charset).width;
 
       defer(function() {
-        if (ctx.measureText(charset).width === defaultWidth)
-          return true;
+        //if (ctx.measureText(charset).width === defaultWidth)
+        //  return true;
         dictionary[id] = obj;
       });
     }
@@ -39,30 +39,30 @@ function definePrototype(dictionary, obj) {
     break;
   case 'sprite':
     defer(function() {
-      for (var i = 1; i < id; ++i) {
-        if (i in dictionary && dictionary[i] === null)
-          return true;
-      }
+      //for (var i = 1; i < id; ++i) {
+      //  if (i in dictionary && dictionary[i] === null)
+      //    return true;
+      //}
       dictionary[id] = new MovieClipPrototype(obj, dictionary);
     });
     break;
   case 'shape':
   case 'text':
-    var dependencies;
-    if (obj.require)
-      dependencies = obj.require.slice();
+    //var dependencies;
+    //if (obj.require)
+    //  dependencies = obj.require.slice();
 
     defer(function() {
-      if (dependencies) {
-        var i = 0;
-        var objId;
-        while (objId = dependencies[i++]) {
-          assert(objId in dictionary, 'unknown object', 'require');
-          if (dictionary[objId] === null)
-            return true;
-          dependencies.pop();
-        }
-      }
+      //if (dependencies) {
+      //  var i = 0;
+      //  var objId;
+      //  while (objId = dependencies[i++]) {
+      //    assert(objId in dictionary, 'unknown object', 'require');
+      //    if (dictionary[objId] === null)
+      //      return true;
+      //    dependencies.pop();
+      //  }
+      //}
       var proto = create(obj);
       proto.draw = (new Function('d,c,r',
         'with(c){\n' +

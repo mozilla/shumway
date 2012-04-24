@@ -159,6 +159,7 @@ var DEFINE_IMAGE = {
   incomplete: ['tagCode===6', ['1']]
 };
 var DEFINE_JPEG_TABLES = {
+  type: '"image"',
   id: '0',
   imgData: BINARY(0),
   mimeType: '"application/octet-stream"'
