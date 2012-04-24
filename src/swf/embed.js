@@ -146,6 +146,16 @@ SWF.embed = function(file, container, options) {
           var as2Context = new AS2Context(swfVersion); // attached to the document
           var timelineObj = {}; // attached to the timeline
           timelineObj['this'] = timelineObj;
+          as2Context.globals._root = {}; // movie clip
+
+          if (obj.initActionsData) {
+            // initializing all sprites
+            for (var spriteId in obj.initActionsData) {
+              var data = obj.initActionsData[spriteId];
+              executeActions(data, as2Context, as2Context.initialScope.create(timelineObj));
+            }
+          }
+
           executeActions(obj.actionsData, as2Context, as2Context.initialScope.create(timelineObj));
         }
         */

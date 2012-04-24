@@ -16,22 +16,25 @@ AS2ScopeListItem.prototype = {
 
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this._global = new AS2Globals(this);
-  this.initialScope = new AS2ScopeListItem(this._global, null);
+  this.globals = new AS2Globals(this);
+  this.initialScope = new AS2ScopeListItem(this.globals, null);
 }
-AS2Context.prototype = Object.create(null, {
-});
+AS2Context.prototype = {};
 
 function AS2Globals(context) {
   this.$context = context;
+  this._global = this;
 }
-AS2Globals.prototype = Object.create(null, {
+AS2Globals.prototype = {
   $asfunction: function(link) {
    throw 'Not implemented';
   },
   Array: Array,
   call: function(frame) {
     throw 'Not implemented';
+  },
+  ASSetPropFlags: function (obj, children, n, allowFalse) {
+    // TODO
   },
   chr: function(number) {
     return String.fromCharCode(number);
@@ -190,4 +193,4 @@ AS2Globals.prototype = Object.create(null, {
   updateAfterEvent: function() {
     throw 'Not implemented';
   }
-});
+};
