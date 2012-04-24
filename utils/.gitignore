@@ -1,0 +1,7 @@
+*
+!.gitignore
+!mocha
+!expect
+!README.md
+*~
+
