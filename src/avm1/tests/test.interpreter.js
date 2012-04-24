@@ -21,6 +21,13 @@ describe('AVM1 Interpreter', function() {
     }),
 
     it('should execute square.swf code', function() {
+      /*
+        function square (val) {
+	        return val * val;
+        }
+
+        var s = square(3);
+      */
       var actionsData = [142, 19, 0, 115, 113, 117, 97, 114, 101, 0, 1, 0, 2, 42, 0, 1, 118,
         97, 108, 0, 9, 0, 150, 4, 0, 4, 1, 4, 1, 12, 62, 150, 21, 0, 0, 115, 0, 7, 3, 0, 0,
         0, 7, 1, 0, 0, 0, 0, 115, 113, 117, 97, 114, 101, 0, 61, 60, 0];

@@ -1,55 +1,36 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function executeActions(actionsData, context, scopeContainer, registers) {
-  function defineFunction(functionName, parametersNames, registerAllocation, actionsData) {
-    scope[functionName] = {
-      params: parametersNames,
-      registerAllocation: registerAllocation || [],
-      actionsData: actionsData
-    };
-  }
-  function findInScopes(name, location) {
-    for (var p = scopeContainer; p; p = p.next) {
-      if (name in p.scope) {
-        if (location) {
-          location.scopeContainer = p;
-          location.scope = p.scope;
-        }
-        return p.scope[name];
-      }
-    }
-    return;
-  }
-  function getFunction(functionName) {
-    var fn = scope[functionName];
-    if (!fn) throw 'Function "' + functionName + '" is not found';
-    if (!fn.wrapped) {
-      fn.wrapped = (function() {
-        var newScope = {};
-        var newScopeContainer = scopeContainer.create(newScope);
+function executeActions(actionsData, context, scopeContainer,
+                        constantPool, registers) {
 
-        for (var i = 0; i < arguments.length || i < fn.params.length; i++)
-          newScope[fn.params[i]] = arguments[i];
-        var regs = [];
-        for (var i = 0; i < fn.registerAllocation.length; i++) {
-          var registerAllocation = fn.registerAllocation[i];
+  function defineFunction(functionName, parametersNames,
+                          registersAllocation, actionsData) {
+    var fn = (function() {
+      var newScope = {};
+      var newScopeContainer = scopeContainer.create(newScope);
+
+      for (var i = 0; i < arguments.length || i < parametersNames.length; i++)
+        newScope[parametersNames[i]] = arguments[i];
+      var registers = [];
+      if (registersAllocation) {
+        for (var i = 0; i < registersAllocation.length; i++) {
+          var registerAllocation = registersAllocation[i];
           if (!registerAllocation)
             continue;
           if (registerAllocation.type == 'param') {
-            regs[i] = arguments[registerAllocation.index];
+            registers[i] = arguments[registerAllocation.index];
           } else { // var
             // TODO
           }
         }
+      }
 
-        return executeActions(fn.actionsData, context, newScopeContainer, regs);
-      });
-    }
-    return fn.wrapped;
-  }
-  function getObjectByName(objectName) {
-    // objectName "can include slash-path or dot-path syntax"
-    throw 'Not implemented';
+      return executeActions(actionsData, context, newScopeContainer,
+        constantPool, registers);
+    });
+    if (functionName)
+      fn.name = functionName;
+    return fn;
   }
   function deleteProperty(propertyName) {
     for (var p = scopeContainer; p; p = p.next) {
@@ -59,31 +40,82 @@ function executeActions(actionsData, context, scopeContainer, registers) {
       }
     }
   }
+  function resolveVariableName(variableName) {
+    var objPath, name;
+    if (variableName.indexOf(':') >= 0) {
+      // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
+      var parts = variableName.split(':');
+      objPath = parts[0].split('/');
+      objPath[0] = '_root';
+      name = parts[1];
+    } else if (variableName.indexOf('.') >= 0) {
+      // new object reference
+      objPath = m[1].split('.');
+      name = objPath.pop();
+    }
+
+    if(!objPath)
+      return; // local variable
+
+    var p = _global;
+    for (var i = 0; i < objPath.length; i++) {
+      p = p[objPath[i]];
+      if (!p)
+        throw objPath.slice(0, i + 1) + ' is undefined';
+    }
+    return { obj: p, name: name };
+  }
   function getVariable(variableName) {
-    // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
-    if (variableName.indexOf(':') >= 0)
-      throw 'Not implemented: getting variable from the different context';
+    // fast check if variable in the current scope
+    if (variableName in scope) {
+      return scope[variableName];
+    }
+
+    var target = resolveVariableName(variableName);
+    if (target)
+      return target.obj[target.name];
 
     for (var p = scopeContainer; p; p = p.next) {
-      if (propertyName in p.scope) {
-        return p.scope[propertyName];
+      if (variableName in p.scope) {
+        return p.scope[variableName];
       }
     }
   }
   function setVariable(variableName, value) {
-    if (variableName.indexOf(':') >= 0)
-      throw 'Not implemented: setting variable in the different context';
+    // fast check if variable in the current scope
+    if (variableName in scope) {
+      scope[variableName] = value;
+      return;
+    }
+
+    var target = resolveVariableName(variableName);
+    if (target) {
+      target.obj[target.name] = value;
+      return;
+    }
 
     scope[variableName] = value;
   }
+  function getFunction(functionName) {
+    var fn = getVariable(functionName);
+    if (!(fn instanceof Function))
+      throw 'Function "' + functionName + '" is not found';
+    return fn;
+  }
+  function getObjectByName(objectName) {
+    var obj = getVariable(objectName);
+    if (!(obj instanceof Object))
+      throw 'Object "' + objectName + '" is not found';
+    return obj;
+  }
   function processWith(obj, withBlock) {
     var newScopeContainer = scopeContainer.create(obj);
-    executeActions(withBlock, context, newScopeContainer, registers);
+    executeActions(withBlock, context, newScopeContainer, constantPool, registers);
   }
   function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
                       tryBlock, catchBlock, finallyBlock) {
     try {
-      executeActions(tryBlock, context, scopeContainer, registers);
+      executeActions(tryBlock, context, scopeContainer, constantPool, registers);
     } catch (e) {
       if (!catchBlockFlag)
         throw e;
@@ -91,19 +123,18 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         scope[catchTarget] = e;
       else
         registers[catchTarget] = e;
-      executeActions(catchBlock, context, scopeContainer, registers);
+      executeActions(catchBlock, context, scopeContainer, constantPool, registers);
     } finally {
       if (finallyBlockFlag)
-        executeActions(finallyBlock, context, scopeContainer, registers);
+        executeActions(finallyBlock, context, scopeContainer, constantPool, registers);
     }
   }
 
   var stream = new ActionsDataStream(actionsData, context.swfVersion);
-  var _global = context._global;
-  var functions = {};
+  var _global = context.globals, defaultScope = _global._root;
+  registers = registers || [];
   var stack = [];
   var scope = scopeContainer.scope;
-  var constantPool;
   var isSwfVersion5 = context.swfVersion >= 5;
   while (stream.position < stream.end) {
     var actionCode = stream.readUI8();
@@ -242,7 +273,7 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x012: // ActionNot
-        var f = !!(+stack.pop());
+        var f = !(+stack.pop());
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x13: // ActionStringEquals
@@ -320,13 +351,13 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         break;
       case 0x9A: // ActionGetURL2
         var flags = stream.readUI8();
-        var method;
+        var httpMethod;
         switch ((flags >> 6) & 3) {
           case 1:
-            method = 'GET';
+            httpMethod = 'GET';
             break;
           case 2:
-            method  = 'POST';
+            httpMethod  = 'POST';
             break;
         }
         var loadMethod = !!(flags & 2) ?
@@ -334,7 +365,7 @@ function executeActions(actionsData, context, scopeContainer, registers) {
           (!!(flags & 1) ? _global.loadVariablesNum : _global.loadMovieNum);
         var target = stack.pop();
         var url = stack.pop();
-        loadMethod.call(_global, url, target, method);
+        loadMethod.call(_global, url, target, httpMethod);
         break;
       case 0x9F: // ActionGotoFrame2
         var flags = stream.readUI8();
@@ -421,8 +452,13 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
-        var method = methodName ? obj[methodName] : obj;
-        var result = method.apply(obj, args);
+        var result;
+        if (methodName) {
+          if (!(methodName in obj))
+            throw 'Method ' + methodName + ' is not defined.';
+          result = obj[methodName].apply(obj, args);
+        } else
+          result = obj.apply(defaultScope, args);
         stack.push(result);
         break;
       case 0x88: // ActionConstantPool
@@ -440,8 +476,12 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         var codeSize = stream.readUI16();
         nextPosition += codeSize;
 
-        defineFunction(functionName, functionParams, null,
+        var fn = defineFunction(functionName, functionParams, null,
           stream.readBytes(codeSize));
+        if (functionName)
+          scope[functionName] = fn;
+        else
+          stack.push(fn);
         break;
       case 0x3C: // ActionDefineLocal
         var value = stack.pop();
@@ -502,8 +542,13 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
-        var method = methodName ? obj[methodName] : obj;
         var result = {};
+        if (methodName) {
+          if (!(methodName in obj))
+            throw 'Method ' + methodName + ' is not defined.';
+          obj[methodName].apply(result, args);
+        } else
+          obj.apply(result, args);
         result.constructor = method;
         method.apply(result, args);
         stack.push(result);
@@ -516,8 +561,8 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
         var result = {};
-        result.constructor = method;
         obj.apply(result, args);
+        result.constructor = obj;
         stack.push(result);
         break;
       case 0x4F: // ActionSetMember
@@ -610,8 +655,7 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         break;
       case 0x87: // ActionStoreRegister
         var register = stream.readUI8();
-        var obj = stack.pop();
-        registers[register] = obj;
+        registers[register] = stack[stack.length - 1];
         break;
       // SWF 6
       case 0x54: // ActionInstanceOf
@@ -679,8 +723,12 @@ function executeActions(actionsData, context, scopeContainer, registers) {
         if (flags & 0x0100) // preloadGlobal
           registerAllocation[j++] = { type: 'var', name: '_global' };
 
-        defineFunction(functionName, functionParams, registerAllocation,
-          stream.readBytes(codeSize));
+        var fn = defineFunction(functionName, functionParams,
+          registerAllocation, stream.readBytes(codeSize));
+        if (functionName)
+          scope[functionName] = fn;
+        else
+          stack.push(fn);
         break;
       case 0x69: // ActionExtends
         var constrSuper = stack.pop();
