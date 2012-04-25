@@ -89,6 +89,7 @@ package
       prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
       prototype.toString = unsafeJSNative("originalObjectToString");
       prototype.valueOf = unsafeJSNative("originalObjectValueOf");
+      _dontEnumPrototype(prototype);
     }
   }
 

@@ -26,26 +26,48 @@ defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
   this[i] = v;
 });
 
-/**
- * Gets the next name index of an object. Index |zero| is actually not an index,
- * but rather an indicator that no such index exists.
- */
-defineReadOnlyProperty(Object.prototype, "nextNameIndex", function (index) {
-  if (index < Object.keys(this).length) {
-    return index + 1;
-  }
-  return 0;
-});
 
-/**
- * Gets the nextName after the specified |index|, which you would expect to be index + 1, but
- * it's actually index - 1;
- */
-defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
-  var keys = Object.keys(this);
-  assert (index > 0 && index < keys.length + 1);
-  return keys[index - 1];
-});
+(function () {
+  const PUBLIC_MANGLED = /^public\$/;
+  function publicKeys(obj) {
+    var keys = [];
+    for (var key in obj) {
+      if (PUBLIC_MANGLED.test(key)) {
+        keys.push(key.substr(7));
+      }
+    }
+    return keys;
+  }
+
+  /**
+   * Gets the next name index of an object. Index |zero| is actually not an
+   * index, but rather an indicator to start the iteration.
+   */
+  defineReadOnlyProperty(Object.prototype, "nextNameIndex", function (index) {
+    if (index === 0) {
+      /*
+       * We're starting a new iteration. Hope that _publicKeys haven't been
+       * defined already.
+       */
+      this._publicKeys = publicKeys(this);
+    }
+    if (index < this._publicKeys.length) {
+      return index + 1;
+    }
+    delete this._publicKeys;
+    return 0;
+  });
+
+  /**
+   * Gets the nextName after the specified |index|, which you would expect to
+   * be index + 1, but it's actually index - 1;
+   */
+  defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
+    var keys = this._publicKeys;
+    assert (keys && index > 0 && index < keys.length + 1);
+    return keys[index - 1];
+  });
+})();
 
 function toDouble(x) {
   return Number(x);
@@ -65,7 +87,7 @@ function toInt(x) {
 }
 
 function toString(x) {
-  return new String(x);
+  return String(x);
 }
 
 /**
@@ -76,7 +98,7 @@ function coerceString(x) {
   if (x === null || x === undefined) {
     return null;
   }
-  return new String(x);
+  return String(x);
 }
 
 function typeOf(x) {
@@ -155,14 +177,15 @@ function hasNext2(obj, index) {
   assert (obj);
   assert (index >= 0);
 
-  var nextNameIndex = obj.nextNameIndex(index);
-  if (!nextNameIndex) {
-    obj = obj.__proto__;
-    index = obj ? obj.nextNameIndex(0) : 0;
-  } else {
-    index = nextNameIndex;
-  }
-  return {index: index, object: obj};
+  /**
+   * Because I don't think hasnext/hasnext2/nextname opcodes are used outside
+   * of loops in "normal" ABC code, we can deviate a little for semantics here
+   * and leave the prototype-chaining to the |for..in| operator in JavaScript
+   * itself, in |obj.nextNameIndex|. That is, the object pushed onto the
+   * stack, if the original object has any more properties left, will _always_
+   * be the original object.
+   */
+  return {index: obj.nextNameIndex(index), object: obj};
 }
 
 /**
@@ -343,6 +366,11 @@ function setProperty(obj, multiname, value) {
   }
 
   obj[resolved.getQualifiedName()] = value;
+}
+
+function throwErrorFromVM(errorClass, message) {
+  var name = Multiname.fromSimpleName(errorClass);
+  throw new (toplevel.getTypeByName(name, true, true)).instance(message);
 }
 
 /**
@@ -728,10 +756,21 @@ var Runtime = (function () {
         applyInterfaceTraits(ii.interfaces);
         ii.traits.traits.forEach(function (trait) {
           var name = "public$" + trait.name.getName();
-          Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
-            get: function () { return this[name]; },
-            enumerable: false
-          });
+          if (trait.isGetter() || trait.isSetter()) {
+            var proto = instance.prototype;
+            var qn = trait.name.getQualifiedName();
+            var descriptor = Object.getOwnPropertyDescriptor(proto, name);
+            if (trait.isGetter()) {
+              defineGetter(proto, qn, descriptor.get);
+            } else {
+              defineSetter(proto, qn, descriptor.set);
+            }
+          } else {
+            Object.defineProperty(instance.prototype, trait.name.getQualifiedName(), {
+              get: function () { return this[name]; },
+              enumerable: false
+            });
+          }
         });
       }
     })(ii.interfaces);
@@ -806,8 +845,7 @@ var Runtime = (function () {
 
           if (trait.slotId <= baseSlotId) {
             /* XXX: Hope we don't throw while doing builtins. */
-            var VerifyErrorName = new Multiname([Namespace.PUBLIC], "VerifyError");
-            throw new (toplevel.getTypeByName(VerifyErrorName, true)).instance("bad slot id");
+            throwErrorFromVM("VerifyError", "Bad slot ID.");
           }
         }
       }
