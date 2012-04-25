@@ -154,6 +154,37 @@ function defineNonEnumerableProperty(obj, name, value) {
 })();
 
 /**
+ * Encoding and decoding a UTF-8 string. Taken from [1].
+ *
+ * [1] http://stackoverflow.com/questions/1240408/reading-bytes-from-a-javascript-string
+ */
+function utf8decode(str) {
+  var bytes = new Int8Array(str.length * 4);
+  var b = 0;
+  for (var i = 0, j = str.length; i < j; i++) {
+    if (str.charCodeAt(i) <= 0x7f) {
+      bytes[b++] = str.charCodeAt(i);
+    } else {
+      var h = encodeURIComponent(str.charAt(i)).substr(1).split("%");
+      for (var k = 0, l = h.length; k < l; k++) {
+        bytes[b++] = parseInt(h[k], 16);
+      }
+    }
+  }
+  return bytes.subarray(0, b);
+}
+
+function utf8encode(bytes) {
+  var str = "";
+  const fcc = String.fromCharCode;
+  for (var i = 0, j = bytes.length; i < j; i++)  {
+    var b = bytes[i];
+    str += b <= 0x7f ? b === 0x25 ? "%25" : fcc(b) : "%" + b.toString(16).toUpperCase();
+  }
+  return decodeURIComponent(str);
+}
+
+/**
  * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
  */
 function inherit(base, properties) {

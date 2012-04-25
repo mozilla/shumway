@@ -129,8 +129,7 @@ package flash.utils
       _uncompress(algorithm);
     }
 
-    public function toString():String { return _toString(); }
-    private native function _toString():String;
+    public native function toString():String;
 
     public native function get bytesAvailable():uint;
     public native function get position():uint;
