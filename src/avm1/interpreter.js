@@ -1,12 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var isAVM1TraceEnabled = true;
+
 function executeActions(actionsData, context, scopeContainer,
                         constantPool, registers) {
 
   function defineFunction(functionName, parametersNames,
                           registersAllocation, actionsData) {
     var fn = (function() {
-      var newScope = {};
+      var newScope = { 'this': this };
       var newScopeContainer = scopeContainer.create(newScope);
 
       for (var i = 0; i < arguments.length || i < parametersNames.length; i++)
@@ -20,13 +22,37 @@ function executeActions(actionsData, context, scopeContainer,
           if (registerAllocation.type == 'param') {
             registers[i] = arguments[registerAllocation.index];
           } else { // var
-            // TODO
+            switch (registerAllocation.name) {
+              case 'this':
+                registers[i] = this;
+                break;
+              case 'arguments':
+                registers[i] = arguments;
+                break;
+              case 'super':
+                throw 'Not implemented: super';
+              case '_global':
+                registers[i] = _global;
+                break;
+              case '_parent':
+                registers[i] = _global._parent;
+                break;
+              case '_root':
+                registers[i] = _global._root;
+                break;
+            }
           }
         }
       }
 
-      return executeActions(actionsData, context, newScopeContainer,
-        constantPool, registers);
+      try
+      {
+        actionTracer.indent();
+        return executeActions(actionsData, context, newScopeContainer,
+          constantPool, registers);
+      } finally {
+        actionTracer.unindent();
+      }
     });
     if (functionName)
       fn.name = functionName;
@@ -136,11 +162,14 @@ function executeActions(actionsData, context, scopeContainer,
   var stack = [];
   var scope = scopeContainer.scope;
   var isSwfVersion5 = context.swfVersion >= 5;
+  var actionTracer = ActionTracerFactory.get();
+
   while (stream.position < stream.end) {
     var actionCode = stream.readUI8();
     var length = actionCode >= 0x80 ? stream.readUI16() : 0;
     var nextPosition = stream.position + length;
 
+    actionTracer.print(stream.position, actionCode, stack);
     switch (actionCode) {
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
@@ -199,6 +228,7 @@ function executeActions(actionsData, context, scopeContainer,
               value = null;
               break;
             case 3: // undefined
+              value = void(0);
               break;
             case 4: // Register number
               value = registers[stream.readUI8()];
@@ -260,19 +290,19 @@ function executeActions(actionsData, context, scopeContainer,
         var f = b < a;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
-      case 0x010: // ActionAnd
+      case 0x10: // ActionAnd
         var a = +stack.pop();
         var b = +stack.pop();
         var f = a && b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
-      case 0x011: // ActionOr
+      case 0x11: // ActionOr
         var a = +stack.pop();
         var b = +stack.pop();
         var f = a || b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
-      case 0x012: // ActionNot
+      case 0x12: // ActionNot
         var f = !(+stack.pop());
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
@@ -328,13 +358,13 @@ function executeActions(actionsData, context, scopeContainer,
         break;
       case 0x99: // ActionJump
         var branchOffset = stream.readSI16();
-        pc += branchOffset;
+        nextPosition += branchOffset;
         break;
       case 0x9D: // ActionIf
         var branchOffset = stream.readSI16();
         var f = !!stack.pop();
         if (f)
-          pc += branchOffset;
+          nextPosition += branchOffset;
         break;
       case 0x9E: // ActionCall
         var label = stack.pop();
@@ -595,7 +625,7 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x47: // ActionAdd2
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 + arg2);
+        stack.push(arg2 + arg1);
         break;
       case 0x48: // ActionLess2
         var arg1 = stack.pop();
@@ -775,3 +805,143 @@ function executeActions(actionsData, context, scopeContainer,
     stream.position = nextPosition;
   }
 }
+
+var ActionTracerFactory = (function() {
+  var indentation = 0;
+  var tracer = {
+    print: function(position, actionCode, stack) {
+      var stackDump = [];
+      for(var q = 0; q < stack.length; q++) {
+        var item = stack[q];
+        stackDump.push(item && item instanceof Object ?
+          '[' + (item.constructor.name || 'Object') + ']' : item);
+      }
+
+      var indent = new Array(indentation + 1).join('..');
+
+      console.log('AS2 trace: ' + indent + position + ': ' +
+        ActionNamesMap[actionCode] + '(' + actionCode.toString(16) + '), ' +
+        'stack=' + stackDump);
+    },
+    indent: function() {
+      indentation++;
+    },
+    unindent: function() {
+      indentation--;
+    }
+  };
+  var nullTracer = {
+    print: function() {},
+    indent: function() {},
+    unindent: function() {}
+  };
+
+  function ActionTracerFactory() {}
+  ActionTracerFactory.get = (function() {
+    return isAVM1TraceEnabled ? tracer : nullTracer;
+  });
+  return ActionTracerFactory;
+})();
+
+var ActionNamesMap = {
+  0x00: 'EOA',
+  0x04: 'ActionNextFrame',
+  0x05: 'ActionPreviousFrame',
+  0x06: 'ActionPlay',
+  0x07: 'ActionStop',
+  0x08: 'ActionToggleQuality',
+  0x09: 'ActionStopSounds',
+  0x0A: 'ActionAdd',
+  0x0B: 'ActionSubtract',
+  0x0C: 'ActionMultiply',
+  0x0D: 'ActionDivide',
+  0x0E: 'ActionEquals',
+  0x0F: 'ActionLess',
+  0x10: 'ActionAnd',
+  0x11: 'ActionOr',
+  0x12: 'ActionNot',
+  0x13: 'ActionStringEquals',
+  0x14: 'ActionStringLength',
+  0x15: 'ActionStringExtract',
+  0x17: 'ActionPop',
+  0x18: 'ActionToInteger',
+  0x1C: 'ActionGetVariable',
+  0x1D: 'ActionSetVariable',
+  0x20: 'ActionSetTarget2',
+  0x21: 'ActionStringAdd',
+  0x22: 'ActionGetProperty',
+  0x23: 'ActionSetProperty',
+  0x24: 'ActionCloneSprite',
+  0x25: 'ActionRemoveSprite',
+  0x26: 'ActionTrace',
+  0x27: 'ActionStartDrag',
+  0x28: 'ActionEndDrag',
+  0x29: 'ActionStringLess',
+  0x2A: 'ActionThrow',
+  0x2B: 'ActionCastOp',
+  0x2C: 'ActionImplementsOp',
+  0x30: 'ActionRandomNumber',
+  0x31: 'ActionMBStringLength',
+  0x32: 'ActionCharToAscii',
+  0x33: 'ActionAsciiToChar',
+  0x34: 'ActionGetTime',
+  0x35: 'ActionMBStringExtrac',
+  0x36: 'ActionMBCharToAscii',
+  0x37: 'ActionMBAsciiToChar',
+  0x3A: 'ActionDelete',
+  0x3B: 'ActionDelete2',
+  0x3C: 'ActionDefineLocal',
+  0x3D: 'ActionCallFunction',
+  0x3E: 'ActionReturn',
+  0x3F: 'ActionModulo',
+  0x40: 'ActionNewObject',
+  0x41: 'ActionDefineLocal2',
+  0x42: 'ActionInitArray',
+  0x43: 'ActionInitObject',
+  0x44: 'ActionTypeOf',
+  0x45: 'ActionTargetPath',
+  0x46: 'ActionEnumerate',
+  0x47: 'ActionAdd2',
+  0x48: 'ActionLess2',
+  0x49: 'ActionEquals2',
+  0x4A: 'ActionToNumber',
+  0x4B: 'ActionToString',
+  0x4C: 'ActionPushDuplicate',
+  0x4D: 'ActionStackSwap',
+  0x4E: 'ActionGetMember',
+  0x4F: 'ActionSetMember',
+  0x50: 'ActionIncrement',
+  0x51: 'ActionDecrement',
+  0x52: 'ActionCallMethod',
+  0x53: 'ActionNewMethod',
+  0x54: 'ActionInstanceOf',
+  0x55: 'ActionEnumerate2',
+  0x60: 'ActionBitAnd',
+  0x61: 'ActionBitOr',
+  0x62: 'ActionBitXor',
+  0x63: 'ActionBitLShift',
+  0x64: 'ActionBitRShift',
+  0x65: 'ActionBitURShift',
+  0x66: 'ActionStrictEquals',
+  0x67: 'ActionGreater',
+  0x68: 'ActionStringGreater',
+  0x69: 'ActionExtends',
+  0x81: 'ActionGotoFrame',
+  0x83: 'ActionGetURL',
+  0x87: 'ActionStoreRegister',
+  0x88: 'ActionConstantPool',
+  0x8A: 'ActionWaitForFrame',
+  0x8B: 'ActionSetTarget',
+  0x8C: 'ActionGoToLabel',
+  0x8D: 'ActionWaitForFrame2',
+  0x8E: 'ActionDefineFunction',
+  0x8F: 'ActionTry',
+  0x94: 'ActionWith',
+  0x96: 'ActionPush',
+  0x99: 'ActionJump',
+  0x9A: 'ActionGetURL2',
+  0x9B: 'ActionDefineFunction',
+  0x9D: 'ActionIf',
+  0x9E: 'ActionCall',
+  0x9F: 'ActionGotoFrame2'
+};

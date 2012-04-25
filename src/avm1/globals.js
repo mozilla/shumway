@@ -30,6 +30,7 @@ AS2Globals.prototype = {
    throw 'Not implemented';
   },
   Array: Array,
+  Boolean: Boolean,
   call: function(frame) {
     throw 'Not implemented';
   },
