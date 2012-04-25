@@ -1,6 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-var isAVM1TraceEnabled = true;
+var isAVM1TraceEnabled = false;
 
 function executeActions(actionsData, context, scopeContainer,
                         constantPool, registers) {
@@ -590,9 +590,13 @@ function executeActions(actionsData, context, scopeContainer,
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
-        var result = {};
-        obj.apply(result, args);
-        result.constructor = obj;
+        var result = createBuiltinType(obj, args);
+        if (typeof result === 'undefined') {
+          // obj in not a built-in type
+          result = {};
+          obj.apply(result, args);
+          result.constructor = obj;
+        }
         stack.push(result);
         break;
       case 0x4F: // ActionSetMember
@@ -819,7 +823,7 @@ var ActionTracerFactory = (function() {
 
       var indent = new Array(indentation + 1).join('..');
 
-      console.log('AS2 trace: ' + indent + position + ': ' +
+      console.log('AVM1 trace: ' + indent + position + ': ' +
         ActionNamesMap[actionCode] + '(' + actionCode.toString(16) + '), ' +
         'stack=' + stackDump);
     },

@@ -17,7 +17,8 @@ AS2ScopeListItem.prototype = {
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
   this.globals = new AS2Globals(this);
-  this.initialScope = new AS2ScopeListItem(this.globals, null);
+  var windowScope = new AS2ScopeListItem(window, null);
+  this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
 }
 AS2Context.prototype = {};
 
@@ -29,8 +30,6 @@ AS2Globals.prototype = {
   $asfunction: function(link) {
    throw 'Not implemented';
   },
-  Array: Array,
-  Boolean: Boolean,
   call: function(frame) {
     throw 'Not implemented';
   },
@@ -40,12 +39,9 @@ AS2Globals.prototype = {
   chr: function(number) {
     return String.fromCharCode(number);
   },
-  clearInterval: window.clearInterval,
-  clearTimeout: window.clearTimeout,
   duplicateMovieClip: function(target, newname, depth) {
     throw 'Not implemented';
   },
-  escape: window.escape,
   eval: function(expression) {
     throw 'Not implemented';
   },
@@ -76,8 +72,6 @@ AS2Globals.prototype = {
   int: function(value) {
     return 0 | value;
   },
-  isFinite: isFinite,
-  isNaN: isNaN,
   length: function(expression) {
     return ('' + expression).length; // ASCII Only?
   },
@@ -118,13 +112,9 @@ AS2Globals.prototype = {
   nextScene: function() {
     throw 'Not implemented';
   },
-  Number: Number,
-  Object: Object,
   ord: function(charachar) {
     return ('' + character).charCodeAt(0); // ASCII only?
   },
-  parseFloat: parseFloat,
-  parseInt: parseInt,
   play: function() {
     throw 'Not implemented';
   },
@@ -152,11 +142,9 @@ AS2Globals.prototype = {
   removeMovieClip: function(target) {
     throw 'Not implemented';
   },
-  setInterval: window.setInterval,
   setProperty: function(target, index, value) {
     throw 'Not implemented';
   },
-  setTimeout: window.setTimeout,
   showRedrawRegions: function(enable, color) {
     throw 'Not implemented';
   },
@@ -195,3 +183,20 @@ AS2Globals.prototype = {
     throw 'Not implemented';
   }
 };
+
+function createBuiltinType(obj, args) {
+  if (obj === Array) {
+    // special case of array
+    var result = args;
+    if (args.length == 1 && typeof args[0] === 'number') {
+      result = [];
+      result.length = args[0];
+    }
+    return result;
+  }
+  if (obj === Boolean || obj === Number || obj === Date ||
+      obj === String || obj === Function)
+    return obj.apply(null, args);
+  if (obj === Object)
+    return {};
+}
