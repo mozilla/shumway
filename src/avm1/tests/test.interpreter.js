@@ -40,3 +40,52 @@ describe('AVM1 Interpreter', function() {
   })
 
 })
+
+describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
+  function getActionsData(swfData) {
+    var swfLength = swfData.length;
+    var swfBytes = new Uint8Array(swfLength);
+    for (var i = 0; i < swfLength; i++)
+      swfBytes[i] = swfData.charCodeAt(i) & 255;
+    var actionsData = [], position = 0;
+    SWF.parse(swfBytes, { onprogress: function(result) {
+      while (position < result.tags.length) {
+        var tag = result.tags[position++];
+        if ('actionsData' in tag)
+           actionsData.push(tag.actionsData);
+      }
+    }});
+    return actionsData;
+  }
+
+  var basePath = './acceptance/', filelistPath = basePath + 'testfiles.txt';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', filelistPath, false);
+  xhr.send(null)
+  if (xhr.status != 200) return;
+  var files = xhr.responseText.split('\n');
+  for (var i = 0; i < files.length; i++)  {
+    if(!files[i]) continue;
+    describe(files[i], (function(filename, path) {
+      return (function() {
+        it('should pass all internal tests in ' + filename, function(){
+          var xhr = new XMLHttpRequest();
+          xhr.open('GET', path, false);
+          xhr.overrideMimeType('text\/plain; charset=x-user-defined');
+          xhr.send(null)
+          expect(xhr.status).to.be(200)
+          var swfData = xhr.responseText;
+          var actionsData = getActionsData(swfData);
+          expect(actionsData.length > 0).to.be.ok(); // sanity check
+          var as2Context = new AS2Context(11);
+          var scope = {};
+          for (var j = 0; j < actionsData.length; j++)
+            executeActions(actionsData[j], as2Context, as2Context.initialScope.create(scope));
+          expect('TestCaseResult' in as2Context.globals).to.be.ok();
+          var results = as2Context.globals.TestCaseResult;
+          expect(!results.failed).to.be.ok();
+        })
+      })
+    })(files[i], basePath + files[i]))
+  }
+})
