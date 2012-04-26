@@ -26,8 +26,7 @@ defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
   this[i] = v;
 });
 
-
-(function () {
+function initializeGlobalObject(global) {
   const PUBLIC_MANGLED = /^public\$/;
   function publicKeys(obj) {
     var keys = [];
@@ -43,7 +42,7 @@ defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
    * Gets the next name index of an object. Index |zero| is actually not an
    * index, but rather an indicator to start the iteration.
    */
-  defineReadOnlyProperty(Object.prototype, "nextNameIndex", function (index) {
+  defineReadOnlyProperty(global.Object.prototype, "nextNameIndex", function (index) {
     if (index === 0) {
       /*
        * We're starting a new iteration. Hope that _publicKeys haven't been
@@ -62,12 +61,49 @@ defineReadOnlyProperty(Object.prototype, SET_ACCESSOR, function (i, v) {
    * Gets the nextName after the specified |index|, which you would expect to
    * be index + 1, but it's actually index - 1;
    */
-  defineReadOnlyProperty(Object.prototype, "nextName", function (index) {
+  defineReadOnlyProperty(global.Object.prototype, "nextName", function (index) {
     var keys = this._publicKeys;
     assert (keys && index > 0 && index < keys.length + 1);
     return keys[index - 1];
   });
-})();
+
+  /**
+   * To get |toString| and |valueOf| to work transparently, as in without
+   * reimplementing stuff like trace and +.
+   */
+
+  for (var objectName in original) {
+    var object = original[objectName];
+    for (var originalFunctionName in object) {
+      (function () {
+        var originalFunction = object[originalFunctionName];
+        var overrideFunctionName = "public$" + originalFunctionName;
+        global[objectName].prototype[originalFunctionName] = function () {
+          if (overrideFunctionName in this) {
+            return this[overrideFunctionName]();
+          }
+          return originalFunction.call(this);
+        };
+      })();
+    }
+  }
+}
+
+initializeGlobalObject(jsGlobal);
+
+function createNewGlobalObject() {
+  var global = null;
+  if (inBrowser) {
+    var iFrame = document.createElement("iframe");
+    iFrame.style.display = "none";
+    document.body.appendChild(iFrame);
+    global = window.frames[window.frames.length - 1];
+  } else {
+    global = newGlobal('new-compartment');
+  }
+  initializeGlobalObject(global);
+  return global;
+}
 
 function toDouble(x) {
   return Number(x);
@@ -121,12 +157,23 @@ function deleteProperty(obj, multiname) {
 }
 
 function applyType(factory, types) {
-  if (factory === toplevel.Vector) {
+  var factoryClassName = factory.classInfo.instanceInfo.name.name;
+  if (factoryClassName === "Vector") {
     assert (types.length === 1);
-    return Vector(types[0]);
+    var typeClassName = types[0].classInfo.instanceInfo.name.name;
+    switch (typeClassName) {
+      case "int":
+      case "uint":
+      case "double":
+        break;
+      default:
+        typeClassName = "object";
+        break;
+    }
+    return toplevel.getTypeByName(Multiname.fromSimpleName("packageInternal __AS3__$vec.Vector$" + typeClassName), true);
+  } else {
+    return notImplemented(factoryClassName);
   }
-  notImplemented();
-  return undefined;
 }
 
 function Vector(type) {
@@ -705,7 +752,7 @@ var Runtime = (function () {
       cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
-        this.applyTraits(instance.prototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
+        this.applyTraits(cls.instancePrototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
       }
       this.applyTraits(cls, ci.traits, null, scope, cls.nativeStatics);
     } else {

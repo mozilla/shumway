@@ -302,7 +302,10 @@ var Interpreter = (function () {
           case OP_sxi1:           notImplemented(); break;
           case OP_sxi8:           notImplemented(); break;
           case OP_sxi16:          notImplemented(); break;
-          case OP_applytype:      notImplemented(); break;
+          case OP_applytype:
+            args = stack.popMany(bc.argCount);
+            stack.push(applyType(stack.pop(), args));
+            break;
           case OP_pushfloat4:     notImplemented(); break;
           case OP_newobject:
             obj = {};

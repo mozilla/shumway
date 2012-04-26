@@ -87,8 +87,8 @@ package
       prototype.hasOwnProperty = unsafeJSNative("Object.prototype.hasOwnProperty");
       prototype.setPropertyIsEnumerable = unsafeJSNative("Object.prototype.setPropertyIsEnumerable");
       prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
-      prototype.toString = unsafeJSNative("originalObjectToString");
-      prototype.valueOf = unsafeJSNative("originalObjectValueOf");
+      prototype.toString = unsafeJSNative("original.Object.toString");
+      prototype.valueOf = unsafeJSNative("original.Object.valueOf");
       _dontEnumPrototype(prototype);
     }
   }

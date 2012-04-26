@@ -126,6 +126,18 @@
  *   };
  */
 
+var original = {};
+
+// TODO: Add Array to this list. It causes an infinite recursion, and I can't figure it out now.
+
+[Object].forEach(function (obj) {
+  var o = {};
+  ["toString", "valueOf"].forEach(function (name) {
+    o[name] = obj.prototype[name];
+  });
+  original[obj.name] = o;
+});
+
 var Interface = (function () {
   function Interface(name) {
     this.name = name;
@@ -140,7 +152,7 @@ var Interface = (function () {
 
 var Class = (function () {
 
-  function Class(name, instance, callable) {
+  function Class(name, instance, callable, instancePrototype) {
     function defaultCallable() {
       notImplemented("class callable");
     }
@@ -149,7 +161,9 @@ var Class = (function () {
 
     if (instance) {
       this.instance = instance;
-      defineNonEnumerableProperty(instance.prototype, "public$constructor", this);
+      this.instancePrototype = instancePrototype || instance.prototype;
+      assert (this.instancePrototype);
+      defineNonEnumerableProperty(this.instancePrototype, "public$constructor", this);
     }
 
     /**
@@ -189,6 +203,7 @@ var Class = (function () {
   defineNonEnumerableProperty(Class.prototype, "public$constructor", Class);
 
   Class.instance = Class;
+  Class.instancePrototype = Class.prototype;
 
   Class.passthroughCallable = function passthroughCallable(f) {
     return {
@@ -214,7 +229,7 @@ var Class = (function () {
   };
 
   Class.nativeMethods = {
-    "get prototype": function () { return this.instance.prototype; }
+    "get prototype": function () { return this.instancePrototype; }
   };
 
   return Class;
@@ -241,27 +256,6 @@ var MethodClosure = (function () {
 
 const natives = (function () {
 
-  /**
-   * To get |toString| and |valueOf| to work transparently, as in without
-   * reimplementing stuff like trace and +.
-   */
-  const originalObjectToString = Object.prototype.toString;
-  const originalObjectValueOf = Object.prototype.valueOf;
-
-  Object.prototype.toString = function () {
-    if ("public$toString" in this) {
-      return this.public$toString();
-    }
-    return originalObjectToString.call(this);
-  };
-
-  Object.prototype.valueOf = function () {
-    if ("public$valueOf" in this) {
-      return this.public$valueOf();
-    }
-    return originalObjectValueOf.call(this);
-  };
-
   const C = Class.passthroughCallable;
   const CC = Class.constructingCallable;
 
@@ -281,6 +275,7 @@ const natives = (function () {
       }
     };
 
+    c.defaultValue = null;
     return c;
   }
 
@@ -350,62 +345,65 @@ const natives = (function () {
    * Vector.as
    */
   function VectorClass(scope, instance, baseClass) {
-    // TODO: Not implemented
-    var c = new Class("Vector", Array, C(Array));
+    var c = new Class("Vector", null, null);
     c.baseClass = baseClass;
-
     var m = Array.prototype;
     c.nativeMethods = m;
+    return c;
+  }
 
+  function createVectorClass(type) {
+    var TypedArray = createNewGlobalObject().Array;
+
+    defineReadOnlyProperty(TypedArray.prototype, GET_ACCESSOR, function (i) {
+      return this[i];
+    });
+
+    var coerce = type.instance;
+    defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
+      this[i] = coerce(v);
+    });
+
+    function TypedVector (length, fixed) {
+      var array = new TypedArray(length);
+      for (var i = 0; i < length; i++) {
+        array[i] = type.defaultValue;
+      }
+      return array;
+    }
+    var typeName = type.classInfo.instanceInfo.name.name;
+    var c = new Class("Vector$" + typeName, TypedVector, C(TypedVector), TypedArray.prototype);
+
+    var m = TypedArray.prototype;
+
+    defineNonEnumerableProperty(m, "get fixed", function () { return false; });
+    defineNonEnumerableProperty(m, "set fixed", function (v) { });
+
+    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
+    defineNonEnumerableProperty(m, "set length", function setLength(length) {
+      // TODO: Fill with zeros if we need to.
+      this.length = length;
+    });
+
+    c.nativeMethods = m;
+    c.nativeStatics = {};
     return c;
   }
 
   function ObjectVectorClass(scope, instance, baseClass) {
-    // TODO: Not implemented
-    var c = new Class("Vector$object", Array, C(Array));
-    c.baseClass = baseClass;
-
-    var m = Array.prototype;
-    c.nativeMethods = m;
-    c.nativeStatics = {};
-
-    return c;
+    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("Object"), true));
   }
 
   function IntVectorClass(scope, instance, baseClass) {
-    // TODO: Not implemented
-    var c = new Class("Vector$int", Array, C(Array));
-    c.baseClass = baseClass;
-
-    var m = Array.prototype;
-    c.nativeMethods = m;
-    c.nativeStatics = {};
-
-    return c;
+    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("int"), true));
   }
 
   function UIntVectorClass(scope, instance, baseClass) {
-    // TODO: Not implemented
-    var c = new Class("Vector$uint", Array, C(Array));
-    c.baseClass = baseClass;
-
-    var m = Array.prototype;
-    c.nativeMethods = m;
-    c.nativeStatics = {};
-
-    return c;
+    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("uint"), true));
   }
 
   function DoubleVectorClass(scope, instance, baseClass) {
-    // TODO: Not implemented
-    var c = new Class("Vector$double", Array, C(Array));
-    c.baseClass = baseClass;
-
-    var m = Array.prototype;
-    c.nativeMethods = m;
-    c.nativeStatics = {};
-
-    return c;
+    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("Number"), true));
   }
 
   /**
@@ -415,6 +413,7 @@ const natives = (function () {
     var c = new Class("Number", Number, C(Number));
     c.baseClass = baseClass;
     c.nativeMethods = Number.prototype;
+    c.defaultValue = Number(0);
     return c;
   }
 
@@ -425,6 +424,7 @@ const natives = (function () {
 
     var c = new Class("int", int, C(int));
     c.baseClass = baseClass;
+    c.defaultValue = 0;
     return c;
   }
 
@@ -435,6 +435,7 @@ const natives = (function () {
 
     var c = new Class("uint", uint, C(uint));
     c.baseClass = baseClass;
+    c.defaultValue = 0;
     return c;
   }
 
@@ -823,11 +824,7 @@ const natives = (function () {
     print: constant(print),
     notImplemented: constant(notImplemented),
 
-    /**
-     * To prevent unbounded recursion.
-     */
-    originalObjectToString: originalObjectToString,
-    originalObjectValueOf: originalObjectValueOf,
+    original: original,
 
     /**
      * actionscript.lang.as

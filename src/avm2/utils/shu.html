@@ -21,7 +21,6 @@
       var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
     </script>
 
-    <script type="text/javascript" src="../../tests/file-reader.js"></script>
     <script type="text/javascript" src="../DataView.js"></script>
     <script type="text/javascript" src="../constants.js"></script>
     <script type="text/javascript" src="../opcodes.js"></script>
@@ -35,12 +34,46 @@
     <script type="text/javascript" src="../interpreter.js"></script>
 
     <script type="text/javascript">
+      var FileReader = (function fileReader() {
+  function constructor(url, responseType) {
+    this.url = url;
+    this.responseType = responseType || "arraybuffer";
+  }
+
+  constructor.prototype = {
+    readAll: function(progress, complete) {
+      var xhr = new XMLHttpRequest();
+      var async = true;
+      xhr.open("GET", this.url, async);
+      xhr.responseType = this.responseType;
+      if (progress) {
+        xhr.onprogress = function (event) {
+          progress(xhr.response, event.loaded, event.total);
+        };
+      }
+      xhr.onreadystatechange = function (event) {
+        if (xhr.readyState === 4) {
+          complete(xhr.response);
+        }
+      }
+      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      xhr.send(null);
+    }
+  };
+  return constructor;
+})();
+
+    </script>
+
+    <script type="text/javascript">
       var abcs = [];
       abcs.push("../generated/builtin.abc");
       abcs.push("../generated/playerGlobal.abc");
-      abcs.push("../tests/testInterpreter.abc");
+      // abcs.push("../tests/testInterpreter.abc");
+      // abcs.push("../tests/tamarin/ecma3/Array/general1.abc");
+      abcs.push("../tests/sunspider/s3d-cube.abc");
       var mode;
- //     mode = ALWAYS_INTERPRET;
+      mode = ALWAYS_INTERPRET;
       function executeNext() {
         if (abcs.length) {
           var path = abcs.shift();
