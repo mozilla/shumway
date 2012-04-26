@@ -62,9 +62,10 @@ function executeActions(actionsData, context, scopeContainer,
     for (var p = scopeContainer; p; p = p.next) {
       if (propertyName in p.scope) {
         delete p.scope[propertyName];
-        break;
+        return !(propertyName in p.scope);
       }
     }
+    return false;
   }
   function resolveVariableName(variableName) {
     var objPath, name;
@@ -528,10 +529,12 @@ function executeActions(actionsData, context, scopeContainer,
         var name = stack.pop();
         var obj = stack.pop();
         delete obj[name];
+        stack.push(!(name in obj)); // XXX undocumented ???
         break;
       case 0x3B: // ActionDelete2
         var name = stack.pop();
-        deleteProperty(name);
+        var result = deleteProperty(name);
+        stack.push(result); // undocumented ???
         break;
       case 0x46: // ActionEnumerate
         var objectName = stack.pop();

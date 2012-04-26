@@ -1,12 +1,12 @@
 class TestCase {
   var sectionName;
-  var testBody;
-  var expected;
+  var reason;
+  var expect;
   var actual;
-  function TestCase(sectionName, testBody, expected, actual) {
+  function TestCase(sectionName, reason, expect, actual) {
     this.sectionName = sectionName;
-    this.testBody = testBody;
-    this.expected = expected;
+    this.reason = reason;
+    this.expect = expect;
     this.actual = actual;
   }
 
@@ -15,10 +15,10 @@ class TestCase {
     var atLeastOneFailed = false;
     for (var i = 0; i < testCases.length; i++) {
       var tc = testCases[i];
-      var failed = tc.expected !== tc.actual;
-      log('Test case #' + i + ' | ' + tc.expected +
+      var failed = tc.expect !== tc.actual;
+      log('Test case #' + i + ' | ' + tc.expect +
         (failed ? ' != ' : ' == ') + tc.actual +
-        ' | ' + tc.sectionName + ' | ' + tc.testBody);
+        ' | ' + tc.sectionName + ' | ' + tc.reason);
       atLeastOneFailed |= failed;
     }
     if (atLeastOneFailed)
