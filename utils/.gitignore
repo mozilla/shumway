@@ -1,5 +1,6 @@
 *
 !.gitignore
+!avm1tests
 !mocha
 !expect
 !README.md

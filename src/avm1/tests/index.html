@@ -8,6 +8,18 @@
   <script src="../../../utils/mocha/mocha.js"></script>
   <script>mocha.setup('bdd')</script>
 
+  <script src="../../swf/DataView.js"></script>
+  <script src="../../swf/util.js"></script>
+  <script src="../../swf/swf.js"></script>
+  <script src="../../swf/types.js"></script>
+  <script src="../../swf/structs.js"></script>
+  <script src="../../swf/tags.js"></script>
+  <script src="../../swf/inflate.js"></script>
+  <script src="../../swf/stream.js"></script>
+  <script src="../../swf/templates.js"></script>
+  <script src="../../swf/generator.js"></script>
+  <script src="../../swf/parser.js"></script>
+
   <script src="../globals.js"></script>
   <script src="../stream.js"></script>
   <script src="../interpreter.js"></script>
@@ -20,6 +32,7 @@
     $(function(){
       mocha
         .run()
+        .globals(['console'])
     })
   </script>
 </head>

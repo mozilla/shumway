@@ -484,6 +484,8 @@ function executeActions(actionsData, context, scopeContainer,
           args.push(stack.pop());
         var result;
         if (methodName) {
+          if (typeof obj !== 'object')
+            obj = Object(obj);
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
           result = obj[methodName].apply(obj, args);
@@ -559,8 +561,8 @@ function executeActions(actionsData, context, scopeContainer,
         var numArgs = stack.pop();
         var obj = {};
         for (var i = 0; i < numArgs; i++) {
-          var name = stack.pop();
           var value = stack.pop();
+          var name = stack.pop();
           obj[name] = value;
         }
         stack.push(obj);
@@ -791,8 +793,8 @@ function executeActions(actionsData, context, scopeContainer,
         var finallyBlockFlag = !!(flags & 2);
         var catchBlockFlag = !!(flags & 1);
         var trySize = stream.readUI16();
-        var catchSize = stream.readU16();
-        var finallySize = stream.readU16();
+        var catchSize = stream.readUI16();
+        var finallySize = stream.readUI16();
         var catchTarget = catchIsRegisterFlag ? stream.readUI8() : stream.readString();
         nextPosition += trySize + catchSize + finallySize;
         processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
