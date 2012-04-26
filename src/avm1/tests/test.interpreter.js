@@ -83,7 +83,17 @@ describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
             executeActions(actionsData[j], as2Context, as2Context.initialScope.create(scope));
           expect('TestCaseResult' in as2Context.globals).to.be.ok();
           var results = as2Context.globals.TestCaseResult;
-          expect(!results.failed).to.be.ok();
+          var reason = '';
+          if (results.failed) {
+            var testCases = results.testCases;
+            for (var q = 0; q < testCases.length; q++) {
+              if (testCases[q].expect === testCases[q].actual) continue;
+              reason += '#' + q + ' | ' + testCases[q].description + ' | ' +
+                testCases[q].reason + ' | ' + testCases[q].expect + ' != ' +
+                testCases[q].actual + ' / ';
+            }
+          }
+          expect(reason).to.be('');
         })
       })
     })(files[i], basePath + files[i]))

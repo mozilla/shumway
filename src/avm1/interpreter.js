@@ -8,7 +8,7 @@ function executeActions(actionsData, context, scopeContainer,
   function defineFunction(functionName, parametersNames,
                           registersAllocation, actionsData) {
     var fn = (function() {
-      var newScope = { 'this': this };
+      var newScope = { 'this': this, 'arguments': arguments };
       var newScopeContainer = scopeContainer.create(newScope);
 
       for (var i = 0; i < arguments.length || i < parametersNames.length; i++)
@@ -136,7 +136,7 @@ function executeActions(actionsData, context, scopeContainer,
     return obj;
   }
   function processWith(obj, withBlock) {
-    var newScopeContainer = scopeContainer.create(obj);
+    var newScopeContainer = scopeContainer.create(Object(obj));
     executeActions(withBlock, context, newScopeContainer, constantPool, registers);
   }
   function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
@@ -292,19 +292,19 @@ function executeActions(actionsData, context, scopeContainer,
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x10: // ActionAnd
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = stack.pop();
+        var b = stack.pop();
         var f = a && b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x11: // ActionOr
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = stack.pop();
+        var b = stack.pop();
         var f = a || b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x12: // ActionNot
-        var f = !(+stack.pop());
+        var f = !stack.pop();
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x13: // ActionStringEquals
@@ -473,7 +473,7 @@ function executeActions(actionsData, context, scopeContainer,
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
         var fn = getFunction(functionName);
-        var result = fn.apply(null, args);
+        var result = fn.apply(scope, args);
         stack.push(result);
         break;
       case 0x52: // ActionCallMethod
@@ -485,8 +485,7 @@ function executeActions(actionsData, context, scopeContainer,
           args.push(stack.pop());
         var result;
         if (methodName) {
-          if (typeof obj !== 'object')
-            obj = Object(obj);
+          obj = Object(obj);
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
           result = obj[methodName].apply(obj, args);
@@ -678,11 +677,13 @@ function executeActions(actionsData, context, scopeContainer,
         break;
       case 0x51: // ActionDecrement
         var arg1 = stack.pop();
-        stack.push(arg1 - 1);
+        arg1--;
+        stack.push(arg1);
         break;
       case 0x50: // ActionIncrement
         var arg1 = stack.pop();
-        stack.push(arg1 + 1);
+        arg1++;
+        stack.push(arg1);
         break;
       case 0x4C: // ActionPushDuplicate
         stack.push(stack[stack.length - 1]);
@@ -700,7 +701,7 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x54: // ActionInstanceOf
         var constr = stack.pop();
         var obj = stack.pop();
-        stack.push(obj instanceof constr);
+        stack.push(Object(obj) instanceof constr);
         break;
       case 0x55: // ActionEnumerate2
         var obj = stack.pop();
