@@ -10,7 +10,7 @@ acceptance:
 	find $(TA_ECMA3) -name "*.as" \
 		-exec $(MAKE) build-test SOURCE={} TARGET=$(OUTPUT)/$(notdir {}).swf \;
 	# excluding bad tests
-	cd $(OUTPUT); rm e15_4_2_1_3.swf
+	cd $(OUTPUT); rm e15_4_2_1_3.swf e15_4_4_2.swf e15_4_4_2.swf toLocaleString.swf
 	cd $(OUTPUT); ls *.swf > testfiles.txt
 
 build-test:
@@ -20,10 +20,14 @@ build-test:
 	sed "s/writeHeaderToLog/TestCase.writeHeaderToLog/" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
 	sed "s/startTest/TestCase.startTest/" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
 	sed "s/var testcases = getTestCases();//" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
+	sed "s/testcases = getTestCases();//" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
+	sed "s/var testcases = new Array();/var testcases = new Array(); var getTestCases = function() { return testcases; }; /" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
 	sed "s/test();//" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
-	sed "s/var MYVAR;//" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
-	sed "s/var MYVAR=/MYVAR=/" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
-	sed "s/function (\w+)/var \1 = function/" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
+	sed "s/var MYVAR;//g" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
+	sed "s/var MYVAR=/MYVAR=/g" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
+	sed "s/var MYVAR =/MYVAR=/g" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
+	sed "s/function \([A-Za-z0-9_]\+\)/var \1 = function/g" $(TMP)/TestBody.1~ > $(TMP)/TestBody.2~
+	sed "s/void 0/undefined/g" $(TMP)/TestBody.2~ > $(TMP)/TestBody.1~
 	cat TestHeader.inc > $(TMP)/Test.as
 	cat $(TMP)/TestBody.1~ >> $(TMP)/Test.as
 	cat TestFooter.inc >> $(TMP)/Test.as

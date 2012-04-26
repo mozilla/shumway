@@ -181,7 +181,23 @@ AS2Globals.prototype = {
   },
   updateAfterEvent: function() {
     throw 'Not implemented';
-  }
+  },
+  // built-ins
+  Boolean: Boolean,
+  Date: Date,
+  Function: Function,
+  Math: Math,
+  Number: Number,
+  NaN: NaN,
+  Infinity: Infinity,
+  Object: Object,
+  RegExp: RegExp,
+  String: String,
+  isFinite: isFinite,
+  isNaN: isNaN,
+  parseFloat: parseFloat,
+  parseInt: parseInt,
+  undefined: void(0)
 };
 
 function createBuiltinType(obj, args) {

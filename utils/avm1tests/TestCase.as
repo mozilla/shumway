@@ -1,11 +1,13 @@
 class TestCase {
   var sectionName;
+  var description;
   var reason;
   var expect;
   var actual;
-  function TestCase(sectionName, reason, expect, actual) {
+  function TestCase(sectionName, description, expect, actual) {
     this.sectionName = sectionName;
-    this.reason = reason;
+    this.description = description;
+    this.reason = '';
     this.expect = expect;
     this.actual = actual;
   }
