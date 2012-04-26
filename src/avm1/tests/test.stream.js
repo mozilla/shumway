@@ -46,7 +46,8 @@ describe('ActionsDataStream', function(){
   describe('#readDouble()', function(){
     it('should return 64-bit number', function(){
       // C0256B851EB851EC = -10.71
-      var stream = new ActionsDataStream(new Uint8Array([0xEC,0x51,0xB8,0x1E,0x85,0x6B,0x25,0xC0]), DefaultSwfVersion);
+      // the two halfs of the double number are swapped in ActionScript presentation
+      var stream = new ActionsDataStream(new Uint8Array([0x85,0x6B,0x25,0xC0,0xEC,0x51,0xB8,0x1E]), DefaultSwfVersion);
       expect(stream.readDouble()).to.be(-10.71);
     })
   })
