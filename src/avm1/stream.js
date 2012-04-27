@@ -57,14 +57,14 @@ ActionsDataStream.prototype = {
     var position = this.position, array = this.array
     var buffer = new ArrayBuffer(8);
     var bytes = new Uint8Array(buffer);
-    bytes[0] = array[position];
-    bytes[1] = array[position + 1];
-    bytes[2] = array[position + 2];
-    bytes[3] = array[position + 3];
-    bytes[4] = array[position + 4];
-    bytes[5] = array[position + 5];
-    bytes[6] = array[position + 6];
-    bytes[7] = array[position + 7];
+    bytes[4] = array[position];
+    bytes[5] = array[position + 1];
+    bytes[6] = array[position + 2];
+    bytes[7] = array[position + 3];
+    bytes[0] = array[position + 4];
+    bytes[1] = array[position + 5];
+    bytes[2] = array[position + 6];
+    bytes[3] = array[position + 7];
     this.position = position + 8;
     return (new Float64Array(buffer))[0];
   },
