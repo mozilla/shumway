@@ -643,37 +643,37 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x3F: // ActionModulo
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 % arg2);
+        stack.push(arg2 % arg1);
         break;
       case 0x60: // ActionBitAnd
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 & arg2);
+        stack.push(arg2 & arg1);
         break;
       case 0x63: // ActionBitLShift
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 << arg2);
+        stack.push(arg2 << arg1);
         break;
       case 0x61: // ActionBitOr
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 | arg2);
+        stack.push(arg2 | arg1);
         break;
       case 0x64: // ActionBitRShift
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 >> arg2);
+        stack.push(arg2 >> arg1);
         break;
       case 0x65: // ActionBitURShift
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 >>> arg2);
+        stack.push(arg2 >>> arg1);
         break;
       case 0x62: // ActionBitXor
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg1 ^ arg2);
+        stack.push(arg2 ^ arg1);
         break;
       case 0x51: // ActionDecrement
         var arg1 = stack.pop();
