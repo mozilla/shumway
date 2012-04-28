@@ -77,6 +77,7 @@ var MovieClipPrototype = function(obj, dictionary) {
 
     var currentFrame = 0;
     var paused = false;
+    var frameScripts = [];
 
     function gotoFrame(frame) {
       var frameNum = frame;
@@ -86,6 +87,9 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (frameNum > framesLoaded)
         frameNum = framesLoaded;
       currentFrame = frameNum;
+
+      if (frame in frameScripts)
+        frameScripts[frame].call(instance);
     }
 
     var proto = create(this);
@@ -144,6 +148,9 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       paused = true;
+    };
+    proto.addFrameScript = function(frame, fn) {
+      frameScripts[frame] = fn;
     };
 
     return instance;
