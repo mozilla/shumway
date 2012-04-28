@@ -87,7 +87,7 @@ describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
           if (results.failed) {
             var testCases = results.testCases;
             for (var q = 0; q < testCases.length; q++) {
-              if (testCases[q].expect === testCases[q].actual) continue;
+              if (!testCases[q].failed) continue;
               reason += '#' + q + ' | ' + testCases[q].description + ' | ' +
                 testCases[q].reason + ' | ' + testCases[q].expect + ' != ' +
                 testCases[q].actual + ' / ';
