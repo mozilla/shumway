@@ -91,6 +91,34 @@ SWF.embed = function(file, container, options) {
   var ctx = canvas.getContext('2d');
   var frameRate;
   var plays;
+  var swfVersion;
+  var as2Context = null;
+
+  function createAS2FrameScript(data) {
+    if (!as2Context) {
+      as2Context = new AS2Context(swfVersion);
+    }
+
+    return (function() {
+      var globals = as2Context.globals;
+      globals._root = this;
+      globals._level0 = this;
+      globals._parent = null;
+
+      if (!('as2Scope' in this)) {
+        var as2Scope = {};
+        as2Scope['this'] = as2Scope;
+        this.as2Scope = as2Scope;
+      }
+
+      try {
+        executeActions(data, as2Context,
+          as2Context.initialScope.create(this.as2Scope));
+      } catch (e) {
+        console.log('Error during ActionScript execution: ' + e);
+      }
+    });
+  }
 
   startWorking(file, function(obj) {
     if (obj) {
@@ -107,6 +135,7 @@ SWF.embed = function(file, container, options) {
         container.appendChild(canvas);
 
         frameRate = obj.frameRate;
+        swfVersion = obj.version;
 
         if (options.onstart)
           options.onstart(root);
@@ -139,26 +168,19 @@ SWF.embed = function(file, container, options) {
             }
           }
         }
-        /*
-        if (obj.actionsData) {
-          // TODO is it the right "when the ShowFrame tag is encountered" place?
-          var swfVersion = 11;
-          var as2Context = new AS2Context(swfVersion); // attached to the document
-          var timelineObj = {}; // attached to the timeline
-          timelineObj['this'] = timelineObj;
-          as2Context.globals._root = {}; // movie clip
 
-          if (obj.initActionsData) {
-            // initializing all sprites
-            for (var spriteId in obj.initActionsData) {
-              var data = obj.initActionsData[spriteId];
-              executeActions(data, as2Context, as2Context.initialScope.create(timelineObj));
-            }
-          }
-
-          executeActions(obj.actionsData, as2Context, as2Context.initialScope.create(timelineObj));
+        var isAVM1Enabled = true; // TODO disable if AVM2 is enabled
+        if (isAVM1Enabled && obj.actionsData) {
+          root.addFrameScript(pframes.length + 1,
+            createAS2FrameScript(obj.actionsData));
         }
-        */
+        if (isAVM1Enabled && obj.initActionsData) {
+          for (var spriteId in obj.initActionsData) {
+            var data = obj.initActionsData[spriteId];
+            var initSprite = createAS2FrameScript(data);
+            initSprite.call(root);
+          }
+        }
 
         pframes.push(obj);
         if (!plays) {
