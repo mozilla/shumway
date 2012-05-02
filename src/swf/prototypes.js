@@ -88,8 +88,8 @@ var MovieClipPrototype = function(obj, dictionary) {
         frameNum = framesLoaded;
       currentFrame = frameNum;
 
-      if (frame in frameScripts)
-        frameScripts[frame].call(instance);
+      if (frameNum == frame && frameNum in frameScripts)
+        frameScripts[frameNum].call(instance);
     }
 
     var proto = create(this);
@@ -149,8 +149,8 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
-    proto.addFrameScript = function(frame, fn) {
-      frameScripts[frame] = fn;
+    proto.addFrameScript = function(frameNum, fn) {
+      frameScripts[frameNum] = fn;
     };
 
     return instance;
