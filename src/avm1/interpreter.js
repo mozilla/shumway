@@ -67,6 +67,12 @@ function executeActions(actionsData, context, scopeContainer,
     }
     return false;
   }
+  function instanceOf(obj, constructor) {
+    if (obj instanceof constructor)
+      return true;
+    // TODO interface check
+    return false;
+  }
   function resolveVariableName(variableName) {
     var objPath, name;
     if (variableName.indexOf(':') >= 0) {
@@ -322,7 +328,7 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x21: // ActionStringAdd
         var sa = '' + stack.pop();
         var sb = '' + stack.pop();
-        stack.push(b + a);
+        stack.push(sb + sa);
         break;
       case 0x15: // ActionStringExtract
         var count = stack.pop();
@@ -701,7 +707,7 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x54: // ActionInstanceOf
         var constr = stack.pop();
         var obj = stack.pop();
-        stack.push(Object(obj) instanceof constr);
+        stack.push(instanceOf(Object(obj), constr));
         break;
       case 0x55: // ActionEnumerate2
         var obj = stack.pop();
@@ -781,7 +787,7 @@ function executeActions(actionsData, context, scopeContainer,
       case 0x2B: // ActionCastOp
         var obj =  stack.pop();
         var constr = stack.pop();
-        stack.push(obj instanceof constr ? obj : null);
+        stack.push(instanceOf(obj, constr) ? obj : null);
         break;
       case 0x2C: // ActionImplementsOp
         var constr = stack.pop();
