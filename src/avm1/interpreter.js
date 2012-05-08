@@ -2,6 +2,24 @@
 
 var isAVM1TraceEnabled = false;
 
+function AS2ScopeListItem(scope, next) {
+  this.scope = scope;
+  this.next = next;
+}
+AS2ScopeListItem.prototype = {
+  create: function (scope) {
+    return new AS2ScopeListItem(scope, this);
+  }
+};
+
+function AS2Context(swfVersion) {
+  this.swfVersion = swfVersion;
+  this.globals = new AS2Globals(this);
+  var windowScope = new AS2ScopeListItem(window, null);
+  this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
+}
+AS2Context.prototype = {};
+
 function executeActions(actionsData, context, scopeContainer,
                         constantPool, registers) {
 
@@ -72,6 +90,9 @@ function executeActions(actionsData, context, scopeContainer,
       return true;
     // TODO interface check
     return false;
+  }
+  function isMovieClip(obj) {
+    return instanceOf(obj, _global.MovieClip);
   }
   function resolveVariableName(variableName) {
     var objPath, name;

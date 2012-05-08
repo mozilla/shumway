@@ -1,26 +1,9 @@
 ﻿/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function isMovieClip(obj) {
-  return obj instanceof MovieClip;
+function ASSetPropFlags(obj, children, flags, allowFalse) {
+  // flags (from bit 0): dontenum, dontdelete, readonly, ....
+  // TODO
 }
-
-function AS2ScopeListItem(scope, next) {
-  this.scope = scope;
-  this.next = next;
-}
-AS2ScopeListItem.prototype = {
-  create: function (scope) {
-    return new AS2ScopeListItem(scope, this);
-  }
-};
-
-function AS2Context(swfVersion) {
-  this.swfVersion = swfVersion;
-  this.globals = new AS2Globals(this);
-  var windowScope = new AS2ScopeListItem(window, null);
-  this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
-}
-AS2Context.prototype = {};
 
 function AS2Globals(context) {
   this.$context = context;
@@ -30,11 +13,9 @@ AS2Globals.prototype = {
   $asfunction: function(link) {
    throw 'Not implemented';
   },
+  ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
     throw 'Not implemented';
-  },
-  ASSetPropFlags: function (obj, children, n, allowFalse) {
-    // TODO
   },
   chr: function(number) {
     return String.fromCharCode(number);
@@ -187,6 +168,7 @@ AS2Globals.prototype = {
   Date: Date,
   Function: Function,
   Math: Math,
+  MovieClip: AS2MovieClip,
   Number: Number,
   NaN: NaN,
   Infinity: Infinity,
@@ -199,20 +181,3 @@ AS2Globals.prototype = {
   parseInt: parseInt,
   undefined: void(0)
 };
-
-function createBuiltinType(obj, args) {
-  if (obj === Array) {
-    // special case of array
-    var result = args;
-    if (args.length == 1 && typeof args[0] === 'number') {
-      result = [];
-      result.length = args[0];
-    }
-    return result;
-  }
-  if (obj === Boolean || obj === Number || obj === Date ||
-      obj === String || obj === Function)
-    return obj.apply(null, args);
-  if (obj === Object)
-    return {};
-}
