@@ -12,16 +12,42 @@ AS2ScopeListItem.prototype = {
   }
 };
 
-function AS2Context(swfVersion) {
+function AS2Context(swfVersion, startTime) {
   this.swfVersion = swfVersion;
+  this.startTime = startTime;
   this.globals = new AS2Globals(this);
   var windowScope = new AS2ScopeListItem(window, null);
   this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
 }
-AS2Context.prototype = {};
+AS2Context.instance = null;
+AS2Context.prototype = {
+  resolveTarget: function(target) {
+    if (!target)
+      target = this.globals._root; // is timeline just _root?
+    if (typeof target === 'string')
+      target = this.globals._root[target];
+    if (typeof target !== 'object' || !('$as2Object' in target))
+      throw 'Invalid AS2 object';
 
-function executeActions(actionsData, context, scopeContainer,
-                        constantPool, registers) {
+    return target.$as2Object;
+  },
+  resolveLevel: function(level) {
+    return this.resolveTarget(this.globals['_level' + level]);
+  }
+};
+
+function executeActions(actionsData, context, scopeContainer) {
+  try {
+    AS2Context.instance = context;
+    interpretActions(actionsData, scopeContainer, null, []);
+  } finally {
+    AS2Context.instance = null;
+  }
+}
+
+function interpretActions(actionsData, scopeContainer,
+                          constantPool, registers) {
+  var currentContext = AS2Context.instance;
 
   function defineFunction(functionName, parametersNames,
                           registersAllocation, actionsData) {
@@ -63,13 +89,17 @@ function executeActions(actionsData, context, scopeContainer,
         }
       }
 
+      var savedContext = AS2Context.instance;
       try
       {
+        // switching contexts if called outside main thread
+        AS2Context.instance = currentContext;
         actionTracer.indent();
-        return executeActions(actionsData, context, newScopeContainer,
+        return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
         actionTracer.unindent();
+        AS2Context.instance = savedContext;
       }
     });
     if (functionName)
@@ -164,12 +194,12 @@ function executeActions(actionsData, context, scopeContainer,
   }
   function processWith(obj, withBlock) {
     var newScopeContainer = scopeContainer.create(Object(obj));
-    executeActions(withBlock, context, newScopeContainer, constantPool, registers);
+    interpretActions(withBlock, newScopeContainer, constantPool, registers);
   }
   function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
                       tryBlock, catchBlock, finallyBlock) {
     try {
-      executeActions(tryBlock, context, scopeContainer, constantPool, registers);
+      interpretActions(tryBlock, scopeContainer, constantPool, registers);
     } catch (e) {
       if (!catchBlockFlag)
         throw e;
@@ -177,19 +207,19 @@ function executeActions(actionsData, context, scopeContainer,
         scope[catchTarget] = e;
       else
         registers[catchTarget] = e;
-      executeActions(catchBlock, context, scopeContainer, constantPool, registers);
+      interpretActions(catchBlock, scopeContainer, constantPool, registers);
     } finally {
       if (finallyBlockFlag)
-        executeActions(finallyBlock, context, scopeContainer, constantPool, registers);
+        interpretActions(finallyBlock, scopeContainer, constantPool, registers);
     }
   }
 
-  var stream = new ActionsDataStream(actionsData, context.swfVersion);
-  var _global = context.globals, defaultScope = _global._root;
-  registers = registers || [];
+  var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
+  var _global = currentContext.globals
+  var defaultScope = _global._root;
   var stack = [];
   var scope = scopeContainer.scope;
-  var isSwfVersion5 = context.swfVersion >= 5;
+  var isSwfVersion5 = currentContext.swfVersion >= 5;
   var actionTracer = ActionTracerFactory.get();
 
   while (stream.position < stream.end) {
