@@ -7,7 +7,7 @@ describe('AVM1 Interpreter', function() {
     it('should do nothing', function() {
       var as2Context = new AS2Context(11);
       var scope = {};
-      executeActions(new Uint8Array([0]), as2Context, as2Context.initialScope.create(scope));
+      executeActions(new Uint8Array([0]), as2Context, scope);
     }),
 
     it('should execute square.swf code', function() {
@@ -23,7 +23,7 @@ describe('AVM1 Interpreter', function() {
         0, 7, 1, 0, 0, 0, 0, 115, 113, 117, 97, 114, 101, 0, 61, 60, 0];
       var as2Context = new AS2Context(11);
       var scope = {};
-      executeActions(new Uint8Array(actionsData), as2Context, as2Context.initialScope.create(scope));
+      executeActions(new Uint8Array(actionsData), as2Context, scope);
       expect(scope.s).to.be(9);
       expect('square' in scope).to.ok();
     })
@@ -70,7 +70,7 @@ describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
           var as2Context = new AS2Context(11);
           var scope = {};
           for (var j = 0; j < actionsData.length; j++)
-            executeActions(actionsData[j], as2Context, as2Context.initialScope.create(scope));
+            executeActions(actionsData[j], as2Context, scope);
           expect('TestCaseResult' in as2Context.globals).to.be.ok();
           var results = as2Context.globals.TestCaseResult;
           var reason = '';

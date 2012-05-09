@@ -560,7 +560,12 @@ AS2MovieClip.prototype = Object.create(null, {
   }
 });
 
-// Namespaces
+// TODO Button
+// TODO TextField
+// TODO MovieClipLoader
+
+// TODO Mouse
+// TODO Key
 
 var flash = {};
 
@@ -572,7 +577,15 @@ function AS2Rectangle(x, y, width, height) {
   this.width = width;
   this.height = height;
 }
+AS2Rectangle.prototype = {
+  // TODO methods
+};
 flash.geom.Rectangle = AS2Rectangle;
+
+// TODO flash.geom.Point
+// TODO flash.geom.Matrix
+// TODO flash.geom.ColorTransform
+// TODO flash.geom.Transform
 
 flash.net = {
   navigateToURL: function navigateToURL(url, target, method) {

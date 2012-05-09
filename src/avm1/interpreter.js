@@ -36,7 +36,8 @@ AS2Context.prototype = {
   }
 };
 
-function executeActions(actionsData, context, scopeContainer) {
+function executeActions(actionsData, context, scope) {
+  var scopeContainer = context.initialScope.create(scope);
   try {
     AS2Context.instance = context;
     interpretActions(actionsData, scopeContainer, null, []);

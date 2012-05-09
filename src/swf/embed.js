@@ -100,20 +100,19 @@ SWF.embed = function(file, container, options) {
     }
 
     return (function() {
-      var globals = as2Context.globals;
-      globals._root = this;
-      globals._level0 = this;
-      globals._parent = null;
-
-      if (!('as2Scope' in this)) {
-        var as2Scope = {};
-        as2Scope['this'] = as2Scope;
-        this.as2Scope = as2Scope;
+      var as2Object = this.$as2Object;
+      if (!as2Object) {
+        as2Object = new AS2MovieClip();
+        as2Object.$attachNativeMovieClip(this);
+        as2Object['this'] = as2Object;
       }
 
+      var globals = as2Context.globals;
+      globals._root = as2Object;
+      globals._level0 = as2Object;
+
       try {
-        executeActions(data, as2Context,
-          as2Context.initialScope.create(this.as2Scope));
+        executeActions(data, as2Context, as2Object);
       } catch (e) {
         console.log('Error during ActionScript execution: ' + e);
       }
