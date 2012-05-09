@@ -137,7 +137,7 @@ AS2Globals.prototype = {
   removeMovieClip: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget();
     var nativeTarget2 = AS2Context.instance.resolveTarget(target);
-    nativeTarget.removeMovieClip(nativeTarget2);
+    nativeTarget.removeChild(nativeTarget2);
   },
   setProperty: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);

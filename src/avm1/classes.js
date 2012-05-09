@@ -14,9 +14,9 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  _alpha: {
-    get: function get$_alpha() { throw 'Not implemented: get$_alpha'; },
-    set: function set$_alpha(value) { throw 'Not implemented: set$_alpha'; },
+  _alpha: { // @flash.display.DisplayObject
+    get: function get$_alpha() { return this.$nativeMovieClip.alpha; },
+    set: function set$_alpha(value) { this.$nativeMovieClip.alpha = value; },
     enumerable: true,
   },
   attachAudio: {
@@ -49,14 +49,14 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  blendMode: {
-    get: function get$blendMode() { throw 'Not implemented: get$blendMode'; },
-    set: function set$blendMode(value) { throw 'Not implemented: set$blendMode'; },
+  blendMode: { // @flash.display.DisplayObject
+    get: function get$blendMode() { return this.$nativeMovieClip.blendMode; },
+    set: function set$blendMode(value) { this.$nativeMovieClip.blendMode = value; },
     enumerable: true,
   },
-  cacheAsBitmap: {
-    get: function get$cacheAsBitmap() { throw 'Not implemented: get$cacheAsBitmap'; },
-    set: function set$cacheAsBitmap(value) { throw 'Not implemented: set$cacheAsBitmap'; },
+  cacheAsBitmap: { // @flash.display.DisplayObject
+    get: function get$cacheAsBitmap() { return this.$nativeMovieClip.cacheAsBitmap; },
+    set: function set$cacheAsBitmap(value) { this.$nativeMovieClip.cacheAsBitmap = value; },
     enumerable: true,
   },
   clear: {
@@ -77,8 +77,8 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  _currentframe: {
-    get: function get$_currentframe() { throw 'Not implemented: get$_currentframe'; },
+  _currentframe: { // @flash.display.MovieClip
+    get: function get$_currentframe() { return this.$nativeMovieClip.currentFrame; },
     enumerable: true,
   },
   curveTo: {
@@ -87,22 +87,22 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  _droptarget: {
-    get: function get$_droptarget() { throw 'Not implemented: get$_droptarget'; },
+  _droptarget: { // @flash.display.Sprite
+    get: function get$_droptarget() { return this.$nativeMovieClip.dropTarget; },
     enumerable: true,
   },
   duplicateMovieClip: {
     value: function duplicateMovieClip(name, depth, initObject) {
-      var newNativeObj = this.$nativeMovieClip(name, depth, initObject);
+      var newNativeObj = this.$nativeMovieClip.duplicateMovieClip(name, depth, initObject);
       var newMovieClip = new AS2MovieClip();
       newMovieClip.$assignNativeMovieClip(newNativeObj);
       return newMovieClip;
     },
     enumerable: false,
   },
-  enabled: {
-    get: function get$enabled() { throw 'Not implemented: get$enabled'; },
-    set: function set$enabled(value) { throw 'Not implemented: set$enabled'; },
+  enabled: { // @flash.display.MovieClip
+    get: function get$enabled() { return this.$nativeMovieClip.enabled; },
+    set: function set$enabled(value) { this.$nativeMovieClip.enabled = value; },
     enumerable: true,
   },
   endFill: {
@@ -111,7 +111,7 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  filters: {
+  filters: { // @flash.display.DisplayObject
     get: function get$filters() { throw 'Not implemented: get$filters'; },
     set: function set$filters(value) { throw 'Not implemented: set$filters'; },
     enumerable: true,
@@ -131,8 +131,8 @@ AS2MovieClip.prototype = Object.create(null, {
     set: function set$forceSmoothing(value) { throw 'Not implemented: set$forceSmoothing'; },
     enumerable: true,
   },
-  _framesloaded: {
-    get: function get$_framesloaded() { throw 'Not implemented: get$_framesloaded'; },
+  _framesloaded: { // @flash.display.MovieClip
+    get: function get$_framesloaded() { return this.$nativeMovieClip.framesloaded; },
     enumerable: true,
   },
   getBounds: {
@@ -191,7 +191,7 @@ AS2MovieClip.prototype = Object.create(null, {
   },
   getURL: {
     value: function getURL(url, window, method) {
-      throw 'Not implemented: getURL';
+      flash.net.navigateToURL.apply(null, arguments);
     },
     enumerable: false,
   },
@@ -203,19 +203,19 @@ AS2MovieClip.prototype = Object.create(null, {
   },
   gotoAndPlay: {
     value: function gotoAndPlay(frame) {
-      throw 'Not implemented: gotoAndPlay';
+      this.$nativeMovieClip.gotoAndPlay(frame);
     },
     enumerable: false,
   },
   gotoAndStop: {
     value: function gotoAndStop(frame) {
-      throw 'Not implemented: gotoAndStop';
+      this.$nativeMovieClip.gotoAndStop(frame);
     },
     enumerable: false,
   },
-  _height: {
-    get: function get$_height() { throw 'Not implemented: get$_height'; },
-    set: function set$_height(value) { throw 'Not implemented: set$_height'; },
+  _height: { // @flash.display.DisplayObject
+    get: function get$_height() { return this.$nativeMovieClip.height; },
+    set: function set$_height(value) { this.$nativeMovieClip.height = value; },
     enumerable: true,
   },
   _highquality: {
@@ -286,14 +286,14 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  _name: {
-    get: function get$_name() { throw 'Not implemented: get$_name'; },
-    set: function set$_name(value) { throw 'Not implemented: set$_name'; },
+  _name: { // @flash.display.DisplayObject
+    get: function get$_name() { return this.$nativeMovieClip.name; },
+    set: function set$_name(value) { this.$nativeMovieClip.name = value; },
     enumerable: true,
   },
   nextFrame: {
     value: function nextFrame() {
-      throw 'Not implemented: nextFrame';
+      this.$nativeMovieClip.nextFrame();
     },
     enumerable: false,
   },
@@ -399,45 +399,46 @@ AS2MovieClip.prototype = Object.create(null, {
     configurable: true,
     enumerable: false,
   },
-  opaqueBackground: {
-    get: function get$opaqueBackground() { throw 'Not implemented: get$opaqueBackground'; },
-    set: function set$opaqueBackground(value) { throw 'Not implemented: set$opaqueBackground'; },
+  opaqueBackground: { // @flash.display.DisplayObject
+    get: function get$opaqueBackground() { return this.$nativeMovieClip.opaqueBackground; },
+    set: function set$opaqueBackground(value) { this.$nativeMovieClip.opaqueBackground = value; },
     enumerable: true,
   },
-  _parent: {
-    get: function get$_parent() { throw 'Not implemented: get$_parent'; },
-    set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
+  _parent: { // @flash.display.DisplayObject
+    get: function get$_parent() { return this.$nativeMovieClip.parent; },
+    set: function set$_parent(value) { this.$nativeMovieClip.parent = value; },
     enumerable: true,
   },
   play: {
     value: function play() {
-      throw 'Not implemented: play';
+      this.$nativeMovieClip.play();
     },
     enumerable: false,
   },
   prevFrame: {
     value: function prevFrame() {
-      throw 'Not implemented: prevFrame';
+      this.$nativeMovieClip.prevFrame();
     },
     enumerable: false,
   },
-  _quality: {
+  _quality: { // @flash.display.Stage
     get: function get$_quality() { throw 'Not implemented: get$_quality'; },
     set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
     enumerable: true,
   },
   removeMovieClip: {
     value: function removeMovieClip() {
-      throw 'Not implemented: removeMovieClip';
+      var parent = this._parent.$nativeMovieClip;
+      parent.removeChild(this.$nativeMovieClip);
     },
     enumerable: false,
   },
-  _rotation: {
-    get: function get$_rotation() { throw 'Not implemented: get$_rotation'; },
-    set: function set$_rotation(value) { throw 'Not implemented: set$_rotation'; },
+  _rotation: { // @flash.display.DisplayObject
+    get: function get$_rotation() { return this.$nativeMovieClip.rotation; },
+    set: function set$_rotation(value) { this.$nativeMovieClip.rotation = value; },
     enumerable: true,
   },
-  scale9Grid: {
+  scale9Grid: { // @flash.display.DisplayObject
     get: function get$scale9Grid() { throw 'Not implemented: get$scale9Grid'; },
     set: function set$scale9Grid(value) { throw 'Not implemented: set$scale9Grid'; },
     enumerable: true,
@@ -459,8 +460,9 @@ AS2MovieClip.prototype = Object.create(null, {
     enumerable: true,
   },
   startDrag: {
-    value: function startDrag(lockCenter, left, top, right, bottom) {
-      throw 'Not implemented: startDrag';
+    value: function startDrag(lock, left, top, right, bottom) {
+    this.$nativeMovieClip.startDrag(lock, arguments.length < 3 ? null :
+      new AS2Rectangle(left, top, right - left, bottom - top));
     },
     enumerable: false,
   },
@@ -470,27 +472,27 @@ AS2MovieClip.prototype = Object.create(null, {
     },
     enumerable: false,
   },
-  tabChildren: {
-    get: function get$tabChildren() { throw 'Not implemented: get$tabChildren'; },
-    set: function set$tabChildren(value) { throw 'Not implemented: set$tabChildren'; },
+  tabChildren: { // @flash.display.DisplayObjectContainer
+    get: function get$tabChildren() { return this.$nativeMovieClip.tabChildren; },
+    set: function set$tabChildren(value) { this.$nativeMovieClip.tabChildren = value; },
     enumerable: true,
   },
-  tabEnabled: {
-    get: function get$tabEnabled() { throw 'Not implemented: get$tabEnabled'; },
-    set: function set$tabEnabled(value) { throw 'Not implemented: set$tabEnabled'; },
+  tabEnabled: { // @flash.display.InteractiveObject
+    get: function get$tabEnabled() { return this.$nativeMovieClip.tabEnabled; },
+    set: function set$tabEnabled(value) { this.$nativeMovieClip.tabEnabled = value; },
     enumerable: true,
   },
-  tabIndex: {
-    get: function get$tabIndex() { throw 'Not implemented: get$tabIndex'; },
-    set: function set$tabIndex(value) { throw 'Not implemented: set$tabIndex'; },
+  tabIndex: { // @flash.display.InteractiveObject
+    get: function get$tabIndex() { return this.$nativeMovieClip.tabIndex; },
+    set: function set$tabIndex(value) { return this.$nativeMovieClip.tabIndex = value; },
     enumerable: true,
   },
-  _target: {
+  _target: { // this.$nativeMovieClip.getPath() ?
     get: function get$_target() { throw 'Not implemented: get$_target'; },
     enumerable: true,
   },
-  _totalframes: {
-    get: function get$_totalframes() { throw 'Not implemented: get$_totalframes'; },
+  _totalframes: { // @flash.display.MovieClip
+    get: function get$_totalframes() { return this.$nativeMovieClip.totalframes; },
     enumerable: true,
   },
   trackAsMenu: {
@@ -518,42 +520,42 @@ AS2MovieClip.prototype = Object.create(null, {
     set: function set$useHandCursor(value) { throw 'Not implemented: set$useHandCursor'; },
     enumerable: true,
   },
-  _visible: {
-    get: function get$_visible() { throw 'Not implemented: get$_visible'; },
-    set: function set$_visible(value) { throw 'Not implemented: set$_visible'; },
+  _visible: { // @flash.display.DisplayObject
+    get: function get$_visible() { return this.$nativeMovieClip.visible; },
+    set: function set$_visible(value) { this.$nativeMovieClip.visible = value; },
     enumerable: true,
   },
-  _width: {
-    get: function get$_width() { throw 'Not implemented: get$_width'; },
-    set: function set$_width(value) { throw 'Not implemented: set$_width'; },
+  _width: { // @flash.display.DisplayObject
+    get: function get$_width() { return this.$nativeMovieClip.width; },
+    set: function set$_width(value) { this.$nativeMovieClip.width = value; },
     enumerable: true,
   },
   _x: {
-    get: function get$_x() { throw 'Not implemented: get$_x'; },
-    set: function set$_x(value) { throw 'Not implemented: set$_x'; },
+    get: function get$_x() { return this.$nativeMovieClip.x; },
+    set: function set$_x(value) { this.$nativeMovieClip.x = value; },
     enumerable: true,
   },
-  _xmouse: {
-    get: function get$_xmouse() { throw 'Not implemented: get$_xmouse'; },
+  _xmouse: { // @flash.display.DisplayObject
+    get: function get$_xmouse() { return this.$nativeMovieClip.mouseX; },
     enumerable: true,
   },
-  _xscale: {
-    get: function get$_xscale() { throw 'Not implemented: get$_xscale'; },
-    set: function set$_xscale(value) { throw 'Not implemented: set$_xscale'; },
+  _xscale: { // @flash.display.DisplayObject
+    get: function get$_xscale() { return this.$nativeMovieClip.scaleX; },
+    set: function set$_xscale(value) { this.$nativeMovieClip.scaleX = value; },
     enumerable: true,
   },
-  _y: {
-    get: function get$_y() { throw 'Not implemented: get$_y'; },
-    set: function set$_y(value) { throw 'Not implemented: set$_y'; },
+  _y: { // @flash.display.DisplayObject
+    get: function get$_y() { return this.$nativeMovieClip.y; },
+    set: function set$_y(value) { this.$nativeMovieClip.y = value; },
     enumerable: true,
   },
-  _ymouse: {
-    get: function get$_ymouse() { throw 'Not implemented: get$_ymouse'; },
+  _ymouse: { // @flash.display.DisplayObject
+    get: function get$_ymouse() { return this.$nativeMovieClip.mouseY; },
     enumerable: true,
   },
-  _yscale: {
-    get: function get$_yscale() { throw 'Not implemented: get$_yscale'; },
-    set: function set$_yscale(value) { throw 'Not implemented: set$_yscale'; },
+  _yscale: { // @flash.display.DisplayObject
+    get: function get$_yscale() { return this.$nativeMovieClip.scaleY; },
+    set: function set$_yscale(value) { this.$nativeMovieClip.scale = value; },
     enumerable: true,
   }
 });
