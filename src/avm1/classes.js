@@ -8,7 +8,7 @@ AS2MovieClip.prototype = Object.create(null, {
     writable: true
   },
   $attachNativeMovieClip: {
-    value: function attachBitmap(nativeMovieClip) {
+    value: function attachNativeMovieClip(nativeMovieClip) {
       this.$nativeMovieClip = nativeMovieClip;
       nativeMovieClip.$as2Object = this;
     },
@@ -560,12 +560,308 @@ AS2MovieClip.prototype = Object.create(null, {
   }
 });
 
-// TODO Button
+function AS2Button() {
+}
+AS2Button.prototype = Object.create(null, {
+  $nativeButton: {
+    value: null,
+    writable: true
+  },
+  $attachNativeButton: {
+    value: function attachNativeButton(nativeButton) {
+      this.$nativeButton = nativeButton;
+      nativeButton.$as2Object = this;
+    },
+    enumerable: false,
+  },
+  _alpha: { // @flash.display.DisplayObject
+    get: function get$_alpha() { return this.$nativeButton.alpha; },
+    set: function set$_alpha(value) { this.$nativeButton.alpha = value; },
+    enumerable: true,
+  },
+  blendMode: { // @flash.display.DisplayObject
+    get: function get$blendMode() { return this.$nativeButton.blendMode; },
+    set: function set$blendMode(value) { this.$nativeButton.blendMode = value; },
+    enumerable: true,
+  },
+  cacheAsBitmap: { // @flash.display.DisplayObject
+    get: function get$cacheAsBitmap() { return this.$nativeButton.cacheAsBitmap; },
+    set: function set$cacheAsBitmap(value) { this.$nativeButton.cacheAsBitmap = value; },
+    enumerable: true,
+  },
+  enabled: { // @flash.display.SimpleButton
+    get: function get$enabled() { return this.$nativeButton.enabled; },
+    set: function set$enabled(value) { this.$nativeButton.enabled = value; },
+    enumerable: true,
+  },
+  filters: {
+    get: function get$filters() { throw 'Not implemented: get$filters'; },
+    set: function set$filters(value) { throw 'Not implemented: set$filters'; },
+    enumerable: true,
+  },
+  _focusrect: {
+    get: function get$_focusrect() { throw 'Not implemented: get$_focusrect'; },
+    set: function set$_focusrect(value) { throw 'Not implemented: set$_focusrect'; },
+    enumerable: true,
+  },
+  getDepth: {
+    value: function getDepth() {
+      throw 'Not implemented: getDepth';
+    },
+    enumerable: false,
+  },
+  _height: { // @flash.display.DisplayObject
+    get: function get$_height() { return this.$nativeButton.height; },
+    set: function set$_height(value) { this.$nativeButton.height = value; },
+    enumerable: true,
+  },
+  _highquality: {
+    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
+    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    enumerable: true,
+  },
+  menu: {
+    get: function get$menu() { throw 'Not implemented: get$menu'; },
+    set: function set$menu(value) { throw 'Not implemented: set$menu'; },
+    enumerable: true,
+  },
+  _name: { // @flash.display.DisplayObject
+    get: function get$_name() { return this.$nativeButton.name; },
+    set: function set$_name(value) { this.$nativeButton.name = value; },
+    enumerable: true,
+  },
+  onDragOut: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onDragOver: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onKeyDown: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onKeyUp: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onKillFocus: {
+    value: function(newFocus) {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onPress: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onRelease: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onReleaseOutside: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onRollOut: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onRollOver: {
+    value: function() {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  onSetFocus: {
+    value: function(oldFocus) {},
+    writable: true,
+    configurable: true,
+    enumerable: false,
+  },
+  _parent: { // @flash.display.DisplayObject
+    get: function get$_parent() { return this.$nativeButton.parent; },
+    set: function set$_parent(value) { this.$nativeButton.parent = value; },
+    enumerable: true,
+  },
+  _quality: {
+    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
+    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    enumerable: true,
+  },
+  _rotation: { // @flash.display.DisplayObject
+    get: function get$_rotation() { return this.$nativeButton.rotation; },
+    set: function set$_rotation(value) { this.$nativeButton.rotation = value; },
+    enumerable: true,
+  },
+  scale9Grid: { // @flash.display.DisplayObject
+    get: function get$scale9Grid() { throw 'Not implemented: get$scale9Grid'; },
+    set: function set$scale9Grid(value) { throw 'Not implemented: set$scale9Grid'; },
+    enumerable: true,
+  },
+  _soundbuftime: {
+    get: function get$_soundbuftime() { throw 'Not implemented: get$_soundbuftime'; },
+    set: function set$_soundbuftime(value) { throw 'Not implemented: set$_soundbuftime'; },
+    enumerable: true,
+  },
+  tabEnabled: { // @flash.display.InteractiveObject
+    get: function get$tabEnabled() { return this.$nativeButton.tabEnabled; },
+    set: function set$tabEnabled(value) { this.$nativeButton.tabEnabled = value; },
+    enumerable: true,
+  },
+  tabIndex: { // @flash.display.InteractiveObject
+    get: function get$tabIndex() { return this.$nativeButton.tabIndex; },
+    set: function set$tabIndex(value) { return this.$nativeButton.tabIndex = value; },
+    enumerable: true,
+  },
+  _target: {
+    get: function get$_target() { throw 'Not implemented: get$_target'; },
+    enumerable: true,
+  },
+  trackAsMenu: {
+    get: function get$trackAsMenu() { throw 'Not implemented: get$trackAsMenu'; },
+    set: function set$trackAsMenu(value) { throw 'Not implemented: set$trackAsMenu'; },
+    enumerable: true,
+  },
+  _url: {
+    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    enumerable: true,
+  },
+  useHandCursor: {
+    get: function get$useHandCursor() { throw 'Not implemented: get$useHandCursor'; },
+    set: function set$useHandCursor(value) { throw 'Not implemented: set$useHandCursor'; },
+    enumerable: true,
+  },
+  _visible: { // @flash.display.DisplayObject
+    get: function get$_visible() { return this.$nativeButton.visible; },
+    set: function set$_visible(value) { this.$nativeButton.visible = value; },
+    enumerable: true,
+  },
+  _width: { // @flash.display.DisplayObject
+    get: function get$_width() { return this.$nativeButton.width; },
+    set: function set$_width(value) { this.$nativeButton.width = value; },
+    enumerable: true,
+  },
+  _x: {
+    get: function get$_x() { return this.$nativeButton.x; },
+    set: function set$_x(value) { this.$nativeButton.x = value; },
+    enumerable: true,
+  },
+  _xmouse: { // @flash.display.DisplayObject
+    get: function get$_xmouse() { return this.$nativeButton.mouseX; },
+    enumerable: true,
+  },
+  _xscale: { // @flash.display.DisplayObject
+    get: function get$_xscale() { return this.$nativeButton.scaleX; },
+    set: function set$_xscale(value) { this.$nativeButton.scaleX = value; },
+    enumerable: true,
+  },
+  _y: { // @flash.display.DisplayObject
+    get: function get$_y() { return this.$nativeButton.y; },
+    set: function set$_y(value) { this.$nativeButton.y = value; },
+    enumerable: true,
+  },
+  _ymouse: { // @flash.display.DisplayObject
+    get: function get$_ymouse() { return this.$nativeButton.mouseY; },
+    enumerable: true,
+  },
+  _yscale: { // @flash.display.DisplayObject
+    get: function get$_yscale() { return this.$nativeButton.scaleY; },
+    set: function set$_yscale(value) { this.$nativeButton.scale = value; },
+    enumerable: true,
+  }
+});
+
 // TODO TextField
 // TODO MovieClipLoader
 
-// TODO Mouse
 // TODO Key
+
+function AS2Mouse() {}
+Object.defineProperty(AS2Mouse, '$listeners', {
+  value: [],
+  writable: false,
+  enumerable: false
+});
+Object.defineProperty(AS2Mouse, '$displatchEvent', {
+  value: function displatchEvent(eventName, args) {
+    for (var i = 0; i < AS2Mouse.$listeners.length; i++)
+      AS2Mouse.$listeners[i].apply(null, args);
+  },
+  enumerable: false
+});
+Object.defineProperty(AS2Mouse, 'addListener', {
+  value: function addListener(listener) {
+    AS2Mouse.$listeners.push(listener);
+  },
+  enumerable: false
+});
+Object.defineProperty(AS2Mouse, 'hide', {
+  value: function hide() {
+    // flash.ui.Mouse.hide()
+    throw 'Not implemented: hide';
+  },
+  enumerable: false
+});
+Object.defineProperty(AS2Mouse, 'removeListener', {
+  value: function removeListener(listener) {
+    var i = AS2Mouse.$listeners.indexOf(listener);
+    if (i < 0)
+      return;
+    AS2Mouse.$listeners.splice(i, 1);
+  },
+  enumerable: false
+});
+Object.defineProperty(AS2Mouse, 'show', {
+  value: function show() {
+    // flash.ui.Mouse.show()
+    throw 'Not implemented: show';
+  },
+  enumerable: false
+});
+AS2Mouse.prototype = Object.create(null, {
+  onMouseDown: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  onMouseMove: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  onMouseUp: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  onMouseWheel: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  }
+});
 
 var flash = {};
 

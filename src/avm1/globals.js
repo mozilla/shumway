@@ -199,7 +199,6 @@ AS2Globals.prototype = {
   Date: Date,
   Function: Function,
   Math: Math,
-  MovieClip: AS2MovieClip,
   Number: Number,
   NaN: NaN,
   Infinity: Infinity,
@@ -210,5 +209,9 @@ AS2Globals.prototype = {
   isNaN: isNaN,
   parseFloat: parseFloat,
   parseInt: parseInt,
-  undefined: void(0)
+  undefined: void(0),
+  MovieClip: AS2MovieClip,
+  Button: AS2Button,
+  Rectangle: AS2Rectangle,
+  Mouse: AS2Mouse
 };
