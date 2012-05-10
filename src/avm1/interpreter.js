@@ -881,8 +881,8 @@ var ActionTracerFactory = (function() {
       var stackDump = [];
       for(var q = 0; q < stack.length; q++) {
         var item = stack[q];
-        stackDump.push(item && item instanceof Object ?
-          '[' + (item.constructor.name || 'Object') + ']' : item);
+        stackDump.push(item && typeof item === 'object' ?
+          '[' + (item.constructor && item.constructor.name ? item.constructor.name : 'Object') + ']' : item);
       }
 
       var indent = new Array(indentation + 1).join('..');

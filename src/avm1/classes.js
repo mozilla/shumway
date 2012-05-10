@@ -1021,22 +1021,68 @@ defineObjectProperties(Array.prototype, {
     value: (function() {
       var originalSort = Array.prototype.sort;
       return (function sort(compareFunction, options) {
-        if (arguments.length <= 1)
+        if (arguments.length <= 1 && typeof compareFunction !== 'number')
           return originalSort.apply(this, arguments);
-        throw 'Not implemented';
+        if (typeof compareFunction === 'number') {
+          options = compareFunction;
+          compareFunction = null;
+        }
+        var subject = !!(options & Array.UNIQUESORT) || !!(options & Array.RETURNINDEXEDARRAY) ?
+          this.slice(0) : this;
+        if (options & Array.CASEINSENSITIVE) {
+          compareFunction = (function(x, y) {
+            var valueX = String(x).toLowerCase();
+            var valueY = String(y).toLowerCase();
+            return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
+          });
+        }
+        if (options & Array.NUMERIC) {
+          compareFunction = (function(x, y) {
+            var result = x - y;
+            return result < 0 ? -1 : result > 0 ? 1 : 0;
+          });
+        }
+        originalSort.call(subject, compareFunction);
+        if (options & Array.UNIQUESORT) {
+          for (var i = 1; i < subject.length; ++i) {
+            if (subject[i - 1] !== subject[i])
+              return; // keeping array unmodified
+          }
+          for (var i = 0; i < subject.length; ++i)
+            this[i] = subject[i];
+          subject = this;
+        }
+        if (options.DESCENDING)
+          subject.reverse();
+        return subject;
       });
     })(),
     enumerable: false
   },
   sortOn: {
     value: function sortOn(fieldName, options) {
-      var comparer = (function(x, y) {
-        var valueX = String(x[fieldName]);
-        var valueY = String(y[fieldName]);
-        return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-      });
+      var comparer;
+      if (options & Array.NUMERIC) {
+        comparer = (function(x, y) {
+          var valueX = Number(x[fieldName]);
+          var valueY = Number(y[fieldName]);
+          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
+        });
+      } else if (options & Array.CASEINSENSITIVE) {
+        comparer = (function(x, y) {
+          var valueX = String(x[fieldName]).toLowerCase();
+          var valueY = String(y[fieldName]).toLowerCase();
+          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
+        });
+      } else {
+        comparer = (function(x, y) {
+          var valueX = String(x[fieldName]);
+          var valueY = String(y[fieldName]);
+          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
+        });
+      }
       return arguments.length <= 1 ? this.sort(comparer) :
-        this.sort(comparer, options);
+        this.sort(comparer, options & ~(Array.NUMERIC | Array.CASEINSENSITIVE));
     },
     enumerable: false
   }
