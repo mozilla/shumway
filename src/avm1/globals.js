@@ -34,7 +34,10 @@ AS2Globals.prototype = {
     return flash.utils.getTimer();
   },
   getURL: function(url, target, method) {
-    flash.net.navigateToURL.apply(null, arguments);
+    var request = new AS2URLRequest(url);
+    if (method)
+      request.method = method;
+    flash.net.navigateToURL(request, target);
   },
   getVersion: function() {
     return flash.system.Capalilities.version;

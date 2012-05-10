@@ -103,7 +103,7 @@ SWF.embed = function(file, container, options) {
       var as2Object = this.$as2Object;
       if (!as2Object) {
         as2Object = new AS2MovieClip();
-        as2Object.$attachNativeMovieClip(this);
+        as2Object.$attachNativeObject(this);
         as2Object['this'] = as2Object;
       }
 
