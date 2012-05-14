@@ -208,7 +208,7 @@ var Class = (function () {
   Class.passthroughCallable = function passthroughCallable(f) {
     return {
       call: function ($this) {
-        Array.prototype.pop.call(arguments);
+        Array.prototype.shift.call(arguments);
         return f.apply($this, arguments);
       },
       apply: function ($this, args) {
