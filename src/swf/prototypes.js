@@ -7,6 +7,28 @@ var MovieClipPrototype = function(obj, dictionary) {
   var currentPframe = 0;
   var timeline = [];
   var framesLoaded = 0;
+  var as2Context = AS2Context.instance;
+
+  function createAS2Script(data) {
+    return (function() {
+      var as2Object = this.$as2Object;
+      if (!as2Object) {
+        as2Object = new AS2MovieClip();
+        as2Object.$attachNativeObject(this);
+        as2Object['this'] = as2Object;
+      }
+
+      var globals = as2Context.globals;
+      globals._root = as2Object;
+      globals._level0 = as2Object;
+
+      try {
+        executeActions(data, as2Context, as2Object);
+      } catch (e) {
+        console.log('Error during ActionScript execution: ' + e);
+      }
+    });
+  }
 
   function ensure(frameNum) {
     var n = timeline.length;
@@ -51,6 +73,8 @@ var MovieClipPrototype = function(obj, dictionary) {
               };
               if (character.draw)
                 character.ratio = entry.ratio || 0;
+              if (entry.events)
+                character.events = entry.events;
               frame[depth] = character;
             } else {
               frame[depth] = entry;
@@ -79,6 +103,20 @@ var MovieClipPrototype = function(obj, dictionary) {
     var paused = false;
     var frameScripts = [];
 
+    function dispatchEvent(eventName) {
+      if (!instance.events)
+        return;
+      for (var i = 0; i < instance.events.length; ++i) {
+        var event = instance.events[i];
+        if (!event[eventName])
+          continue;
+        var actions = event.actionsData;
+        if (typeof actions !== 'function')
+          event.actionsData = actions = createAS2Script(actions);
+        actions.call(instance);
+      }
+    }
+
     function gotoFrame(frame) {
       var frameNum = frame;
       if (frameNum > totalFrames)
@@ -88,8 +126,15 @@ var MovieClipPrototype = function(obj, dictionary) {
         frameNum = framesLoaded;
       currentFrame = frameNum;
 
-      if (frameNum == frame && frameNum in frameScripts)
-        frameScripts[frameNum].call(instance);
+      if (frameNum == frame) {
+        dispatchEvent('enterFrame');
+        if (frameNum in frameScripts) {
+          var actionsData = frameScripts[frameNum];
+          if (typeof actionsData !== 'function')
+            frameScripts[frameNum] = actionsData = createAS2Script(actionsData);
+          actionsData.call(instance);
+        }
+      }
     }
 
     var proto = create(this);
@@ -149,8 +194,13 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
-    proto.addFrameScript = function(frameNum, fn) {
-      frameScripts[frameNum] = fn;
+    proto.addFrameScript = function(frameNum, actionData) {
+      frameScripts[frameNum] = actionData;
+    };
+    proto.addSpriteInitScripts = function(initScripts) {
+      for (var spriteId in initScripts) {
+        createAS2Script(initScripts[spriteId]).call(this);
+      }
     };
 
     return instance;
