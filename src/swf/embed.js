@@ -107,6 +107,9 @@ SWF.embed = function(file, container, options) {
         {width: canvas.width, height: canvas.height});
       AS2Context.instance = as2Context;
 
+      AS2Mouse.$bind(canvas);
+      AS2Key.$bind(canvas);
+
       var proto = create(new MovieClipPrototype({
         frameCount: obj.frameCount,
         pframes: pframes

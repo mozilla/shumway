@@ -835,13 +835,97 @@ AS2Button.prototype = Object.create({}, {
 // TODO TextField
 // TODO MovieClipLoader
 
-// TODO Key
+function AS2Key() {}
+defineObjectProperties(AS2Key, {
+  DOWN: createConstant(40),
+  LEFT: createConstant(37),
+  RIGHT: createConstant(39),
+  UP: createConstant(38),
+  $listeners: {
+    value: [],
+    writable: false,
+    enumerable: false
+  },
+  $keyStates: {
+    value: [],
+    writable: false,
+    enumerable: false
+  },
+  $lastKeyCode: {
+    value: 0,
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  $bind: {
+    value: function $bind(canvas) {
+      canvas.ownerDocument.addEventListener('keydown', function(e) {
+        AS2Key.$lastKeyCode = e.keyCode;
+        AS2Key.$keyStates[e.keyCode] = 1;
+        AS2Key.$dispatchEvent('onKeyDown');
+      }, false);
+      canvas.ownerDocument.addEventListener('keyup', function(e) {
+        AS2Key.$lastKeyCode = e.keyCode;
+        delete AS2Key.$keyStates[e.keyCode];
+        AS2Key.$dispatchEvent('onKeyUp');
+      }, false);
+    },
+    enumerable: false
+  },
+  $dispatchEvent: {
+    value: function dispatchEvent(eventName, args) {
+      for (var i = 0; i < AS2Key.$listeners.length; i++)
+        AS2Key.$listeners[i][eventName].apply(null, args);
+    },
+    enumerable: false
+  },
+  addListener: {
+    value: function addListener(listener) {
+      AS2Key.$listeners.push(listener);
+    },
+    enumerable: false
+  },
+  isDown: {
+    value: function isDown(code) {
+      return !!AS2Key.$keyStates[code];
+    }
+  },
+  removeListener: {
+    value: function removeListener(listener) {
+      var i = AS2Key.$listeners.indexOf(listener);
+      if (i < 0)
+        return;
+      AS2Key.$listeners.splice(i, 1);
+    },
+    enumerable: false
+  }
+});
+AS2Key.prototype = Object.create({}, {
+  onKeyDown: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  onKeyUp: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  }
+});
 
 function AS2Mouse() {}
 defineObjectProperties(AS2Mouse, {
   $listeners: {
     value: [],
     writable: false,
+    enumerable: false
+  },
+  $bind: {
+    value: function $bind(canvas) {
+      // TODO bind to canvas
+    },
     enumerable: false
   },
   $dispatchEvent: {

@@ -217,5 +217,6 @@ AS2Globals.prototype = {
   Stage: AS2Stage,
   Button: AS2Button,
   Rectangle: AS2Rectangle,
+  Key: AS2Key,
   Mouse: AS2Mouse
 };
