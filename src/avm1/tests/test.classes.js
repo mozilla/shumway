@@ -52,3 +52,48 @@ describe('AS2Classes', function() {
     })
   })
 })
+
+describe('AS2Stage', function() {
+  describe('#width', function() {
+    it('should return stage width', function() {
+      AS2Context.instance = new AS2Context(11, {width: 100, height: 50});
+      expect(AS2Stage.width).to.be(100);
+    })
+  })
+
+  describe('#height', function() {
+    it('should return stage height', function() {
+      AS2Context.instance = new AS2Context(11, {width: 100, height: 50});
+      expect(AS2Stage.height).to.be(50);
+    })
+  })
+
+  describe('#onFullScreen', function() {
+    it('should dispath onFullScreen', function() {
+      var track = [];
+      var listener = {
+        onFullScreen: function(bFull) { track.push(bFull); }
+      };
+      AS2Stage.addListener(listener);
+      AS2Stage.$dispatchEvent('onFullScreen', [true]);
+      AS2Stage.$dispatchEvent('onFullScreen', [false]);
+      AS2Stage.removeListener(listener);
+      AS2Stage.$dispatchEvent('onFullScreen');
+      expect(track.join(',')).to.be('true,false');
+    })
+  })
+
+  describe('#onResize', function() {
+    it('should dispath onResize', function() {
+      var invoked = 0;
+      var listener = {
+        onResize: function() { invoked++; }
+      };
+      AS2Stage.addListener(listener);
+      AS2Stage.$dispatchEvent('onResize');
+      AS2Stage.removeListener(listener);
+      AS2Stage.$dispatchEvent('onResize');
+      expect(invoked).to.be(1);
+    })
+  })
+})

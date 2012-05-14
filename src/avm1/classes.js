@@ -42,7 +42,7 @@ function defineObjectProperties(obj, propeties) {
 
 function AS2MovieClip() {
 }
-AS2MovieClip.prototype = Object.create(null, {
+AS2MovieClip.prototype = Object.create({}, {
   $nativeObject: {
     value: null,
     writable: true
@@ -605,7 +605,7 @@ AS2MovieClip.prototype = Object.create(null, {
 
 function AS2Button() {
 }
-AS2Button.prototype = Object.create(null, {
+AS2Button.prototype = Object.create({}, {
   $nativeObject: {
     value: null,
     writable: true
@@ -844,10 +844,10 @@ defineObjectProperties(AS2Mouse, {
     writable: false,
     enumerable: false
   },
-  $displatchEvent: {
-    value: function displatchEvent(eventName, args) {
+  $dispatchEvent: {
+    value: function dispatchEvent(eventName, args) {
       for (var i = 0; i < AS2Mouse.$listeners.length; i++)
-        AS2Mouse.$listeners[i].apply(null, args);
+        AS2Mouse.$listeners[i][eventName].apply(null, args);
     },
     enumerable: false
   },
@@ -881,7 +881,7 @@ defineObjectProperties(AS2Mouse, {
     enumerable: false
   }
 });
-AS2Mouse.prototype = Object.create(null, {
+AS2Mouse.prototype = Object.create({}, {
   onMouseDown: {
     value: function () {},
     writable: true,
@@ -908,6 +908,109 @@ AS2Mouse.prototype = Object.create(null, {
   }
 });
 
+function AS2Stage() {
+}
+defineObjectProperties(AS2Stage, {
+  $listeners: {
+    value: [],
+    writable: false,
+    enumerable: false
+  },
+  $dispatchEvent: {
+    value: function dispatchEvent(eventName, args) {
+      for (var i = 0; i < AS2Stage.$listeners.length; i++)
+        AS2Stage.$listeners[i][eventName].apply(null, args);
+    },
+    enumerable: false
+  },
+  addListener: {
+    value: function addListener(listener) {
+      AS2Stage.$listeners.push(listener);
+    },
+    enumerable: false
+  },
+  align: {
+    get: function get$align() {
+      throw 'Not implemented: get$align';
+    },
+    set: function set$align(value) {
+      throw 'Not implemented: set$align';
+    },
+    enumerable: true
+  },
+  displayState: {
+    get: function get$displayState() {
+      throw 'Not implemented: get$displayState';
+    },
+    set: function set$displayState(value) {
+      throw 'Not implemented: set$displayState';
+    },
+    enumerable: true
+  },
+  fullScreenSourceRect: {
+    get: function get$fullScreenSourceRect() {
+      throw 'Not implemented: get$fullScreenSourceRect';
+    },
+    set: function set$fullScreenSourceRect(value) {
+      throw 'Not implemented: set$fullScreenSourceRect';
+    },
+    enumerable: true
+  },
+  height: {
+    get: function get$height() {
+      return AS2Context.instance.stage.height;
+    },
+    enumerable: true
+  },
+  removeListener: {
+    value: function removeListener(listener) {
+      var i = AS2Stage.$listeners.indexOf(listener);
+      if (i < 0)
+        return;
+      AS2Stage.$listeners.splice(i, 1);
+    },
+    enumerable: false
+  },
+  scaleMode: {
+    get: function get$scaleMode() {
+      throw 'Not implemented: get$scaleMode';
+    },
+    set: function set$scaleMode(value) {
+      throw 'Not implemented: set$scaleMode';
+    },
+    enumerable: true
+  },
+  showMenu: {
+    get: function get$showMenu() {
+      throw 'Not implemented: get$showMenu';
+    },
+    set: function set$showMenu(value) {
+      throw 'Not implemented: set$showMenu';
+    },
+    enumerable: true
+  },
+  width: {
+    get: function get$width() {
+      return AS2Context.instance.stage.width;
+    },
+    enumerable: true
+  }
+});
+AS2Stage.prototype = Object.create({}, {
+  onFullScreen: {
+    value: function (bFull) {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  onResize: {
+    value: function () {},
+    writable: true,
+    configurable: true,
+    enumerable: false
+  }
+});
+
 var flash = {};
 
 flash.geom = {};
@@ -918,7 +1021,7 @@ function AS2Rectangle(x, y, width, height) {
   this.width = width;
   this.height = height;
 }
-AS2Rectangle.prototype = Object.create(null, {
+AS2Rectangle.prototype = Object.create({}, {
   // TODO methods
 });
 flash.geom.Rectangle = AS2Rectangle;
@@ -942,7 +1045,7 @@ flash.net = {
 function AS2URLRequest(url) {
   this.url = url;
 }
-AS2URLRequest.prototype = Object.create(null, {
+AS2URLRequest.prototype = Object.create({}, {
   url: {
     value: null,
     writable: true,

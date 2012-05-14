@@ -214,6 +214,7 @@ AS2Globals.prototype = {
   parseInt: parseInt,
   undefined: void(0),
   MovieClip: AS2MovieClip,
+  Stage: AS2Stage,
   Button: AS2Button,
   Rectangle: AS2Rectangle,
   Mouse: AS2Mouse

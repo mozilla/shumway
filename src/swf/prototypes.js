@@ -82,7 +82,7 @@ var MovieClipPrototype = function(obj, dictionary) {
     function gotoFrame(frame) {
       var frameNum = frame;
       if (frameNum > totalFrames)
-        frameNum = totalFrames;
+        frameNum = 1;
       ensure(frameNum);
       if (frameNum > framesLoaded)
         frameNum = framesLoaded;

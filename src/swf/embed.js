@@ -96,7 +96,8 @@ SWF.embed = function(file, container, options) {
 
   function createAS2FrameScript(data) {
     if (!as2Context) {
-      as2Context = new AS2Context(swfVersion);
+      as2Context = new AS2Context(swfVersion,
+        {width: canvas.width, height: canvas.height});
     }
 
     return (function() {
