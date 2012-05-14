@@ -8,4 +8,6 @@ package {
   [native("notImplemented")]
   public native function notImplemented(s);
 
+  [native("debugBreak")]
+  public native function debugBreak(s);
 }

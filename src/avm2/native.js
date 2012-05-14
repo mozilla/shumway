@@ -817,12 +817,18 @@ const natives = (function () {
     return c;
   }
 
+  function debugBreak(message) {
+    // TODO: Set Breakpoint Here
+    return message;
+  }
+
   return {
     /**
      * Shell toplevel.
      */
     print: constant(print),
     notImplemented: constant(notImplemented),
+    debugBreak: constant(debugBreak),
 
     original: original,
 
