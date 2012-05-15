@@ -223,6 +223,8 @@ class Test(Command):
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
     parser.add_argument('-i', '--interpret', action='store_true', help="always interpret")
+    parser.add_argument('-z', '--tabulate', action='store_true', help="tabulate")
+
     args = parser.parse_args(args)
     print "Testing %s (%s)" % (args.src, "interpreted" if args.interpret else "compiled")
 
@@ -256,43 +258,47 @@ class Test(Command):
     def runTest(tests, counts):
       while tests.qsize() > 0:
         test = tests.get()
-        out = [str(total - tests.qsize()) + " of " + str(total) + ": " + test]
+        out = []
         counts['count'] += 1
         shuCommand = ["js", "-m", "-n", "avm.js", "-x"]
         if args.interpret:
           shuCommand.append("-i")
         else:
           shuCommand.append("-cse")
+
         shuCommand.append(test)
         shuResult = execute(shuCommand, int(args.timeout))
         avmResult = execute([self.avm, test], int(args.timeout))
 
         if not shuResult or not avmResult:
           continue
-
         if shuResult[0] == avmResult[0]:
           counts['passed'] += 1
           counts['shuElapsed'] += shuResult[1]
           counts['avmElapsed'] += avmResult[1]
-          out.append(PASS + " PASSED" + ENDC)
+          out.append(PASS + "PASSED" + ENDC)
         else:
           if "PASSED" in shuResult[0] and not "FAILED" in shuResult[0]:
             counts['almost'] += 1
-            out.append(INFO + " ALMOST"  + ENDC)
+            out.append(INFO + "ALMOST"  + ENDC)
           elif "PASSED" in shuResult[0] and "FAILED" in shuResult[0]:
             counts['kindof'] += 1
-            out.append(WARN + " KINDOF"  + ENDC)
+            out.append(WARN + "KINDOF"  + ENDC)
           else:
             counts['failed'] += 1
-            out.append(FAIL + " FAILED"  + ENDC)
+            out.append(FAIL + "FAILED"  + ENDC)
 
-        out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
+        out.append(str(total - tests.qsize()))
+
+        # out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
         out.append("shu: " + str(round(shuResult[1] * 1000, 2)) + " ms,")
         out.append("avm: " + str(round(avmResult[1] * 1000, 2)) + " ms,")
         ratio = round(avmResult[1] / shuResult[1], 2)
         out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC)
-        sys.stdout.write(" ".join(out) + "\n")
+        out.append(test);
+        sys.stdout.write("\t".join(out) + "\n")
         sys.stdout.flush()
+
         tests.task_done()
 
     jobs = []
