@@ -135,6 +135,8 @@ var MovieClipPrototype = function(obj, dictionary) {
           actionsData.call(instance);
         }
       }
+
+      delete instance.$boundsCache;
     }
 
     var proto = create(this);
@@ -202,6 +204,75 @@ var MovieClipPrototype = function(obj, dictionary) {
         createAS2Script(initScripts[spriteId]).call(this);
       }
     };
+    defineObjectProperties(proto, {
+      getBounds: {
+        value: function getBounds() {
+          if (this.$boundsCache)
+            return this.$boundsCache;
+
+          var currentShapes = timeline[currentFrame - 1];
+          var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
+          for (var i in currentShapes) {
+            if (!+i) continue;
+            var shape = currentShapes[i];
+            var bounds = shape.bounds || shape.getBounds();
+            xMin = Math.min(xMin, bounds.xMin);
+            yMin = Math.min(yMin, bounds.yMin);
+            xMax = Math.max(xMax, bounds.xMax);
+            yMax = Math.max(yMax, bounds.yMax);
+          }
+          return (this.$boundsCache = {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax});
+        },
+        enumerable: false
+      },
+      x: {
+        get: function get$x() {
+          return this.transform.matrix.translateX * 0.05;
+        },
+        set: function set$x(value) {
+          this.transform.matrix.translateX = value * 20;
+        },
+        enumerable: true
+      },
+      y: {
+        get: function get$y() {
+          return this.transform.matrix.translateY * 0.05;
+        },
+        set: function set$y(value) {
+          this.transform.matrix.translateY = value * 20;
+        },
+        enumerable: true
+      },
+      width: {
+        get: function get$width() {
+          var bounds = this.getBounds();
+          return (bounds.xMax - bounds.xMin) * 0.05;
+        },
+        set: function set$width(value) {
+          throw 'Not implemented: width';
+        },
+        enumerable: true
+      },
+      height: {
+        get: function get$height() {
+          var bounds = this.getBounds();
+          return (bounds.yMax - bounds.yMin) * 0.05;
+        },
+        set: function set$height(value) {
+          throw 'Not implemented: height';
+        },
+        enumerable: true
+      },
+      rotation: {
+        get: function get$rotation() {
+          return this.transform.rotation || 0;
+        },
+        set: function set$rotation(value) {
+          this.transform.rotation = value;
+        },
+        enumerable: true
+      },
+    });
 
     return instance;
   }

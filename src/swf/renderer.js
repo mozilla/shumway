@@ -26,6 +26,9 @@ function render(displayList, ctx) {
           matrix.translateY
         );
       }
+      var rotation = character.transform.rotation;
+      if (rotation)
+        ctx.rotate(rotation * Math.PI / 180);
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)
