@@ -162,7 +162,7 @@ var Interpreter = (function () {
             continue;
           case OP_lookupswitch:
             index = stack.pop();
-            if (index >= bc.offsets.length) {
+            if (index < 0 || index >= bc.offsets.length) {
               /* The last target is the default. */
               index = bc.offsets.length - 1;
             }
