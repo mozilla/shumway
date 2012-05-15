@@ -7,6 +7,28 @@ var MovieClipPrototype = function(obj, dictionary) {
   var currentPframe = 0;
   var timeline = [];
   var framesLoaded = 0;
+  var as2Context = AS2Context.instance;
+
+  function createAS2Script(data) {
+    return (function() {
+      var as2Object = this.$as2Object;
+      if (!as2Object) {
+        as2Object = new AS2MovieClip();
+        as2Object.$attachNativeObject(this);
+        as2Object['this'] = as2Object;
+      }
+
+      var globals = as2Context.globals;
+      globals._root = as2Object;
+      globals._level0 = as2Object;
+
+      try {
+        executeActions(data, as2Context, as2Object);
+      } catch (e) {
+        console.log('Error during ActionScript execution: ' + e);
+      }
+    });
+  }
 
   function ensure(frameNum) {
     var n = timeline.length;
@@ -51,6 +73,8 @@ var MovieClipPrototype = function(obj, dictionary) {
               };
               if (character.draw)
                 character.ratio = entry.ratio || 0;
+              if (entry.events)
+                character.events = entry.events;
               frame[depth] = character;
             } else {
               frame[depth] = entry;
@@ -79,17 +103,40 @@ var MovieClipPrototype = function(obj, dictionary) {
     var paused = false;
     var frameScripts = [];
 
+    function dispatchEvent(eventName) {
+      if (!instance.events)
+        return;
+      for (var i = 0; i < instance.events.length; ++i) {
+        var event = instance.events[i];
+        if (!event[eventName])
+          continue;
+        var actions = event.actionsData;
+        if (typeof actions !== 'function')
+          event.actionsData = actions = createAS2Script(actions);
+        actions.call(instance);
+      }
+    }
+
     function gotoFrame(frame) {
       var frameNum = frame;
       if (frameNum > totalFrames)
-        frameNum = totalFrames;
+        frameNum = 1;
       ensure(frameNum);
       if (frameNum > framesLoaded)
         frameNum = framesLoaded;
       currentFrame = frameNum;
 
-      if (frameNum == frame && frameNum in frameScripts)
-        frameScripts[frameNum].call(instance);
+      if (frameNum == frame) {
+        dispatchEvent('enterFrame');
+        if (frameNum in frameScripts) {
+          var actionsData = frameScripts[frameNum];
+          if (typeof actionsData !== 'function')
+            frameScripts[frameNum] = actionsData = createAS2Script(actionsData);
+          actionsData.call(instance);
+        }
+      }
+
+      delete instance.$boundsCache;
     }
 
     var proto = create(this);
@@ -149,9 +196,83 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
-    proto.addFrameScript = function(frameNum, fn) {
-      frameScripts[frameNum] = fn;
+    proto.addFrameScript = function(frameNum, actionData) {
+      frameScripts[frameNum] = actionData;
     };
+    proto.addSpriteInitScripts = function(initScripts) {
+      for (var spriteId in initScripts) {
+        createAS2Script(initScripts[spriteId]).call(this);
+      }
+    };
+    defineObjectProperties(proto, {
+      getBounds: {
+        value: function getBounds() {
+          if (this.$boundsCache)
+            return this.$boundsCache;
+
+          var currentShapes = timeline[currentFrame - 1];
+          var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
+          for (var i in currentShapes) {
+            if (!+i) continue;
+            var shape = currentShapes[i];
+            var bounds = shape.bounds || shape.getBounds();
+            xMin = Math.min(xMin, bounds.xMin);
+            yMin = Math.min(yMin, bounds.yMin);
+            xMax = Math.max(xMax, bounds.xMax);
+            yMax = Math.max(yMax, bounds.yMax);
+          }
+          return (this.$boundsCache = {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax});
+        },
+        enumerable: false
+      },
+      x: {
+        get: function get$x() {
+          return this.transform.matrix.translateX * 0.05;
+        },
+        set: function set$x(value) {
+          this.transform.matrix.translateX = value * 20;
+        },
+        enumerable: true
+      },
+      y: {
+        get: function get$y() {
+          return this.transform.matrix.translateY * 0.05;
+        },
+        set: function set$y(value) {
+          this.transform.matrix.translateY = value * 20;
+        },
+        enumerable: true
+      },
+      width: {
+        get: function get$width() {
+          var bounds = this.getBounds();
+          return (bounds.xMax - bounds.xMin) * 0.05;
+        },
+        set: function set$width(value) {
+          throw 'Not implemented: width';
+        },
+        enumerable: true
+      },
+      height: {
+        get: function get$height() {
+          var bounds = this.getBounds();
+          return (bounds.yMax - bounds.yMin) * 0.05;
+        },
+        set: function set$height(value) {
+          throw 'Not implemented: height';
+        },
+        enumerable: true
+      },
+      rotation: {
+        get: function get$rotation() {
+          return this.transform.rotation || 0;
+        },
+        set: function set$rotation(value) {
+          this.transform.rotation = value;
+        },
+        enumerable: true
+      },
+    });
 
     return instance;
   }

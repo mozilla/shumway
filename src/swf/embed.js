@@ -91,55 +91,39 @@ SWF.embed = function(file, container, options) {
   var ctx = canvas.getContext('2d');
   var frameRate;
   var plays;
-  var swfVersion;
   var as2Context = null;
 
-  function createAS2FrameScript(data) {
-    if (!as2Context) {
-      as2Context = new AS2Context(swfVersion);
+  startWorking(file, function(obj) {
+    if (!root) {
+      var bounds = obj.bounds;
+      canvas.width = (bounds.xMax - bounds.xMin) / 20;
+      canvas.height = (bounds.yMax - bounds.yMin) / 20;
+      container.appendChild(canvas);
+
+      frameRate = obj.frameRate;
+
+      // TODO disable AVM1 if AVM2 is enabled
+      as2Context = new AS2Context(obj.version,
+        {width: canvas.width, height: canvas.height});
+      AS2Context.instance = as2Context;
+
+      AS2Mouse.$bind(canvas);
+      AS2Key.$bind(canvas);
+
+      var proto = create(new MovieClipPrototype({
+        frameCount: obj.frameCount,
+        pframes: pframes
+      }, dictionary));
+      root = proto.constructor();
+
+      if (options.onstart)
+        options.onstart(root);
+      return;
     }
 
-    return (function() {
-      var globals = as2Context.globals;
-      globals._root = this;
-      globals._level0 = this;
-      globals._parent = null;
-
-      if (!('as2Scope' in this)) {
-        var as2Scope = {};
-        as2Scope['this'] = as2Scope;
-        this.as2Scope = as2Scope;
-      }
-
-      try {
-        executeActions(data, as2Context,
-          as2Context.initialScope.create(this.as2Scope));
-      } catch (e) {
-        console.log('Error during ActionScript execution: ' + e);
-      }
-    });
-  }
-
-  startWorking(file, function(obj) {
+    AS2Context.instance = as2Context;
     if (obj) {
-      if (!root) {
-        var proto = create(new MovieClipPrototype({
-          frameCount: obj.frameCount,
-          pframes: pframes
-        }, dictionary));
-        root = proto.constructor();
-
-        var bounds = obj.bounds;
-        canvas.width = (bounds.xMax - bounds.xMin) / 20;
-        canvas.height = (bounds.yMax - bounds.yMin) / 20;
-        container.appendChild(canvas);
-
-        frameRate = obj.frameRate;
-        swfVersion = obj.version;
-
-        if (options.onstart)
-          options.onstart(root);
-      } else if (obj.id) {
+      if (obj.id) {
         definePrototype(dictionary, obj);
       } else if (obj.type === 'pframe') {
         if (obj.bgcolor)
@@ -169,18 +153,10 @@ SWF.embed = function(file, container, options) {
           }
         }
 
-        var isAVM1Enabled = true; // TODO disable if AVM2 is enabled
-        if (isAVM1Enabled && obj.actionsData) {
-          root.addFrameScript(pframes.length + 1,
-            createAS2FrameScript(obj.actionsData));
-        }
-        if (isAVM1Enabled && obj.initActionsData) {
-          for (var spriteId in obj.initActionsData) {
-            var data = obj.initActionsData[spriteId];
-            var initSprite = createAS2FrameScript(data);
-            initSprite.call(root);
-          }
-        }
+        if (obj.actionsData)
+          root.addFrameScript(pframes.length + 1, obj.actionsData);
+        if (obj.initActionsData)
+          root.addSpriteInitScripts(obj.initActionsData);
 
         pframes.push(obj);
         if (!plays) {
