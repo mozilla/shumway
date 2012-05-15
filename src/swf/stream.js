@@ -4,7 +4,7 @@ function Stream(buffer, offset, length, compression) {
   if (offset === undefined)
     offset = 0;
   if (buffer.buffer instanceof ArrayBuffer) {
-	offset += buffer.byteOffset;
+    offset += buffer.byteOffset;
     buffer = buffer.buffer;
   }
   if (length === undefined)
@@ -52,9 +52,8 @@ StreamPrototype.remaining = function() {
   return this.end - this.pos;
 };
 StreamPrototype.substream = function(begin, end) {
-  var stream = create(this);
+  var stream = new Stream(this.bytes);
   stream.pos = begin;
   stream.end = end;
-  stream.align();
   return stream;
 };
