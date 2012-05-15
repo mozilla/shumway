@@ -223,7 +223,7 @@ class Test(Command):
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
     parser.add_argument('-i', '--interpret', action='store_true', help="always interpret")
-    parser.add_argument('-z', '--tabulate', action='store_true', help="tabulate")
+    parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
 
     args = parser.parse_args(args)
     print "Testing %s (%s)" % (args.src, "interpreted" if args.interpret else "compiled")
@@ -243,6 +243,9 @@ class Test(Command):
     PASS = '\033[92m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
+
+    if args.noColors:
+      INFO = WARN = PASS = FAIL = ENDC = "";
 
     total = tests.qsize()
     counts = {
@@ -291,10 +294,10 @@ class Test(Command):
         out.append(str(total - tests.qsize()))
 
         # out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
-        out.append("shu: " + str(round(shuResult[1] * 1000, 2)) + " ms,")
-        out.append("avm: " + str(round(avmResult[1] * 1000, 2)) + " ms,")
+        out.append(str(round(shuResult[1] * 1000, 2)))
+        out.append(str(round(avmResult[1] * 1000, 2)))
         ratio = round(avmResult[1] / shuResult[1], 2)
-        out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + "x faster" + ENDC)
+        out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + ENDC)
         out.append(test);
         sys.stdout.write("\t".join(out) + "\n")
         sys.stdout.flush()
