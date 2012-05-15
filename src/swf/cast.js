@@ -100,6 +100,12 @@ function cast(tags, dictionary, declare) {
         assert(obj, 'undefined object', 'place');
         entry.id = obj.id;
       }
+      if (tag.events) {
+        var events = tag.events;
+        if (events[events.length - 1].eoe)
+          events = events.slice(0, events.length - 1);
+        entry.events = events;
+      }
       if (tag.move)
         entry.move = true;
       if (tag.hasMatrix)
@@ -107,6 +113,7 @@ function cast(tags, dictionary, declare) {
       if (tag.hasRatio)
         entry.ratio = tag.ratio / 0xffff;
       pframe[tag.depth] = entry;
+
       break;
     case 'remove':
       pframe[tag.depth] = null;

@@ -1,73 +1,60 @@
 ﻿/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-function isMovieClip(obj) {
-  return obj instanceof MovieClip;
+function ASSetPropFlags(obj, children, flags, allowFalse) {
+  // flags (from bit 0): dontenum, dontdelete, readonly, ....
+  // TODO
 }
-
-function AS2ScopeListItem(scope, next) {
-  this.scope = scope;
-  this.next = next;
-}
-AS2ScopeListItem.prototype = {
-  create: function (scope) {
-    return new AS2ScopeListItem(scope, this);
-  }
-};
-
-function AS2Context(swfVersion) {
-  this.swfVersion = swfVersion;
-  this.globals = new AS2Globals(this);
-  var windowScope = new AS2ScopeListItem(window, null);
-  this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
-}
-AS2Context.prototype = {};
 
 function AS2Globals(context) {
-  this.$context = context;
   this._global = this;
 }
 AS2Globals.prototype = {
   $asfunction: function(link) {
-   throw 'Not implemented';
+    throw 'Not implemented: $asfunction';
   },
+  ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
-    throw 'Not implemented';
-  },
-  ASSetPropFlags: function (obj, children, n, allowFalse) {
-    // TODO
+    throw 'Not implemented: call';
   },
   chr: function(number) {
     return String.fromCharCode(number);
   },
   duplicateMovieClip: function(target, newname, depth) {
-    throw 'Not implemented';
-  },
-  eval: function(expression) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    nativeTarget.duplicateMovieClip(newname, depth);
   },
   fscommand: function (command, parameters) {
-    throw 'Not implemented'; // flash.system.fscommand
+    flash.system.fscommand.apply(null, arguments);
   },
   getProperty: function(target, index) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    throw 'Not implemented: getProperty';
   },
   getTimer: function() {
-    return 0; // flash.utils.getTimer()
+    return flash.utils.getTimer();
   },
   getURL: function(url, target, method) {
-    // flash.net.navigateToURL()
+    var request = new AS2URLRequest(url);
+    if (method)
+      request.method = method;
+    flash.net.navigateToURL(request, target);
   },
   getVersion: function() {
-    return 'SHUMWAY ' + this.$context.swfVersion + ',0,0,0';
+    return flash.system.Capalilities.version;
   },
-  gotoAndPlay: function(scene, frame) {
-    throw 'Not implemented';
+  gotoAndPlay: function() {
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    if (arguments.length < 2)
+      nativeTarget.gotoAndPlay(arguments[0]);
+    else
+      nativeTarget.gotoAndPlay(arguments[1], arguments[0]); // scene and frame are swapped for AS3
   },
   gotoAndStop: function(scene, frame) {
-    throw 'Not implemented';
-  },
-  ifFrameLoaded: function(scene, frame) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    if (arguments.length < 2)
+      nativeTarget.gotoAndStop(arguments[0]);
+    else
+      nativeTarget.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
   },
   int: function(value) {
     return 0 | value;
@@ -76,16 +63,24 @@ AS2Globals.prototype = {
     return ('' + expression).length; // ASCII Only?
   },
   loadMovie: function(url, target, method) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    // flash.display.Loader, flash.net.URLLoader
+    throw 'Not implemented: loadMovie';
   },
   loadMovieNum: function(url, level, method) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveLevel(level);
+    // flash.display.Loader, flash.net.URLLoader
+    throw 'Not implemented: loadMovieNum';
   },
   loadVariables: function(url, target, method) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    // flash.display.Loader, flash.net.URLLoader
+    throw 'Not implemented: loadVariables';
   },
   loadVariablesNum: function(url, level, method) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveLevel(level);
+    // flash.display.Loader, flash.net.URLLoader
+    throw 'Not implemented: loadVariablesNum';
   },
   mbchr: function(number) {
     return String.fromCharCode.charCodeAt(number);
@@ -103,83 +98,103 @@ AS2Globals.prototype = {
     }
     return ('' + value).substr(index, count);
   },
-  MMExecute: function(command) {
-    throw 'Not implemented';
-  },
   nextFrame: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.nextFrame();
   },
   nextScene: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.nextScene();
   },
   ord: function(charachar) {
     return ('' + character).charCodeAt(0); // ASCII only?
   },
   play: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.play();
   },
   prevFrame: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    prevFrame.nextFrame();
   },
   prevScene: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.prevScene();
   },
   print: function(target, boundingBox) {
-    throw 'Not implemented';
+    // flash.printing.PrintJob
+    throw 'Not implemented: print';
   },
   printAsBitmap: function(target, boundingBox) {
-    throw 'Not implemented';
+    throw 'Not implemented: printAsBitmap';
   },
   printAsBitmapNum: function(level, boundingBox) {
-    throw 'Not implemented';
+    throw 'Not implemented: printAsBitmapNum';
   },
   printNum: function(level, bondingBox) {
-    throw 'Not implemented';
+    throw 'Not implemented: printNum';
   },
   random: function(value) {
     return 0 | (Math.random() * (0 | value));
   },
   removeMovieClip: function(target) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    var nativeTarget2 = AS2Context.instance.resolveTarget(target);
+    nativeTarget.removeChild(nativeTarget2);
   },
   setProperty: function(target, index, value) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    throw 'Not implemented: setProperty';
   },
   showRedrawRegions: function(enable, color) {
-    throw 'Not implemented';
+    // flash.profiler.showRedrawRegions.apply(null, arguments);
+    throw 'Not implemented: showRedrawRegions';
   },
   startDrag: function(target, lock, left, top, right, bottom) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    nativeTarget.startDrag(lock, arguments.length < 3 ? null :
+      new AS2Rectangle(left, top, right - left, bottom - top));
   },
   stop: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.stop();
   },
   stopAllSounds: function() {
-    throw 'Not implemented';
+    // flash.media.SoundMixer.stopAll();
+    throw 'Not implemented: stopAllSounds';
   },
   stopDrag: function() {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    nativeTarget.stopDrag();
   },
   String: String,
   substring: function(value, index, count) {
     return this.mbsubstring(value, index, count); // ASCII Only?
   },
   targetPath: function(targetObject) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    // nativeTarget.getPath() ?
+    throw 'Not implemented: targetPath';
   },
   toggleHighQuality: function() {
-    throw 'Not implemented';
+    // flash.display.Stage.quality
+    throw 'Not implemented: toggleHighQuality';
   },
   trace: function(expression) {
     console.log(expression);
   },
   unloadMovie: function(target) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveTarget(target);
+    // nativeTarget.unload(); ?
+    throw 'Not implemented: unloadMovie';
   },
   unloadMovieNum: function(level) {
-    throw 'Not implemented';
+    var nativeTarget = AS2Context.instance.resolveLevel(level);
+    // nativeTarget.unload(); ?
+    throw 'Not implemented: unloadMovieNum';
   },
   updateAfterEvent: function() {
+    // flash.events.TimerEvent.updateAfterEvent
     throw 'Not implemented';
   },
   // built-ins
@@ -197,22 +212,11 @@ AS2Globals.prototype = {
   isNaN: isNaN,
   parseFloat: parseFloat,
   parseInt: parseInt,
-  undefined: void(0)
+  undefined: void(0),
+  MovieClip: AS2MovieClip,
+  Stage: AS2Stage,
+  Button: AS2Button,
+  Rectangle: AS2Rectangle,
+  Key: AS2Key,
+  Mouse: AS2Mouse
 };
-
-function createBuiltinType(obj, args) {
-  if (obj === Array) {
-    // special case of array
-    var result = args;
-    if (args.length == 1 && typeof args[0] === 'number') {
-      result = [];
-      result.length = args[0];
-    }
-    return result;
-  }
-  if (obj === Boolean || obj === Number || obj === Date ||
-      obj === String || obj === Function)
-    return obj.apply(null, args);
-  if (obj === Object)
-    return {};
-}

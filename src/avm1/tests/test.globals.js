@@ -7,8 +7,15 @@ describe('AS2Globals', function() {
       var globals = new AS2Globals(null);
       var obj = {};
       globals.ASSetPropFlags(obj, null, 1);
+      expect(true).to.be.ok();
     })
-    expect(true).to.be.ok();
+  })
+
+  describe('#MovieClip()', function() {
+    it('should return the global AS2MovieClip constructor', function(){
+      var globals = new AS2Globals(null);
+      expect(globals.MovieClip).to.be(AS2MovieClip);
+    })
   })
 
   describe('#_global', function() {
