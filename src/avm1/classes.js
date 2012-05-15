@@ -54,6 +54,12 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
+  $lookupChild: {
+    value: function lookupChild(id) {
+      throw 'Not implemented: $lookupChild';
+    },
+    enumerable: false
+  },
   _alpha: { // @flash.display.DisplayObject
     get: function get$_alpha() { return this.$nativeObject.alpha; },
     set: function set$_alpha(value) { this.$nativeObject.alpha = value; },

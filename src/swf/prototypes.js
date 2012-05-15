@@ -210,12 +210,23 @@ var MovieClipPrototype = function(obj, dictionary) {
           if (this.$boundsCache)
             return this.$boundsCache;
 
+          // TODO move the getBounds into utility/core classes
           var currentShapes = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
           for (var i in currentShapes) {
             if (!+i) continue;
             var shape = currentShapes[i];
-            var bounds = shape.bounds || shape.getBounds();
+            var bounds = shape.bounds;
+            if (!bounds) {
+              bounds = shape.getBounds();
+              var transform = this.transform.matrix;
+              var x1 = transform.scaleX * bounds.xMin + transform.skew0 * bounds.yMin + transform.translateX;
+              var y1 = transform.skew1 * bounds.yMin + transform.scaleY * bounds.yMin + transform.translateY;
+              var x2 = transform.scaleX * bounds.xMax + transform.skew0 * bounds.yMax + transform.translateX;
+              var y2 = transform.skew1 * bounds.yMax + transform.scaleY * bounds.yMax + transform.translateY;
+              bounds.xMin = Math.min(x1, x2); bounds.xMax = Math.max(x1, x2);
+              bounds.yMin = Math.min(y1, y2); bounds.yMax = Math.max(y1, y2);
+            }
             xMin = Math.min(xMin, bounds.xMin);
             yMin = Math.min(yMin, bounds.yMin);
             xMax = Math.max(xMax, bounds.xMax);

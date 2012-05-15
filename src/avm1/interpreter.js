@@ -25,11 +25,11 @@ AS2Context.prototype = {
     if (!target)
       target = this.globals._root; // is timeline just _root?
     if (typeof target === 'string')
-      target = this.globals._root[target];
-    if (typeof target !== 'object' || !('$as2Object' in target))
+      target = this.globals._root.$lookupChild(target);
+    if (typeof target !== 'object' || !('$nativeObject' in target))
       throw 'Invalid AS2 object';
 
-    return target.$as2Object;
+    return target;
   },
   resolveLevel: function(level) {
     return this.resolveTarget(this.globals['_level' + level]);
