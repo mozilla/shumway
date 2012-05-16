@@ -1,4 +1,4 @@
-var filter = options.register(new Option("filter", "f", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods"));
+var filter = options.register(new Option("filter", "f", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
 
 var IndentingWriter = (function () {
   function indentingWriter(suppressOutput, out) {
@@ -38,7 +38,7 @@ var IndentingWriter = (function () {
     }
   };
 
-  indentingWriter.prototype.writeArray = function writeArray(arr, detailed) {
+  indentingWriter.prototype.writeArray = function writeArray(arr, detailed, noNumbers) {
     detailed = detailed || false;
     for (var i = 0, j = arr.length; i < j; i++) {
       var prefix = "";
@@ -52,7 +52,8 @@ var IndentingWriter = (function () {
         }
         prefix += " ";
       }
-      this.writeLn(("" + i).padRight(' ', 4) + prefix + arr[i]);
+      var number = noNumbers ? "" : ("" + i).padRight(' ', 4);
+      this.writeLn(number + prefix + arr[i]);
     }
   };
 
@@ -73,6 +74,9 @@ function traceArray(writer, name, array, abc) {
 AbcFile.prototype.trace = function trace(writer) {
   if (filter.value.indexOf("p") >= 0) {
     this.constantPool.trace(writer);
+  }
+  if (filter.value.indexOf("N") >= 0) {
+    this.constantPool.traceMultinamesOnly(writer);
   }
   if (filter.value.indexOf("c") >= 0) {
     traceArray(writer, "classes", this.classes);
@@ -112,6 +116,10 @@ ConstantPool.prototype.trace = function (writer) {
     }
   }
   writer.leave("}");
+};
+
+ConstantPool.prototype.traceMultinamesOnly = function (writer) {
+  writer.writeArray(this.multinames, null, true);
 };
 
 Traits.prototype.trace = function (writer) {
