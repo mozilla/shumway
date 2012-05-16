@@ -4,20 +4,20 @@
      xmlns:em="http://www.mozilla.org/2004/em-rdf#">
 
   <Description about="urn:mozilla:install-manifest">
-    <em:id>shumway@labs.mozilla.org</em:id>
+    <em:id>shumway@research.mozilla.org</em:id>
     <em:name>shumway</em:name>
     <em:version>0.1.0</em:version>
 	  <em:iconURL>chrome://shumway/skin/logo.png</em:iconURL>
     <em:targetApplication>
       <Description>
        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-       <em:minVersion>9.0</em:minVersion>
-       <em:maxVersion>13.0a1</em:maxVersion>
+       <em:minVersion>10.0</em:minVersion>
+       <em:maxVersion>15.0a1</em:maxVersion>
      </Description>
     </em:targetApplication>
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>true</em:unpack>
-    <em:creator>Mozilla Labs</em:creator>
+    <em:creator>Mozilla Research</em:creator>
     <em:description>shumway loader</em:description>
     <em:homepageURL>https://github.com/mozilla/shumway/</em:homepageURL>
     <em:type>2</em:type>

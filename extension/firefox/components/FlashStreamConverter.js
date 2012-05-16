@@ -10,7 +10,7 @@ const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 const FALSH_CONTENT_TYPE = 'application/x-shockwave-flash';
-const EXT_PREFIX = 'shumway@labs.mozilla.org';
+const EXT_PREFIX = 'shumway@research.mozilla.org';
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
