@@ -37,11 +37,3 @@ function defineButton(tag, dictionary) {
     button.require = dependencies;
   return button;
 }
-
-var ButtonPrototype = function(obj, dictionary) {
-  // HACK button as movieclip
-  obj.frameCount = 4;
-  obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
-  var instance = MovieClipPrototype.apply(this, arguments);
-  return instance;
-};

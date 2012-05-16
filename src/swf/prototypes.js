@@ -290,3 +290,11 @@ var MovieClipPrototype = function(obj, dictionary) {
     return instance;
   }
 };
+
+// HACK button as movieclip
+var ButtonPrototype = function(obj, dictionary) {
+  obj.frameCount = 4;
+  obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
+  var instance = MovieClipPrototype.apply(this, arguments);
+  return instance;
+};
