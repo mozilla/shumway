@@ -235,6 +235,31 @@ var DEFINE_TEXT = {
   variableName: STRING(0),
   initialText: ['hasText', [STRING(0)]]
 };
+var DEFINE_BUTTON = {
+  type: '"button"',
+  id: UI16,
+  $0: ['tagCode==7', [{
+    characters: {
+      $: BUTTON,
+      condition: '!eob'
+    },
+    actionsData: BINARY(0)
+  }, {
+    $$trackFlags: UI8,
+    trackAsMenu: 'trackFlags>>7&1',
+    $$actionOffset: UI16,
+    characters: {
+      $: BUTTON,
+      condition: '!eob'
+    },
+    $1: ['!!actionOffset', [{
+      buttonActions: {
+        $: BUTTONCONDACTION,
+        condition: '$stream.remaining() > 0'
+      }
+    }]]
+  }]]
+};
 var DO_ABC = {
   type: '"abc"',
   flags: UI32,

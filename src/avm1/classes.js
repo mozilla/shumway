@@ -510,8 +510,20 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   startDrag: {
     value: function startDrag(lock, left, top, right, bottom) {
-    this.$nativeObject.startDrag(lock, arguments.length < 3 ? null :
-      new AS2Rectangle(left, top, right - left, bottom - top));
+      this.$nativeObject.startDrag(lock, arguments.length < 3 ? null :
+        new AS2Rectangle(left, top, right - left, bottom - top));
+    },
+    enumerable: false
+  },
+  stop: {
+    value: function stop() {
+      this.$nativeObject.stop();
+    },
+    enumerable: false
+  },
+  stopDrag: {
+    value: function stopDrag() {
+      this.$nativeObject.stopDrag();
     },
     enumerable: false
   },
