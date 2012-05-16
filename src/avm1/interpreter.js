@@ -261,7 +261,8 @@ function interpretActions(actionsData, scopeContainer,
       case 0x8A: // ActionWaitForFrame
         var frame = stream.readUI16();
         var skipCount = stream.readUI8();
-        _global.waitForFrame(frame, skipCount);
+        if (!_global.ifFrameLoaded(frame))
+          nextPosition += skipCount; // actions or bytes ?
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
@@ -510,8 +511,11 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x8D: // ActionWaitForFrame2
         var skipCount = stream.readUI8();
-        var label = stack.pop();
-        _global.waitForFrame(label, skipCount);
+        var frame = stack.pop();
+        if (!_global.ifFrameLoaded(frame))
+          nextPosition += skipCount; // actions or bytes ?
+        debugger;
+        //_global.waitForFrame(label, skipCount);
         break;
       case 0x26: // ActionTrace
         var value = stack.pop();

@@ -164,7 +164,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       paused = false;
       gotoFrame(frame);
     };
-    proto.gotoAndStop = function(frame) {
+    proto.gotoAndStop = function(frame, scene) {
       if (this !== instance)
         return;
       paused = true;
@@ -284,7 +284,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           this.transform.rotation = value;
         },
         enumerable: true
-      },
+      }
     });
 
     return instance;

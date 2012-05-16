@@ -56,6 +56,13 @@ AS2Globals.prototype = {
     else
       nativeTarget.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
   },
+  ifFrameLoaded: function(scene, frame) {
+    // ignoring scene parameter ?
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
+    var framesLoaded = nativeTarget._framesloaded;
+    return frameNum < framesLoaded;
+  },
   int: function(value) {
     return 0 | value;
   },
