@@ -72,6 +72,11 @@ function definePrototype(dictionary, obj) {
       dictionary[id] = proto;
     });
     break;
+  case 'button':
+    defer(function() {
+      dictionary[id] = new ButtonPrototype(obj, dictionary);
+    });
+    break;
   default:
     fail('unknown object type', 'define');
   }

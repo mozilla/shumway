@@ -3,19 +3,45 @@
 function defineButton(tag, dictionary) {
   var characters = tag.characters;
   var dependencies = [];
+  var states = {
+    up: {type: 'pframe'},
+    over: {type: 'pframe'},
+    down: {type: 'pframe'},
+    hitTest: {type: 'pframe'}
+  };
   var i = 0;
-  var character;
   while (character = characters[i++]) {
     if (character.eob)
       break;
-    // TODO characters and dependencies
+    var characterItem = dictionary[character.characterId];
+    assert(characterItem, 'undefined character', 'button');
+    var entry = {
+      id: characterItem.id,
+      matrix: character.matrix
+    };
+    if (character.stateUp)
+      states.up[character.depth] = entry;
+    if (character.stateOver)
+      states.over[character.depth] = entry;
+    if (character.stateDown)
+      states.down[character.depth] = entry;
+    if (character.stateHitTest)
+      states.hitTest[character.depth] = entry;
   }
-  var shape = {
-    type: 'shape',
+  var button = {
+    type: 'button',
     id: tag.id,
-    bounds: { xMin:0, yMin:0, xMax:0, yMax:0 } // ???
+    states: states
   };
   if (dependencies.length)
-    shape.require = dependencies;
-  return shape;
+    button.require = dependencies;
+  return button;
 }
+
+var ButtonPrototype = function(obj, dictionary) {
+  // HACK button as movieclip
+  obj.frameCount = 4;
+  obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
+  var instance = MovieClipPrototype.apply(this, arguments);
+  return instance;
+};
