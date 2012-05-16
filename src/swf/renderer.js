@@ -2,7 +2,8 @@
 
 var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 
-function render(displayList, ctx) {
+function render(displayList, renderingContext) {
+  var ctx = renderingContext.beginDrawing();
   var depths = [];
   var i = 0;
   for (depths[i++] in displayList);
@@ -32,10 +33,11 @@ function render(displayList, ctx) {
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)
-        character.nextFrame.call(render, ctx);
+        character.nextFrame.call(render, renderingContext);
       ctx.restore();
     }
   }
+  renderingContext.endDrawing();
 }
 function renderMovieClip(mc, rate, ctx) {
   var frameTime = 0;
@@ -44,16 +46,31 @@ function renderMovieClip(mc, rate, ctx) {
   var frameHeight = ctx.canvas.height;
 
   ctx.mozFillRule = 'evenodd';
+
+  var renderingContext = {
+    depth: 0,
+    beginDrawing: function (){
+      if (this.depth == 0) {
+        ctx.clearRect(0, 0, frameWidth, frameHeight);
+        ctx.save();
+        ctx.scale(0.05, 0.05);
+      }
+      this.depth++;
+      return ctx;
+    },
+    endDrawing: function() {
+      this.depth--;
+      if (this.depth == 0) {
+        ctx.restore();
+      }
+    }
+  };
  
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      ctx.clearRect(0, 0, frameWidth, frameHeight);
-      ctx.save();
-      ctx.scale(0.05, 0.05);
-      mc.nextFrame.call(render, ctx);
-      ctx.restore();
+      mc.nextFrame.call(render, renderingContext);
     }
     requestAnimationFrame(draw);
   })();

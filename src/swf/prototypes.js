@@ -175,9 +175,11 @@ var MovieClipPrototype = function(obj, dictionary) {
         if (this === render) {
           if (!paused)
             gotoFrame(currentFrame + 1);
-          var ctx = arguments[0];
           var frameIndex = currentFrame - 1;
-          render(timeline[frameIndex], ctx);
+          var displayList = timeline[frameIndex];
+          if (!displayList)
+            return; // skiping non-prepared frame
+          render(displayList, arguments[0]);
         }
         return;
       }
