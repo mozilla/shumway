@@ -104,8 +104,7 @@ var Interpreter = (function () {
           switch (op) {
           case OP_bkpt:           notImplemented(); break;
           case OP_throw:
-            runtime.exception.value = stack.pop();
-            throw runtime.exception;
+            throw stack.pop();
           case OP_getsuper:       notImplemented(); break;
           case OP_setsuper:       notImplemented(); break;
           case OP_dxns:           notImplemented(); break;
@@ -561,22 +560,24 @@ var Interpreter = (function () {
 
           pc++;
         } catch (e) {
-          if (e !== runtime.exception || exceptions.length < 1) {
+          if (exceptions.length < 1) {
             throw e;
           }
 
-          var ev = e.value;
+          e = translateError(e);
+
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
                 (!handler.typeName ||
-                 runtime.isType(ev, getTypeByName(handler.typeName)))) {
+                 runtime.isType(e, toplevel.getTypeByName(handler.typeName, true, true)))) {
               if (!handler.scopeObject) {
                 if (handler.varName) {
                   var varTrait = Object.create(Trait.prototype);
                   varTrait.kind = TRAIT_Slot;
                   varTrait.name = handler.varName;
                   varTrait.typeName = handler.typeName;
+                  varTrait.holder = method;
                   handler.scopeObject = runtime.applyTraits({}, new Traits([varTrait]));
                 } else {
                   handler.scopeObject = {};
@@ -586,7 +587,7 @@ var Interpreter = (function () {
               scope = savedScope;
               scopeHeight = 0;
               stack.length = 0;
-              stack.push(ev);
+              stack.push(e);
               pc = handler.offset;
               continue interpret;
             }
