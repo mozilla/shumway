@@ -495,7 +495,7 @@ var BUTTON = {
   stateOver: 'flags>>1&1',
   stateUp: 'flags&1',
   $1: ['!eob', [{
-    buttonId: UI16,
+    characterId: UI16,
     depth: UI16,
     matrix: MATRIX,
     cxform: ['tagCode===34', [CXFORM]],
@@ -519,7 +519,7 @@ var BUTTONCONDACTION = {
   idleToOverUp: 'buttonConditions&1',
   keyPress: 'buttonConditions>>9&127',
   overDownToIdle: 'buttonConditions>>8&1',
-  actionsData: ['!buttonCondSize', [BINARY(0), BINARY('buttonCondSize - 5')]]
+  actionsData: ['!buttonCondSize', [BINARY(0), BINARY('buttonCondSize - 4')]]
 };
 var CONDITION = {
   $$length: UI16,
