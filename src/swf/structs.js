@@ -495,7 +495,7 @@ var BUTTON = {
   stateOver: 'flags>>1&1',
   stateUp: 'flags&1',
   $1: ['!eob', [{
-    buttonId: UI16,
+    characterId: UI16,
     depth: UI16,
     matrix: MATRIX,
     cxform: ['tagCode===34', [CXFORM]],
@@ -505,6 +505,21 @@ var BUTTON = {
     }]],
     blendMode: ['blend', [UI8]]
   }]]
+};
+var BUTTONCONDACTION = {
+  $$buttonCondSize: UI16,
+  $$buttonConditions: UI16,
+  idleToOverDown: 'buttonConditions>>7&1',
+  outDownToIdle: 'buttonConditions>>6&1',
+  outDownToOverDown: 'buttonConditions>>5&1',
+  overDownToOutDown: 'buttonConditions>>4&1',
+  overDownToOverUp: 'buttonConditions>>3&1',
+  overUpToOverDown: 'buttonConditions>>2&1',
+  overUpToIdle: 'buttonConditions>>1&1',
+  idleToOverUp: 'buttonConditions&1',
+  keyPress: 'buttonConditions>>9&127',
+  overDownToIdle: 'buttonConditions>>8&1',
+  actionsData: ['!buttonCondSize', [BINARY(0), BINARY('buttonCondSize - 4')]]
 };
 var CONDITION = {
   $$length: UI16,

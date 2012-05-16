@@ -2,7 +2,7 @@
 
 /** @define {string} */ var workerScripts = 'DataView.js,util.js,swf.js,\
 types.js,structs.js,tags.js,inflate.js,stream.js,templates.js,generator.js,\
-parser.js,bitmap.js,font.js,image.js,label.js,shape.js,text.js,cast.js';
+parser.js,bitmap.js,button.js,font.js,image.js,label.js,shape.js,text.js,cast.js';
 
 if (typeof window === 'undefined') {
   importScripts.apply(null, workerScripts.split(','));
