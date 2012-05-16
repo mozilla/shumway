@@ -41,6 +41,9 @@ function cast(tags, dictionary, declare) {
       case 'text':
         var factory = defineText;
         break;
+      case 'button':
+        var factory = defineButton;
+        break;
       default:
         fail('unknown object type', 'cast');
       }

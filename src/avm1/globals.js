@@ -146,6 +146,9 @@ AS2Globals.prototype = {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     throw 'Not implemented: setProperty';
   },
+  setTarget: function(target) {
+    throw 'Not implemented: setTarget';
+  },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
     throw 'Not implemented: showRedrawRegions';
