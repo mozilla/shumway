@@ -30,6 +30,13 @@ var MovieClipPrototype = function(obj, dictionary) {
     });
   }
 
+  function prefetch() {
+    var prefetchPortion = 20, prefetchInterval = 100;
+    setTimeout(function() {
+      ensure(Math.min(framesLoaded + prefetchPortion, totalFrames));
+    }, prefetchInterval);
+  }
+
   function ensure(frameNum) {
     var n = timeline.length;
     while (n < frameNum) {
@@ -91,6 +98,8 @@ var MovieClipPrototype = function(obj, dictionary) {
             break;
           ++framesLoaded;
         }
+        if (framesLoaded < totalFrames)
+          prefetch();
       });
     }
   }
