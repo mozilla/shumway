@@ -152,7 +152,7 @@ var Interface = (function () {
 
 var Class = (function () {
 
-  function Class(name, instance, callable, instancePrototype) {
+  function Class(name, instance, callable) {
     function defaultCallable() {
       notImplemented("class callable");
     }
@@ -161,9 +161,8 @@ var Class = (function () {
 
     if (instance) {
       this.instance = instance;
-      this.instancePrototype = instancePrototype || instance.prototype;
-      assert (this.instancePrototype);
-      defineNonEnumerableProperty(this.instancePrototype, "public$constructor", this);
+      assert (this.instance.prototype);
+      defineNonEnumerableProperty(this.instance.prototype, "public$constructor", this);
     }
 
     /**
@@ -203,7 +202,6 @@ var Class = (function () {
   defineNonEnumerableProperty(Class.prototype, "public$constructor", Class);
 
   Class.instance = Class;
-  Class.instancePrototype = Class.prototype;
 
   Class.passthroughCallable = function passthroughCallable(f) {
     return {
@@ -229,7 +227,7 @@ var Class = (function () {
   };
 
   Class.nativeMethods = {
-    "get prototype": function () { return this.instancePrototype; }
+    "get prototype": function () { return this.instance.prototype; }
   };
 
   return Class;
@@ -265,7 +263,19 @@ const natives = (function () {
   function ObjectClass(scope, instance, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
-    c.nativeMethods = Object.prototype;
+    c.nativeMethods = {
+      isPrototypeOf: Object.prototype.isPrototypeOf,
+      hasOwnProperty: function (name) {
+        name = "public$" + name;
+        if (this.hasOwnProperty(name)) {
+          return true;
+        }
+        return this.public$constructor.instance.prototype.hasOwnProperty(name);
+      },
+      propertyIsEnumerable: function (name) {
+        return Object.prototype.propertyIsEnumerable.call(this, "public$" + name);
+      }
+    };
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
         prop = "public$" + name;
@@ -371,8 +381,9 @@ const natives = (function () {
       }
       return array;
     }
+    TypedVector.prototype = TypedArray.prototype;
     var typeName = type.classInfo.instanceInfo.name.name;
-    var c = new Class("Vector$" + typeName, TypedVector, C(TypedVector), TypedArray.prototype);
+    var c = new Class("Vector$" + typeName, TypedVector, C(TypedVector));
 
     var m = TypedArray.prototype;
 

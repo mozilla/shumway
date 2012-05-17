@@ -84,8 +84,21 @@ package
     //[API(CONFIG::VM_INTERNAL)]
     public static function _init()
     {
-      prototype.hasOwnProperty = unsafeJSNative("Object.prototype.hasOwnProperty");
-      prototype.setPropertyIsEnumerable = unsafeJSNative("Object.prototype.setPropertyIsEnumerable");
+      prototype.hasOwnProperty = function(V=void 0):Boolean
+      {
+        return this.AS3::hasOwnProperty(V)
+      }
+
+      prototype.propertyIsEnumerable = function(V=void 0)
+      {
+        return this.AS3::propertyIsEnumerable(V)
+      }
+
+      prototype.setPropertyIsEnumerable = function(name:String,enumerable:Boolean):void
+      {
+        _setPropertyIsEnumerable(this, name, enumerable);
+      }
+
       prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
       prototype.toString = unsafeJSNative("original.Object.toString");
       prototype.valueOf = unsafeJSNative("original.Object.valueOf");

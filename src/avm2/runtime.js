@@ -763,7 +763,7 @@ var Runtime = (function () {
       cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
-        this.applyTraits(cls.instancePrototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
+        this.applyTraits(cls.instance.prototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
       }
       this.applyTraits(cls, ci.traits, null, scope, cls.nativeStatics);
     } else {
