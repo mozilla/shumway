@@ -110,7 +110,7 @@ package
   // The initial value of NaN is NaN (section 8.5).
   // E262 { DontEnum, DontDelete}
   // E327 { DontEnum, DontDelete, ReadOnly}
-  public const NaN:Number = NaN;
+  public const NaN:Number = 0/0;
 
   // The initial value of Infinity is +8 (section 8.5).
   // E262 { DontEnum, DontDelete}
