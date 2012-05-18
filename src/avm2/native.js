@@ -867,6 +867,7 @@ const natives = (function () {
     String: String,
     Array: Array,
     Number: Number,
+    Boolean: Boolean,
     Math: Math,
     Date: Date,
     RegExp: RegExp,
