@@ -360,18 +360,17 @@ function getProperty(obj, multiname, bind) {
   }
 
   if (resolved) {
-    var prop = obj[resolved.getQualifiedName()];
+    var value = obj[resolved.getQualifiedName()];
 
     if (tracePropertyAccess.value) {
-      print("getProperty: multiname: " + resolved + " some value: " + !!prop);
+      print("getProperty: multiname: " + resolved + " some value: " + !!value);
     }
 
-    if (bind && prop && prop.isMethod) {
+    if (bind && value && value.isMethod) {
       // OPTIMIZEME: could optimize to a separate function
-      return new MethodClosure(obj, prop);
+      return new MethodClosure(obj, value);
     }
-
-    return prop;
+    return value;
   }
 
   return undefined;
