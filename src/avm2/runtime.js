@@ -370,6 +370,7 @@ function getProperty(obj, multiname, bind) {
       // OPTIMIZEME: could optimize to a separate function
       return new MethodClosure(obj, value);
     }
+
     return value;
   }
 
@@ -387,7 +388,7 @@ function setProperty(obj, multiname, value) {
   if (multiname.isQName()) {
     resolved = multiname;
   } else {
-    resolved = resolveMultiname(Object.getPrototypeOf(obj), multiname, true);
+    resolved = resolveMultiname(obj, multiname, true);
   }
 
   if (!resolved) {
@@ -911,7 +912,7 @@ var Runtime = (function () {
       traits.lastSlotId = freshSlotId;
     }
 
-    function defineProperty(name, slotId, value, type) {
+    function defineProperty(name, slotId, value, type, isMethod) {
       // print("Defining Trait: " + name + ", slot: " + slotId + ", value: " + value);
       if (slotId) {
         if (name in obj) {
@@ -952,7 +953,11 @@ var Runtime = (function () {
           });
         }
       } else if (!obj.hasOwnProperty(name)) {
-        defineNonEnumerableProperty(obj, name, value);
+        if (isMethod) {
+          defineReadOnlyProperty(obj, name, value);
+        } else {
+          defineNonEnumerableProperty(obj, name, value);
+        }
       }
     }
 
@@ -1023,7 +1028,7 @@ var Runtime = (function () {
         } else if (trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
-          defineProperty(qn, undefined, closure);
+          defineProperty(qn, undefined, closure, undefined, true);
         }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
