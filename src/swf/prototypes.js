@@ -112,17 +112,21 @@ var MovieClipPrototype = function(obj, dictionary) {
     var paused = false;
     var frameScripts = [];
 
-    function dispatchEvent(eventName) {
-      if (!instance.events)
-        return;
-      for (var i = 0; i < instance.events.length; ++i) {
-        var event = instance.events[i];
-        if (!event[eventName])
-          continue;
-        var actions = event.actionsData;
-        if (typeof actions !== 'function')
-          event.actionsData = actions = createAS2Script(actions);
-        actions.call(instance);
+    function dispatchEvent(eventName, args) {
+      var as2Object = instance.$as2Object;
+      if (as2Object && as2Object[eventName])
+        as2Object[eventName].apply(as2Object, args);
+
+      if (instance.events) {
+        for (var i = 0; i < instance.events.length; ++i) {
+          var event = instance.events[i];
+          if (!event[eventName])
+            continue;
+          var actions = event.actionsData;
+          if (typeof actions !== 'function')
+            event.actionsData = actions = createAS2Script(actions);
+          actions.call(instance);
+        }
       }
     }
 
@@ -136,7 +140,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       currentFrame = frameNum;
 
       if (frameNum == frame) {
-        dispatchEvent('enterFrame');
+        dispatchEvent('onEnterFrame');
         if (frameNum in frameScripts) {
           var actionsData = frameScripts[frameNum];
           if (typeof actionsData !== 'function')

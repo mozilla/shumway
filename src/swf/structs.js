@@ -102,27 +102,27 @@ var MOVIE_HEADER = {
 var EVENT = {
   $$flags: ['version>=6', [UI32, UI16]],
   $eoe: '!flags',
-  keyUp: 'flags>>7&1',
-  keyDown: 'flags>>6&1',
-  mouseUp: 'flags>>5&1',
-  mouseDown: 'flags>>4&1',
-  mouseMove: 'flags>>3&1',
-  unload: 'flags>>2&1',
-  enterFrame: 'flags>>1&1',
-  onload: 'flags&1',
+  onKeyUp: 'flags>>7&1',
+  onKeyDown: 'flags>>6&1',
+  onMouseUp: 'flags>>5&1',
+  onMouseDown: 'flags>>4&1',
+  onMouseMove: 'flags>>3&1',
+  onUnload: 'flags>>2&1',
+  onEnterFrame: 'flags>>1&1',
+  onLoad: 'flags&1',
   $0: ['version>=6', [
     {
-      dragOver: 'flags>>15&1',
-      rollOut: 'flags>>14&1',
-      rollOver: 'flags>>13&1',
-      releaseOutside: 'flags>>12&1',
-      release: 'flags>>11&1',
-      press: 'flags>>10&1',
-      initialize: 'flags>>9&1',
-      data: 'flags>>8&1',
-      construct: ['version>=7', ['flags>>18&1', '0']],
+      onDragOver: 'flags>>15&1',
+      onRollOut: 'flags>>14&1',
+      onRollOver: 'flags>>13&1',
+      onReleaseOutside: 'flags>>12&1',
+      onRelease: 'flags>>11&1',
+      onPress: 'flags>>10&1',
+      onInitialize: 'flags>>9&1',
+      onData: 'flags>>8&1',
+      onConstruct: ['version>=7', ['flags>>18&1', '0']],
       $keyPress: 'flags>>17&1',
-      dragOut: 'flags>>16&1'
+      onDragOut: 'flags>>16&1'
     }
   ]],
   $1: ['!eoe', [{
@@ -520,20 +520,4 @@ var BUTTONCONDACTION = {
   keyPress: 'buttonConditions>>9&127',
   overDownToIdle: 'buttonConditions>>8&1',
   actionsData: ['!buttonCondSize', [BINARY(0), BINARY('buttonCondSize - 4')]]
-};
-var CONDITION = {
-  $$length: UI16,
-  $0: ['length', [{
-    key: UB(7),
-    menuLeave: UB(1),
-    menuEnter: UB(1),
-    releaseOutside: UB(1),
-    dragEnter: UB(1),
-    dragLeave: UB(1),
-    releaseInside: UB(1),
-    push: UB(1),
-    leave: UB(1),
-    enter: UB(1),
-    data: BINARY(0)
-  }]]
 };
