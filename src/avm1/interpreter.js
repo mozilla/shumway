@@ -15,6 +15,7 @@ AS2ScopeListItem.prototype = {
 function AS2Context(swfVersion, stage) {
   this.swfVersion = swfVersion;
   this.stage = stage;
+  this.defaultTarget = null;
   this.globals = new AS2Globals(this);
   var windowScope = new AS2ScopeListItem(window, null);
   this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
@@ -23,7 +24,7 @@ AS2Context.instance = null;
 AS2Context.prototype = {
   resolveTarget: function(target) {
     if (!target)
-      target = this.globals._root; // is timeline just _root?
+      target = this.defaultTarget || this.globals._root; // is fallback just _root?
     if (typeof target === 'string')
       target = this.globals._root.$lookupChild(target);
     if (typeof target !== 'object' || !('$nativeObject' in target))
@@ -33,6 +34,9 @@ AS2Context.prototype = {
   },
   resolveLevel: function(level) {
     return this.resolveTarget(this.globals['_level' + level]);
+  },
+  setTarget: function(target) {
+    this.defaultTarget = target || null;
   }
 };
 
@@ -266,7 +270,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
-        _global.setTarget(targetName);
+        currentContext.setTarget(targetName);
         break;
       case 0x8C: // ActionGoToLabel
         var label = stream.readString();
@@ -467,7 +471,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x20: // ActionSetTarget2
         var target = stack.pop();
-        _global.setTarget(target);
+        currentContext.setTarget(target);
         break;
       case 0x22: // ActionGetProperty
         var index = stack.pop();
@@ -869,6 +873,17 @@ function interpretActions(actionsData, scopeContainer,
       case 0x2A: // ActionThrow
         var obj = stack.pop();
         throw obj;
+      // Not documented by the spec
+      case 0x2D: // ActionFSCommand2
+        var numArgs = stack.pop();
+        var args = [];
+        for (var i = 0; i < numArgs; i++)
+          args.push(stack.pop());
+        _global.fscommand.apply(null, args);
+        break;
+      case 0x89: // ActionStrictMode
+        var mode = stream.readUI8();
+        break;
       case 0: // End of actions
         return;
       default:
@@ -952,6 +967,7 @@ var ActionNamesMap = {
   0x2A: 'ActionThrow',
   0x2B: 'ActionCastOp',
   0x2C: 'ActionImplementsOp',
+  0x2D: 'ActionFSCommand2',
   0x30: 'ActionRandomNumber',
   0x31: 'ActionMBStringLength',
   0x32: 'ActionCharToAscii',
@@ -1002,6 +1018,7 @@ var ActionNamesMap = {
   0x83: 'ActionGetURL',
   0x87: 'ActionStoreRegister',
   0x88: 'ActionConstantPool',
+  0x89: 'ActionStrictMode',
   0x8A: 'ActionWaitForFrame',
   0x8B: 'ActionSetTarget',
   0x8C: 'ActionGoToLabel',

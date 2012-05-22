@@ -1165,7 +1165,8 @@ flash.net.URLRequest = AS2URLRequest;
 
 flash.system = {
   fscommand: function fscommand(command, parameters) {
-    throw 'Not implemented: fscommand';
+    // TODO ignoring all fscommand
+    console.log('FSCommand: ' + command + '; ' + parameters);
   }
 };
 

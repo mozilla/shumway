@@ -6,6 +6,7 @@ var MovieClipPrototype = function(obj, dictionary) {
   var frame = null;
   var currentPframe = 0;
   var timeline = [];
+  var frameLabels = {};
   var framesLoaded = 0;
   var as2Context = AS2Context.instance;
 
@@ -182,6 +183,13 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
       gotoFrame(frame);
+    };
+    proto.gotoLabel = function(label) {
+      if (this !== instance)
+        return;
+      if (!(label in frameLabels))
+        throw 'FrameLabel is not found';
+      gotoFrame(frameLabels[label]);
     };
     proto.nextFrame = function() {
       if (this !== instance) {

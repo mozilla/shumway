@@ -56,6 +56,10 @@ AS2Globals.prototype = {
     else
       nativeTarget.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
   },
+  gotoLabel: function(label) {
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.gotoLabel(label);
+  },
   ifFrameLoaded: function(scene, frame) {
     // ignoring scene parameter ?
     var nativeTarget = AS2Context.instance.resolveTarget();
