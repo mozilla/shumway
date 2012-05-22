@@ -33,7 +33,7 @@ var tagHandler = {
   /* DefineBitsLossless2 */           36: DEFINE_BITMAP,
   /* DefineEditText */                37: DEFINE_TEXT,
   /* DefineSprite */                  39: undefined,
-  /* FrameLabel */                    43: undefined,
+  /* FrameLabel */                    43: FRAME_LABEL,
   /* SoundStreamHead2 */              45: undefined,
   /* DefineMorphShape */              46: DEFINE_SHAPE,
   /* DefineFont2 */                   48: DEFINE_FONT2,

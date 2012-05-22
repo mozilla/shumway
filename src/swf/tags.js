@@ -378,3 +378,7 @@ var SYMBOL_CLASS = {
     count: 'symbolCount'
   }
 };
+var FRAME_LABEL = {
+  type: '"frameLabel"',
+  name: STRING(0)
+};

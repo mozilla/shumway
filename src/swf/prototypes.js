@@ -8,17 +8,12 @@ var MovieClipPrototype = function(obj, dictionary) {
   var timeline = [];
   var frameLabels = {};
   var framesLoaded = 0;
+  var children = {};
   var as2Context = AS2Context.instance;
 
   function createAS2Script(data) {
     return (function() {
       var as2Object = this.$as2Object;
-      if (!as2Object) {
-        as2Object = new AS2MovieClip();
-        as2Object.$attachNativeObject(this);
-        as2Object['this'] = as2Object;
-      }
-
       var globals = as2Context.globals;
       globals._root = as2Object;
       globals._level0 = as2Object;
@@ -46,6 +41,8 @@ var MovieClipPrototype = function(obj, dictionary) {
       var pframe = pframes[currentPframe++];
       if (!pframe)
         return;
+      if (pframe.name)
+        frameLabels[pframe.name] = n + 1;
       var i = pframe.repeat || 1;
       while (i--) {
         timeline.push(frame);
@@ -83,6 +80,8 @@ var MovieClipPrototype = function(obj, dictionary) {
                 character.ratio = entry.ratio || 0;
               if (entry.events)
                 character.events = entry.events;
+              if (entry.name)
+                children[entry.name] = character;
               frame[depth] = character;
             } else {
               frame[depth] = entry;
@@ -154,6 +153,7 @@ var MovieClipPrototype = function(obj, dictionary) {
     }
 
     var proto = create(this);
+    var as2Object;
     var instance = create(proto, {
       _currentframe: {
         get: function() {
@@ -188,7 +188,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       if (!(label in frameLabels))
-        throw 'FrameLabel is not found';
+        throw 'FrameLabel is not found: ' + label;
       gotoFrame(frameLabels[label]);
     };
     proto.nextFrame = function() {
@@ -228,6 +228,25 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
     };
     defineObjectProperties(proto, {
+      $as2Object: {
+        get: function() {
+          if (!as2Object) {
+            as2Object = new AS2MovieClip();
+            as2Object.$attachNativeObject(this);
+            as2Object['this'] = as2Object;
+          }
+          return as2Object;
+        },
+        enumerable: false
+      },
+      $lookupChild: {
+        value: function(name) {
+          if (!(name in children))
+            throw 'Child mc is not found: ' + name;
+          return children[name].$as2Object;
+        },
+        enumerable: false
+      },
       getBounds: {
         value: function getBounds() {
           if (this.$boundsCache)

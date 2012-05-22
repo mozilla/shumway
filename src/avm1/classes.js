@@ -56,7 +56,7 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   $lookupChild: {
     value: function lookupChild(id) {
-      throw 'Not implemented: $lookupChild';
+      return this.$nativeObject.$lookupChild(id);
     },
     enumerable: false
   },

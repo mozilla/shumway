@@ -58,7 +58,7 @@ AS2Globals.prototype = {
   },
   gotoLabel: function(label) {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.gotoLabel(label);
+    nativeTarget.$nativeObject.gotoLabel(label);
   },
   ifFrameLoaded: function(scene, frame) {
     // ignoring scene parameter ?

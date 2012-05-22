@@ -96,6 +96,9 @@ function cast(tags, dictionary, declare) {
       pframes.push(pframe);
       pframe = { };
       break;
+    case 'frameLabel':
+      pframe.name = tag.name;
+      break;
     case 'place':
       var entry = { };
       if (tag.place) {
@@ -111,6 +114,8 @@ function cast(tags, dictionary, declare) {
       }
       if (tag.move)
         entry.move = true;
+      if (tag.name)
+        entry.name = tag.name;
       if (tag.hasMatrix)
         entry.matrix = tag.matrix;
       if (tag.hasRatio)
