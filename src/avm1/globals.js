@@ -5,6 +5,13 @@ function ASSetPropFlags(obj, children, flags, allowFalse) {
   // TODO
 }
 
+var PropertiesIndexMap = [
+  '_x', '_y', '_xscale', '_yscale', '_currentframe', '_totalframes', '_alpha',
+  '_visible', '_width', '_height', '_rotation', '_target', '_framesloaded',
+  '_name', '_droptarget', '_url', '_highquality', '_focusrect',
+  '_soundbuftime', '_quality', '_xmouse', '_ymouse'
+];
+
 function AS2Globals(context) {
   this._global = this;
 }
@@ -28,7 +35,7 @@ AS2Globals.prototype = {
   },
   getProperty: function(target, index) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    throw 'Not implemented: getProperty';
+    return nativeTarget[PropertiesIndexMap[index]];
   },
   getTimer: function() {
     return flash.utils.getTimer();
@@ -155,10 +162,10 @@ AS2Globals.prototype = {
   },
   setProperty: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    throw 'Not implemented: setProperty';
+    nativeTarget[PropertiesIndexMap[index]] = value;
   },
   setTarget: function(target) {
-    throw 'Not implemented: setTarget';
+    AS2Context.instance.setTarget(target);
   },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);

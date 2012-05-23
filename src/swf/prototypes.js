@@ -3,7 +3,6 @@
 var MovieClipPrototype = function(obj, dictionary) {
   var totalFrames = obj.frameCount || 1;
   var pframes = obj.pframes || [];
-  var frame = null;
   var currentPframe = 0;
   var timeline = [];
   var frameLabels = {};
@@ -36,7 +35,7 @@ var MovieClipPrototype = function(obj, dictionary) {
   function ensure(frameNum) {
     var n = timeline.length;
     while (n < frameNum) {
-      frame = create(frame);
+      var frame = create(n > 0 ? timeline[n - 1] : null);
       frame.incomplete = true;
       var pframe = pframes[currentPframe++];
       if (!pframe)
@@ -50,7 +49,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
       var depths = keys(pframe);
 
-      defer(function() {
+      defer((function(frame, pframe, depths) {
         var depth;
         while (depth = depths[0]) {
           if (+depth) {
@@ -100,7 +99,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         }
         if (framesLoaded < totalFrames)
           prefetch();
-      });
+      }).bind(null, frame, pframe, depths));
     }
   }
 

@@ -134,8 +134,12 @@ function interpretActions(actionsData, scopeContainer,
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      objPath = parts[0].split('/');
-      objPath[0] = '_root';
+      if (parts[0] == '/')
+        objPath = ['_root'];
+      else {
+        objPath = parts[0].split('/');
+        objPath[0] = '_root';
+      }
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference
@@ -270,7 +274,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
-        currentContext.setTarget(targetName);
+        _global.setTarget(targetName);
         break;
       case 0x8C: // ActionGoToLabel
         var label = stream.readString();
