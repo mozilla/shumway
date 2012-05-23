@@ -81,8 +81,10 @@ var MovieClipPrototype = function(obj, dictionary) {
                 character.ratio = entry.ratio || 0;
               if (entry.events)
                 character.events = entry.events;
-              if (entry.name)
+              if (entry.name) {
+                character.name = entry.name;
                 children[entry.name] = character;
+              }
               frame[depth] = character;
             } else {
               frame[depth] = entry;
@@ -196,7 +198,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance) {
         if (this === render) {
           if (!paused)
-            gotoFrame(currentFrame + 1);
+            gotoFrame((currentFrame % totalFrames) + 1);
           var frameIndex = currentFrame - 1;
           var displayList = timeline[frameIndex];
           if (!displayList || displayList.incomplete)
@@ -205,7 +207,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         }
         return;
       }
-      this.gotoAndStop(currentFrame + 1);
+      this.gotoAndStop((currentFrame % totalFrames) + 1);
     };
     proto.play = function() {
       if (this !== instance)
@@ -213,7 +215,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       paused = false;
     };
     proto.prevFrame = function() {
-      this.gotoAndStop(currentFrame - 1);
+      this.gotoAndStop(currentFrame > 1 ? currentFrame - 1 : totalFrames);
     };
     proto.stop = function() {
       if (this !== instance)
@@ -279,6 +281,12 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         enumerable: false
       },
+      name: {
+        get: function get$name() {
+          return this.name;
+        },
+        enumerable: true
+      },
       x: {
         get: function get$x() {
           return this.transform.matrix.translateX * 0.05;
@@ -336,6 +344,13 @@ var MovieClipPrototype = function(obj, dictionary) {
 var ButtonPrototype = function(obj, dictionary) {
   obj.frameCount = 4;
   obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
-  var instance = MovieClipPrototype.apply(this, arguments);
+  var instance = MovieClipPrototype.apply(this, arguments) || this;
+  instance.constructor = (function(oldContructor) {
+    return (function() {
+      var result = oldContructor.apply(this, arguments);
+      result.gotoAndStop(1);
+      return result;
+    });
+  })(instance.constructor);
   return instance;
 };
