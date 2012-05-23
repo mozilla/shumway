@@ -181,8 +181,7 @@ AS2Globals.prototype = {
     nativeTarget.stop();
   },
   stopAllSounds: function() {
-    // flash.media.SoundMixer.stopAll();
-    throw 'Not implemented: stopAllSounds';
+    flash.media.SoundMixer.stopAll();
   },
   stopDrag: function() {
     var nativeTarget = AS2Context.instance.resolveTarget(target);

@@ -1133,6 +1133,22 @@ flash.geom.Rectangle = AS2Rectangle;
 // TODO flash.geom.ColorTransform
 // TODO flash.geom.Transform
 
+flash.media = {
+};
+
+function AS2SoundMixer() {
+};
+defineObjectProperties(AS2SoundMixer, {
+  stopAll: {
+    value: function stopAll() {
+      // TODO stop all sounds
+      console.log('SoundMixer: stopAll');
+    },
+    enumerable: false
+  }
+});
+flash.media.SoundMixer = AS2SoundMixer;
+
 flash.net = {
   navigateToURL: function navigateToURL(request, window) {
     if (request.method == 'GET') {
