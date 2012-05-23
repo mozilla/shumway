@@ -56,6 +56,8 @@ var MovieClipPrototype = function(obj, dictionary) {
             var entry = pframe[depth];
             depth -= 0x4001;
             if (entry) {
+              if (entry.move && dictionary[entry.id] === null)
+                return true;
               var initObj = entry.move ? frame[depth] : { };
               var id = entry.id;
               if (id) {
@@ -187,7 +189,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       if (!(label in frameLabels))
-        throw 'FrameLabel is not found: ' + label;
+        return; // label is not found, skipping ?
       gotoFrame(frameLabels[label]);
     };
     proto.nextFrame = function() {
