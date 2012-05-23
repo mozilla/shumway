@@ -327,8 +327,8 @@ function defineShape(tag, dictionary) {
         assert(bitmap, 'undefined bitmap', 'shape');
         cmds.push('var p=createPattern(d[' + bitmap.id + '].img,"' + repetition + '")');
         cmds.push('save()');
-        cmds.push('scale(0.05,0.05)');
         cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
+        cmds.push('scale(0.05,0.05)');
         cmds.push('fillStyle=p');
         cmds.push('fill()');
         cmds.push('restore()');

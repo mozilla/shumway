@@ -34,8 +34,8 @@ function defineBitmap(tag) {
   switch (tag.format) {
   case FORMAT_COLORMAPPED:
     var colorType = '\x03';
-    var bytesPerLine = width + (width % 4);
-    var colorTableSize = tag.colorTableSize;
+    var bytesPerLine = (width + 3) & ~3;
+    var colorTableSize = tag.colorTableSize + 1;
     var paletteSize = colorTableSize * (tag.hasAlpha ? 4 : 3);
     var datalen = paletteSize + (bytesPerLine * height);
     var stream = new Stream(bmpData, 0, datalen, 'C');
@@ -46,14 +46,14 @@ function defineBitmap(tag) {
     stream.ensure(paletteSize);
     if (hasAlpha) {
       var alphaValues = '';
-      while (pos < colorTableSize) {
+      while (pos < paletteSize) {
         palette += rgbToString(bytes, pos);
         pos += 3;
         alphaValues += fromCharCode(bytes[pos++]);
       }
       trns = createPngChunk('tRNS', alphaValues);
     } else {
-      while (pos < colorTableSize) {
+      while (pos < paletteSize) {
         palette += rgbToString(bytes, pos);
         pos += 3;
       }
@@ -65,13 +65,15 @@ function defineBitmap(tag) {
       var begin = pos;
       var end = begin + width;
       var scanline = slice.call(bytes, begin, end);
+      if (scanline[0] == 5 && scanline[2] == 5)
+        debugger;
       literals += '\x00' + fromCharCode.apply(null, scanline);
-      pos += bytesPerLine;
+      stream.pos = (pos += bytesPerLine);
     }
     break;
   case FORMAT_15BPP:
     var colorType = '\x02';
-    var bytesPerLine = (width * 2) + ((width * 2) % 4);
+    var bytesPerLine = ((width * 2) + 3) & ~3;
     var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
     var pos = 0;
     for (var y = 0; y < height; ++y) {
@@ -87,7 +89,7 @@ function defineBitmap(tag) {
         var blue = 0 | (FACTOR_5BBP * (word & 0x1f));
         literals += fromCharCode(red, green, blue);
       }
-      pos += bytesPerLine;
+      stream.pos = (pos += bytesPerLine);
     }
     break;
   case FORMAT_24BPP:
@@ -112,6 +114,7 @@ function defineBitmap(tag) {
         literals += pxToString(bytes, pos);
         pos += 4 - padding;
       }
+      stream.pos = pos;
     }
     break;
   default:
@@ -128,17 +131,24 @@ function defineBitmap(tag) {
     '\x00' // interlace method
   ;
 
-  var len = literals.length;
-  var nlen = ~len & 0xffff;
   var idat =
     '\x78' + // compression method and flags
-    '\x9c' + // flags
-    '\x01' + // block header
+    '\x9c';  // flags
+
+  var len = literals.length, pos = 0;
+  var maxBlockLength = 0xFFFF;
+  while (len > maxBlockLength) {
+    idat += '\x00\xFF\xFF\x00\x00' +
+      literals.substring(pos, pos + maxBlockLength);
+    pos += maxBlockLength;
+    len -= maxBlockLength;
+  }
+  idat += '\x01' +
     toString16Le(len) +
-    toString16Le(nlen) +
-    literals +
-    toString32(adler32(literals)) // checksum
-  ;
+    toString16Le(~len & 0xffff) +
+    literals.substring(pos);
+
+  idat += toString32(adler32(literals)); // checksum
 
   var data =
     '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a' + // signature
