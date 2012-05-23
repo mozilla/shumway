@@ -12,7 +12,7 @@ function defineText(tag, dictionary) {
     }
     if (tag.hasColor)
       cmds.push('fillStyle="' + toStringRgba(tag.color) + '"');
-    cmds.push('fillText(this.value,0,' + (tag.fontHeight - tag.leading) + ')');
+    cmds.push('fillText(this.value,0,' + (tag.fontHeight - tag.leading - tag.bounds.yMin) + ')');
 	var initialText = tag.html ? tag.initialText.replace(/<[^>]*>/g, '') : tag.initialText;
   } else {
   	var initialText = '';
@@ -22,7 +22,7 @@ function defineText(tag, dictionary) {
     id: tag.id,
     variableName: tag.variableName,
     value: initialText,
-	data: cmds.join('\n')
+    data: cmds.join('\n')
   };
   if (dependencies.length)
     text.require = dependencies;
