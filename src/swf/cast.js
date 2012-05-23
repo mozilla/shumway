@@ -118,6 +118,8 @@ function cast(tags, dictionary, declare) {
         entry.name = tag.name;
       if (tag.hasMatrix)
         entry.matrix = tag.matrix;
+      if (tag.hasCxform)
+        entry.cxform = tag.cxform;
       if (tag.hasRatio)
         entry.ratio = tag.ratio / 0xffff;
       pframe[tag.depth] = entry;

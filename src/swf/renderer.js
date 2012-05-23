@@ -30,6 +30,11 @@ function render(displayList, renderingContext) {
       var rotation = character.transform.rotation;
       if (rotation)
         ctx.rotate(rotation * Math.PI / 180);
+      var cxform = character.transform.colorTransform;
+      if (cxform) {
+        // We only support alpha channel transformation for now
+        ctx.globalAlpha = cxform.alphaMult + cxform.alphaAdd;
+      }
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)
@@ -65,7 +70,7 @@ function renderMovieClip(mc, rate, ctx) {
       }
     }
   };
- 
+
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
