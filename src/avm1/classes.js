@@ -454,8 +454,8 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   _parent: { // @flash.display.DisplayObject
-    get: function get$_parent() { return this.$nativeObject.parent; },
-    set: function set$_parent(value) { this.$nativeObject.parent = value; },
+    get: function get$_parent() { return this.$nativeObject.$parent; },
+    set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
     enumerable: true
   },
   play: {

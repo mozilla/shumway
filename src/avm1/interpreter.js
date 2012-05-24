@@ -15,7 +15,6 @@ AS2ScopeListItem.prototype = {
 function AS2Context(swfVersion, stage) {
   this.swfVersion = swfVersion;
   this.stage = stage;
-  this.defaultTarget = null;
   this.globals = new AS2Globals(this);
   var windowScope = new AS2ScopeListItem(window, null);
   this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
@@ -24,9 +23,9 @@ AS2Context.instance = null;
 AS2Context.prototype = {
   resolveTarget: function(target) {
     if (!target)
-      target = this.defaultTarget || this.globals._root; // is fallback just _root?
-    if (typeof target === 'string')
-      target = this.globals._root.$lookupChild(target);
+      target = this.defaultTarget;
+    else if (typeof target === 'string')
+      target = this.defaultTarget.$lookupChild(target);
     if (typeof target !== 'object' || !('$nativeObject' in target))
       throw 'Invalid AS2 object';
 
@@ -34,9 +33,6 @@ AS2Context.prototype = {
   },
   resolveLevel: function(level) {
     return this.resolveTarget(this.globals['_level' + level]);
-  },
-  setTarget: function(target) {
-    this.defaultTarget = target || null;
   }
 };
 
@@ -44,6 +40,7 @@ function executeActions(actionsData, context, scope) {
   var scopeContainer = context.initialScope.create(scope);
   try {
     AS2Context.instance = context;
+    context.defaultTarget = scope;
     interpretActions(actionsData, scopeContainer, null, []);
   } finally {
     AS2Context.instance = null;
@@ -53,6 +50,14 @@ function executeActions(actionsData, context, scope) {
 function interpretActions(actionsData, scopeContainer,
                           constantPool, registers) {
   var currentContext = AS2Context.instance;
+
+  function setTarget(targetPath) {
+    if (!targetPath)
+      defaultTarget = _global._root;
+    else
+      defaultTarget = defaultTarget.$lookupChild(targetPath);
+    currentContext.defaultTarget = defaultTarget;
+  }
 
   function defineFunction(functionName, parametersNames,
                           registersAllocation, actionsData) {
@@ -99,11 +104,13 @@ function interpretActions(actionsData, scopeContainer,
       {
         // switching contexts if called outside main thread
         AS2Context.instance = currentContext;
+        currentContext.defaultTarget = scope;
         actionTracer.indent();
         return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
         actionTracer.unindent();
+        currentContext.defaultTarget = defaultTarget;
         AS2Context.instance = savedContext;
       }
     });
@@ -130,33 +137,28 @@ function interpretActions(actionsData, scopeContainer,
     return instanceOf(obj, _global.MovieClip);
   }
   function resolveVariableName(variableName) {
-    var objPath, name;
+    var obj, name;
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      if (parts[0] == '/')
-        objPath = ['_root'];
-      else {
-        objPath = parts[0].split('/');
-        objPath[0] = '_root';
-      }
+      var obj = defaultTarget.$lookupChild(parts[0]);
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference
-      objPath = m[1].split('.');
+      var objPath = variableName.split('.');
       name = objPath.pop();
+      var obj = _global;
+      for (var i = 0; i < objPath.length; i++) {
+        obj = obj[objPath[i]];
+        if (!obj)
+          throw objPath.slice(0, i + 1) + ' is undefined';
+      }
     }
 
-    if(!objPath)
+    if(!obj)
       return; // local variable
 
-    var p = _global;
-    for (var i = 0; i < objPath.length; i++) {
-      p = p[objPath[i]];
-      if (!p)
-        throw objPath.slice(0, i + 1) + ' is undefined';
-    }
-    return { obj: p, name: name };
+    return { obj: obj, name: name };
   }
   function getVariable(variableName) {
     // fast check if variable in the current scope
@@ -225,7 +227,7 @@ function interpretActions(actionsData, scopeContainer,
 
   var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
   var _global = currentContext.globals
-  var defaultScope = _global._root;
+  var defaultTarget = currentContext.defaultTarget;
   var stack = [];
   var scope = scopeContainer.scope;
   var isSwfVersion5 = currentContext.swfVersion >= 5;
@@ -274,7 +276,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
-        _global.setTarget(targetName);
+        setTarget(targetName);
         break;
       case 0x8C: // ActionGoToLabel
         var label = stream.readString();
@@ -475,7 +477,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x20: // ActionSetTarget2
         var target = stack.pop();
-        currentContext.setTarget(target);
+        setTarget(target);
         break;
       case 0x22: // ActionGetProperty
         var index = stack.pop();
@@ -560,7 +562,7 @@ function interpretActions(actionsData, scopeContainer,
             throw 'Method ' + methodName + ' is not defined.';
           result = obj[methodName].apply(obj, args);
         } else
-          result = obj.apply(defaultScope, args);
+          result = obj.apply(defaultTarget, args);
         stack.push(result);
         break;
       case 0x88: // ActionConstantPool

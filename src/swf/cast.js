@@ -44,6 +44,12 @@ function cast(tags, dictionary, declare) {
       case 'button':
         var factory = defineButton;
         break;
+      case 'sound':
+        var obj = {
+          type: 'sound',
+          id: tag.id
+        };
+        break;
       default:
         fail('unknown object type', 'cast');
       }
@@ -130,6 +136,11 @@ function cast(tags, dictionary, declare) {
       break;
     case 'symbols':
       pframe.symbols = tag.references;
+      break;
+    case 'assets':
+      if (!pframe.assets)
+        pframe.assets = [];
+      pframe.assets = pframe.assets.concat(tag.references);
       break;
     }
   }
