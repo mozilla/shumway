@@ -13,9 +13,6 @@ var MovieClipPrototype = function(obj, dictionary) {
   function createAS2Script(data) {
     return (function() {
       var as2Object = this.$as2Object;
-      var globals = as2Context.globals;
-      globals._root = as2Object;
-      globals._level0 = as2Object;
 
       try {
         executeActions(data, as2Context, as2Object);

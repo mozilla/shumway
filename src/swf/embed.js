@@ -111,6 +111,7 @@ SWF.embed = function(file, container, options) {
       as2Context = new AS2Context(obj.version,
         {width: canvas.width, height: canvas.height});
       AS2Context.instance = as2Context;
+      var globals = as2Context.globals;
 
       AS2Mouse.$bind(canvas);
       AS2Key.$bind(canvas);
@@ -120,6 +121,8 @@ SWF.embed = function(file, container, options) {
         pframes: pframes
       }, dictionary));
       root = proto.constructor();
+
+      globals._root = globals._level0 = root.$as2Object;
 
       if (options.onstart)
         options.onstart(root);
