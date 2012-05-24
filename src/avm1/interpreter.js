@@ -530,7 +530,7 @@ function interpretActions(actionsData, scopeContainer,
         _global.trace(value);
         break;
       case 0x34: // ActionGetTime
-        stack.push(_global.getTime());
+        stack.push(_global.getTimer());
         break;
       case 0x30: // ActionRandomNumber
         stack.push(_global.random(stack.pop()));
