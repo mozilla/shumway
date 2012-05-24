@@ -48,8 +48,8 @@ function notImplemented(message) {
   assert(false, "Not Implemented " + message);
 }
 
-function unexpected() {
-  assert(false);
+function unexpected(message) {
+  assert(false, message);
 }
 
 function defineReadOnlyProperty(obj, name, value) {
