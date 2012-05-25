@@ -106,8 +106,10 @@ var MovieClipPrototype = function(obj, dictionary) {
           }
           depths.shift();
         }
-        if (pframe.actionsData)
-          addFrameScript(currentFrame, createAS2Script(pframe.actionsData));
+        if (pframe.actionsData && pframe.actionsData.length > 0) {
+          for (var i = 0; i < pframe.actionsData.length; i++)
+            addFrameScript(currentFrame, createAS2Script(pframe.actionsData[i]));
+        }
         if (pframe.initActionsData) {
           for (var spriteId in pframe.initActionsData) {
             createAS2Script(pframe.initActionsData[spriteId]).call(parent);
@@ -123,6 +125,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         while (frm = timeline[i++]) {
           if (frm.incomplete)
             break;
+          parent.$dispatchEvent('onLoad');
           ++framesLoaded;
         }
         if (framesLoaded < totalFrames)
@@ -167,10 +170,11 @@ var MovieClipPrototype = function(obj, dictionary) {
       currentFrame = frameNum;
 
       // execute scripts
+      dispatchEvent('onEnterFrame');
       if (currentFrame in frameScripts) {
         var scripts = frameScripts[currentFrame];
         for (var i = 0, n = scripts.length; i < n; ++i)
-          scripts[i].call(this);
+          scripts[i].call(instance);
       }
     }
 
@@ -216,10 +220,9 @@ var MovieClipPrototype = function(obj, dictionary) {
     proto.nextFrame = function() {
       if (this !== instance) {
         if (this === render) {
-          if (!paused) {
-            dispatchEvent('onEnterFrame');
+          if (!paused)
             gotoFrame.call(instance, (currentFrame % totalFrames) + 1);
-          }
+
           var frameIndex = currentFrame - 1;
           var displayList = timeline[frameIndex];
           if (!displayList || displayList.incomplete)
@@ -244,6 +247,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
+    proto.$dispatchEvent = dispatchEvent;
     proto.$addFrameScript = addFrameScript;
     proto.$addChild = function(name, child) {
       children[name] = child;
