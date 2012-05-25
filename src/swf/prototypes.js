@@ -205,12 +205,16 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       paused = false;
+      if (typeof frame === 'string')
+        return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
     proto.gotoAndStop = function(frame, scene) {
       if (this !== instance)
         return;
       paused = true;
+      if (typeof frame === 'string')
+        return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
     proto.gotoLabel = function(label) {
