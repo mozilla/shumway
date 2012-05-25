@@ -364,7 +364,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           return this.matrix.translateX / 20;
         },
         set: function set$x(value) {
-          this.matrix.translateX = ~~value * 20;
+          this.matrix.translateX = ~~(value * 20);
         },
         enumerable: true
       },
@@ -373,7 +373,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           return this.matrix.translateY / 20;
         },
         set: function set$y(value) {
-          this.matrix.translateY = ~~value * 20;
+          this.matrix.translateY = ~~(value * 20);
         },
         enumerable: true
       },
