@@ -65,10 +65,10 @@ var CXFORM = {
   $$bits: UB(4),
   $0: ['hasMult', [
     {
-      redMult: FB('bits'),
-      greenMult: FB('bits'),
-      blueMult: FB('bits'),
-      alphaMult: ['tagCode>4', [FB('bits'), '1']]
+      redMult: SB('bits'),
+      greenMult: SB('bits'),
+      blueMult: SB('bits'),
+      alphaMult: ['tagCode>4', [SB('bits'), '1']]
     },
     {
       redMult: '1',
@@ -79,10 +79,10 @@ var CXFORM = {
   ]],
   $1: ['hasAdd', [
     {
-      redAdd: FB('bits'),
-      greenAdd: FB('bits'),
-      blueAdd: FB('bits'),
-      alphaAdd: ['tagCode>4', [FB('bits'), '0']]
+      redAdd: SB('bits'),
+      greenAdd: SB('bits'),
+      blueAdd: SB('bits'),
+      alphaAdd: ['tagCode>4', [SB('bits'), '0']]
     },
     {
       redAdd: '0',
@@ -425,7 +425,7 @@ var TEXT_RECORD_SETUP = {
   fontHeight: ['hasFont', [UI16]]
 };
 var TEXT_RECORD = {
-  $$: ALIGN, 
+  $$: ALIGN,
   $$flags: UB(8),
   $eot: '!flags',
   $0: TEXT_RECORD_SETUP,
