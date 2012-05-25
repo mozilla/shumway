@@ -166,7 +166,12 @@ var MovieClipPrototype = function(obj, dictionary) {
         frameNum = framesLoaded;
       currentFrame = frameNum;
 
-      delete instance.$boundsCache;
+      // execute scripts
+      if (currentFrame in frameScripts) {
+        var scripts = frameScripts[currentFrame];
+        for (var i = 0, n = scripts.length; i < n; ++i)
+          scripts[i].call(this);
+      }
     }
 
     var proto = create(this);
@@ -193,36 +198,29 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       paused = false;
-      gotoFrame(frame);
+      gotoFrame.call(instance, frame);
     };
     proto.gotoAndStop = function(frame, scene) {
       if (this !== instance)
         return;
       paused = true;
-      gotoFrame(frame);
+      gotoFrame.call(instance, frame);
     };
     proto.gotoLabel = function(label) {
       if (this !== instance)
         return;
       if (!(label in frameLabels))
         return; // label is not found, skipping ?
-      gotoFrame(frameLabels[label]);
+      gotoFrame.call(instance, frameLabels[label]);
     };
     proto.nextFrame = function() {
       if (this !== instance) {
         if (this === render) {
-          if (!paused)
-            gotoFrame((currentFrame % totalFrames) + 1);
-          var frameIndex = currentFrame - 1;
-
-          // execute scripts
-          dispatchEvent('onEnterFrame');
-          if (currentFrame in frameScripts) {
-            var scripts = frameScripts[currentFrame];
-            for (var i = 0, n = scripts.length; i < n; ++i)
-              scripts[i].call(instance);
+          if (!paused) {
+            dispatchEvent('onEnterFrame');
+            gotoFrame.call(instance, (currentFrame % totalFrames) + 1);
           }
-
+          var frameIndex = currentFrame - 1;
           var displayList = timeline[frameIndex];
           if (!displayList || displayList.incomplete)
             return; // skiping non-prepared frame
