@@ -87,7 +87,7 @@ var Interpreter = (function () {
         return multiname;
       }
 
-      var args, obj, index, multiname, ns, name, res;
+      var args, obj, objsuper, type, index, multiname, ns, name, res;
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 
@@ -261,7 +261,13 @@ var Interpreter = (function () {
             break;
           case OP_callmethod:     notImplemented(); break;
           case OP_callstatic:     notImplemented(); break;
-          case OP_callsuper:      notImplemented(); break;
+          case OP_callsuper:
+            args = stack.popMany(bc.argCount);
+            multiname = createMultiname(multinames[bc.index]);
+            obj = stack.pop();
+            objsuper = obj.public$constructor.baseClass.instance.prototype;
+            stack.push(getProperty(objsuper, multiname).apply(obj, args));
+            break;
           case OP_callproperty:
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(multinames[bc.index]);
@@ -291,7 +297,13 @@ var Interpreter = (function () {
             stack.push(getProperty(obj, multiname).apply(null, args));
             break;
           case OP_callinterface:  notImplemented(); break;
-          case OP_callsupervoid:  notImplemented(); break;
+          case OP_callsupervoid:
+            args = stack.popMany(bc.argCount);
+            multiname = createMultiname(multinames[bc.index]);
+            obj = stack.pop();
+            objsuper = obj.public$constructor.baseClass.instance.prototype;
+            getProperty(objsuper, multiname).apply(obj, args);
+            break;
           case OP_callpropvoid:
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(multinames[bc.index]);

@@ -830,8 +830,12 @@ var Compiler = (function () {
       return SAVED_SCOPE_NAME + ".object";
     }
 
-    function superClassObject() {
-      return classObject() + ".baseClass";
+    function superClassInstanceObject() {
+      return classObject() + ".baseClass.instance";
+    }
+
+    function superOf(obj) {
+      return obj + ".public$constructor.baseClass.instance.prototype";
     }
 
     /**
@@ -988,7 +992,13 @@ var Compiler = (function () {
         break;
       case OP_callmethod:     notImplemented(); break;
       case OP_callstatic:     notImplemented(); break;
-      case OP_callsuper:      notImplemented(); break;
+      case OP_callsuper:
+        flushStack();
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        pushValue(getProperty(superOf(obj), multiname) + ".call" + argumentList.apply(null, [obj].concat(args)));
+        break;
       case OP_callproperty:
         flushStack();
         multiname = multinames[bc.index];
@@ -1001,7 +1011,7 @@ var Compiler = (function () {
       case OP_constructsuper:
         args = state.stack.popMany(bc.argCount);
         obj = state.stack.pop();
-        emitStatement(superClassObject() + ".call" + argumentList.apply(null, [obj].concat(args)));
+        emitStatement(superClassInstanceObject() + ".call" + argumentList.apply(null, [obj].concat(args)));
         break;
       case OP_constructprop:
         multiname = multinames[bc.index];
@@ -1017,7 +1027,13 @@ var Compiler = (function () {
         pushValue(getProperty(obj, multiname) + ".call" + argumentList.apply(null, [obj].concat(args)));
         break;
       case OP_callinterface:  notImplemented(); break;
-      case OP_callsupervoid:  notImplemented(); break;
+      case OP_callsupervoid:
+        flushStack();
+        multiname = multinames[bc.index];
+        args = state.stack.popMany(bc.argCount);
+        obj = state.stack.pop();
+        emitStatement(getProperty(superOf(obj), multiname) + ".call" + argumentList.apply(null, [obj].concat(args)));
+        break;
       case OP_callpropvoid:
         multiname = multinames[bc.index];
         args = state.stack.popMany(bc.argCount);
