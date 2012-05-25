@@ -278,8 +278,10 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   hitTest: {
-    value: function hitTest() {
-      throw 'Not implemented: hitTest';
+    value: function hitTest(x, y, shapeFlag, target) {
+      if (x instanceof AS2MovieClip)
+        x = x.$nativeObject;
+      return this.$nativeObject.hitTest(x, y, shapeFlag, target);
     },
     enumerable: false
   },
