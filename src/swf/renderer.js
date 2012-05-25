@@ -25,6 +25,9 @@ function render(displayList, renderingContext) {
         matrix.translateX,
         matrix.translateY
       );
+      var rotation = character.rotation;
+      if (rotation)
+        ctx.rotate(rotation * Math.PI / 180);
       var cxform = character.cxform;
       if (cxform) {
         // We only support alpha channel transformation for now

@@ -136,6 +136,7 @@ var MovieClipPrototype = function(obj, dictionary) {
 
     var currentFrame = 0;
     var paused = false;
+    var rotation = 0;
 
     function dispatchEvent(eventName, args) {
       var as2Object = instance.$as2Object;
@@ -329,7 +330,9 @@ var MovieClipPrototype = function(obj, dictionary) {
             if (!+i) continue;
             var character = frame[i];
             var b = character.bounds;
-            if (!bounds) {
+            if (!b) {
+              if (!character.getBounds)
+                debugger;
               b = character.getBounds();
               var m = this.matrix;
               var x1 = m.scaleX * b.xMin + m.skew0 * b.yMin + m.translateX;
@@ -360,7 +363,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       x: {
         get: function get$x() {
-          return this.matrix.translateX/ 20;
+          return this.matrix.translateX / 20;
         },
         set: function set$x(value) {
           this.matrix.translateX = ~~value * 20;
@@ -369,7 +372,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       y: {
         get: function get$y() {
-          return this.matrix.translateY/ 20;
+          return this.matrix.translateY / 20;
         },
         set: function set$y(value) {
           this.matrix.translateY = ~~value * 20;
@@ -379,7 +382,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       width: {
         get: function get$width() {
           var bounds = this.getBounds();
-          return (bounds.xMax - bounds.xMin)/ 20;
+          return (bounds.xMax - bounds.xMin) / 20;
         },
         set: function set$width(value) {
           throw 'Not implemented: width';
@@ -389,7 +392,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       height: {
         get: function get$height() {
           var bounds = this.getBounds();
-          return (bounds.yMax - bounds.yMin)/ 20;
+          return (bounds.yMax - bounds.yMin) / 20;
         },
         set: function set$height(value) {
           throw 'Not implemented: height';
@@ -397,17 +400,11 @@ var MovieClipPrototype = function(obj, dictionary) {
         enumerable: true
       },
       rotation: {
+        get: function get$rotation() {
+          return rotation || 0;
+        },
         set: function set$rotation(value) {
-          var m = this.matrix;
-          var angle = ~~value;
-          var ca = Math.cos(angle);
-          var sa = Math.sin(angle);
-          m.scaleX = ca * m.scaleX - sa * m.skew0;
-          m.skew0 = sa * m.scaleX + ca * m.skew0;
-          m.skew1 = ca * m.skew1 - sa * m.scaleY;
-          m.scaleY = sa * m.skew1 + ca * m.scaleY;
-          m.translateX = ca * m.translateX - sa * m.translateY;
-          m.translateY = sa * m.translateX + ca * m.translateY;
+          rotation = value;
         },
         enumerable: true
       }
