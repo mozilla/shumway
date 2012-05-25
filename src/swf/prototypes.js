@@ -1,5 +1,14 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var identityMatrix = {
+  scaleX: 20,
+  scaleY: 20,
+  skew0: 0,
+  skew1: 0,
+  translateX: 0,
+  translateY: 0
+};
+
 var MovieClipPrototype = function(obj, dictionary) {
   var totalFrames = obj.frameCount || 1;
   var pframes = obj.pframes || [];
@@ -7,7 +16,7 @@ var MovieClipPrototype = function(obj, dictionary) {
   var timeline = [];
   var frameLabels = {};
   var framesLoaded = 0;
-  var framesScripts = [];
+  var frameScripts = [];
   var children = {};
   var as2Context = AS2Context.instance;
 
@@ -23,14 +32,23 @@ var MovieClipPrototype = function(obj, dictionary) {
     });
   }
 
-  function prefetch(parent) {
+  function addFrameScript() {
+    for (var i = 0, n = arguments.length; i < n; i += 2) {
+      var frameNum = arguments[i];
+      if (!frameScripts[frameNum])
+        frameScripts[frameNum] = [];
+      frameScripts[frameNum].push(arguments[i + 1]);
+    }
+  }
+
+  function prefetchFrame(parent) {
     var prefetchPortion = 20, prefetchInterval = 100;
     setTimeout(function() {
-      ensure(Math.min(framesLoaded + prefetchPortion, totalFrames), parent);
+      ensureFrame(Math.min(framesLoaded + prefetchPortion, totalFrames), parent);
     }, prefetchInterval);
   }
 
-  function ensure(frameNum, parent) { // HACK parent shall not be here
+  function ensureFrame(frameNum, parent) { // HACK parent shall not be here
     var n = timeline.length;
     while (n < frameNum) {
       var frame = create(n > 0 ? timeline[n - 1] : null);
@@ -70,11 +88,8 @@ var MovieClipPrototype = function(obj, dictionary) {
               } else {
                 var character = create(initObj);
               }
-              var initXform = initObj.transform || { };
-              character.transform = {
-                matrix: entry.matrix || initXform.matrix,
-                colorTransform: entry.cxform || initXform.colorTransform
-              };
+              character.matrix = entry.matrix || initObj.matrix || identityMatrix;
+              character.cxform = entry.cxform || initObj.cxform;
               if (character.draw)
                 character.ratio = entry.ratio || 0;
               if (entry.events)
@@ -85,13 +100,13 @@ var MovieClipPrototype = function(obj, dictionary) {
               }
               frame[depth] = character;
             } else {
-              frame[depth] = entry;
+              frame[depth] = null;
             }
           }
           depths.shift();
         }
         if (pframe.actionsData)
-          framesScripts[n] = createAS2Script(pframe.actionsData);
+          addFrameScript(n + 1, createAS2Script(pframe.actionsData));
         if (pframe.initActionsData) {
           for (var spriteId in pframe.initActionsData) {
             createAS2Script(pframe.initActionsData[spriteId]).call(parent);
@@ -110,7 +125,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           ++framesLoaded;
         }
         if (framesLoaded < totalFrames)
-          prefetch(parent);
+          prefetchFrame(parent);
       }).bind(null, frame, pframe, depths, n));
     }
   }
@@ -144,7 +159,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       var frameNum = frame;
       if (frameNum > totalFrames)
         frameNum = 1;
-      ensure(frameNum, instance);
+      ensureFrame(frameNum, instance);
       if (frameNum > framesLoaded)
         frameNum = framesLoaded;
       currentFrame = frameNum;
@@ -200,8 +215,11 @@ var MovieClipPrototype = function(obj, dictionary) {
 
           // execute scripts
           dispatchEvent('onEnterFrame');
-          if (currentFrame in framesScripts)
-            framesScripts[currentFrame].call(instance);
+          if (currentFrame in frameScripts) {
+            var scripts = frameScripts[currentFrame];
+            for (var i = 0, n = scripts.length; i < n; ++i)
+              scripts[i].call(instance);
+          }
 
           var displayList = timeline[frameIndex];
           if (!displayList || displayList.incomplete)
@@ -226,6 +244,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
+    proto.$addFrameScript = addFrameScript;
     proto.$addChild = function(name, child) {
       children[name] = child;
       child.parent = this;
@@ -299,32 +318,37 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       getBounds: {
         value: function getBounds() {
-          if (this.$boundsCache)
-            return this.$boundsCache;
+          var frame = timeline[currentFrame - 1];
+
+          if (frame.bounds)
+            return frame.bounds;
 
           // TODO move the getBounds into utility/core classes
-          var currentShapes = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
-          for (var i in currentShapes) {
+          for (var i in frame) {
             if (!+i) continue;
-            var shape = currentShapes[i];
-            var bounds = shape.bounds;
+            var character = frame[i];
+            var b = character.bounds;
             if (!bounds) {
-              bounds = shape.getBounds();
-              var transform = this.transform.matrix;
-              var x1 = transform.scaleX * bounds.xMin + transform.skew0 * bounds.yMin + transform.translateX;
-              var y1 = transform.skew1 * bounds.yMin + transform.scaleY * bounds.yMin + transform.translateY;
-              var x2 = transform.scaleX * bounds.xMax + transform.skew0 * bounds.yMax + transform.translateX;
-              var y2 = transform.skew1 * bounds.yMax + transform.scaleY * bounds.yMax + transform.translateY;
-              bounds.xMin = Math.min(x1, x2); bounds.xMax = Math.max(x1, x2);
-              bounds.yMin = Math.min(y1, y2); bounds.yMax = Math.max(y1, y2);
+              b = character.getBounds();
+              var m = this.matrix;
+              var x1 = m.scaleX * b.xMin + m.skew0 * b.yMin + m.translateX;
+              var y1 = m.skew1 * b.yMin + m.scaleY * b.yMin + m.translateY;
+              var x2 = m.scaleX * b.xMax + m.skew0 * b.yMax + m.translateX;
+              var y2 = m.skew1 * b.yMax + m.scaleY * b.yMax + m.translateY;
+              b.xMin = Math.min(x1, x2); b.xMax = Math.max(x1, x2);
+              b.yMin = Math.min(y1, y2); b.yMax = Math.max(y1, y2);
             }
-            xMin = Math.min(xMin, bounds.xMin);
-            yMin = Math.min(yMin, bounds.yMin);
-            xMax = Math.max(xMax, bounds.xMax);
-            yMax = Math.max(yMax, bounds.yMax);
+            xMin = Math.min(xMin, b.xMin);
+            yMin = Math.min(yMin, b.yMin);
+            xMax = Math.max(xMax, b.xMax);
+            yMax = Math.max(yMax, b.yMax);
           }
-          return (this.$boundsCache = {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax});
+
+          var bounds = { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
+          Object.defineProperty(frame, 'bounds', { value: bounds });
+
+          return bounds;
         },
         enumerable: false
       },
@@ -336,26 +360,26 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       x: {
         get: function get$x() {
-          return this.transform.matrix.translateX * 0.05;
+          return this.matrix.translateX/ 20;
         },
         set: function set$x(value) {
-          this.transform.matrix.translateX = value * 20;
+          this.matrix.translateX = ~~value * 20;
         },
         enumerable: true
       },
       y: {
         get: function get$y() {
-          return this.transform.matrix.translateY * 0.05;
+          return this.matrix.translateY/ 20;
         },
         set: function set$y(value) {
-          this.transform.matrix.translateY = value * 20;
+          this.matrix.translateY = ~~value * 20;
         },
         enumerable: true
       },
       width: {
         get: function get$width() {
           var bounds = this.getBounds();
-          return (bounds.xMax - bounds.xMin) * 0.05;
+          return (bounds.xMax - bounds.xMin)/ 20;
         },
         set: function set$width(value) {
           throw 'Not implemented: width';
@@ -365,7 +389,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       height: {
         get: function get$height() {
           var bounds = this.getBounds();
-          return (bounds.yMax - bounds.yMin) * 0.05;
+          return (bounds.yMax - bounds.yMin)/ 20;
         },
         set: function set$height(value) {
           throw 'Not implemented: height';
@@ -373,11 +397,17 @@ var MovieClipPrototype = function(obj, dictionary) {
         enumerable: true
       },
       rotation: {
-        get: function get$rotation() {
-          return this.transform.rotation || 0;
-        },
         set: function set$rotation(value) {
-          this.transform.rotation = value;
+          var m = this.matrix;
+          var angle = ~~value;
+          var ca = Math.cos(angle);
+          var sa = Math.sin(angle);
+          m.scaleX = ca * m.scaleX - sa * m.skew0;
+          m.skew0 = sa * m.scaleX + ca * m.skew0;
+          m.skew1 = ca * m.skew1 - sa * m.scaleY;
+          m.scaleY = sa * m.skew1 + ca * m.scaleY;
+          m.translateX = ca * m.translateX - sa * m.translateY;
+          m.translateY = sa * m.translateX + ca * m.translateY;
         },
         enumerable: true
       }

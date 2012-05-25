@@ -16,21 +16,16 @@ function render(displayList, renderingContext) {
     var character = displayList[depth];
     if (character) {
       ctx.save();
-      var matrix = character.transform.matrix;
-      if (matrix) {
-        ctx.transform(
-          matrix.scaleX,
-          matrix.skew0,
-          matrix.skew1,
-          matrix.scaleY,
-          matrix.translateX,
-          matrix.translateY
-        );
-      }
-      var rotation = character.transform.rotation;
-      if (rotation)
-        ctx.rotate(rotation * Math.PI / 180);
-      var cxform = character.transform.colorTransform;
+      var matrix = character.matrix;
+      ctx.transform(
+        matrix.scaleX,
+        matrix.skew0,
+        matrix.skew1,
+        matrix.scaleY,
+        matrix.translateX,
+        matrix.translateY
+      );
+      var cxform = character.cxform;
       if (cxform) {
         // We only support alpha channel transformation for now
         ctx.globalAlpha = cxform.alphaMult + cxform.alphaAdd;
