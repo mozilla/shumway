@@ -320,20 +320,14 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       getBounds: {
         value: function getBounds() {
-          var frame = timeline[currentFrame - 1];
-
-          if (frame.bounds)
-            return frame.bounds;
-
           // TODO move the getBounds into utility/core classes
+          var frame = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
           for (var i in frame) {
             if (!+i) continue;
             var character = frame[i];
             var b = character.bounds;
             if (!b) {
-              if (!character.getBounds)
-                debugger;
               b = character.getBounds();
               var m = this.matrix;
               var x1 = m.scaleX * b.xMin + m.skew0 * b.yMin + m.translateX;
@@ -348,11 +342,7 @@ var MovieClipPrototype = function(obj, dictionary) {
             xMax = Math.max(xMax, b.xMax);
             yMax = Math.max(yMax, b.yMax);
           }
-
-          var bounds = { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
-          Object.defineProperty(frame, 'bounds', { value: bounds });
-
-          return bounds;
+          return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
         },
         enumerable: false
       },
