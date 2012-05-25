@@ -82,6 +82,8 @@
     <script src="../src/flash/display/Sprite.js"></script>
     <script src="../src/flash/display/MovieClip.js"></script>
 
+    <input type="file" id="files" name="files[]" multiple>
+
     <script>
       var body = $("body");
       var stage = $("#stage");
@@ -102,6 +104,10 @@
         event.stopPropagation();
         event.preventDefault();
         var file = event.originalEvent.dataTransfer.files[0];
+        readFile(file);
+      });
+      $("#files").on("change", function(event) {
+        var file = event.originalEvent.target.files[0];
         readFile(file);
       });
     </script>

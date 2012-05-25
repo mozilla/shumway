@@ -385,6 +385,42 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         enumerable: false
       },
+      hitTest: {
+        value: function hitTest() {
+          var bounds = this.getBounds();
+          if (typeof arguments[0] === 'object') {
+            var target = arguments[0];
+            var targetBounds = target.getBounds();
+            var x1 = this.x;
+            var y1 = this.y;
+            var x2 = target.x;
+            var y2 = target.y;
+            var x3 = Math.max(x1, x2);
+            var y3 = Math.max(y1, y2);
+            var width = Math.min(
+              x1 + (bounds.xMax - bounds.xMin) / 20,
+              x2 + (targetBounds.xMax - targetBounds.xMin) / 20
+            ) - x3;
+            var height = Math.min(
+              y1 + (bounds.yMax - bounds.yMin) / 20,
+              y2 + (targetBounds.yMax - targetBounds.yMin) / 20
+            ) - y3;
+            return width > 0 && height > 0;
+          } else {
+            var x = arguments[0];
+            var y = arguments[1];
+            var shapeFlag = arguments[2];
+            if (shapeFlag) {
+              // TODO: shadow canvas hit testing
+              return false;
+            } else {
+              return x > bounds.xMin / 20 && x < bounds.xMax / 20 &&
+                     y > bounds.yMin / 20 && y < bounds.yMax / 20;
+            }
+          }
+        },
+        enumerable: false
+      },
       x: {
         get: function get$x() {
           return this.matrix.translateX / 20;
