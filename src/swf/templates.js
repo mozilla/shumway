@@ -22,7 +22,7 @@ function readFixed($bytes, $stream) {
   return $stream.getInt32($stream.pos, $stream.pos += 4) / 65536;
 }
 function readFixed8($bytes, $stream) {
-  return $stream.getInt16($stream.pos, $stream.pos += 2) / 255;
+  return $stream.getInt16($stream.pos, $stream.pos += 2) / 256;
 }
 function readFloat16($bytes, $stream) {
   var ui16 = $stream.getUint16($stream.pos);
