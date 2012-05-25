@@ -164,9 +164,6 @@ AS2Globals.prototype = {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     nativeTarget[PropertiesIndexMap[index]] = value;
   },
-  setTarget: function(target) {
-    AS2Context.instance.setTarget(target);
-  },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
     throw 'Not implemented: showRedrawRegions';
