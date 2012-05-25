@@ -43,7 +43,7 @@ function defineLabel(tag, dictionary) {
     while (entry = entries[j++]) {
       var code = codes[entry.glyphIndex];
       assert(code, 'undefined glyph', 'label');
-      var text = false && code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
+      var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
         '\\u' + (code + 0x10000).toString(16).substring(1);
       cmds.push('fillText("' + text + '",' + x + ',' + y + ')');
       x += entry.advance;

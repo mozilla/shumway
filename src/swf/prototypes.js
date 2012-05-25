@@ -99,6 +99,9 @@ var MovieClipPrototype = function(obj, dictionary) {
                 character.name = entry.name;
                 parent.$addChild(entry.name, character); // HACK parent assignment
               }
+              character.parent = parent;
+              if (character.variableName)
+                parent.$bindVariable(character);
               frame[depth] = character;
             } else {
               frame[depth] = null;
@@ -251,7 +254,6 @@ var MovieClipPrototype = function(obj, dictionary) {
     proto.$addFrameScript = addFrameScript;
     proto.$addChild = function(name, child) {
       children[name] = child;
-      child.parent = this;
     };
     defineObjectProperties(proto, {
       $as2Object: {
@@ -295,9 +297,8 @@ var MovieClipPrototype = function(obj, dictionary) {
             if (this.parent) {
               // moving to _root
               var mc = this;
-              while (this.parent)
+              while (mc.parent)
                 mc = mc.parent;
-              i++;
               return mc.$lookupChild(name.substring(1));
             }
             // already a root
@@ -317,6 +318,31 @@ var MovieClipPrototype = function(obj, dictionary) {
           }
 
           return i < 0 ? child.$as2Object : child.$lookupChild(name.substring(i + 1));
+        },
+        enumerable: false
+      },
+      $bindVariable: {
+        value: function bindVariable(character) {
+          var clip;
+          var variableName = character.variableName;
+          var i = variableName.lastIndexOf('.');
+          if (i >= 0) {
+            var targetPath = variableName.substring(0, i);
+            targetPath = targetPath == '_root' ? '/' :
+              targetPath.replace('_root', '').replace('.', '/');
+            clip = this.$lookupChild(targetPath);
+            variableName = variableName.substring(i + 1);
+          } else
+            clip = instance.$as2Object;
+          if (!(variableName in clip))
+            clip[variableName] = character.value;
+          delete character.value;
+          Object.defineProperty(character, 'value', {
+            get: function () {
+              return clip[variableName];
+            },
+            enumerable: true
+          });
         },
         enumerable: false
       },

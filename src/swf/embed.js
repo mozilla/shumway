@@ -64,11 +64,14 @@ function definePrototype(dictionary, obj) {
       //  }
       //}
       var proto = create(obj);
-      proto.draw = (new Function('d,c,r',
+      var drawFn = new Function('d,c,r',
         'with(c){\n' +
           obj.data + '\n' +
         '}'
-      )).bind(obj, dictionary);
+      );
+      proto.draw = (function(c, r) {
+        return drawFn.call(this, dictionary, c, r);
+      });
       dictionary[id] = proto;
     });
     break;
