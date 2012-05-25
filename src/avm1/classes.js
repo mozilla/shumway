@@ -315,7 +315,7 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   localToGlobal: {
     value: function localToGlobal(pt) {
-      throw 'Not implemented: localToGlobal';
+      return this.$nativeObject.localToGlobal(pt);
     },
     enumerable: false
   },

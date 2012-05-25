@@ -333,9 +333,9 @@ var MovieClipPrototype = function(obj, dictionary) {
               b = character.getBounds();
               var m = this.matrix;
               var x1 = m.scaleX * b.xMin + m.skew0 * b.yMin + m.translateX;
-              var y1 = m.skew1 * b.yMin + m.scaleY * b.yMin + m.translateY;
+              var y1 = m.skew1 * b.xMin + m.scaleY * b.yMin + m.translateY;
               var x2 = m.scaleX * b.xMax + m.skew0 * b.yMax + m.translateX;
-              var y2 = m.skew1 * b.yMax + m.scaleY * b.yMax + m.translateY;
+              var y2 = m.skew1 * b.xMax + m.scaleY * b.yMax + m.translateY;
               b.xMin = Math.min(x1, x2); b.xMax = Math.max(x1, x2);
               b.yMin = Math.min(y1, y2); b.yMax = Math.max(y1, y2);
             }
@@ -345,6 +345,17 @@ var MovieClipPrototype = function(obj, dictionary) {
             yMax = Math.max(yMax, b.yMax);
           }
           return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
+        },
+        enumerable: false
+      },
+      localToGlobal: {
+        value: function localToGlobal(pt) {
+          var m = this.matrix;
+          var result = !m ? pt : {
+            x: m.scaleX * pt.x + m.skew0 * pt.y + m.translateX,
+            y: m.skew1 * pt.x + m.scaleY * pt.y + m.translateY
+          };
+          return this.parent ? this.parent.localToGlobal(result) : result;
         },
         enumerable: false
       },
