@@ -363,7 +363,6 @@ var MovieClipPrototype = function(obj, dictionary) {
         value: function hitTest() {
           var bounds = this.getBounds();
           if (typeof arguments[0] === 'object') {
-            debugger;
             var target = arguments[0];
             var targetBounds = target.getBounds();
             var x1 = this.x;
