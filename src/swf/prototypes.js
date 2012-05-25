@@ -344,12 +344,6 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         enumerable: false
       },
-      name: {
-        get: function get$name() {
-          return this.name;
-        },
-        enumerable: true
-      },
       x: {
         get: function get$x() {
           return this.matrix.translateX / 20;
