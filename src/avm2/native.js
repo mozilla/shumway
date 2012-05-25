@@ -195,6 +195,13 @@ var Class = (function () {
       });
     },
 
+    isInstance: function (value) {
+      if (value === null || typeof value !== "object") {
+        return false;
+      }
+      return this.instance.prototype.isPrototypeOf(value);
+    },
+
     toString: function () {
       return "[class " + this.debugName + "]";
     }
@@ -311,6 +318,9 @@ const natives = (function () {
     defineNonEnumerableProperty(m, "set prototype", function (p) { this.prototype = p; });
     defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     c.nativeMethods = m;
+    c.isInstance = function (value) {
+      return typeof value === "function";
+    };
 
     return c;
   }
@@ -332,6 +342,9 @@ const natives = (function () {
     defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     c.nativeMethods = m;
     c.nativeStatics = String;
+    c.isInstance = function (value) {
+      return typeof value === "string";
+    };
 
     return c;
   }
@@ -425,6 +438,9 @@ const natives = (function () {
     c.baseClass = baseClass;
     c.nativeMethods = Number.prototype;
     c.defaultValue = Number(0);
+    c.isInstance = function (value) {
+      return typeof value === "number";
+    };
     return c;
   }
 
@@ -436,6 +452,10 @@ const natives = (function () {
     var c = new Class("int", int, C(int));
     c.baseClass = baseClass;
     c.defaultValue = 0;
+    c.isInstance = function (value) {
+      return (value | 0) === value;
+    };
+
     return c;
   }
 
@@ -447,6 +467,10 @@ const natives = (function () {
     var c = new Class("uint", uint, C(uint));
     c.baseClass = baseClass;
     c.defaultValue = 0;
+    c.isInstance = function (value) {
+      return (value >>> 0) === value;
+    };
+
     return c;
   }
 

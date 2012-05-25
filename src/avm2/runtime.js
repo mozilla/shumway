@@ -1043,25 +1043,6 @@ var Runtime = (function () {
     return obj;
   };
 
-  runtime.prototype.isType = function isType(value, type) {
-    if (value !== null && typeof value === 'object') {
-      return value.public$constructor === type;
-    }
-
-    if (typeof value === 'number') {
-      if ((value | 0) !== value) {
-        return false;
-      }
-      if (type === builtinClasses.int) {
-        return (value & 0xffffffff) === value;
-      } else if (type === builtinClasses.uint) {
-        return value >= 0 && value <= UINT_MAX_VALUE;
-      }
-      notImplemented(type);
-    }
-    return false;
-  };
-
   return runtime;
 })();
 

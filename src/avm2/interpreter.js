@@ -509,12 +509,13 @@ var Interpreter = (function () {
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
-            stack.push(runtime.isType(value, multiname));
+            type = toplevel.getTypeByName(multiname, true, true);
+            stack.push(type instanceof Class ? type.isInstance(value) : false);
             break;
           case OP_istypelate:
             type = stack.pop();
             value = stack.pop();
-            stack.push(runtime.isType(value, type));
+            stack.push(type instanceof Class ? type.isInstance(value) : false);
             break;
           case OP_in:             notImplemented(); break;
           case OP_increment_i:
@@ -570,7 +571,7 @@ var Interpreter = (function () {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
                 (!handler.typeName ||
-                 runtime.isType(e, toplevel.getTypeByName(handler.typeName, true, true)))) {
+                 toplevel.getTypeByName(handler.typeName, true, true).isInstance(e))) {
               if (!handler.scopeObject) {
                 if (handler.varName) {
                   var varTrait = Object.create(Trait.prototype);

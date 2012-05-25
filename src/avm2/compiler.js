@@ -1217,12 +1217,13 @@ var Compiler = (function () {
         value = state.stack.pop();
         multiname = multinames[bc.index];
         assert (!multiname.isRuntime());
-        pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, objectConstant(multiname)));
+        type = getProperty(findProperty(multiname, true), multiname);
+        pushValue(type + " instanceof Class ? " + type + ".isInstance" + argumentList(value) + " : false");
         break;
       case OP_istypelate:
         type = state.stack.pop();
         value = state.stack.pop();
-        pushValue(objectConstant(abc) + ".runtime.isType" + argumentList(value, type));
+        pushValue(type + " instanceof Class ? " + type + ".isInstance" + argumentList(value) + " : false");
         break;
       case OP_in:             notImplemented(); break;
       case OP_increment_i:
