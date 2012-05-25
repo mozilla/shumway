@@ -56,8 +56,9 @@ var MovieClipPrototype = function(obj, dictionary) {
       var pframe = pframes[currentPframe++];
       if (!pframe)
         return;
+      var currentFrame = n + 1;
       if (pframe.name)
-        frameLabels[pframe.name] = n + 1;
+        frameLabels[pframe.name] = currentFrame;
       var i = pframe.repeat || 1;
       while (i--) {
         timeline.push(frame);
@@ -65,7 +66,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
       var depths = keys(pframe);
 
-      defer((function(frame, pframe, depths, n) {
+      defer((function(frame, pframe, depths, currentFrame) {
         var depth;
         while (depth = depths[0]) {
           if (+depth) {
@@ -106,7 +107,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           depths.shift();
         }
         if (pframe.actionsData)
-          addFrameScript(n + 1, createAS2Script(pframe.actionsData));
+          addFrameScript(currentFrame, createAS2Script(pframe.actionsData));
         if (pframe.initActionsData) {
           for (var spriteId in pframe.initActionsData) {
             createAS2Script(pframe.initActionsData[spriteId]).call(parent);
@@ -126,7 +127,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         }
         if (framesLoaded < totalFrames)
           prefetchFrame(parent);
-      }).bind(null, frame, pframe, depths, n));
+      }).bind(null, frame, pframe, depths, currentFrame));
     }
   }
 
