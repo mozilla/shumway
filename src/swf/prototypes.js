@@ -7,6 +7,7 @@ var MovieClipPrototype = function(obj, dictionary) {
   var timeline = [];
   var frameLabels = {};
   var framesLoaded = 0;
+  var framesScripts = [];
   var children = {};
   var as2Context = AS2Context.instance;
 
@@ -22,14 +23,14 @@ var MovieClipPrototype = function(obj, dictionary) {
     });
   }
 
-  function prefetch() {
+  function prefetch(parent) {
     var prefetchPortion = 20, prefetchInterval = 100;
     setTimeout(function() {
-      ensure(Math.min(framesLoaded + prefetchPortion, totalFrames));
+      ensure(Math.min(framesLoaded + prefetchPortion, totalFrames), parent);
     }, prefetchInterval);
   }
 
-  function ensure(frameNum) {
+  function ensure(frameNum, parent) { // HACK parent shall not be here
     var n = timeline.length;
     while (n < frameNum) {
       var frame = create(n > 0 ? timeline[n - 1] : null);
@@ -46,7 +47,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
       var depths = keys(pframe);
 
-      defer((function(frame, pframe, depths) {
+      defer((function(frame, pframe, depths, n) {
         var depth;
         while (depth = depths[0]) {
           if (+depth) {
@@ -63,7 +64,7 @@ var MovieClipPrototype = function(obj, dictionary) {
                   return true;
                 var proto = dictionary[id];
                 if (proto.constructor !== Object)
-                  var character = proto.constructor();
+                  var character = proto.constructor(); // HACK ... so is instance creation
                 else
                   var character = create(proto);
               } else {
@@ -80,7 +81,7 @@ var MovieClipPrototype = function(obj, dictionary) {
                 character.events = entry.events;
               if (entry.name) {
                 character.name = entry.name;
-                children[entry.name] = character;
+                parent.$addChild(entry.name, character); // HACK parent assignment
               }
               frame[depth] = character;
             } else {
@@ -88,6 +89,16 @@ var MovieClipPrototype = function(obj, dictionary) {
             }
           }
           depths.shift();
+        }
+        if (pframe.actionsData)
+          framesScripts[n] = createAS2Script(pframe.actionsData);
+        if (pframe.initActionsData) {
+          for (var spriteId in pframe.initActionsData) {
+            createAS2Script(pframe.initActionsData[spriteId]).call(parent);
+          }
+        }
+        if (pframe.assets) {
+          parent.$addChild('soundmc', new SoundMock(pframe.assets));
         }
         delete frame.incomplete;
         ++framesLoaded;
@@ -99,8 +110,8 @@ var MovieClipPrototype = function(obj, dictionary) {
           ++framesLoaded;
         }
         if (framesLoaded < totalFrames)
-          prefetch();
-      }).bind(null, frame, pframe, depths));
+          prefetch(parent);
+      }).bind(null, frame, pframe, depths, n));
     }
   }
 
@@ -110,7 +121,6 @@ var MovieClipPrototype = function(obj, dictionary) {
 
     var currentFrame = 0;
     var paused = false;
-    var frameScripts = [];
 
     function dispatchEvent(eventName, args) {
       var as2Object = instance.$as2Object;
@@ -134,20 +144,10 @@ var MovieClipPrototype = function(obj, dictionary) {
       var frameNum = frame;
       if (frameNum > totalFrames)
         frameNum = 1;
-      ensure(frameNum);
+      ensure(frameNum, instance);
       if (frameNum > framesLoaded)
         frameNum = framesLoaded;
       currentFrame = frameNum;
-
-      if (frameNum == frame) {
-        dispatchEvent('onEnterFrame');
-        if (frameNum in frameScripts) {
-          var actionsData = frameScripts[frameNum];
-          if (typeof actionsData !== 'function')
-            frameScripts[frameNum] = actionsData = createAS2Script(actionsData);
-          actionsData.call(instance);
-        }
-      }
 
       delete instance.$boundsCache;
     }
@@ -197,9 +197,16 @@ var MovieClipPrototype = function(obj, dictionary) {
           if (!paused)
             gotoFrame((currentFrame % totalFrames) + 1);
           var frameIndex = currentFrame - 1;
+
+          // execute scripts
+          dispatchEvent('onEnterFrame');
+          if (currentFrame in framesScripts)
+            framesScripts[currentFrame].call(instance);
+
           var displayList = timeline[frameIndex];
           if (!displayList || displayList.incomplete)
             return; // skiping non-prepared frame
+
           render(displayList, arguments[0]);
         }
         return;
@@ -219,13 +226,9 @@ var MovieClipPrototype = function(obj, dictionary) {
         return;
       paused = true;
     };
-    proto.addFrameScript = function(frameNum, actionData) {
-      frameScripts[frameNum] = actionData;
-    };
-    proto.addSpriteInitScripts = function(initScripts) {
-      for (var spriteId in initScripts) {
-        createAS2Script(initScripts[spriteId]).call(this);
-      }
+    proto.$addChild = function(name, child) {
+      children[name] = child;
+      child.parent = this;
     };
     defineObjectProperties(proto, {
       $as2Object: {
@@ -234,16 +237,63 @@ var MovieClipPrototype = function(obj, dictionary) {
             as2Object = new AS2MovieClip();
             as2Object.$attachNativeObject(this);
             as2Object['this'] = as2Object;
+
+            var registerChild = (function(name, obj) {
+              Object.defineProperty(as2Object, name, {
+                get: function() {
+                  return obj.$as2Object;
+                },
+                configurable: true,
+                enumerable: true
+              });
+            });
+            for (var child in children)
+              registerChild(child, children[child]);
+            var oldAddChild = proto.$addChild;
+            proto.$addChild = (function(name, child) {
+              oldAddChild.call(this, name, child);
+              registerChild(name, child);
+            });
           }
           return as2Object;
         },
         enumerable: false
       },
+      $parent: {
+        get: function get$parent() {
+          return this.parent.$as2Object;
+        },
+        enumerable: false
+      },
       $lookupChild: {
         value: function(name) {
-          if (!(name in children))
-            throw 'Child mc is not found: ' + name;
-          return children[name].$as2Object;
+          var i = name.indexOf('/');
+          if (i == 0) {
+            if (this.parent) {
+              // moving to _root
+              var mc = this;
+              while (this.parent)
+                mc = mc.parent;
+              i++;
+              return mc.$lookupChild(name.substring(1));
+            }
+            // already a root
+            name = name.substring(1);
+            i = name.indexOf('/');
+          }
+          var childName = i > 0 ? name.substring(0, i) : name;
+          var child = this;
+          if (childName == '..') {
+            if (!this.parent)
+              throw 'mc is _root';
+            child = this.parent;
+          } else if (childName) {
+            if (!(childName in children))
+              throw 'Child mc is not found: ' + childName;
+            child = children[childName];
+          }
+
+          return i < 0 ? child.$as2Object : child.$lookupChild(name.substring(i + 1));
         },
         enumerable: false
       },
@@ -350,4 +400,16 @@ var ButtonPrototype = function(obj, dictionary) {
     });
   })(instance.constructor);
   return instance;
+};
+
+// HACK mocking the sound clips presence
+var SoundMock = function(assets) {
+  var clip = {
+    start: function() {},
+    setVolume: function() {}
+  };
+  var as2Object = {};
+  for (var i = 0; i < assets.length; i++)
+    as2Object[assets[i].name] = clip;
+  this.$as2Object = as2Object;
 };

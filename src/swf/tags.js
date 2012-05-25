@@ -382,3 +382,21 @@ var FRAME_LABEL = {
   type: '"frameLabel"',
   name: STRING(0)
 };
+var DEFINE_SOUND = {
+  type: '"sound"',
+  id: UI16,
+  $$soundFlags: UI8,
+  samplesCound: UI32,
+  soundData: BINARY(0)
+};
+var EXPORT_ASSETS = {
+  type: '"assets"',
+  $$assetsCount: UI16,
+  references: {
+    $: {
+      id: UI16,
+      name: STRING(0)
+    },
+    count: 'assetsCount'
+  }
+};

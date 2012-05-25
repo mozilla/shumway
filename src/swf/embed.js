@@ -121,6 +121,7 @@ SWF.embed = function(file, container, options) {
         pframes: pframes
       }, dictionary));
       root = proto.constructor();
+      root.name = '_root';
 
       globals._root = globals._level0 = root.$as2Object;
 
@@ -160,11 +161,6 @@ SWF.embed = function(file, container, options) {
             }
           }
         }
-
-        if (obj.actionsData)
-          root.addFrameScript(pframes.length + 1, obj.actionsData);
-        if (obj.initActionsData)
-          root.addSpriteInitScripts(obj.initActionsData);
 
         pframes.push(obj);
         if (!plays) {
