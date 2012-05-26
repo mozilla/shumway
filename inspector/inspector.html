@@ -22,9 +22,12 @@
         bottom: 0; left: 0; right: 0;
         height: 30px;
         padding: 4px;
-        color: white;
+        color: white !important;
         background-color: #3F003F;
         border-top: 2px solid black;
+      }
+      #inputBar a {
+        color: white;
       }
     </style>
   </head>
@@ -97,7 +100,11 @@
     <script src="../src/flash/display/Sprite.js"></script>
     <script src="../src/flash/display/MovieClip.js"></script>
 
-    <div id="inputBar"><label for="file">Select SWF file: </label><input type="file" id="files" name="files[]" multiple> <span>(or drap'n'drop it on the stage)</span></div>
+    <div id="inputBar">
+      <span><a href="https://www.github.com/mozilla/shumway">shumway</a> inspector &nbsp;&nbsp;|&nbsp;&nbsp;</span>
+      <label for="file">Select SWF file: </label><input type="file" id="files" name="files[]" multiple>
+      <span>(or drag'n'drop the file on the stage)</span>
+    </div>
 
     <script>
       var body = $("body");
