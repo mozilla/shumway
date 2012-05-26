@@ -75,7 +75,7 @@ var MovieClipPrototype = function(obj, dictionary) {
             if (entry) {
               if (entry.move && dictionary[entry.id] === null)
                 return true;
-              var initObj = entry.move ? frame[depth] : { };
+              var initObj = (entry.move ? frame[depth] : null) || {};
               var id = entry.id;
               if (id) {
                 assert(id in dictionary, 'unknown object', 'place');
@@ -205,7 +205,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       paused = false;
-      if (typeof frame === 'string')
+      if (!+frame)
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
@@ -213,7 +213,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       if (this !== instance)
         return;
       paused = true;
-      if (typeof frame === 'string')
+      if (!+frame)
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
