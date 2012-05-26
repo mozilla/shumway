@@ -10,6 +10,21 @@
       }
       body {
         margin: 0;
+        font-family: Sans-Serif;
+      }
+      #stage {
+        position: absolute;
+        top: 0; left: 0;
+        bottom: 32px; right: 0;
+      }
+      #inputBar {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 30px;
+        padding: 4px;
+        color: white;
+        background-color: #3F003F;
+        border-top: 2px solid black;
       }
     </style>
   </head>
@@ -82,7 +97,7 @@
     <script src="../src/flash/display/Sprite.js"></script>
     <script src="../src/flash/display/MovieClip.js"></script>
 
-    <input type="file" id="files" name="files[]" multiple>
+    <div id="inputBar"><label for="file">Select SWF file: </label><input type="file" id="files" name="files[]" multiple> <span>(or drap'n'drop it on the stage)</span></div>
 
     <script>
       var body = $("body");

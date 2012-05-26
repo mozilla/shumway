@@ -43,7 +43,7 @@ function render(displayList, renderingContext) {
   }
   renderingContext.endDrawing();
 }
-function renderMovieClip(mc, rate, ctx) {
+function renderMovieClip(mc, rate, bounds, ctx) {
   var frameTime = 0;
   var maxDelay = 1000 / rate;
   var frameWidth = ctx.canvas.width;
@@ -55,9 +55,18 @@ function renderMovieClip(mc, rate, ctx) {
     depth: 0,
     beginDrawing: function (){
       if (this.depth == 0) {
+        var frameWidth = ctx.canvas.width;
+        var frameHeight = ctx.canvas.height;
+
+        var scaleX = frameWidth / (bounds.xMax - bounds.xMin);
+        var scaleY = frameHeight / (bounds.yMax - bounds.yMin);
+        var scale = Math.min(scaleX, scaleY);
+
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
-        ctx.scale(0.05, 0.05);
+        ctx.translate((frameWidth - scale * (bounds.xMax - bounds.xMin)) / 2,
+                      (frameHeight - scale * (bounds.yMax - bounds.yMin)) / 2);
+        ctx.scale(scale, scale);
       }
       this.depth++;
       return ctx;

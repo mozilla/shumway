@@ -97,15 +97,26 @@ SWF.embed = function(file, container, options) {
   var pframes = [];
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
-  var frameRate;
+  var frameRate, bounds;
   var plays;
   var as2Context = null;
 
+  function resizeCanvas(container, canvas) {
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+  }
+
   startWorking(file, function(obj) {
     if (!root) {
-      var bounds = obj.bounds;
-      canvas.width = (bounds.xMax - bounds.xMin) / 20;
-      canvas.height = (bounds.yMax - bounds.yMin) / 20;
+      bounds = obj.bounds;
+      if (container.clientHeight) {
+        resizeCanvas(container, canvas);
+        window.addEventListener('resize',
+          resizeCanvas.bind(null, container, canvas), false);
+      } else {
+        canvas.width = (bounds.xMax - bounds.xMin) / 20;
+        canvas.height = (bounds.yMax - bounds.yMin) / 20;
+      }
       container.appendChild(canvas);
 
       frameRate = obj.frameRate;
@@ -167,7 +178,7 @@ SWF.embed = function(file, container, options) {
 
         pframes.push(obj);
         if (!plays) {
-          renderMovieClip(root, frameRate, ctx);
+          renderMovieClip(root, frameRate, bounds, ctx);
           plays = true;
         }
       } else {
