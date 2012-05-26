@@ -31,12 +31,13 @@ function render(displayList, renderingContext) {
       var cxform = character.cxform;
       if (cxform) {
         // We only support alpha channel transformation for now
-        ctx.globalAlpha = (cxform.alphaMult + cxform.alphaAdd) / 256;
+        ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
       }
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)
         character.nextFrame.call(render, renderingContext);
+
       ctx.restore();
     }
   }

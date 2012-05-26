@@ -68,13 +68,13 @@ var CXFORM = {
       redMult: SB('bits'),
       greenMult: SB('bits'),
       blueMult: SB('bits'),
-      alphaMult: ['tagCode>4', [SB('bits'), '1']]
+      alphaMult: ['tagCode>4', [SB('bits'), '256']]
     },
     {
-      redMult: '1',
-      greenMult: '1',
-      blueMult: '1',
-      alphaMult: '1'
+      redMult: '256',
+      greenMult: '256',
+      blueMult: '256',
+      alphaMult: '256'
     }
   ]],
   $1: ['hasAdd', [
