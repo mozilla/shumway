@@ -1,8 +1,8 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var identityMatrix = {
-  scaleX: 20,
-  scaleY: 20,
+  scaleX: 1,
+  scaleY: 1,
   skew0: 0,
   skew1: 0,
   translateX: 0,
