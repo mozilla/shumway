@@ -39,10 +39,55 @@ function render(displayList, renderingContext) {
         character.nextFrame.call(render, renderingContext);
 
       ctx.restore();
+      if (character.hitTestCache && character.hitTestCache.ratio != character.ratio)
+        renderShadowCanvas(character);
     }
   }
   renderingContext.endDrawing();
 }
+
+function renderShadowCanvas(character) {
+  var cache = character.hitTestCache;
+
+  var bounds = 'getBounds' in character ? character.getBounds() : character.bounds;
+  var border = 100;
+  var offsetX = Math.floor(bounds.xMin / 20);
+  var offsetY = Math.floor(bounds.yMin / 20);
+  var sizeX = Math.ceil(bounds.xMax / 20) - offsetX;
+  var sizeY = Math.ceil(bounds.yMax / 20) - offsetY;
+
+  var canvas = cache.canvas;
+  if (!canvas) {
+    cache.canvas = canvas = document.createElement('canvas');
+    cache.isPixelPainted = function(x, y) {
+      x = 0 | (x + offsetX);
+      y = 0 | (y + offsetY);
+      if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
+        return true; // HACK out of bounds pixels are painted
+      var result = this.ctx.getImageData(x, y, 1, 1).data;
+      return !!result[3];
+    };
+  }
+  canvas.width = sizeX;
+  canvas.height = sizeY;
+
+  var ctx = canvas.getContext('2d');
+  ctx.save();
+  ctx.mozFillRule = 'evenodd';
+  ctx.clearRect(0, 0, sizeX, sizeY);
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(0.05, 0.05);
+  cache.ctx = ctx;
+
+  cache.ratio = character.ratio;
+  var renderContext = {
+    beginDrawing: function() { return ctx; },
+    endDrawing: function() {}
+  };
+  render({0: character}, renderContext);
+  ctx.restore();
+}
+
 function renderMovieClip(mc, rate, bounds, ctx) {
   var frameTime = 0;
   var maxDelay = 1000 / rate;

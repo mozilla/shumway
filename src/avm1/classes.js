@@ -317,7 +317,9 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   localToGlobal: {
     value: function localToGlobal(pt) {
-      return this.$nativeObject.localToGlobal(pt);
+      var tmp = this.$nativeObject.localToGlobal(pt);
+      pt.x = tmp.x;
+      pt.y = tmp.y;
     },
     enumerable: false
   },

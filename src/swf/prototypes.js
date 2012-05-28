@@ -381,9 +381,17 @@ var MovieClipPrototype = function(obj, dictionary) {
       localToGlobal: {
         value: function localToGlobal(pt) {
           var m = this.matrix;
+          if (rotation) {
+            var rotationCos = Math.cos(rotation * Math.PI / 180);
+            var rotationSin = Math.sin(rotation * Math.PI / 180);
+            pt = {
+              x: rotationCos * pt.x - rotationSin * pt.y,
+              y: rotationSin * pt.x + rotationCos * pt.y
+            };
+          }
           var result = !m ? pt : {
-            x: m.scaleX * pt.x + m.skew0 * pt.y + m.translateX,
-            y: m.skew1 * pt.x + m.scaleY * pt.y + m.translateY
+            x: m.scaleX * pt.x + m.skew0 * pt.y + m.translateX / 20,
+            y: m.skew1 * pt.x + m.scaleY * pt.y + m.translateY / 20
           };
           return this.parent ? this.parent.localToGlobal(result) : result;
         },
@@ -415,8 +423,12 @@ var MovieClipPrototype = function(obj, dictionary) {
             var y = arguments[1];
             var shapeFlag = arguments[2];
             if (shapeFlag) {
-              // TODO: shadow canvas hit testing
-              return false;
+              // HACK shadow canvas hit testing
+              if (!this.hitTestCache) {
+                this.hitTestCache = {};
+                renderShadowCanvas(this);
+              }
+              return this.hitTestCache.isPixelPainted(x, y);
             } else {
               return x > bounds.xMin / 20 && x < bounds.xMax / 20 &&
                      y > bounds.yMin / 20 && y < bounds.yMax / 20;
