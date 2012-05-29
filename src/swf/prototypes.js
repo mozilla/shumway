@@ -201,6 +201,16 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
     });
 
+    var lastMouseCoordinates = null;
+    function getMouseCoordinates() {
+      if (!lastMouseCoordinates)
+        return lastMouseCoordinates;
+
+      lastMouseCoordinates = { x: AS2Mouse.$lastX, y: AS2Mouse.$lastY };
+      instance.globalToLocal(pt);
+      return lastMouseCoordinates;
+    }
+
     proto.gotoAndPlay = function(frame) {
       if (this !== instance)
         return;
@@ -224,21 +234,18 @@ var MovieClipPrototype = function(obj, dictionary) {
         return; // label is not found, skipping ?
       gotoFrame.call(instance, frameLabels[label]);
     };
+    proto.renderNextFrame = function(context) {
+      if (!paused)
+        gotoFrame.call(instance, (currentFrame % totalFrames) + 1);
+
+      var frameIndex = currentFrame - 1;
+      var displayList = timeline[frameIndex];
+      if (!displayList || displayList.incomplete)
+        return; // skiping non-prepared frame
+
+      render(displayList, context);
+    }
     proto.nextFrame = function() {
-      if (this !== instance) {
-        if (this === render) {
-          if (!paused)
-            gotoFrame.call(instance, (currentFrame % totalFrames) + 1);
-
-          var frameIndex = currentFrame - 1;
-          var displayList = timeline[frameIndex];
-          if (!displayList || displayList.incomplete)
-            return; // skiping non-prepared frame
-
-          render(displayList, arguments[0]);
-        }
-        return;
-      }
       this.gotoAndStop((currentFrame % totalFrames) + 1);
     };
     proto.play = function() {
@@ -258,6 +265,12 @@ var MovieClipPrototype = function(obj, dictionary) {
     proto.$addFrameScript = addFrameScript;
     proto.$addChild = function(name, child) {
       children[name] = child;
+    };
+    proto.$getDisplayList = function(frameNum) {
+      var displayList = timeline[frameNum];
+      if (!displayList || displayList.incomplete)
+        return; // non-prepared frame
+      return displayList;
     };
     defineObjectProperties(proto, {
       $as2Object: {
@@ -397,6 +410,28 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         enumerable: false
       },
+      globalToLocal: {
+        value: function globalToLocal(pt) {
+          var result = this.parent ? this.parent.localToGlobal(pt) : pt;
+          var m = this.matrix, k = 1 / (m.scaleX * m.scaleY - m.skew0 * m.skew1);
+          var result = !m ? result : {
+            x: m.scaleY * k * result.x - m.skew0 * k * result.y +
+               (m.translateY * m.skew0 - m.translateX * m.scaleY) * k / 20,
+            y: -m.skew1 * k * result.x + m.scaleX * k * result.y +
+               (m.translateX * m.skew1 - m.translateY * m.scaleX) * k / 20
+          };
+          if (rotation) {
+            var rotationCos = Math.cos(rotation * Math.PI / 180);
+            var rotationSin = Math.sin(rotation * Math.PI / 180);
+            result = {
+              x: rotationCos * result.x + rotationSin * result.y,
+              y: -rotationSin * result.x + rotationCos * result.y
+            };
+          }
+          return result;
+        },
+        enumerable: false
+      },
       hitTest: {
         value: function hitTest() {
           var bounds = this.getBounds();
@@ -475,6 +510,18 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         enumerable: true
       },
+      mouseX: {
+        get: function get$mouseY() {
+          return getMouseCoordinates().x;
+        },
+        enumerable: true
+      },
+      mouseY: {
+        get: function get$mouseY() {
+          return getMouseCoordinates().y;
+        },
+        enumerable: true
+      },
       rotation: {
         get: function get$rotation() {
           return rotation || 0;
@@ -486,6 +533,25 @@ var MovieClipPrototype = function(obj, dictionary) {
       }
     });
 
+    var events = {
+      onMouseDown: function() {
+        lastMouseCoordinates = null;
+        dispatchEvent('onMouseDown');
+      },
+      onMouseMove: function() {
+        lastMouseCoordinates = null;
+        dispatchEvent('onMouseMove');
+      },
+      onMouseUp: function () {
+        lastMouseCoordinates = null;
+        dispatchEvent('onMouseUp');
+      },
+      onMouseWheel: function () {
+        // TODO
+      }
+    };
+    AS2Mouse.addListener(events);
+
     return instance;
   }
 };
@@ -495,10 +561,23 @@ var ButtonPrototype = function(obj, dictionary) {
   obj.frameCount = 4;
   obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
   var instance = MovieClipPrototype.apply(this, arguments) || this;
+  instance.renderNextFrame = (function(oldRenderNextFrame) {
+    return (function(context) {
+      if (!context.isHitTestRendering)
+        return oldRenderNextFrame.apply(this, arguments);
+
+      var displayList = this.$getDisplayList(4);
+      if (!displayList)
+        return; // skiping non-prepared frame
+
+      render(displayList, context);
+    });
+  })(instance.renderNextFrame);
   instance.constructor = (function(oldContructor) {
     return (function() {
       var result = oldContructor.apply(this, arguments);
-      result.gotoAndStop(1);
+      result.gotoAndStop(4); // invoke hitTest layer
+      result.gotoAndStop(1); // then return to the normal
       return result;
     });
   })(instance.constructor);

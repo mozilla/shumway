@@ -896,8 +896,11 @@ defineObjectProperties(AS2Key, {
   },
   $dispatchEvent: {
     value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Key.$listeners.length; i++)
+      for (var i = 0; i < AS2Key.$listeners.length; i++) {
+        if (!(eventName in AS2Key.$listeners[i]))
+          continue;
         AS2Key.$listeners[i][eventName].apply(null, args);
+      }
     },
     enumerable: false
   },
@@ -939,6 +942,18 @@ AS2Key.prototype = Object.create({}, {
 
 function AS2Mouse() {}
 defineObjectProperties(AS2Mouse, {
+  $lastX: {
+    value: 0,
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
+  $lastY: {
+    value: 0,
+    writable: true,
+    configurable: true,
+    enumerable: false
+  },
   $listeners: {
     value: [],
     writable: false,
@@ -946,14 +961,43 @@ defineObjectProperties(AS2Mouse, {
   },
   $bind: {
     value: function $bind(canvas) {
-      // TODO bind to canvas
+
+      function updateMouseState(e) {
+        var transform = canvas.currentTransform;
+        if (!transform)
+          return;
+
+        var mouseX = e.clientX, mouseY = e.clientY;
+        for (var p = canvas; p; p = p.offsetParent) {
+          mouseX -= p.offsetLeft;
+          mouseY -= p.offsetTop;
+        }
+        this.$lastX = (mouseX - transform.offsetX) * transform.scale;
+        this.$lastY = (mouseY - transform.offsetY) * transform.scale;
+      }
+
+      canvas.addEventListener('mousedown', function(e) {
+        updateMouseState(e);
+        AS2Mouse.$dispatchEvent('onMouseDown');
+      }, false);
+      canvas.addEventListener('mousemove', function(e) {
+        updateMouseState(e);
+        AS2Mouse.$dispatchEvent('onMouseMove');
+      }, false);
+      canvas.addEventListener('mouseup', function(e) {
+        updateMouseState(e);
+        AS2Mouse.$dispatchEvent('onMouseUp');
+      }, false);
     },
     enumerable: false
   },
   $dispatchEvent: {
     value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Mouse.$listeners.length; i++)
+      for (var i = 0; i < AS2Mouse.$listeners.length; i++) {
+        if (!(eventName in AS2Mouse.$listeners[i]))
+          continue;
         AS2Mouse.$listeners[i][eventName].apply(null, args);
+      }
     },
     enumerable: false
   },

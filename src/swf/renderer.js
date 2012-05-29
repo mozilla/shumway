@@ -36,7 +36,7 @@ function render(displayList, renderingContext) {
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)
-        character.nextFrame.call(render, renderingContext);
+        character.renderNextFrame(renderingContext);
 
       ctx.restore();
       if (character.hitTestCache && character.hitTestCache.ratio != character.ratio)
@@ -81,6 +81,7 @@ function renderShadowCanvas(character) {
 
   cache.ratio = character.ratio;
   var renderContext = {
+    isHitTestRendering: true,
     beginDrawing: function() { return ctx; },
     endDrawing: function() {}
   };
@@ -106,12 +107,20 @@ function renderMovieClip(mc, rate, bounds, ctx) {
         var scaleX = frameWidth / (bounds.xMax - bounds.xMin);
         var scaleY = frameHeight / (bounds.yMax - bounds.yMin);
         var scale = Math.min(scaleX, scaleY);
+        var offsetX = (frameWidth - scale * (bounds.xMax - bounds.xMin)) / 2;
+        var offsetY = (frameHeight - scale * (bounds.yMax - bounds.yMin)) / 2;
 
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
-        ctx.translate((frameWidth - scale * (bounds.xMax - bounds.xMin)) / 2,
-                      (frameHeight - scale * (bounds.yMax - bounds.yMin)) / 2);
+        ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
+
+        ctx.canvas.currentTransform = {
+          scale: scale,
+          offsetX: offsetX,
+          offsetY: offsetY,
+          bounds: bounds
+        };
       }
       this.depth++;
       return ctx;
@@ -128,7 +137,7 @@ function renderMovieClip(mc, rate, bounds, ctx) {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      mc.nextFrame.call(render, renderingContext);
+      mc.renderNextFrame(renderingContext);
     }
     requestAnimationFrame(draw);
   })();
