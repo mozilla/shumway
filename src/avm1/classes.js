@@ -854,6 +854,50 @@ AS2Button.prototype = Object.create({}, {
   }
 });
 
+
+function AS2Broadcaster() {
+}
+defineObjectProperties(AS2Broadcaster, {
+  initialize: {
+    value: function initialize(obj) {
+      obj._listeners = [];
+      obj.broadcastMessage = AS2Broadcaster.prototype.broadcastMessage;
+      obj.addListener = AS2Broadcaster.prototype.addListener;
+      obj.removeListener = AS2Broadcaster.prototype.removeListener;
+    },
+    enumerable: false
+  },
+});
+AS2Broadcaster.prototype = Object.create({}, {
+  broadcastMessage: {
+    value: function broadcastMessage(eventName) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      for (var i = 0; i < this._listeners.length; i++) {
+        var listener = this._listeners[i];
+        if (!(eventName in listener))
+          continue;
+        listener[eventName].apply(listener, args);
+      }
+    },
+    enumerable: false
+  },
+  addListener: {
+    value: function addListener(listener) {
+      this._listeners.push(listener);
+    },
+    enumerable: false
+  },
+  removeListener: {
+    value: function removeListener(listener) {
+      var i = this._listeners.indexOf(listener);
+      if (i < 0)
+        return;
+      this._listeners.splice(i, 1);
+    },
+    enumerable: false
+  }
+});
+
 // TODO TextField
 // TODO MovieClipLoader
 
@@ -863,11 +907,6 @@ defineObjectProperties(AS2Key, {
   LEFT: createConstant(37),
   RIGHT: createConstant(39),
   UP: createConstant(38),
-  $listeners: {
-    value: [],
-    writable: false,
-    enumerable: false
-  },
   $keyStates: {
     value: [],
     writable: false,
@@ -884,30 +923,13 @@ defineObjectProperties(AS2Key, {
       canvas.ownerDocument.addEventListener('keydown', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         AS2Key.$keyStates[e.keyCode] = 1;
-        AS2Key.$dispatchEvent('onKeyDown');
+        AS2Key.broadcastMessage('onKeyDown');
       }, false);
       canvas.ownerDocument.addEventListener('keyup', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         delete AS2Key.$keyStates[e.keyCode];
-        AS2Key.$dispatchEvent('onKeyUp');
+        AS2Key.broadcastMessage('onKeyUp');
       }, false);
-    },
-    enumerable: false
-  },
-  $dispatchEvent: {
-    value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Key.$listeners.length; i++) {
-        var listener = AS2Key.$listeners[i];
-        if (!(eventName in listener))
-          continue;
-        listener[eventName].apply(listener, args);
-      }
-    },
-    enumerable: false
-  },
-  addListener: {
-    value: function addListener(listener) {
-      AS2Key.$listeners.push(listener);
     },
     enumerable: false
   },
@@ -915,15 +937,6 @@ defineObjectProperties(AS2Key, {
     value: function isDown(code) {
       return !!AS2Key.$keyStates[code];
     }
-  },
-  removeListener: {
-    value: function removeListener(listener) {
-      var i = AS2Key.$listeners.indexOf(listener);
-      if (i < 0)
-        return;
-      AS2Key.$listeners.splice(i, 1);
-    },
-    enumerable: false
   }
 });
 AS2Key.prototype = Object.create({}, {
@@ -940,6 +953,7 @@ AS2Key.prototype = Object.create({}, {
     enumerable: false
   }
 });
+AS2Broadcaster.initialize(AS2Key);
 
 function AS2Mouse() {}
 defineObjectProperties(AS2Mouse, {
@@ -953,11 +967,6 @@ defineObjectProperties(AS2Mouse, {
     value: 0,
     writable: true,
     configurable: true,
-    enumerable: false
-  },
-  $listeners: {
-    value: [],
-    writable: false,
     enumerable: false
   },
   $bind: {
@@ -979,37 +988,20 @@ defineObjectProperties(AS2Mouse, {
 
       canvas.addEventListener('mousedown', function(e) {
         updateMouseState(e);
-        AS2Mouse.$dispatchEvent('onMouseDown');
+        AS2Mouse.broadcastMessage('onMouseDown');
       }, false);
       canvas.addEventListener('mousemove', function(e) {
         updateMouseState(e);
-        AS2Mouse.$dispatchEvent('onMouseMove');
+        AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
       canvas.addEventListener('mouseout', function(e) {
         updateMouseState(e);
-        AS2Mouse.$dispatchEvent('onMouseMove');
+        AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
       canvas.addEventListener('mouseup', function(e) {
         updateMouseState(e);
-        AS2Mouse.$dispatchEvent('onMouseUp');
+        AS2Mouse.broadcastMessage('onMouseUp');
       }, false);
-    },
-    enumerable: false
-  },
-  $dispatchEvent: {
-    value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Mouse.$listeners.length; i++) {
-        var listener = AS2Mouse.$listeners[i];
-        if (!(eventName in listener))
-          continue;
-        listener[eventName].apply(listener, args);
-      }
-    },
-    enumerable: false
-  },
-  addListener: {
-    value: function addListener(listener) {
-      AS2Mouse.$listeners.push(listener);
     },
     enumerable: false
   },
@@ -1017,15 +1009,6 @@ defineObjectProperties(AS2Mouse, {
     value: function hide() {
       // flash.ui.Mouse.hide()
       throw 'Not implemented: hide';
-    },
-    enumerable: false
-  },
-  removeListener: {
-    value: function removeListener(listener) {
-      var i = AS2Mouse.$listeners.indexOf(listener);
-      if (i < 0)
-        return;
-      AS2Mouse.$listeners.splice(i, 1);
     },
     enumerable: false
   },
@@ -1063,32 +1046,11 @@ AS2Mouse.prototype = Object.create({}, {
     enumerable: false
   }
 });
+AS2Broadcaster.initialize(AS2Mouse);
 
 function AS2Stage() {
 }
 defineObjectProperties(AS2Stage, {
-  $listeners: {
-    value: [],
-    writable: false,
-    enumerable: false
-  },
-  $dispatchEvent: {
-    value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Stage.$listeners.length; i++) {
-        var listener = AS2Stage.$listeners[i];
-        if (!(eventName in listener))
-          continue;
-        listener[eventName].apply(null, args);
-      }
-    },
-    enumerable: false
-  },
-  addListener: {
-    value: function addListener(listener) {
-      AS2Stage.$listeners.push(listener);
-    },
-    enumerable: false
-  },
   align: {
     get: function get$align() {
       throw 'Not implemented: get$align';
@@ -1121,15 +1083,6 @@ defineObjectProperties(AS2Stage, {
       return AS2Context.instance.stage.height;
     },
     enumerable: true
-  },
-  removeListener: {
-    value: function removeListener(listener) {
-      var i = AS2Stage.$listeners.indexOf(listener);
-      if (i < 0)
-        return;
-      AS2Stage.$listeners.splice(i, 1);
-    },
-    enumerable: false
   },
   scaleMode: {
     get: function get$scaleMode() {
@@ -1170,6 +1123,7 @@ AS2Stage.prototype = Object.create({}, {
     enumerable: false
   }
 });
+AS2Broadcaster.initialize(AS2Stage);
 
 var flash = {};
 
