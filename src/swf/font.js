@@ -267,6 +267,7 @@ function defineFont(tag, dictionary) {
   ;
 
   var advance = tag.advance;
+  var resolution = tag.resolution || 1;
   var glyphCount = glyphs.length;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
@@ -290,7 +291,7 @@ function defineFont(tag, dictionary) {
 
   var hmtx = '\x00\x00\x00\x00';
   for (var i = 0; i < glyphCount; ++i)
-    hmtx += toString16(advance ? advance[i] : 1024) + '\x00\x00';
+    hmtx += toString16(advance ? (advance[i] / resolution) : 1024) + '\x00\x00';
   tables['hmtx'] = hmtx;
 
   if (tag.kerning) {
