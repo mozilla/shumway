@@ -897,9 +897,10 @@ defineObjectProperties(AS2Key, {
   $dispatchEvent: {
     value: function dispatchEvent(eventName, args) {
       for (var i = 0; i < AS2Key.$listeners.length; i++) {
-        if (!(eventName in AS2Key.$listeners[i]))
+        var listener = AS2Key.$listeners[i];
+        if (!(eventName in listener))
           continue;
-        AS2Key.$listeners[i][eventName].apply(null, args);
+        listener[eventName].apply(listener, args);
       }
     },
     enumerable: false
@@ -972,8 +973,8 @@ defineObjectProperties(AS2Mouse, {
           mouseX -= p.offsetLeft;
           mouseY -= p.offsetTop;
         }
-        this.$lastX = (mouseX - transform.offsetX) * transform.scale;
-        this.$lastY = (mouseY - transform.offsetY) * transform.scale;
+        AS2Mouse.$lastX = (mouseX - transform.offsetX) / transform.scale;
+        AS2Mouse.$lastY = (mouseY - transform.offsetY) / transform.scale;
       }
 
       canvas.addEventListener('mousedown', function(e) {
@@ -981,6 +982,10 @@ defineObjectProperties(AS2Mouse, {
         AS2Mouse.$dispatchEvent('onMouseDown');
       }, false);
       canvas.addEventListener('mousemove', function(e) {
+        updateMouseState(e);
+        AS2Mouse.$dispatchEvent('onMouseMove');
+      }, false);
+      canvas.addEventListener('mouseout', function(e) {
         updateMouseState(e);
         AS2Mouse.$dispatchEvent('onMouseMove');
       }, false);
@@ -994,9 +999,10 @@ defineObjectProperties(AS2Mouse, {
   $dispatchEvent: {
     value: function dispatchEvent(eventName, args) {
       for (var i = 0; i < AS2Mouse.$listeners.length; i++) {
-        if (!(eventName in AS2Mouse.$listeners[i]))
+        var listener = AS2Mouse.$listeners[i];
+        if (!(eventName in listener))
           continue;
-        AS2Mouse.$listeners[i][eventName].apply(null, args);
+        listener[eventName].apply(listener, args);
       }
     },
     enumerable: false
@@ -1068,8 +1074,12 @@ defineObjectProperties(AS2Stage, {
   },
   $dispatchEvent: {
     value: function dispatchEvent(eventName, args) {
-      for (var i = 0; i < AS2Stage.$listeners.length; i++)
-        AS2Stage.$listeners[i][eventName].apply(null, args);
+      for (var i = 0; i < AS2Stage.$listeners.length; i++) {
+        var listener = AS2Stage.$listeners[i];
+        if (!(eventName in listener))
+          continue;
+        listener[eventName].apply(null, args);
+      }
     },
     enumerable: false
   },

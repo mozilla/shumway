@@ -203,11 +203,11 @@ var MovieClipPrototype = function(obj, dictionary) {
 
     var lastMouseCoordinates = null;
     function getMouseCoordinates() {
-      if (!lastMouseCoordinates)
+      if (lastMouseCoordinates)
         return lastMouseCoordinates;
 
       lastMouseCoordinates = { x: AS2Mouse.$lastX, y: AS2Mouse.$lastY };
-      instance.globalToLocal(pt);
+      instance.globalToLocal(lastMouseCoordinates);
       return lastMouseCoordinates;
     }
 
@@ -267,7 +267,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       children[name] = child;
     };
     proto.$getDisplayList = function(frameNum) {
-      var displayList = timeline[frameNum];
+      var displayList = timeline[frameNum - 1];
       if (!displayList || displayList.incomplete)
         return; // non-prepared frame
       return displayList;
@@ -560,28 +560,62 @@ var MovieClipPrototype = function(obj, dictionary) {
 var ButtonPrototype = function(obj, dictionary) {
   obj.frameCount = 4;
   obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
-  var instance = MovieClipPrototype.apply(this, arguments) || this;
-  instance.renderNextFrame = (function(oldRenderNextFrame) {
-    return (function(context) {
-      if (!context.isHitTestRendering)
-        return oldRenderNextFrame.apply(this, arguments);
+  var instance;
 
-      var displayList = this.$getDisplayList(4);
-      if (!displayList)
-        return; // skiping non-prepared frame
+  function ButtonEvents(instance) {
+    this.instance = instance;
+    this.buttonPressed = false;
+    this.inBounds = false;
+  }
+  ButtonEvents.prototype = {
+    onMouseDown: function() {
+      this.buttonPressed = true;
+      this.updateButtonState();
+    },
+    onMouseMove: function() {
+      this.inBounds = this.instance.hitTest(this.instance.mouseX, this.instance.mouseY, true);
+      this.updateButtonState();
+    },
+    onMouseUp: function () {
+      this.buttonPressed = false;
+      this.updateButtonState();
+    },
+    updateButtonState: function() {
+      if (!this.inBounds)
+        this.instance.gotoAndStop(1);
+      else if (!this.buttonPressed)
+        this.instance.gotoAndStop(2);
+      else
+        this.instance.gotoAndStop(3);
+    },
+    onMouseWheel: function () {}
+  };
 
-      render(displayList, context);
-    });
-  })(instance.renderNextFrame);
-  instance.constructor = (function(oldContructor) {
+  var proto = MovieClipPrototype.apply(this, arguments) || this;
+  proto.constructor = (function(oldContructor) {
     return (function() {
       var result = oldContructor.apply(this, arguments);
       result.gotoAndStop(4); // invoke hitTest layer
       result.gotoAndStop(1); // then return to the normal
+
+      result.renderNextFrame = (function(oldRenderNextFrame) {
+        return (function(context) {
+          if (!context.isHitTestRendering)
+            return oldRenderNextFrame.apply(this, arguments);
+
+          var displayList = this.$getDisplayList(4);
+          if (!displayList)
+            return; // skiping non-prepared frame
+
+          render(displayList, context);
+        });
+      })(result.renderNextFrame);
+
+      AS2Mouse.addListener(new ButtonEvents(result));
       return result;
     });
-  })(instance.constructor);
-  return instance;
+  })(proto.constructor);
+  return proto;
 };
 
 // HACK mocking the sound clips presence

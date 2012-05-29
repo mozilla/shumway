@@ -50,7 +50,6 @@ function renderShadowCanvas(character) {
   var cache = character.hitTestCache;
 
   var bounds = 'getBounds' in character ? character.getBounds() : character.bounds;
-  var border = 100;
   var offsetX = Math.floor(bounds.xMin / 20);
   var offsetY = Math.floor(bounds.yMin / 20);
   var sizeX = Math.ceil(bounds.xMax / 20) - offsetX;
@@ -60,10 +59,10 @@ function renderShadowCanvas(character) {
   if (!canvas) {
     cache.canvas = canvas = document.createElement('canvas');
     cache.isPixelPainted = function(x, y) {
-      x = 0 | (x + offsetX);
-      y = 0 | (y + offsetY);
+      x = 0 | (x - offsetX);
+      y = 0 | (y - offsetY);
       if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
-        return true; // HACK out of bounds pixels are painted
+        return false;
       var result = this.ctx.getImageData(x, y, 1, 1).data;
       return !!result[3];
     };
@@ -75,7 +74,7 @@ function renderShadowCanvas(character) {
   ctx.save();
   ctx.mozFillRule = 'evenodd';
   ctx.clearRect(0, 0, sizeX, sizeY);
-  ctx.translate(offsetX, offsetY);
+  ctx.translate(-offsetX, -offsetY);
   ctx.scale(0.05, 0.05);
   cache.ctx = ctx;
 
@@ -116,7 +115,7 @@ function renderMovieClip(mc, rate, bounds, ctx) {
         ctx.scale(scale, scale);
 
         ctx.canvas.currentTransform = {
-          scale: scale,
+          scale: scale * 20,
           offsetX: offsetX,
           offsetY: offsetY,
           bounds: bounds
