@@ -276,7 +276,8 @@ var MovieClipPrototype = function(obj, dictionary) {
       $as2Object: {
         get: function() {
           if (!as2Object) {
-            as2Object = new AS2MovieClip();
+            var nativeObjectContructor = this.nativeObjectContructor || AS2MovieClip;
+            as2Object = new nativeObjectContructor();
             as2Object.$attachNativeObject(this);
             as2Object['this'] = as2Object;
 
@@ -547,10 +548,17 @@ var MovieClipPrototype = function(obj, dictionary) {
         dispatchEvent('onMouseUp');
       },
       onMouseWheel: function () {
-        // TODO
-      }
+        dispatchEvent('onMouseWheel', arguments);
+      },
+      onKeyDown: function() {
+        dispatchEvent('onKeyDown');
+      },
+      onKeyUp: function() {
+        dispatchEvent('onKeyUp');
+      },
     };
     AS2Mouse.addListener(events);
+    AS2Key.addListener(events);
 
     return instance;
   }
@@ -566,6 +574,7 @@ var ButtonPrototype = function(obj, dictionary) {
     this.instance = instance;
     this.buttonPressed = false;
     this.inBounds = false;
+    this.lastState = 0;
   }
   ButtonEvents.prototype = {
     onMouseDown: function() {
@@ -581,17 +590,41 @@ var ButtonPrototype = function(obj, dictionary) {
       this.updateButtonState();
     },
     updateButtonState: function() {
+      var state = 0, lastState = this.lastState;
       if (!this.inBounds)
-        this.instance.gotoAndStop(1);
+        state = 0;
       else if (!this.buttonPressed)
-        this.instance.gotoAndStop(2);
+        state = 1;
       else
-        this.instance.gotoAndStop(3);
+        state = 2;
+
+      switch (state) {
+        case 0:
+          this.instance.gotoAndStop(1);
+          break;
+        case 1:
+          this.instance.gotoAndStop(2);
+          break;
+        case 2:
+          this.instance.gotoAndStop(3);
+          break;
+      }
+
+      if (lastState == 0 && state != 0)
+        this.instance.$dispatchEvent('onRollOver');
+      else if (lastState != 0 && state == 0)
+        this.instance.$dispatchEvent('onRollOut');
+      else if (lastState != 2 && state == 2)
+        this.instance.$dispatchEvent('onPress');
+      else if (lastState == 2 && state != 2)
+        this.instance.$dispatchEvent('onRelease');
+      this.lastState = state;
     },
     onMouseWheel: function () {}
   };
 
   var proto = MovieClipPrototype.apply(this, arguments) || this;
+  proto.nativeObjectContructor = AS2Button;
   proto.constructor = (function(oldContructor) {
     return (function() {
       var result = oldContructor.apply(this, arguments);
