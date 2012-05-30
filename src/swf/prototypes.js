@@ -423,7 +423,7 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       globalToLocal: {
         value: function globalToLocal(pt) {
-          var result = this.parent ? this.parent.localToGlobal(pt) : pt;
+          var result = this.parent ? this.parent.globalToLocal(pt) : pt;
           var m = this.matrix;
           var k = m ? 1 / (m.scaleX * m.scaleY - m.skew0 * m.skew1) : 0;
           var result = !m ? result : {
