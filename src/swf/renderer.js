@@ -76,15 +76,21 @@ function renderShadowCanvas(character) {
   ctx.clearRect(0, 0, sizeX, sizeY);
   ctx.translate(-offsetX, -offsetY);
   ctx.scale(0.05, 0.05);
-  cache.ctx = ctx;
 
+  cache.ctx = ctx;
   cache.ratio = character.ratio;
-  var renderContext = {
-    isHitTestRendering: true,
-    beginDrawing: function() { return ctx; },
-    endDrawing: function() {}
-  };
-  render({0: character}, renderContext);
+
+  if (character.draw)
+    character.draw(ctx, character.ratio);
+  else if (character.nextFrame) {
+    var renderContext = {
+      isHitTestRendering: true,
+      beginDrawing: function() { return ctx; },
+      endDrawing: function() {}
+    };
+    character.renderNextFrame(renderContext);
+  }
+
   ctx.restore();
 }
 

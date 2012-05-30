@@ -183,7 +183,10 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getBounds: {
     value: function getBounds(bounds) {
-      throw 'Not implemented: getBounds';
+      var obj = bounds.$nativeObject;
+      if (!obj)
+        throw 'Unsupported bounds type';
+      return this.$nativeObject.getBounds(obj);
     },
     enumerable: false
   },

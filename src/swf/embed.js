@@ -122,8 +122,10 @@ SWF.embed = function(file, container, options) {
       frameRate = obj.frameRate;
 
       // TODO disable AVM1 if AVM2 is enabled
-      as2Context = new AS2Context(obj.version,
-        {width: canvas.width, height: canvas.height});
+      as2Context = new AS2Context(obj.version, {
+        width: (bounds.xMax - bounds.xMin) / 20,
+        height: (bounds.yMax - bounds.yMin) / 20
+      });
       AS2Context.instance = as2Context;
       var globals = as2Context.globals;
 
