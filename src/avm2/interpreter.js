@@ -448,12 +448,16 @@ var Interpreter = (function () {
             stack.push(1);
             evaluateBinary(Operator.ADD);
             break;
-          case OP_inclocal:       notImplemented(); break;
+          case OP_inclocal:
+            ++locals[bc.index];
+            break;
           case OP_decrement:
             stack.push(1);
             evaluateBinary(Operator.SUB);
             break;
-          case OP_declocal:       notImplemented(); break;
+          case OP_declocal:
+            --locals[bc.index];
+            break;
           case OP_typeof:
             stack.push(typeof stack.pop());
             break;
