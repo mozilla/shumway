@@ -1190,8 +1190,10 @@ var Compiler = (function () {
       case OP_unplus:         notImplemented(); break;
       case OP_convert_f4:     notImplemented(); break;
       case OP_coerce:
-        // TODO:
-        break;
+        value = state.stack.pop();
+        multiname = multinames[bc.index];
+        type = getProperty(findProperty(multiname, true), multiname);
+        pushValue("coerce" + argumentList(value, type));
       case OP_coerce_a:       /* NOP */ break;
       case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
