@@ -1204,12 +1204,16 @@ var Compiler = (function () {
         pushValue(new Constant(1));
         expression(Operator.ADD);
         break;
-      case OP_inclocal:       notImplemented(); break;
+      case OP_inclocal:
+        emitStatement("++" + local[bc.index]);
+        break;
       case OP_decrement:
         pushValue(new Constant(1));
         expression(Operator.SUB);
         break;
-      case OP_declocal:       notImplemented(); break;
+      case OP_declocal:
+        emitStatement("--" + local[bc.index]);
+        break;
       case OP_typeof:
         pushValue("typeOf" + argumentList(state.stack.pop()));
         break;
