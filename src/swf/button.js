@@ -31,6 +31,7 @@ function defineButton(tag, dictionary) {
   var button = {
     type: 'button',
     id: tag.id,
+    buttonActions: tag.buttonActions,
     states: states
   };
   if (dependencies.length)
