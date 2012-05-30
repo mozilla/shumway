@@ -408,15 +408,19 @@ var Interpreter = (function () {
           case OP_convert_s:      notImplemented(); break;
           case OP_esc_xelem:      notImplemented(); break;
           case OP_esc_xattr:      notImplemented(); break;
+          case OP_coerce_i:
           case OP_convert_i:
             stack.push(toInt(stack.pop()));
             break;
+          case OP_coerce_u:
           case OP_convert_u:
             stack.push(toUint(stack.pop()));
             break;
+          case OP_coerce_d:
           case OP_convert_d:
             stack.push(toDouble(stack.pop()));
             break;
+          case OP_coerce_b:
           case OP_convert_b:
             stack.push(toBoolean(stack.pop()));
             break;
@@ -428,17 +432,12 @@ var Interpreter = (function () {
           case OP_coerce:
             // TODO:
             break;
-          case OP_coerce_b:       notImplemented(); break;
           case OP_coerce_a:       /* NOP */ break;
-          case OP_coerce_i:       notImplemented(); break;
-          case OP_coerce_d:       notImplemented(); break;
           case OP_coerce_s:
             stack.push(coerceString(stack.pop()));
             break;
           case OP_astype:         notImplemented(); break;
           case OP_astypelate:     notImplemented(); break;
-          case OP_coerce_u:       notImplemented(); break;
-          case OP_coerce_o:       notImplemented(); break;
           case OP_negate:
             evaluateUnary(Operator.NEG);
             break;
