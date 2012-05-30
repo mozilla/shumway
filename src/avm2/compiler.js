@@ -1168,10 +1168,22 @@ var Compiler = (function () {
       case OP_convert_s:      pushValue("toString" + argumentList(state.stack.pop())); break;
       case OP_esc_xelem:      notImplemented(); break;
       case OP_esc_xattr:      notImplemented(); break;
-      case OP_convert_i:      pushValue("toInt" + argumentList(state.stack.pop())); break;
-      case OP_convert_u:      pushValue("toUint" + argumentList(state.stack.pop())); break;
-      case OP_convert_d:      pushValue("toDouble" + argumentList(state.stack.pop())); break;
-      case OP_convert_b:      pushValue("toBoolean" + argumentList(state.stack.pop())); break;
+      case OP_coerce_i:
+      case OP_convert_i:
+        pushValue("toInt" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_u:
+      case OP_convert_u:
+        pushValue("toUint" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_d:
+      case OP_convert_d:
+        pushValue("toDouble" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_b:
+      case OP_convert_b:
+        pushValue("toBoolean" + argumentList(state.stack.pop()));
+        break;
       case OP_convert_o:      notImplemented(); break;
       case OP_checkfilter:    notImplemented(); break;
       case OP_convert_f:      notImplemented(); break;
@@ -1180,14 +1192,10 @@ var Compiler = (function () {
       case OP_coerce:
         // TODO:
         break;
-      case OP_coerce_b:       notImplemented(); break;
       case OP_coerce_a:       /* NOP */ break;
-      case OP_coerce_i:       notImplemented(); break;
-      case OP_coerce_d:       notImplemented(); break;
       case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
-      case OP_coerce_u:       notImplemented(); break;
       case OP_coerce_o:       notImplemented(); break;
       case OP_negate:         expression(Operator.NEG); break;
       case OP_increment:
