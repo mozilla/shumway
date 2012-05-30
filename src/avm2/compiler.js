@@ -859,6 +859,18 @@ var Compiler = (function () {
           obj.multiname.isQName()) {
         return obj + "." + obj.multiname.getQualifiedName();
       }
+
+      /**
+       * Looping over arrays by index will use a MultinameL
+       * as it's the simplest type of late name. Instead of
+       * doing a runtime looking, quickly go through late
+       * name lookup here.
+       */
+      if (multiname.isRuntimeName() && !multiname.isPublicNamespaced()) {
+        var value = state.stack.pop();
+        return obj + "." + GET_ACCESSOR + "(" + value + ")";
+      }
+
       return "getProperty" + argumentList(obj, objectConstant(multiname));
     }
 
@@ -1168,38 +1180,52 @@ var Compiler = (function () {
       case OP_convert_s:      pushValue("toString" + argumentList(state.stack.pop())); break;
       case OP_esc_xelem:      notImplemented(); break;
       case OP_esc_xattr:      notImplemented(); break;
-      case OP_convert_i:      pushValue("toInt" + argumentList(state.stack.pop())); break;
-      case OP_convert_u:      pushValue("toUint" + argumentList(state.stack.pop())); break;
-      case OP_convert_d:      pushValue("toDouble" + argumentList(state.stack.pop())); break;
-      case OP_convert_b:      pushValue("toBoolean" + argumentList(state.stack.pop())); break;
+      case OP_coerce_i:
+      case OP_convert_i:
+        pushValue("toInt" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_u:
+      case OP_convert_u:
+        pushValue("toUint" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_d:
+      case OP_convert_d:
+        pushValue("toDouble" + argumentList(state.stack.pop()));
+        break;
+      case OP_coerce_b:
+      case OP_convert_b:
+        pushValue("toBoolean" + argumentList(state.stack.pop()));
+        break;
       case OP_convert_o:      notImplemented(); break;
       case OP_checkfilter:    notImplemented(); break;
       case OP_convert_f:      notImplemented(); break;
       case OP_unplus:         notImplemented(); break;
       case OP_convert_f4:     notImplemented(); break;
       case OP_coerce:
-        // TODO:
-        break;
-      case OP_coerce_b:       notImplemented(); break;
+        value = state.stack.pop();
+        multiname = multinames[bc.index];
+        type = getProperty(findProperty(multiname, true), multiname);
+        pushValue("coerce" + argumentList(value, type));
       case OP_coerce_a:       /* NOP */ break;
-      case OP_coerce_i:       notImplemented(); break;
-      case OP_coerce_d:       notImplemented(); break;
       case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
-      case OP_coerce_u:       notImplemented(); break;
       case OP_coerce_o:       notImplemented(); break;
       case OP_negate:         expression(Operator.NEG); break;
       case OP_increment:
         pushValue(new Constant(1));
         expression(Operator.ADD);
         break;
-      case OP_inclocal:       notImplemented(); break;
+      case OP_inclocal:
+        emitStatement("++" + local[bc.index]);
+        break;
       case OP_decrement:
         pushValue(new Constant(1));
         expression(Operator.SUB);
         break;
-      case OP_declocal:       notImplemented(); break;
+      case OP_declocal:
+        emitStatement("--" + local[bc.index]);
+        break;
       case OP_typeof:
         pushValue("typeOf" + argumentList(state.stack.pop()));
         break;

@@ -126,6 +126,14 @@ function toString(x) {
   return String(x);
 }
 
+function coerce(obj, type) {
+  if (type.isInstance(obj)) {
+    return obj;
+  } else {
+    return null;
+  }
+}
+
 /**
  * Similar to |toString| but returns |null| for |null| or |undefined| instead
  * of "null" or "undefined".
