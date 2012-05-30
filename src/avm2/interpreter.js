@@ -430,7 +430,10 @@ var Interpreter = (function () {
           case OP_unplus:         notImplemented(); break;
           case OP_convert_f4:     notImplemented(); break;
           case OP_coerce:
-            // TODO:
+            // TODO: Cache the resolved multiname so it doesn't have to be
+            // resolved again in getProperty
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(coerce(getProperty(scope.findProperty(multiname, true), multiname, true)));
             break;
           case OP_coerce_a:       /* NOP */ break;
           case OP_coerce_s:
