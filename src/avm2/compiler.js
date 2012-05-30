@@ -870,7 +870,7 @@ var Compiler = (function () {
        * doing a runtime looking, quickly go through late
        * name lookup here.
        */
-      if (multiname.isRuntimeName() && !multiname.isPublicNamespaced()) {
+      if (multiname.isRuntimeName() && multiname.isPublicNamespaced()) {
         var value = state.stack.pop();
         return obj + "." + GET_ACCESSOR + "(" + value + ")";
       }
