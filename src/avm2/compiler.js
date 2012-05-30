@@ -1285,12 +1285,37 @@ var Compiler = (function () {
         pushValue(new Constant(1));
         expression(Operator.SUB);
         break;
-      case OP_inclocal_i:     notImplemented(); break;
-      case OP_declocal_i:     notImplemented(); break;
-      case OP_negate_i:       notImplemented(); break;
-      case OP_add_i:          notImplemented(); break;
-      case OP_subtract_i:     notImplemented(); break;
-      case OP_multiply_i:     notImplemented(); break;
+      case OP_inclocal_i:
+        emitStatement(locals[bc.index] + " = (" + locals[bc.index] + " | 0) + 1");
+        break;
+      case OP_declocal_i:
+        emitStatement(locals[bc.index] + " = (" + locals[bc.index] + " | 0) - 1");
+        break;
+      case OP_negate_i:
+        toInt32();
+        expression(Operator.NEG);
+        break;
+      case OP_add_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.ADD);
+        break;
+      case OP_subtract_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.SUB);
+        break;
+      case OP_multiply_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.MUL);
+        break;
       case OP_getlocal0:
       case OP_getlocal1:
       case OP_getlocal2:

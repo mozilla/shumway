@@ -551,12 +551,28 @@ var Interpreter = (function () {
             stack.push(1);
             evaluateBinary(Operator.SUB);
             break;
-          case OP_inclocal_i:     notImplemented(); break;
-          case OP_declocal_i:     notImplemented(); break;
-          case OP_negate_i:       notImplemented(); break;
-          case OP_add_i:          notImplemented(); break;
-          case OP_subtract_i:     notImplemented(); break;
-          case OP_multiply_i:     notImplemented(); break;
+          case OP_inclocal_i:
+            locals[bc.index] = (locals[bc.index] | 0) + 1;
+            break;
+          case OP_declocal_i:
+            locals[bc.index] = (locals[bc.index] | 0) - 1;
+            break;
+          case OP_negate_i:
+            stack.push(stack.pop() | 0);
+            evaluateUnary(Operator.NEG);
+            break;
+          case OP_add_i:
+            evaluateBinary(Operator.ADD);
+            stack.push(stack.pop() | 0);
+            break;
+          case OP_subtract_i:
+            evaluateBinary(Operator.SUB);
+            stack.push(stack.pop() | 0);
+            break;
+          case OP_multiply_i:
+            evaluateBinary(Operator.MUL);
+            stack.push(stack.pop() | 0);
+            break;
           case OP_getlocal0:
           case OP_getlocal1:
           case OP_getlocal2:
