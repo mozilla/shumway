@@ -265,6 +265,7 @@ var MovieClipPrototype = function(obj, dictionary) {
     };
     proto.$dispatchEvent = dispatchEvent;
     proto.$addFrameScript = addFrameScript;
+    proto.$createAS2Script = createAS2Script;
     proto.$addChild = function(name, child) {
       children[name] = child;
     };
@@ -585,6 +586,13 @@ var ButtonPrototype = function(obj, dictionary) {
   obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
   var instance;
 
+  var AS2ButtonConditions = [
+    [null, 'idleToOverUp', 'idleToOverDown', null],
+    ['overUpToIdle', null, 'overUpToOverDown', null],
+    ['overDownToIdle', 'overDownToOverUp', null, 'overDownToOutDown'],
+    ['outDownToIdle', null, 'outDownToOverDown', null]
+  ];
+
   function ButtonEvents(instance) {
     this.instance = instance;
     this.buttonPressed = false;
@@ -633,13 +641,39 @@ var ButtonPrototype = function(obj, dictionary) {
         this.instance.$dispatchEvent('onPress');
       else if (lastState == 2 && state != 2)
         this.instance.$dispatchEvent('onRelease');
+
+      this.dispatchAS2Events(lastState, state);
       this.lastState = state;
+    },
+    dispatchAS2Events: function(lastState, state) {
+      var buttonActions = this.instance.buttonActions;
+      if (!buttonActions)
+        return;
+      var buttonCondition = AS2ButtonConditions[lastState][state];
+      if (!buttonCondition)
+        return;
+      if (!this.as2ActionsCache)
+        this.as2ActionsCache = {};
+      var buttonActionsCache = this.as2ActionsCache[buttonCondition];
+      if (!buttonActionsCache) {
+        buttonActionsCache = [];
+        for (var i = 0; i < buttonActions.length; i++) {
+          if (!buttonActions[i][buttonCondition])
+            continue;
+          var actionsData = buttonActions[i].actionsData;
+          buttonActionsCache.push(this.instance.$createAS2Script(actionsData));
+        }
+        this.as2ActionsCache[buttonCondition] = buttonActionsCache;
+      }
+      for (var i = 0; i < buttonActionsCache.length; i++)
+        buttonActionsCache[i].call(this.instance);
     },
     onMouseWheel: function () {}
   };
 
   var proto = MovieClipPrototype.apply(this, arguments) || this;
   proto.nativeObjectContructor = AS2Button;
+  proto.buttonActions = obj.buttonActions;
   proto.constructor = (function(oldContructor) {
     return (function() {
       var result = oldContructor.apply(this, arguments);
