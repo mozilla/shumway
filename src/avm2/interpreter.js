@@ -441,6 +441,9 @@ var Interpreter = (function () {
             break;
           case OP_astype:         notImplemented(); break;
           case OP_astypelate:     notImplemented(); break;
+          case OP_coerce_o:
+            obj = stack.pop();
+            stack.push(obj == undefined ? null : obj);
           case OP_negate:
             evaluateUnary(Operator.NEG);
             break;

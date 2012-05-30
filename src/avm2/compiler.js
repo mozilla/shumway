@@ -1214,7 +1214,10 @@ var Compiler = (function () {
       case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
-      case OP_coerce_o:       notImplemented(); break;
+      case OP_coerce_o:
+        obj = state.stack.pop();
+        pushValue("(" + obj + " == undefined ? null : " + obj + ")");
+        break;
       case OP_negate:         expression(Operator.NEG); break;
       case OP_increment:
         pushValue(new Constant(1));
