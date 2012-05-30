@@ -594,6 +594,15 @@ var Multiname = (function () {
     return this.flags & QNAME;
   };
 
+  multiname.prototype.isPublicNamespaced = function setName(name) {
+    if (this.isRuntimeNamespace())
+      return false;
+
+    return this.namespaces.every(function(ns) {
+      return ns.isPublic() && ns.name === "";
+    });
+  };
+
   multiname.prototype.getName = function getName() {
     assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
