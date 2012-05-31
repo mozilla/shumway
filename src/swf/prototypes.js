@@ -44,18 +44,19 @@ var MovieClipPrototype = function(obj, dictionary) {
   function prefetchFrame(parent) {
     var prefetchPortion = 20, prefetchInterval = 100;
     setTimeout(function() {
-      ensureFrame(Math.min(framesLoaded + prefetchPortion, totalFrames), parent);
+      ensureFrame(Math.min(timeline.length + prefetchPortion, totalFrames), parent);
     }, prefetchInterval);
   }
 
+  var lastFramePromise = Promise.resolved, lastFrame = null;
   function ensureFrame(frameNum, parent) { // HACK parent shall not be here
     var n = timeline.length;
     while (n < frameNum) {
-      var frame = create(n > 0 ? timeline[n - 1] : null);
-      frame.incomplete = true;
+      var frame = create(lastFrame);
+      lastFrame = frame;
       var pframe = pframes[currentPframe++];
       if (!pframe)
-        return;
+        break;
       var currentFrame = n + 1;
       if (pframe.name)
         frameLabels[pframe.name] = currentFrame;
@@ -64,52 +65,84 @@ var MovieClipPrototype = function(obj, dictionary) {
         timeline.push(frame);
         ++n;
       }
-      var depths = keys(pframe);
 
-      defer((function(frame, pframe, depths, currentFrame) {
-        var depth;
-        while (depth = depths[0]) {
-          if (+depth) {
-            var entry = pframe[depth];
-            depth -= 0x4001;
-            if (entry) {
-              if (entry.move && dictionary[entry.id] === null)
-                return true;
-              var initObj = (entry.move ? frame[depth] : null) || {};
-              var id = entry.id;
-              if (id) {
-                assert(id in dictionary, 'unknown object', 'place');
-                if (dictionary[id] === null)
-                  return true;
-                var proto = dictionary[id];
+      function initCharacter(character, entry, initObj) {
+        character.matrix = entry.matrix || initObj.matrix || identityMatrix;
+        character.cxform = entry.cxform || initObj.cxform;
+        if (character.draw)
+          character.ratio = entry.ratio || 0;
+        if (entry.events)
+          character.events = entry.events;
+        if (entry.name) {
+          character.name = entry.name;
+          parent.$addChild(entry.name, character); // HACK parent assignment
+        }
+        character.parent = parent;
+        character.root = parent.root || parent;
+        if (character.variableName)
+          parent.$bindVariable(character);
+      }
+
+      var framePromises = [lastFramePromise];
+
+      var depths = keys(pframe), depth;
+      while (depth = depths[0]) {
+        if (+depth) {
+          var entry = pframe[depth];
+          depth -= 0x4001;
+          if (entry) {
+            var promise = null;
+            var initObj = (entry.move ? frame[depth] : null) || {};
+            var id = entry.id;
+            if (id) {
+              assert(id in dictionary, 'unknown object', 'place');
+              var protoPromise = dictionary.getPromise(id);
+              promise = new Promise();
+              frame[depth] = promise;
+              protoPromise.then((function(frame, depth, entry, initObj, promise, proto) {
                 if (proto.constructor !== Object)
                   var character = proto.constructor(); // HACK ... so is instance creation
                 else
                   var character = create(proto);
+                if (initObj instanceof Promise) {
+                  initObj.then(function(obj) {
+                    initCharacter(character, entry, obj);
+                    frame[depth] = character;
+                    promise.resolve(character);
+                  });
+                } else {
+                  initCharacter(character, entry, initObj);
+                  frame[depth] = character;
+                  promise.resolve(character);
+                }
+              }).bind(null, frame, depth, entry, initObj, promise));
+            } else {
+              if (initObj instanceof Promise) {
+                promise = new Promise();
+                frame[depth] = promise;
+                initObj.then((function(frame, depth, promise, obj) {
+                  var character = create(obj);
+                  initCharacter(character, entry, obj);
+                  frame[depth] = character;
+                  promise.resolve(character);
+                }).bind(null, frame, depth, promise));
               } else {
                 var character = create(initObj);
+                initCharacter(character, entry, initObj);
+                frame[depth] = character;
               }
-              character.matrix = entry.matrix || initObj.matrix || identityMatrix;
-              character.cxform = entry.cxform || initObj.cxform;
-              if (character.draw)
-                character.ratio = entry.ratio || 0;
-              if (entry.events)
-                character.events = entry.events;
-              if (entry.name) {
-                character.name = entry.name;
-                parent.$addChild(entry.name, character); // HACK parent assignment
-              }
-              character.parent = parent;
-              character.root = parent.root || parent;
-              if (character.variableName)
-                parent.$bindVariable(character);
-              frame[depth] = character;
-            } else {
-              frame[depth] = null;
             }
+            if (promise)
+              framePromises.push(promise);
+          } else {
+            frame[depth] = null;
           }
-          depths.shift();
         }
+        depths.shift();
+      }
+      var framePromise = Promise.all(framePromises);
+      lastFramePromise = framePromise;
+      framePromise.then((function(pframe, frame, currentFrame, lastInserted) {
         if (pframe.actionsData && pframe.actionsData.length > 0) {
           for (var i = 0; i < pframe.actionsData.length; i++)
             addFrameScript(currentFrame, createAS2Script(pframe.actionsData[i]));
@@ -122,19 +155,15 @@ var MovieClipPrototype = function(obj, dictionary) {
         if (pframe.assets) {
           parent.$addChild('soundmc', new SoundMock(pframe.assets));
         }
-        delete frame.incomplete;
-        ++framesLoaded;
-        var i = framesLoaded;
-        var frm;
-        while (frm = timeline[i++]) {
-          if (frm.incomplete)
-            break;
+        framesLoaded = lastInserted;
+        if (currentFrame == 1)
           parent.$dispatchEvent('onLoad');
-          ++framesLoaded;
-        }
-        if (framesLoaded < totalFrames)
-          prefetchFrame(parent);
-      }).bind(null, frame, pframe, depths, currentFrame));
+      }).bind(null, pframe, frame, currentFrame, n));
+    }
+    if (n < totalFrames) {
+      lastFramePromise.then(function() {
+        prefetchFrame(parent);
+      });
     }
   }
 

@@ -27,6 +27,7 @@ function defineButton(tag, dictionary) {
       states.down[character.depth] = entry;
     if (character.stateHitTest)
       states.hitTest[character.depth] = entry;
+    dependencies.push(characterItem.id);
   }
   var button = {
     type: 'button',
