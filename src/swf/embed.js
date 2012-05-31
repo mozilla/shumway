@@ -6,6 +6,14 @@ var style = document.styleSheets[0];
 
 function definePrototype(dictionary, obj) {
   var id = obj.id;
+  var requirePromise = Promise.resolved;
+  if (obj.require && obj.require.length > 0) {
+    var requirePromises = [];
+    for (var i = 0; i < obj.require.length; i++)
+      requirePromises.push(dictionary.getPromise(obj.require[i]));
+    requirePromise = Promise.all(requirePromises);
+  }
+  var promise = dictionary.getPromise(id);
   switch (obj.type) {
   case 'font':
     var charset = fromCharCode.apply(null, obj.codes);
@@ -21,10 +29,8 @@ function definePrototype(dictionary, obj) {
       ctx.font = '1024px "' + obj.name + '"';
       var defaultWidth = ctx.measureText(charset).width;
 
-      defer(function() {
-        //if (ctx.measureText(charset).width === defaultWidth)
-        //  return true;
-        dictionary[id] = obj;
+      requirePromise.then(function() {
+        promise.resolve(obj);
       });
     }
     break;
@@ -34,58 +40,56 @@ function definePrototype(dictionary, obj) {
     img.onload = function() {
       var proto = create(obj);
       proto.img = img;
-      dictionary[id] = proto;
+      requirePromise.then(function() {
+        promise.resolve(proto);
+      });
     };
     break;
   case 'sprite':
-    defer(function() {
-      //for (var i = 1; i < id; ++i) {
-      //  if (i in dictionary && dictionary[i] === null)
-      //    return true;
-      //}
-      dictionary[id] = new MovieClipPrototype(obj, dictionary);
+    requirePromise.then(function() {
+      promise.resolve(new MovieClipPrototype(obj, dictionary));
     });
     break;
   case 'shape':
   case 'text':
-    //var dependencies;
-    //if (obj.require)
-    //  dependencies = obj.require.slice();
-
-    defer(function() {
-      //if (dependencies) {
-      //  var i = 0;
-      //  var objId;
-      //  while (objId = dependencies[i++]) {
-      //    assert(objId in dictionary, 'unknown object', 'require');
-      //    if (dictionary[objId] === null)
-      //      return true;
-      //    dependencies.pop();
-      //  }
-      //}
-      var proto = create(obj);
-      var drawFn = new Function('d,c,r',
-        'with(c){\n' +
-          obj.data + '\n' +
-        '}'
-      );
-      proto.draw = (function(c, r) {
-        return drawFn.call(this, dictionary, c, r);
-      });
-      dictionary[id] = proto;
+    var proto = create(obj);
+    var drawFn = new Function('d,c,r',
+      'with(c){\n' +
+        obj.data + '\n' +
+      '}'
+    );
+    proto.draw = (function(c, r) {
+      return drawFn.call(this, dictionary, c, r);
+    });
+    requirePromise.then(function() {
+      promise.resolve(proto);
     });
     break;
   case 'button':
-    defer(function() {
-      dictionary[id] = new ButtonPrototype(obj, dictionary);
+    requirePromise.then(function() {
+      promise.resolve(new ButtonPrototype(obj, dictionary));
     });
     break;
   default:
     fail('unknown object type', 'define');
   }
-  if (!(id in dictionary))
-    dictionary[id] = null;
 }
+
+function ObjDictionary() {
+  this.promises = this;
+}
+ObjDictionary.prototype = {
+  getPromise: function(objId) {
+    if (!(objId in this.promises)) {
+      var promise = new Promise();
+      this.promises[objId] = promise;
+    }
+    return this.promises[objId];
+  },
+  isPromiseExists: function(objId) {
+    return objId in this.promises;
+  }
+};
 
 SWF.embed = function(file, container, options) {
   if (!options)
@@ -93,7 +97,7 @@ SWF.embed = function(file, container, options) {
 
   var result;
   var root;
-  var dictionary = { };
+  var dictionary = new ObjDictionary();
   var pframes = [];
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('2d');
