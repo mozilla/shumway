@@ -32,10 +32,10 @@ function cast(tags, dictionary, declare) {
           id: tag.id,
           frameCount: tag.frameCount,
           require: dependencies,
-          pframes: cast(tag.tags, dictionary, function(obj) {
+          pframes: cast(tag.tags, dictionary, (function(dependencies, obj) {
             dependencies.push(obj.id);
             declare(obj);
-          })
+          }).bind(null, dependencies))
         };
         break;
       case 'text':

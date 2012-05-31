@@ -133,7 +133,7 @@ AS2Globals.prototype = {
   },
   prevFrame: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    prevFrame.nextFrame();
+    nativeTarget.prevFrame();
   },
   prevScene: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
