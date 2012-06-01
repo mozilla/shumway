@@ -1,43 +1,54 @@
 function DisplayObjectContainer() {
-  this.numChildren = 0;
-  this.textSnapshot = null;
-  this.tabChildren = false;
-  this.mouseChildren = false;
+  this.textSnapshot = {};
+  this.tabChildren = true;
+  this.mouseChildren = true;
 }
 
-DisplayObjectContainer.prototype = new InteractiveObject;
-DisplayObjectContainer.prototype.addChild = function (child) { notImplemented(); };
-DisplayObjectContainer.prototype.addChildAt = function (child, index) { notImplemented(); };
-DisplayObjectContainer.prototype.removeChild = function (child) { notImplemented(); };
-DisplayObjectContainer.prototype.removeChildAt = function (index) { notImplemented(); };
-DisplayObjectContainer.prototype.getChildIndex = function (child) { notImplemented(); };
-DisplayObjectContainer.prototype.setChildIndex = function (child, index) { notImplemented(); };
-DisplayObjectContainer.prototype.getChildAt = function (index) { notImplemented(); };
-DisplayObjectContainer.prototype.getChildByName = function (name) { notImplemented(); };
-DisplayObjectContainer.prototype.contains = function (child) { notImplemented(); };
-DisplayObjectContainer.prototype.swapChildrenAt = function (index1, index2) { notImplemented(); };
-DisplayObjectContainer.prototype.swapChildren = function (child1, child2) { notImplemented(); };
-DisplayObjectContainer.prototype.removeChildren = function (beginIndex, endIndex) {
-  notImplemented();
-};
-DisplayObjectContainer.prototype.getObjectsUnderPoint = function (point) { notImplemented(); };
-DisplayObjectContainer.prototype.areInaccessibleObjectsUnderPoint = function (point) {
-  notImplemented();
-};
+DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
+  numChildren: descAccessor(function () {
+    notImplemented();
+  }),
 
-natives.ContainerClass = function (scope, instance, baseClass) {
-  var c = new Class(
-    "DisplayObjectContainer",
-    DisplayObjectContainer,
-    Class.passthroughCallable(DisplayObjectContainer)
-  );
-  c.baseClass = baseClass;
-  c.nativeMethods = DisplayObjectContainer.prototype;
-  c.makeSimpleNativeAccessors("get", ["numChildren",
-                                      "textSnapshot",
-                                      "dropTarget",
-                                      "tabChildren",
-                                      "mouseChildren"]);
-  c.makeSimpleNativeAccessors("set", ["tabChildren", "mouseChildren"]);
-  return c;
-};
+  addChild: descMethod(function (child) {
+    notImplemented();
+  }),
+  addChildAt: descMethod(function (child, index) {
+    notImplemented();
+  }),
+  removeChild: descMethod(function (child) {
+    notImplemented();
+  }),
+  removeChildAt: descMethod(function (child, index) {
+    notImplemented();
+  }),
+  getChildIndex: descMethod(function (child) {
+    notImplemented();
+  }),
+  setChildIndex: descMethod(function (child, index) {
+    notImplemented();
+  }),
+  getChildAt: descMethod(function (index) {
+    notImplemented();
+  }),
+  getChildByName: descMethod(function (name) {
+    notImplemented();
+  }),
+  getObjectsUnderPoint: descMethod(function (pt) {
+    notImplemented();
+  }),
+  areInaccessibleObjectsUnderPoint: descMethod(function (pt) {
+    notImplemented();
+  }),
+  contains: descMethod(function (child) {
+    notImplemented();
+  }),
+  swapChildrenAt: descMethod(function (index1, index2) {
+    notImplemented();
+  }),
+  swapChildren: descMethod(function (child1, child2) {
+    notImplemented();
+  }),
+  removeChildren: descMethod(function (begin, end) {
+    notImplemented();
+  })
+});
