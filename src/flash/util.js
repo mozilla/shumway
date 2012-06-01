@@ -1,23 +1,26 @@
-function descProperty(val, enumerable, writable, configurable) {
+function descProperty(val) {
   return {
     value: val,
-    enumerable: enumerable,
-    writable: writable,
-    configurable: configurable
+    writable: true,
+    configurable: true,
+    enumerable: true
   };
 }
-function descMethod(func, enumerable, writable, configurable) {
-  return descProperty(func, enumerable, writable, configurable);
+function descMethod(func) {
+  return descProperty(func);
 }
-function descAccessor(get, set, enumerable, writable, configurable) {
+function descAccessor(get, set) {
   return {
     get: get,
     set: set,
-    enumerable: enumerable,
-    writable: writable,
-    configurable: configurable
+    configurable: true,
+    enumerable: true
   };
 }
 function descConst(val) {
-  return { value:  val };
+  return {
+    value:  val,
+    configurable: true,
+    enumerable: true
+  };
 }
