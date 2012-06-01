@@ -252,7 +252,7 @@ var Option = (function () {
   option.prototype.tryParse = function tryParse(str) {
     if (str.indexOf("-" + this.shortName) === 0) {
       if (str.indexOf("=") >= 0) {
-        this.value = eval(str.slice(str.indexOf("=") + 1).trim());
+        this.value = str.slice(str.indexOf("=") + 1).trim();
       } else if (str == "-" + this.shortName) {
         this.value = true;
       } else {

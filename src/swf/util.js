@@ -20,13 +20,6 @@ function assert(cond, msg, context) {
   if (!cond)
     fail(msg, context);
 }
-function defer(func, startTime) {
-  if (!startTime)
-    startTime = +new Date;
-  assert(+new Date - startTime < 1000, 'timeout', 'defer');
-  if (func())
-    setTimeout(defer, 0, func, startTime);
-}
 
 function toStringRgba(color) {
   return 'rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')';
@@ -77,3 +70,54 @@ function adler32(data) {
   }
   return (b << 16) | a;
 }
+
+function Promise() {
+  this.isResolved = false;
+}
+Promise.prototype = {
+  resolve: function() {
+    if (this.isResolved) throw 'resolved';
+    this.isResolved = true;
+    this.data = slice.call(arguments, 0);
+    var callbacks = this.cachedCallbacks;
+    if (callbacks) {
+      for (var i = 0; i < callbacks.length; i++)
+        callbacks[i].apply(null, this.data);
+      delete this.cachedCallbacks;
+    }
+  },
+  then: function(callback) {
+    if (this.isResolved) {
+      callback.apply(null, this.data);
+      return;
+    }
+    if (!('cachedCallbacks' in this))
+      this.cachedCallbacks = [];
+    this.cachedCallbacks.push(callback);
+  }
+};
+Promise.resolved = {
+  isResolved: true,
+  then: function(callback) {
+    callback();
+  }
+};
+Promise.all = function(promises) {
+  if (promises.length == 0)
+    return Promise.resolved;
+  var promisesToResolve = promises.length;
+  var results = [];
+  var promise = new Promise();
+  for (var i = 0; i < promises.length; i++) {
+    promises[i].then((function(i) {
+      return (function() {
+        if (arguments.length > 1)
+          results[i] = slice.call(arguments, 0);
+        promisesToResolve--;
+        if (promisesToResolve == 0)
+          promise.resolve(results);
+      });
+    })(i));
+  }
+  return promise;
+};

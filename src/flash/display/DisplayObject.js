@@ -1,105 +1,138 @@
 function DisplayObject() {
-  this.root = null;
-  this.stage = null;
-  this.name = null;
-  this.parent = null;
-  this.mask = null;
+  this._root = null;
+  this._stage = null;
+  this._name = '';
+  this._parent = null;
+  this._mask = null;
   this.visible = true;
-  this.x = 0;
-  this.y = 0;
-  this.z = 0;
-  this.scaleX = 0;
-  this.scaleY = 0;
-  this.scaleZ = 0;
-  this.mouseX = 0;
-  this.mouseY = 0;
-  this.rotation = 0;
-  this.rotationX = 0;
-  this.rotationY = 0;
-  this.rotationZ = 0;
+  this._x = 0;
+  this._y = 0;
+  this._scaleX = 1;
+  this._scaleY = 1;
+  this._mouseX = 0;
+  this._mouseY = 0;
+  this._rotation = 0;
   this.alpha = 1;
-  this.width = 0;
-  this.height = 0;
   this.cacheAsBitmap = false;
-  this.opaqueBackground = false;
+  this.opaqueBackground = null;
   this.scrollRect = null;
   this.filters = [];
-  this.blendMode = null;
-  this.transform = null;
+  this.blendMode = 'normal';
+  this._transform = null;
   this.scale9Grid = null;
-  this.loaderInfo = null;
   this.accessibilityProperties = null;
 }
 
-DisplayObject.prototype = new EventDispatcher;
-DisplayObject.prototype.globalToLocal = function (point) { notImplemented(); };
-DisplayObject.prototype.localToGlobal = function (point) { notImplemented(); };
-DisplayObject.prototype.getBounds = function (targetCoordinateSpace) { notImplemented(); };
-DisplayObject.prototype.getRect = function (targetCoordinateSpace) { notImplemented(); };
-DisplayObject.prototype._hitTest = function (use_xy, x, y, useShape, hitTestObject) {
-  notImplemented();
-};
-DisplayObject.prototype.globalToLocal3D = function (point) { notImplemented(); };
-DisplayObject.prototype.local3DToGlobal = function (point3d) { notImplemented(); };
+DisplayObject.prototype = Object.create(new EventDispatcher, {
+  root: descAccessor(function () {
+    return this._return;
+  }),
+  stage: descAccessor(function () {
+    return this._stage;
+  }),
+  name: descAccessor(
+    function () {
+      return this._name;
+    },
+    function (val) {
+      this._name = val;
+    }
+  ),
+  parent: descAccessor(function () {
+    return this._parent;
+  }),
+  mask: descAccessor(
+    function () {
+      return this._mask;
+    },
+    function (val) {
+      this._mask = val;
+    }
+  ),
+  x: descAccessor(
+    function () {
+      return this._x;
+    },
+    function (val) {
+      this._x = val;
+    }
+  ),
+  y: descAccessor(
+    function () {
+      return this._y;
+    },
+    function (val) {
+      this._y = val;
+    }
+  ),
+  scaleX: descAccessor(
+    function () {
+      return this._scaleX;
+    },
+    function (val) {
+      this._scaleX = val;
+    }
+  ),
+  scaleY: descAccessor(
+    function () {
+      return this._scaleY;
+    },
+    function (val) {
+      this._scaleY = val;
+    }
+  ),
+  mouseX: descAccessor(
+    function () {
+      return this._mouseX;
+    }
+  ),
+  mouseY: descAccessor(
+    function () {
+      return this._mouseY;
+    }
+  ),
+  rotation: descAccessor(
+    function () {
+      return this._rotation;
+    },
+    function (val) {
+      this._rotation = val;
+    }
+  ),
+  width: descAccessor(function () {
+    notImplemented();
+  }),
+  height: descAccessor(function () {
+    notImplemented();
+  }),
+  transform: descAccessor(
+    function () {
+      return this._transform;
+    },
+    function (val) {
+      this._transform = val;
+    }
+  ),
 
-natives.DisplayObjectClass = function (scope, instance, baseClass) {
-  var c = new Class("DisplayObject", DisplayObject, Class.passthroughCallable(DisplayObject));
-  c.baseClass = baseClass;
-  c.nativeMethods = DisplayObject.prototype;
-  c.makeSimpleNativeAccessors("get", ["root",
-                                      "stage",
-                                      "name",
-                                      "parent",
-                                      "mask",
-                                      "visible",
-                                      "x",
-                                      "y",
-                                      "z",
-                                      "scaleX",
-                                      "scaleY",
-                                      "ScaleZ",
-                                      "mouseX",
-                                      "mouseY",
-                                      "rotation",
-                                      "rotationX",
-                                      "rotationY",
-                                      "rotationZ",
-                                      "alpha",
-                                      "width",
-                                      "height",
-                                      "cacheAsBitmap",
-                                      "opaqueBackground",
-                                      "scrollRect",
-                                      "filters",
-                                      "blendMode",
-                                      "transform",
-                                      "scale9Grid",
-                                      "loaderInfo",
-                                      "accessibilityProperties"]);
-  c.makeSimpleNativeAccessors("set", ["name",
-                                      "mask",
-                                      "visible",
-                                      "x",
-                                      "y",
-                                      "z",
-                                      "scaleX",
-                                      "scaleY",
-                                      "scaleZ",
-                                      "rotation",
-                                      "rotationX",
-                                      "rotationY",
-                                      "rotationZ",
-                                      "alpha",
-                                      "width",
-                                      "height",
-                                      "cacheAsBitmap",
-                                      "opaqueBackground",
-                                      "scrollRect",
-                                      "filters",
-                                      "blendMode",
-                                      "transform",
-                                      "scale9Grid",
-                                      "accessibilityProperties",
-                                      "blendShader"]);
-  return c;
-};
+  globalToLocal: descMethod(function (pt) {
+    notImplemented();
+  }),
+  localToGlobal: descMethod(function (pt) {
+    notImplemented();
+  }),
+  getBounds: descMethod(function (targetCoordSpace) {
+    notImplemented();
+  }),
+  getRect: descMethod(function (targetCoordSpace) {
+    notImplemented();
+  }),
+  loaderInfo: descAccessor(function () {
+    notImplemented();
+  }),
+  hitTestObject: descMethod(function (obj) {
+    notImplemented();
+  }),
+  hitTestPoint: descMethod(function (x, y, shapeFlag) {
+    notImplemented();
+  }),
+});

@@ -1,42 +1,36 @@
-function EventDispatcher() { }
-EventDispatcher.trimHeaderValue = function (headerValue) { notImplemented(); };
+function EventDispatcher(target) {
+  this._listeners = {};
+}
 
-EventDispatcher.prototype;
-EventDispatcher.prototype.ctor = function (target) { notImplemented(); };
+EventDispatcher.prototype = Object.create(null, {
+  toString: descMethod(function () {
+    return '[object EventDispatcher]';
+  }),
+  addEventListener: descMethod(function (type, listener, useCapture, priority, useWeakReference) {
+    var listeners = this._listeners[type];
 
-EventDispatcher.prototype.addEventListener = function (type,
-                                                       listener,
-                                                       useCapture,
-                                                       priority,
-                                                       useWeakReference) {
-  notImplemented();
-};
+    if (!listeners)
+      listeners = this._listeners[type] = [];
 
-EventDispatcher.prototype.removeEventListener = function (type, listener, useCapture) {
-  notImplemented();
-};
-EventDispatcher.prototype.dispatchEvent = function (event) {
-  notImplemented();
-};
-EventDispatcher.prototype.hasEventListener = function (type) {
-  notImplemented();
-};
-EventDispatcher.prototype.willTrigger = function (type) { notImplemented(); };
-EventDispatcher.prototype.dispatchEventFunction = function (event) {
-  notImplemented();
-};
-EventDispatcher.prototype.dispatchHttpStatusEvent = function (status, responseLocation, headers) {
-  notImplemented();
-};
+    listeners.push(listener);
+  }),
+  removeEventListener: descMethod(function (type, listener, useCapture) {
+    var listeners = this._listeners[type];
 
-natives.EventDispatcherClass = function (scope, instance, baseClass) {
-  var c = new Class(
-    "EventDispatcher",
-    EventDispatcher,
-    Class.passthroughCallable(EventDispatcher)
-  );
-  c.baseClass = baseClass;
-  c.nativeMethods = EventDispatcher.prototype;
-  c.nativeStatics = EventDispatcher;
-  return c;
-};
+    if (listeners) {
+      var i = listeners.indexOf(listener);
+
+      if (i > -1)
+        listeners.splice(i, 1);
+    }
+  }),
+  dispatchEvent: descMethod(function (evt) {
+    notImplemented();
+  }),
+  hasEventListener: descMethod(function (type) {
+    return this._listeners[type] != false;
+  }),
+  willTrigger: descMethod(function (type) {
+    notImplemented();
+  })
+});
