@@ -17,43 +17,36 @@ function ColorTransform(redMultiplier,
 }
 
 ColorTransform.prototype = Object.create(null, {
-
-  color: {
-    get: function () {
+  color: descAccessor(
+    function () {
       return this.redOffset << 16 | this.greenOffset << 8 | this.blueOffset;
     },
-    set: function (val) {
+    function (val) {
       this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 0;
-      this.redOffset = (val >> 16) & 0xff;
-      this.greenOffset = (val >> 8) & 0xff;
+      this.redOffset = val >> 16 & 0xff;
+      this.greenOffset = val >> 8 & 0xff;
       this.blueOffset = val & 0xff;
     }
-  },
+  ),
 
-  concat: {
-    value: function (cxform) {
-      this.redOffset += this.redMultiplier * cxform.redOffset;
-      this.redMultiplier = this.redMultiplier * cxform.redMultiplier;
-      this.greenOffset += this.greenMultiplier * cxform.greenOffset;
-      this.greenMultiplier = this.greenMultiplier * cxform.greenMultiplier;
-      this.blueOffset += this.blueMultiplier * cxform.blueOffset;
-      this.blueMultiplier = this.blueMultiplier * cxform.blueMultiplier;
-      this.alphaOffset += this.alphaMultiplier * cxform.alphaOffset;
-      this.alphaMultiplier = this.alphaMultiplier * cxform.alphaMultiplier;
-    }
-  },
-
-  toString: {
-    value: function () {
-      return '(redMultiplier=' + this.redMultiplier + ',' +
-             ' greenMultiplier=' + this.greenMultiplier + ',' +
-             ' blueMultiplier=' + this.blueMultiplier + ',' +
-             ' alphaMultiplier=' + this.alphaMultiplier + ',' +
-             ' redOffset=' + this.redOffset + ',' +
-             ' greenOffset=' + this.greenOffset + ',' +
-             ' blueOffset=' + this.blueOffset + ',' +
-             ' alphaOffset=' + this.alphaOffset +')';
-    }
-  }
-
+  concat: descMethod(function (cxform) {
+    this.redOffset += this.redMultiplier * cxform.redOffset;
+    this.redMultiplier = this.redMultiplier * cxform.redMultiplier;
+    this.greenOffset += this.greenMultiplier * cxform.greenOffset;
+    this.greenMultiplier = this.greenMultiplier * cxform.greenMultiplier;
+    this.blueOffset += this.blueMultiplier * cxform.blueOffset;
+    this.blueMultiplier = this.blueMultiplier * cxform.blueMultiplier;
+    this.alphaOffset += this.alphaMultiplier * cxform.alphaOffset;
+    this.alphaMultiplier = this.alphaMultiplier * cxform.alphaMultiplier;
+  }),
+  toString: descMethod(function () {
+    return '(redMultiplier=' + this.redMultiplier + ',' +
+           ' greenMultiplier=' + this.greenMultiplier + ',' +
+           ' blueMultiplier=' + this.blueMultiplier + ',' +
+           ' alphaMultiplier=' + this.alphaMultiplier + ',' +
+           ' redOffset=' + this.redOffset + ',' +
+           ' greenOffset=' + this.greenOffset + ',' +
+           ' blueOffset=' + this.blueOffset + ',' +
+           ' alphaOffset=' + this.alphaOffset +')';
+  })
 });
