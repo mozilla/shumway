@@ -1,8 +1,8 @@
 function Event(type, bubbles, cancelable) {
   Object.defineProperties(
-    type: descProp(type),
-    bubbles: descProp(bubbles),
-    cancelable: descProp(cancelable)
+    type:       descProp(type),
+    bubbles:    descProp(!!bubbles),
+    cancelable: descProp(!!cancelable)
   );
   this._target = null;
 }
@@ -76,7 +76,7 @@ Event.prototype = Object.create(null, {
     return new Event (this.type, this.bubbles, this.cancelable);
   }),
   toString: descMethod(function () {
-    return formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
+    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
   }),
   stopPropagation: descMethod(function () {
     notImplemented();
