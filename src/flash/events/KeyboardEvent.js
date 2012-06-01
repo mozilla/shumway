@@ -1,12 +1,12 @@
-function MouseEvent(type,
-                    bubbles,
-                    cancelable,
-                    charCode,
-                    keyCode,
-                    keyLocation,
-                    ctrlKey,
-                    altKey,
-                    shiftKey){
+function KeyboardEvent(type,
+                       bubbles,
+                       cancelable,
+                       charCode,
+                       keyCode,
+                       keyLocation,
+                       ctrlKey,
+                       altKey,
+                       shiftKey){
   Object.defineProperties(
     type:        descProp(type),
     bubbles:     descProp(bubbles !== undefined ? !!bubbles : true),
@@ -20,12 +20,12 @@ function MouseEvent(type,
   );
 }
 
-Object.defineProperties(MouseEvent, {
+Object.defineProperties(KeyboardEvent, {
   KEY_DOWN: descConst('keyDown'),
   KEY_UP:   descConst('keyUp')
 });
 
-MouseEvent.prototype = Object.create(new Event, {
+KeyboardEvent.prototype = Object.create(new Event, {
   clone: descMethod(function () {
     return new Event (
       this.type,
