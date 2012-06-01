@@ -200,5 +200,5 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
   }),
   hitTestPoint: descMethod(function (x, y, shapeFlag) {
     notImplemented();
-  }),
+  })
 });
