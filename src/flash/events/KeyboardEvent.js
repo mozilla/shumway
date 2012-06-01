@@ -26,21 +26,6 @@ Object.defineProperties(MouseEvent, {
 });
 
 MouseEvent.prototype = Object.create(new Event, {
-  stageX: descAccessor(function () {
-    notImplemented();
-  }),
-  stageY: descAccessor(function () {
-    notImplemented();
-  }),
-  isRelatedObjectInaccessible: descAccessor(
-    function () {
-      return false;
-    },
-    function () {
-      notImplemented();
-    }
-  ),
-
   clone: descMethod(function () {
     return new Event (
       this.type,
