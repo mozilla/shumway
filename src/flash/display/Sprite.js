@@ -1,12 +1,48 @@
 function Sprite() {
-  this.graphics = {};
-  this.buttonMode = false;
-  this.hitArea = null;
-  this.useHandCursor = true;
-  this.soundTransform = {};
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
+  graphics: descAccessor(
+    function () {
+      notImplemented();
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  buttonMode: descAccessor(
+    function () {
+      return false;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  hitArea: descAccessor(
+    function () {
+      return null;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  useHandCursor: descAccessor(
+    function () {
+      return true;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  soundTransform: descAccessor(
+    function () {
+      notImplemented();
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+
   toString: descMethod(function () {
     return '[object Sprite]';
   }),

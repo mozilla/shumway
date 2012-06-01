@@ -1,13 +1,31 @@
 function DisplayObjectContainer() {
-  this.textSnapshot = {};
-  this.tabChildren = true;
-  this.mouseChildren = true;
 }
 
 DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
   numChildren: descAccessor(function () {
     notImplemented();
   }),
+  textSnapshot: descAccessor(
+    function () {
+      notImplemented();
+    }
+  ),
+  tabChildren: descAccessor(
+    function () {
+      return true;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  mouseChildren: descAccessor(
+    function () {
+      return true;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
 
   addChild: descMethod(function (child) {
     notImplemented();

@@ -1,5 +1,13 @@
 function Shape() {
-  this.graphics = {};
 }
 
-Shape.prototype = Object.create(new DisplayObject);
+Shape.prototype = Object.create(new DisplayObject, {
+  graphics: descAccessor(
+    function () {
+      notImplemented();
+    },
+    function (val) {
+      notImplemented();
+    }
+  )
+});

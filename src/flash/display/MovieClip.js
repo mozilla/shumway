@@ -2,12 +2,11 @@ function MovieClip() {
   this._currentFrame = 1;
   this._framesLoaded = 1;
   this._totalFrames = 1;
-  this.trackAsMenu = false;
   this._scenes = [{}];
   this._currentScene = {};
   this._currentLabel = false;
   this._currentFrameLabel = null;
-  this.enabled = true;
+  this._enabled = true;
 }
 
 MovieClip.prototype = Object.create(new Sprite, {
@@ -20,6 +19,14 @@ MovieClip.prototype = Object.create(new Sprite, {
   totalFrames: descAccessor(function () {
     return this._totalFrames;
   }),
+  trackAsMenu: descAccessor(
+    function () {
+      return false;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
   totalFrames: descAccessor(function () {
     return this._totalFrames;
   }),
@@ -35,6 +42,14 @@ MovieClip.prototype = Object.create(new Sprite, {
   currentLabels: descAccessor(function () {
     return this._currentScene.labels;
   }),
+  enabled: descAccessor(
+    function () {
+      return this._enabled;
+    },
+    function (val) {
+      this._enabled = val;
+    }
+  ),
 
   play: descMethod(function () {
     notImplemented();

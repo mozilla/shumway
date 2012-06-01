@@ -3,8 +3,7 @@ function DisplayObject() {
   this._stage = null;
   this._name = '';
   this._parent = null;
-  this._mask = null;
-  this.visible = true;
+  this._visible = true;
   this._x = 0;
   this._y = 0;
   this._scaleX = 1;
@@ -12,15 +11,10 @@ function DisplayObject() {
   this._mouseX = 0;
   this._mouseY = 0;
   this._rotation = 0;
-  this.alpha = 1;
-  this.cacheAsBitmap = false;
-  this.opaqueBackground = null;
-  this.scrollRect = null;
-  this.filters = [];
-  this.blendMode = 'normal';
+  this._alpha = 1;
+  this._cacheAsBitmap = false;
+  this._opaqueBackground = null;
   this._transform = null;
-  this.scale9Grid = null;
-  this.accessibilityProperties = null;
 }
 
 DisplayObject.prototype = Object.create(new EventDispatcher, {
@@ -43,10 +37,18 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
   }),
   mask: descAccessor(
     function () {
-      return this._mask;
+      return null;
     },
     function (val) {
-      this._mask = val;
+      notImplemented();
+    }
+  ),
+  visible: descAccessor(
+    function () {
+      return this._visible;
+    },
+    function (val) {
+      this._visible = val;
     }
   ),
   x: descAccessor(
@@ -99,6 +101,54 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._rotation = val;
     }
   ),
+  alpha: descAccessor(
+    function () {
+      return this._alpha;
+    },
+    function (val) {
+      this._alpha = val;
+    }
+  ),
+  cacheAsBitmap: descAccessor(
+    function () {
+      return this._cacheAsBitmap;
+    },
+    function (val) {
+      this._cacheAsBitmap = val;
+    }
+  ),
+  opaqueBackground: descAccessor(
+    function () {
+      return this._opaqueBackground;
+    },
+    function (val) {
+      this._opaqueBackground = val;
+    }
+  ),
+  scrollRect: descAccessor(
+    function () {
+      return null;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  filters: descAccessor(
+    function () {
+      return [];
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  blendMode: descAccessor(
+    function () {
+      return 'normal';
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
   width: descAccessor(function () {
     notImplemented();
   }),
@@ -111,6 +161,22 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
     },
     function (val) {
       this._transform = val;
+    }
+  ),
+  scale9Grid: descAccessor(
+    function () {
+      return null;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  accessibilityProperties: descAccessor(
+    function () {
+      return null;
+    },
+    function (val) {
+      notImplemented();
     }
   ),
 
