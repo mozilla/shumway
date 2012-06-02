@@ -10,6 +10,19 @@
       #stage {
         text-align: center;
       }
+      #footer {
+        font-family: Sans-Serif;
+        font-size: x-small;
+        text-align: center;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        color: Yellow;
+      }
+      #footer a {
+        color: Yellow;
+      }
     </style>
   </head>
   <body>
@@ -34,5 +47,9 @@
     <script>
       SWF.embed("../../examples/racing/race.swf", document.getElementById("stage"));
     </script>
+    <div id="footer">
+     <sup>*</sup>
+     The SWF file is the ActionScript game by Remus C. See also <a href="http://www.emanueleferonato.com/2007/05/15/create-a-flash-racing-game-tutorial/">Create a Flash Racing Game Tutorial</a> by Emanuele Feronato.
+    </div>
   </body>
 </html>
