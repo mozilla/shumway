@@ -133,10 +133,8 @@ Rectangle.prototype = Object.create(null, {
     var width = Math.min(x1 + this.width, x2 + rect.width) - xMax;
     var height = Math.min(y1 + this.height, y2 + rect.height) - yMax;
 
-    if (width <= 0 || height <= 0)
-      x = y = width = height = 0;
-
-    return new Rectangle(xMax, yMax, width, height);
+    return width > 0 && height > 0 ?
+           new Rectangle(xMax, yMax, width, height) : new Rectangle;
   }),
   intersects: descMethod(function (rect) {
     if (isEmpty() || rect.isEmpty())
