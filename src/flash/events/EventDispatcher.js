@@ -6,7 +6,11 @@ EventDispatcher.prototype = Object.create(null, {
   toString: descMethod(function () {
     return '[object EventDispatcher]';
   }),
-  addEventListener: descMethod(function (type, listener, useCapture, priority, useWeakReference) {
+  addEventListener: descMethod(function (type,
+                                         listener,
+                                         useCapture,
+                                         priority,
+                                         useWeakReference) {
     var listeners = this._listeners[type];
 
     if (!listeners)

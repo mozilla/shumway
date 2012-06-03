@@ -12,12 +12,24 @@ Matrix.prototype = Object.create(null, {
     return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
   }),
   concat: descMethod(function (m) {
-    this.a = this.a * m.a + this.b * m.c;
-    this.b = this.a * m.b + this.b * m.d;
-    this.c = this.c * m.a + this.d * m.c;
-    this.d = this.d * m.d + this.c * m.b;
-    this.tx = (this.tx * m.a + m.tx) + this.ty * m.c;
-    this.ty = (this.ty * m.d + m.ty) + this.tx * m.b;
+    var a1 = this.a;
+    var a2 = m.a;
+    var b1 = this.b;
+    var b2 = m.b;
+    var c1 = this.c;
+    var c2 = m.c;
+    var d1 = this.d;
+    var d2 = m.d;
+    var tx1 = this.tx;
+    var tx2 = m.tx;
+    var ty1 = this.ty;
+    var ty2 = m.ty;
+    this.a = a1 * a2 + b1 * c2;
+    this.b = a1 * b2 + b1 * d2;
+    this.c = c1 * a2 + d1 * c2;
+    this.d = d1 * d2 + c1 * b2;
+    this.tx = (tx1 * a2 + tx2) + ty1 * c2;
+    this.ty = (ty1 * d2 + ty2) + tx1 * b2;
   }),
   invert: descMethod(function () {
     var a = this.a;
@@ -67,12 +79,18 @@ Matrix.prototype = Object.create(null, {
   rotate: descMethod(function (angle) {
     var u = Math.cos(angle);
     var v = Math.sin(angle);
-    this.a = u * this.a - v * this.b;
-    this.b = v * this.a + u * this.b;
-    this.c = u * this.c - v * this.d;
-    this.d = v * this.c + u * this.d;
-    this.tx = u * this.tx - v * this.ty;
-    this.ty = v * this.tx + u * this.ty;
+    var a = this.a;
+    var b = this.b;
+    var c = this.c;
+    var d = this.d;
+    var tx = this.tx;
+    var ty = this.ty;
+    this.a = u * a - v * b;
+    this.b = v * a + u * b;
+    this.c = u * c - v * d;
+    this.d = v * c + u * d;
+    this.tx = u * tx - v * ty;
+    this.ty = v * tx + u * ty;
   }),
   translate: descMethod(function (dx, dy) {
     this.tx += dx;

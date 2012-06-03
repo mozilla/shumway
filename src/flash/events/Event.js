@@ -63,9 +63,9 @@ Event.prototype = Object.create(null, {
     var str = '[' + className;
 
     for (var i = 0, n = arguments.length; i < n; ++i) {
-      var name = arguments[i];
-      var val = this[name];
-      str += ' ' + name + '=' + (val instanceof String ? '"' + val + '"' : val);
+      var prop = arguments[i];
+      var val = this[prop];
+      str += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
     }
 
     str += ']';
@@ -76,7 +76,13 @@ Event.prototype = Object.create(null, {
     return new Event (this.type, this.bubbles, this.cancelable);
   }),
   toString: descMethod(function () {
-    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
+    return this.formatToString(
+      'Event',
+      'type',
+      'bubbles',
+      'cancelable',
+      'eventPhase'
+    );
   }),
   stopPropagation: descMethod(function () {
     notImplemented();

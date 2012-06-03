@@ -124,40 +124,51 @@ Rectangle.prototype = Object.create(null, {
     if (this.isEmpty() || rect.isEmpty())
       return new Rectangle;
 
-    var x = Math.max(this.x, rect.x);
-    var y = Math.max(this.y, rect.y);
-    var width = Math.min(this.x + this.width, rect.x + rect.width) - x;
-    var height = Math.min(this.y + this.height, rect.y + rect.height) - y;
+    var x1 = this.x;
+    var y1 = this.y;
+    var x2 = rect.x;
+    var y2 = rect.y;
+    var xMax = Math.max(x1, x2);
+    var yMax = Math.max(y1, y2);
+    var width = Math.min(x1 + this.width, x2 + rect.width) - xMax;
+    var height = Math.min(y1 + this.height, y2 + rect.height) - yMax;
 
     if (width <= 0 || height <= 0)
       x = y = width = height = 0;
 
-    return new Rectangle(x, y, width, height);
+    return new Rectangle(xMax, yMax, width, height);
   }),
   intersects: descMethod(function (rect) {
     if (isEmpty() || rect.isEmpty())
       return false;
 
-    var x = Math.max(this.x, rect.x);
-    var y = Math.max(this.y, rect.y);
-    var width = Math.min(this.x + this.width, rect.x + rect.width) - x;
-    var height = Math.min(this.y + this.height, rect.y + rect.height) - y;
+    var x1 = this.x;
+    var y1 = this.y;
+    var x2 = rect.x;
+    var y2 = rect.y;
+    var xMax = Math.max(x1, x2);
+    var yMax = Math.max(y1, y2);
+    var width = Math.min(x1 + this.width, x2 + rect.width) - xMax;
+    var height = Math.min(y1 + this.height, y2 + rect.height) - yMax;
 
     return width && height;
   }),
   union: descMethod(function (rect) {
     if (this.isEmpty())
       return rect.clone();
-
     if (rect.isEmpty())
       return this.clone();
 
-    var x = Math.min(this.x, rect.x);
-    var y = Math.min(this.y, rect.y);
-    var width = Math.max(this.x + this.width, rect.x + rect.width) - x;
-    var height = Math.max(this.y + this.height, rect.y + rect.height) - y;
+    var x1 = this.x;
+    var y1 = this.y;
+    var x2 = rect.x;
+    var y2 = rect.y;
+    var xMax = Math.min(x1, x2);
+    var yMax = Math.min(y1, y2);
+    var width = Math.max(x1 + this.width, x2 + rect.width) - xMax;
+    var height = Math.max(y1 + this.height, y2 + rect.height) - yMax;
 
-    return new Rectangle(x, y, width, height);
+    return new Rectangle(xMax, yMax, width, height);
   }),
   equals: descMethod(function (rect) {
     return rect.x  === this.x && rect.y === this.y &&
