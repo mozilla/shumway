@@ -96,7 +96,6 @@ SWF.embed = function(file, container, options) {
     options = { };
 
   var canvas = document.createElement('canvas');
-  var dictionary = new ObjDictionary();
 
   function resizeCanvas(container, canvas) {
     canvas.width = container.clientWidth;
@@ -107,7 +106,6 @@ SWF.embed = function(file, container, options) {
   stage._attachToCanvas({
     file: file,
     canvas: canvas,
-    dictionary: dictionary,
     onstart: function(root, stage) {
       if (container.clientHeight) {
         resizeCanvas(container, canvas);
@@ -118,6 +116,10 @@ SWF.embed = function(file, container, options) {
         canvas.height = stage.stageHeight;
       }
       container.appendChild(canvas);
+
+      AS2Mouse.$bind(canvas);
+      AS2Key.$bind(canvas);
+
       if (options.onstart)
         options.onstart(root);
     },

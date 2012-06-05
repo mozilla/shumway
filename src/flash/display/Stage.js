@@ -97,12 +97,6 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   fullScreenWidth: descAccessor(function () {
     notImplemented();
   }),
-  invalidate: descMethod(function() {
-    notImplemented();
-  }),
-  isFocusInaccessible: descMethod(function() {
-    notImplemented();
-  }),
   loaderInfo: descAccessor(function () {
     return this._loaderInfo; // read-only/default
   }),
@@ -208,92 +202,40 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   wmodeGPU: descAccessor(function () {
     return false; // TODO
   }),
+
+  invalidate: descMethod(function() {
+    notImplemented();
+  }),
+  isFocusInaccessible: descMethod(function() {
+    notImplemented();
+  }),
   _attachToCanvas: descMethod(function(parameters) {
-    var result;
-    var root;
-    var pframes = [];
-    var dictionary = parameters.dictionary;
     var canvas = parameters.canvas;
     var ctx = canvas.getContext('2d');
-    var frameRate, bounds;
     var plays;
-    var as2Context = null;
-
+    var loader = new Loader();
     var stage = this;
-    startWorking(parameters.file, function(obj) {
-      if (!root) {
-        bounds = obj.bounds;
+    loader._onStart = function(root, loaderInfo) {
+      stage._stageWidth = loaderInfo.width;
+      stage._stageHeight = loaderInfo.height;
+      stage._frameRate = loaderInfo.frameRate;
 
-        stage._stageWidth = (bounds.xMax - bounds.xMin) / 20;
-        stage._stageHeight = (bounds.yMax - bounds.yMin) / 20
-        stage._frameRate = obj.frameRate;
-
-        // TODO disable AVM1 if AVM2 is enabled
-        as2Context = new AS2Context(obj.version, stage);
-        AS2Context.instance = as2Context;
-        var globals = as2Context.globals;
-
-        AS2Mouse.$bind(canvas);
-        AS2Key.$bind(canvas);
-
-        var proto = create(new MovieClipPrototype({
-          frameCount: obj.frameCount,
-          pframes: pframes
-        }, dictionary));
-        root = proto.constructor();
-        root.name = '_root';
-
-        globals._root = globals._level0 = root.$as2Object;
-
-        parameters.onstart(root, stage);
-        return;
+      AS2Context.instance.stage = stage; // TODO make it better
+      parameters.onstart(root, stage);
+    };
+    loader._onProgress = function(root, obj) {
+      if (obj.bgcolor) {
+        stage._color = obj.bgcolor; // TODO convert to numeric
+        canvas.style.background = obj.bgcolor;
       }
-
-      AS2Context.instance = as2Context;
-      if (obj) {
-        if (obj.id) {
-          definePrototype(dictionary, obj);
-        } else if (obj.type === 'pframe') {
-          if (obj.bgcolor) {
-            stage._color = obj.bgcolor; // TODO convert to numeric
-            canvas.style.background = obj.bgcolor;
-          }
-
-          if (obj.abcBlocks) {
-            var blocks = obj.abcBlocks;
-            var i = 0;
-            var block;
-            while (block = blocks[i++]) {
-              var abc = new AbcFile(block);
-              executeAbc(abc, ALWAYS_INTERPRET);
-            }
-          }
-
-          if (obj.symbols) {
-            var symbols = obj.symbols;
-            var i = 0;
-            var sym;
-            while (sym = symbols[i++]) {
-              if (!sym.id) {
-                var mainTimeline = new (toplevel.getTypeByName(
-                  Multiname.fromSimpleName(sym.name),
-                  true
-                )).instance;
-              }
-            }
-          }
-
-          pframes.push(obj);
-          if (!plays) {
-            renderMovieClip(root, stage, ctx);
-            plays = true;
-          }
-        } else {
-          result = obj;
-        }
-      } else {
-        parameters.oncomplete(root, result);
+      if (!plays) {
+        renderMovieClip(root, stage, ctx);
+        plays = true;
       }
-    });
+    };
+    loader._onComplete = function(root, result) {
+      parameters.oncomplete(root, result);
+    };
+    loader.load(parameters.file);
   })
 });

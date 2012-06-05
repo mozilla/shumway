@@ -10,6 +10,13 @@ Object.defineProperties(Mouse, {
       notImplemented();
     }
   ),
+  supportsCursor: descAccessor(function () {
+    return true; // TODO
+  }),
+  supportsNativeCursor: descAccessor(function () {
+    return true; // TODO
+  }),
+
   hide: descMethod(function () {
     notImplemented();
   }),
@@ -18,12 +25,6 @@ Object.defineProperties(Mouse, {
   }),
   show: descMethod(function () {
     notImplemented();
-  }),
-  supportsCursor: descAccessor(function () {
-    return true; // TODO
-  }),
-  supportsNativeCursor: descAccessor(function () {
-    return true; // TODO
   }),
   unregisterCursor: descMethod(function (name) {
     notImplemented();

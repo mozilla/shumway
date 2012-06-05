@@ -3,20 +3,22 @@ function Keyboard() {
 
 Object.defineProperties(Keyboard, {
   capsLock: descAccessor(function () {
-    return Stage.instance.$keyboard.capsLock;
+    return false; // TODO Stage.instance.$keyboard.capsLock;
   }),
   hasVirtualKeyboard: descAccessor(function () {
     return false; // TODO Stage.instance.$keyboard.hasVirtualKeyboard;
   }),
   numLock: descAccessor(function () {
-    return Stage.instance.$keyboard.numLock;
+    return false; // TODO Stage.instance.$keyboard.numLock;
   }),
   physicalKeyboardType: descAccessor(function () {
     return 'alphanumeric'; // TODO Stage.instance.$keyboard.physicalKeyboardType;
   }),
+
   isAccessible: descMethod(function () {
     return true; // TODO
   }),
+
   A:                    descConst(65),
   ALTERNATE:            descConst(18),
   AUDIO:                descConst(0x01000017),
