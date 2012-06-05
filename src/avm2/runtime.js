@@ -4,6 +4,8 @@ var traceClasses = options.register(new Option("traceClasses", "tc", false, "tra
 var traceExecution = options.register(new Option("traceExecution", "tx", false, "trace script execution"));
 var tracePropertyAccess = options.register(new Option("tracePropertyAccess", "tpa", false, "trace property access"));
 
+var selectedCompiler = options.register(new Option("compiler", "c", "c1", "compiler"));
+
 const ALWAYS_INTERPRET = 0x1;
 const HEURISTIC_JIT = 0x2;
 
@@ -602,7 +604,7 @@ var Runtime = (function () {
   function runtime(abc, mode) {
     this.abc = abc;
     this.mode = mode;
-    this.compiler = new Compiler(abc);
+    this.compiler = selectedCompiler.value === "c1" ? new C1(abc) : new Compiler(abc);
     this.interpreter = new Interpreter(abc);
 
     /**

@@ -23,10 +23,12 @@ function objectId(obj) {
   return id;
 }
 
+/*
 function objectConstant(obj) {
   assert (obj !== undefined);
   return "$C[" + objectId(obj) + "]";
 }
+*/
 
 function getLocalVariableName(i) {
   if (i < 26) {

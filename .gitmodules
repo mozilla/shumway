@@ -4,3 +4,6 @@
 [submodule "utils/expect"]
 	path = utils/expect
 	url = https://github.com/LearnBoost/expect.js.git
+[submodule "src/avm2/compiler/lljs"]
+	path = src/avm2/compiler/lljs
+	url = https://github.com/mbebenita/LLJS.git
