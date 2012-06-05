@@ -1,7 +1,7 @@
 function DisplayObject() {
   this._root = null;
   this._stage = null;
-  this._name = '';
+  this._name = null;
   this._parent = null;
   this._visible = true;
   this._x = 0;

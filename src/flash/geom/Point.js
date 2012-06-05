@@ -30,7 +30,7 @@ Point.prototype = Object.create(null, {
     this.y += dy;
   }),
   equals: descMethod(function (pt) {
-    return pt.x === thisx && pt.y === this.y;
+    return this.x === pt.x && this.y === pt.y;
   }),
   subtract: descMethod(function (v) {
     return new Point(this.x - v.x, this.y - v.y);

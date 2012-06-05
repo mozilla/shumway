@@ -154,6 +154,7 @@ Rectangle.prototype = Object.create(null, {
   union: descMethod(function (rect) {
     if (this.isEmpty())
       return rect.clone();
+
     if (rect.isEmpty())
       return this.clone();
 
@@ -169,8 +170,8 @@ Rectangle.prototype = Object.create(null, {
     return new Rectangle(xMax, yMax, width, height);
   }),
   equals: descMethod(function (rect) {
-    return rect.x  === this.x && rect.y === this.y &&
-           rect.width === this.width && rect.height === this.height;
+    return this.x === rect.x && this.y === rect.y &&
+           this.width === rect.width && this.height === rect.height;
   }),
   toString: descMethod(function () {
     return '(x=' + this.x + ',' +
