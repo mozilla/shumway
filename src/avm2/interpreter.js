@@ -394,12 +394,14 @@ var Interpreter = (function () {
           case OP_deletepropertylate: notImplemented(); break;
           case OP_getslot:
             obj = stack.pop();
-            stack.push(obj["S" + bc.index]);
+            stack.push(obj[obj.slots[bc.index]]);
             break;
           case OP_setslot:
             value = stack.pop();
             obj = stack.pop();
-            obj["S" + bc.index] = value;
+            name = obj.slots[bc.index];
+            type = obj.types[name];
+            obj[name] = type ? type.call(type, value) : value;
             break;
           case OP_getglobalslot:  notImplemented(); break;
           case OP_setglobalslot:  notImplemented(); break;

@@ -693,12 +693,16 @@ var Compiler = (function () {
     var statements = [];
 
     function getSlot(obj, index) {
-      pushValue(obj + ".S" + index);
+      pushValue(obj + "[" + obj + ".slots[" + index + "]]");
     }
 
     function setSlot(obj, index, value) {
       flushStack();
-      statements.push(obj + ".S" + index + " = " + value + ";");
+      var t = temporary[0];
+      statements.push(t + " = " + obj + ".types[" + index + "];");
+      statements.push(obj + "[" + obj + ".slots[" + index + "]] = " +
+                      t + " ? " + t + ".call" + argumentList(t, value) +
+                      " : " + value + ";");
     }
 
     var local = this.local;
