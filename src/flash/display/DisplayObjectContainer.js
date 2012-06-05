@@ -2,14 +2,17 @@ function DisplayObjectContainer() {
 }
 
 DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
-  numChildren: descAccessor(function () {
-    notImplemented();
-  }),
-  textSnapshot: descAccessor(
+  mouseChildren: descAccessor(
     function () {
+      return true;
+    },
+    function (val) {
       notImplemented();
     }
   ),
+  numChildren: descAccessor(function () {
+    notImplemented();
+  }),
   tabChildren: descAccessor(
     function () {
       return true;
@@ -18,11 +21,8 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
       notImplemented();
     }
   ),
-  mouseChildren: descAccessor(
+  textSnapshot: descAccessor(
     function () {
-      return true;
-    },
-    function (val) {
       notImplemented();
     }
   ),
@@ -33,16 +33,10 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
   addChildAt: descMethod(function (child, index) {
     notImplemented();
   }),
-  removeChild: descMethod(function (child) {
+  areInaccessibleObjectsUnderPoint: descMethod(function (pt) {
     notImplemented();
   }),
-  removeChildAt: descMethod(function (child, index) {
-    notImplemented();
-  }),
-  getChildIndex: descMethod(function (child) {
-    notImplemented();
-  }),
-  setChildIndex: descMethod(function (child, index) {
+  contains: descMethod(function (child) {
     notImplemented();
   }),
   getChildAt: descMethod(function (index) {
@@ -51,22 +45,28 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
   getChildByName: descMethod(function (name) {
     notImplemented();
   }),
+  getChildIndex: descMethod(function (child) {
+    notImplemented();
+  }),
   getObjectsUnderPoint: descMethod(function (pt) {
     notImplemented();
   }),
-  areInaccessibleObjectsUnderPoint: descMethod(function (pt) {
+  removeChild: descMethod(function (child) {
     notImplemented();
   }),
-  contains: descMethod(function (child) {
+  removeChildAt: descMethod(function (child, index) {
     notImplemented();
   }),
-  swapChildrenAt: descMethod(function (index1, index2) {
+  setChildIndex: descMethod(function (child, index) {
+    notImplemented();
+  }),
+  removeChildren: descMethod(function (begin, end) {
     notImplemented();
   }),
   swapChildren: descMethod(function (child1, child2) {
     notImplemented();
   }),
-  removeChildren: descMethod(function (begin, end) {
+  swapChildrenAt: descMethod(function (index1, index2) {
     notImplemented();
   })
 });

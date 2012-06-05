@@ -5,6 +5,37 @@ function Transform(target) {
 }
 
 Transform.prototype = Object.create(null, {
+  colorTransform: descAccessor(
+    function () {
+      return new ColorTransform(
+        cxform.redMultiplier,
+        cxform.greenMultiplier,
+        cxform.blueMultiplier,
+        cxform.alphaMultiplier,
+        cxform.redOffset,
+        cxform.greenOffset,
+        cxform.blueOffset,
+        cxform.alphaOffset
+      );
+    },
+    function (val) {
+      this._colorTransform = val;
+    }
+  ),
+  concatenatedColorTransform: descAccessor(function () {
+    var cxform = this.colorTransform;
+
+    cxform.concat(this._target.parent.transform.concatenatedColorTransform);
+
+    return cxform;
+  })
+  concatenatedMatrix: descAccessor(function () {
+    var m = this.matrix;
+
+    m.concat(this._target.parent.transform.concatenatedMatrix);
+
+    return m;
+  }),
   matrix: descAccessor(
     function () {
       var target = this._target;
@@ -30,36 +61,5 @@ Transform.prototype = Object.create(null, {
       target.scaleY = d > 0 ? sy : -sy;
       target.rotation = Math.atan(a/b) * 180 / Math.PI;
     }
-  ),
-  colorTransform: descAccessor(
-    function () {
-      return new ColorTransform(
-        cxform.redMultiplier,
-        cxform.greenMultiplier,
-        cxform.blueMultiplier,
-        cxform.alphaMultiplier,
-        cxform.redOffset,
-        cxform.greenOffset,
-        cxform.blueOffset,
-        cxform.alphaOffset
-      );
-    },
-    function (val) {
-      this._colorTransform = val;
-    }
-  ),
-  concatenatedMatrix: descAccessor(function () {
-    var m = this.matrix;
-
-    m.concat(this._target.parent.transform.concatenatedMatrix);
-
-    return m;
-  }),
-  concatenatedColorTransform: descAccessor(function () {
-    var cxform = this.colorTransform;
-
-    cxform.concat(this._target.parent.transform.concatenatedColorTransform);
-
-    return cxform;
-  })
+  )
 });
