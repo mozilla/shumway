@@ -1,5 +1,4 @@
 function Stage() {
-  this._loaderInfo = null; // TODO
   this._transform = [];
   this._color = 0xFFFFFFFF;
 }
@@ -216,6 +215,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
     var loader = new Loader();
     var stage = this;
     loader._onStart = function(root, loaderInfo) {
+      stage._loaderInfo = loaderInfo;
       stage._stageWidth = loaderInfo.width;
       stage._stageHeight = loaderInfo.height;
       stage._frameRate = loaderInfo.frameRate;
