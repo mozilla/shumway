@@ -13,12 +13,15 @@ var MovieClipPrototype = function(obj, dictionary) {
   var totalFrames = obj.frameCount || 1;
   var pframes = obj.pframes || [];
   var currentPframe = 0;
-  var timeline = [];
+  var ptimeline = [];
   var frameLabels = {};
   var framesLoaded = 0;
   var frameScripts = [];
-  var children = {};
   var as2Context = AS2Context.instance;
+
+  var ptimelinePromises = [];
+  for (var i = 0; i < totalFrames; i++)
+    ptimelinePromises.push(new Promise);
 
   function createAS2Script(data) {
     return (function() {
@@ -41,16 +44,16 @@ var MovieClipPrototype = function(obj, dictionary) {
     }
   }
 
-  function prefetchFrame(parent) {
+  function prefetchFrame() {
     var prefetchPortion = 20, prefetchInterval = 100;
     setTimeout(function() {
-      ensureFrame(Math.min(timeline.length + prefetchPortion, totalFrames), parent);
+      ensureFrame(Math.min(ptimeline.length + prefetchPortion, totalFrames));
     }, prefetchInterval);
   }
 
   var lastFramePromise = Promise.resolved, lastFrame = null;
-  function ensureFrame(frameNum, parent) { // HACK parent shall not be here
-    var n = timeline.length;
+  function ensureFrame(frameNum) {
+    var n = ptimeline.length;
     while (n < frameNum) {
       var frame = create(lastFrame);
       lastFrame = frame;
@@ -62,11 +65,16 @@ var MovieClipPrototype = function(obj, dictionary) {
         frameLabels[pframe.name] = currentFrame;
       var i = pframe.repeat || 1;
       while (i--) {
-        timeline.push(frame);
+        ptimeline.push(frame);
         ++n;
       }
 
-      function initCharacter(character, entry, initObj) {
+      function initCharacter(proto, entry, initObj, parent) {
+        var character;
+        if (proto.constructor !== Object)
+          character = proto.constructor(); // HACK ... so is instance creation
+        else
+          character = create(proto);
         character.matrix = entry.matrix || initObj.matrix || identityMatrix;
         character.cxform = entry.cxform || initObj.cxform;
         if (character.draw)
@@ -81,6 +89,17 @@ var MovieClipPrototype = function(obj, dictionary) {
         character.root = parent.root || parent;
         if (character.variableName)
           parent.$bindVariable(character);
+        return character;
+      }
+      function buildFromPrototype(proto, entry, obj, frame, depth, promise) {
+        var objectCreator = (function objectCreator(parent, map) {
+          var character = initCharacter(map.get(proto) || proto, entry, map.get(obj) || obj, parent);
+          map.set(objectCreator, character);
+          return character;
+        });
+        frame[depth] = objectCreator;
+        if (promise)
+          promise.resolve(objectCreator);
       }
 
       var framePromises = [lastFramePromise];
@@ -100,20 +119,12 @@ var MovieClipPrototype = function(obj, dictionary) {
               promise = new Promise();
               frame[depth] = promise;
               protoPromise.then((function(frame, depth, entry, initObj, promise, proto) {
-                if (proto.constructor !== Object)
-                  var character = proto.constructor(); // HACK ... so is instance creation
-                else
-                  var character = create(proto);
                 if (initObj instanceof Promise) {
                   initObj.then(function(obj) {
-                    initCharacter(character, entry, obj);
-                    frame[depth] = character;
-                    promise.resolve(character);
+                    buildFromPrototype(proto, entry, obj, frame, depth, promise);
                   });
                 } else {
-                  initCharacter(character, entry, initObj);
-                  frame[depth] = character;
-                  promise.resolve(character);
+                  buildFromPrototype(proto, entry, initObj, frame, depth, promise);
                 }
               }).bind(null, frame, depth, entry, initObj, promise));
             } else {
@@ -121,15 +132,10 @@ var MovieClipPrototype = function(obj, dictionary) {
                 promise = new Promise();
                 frame[depth] = promise;
                 initObj.then((function(frame, depth, promise, obj) {
-                  var character = create(obj);
-                  initCharacter(character, entry, obj);
-                  frame[depth] = character;
-                  promise.resolve(character);
+                  buildFromPrototype(obj, entry, obj, frame, depth, promise);
                 }).bind(null, frame, depth, promise));
               } else {
-                var character = create(initObj);
-                initCharacter(character, entry, initObj);
-                frame[depth] = character;
+                buildFromPrototype(initObj, entry, initObj, frame, depth, null);
               }
             }
             if (promise)
@@ -143,26 +149,35 @@ var MovieClipPrototype = function(obj, dictionary) {
       var framePromise = Promise.all(framePromises);
       lastFramePromise = framePromise;
       framePromise.then((function(pframe, frame, currentFrame, lastInserted) {
-        if (pframe.actionsData && pframe.actionsData.length > 0) {
-          for (var i = 0; i < pframe.actionsData.length; i++)
-            addFrameScript(currentFrame, createAS2Script(pframe.actionsData[i]));
-        }
-        if (pframe.initActionsData) {
-          for (var spriteId in pframe.initActionsData) {
-            createAS2Script(pframe.initActionsData[spriteId]).call(parent);
+        function initialize(parent) {
+          if (pframe.actionsData && pframe.actionsData.length > 0) {
+            for (var i = 0; i < pframe.actionsData.length; i++)
+              addFrameScript(currentFrame, createAS2Script(pframe.actionsData[i]));
           }
+
+          if (pframe.initActionsData) {
+            for (var spriteId in pframe.initActionsData) {
+              createAS2Script(pframe.initActionsData[spriteId]).call(parent);
+            }
+          }
+          if (pframe.assets) {
+            parent.$addChild('soundmc', new SoundMock(pframe.assets));
+          }
+          if (currentFrame == 1)
+            parent.$dispatchEvent('onLoad');
         }
-        if (pframe.assets) {
-          parent.$addChild('soundmc', new SoundMock(pframe.assets));
+
+        ptimelinePromises[framesLoaded].resolve(frame, ptimeline[framesLoaded - 1], initialize);
+        framesLoaded++;
+        while(framesLoaded < lastInserted) {
+          ptimelinePromises[framesLoaded].resolve(frame, frame, function() {});
+          framesLoaded++;
         }
-        framesLoaded = lastInserted;
-        if (currentFrame == 1)
-          parent.$dispatchEvent('onLoad');
       }).bind(null, pframe, frame, currentFrame, n));
     }
     if (n < totalFrames) {
       lastFramePromise.then(function() {
-        prefetchFrame(parent);
+        prefetchFrame();
       });
     }
   }
@@ -175,6 +190,8 @@ var MovieClipPrototype = function(obj, dictionary) {
     var paused = false;
     var rotation = 0;
     var width, height;
+    var timeline = [], map = new WeakMap();
+    var children = {};
 
     function dispatchEvent(eventName, args) {
       var as2Object = instance.$as2Object;
@@ -604,6 +621,25 @@ var MovieClipPrototype = function(obj, dictionary) {
     };
     AS2Mouse.addListener(events);
     AS2Key.addListener(events);
+
+    for (var i = 0; i < totalFrames; i++) {
+      ptimelinePromises[i].then((function(i, frame, previousFrame, initialize) {
+        var timelineFrame = {}, previousTimelineFrame = timeline[i - 1];
+        for (var depth in frame) {
+          if (previousFrame && previousFrame[depth] === frame[depth]) {
+            timelineFrame[depth] = previousTimelineFrame[depth];
+            continue;
+          }
+          var creator = frame[depth];
+          if (typeof creator === 'function')
+            timelineFrame[depth] = creator(this, map);
+          else
+            timelineFrame[depth] = creator;
+        }
+        initialize(this);
+        timeline[i] = timelineFrame;
+      }).bind(instance, i));
+    }
 
     return instance;
   }
