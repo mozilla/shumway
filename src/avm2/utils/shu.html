@@ -27,7 +27,11 @@
     <script type="text/javascript" src="../parser.js"></script>
     <script type="text/javascript" src="../analyze.js"></script>
     <script type="text/javascript" src="../viz.js"></script>
-    <script type="text/javascript" src="../compiler.js"></script>
+
+    <script type="text/javascript" src="../compiler/lljs/src/estransform.js"></script>
+    <script type="text/javascript" src="../compiler/lljs/src/escodegen.js"></script>
+    <script type="text/javascript" src="../compiler/c1.js"></script>
+
     <script type="text/javascript" src="../native.js"></script>
     <script type="text/javascript" src="../runtime.js"></script>
     <script type="text/javascript" src="../disassembler.js"></script>
@@ -66,19 +70,26 @@
     </script>
 
     <script type="text/javascript">
+      traceLevel.value = 2;
       var abcs = [];
-      abcs.push("../generated/builtin.abc");
-      abcs.push("../generated/playerGlobal.abc");
-      // abcs.push("../tests/testInterpreter.abc");
+      abcs.push(["../generated/builtin.abc", ALWAYS_INTERPRET]);
+      abcs.push(["../generated/playerGlobal.abc", ALWAYS_INTERPRET]);
       // abcs.push("../tests/tamarin/ecma3/Array/general1.abc");
-      abcs.push("../tests/sunspider/s3d-cube.abc");
-      var mode;
-      mode = ALWAYS_INTERPRET;
+      // abcs.push("../tests/sunspider/s3d-cube.abc");
+//      abcs.push(["../tests/sunspider/access-fannkuch.abc"]);
+      // abcs.push(["../tests/testInterpreter.abc"]);
+      // abcs.push(["../tests/sunspider/crypto-md5.abc"]);
+      // abcs.push(["../tests/tamarin/ecma3/Array/e15_4_3_2.abc"]);
+
+      abcs.push(["../tests/sunspider/string-unpack-code.abc"]);
+
+
+
       function executeNext() {
         if (abcs.length) {
-          var path = abcs.shift();
-          new FileReader(path).readAll(null, function (buffer) {
-            executeAbc(new AbcFile(new Uint8Array(buffer), path, true), mode);
+          var run = abcs.shift();
+          new FileReader(run[0]).readAll(null, function (buffer) {
+            executeAbc(new AbcFile(new Uint8Array(buffer), run[0], true), run[1]);
             executeNext();
           });
         }

@@ -15,7 +15,7 @@ load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");
 load("../analyze.js");
-load("../compiler.js");
+// load("../compiler.js");
 
 load("../compiler/lljs/src/estransform.js");
 load("../compiler/lljs/src/escodegen.js");

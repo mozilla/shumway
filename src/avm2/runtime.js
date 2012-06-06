@@ -4,8 +4,6 @@ var traceClasses = options.register(new Option("traceClasses", "tc", false, "tra
 var traceExecution = options.register(new Option("traceExecution", "tx", false, "trace script execution"));
 var tracePropertyAccess = options.register(new Option("tracePropertyAccess", "tpa", false, "trace property access"));
 
-var selectedCompiler = options.register(new Option("compiler", "c", "c1", "compiler"));
-
 const ALWAYS_INTERPRET = 0x1;
 const HEURISTIC_JIT = 0x2;
 
@@ -604,7 +602,7 @@ var Runtime = (function () {
   function runtime(abc, mode) {
     this.abc = abc;
     this.mode = mode;
-    this.compiler = selectedCompiler.value === "c1" ? new C1(abc) : new Compiler(abc);
+    this.compiler = new Compiler(abc);
     this.interpreter = new Interpreter(abc);
 
     /**
@@ -682,31 +680,13 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var result = this.compiler.compileMethod(mi, hasDefaults, scope);
+    var body = this.compiler.compileMethod(mi, hasDefaults, scope);
 
     var parameters = mi.parameters.map(function (p) {
       return p.name;
     });
     parameters.unshift(SAVED_SCOPE_NAME);
 
-    function flatten(array, indent) {
-      var str = "";
-      array.forEach(function (x) {
-        if (x instanceof Indent) {
-          str += flatten(x.statements, indent + "  ");
-        } else if (x instanceof Array) {
-          str += flatten(x, indent);
-        } else {
-          str += indent + x + "\n";
-        }
-      });
-      return str;
-    }
-
-    var body = flatten(result.statements, "");
-    if (traceLevel.value > 4) {
-      print('\033[93m' + body + '\033[0m');
-    }
     mi.compiledMethod = new Function(parameters, body);
 
     /* Hook to set breakpoints in compiled code. */
@@ -715,11 +695,7 @@ var Runtime = (function () {
     }
 
     if (traceLevel.value > 0) {
-      /* Unfortunately inner functions are not pretty-printed by the JS engine, so here we recompile the
-       * inner function by itself just for pretty printing purposes.
-       */
-      eval ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
-      print('\033[92m' + eval("fnSource" + functionCount) + '\033[0m');
+      print ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
     }
 
     functionCount++;

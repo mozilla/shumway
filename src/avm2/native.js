@@ -285,7 +285,7 @@ const natives = (function () {
     };
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        prop = "public$" + name;
+        var prop = "public$" + name;
         var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
         descriptor.enumerable = false;
         Object.defineProperty(obj, prop, descriptor);
