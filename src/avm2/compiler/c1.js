@@ -484,12 +484,12 @@ var Compiler = (function () {
       }
 
       function getSlot(obj, index) {
-        push(property(obj, "S" + index));
+        push(call(id("getSlot"), [obj, constant(index)]));
       }
 
       function setSlot(obj, index, value) {
         flushStack();
-        emit(assignment(property(obj, "S" + index), value));
+        push(call(id("setSlot"), [obj, constant(index), value]));
       }
 
       function getTemporary(index) {

@@ -164,6 +164,16 @@ function deleteProperty(obj, multiname) {
   return false;
 }
 
+function getSlot(obj, index) {
+  return obj[obj.slots[index]];
+}
+
+function setSlot(obj, index, value) {
+  var name = obj.slots[index];
+  var type = obj.types[name];
+  obj[name] = type ? type.call(type, value) : value;
+}
+
 function applyType(factory, types) {
   var factoryClassName = factory.classInfo.instanceInfo.name.name;
   if (factoryClassName === "Vector") {
