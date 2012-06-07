@@ -230,6 +230,17 @@ class Test(Command):
     args = parser.parse_args(args)
     print "Testing %s" % (args.src)
 
+    print "---------------------------------------------------------------------------------------------------------"
+    print "Each Tamarin acceptance test case includes a bunch of smaller tests, each of which print out PASSED or"
+    print "FAILED. We compare the output under several configurations and print the results as follows:"
+    print "PASSED - output matches AVM Shell"
+    print "ALMOST - the \"PASSED\" string appears in the output but the \"FAILED\" string does not."
+    print "KINDOF - the \"PASSED\" and \"FAILED\" string appear in the output."
+    print "FAILED - the \"PASSED\" string doesn't appear anywhere."
+    print "---------------------------------------------------------------------------------------------------------"
+    print "Interpreter Time, Time Ratio, Compiler, Time, Time Ratio, Interpreter/Compiler, Time Ratio, Number, File"
+    print "---------------------------------------------------------------------------------------------------------"
+
     tests = Queue.Queue();
 
     if os.path.isdir(args.src):
@@ -298,6 +309,10 @@ class Test(Command):
           out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
 
         if args.compile:
+          if results[1][0] == results[2][0]:
+            out.append(PASS + "MATCH"  + ENDC)
+          else:
+            out.append(FAIL + "DIFFER"  + ENDC)
           ratio = round(results[1][1] / results[2][1], 2)
           out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
 
