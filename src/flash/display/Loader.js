@@ -41,10 +41,8 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
         AS2Context.instance = as2Context;
         var globals = as2Context.globals;
 
-        var proto = create(new MovieClipPrototype({
-          frameCount: obj.frameCount,
-          pframes: pframes
-        }, dictionary));
+        var timelineLoader = new TimelineLoader(obj.frameCount, pframes, dictionary);
+        var proto = new MovieClipPrototype({}, timelineLoader);
         root = proto.constructor();
         root.name = '_root';
 

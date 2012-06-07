@@ -102,16 +102,16 @@ Promise.resolved = {
     callback();
   }
 };
-Promise.all = function(promises) {
+Promise.all = function(promises, collectResults) {
   if (promises.length == 0)
     return Promise.resolved;
   var promisesToResolve = promises.length;
-  var results = [];
+  var results = collectResults ? [] : null;
   var promise = new Promise();
   for (var i = 0; i < promises.length; i++) {
     promises[i].then((function(i) {
       return (function() {
-        if (arguments.length > 1)
+        if (collectResults && arguments.length > 1)
           results[i] = slice.call(arguments, 0);
         promisesToResolve--;
         if (promisesToResolve == 0)
