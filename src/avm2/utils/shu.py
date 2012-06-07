@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys,os.path,os,getopt,time,subprocess,re,argparse,threading
+from pprint import pprint
 
 from subprocess import Popen, PIPE, STDOUT
 import datetime, time, signal
@@ -222,11 +223,12 @@ class Test(Command):
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
-    parser.add_argument('-i', '--interpret', action='store_true', help="always interpret")
+    parser.add_argument('-i', '--interpret', action='store_true', default=True, help="always interpret")
+    parser.add_argument('-c', '--compile', action='store_true', default=False, help="always compile")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
 
     args = parser.parse_args(args)
-    print "Testing %s (%s)" % (args.src, "interpreted" if args.interpret else "compiled")
+    print "Testing %s" % (args.src)
 
     tests = Queue.Queue();
 
@@ -249,13 +251,15 @@ class Test(Command):
 
     total = tests.qsize()
     counts = {
-      'passed': 0,
-      'almost': 0,
-      'kindof': 0,
-      'failed': 0,
+      'passed-i': 0,
+      'almost-i': 0,
+      'kindof-i': 0,
+      'failed-i': 0,
+      'passed-c': 0,
+      'almost-c': 0,
+      'kindof-c': 0,
+      'failed-c': 0,
       'count': 0,
-      'shuElapsed': 0,
-      'avmElapsed': 0
     }
 
     def runTest(tests, counts):
@@ -263,41 +267,42 @@ class Test(Command):
         test = tests.get()
         out = []
         counts['count'] += 1
-        shuCommand = ["js", "-m", "-n", "avm.js", "-x"]
+
+        results = []
+        results.append(execute([self.avm, test], int(args.timeout)))
+        if args.compile:
+          results.append(execute(["js", "-m", "-n", "avm.js", "-x", "-i", test], int(args.timeout)))
         if args.interpret:
-          shuCommand.append("-i")
-        else:
-          shuCommand.append("-cse")
+          results.append(execute(["js", "-m", "-n", "avm.js", "-x", test], int(args.timeout)))
 
-        shuCommand.append(test)
-        shuResult = execute(shuCommand, int(args.timeout))
-        avmResult = execute([self.avm, test], int(args.timeout))
-
-        if not shuResult or not avmResult:
-          continue
-        if shuResult[0] == avmResult[0]:
-          counts['passed'] += 1
-          counts['shuElapsed'] += shuResult[1]
-          counts['avmElapsed'] += avmResult[1]
-          out.append(PASS + "PASSED" + ENDC)
-        else:
-          if "PASSED" in shuResult[0] and not "FAILED" in shuResult[0]:
-            counts['almost'] += 1
-            out.append(INFO + "ALMOST"  + ENDC)
-          elif "PASSED" in shuResult[0] and "FAILED" in shuResult[0]:
-            counts['kindof'] += 1
-            out.append(WARN + "KINDOF"  + ENDC)
+        for i in range (1, len(results)):
+          base = results[0]
+          result = results[i]
+          suffix = "c" if i == 2 else "i"
+          if base[0] == result[0]:
+            out.append(PASS + "PASSED" + ENDC)
+            counts["passed-" + suffix] += 1;
           else:
-            counts['failed'] += 1
-            out.append(FAIL + "FAILED"  + ENDC)
+            if "PASSED" in result[0] and not "FAILED" in result[0]:
+              out.append(INFO + "ALMOST"  + ENDC)
+              counts["almost-" + suffix] += 1;
+            elif "PASSED" in result[0] and "FAILED" in result[0]:
+              out.append(WARN + "KINDOF"  + ENDC)
+              counts["kindof-" + suffix] += 1;
+            else:
+              out.append(FAIL + "FAILED"  + ENDC)
+              counts["failed-" + suffix] += 1;
 
+          out.append(str(round(result[1], 2)))
+          ratio = round(base[1] / result[1], 2)
+          out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
+
+        if args.compile:
+          ratio = round(results[1][1] / results[2][1], 2)
+          out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
+
+        out.append(str(round(result[1], 2)))
         out.append(str(total - tests.qsize()))
-
-        # out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
-        out.append(str(round(shuResult[1] * 1000, 2)))
-        out.append(str(round(avmResult[1] * 1000, 2)))
-        ratio = round(avmResult[1] / shuResult[1], 2)
-        out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + ENDC)
         out.append(test);
         sys.stdout.write("\t".join(out) + "\n")
         sys.stdout.flush()
@@ -315,11 +320,13 @@ class Test(Command):
     for job in jobs:
       job.join()
 
-    print "Results: failed: " + FAIL + str(counts['failed']) + ENDC + ", passed: " + PASS + str(counts['passed']) + ENDC + " of " + str(total),
-    print "shuElapsed: " + str(round(counts['shuElapsed'] * 1000, 2)) + " ms",
-    print "avmElapsed: " + str(round(counts['avmElapsed'] * 1000, 2)) + " ms",
-    if counts['shuElapsed'] > 0:
-      print str(round(counts['avmElapsed'] / counts['shuElapsed'], 2)) + "x faster" + ENDC
+    pprint (counts)
+
+#    print "Results: failed: " + FAIL + str(counts['failed']) + ENDC + ", passed: " + PASS + str(counts['passed']) + ENDC + " of " + str(total),
+#    print "shuElapsed: " + str(round(counts['shuElapsed'] * 1000, 2)) + " ms",
+#    print "avmElapsed: " + str(round(counts['avmElapsed'] * 1000, 2)) + " ms",
+#    if counts['shuElapsed'] > 0:
+#      print str(round(counts['avmElapsed'] / counts['shuElapsed'], 2)) + "x faster" + ENDC
 
 commands = {}
 for command in [Asc(), Avm(), Dis(), Compile(), Test(), Ascreg()]:
