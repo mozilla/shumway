@@ -49,7 +49,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
         ++n;
       }
 
-      function initCharacter(proto, entry, initObj, parent) {
+      function initCharacter(proto, entry, initObj, parent, as2Context) {
         var character;
         var matrix = entry.matrix || initObj.matrix || identityMatrix;
         var cxform = entry.cxform || initObj.cxform;
@@ -60,7 +60,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
         else {
           // creates new instance of the character
           if (proto.constructor !== Object)
-            character = proto.constructor();
+            character = proto.constructor(as2Context);
           else
             character = create(proto);
 
@@ -89,10 +89,11 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
 
         return item;
       }
+
       function buildFromPrototype(proto, entry, obj, frame, depth, promise) {
-        var objectCreator = (function objectCreator(parent, objectCache) {
+        var objectCreator = (function objectCreator(parent, objectCache, asContext) {
           var character = initCharacter(objectCache.get(proto) || proto, entry,
-                                        objectCache.get(obj) || obj, parent);
+                                        objectCache.get(obj) || obj, parent, asContext);
           objectCache.set(objectCreator, character);
           return character;
         });
@@ -182,7 +183,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
     }
   }
 
-  function prepareTimeline(instance) {
+  function prepareTimeline(instance, as2Context) {
     // instance shall implement the following methods:
     // $setDisplayList, $createAS2Script, $addChild, $dispatchEvent, $addFrameScript
     var previousDisplayList = null;
@@ -202,7 +203,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
           }
           var creator = frame[depth];
           if (typeof creator === 'function')
-            displayList[depth] = creator(this, objectCache);
+            displayList[depth] = creator(this, objectCache, as2Context);
           else
             displayList[depth] = creator;
         }
@@ -222,9 +223,8 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
 }
 
 var MovieClipPrototype = function(obj, timelineLoader) {
-  var as2Context = AS2Context.instance;
 
-  this.constructor = function MovieClip() {
+  this.constructor = function MovieClip(as2Context) {
     if (this instanceof MovieClip)
       return;
 
@@ -689,7 +689,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     AS2Mouse.addListener(events);
     AS2Key.addListener(events);
 
-    timelineLoader.prepareTimeline(instance);
+    timelineLoader.prepareTimeline(instance, as2Context);
 
     return instance;
   }

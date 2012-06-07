@@ -38,22 +38,20 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
 
         // TODO disable AVM1 if AVM2 is enabled
         as2Context = new AS2Context(obj.version);
-        AS2Context.instance = as2Context;
         var globals = as2Context.globals;
 
         var timelineLoader = new TimelineLoader(obj.frameCount, pframes, dictionary);
         var proto = new MovieClipPrototype({}, timelineLoader);
-        root = proto.constructor();
+        root = proto.constructor(as2Context);
         root.name = '_root';
 
         globals._root = globals._level0 = root.$as2Object;
 
         loader._content = root;
-        loader._onStart(root, loaderInfo);
+        loader._onStart(root, loaderInfo, as2Context);
         return;
       }
 
-      AS2Context.instance = as2Context;
       if (obj) {
         if (obj.id) {
           definePrototype(dictionary, obj);

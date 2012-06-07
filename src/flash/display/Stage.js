@@ -214,13 +214,13 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
     var plays;
     var loader = new Loader();
     var stage = this;
-    loader._onStart = function(root, loaderInfo) {
+    loader._onStart = function(root, loaderInfo, as2Context) {
       stage._loaderInfo = loaderInfo;
       stage._stageWidth = loaderInfo.width;
       stage._stageHeight = loaderInfo.height;
       stage._frameRate = loaderInfo.frameRate;
 
-      AS2Context.instance.stage = stage; // TODO make it better
+      as2Context.stage = stage; // TODO make it better
       parameters.onstart(root, stage);
     };
     loader._onProgress = function(root, obj) {
