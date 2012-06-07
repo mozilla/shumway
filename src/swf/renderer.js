@@ -6,8 +6,14 @@ function render(displayList, renderingContext) {
   var ctx = renderingContext.beginDrawing();
   // displayList is array, so items are sorted by depth
   for (var depth in displayList) {
-    var character = displayList[depth];
-    if (character) {
+    var item = displayList[depth];
+    if (item) {
+      var character = item.character;
+      if (item.matrix && !character.$fixMatrix)
+        character.matrix = create(item.matrix);
+      if (item.cxform && !character.$fixCxform)
+        character.cxform = create(item.cxform);
+
       ctx.save();
       var matrix = character.matrix;
       ctx.transform(
@@ -61,6 +67,10 @@ function renderShadowCanvas(character) {
       return !!result;
     };
   }
+
+  if (sizeX <= 0 || sizeY <= 0)
+    return;
+
   canvas.width = sizeX;
   canvas.height = sizeY;
 

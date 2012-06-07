@@ -9,6 +9,10 @@ var identityMatrix = {
   translateY: 0
 };
 
+function DisplayListItem(character) {
+  this.character = character;
+}
+
 function TimelineLoader(totalFrames, pframes, dictionary) {
   var currentPframe = 0;
   var ptimeline = [];
@@ -47,25 +51,43 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
 
       function initCharacter(proto, entry, initObj, parent) {
         var character;
-        if (proto.constructor !== Object)
-          character = proto.constructor();
-        else
-          character = create(proto);
-        character.matrix = entry.matrix || initObj.matrix || identityMatrix;
-        character.cxform = entry.cxform || initObj.cxform;
-        if (character.draw)
-          character.ratio = entry.ratio || 0;
-        if (entry.events)
-          character.events = entry.events;
-        if (entry.name) {
-          character.name = entry.name;
-          parent.$addChild(entry.name, character);
+        var matrix = entry.matrix || initObj.matrix || identityMatrix;
+        var cxform = entry.cxform || initObj.cxform;
+        var ratio = entry.ratio || 0;
+
+        if (proto instanceof DisplayListItem)
+          character = proto.character; // reusing created one
+        else {
+          // creates new instance of the character
+          if (proto.constructor !== Object)
+            character = proto.constructor();
+          else
+            character = create(proto);
+
+          character.matrix = matrix;
+          character.cxform = cxform;
+          if (character.draw)
+            character.ratio = ratio;
+
+          if (entry.events)
+            character.events = entry.events;
+          if (entry.name) {
+            character.name = entry.name;
+            parent.$addChild(entry.name, character);
+          }
+          character.parent = parent;
+          character.root = parent.root || parent;
+          if (character.variableName)
+            parent.$bindVariable(character);
         }
-        character.parent = parent;
-        character.root = parent.root || parent;
-        if (character.variableName)
-          parent.$bindVariable(character);
-        return character;
+
+        var item = new DisplayListItem(character);
+        item.matrix = matrix;
+        item.cxform = cxform;
+        if (character.draw)
+          item.ratio = ratio;
+
+        return item;
       }
       function buildFromPrototype(proto, entry, obj, frame, depth, promise) {
         var objectCreator = (function objectCreator(parent, objectCache) {
@@ -461,8 +483,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
           var frame = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
           for (var i in frame) {
-            if (!+i) continue;
-            var character = frame[i];
+            var character = frame[i].character;
             var b = character.bounds || character.getBounds(this);
             xMin = Math.min(xMin, b.xMin);
             yMin = Math.min(yMin, b.yMin);
@@ -578,7 +599,10 @@ var MovieClipPrototype = function(obj, timelineLoader) {
           return this.matrix.translateX / 20;
         },
         set: function set$x(value) {
+          if (!this.matrix)
+            debugger;
           this.matrix.translateX = ~~(value * 20);
+          this.$fixMatrix = true;
         },
         enumerable: true
       },
@@ -588,6 +612,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
         },
         set: function set$y(value) {
           this.matrix.translateY = ~~(value * 20);
+          this.$fixMatrix = true;
         },
         enumerable: true
       },
@@ -599,7 +624,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
           return bounds.xMax / 20;
         },
         set: function set$width(value) {
-          width = value;
+          width = value; // TODO adjust the scaleX
         },
         enumerable: true
       },
@@ -611,7 +636,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
           return bounds.yMax / 20;
         },
         set: function set$height(value) {
-          height = value;
+          height = value; // TODO adjust the scaleY
         },
         enumerable: true
       },
