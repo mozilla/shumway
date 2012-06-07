@@ -4,8 +4,8 @@ function defineLabel(tag, dictionary) {
   var records = tag.records;
   var matrix = tag.matrix;
   var cmds = [
-    'save()', 
-    'transform(' +
+    'c.save()',
+    'c.transform(' +
       [
         matrix.scaleX,
         matrix.skew0,
@@ -28,11 +28,11 @@ function defineLabel(tag, dictionary) {
       var font = dictionary[record.fontId];
       assert(font, 'undefined font', 'label');
       var codes = font.codes;
-      cmds.push('font="' + record.fontHeight + 'px \'' + font.name + '\'"');
+      cmds.push('c.font="' + record.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(font.id);
     }
     if (record.hasColor)
-      cmds.push('fillStyle="' + toStringRgba(record.color) + '"');
+      cmds.push('c.fillStyle="' + toStringRgba(record.color) + '"');
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)
@@ -45,11 +45,11 @@ function defineLabel(tag, dictionary) {
       assert(code, 'undefined glyph', 'label');
       var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
         '\\u' + (code + 0x10000).toString(16).substring(1);
-      cmds.push('fillText("' + text + '",' + x + ',' + y + ')');
+      cmds.push('c.fillText("' + text + '",' + x + ',' + y + ')');
       x += entry.advance;
     }
   }
-  cmds.push('restore()');
+  cmds.push('c.restore()');
   var shape = {
     type: 'shape',
     id: tag.id,

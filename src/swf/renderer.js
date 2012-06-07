@@ -5,6 +5,7 @@ var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequ
 function render(displayList, renderingContext) {
   var ctx = renderingContext.beginDrawing();
   var depths = [];
+  displayListByDepth = [];
   var i = 0;
   for (depths[i++] in displayList);
   depths.sort(function(a, b) {
@@ -63,8 +64,9 @@ function renderShadowCanvas(character) {
       y = 0 | (y - offsetY);
       if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
         return false;
-      var result = this.ctx.getImageData(x, y, 1, 1).data;
-      return !!result[3];
+      var data = cache.imageData.data;
+      var result = data[(x + sizeX * y) * 4 + 3];
+      return !!result;
     };
   }
   canvas.width = sizeX;
@@ -76,9 +78,6 @@ function renderShadowCanvas(character) {
   ctx.clearRect(0, 0, sizeX, sizeY);
   ctx.translate(-offsetX, -offsetY);
   ctx.scale(0.05, 0.05);
-
-  cache.ctx = ctx;
-  cache.ratio = character.ratio;
 
   if (character.draw)
     character.draw(ctx, character.ratio);
@@ -92,6 +91,9 @@ function renderShadowCanvas(character) {
   }
 
   ctx.restore();
+
+  cache.ratio = character.ratio;
+  cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
 }
 
 function renderMovieClip(mc, stage, ctx) {

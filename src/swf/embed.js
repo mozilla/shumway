@@ -54,11 +54,7 @@ function definePrototype(dictionary, obj) {
   case 'shape':
   case 'text':
     var proto = create(obj);
-    var drawFn = new Function('d,c,r',
-      'with(c){\n' +
-        obj.data + '\n' +
-      '}'
-    );
+    var drawFn = new Function('d,c,r', obj.data);
     proto.draw = (function(c, r) {
       return drawFn.call(this, dictionary, c, r);
     });

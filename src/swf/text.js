@@ -7,12 +7,12 @@ function defineText(tag, dictionary) {
     if (tag.hasFont) {
       var font = dictionary[tag.fontId];
       assert(font, 'undefined font', 'label');
-      cmds.push('font="' + tag.fontHeight + 'px \'' + font.name + '\'"');
+      cmds.push('c.font="' + tag.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(font.id);
     }
     if (tag.hasColor)
-      cmds.push('fillStyle="' + toStringRgba(tag.color) + '"');
-    cmds.push('fillText(this.value,0,' + (tag.fontHeight - tag.leading - tag.bounds.yMin) + ')');
+      cmds.push('c.fillStyle="' + toStringRgba(tag.color) + '"');
+    cmds.push('c.fillText(this.value,0,' + (tag.fontHeight - tag.leading - tag.bounds.yMin) + ')');
 	var initialText = tag.html ? tag.initialText.replace(/<[^>]*>/g, '') : tag.initialText;
   } else {
   	var initialText = '';
