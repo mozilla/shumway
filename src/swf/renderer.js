@@ -4,16 +4,8 @@ var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequ
 
 function render(displayList, renderingContext) {
   var ctx = renderingContext.beginDrawing();
-  var depths = [];
-  displayListByDepth = [];
-  var i = 0;
-  for (depths[i++] in displayList);
-  depths.sort(function(a, b) {
-    return a - b;
-  });
-  var i = 0;
-  var depth;
-  while (depth = depths[i++]) {
+  // displayList is array, so items are sorted by depth
+  for (var depth in displayList) {
     var character = displayList[depth];
     if (character) {
       ctx.save();

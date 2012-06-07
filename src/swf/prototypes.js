@@ -85,7 +85,6 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
       while (depth = depths[0]) {
         if (+depth) {
           var entry = pframe[depth];
-          depth -= 0x4001;
           if (entry) {
             var promise = null;
             var initObj = (entry.move ? frame[depth] : null) || {};
@@ -161,29 +160,33 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
     }
   }
 
-  function prepareTimeline(instance, timeline) {
+  function prepareTimeline(instance) {
+    // instance shall implement the following methods:
+    // $setDisplayList, $createAS2Script, $addChild, $dispatchEvent, $addFrameScript
+    var previousDisplayList = null;
     var objectCache = new WeakMap();
     for (var i = 0; i < totalFrames; i++) {
       ptimelinePromises[i].then((function(i, frame, previousFrame, initialize) {
-        var previousTimelineFrame = timeline[i - 1];
         if (!frame) {
-          timeline[i] = previousTimelineFrame;
+          // repeat of the previous frame
+          instance.$setDisplayList(i + 1, previousDisplayList);
           return;
         }
-        var timelineFrame = {};
+        var displayList = [];
         for (var depth in frame) {
           if (previousFrame && previousFrame[depth] === frame[depth]) {
-            timelineFrame[depth] = previousTimelineFrame[depth];
+            displayList[depth] = previousDisplayList[depth];
             continue;
           }
           var creator = frame[depth];
           if (typeof creator === 'function')
-            timelineFrame[depth] = creator(this, objectCache);
+            displayList[depth] = creator(this, objectCache);
           else
-            timelineFrame[depth] = creator;
+            displayList[depth] = creator;
         }
         initialize(this);
-        timeline[i] = timelineFrame;
+        instance.$setDisplayList(i + 1, displayList);
+        previousDisplayList = displayList;
       }).bind(instance, i));
     }
   }
@@ -327,7 +330,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
 
       var frameIndex = currentFrame - 1;
       var displayList = timeline[frameIndex];
-      if (!displayList || displayList.incomplete)
+      if (!displayList)
         return; // skiping non-prepared frame
 
       render(displayList, context);
@@ -354,11 +357,11 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     proto.$addChild = function(name, child) {
       children[name] = child;
     };
+    proto.$setDisplayList = function(frameNum, displayList) {
+      timeline[frameNum - 1] = displayList;
+    };
     proto.$getDisplayList = function(frameNum) {
-      var displayList = timeline[frameNum - 1];
-      if (!displayList || displayList.incomplete)
-        return; // non-prepared frame
-      return displayList;
+      return timeline[frameNum - 1];
     };
     defineObjectProperties(proto, {
       $as2Object: {
@@ -661,7 +664,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     AS2Mouse.addListener(events);
     AS2Key.addListener(events);
 
-    timelineLoader.prepareTimeline(instance, timeline);
+    timelineLoader.prepareTimeline(instance);
 
     return instance;
   }
