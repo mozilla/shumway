@@ -2,17 +2,25 @@ function InteractiveObject() {
 }
 
 InteractiveObject.prototype = Object.create(new DisplayObject, {
-  tabEnabled: descAccessor(
+  accessibilityImplementation: descAccessor(
     function () {
-      return false;
+      return -1;
     },
     function (val) {
       notImplemented();
     }
   ),
-  tabIndex: descAccessor(
+  contextMenu: descAccessor(
     function () {
-      return -1;
+      return null;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  doubleClickEnabled: descAccessor(
+    function () {
+      return false;
     },
     function (val) {
       notImplemented();
@@ -34,38 +42,6 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  doubleClickEnabled: descAccessor(
-    function () {
-      return false;
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  contextMenu: descAccessor(
-    function () {
-      return null;
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  accessibilityImplementation: descAccessor(
-    function () {
-      return -1;
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  softKeyboardInputAreaOfInterest: descAccessor(
-    function () {
-      return null;
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
   needsSoftKeyboard: descAccessor(
     function () {
       return false;
@@ -74,8 +50,31 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-
   requestSoftKeyboard: descMethod(function () {
     notImplemented();
-  })
+  }),
+  softKeyboardInputAreaOfInterest: descAccessor(
+    function () {
+      return null;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  tabEnabled: descAccessor(
+    function () {
+      return false;
+    },
+    function (val) {
+      notImplemented();
+    }
+  ),
+  tabIndex: descAccessor(
+    function () {
+      return -1;
+    },
+    function (val) {
+      notImplemented();
+    }
+  )
 });

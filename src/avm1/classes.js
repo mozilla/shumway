@@ -1010,15 +1010,13 @@ defineObjectProperties(AS2Mouse, {
   },
   hide: {
     value: function hide() {
-      // flash.ui.Mouse.hide()
-      throw 'Not implemented: hide';
+      Mouse.hide();
     },
     enumerable: false
   },
   show: {
     value: function show() {
-      // flash.ui.Mouse.show()
-      throw 'Not implemented: show';
+      Mouse.show();
     },
     enumerable: false
   }
@@ -1054,60 +1052,65 @@ AS2Broadcaster.initialize(AS2Mouse);
 function AS2Stage() {
 }
 defineObjectProperties(AS2Stage, {
+  $stage: {
+    get: function get$stage() {
+      return AS2Context.instance.stage;
+    }
+  },
   align: {
     get: function get$align() {
-      throw 'Not implemented: get$align';
+      return this.$stage.align;
     },
     set: function set$align(value) {
-      throw 'Not implemented: set$align';
+      this.$stage.align = value;
     },
     enumerable: true
   },
   displayState: {
     get: function get$displayState() {
-      throw 'Not implemented: get$displayState';
+      return this.$stage.displayState;
     },
     set: function set$displayState(value) {
-      throw 'Not implemented: set$displayState';
+      this.$stage.displayState = value;
     },
     enumerable: true
   },
   fullScreenSourceRect: {
     get: function get$fullScreenSourceRect() {
-      throw 'Not implemented: get$fullScreenSourceRect';
+      return this.$stage.fullScreenSourceRect;
     },
     set: function set$fullScreenSourceRect(value) {
-      throw 'Not implemented: set$fullScreenSourceRect';
+      this.$stage.fullScreenSourceRect = value;
     },
     enumerable: true
   },
   height: {
     get: function get$height() {
-      return AS2Context.instance.stage.height;
+      return this.$stage.stageHeight;
     },
     enumerable: true
   },
   scaleMode: {
     get: function get$scaleMode() {
-      throw 'Not implemented: get$scaleMode';
+      return this.$stage.scaleMode;
     },
     set: function set$scaleMode(value) {
-      throw 'Not implemented: set$scaleMode';
+      this.$stage.scaleMode = value;
     },
     enumerable: true
   },
   showMenu: {
     get: function get$showMenu() {
-      throw 'Not implemented: get$showMenu';
+      return this.$stage.showDefaultContextMenu;
     },
     set: function set$showMenu(value) {
-      throw 'Not implemented: set$showMenu';
+      this.$stage.showDefaultContextMenu = value;
     },
     enumerable: true
   },
   width: {
     get: function get$width() {
-      return AS2Context.instance.stage.width;
+      return this.$stage.stageWidth;
     },
     enumerable: true
   }

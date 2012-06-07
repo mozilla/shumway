@@ -49,8 +49,8 @@ Object.defineProperties(Event, {
 });
 
 Event.prototype = Object.create(null, {
-  target: descAccessor(function () {
-    return this._target;
+  clone: descMethod(function () {
+    return new Event (this.type, this.bubbles, this.cancelable);
   }),
   currentTarget: descAccessor(function () {
     notImplemented();
@@ -58,7 +58,6 @@ Event.prototype = Object.create(null, {
   eventPhase: descAccessor(function () {
     notImplemented();
   }),
-
   formatToString: descMethod(function (className) {
     var str = '[' + className;
 
@@ -72,8 +71,20 @@ Event.prototype = Object.create(null, {
 
     return str;
   }),
-  clone: descMethod(function () {
-    return new Event (this.type, this.bubbles, this.cancelable);
+  isDefaultPrevented: descMethod(function () {
+    notImplemented();
+  }),
+  preventDefault: descMethod(function () {
+    notImplemented();
+  }),
+  stopImmediatePropagation: descMethod(function () {
+    notImplemented();
+  }),
+  stopPropagation: descMethod(function () {
+    notImplemented();
+  }),
+  target: descAccessor(function () {
+    return this._target;
   }),
   toString: descMethod(function () {
     return this.formatToString(
@@ -83,17 +94,5 @@ Event.prototype = Object.create(null, {
       'cancelable',
       'eventPhase'
     );
-  }),
-  stopPropagation: descMethod(function () {
-    notImplemented();
-  }),
-  stopImmediatePropagation: descMethod(function () {
-    notImplemented();
-  }),
-  preventDefault: descMethod(function () {
-    notImplemented();
-  }),
-  isDefaultPrevented: descMethod(function () {
-    notImplemented();
-  }),
+  })
 });

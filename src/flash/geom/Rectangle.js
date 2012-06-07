@@ -6,6 +6,23 @@ function Rectangle(x, y, width, height) {
 }
 
 Rectangle.prototype = Object.create(null, {
+  bottomRight: descAccessor(
+    function() {
+      return new Point(this.right, this.bottom);
+    },
+    function (val) {
+      this.width = val.x - this.x;
+      this.height = val.y - this.y;
+    }
+  ),
+  bottom: descAccessor(
+    function() {
+      this.y + this.height;
+    },
+    function (val) {
+      this.height = val - this.y;
+    }
+  ),
   left: descAccessor(
     function() {
       return this.x;
@@ -23,6 +40,15 @@ Rectangle.prototype = Object.create(null, {
       this.width = val - this.x;
     }
   ),
+  size: descAccessor(
+    function() {
+      return new Point(this.width, this.height);
+    },
+    function (val) {
+      this.width = val.x;
+      this.height = val.y;
+    }
+  ),
   top: descAccessor(
     function() {
       return this.y;
@@ -30,14 +56,6 @@ Rectangle.prototype = Object.create(null, {
     function (val) {
       this.height += this.y - val;
       this.y = val;
-    }
-  ),
-  bottom: descAccessor(
-    function() {
-      this.y + this.height;
-    },
-    function (val) {
-      this.height = val - this.y;
     }
   ),
   topLeft: descAccessor(
@@ -51,53 +69,9 @@ Rectangle.prototype = Object.create(null, {
       this.y = val.y;
     }
   ),
-  bottomRight: descAccessor(
-    function() {
-      return new Point(this.right, this.bottom);
-    },
-    function (val) {
-      this.width = val.x - this.x;
-      this.height = val.y - this.y;
-    }
-  ),
-  size: descAccessor(
-    function() {
-      return new Point(this.width, this.height);
-    },
-    function (val) {
-      this.width = val.x;
-      this.height = val.y;
-    }
-  ),
 
   clone: descMethod(function () {
     return new Rectangle(this.x, this.y, this.width, this.y);
-  }),
-  isEmpty: descMethod(function () {
-    return this.width <= 0 || this.height <= 0;
-  }),
-  setEmpty: descMethod(function () {
-    this.x = this.y = this.width = this.height = 0;
-  }),
-  inflate: descMethod(function (dx, dy) {
-    this.x -= dx;
-    this.width += 2 * dx;
-    this.y -= dy;
-    this.height += 2 * dy;
-  }),
-  inflatePoint: descMethod(function (pt) {
-    this.x -= pt.x;
-    this.width += 2 * pt.x;
-    this.y -= pt.y;
-    this.height += 2 * pt.y;
-  }),
-  offset: descMethod(function (dx, dy) {
-    this.x += dx;
-    this.y += dy;
-  }),
-  offsetPoint: descMethod(function (pt) {
-    this.x += pt.x;
-    this.y += pt.y;
   }),
   contains: descMethod(function (x, y) {
     return x >= this.x &&
@@ -119,6 +93,28 @@ Rectangle.prototype = Object.create(null, {
            r1 <= r2 &&
            b1 > y &&
            b1 <= b2;
+  }),
+  copyFrom: descMethod(function (rect) {
+    this.x = rect.x;
+    this.y = rect.y;
+    this.width = rect.width;
+    this.height = rect.height;
+  }),
+  equals: descMethod(function (rect) {
+    return this.x === rect.x && this.y === rect.y &&
+           this.width === rect.width && this.height === rect.height;
+  }),
+  inflate: descMethod(function (dx, dy) {
+    this.x -= dx;
+    this.width += 2 * dx;
+    this.y -= dy;
+    this.height += 2 * dy;
+  }),
+  inflatePoint: descMethod(function (pt) {
+    this.x -= pt.x;
+    this.width += 2 * pt.x;
+    this.y -= pt.y;
+    this.height += 2 * pt.y;
   }),
   intersection: descMethod(function (rect) {
     if (this.isEmpty() || rect.isEmpty())
@@ -151,9 +147,36 @@ Rectangle.prototype = Object.create(null, {
 
     return width && height;
   }),
+  isEmpty: descMethod(function () {
+    return this.width <= 0 || this.height <= 0;
+  }),
+  offset: descMethod(function (dx, dy) {
+    this.x += dx;
+    this.y += dy;
+  }),
+  offsetPoint: descMethod(function (pt) {
+    this.x += pt.x;
+    this.y += pt.y;
+  }),
+  setEmpty: descMethod(function () {
+    this.x = this.y = this.width = this.height = 0;
+  }),
+  setTo: descMethod(function (x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+  }),
+  toString: descMethod(function () {
+    return '(x=' + this.x + ',' +
+           ' y=' + this.y + ',' +
+           ' w=' + this.width + ',' +
+           ' h=' + this.height + ')';
+  }),
   union: descMethod(function (rect) {
     if (this.isEmpty())
       return rect.clone();
+
     if (rect.isEmpty())
       return this.clone();
 
@@ -167,27 +190,5 @@ Rectangle.prototype = Object.create(null, {
     var height = Math.max(y1 + this.height, y2 + rect.height) - yMax;
 
     return new Rectangle(xMax, yMax, width, height);
-  }),
-  equals: descMethod(function (rect) {
-    return rect.x  === this.x && rect.y === this.y &&
-           rect.width === this.width && rect.height === this.height;
-  }),
-  toString: descMethod(function () {
-    return '(x=' + this.x + ',' +
-           ' y=' + this.y + ',' +
-           ' w=' + this.width + ',' +
-           ' h=' + this.height + ')';
-  }),
-  copyFrom: descMethod(function (rect) {
-    this.x = rect.x;
-    this.y = rect.y;
-    this.width = rect.width;
-    this.height = rect.height;
-  }),
-  setTo: descMethod(function (x, y, width, height) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
   })
 });

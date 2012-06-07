@@ -94,9 +94,9 @@ function renderShadowCanvas(character) {
   ctx.restore();
 }
 
-function renderMovieClip(mc, rate, bounds, ctx) {
+function renderMovieClip(mc, stage, ctx) {
   var frameTime = 0;
-  var maxDelay = 1000 / rate;
+  var maxDelay = 1000 / stage.frameRate;
   var frameWidth = ctx.canvas.width;
   var frameHeight = ctx.canvas.height;
 
@@ -109,22 +109,21 @@ function renderMovieClip(mc, rate, bounds, ctx) {
         var frameWidth = ctx.canvas.width;
         var frameHeight = ctx.canvas.height;
 
-        var scaleX = frameWidth / (bounds.xMax - bounds.xMin);
-        var scaleY = frameHeight / (bounds.yMax - bounds.yMin);
+        var scaleX = frameWidth / stage.stageWidth;
+        var scaleY = frameHeight / stage.stageHeight;
         var scale = Math.min(scaleX, scaleY);
-        var offsetX = (frameWidth - scale * (bounds.xMax - bounds.xMin)) / 2;
-        var offsetY = (frameHeight - scale * (bounds.yMax - bounds.yMin)) / 2;
+        var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
+        var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
 
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
         ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
+        ctx.scale(scale / 20, scale / 20);
 
         ctx.canvas.currentTransform = {
-          scale: scale * 20,
+          scale: scale,
           offsetX: offsetX,
-          offsetY: offsetY,
-          bounds: bounds
+          offsetY: offsetY
         };
       }
       this.depth++;

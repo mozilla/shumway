@@ -184,22 +184,6 @@ function applyType(factory, types) {
   }
 }
 
-function Vector(type) {
-  function vector() {
-    this.push.apply(this, arguments);
-  }
-  vector.prototype = Object.create(Array.prototype);
-  return vector;
-}
-
-Vector.coerce = function(x) {
-  return x;
-};
-
-Array.coerce = function(x) {
-  return x;
-};
-
 function nextName(obj, index) {
   return obj.nextName(index);
 }
@@ -420,7 +404,10 @@ function setProperty(obj, multiname, value) {
     print("setProperty: resolved multiname: " + resolved + " value: " + value);
   }
 
-  obj[resolved.getQualifiedName()] = value;
+  var name = resolved.getQualifiedName();
+  var type = obj.types[name];
+
+  obj[name] = type ? type.call(type, value) : value;
 }
 
 function throwErrorFromVM(errorClass, message) {
@@ -899,45 +886,10 @@ var Runtime = (function () {
     }
 
     function defineProperty(name, slotId, value, type, isMethod) {
-      // print("Defining Trait: " + name + ", slot: " + slotId + ", value: " + value);
       if (slotId) {
-        if (name in obj) {
-          assert (!type || !type.coerce);
-          Object.defineProperty(obj, "S" + slotId, {
-            get: function () {
-              return this[name];
-            },
-            set: function (val) {
-              this[name] = value;
-            },
-            enumerable: false
-          });
-        } else {
-          if (!type || !type.coerce) {
-            defineNonEnumerableProperty(obj, "S" + slotId, value);
-          } else {
-            defineNonEnumerableProperty(obj, "$S" + slotId, value);
-            var coerce = type.coerce;
-            Object.defineProperty(obj, "S" + slotId, {
-              get: function () {
-                return this["$S" + slotId];
-              },
-              set: function (val) {
-                return this["$S" + slotId] = coerce(val);
-              },
-              enumerable: false
-            });
-          }
-          Object.defineProperty(obj, name, {
-            get: function () {
-              return this["S" + slotId];
-            },
-            set: function (val) {
-              return this["S" + slotId] = val;
-            },
-            enumerable: false
-          });
-        }
+        defineNonEnumerableProperty(obj, name, value);
+        obj.slots[slotId] = name;
+        obj.types[name] = type;
       } else if (!obj.hasOwnProperty(name)) {
         if (isMethod) {
           defineReadOnlyProperty(obj, name, value);
@@ -952,11 +904,17 @@ var Runtime = (function () {
     }
 
     var ts = traits.traits;
+
+    // Make a slot # -> property id and property id -> type mappings. We use 2
+    // maps instead of 1 map of an object to avoid an extra property lookup on
+    // getslot, since we only coerce on assignment.
+    defineNonEnumerableProperty(obj, "slots", new Array(ts.length));
+    defineNonEnumerableProperty(obj, "types", {});
+
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
       assert (trait.holder);
       if (trait.isSlot() || trait.isConst()) {
-        // FIXME: coercions broken
         var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
         defineProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
@@ -1006,7 +964,7 @@ var Runtime = (function () {
         }
 
         /* Identify this as a method for auto-binding via MethodClosure. */
-        closure.isMethod = true;
+        defineNonEnumerableProperty(closure, "isMethod", true);
 
         var qn = trait.name.getQualifiedName();
         if (trait.isGetter()) {

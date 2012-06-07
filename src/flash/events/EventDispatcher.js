@@ -3,9 +3,6 @@ function EventDispatcher(target) {
 }
 
 EventDispatcher.prototype = Object.create(null, {
-  toString: descMethod(function () {
-    return '[object EventDispatcher]';
-  }),
   addEventListener: descMethod(function (type,
                                          listener,
                                          useCapture,
@@ -18,6 +15,12 @@ EventDispatcher.prototype = Object.create(null, {
 
     listeners.push(listener);
   }),
+  dispatchEvent: descMethod(function (evt) {
+    notImplemented();
+  }),
+  hasEventListener: descMethod(function (type) {
+    return this._listeners[type] != false;
+  }),
   removeEventListener: descMethod(function (type, listener, useCapture) {
     var listeners = this._listeners[type];
 
@@ -28,11 +31,8 @@ EventDispatcher.prototype = Object.create(null, {
         listeners.splice(i, 1);
     }
   }),
-  dispatchEvent: descMethod(function (evt) {
-    notImplemented();
-  }),
-  hasEventListener: descMethod(function (type) {
-    return this._listeners[type] != false;
+  toString: descMethod(function () {
+    return '[object EventDispatcher]';
   }),
   willTrigger: descMethod(function (type) {
     notImplemented();

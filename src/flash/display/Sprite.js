@@ -2,17 +2,17 @@ function Sprite() {
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
-  graphics: descAccessor(
+  buttonMode: descAccessor(
     function () {
-      notImplemented();
+      return false;
     },
     function (val) {
       notImplemented();
     }
   ),
-  buttonMode: descAccessor(
+  graphics: descAccessor(
     function () {
-      return false;
+      notImplemented();
     },
     function (val) {
       notImplemented();
@@ -26,14 +26,6 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  useHandCursor: descAccessor(
-    function () {
-      return true;
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
   soundTransform: descAccessor(
     function () {
       notImplemented();
@@ -42,20 +34,27 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-
-  toString: descMethod(function () {
-    return '[object Sprite]';
-  }),
   startDrag: descMethod(function (lockCenter, bounds) {
-    notImplemented();
-  }),
-  stopDrag: descMethod(function () {
     notImplemented();
   }),
   startTouchDrag: descMethod(function (touchPointID, lockCenter, bounds) {
     notImplemented();
   }),
+  stopDrag: descMethod(function () {
+    notImplemented();
+  }),
   stopTouchDrag: descMethod(function (touchPointID) {
     notImplemented();
-  })
+  }),
+  toString: descMethod(function () {
+    return '[object Sprite]';
+  }),
+  useHandCursor: descAccessor(
+    function () {
+      return true;
+    },
+    function (val) {
+      notImplemented();
+    }
+  )
 });

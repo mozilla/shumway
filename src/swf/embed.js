@@ -95,103 +95,37 @@ SWF.embed = function(file, container, options) {
   if (!options)
     options = { };
 
-  var result;
-  var root;
-  var dictionary = new ObjDictionary();
-  var pframes = [];
   var canvas = document.createElement('canvas');
-  var ctx = canvas.getContext('2d');
-  var frameRate, bounds;
-  var plays;
-  var as2Context = null;
 
   function resizeCanvas(container, canvas) {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
   }
 
-  startWorking(file, function(obj) {
-    if (!root) {
-      bounds = obj.bounds;
+  var stage = new Stage();
+  stage._attachToCanvas({
+    file: file,
+    canvas: canvas,
+    onstart: function(root, stage) {
       if (container.clientHeight) {
         resizeCanvas(container, canvas);
         window.addEventListener('resize',
           resizeCanvas.bind(null, container, canvas), false);
       } else {
-        canvas.width = (bounds.xMax - bounds.xMin) / 20;
-        canvas.height = (bounds.yMax - bounds.yMin) / 20;
+        canvas.width = stage.stageWidth;
+        canvas.height = stage.stageHeight;
       }
       container.appendChild(canvas);
-
-      frameRate = obj.frameRate;
-
-      // TODO disable AVM1 if AVM2 is enabled
-      as2Context = new AS2Context(obj.version, {
-        width: (bounds.xMax - bounds.xMin) / 20,
-        height: (bounds.yMax - bounds.yMin) / 20
-      });
-      AS2Context.instance = as2Context;
-      var globals = as2Context.globals;
 
       AS2Mouse.$bind(canvas);
       AS2Key.$bind(canvas);
 
-      var proto = create(new MovieClipPrototype({
-        frameCount: obj.frameCount,
-        pframes: pframes
-      }, dictionary));
-      root = proto.constructor();
-      root.name = '_root';
-
-      globals._root = globals._level0 = root.$as2Object;
-
       if (options.onstart)
         options.onstart(root);
-      return;
-    }
-
-    AS2Context.instance = as2Context;
-    if (obj) {
-      if (obj.id) {
-        definePrototype(dictionary, obj);
-      } else if (obj.type === 'pframe') {
-        if (obj.bgcolor)
-          canvas.style.background = obj.bgcolor;
-
-        if (obj.abcBlocks) {
-          var blocks = obj.abcBlocks;
-          var i = 0;
-          var block;
-          while (block = blocks[i++]) {
-            var abc = new AbcFile(block);
-            executeAbc(abc, ALWAYS_INTERPRET);
-          }
-        }
-
-        if (obj.symbols) {
-          var symbols = obj.symbols;
-          var i = 0;
-          var sym;
-          while (sym = symbols[i++]) {
-            if (!sym.id) {
-              var mainTimeline = new (toplevel.getTypeByName(
-                Multiname.fromSimpleName(sym.name),
-                true
-              )).instance;
-            }
-          }
-        }
-
-        pframes.push(obj);
-        if (!plays) {
-          renderMovieClip(root, frameRate, bounds, ctx);
-          plays = true;
-        }
-      } else {
-        result = obj;
-      }
-    } else if (options.oncomplete) {
-      options.oncomplete(root, result);
+    },
+    oncomplete: function(root, result) {
+      if (options.oncomplete)
+        options.oncomplete(root, result);
     }
   });
 };

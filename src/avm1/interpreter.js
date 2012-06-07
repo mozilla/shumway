@@ -12,9 +12,8 @@ AS2ScopeListItem.prototype = {
   }
 };
 
-function AS2Context(swfVersion, stage) {
+function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this.stage = stage;
   this.globals = new AS2Globals(this);
   var windowScope = new AS2ScopeListItem(window, null);
   this.initialScope = new AS2ScopeListItem(this.globals, windowScope);

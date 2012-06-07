@@ -35,16 +35,9 @@ Object.defineProperties(MouseEvent, {
   MOUSE_WHEEL:  descConst('mouseWheel'),
   ROLL_OUT:     descConst('rollOut'),
   ROLL_OVER:    descConst('rollOver')
-
 });
 
 MouseEvent.prototype = Object.create(new Event, {
-  stageX: descAccessor(function () {
-    notImplemented();
-  }),
-  stageY: descAccessor(function () {
-    notImplemented();
-  }),
   isRelatedObjectInaccessible: descAccessor(
     function () {
       return false;
@@ -53,6 +46,12 @@ MouseEvent.prototype = Object.create(new Event, {
       notImplemented();
     }
   ),
+  stageX: descAccessor(function () {
+    notImplemented();
+  }),
+  stageY: descAccessor(function () {
+    notImplemented();
+  }),
 
   clone: descMethod(function () {
     return new Event (
