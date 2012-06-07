@@ -8,12 +8,14 @@ import pickle
 import Queue
 import multiprocessing
 import tempfile
+from collections import Counter
+
+import signal
 
 from dis import disassemble
 
 def execute (command, timeout = -1):
   start_time = time.time()
-  # print "run: ", command
   processPid = [None]
   stdoutOutput = [None]
   stderrOutput = [None]
@@ -24,17 +26,71 @@ def execute (command, timeout = -1):
 
   thread = threading.Thread(target=target)
   thread.start()
-  # print "Timeout", timeout
   thread.join(timeout)
   if thread.is_alive():
     # Kill Process
-    os.kill(processPid[0], signal.SIGKILL)
+    try:
+      os.killpg(processPid[0], signal.SIGKILL)
+    except:
+      pass
     os.waitpid(-1, os.WNOHANG)
     thread.join()
 
   elapsed_time = time.time() - start_time
   output = stdoutOutput[0]
   return (output.strip(), elapsed_time);
+
+
+def execute2(cmd, timeout=None):
+  '''
+  Will execute a command, read the output and return it back.
+
+  @param cmd: command to execute
+  @param timeout: process timeout in seconds
+  @return: a tuple of three: first stdout, then stderr, then exit code
+  @raise OSError: on missing command or if a timeout was reached
+  '''
+
+  ph_out = None # process output
+  ph_err = None # stderr
+  ph_ret = None # return code
+
+  start_time = time.time()
+
+  def preexec_function():
+    # Ignore the SIGINT signal by setting the handler to the standard
+    # signal handler SIG_IGN.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+  p = subprocess.Popen(cmd,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       close_fds=True,
+                       preexec_fn = preexec_function)
+
+  # if timeout is not set wait for process to complete
+  if not timeout:
+    ph_ret = p.wait()
+  else:
+    fin_time = time.time() + timeout
+    while p.poll() == None and fin_time > time.time():
+      time.sleep(0.001)
+
+    # if timeout reached, raise an exception
+    if fin_time < time.time():
+
+      # starting 2.6 subprocess has a kill() method which is preferable
+      # p.kill()
+      try:
+        os.kill(p.pid, signal.SIGKILL)
+      except:
+        pass
+      return None
+
+    ph_ret = p.returncode
+    ph_out, ph_err = p.communicate()
+
+  return (ph_out, time.time() - start_time)
 
 class Base:
   asc = None
@@ -222,9 +278,8 @@ class Test(Command):
     parser = argparse.ArgumentParser(description='Runs all tests.')
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
-    parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
-    parser.add_argument('-i', '--interpret', action='store_true', default=True, help="always interpret")
-    parser.add_argument('-c', '--compile', action='store_true', default=False, help="always compile")
+    parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
+    parser.add_argument('-m', '--mode', type=str, default="aic", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
 
     args = parser.parse_args(args)
@@ -273,55 +328,59 @@ class Test(Command):
       'count': 0,
     }
 
+    counter = Counter()
+
     def runTest(tests, counts):
       while tests.qsize() > 0:
         test = tests.get()
         out = []
-        counts['count'] += 1
 
-        results = []
-        results.append(execute([self.avm, test], int(args.timeout)))
-        if args.compile:
-          results.append(execute(["js", "-m", "-n", "avm.js", "-x", "-i", test], int(args.timeout)))
-        if args.interpret:
-          results.append(execute(["js", "-m", "-n", "avm.js", "-x", test], int(args.timeout)))
+        modes = {}
+        modes["a"] = [self.avm, test]
+        modes["i"] = ["js", "-m", "-n", "avm.js", "-x", "-i", test];
+        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", test];
 
-        for i in range (1, len(results)):
-          base = results[0]
-          result = results[i]
-          suffix = "c" if i == 2 else "i"
-          if base[0] == result[0]:
-            out.append(PASS + "PASSED" + ENDC)
-            counts["passed-" + suffix] += 1;
+        results = {}
+
+        for m in args.mode:
+          results[m] = execute(modes[m], int(args.timeout))
+
+        def compare (base, result):
+          if result == None:
+            return "FAILED"
+
+          if base != None and base[0] == result[0]:
+            return "PASSED"
           else:
             if "PASSED" in result[0] and not "FAILED" in result[0]:
-              out.append(INFO + "ALMOST"  + ENDC)
-              counts["almost-" + suffix] += 1;
+              return "ALMOST"
             elif "PASSED" in result[0] and "FAILED" in result[0]:
-              out.append(WARN + "KINDOF"  + ENDC)
-              counts["kindof-" + suffix] += 1;
+              return "KINDOF"
             else:
-              out.append(FAIL + "FAILED"  + ENDC)
-              counts["failed-" + suffix] += 1;
+              return "FAILED"
 
-          out.append(str(round(result[1], 2)))
-          ratio = round(base[1] / result[1], 2)
-          out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
+        def color (s):
+          if s == "PASSED":
+            return PASS + s + ENDC
+          elif s == "ALMOST":
+            return INFO + s + ENDC
+          elif s == "KINDOF":
+            return WARN + s + ENDC
+          elif s == "FAILED":
+            return FAIL + s + ENDC
 
-        if args.compile:
-          if results[1][0] == results[2][0]:
-            out.append(PASS + "MATCH"  + ENDC)
-          else:
-            out.append(FAIL + "DIFFER"  + ENDC)
-          ratio = round(results[1][1] / results[2][1], 2)
-          out.append((WARN if ratio < 1 else INFO) + str(ratio) + ENDC)
-
-        out.append(str(round(result[1], 2)))
         out.append(str(total - tests.qsize()))
+        for k in results:
+          if k != "a":
+            c = compare(results["a"] if "a" in results else None, results[k])
+            counter.update([k + "-" + c]);
+            out.append(color(c))
+          out.append(str(round(results[k][1], 2)) if results[k] != None else "N/A")
+
         out.append(test);
+
         sys.stdout.write("\t".join(out) + "\n")
         sys.stdout.flush()
-
         tests.task_done()
 
     jobs = []
@@ -335,13 +394,7 @@ class Test(Command):
     for job in jobs:
       job.join()
 
-    pprint (counts)
-
-#    print "Results: failed: " + FAIL + str(counts['failed']) + ENDC + ", passed: " + PASS + str(counts['passed']) + ENDC + " of " + str(total),
-#    print "shuElapsed: " + str(round(counts['shuElapsed'] * 1000, 2)) + " ms",
-#    print "avmElapsed: " + str(round(counts['avmElapsed'] * 1000, 2)) + " ms",
-#    if counts['shuElapsed'] > 0:
-#      print str(round(counts['avmElapsed'] / counts['shuElapsed'], 2)) + "x faster" + ENDC
+    print counter
 
 commands = {}
 for command in [Asc(), Avm(), Dis(), Compile(), Test(), Ascreg()]:

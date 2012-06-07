@@ -387,11 +387,14 @@ var Compiler = (function () {
       var body = [];
       item.body.forEach(function (x) {
         var result = x.compile(cx, state);
-        body.push(result.node);
+        if (result.node instanceof BlockStatement) {
+          body = body.concat(result.node.body);
+        } else {
+          body.push(result.node);
+        }
         state = result.state;
       });
-      var node = body.length > 1 ? new BlockStatement(body) : body[0];
-      return {node: node, state: state};
+      return {node: new BlockStatement(body), state: state};
     };
     compilation.prototype.compileLoop = function compileLoop(item, state) {
       var br = item.body.compile(this, state);
@@ -670,7 +673,7 @@ var Compiler = (function () {
           index = local[bc.index];
           emit(assignment(getTemporary(0), call(id("hasNext2"), [obj, index])));
           emit(assignment(local[bc.object], property(getTemporary(0), "object")));
-          emit(assignment(local[bc.index], property(getTemporary(0), ".index")));
+          emit(assignment(local[bc.index], property(getTemporary(0), "index")));
           push(property(getTemporary(0), "index"));
           break;
         case OP_pushnull:       push(constant(null)); break;
@@ -1056,8 +1059,16 @@ var Compiler = (function () {
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
     assert(methodInfo.analysis);
     // methodInfo.analysis.trace(new IndentingWriter());
+    Timer.start("compiler");
     var cx = new Compilation(this, methodInfo, scope);
-    return generate(cx.compile());
+    Timer.start("ast");
+    var node = cx.compile();
+    Timer.stop();
+    Timer.start("gen");
+    var code = generate(node);
+    Timer.stop();
+    Timer.stop();
+    return code;
   };
 
   compiler.Operator = Operator;

@@ -1439,7 +1439,9 @@ var Analysis = (function () {
     },
 
     restructureControlFlow: function restructureControlFlow() {
+      Timer.start("restructureControlFlow");
       if (!this.markedLoops && !this.markLoops()) {
+        Timer.stop();
         return false;
       }
 
@@ -1449,6 +1451,7 @@ var Analysis = (function () {
       }
 
       this.restructuredControlFlow = true;
+      Timer.stop();
       return true;
     },
 
