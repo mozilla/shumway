@@ -124,6 +124,10 @@
  *
  *     return c;
  *   };
+ *
+ * There is an automatic convenience method |Class.lift| that takes an
+ * existing JavaScript constructor, clobbers its prototype, then mixes the
+ * original prototype back in.
  */
 
 var original = {};
