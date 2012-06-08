@@ -65,8 +65,12 @@ Matrix.prototype = Object.create(null, {
     );
   }),
   identity: descMethod(function () {
-    this.a = this.d = 1;
-    this.b = this.c = this.tx = this.ty = 0;
+    this.a = 1;
+    this.b = 0;
+    this.c = 0;
+    this.d = 1;
+    this.tx = 0;
+    this.ty = 0;
   }),
   invert: descMethod(function () {
     var a = this.a;

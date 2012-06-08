@@ -24,3 +24,6 @@ function descConst(val) {
     enumerable: true
   };
 }
+function illegalOperation() {
+  throw Error('Illegal Operation');
+}
