@@ -22,7 +22,9 @@ ColorTransform.prototype = Object.create(null, {
       return this.redOffset << 16 | this.greenOffset << 8 | this.blueOffset;
     },
     function (val) {
-      this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 0;
+      this.redMultiplier = 0;
+      this.greenMultiplier = 0;
+      this.blueMultiplier = 0;
       this.redOffset = val >> 16 & 0xff;
       this.greenOffset = val >> 8 & 0xff;
       this.blueOffset = val & 0xff;

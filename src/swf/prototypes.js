@@ -9,48 +9,31 @@ var identityMatrix = {
   translateY: 0
 };
 
-var MovieClipPrototype = function(obj, dictionary) {
-  var totalFrames = obj.frameCount || 1;
-  var pframes = obj.pframes || [];
+function DisplayListItem(character) {
+  this.character = character;
+}
+
+function TimelineLoader(totalFrames, pframes, dictionary) {
   var currentPframe = 0;
-  var timeline = [];
+  var ptimeline = [];
   var frameLabels = {};
   var framesLoaded = 0;
-  var frameScripts = [];
-  var children = {};
-  var as2Context = AS2Context.instance;
 
-  function createAS2Script(data) {
-    return (function() {
-      var as2Object = this.$as2Object;
+  var ptimelinePromises = [];
+  for (var i = 0; i < totalFrames; i++)
+    ptimelinePromises.push(new Promise);
 
-      try {
-        executeActions(data, as2Context, as2Object);
-      } catch (e) {
-        console.log('Error during ActionScript execution: ' + e);
-      }
-    });
-  }
-
-  function addFrameScript() {
-    for (var i = 0, n = arguments.length; i < n; i += 2) {
-      var frameNum = arguments[i];
-      if (!frameScripts[frameNum])
-        frameScripts[frameNum] = [];
-      frameScripts[frameNum].push(arguments[i + 1]);
-    }
-  }
-
-  function prefetchFrame(parent) {
+  function prefetchFrame() {
     var prefetchPortion = 20, prefetchInterval = 100;
     setTimeout(function() {
-      ensureFrame(Math.min(timeline.length + prefetchPortion, totalFrames), parent);
+      ensureFrame(Math.min(ptimeline.length + prefetchPortion, totalFrames));
     }, prefetchInterval);
   }
 
+  var loader = this;
   var lastFramePromise = Promise.resolved, lastFrame = null;
-  function ensureFrame(frameNum, parent) { // HACK parent shall not be here
-    var n = timeline.length;
+  function ensureFrame(frameNum) {
+    var n = ptimeline.length;
     while (n < frameNum) {
       var frame = create(lastFrame);
       lastFrame = frame;
@@ -62,25 +45,61 @@ var MovieClipPrototype = function(obj, dictionary) {
         frameLabels[pframe.name] = currentFrame;
       var i = pframe.repeat || 1;
       while (i--) {
-        timeline.push(frame);
+        ptimeline.push(frame);
         ++n;
       }
 
-      function initCharacter(character, entry, initObj) {
-        character.matrix = entry.matrix || initObj.matrix || identityMatrix;
-        character.cxform = entry.cxform || initObj.cxform;
-        if (character.draw)
-          character.ratio = entry.ratio || 0;
-        if (entry.events)
-          character.events = entry.events;
-        if (entry.name) {
-          character.name = entry.name;
-          parent.$addChild(entry.name, character); // HACK parent assignment
+      function initCharacter(proto, entry, initObj, parent, as2Context) {
+        var character;
+        var matrix = entry.matrix || initObj.matrix || identityMatrix;
+        var cxform = entry.cxform || initObj.cxform;
+        var ratio = entry.ratio || 0;
+
+        if (proto instanceof DisplayListItem)
+          character = proto.character; // reusing created one
+        else {
+          // creates new instance of the character
+          if (proto.constructor !== Object)
+            character = proto.constructor(as2Context);
+          else
+            character = create(proto);
+
+          character.matrix = matrix;
+          character.cxform = cxform;
+          if (character.draw)
+            character.ratio = ratio;
+
+          if (entry.events)
+            character.events = entry.events;
+          if (entry.name) {
+            character.name = entry.name;
+            parent.$addChild(entry.name, character);
+          }
+          character.parent = parent;
+          character.root = parent.root || parent;
+          if (character.variableName)
+            parent.$bindVariable(character);
         }
-        character.parent = parent;
-        character.root = parent.root || parent;
-        if (character.variableName)
-          parent.$bindVariable(character);
+
+        var item = new DisplayListItem(character);
+        item.matrix = matrix;
+        item.cxform = cxform;
+        if (character.draw)
+          item.ratio = ratio;
+
+        return item;
+      }
+
+      function buildFromPrototype(proto, entry, obj, frame, depth, promise) {
+        var objectCreator = (function objectCreator(parent, objectCache, asContext) {
+          var character = initCharacter(objectCache.get(proto) || proto, entry,
+                                        objectCache.get(obj) || obj, parent, asContext);
+          objectCache.set(objectCreator, character);
+          return character;
+        });
+        frame[depth] = objectCreator;
+        if (promise)
+          promise.resolve(objectCreator);
       }
 
       var framePromises = [lastFramePromise];
@@ -89,7 +108,6 @@ var MovieClipPrototype = function(obj, dictionary) {
       while (depth = depths[0]) {
         if (+depth) {
           var entry = pframe[depth];
-          depth -= 0x4001;
           if (entry) {
             var promise = null;
             var initObj = (entry.move ? frame[depth] : null) || {};
@@ -100,20 +118,12 @@ var MovieClipPrototype = function(obj, dictionary) {
               promise = new Promise();
               frame[depth] = promise;
               protoPromise.then((function(frame, depth, entry, initObj, promise, proto) {
-                if (proto.constructor !== Object)
-                  var character = proto.constructor(); // HACK ... so is instance creation
-                else
-                  var character = create(proto);
                 if (initObj instanceof Promise) {
                   initObj.then(function(obj) {
-                    initCharacter(character, entry, obj);
-                    frame[depth] = character;
-                    promise.resolve(character);
+                    buildFromPrototype(proto, entry, obj, frame, depth, promise);
                   });
                 } else {
-                  initCharacter(character, entry, initObj);
-                  frame[depth] = character;
-                  promise.resolve(character);
+                  buildFromPrototype(proto, entry, initObj, frame, depth, promise);
                 }
               }).bind(null, frame, depth, entry, initObj, promise));
             } else {
@@ -121,15 +131,10 @@ var MovieClipPrototype = function(obj, dictionary) {
                 promise = new Promise();
                 frame[depth] = promise;
                 initObj.then((function(frame, depth, promise, obj) {
-                  var character = create(obj);
-                  initCharacter(character, entry, obj);
-                  frame[depth] = character;
-                  promise.resolve(character);
+                  buildFromPrototype(obj, entry, obj, frame, depth, promise);
                 }).bind(null, frame, depth, promise));
               } else {
-                var character = create(initObj);
-                initCharacter(character, entry, initObj);
-                frame[depth] = character;
+                buildFromPrototype(initObj, entry, initObj, frame, depth, null);
               }
             }
             if (promise)
@@ -143,31 +148,83 @@ var MovieClipPrototype = function(obj, dictionary) {
       var framePromise = Promise.all(framePromises);
       lastFramePromise = framePromise;
       framePromise.then((function(pframe, frame, currentFrame, lastInserted) {
-        if (pframe.actionsData && pframe.actionsData.length > 0) {
-          for (var i = 0; i < pframe.actionsData.length; i++)
-            addFrameScript(currentFrame, createAS2Script(pframe.actionsData[i]));
-        }
-        if (pframe.initActionsData) {
-          for (var spriteId in pframe.initActionsData) {
-            createAS2Script(pframe.initActionsData[spriteId]).call(parent);
+        function initialize(instance) {
+          if (pframe.actionsData && pframe.actionsData.length > 0) {
+            for (var i = 0; i < pframe.actionsData.length; i++)
+              instance.$addFrameScript(currentFrame,
+                instance.$createAS2Script(pframe.actionsData[i]));
           }
+
+          if (pframe.initActionsData) {
+            for (var spriteId in pframe.initActionsData) {
+              instance.$createAS2Script(pframe.initActionsData[spriteId]).call(instance);
+            }
+          }
+          if (pframe.assets) {
+            instance.$addChild('soundmc', new SoundMock(pframe.assets));
+          }
+          if (currentFrame == 1)
+            instance.$dispatchEvent('onLoad');
         }
-        if (pframe.assets) {
-          parent.$addChild('soundmc', new SoundMock(pframe.assets));
+
+        ptimelinePromises[framesLoaded].resolve(frame, ptimeline[framesLoaded - 1], initialize);
+        framesLoaded++;
+        while(framesLoaded < lastInserted) {
+          ptimelinePromises[framesLoaded].resolve(null, frame);
+          framesLoaded++;
         }
-        framesLoaded = lastInserted;
-        if (currentFrame == 1)
-          parent.$dispatchEvent('onLoad');
+        loader.framesLoaded = framesLoaded;
       }).bind(null, pframe, frame, currentFrame, n));
     }
     if (n < totalFrames) {
       lastFramePromise.then(function() {
-        prefetchFrame(parent);
+        prefetchFrame();
       });
     }
   }
 
-  this.constructor = function MovieClip() {
+  function prepareTimeline(instance, as2Context) {
+    // instance shall implement the following methods:
+    // $setDisplayList, $createAS2Script, $addChild, $dispatchEvent, $addFrameScript
+    var previousDisplayList = null;
+    var objectCache = new WeakMap();
+    for (var i = 0; i < totalFrames; i++) {
+      ptimelinePromises[i].then((function(i, frame, previousFrame, initialize) {
+        if (!frame) {
+          // repeat of the previous frame
+          instance.$setDisplayList(i + 1, previousDisplayList);
+          return;
+        }
+        var displayList = [];
+        for (var depth in frame) {
+          if (previousFrame && previousFrame[depth] === frame[depth]) {
+            displayList[depth] = previousDisplayList[depth];
+            continue;
+          }
+          var creator = frame[depth];
+          if (typeof creator === 'function')
+            displayList[depth] = creator(this, objectCache, as2Context);
+          else
+            displayList[depth] = creator;
+        }
+        initialize(this);
+        instance.$setDisplayList(i + 1, displayList);
+        previousDisplayList = displayList;
+      }).bind(instance, i));
+    }
+  }
+
+  this.totalFrames = totalFrames;
+  this.framesLoaded = 0;
+  this.ptimelinePromises = ptimelinePromises;
+  this.frameLabels = frameLabels;
+  this.ensureFrame = ensureFrame;
+  this.prepareTimeline = prepareTimeline;
+}
+
+var MovieClipPrototype = function(obj, timelineLoader) {
+
+  this.constructor = function MovieClip(as2Context) {
     if (this instanceof MovieClip)
       return;
 
@@ -175,6 +232,30 @@ var MovieClipPrototype = function(obj, dictionary) {
     var paused = false;
     var rotation = 0;
     var width, height;
+    var timeline = [];
+    var children = {};
+    var frameScripts = [];
+
+    function createAS2Script(data) {
+      return (function() {
+        var as2Object = this.$as2Object;
+
+        try {
+          executeActions(data, as2Context, as2Object);
+        } catch (e) {
+          console.log('Error during ActionScript execution: ' + e);
+        }
+      });
+    }
+
+    function addFrameScript() {
+      for (var i = 0, n = arguments.length; i < n; i += 2) {
+        var frameNum = arguments[i];
+        if (!frameScripts[frameNum])
+          frameScripts[frameNum] = [];
+        frameScripts[frameNum].push(arguments[i + 1]);
+      }
+    }
 
     function dispatchEvent(eventName, args) {
       var as2Object = instance.$as2Object;
@@ -196,11 +277,11 @@ var MovieClipPrototype = function(obj, dictionary) {
 
     function gotoFrame(frame) {
       var frameNum = frame;
-      if (frameNum > totalFrames)
+      if (frameNum > timelineLoader.totalFrames)
         frameNum = 1;
-      ensureFrame(frameNum, instance);
-      if (frameNum > framesLoaded)
-        frameNum = framesLoaded;
+      timelineLoader.ensureFrame(frameNum, instance);
+      if (frameNum > timelineLoader.framesLoaded)
+        frameNum = timelineLoader.framesLoaded;
       currentFrame = frameNum;
 
       // execute scripts
@@ -222,12 +303,12 @@ var MovieClipPrototype = function(obj, dictionary) {
       },
       _framesloaded: {
         get: function() {
-          return framesLoaded;
+          return timelineLoader.framesLoaded;
         }
       },
       _totalframes: {
         get: function() {
-          return totalFrames;
+          return timelineLoader.totalFrames;
         }
       }
     });
@@ -261,23 +342,23 @@ var MovieClipPrototype = function(obj, dictionary) {
     proto.gotoLabel = function(label) {
       if (this !== instance)
         return;
-      if (!(label in frameLabels))
+      if (!(label in timelineLoader.frameLabels))
         return; // label is not found, skipping ?
-      gotoFrame.call(instance, frameLabels[label]);
+      gotoFrame.call(instance, timelineLoader.frameLabels[label]);
     };
     proto.renderNextFrame = function(context) {
       if (!paused)
-        gotoFrame.call(instance, (currentFrame % totalFrames) + 1);
+        gotoFrame.call(instance, (currentFrame % timelineLoader.totalFrames) + 1);
 
       var frameIndex = currentFrame - 1;
       var displayList = timeline[frameIndex];
-      if (!displayList || displayList.incomplete)
+      if (!displayList)
         return; // skiping non-prepared frame
 
       render(displayList, context);
     }
     proto.nextFrame = function() {
-      this.gotoAndStop((currentFrame % totalFrames) + 1);
+      this.gotoAndStop((currentFrame % timelineLoader.totalFrames) + 1);
     };
     proto.play = function() {
       if (this !== instance)
@@ -298,11 +379,11 @@ var MovieClipPrototype = function(obj, dictionary) {
     proto.$addChild = function(name, child) {
       children[name] = child;
     };
+    proto.$setDisplayList = function(frameNum, displayList) {
+      timeline[frameNum - 1] = displayList;
+    };
     proto.$getDisplayList = function(frameNum) {
-      var displayList = timeline[frameNum - 1];
-      if (!displayList || displayList.incomplete)
-        return; // non-prepared frame
-      return displayList;
+      return timeline[frameNum - 1];
     };
     defineObjectProperties(proto, {
       $as2Object: {
@@ -402,8 +483,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           var frame = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
           for (var i in frame) {
-            if (!+i) continue;
-            var character = frame[i];
+            var character = frame[i].character;
             var b = character.bounds || character.getBounds(this);
             xMin = Math.min(xMin, b.xMin);
             yMin = Math.min(yMin, b.yMin);
@@ -519,7 +599,10 @@ var MovieClipPrototype = function(obj, dictionary) {
           return this.matrix.translateX / 20;
         },
         set: function set$x(value) {
+          if (!this.matrix)
+            debugger;
           this.matrix.translateX = ~~(value * 20);
+          this.$fixMatrix = true;
         },
         enumerable: true
       },
@@ -529,6 +612,7 @@ var MovieClipPrototype = function(obj, dictionary) {
         },
         set: function set$y(value) {
           this.matrix.translateY = ~~(value * 20);
+          this.$fixMatrix = true;
         },
         enumerable: true
       },
@@ -540,7 +624,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           return bounds.xMax / 20;
         },
         set: function set$width(value) {
-          width = value;
+          width = value; // TODO adjust the scaleX
         },
         enumerable: true
       },
@@ -552,7 +636,7 @@ var MovieClipPrototype = function(obj, dictionary) {
           return bounds.yMax / 20;
         },
         set: function set$height(value) {
-          height = value;
+          height = value; // TODO adjust the scaleY
         },
         enumerable: true
       },
@@ -605,14 +689,14 @@ var MovieClipPrototype = function(obj, dictionary) {
     AS2Mouse.addListener(events);
     AS2Key.addListener(events);
 
+    timelineLoader.prepareTimeline(instance, as2Context);
+
     return instance;
   }
 };
 
 // HACK button as movieclip
-var ButtonPrototype = function(obj, dictionary) {
-  obj.frameCount = 4;
-  obj.pframes = [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest];
+var ButtonPrototype = function(obj, timelineLoader) {
   var instance;
 
   var AS2ButtonConditions = [

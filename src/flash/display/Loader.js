@@ -12,6 +12,12 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
     notImplemented();
   }),
 
+  addChild: descMethod(function (child) {
+    illegalOperation();
+  }),
+  addChildAt: descMethod(function (child, index) {
+    illegalOperation();
+  }),
   close: descMethod(function() {
     notImplemented();
   }),
@@ -38,24 +44,20 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
 
         // TODO disable AVM1 if AVM2 is enabled
         as2Context = new AS2Context(obj.version);
-        AS2Context.instance = as2Context;
         var globals = as2Context.globals;
 
-        var proto = create(new MovieClipPrototype({
-          frameCount: obj.frameCount,
-          pframes: pframes
-        }, dictionary));
-        root = proto.constructor();
+        var timelineLoader = new TimelineLoader(obj.frameCount, pframes, dictionary);
+        var proto = new MovieClipPrototype({}, timelineLoader);
+        root = proto.constructor(as2Context);
         root.name = '_root';
 
         globals._root = globals._level0 = root.$as2Object;
 
         loader._content = root;
-        loader._onStart(root, loaderInfo);
+        loader._onStart(root, loaderInfo, as2Context);
         return;
       }
 
-      AS2Context.instance = as2Context;
       if (obj) {
         if (obj.id) {
           definePrototype(dictionary, obj);
@@ -96,6 +98,15 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
   }),
   loadBytes: descMethod(function(bytes, context) {
     notImplemented();
+  }),
+  removeChild: descMethod(function (child) {
+    illegalOperation();
+  }),
+  removeChildAt: descMethod(function (child, index) {
+    illegalOperation();
+  }),
+  setChildIndex: descMethod(function (child, index) {
+    illegalOperation();
   }),
   unload: descMethod(function() {
     notImplemented();

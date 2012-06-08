@@ -186,15 +186,6 @@ var Class = (function () {
       this.baseClass = baseClass;
     },
 
-    makeSimpleNativeAccessors: function makeSimpleNativeAccessors(prefix, props) {
-      const nativeMethods = this.nativeMethods;
-      props.forEach(function (prop) {
-        nativeMethods[prefix + " " + prop] = function () {
-          return this[prop];
-        };
-      });
-    },
-
     isInstance: function (value) {
       if (value === null || typeof value !== "object") {
         return false;
@@ -228,8 +219,73 @@ var Class = (function () {
         return new Function.bind.apply(instance, arguments);
       },
       apply: function ($this, args) {
-      return new Function.bind.apply(instance, [$this].concat(args));
+        return new Function.bind.apply(instance, [$this].concat(args));
       }
+    };
+  };
+
+  /**
+   * Convenience functions to export all the enumerable properties of a simple
+   * JavaScript constructor as an AVM2 class. This clones the instance
+   * constructor and hooks up the prototype according to AS inheritance.
+   *
+   * Warning: language-level classes like Object, Function, etc, should not
+   * use this.
+   */
+
+  function exportProperties(obj, isStatic) {
+    var natives = {};
+    var desc;
+    for (var prop in obj) {
+      if (!(desc = Object.getOwnPropertyDescriptor(obj, prop))) {
+        continue;
+      }
+
+      var value = desc.value;
+      if (!desc.get && !desc.set) {
+        if (typeof value === "function") {
+          natives[prop] = value;
+        } else {
+          var access = "this." + (isStatic ? "instance." : "") + prop;
+          natives["get " + prop] = new Function("return " + access + ";");
+          natives["set " + prop] = new Function("v", access + " = v;");
+        }
+      } else {
+        if (desc.get) {
+          natives["get " + prop] = desc.get;
+        }
+
+        if (desc.set) {
+          natives["set " + prop] = desc.set;
+        }
+      }
+    }
+    return natives;
+  }
+
+  function mixin(into, obj) {
+    var desc;
+    for (var prop in obj) {
+      if (desc = Object.getOwnPropertyDescriptor(obj, prop)) {
+        Object.defineProperty(into, prop, desc);
+      }
+    }
+  }
+
+  Class.lift = function (name, instance) {
+    const C = Class.passthroughCallable;
+    const originalProto = instance.prototype;
+    const nativeMethods = exportProperties(originalProto);
+    const nativeStatics = exportProperties(instance, true);
+
+    // Ignore the AS constructor.
+    return function ClassMaker(scope, _, baseClass) {
+      var c = new Class(name, instance, C(instance));
+      c.extend(baseClass);
+      mixin(c.instance.prototype, originalProto);
+      c.nativeMethods = nativeMethods;
+      c.nativeStatics = nativeStatics;
+      return c;
     };
   };
 

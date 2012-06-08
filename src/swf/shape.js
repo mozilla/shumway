@@ -29,7 +29,7 @@ function colorToStyle(color, colorMorph) {
 }
 function matrixToTransform(matrix, matrixMorph) {
   if (matrixMorph) {
-    return 'transform(' + [
+    return 'c.transform(' + [
       morph(matrix.scaleX * 20, matrixMorph.scaleX * 20),
       morph(matrix.scaleY * 20, matrixMorph.scaleY * 20),
       morph(matrix.skew0 * 20, matrixMorph.skew0 * 20),
@@ -38,7 +38,7 @@ function matrixToTransform(matrix, matrixMorph) {
       morph(matrix.translateY, matrixMorph.translateY)
     ].join(',') + ')';
   }
-  return 'transform(' + [
+  return 'c.transform(' + [
     matrix.scaleX * 20,
     matrix.skew0 * 20,
     matrix.skew1 * 20,
@@ -256,31 +256,31 @@ function defineShape(tag, dictionary) {
     }
     if (path.length) {
       var cmds = [];
-      cmds.push('beginPath()');
+      cmds.push('c.beginPath()');
       var j = 0;
       var subpath;
       var prev = { };
       while (subpath = path[j++]) {
         if (subpath.spt !== prev.dpt)
-          cmds.push('moveTo(' + subpath.spt + ')');
+          cmds.push('c.moveTo(' + subpath.spt + ')');
         var edges = subpath.edges;
         if (subpath.flip) {
           var k = edges.length;
           var edge;
           while (edge = edges[--k]) {
             if (edge.cpt)
-              cmds.push('quadraticCurveTo(' + edge.cpt + ',' + edge.spt + ')');
+              cmds.push('c.quadraticCurveTo(' + edge.cpt + ',' + edge.spt + ')');
             else
-              cmds.push('lineTo(' + edge.spt + ')');
+              cmds.push('c.lineTo(' + edge.spt + ')');
           }
         } else {
           var k = 0;
           var edge;
           while (edge = edges[k++]) {
             if (edge.cpt)
-              cmds.push('quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
+              cmds.push('c.quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
             else
-              cmds.push('lineTo(' + edge.dpt + ')');
+              cmds.push('c.lineTo(' + edge.dpt + ')');
           }
         }
         prev = subpath;
@@ -289,20 +289,20 @@ function defineShape(tag, dictionary) {
       var fillStyle = fillStyles[i - 1];
       switch (fillStyle.type) {
       case FILL_SOLID:
-        cmds.push('fillStyle=' + colorToStyle(fillStyle.color, fillStyle.colorMorph));
-        cmds.push('fill()');
+        cmds.push('c.fillStyle=' + colorToStyle(fillStyle.color, fillStyle.colorMorph));
+        cmds.push('c.fill()');
         break;
       case FILL_LINEAR_GRADIENT:
       case FILL_RADIAL_GRADIENT:
       case FILL_FOCAL_RADIAL_GRADIENT:
         if (fillStyle.type === FILL_LINEAR_GRADIENT) {
-          cmds.push('var g=createLinearGradient(-819.2,0,819.2,0)');
+          cmds.push('var g=c.createLinearGradient(-819.2,0,819.2,0)');
         } else {
           var x1 = fillStyle.type === FILL_FOCAL_RADIAL_GRADIENT ?
             '819.2*' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) :
             '0'
           ;
-          cmds.push('var g=createRadialGradient(' + x1 + ',0,0,0,0,819.2)');
+          cmds.push('var g=c.createRadialGradient(' + x1 + ',0,0,0,0,819.2)');
         }
         var records = fillStyle.records;
         var j = 0;
@@ -312,11 +312,11 @@ function defineShape(tag, dictionary) {
                     morph(record.ratio / 255, isMorph ? record.ratioMorph / 255 : undefined) +
                     ',' + colorToStyle(record.color, record.colorMorph) + ')');
         }
-        cmds.push('save()');
+        cmds.push('c.save()');
         cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
-        cmds.push('fillStyle=g');
-        cmds.push('fill()');
-        cmds.push('restore()');
+        cmds.push('c.fillStyle=g');
+        cmds.push('c.fill()');
+        cmds.push('c.restore()');
         break;
       case FILL_REPEATING_BITMAP:
       case FILL_CLIPPED_BITMAP:
@@ -325,13 +325,13 @@ function defineShape(tag, dictionary) {
         var repetition = fillStyle.repeat ? 'repeat' : 'no-repeat';
         var bitmap = dictionary[fillStyle.bitmapId];
         assert(bitmap, 'undefined bitmap', 'shape');
-        cmds.push('var p=createPattern(d[' + bitmap.id + '].img,"' + repetition + '")');
-        cmds.push('save()');
+        cmds.push('var p=c.createPattern(d[' + bitmap.id + '].img,"' + repetition + '")');
+        cmds.push('c.save()');
         cmds.push(matrixToTransform(fillStyle.matrix, fillStyle.matrixMorph));
-        cmds.push('scale(0.05,0.05)');
-        cmds.push('fillStyle=p');
-        cmds.push('fill()');
-        cmds.push('restore()');
+        cmds.push('c.scale(0.05,0.05)');
+        cmds.push('c.fillStyle=p');
+        cmds.push('c.fill()');
+        cmds.push('c.restore()');
         dependencies.push(bitmap.id);
         break;
       default:
@@ -354,24 +354,24 @@ function defineShape(tag, dictionary) {
       var segment;
       while (segment = segments[j++]) {
         var edges = segment.edges;
-        var cmds = ['beginPath()'];
+        var cmds = ['c.beginPath()'];
         var k = 0;
         var edge;
         var prev = { };
         while (edge = edges[k++]) {
           if (edge.spt !== prev.dpt)
-            cmds.push('moveTo(' + edge.spt + ')');
+            cmds.push('c.moveTo(' + edge.spt + ')');
           if (edge.cpt)
-            cmds.push('quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
+            cmds.push('c.quadraticCurveTo(' + edge.cpt + ',' + edge.dpt + ')');
           else
-            cmds.push('lineTo(' + edge.dpt + ')');
+            cmds.push('c.lineTo(' + edge.dpt + ')');
           prev = edge;
         }
-        cmds.push('strokeStyle=' + strokeStyle);
-        cmds.push('lineWidth=' + lineWidth);
-        cmds.push('lineCap="round"');
-        cmds.push('lineJoin="round"');
-        cmds.push('stroke()');
+        cmds.push('c.strokeStyle=' + strokeStyle);
+        cmds.push('c.lineWidth=' + lineWidth);
+        cmds.push('c.lineCap="round"');
+        cmds.push('c.lineJoin="round"');
+        cmds.push('c.stroke()');
         paths.push({ i: segment.i, cmds: cmds });
       }
     }

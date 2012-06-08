@@ -102,16 +102,16 @@ Promise.resolved = {
     callback();
   }
 };
-Promise.all = function(promises) {
+Promise.all = function(promises, collectResults) {
   if (promises.length == 0)
     return Promise.resolved;
   var promisesToResolve = promises.length;
-  var results = [];
+  var results = collectResults ? [] : null;
   var promise = new Promise();
   for (var i = 0; i < promises.length; i++) {
     promises[i].then((function(i) {
       return (function() {
-        if (arguments.length > 1)
+        if (collectResults && arguments.length > 1)
           results[i] = slice.call(arguments, 0);
         promisesToResolve--;
         if (promisesToResolve == 0)
@@ -121,3 +121,29 @@ Promise.all = function(promises) {
   }
   return promise;
 };
+
+(function checkWeakMap() {
+  if (typeof this.WeakMap === 'function')
+    return; // weak map is supported
+
+  var id = 0;
+  function WeakMap() {
+    this.id = '$weekmap' + (id++);
+  };
+  WeakMap.prototype = {
+    has: function(obj) {
+      return this.id in obj;
+    },
+    get: function(obj, defaultValue) {
+      return this.id in obj ? obj[this.id] : defaultValue;
+    },
+    set: function(obj, value) {
+      Object.defineProperty(obj, this.id, {
+        value: value,
+        enumerable: false,
+        configurable: true
+      });
+    }
+  };
+  this.WeakMap = WeakMap;
+})();

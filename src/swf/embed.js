@@ -47,17 +47,14 @@ function definePrototype(dictionary, obj) {
     break;
   case 'sprite':
     requirePromise.then(function() {
-      promise.resolve(new MovieClipPrototype(obj, dictionary));
+      var timelineLoader = new TimelineLoader(obj.frameCount || 1, obj.pframes || [], dictionary);
+      promise.resolve(new MovieClipPrototype(obj, timelineLoader));
     });
     break;
   case 'shape':
   case 'text':
     var proto = create(obj);
-    var drawFn = new Function('d,c,r',
-      'with(c){\n' +
-        obj.data + '\n' +
-      '}'
-    );
+    var drawFn = new Function('d,c,r', obj.data);
     proto.draw = (function(c, r) {
       return drawFn.call(this, dictionary, c, r);
     });
@@ -67,7 +64,10 @@ function definePrototype(dictionary, obj) {
     break;
   case 'button':
     requirePromise.then(function() {
-      promise.resolve(new ButtonPrototype(obj, dictionary));
+      var timelineLoader = new TimelineLoader(4,
+        [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest],
+        dictionary);
+      promise.resolve(new ButtonPrototype(obj, timelineLoader));
     });
     break;
   default:
