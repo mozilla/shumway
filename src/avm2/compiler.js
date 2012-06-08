@@ -652,7 +652,7 @@ var Compiler = (function () {
     }
 
     this.temporary = [];
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < method.maxStack; i++) {
       this.temporary.push(new Variable("s" + i));
     }
 
@@ -692,21 +692,23 @@ var Compiler = (function () {
 
     var statements = [];
 
+    var local = this.local;
+    var temporary = this.temporary;
+    var varPool = this.variablePool;
+
     function getSlot(obj, index) {
       pushValue(obj + "[" + obj + ".slots[" + index + "]]");
     }
 
     function setSlot(obj, index, value) {
       flushStack();
-      var t = temporary[0];
-      statements.push(t + " = " + obj + ".types[" + index + "];");
+      var temp = varPool.acquire();
+      statements.push(temp + " = " + obj + ".types[" + index + "];");
       statements.push(obj + "[" + obj + ".slots[" + index + "]] = " +
-                      t + " ? " + t + ".call" + argumentList(t, value) +
+                      temp + " ? " + temp + ".call" + argumentList(temp, value) +
                       " : " + value + ";");
+      varPool.release(temp);
     }
-
-    var local = this.local;
-    var temporary = this.temporary;
 
     if (enableCSE.value) {
       if (block.dominator === block) {
@@ -747,9 +749,10 @@ var Compiler = (function () {
     }
 
     function duplicate(value) {
-      var temp = temporary[state.stack.length];
+      var temp = varPool.acquire();
       state.stack.push("(" + temp + " = " + value + ")");
       state.stack.push(temp);
+      varPool.release(temp);
     }
 
     function popValue() {
@@ -828,7 +831,7 @@ var Compiler = (function () {
     var multinames = abc.constantPool.multinames;
     var runtime = abc.runtime;
     var savedScope = this.savedScope;
-    var multiname, args, value, obj, ns, name, type, factory, index;
+    var multiname, args, value, obj, ns, name, type, factory, index, temp;
 
     function classObject() {
       return SAVED_SCOPE_NAME + ".object";
@@ -870,7 +873,7 @@ var Compiler = (function () {
        * doing a runtime looking, quickly go through late
        * name lookup here.
        */
-      if (multiname.isRuntimeName() && !multiname.isPublicNamespaced()) {
+      if (multiname.isRuntimeName() && multiname.isPublicNamespaced()) {
         var value = state.stack.pop();
         return obj + "." + GET_ACCESSOR + "(" + value + ")";
       }
@@ -895,10 +898,12 @@ var Compiler = (function () {
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
       case OP_throw:
-        emitStatement(temporary[0] + " = " +
+        temp = varPool.acquire();
+        emitStatement(temp + " = " +
                       objectConstant(abc) + ".runtime.exception");
-        emitStatement(temporary[0] + ".value = " + state.stack.pop());
-        emitStatement("throw " + temporary[0]);
+        emitStatement(temp + ".value = " + state.stack.pop());
+        emitStatement("throw " + temp);
+        varPool.release(temp);
         break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
@@ -955,10 +960,12 @@ var Compiler = (function () {
         flushStack();
         obj = local[bc.object];
         index = local[bc.index];
-        emitStatement(temporary[0] + " = hasNext2" + argumentList(obj, index));
-        emitStatement(local[bc.object] + " = " + temporary[0] + ".object");
-        emitStatement(local[bc.index] + " = " + temporary[0] + ".index");
-        pushValue(temporary[0] + ".index");
+        temp = varPool.acquire();
+        emitStatement( + " = hasNext2" + argumentList(obj, index));
+        emitStatement(local[bc.object] + " = " + temp + ".object");
+        emitStatement(local[bc.index] + " = " + temp + ".index");
+        pushValue(temp + ".index");
+        varPool.release(temp);
         break;
       case OP_pushnull:       pushValue(new Constant(null)); break;
       case OP_pushundefined:  pushValue(new Constant(undefined)); break;
@@ -1214,7 +1221,10 @@ var Compiler = (function () {
       case OP_coerce_s:       pushValue("coerceString" + argumentList(state.stack.pop())); break;
       case OP_astype:         notImplemented(); break;
       case OP_astypelate:     notImplemented(); break;
-      case OP_coerce_o:       notImplemented(); break;
+      case OP_coerce_o:
+        obj = state.stack.pop();
+        pushValue("(" + obj + " == undefined ? null : " + obj + ")");
+        break;
       case OP_negate:         expression(Operator.NEG); break;
       case OP_increment:
         pushValue(new Constant(1));
@@ -1282,12 +1292,37 @@ var Compiler = (function () {
         pushValue(new Constant(1));
         expression(Operator.SUB);
         break;
-      case OP_inclocal_i:     notImplemented(); break;
-      case OP_declocal_i:     notImplemented(); break;
-      case OP_negate_i:       notImplemented(); break;
-      case OP_add_i:          notImplemented(); break;
-      case OP_subtract_i:     notImplemented(); break;
-      case OP_multiply_i:     notImplemented(); break;
+      case OP_inclocal_i:
+        emitStatement(locals[bc.index] + " = (" + locals[bc.index] + " | 0) + 1");
+        break;
+      case OP_declocal_i:
+        emitStatement(locals[bc.index] + " = (" + locals[bc.index] + " | 0) - 1");
+        break;
+      case OP_negate_i:
+        toInt32();
+        expression(Operator.NEG);
+        break;
+      case OP_add_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.ADD);
+        break;
+      case OP_subtract_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.SUB);
+        break;
+      case OP_multiply_i:
+        value = stack.state.pop();
+        toInt32();
+        stack.state.push(value);
+        toInt32();
+        expression(Operator.MUL);
+        break;
       case OP_getlocal0:
       case OP_getlocal1:
       case OP_getlocal2:
