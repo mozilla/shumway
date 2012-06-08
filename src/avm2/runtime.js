@@ -466,6 +466,12 @@ const toplevel = (function () {
       }
     },
 
+    getClass: function getClass(simpleName) {
+      var c = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
+      assert(c instanceof Class);
+      return c.instance;
+    },
+
     findProperty: function findProperty(multiname, strict, execute) {
       if (traceToplevel.value) {
         print("Toplevel Find Property: " + multiname);
