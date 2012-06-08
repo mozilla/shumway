@@ -1,14 +1,16 @@
 #!/usr/bin/env python
-import sys,os.path,os,getopt,time,subprocess,re,argparse,threading
+import argparse
+import multiprocessing
+import os.path
+import os
+import Queue
+import signal
+import subprocess
+import sys
+import time
+import threading
 
 from subprocess import Popen, PIPE, STDOUT
-import datetime, time, signal
-import pickle
-import Queue
-import multiprocessing
-import tempfile
-
-from dis import disassemble
 
 def execute (command, timeout = -1):
   start_time = time.time()
