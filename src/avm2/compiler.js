@@ -652,7 +652,7 @@ var Compiler = (function () {
     }
 
     this.temporary = [];
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < method.maxStack; i++) {
       this.temporary.push(new Variable("s" + i));
     }
 
@@ -692,21 +692,23 @@ var Compiler = (function () {
 
     var statements = [];
 
+    var local = this.local;
+    var temporary = this.temporary;
+    var varPool = this.variablePool;
+
     function getSlot(obj, index) {
       pushValue(obj + "[" + obj + ".slots[" + index + "]]");
     }
 
     function setSlot(obj, index, value) {
       flushStack();
-      var t = temporary[0];
-      statements.push(t + " = " + obj + ".types[" + index + "];");
+      var temp = varPool.acquire();
+      statements.push(temp + " = " + obj + ".types[" + index + "];");
       statements.push(obj + "[" + obj + ".slots[" + index + "]] = " +
-                      t + " ? " + t + ".call" + argumentList(t, value) +
+                      temp + " ? " + temp + ".call" + argumentList(temp, value) +
                       " : " + value + ";");
+      varPool.release(temp);
     }
-
-    var local = this.local;
-    var temporary = this.temporary;
 
     if (enableCSE.value) {
       if (block.dominator === block) {
@@ -747,9 +749,10 @@ var Compiler = (function () {
     }
 
     function duplicate(value) {
-      var temp = temporary[state.stack.length];
+      var temp = varPool.acquire();
       state.stack.push("(" + temp + " = " + value + ")");
       state.stack.push(temp);
+      varPool.release(temp);
     }
 
     function popValue() {
@@ -828,7 +831,7 @@ var Compiler = (function () {
     var multinames = abc.constantPool.multinames;
     var runtime = abc.runtime;
     var savedScope = this.savedScope;
-    var multiname, args, value, obj, ns, name, type, factory, index;
+    var multiname, args, value, obj, ns, name, type, factory, index, temp;
 
     function classObject() {
       return SAVED_SCOPE_NAME + ".object";
@@ -895,10 +898,12 @@ var Compiler = (function () {
       switch (op) {
       case OP_bkpt:           notImplemented(); break;
       case OP_throw:
-        emitStatement(temporary[0] + " = " +
+        temp = varPool.acquire();
+        emitStatement(temp + " = " +
                       objectConstant(abc) + ".runtime.exception");
-        emitStatement(temporary[0] + ".value = " + state.stack.pop());
-        emitStatement("throw " + temporary[0]);
+        emitStatement(temp + ".value = " + state.stack.pop());
+        emitStatement("throw " + temp);
+        varPool.release(temp);
         break;
       case OP_getsuper:       notImplemented(); break;
       case OP_setsuper:       notImplemented(); break;
@@ -955,10 +960,12 @@ var Compiler = (function () {
         flushStack();
         obj = local[bc.object];
         index = local[bc.index];
-        emitStatement(temporary[0] + " = hasNext2" + argumentList(obj, index));
-        emitStatement(local[bc.object] + " = " + temporary[0] + ".object");
-        emitStatement(local[bc.index] + " = " + temporary[0] + ".index");
-        pushValue(temporary[0] + ".index");
+        temp = varPool.acquire();
+        emitStatement( + " = hasNext2" + argumentList(obj, index));
+        emitStatement(local[bc.object] + " = " + temp + ".object");
+        emitStatement(local[bc.index] + " = " + temp + ".index");
+        pushValue(temp + ".index");
+        varPool.release(temp);
         break;
       case OP_pushnull:       pushValue(new Constant(null)); break;
       case OP_pushundefined:  pushValue(new Constant(undefined)); break;
