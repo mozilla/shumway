@@ -264,7 +264,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.leave("}");
 }
 
-var SourceTracer = (function () {
+var SourceTracer = (function (writer) {
   function literal(value) {
     if (value === undefined) {
       return "undefined";
@@ -483,10 +483,11 @@ var SourceTracer = (function () {
     traceClass: traceClass,
     traceClassStub: traceClassStub
   };
-})();
+});
 
 function traceSource(writer, abc) {
+  var tracer = SourceTracer(writer);
   abc.scripts.forEach(function (script) {
-    SourceTracer.traceTraits(script.traits);
+    tracer.traceTraits(script.traits);
   });
 }
