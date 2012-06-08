@@ -423,7 +423,9 @@ var Interpreter = (function () {
           case OP_unplus:         notImplemented(); break;
           case OP_convert_f4:     notImplemented(); break;
           case OP_coerce:
-            // TODO:
+            value = stack.pop();
+            multiname = multinames[bc.index];
+            stack.push(coerce(value, toplevel.getTypeByName(multiname, true, true)));
             break;
           case OP_coerce_b:       notImplemented(); break;
           case OP_coerce_a:       /* NOP */ break;

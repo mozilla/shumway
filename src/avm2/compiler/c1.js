@@ -1,3 +1,5 @@
+var enableCSE = options.register(new Option("cse", "cse", true, "Common Subexpression Elimination"));
+
 const T = estransform;
 
 const Node = T.Node;
@@ -277,23 +279,113 @@ var Compiler = (function () {
     return findProperty;
   })();
 
+  /**
+   * Wrapper around a named local variable.
+   */
+  var Variable = (function () {
+    function variable(name) {
+      Identifier.call(this, name);
+    }
+    variable.prototype = Object.create(Identifier.prototype);
+    variable.prototype.toString = function toString() {
+      return this.name;
+    };
+    variable.prototype.isEquivalent = function isEquivalent(other) {
+      return other instanceof variable && this.name === other.name;
+    };
+    return variable;
+  })();
+
+  /**
+   * Keeps track of a pool of variables that may be reused.
+   */
+  var VariablePool = (function () {
+    var count = 0;
+    function variablePool() {
+      this.used = [];
+      this.available = [];
+    }
+    variablePool.prototype.acquire = function () {
+      if (!this.available.empty()) {
+        return this.available.pop();
+      }
+      var variable = new Variable("v" + count++);
+      this.used.push(variable);
+      return variable;
+    };
+    variablePool.prototype.release = function (variable) {
+      assert (this.used.contains(variable));
+      this.available.push(variable);
+    };
+    return variablePool;
+  })();
+
+  /**
+   * Common subexpression elimination is only used to CSE scope lookups for now,
+   * use it more aggressively. Each basic block maintains a list of values which
+   * are checked whenever new values are added to the list. If a [equivalent] value
+   * already exists in the list, the old value is returned. The values are first
+   * looked up in the current list, then in the parent's (immediate dominator) list.
+   */
+  var CSE = (function () {
+    function cse(parent, variablePool) {
+      this.parent = parent;
+      this.variablePool = variablePool;
+      this.values = [];
+    }
+
+    /**
+     * Finds and returns an equivalent value or returns null if not found.
+     * If [allocate] is true, then if an equivalent value is not found the
+     * a variable is allocated for the current value and the original value
+     * is returned.
+     */
+    cse.prototype.get = function get(value, allocate) {
+      if (value instanceof Variable || value instanceof Literal) {
+        return value;
+      }
+      var values = this.values;
+      for (var i = values.length - 1; i >= 0; i--) {
+        var other = values[i];
+        if (value.isEquivalent(other)) {
+          assert (other.variable);
+          return other;
+        }
+      }
+      if (this.parent) {
+        var otherValue = this.parent.get(value, false);
+        if (otherValue) {
+          return otherValue;
+        }
+      }
+      if (!allocate) {
+        return null;
+      }
+      value.variable = this.variablePool.acquire();
+      this.values.push(value);
+      return value;
+    };
+
+    return cse;
+  })();
+
   var Compilation = (function () {
     function compilation(compiler, methodInfo, scope) {
       this.compiler = compiler;
       var mi = this.methodInfo = methodInfo;
       this.bytecodes = methodInfo.analysis.bytecodes;
-
       this.state = new State();
+      this.variablePool = new VariablePool();
 
       /* Initialize local variables. First declare the [this] reference, then ... */
-      this.local = [id("this")];
+      this.local = [new Variable("this")];
 
       var freeVariableNames = "abcdefghijklmnopqrstuvwxyz".split("");
 
       /* push the method's parameters, followed by ... */
       for (var i = 0; i < mi.parameters.length; i++) {
         var name = mi.parameters[i].name;
-        this.local.push(id(name));
+        this.local.push(new Variable(name));
         if (freeVariableNames.indexOf(name) >= 0) {
           delete freeVariableNames[freeVariableNames.indexOf(name)];
         }
@@ -314,7 +406,7 @@ var Compiler = (function () {
 
       /* push the method's remaining locals.*/
       for (var i = mi.parameters.length; i < mi.localCount; i++) {
-        this.local.push(id(newVariableName()));
+        this.local.push(new Variable(newVariableName()));
       }
 
       this.temporary = [];
@@ -344,6 +436,12 @@ var Compiler = (function () {
       assert (node instanceof BlockStatement);
       if (this.temporary.length > 1) {
         this.prologue.push(new VariableDeclaration("var", this.temporary.map(function (x) {
+          return new VariableDeclarator(x, null);
+        })));
+      }
+      var usedVariables = this.variablePool.used;
+      if (usedVariables.length) {
+        this.prologue.push(new VariableDeclaration("var", usedVariables.map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
@@ -461,7 +559,22 @@ var Compiler = (function () {
 
       function push(value) {
         assert (typeof value !== "string");
-        state.stack.push(value);
+        if (enableCSE.value && value instanceof FindProperty) {
+          cseValue(value);
+        } else {
+          state.stack.push(value);
+        }
+      }
+
+      function cseValue(value) {
+        assert (value);
+        if (block.cse) {
+          var otherValue = block.cse.get(value, true);
+          if (otherValue === value) {
+            emit(assignment(value.variable, value));
+          }
+          state.stack.push(otherValue.variable);
+        }
       }
 
       function setLocal(index) {
@@ -503,11 +616,9 @@ var Compiler = (function () {
       }
 
       /**
-       * Stores all stack values into temporaries. At the end of a block, the state stack
-       * may not be empty. This usually occurs for short-circuited conditional expressions.
+       * Emits assignments that store stack expressions into temporaries.
        */
       function flushStack() {
-        // assert (state.stack.length <= 2, "Stack Length is " + state.stack.length);
         for (var i = 0; i < state.stack.length; i++) {
           if (state.stack[i] !== getTemporary(i)) {
             emit(assignment(getTemporary(i), state.stack[i]));
@@ -527,6 +638,15 @@ var Compiler = (function () {
         // TODO
       }
 
+      if (enableCSE.value) {
+        if (block.dominator === block) {
+          block.cse = new CSE(null, this.variablePool);
+        } else {
+          assert (block.dominator.cse, "Dominator should have a CSE map.");
+          block.cse = new CSE(block.dominator.cse, this.variablePool);
+        }
+      }
+
       function expression(operator) {
         if (operator.isBinary()) {
           var b = state.stack.pop();
@@ -536,6 +656,11 @@ var Compiler = (function () {
           var a = state.stack.pop();
           push(new UnaryExpression(operator.name, a));
         }
+      }
+
+      function toInt32() {
+        push(constant(0));
+        expression(Operator.OR);
       }
 
       var condition = null;
@@ -779,7 +904,7 @@ var Compiler = (function () {
         case OP_applytype:
           args = state.stack.popMany(bc.argCount);
           factory = state.stack.pop();
-          push(call(id("applyType"), [factory, args]));
+          push(call(id("applyType"), [factory].concat(new ArrayExpression(args))));
           flushStack();
           break;
         case OP_pushfloat4:     notImplemented(); break;

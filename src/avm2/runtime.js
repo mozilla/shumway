@@ -417,6 +417,10 @@ function setProperty(obj, multiname, value) {
   var name = resolved.getQualifiedName();
   var type = obj.types[name];
 
+  if (tracePropertyAccess.value && type) {
+    print("setProperty: coercing to type:" + type);
+  }
+
   obj[name] = type ? type.call(type, value) : value;
 }
 

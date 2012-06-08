@@ -367,6 +367,8 @@ const natives = (function () {
   /**
    * Vector.as
    */
+
+  /*
   function VectorClass(scope, instance, baseClass) {
     var c = new Class("Vector", null, null);
     c.baseClass = baseClass;
@@ -374,7 +376,14 @@ const natives = (function () {
     c.nativeMethods = m;
     return c;
   }
+   */
 
+  /**
+   * Creates a typed Vector class. It steals the Array object from a new global
+   * and overrides its GET/SET ACCESSOR methods to do the appropriate coercions.
+   * If the |type| argument is undefined, then it creates the untyped Vector
+   * class.
+   */
   function createVectorClass(type) {
     var TypedArray = createNewGlobalObject().Array;
 
@@ -382,10 +391,16 @@ const natives = (function () {
       return this[i];
     });
 
-    var coerce = type.instance;
-    defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
-      this[i] = coerce(v);
-    });
+    if (type) {
+      var coerce = type.instance;
+      defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
+        this[i] = coerce(v);
+      });
+    } else {
+      defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
+        this[i] = v;
+      });
+    }
 
     function TypedVector (length, fixed) {
       var array = new TypedArray(length);
@@ -394,9 +409,10 @@ const natives = (function () {
       }
       return array;
     }
+
     TypedVector.prototype = TypedArray.prototype;
-    var typeName = type.classInfo.instanceInfo.name.name;
-    var c = new Class("Vector$" + typeName, TypedVector, C(TypedVector));
+    var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
+    var c = new Class(name, TypedVector, C(TypedVector));
 
     var m = TypedArray.prototype;
 
@@ -412,6 +428,10 @@ const natives = (function () {
     c.nativeMethods = m;
     c.nativeStatics = {};
     return c;
+  }
+
+  function VectorClass(scope, instance, baseClass) {
+    return createVectorClass();
   }
 
   function ObjectVectorClass(scope, instance, baseClass) {
