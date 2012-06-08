@@ -21,7 +21,7 @@ var Timer = metrics.Timer;
 
 load("../compiler/lljs/src/estransform.js");
 load("../compiler/lljs/src/escodegen.js");
-load("../compiler/c1.js");
+load("../compiler/compiler.js");
 
 load("../native.js");
 load("../runtime.js");
