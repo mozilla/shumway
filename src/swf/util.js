@@ -128,7 +128,7 @@ Promise.all = function(promises, collectResults) {
 
   var id = 0;
   function WeakMap() {
-    this.id = '$weekmap' + (id++);
+    this.id = '$weakmap' + (id++);
   };
   WeakMap.prototype = {
     has: function(obj) {

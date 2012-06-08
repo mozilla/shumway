@@ -42,7 +42,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
         break;
       var currentFrame = n + 1;
       if (pframe.name)
-        frameLabels[pframe.name] = currentFrame;
+        frameLabels[pframe.name.toLowerCase()] = currentFrame;
       var i = pframe.repeat || 1;
       while (i--) {
         ptimeline.push(frame);
@@ -327,7 +327,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
       if (this !== instance)
         return;
       paused = false;
-      if (!+frame)
+      if (isNaN(frame))
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
@@ -335,13 +335,14 @@ var MovieClipPrototype = function(obj, timelineLoader) {
       if (this !== instance)
         return;
       paused = true;
-      if (!+frame)
+      if (isNaN(frame))
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
     };
     proto.gotoLabel = function(label) {
       if (this !== instance)
         return;
+      label = label.toLowerCase(); // labels are case insensitive
       if (!(label in timelineLoader.frameLabels))
         return; // label is not found, skipping ?
       gotoFrame.call(instance, timelineLoader.frameLabels[label]);
