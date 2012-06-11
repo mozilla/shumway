@@ -127,10 +127,10 @@ function toString(x) {
 }
 
 function coerce(obj, type) {
-  if (type.isInstance(obj)) {
+  if (obj == null || type.isInstance(obj)) {
     return obj;
   } else {
-    return null;
+    throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
   }
 }
 
@@ -188,7 +188,7 @@ function applyType(factory, types) {
         typeClassName = "object";
         break;
     }
-    return toplevel.getTypeByName(Multiname.fromSimpleName("packageInternal __AS3__$vec.Vector$" + typeClassName), true);
+    return toplevel.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
   } else {
     return notImplemented(factoryClassName);
   }
@@ -411,7 +411,8 @@ function setProperty(obj, multiname, value) {
   }
 
   if (tracePropertyAccess.value) {
-    print("setProperty: resolved multiname: " + resolved + " value: " + value);
+    // print("setProperty: resolved multiname: " + resolved + " value: " + value);
+    print("setProperty: resolved multiname: " + resolved);
   }
 
   var name = resolved.getQualifiedName();
@@ -421,17 +422,20 @@ function setProperty(obj, multiname, value) {
     print("setProperty: coercing to type:" + type);
   }
 
-  obj[name] = type ? type.call(type, value) : value;
+  if (type && type.coerce) {
+    value = type.coerce(value);
+  }
+
+  obj[name] = value;
 }
 
 function throwErrorFromVM(errorClass, message) {
-  var name = Multiname.fromSimpleName(errorClass);
-  throw new (toplevel.getTypeByName(name, true, true)).instance(message);
+  throw new (toplevel.getClass(errorClass)).instance(message);
 }
 
 function translateError(error) {
   if (error instanceof Error) {
-    var type = toplevel.getTypeByName(Multiname.fromSimpleName(error.name), true, true);
+    var type = toplevel.getClass(error.name);
     if (type) {
       return new type.instance(error.message);
     }
@@ -467,6 +471,8 @@ const toplevel = (function () {
     // TODO: Caching.
   }
 
+  var cache = {};
+
   Toplevel.prototype = {
     getTypeByName: function getTypeByName(multiname, strict, execute) {
       var resolved = this.resolveMultiname(multiname, execute);
@@ -481,9 +487,12 @@ const toplevel = (function () {
     },
 
     getClass: function getClass(simpleName) {
-      var c = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
+      var c = cache[simpleName];
+      if (!c) {
+        c = cache[simpleName] = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
+      }
       assert(c instanceof Class);
-      return c.instance;
+      return c;
     },
 
     findProperty: function findProperty(multiname, strict, execute) {
@@ -855,9 +864,7 @@ var Runtime = (function () {
       }
       print(str);
     }
-    var interface = new Interface(ii.name);
-    interface.classInfo = classInfo;
-    return interface;
+    return new Interface(classInfo);
   };
 
   /**

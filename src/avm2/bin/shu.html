@@ -14,8 +14,10 @@
     </script>
 
     <script type="text/javascript" src="../util.js"></script>
+    <script type="text/javascript" src="../metrics.js"></script>
 
     <script type="text/javascript">
+      var Timer = metrics.Timer;
       var options = new OptionSet("option(s)");
       var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
       var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
@@ -81,9 +83,7 @@
       // abcs.push(["../tests/sunspider/crypto-md5.abc"]);
       // abcs.push(["../tests/tamarin/ecma3/Array/e15_4_3_2.abc"]);
 
-      abcs.push(["../tests/sunspider/string-unpack-code.abc"]);
-
-
+      abcs.push(["../tests/crypto.abc", ALWAYS_INTERPRET]);
 
       function executeNext() {
         if (abcs.length) {
