@@ -119,7 +119,7 @@ function toUint(x) {
 }
 
 function toInt(x) {
-  return parseInt(x);
+  return x | 0;
 }
 
 function toString(x) {

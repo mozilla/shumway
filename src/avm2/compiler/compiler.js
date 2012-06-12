@@ -1,8 +1,8 @@
 var enableCSE = options.register(new Option("cse", "cse", true, "Common Subexpression Elimination"));
+var enableAccessors = options.register(new Option("acc", "acc", true, "Use accessors to get/set values via runtime multinames. "));
 
 const T = estransform;
 
-const Node = T.Node;
 const Literal = T.Literal;
 const Identifier = T.Identifier;
 const VariableDeclaration = T.VariableDeclaration;
@@ -16,7 +16,6 @@ const ExpressionStatement = T.ExpressionStatement;
 const ReturnStatement = T.ReturnStatement;
 const Program = T.Program;
 const Statement = T.Statement;
-const Comment = T.Comment;
 const FunctionDeclaration = T.FunctionDeclaration;
 const FunctionExpression = T.FunctionExpression;
 const ConditionalExpression = T.ConditionalExpression;
@@ -141,6 +140,11 @@ var Compiler = (function () {
   function binary (operator, left, right) {
     return new BinaryExpression(operator.name, left, right);
   }
+
+  function asInt32(value) {
+    return binary(Operator.OR, value, constant(0));
+  }
+
   function id(name) {
     return new Identifier(name);
   }
@@ -673,11 +677,6 @@ var Compiler = (function () {
         }
       }
 
-      function toInt32() {
-        push(constant(0));
-        expression(Operator.OR);
-      }
-
       var condition = null;
 
       /**
@@ -752,7 +751,7 @@ var Compiler = (function () {
 
         case OP_bkpt:           notImplemented(); break;
         case OP_throw:
-          emit(assignment(getTemporary(0), property(objectConstant(abc), ".runtime.exception")));
+          emit(assignment(getTemporary(0), property(objectConstant(abc), "runtime.exception")));
           emit(assignment(property(getTemporary(0), "value"), state.stack.pop()));
           emit(new ThrowStatement(getTemporary(0)));
           break;
@@ -978,7 +977,11 @@ var Compiler = (function () {
               ns = state.stack.pop();
             }
             obj = state.stack.pop();
-            emit(call(property(obj, SET_ACCESSOR), [name, value]));
+            if (enableAccessors.value) {
+              emit(call(property(obj, SET_ACCESSOR), [name, value]));
+            } else {
+              emit(assignment(new MemberExpression(obj, name, true), value));
+            }
           }
           break;
         case OP_getlocal:       push(local[bc.index]); break;
@@ -1007,7 +1010,11 @@ var Compiler = (function () {
               ns = state.stack.pop();
             }
             obj = state.stack.pop();
-            push(call(property(obj, GET_ACCESSOR), [name]));
+            if (enableAccessors.value) {
+              push(call(property(obj, GET_ACCESSOR), [name]));
+            } else {
+              push(new MemberExpression(obj, name, true));
+            }
           }
           break;
         case OP_getouterscope:      notImplemented(); break;
@@ -1046,7 +1053,7 @@ var Compiler = (function () {
         case OP_esc_xattr:      notImplemented(); break;
         case OP_coerce_i:
         case OP_convert_i:
-          push(call(id("toInt"), [state.stack.pop()]));
+          push(asInt32(state.stack.pop()));
           break;
         case OP_coerce_u:
         case OP_convert_u:
@@ -1137,14 +1144,10 @@ var Compiler = (function () {
           break;
         case OP_in:             notImplemented(); break;
         case OP_increment_i:
-          toInt32();
-          push(constant(1));
-          expression(Operator.ADD);
+          push(binary(Operator.ADD, asInt32(state.stack.pop()), constant(1)));
           break;
         case OP_decrement_i:
-          toInt32();
-          push(constant(1));
-          expression(Operator.SUB);
+          push(binary(Operator.SUB, asInt32(state.stack.pop()), constant(1)));
           break;
         case OP_inclocal_i:     notImplemented(); break;
         case OP_declocal_i:     notImplemented(); break;
