@@ -918,17 +918,17 @@ var Runtime = (function () {
       traits.lastSlotId = freshSlotId;
     }
 
-    function defineProperty(name, slotId, value, type, isMethod) {
+    function defineProperty(name, slotId, value, type, readOnly) {
       if (slotId) {
-        defineNonEnumerableProperty(obj, name, value);
-        obj.slots[slotId] = name;
-        obj.types[name] = type;
-      } else if (!obj.hasOwnProperty(name)) {
-        if (isMethod) {
+        if (readOnly) {
           defineReadOnlyProperty(obj, name, value);
         } else {
           defineNonEnumerableProperty(obj, name, value);
         }
+        obj.slots[slotId] = name;
+        obj.types[name] = type;
+      } else if (!obj.hasOwnProperty(name)) {
+        defineNonEnumerableProperty(obj, name, value);
       }
     }
 
@@ -946,10 +946,12 @@ var Runtime = (function () {
 
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
+      var qn = trait.name.getQualifiedName();
+
       assert (trait.holder);
       if (trait.isSlot() || trait.isConst()) {
         var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
-        defineProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
+        defineProperty(qn, trait.slotId, trait.value, type, trait.isConst());
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
         var mi = trait.methodInfo;
@@ -999,19 +1001,18 @@ var Runtime = (function () {
         /* Identify this as a method for auto-binding via MethodClosure. */
         defineNonEnumerableProperty(closure, "isMethod", true);
 
-        var qn = trait.name.getQualifiedName();
         if (trait.isGetter()) {
           defineGetter(obj, qn, closure);
         } else if (trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
-          defineProperty(qn, undefined, closure, undefined, true);
+          defineReadOnlyProperty(obj, qn, closure);
         }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
           trait.classInfo.native = trait.metadata.native;
         }
-        defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
+        defineProperty(qn, trait.slotId, null, undefined, false);
       } else {
         assert(false, trait);
       }
