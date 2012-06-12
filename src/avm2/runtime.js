@@ -171,7 +171,10 @@ function getSlot(obj, index) {
 function setSlot(obj, index, value) {
   var name = obj.slots[index];
   var type = obj.types[name];
-  obj[name] = type ? type.call(type, value) : value;
+  if (type && type.coerce) {
+    value = type.coerce(value);
+  }
+  obj[name] = value;
 }
 
 function applyType(factory, types) {
@@ -273,6 +276,7 @@ var Scope = (function () {
   }
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
+    assert (multiname instanceof Multiname);
     if (traceScope.value || tracePropertyAccess.value) {
       print("scopeFindProperty: " + multiname);
     }
@@ -381,6 +385,8 @@ function getProperty(obj, multiname, bind) {
 
 function setProperty(obj, multiname, value) {
   assert (obj);
+  assert (multiname instanceof Multiname);
+
   if (typeof multiname.name === "number") {
     obj[SET_ACCESSOR](multiname.name, value);
     return;

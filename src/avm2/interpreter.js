@@ -628,7 +628,6 @@ var Interpreter = (function () {
               continue interpret;
             }
           }
-
           throw e;
         }
       }

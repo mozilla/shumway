@@ -43,7 +43,7 @@ const constantsName = new Identifier("$C");
  * To embed object references in compiled code we index into globally accessible constant table [$C].
  * This table maintains an unique set of object references, each of which holds its own position in
  * the constant table, thus providing for fast lookup. To embed a reference to an object [k] we call
- * [objectConstant(k)] which may generate the literal "$C[12]".
+ * [constant(k)] which may generate the literal "$C[12]".
  */
 
 var $C = [];
@@ -103,15 +103,29 @@ var Compiler = (function () {
     return cx.compileIf(this, state);
   };
 
-  function objectConstant(obj) {
-    return new MemberExpression(constantsName, new Literal(objectId(obj)), true);
-  }
+  var Constant = (function () {
+    function constant(value) {
+      this.value = value;
+      if (value === undefined) {
+        Identifier.call(this, "undefined");
+      } else if (value !== null && typeof value === "object") {
+        assert (value instanceof Multiname ||
+                value instanceof Runtime ||
+                value instanceof MethodInfo ||
+                value instanceof ClassInfo ||
+                value instanceof AbcFile ||
+                value instanceof Array,
+                "Should not make constants from ", value);
+        MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
+      } else {
+        Literal.call(this, value);
+      }
+    }
+    return constant;
+  })();
 
   function constant(value) {
-    if (value === undefined) {
-      return id("undefined");
-    }
-    return new Literal(value);
+    return new Constant(value);
   }
 
   function property(obj, path) {
@@ -121,15 +135,16 @@ var Compiler = (function () {
     return obj;
   }
 
-  function call(callee, arguments) {
-    arguments.forEach(function (x) {
+  function call(callee, args) {
+    assert (args instanceof Array);
+    args.forEach(function (x) {
       assert (!(x instanceof Array));
     });
-    return new CallExpression(callee, arguments);
+    return new CallExpression(callee, args);
   }
 
-  function callCall(callee, arguments) {
-    return call(property(callee, "call"), arguments);
+  function callCall(callee, args) {
+    return call(property(callee, "call"), args);
   }
 
   function assignment(left, right) {
@@ -277,7 +292,7 @@ var Compiler = (function () {
     function findProperty(multiname, strict) {
       this.strict = strict;
       this.multiname = multiname;
-      CallExpression.call(this, property(scopeName, "findProperty"), [objectConstant(this.multiname), new Literal(this.strict)]);
+      CallExpression.call(this, property(scopeName, "findProperty"), [this.multiname, new Literal(this.strict)]);
     };
     findProperty.prototype = Object.create(CallExpression.prototype);
     findProperty.prototype.isEquivalent = function isEquivalent(other) {
@@ -383,13 +398,14 @@ var Compiler = (function () {
       this.bytecodes = methodInfo.analysis.bytecodes;
       this.state = new State();
       this.variablePool = new VariablePool();
+      this.temporary = [];
 
-      /* Initialize local variables. First declare the [this] reference, then ... */
+      /* Initialize local variables, first local is the |this| reference. */
       this.local = [new Variable("this")];
 
       var freeVariableNames = "abcdefghijklmnopqrstuvwxyz".split("");
 
-      /* push the method's parameters, followed by ... */
+      /* Create variables for the method's parameters. */
       for (var i = 0; i < mi.parameters.length; i++) {
         var name = mi.parameters[i].name;
         this.local.push(new Variable(name));
@@ -411,18 +427,17 @@ var Compiler = (function () {
         return "$l" + freshVariableCount++;
       }
 
-      /* push the method's remaining locals.*/
+      /* Create variables for the method's remaining locals. */
       for (var i = mi.parameters.length; i < mi.localCount; i++) {
         this.local.push(new Variable(newVariableName()));
       }
-
-      this.temporary = [];
 
       this.prologue = [];
       this.prologue.push(new VariableDeclaration("var", [
         new VariableDeclarator(id(SCOPE_NAME), id(SAVED_SCOPE_NAME))
       ]));
 
+      /* Declare local variables. */
       if (this.local.length > 1) {
         this.prologue.push(new VariableDeclaration("var", this.local.slice(1).map(function (x) {
           return new VariableDeclarator(x, null);
@@ -437,16 +452,15 @@ var Compiler = (function () {
                           [id("arguments"), constant(mi.needsRest() ? parameterCount + 1 : 1)]))));
       }
 
-      /* initialize default arguments */
+      /* Initialize default arguments. */
       var argumentCount = property(id("arguments"), "length");
       for (var i = 0; i < parameterCount; i++) {
         var value = mi.parameters[i].value;
         if (value) {
           var local = this.local[i + 1];
-          this.prologue.push(new ExpressionStatement(
-            assignment(local, new ConditionalExpression(
-              binary(Operator.LT, argumentCount, constant(i + 2)),
-              constant(value), local))));
+          this.prologue.push(new IfStatement(binary(Operator.LT, argumentCount, constant(i + 2)),
+                                             new ExpressionStatement(assignment(local, constant(value))),
+                                             null));
         }
       }
     }
@@ -553,7 +567,7 @@ var Compiler = (function () {
       var multinames = abc.constantPool.multinames;
       var runtime = abc.runtime;
       var savedScope = this.savedScope;
-      var multiname, args, value, obj, ns, name, type, factory, index;
+      var multiname, args, value, obj, qn, ns, name, type, factory, index;
 
 
       function classObject() {
@@ -569,7 +583,7 @@ var Compiler = (function () {
       }
 
       function runtimeProperty(propertyName) {
-        var result = objectConstant(abc.runtime);
+        var result = constant(abc.runtime);
         if (propertyName) {
           result = property(result, propertyName);
         }
@@ -706,6 +720,7 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
+        /*
         if (false && !multiname.isQName()) {
           if (savedScope) {
             var resolved = savedScope.resolveMultiname(multiname);
@@ -714,15 +729,20 @@ var Compiler = (function () {
             }
           }
         }
+        */
         return new FindProperty(multiname, strict);
       }
 
       function getProperty(obj, multiname) {
+        assert (!(multiname instanceof Multiname), multiname);
+
+        /*
         if (obj instanceof FindProperty &&
             obj.multiname.name === multiname.name &&
             obj.multiname.isQName()) {
           return property(obj, obj.multiname.getQualifiedName());
         }
+        */
 
         /**
          * Looping over arrays by index will use a MultinameL
@@ -730,12 +750,48 @@ var Compiler = (function () {
          * doing a runtime looking, quickly go through late
          * name lookup here.
          */
+
+        /*
         if (multiname.isRuntimeName() && !multiname.isPublicNamespaced()) {
           var value = state.stack.pop();
           return call(property(obj, GET_ACCESSOR), [value]);
         }
+        */
 
-        return call(id("getProperty"), [obj, objectConstant(multiname)]);
+        return call(id("getProperty"), [obj, multiname]);
+
+        /*
+         if (enableAccessors.value) {
+              push(call(property(obj, GET_ACCESSOR), [qn.name]));
+            } else {
+              push(new MemberExpression(obj, qn.name, true));
+            }
+         */
+      }
+
+      function setProperty(obj, multiname, value) {
+        return call(id("setProperty"), [obj, multiname, value]);
+      }
+
+      function getMultiname(index) {
+        assert (!multinames[index].isRuntime());
+        return constant(multinames[index]);
+      }
+
+      function popMultiname(index) {
+        var multiname = multinames[index];
+        if (multiname.isRuntime()) {
+          var ns = constant(multiname.namespaces), name = constant(multiname.name);
+          if (multiname.isRuntimeName()) {
+            name = state.stack.pop();
+          }
+          if (multiname.isRuntimeNamespace()) {
+            ns = state.stack.pop();
+          }
+          return new NewExpression(id("Multiname"), [ns, name]);
+        } else {
+          return constant(multiname);
+        }
       }
 
       var bytecodes = this.bytecodes;
@@ -751,7 +807,7 @@ var Compiler = (function () {
 
         case OP_bkpt:           notImplemented(); break;
         case OP_throw:
-          emit(assignment(getTemporary(0), property(objectConstant(abc), "runtime.exception")));
+          emit(assignment(getTemporary(0), property(constant(abc), "runtime.exception")));
           emit(assignment(property(getTemporary(0), "value"), state.stack.pop()));
           emit(new ThrowStatement(getTemporary(0)));
           break;
@@ -849,7 +905,7 @@ var Compiler = (function () {
         case OP_sf32:           notImplemented(); break;
         case OP_sf64:           notImplemented(); break;
         case OP_newfunction:
-          push(call(runtimeProperty("createFunction"), [objectConstant(methods[bc.index]), scopeName]));
+          push(call(runtimeProperty("createFunction"), [constant(methods[bc.index]), scopeName]));
           break;
         case OP_call:
           args = state.stack.popMany(bc.argCount);
@@ -865,15 +921,15 @@ var Compiler = (function () {
         case OP_callstatic:     notImplemented(); break;
         case OP_callsuper:
           flushStack();
-          multiname = multinames[bc.index];
+          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
           push(call(getProperty(superOf(obj), multiname), [obj].concat(args)));
           break;
         case OP_callproperty:
           flushStack();
-          multiname = multinames[bc.index];
           args = state.stack.popMany(bc.argCount);
+          multiname = popMultiname(bc.index);
           obj = state.stack.pop();
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
@@ -885,14 +941,14 @@ var Compiler = (function () {
           emit(callCall(superClassInstanceObject(), [obj].concat(args)));
           break;
         case OP_constructprop:
-          multiname = multinames[bc.index];
+          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
           push(new NewExpression(property(getProperty(obj, multiname), "instance"), args));
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:
-          multiname = multinames[bc.index];
+          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
@@ -900,16 +956,15 @@ var Compiler = (function () {
         case OP_callinterface:  notImplemented(); break;
         case OP_callsupervoid:
           flushStack();
-          multiname = multinames[bc.index];
+          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
           emit(callCall(getProperty(superOf(obj), multiname), [obj].concat(args)));
           break;
         case OP_callpropvoid:
-          multiname = multinames[bc.index];
           args = state.stack.popMany(bc.argCount);
+          multiname = popMultiname(bc.index);
           obj = state.stack.pop();
-          assert(!multiname.isRuntime());
           emit(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
         case OP_sxi1:           notImplemented(); break;
@@ -935,54 +990,36 @@ var Compiler = (function () {
           assert (this.methodInfo.needsActivation());
           emit(new VariableDeclaration("var", [
             new VariableDeclarator(id("activation"),
-                                   call(runtimeProperty("createActivation"), [objectConstant(this.methodInfo)]))
+                                   call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
           ]));
           push(id("activation"));
           break;
         case OP_newclass:
-          push(call(property(objectConstant(abc), "runtime.createClass"),
-                    [objectConstant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
+          push(call(property(constant(abc), "runtime.createClass"),
+                    [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
           break;
         case OP_getdescendants: notImplemented(); break;
         case OP_newcatch:       notImplemented(); break;
         case OP_findpropstrict:
-          multiname = multinames[bc.index];
-          assertNotImplemented (!multiname.isRuntime());
+          multiname = popMultiname(bc.index);
           push(findProperty(multiname, true));
           break;
         case OP_findproperty:
-          multiname = multinames[bc.index];
-          assertNotImplemented (!multiname.isRuntime());
+          multiname = popMultiname(bc.index);
           push(findProperty(multiname, false));
           break;
         case OP_finddef:        notImplemented(); break;
         case OP_getlex:
-          multiname = multinames[bc.index];
-          assert (!multiname.isRuntime());
+          multiname = getMultiname(bc.index);
           push(getProperty(findProperty(multiname, true), multiname));
           break;
+        case OP_initproperty:
         case OP_setproperty:
           value = state.stack.pop();
-          multiname = multinames[bc.index];
+          multiname = popMultiname(bc.index);
           flushStack();
-          if (!multiname.isRuntime()) {
-            obj = state.stack.pop();
-            emit(call(id("setProperty"), [obj, objectConstant(multiname), value]));
-          } else {
-            ns = name = null;
-            if (multiname.isRuntimeName()) {
-              name = state.stack.pop();
-            }
-            if (multiname.isRuntimeNamespace()) {
-              ns = state.stack.pop();
-            }
-            obj = state.stack.pop();
-            if (enableAccessors.value) {
-              emit(call(property(obj, SET_ACCESSOR), [name, value]));
-            } else {
-              emit(assignment(new MemberExpression(obj, name, true), value));
-            }
-          }
+          obj = state.stack.pop();
+          emit(setProperty(obj, multiname, value));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
         case OP_setlocal:       setLocal(bc.index); break;
@@ -997,47 +1034,17 @@ var Compiler = (function () {
           push(property(obj, "object"));
           break;
         case OP_getproperty:
-          multiname = multinames[bc.index];
-          if (!multiname.isRuntime()) {
-            obj = state.stack.pop();
-            push(getProperty(obj, multiname));
-          } else {
-            ns = name = null;
-            if (multiname.isRuntimeName()) {
-              name = state.stack.pop();
-            }
-            if (multiname.isRuntimeNamespace()) {
-              ns = state.stack.pop();
-            }
-            obj = state.stack.pop();
-            if (enableAccessors.value) {
-              push(call(property(obj, GET_ACCESSOR), [name]));
-            } else {
-              push(new MemberExpression(obj, name, true));
-            }
-          }
+          multiname = popMultiname(bc.index);
+          obj = state.stack.pop();
+          push(getProperty(obj, multiname));
           break;
         case OP_getouterscope:      notImplemented(); break;
-        case OP_initproperty:
-          value = state.stack.pop();
-          multiname = multinames[bc.index];
-          if (!multiname.isRuntime()) {
-            obj = state.stack.pop();
-            emit(call(id("setProperty"), [obj, objectConstant(multiname), value]));
-          } else {
-            notImplemented();
-          }
-          break;
         case OP_setpropertylate:    notImplemented(); break;
         case OP_deleteproperty:
-          multiname = multinames[bc.index];
-          if (!multiname.isRuntime()) {
-            obj = state.stack.pop();
-            emit(call(id("deleteProperty"), [obj, objectConstant(multiname)]));
-            flushStack();
-          } else {
-            notImplemented();
-          }
+          multiname = popMultiname(bc.index);
+          obj = state.stack.pop();
+          push(call(id("deleteProperty"), [obj, multiname]));
+          flushStack();
           break;
         case OP_deletepropertylate: notImplemented(); break;
         case OP_getslot:            getSlot(state.stack.pop(), bc.index); break;
@@ -1048,7 +1055,7 @@ var Compiler = (function () {
           break;
         case OP_getglobalslot:  notImplemented(); break;
         case OP_setglobalslot:  notImplemented(); break;
-        case OP_convert_s:      push("toString" + argumentList(state.stack.pop())); break;
+        case OP_convert_s:      push(call(id("toString"), [state.stack.pop()])); break;
         case OP_esc_xelem:      notImplemented(); break;
         case OP_esc_xattr:      notImplemented(); break;
         case OP_coerce_i:
@@ -1074,7 +1081,7 @@ var Compiler = (function () {
         case OP_convert_f4:     notImplemented(); break;
         case OP_coerce:
           value = state.stack.pop();
-          multiname = multinames[bc.index];
+          multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
           push(call(id("coerce"), [value, type]));
         case OP_coerce_a:       /* NOP */ break;
@@ -1128,8 +1135,7 @@ var Compiler = (function () {
           break;
         case OP_istype:
           value = state.stack.pop();
-          multiname = multinames[bc.index];
-          assert (!multiname.isRuntime());
+          multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
           push(new ConditionalExpression(new BinaryExpression("instanceof", type, id("Class")),
                                          call(property(type, "isInstance"), [value]),
