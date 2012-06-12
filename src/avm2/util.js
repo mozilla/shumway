@@ -22,9 +22,11 @@ function error(message) {
   throw new Error(message);
 }
 
-function assert(condition, message) {
+function assert(condition) {
   if (!condition) {
-    error(message);
+    var message = Array.prototype.slice.call(arguments);
+    message.shift();
+    error(message.join(""));
   }
 }
 

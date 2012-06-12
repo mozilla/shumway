@@ -328,7 +328,7 @@ var Scope = (function () {
  * with the qualified name.
  */
 function resolveMultiname(obj, multiname, checkPrototype) {
-  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: " + multiname.qualifiedName);
+  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: ", multiname);
   obj = Object(obj);
   for (var i = 0, count = multiname.namespaces.length; i < count; i++) {
     var name = multiname.getQName(i);
@@ -634,7 +634,7 @@ var Runtime = (function () {
 
   runtime.prototype.createFunction = function (methodInfo, scope) {
     const mi = methodInfo;
-    assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
+    assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
     function closeOverScope(fn, scope) {
       var closure = function () {
