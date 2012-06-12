@@ -278,7 +278,7 @@ class Test(Command):
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
-    parser.add_argument('-m', '--mode', type=str, default="aic", help="mode")
+    parser.add_argument('-m', '--mode', type=str, default="aico", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
 
     args = parser.parse_args(args)
@@ -337,7 +337,8 @@ class Test(Command):
         modes = {}
         modes["a"] = [self.avm, test]
         modes["i"] = ["js", "-m", "-n", "avm.js", "-x", "-i", test];
-        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", test];
+        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", "-cse=false", test];
+        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", "-acc=false", test];
 
         results = {}
 
