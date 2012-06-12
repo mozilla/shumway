@@ -4,9 +4,27 @@ function Stage() {
 }
 
 Stage.prototype = Object.create(new DisplayObjectContainer, {
-  accessibilityProperties: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  accessibilityImplementation: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  accessibilityProperties: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  alpha: descAccessor(
+    function () {
+      return 1;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   align: descAccessor(
     function () {
       return ''; // TODO
@@ -21,13 +39,21 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   alpha: descAccessor(function () {
     return 1; // read-only/default
   }),
-  blendMode: descAccessor(function () {
-    // TODO BlendMode.NORMAL
-    return 'normal'; // read-only/default
-  }),
-  cacheAsBitmap: descAccessor(function () {
-    return false; // read-only/default
-  }),
+  blendMode: descAccessor(
+    function () {
+      // TODO BlendMode.NORMAL
+      return 'normal';
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  cacheAsBitmap: descAccessor(
+    function () {
+      return false;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   color: descAccessor(
     function () {
       return this._color;
@@ -47,9 +73,13 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   colorCorrectionSupport: descAccessor(function () {
     return 'unsupported'; // TODO
   }),
-  contextMenu: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  contextMenu: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   displayState: descAccessor(
     function () {
       return null; // TODO
@@ -58,9 +88,13 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  filters: descAccessor(function () {
-    return []; // read-only/default
-  }),
+  filters: descAccessor(
+    function () {
+      return [];
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   focus: descAccessor(
     function () {
       return null; // TODO
@@ -69,9 +103,13 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  focusRect: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  focusRect: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   frameRate: descAccessor(
     function () {
       return this._frameRate;
@@ -96,24 +134,44 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   fullScreenWidth: descAccessor(function () {
     notImplemented();
   }),
-  loaderInfo: descAccessor(function () {
-    return this._loaderInfo; // read-only/default
-  }),
-  mask: descAccessor(function () {
-    return null; // read-only/default
-  }),
-  mouseEnabled: descAccessor(function () {
-    return true; // read-only/default
-  }),
-  name: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  loaderInfo: descAccessor(
+    function () {
+      return this._loaderInfo;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  mask: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  mouseEnabled: descAccessor(
+    function () {
+      return true;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  name: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   nativeWindow: descAccessor(function () {
     return null; // TODO
   }),
-  opaqueBackground: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  opaqueBackground: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   quality: descAccessor(
     function () {
       return 'HIGH'; // TODO
@@ -122,12 +180,20 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  rotation: descAccessor(function () {
-    return 0; // read-only/default
-  }),
-  scale9Grid: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  rotation: descAccessor(
+    function () {
+      return 0;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  scale9Grid: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   scaleMode: descAccessor(
     function () {
       return 'noScale'; // TODO
@@ -136,15 +202,27 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  scaleX: descAccessor(function () {
-    return 1; // read-only/default
-  }),
-  scaleY: descAccessor(function () {
-    return 1; // read-only/default
-  }),
-  scrollRect: descAccessor(function () {
-    return null; // read-only/default
-  }),
+  scaleX: descAccessor(
+    function () {
+      return 1;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  scaleY: descAccessor(
+    function () {
+      return 1;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  scrollRect: descAccessor(
+    function () {
+      return null;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   showDefaultContextMenu: descAccessor(
     function () {
       return true; // TODO
@@ -180,24 +258,51 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  tabEnabled: descAccessor(function () {
-    return false; // read-only/default
+  stageVideos: descAccessor(function () {
+    notImplemented();
   }),
-  tabIndex: descAccessor(function () {
-    return 1; // read-only/default
-  }),
-  transform: descAccessor(function () {
-    return this._transform; // read-only/default
-  }),
-  visible: descAccessor(function () {
-    return true; // read-only/default
-  }),
-  x: descAccessor(function () {
-    return 0; // read-only/default
-  }),
-  y: descAccessor(function () {
-    return 0; // read-only/default
-  }),
+  tabEnabled: descAccessor(
+    function () {
+      return false;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  tabIndex: descAccessor(
+    function () {
+      return -1;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  transform: descAccessor(
+    function () {
+      return this._transform;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  visible: descAccessor(
+    function () {
+      return true;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  x: descAccessor(
+    function () {
+      return 0;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
+  y: descAccessor(
+    function () {
+      return 0;
+    }, function (val) {
+      illegalOperation();
+    }
+  ),
   wmodeGPU: descAccessor(function () {
     return false; // TODO
   }),

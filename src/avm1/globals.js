@@ -21,7 +21,8 @@ AS2Globals.prototype = {
   },
   ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
-    throw 'Not implemented: call';
+    var nativeTarget = AS2Context.instance.resolveTarget();
+    nativeTarget.gotoAndPlay(frame);
   },
   chr: function(number) {
     return String.fromCharCode(number);

@@ -12,6 +12,12 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
     notImplemented();
   }),
 
+  addChild: descMethod(function (child) {
+    illegalOperation();
+  }),
+  addChildAt: descMethod(function (child, index) {
+    illegalOperation();
+  }),
   close: descMethod(function() {
     notImplemented();
   }),
@@ -92,6 +98,15 @@ Loader.prototype = Object.create(new DisplayObjectContainer, {
   }),
   loadBytes: descMethod(function(bytes, context) {
     notImplemented();
+  }),
+  removeChild: descMethod(function (child) {
+    illegalOperation();
+  }),
+  removeChildAt: descMethod(function (child, index) {
+    illegalOperation();
+  }),
+  setChildIndex: descMethod(function (child, index) {
+    illegalOperation();
   }),
   unload: descMethod(function() {
     notImplemented();

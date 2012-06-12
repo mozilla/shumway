@@ -36,13 +36,19 @@ AS2Context.prototype = {
 };
 
 function executeActions(actionsData, context, scope) {
+  var actionTracer = ActionTracerFactory.get();
+
   var scopeContainer = context.initialScope.create(scope);
   var savedContext = AS2Context.instance;
   try {
     AS2Context.instance = context;
     context.defaultTarget = scope;
+    actionTracer.message('ActionScript Execution Starts');
+    actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
   } finally {
+    actionTracer.unindent();
+    actionTracer.message('ActionScript Execution Stops');
     AS2Context.instance = savedContext;
   }
 }
@@ -885,7 +891,8 @@ function interpretActions(actionsData, scopeContainer,
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
-        _global.fscommand.apply(null, args);
+        var result = _global.fscommand.apply(null, args);
+        stack.push(result);
         break;
       case 0x89: // ActionStrictMode
         var mode = stream.readUI8();
@@ -921,12 +928,16 @@ var ActionTracerFactory = (function() {
     },
     unindent: function() {
       indentation--;
+    },
+    message: function(str) {
+      console.log('AVM1 trace: ------- ' + str);
     }
   };
   var nullTracer = {
     print: function() {},
     indent: function() {},
-    unindent: function() {}
+    unindent: function() {},
+    message: function() {}
   };
 
   function ActionTracerFactory() {}
