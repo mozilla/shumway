@@ -196,22 +196,23 @@ class Asc(Command):
     print "Compiling %s" % args.src
     self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  sc = args.sc)
 
-class Ascreg(Command):
+class Reg(Command):
   def __init__(self):
-    Command.__init__(self, "ascreg")
+    Command.__init__(self, "reg")
 
   def __repr__(self):
     return self.name
 
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Compiles all the source files in the test/regress directory using the asc.jar compiler.')
-    parser.add_argument('src', default="../tests/regress", help="source .as file")
+    parser.add_argument('src', nargs="?", default="../tests/regress", help="source .as file")
+    print args
     args = parser.parse_args(args)
     print "Compiling Tests"
 
     tests = [];
     if os.path.isdir(args.src):
-      for root, subFolders, files in os.walk("../tests/regress"):
+      for root, subFolders, files in os.walk(args.src):
         for file in files:
           if file.endswith(".as") and file != "harness.as":
             tests.append(os.path.join(root, file))
@@ -397,7 +398,7 @@ class Test(Command):
     print counter
 
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile(), Test(), Ascreg()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Test(), Reg()]:
   commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()
