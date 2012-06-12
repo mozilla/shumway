@@ -622,12 +622,18 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
-    assert(this.isQName());
-    var ns = this.namespaces[0];
-    if (ns.isPublic() && ns.name === "") {
-      return "public$" + this.getName();
+    var qualifiedName = this.qualifiedName;
+    if (qualifiedName) {
+      return qualifiedName;
     } else {
-      return ns.qualifiedName + "$" + this.getName();
+      assert(this.isQName());
+      var ns = this.namespaces[0];
+      if (ns.isPublic() && ns.name === "") {
+        qualifiedName = "public$" + this.getName();
+      } else {
+        qualifiedName = ns.qualifiedName + "$" + this.getName();
+      }
+      return this.qualifiedName = qualifiedName;
     }
   };
 
