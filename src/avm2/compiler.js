@@ -1264,22 +1264,21 @@ var Compiler = (function () {
       case OP_greaterthan:    expression(Operator.GT); break;
       case OP_greaterequals:  expression(Operator.GE); break;
       case OP_instanceof:
-        // TODO: Temporary implementation, totally broken.
-        state.stack.pop();
-        state.stack.pop();
-        pushValue(new Constant(true));
+        type = state.stack.pop();
+        value = state.stack.pop();
+        pushValue(type + " instanceof Class ? " + value + " instanceof " + type + ".instance" + " : (typeof " + type + " === 'function' ? " + value + " instanceof " + type + " : false)");
         break;
       case OP_istype:
         value = state.stack.pop();
         multiname = multinames[bc.index];
         assert (!multiname.isRuntime());
         type = getProperty(findProperty(multiname, true), multiname);
-        pushValue(type + " instanceof Class ? " + type + ".isInstance" + argumentList(value) + " : false");
+        pushValue("typeof " + type + ".isInstance === 'function' ? " + type + ".isInstance" + argumentList(value) + " : false");
         break;
       case OP_istypelate:
         type = state.stack.pop();
         value = state.stack.pop();
-        pushValue(type + " instanceof Class ? " + type + ".isInstance" + argumentList(value) + " : false");
+        pushValue("typeof " + type + ".isInstance === 'function' ? " + type + ".isInstance" + argumentList(value) + " : false");
         break;
       case OP_in:             notImplemented(); break;
       case OP_increment_i:

@@ -523,22 +523,27 @@ var Interpreter = (function () {
             evaluateBinary(Operator.GE);
             break;
           case OP_instanceof:
-            // TODO: Temporary implementation, totally broken.
-            stack.pop();
-            stack.pop();
-            stack.push(True);
+            type = stack.pop();
+            value = stack.pop();
+            if (type instanceof Class) {
+              stack.push(value instanceof type.instance);
+            } else if (typeof type === "function") {
+              stack.push(value instanceof type);
+            } else {
+              stack.push(false);
+            }
             break;
           case OP_istype:
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
             type = toplevel.getTypeByName(multiname, true, true);
-            stack.push(type instanceof Class ? type.isInstance(value) : false);
+            stack.push(typeof type.isInstance === "function" ? type.isInstance(value) : false);
             break;
           case OP_istypelate:
             type = stack.pop();
             value = stack.pop();
-            stack.push(type instanceof Class ? type.isInstance(value) : false);
+            stack.push(typeof type.isInstance === "function" ? type.isInstance(value) : false);
             break;
           case OP_in:             notImplemented(); break;
           case OP_increment_i:

@@ -146,11 +146,31 @@ var Interface = (function () {
   function Interface(name) {
     this.name = name;
   }
+
   Interface.prototype = {
     toString: function () {
       return "[interface " + this.name + "]";
+    },
+
+    isInstance: function (value) {
+      if (value === null || typeof value !== "object") {
+        return false;
+      }
+
+      var cls = value.public$constructor;
+      if (cls) {
+        var interfaces = cls.implementedInterfaces;
+        for (var i = 0, j = interfaces.length; i < j; i++) {
+          if (interfaces[i] === this) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     }
   };
+
   return Interface;
 })();
 

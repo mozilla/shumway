@@ -807,11 +807,16 @@ var Runtime = (function () {
      *
      * Luckily, interface methods are always public.
      */
+    if (ii.interfaces.length > 0) {
+      cls.implementedInterfaces = [];
+    }
     (function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var iname = interfaces[i];
-        var ci = toplevel.getTypeByName(iname, true, true).classInfo;
+        var iface = toplevel.getTypeByName(iname, true, true);
+        var ci = iface.classInfo;
         var ii = ci.instanceInfo;
+        cls.implementedInterfaces.push(iface);
         applyInterfaceTraits(ii.interfaces);
         ii.traits.traits.forEach(function (trait) {
           var name = "public$" + trait.name.getName();
