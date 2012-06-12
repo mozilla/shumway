@@ -138,6 +138,9 @@ var Compiler = (function () {
     return new AssignmentExpression(left, "=", right);
   }
 
+  function binary (operator, left, right) {
+    return new BinaryExpression(operator.name, left, right);
+  }
   function id(name) {
     return new Identifier(name);
   }
@@ -430,6 +433,18 @@ var Compiler = (function () {
                           [id("arguments"), constant(mi.needsRest() ? parameterCount + 1 : 1)]))));
       }
 
+      /* initialize default arguments */
+      var argumentCount = property(id("arguments"), "length");
+      for (var i = 0; i < parameterCount; i++) {
+        var value = mi.parameters[i].value;
+        if (value) {
+          var local = this.local[i + 1];
+          this.prologue.push(new ExpressionStatement(
+            assignment(local, new ConditionalExpression(
+              binary(Operator.LT, argumentCount, constant(i + 2)),
+              constant(value), local))));
+        }
+      }
     }
     compilation.prototype.compile = function compile() {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
