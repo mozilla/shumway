@@ -110,7 +110,7 @@ function toDouble(x) {
 }
 
 function toBoolean(x) {
-  return Boolean(x);
+  return !!x;
 }
 
 function toUint(x) {
@@ -119,7 +119,7 @@ function toUint(x) {
 }
 
 function toInt(x) {
-  return parseInt(x);
+  return x | 0;
 }
 
 function toString(x) {
@@ -127,10 +127,10 @@ function toString(x) {
 }
 
 function coerce(obj, type) {
-  if (type.isInstance(obj)) {
+  if (obj == null || type.isInstance(obj)) {
     return obj;
   } else {
-    return null;
+    throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
   }
 }
 
@@ -164,6 +164,19 @@ function deleteProperty(obj, multiname) {
   return false;
 }
 
+function getSlot(obj, index) {
+  return obj[obj.slots[index]];
+}
+
+function setSlot(obj, index, value) {
+  var name = obj.slots[index];
+  var type = obj.types[name];
+  if (type && type.coerce) {
+    value = type.coerce(value);
+  }
+  obj[name] = value;
+}
+
 function applyType(factory, types) {
   var factoryClassName = factory.classInfo.instanceInfo.name.name;
   if (factoryClassName === "Vector") {
@@ -178,7 +191,7 @@ function applyType(factory, types) {
         typeClassName = "object";
         break;
     }
-    return toplevel.getTypeByName(Multiname.fromSimpleName("packageInternal __AS3__$vec.Vector$" + typeClassName), true);
+    return toplevel.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
   } else {
     return notImplemented(factoryClassName);
   }
@@ -263,6 +276,7 @@ var Scope = (function () {
   }
 
   scope.prototype.findProperty = function findProperty(multiname, strict) {
+    assert (multiname instanceof Multiname);
     if (traceScope.value || tracePropertyAccess.value) {
       print("scopeFindProperty: " + multiname);
     }
@@ -318,7 +332,7 @@ var Scope = (function () {
  * with the qualified name.
  */
 function resolveMultiname(obj, multiname, checkPrototype) {
-  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: " + multiname.qualifiedName);
+  assert (!multiname.isQName(), "We shouldn't resolve an already resolved name: ", multiname);
   obj = Object(obj);
   for (var i = 0, count = multiname.namespaces.length; i < count; i++) {
     var name = multiname.getQName(i);
@@ -371,6 +385,8 @@ function getProperty(obj, multiname, bind) {
 
 function setProperty(obj, multiname, value) {
   assert (obj);
+  assert (multiname instanceof Multiname);
+
   if (typeof multiname.name === "number") {
     obj[SET_ACCESSOR](multiname.name, value);
     return;
@@ -401,23 +417,29 @@ function setProperty(obj, multiname, value) {
   }
 
   if (tracePropertyAccess.value) {
-    print("setProperty: resolved multiname: " + resolved + " value: " + value);
+    // print("setProperty: resolved multiname: " + resolved + " value: " + value);
+    print("setProperty: resolved multiname: " + resolved);
   }
 
   var name = resolved.getQualifiedName();
-  var type = obj.types[name];
+  setPropertyQuick(obj, name, value);
+}
 
-  obj[name] = type ? type.call(type, value) : value;
+function setPropertyQuick(obj, qualifiedName, value) {
+  var type = obj.types[qualifiedName];
+  if (type && type.coerce) {
+    value = type.coerce(value);
+  }
+  obj[qualifiedName] = value;
 }
 
 function throwErrorFromVM(errorClass, message) {
-  var name = Multiname.fromSimpleName(errorClass);
-  throw new (toplevel.getTypeByName(name, true, true)).instance(message);
+  throw new (toplevel.getClass(errorClass)).instance(message);
 }
 
 function translateError(error) {
   if (error instanceof Error) {
-    var type = toplevel.getTypeByName(Multiname.fromSimpleName(error.name), true, true);
+    var type = toplevel.getClass(error.name);
     if (type) {
       return new type.instance(error.message);
     }
@@ -453,6 +475,8 @@ const toplevel = (function () {
     // TODO: Caching.
   }
 
+  var cache = {};
+
   Toplevel.prototype = {
     getTypeByName: function getTypeByName(multiname, strict, execute) {
       var resolved = this.resolveMultiname(multiname, execute);
@@ -467,9 +491,12 @@ const toplevel = (function () {
     },
 
     getClass: function getClass(simpleName) {
-      var c = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
+      var c = cache[simpleName];
+      if (!c) {
+        c = cache[simpleName] = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
+      }
       assert(c instanceof Class);
-      return c.instance;
+      return c;
     },
 
     findProperty: function findProperty(multiname, strict, execute) {
@@ -611,7 +638,7 @@ var Runtime = (function () {
 
   runtime.prototype.createFunction = function (methodInfo, scope) {
     const mi = methodInfo;
-    assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
+    assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
     function closeOverScope(fn, scope) {
       var closure = function () {
@@ -673,31 +700,13 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var result = this.compiler.compileMethod(mi, hasDefaults, scope);
+    var body = this.compiler.compileMethod(mi, hasDefaults, scope);
 
     var parameters = mi.parameters.map(function (p) {
       return p.name;
     });
     parameters.unshift(SAVED_SCOPE_NAME);
 
-    function flatten(array, indent) {
-      var str = "";
-      array.forEach(function (x) {
-        if (x instanceof Indent) {
-          str += flatten(x.statements, indent + "  ");
-        } else if (x instanceof Array) {
-          str += flatten(x, indent);
-        } else {
-          str += indent + x + "\n";
-        }
-      });
-      return str;
-    }
-
-    var body = flatten(result.statements, "");
-    if (traceLevel.value > 4) {
-      print('\033[93m' + body + '\033[0m');
-    }
     mi.compiledMethod = new Function(parameters, body);
 
     /* Hook to set breakpoints in compiled code. */
@@ -706,11 +715,7 @@ var Runtime = (function () {
     }
 
     if (traceLevel.value > 0) {
-      /* Unfortunately inner functions are not pretty-printed by the JS engine, so here we recompile the
-       * inner function by itself just for pretty printing purposes.
-       */
-      eval ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
-      print('\033[92m' + eval("fnSource" + functionCount) + '\033[0m');
+      print ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
     }
 
     functionCount++;
@@ -868,9 +873,7 @@ var Runtime = (function () {
       }
       print(str);
     }
-    var interface = new Interface(ii.name);
-    interface.classInfo = classInfo;
-    return interface;
+    return new Interface(classInfo);
   };
 
   /**
@@ -918,17 +921,17 @@ var Runtime = (function () {
       traits.lastSlotId = freshSlotId;
     }
 
-    function defineProperty(name, slotId, value, type, isMethod) {
+    function defineProperty(name, slotId, value, type, readOnly) {
       if (slotId) {
-        defineNonEnumerableProperty(obj, name, value);
-        obj.slots[slotId] = name;
-        obj.types[name] = type;
-      } else if (!obj.hasOwnProperty(name)) {
-        if (isMethod) {
+        if (readOnly) {
           defineReadOnlyProperty(obj, name, value);
         } else {
           defineNonEnumerableProperty(obj, name, value);
         }
+        obj.slots[slotId] = name;
+        obj.types[name] = type;
+      } else if (!obj.hasOwnProperty(name)) {
+        defineNonEnumerableProperty(obj, name, value);
       }
     }
 
@@ -946,10 +949,12 @@ var Runtime = (function () {
 
     for (var i = 0, j = ts.length; i < j; i++) {
       var trait = ts[i];
+      var qn = trait.name.getQualifiedName();
+
       assert (trait.holder);
       if (trait.isSlot() || trait.isConst()) {
         var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
-        defineProperty(trait.name.getQualifiedName(), trait.slotId, trait.value, type);
+        defineProperty(qn, trait.slotId, trait.value, type, trait.isConst());
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
         var mi = trait.methodInfo;
@@ -999,19 +1004,18 @@ var Runtime = (function () {
         /* Identify this as a method for auto-binding via MethodClosure. */
         defineNonEnumerableProperty(closure, "isMethod", true);
 
-        var qn = trait.name.getQualifiedName();
         if (trait.isGetter()) {
           defineGetter(obj, qn, closure);
         } else if (trait.isSetter()) {
           defineSetter(obj, qn, closure);
         } else {
-          defineProperty(qn, undefined, closure, undefined, true);
+          defineReadOnlyProperty(obj, qn, closure);
         }
       } else if (trait.isClass()) {
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
           trait.classInfo.native = trait.metadata.native;
         }
-        defineProperty(trait.name.getQualifiedName(), trait.slotId, null);
+        defineProperty(qn, trait.slotId, null, undefined, false);
       } else {
         assert(false, trait);
       }

@@ -11,10 +11,10 @@ import time
 import threading
 
 from subprocess import Popen, PIPE, STDOUT
+from collections import Counter
 
 def execute (command, timeout = -1):
   start_time = time.time()
-  # print "run: ", command
   processPid = [None]
   stdoutOutput = [None]
   stderrOutput = [None]
@@ -25,17 +25,71 @@ def execute (command, timeout = -1):
 
   thread = threading.Thread(target=target)
   thread.start()
-  # print "Timeout", timeout
   thread.join(timeout)
   if thread.is_alive():
     # Kill Process
-    os.kill(processPid[0], signal.SIGKILL)
+    try:
+      os.killpg(processPid[0], signal.SIGKILL)
+    except:
+      pass
     os.waitpid(-1, os.WNOHANG)
     thread.join()
 
   elapsed_time = time.time() - start_time
   output = stdoutOutput[0]
   return (output.strip(), elapsed_time);
+
+
+def execute2(cmd, timeout=None):
+  '''
+  Will execute a command, read the output and return it back.
+
+  @param cmd: command to execute
+  @param timeout: process timeout in seconds
+  @return: a tuple of three: first stdout, then stderr, then exit code
+  @raise OSError: on missing command or if a timeout was reached
+  '''
+
+  ph_out = None # process output
+  ph_err = None # stderr
+  ph_ret = None # return code
+
+  start_time = time.time()
+
+  def preexec_function():
+    # Ignore the SIGINT signal by setting the handler to the standard
+    # signal handler SIG_IGN.
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+  p = subprocess.Popen(cmd,
+                       stdout=subprocess.PIPE,
+                       stderr=subprocess.STDOUT,
+                       close_fds=True,
+                       preexec_fn = preexec_function)
+
+  # if timeout is not set wait for process to complete
+  if not timeout:
+    ph_ret = p.wait()
+  else:
+    fin_time = time.time() + timeout
+    while p.poll() == None and fin_time > time.time():
+      time.sleep(0.001)
+
+    # if timeout reached, raise an exception
+    if fin_time < time.time():
+
+      # starting 2.6 subprocess has a kill() method which is preferable
+      # p.kill()
+      try:
+        os.kill(p.pid, signal.SIGKILL)
+      except:
+        pass
+      return None
+
+    ph_ret = p.returncode
+    ph_out, ph_err = p.communicate()
+
+  return (ph_out, time.time() - start_time)
 
 class Base:
   asc = None
@@ -142,22 +196,23 @@ class Asc(Command):
     print "Compiling %s" % args.src
     self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  sc = args.sc)
 
-class Ascreg(Command):
+class Reg(Command):
   def __init__(self):
-    Command.__init__(self, "ascreg")
+    Command.__init__(self, "reg")
 
   def __repr__(self):
     return self.name
 
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Compiles all the source files in the test/regress directory using the asc.jar compiler.')
-    parser.add_argument('src', default="../tests/regress", help="source .as file")
+    parser.add_argument('src', nargs="?", default="../tests/regress", help="source .as file")
+    print args
     args = parser.parse_args(args)
     print "Compiling Tests"
 
     tests = [];
     if os.path.isdir(args.src):
-      for root, subFolders, files in os.walk("../tests/regress"):
+      for root, subFolders, files in os.walk(args.src):
         for file in files:
           if file.endswith(".as") and file != "harness.as":
             tests.append(os.path.join(root, file))
@@ -223,12 +278,21 @@ class Test(Command):
     parser = argparse.ArgumentParser(description='Runs all tests.')
     parser.add_argument('src', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
-    parser.add_argument('-t', '--timeout', type=int, default=20, help="timeout (s)")
-    parser.add_argument('-i', '--interpret', action='store_true', help="always interpret")
+    parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
+    parser.add_argument('-m', '--mode', type=str, default="aico", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
 
     args = parser.parse_args(args)
-    print "Testing %s (%s)" % (args.src, "interpreted" if args.interpret else "compiled")
+    print "Testing %s" % (args.src)
+
+    print "---------------------------------------------------------------------------------------------------------"
+    print "Each Tamarin acceptance test case includes a bunch of smaller tests, each of which print out PASSED or"
+    print "FAILED. We compare the output under several configurations and print the results as follows:"
+    print "PASSED - output matches AVM Shell"
+    print "ALMOST - the \"PASSED\" string appears in the output but the \"FAILED\" string does not."
+    print "KINDOF - the \"PASSED\" and \"FAILED\" string appear in the output."
+    print "FAILED - the \"PASSED\" string doesn't appear anywhere."
+    print "---------------------------------------------------------------------------------------------------------"
 
     tests = Queue.Queue();
 
@@ -251,59 +315,71 @@ class Test(Command):
 
     total = tests.qsize()
     counts = {
-      'passed': 0,
-      'almost': 0,
-      'kindof': 0,
-      'failed': 0,
+      'passed-i': 0,
+      'almost-i': 0,
+      'kindof-i': 0,
+      'failed-i': 0,
+      'passed-c': 0,
+      'almost-c': 0,
+      'kindof-c': 0,
+      'failed-c': 0,
       'count': 0,
-      'shuElapsed': 0,
-      'avmElapsed': 0
     }
+
+    counter = Counter()
 
     def runTest(tests, counts):
       while tests.qsize() > 0:
         test = tests.get()
         out = []
-        counts['count'] += 1
-        shuCommand = ["js", "-m", "-n", "avm.js", "-x"]
-        if args.interpret:
-          shuCommand.append("-i")
-        else:
-          shuCommand.append("-cse")
 
-        shuCommand.append(test)
-        shuResult = execute(shuCommand, int(args.timeout))
-        avmResult = execute([self.avm, test], int(args.timeout))
+        modes = {}
+        modes["a"] = [self.avm, test]
+        modes["i"] = ["js", "-m", "-n", "avm.js", "-x", "-i", test];
+        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", "-opt=false", test];
+        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", test];
 
-        if not shuResult or not avmResult:
-          continue
-        if shuResult[0] == avmResult[0]:
-          counts['passed'] += 1
-          counts['shuElapsed'] += shuResult[1]
-          counts['avmElapsed'] += avmResult[1]
-          out.append(PASS + "PASSED" + ENDC)
-        else:
-          if "PASSED" in shuResult[0] and not "FAILED" in shuResult[0]:
-            counts['almost'] += 1
-            out.append(INFO + "ALMOST"  + ENDC)
-          elif "PASSED" in shuResult[0] and "FAILED" in shuResult[0]:
-            counts['kindof'] += 1
-            out.append(WARN + "KINDOF"  + ENDC)
+        results = {}
+
+        for m in args.mode:
+          results[m] = execute(modes[m], int(args.timeout))
+
+        def compare (base, result):
+          if result == None:
+            return "FAILED"
+
+          if base != None and base[0] == result[0]:
+            return "PASSED"
           else:
-            counts['failed'] += 1
-            out.append(FAIL + "FAILED"  + ENDC)
+            if "PASSED" in result[0] and not "FAILED" in result[0]:
+              return "ALMOST"
+            elif "PASSED" in result[0] and "FAILED" in result[0]:
+              return "KINDOF"
+            else:
+              return "FAILED"
+
+        def color (s):
+          if s == "PASSED":
+            return PASS + s + ENDC
+          elif s == "ALMOST":
+            return INFO + s + ENDC
+          elif s == "KINDOF":
+            return WARN + s + ENDC
+          elif s == "FAILED":
+            return FAIL + s + ENDC
 
         out.append(str(total - tests.qsize()))
+        for k in results:
+          if k != "a":
+            c = compare(results["a"] if "a" in results else None, results[k])
+            counter.update([k + "-" + c]);
+            out.append(color(c))
+          out.append(str(round(results[k][1], 2)) if results[k] != None else "N/A")
 
-        # out.append("(\033[92m%d\033[0m + \033[94m%d\033[0m + \033[93m%d\033[0m = %d of %d)" % (counts['passed'], counts['almost'], counts['kindof'], counts['passed'] + counts['almost'] + counts['kindof'], counts['count']));
-        out.append(str(round(shuResult[1] * 1000, 2)))
-        out.append(str(round(avmResult[1] * 1000, 2)))
-        ratio = round(avmResult[1] / shuResult[1], 2)
-        out.append((WARN if ratio < 1 else INFO) + str(round(avmResult[1] / shuResult[1], 2)) + ENDC)
         out.append(test);
+
         sys.stdout.write("\t".join(out) + "\n")
         sys.stdout.flush()
-
         tests.task_done()
 
     jobs = []
@@ -317,14 +393,10 @@ class Test(Command):
     for job in jobs:
       job.join()
 
-    print "Results: failed: " + FAIL + str(counts['failed']) + ENDC + ", passed: " + PASS + str(counts['passed']) + ENDC + " of " + str(total),
-    print "shuElapsed: " + str(round(counts['shuElapsed'] * 1000, 2)) + " ms",
-    print "avmElapsed: " + str(round(counts['avmElapsed'] * 1000, 2)) + " ms",
-    if counts['shuElapsed'] > 0:
-      print str(round(counts['avmElapsed'] / counts['shuElapsed'], 2)) + "x faster" + ENDC
+    print counter
 
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile(), Test(), Ascreg()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Test(), Reg()]:
   commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()

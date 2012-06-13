@@ -622,12 +622,18 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
-    assert(this.isQName());
-    var ns = this.namespaces[0];
-    if (ns.isPublic() && ns.name === "") {
-      return "public$" + this.getName();
+    var qualifiedName = this.qualifiedName;
+    if (qualifiedName) {
+      return qualifiedName;
     } else {
-      return ns.qualifiedName + "$" + this.getName();
+      assert(this.isQName());
+      var ns = this.namespaces[0];
+      if (ns.isPublic() && ns.name === "") {
+        qualifiedName = "public$" + this.getName();
+      } else {
+        qualifiedName = ns.qualifiedName + "$" + this.getName();
+      }
+      return this.qualifiedName = qualifiedName;
     }
   };
 
@@ -1029,6 +1035,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name, allowNatives) {
+    Timer.start("parse");
     this.name = name;
 
     /* Only library code can have natives. */
@@ -1078,6 +1085,7 @@ var AbcFile = (function () {
     for (i = 0; i < n; ++i) {
       MethodInfo.parseBody(this, stream);
     }
+    Timer.stop();
   }
 
   function checkMagic(stream) {

@@ -22,9 +22,11 @@ function error(message) {
   throw new Error(message);
 }
 
-function assert(condition, message) {
+function assert(condition) {
   if (!condition) {
-    error(message);
+    var message = Array.prototype.slice.call(arguments);
+    message.shift();
+    error(message.join(""));
   }
 }
 
@@ -253,6 +255,16 @@ var Option = (function () {
     if (str.indexOf("-" + this.shortName) === 0) {
       if (str.indexOf("=") >= 0) {
         this.value = str.slice(str.indexOf("=") + 1).trim();
+        switch (this.value) {
+          case "true":
+            this.value = true;
+            break;
+          case "false":
+            this.value = false;
+            break;
+          default:
+            break;
+        }
       } else if (str == "-" + this.shortName) {
         this.value = true;
       } else {

@@ -143,8 +143,11 @@ var original = {};
 });
 
 var Interface = (function () {
-  function Interface(name) {
-    this.name = name;
+  function Interface(classInfo) {
+    var ii = classInfo.instanceInfo;
+    assert (ii.isInterface());
+    this.name = ii.name;
+    this.classInfo = classInfo;
   }
 
   Interface.prototype = {
@@ -365,7 +368,7 @@ const natives = (function () {
     };
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        prop = "public$" + name;
+        var prop = "public$" + name;
         var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
         descriptor.enumerable = false;
         Object.defineProperty(obj, prop, descriptor);
@@ -383,6 +386,7 @@ const natives = (function () {
     var c = new Class("Boolean", Boolean, C(Boolean));
     c.baseClass = baseClass;
     c.nativeMethods = Boolean.prototype;
+    c.coerce = Boolean;
     return c;
   }
 
@@ -447,38 +451,43 @@ const natives = (function () {
   /**
    * Vector.as
    */
-  function VectorClass(scope, instance, baseClass) {
-    var c = new Class("Vector", null, null);
-    c.baseClass = baseClass;
-    var m = Array.prototype;
-    c.nativeMethods = m;
-    return c;
-  }
 
-  function createVectorClass(type) {
+  /**
+   * Creates a typed Vector class. It steals the Array object from a new global
+   * and overrides its GET/SET ACCESSOR methods to do the appropriate coercions.
+   * If the |type| argument is undefined it creates the untyped Vector class.
+   */
+  function createVectorClass(type, baseClass) {
     var TypedArray = createNewGlobalObject().Array;
 
     defineReadOnlyProperty(TypedArray.prototype, GET_ACCESSOR, function (i) {
       return this[i];
     });
 
-    var coerce = type.instance;
-    defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
-      this[i] = coerce(v);
-    });
+    if (type) {
+      var coerce = type.instance;
+      defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
+        this[i] = coerce(v);
+      });
+    } else {
+      defineReadOnlyProperty(TypedArray.prototype, SET_ACCESSOR, function (i, v) {
+        this[i] = v;
+      });
+    }
 
     function TypedVector (length, fixed) {
       var array = new TypedArray(length);
       for (var i = 0; i < length; i++) {
-        array[i] = type.defaultValue;
+        array[i] = type ? type.defaultValue : undefined;
       }
       return array;
     }
     TypedVector.prototype = TypedArray.prototype;
-    var typeName = type.classInfo.instanceInfo.name.name;
-    var c = new Class("Vector$" + typeName, TypedVector, C(TypedVector));
-
+    var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
+    var c = new Class(name, TypedVector, C(TypedVector));
     var m = TypedArray.prototype;
+
+    defineReadOnlyProperty(TypedArray.prototype, "class", c);
 
     defineNonEnumerableProperty(m, "get fixed", function () { return false; });
     defineNonEnumerableProperty(m, "set fixed", function (v) { });
@@ -491,23 +500,38 @@ const natives = (function () {
 
     c.nativeMethods = m;
     c.nativeStatics = {};
+    c.vectorType = type;
+    c.isInstance = function (value) {
+      if (value === null || typeof value !== "object") {
+        return false;
+      }
+      if (!this.instance.vectorType && value.class.vectorType) {
+        return true;
+      }
+      return this.instance.prototype.isPrototypeOf(value);
+    };
+
     return c;
   }
 
+  function VectorClass(scope, instance) {
+    return createVectorClass(undefined);
+  }
+
   function ObjectVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("Object"), true));
+    return createVectorClass(toplevel.getClass("Object"));
   }
 
   function IntVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("int"), true));
+    return createVectorClass(toplevel.getClass("int"));
   }
 
   function UIntVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("uint"), true));
+    return createVectorClass(toplevel.getClass("uint"));
   }
 
   function DoubleVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getTypeByName(Multiname.fromSimpleName("Number"), true));
+    return createVectorClass(toplevel.getClass("Number"));
   }
 
   /**
@@ -521,6 +545,7 @@ const natives = (function () {
     c.isInstance = function (value) {
       return typeof value === "number";
     };
+    c.coerce = Number;
     return c;
   }
 
@@ -535,7 +560,7 @@ const natives = (function () {
     c.isInstance = function (value) {
       return (value | 0) === value;
     };
-
+    c.coerce = int;
     return c;
   }
 
@@ -550,7 +575,7 @@ const natives = (function () {
     c.isInstance = function (value) {
       return (value >>> 0) === value;
     };
-
+    c.coerce = uint;
     return c;
   }
 

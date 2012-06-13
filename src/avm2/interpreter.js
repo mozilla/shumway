@@ -393,15 +393,12 @@ var Interpreter = (function () {
             break;
           case OP_deletepropertylate: notImplemented(); break;
           case OP_getslot:
-            obj = stack.pop();
-            stack.push(obj[obj.slots[bc.index]]);
+            stack.push(getSlot(stack.pop(), bc.index));
             break;
           case OP_setslot:
             value = stack.pop();
             obj = stack.pop();
-            name = obj.slots[bc.index];
-            type = obj.types[name];
-            obj[name] = type ? type.call(type, value) : value;
+            setSlot(obj, bc.index, value);
             break;
           case OP_getglobalslot:  notImplemented(); break;
           case OP_setglobalslot:  notImplemented(); break;
@@ -430,10 +427,9 @@ var Interpreter = (function () {
           case OP_unplus:         notImplemented(); break;
           case OP_convert_f4:     notImplemented(); break;
           case OP_coerce:
-            // TODO: Cache the resolved multiname so it doesn't have to be
-            // resolved again in getProperty
-            multiname = createMultiname(multinames[bc.index]);
-            stack.push(coerce(getProperty(scope.findProperty(multiname, true), multiname, true)));
+            value = stack.pop();
+            multiname = multinames[bc.index];
+            stack.push(coerce(value, toplevel.getTypeByName(multiname, true, true)));
             break;
           case OP_coerce_a:       /* NOP */ break;
           case OP_coerce_s:
@@ -637,7 +633,6 @@ var Interpreter = (function () {
               continue interpret;
             }
           }
-
           throw e;
         }
       }
