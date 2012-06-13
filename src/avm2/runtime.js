@@ -110,7 +110,7 @@ function toDouble(x) {
 }
 
 function toBoolean(x) {
-  return Boolean(x);
+  return !!x;
 }
 
 function toUint(x) {
@@ -422,17 +422,15 @@ function setProperty(obj, multiname, value) {
   }
 
   var name = resolved.getQualifiedName();
-  var type = obj.types[name];
+  setPropertyQuick(obj, name, value);
+}
 
-  if (tracePropertyAccess.value && type) {
-    print("setProperty: coercing to type:" + type);
-  }
-
+function setPropertyQuick(obj, qualifiedName, value) {
+  var type = obj.types[qualifiedName];
   if (type && type.coerce) {
     value = type.coerce(value);
   }
-
-  obj[name] = value;
+  obj[qualifiedName] = value;
 }
 
 function throwErrorFromVM(errorClass, message) {

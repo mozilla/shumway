@@ -293,8 +293,6 @@ class Test(Command):
     print "KINDOF - the \"PASSED\" and \"FAILED\" string appear in the output."
     print "FAILED - the \"PASSED\" string doesn't appear anywhere."
     print "---------------------------------------------------------------------------------------------------------"
-    print "Interpreter Time, Time Ratio, Compiler, Time, Time Ratio, Interpreter/Compiler, Time Ratio, Number, File"
-    print "---------------------------------------------------------------------------------------------------------"
 
     tests = Queue.Queue();
 
@@ -338,8 +336,8 @@ class Test(Command):
         modes = {}
         modes["a"] = [self.avm, test]
         modes["i"] = ["js", "-m", "-n", "avm.js", "-x", "-i", test];
-        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", "-cse=false", test];
-        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", "-acc=false", test];
+        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", "-opt=false", test];
+        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", test];
 
         results = {}
 

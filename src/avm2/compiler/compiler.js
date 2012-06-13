@@ -1,5 +1,4 @@
-var enableCSE = options.register(new Option("cse", "cse", true, "Common Subexpression Elimination"));
-var enableAccessors = options.register(new Option("acc", "acc", true, "Use accessors to get/set values via runtime multinames. "));
+var enableOpt = options.register(new Option("opt", "opt", true, "Enable optimizations."));
 
 const T = estransform;
 
@@ -121,6 +120,9 @@ var Compiler = (function () {
         Literal.call(this, value);
       }
     }
+    constant.prototype.isEquivalent = function (other) {
+      return other instanceof Constant && this.value === other.value;
+    };
     return constant;
   })();
 
@@ -296,7 +298,9 @@ var Compiler = (function () {
     };
     findProperty.prototype = Object.create(CallExpression.prototype);
     findProperty.prototype.isEquivalent = function isEquivalent(other) {
-      return other instanceof findProperty && this.multiname === other.multiname && this.strict === other.strict;
+      return other instanceof findProperty &&
+             this.multiname.isEquivalent(other.multiname) &&
+             this.strict === other.strict;
     };
     return findProperty;
   })();
@@ -322,8 +326,8 @@ var Compiler = (function () {
    * Keeps track of a pool of variables that may be reused.
    */
   var VariablePool = (function () {
-    var count = 0;
     function variablePool() {
+      this.count = 0;
       this.used = [];
       this.available = [];
     }
@@ -331,13 +335,17 @@ var Compiler = (function () {
       if (!this.available.empty()) {
         return this.available.pop();
       }
-      var variable = new Variable("v" + count++);
+      var variable = new Variable("v" + this.count++);
       this.used.push(variable);
       return variable;
     };
     variablePool.prototype.release = function (variable) {
       assert (this.used.contains(variable));
       this.available.push(variable);
+    };
+    variablePool.prototype.releaseAll = function () {
+      this.available = this.available.concat(this.used);
+      this.used = [];
     };
     return variablePool;
   })();
@@ -358,7 +366,7 @@ var Compiler = (function () {
 
     /**
      * Finds and returns an equivalent value or returns null if not found.
-     * If [allocate] is true, then if an equivalent value is not found the
+     * If |allocate| is true and an equivalent value is not found, then
      * a variable is allocated for the current value and the original value
      * is returned.
      */
@@ -386,6 +394,11 @@ var Compiler = (function () {
       value.variable = this.variablePool.acquire();
       this.values.push(value);
       return value;
+    };
+
+    cse.prototype.reset = function reset() {
+      this.values = [];
+      this.variablePool.releaseAll();
     };
 
     return cse;
@@ -592,21 +605,26 @@ var Compiler = (function () {
 
       function push(value) {
         assert (typeof value !== "string");
-        if (enableCSE.value && value instanceof FindProperty) {
-          cseValue(value);
-        } else {
-          state.stack.push(value);
-        }
+        state.stack.push(value);
       }
 
       function cseValue(value) {
-        assert (value);
         if (block.cse) {
           var otherValue = block.cse.get(value, true);
           if (otherValue === value) {
+            // flushStack();
             emit(assignment(value.variable, value));
+            value.variable.value = value;
+            // print("CSE: " + generate(value) + " -> " + value.variable);
           }
-          state.stack.push(otherValue.variable);
+          return otherValue.variable;
+        }
+        return value;
+      }
+
+      function flushScope() {
+        if (block.cse) {
+          block.cse.reset();
         }
       }
 
@@ -671,7 +689,7 @@ var Compiler = (function () {
         // TODO
       }
 
-      if (enableCSE.value) {
+      if (enableOpt.value) {
         if (block.dominator === block) {
           block.cse = new CSE(null, this.variablePool);
         } else {
@@ -720,29 +738,24 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
-        /*
-        if (false && !multiname.isQName()) {
-          if (savedScope) {
-            var resolved = savedScope.resolveMultiname(multiname);
-            if (resolved) {
-              return new FindProperty(resolved, strict);
-            }
-          }
-        }
-        */
-        return new FindProperty(multiname, strict);
+        return cseValue(new FindProperty(multiname, strict));
       }
 
       function getProperty(obj, multiname) {
         assert (!(multiname instanceof Multiname), multiname);
 
-        /*
-        if (obj instanceof FindProperty &&
-            obj.multiname.name === multiname.name &&
-            obj.multiname.isQName()) {
-          return property(obj, obj.multiname.getQualifiedName());
+        if (enableOpt.value && multiname instanceof RuntimeMultiname) {
+          return new MemberExpression(obj, multiname.name, true);
         }
-        */
+
+        if (multiname instanceof Constant) {
+          var val = obj instanceof Variable ? obj.value : obj;
+          if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
+            if (multiname.value.isQName()) {
+              return property(obj, multiname.value.getQualifiedName());
+            }
+          }
+        }
 
         /**
          * Looping over arrays by index will use a MultinameL
@@ -770,13 +783,29 @@ var Compiler = (function () {
       }
 
       function setProperty(obj, multiname, value) {
+        if (enableOpt.value && multiname instanceof RuntimeMultiname) {
+          return assignment(new MemberExpression(obj, multiname.name, true), value);
+        }
         return call(id("setProperty"), [obj, multiname, value]);
       }
 
       function getMultiname(index) {
-        assert (!multinames[index].isRuntime());
-        return constant(multinames[index]);
+        var multiname = multinames[index];
+        assert (!multiname.isRuntime());
+        var c = constant(multiname);
+        c.multiname = multiname;
+        return c;
       }
+
+      var RuntimeMultiname = (function () {
+        function runtimeMultiname(multiname, ns, name) {
+          this.multiname = multiname;
+          this.ns = ns;
+          this.name = name;
+          NewExpression.call(this, id("Multiname"), [ns, name]);
+        };
+        return runtimeMultiname;
+      })();
 
       function popMultiname(index) {
         var multiname = multinames[index];
@@ -788,7 +817,7 @@ var Compiler = (function () {
           if (multiname.isRuntimeNamespace()) {
             ns = state.stack.pop();
           }
-          return new NewExpression(id("Multiname"), [ns, name]);
+          return new RuntimeMultiname(multiname, ns, name);
         } else {
           return constant(multiname);
         }
@@ -850,6 +879,7 @@ var Compiler = (function () {
           break;
         case OP_popscope:
           flushStack();
+          flushScope();
           emit(assignment(scopeName, property(scopeName, "parent")));
           state.scopeHeight -= 1;
           break;
@@ -889,6 +919,7 @@ var Compiler = (function () {
         case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
         case OP_pushscope:
           flushStack();
+          flushScope();
           obj = state.stack.pop();
           emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj])));
           state.scopeHeight += 1;
@@ -1072,7 +1103,7 @@ var Compiler = (function () {
           break;
         case OP_coerce_b:
         case OP_convert_b:
-          push(call(id("toBoolean"), [state.stack.pop()]));
+          push(new UnaryExpression(Operator.FALSE, new UnaryExpression(Operator.FALSE, state.stack.pop())));
           break;
         case OP_convert_o:      notImplemented(); break;
         case OP_checkfilter:    notImplemented(); break;
