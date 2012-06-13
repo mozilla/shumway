@@ -521,25 +521,19 @@ var Interpreter = (function () {
           case OP_instanceof:
             type = stack.pop();
             value = stack.pop();
-            if (type instanceof Class) {
-              stack.push(value instanceof type.instance);
-            } else if (typeof type === "function") {
-              stack.push(value instanceof type);
-            } else {
-              stack.push(false);
-            }
+            stack.push(instanceOf(value, type));
             break;
           case OP_istype:
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
             type = toplevel.getTypeByName(multiname, true, true);
-            stack.push(typeof type.isInstance === "function" ? type.isInstance(value) : false);
+            stack.push(isType(value, type));
             break;
           case OP_istypelate:
             type = stack.pop();
             value = stack.pop();
-            stack.push(typeof type.isInstance === "function" ? type.isInstance(value) : false);
+            stack.push(isType(value, type));
             break;
           case OP_in:             notImplemented(); break;
           case OP_increment_i:

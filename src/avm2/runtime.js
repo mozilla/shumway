@@ -433,6 +433,20 @@ function setPropertyQuick(obj, qualifiedName, value) {
   obj[qualifiedName] = value;
 }
 
+function instanceOf (value, type) {
+  if (type instanceof Class) {
+    return value instanceof type.instance;
+  } else if (typeof type === "function") {
+    return value instanceof type;
+  } else {
+    return false;
+  }
+}
+
+function isType (value, type) {
+  return typeof type.isInstance === "function" ? type.isInstance(value) : false;
+}
+
 function throwErrorFromVM(errorClass, message) {
   throw new (toplevel.getClass(errorClass)).instance(message);
 }

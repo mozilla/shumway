@@ -1159,25 +1159,20 @@ var Compiler = (function () {
         case OP_greaterthan:    expression(Operator.GT); break;
         case OP_greaterequals:  expression(Operator.GE); break;
         case OP_instanceof:
-          // TODO: Temporary implementation, totally broken.
-          state.stack.pop();
-          state.stack.pop();
-          push(constant(true));
+          type = state.stack.pop();
+          value = state.stack.pop();
+          push(call(id("instanceof"), [value, type]));
           break;
         case OP_istype:
           value = state.stack.pop();
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
-          push(new ConditionalExpression(new BinaryExpression("instanceof", type, id("Class")),
-                                         call(property(type, "isInstance"), [value]),
-                                         constant(false)));
+          push(call(id("isType"), [value, type]));
           break;
         case OP_istypelate:
           type = state.stack.pop();
           value = state.stack.pop();
-          push(new ConditionalExpression(new BinaryExpression("instanceof", type, id("Class")),
-                                         call(property(type, "isInstance"), [value]),
-                                         constant(false)));
+          push(call(id("isType"), [value, type]));
           break;
         case OP_in:             notImplemented(); break;
         case OP_increment_i:
