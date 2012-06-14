@@ -1161,7 +1161,7 @@ var Compiler = (function () {
         case OP_instanceof:
           type = state.stack.pop();
           value = state.stack.pop();
-          push(call(id("instanceof"), [value, type]));
+          push(call(id("instanceOf"), [value, type]));
           break;
         case OP_istype:
           value = state.stack.pop();
