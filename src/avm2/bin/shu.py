@@ -284,14 +284,28 @@ class Test(Command):
 
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Runs all tests.')
-    parser.add_argument('src', help=".abc search path")
+    parser.add_argument('src', nargs='?', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
     parser.add_argument('-m', '--mode', type=str, default="aico", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
+    parser.add_argument('-i', '--include', nargs="?", action='append', help="include tests from file")
+    parser.add_argument('-e', '--exclude', nargs="?", action='append', help="exclude tests from file")
 
     args = parser.parse_args(args)
-    print "Testing %s" % (args.src)
+
+    def readLines(file):
+      return open(file, 'r').read().split('\n')
+
+    include = []
+    if args.include:
+      for file in args.include:
+        include += readLines(file)
+
+    exclude = []
+    if args.exclude:
+      for file in args.exclude:
+        exclude += readLines(file)
 
     print "---------------------------------------------------------------------------------------------------------"
     print "Each Tamarin acceptance test case includes a bunch of smaller tests, each of which print out PASSED or"
@@ -304,13 +318,18 @@ class Test(Command):
 
     tests = Queue.Queue();
 
-    if os.path.isdir(args.src):
-      for root, subFolders, files in os.walk(args.src):
-        for file in files:
-          if file.endswith(".abc"):
-            tests.put(os.path.join(root, file))
-    elif args.src.endswith(".abc"):
-      tests.put(os.path.abspath(args.src))
+    if args.src:
+      if os.path.isdir(args.src):
+        for root, subFolders, files in os.walk(args.src):
+          for file in files:
+            if file.endswith(".abc"):
+              include.append(os.path.join(root, file))
+      elif args.src.endswith(".abc"):
+        include.append(os.path.abspath(args.src))
+
+    for file in include:
+      if not file in exclude:
+        tests.put(file)
 
     INFO = '\033[94m'
     WARN = '\033[93m'
