@@ -526,6 +526,15 @@ var Compiler = (function () {
       body.push(new BreakStatement(null));
       return {node: new BlockStatement(body), state: state};
     };
+    compilation.prototype.compileExit = function compileBreak(item, state) {
+      var body = [];
+      if (item.label) {
+        body.push(new VariableDeclaration("var", [
+          new VariableDeclarator(id("$label"), id(item.label))
+        ]));
+      }
+      return {node: new BlockStatement(body), state: state};
+    };
     compilation.prototype.compileSequence = function compileSequence(item, state) {
       var cx = this;
       var body = [];

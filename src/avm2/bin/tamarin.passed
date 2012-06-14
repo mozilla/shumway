@@ -986,3 +986,13 @@
 ../tests/tamarin/spidermonkey/js1_5/Regress/regress-355829-03.abc
 ../tests/tamarin/spidermonkey/js1_5/Regress/regress-356250.abc
 ../tests/tamarin/spidermonkey/js1_5/Regress/regress-360969-01.abc
+../tests/tamarin/ecma3/Array/splice1.abc
+../tests/tamarin/ecma3/Array/splice2.abc
+../tests/tamarin/ecma3/Statements/eregress_74474_001.abc
+../tests/tamarin/ecma3/Statements/edowhile_006.abc
+../tests/tamarin/spidermonkey/js1_2/Array/splice1.abc
+../tests/tamarin/spidermonkey/js1_2/Array/splice2.abc
+../tests/tamarin/spidermonkey/js1_2/statements/continue.abc
+../tests/tamarin/spidermonkey/js1_2/statements/switch.abc
+../tests/tamarin/spidermonkey/js1_2/statements/switch2.abc
+../tests/tamarin/spidermonkey/js1_5/Regress/regress-360969-02.abc
