@@ -206,7 +206,7 @@ class Reg(Command):
   def execute(self, args):
     parser = argparse.ArgumentParser(description='Compiles all the source files in the test/regress directory using the asc.jar compiler.')
     parser.add_argument('src', nargs="?", default="../tests/regress", help="source .as file")
-    print args
+    parser.add_argument('-force', action='store_true', help="force recompilation of all regression tests")
     args = parser.parse_args(args)
     print "Compiling Tests"
 
@@ -215,7 +215,15 @@ class Reg(Command):
       for root, subFolders, files in os.walk(args.src):
         for file in files:
           if file.endswith(".as") and file != "harness.as":
-            tests.append(os.path.join(root, file))
+            asFile = os.path.join(root, file)
+            abcFile = os.path.splitext(asFile)[0] + ".abc"
+            compile = args.force
+            if not os.path.exists(abcFile):
+              compile = True
+            elif os.path.getmtime(abcFile) < os.path.getmtime(asFile):
+              compile = True
+            if compile:
+              tests.append(asFile)
     else:
       tests.append(os.path.abspath(args.src))
 
@@ -368,7 +376,6 @@ class Test(Command):
           elif s == "FAILED":
             return FAIL + s + ENDC
 
-        out.append(str(total - tests.qsize()))
         for k in results:
           if k != "a":
             c = compare(results["a"] if "a" in results else None, results[k])
