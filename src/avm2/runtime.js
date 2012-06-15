@@ -512,7 +512,6 @@ const toplevel = (function () {
       assert(c instanceof Class);
       return c;
     },
-
     findProperty: function findProperty(multiname, strict, execute) {
       if (traceToplevel.value) {
         print("Toplevel Find Property: " + multiname);
@@ -721,17 +720,16 @@ var Runtime = (function () {
     });
     parameters.unshift(SAVED_SCOPE_NAME);
 
-    mi.compiledMethod = new Function(parameters, body);
-
-    /* Hook to set breakpoints in compiled code. */
-    if (functionCount == 13) {
-      body = "stop();" + body;
-    }
-
+    var fnName = mi.name ? mi.name.getQualifiedName() : "fn" + functionCount;
+    var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 0) {
-      print ("function fnSource" + functionCount + " (" + parameters.join(", ") + ") { " + body + " }");
+      print (fnSource);
     }
-
+    if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
+      mi.compiledMethod = eval('[' + fnSource + '][0]');
+    } else {
+      mi.compiledMethod = new Function(parameters, body);
+    }
     functionCount++;
     return closeOverScope(mi.compiledMethod, scope);
   };
