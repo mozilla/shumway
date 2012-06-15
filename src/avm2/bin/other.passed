@@ -5,6 +5,7 @@
 ../tests/regress/correctness/play.abc
 ../tests/regress/correctness/arrays.abc
 ../tests/regress/performance/crpto.abc
+
 ../tests/sunspider/math-cordic.abc
 ../tests/sunspider/math-spectral-norm.abc
 ../tests/sunspider/math-partial-sums.abc
@@ -26,3 +27,14 @@
 ../tests/sunspider/access-fannkuch.abc
 ../tests/sunspider/string-unpack-code.abc
 ../tests/sunspider/s3d-raytrace.abc
+
+../tests/jsbench/Series.abc
+../tests/jsbench/FFT.abc
+../tests/jsbench/SparseMatmult.abc
+../tests/jsbench/SOR.abc
+../tests/jsbench/RayTracer.abc
+../tests/jsbench/Crypt.abc
+../tests/jsbench/HeapSort.abc
+../tests/jsbench/Euler.abc
+../tests/jsbench/LUFact.abc
+../tests/jsbench/Moldyn.abc
