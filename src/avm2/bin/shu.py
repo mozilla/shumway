@@ -295,7 +295,11 @@ class Test(Command):
     args = parser.parse_args(args)
 
     def readLines(file):
-      return open(file, 'r').read().split('\n')
+      lines = []
+      for line in open(file, 'r').read().split('\n'):
+        if line != "":
+          lines.append(line)
+      return lines
 
     include = []
     if args.include:
