@@ -150,14 +150,15 @@ var FILTER_GLOW = {
     angle: FIXED,
     distance: FIXED
   }]],
-  strength: UB(1),
+  strength: FIXED8,
   innerShadow: UB(1),
   knockout: UB(1),
-  $2: ['type===3', [
+  compositeSource: UB(1),
+  $3: ['type===3', [
     { onTop: UB(1) },
     { $$reserved: UB(1) }
   ]],
-  $3: ['type===4||type===7', [
+  $4: ['type===4||type===7', [
     { passes: UB(4) },
     { $$reserved: UB(4) }
   ]]
