@@ -91,6 +91,12 @@ var Interpreter = (function () {
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 
+      if (traceInterpreter.value > 0) {
+        var methodName = method.name ? method.name.getQualifiedName() : "unknown";
+        print("methodName: " + methodName);
+        method.trace(new IndentingWriter(), abc);
+      }
+
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         if (traceInterpreter.value > 0) {
@@ -180,6 +186,11 @@ var Interpreter = (function () {
             obj = stack.pop();
             stack.push(nextName(obj, index));
             break;
+          case OP_nextvalue:
+            index = stack.pop();
+            obj = stack.pop();
+            stack.push(nextValue(obj, index));
+            break;
           case OP_hasnext:
             notImplemented();
             break;
@@ -196,7 +207,6 @@ var Interpreter = (function () {
             stack.push(undefined);
             break;
           case OP_pushfloat:      notImplemented(); break;
-          case OP_nextvalue:      notImplemented(); break;
           case OP_pushbyte:
           case OP_pushshort:
             stack.push(bc.value);
@@ -338,7 +348,10 @@ var Interpreter = (function () {
           case OP_newclass:
             stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));
             break;
-          case OP_getdescendants: notImplemented(); break;
+          case OP_getdescendants:
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(getDescendants(multiname, stack.pop()));
+            break;
           case OP_newcatch:
             assert(exceptions[bc.index].scopeObject);
             stack.push(new Scope(scope, exceptions[bc.index].scopeObject));
@@ -422,7 +435,9 @@ var Interpreter = (function () {
             stack.push(toBoolean(stack.pop()));
             break;
           case OP_convert_o:      notImplemented(); break;
-          case OP_checkfilter:    notImplemented(); break;
+          case OP_checkfilter:
+            stack.push(checkFilter(stack.pop()));
+            break;
           case OP_convert_f:      notImplemented(); break;
           case OP_unplus:         notImplemented(); break;
           case OP_convert_f4:     notImplemented(); break;
