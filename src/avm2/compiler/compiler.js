@@ -897,6 +897,11 @@ var Compiler = (function () {
           obj = state.stack.pop();
           push(call(id("nextName"), [obj, index]));
           break;
+        case OP_nextvalue:
+          index = state.stack.pop();
+          obj = state.stack.pop();
+          push(call(id("nextValue"), [obj, index]));
+          break;
         case OP_hasnext:
           // TODO: Temporary implementation, totally broken.
           push(constant(false));
@@ -913,7 +918,6 @@ var Compiler = (function () {
         case OP_pushnull:       push(constant(null)); break;
         case OP_pushundefined:  push(constant(undefined)); break;
         case OP_pushfloat:      notImplemented(); break;
-        case OP_nextvalue:      notImplemented(); break;
         case OP_pushbyte:       push(constant(bc.value)); break;
         case OP_pushshort:      push(constant(bc.value)); break;
         case OP_pushstring:     push(constant(strings[bc.index])); break;
@@ -1038,7 +1042,11 @@ var Compiler = (function () {
           push(call(property(constant(abc), "runtime.createClass"),
                     [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
           break;
-        case OP_getdescendants: notImplemented(); break;
+        case OP_getdescendants:
+          multiname = popMultiname(bc.index);
+          obj = state.stack.pop();
+          push(call(id("getDescendants"), [multiname, obj]));
+          break;
         case OP_newcatch:       notImplemented(); break;
         case OP_findpropstrict:
           multiname = popMultiname(bc.index);
@@ -1115,7 +1123,9 @@ var Compiler = (function () {
           push(new UnaryExpression(Operator.FALSE, new UnaryExpression(Operator.FALSE, state.stack.pop())));
           break;
         case OP_convert_o:      notImplemented(); break;
-        case OP_checkfilter:    notImplemented(); break;
+        case OP_checkfilter:
+          push(call(id("checkFilter"), [state.stack.pop()]));
+          break;
         case OP_convert_f:      notImplemented(); break;
         case OP_unplus:         notImplemented(); break;
         case OP_convert_f4:     notImplemented(); break;

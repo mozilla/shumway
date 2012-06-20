@@ -4,7 +4,9 @@ package flash.system {
 
   [native(cls="ApplicationDomainClass")]
   public final class ApplicationDomain {
-    public function ApplicationDomain(parentDomain:ApplicationDomain=null) {}
+    public function ApplicationDomain(parentDomain:ApplicationDomain=null) {
+      ctor(parentDomain);
+    }
 
     public static native function get currentDomain():ApplicationDomain;
     // [API("662", "663")]

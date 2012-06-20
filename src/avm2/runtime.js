@@ -201,6 +201,10 @@ function nextName(obj, index) {
   return obj.nextName(index);
 }
 
+function nextValue(obj, index) {
+  return obj["public$" + obj.nextName(index)];
+}
+
 /**
  * Determine if the given object has any more properties after the specified |index| in the given |obj|
  * and if so, return the next index or |zero| otherwise. If the |obj| has no more properties then continue
@@ -238,6 +242,14 @@ function hasNext2(obj, index) {
    * be the original object.
    */
   return {index: obj.nextNameIndex(index), object: obj};
+}
+
+function getDescendants(multiname, obj) {
+  notImplemented("getDescendants");
+}
+
+function checkFilter(value) {
+  notImplemented("checkFilter");
 }
 
 /**
@@ -778,6 +790,7 @@ var Runtime = (function () {
     if (ci.native) {
       /* Some natives classes need this, like Error. */
       var makeNativeClass = getNative(ci.native.cls);
+      assert (makeNativeClass, "No native for ", ci.native.cls);
       cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
       if (instance = cls.instance) {
         /* Math doesn't have an instance, for example. */
@@ -1059,6 +1072,11 @@ function executeScript(abc, script) {
 function executeAbc(abc, mode) {
   loadAbc(abc, mode);
   executeScript(abc, abc.lastScript);
+  /*
+  for (var i = 0; i < abc.scripts.length - 1; i++) {
+    executeScript(abc, abc.scripts[i]);
+  }
+  */
   if (traceClasses.value) {
     toplevel.traceLoadedClasses();
   }
