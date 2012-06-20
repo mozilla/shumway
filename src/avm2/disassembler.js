@@ -373,12 +373,16 @@ var SourceTracer = (function (writer) {
       return;
     }
     writer.enter("Shumway Stub {");
-    writer.enter("function " + native.cls + "(scope, instance, baseClass) {");
-    writer.writeLn("function " + name + "() {};");
+    writer.enter("natives." + native.cls + " = function " + native.cls + "(scope, instance, baseClass) {");
+    writer.writeLn("// Signature: " + getSignature(ii.init));
+    var initSignature = getSignature(ii.init, true);
+    writer.writeLn("function " + name + "(" + initSignature + ") {");
+    writer.writeLn("  instance.call(this" + (initSignature ? ", " + initSignature : "") + ")");
+    writer.writeLn("};");
     writer.writeLn("var c = new Class(\"" + name + "\", " + name +
                    ", Class.passthroughCallable(" + name + "));");
     writer.writeLn("//");
-    writer.writeLn("// WARNING! This sets: ")
+    writer.writeLn("// WARNING! This sets:")
     writer.writeLn("//   " + name + ".prototype = " +
                    "Object.create(baseClass.instance.prototype)");
     writer.writeLn("//");
@@ -410,7 +414,9 @@ var SourceTracer = (function (writer) {
               prop = "." + traitName;
             }
             str += prop + " = function " + traitName + "(" + getSignature(mi, true) + ")";
-            writer.writeLn(str + " { notImplemented(); }");
+            writer.writeLn(str + " {");
+            writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\"); };");
+            writer.writeLn("}");
           }
         }
       });
@@ -426,7 +432,7 @@ var SourceTracer = (function (writer) {
     writer.writeLn("c.nativeStatics = s;");
 
     writer.writeLn("return c;");
-    writer.leave("}");
+    writer.leave("};");
     writer.leave("}");
   }
 
