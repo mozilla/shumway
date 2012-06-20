@@ -618,7 +618,7 @@ const natives = (function () {
         }
       };
       return c;
-    }
+    };
   }
 
   /**
@@ -1055,7 +1055,7 @@ const natives = (function () {
         return notImplemented(value);
       }
     })
-  }
+  };
 
 })();
 

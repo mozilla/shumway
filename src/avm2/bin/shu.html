@@ -35,6 +35,14 @@
     <script type="text/javascript" src="../compiler/compiler.js"></script>
 
     <script type="text/javascript" src="../native.js"></script>
+
+    <script type="text/javascript" src="../builtin/EventDispatcherClass.js"></script>
+    <script type="text/javascript" src="../builtin/DisplayObjectClass.js"></script>
+    <script type="text/javascript" src="../builtin/InteractiveObjectClass.js"></script>
+    <script type="text/javascript" src="../builtin/ContainerClass.js"></script>
+    <script type="text/javascript" src="../builtin/SpriteClass.js"></script>
+    <script type="text/javascript" src="../builtin/ApplicationDomainClass.js"></script>
+
     <script type="text/javascript" src="../runtime.js"></script>
     <script type="text/javascript" src="../disassembler.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
@@ -83,7 +91,7 @@
       // abcs.push(["../tests/sunspider/crypto-md5.abc"]);
       // abcs.push(["../tests/tamarin/ecma3/Array/e15_4_3_2.abc"]);
 
-      abcs.push(["../tests/crypto.abc", ALWAYS_INTERPRET]);
+      abcs.push(["../tests/watch.abc", ALWAYS_INTERPRET]);
 
       function executeNext() {
         if (abcs.length) {
@@ -92,6 +100,11 @@
             executeAbc(new AbcFile(new Uint8Array(buffer), run[0], true), run[1]);
             executeNext();
           });
+        } else {
+    toplevel.getTypeByName(
+      Multiname.fromSimpleName("com.google.youtube.application.WatchPageVideoApplication"),
+      true, true
+    );
         }
       }
       executeNext();
