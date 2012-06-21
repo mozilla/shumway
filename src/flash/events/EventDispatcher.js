@@ -9,10 +9,8 @@ EventDispatcher.prototype = Object.create(null, {
                                          priority,
                                          useWeakReference) {
     var listeners = this._listeners[type];
-
     if (!listeners)
       listeners = this._listeners[type] = [];
-
     listeners.push(listener);
   }),
   dispatchEvent: descMethod(function (evt) {
@@ -23,10 +21,8 @@ EventDispatcher.prototype = Object.create(null, {
   }),
   removeEventListener: descMethod(function (type, listener, useCapture) {
     var listeners = this._listeners[type];
-
     if (listeners) {
       var i = listeners.indexOf(listener);
-
       if (i > -1)
         listeners.splice(i, 1);
     }

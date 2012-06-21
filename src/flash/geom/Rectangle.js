@@ -74,25 +74,17 @@ Rectangle.prototype = Object.create(null, {
     return new Rectangle(this.x, this.y, this.width, this.y);
   }),
   contains: descMethod(function (x, y) {
-    return x >= this.x &&
-           x < this.x + width &&
-           y >= this.y &&
-           y < this.y + height;
+    return x >= this.x && x < this.x + width && y >= this.y && y < this.y + height;
   }),
   containsRect: descMethod(function (rect) {
     var r1 = rect.x + rect.width;
     var b1 = rect.y + rect.height;
     var r2 = this.x + width;
     var b2 = this.y + height;
-
-    return rect.x >= x &&
-           rect.x < r2 &&
-           rect.y >= y &&
-           rect.y < b2 &&
-           r1 > x &&
-           r1 <= r2 &&
-           b1 > y &&
-           b1 <= b2;
+    return rect.x >= x && rect.x < r2 &&
+           rect.y >= y && rect.y < b2 &&
+           r1 > x && r1 <= r2 &&
+           b1 > y && b1 <= b2;
   }),
   copyFrom: descMethod(function (rect) {
     this.x = rect.x;
@@ -106,14 +98,14 @@ Rectangle.prototype = Object.create(null, {
   }),
   inflate: descMethod(function (dx, dy) {
     this.x -= dx;
-    this.width += 2 * dx;
     this.y -= dy;
+    this.width += 2 * dx;
     this.height += 2 * dy;
   }),
   inflatePoint: descMethod(function (pt) {
     this.x -= pt.x;
-    this.width += 2 * pt.x;
     this.y -= pt.y;
+    this.width += 2 * pt.x;
     this.height += 2 * pt.y;
   }),
   intersection: descMethod(function (rect) {
@@ -128,9 +120,7 @@ Rectangle.prototype = Object.create(null, {
     var yMax = Math.max(y1, y2);
     var width = Math.min(x1 + this.width, x2 + rect.width) - xMax;
     var height = Math.min(y1 + this.height, y2 + rect.height) - yMax;
-
-    return width > 0 && height > 0 ?
-           new Rectangle(xMax, yMax, width, height) : new Rectangle;
+    return width > 0 && height > 0 ? new Rectangle(xMax, yMax, width, height) : new Rectangle;
   }),
   intersects: descMethod(function (rect) {
     if (isEmpty() || rect.isEmpty())
@@ -144,7 +134,6 @@ Rectangle.prototype = Object.create(null, {
     var yMax = Math.max(y1, y2);
     var width = Math.min(x1 + this.width, x2 + rect.width) - xMax;
     var height = Math.min(y1 + this.height, y2 + rect.height) - yMax;
-
     return width && height;
   }),
   isEmpty: descMethod(function () {
@@ -168,10 +157,7 @@ Rectangle.prototype = Object.create(null, {
     this.height = height;
   }),
   toString: descMethod(function () {
-    return '(x=' + this.x + ',' +
-           ' y=' + this.y + ',' +
-           ' w=' + this.width + ',' +
-           ' h=' + this.height + ')';
+    return '(x=' + this.x + ', y=' + this.y + ', w=' + this.width + ', h=' + this.height + ')';
   }),
   union: descMethod(function (rect) {
     if (this.isEmpty())
@@ -188,7 +174,6 @@ Rectangle.prototype = Object.create(null, {
     var yMax = Math.min(y1, y2);
     var width = Math.max(x1 + this.width, x2 + rect.width) - xMax;
     var height = Math.max(y1 + this.height, y2 + rect.height) - yMax;
-
     return new Rectangle(xMax, yMax, width, height);
   })
 });

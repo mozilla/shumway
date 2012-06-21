@@ -60,15 +60,12 @@ Event.prototype = Object.create(null, {
   }),
   formatToString: descMethod(function (className) {
     var str = '[' + className;
-
-    for (var i = 0, n = arguments.length; i < n; ++i) {
+    for (var i = 0, n = arguments.length; i < n; i++) {
       var prop = arguments[i];
       var val = this[prop];
       str += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
     }
-
     str += ']';
-
     return str;
   }),
   isDefaultPrevented: descMethod(function () {
@@ -87,12 +84,6 @@ Event.prototype = Object.create(null, {
     return this._target;
   }),
   toString: descMethod(function () {
-    return this.formatToString(
-      'Event',
-      'type',
-      'bubbles',
-      'cancelable',
-      'eventPhase'
-    );
+    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
   })
 });

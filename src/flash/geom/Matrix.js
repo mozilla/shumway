@@ -13,16 +13,16 @@ Matrix.prototype = Object.create(null, {
   }),
   concat: descMethod(function (m) {
     var a1 = this.a;
-    var a2 = m.a;
     var b1 = this.b;
-    var b2 = m.b;
     var c1 = this.c;
-    var c2 = m.c;
     var d1 = this.d;
-    var d2 = m.d;
     var tx1 = this.tx;
-    var tx2 = m.tx;
     var ty1 = this.ty;
+    var a2 = m.a;
+    var b2 = m.b;
+    var c2 = m.c;
+    var d2 = m.d;
+    var tx2 = m.tx;
     var ty2 = m.ty;
     this.a = a1 * a2 + b1 * c2;
     this.b = a1 * b2 + b1 * d2;
@@ -59,10 +59,7 @@ Matrix.prototype = Object.create(null, {
     );
   }),
   deltaTransformPoint: descMethod(function (pt) {
-    return new Point(
-      this.a * pt.x + this.c * pt.y,
-      this.d * pt.y + this.b * pt.x
-    );
+    return new Point(this.a * pt.x + this.c * pt.y, this.d * pt.y + this.b * pt.x);
   }),
   identity: descMethod(function () {
     this.a = 1;
@@ -80,12 +77,10 @@ Matrix.prototype = Object.create(null, {
     var tx = this.tx;
     var ty = this.ty;
     var det = a * d - b * c;
-
     if (!det) {
       this.identity();
       return;
     }
-
     det = 1 / det;
     this.a = d * det;
     this.b = -b * det;
@@ -96,14 +91,14 @@ Matrix.prototype = Object.create(null, {
   }),
 
   rotate: descMethod(function (angle) {
-    var u = Math.cos(angle);
-    var v = Math.sin(angle);
     var a = this.a;
     var b = this.b;
     var c = this.c;
     var d = this.d;
     var tx = this.tx;
     var ty = this.ty;
+    var u = Math.cos(angle);
+    var v = Math.sin(angle);
     this.a = u * a - v * b;
     this.b = v * a + u * b;
     this.c = u * c - v * d;

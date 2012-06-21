@@ -37,7 +37,6 @@ Point.prototype = Object.create(null, {
   }),
   normalize: descMethod(function (len) {
     var current = Math.sqrt(this.x * this.x + this.y * this.y);
-
     if (current > 0) {
       var scale = len / current;
       this.x *= scale;
