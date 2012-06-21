@@ -1,14 +1,3 @@
-function descProperty(val) {
-  return {
-    value: val,
-    writable: true,
-    configurable: true,
-    enumerable: true
-  };
-}
-function descMethod(func) {
-  return descProperty(func);
-}
 function descAccessor(get, set) {
   return {
     get: get,
@@ -24,6 +13,18 @@ function descConst(val) {
     enumerable: true
   };
 }
+function descMethod(func) {
+  return descProperty(func);
+}
+function descProperty(val) {
+  return {
+    value: val,
+    writable: true,
+    configurable: true,
+    enumerable: true
+  };
+}
+
 function illegalOperation() {
   throw Error('Illegal Operation');
 }
