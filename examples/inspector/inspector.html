@@ -36,19 +36,17 @@
 
     <script src="jquery.min.js"></script>
 
-    <script src="../src/swf/util.js"></script>
-    <script src="../src/swf/swf.js"></script>
-    <script>
-      SWF.workerPath = "../src/swf/worker.js";
-    </script>
-    <script src="../src/swf/worker.js"></script>
-    <script src="../src/swf/prototypes.js"></script>
-    <script src="../src/avm1/classes.js"></script>
-    <script src="../src/avm1/globals.js"></script>
-    <script src="../src/avm1/stream.js"></script>
-    <script src="../src/avm1/interpreter.js"></script>
-    <script src="../src/swf/embed.js"></script>
-    <script src="../src/swf/renderer.js"></script>
+    <script src="../../lib/DataView.js/DataView.js"></script>
+
+    <script src="../../src/swf/util.js"></script>
+    <script src="../../src/swf/swf.js"></script>
+    <script src="../../src/swf/prototypes.js"></script>
+    <script src="../../src/avm1/classes.js"></script>
+    <script src="../../src/avm1/globals.js"></script>
+    <script src="../../src/avm1/stream.js"></script>
+    <script src="../../src/avm1/interpreter.js"></script>
+    <script src="../../src/swf/embed.js"></script>
+    <script src="../../src/swf/renderer.js"></script>
 
     <script>
       window.print = function (msg) {
@@ -56,29 +54,27 @@
       };
       var webShell = true;
     </script>
-    <script src="../src/avm2/DataView.js"></script>
-    <script src="../src/avm2/util.js"></script>
+    <script src="../../src/avm2/util.js"></script>
     <script>
       var options = new OptionSet("option(s)");
       var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
       var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
     </script>
-    <script src="../src/avm2/constants.js"></script>
-    <script src="../src/avm2/opcodes.js"></script>
-    <script src="../src/avm2/parser.js"></script>
-    <script src="../src/avm2/disassembler.js"></script>
-    <script src="../src/avm2/analyze.js"></script>
-    <script src="../src/avm2/compiler.js"></script>
-    <script src="../src/avm2/native.js"></script>
-    <script src="../src/avm2/runtime.js"></script>
-    <script src="../src/avm2/interpreter.js"></script>
+    <script src="../../src/avm2/constants.js"></script>
+    <script src="../../src/avm2/opcodes.js"></script>
+    <script src="../../src/avm2/parser.js"></script>
+    <script src="../../src/avm2/disassembler.js"></script>
+    <script src="../../src/avm2/analyze.js"></script>
+    <script src="../../src/avm2/native.js"></script>
+    <script src="../../src/avm2/runtime.js"></script>
+    <script src="../../src/avm2/interpreter.js"></script>
 
     <script>
       var abcFiles = [];
       var filesLoaded = 0;
       ["builtin.abc", "playerGlobal.abc"].forEach(function (v, i, a) {
           var xhr = new XMLHttpRequest;
-          xhr.open("GET", "../src/avm2/generated/" + v);
+          xhr.open("GET", "../../src/avm2/generated/" + v);
           xhr.responseType = "arraybuffer";
           xhr.onload = function () {
             abcFiles[i] = new AbcFile(new Uint8Array(this.response), v, true);
@@ -92,19 +88,23 @@
       });
     </script>
 
-    <script src="../src/flash/util.js"></script>
-    <script src="../src/flash/events/EventDispatcher.js"></script>
-    <script src="../src/flash/display/DisplayObject.js"></script>
-    <script src="../src/flash/display/InteractiveObject.js"></script>
-    <script src="../src/flash/display/DisplayObjectContainer.js"></script>
-    <script src="../src/flash/display/Graphics.js"></script>
-    <script src="../src/flash/display/Sprite.js"></script>
-    <script src="../src/flash/display/Loader.js"></script>
-    <script src="../src/flash/display/LoaderInfo.js"></script>
-    <script src="../src/flash/display/MovieClip.js"></script>
-    <script src="../src/flash/display/Stage.js"></script>
-    <script src="../src/flash/ui/Keyboard.js"></script>
-    <script src="../src/flash/ui/Mouse.js"></script>
+    <script src="../../src/flash/util.js"></script>
+    <script src="../../src/flash/events/EventDispatcher.js"></script>
+    <script src="../../src/flash/display/DisplayObject.js"></script>
+    <script src="../../src/flash/display/InteractiveObject.js"></script>
+    <script src="../../src/flash/display/DisplayObjectContainer.js"></script>
+    <script src="../../src/flash/display/Graphics.js"></script>
+    <script src="../../src/flash/display/Sprite.js"></script>
+    <script src="../../src/flash/display/Loader.js"></script>
+    <script src="../../src/flash/display/LoaderInfo.js"></script>
+    <script src="../../src/flash/display/MovieClip.js"></script>
+    <script src="../../src/flash/display/Stage.js"></script>
+    <script src="../../src/flash/ui/Keyboard.js"></script>
+    <script src="../../src/flash/ui/Mouse.js"></script>
+
+    <script>
+      Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
+    </script>
 
     <div id="inputBar">
       <span><a href="https://www.github.com/mozilla/shumway">shumway</a> inspector &nbsp;&nbsp;|&nbsp;&nbsp;</span>
