@@ -1054,7 +1054,7 @@ var Runtime = (function () {
 
 function executeScript(abc, script) {
   if (disassemble.value) {
-    abc.trace(new IndentingWriter(false));
+    abc.trace(new IndentingWriter());
   }
   if (traceExecution.value) {
     print("Executing : " + abc.name);

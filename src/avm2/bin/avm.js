@@ -59,11 +59,11 @@ var abc = new AbcFile(snarf(file, "binary"), file);
 var methodBodies = abc.methodBodies;
 
 if (disassemble.value) {
-  abc.trace(new IndentingWriter(false));
+  abc.trace(new IndentingWriter());
 }
 
 if (traceGraphViz.value) {
-  var writer = new IndentingWriter(false);
+  var writer = new IndentingWriter();
   writer.enter("digraph {");
   var graph = 0;
   var opts = { massage: true };
@@ -97,7 +97,7 @@ if (execute.value) {
 
   if (traceLevel.value > 4) {
     /* Spew analysis information if not quiet. */
-    var writer = new IndentingWriter(false);
+    var writer = new IndentingWriter();
     writer.enter("analyses {");
     abc.methods.forEach(function (method) {
       if (method.analysis) {
