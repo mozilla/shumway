@@ -7,3 +7,7 @@
 [submodule "src/avm2/compiler/lljs"]
 	path = src/avm2/compiler/lljs
 	url = https://github.com/mbebenita/LLJS.git
+[submodule "lib/DataView.js"]
+        path = lib/DataView.js
+        url = https://github.com/davidflanagan/DataView.js.git
+
