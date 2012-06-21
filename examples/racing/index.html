@@ -28,13 +28,10 @@
   <body>
     <div id="stage"></div>
 
-    <script src="../../src/swf/DataView.js"></script>
+    <script src="../../lib/DataView.js/DataView.js"></script>
+
     <script src="../../src/swf/util.js"></script>
     <script src="../../src/swf/swf.js"></script>
-    <script>
-      SWF.workerPath = "../../src/swf/worker.js";
-    </script>
-    <script src="../../src/swf/worker.js"></script>
     <script src="../../src/swf/prototypes.js"></script>
     <script src="../../src/swf/embed.js"></script>
     <script src="../../src/swf/renderer.js"></script>
@@ -59,7 +56,11 @@
     <script src="../../src/flash/ui/Mouse.js"></script>
 
     <script>
-      SWF.embed("../../examples/racing/race.swf", document.getElementById("stage"));
+      Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
+    </script>
+
+    <script>
+      SWF.embed("../../../examples/racing/race.swf", document.getElementById("stage"));
     </script>
     <div id="footer">
      <sup>*</sup>
