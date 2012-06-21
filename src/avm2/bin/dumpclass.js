@@ -1,4 +1,4 @@
-load("../DataView.js");
+load("../../../lib/DataView.js/DataView.js");
 
 var SWF = {};
 load("../../swf/util.js");

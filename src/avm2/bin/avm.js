@@ -9,7 +9,8 @@ var alwaysInterpret = options.register(new Option("alwaysInterpret", "i", false,
 var help = options.register(new Option("help", "h", false, "prints help"));
 var traceMetrics = options.register(new Option("traceMetrics", "tm", false, "prints collected metrics"));
 
-load("../DataView.js");
+load("../../../lib/DataView.js/DataView.js");
+
 load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");

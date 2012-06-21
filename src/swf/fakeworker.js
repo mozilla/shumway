@@ -1,6 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-/** @define {string} */ var workerScripts = 'DataView.js,\
+/** @define {string} */ var workerScripts = '../../DataView.js/DataView.js,\
 types.js,structs.js,tags.js,inflate.js,stream.js,templates.js,generator.js,\
 parser.js,bitmap.js,button.js,font.js,image.js,label.js,shape.js,text.js,cast.js';
 
