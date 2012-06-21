@@ -13,6 +13,13 @@ import threading
 from subprocess import Popen, PIPE, STDOUT
 from collections import Counter
 
+def readLines(file):
+  lines = []
+  for line in open(file, 'r').read().split('\n'):
+    if line != "":
+      lines.append(line)
+  return lines
+
 def execute (command, timeout = -1):
   start_time = time.time()
   processPid = [None]
@@ -260,6 +267,45 @@ class Dis(Command):
     print "Disassembling %s" % args.src
     self.runAvm(args.src, execute = False, disassemble = True)
 
+# Splits a text file with the following delimiters into multiple files.
+# <<< fileName
+# ...
+# >>>
+# <<< fileName 2
+# ...
+# >>>
+class Split(Command):
+  def __init__(self):
+    Command.__init__(self, "split")
+
+  def __repr__(self):
+    return self.name
+
+  def execute(self, args):
+    parser = argparse.ArgumentParser(description='Splits a delimited text file into multiple text files.')
+    parser.add_argument('src', help="source .txt file")
+    parser.add_argument('dst', help="destination directory")
+    args = parser.parse_args(args)
+
+    if not os.path.isdir(args.dst):
+      print "Destination \"" + args.dst + "\" is not a directory."
+      sys.exit();
+    src = args.src
+    dst = os.path.abspath(args.dst)
+    print "Splitting %s into %s" % (src, dst)
+    file = None
+    for line in readLines(src):
+      if line.startswith("<<< "):
+        name = line[4:]
+        print "Open " + dst + "/" + name
+        file = open(dst + "/" + name, "w")
+      elif line == ">>>":
+        file.close()
+        file = None
+      else:
+        if file:
+          file.write(line + "\n")
+
 class Compile(Command):
   def __init__(self):
     Command.__init__(self, "compile")
@@ -293,13 +339,6 @@ class Test(Command):
     parser.add_argument('-e', '--exclude', nargs="?", action='append', help="exclude tests from file")
 
     args = parser.parse_args(args)
-
-    def readLines(file):
-      lines = []
-      for line in open(file, 'r').read().split('\n'):
-        if line != "":
-          lines.append(line)
-      return lines
 
     include = []
     if args.include:
@@ -426,7 +465,7 @@ class Test(Command):
     print counter
 
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile(), Test(), Reg()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Test(), Reg(), Split()]:
   commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()
