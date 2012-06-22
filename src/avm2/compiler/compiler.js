@@ -1,4 +1,6 @@
-var enableOpt = options.register(new Option("opt", "opt", true, "Enable optimizations."));
+var compilerOptions = new OptionSet("Compiler Options");
+
+var enableOpt = compilerOptions.register(new Option("opt", "optimizations", true, "Enable optimizations."));
 
 const T = estransform;
 

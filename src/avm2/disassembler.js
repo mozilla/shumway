@@ -1,4 +1,6 @@
-var filter = options.register(new Option("filter", "f", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
+var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
+
+var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {

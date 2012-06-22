@@ -1,4 +1,6 @@
-var traceInterpreter = options.register(new Option("traceInterpreter", "ti", 0, "trace interpreter execution"));
+var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Options"));
+
+var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
 
 var Interpreter = (function () {
 

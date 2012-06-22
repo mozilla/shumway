@@ -1,13 +1,24 @@
 load("../util.js");
-var options = new OptionSet("option(s)");
+load("../options.js");
 
-var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
-var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
-var traceGraphViz = options.register(new Option("traceGraphViz", "v", false, "trace GraphViz output"));
-var execute = options.register(new Option("execute", "x", false, "execute"));
-var alwaysInterpret = options.register(new Option("alwaysInterpret", "i", false, "always interpret"));
-var help = options.register(new Option("help", "h", false, "prints help"));
-var traceMetrics = options.register(new Option("traceMetrics", "tm", false, "prints collected metrics"));
+var stdout = new IndentingWriter();
+
+var ArgumentParser = options.ArgumentParser;
+var Option = options.Option;
+var OptionSet = options.OptionSet;
+
+var argumentParser = new ArgumentParser();
+
+var systemOptions = new OptionSet("System Options");
+
+var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
+var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+var traceGraphViz = shellOptions.register(new Option("v", "traceGraphViz" , "boolean", false, "trace GraphViz output"));
+var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
+var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
+var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
+var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 
 load("../../../lib/DataView.js/DataView.js");
 
@@ -25,46 +36,46 @@ load("../compiler/lljs/src/escodegen.js");
 load("../compiler/compiler.js");
 
 load("../native.js");
-load("../builtin/EventDispatcherClass.js");
-load("../builtin/DisplayObjectClass.js");
-load("../builtin/InteractiveObjectClass.js");
-load("../builtin/ContainerClass.js");
-load("../builtin/SpriteClass.js");
-load("../builtin/ApplicationDomainClass.js");
 
 load("../runtime.js");
 load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
 
-if (arguments.length === 0) {
-  printUsage();
+argumentParser.addBoundOptionSet(systemOptions);
+
+argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
+  stdout.writeLn("avm.js " + argumentParser.getUsage());
+}});
+
+argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x) {
+  systemOptions.trace(stdout);
+}});
+
+var abcPath;
+argumentParser.addArgument("abc", "abcFile", "string", {
+  positional: true,
+  parse: function (x) {
+    abcPath = x;
+  }
+});
+
+try {
+  print (argumentParser.parse(arguments));
+} catch (x) {
+  stdout.writeLn(x.message);
   quit();
 }
 
-function printUsage() {
-  print("avm: [option(s)] file");
-  options.trace(new IndentingWriter());
-}
-
-var file = arguments[arguments.length - 1];
-options.parse(arguments.slice(0, arguments.length - 1));
-
-if (help.value) {
-  printUsage();
-  quit();
-}
-
-var abc = new AbcFile(snarf(file, "binary"), file);
+var abc = new AbcFile(snarf(abcPath, "binary"), abcPath);
 var methodBodies = abc.methodBodies;
 
 if (disassemble.value) {
-  abc.trace(new IndentingWriter());
+  abc.trace(stdout);
 }
 
 if (traceGraphViz.value) {
-  var writer = new IndentingWriter();
-  writer.enter("digraph {");
+  stdout.enter("digraph {");
   var graph = 0;
   var opts = { massage: true };
   abc.methods.forEach(function (method) {
@@ -76,7 +87,7 @@ if (traceGraphViz.value) {
       graph += 1;
     }
   });
-  writer.leave("}");
+  stdout.leave("}");
 }
 
 if (execute.value) {
@@ -97,17 +108,16 @@ if (execute.value) {
 
   if (traceLevel.value > 4) {
     /* Spew analysis information if not quiet. */
-    var writer = new IndentingWriter();
-    writer.enter("analyses {");
+    stdout.enter("analyses {");
     abc.methods.forEach(function (method) {
       if (method.analysis) {
-        method.analysis.trace(writer);
+        method.analysis.trace(stdout);
       }
     });
-    writer.leave("}");
+    stdout.leave("}");
   }
 }
 
 if (traceMetrics.value) {
-  metrics.Timer.trace(new IndentingWriter());
+  metrics.Timer.trace(stdout);
 }
