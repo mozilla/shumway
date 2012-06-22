@@ -10,7 +10,6 @@ var OptionSet = options.OptionSet;
 var argumentParser = new ArgumentParser();
 
 var systemOptions = new OptionSet("System Options");
-
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
@@ -44,30 +43,30 @@ load("../interpreter.js");
 
 argumentParser.addBoundOptionSet(systemOptions);
 
-argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
+function printUsage() {
   stdout.writeLn("avm.js " + argumentParser.getUsage());
+}
+
+argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
+  printUsage();
 }});
 
 argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x) {
   systemOptions.trace(stdout);
 }});
 
-var abcPath;
-argumentParser.addArgument("abc", "abcFile", "string", {
-  positional: true,
-  parse: function (x) {
-    abcPath = x;
-  }
+var abcFile = argumentParser.addArgument("abc", "abcFile", "string", {
+  positional: true
 });
 
 try {
-  print (argumentParser.parse(arguments));
+  argumentParser.parse(arguments);
 } catch (x) {
   stdout.writeLn(x.message);
   quit();
 }
 
-var abc = new AbcFile(snarf(abcPath, "binary"), abcPath);
+var abc = new AbcFile(snarf(abcFile.value, "binary"), abcFile.value);
 var methodBodies = abc.methodBodies;
 
 if (disassemble.value) {

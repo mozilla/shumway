@@ -17,11 +17,18 @@ load("../../swf/image.js");
 load("../../swf/label.js");
 load("../../swf/shape.js");
 load("../../swf/text.js");
-load("../../swf/cast.js");
 
 load("../util.js");
+load("../options.js");
 
-var options = new OptionSet("option(s)");
+var stdout = new IndentingWriter();
+
+var ArgumentParser = options.ArgumentParser;
+var Option = options.Option;
+var OptionSet = options.OptionSet;
+
+var argumentParser = new ArgumentParser();
+var systemOptions = new OptionSet("System Options");
 
 load("../constants.js");
 load("../opcodes.js");
@@ -37,13 +44,19 @@ load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
 
-if (arguments.length !== 2) {
-  usage();
-  quit();
+function printUsage() {
+  stdout.writeLn("dumpclass.js " + argumentParser.getUsage());
 }
 
-function usage() {
-  print("dumpclass: library.swf ClassName");
+argumentParser.addArgument("h", "help", "boolean", {parse: function (x) { printUsage(); }});
+var swfFile = argumentParser.addArgument("swf", "swf", "string", { positional: true });
+var className = argumentParser.addArgument("class", "class", "string", { positional: true });
+
+try {
+  argumentParser.parse(arguments);
+} catch (x) {
+  stdout.writeLn(x.message);
+  quit();
 }
 
 function forEachABC(swf, cb) {
@@ -76,13 +89,12 @@ function forEachABC(swf, cb) {
 }
 
 var writer = new IndentingWriter();
-var className = arguments[1];
-forEachABC(arguments[0], function (abc) {
+forEachABC(swfFile.value, function (abc) {
   abc.scripts.forEach(function (script) {
     script.traits.traits.forEach(function (trait) {
       if (trait.isClass()) {
         var cname = trait.classInfo.instanceInfo.name;
-        if (cname.getName() === className) {
+        if (cname.getName() === className.value) {
           writer.enter("package " + cname.namespaces[0].originalURI + " {\n");
           SourceTracer.traceMetadata(trait.metadata);
           SourceTracer.traceClass(trait.classInfo);

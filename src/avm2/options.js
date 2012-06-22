@@ -26,6 +26,8 @@
         } else  if (this.type === "number") {
           assert (!isNaN(value), value + " is not a number");
           this.value = parseInt(value);
+        } else {
+          this.value = value;
         }
         if (this.parseFn) {
           this.parseFn(value);

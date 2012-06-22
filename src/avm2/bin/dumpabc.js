@@ -17,14 +17,19 @@ load("../../swf/image.js");
 load("../../swf/label.js");
 load("../../swf/shape.js");
 load("../../swf/text.js");
-load("../../swf/cast.js");
 
 load("../util.js");
+load("../options.js");
 load("../metrics.js");
 
 var Timer = metrics.Timer;
+var stdout = new IndentingWriter();
+var ArgumentParser = options.ArgumentParser;
+var Option = options.Option;
+var OptionSet = options.OptionSet;
 
-var options = new OptionSet("option(s)");
+var argumentParser = new ArgumentParser();
+var systemOptions = new OptionSet("System Options");
 
 load("../constants.js");
 load("../opcodes.js");
@@ -36,18 +41,20 @@ load("../compiler/lljs/src/escodegen.js");
 load("../compiler/compiler.js");
 load("../native.js");
 load("../runtime.js");
-load("../fuzzer.js");
-load("../viz.js");
 load("../interpreter.js");
 
-if (arguments.length !== 1) {
-  usage();
-  quit();
+function printUsage() {
+  stdout.writeLn("dumpabc.js " + argumentParser.getUsage());
 }
 
-function usage() {
-  print("dumpabc: file.swf");
-  options.trace(new IndentingWriter());
+argumentParser.addArgument("h", "help", "boolean", {parse: function (x) { printUsage(); }});
+var swfFile = argumentParser.addArgument("swf", "swf", "string", { positional: true });
+
+try {
+  argumentParser.parse(arguments);
+} catch (x) {
+  stdout.writeLn(x.message);
+  quit();
 }
 
 function forEachABC(swf, cb) {
@@ -79,9 +86,11 @@ function forEachABC(swf, cb) {
   });
 }
 
+print (swfFile.value);
+
 var writer = new IndentingWriter();
 var first = true;
-forEachABC(arguments[0], function (bytes) {
+forEachABC(swfFile.value, function (bytes) {
   if (!first) {
     print ("---");
   }
