@@ -1,4 +1,4 @@
-var runtimeOptions = systemOptions.register(new OptionSet("Interpreter Options"));
+var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceToplevel = runtimeOptions.register(new Option("ttl","traceToplevel", "boolean", false, "trace top level execution"));

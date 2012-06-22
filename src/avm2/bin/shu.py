@@ -406,8 +406,8 @@ class Test(Command):
         modes = {}
         modes["a"] = [self.avm, test]
         modes["i"] = ["js", "-m", "-n", "avm.js", "-x", "-i", test];
-        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", "-opt=false", test];
-        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", test];
+        modes["c"] = ["js", "-m", "-n", "avm.js", "-x", test];
+        modes["o"] = ["js", "-m", "-n", "avm.js", "-x", "-opt", test];
 
         results = {}
 
