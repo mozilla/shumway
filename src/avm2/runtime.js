@@ -526,6 +526,7 @@ const toplevel = (function () {
       assert(c instanceof Class);
       return c;
     },
+
     findProperty: function findProperty(multiname, strict, execute) {
       if (traceToplevel.value) {
         print("Toplevel Find Property: " + multiname);
@@ -568,7 +569,7 @@ const toplevel = (function () {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
               }
-              return { object: global, name: multiname };
+              return { abc: abc, object: global, name: multiname };
             }
           } else {
             var resolved = resolveMultiname(global, multiname, false);
@@ -576,7 +577,7 @@ const toplevel = (function () {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
               }
-              return { object: global, name: resolved };
+              return { abc: abc, object: global, name: resolved };
             }
           }
         }
@@ -1039,6 +1040,13 @@ var Runtime = (function () {
           defineReadOnlyProperty(obj, qn, closure);
         }
       } else if (trait.isClass()) {
+        // Builtins are special, so drop any attempts to define builtins
+        // that aren't from 'builtin.abc'.
+        var res = toplevel.resolveMultiname(trait.name, false);
+        if (res && res.abc.name === "builtin.abc") {
+          return obj;
+        }
+
         if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
           trait.classInfo.native = trait.metadata.native;
         }

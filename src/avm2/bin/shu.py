@@ -169,8 +169,6 @@ class Base:
     args = ["js", "-m", "-n", "avm.js"];
     if disassemble:
       args.append("-d")
-    if not trace:
-      args.append("-q")
     if execute:
       args.append("-x")
     args.append(file)

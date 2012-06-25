@@ -60,8 +60,9 @@
  *     ...
  *   }
  *
- * The cls= syntax is to maintain parity with how it's done in Tamarin, in
- * case we need to run stock player globals but plug in our native classes.
+ * The cls= syntax is to maintain parity with how it's done in Tamarin, as we
+ * run stock player globals but have custom language-level builtin shims
+ * (e.g. for Object, Array, etc).
  *
  * This lets the VM automatically resolve native methods that don't have their
  * own [native].

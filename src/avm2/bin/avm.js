@@ -94,8 +94,21 @@ try {
 var mode;
 
 if (execute.value) {
+  // Execute the custom builtin.
   executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
-  executeAbc(new AbcFile(snarf("../generated/playerGlobal.abc", "binary"), "playerGlobal.abc", true), ALWAYS_INTERPRET);
+
+  // Load, but don't execute, the default player globals.
+  SWF.parse(snarf("../generated/playerGlobal.swf", "binary"), {
+    oncomplete: function(result) {
+      var tags = result.tags;
+      for (var i = 0, n = tags.length; i < n; i++) {
+        var tag = tags[i];
+        if (tag.type === "abc") {
+          loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc", true), ALWAYS_INTERPRET);
+        }
+      }
+    }
+  });
 }
 
 if (file.value.endsWith(".swf")) {
