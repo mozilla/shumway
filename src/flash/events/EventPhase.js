@@ -6,3 +6,5 @@ Object.defineProperties(EventPhase, {
   AT_TARGET:       descConst(2),
   BUBBLING_PHASE:  descConst(3)
 });
+
+EventPhase.prototype = Object.create(null);
