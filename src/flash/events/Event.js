@@ -1,9 +1,13 @@
 function Event(type, bubbles, cancelable) {
-  Object.defineProperties(
+  Object.defineProperties(this, {
     type:       descProp(type),
     bubbles:    descProp(!!bubbles),
     cancelable: descProp(!!cancelable)
-  );
+  });
+
+  this._canceled = false;
+  this._eventPhase = EventPhase.AT_TARGET;
+  this._currentTarget = null;
   this._target = null;
 }
 
@@ -39,7 +43,7 @@ Object.defineProperties(Event, {
   SOUND_COMPLETE:               descConst('soundComplete'),
   TAB_CHILDREN_CHANGE:          descConst('tabChildrenChange'),
   TAB_INDEX_CHANGE:             descConst('tabIndexChange'),
-  UNLOAD:                       descConst('unload'),""
+  UNLOAD:                       descConst('unload'),
   FULLSCREEN:                   descConst('fullscreen'),
   HTML_BOUNDS_CHANGE:           descConst('htmlBoundsChange'),
   HTML_RENDER:                  descConst('htmlRender'),
@@ -53,10 +57,10 @@ Event.prototype = Object.create(null, {
     return new Event(this.type, this.bubbles, this.cancelable);
   }),
   currentTarget: descAccessor(function () {
-    notImplemented();
+    return this._currentTarget;
   }),
   eventPhase: descAccessor(function () {
-    notImplemented();
+    return this._eventPhase;
   }),
   formatToString: descMethod(function (className) {
     var str = '[' + className;
@@ -69,10 +73,10 @@ Event.prototype = Object.create(null, {
     return str;
   }),
   isDefaultPrevented: descMethod(function () {
-    notImplemented();
+    return this._isDefaultPrevented;
   }),
   preventDefault: descMethod(function () {
-    notImplemented();
+    this._isDefaultPrevented = true;
   }),
   stopImmediatePropagation: descMethod(function () {
     notImplemented();
