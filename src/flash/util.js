@@ -14,13 +14,12 @@ function descConst(val) {
   };
 }
 function descMethod(func) {
-  return descProperty(func);
+  return descProp(func);
 }
-function descProperty(val) {
+function descProp(val) {
   return {
     value: val,
     writable: true,
-    configurable: true,
     enumerable: true
   };
 }
