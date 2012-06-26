@@ -55,24 +55,40 @@
       var webShell = true;
     </script>
     <script src="../../src/avm2/util.js"></script>
+    <script src="../../src/avm2/options.js"></script>
+
     <script>
+      var OptionSet = options.OptionSet;
       var options = new OptionSet("option(s)");
+      var systemOptions = new OptionSet("System Options");
       var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
       var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
     </script>
+
     <script src="../../src/avm2/constants.js"></script>
     <script src="../../src/avm2/opcodes.js"></script>
     <script src="../../src/avm2/parser.js"></script>
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../src/avm2/analyze.js"></script>
+    <script src="../../src/avm2/metrics.js"></script>
+
+    <script>
+      var Timer = metrics.Timer;
+    </script>
+
+    <script src="../../src/avm2/compiler/lljs/src/estransform.js"></script>
+    <script src="../../src/avm2/compiler/lljs/src/escodegen.js"></script>
+    <script src="../../src/avm2/compiler/compiler.js"></script>
+
     <script src="../../src/avm2/native.js"></script>
+
     <script src="../../src/avm2/runtime.js"></script>
     <script src="../../src/avm2/interpreter.js"></script>
 
     <script>
       var abcFiles = [];
       var filesLoaded = 0;
-      ["builtin.abc", "playerGlobal.abc"].forEach(function (v, i, a) {
+      ["builtin.abc"].forEach(function (v, i, a) {
           var xhr = new XMLHttpRequest;
           xhr.open("GET", "../../src/avm2/generated/" + v);
           xhr.responseType = "arraybuffer";
