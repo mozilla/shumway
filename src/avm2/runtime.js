@@ -1059,7 +1059,7 @@ function executeScript(abc, script) {
     abc.trace(new IndentingWriter());
   }
   if (traceExecution.value) {
-    print("Executing : " + abc.name);
+    print("Executing: " + abc.name);
   }
   assert (!script.executing && !script.executed);
   script.executing = true;

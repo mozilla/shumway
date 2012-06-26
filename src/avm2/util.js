@@ -107,7 +107,11 @@ function defineNonEnumerableProperty(obj, name, value) {
   });
 
   extendBuiltin(Sp, "trim", function () {
-	  return this.replace(/^\s+|\s+$/g,"");
+    return this.replace(/^\s+|\s+$/g,"");
+  });
+
+  extendBuiltin(Sp, "endsWith", function (str) {
+    return this.indexOf(str, this.length - str.length) !== -1;
   });
 
   var Ap = Array.prototype;

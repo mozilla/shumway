@@ -1,3 +1,30 @@
+load("../../../lib/DataView.js/DataView.js");
+
+/**
+ * Load SWF Dependencies
+ */
+var SWF = {};
+load("../../swf/util.js");
+load("../../swf/types.js");
+load("../../swf/structs.js");
+load("../../swf/tags.js");
+load("../../swf/inflate.js");
+load("../../swf/stream.js");
+load("../../swf/templates.js");
+load("../../swf/generator.js");
+load("../../swf/parser.js");
+load("../../swf/bitmap.js");
+load("../../swf/button.js");
+load("../../swf/font.js");
+load("../../swf/image.js");
+load("../../swf/label.js");
+load("../../swf/shape.js");
+load("../../swf/text.js");
+
+/**
+ * Load AVM2 Dependencies
+ */
+
 load("../util.js");
 load("../options.js");
 
@@ -18,8 +45,6 @@ var execute = shellOptions.register(new Option("x", "execute", "boolean", false,
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
-
-load("../../../lib/DataView.js/DataView.js");
 
 load("../constants.js");
 load("../opcodes.js");
@@ -55,7 +80,7 @@ argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x)
   systemOptions.trace(stdout);
 }});
 
-var abcFile = argumentParser.addArgument("abc", "abcFile", "string", {
+var file = argumentParser.addArgument("file", "file", "string", {
   positional: true
 });
 
@@ -66,54 +91,86 @@ try {
   quit();
 }
 
-var abc = new AbcFile(snarf(abcFile.value, "binary"), abcFile.value);
-var methodBodies = abc.methodBodies;
-
-if (disassemble.value) {
-  abc.trace(stdout);
-}
-
-if (traceGraphViz.value) {
-  stdout.enter("digraph {");
-  var graph = 0;
-  var opts = { massage: true };
-  abc.methods.forEach(function (method) {
-    method.analysis = new Analysis(method, opts);
-    method.analysis.analyzeControlFlow();
-    method.analysis.restructureControlFlow();
-    if (method.analysis) {
-      method.analysis.traceCFG(writer, method, "G" + graph + "_");
-      graph += 1;
-    }
-  });
-  stdout.leave("}");
-}
+var mode;
 
 if (execute.value) {
-  try {
-    executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
-    executeAbc(new AbcFile(snarf("../generated/playerGlobal.abc", "binary"), "playerGlobal.abc", true), ALWAYS_INTERPRET);
+  executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
+  executeAbc(new AbcFile(snarf("../generated/playerGlobal.abc", "binary"), "playerGlobal.abc", true), ALWAYS_INTERPRET);
+}
 
-    var mode;
-    if (alwaysInterpret.value) {
-      mode = ALWAYS_INTERPRET;
+if (file.value.endsWith(".swf")) {
+  SWF.parse(snarf(file.value, "binary"), {
+    oncomplete: function(result) {
+      var tags = result.tags;
+      for (var i = 0, n = tags.length; i < n; i++) {
+        var tag = tags[i];
+        if (tag.type === "abc") {
+          processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]", true));
+        } else if (tag.type === "symbols") {
+          for (var j = tag.references.length - 1; j >= 0; j--) {
+            if (tag.references[j].id === 0) {
+              toplevel.getTypeByName(
+                Multiname.fromSimpleName(tag.references[j].name),
+                true, true
+              );
+              break;
+            }
+          }
+        }
+      }
     }
-    executeAbc(abc, mode);
-  } catch(e) {
-    print(e);
-    print("");
-    print(e.stack);
+  });
+} else {
+  assert(file.value.endsWith(".abc"));
+  processAbc(new AbcFile(snarf(file.value, "binary"), file.value, true));
+}
+
+if (alwaysInterpret.value) {
+  mode = ALWAYS_INTERPRET;
+}
+
+function processAbc(abc) {
+  var methodBodies = abc.methodBodies;
+
+  if (disassemble.value) {
+    abc.trace(stdout);
   }
 
-  if (traceLevel.value > 4) {
-    /* Spew analysis information if not quiet. */
-    stdout.enter("analyses {");
+  if (traceGraphViz.value) {
+    stdout.enter("digraph {");
+    var graph = 0;
+    var opts = { massage: true };
     abc.methods.forEach(function (method) {
+      method.analysis = new Analysis(method, opts);
+      method.analysis.analyzeControlFlow();
+      method.analysis.restructureControlFlow();
       if (method.analysis) {
-        method.analysis.trace(stdout);
+        method.analysis.traceCFG(writer, method, "G" + graph + "_");
+        graph += 1;
       }
     });
     stdout.leave("}");
+  }
+
+  if (execute.value) {
+    try {
+      executeAbc(abc, mode);
+    } catch(e) {
+      print(e);
+      print("");
+      print(e.stack);
+    }
+
+    if (traceLevel.value > 4) {
+      /* Spew analysis information if not quiet. */
+      stdout.enter("analyses {");
+      abc.methods.forEach(function (method) {
+        if (method.analysis) {
+          method.analysis.trace(stdout);
+        }
+      });
+      stdout.leave("}");
+    }
   }
 }
 
