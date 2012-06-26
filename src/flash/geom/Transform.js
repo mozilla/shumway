@@ -1,6 +1,7 @@
 function Transform(target) {
   this._target = target;
   this._colorTransform = new ColorTransform;
+
   target.transform = this;
 }
 

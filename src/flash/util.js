@@ -8,7 +8,7 @@ function descAccessor(get, set) {
 }
 function descConst(val) {
   return {
-    value:  val,
+    value: val,
     configurable: true,
     enumerable: true
   };

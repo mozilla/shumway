@@ -50,7 +50,7 @@ Object.defineProperties(Event, {
 
 Event.prototype = Object.create(null, {
   clone: descMethod(function () {
-    return new Event (this.type, this.bubbles, this.cancelable);
+    return new Event(this.type, this.bubbles, this.cancelable);
   }),
   currentTarget: descAccessor(function () {
     notImplemented();

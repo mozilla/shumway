@@ -54,7 +54,7 @@ MouseEvent.prototype = Object.create(new Event, {
   }),
 
   clone: descMethod(function () {
-    return new Event (
+    return new Event(
       this.type,
       this.bubbles,
       this.cancelable,

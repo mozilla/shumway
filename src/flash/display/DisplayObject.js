@@ -1,6 +1,7 @@
 function DisplayObject() {
   this._alpha = 1;
   this._cacheAsBitmap = false;
+  this._control = document.createElement('div');
   this._mouseX = 0;
   this._mouseY = 0;
   this._name = null;
