@@ -58,11 +58,10 @@
     <script src="../../src/avm2/options.js"></script>
 
     <script>
+      var Option = options.Option;
       var OptionSet = options.OptionSet;
-      var options = new OptionSet("option(s)");
       var systemOptions = new OptionSet("System Options");
-      var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
-      var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
