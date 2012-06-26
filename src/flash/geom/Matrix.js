@@ -1,10 +1,12 @@
 function Matrix(a, b, c, d, tx, ty) {
-  this.a = a || 1;
-  this.b = b || 0;
-  this.c = c || 0;
-  this.d = d || 1;
-  this.tx = tx || 0;
-  this.ty = ty || 0;
+  Object.defineProperties(this, {
+    a:  descProp(a || 1),
+    b:  descProp(b || 0),
+    c:  descProp(c || 0),
+    d:  descProp(d || 1),
+    tx: descProp(tx || 0),
+    ty: descProp(ty || 0)
+  });
 }
 
 Matrix.prototype = Object.create(null, {

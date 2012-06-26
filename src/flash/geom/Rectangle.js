@@ -1,8 +1,10 @@
 function Rectangle(x, y, width, height) {
-  this.x = x || 0;
-  this.y = y || 0;
-  this.width = width || 0;
-  this.height = height || 0;
+  Object.defineProperties(this, {
+    x:      descProp(x || 0),
+    y:      descProp(y || 0),
+    width:  descProp(width || 0),
+    height: descProp(height || 0)
+  });
 }
 
 Rectangle.prototype = Object.create(null, {

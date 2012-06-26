@@ -1,6 +1,8 @@
 function Point(x, y) {
-  this.x = x || 0;
-  this.y = y || 0;
+  Object.defineProperties(this, {
+    x: descProp(x || 0),
+    y: descProp(y || 0)
+  });
 }
 
 Object.defineProperties(Point, {

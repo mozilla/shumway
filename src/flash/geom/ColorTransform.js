@@ -6,14 +6,16 @@ function ColorTransform(redMultiplier,
 						            greenOffset,
 						            blueOffset,
 						            alphaOffset) {
-  this.redMultiplier = redMultiplier || 1;
-  this.greenMultiplier = greenMultiplier || 1;
-  this.blueMultiplier = blueMultiplier || 1;
-  this.alphaMultiplier = alphaMultiplier || 1;
-  this.redOffset = redOffset || 0;
-  this.greenOffset = greenOffset || 0;
-  this.blueOffset = blueOffset || 0;
-  this.alphaOffset = alphaOffset || 0;
+  Object.defineProperties(this, {
+    redMultiplier:   descProp(redMultiplier || 1),
+    greenMultiplier: descProp(greenMultiplier || 1),
+    blueMultiplier:  descProp(blueMultiplier || 1),
+    alphaMultiplier: descProp(alphaMultiplier || 1),
+    redOffset:       descProp(redOffset || 0),
+    greenOffset:     descProp(reenOffset || 0),
+    blueOffset:      descProp(blueOffset || 0),
+    alphaOffset:     descProp(alphaOffset || 0)
+  });
 }
 
 ColorTransform.prototype = Object.create(null, {
