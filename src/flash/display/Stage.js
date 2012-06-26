@@ -1,6 +1,6 @@
 function Stage() {
-  this._transform = [];
   this._color = 0xFFFFFFFF;
+  this._transform = { };
 }
 
 Stage.prototype = Object.create(new DisplayObjectContainer, {
@@ -316,31 +316,36 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   _attachToCanvas: descMethod(function(parameters) {
     var canvas = parameters.canvas;
     var ctx = canvas.getContext('2d');
-    var plays;
     var loader = new Loader();
+    var loaderInfo = loader.contentLoaderInfo;
     var stage = this;
-    loader._onStart = function(root, loaderInfo, as2Context) {
+    var isPlaying = false;
+
+    loaderInfo.addEventListener(Event.INIT, function () {
       stage._loaderInfo = loaderInfo;
       stage._stageWidth = loaderInfo.width;
       stage._stageHeight = loaderInfo.height;
       stage._frameRate = loaderInfo.frameRate;
 
-      as2Context.stage = stage; // TODO make it better
-      parameters.onstart(root, stage);
-    };
-    loader._onProgress = function(root, obj) {
-      if (obj.bgcolor) {
-        stage._color = obj.bgcolor; // TODO convert to numeric
-        canvas.style.background = obj.bgcolor;
-      }
-      if (!plays) {
+      loaderInfo._as2Context.stage = stage; // TODO make it better
+
+      parameters.onstart(loader.content, stage);
+    });
+    loaderInfo.addEventListener(Event.PROGRESS, function () {
+      //if (obj.bgcolor) {
+      //  stage._color = obj.bgcolor; // TODO convert to numeric
+      //  canvas.style.background = obj.bgcolor;
+      //}
+      var root = loader.content;
+      if (!isPlaying) {
         renderMovieClip(root, stage, ctx);
-        plays = true;
+        isPlaying = true;
       }
-    };
-    loader._onComplete = function(root, result) {
-      parameters.oncomplete(root, result);
-    };
-    loader.load(parameters.file);
+    });
+    loaderInfo.addEventListener(Event.COMPLETE, function () {
+      parameters.oncomplete(loader.content);
+    });
+
+    loader.load({ url: parameters.file });
   })
 });
