@@ -15,7 +15,13 @@ Object.defineProperties(ProgressEvent, {
 
 ProgressEvent.prototype = Object.create(new Event, {
   clone: descMethod(function () {
-    return new ProgressEvent(this.type, this.bubbles, this.cancelable, this.bytesLoaded, this.bytesTotal);
+    return new ProgressEvent(
+      this.type,
+      this.bubbles,
+      this.cancelable,
+      this.bytesLoaded,
+      this.bytesTotal
+    );
   }),
   toString: descMethod(function () {
     return this.formatToString('ProgressEvent',
