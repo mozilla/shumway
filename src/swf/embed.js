@@ -13,14 +13,15 @@ SWF.embed = function(file, container, options) {
 
   var stage = new Stage();
   stage._attachToCanvas({
-    file: file,
     canvas: canvas,
+    file: file,
+
     onstart: function(root, stage) {
       if (container.clientHeight) {
         resizeCanvas(container, canvas);
-        window.addEventListener('resize',
-          resizeCanvas.bind(null, container, canvas), false);
+        window.addEventListener('resize', resizeCanvas.bind(null, container, canvas), false);
       } else {
+
         canvas.width = stage.stageWidth;
         canvas.height = stage.stageHeight;
       }
@@ -34,7 +35,7 @@ SWF.embed = function(file, container, options) {
     },
     oncomplete: function(root, result) {
       if (options.oncomplete)
-        options.oncomplete(root, result);
+        options.oncomplete(root);
     }
   });
 };
