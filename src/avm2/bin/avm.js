@@ -43,6 +43,7 @@ var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0
 var traceGraphViz = shellOptions.register(new Option("v", "traceGraphViz" , "boolean", false, "trace GraphViz output"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
+var loadPlayerGlobal = shellOptions.register(new Option("p", "loadPlayerGlobal", "boolean", false, "load player global"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 
@@ -61,6 +62,7 @@ load("../compiler/compiler.js");
 
 load("../native.js");
 
+load("../domain.js");
 load("../runtime.js");
 load("../fuzzer.js");
 load("../viz.js");
@@ -92,23 +94,31 @@ try {
 }
 
 var mode;
+var sysDomain, appDomain;
 
 if (execute.value) {
-  // Execute the custom builtin.
-  executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc", true), ALWAYS_INTERPRET);
+  // Make the system domain and load builtins.
+  sysDomain = new Domain(null, ALWAYS_INTERPRET, true);
 
-  // Load, but don't execute, the default player globals.
-  SWF.parse(snarf("../generated/playerGlobal.swf", "binary"), {
-    oncomplete: function(result) {
-      var tags = result.tags;
-      for (var i = 0, n = tags.length; i < n; i++) {
-        var tag = tags[i];
-        if (tag.type === "abc") {
-          loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc", true), ALWAYS_INTERPRET);
+  // Execute the custom builtin.
+  sysDomain.executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc"));
+
+  if (loadPlayerGlobal.value) {
+    // Load, but don't execute, the default player globals.
+    SWF.parse(snarf("../generated/playerGlobal.swf", "binary"), {
+      oncomplete: function(result) {
+        var tags = result.tags;
+        for (var i = 0, n = tags.length; i < n; i++) {
+          var tag = tags[i];
+          if (tag.type === "abc") {
+            sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
+          }
         }
       }
-    }
-  });
+    });
+  }
+
+  appDomain = new Domain(sysDomain, ALWAYS_INTERPRET, false);
 }
 
 if (file.value.endsWith(".swf")) {
@@ -166,8 +176,9 @@ function processAbc(abc) {
   }
 
   if (execute.value) {
+    assert(appDomain);
     try {
-      executeAbc(abc, mode);
+      appDomain.executeAbc(abc);
     } catch(e) {
       print(e);
       print("");

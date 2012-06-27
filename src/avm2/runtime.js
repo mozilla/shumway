@@ -1,13 +1,8 @@
 var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
-var traceToplevel = runtimeOptions.register(new Option("ttl","traceToplevel", "boolean", false, "trace top level execution"));
-var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
-
-const ALWAYS_INTERPRET = 0x1;
-const HEURISTIC_JIT = 0x2;
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
@@ -179,26 +174,6 @@ function setSlot(obj, index, value) {
   obj[name] = value;
 }
 
-function applyType(factory, types) {
-  var factoryClassName = factory.classInfo.instanceInfo.name.name;
-  if (factoryClassName === "Vector") {
-    assert (types.length === 1);
-    var typeClassName = types[0].classInfo.instanceInfo.name.name;
-    switch (typeClassName) {
-      case "int":
-      case "uint":
-      case "double":
-        break;
-      default:
-        typeClassName = "object";
-        break;
-    }
-    return toplevel.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
-  } else {
-    return notImplemented(factoryClassName);
-  }
-}
-
 function nextName(obj, index) {
   return obj.nextName(index);
 }
@@ -289,7 +264,7 @@ var Scope = (function () {
     this.global = parent ? parent.global : this;
   }
 
-  scope.prototype.findProperty = function findProperty(multiname, strict) {
+  scope.prototype.findProperty = function findProperty(multiname, domain, strict) {
     assert (multiname instanceof Multiname);
     if (traceScope.value || tracePropertyAccess.value) {
       print("scopeFindProperty: " + multiname);
@@ -301,33 +276,16 @@ var Scope = (function () {
       }
     }
     if (this.parent) {
-      return this.parent.findProperty(multiname, strict);
+      return this.parent.findProperty(multiname, domain, strict);
     }
     var obj;
-    if ((obj = toplevel.findProperty(multiname, strict, true))) {
+    if ((obj = domain.findProperty(multiname, strict, true))) {
       return obj;
     }
     if (strict) {
       unexpected("Cannot find property " + multiname);
     }
     return this.global.object;
-  };
-
-  /**
-   * Returns the first multiname that binds to a property in the scope chain.
-   */
-  scope.prototype.resolveMultiname = function(multiname) {
-    assert (!multiname.isQName());
-    var resolved = resolveMultiname(this.object, multiname);
-    if (resolved) {
-      return resolved;
-    }
-    if (this.parent) {
-      return this.parent.resolveMultiname(multiname);
-    }
-    // FIXME: This doesn't work since it also returns what global it's found
-    // in. When is this used?
-    return toplevel.resolveMultiname(multiname);
   };
 
   scope.prototype.trace = function () {
@@ -461,27 +419,13 @@ function isType (value, type) {
   return typeof type.isInstance === "function" ? type.isInstance(value) : false;
 }
 
-function throwErrorFromVM(errorClass, message) {
-  throw new (toplevel.getClass(errorClass)).instance(message);
-}
-
-function translateError(error) {
-  if (error instanceof Error) {
-    var type = toplevel.getClass(error.name);
-    if (type) {
-      return new type.instance(error.message);
-    }
-    unexpected("Can't translate error: " + error);
-  }
-  return error;
-}
-
 /**
  * Global object for a script.
  */
 var Global = (function () {
   function Global(runtime, script) {
     script.global = this;
+    script.abc = runtime.abc;
     runtime.applyTraits(this, script.traits, null, new Scope(null, this));
     script.loaded = true;
   }
@@ -489,167 +433,14 @@ var Global = (function () {
 })();
 
 /**
- * Toplevel that keeps track of all parsed ABCs and caches stuff.
- */
-const toplevel = (function () {
-
-  function Toplevel() {
-    /* All ABCs that have been parsed. */
-    this.abcs = [];
-
-    /* Classes that have been loaded. */
-    this.loadedClasses = [];
-
-    // TODO: Caching.
-  }
-
-  var cache = {};
-
-  Toplevel.prototype = {
-    getTypeByName: function getTypeByName(multiname, strict, execute) {
-      var resolved = this.resolveMultiname(multiname, execute);
-      if (resolved) {
-        return resolved.object[resolved.name.getQualifiedName()];
-      }
-      if (strict) {
-        return unexpected("Cannot find type " + multiname);
-      } else {
-        return null;
-      }
-    },
-
-    getClass: function getClass(simpleName) {
-      var c = cache[simpleName];
-      if (!c) {
-        c = cache[simpleName] = this.getTypeByName(Multiname.fromSimpleName(simpleName), true, true);
-      }
-      assert(c instanceof Class);
-      return c;
-    },
-
-    findProperty: function findProperty(multiname, strict, execute) {
-      if (traceToplevel.value) {
-        print("Toplevel Find Property: " + multiname);
-      }
-      var resolved = this.resolveMultiname(multiname, execute);
-      if (resolved) {
-        return resolved.object;
-      }
-      if (strict) {
-        return unexpected("Cannot find property " + multiname);
-      } else {
-        return null;
-      }
-      return null;
-    },
-
-    resolveMultiname: function _resolveMultiname(multiname, execute) {
-      function ensureScriptIsExecuted(abc, script) {
-        if (!script.executed && !script.executing) {
-          executeScript(abc, script);
-        }
-      }
-      var abcs = this.abcs;
-      for (var i = 0, j = abcs.length; i < j; i++) {
-        var abc = abcs[i];
-        var scripts = abc.scripts;
-        for (var k = 0, l = scripts.length; k < l; k++) {
-          var script = scripts[k];
-          if (!script.loaded) {
-            continue;
-          }
-          var global = script.global;
-          if (multiname.isQName()) {
-            if (global.hasOwnProperty(multiname.getQualifiedName())) {
-              if (traceToplevel.value) {
-                print("Toplevel Resolved Multiname: " + multiname + " in " + abc + ", script: " + k);
-                print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
-                print("Value is: " + script.global[multiname.getQualifiedName()]);
-              }
-              if (execute) {
-                ensureScriptIsExecuted(abc, script);
-              }
-              return { abc: abc, object: global, name: multiname };
-            }
-          } else {
-            var resolved = resolveMultiname(global, multiname, false);
-            if (resolved) {
-              if (execute) {
-                ensureScriptIsExecuted(abc, script);
-              }
-              return { abc: abc, object: global, name: resolved };
-            }
-          }
-        }
-      }
-      return null;
-    },
-
-    traceLoadedClasses: function () {
-      var writer = new IndentingWriter();
-      function traceProperties(obj) {
-        for (var key in obj) {
-          var str = key;
-          var descriptor = Object.getOwnPropertyDescriptor(obj, key);
-          if (descriptor) {
-            if (descriptor.get) {
-              str += " getter";
-            }
-            if (descriptor.set) {
-              str += " setter";
-            }
-            if (descriptor.value) {
-              var value = obj[key];
-              if (value instanceof Scope) {
-                str += ": ";
-                var scope = value;
-                while (scope) {
-                  assert (scope.object);
-                  str += scope.object.debugName || "T";
-                  if ((scope = scope.parent)) {
-                    str += " <: ";
-                  }
-                }
-              } else if (value instanceof Function) {
-                str += ": " + (value.name ? value.name : "untitled");
-              } else if (value) {
-                str += ": " + value;
-              }
-            }
-          }
-          writer.writeLn(str);
-        }
-      }
-      writer.enter("Loaded Classes");
-      this.loadedClasses.forEach(function (cls) {
-        var description = cls.debugName + (cls.baseClass ? " extends " + cls.baseClass.debugName : "");
-        writer.enter(description + " {");
-        writer.enter("instance");
-        traceProperties(cls.prototype);
-        writer.leave("");
-        writer.enter("static");
-        traceProperties(cls);
-        writer.leave("");
-        writer.leave("}");
-      });
-      writer.leave("");
-    }
-  };
-
-  var toplevel = new Toplevel();
-  return toplevel;
-
-})();
-
-/**
- * Execution context for a script.
+ * Execution context for an ABC.
  */
 var Runtime = (function () {
   var functionCount = 0;
 
-  function runtime(abc, mode) {
+  function runtime(abc) {
     this.abc = abc;
-    this.mode = mode;
+    this.domain = abc.domain;
     this.compiler = new Compiler(abc);
     this.interpreter = new Interpreter(abc);
 
@@ -659,6 +450,17 @@ var Runtime = (function () {
      */
     this.exception = { value: undefined };
   }
+
+  runtime.currentSaves = [];
+
+  runtime.prototype.pushCurrent = function () {
+    runtime.currentSaves.push(runtime.current);
+    runtime.current = this;
+  };
+
+  runtime.prototype.popCurrent = function () {
+    runtime.current = runtime.currentSaves.pop();
+  };
 
   runtime.prototype.createActivation = function (method) {
     return Object.create(method.activationPrototype);
@@ -704,7 +506,7 @@ var Runtime = (function () {
       return fn;
     }
 
-    const mode = this.mode;
+    const mode = this.domain.mode;
 
     /**
      * We use not having an analysis to mean "not initialized".
@@ -775,6 +577,7 @@ var Runtime = (function () {
       return this.createInterface(classInfo);
     }
 
+    const domain = this.domain;
     scope = new Scope(scope, null);
 
     var className = ii.name.getName();
@@ -794,7 +597,7 @@ var Runtime = (function () {
       /* Some natives classes need this, like Error. */
       var makeNativeClass = getNative(ci.native.cls);
       assert (makeNativeClass, "No native for ", ci.native.cls);
-      cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
+      cls = makeNativeClass(this, scope, this.createFunction(ii.init, scope), baseClass);
       if ((instance = cls.instance)) {
         /* Math doesn't have an instance, for example. */
         this.applyTraits(cls.instance.prototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
@@ -846,7 +649,7 @@ var Runtime = (function () {
     (function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var iname = interfaces[i];
-        var iface = toplevel.getTypeByName(iname, true, true);
+        var iface = domain.getProperty(iname, true, true);
         var ci = iface.classInfo;
         var ii = ci.instanceInfo;
         cls.implementedInterfaces.push(iface);
@@ -882,8 +685,8 @@ var Runtime = (function () {
     cls.classInfo = classInfo;
 
     if (traceClasses.value) {
-      toplevel.loadedClasses.push(cls);
-      toplevel.traceLoadedClasses();
+      domain.loadedClasses.push(cls);
+      domain.traceLoadedClasses();
     }
 
     return cls;
@@ -940,7 +743,7 @@ var Runtime = (function () {
 
           if (trait.slotId <= baseSlotId) {
             /* XXX: Hope we don't throw while doing builtins. */
-            throwErrorFromVM("VerifyError", "Bad slot ID.");
+            this.throwErrorFromVM("VerifyError", "Bad slot ID.");
           }
         }
       }
@@ -967,6 +770,7 @@ var Runtime = (function () {
       computeAndVerifySlotIds(traits, baseTraits);
     }
 
+    const domain = this.domain;
     var ts = traits.traits;
 
     // Make a slot # -> property id and property id -> type mappings. We use 2
@@ -981,13 +785,13 @@ var Runtime = (function () {
 
       assert (trait.holder);
       if (trait.isSlot() || trait.isConst()) {
-        var type = trait.typeName ? toplevel.getTypeByName(trait.typeName, false, false) : null;
+        var type = trait.typeName ? domain.getProperty(trait.typeName, false, false) : null;
         defineProperty(qn, trait.slotId, trait.value, type, trait.isConst());
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         assert (scope !== undefined);
         var mi = trait.methodInfo;
         var closure = null;
-        if (mi.isNative() && this.abc.allowNatives) {
+        if (mi.isNative() && domain.allowNatives) {
           /**
            * We can get the native metadata from two places: either a [native]
            * metadata directly attached to the method trait, or from a
@@ -999,7 +803,7 @@ var Runtime = (function () {
           var md = trait.metadata;
           if (md && md.native) {
             var makeClosure = getNative(md.native.items[0].value);
-            closure = makeClosure && makeClosure(scope);
+            closure = makeClosure && makeClosure(this, scope);
           } else if (md && md.unsafeJSNative) {
             closure = getNative(md.unsafeJSNative.items[0].value);
           } else if (classNatives) {
@@ -1015,8 +819,6 @@ var Runtime = (function () {
             }
             closure = classNatives[k];
           }
-
-
         } else {
           closure = this.createFunction(mi, scope);
         }
@@ -1042,12 +844,15 @@ var Runtime = (function () {
       } else if (trait.isClass()) {
         // Builtins are special, so drop any attempts to define builtins
         // that aren't from 'builtin.abc'.
-        var res = toplevel.resolveMultiname(trait.name, false);
-        if (res && res.abc.name === "builtin.abc") {
-          return obj;
+        var res = domain.findDefiningScript(trait.name, false);
+        if (res) {
+          var abc = res.script.abc;
+          if (!abc.domain.base && abc.name === "builtin.abc") {
+            return obj;
+          }
         }
 
-        if (trait.metadata && trait.metadata.native && this.abc.allowNatives) {
+        if (trait.metadata && trait.metadata.native && domain.allowNatives) {
           trait.classInfo.native = trait.metadata.native;
         }
         defineProperty(qn, trait.slotId, null, undefined, false);
@@ -1059,60 +864,41 @@ var Runtime = (function () {
     return obj;
   };
 
+  runtime.prototype.applyType = function applyType(factory, types) {
+    var factoryClassName = factory.classInfo.instanceInfo.name.name;
+    if (factoryClassName === "Vector") {
+      assert (types.length === 1);
+      var typeClassName = types[0].classInfo.instanceInfo.name.name;
+      switch (typeClassName) {
+      case "int":
+      case "uint":
+      case "double":
+        break;
+      default:
+        typeClassName = "object";
+        break;
+      }
+      return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
+    } else {
+      return notImplemented(factoryClassName);
+    }
+  };
+
+  throwErrorFromVM: function throwErrorFromVM(errorClass, message) {
+    throw new (this.domain.getClass(errorClass)).instance(message);
+  };
+
+  translateError: function translateError(error) {
+    if (error instanceof Error) {
+      var type = this.domain.getClass(error.name);
+      if (type) {
+        return new type.instance(error.message);
+      }
+      unexpected("Can't translate error: " + error);
+    }
+    return error;
+  };
+
   return runtime;
 })();
 
-function executeScript(abc, script) {
-  if (disassemble.value) {
-    abc.trace(new IndentingWriter());
-  }
-  if (traceExecution.value) {
-    print("Executing: " + abc.name);
-  }
-  assert (!script.executing && !script.executed);
-  script.executing = true;
-  abc.runtime.createFunction(script.init, null).call(script.global);
-  script.executed = true;
-}
-
-/**
- * This is the main entry point to the VM. To re-execute an abc file, call [createEntryPoint] once and
- * cache its result for repeated evaluation;
- */
-function executeAbc(abc, mode) {
-  loadAbc(abc, mode);
-  executeScript(abc, abc.lastScript);
-  /*
-  for (var i = 0; i < abc.scripts.length - 1; i++) {
-    executeScript(abc, abc.scripts[i]);
-  }
-  */
-  if (traceClasses.value) {
-    toplevel.traceLoadedClasses();
-  }
-}
-
-function loadAbc(abc, mode) {
-  if (traceExecution.value) {
-    print("Loading: " + abc.name);
-  }
-  toplevel.abcs.push(abc);
-
-  var runtime = new Runtime(abc, mode);
-  abc.runtime = runtime;
-
-  /**
-   * Initialize all the scripts inside the abc block and their globals in
-   * reverse order, since some content depends on the last script being
-   * initialized first or some shit.
-   */
-  var scripts = abc.scripts;
-  for (var i = scripts.length - 1; i >= 0; i--) {
-    var script = scripts[i];
-    var global = new Global(runtime, script);
-
-    if (abc.allowNatives) {
-      global.public$unsafeJSNative = getNative;
-    }
-  }
-}

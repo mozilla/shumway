@@ -31,6 +31,7 @@ var Interpreter = (function () {
       const methods = abc.methods;
       const multinames = abc.constantPool.multinames;
       const runtime = abc.runtime;
+      const domain = abc.domain;
 
       var exceptions = method.exceptions;
 
@@ -327,7 +328,7 @@ var Interpreter = (function () {
           case OP_sxi16:          notImplemented(); break;
           case OP_applytype:
             args = stack.popMany(bc.argCount);
-            stack.push(applyType(stack.pop(), args));
+            stack.push(runtime.applyType(stack.pop(), args));
             break;
           case OP_pushfloat4:     notImplemented(); break;
           case OP_newobject:
@@ -360,18 +361,18 @@ var Interpreter = (function () {
             break;
           case OP_findpropstrict:
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(scope.findProperty(multiname, true));
+            stack.push(scope.findProperty(multiname, domain, true));
             break;
           case OP_findproperty:
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(scope.findProperty(multiname, false));
+            stack.push(scope.findProperty(multiname, domain, false));
             break;
           case OP_finddef:        notImplemented(); break;
           case OP_getlex:
             // TODO: Cache the resolved multiname so it doesn't have to be
             // resolved again in getProperty
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(getProperty(scope.findProperty(multiname, true), multiname, true));
+            stack.push(getProperty(scope.findProperty(multiname, domain, true), multiname, true));
             break;
           case OP_initproperty:
           case OP_setproperty:
@@ -446,7 +447,7 @@ var Interpreter = (function () {
           case OP_coerce:
             value = stack.pop();
             multiname = multinames[bc.index];
-            stack.push(coerce(value, toplevel.getTypeByName(multiname, true, true)));
+            stack.push(coerce(value, domain.getProperty(multiname, true, true)));
             break;
           case OP_coerce_a:       /* NOP */ break;
           case OP_coerce_s:
@@ -544,7 +545,7 @@ var Interpreter = (function () {
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
-            type = toplevel.getTypeByName(multiname, true, true);
+            type = domain.getProperty(multiname, true, true);
             stack.push(isType(value, type));
             break;
           case OP_istypelate:
@@ -622,7 +623,7 @@ var Interpreter = (function () {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
                 (!handler.typeName ||
-                 toplevel.getTypeByName(handler.typeName, true, true).isInstance(e))) {
+                 domain.getProperty(handler.typeName, true, true).isInstance(e))) {
               if (!handler.scopeObject) {
                 if (handler.varName) {
                   var varTrait = Object.create(Trait.prototype);

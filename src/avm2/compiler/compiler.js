@@ -295,7 +295,8 @@ var Compiler = (function () {
     function findProperty(multiname, strict) {
       this.strict = strict;
       this.multiname = multiname;
-      CallExpression.call(this, property(scopeName, "findProperty"), [this.multiname, new Literal(this.strict)]);
+      var args = [this.multiname, property(constant(abc), "domain"), new Literal(this.strict)];
+      CallExpression.call(this, property(scopeName, "findProperty"), args);
     }
     findProperty.prototype = Object.create(CallExpression.prototype);
     findProperty.prototype.isEquivalent = function isEquivalent(other) {
@@ -1019,7 +1020,7 @@ var Compiler = (function () {
         case OP_applytype:
           args = state.stack.popMany(bc.argCount);
           factory = state.stack.pop();
-          push(call(id("applyType"), [factory].concat(new ArrayExpression(args))));
+          push(call(runtimeProperty("applyType"), [factory].concat(new ArrayExpression(args))));
           flushStack();
           break;
         case OP_pushfloat4:     notImplemented(); break;

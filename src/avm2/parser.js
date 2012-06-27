@@ -1033,12 +1033,9 @@ var ScriptInfo = (function scriptInfo() {
 })();
 
 var AbcFile = (function () {
-  function abcFile(bytes, name, allowNatives) {
+  function abcFile(bytes, name) {
     Timer.start("parse");
     this.name = name;
-
-    /* Only library code can have natives. */
-    this.allowNatives = allowNatives;
 
     var n, i;
     var stream = new AbcStream(bytes);

@@ -103,7 +103,7 @@
  *
  * For the above example, we would write:
  *
- *   natives.CClass = function CClass(scope, instance, baseClass) {
+ *   natives.CClass = function CClass(runtime, scope, instance, baseClass) {
  *     function CInstance() {
  *       // If we wanted to call the AS constructor we would do
  *       // |instance.apply(this, arguments)|
@@ -351,7 +351,7 @@ const natives = (function () {
   /**
    * Object.as
    */
-  function ObjectClass(scope, instance, baseClass) {
+  function ObjectClass(runtime, scope, instance, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
     c.nativeMethods = {
@@ -383,7 +383,7 @@ const natives = (function () {
   /**
    * Boolean.as
    */
-  function BooleanClass(scope, instance, baseClass) {
+  function BooleanClass(runtime, scope, instance, baseClass) {
     var c = new Class("Boolean", Boolean, C(Boolean));
     c.baseClass = baseClass;
     c.nativeMethods = Boolean.prototype;
@@ -394,7 +394,7 @@ const natives = (function () {
   /**
    * Function.as
    */
-  function FunctionClass(scope, instance, baseClass) {
+  function FunctionClass(runtime, scope, instance, baseClass) {
     var c = new Class("Function", Function, C(Function));
     c.baseClass = baseClass;
 
@@ -410,7 +410,7 @@ const natives = (function () {
     return c;
   }
 
-  function MethodClosureClass(scope, instance, baseClass) {
+  function MethodClosureClass(runtime, scope, instance, baseClass) {
     var c = new Class("MethodClosure", MethodClosure);
     c.extend(baseClass);
     return c;
@@ -419,7 +419,7 @@ const natives = (function () {
   /**
    * String.as
    */
-  function StringClass(scope, instance, baseClass) {
+  function StringClass(runtime, scope, instance, baseClass) {
     var c = new Class("String", String, C(String));
     c.baseClass = baseClass;
 
@@ -437,7 +437,7 @@ const natives = (function () {
   /**
    * Array.as
    */
-  function ArrayClass(scope, instance, baseClass) {
+  function ArrayClass(runtime, scope, instance, baseClass) {
     var c = new Class("Array", Array, C(Array));
     c.baseClass = baseClass;
 
@@ -515,30 +515,30 @@ const natives = (function () {
     return c;
   }
 
-  function VectorClass(scope, instance) {
+  function VectorClass(runtime, scope, instance) {
     return createVectorClass(undefined);
   }
 
-  function ObjectVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getClass("Object"));
+  function ObjectVectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime.domain.getClass("Object"));
   }
 
-  function IntVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getClass("int"));
+  function IntVectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime.domain.getClass("int"));
   }
 
-  function UIntVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getClass("uint"));
+  function UIntVectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime.domain.getClass("uint"));
   }
 
-  function DoubleVectorClass(scope, instance, baseClass) {
-    return createVectorClass(toplevel.getClass("Number"));
+  function DoubleVectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime.domain.getClass("Number"));
   }
 
   /**
    * Number.as
    */
-  function NumberClass(scope, instance, baseClass) {
+  function NumberClass(runtime, scope, instance, baseClass) {
     var c = new Class("Number", Number, C(Number));
     c.baseClass = baseClass;
     c.nativeMethods = Number.prototype;
@@ -550,7 +550,7 @@ const natives = (function () {
     return c;
   }
 
-  function intClass(scope, instance, baseClass) {
+  function intClass(runtime, scope, instance, baseClass) {
     function int(x) {
       return Number(x) | 0;
     }
@@ -565,7 +565,7 @@ const natives = (function () {
     return c;
   }
 
-  function uintClass(scope, instance, baseClass) {
+  function uintClass(runtime, scope, instance, baseClass) {
     function uint(x) {
       return Number(x) >>> 0;
     }
@@ -583,7 +583,7 @@ const natives = (function () {
   /**
    * Math.as
    */
-  function MathClass(scope, instance, baseClass) {
+  function MathClass(runtime, scope, instance, baseClass) {
     var c = new Class("Math");
     c.baseClass = baseClass;
     c.nativeStatics = Math;
@@ -593,7 +593,7 @@ const natives = (function () {
   /**
    * Date.as
    */
-  function DateClass(scope, instance, baseClass) {
+  function DateClass(runtime, scope, instance, baseClass) {
     var c = new Class("Date", Date, C(Date));
     c.baseClass = baseClass;
     c.nativeMethods = Date.prototype;
@@ -605,7 +605,7 @@ const natives = (function () {
    * Error.as
    */
   function makeErrorClass(name) {
-    return function (scope, instance, baseClass) {
+    return function (runtime, scope, instance, baseClass) {
       var c = new Class(name, instance, CC(instance));
       c.extend(baseClass);
       c.nativeMethods = {
@@ -631,7 +631,7 @@ const natives = (function () {
    *
    * TODO: Should we support extended at all? Or even dotall?
    */
-  function RegExpClass(scope, instance, baseClass) {
+  function RegExpClass(runtime, scope, instance, baseClass) {
     function ASRegExp(pattern, flags) {
       function stripFlag(flags, c) {
         flags[flags.indexOf(c)] = flags[flags.length - 1];
@@ -682,7 +682,7 @@ const natives = (function () {
   /**
    * Namespace.as
    */
-  function NamespaceClass(scope, instance, baseClass) {
+  function NamespaceClass(runtime, scope, instance, baseClass) {
     function ASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
@@ -729,7 +729,7 @@ const natives = (function () {
   /**
    * Capabilities.as
    */
-  function CapabilitiesClass(scope, instance, baseClass) {
+  function CapabilitiesClass(runtime, scope, instance, baseClass) {
     function Capabilities () {}
     var c = new Class("Capabilities", Capabilities, C(Capabilities));
     c.extend(baseClass);
@@ -748,7 +748,7 @@ const natives = (function () {
   /**
    * ByteArray.as
    */
-  function ByteArrayClass(scope, instance, baseClass) {
+  function ByteArrayClass(runtime, scope, instance, baseClass) {
     /* The initial size of the backing, in bytes. Doubled every OOM. */
     const INITIAL_SIZE = 128;
 
@@ -763,7 +763,7 @@ const natives = (function () {
     }
 
     function throwEOFError() {
-      throwErrorFromVM("flash.errors.EOFError", "End of file was encountered.");
+      runtime.throwErrorFromVM("flash.errors.EOFError", "End of file was encountered.");
     }
 
     function get(b, m, size) {
