@@ -153,7 +153,7 @@ var Trait = (function () {
       this.typeName = constantPool.multinames[stream.readU30()];
       var valueIndex = stream.readU30();
       this.value = null;
-      if (valueIndex != 0) {
+      if (valueIndex !== 0) {
         this.value = constantPool.getValue(stream.readU8(), valueIndex);
       }
       break;
@@ -223,10 +223,8 @@ var Trait = (function () {
       case TRAIT_Setter:
       case TRAIT_Getter:
         return str + ", method: " + this.methodInfo + ", dispId: " + this.dispId;
-        break;
       case TRAIT_Class:
         return str + ", slotId: " + this.slotId + ", class: " + this.classInfo;
-        break;
       case TRAIT_Function: // TODO
         break;
     }
@@ -277,10 +275,10 @@ var Namespace = (function () {
     }
     assert (kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
-  };
+  }
 
   namespace.kindFromString = function kindFromString(str) {
-    for (kind in kinds) {
+    for (var kind in kinds) {
       if (kinds[kind] === str) {
         return kind;
       }
@@ -693,10 +691,11 @@ var Multiname = (function () {
       return simpleNameCache[simpleName];
     }
 
-    var nameIndex = simpleName.lastIndexOf(".");
+    var nameIndex = simpleName.lastIndexOf("."), name, namespace;
+    
     if (nameIndex >= 0) {
-      var name = simpleName.substring(nameIndex + 1).trim();
-      var namespace = simpleName.substring(0, nameIndex);
+      name = simpleName.substring(nameIndex + 1).trim();
+      namespace = simpleName.substring(0, nameIndex);
     } else {
       name = simpleName;
       namespace = "";

@@ -129,7 +129,7 @@ function toString(x) {
 }
 
 function coerce(obj, type) {
-  if (obj == null || type.isInstance(obj)) {
+  if (obj === null || type.isInstance(obj)) {
     return obj;
   } else {
     throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
@@ -606,9 +606,9 @@ const toplevel = (function () {
                 while (scope) {
                   assert (scope.object);
                   str += scope.object.debugName || "T";
-                  if (scope = scope.parent) {
+                  if ((scope = scope.parent)) {
                     str += " <: ";
-                  };
+                  }
                 }
               } else if (value instanceof Function) {
                 str += ": " + (value.name ? value.name : "untitled");
@@ -795,7 +795,7 @@ var Runtime = (function () {
       var makeNativeClass = getNative(ci.native.cls);
       assert (makeNativeClass, "No native for ", ci.native.cls);
       cls = makeNativeClass(scope, this.createFunction(ii.init, scope), baseClass);
-      if (instance = cls.instance) {
+      if ((instance = cls.instance)) {
         /* Math doesn't have an instance, for example. */
         this.applyTraits(cls.instance.prototype, ii.traits, bii ? bii.traits : null, scope, cls.nativeMethods);
       }

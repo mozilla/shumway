@@ -296,7 +296,7 @@ var Compiler = (function () {
       this.strict = strict;
       this.multiname = multiname;
       CallExpression.call(this, property(scopeName, "findProperty"), [this.multiname, new Literal(this.strict)]);
-    };
+    }
     findProperty.prototype = Object.create(CallExpression.prototype);
     findProperty.prototype.isEquivalent = function isEquivalent(other) {
       return other instanceof findProperty &&
@@ -709,12 +709,13 @@ var Compiler = (function () {
       }
 
       function expression(operator) {
+        var a, b;
         if (operator.isBinary()) {
-          var b = state.stack.pop();
-          var a = state.stack.pop();
+          b = state.stack.pop();
+          a = state.stack.pop();
           push(new BinaryExpression(operator.name, a, b));
         } else {
-          var a = state.stack.pop();
+          a = state.stack.pop();
           push(new UnaryExpression(operator.name, a));
         }
       }
@@ -727,7 +728,7 @@ var Compiler = (function () {
        */
       function setCondition(operator) {
         assert (condition === null);
-        var b = undefined;
+        var b;
         if (operator.isBinary()) {
           b = state.stack.pop();
         }
@@ -813,7 +814,7 @@ var Compiler = (function () {
           this.ns = ns;
           this.name = name;
           NewExpression.call(this, id("Multiname"), [ns, name]);
-        };
+        }
         return runtimeMultiname;
       })();
 
@@ -1135,6 +1136,7 @@ var Compiler = (function () {
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
           push(call(id("coerce"), [value, type]));
+          break;
         case OP_coerce_a:       /* NOP */ break;
         case OP_coerce_s:       push(call(id("coerceString"), [state.stack.pop()])); break;
         case OP_astype:         notImplemented(); break;
