@@ -18,6 +18,7 @@
         options = options || {};
         this.positional = options.positional;
         this.parseFn = options.parse;
+        this.value = options.defaultValue;
       }
       argument.prototype.parse = function parse(value) {
         if (this.type === "boolean") {

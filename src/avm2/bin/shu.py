@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 import threading
+import base64
 
 from subprocess import Popen, PIPE, STDOUT
 from collections import Counter
@@ -151,7 +152,17 @@ class Base:
       args.extend(["-import", self.global_abc])
 
     if playerGlobal:
-      args.extend(["-import", self.player_global_abc])
+      playerGlobalAbcs = []      
+      if not os.path.isdir(self.player_global_abc):
+        playerGlobalAbcs.append(self.player_global_abc)
+      else:
+        for root, subFolders, abcFiles in os.walk(self.player_global_abc):
+          for file in abcFiles:
+            if file.endswith(".abc"):
+              playerGlobalAbcs.append(os.path.join(root, file))
+              
+      for abc in playerGlobalAbcs:
+        args.extend(["-import", abc])
 
     args.extend(files);
     print(args)
@@ -302,6 +313,7 @@ class Split(Command):
         file = None
       else:
         if file:
+          print(base64.b64decode(line))
           file.write(line + "\n")
 
 class Compile(Command):

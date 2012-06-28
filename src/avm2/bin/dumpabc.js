@@ -49,6 +49,7 @@ function printUsage() {
 
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) { printUsage(); }});
 var swfFile = argumentParser.addArgument("swf", "swf", "string", { positional: true });
+var prefix = argumentParser.addArgument("prefix", "prefix", "string", { defaultValue: "abc" });
 
 try {
   argumentParser.parse(arguments);
@@ -57,43 +58,18 @@ try {
   quit();
 }
 
-function forEachABC(swf, cb) {
-  var dictionary = { };
-  var controlTags = [];
-  var buffer = snarf(swf, "binary");
-
-  SWF.parse(buffer, {
-    onprogress: function(result) {
-      var tags = result.tags.slice(i);
-      var tag = tags[tags.length - 1];
-      if (!('id' in tag) && !('ref' in tag)) {
-        var pframes = cast(controlTags.concat(tags), dictionary, function (x) {});
-        controlTags = [];
-        var i = 0;
-        var pframe;
-        while (pframe = pframes[i++]) {
-          var blocks = pframe.abcBlocks;
-          if (blocks) {
-            var j = 0;
-            var block;
-            while (block = blocks[j++]) {
-              cb(block);
-            }
-          }
-        }
+SWF.parse(snarf(swfFile.value, "binary"), {
+  oncomplete: function(result) {
+    var tags = result.tags;
+    var abcCount = 0;
+    for (var i = 0, n = tags.length; i < n; i++) {
+      var tag = tags[i];
+      if (tag.type === "abc") {
+        // sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
+        stdout.writeLn("<<< " + prefix.value + "-" + abcCount++ + ".abc");
+        print (base64ArrayBuffer(tag.data));
+        stdout.writeLn(">>>");
       }
-    },
-  });
-}
-
-print (swfFile.value);
-
-var writer = new IndentingWriter();
-var first = true;
-forEachABC(swfFile.value, function (bytes) {
-  if (!first) {
-    print ("---");
+    }
   }
-  print (base64ArrayBuffer(bytes));
-  first = false;
 });
