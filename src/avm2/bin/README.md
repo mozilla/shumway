@@ -20,7 +20,6 @@ By default, `shu.py test` runs avm under all configurations. You can use the `-m
 * `./shu.py asc file.as` - compiles an actionscript file using the asc compiler, if it complains that it can't find the base class Object, specify the `-builtin` argument to import the `builtin.abc` file during compilation.
 
 `abcdump.js` is an utility that extracts ABC tags from a .swf file and exports them as a sequence of base64 encoded strings. Since we're doing most
-of our development in the SpiderMonkey shell, we don't have a way to write to files. Instead, we write binary data to stdout as base64 encoded strings
-then later process the output using the `shu.py split` command.
+of our development in the SpiderMonkey shell, we don't have a way to write to files. Instead, we write binary data to stdout as base64 encoded strings then later process the output using the `shu.py split` command.
 
 * `js abcdump.js playerGlobal.swf -prefix library > out.txt && ./shy.py split out.txt playerGlobal` - extracts all ABC tags from playerGlobal.swf and saves them in the playerGlobal directory.

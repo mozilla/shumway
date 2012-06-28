@@ -66,7 +66,7 @@ SWF.parse(snarf(swfFile.value, "binary"), {
       var tag = tags[i];
       if (tag.type === "abc") {
         // sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
-        stdout.writeLn("<<< " + prefix.value + "-" + abcCount++ + ".abc");
+        stdout.writeLn("<<< BASE64 " + prefix.value + "-" + abcCount++ + ".abc");
         print (base64ArrayBuffer(tag.data));
         stdout.writeLn(">>>");
       }

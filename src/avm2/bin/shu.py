@@ -277,10 +277,10 @@ class Dis(Command):
     self.runAvm(args.src, execute = False, disassemble = True)
 
 # Splits a text file with the following delimiters into multiple files.
-# <<< fileName
+# <<< type fileName-0
 # ...
 # >>>
-# <<< fileName 2
+# <<< type fileName-1
 # ...
 # >>>
 class Split(Command):
@@ -305,7 +305,9 @@ class Split(Command):
     file = None
     for line in readLines(src):
       if line.startswith("<<< "):
-        name = line[4:]
+        tokens = line.split(" ")
+        type = tokens[1]
+        name = tokens[2]
         print "Open " + dst + "/" + name
         file = open(dst + "/" + name, "w")
       elif line == ">>>":
@@ -313,8 +315,10 @@ class Split(Command):
         file = None
       else:
         if file:
-          print(base64.b64decode(line))
-          file.write(line + "\n")
+          if type == "BASE64":
+            file.write(base64.b64decode(line))
+          else:
+            file.write(line + "\n")
 
 class Compile(Command):
   def __init__(self):
