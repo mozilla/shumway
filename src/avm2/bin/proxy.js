@@ -13,7 +13,6 @@ load("../analyze.js");
 load("../compiler.js");
 load("../native.js");
 load("../runtime.js");
-load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
 

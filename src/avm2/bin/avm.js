@@ -64,7 +64,6 @@ load("../native.js");
 
 load("../domain.js");
 load("../runtime.js");
-load("../fuzzer.js");
 load("../viz.js");
 load("../interpreter.js");
 
