@@ -835,6 +835,9 @@ var Compiler = (function () {
         }
       }
 
+      // Push the current runtime onto the runtime stack.
+      emit(call(id("Runtime.stack.push"), [constant(abc.runtime)]));
+
       var bytecodes = this.bytecodes;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
         var bc = bytecodes[bci];
@@ -980,8 +983,13 @@ var Compiler = (function () {
           obj = state.stack.pop();
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
-        case OP_returnvoid:     emit(new ReturnStatement()); break;
-        case OP_returnvalue:    emit(new ReturnStatement(state.stack.pop())); break;
+        case OP_returnvoid:
+          emit(call(id("Runtime.stack.pop"), []));
+          emit(new ReturnStatement());
+          break;
+        case OP_returnvalue:
+          emit(call(id("Runtime.stack.pop"), []));
+          emit(new ReturnStatement(state.stack.pop())); break;
         case OP_constructsuper:
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();

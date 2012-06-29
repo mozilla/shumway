@@ -730,7 +730,7 @@ const natives = (function () {
    * Capabilities.as
    */
   function CapabilitiesClass(runtime, scope, instance, baseClass) {
-    function Capabilities () {}
+    function Capabilities() {}
     var c = new Class("Capabilities", Capabilities, C(Capabilities));
     c.extend(baseClass);
     c.nativeStatics = {

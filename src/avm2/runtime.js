@@ -451,7 +451,9 @@ var Runtime = (function () {
     this.exception = { value: undefined };
   }
 
-  runtime.currentSaves = [];
+  // We sometimes need to know where we came from, such as in
+  // |ApplicationDomain.currentDomain|.
+  runtime.stack = [];
 
   runtime.prototype.pushCurrent = function () {
     runtime.currentSaves.push(runtime.current);

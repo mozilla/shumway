@@ -32,6 +32,7 @@ var Interpreter = (function () {
       const multinames = abc.constantPool.multinames;
       const runtime = abc.runtime;
       const domain = abc.domain;
+      const rtstack = Runtime.stack;
 
       var exceptions = method.exceptions;
 
@@ -42,6 +43,8 @@ var Interpreter = (function () {
 
       const Apslice = [].slice;
       var parameterCount = method.parameters.length;
+
+      rtstack.push(runtime);
 
       locals.push.apply(locals, Apslice.call(args, 0, parameterCount));
 
@@ -288,8 +291,10 @@ var Interpreter = (function () {
             stack.push(getProperty(obj, multiname).apply(obj, args));
             break;
           case OP_returnvoid:
+            rtstack.pop();
             return;
           case OP_returnvalue:
+            rtstack.pop();
             return stack.pop();
           case OP_constructsuper:
             args = stack.popMany(bc.argCount);
@@ -636,6 +641,13 @@ var Interpreter = (function () {
                   handler.scopeObject = {};
                 }
               }
+
+              // Unwind the runtime stack.
+              var unwind = rtstack.length;
+              while (rtstack[unwind - 1] !== runtime) {
+                unwind--;
+              }
+              rtstack.length = unwind;
 
               scope = savedScope;
               scopeHeight = 0;
