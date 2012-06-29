@@ -68,6 +68,8 @@ load("../runtime.js");
 load("../viz.js");
 load("../interpreter.js");
 
+load("../vm.js");
+
 argumentParser.addBoundOptionSet(systemOptions);
 
 function printUsage() {
@@ -93,32 +95,12 @@ try {
   quit();
 }
 
-var mode;
-var sysDomain, appDomain;
-
+var vm;
 if (execute.value) {
-  // Make the system domain and load builtins.
-  sysDomain = new Domain(null, ALWAYS_INTERPRET, true);
-
-  // Execute the custom builtin.
-  sysDomain.executeAbc(new AbcFile(snarf("../generated/builtin.abc", "binary"), "builtin.abc"));
-
+  vm = new AVM2(snarf("../generated/builtin.abc", "binary"), alwaysInterpret.value ? ALWAYS_INTERPRET : null);
   if (loadPlayerGlobal.value) {
-    // Load, but don't execute, the default player globals.
-    SWF.parse(snarf("../generated/playerGlobal.swf", "binary"), {
-      oncomplete: function(result) {
-        var tags = result.tags;
-        for (var i = 0, n = tags.length; i < n; i++) {
-          var tag = tags[i];
-          if (tag.type === "abc") {
-            sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
-          }
-        }
-      }
-    });
+    vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
   }
-
-  appDomain = new Domain(sysDomain, ALWAYS_INTERPRET, false);
 }
 
 if (file.value.endsWith(".swf")) {
@@ -132,7 +114,7 @@ if (file.value.endsWith(".swf")) {
         } else if (tag.type === "symbols") {
           for (var j = tag.references.length - 1; j >= 0; j--) {
             if (tag.references[j].id === 0) {
-              appDomain.getProperty(
+              vm.applicationDomain.getProperty(
                 Multiname.fromSimpleName(tag.references[j].name),
                 true, true
               );
@@ -146,10 +128,6 @@ if (file.value.endsWith(".swf")) {
 } else {
   assert(file.value.endsWith(".abc"));
   processAbc(new AbcFile(snarf(file.value, "binary"), file.value, true));
-}
-
-if (alwaysInterpret.value) {
-  mode = ALWAYS_INTERPRET;
 }
 
 function processAbc(abc) {
@@ -176,9 +154,9 @@ function processAbc(abc) {
   }
 
   if (execute.value) {
-    assert(appDomain);
+    assert(vm);
     try {
-      appDomain.executeAbc(abc);
+      vm.applicationDomain.executeAbc(abc);
     } catch(e) {
       print(e);
       print("");

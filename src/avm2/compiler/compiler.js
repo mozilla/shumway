@@ -111,6 +111,7 @@ var Compiler = (function () {
       } else if (value !== null && typeof value === "object") {
         assert (value instanceof Multiname ||
                 value instanceof Runtime ||
+                value instanceof Domain ||
                 value instanceof MethodInfo ||
                 value instanceof ClassInfo ||
                 value instanceof AbcFile ||
@@ -292,10 +293,10 @@ var Compiler = (function () {
   }
 
   var FindProperty = (function () {
-    function findProperty(multiname, strict) {
+    function findProperty(multiname, domain, strict) {
       this.strict = strict;
       this.multiname = multiname;
-      var args = [this.multiname, property(constant(abc), "domain"), new Literal(this.strict)];
+      var args = [this.multiname, domain, new Literal(this.strict)];
       CallExpression.call(this, property(scopeName, "findProperty"), args);
     }
     findProperty.prototype = Object.create(CallExpression.prototype);
@@ -750,7 +751,7 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
-        return cseValue(new FindProperty(multiname, strict));
+        return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
       }
 
       function getProperty(obj, multiname) {
