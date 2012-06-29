@@ -103,7 +103,7 @@ function readTags(context, stream, version, onprogress) {
     tags.push(tag);
 
     if (tagCode === 1) {
-      while (stream.getUint16(stream.pos, true) >> 6 === 1) {
+      while (stream.pos < stream.end && stream.getUint16(stream.pos, true) >> 6 === 1) {
         tags.push(tag);
         stream.pos += 2;
       }
@@ -144,7 +144,7 @@ SWF.parse = function(buffer, options) {
 
   swf.tags = [];
   readTags(swf, stream, version, options.onprogress);
-  
+
   if (options.oncomplete)
     options.oncomplete(swf);
 };
