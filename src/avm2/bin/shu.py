@@ -138,12 +138,17 @@ class Base:
       sys.exit();
 
   def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, sc = False):
+    
     if sc:
       outf = os.path.splitext(files[-1])[0]
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
               "macromedia.asc.embedding.ScriptCompiler", "-d", "-out", outf]
     else:
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-jar", self.asc, "-d"]
+
+
+    if createSwf:
+      args.extend(["-swf", "cls,1,1"])
 
     if builtin:
       args.extend(["-import", self.builtin_abc])
@@ -165,12 +170,7 @@ class Base:
         args.extend(["-import", abc])
 
     args.extend(files);
-    print(args)
     subprocess.call(args)
-    if createSwf:
-      args = ["java", "-jar", self.asc, "-swf", "cls,1,1", "-d"]
-      args.extend(files)
-      subprocess.call(args)
 
     if sc:
       os.remove(outf + ".cpp")
