@@ -6,24 +6,59 @@
 </head>
 <body>
     <script type="text/javascript">
-        print = function (message) {
-            console.log(message);
-        };
+      print = function(message) {
+        console.log(message);
+      };
 
-        var webShell = true;
+      var webShell = true;
+
+      function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+          var pair = vars[i].split("=");
+          if (pair[0] == variable) {
+            return unescape(pair[1]);
+          }
+        }
+        return undefined;
+      }
     </script>
+
+    <script>
+      var SWF = {};
+    </script>
+
+    <script type="text/javascript" src="../../swf/util.js"></script>
+    <script type="text/javascript" src="../../swf/types.js"></script>
+    <script type="text/javascript" src="../../swf/structs.js"></script>
+    <script type="text/javascript" src="../../swf/tags.js"></script>
+    <script type="text/javascript" src="../../swf/inflate.js"></script>
+    <script type="text/javascript" src="../../swf/stream.js"></script>
+    <script type="text/javascript" src="../../swf/templates.js"></script>
+    <script type="text/javascript" src="../../swf/generator.js"></script>
+    <script type="text/javascript" src="../../swf/parser.js"></script>
+    <script type="text/javascript" src="../../swf/bitmap.js"></script>
+    <script type="text/javascript" src="../../swf/button.js"></script>
+    <script type="text/javascript" src="../../swf/font.js"></script>
+    <script type="text/javascript" src="../../swf/image.js"></script>
+    <script type="text/javascript" src="../../swf/label.js"></script>
+    <script type="text/javascript" src="../../swf/shape.js"></script>
+    <script type="text/javascript" src="../../swf/text.js"></script>
 
     <script type="text/javascript" src="../util.js"></script>
     <script type="text/javascript" src="../metrics.js"></script>
+    <script type="text/javascript" src="../options.js"></script>
 
-    <script type="text/javascript">
+    <script>
       var Timer = metrics.Timer;
-      var options = new OptionSet("option(s)");
-      var traceLevel = options.register(new Option("traceLevel", "t", 0, "trace level"));
-      var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
     </script>
 
-    <script type="text/javascript" src="../DataView.js"></script>
+    <script src="../../../lib/DataView.js/DataView.js"></script>
     <script type="text/javascript" src="../constants.js"></script>
     <script type="text/javascript" src="../opcodes.js"></script>
     <script type="text/javascript" src="../parser.js"></script>
@@ -36,77 +71,126 @@
 
     <script type="text/javascript" src="../native.js"></script>
 
-    <script type="text/javascript" src="../builtin/EventDispatcherClass.js"></script>
-    <script type="text/javascript" src="../builtin/DisplayObjectClass.js"></script>
-    <script type="text/javascript" src="../builtin/InteractiveObjectClass.js"></script>
-    <script type="text/javascript" src="../builtin/ContainerClass.js"></script>
-    <script type="text/javascript" src="../builtin/SpriteClass.js"></script>
-    <script type="text/javascript" src="../builtin/ApplicationDomainClass.js"></script>
-
+    <script type="text/javascript" src="../domain.js"></script>
     <script type="text/javascript" src="../runtime.js"></script>
     <script type="text/javascript" src="../disassembler.js"></script>
     <script type="text/javascript" src="../interpreter.js"></script>
 
     <script type="text/javascript">
       var FileReader = (function fileReader() {
-  function constructor(url, responseType) {
-    this.url = url;
-    this.responseType = responseType || "arraybuffer";
-  }
-
-  constructor.prototype = {
-    readAll: function(progress, complete) {
-      var xhr = new XMLHttpRequest();
-      var async = true;
-      xhr.open("GET", this.url, async);
-      xhr.responseType = this.responseType;
-      if (progress) {
-        xhr.onprogress = function (event) {
-          progress(xhr.response, event.loaded, event.total);
-        };
-      }
-      xhr.onreadystatechange = function (event) {
-        if (xhr.readyState === 4) {
-          complete(xhr.response);
+        function constructor(url, responseType) {
+          this.url = url;
+          this.responseType = responseType || "arraybuffer";
         }
-      }
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(null);
-    }
-  };
-  return constructor;
-})();
 
+        constructor.prototype = {
+          readAll: function(progress, complete) {
+            var xhr = new XMLHttpRequest();
+            var async = true;
+            xhr.open("GET", this.url, async);
+            xhr.responseType = this.responseType;
+            if (progress) {
+              xhr.onprogress = function(event) {
+                progress(xhr.response, event.loaded, event.total);
+              };
+            }
+            xhr.onreadystatechange = function(event) {
+              if (xhr.readyState === 4) {
+                complete(xhr.response);
+              }
+            }
+            xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+            xhr.send(null);
+          }
+        };
+        return constructor;
+      })();
     </script>
 
     <script type="text/javascript">
-      traceLevel.value = 2;
-      var abcs = [];
-      abcs.push(["../generated/builtin.abc", ALWAYS_INTERPRET]);
-      abcs.push(["../generated/playerGlobal.abc", ALWAYS_INTERPRET]);
-      // abcs.push("../tests/tamarin/ecma3/Array/general1.abc");
-      // abcs.push("../tests/sunspider/s3d-cube.abc");
-//      abcs.push(["../tests/sunspider/access-fannkuch.abc"]);
-      // abcs.push(["../tests/testInterpreter.abc"]);
-      // abcs.push(["../tests/sunspider/crypto-md5.abc"]);
-      // abcs.push(["../tests/tamarin/ecma3/Array/e15_4_3_2.abc"]);
 
-      abcs.push(["../tests/watch.abc", ALWAYS_INTERPRET]);
+      var sysDomain = new Domain(null, ALWAYS_INTERPRET, true);
 
-      function executeNext() {
-        if (abcs.length) {
-          var run = abcs.shift();
-          new FileReader(run[0]).readAll(null, function (buffer) {
-            executeAbc(new AbcFile(new Uint8Array(buffer), run[0], true), run[1]);
+      var loadPlayerGlobal = true;
+      var file = getQueryVariable("file") || "../tests/watch.swf";
+
+      var queue = [];
+
+      /**
+       * Chains together a bunch of I/O callbacks to intialize the sys and app domains.
+       */
+
+      queue.push(function () {
+        new FileReader("../generated/builtin.abc").readAll(null, function (buffer) {
+          sysDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc", true));
+          executeNext();
+        });
+      });
+
+      if (loadPlayerGlobal) {
+        queue.push(function () {
+          new FileReader("../generated/playerGlobal.swf").readAll(null, function (buffer) {
+            SWF.parse(buffer, {
+              oncomplete: function(result) {
+                var tags = result.tags;
+                for (var i = 0, n = tags.length; i < n; i++) {
+                  var tag = tags[i];
+                  if (tag.type === "abc") {
+                    sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
+                  }
+                }
+              }
+            });
             executeNext();
           });
-        } else {
-    toplevel.getTypeByName(
-      Multiname.fromSimpleName("com.google.youtube.application.WatchPageVideoApplication"),
-      true, true
-    );
-        }
+        });
       }
+
+      var appDomain = new Domain(sysDomain, ALWAYS_INTERPRET, false);
+
+      if (file.endsWith(".swf")) {
+        queue.push(function() {
+          new FileReader(file).readAll(null, function(buffer) {
+            SWF.parse(buffer, {
+              oncomplete: function(result) {
+                var tags = result.tags;
+                for (var i = 0, n = tags.length; i < n; i++) {
+                  var tag = tags[i];
+                  if (tag.type === "abc") {
+                    appDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
+                  } else if (tag.type === "symbols") {
+                    for (var j = tag.references.length - 1; j >= 0; j--) {
+                      if (tag.references[j].id === 0) {
+                        appDomain.getProperty(
+                          Multiname.fromSimpleName(tag.references[j].name),
+                          true, true
+                        );
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+            executeNext();
+          });
+        });
+      } else {
+        queue.push(function () {
+          new FileReader(file).readAll(null, function (buffer) {
+            sysDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file, true));
+            executeNext();
+          });
+        });
+      }
+
+      function executeNext() {
+        if (queue.length === 0) {
+          return;
+        }
+        queue.shift()();
+      }
+
       executeNext();
     </script>
 </body>

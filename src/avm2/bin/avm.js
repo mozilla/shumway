@@ -132,7 +132,7 @@ if (file.value.endsWith(".swf")) {
         } else if (tag.type === "symbols") {
           for (var j = tag.references.length - 1; j >= 0; j--) {
             if (tag.references[j].id === 0) {
-              toplevel.getTypeByName(
+              appDomain.getProperty(
                 Multiname.fromSimpleName(tag.references[j].name),
                 true, true
               );
