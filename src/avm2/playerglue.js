@@ -22,19 +22,15 @@
    * ApplicationDomain.as
    */
   function ApplicationDomainClass(runtime, scope, instance, baseClass) {
-    function ApplicationDomain() {}
-
-    var c = new Class("ApplicationDomain", ApplicationDomain, C(ApplicationDomain));
+    var c = new Class("ApplicationDomain", instance, C(instance));
     c.extend(baseClass);
-
-    const domain = runtime.domain;
 
     c.nativeMethods = {
       ctor: function (parentDomain) {
         // If no parent domain is passed in, get the current system domain.
         var parent;
         if (!parentDomain) {
-          parent = domain;
+          parent = Runtime.stack.top().domain;
           while (parent.base) {
             parent = parent.base;
           }
@@ -50,11 +46,11 @@
       },
 
       getDefinition: function (name) {
-        notImplemented("Domain.getDefinition");
+        return this.d.getProperty(Multiname.fromSimpleName(name), false, true);
       },
 
       hasDefinition: function (name) {
-        notImplemented("Domain.hasDefinition");
+        return !!this.d.findProperty(Multiname.fromSimpleName(name), false, false);
       }
     };
 

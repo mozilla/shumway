@@ -54,9 +54,9 @@ var Domain = (function () {
       }
       if (strict) {
         return unexpected("Cannot find property " + multiname);
-      } else {
-        return undefined;
       }
+
+      return undefined;
     },
 
     getClass: function getClass(simpleName) {
