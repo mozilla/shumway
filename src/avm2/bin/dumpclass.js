@@ -20,9 +20,10 @@ load("../../swf/text.js");
 
 load("../util.js");
 load("../options.js");
+load("../metrics.js");
 
+var Timer = metrics.Timer;
 var stdout = new IndentingWriter();
-
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
 var OptionSet = options.OptionSet;
@@ -59,35 +60,22 @@ try {
 }
 
 function forEachABC(swf, cb) {
-  var dictionary = { };
-  var controlTags = [];
-  var buffer = snarf(swf, "binary");
-
-  SWF.parse(buffer, {
-    onprogress: function(result) {
-      var tags = result.tags.slice(i);
-      var tag = tags[tags.length - 1];
-      if (!('id' in tag) && !('ref' in tag)) {
-        var pframes = cast(controlTags.concat(tags), dictionary);
-        controlTags = [];
-        var i = 0;
-        var pframe;
-        while (pframe = pframes[i++]) {
-          var blocks = pframe.abcBlocks;
-          if (blocks) {
-            var j = 0;
-            var block;
-            while (block = blocks[j++]) {
-              cb(new AbcFile(block));
-            }
-          }
+  SWF.parse(snarf(swf, "binary"), {
+    oncomplete: function(result) {
+      var tags = result.tags;
+      var abcCount = 0;
+      for (var i = 0, n = tags.length; i < n; i++) {
+        var tag = tags[i];
+        if (tag.type === "abc") {
+          cb(new AbcFile(tag.data));
         }
       }
-    },
+    }
   });
 }
 
 var writer = new IndentingWriter();
+var tracer = new SourceTracer(writer);
 forEachABC(swfFile.value, function (abc) {
   abc.scripts.forEach(function (script) {
     script.traits.traits.forEach(function (trait) {
@@ -95,10 +83,10 @@ forEachABC(swfFile.value, function (abc) {
         var cname = trait.classInfo.instanceInfo.name;
         if (cname.getName() === className.value) {
           writer.enter("package " + cname.namespaces[0].originalURI + " {\n");
-          SourceTracer.traceMetadata(trait.metadata);
-          SourceTracer.traceClass(trait.classInfo);
+          tracer.traceMetadata(trait.metadata);
+          tracer.traceClass(trait.classInfo);
           writer.leave("\n}");
-          SourceTracer.traceClassStub(trait);
+          tracer.traceClassStub(trait);
         }
       }
     });
