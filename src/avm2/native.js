@@ -125,10 +125,6 @@
  *
  *     return c;
  *   };
- *
- * There is an automatic convenience method |Class.lift| that takes an
- * existing JavaScript constructor, clobbers its prototype, then mixes the
- * original prototype back in.
  */
 
 var original = {};
@@ -252,71 +248,6 @@ var Class = (function () {
     };
   };
 
-  /**
-   * Convenience functions to export all the enumerable properties of a simple
-   * JavaScript constructor as an AVM2 class. This clones the instance
-   * constructor and hooks up the prototype according to AS inheritance.
-   *
-   * Warning: language-level classes like Object, Function, etc, should not
-   * use this.
-   */
-
-  function exportProperties(obj, isStatic) {
-    var natives = {};
-    var desc;
-    for (var prop in obj) {
-      if (!(desc = Object.getOwnPropertyDescriptor(obj, prop))) {
-        continue;
-      }
-
-      var value = desc.value;
-      if (!desc.get && !desc.set) {
-        if (typeof value === "function") {
-          natives[prop] = value;
-        } else {
-          var access = "this." + (isStatic ? "instance." : "") + prop;
-          natives["get " + prop] = new Function("return " + access + ";");
-          natives["set " + prop] = new Function("v", access + " = v;");
-        }
-      } else {
-        if (desc.get) {
-          natives["get " + prop] = desc.get;
-        }
-
-        if (desc.set) {
-          natives["set " + prop] = desc.set;
-        }
-      }
-    }
-    return natives;
-  }
-
-  function mixin(into, obj) {
-    var desc;
-    for (var prop in obj) {
-      if (desc = Object.getOwnPropertyDescriptor(obj, prop)) {
-        Object.defineProperty(into, prop, desc);
-      }
-    }
-  }
-
-  Class.lift = function (name, instance) {
-    const C = Class.passthroughCallable;
-    const originalProto = instance.prototype;
-    const nativeMethods = exportProperties(originalProto);
-    const nativeStatics = exportProperties(instance, true);
-
-    // Ignore the AS constructor.
-    return function ClassMaker(scope, _, baseClass) {
-      var c = new Class(name, instance, C(instance));
-      c.extend(baseClass);
-      mixin(c.instance.prototype, originalProto);
-      c.nativeMethods = nativeMethods;
-      c.nativeStatics = nativeStatics;
-      return c;
-    };
-  };
-
   Class.nativeMethods = {
     "get prototype": function () { return this.instance.prototype; }
   };
@@ -344,6 +275,12 @@ var MethodClosure = (function () {
 })();
 
 const natives = (function () {
+
+  function glue(inner, proxy) {
+    inner.p = proxy;
+    proxy.d = inner;
+    return proxy;
+  }
 
   const C = Class.passthroughCallable;
   const CC = Class.constructingCallable;
@@ -958,6 +895,67 @@ const natives = (function () {
     return c;
   }
 
+  /**
+   * ApplicationDomain.as
+   */
+  function ApplicationDomainClass(runtime, scope, instance, baseClass) {
+    var c = new Class("ApplicationDomain", instance, C(instance));
+    c.extend(baseClass);
+
+    c.nativeMethods = {
+      ctor: function (parentDomain) {
+        // If no parent domain is passed in, get the current system domain.
+        var parent;
+        if (!parentDomain) {
+          parent = Runtime.stack.top().domain;
+          while (parent.base) {
+            parent = parent.base;
+          }
+        } else {
+          parent = parentDomain.d;
+        }
+
+        glue(new Domain(parent), this);
+      },
+
+      "get parentDomain": function () {
+        var base = this.d.base;
+
+        if (!base) {
+          return undefined;
+        }
+
+        if (base.p) {
+          return base.p;
+        }
+
+        return glue(base, new instance());
+      },
+
+      getDefinition: function (name) {
+        return this.d.getProperty(Multiname.fromSimpleName(name), false, true);
+      },
+
+      hasDefinition: function (name) {
+        return !!this.d.findProperty(Multiname.fromSimpleName(name), false, false);
+      }
+    };
+
+    c.nativeStatics = {
+      "get currentDomain": function () {
+        var domain = Runtime.stack.top().domain;
+
+        if (domain.p) {
+          return domain.p;
+        }
+
+        return glue(domain, new instance());
+      }
+    };
+
+    return c;
+  }
+
   function debugBreak(message) {
     // TODO: Set Breakpoint Here
     return message;
@@ -1041,6 +1039,7 @@ const natives = (function () {
     RegExpClass: RegExpClass,
 
     CapabilitiesClass: CapabilitiesClass,
+    ApplicationDomainClass: ApplicationDomainClass,
 
     /**
      * DescribeType.as

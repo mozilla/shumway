@@ -61,7 +61,6 @@ load("../compiler/lljs/src/escodegen.js");
 load("../compiler/compiler.js");
 
 load("../native.js");
-load("../playerglue.js");
 
 load("../domain.js");
 load("../runtime.js");
