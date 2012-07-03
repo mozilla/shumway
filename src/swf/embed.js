@@ -15,6 +15,8 @@ SWF.embed = function(file, container, options) {
   stage._attachToCanvas({
     canvas: canvas,
     file: file,
+    avm1: options.avm1,
+    avm2: options.avm2,
 
     onstart: function(root, stage) {
       if (container.clientHeight) {

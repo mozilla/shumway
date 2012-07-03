@@ -150,7 +150,10 @@
       function readFile(file) {
         var reader = new FileReader();
         reader.onload = function() {
-          SWF.embed(this.result, stage[0]);
+          var result = this.result;
+          createAVM2(true, function (avm2) {
+            SWF.embed(result, stage[0], {avm2: avm2});
+          });
         }
         reader.readAsArrayBuffer(file);
       }
@@ -201,83 +204,41 @@
         return constructor;
       })();
 
-      var avm2Root = "../../src/avm2/"
-
-      function runAVM2(file) {
-        var avm2;
-        var loadPlayerGlobal = true;
-        var queue = [];
-
-        /**
-         * Chain together a bunch of I/O callbacks to intialize AVM2.
-         */
-
-        queue.push(function () {
-          new BinaryFileReader(avm2Root + "generated/builtin.abc").readAll(null, function (buffer) {
-            avm2 = new AVM2(new Uint8Array(buffer), ALWAYS_INTERPRET);
-            executeNext();
-          });
-        });
-
-        if (loadPlayerGlobal) {
-          queue.push(function () {
+      function createAVM2(loadPlayerGlobal, next) {
+        new BinaryFileReader(avm2Root + "generated/builtin.abc").readAll(null, function (buffer) {
+          var vm = new AVM2(new Uint8Array(buffer), ALWAYS_INTERPRET);
+          if (loadPlayerGlobal) {
             new BinaryFileReader(avm2Root + "generated/playerGlobal.swf").readAll(null, function (buffer) {
-              avm2.loadPlayerGlobal(new Uint8Array(buffer));
-              executeNext();
+              vm.loadPlayerGlobal(new Uint8Array(buffer));
+              next(vm);
             });
-          });
-        }
-
-        // TODO: This needs to be hooked in the Loader somewhere.
-
-        if (file.endsWith(".swf")) {
-          queue.push(function() {
-            new BinaryFileReader(file).readAll(null, function(buffer) {
-              SWF.parse(new Uint8Array(buffer), {
-                oncomplete: function(result) {
-                  var tags = result.tags;
-                  for (var i = 0, n = tags.length; i < n; i++) {
-                    var tag = tags[i];
-                    if (tag.type === "abc") {
-                      avm2.applicationDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
-                    } else if (tag.type === "symbols") {
-                      for (var j = tag.references.length - 1; j >= 0; j--) {
-                        if (tag.references[j].id === 0) {
-                          avm2.applicationDomain.getProperty(
-                            Multiname.fromSimpleName(tag.references[j].name),
-                            true, true
-                          );
-                          break;
-                        }
-                      }
-                    }
-                  }
-                }
-              });
-              executeNext();
-            });
-          });
-        } else {
-          queue.push(function () {
-            new BinaryFileReader(file).readAll(null, function (buffer) {
-              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file, true));
-              executeNext();
-            });
-          });
-        }
-
-        function executeNext() {
-          if (queue.length === 0) {
-            return;
+          } else {
+            next(vm);
           }
-          queue.shift()();
-        }
-
-        executeNext();
+        });
       }
+
+      var avm2Root = "../../src/avm2/";
       var file = getQueryVariable("file");
+
+      /**
+       * You can also specify the file as a query string parameters, ?file=... to load it automatically when the
+       * page loads.
+       */
       if (file) {
-        runAVM2(file || avm2Root + "tests/watch.swf");
+        if (file.endsWith(".abc")) {
+          createAVM2(true, function(avm2) {
+            new BinaryFileReader(file).readAll(null, function(buffer) {
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file, true));
+            });
+          });
+        } else if (file.endsWith(".swf")) {
+          createAVM2(true, function(avm2) {
+            new BinaryFileReader(file).readAll(null, function(buffer) {
+              SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
+            });
+          });
+        }
       }
 
     </script>

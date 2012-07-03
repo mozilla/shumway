@@ -1,9 +1,11 @@
-function Loader() {
+function Loader(parameters) {
+  this.avm1 = parameters.avm1;
+  this.avm2 = parameters.avm2;
   this._dictionary = new ObjDictionary;
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
-Loader.WORKERS_ENABLED = true;
+Loader.WORKERS_ENABLED = false;
 Loader.WORKER_SCRIPTS = [
   '../../../lib/DataView.js/DataView.js',
 
@@ -212,8 +214,7 @@ Loader.prototype = Object.create(baseProto, {
             var i = 0;
             var block;
             while (block = blocks[i++]) {
-              var abc = new AbcFile(block);
-              executeAbc(abc, ALWAYS_INTERPRET);
+              this.avm2.applicationDomain.executeAbc(new AbcFile(block, file, true));
             }
           }
 

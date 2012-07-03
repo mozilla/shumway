@@ -316,7 +316,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   _attachToCanvas: descMethod(function(parameters) {
     var canvas = parameters.canvas;
     var ctx = canvas.getContext('2d');
-    var loader = new Loader();
+    var loader = new Loader({ avm1: undefined, avm2: parameters.avm2 });
     var loaderInfo = loader.contentLoaderInfo;
     var stage = this;
     var isPlaying = false;
