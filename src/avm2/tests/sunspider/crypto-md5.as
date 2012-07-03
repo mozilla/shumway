@@ -310,8 +310,6 @@ for (var i = 0; i <4; i++) {
     plainText += plainText;
 }
 
-plainText = "ABCDEF";
-
 var md5Output = hex_md5(plainText);
 var totaltime=new Date()-start;
 if (md5Output=="a831e91e0f70eddcb70dc61c6f82f6cd")
