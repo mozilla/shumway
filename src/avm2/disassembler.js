@@ -64,13 +64,9 @@ ConstantPool.prototype.traceMultinamesOnly = function (writer) {
   writer.writeArray(this.multinames, null, true);
 };
 
-Traits.prototype.trace = function (writer) {
-  traceArray(writer, "traits", this.traits);
-};
-
 ClassInfo.prototype.trace = function (writer) {
   writer.enter("class " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
@@ -84,13 +80,13 @@ MetaDataInfo.prototype.trace = function (writer) {
 
 InstanceInfo.prototype.trace = function (writer) {
   writer.enter("instance " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
 ScriptInfo.prototype.trace = function (writer) {
   writer.enter("script " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
@@ -167,7 +163,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
 
   var code = new AbcStream(this.code);
 
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
 
   writer.enter("code {");
   while (code.remaining() > 0) {
@@ -243,7 +239,7 @@ var SourceTracer = (function () {
       const writer = this.writer;
       const tracer = this;
 
-      traits.traits.forEach(function (trait) {
+      traits.forEach(function (trait) {
         var str;
         var accessModifier = trait.name.getAccessModifier();
         var namespaceName = trait.name.namespaces[0].originalURI;

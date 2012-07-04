@@ -999,8 +999,8 @@ var Compiler = (function () {
         case OP_constructprop:
           multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
-          push(new NewExpression(property(getProperty(obj, multiname), "instance"), args));
+          obj = getProperty(state.stack.pop(), multiname);
+          push(new NewExpression(property(obj, "instance"), args));
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:

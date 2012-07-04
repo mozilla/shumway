@@ -377,7 +377,7 @@ var Interpreter = (function () {
             // TODO: Cache the resolved multiname so it doesn't have to be
             // resolved again in getProperty
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(getProperty(scope.findProperty(multiname, domain, true), multiname, true));
+            stack.push(getProperty(scope.findProperty(multiname, domain, true), multiname));
             break;
           case OP_initproperty:
           case OP_setproperty:
@@ -403,7 +403,7 @@ var Interpreter = (function () {
             break;
           case OP_getproperty:
             multiname = createMultiname(multinames[bc.index]);
-            stack.push(getProperty(stack.pop(), multiname, true));
+            stack.push(getProperty(stack.pop(), multiname));
             break;
           case OP_getouterscope:      notImplemented(); break;
           case OP_setpropertylate:    notImplemented(); break;
@@ -636,7 +636,7 @@ var Interpreter = (function () {
                   varTrait.name = handler.varName;
                   varTrait.typeName = handler.typeName;
                   varTrait.holder = method;
-                  handler.scopeObject = runtime.applyTraits({}, new Traits([varTrait]));
+                  handler.scopeObject = runtime.applyTraits({}, null, null, [varTrait], null, false);
                 } else {
                   handler.scopeObject = {};
                 }

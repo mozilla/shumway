@@ -25,7 +25,108 @@ var Domain = (function () {
 
     // Do we compile or interpret?
     this.mode = mode;
+
+    // If we are the system domain (the root), we should initialize the Class
+    // and MethodClosure classes.
+    if (base) {
+      this.system = base.system;
+    } else {
+      this.system = this;
+
+      var Class = this.Class = function Class(name, instance, callable) {
+        this.debugName = name;
+
+        if (instance) {
+          assert(instance.prototype);
+          this.instance = instance;
+        }
+
+        if (!callable) {
+          callable = Domain.passthroughCallable(instance);
+        }
+        defineNonEnumerableProperty(this, "call", callable.call);
+        defineNonEnumerableProperty(this, "apply", callable.apply);
+      };
+
+      Class.prototype = {
+        extendBuiltin: function(baseClass) {
+          // Some natives handle their own prototypes/it's impossible to do the
+          // traits/public prototype BS, e.g. Object, Array, etc.
+          // FIXME: This is technically non-semantics preserving.
+          this.baseClass = baseClass;
+          this.dynamicPrototype = this.instance.prototype;
+          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+        },
+
+        extend: function (baseClass) {
+          this.baseClass = baseClass;
+          this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
+          this.instance.prototype = Object.create(this.dynamicPrototype);
+          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+        },
+
+        isInstance: function (value) {
+          if (value === null || typeof value !== "object") {
+            return false;
+          }
+          return this.dynamicPrototype.isPrototypeOf(value);
+        },
+
+        toString: function () {
+          return "[class " + this.debugName + "]";
+        }
+      };
+
+      Class.instance = Class;
+      Class.toString = Class.prototype.toString;
+
+      // Traits are below the dynamic instant prototypes,
+      // i.e. this.dynamicPrototype === Object.getPrototypeOf(this.instance.prototype)
+      // and we cache the dynamic instant prototype as this.dynamicPrototype.
+      //
+      // Traits are not visible to the AVM script.
+      Class.nativeMethods = {
+        "get prototype": function () {
+          return this.dynamicPrototype;
+        }
+      };
+
+      var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
+        var bound = fn.bind($this);
+        defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+        defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+      };
+
+      MethodClosure.prototype = {
+        toString: function () {
+          return "function Function() {}";
+        }
+      };
+    }
   }
+
+  Domain.passthroughCallable = function passthroughCallable(f) {
+    return {
+      call: function ($this) {
+        Array.prototype.shift.call(arguments);
+        return f.apply($this, arguments);
+      },
+      apply: function ($this, args) {
+        return f.apply($this, args);
+      }
+    };
+  };
+
+  Domain.constructingCallable = function constructingCallable(instance) {
+    return {
+      call: function ($this) {
+        return new Function.bind.apply(instance, arguments);
+      },
+      apply: function ($this, args) {
+        return new Function.bind.apply(instance, [$this].concat(args));
+      }
+    };
+  };
 
   function executeScript(abc, script) {
     if (disassemble.value) {
@@ -65,7 +166,7 @@ var Domain = (function () {
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
       }
-      assert(c instanceof Class);
+      assert(c instanceof this.system.Class);
       return c;
     },
 
@@ -110,9 +211,9 @@ var Domain = (function () {
           }
           var global = script.global;
           if (multiname.isQName()) {
-            if (global.hasOwnProperty(multiname.getQualifiedName())) {
+            if (multiname.getQualifiedName() in global) {
               if (traceDomain.value) {
-                print("Domain findDefiningScript: " + multiname + " in " + abc + ", script: " + k);
+                print("Domain.findDefiningScript(" + multiname + ") in " + abc + ", script: " + k);
                 print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
                 print("Value is: " + script.global[multiname.getQualifiedName()]);
               }
@@ -122,7 +223,7 @@ var Domain = (function () {
               return { script: script, name: multiname };
             }
           } else {
-            var resolved = resolveMultiname(global, multiname, false);
+            var resolved = resolveMultiname(global, multiname);
             if (resolved) {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
