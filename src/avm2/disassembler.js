@@ -328,8 +328,8 @@ var SourceTracer = (function () {
       writer.writeLn("// Signature: " + getSignature(ii.init));
       var initSignature = getSignature(ii.init, true);
       writer.writeLn("function " + name + "(" + initSignature + ") {");
-      writer.writeLn("  instance.call(this" + (initSignature ? ", " + initSignature : "") + ")");
-      writer.writeLn("};");
+      writer.writeLn("  instance.call(this" + (initSignature ? ", " + initSignature : "") + ");");
+      writer.writeLn("}");
       writer.writeLn("var c = new Class(\"" + name + "\", " + name +
                      ", Class.passthroughCallable(" + name + "));");
       writer.writeLn("//");
@@ -366,8 +366,8 @@ var SourceTracer = (function () {
               }
               str += prop + " = function " + traitName + "(" + getSignature(mi, true) + ")";
               writer.writeLn(str + " {");
-              writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\"); };");
-              writer.writeLn("}");
+              writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\");");
+              writer.writeLn("};");
             }
           }
         });
