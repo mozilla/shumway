@@ -224,10 +224,10 @@ Loader.prototype = Object.create(baseProto, {
             var sym;
             while (sym = symbols[i++]) {
               if (!sym.id) {
-                var mainTimeline = new (toplevel.getTypeByName(
+                var mainClass = this.avm2.applicationDomain.getProperty(
                   Multiname.fromSimpleName(sym.name),
-                  true
-                )).instance;
+                  true, true
+                );
               }
             }
           }
