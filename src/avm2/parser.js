@@ -410,6 +410,7 @@ function getQualifiedName(ns, name) {
  *  If the multiname has a namespace set, then the object is searched for any properties with the same
  *  name and a namespace matches any of the namespaces in the namespace set.
  */
+
 var Multiname = (function () {
   const ATTRIBUTE         = 0x01;
   const QNAME             = 0x02;
@@ -437,94 +438,94 @@ var Multiname = (function () {
     return new multiname(this.namespaces, this.name, this.flags);
   };
 
+  function setAnyNamespace() {
+    this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE);
+    this.namespaces = null;
+  }
+
+  function setAnyName() {
+    this.flags &= ~(RUNTIME_NAME);
+    this.name = null;
+  }
+
+  function setQName() {
+    this.flags |= QNAME;
+  }
+
+  function setAttribute(set) {
+    if (set) {
+      this.flags |= ATTRIBUTE;
+    } else {
+      this.flags &= ~(ATTRIBUTE);
+    }
+  }
+
+  function setRuntimeName() {
+    this.flags |= RUNTIME_NAME;
+    this.name = null;
+  }
+
+  function setRuntimeNamespace() {
+    this.flags |= RUNTIME_NAMESPACE;
+    this.flags &= ~(NAMESPACE_SET);
+    this.namespaces = null;
+  }
+
+  function setNamespaceSet(namespaceSet) {
+    assert(namespaceSet != null);
+    this.flags &= ~(RUNTIME_NAMESPACE);
+    this.flags |= NAMESPACE_SET;
+    this.namespaces = namespaceSet;
+  }
+
+  function setTypeParameter(typeParameter) {
+    this.flags |= TYPE_PARAMETER;
+    this.typeParameter = typeParameter;
+  }
+
   multiname.prototype.parse = function parse(constantPool, stream, multinames) {
     var index = 0;
     this.flags = 0;
     this.kind = stream.readU8();
 
-    var setAnyNamespace = function() {
-      this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE);
-      this.namespaces = null;
-    }.bind(this);
-
-    var setAnyName = function() {
-      this.flags &= ~(RUNTIME_NAME);
-      this.name = null;
-    }.bind(this);
-
-    var setQName = function() {
-      this.flags |= QNAME;
-    }.bind(this);
-
-    var setAttribute = function(set) {
-      if (set) {
-        this.flags |= ATTRIBUTE;
-      } else {
-        this.flags &= ~(ATTRIBUTE);
-      }
-    }.bind(this);
-
-    var setRuntimeName = function() {
-      this.flags |= RUNTIME_NAME;
-      this.name = null;
-    }.bind(this);
-
-    var setRuntimeNamespace = function() {
-      this.flags |= RUNTIME_NAMESPACE;
-      this.flags &= ~(NAMESPACE_SET);
-      this.namespaces = null;
-    }.bind(this);
-
-    var setNamespaceSet = function(namespaceSet) {
-      assert(namespaceSet != null);
-      this.flags &= ~(RUNTIME_NAMESPACE);
-      this.flags |= NAMESPACE_SET;
-      this.namespaces = namespaceSet;
-    }.bind(this);
-
-    var setTypeParameter = function(typeParameter) {
-      this.flags |= TYPE_PARAMETER;
-      this.typeParameter = typeParameter;
-    }.bind(this);
-
     switch (this.kind) {
       case CONSTANT_QName: case CONSTANT_QNameA:
         index = stream.readU30();
         if (index === 0) {
-          setAnyNamespace();
+          setAnyNamespace.call(this);
         } else {
           this.namespaces = [constantPool.namespaces[index]];
         }
         index = stream.readU30();
         if (index === 0) {
-          setAnyName();
+          setAnyName.call(this);
         } else {
           this.name = constantPool.strings[index];
         }
-        setQName();
-        setAttribute(this.kind === CONSTANT_QNameA);
+        setQName.call(this);
+        setAttribute.call(this, this.kind === CONSTANT_QNameA);
         break;
       case CONSTANT_RTQName: case CONSTANT_RTQNameA:
         index = stream.readU30();
         if (index === 0) {
-          setAnyName();
+          setAnyName.call(this);
         } else {
           this.name = constantPool.strings[index];
         }
-        setQName();
-        setRuntimeNamespace();
-        setAttribute(this.kind === CONSTANT_RTQNameA);
+        setQName.call(this);
+        setRuntimeNamespace.call(this);
+        setAttribute.call(this, this.kind === CONSTANT_RTQNameA);
         break;
       case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-        setQName();
-        setRuntimeNamespace();
-        setRuntimeName();
-        setAttribute(this.kind === CONSTANT_RTQNameLA);
+        setQName.call(this);
+        setRuntimeNamespace.call(this);
+        setRuntimeName.call(this);
+        setAttribute.call(this, this.kind === CONSTANT_RTQNameLA);
         break;
       case CONSTANT_Multiname: case CONSTANT_MultinameA:
         index = stream.readU30();
         if (index === 0) {
-          setAnyName();
+          setAnyName.call(this);
         } else {
           this.name = constantPool.strings[index];
         }
@@ -532,19 +533,19 @@ var Multiname = (function () {
         assert(index != 0);
         var nsset = constantPool.namespaceSets[index];
         if (nsset.length === 1) {
-          setQName();
+          setQName.call(this);
           this.namespaces = nsset;
         } else {
-          setNamespaceSet(nsset);
+          setNamespaceSet.call(this, nsset);
         }
-        setAttribute(this.kind === CONSTANT_MultinameA);
+        setAttribute.call(this, this.kind === CONSTANT_MultinameA);
         break;
       case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-        setRuntimeName();
+        setRuntimeName.call(this);
         index = stream.readU30();
         assert(index != 0);
-        setNamespaceSet(constantPool.namespaceSets[index]);
-        setAttribute(this.kind === CONSTANT_MultinameLA);
+        setNamespaceSet.call(this, constantPool.namespaceSets[index]);
+        setAttribute.call(this, this.kind === CONSTANT_MultinameLA);
         break;
       /**
        * This is undocumented, looking at Tamarin source for this one.
@@ -556,7 +557,7 @@ var Multiname = (function () {
         }
         index = stream.readU32();
         assert(index === 1);
-        setTypeParameter(stream.readU32());
+        setTypeParameter.call(this, stream.readU32());
         break;
       default:
         unexpected();
@@ -692,7 +693,7 @@ var Multiname = (function () {
     }
 
     var nameIndex = simpleName.lastIndexOf("."), name, namespace;
-    
+
     if (nameIndex >= 0) {
       name = simpleName.substring(nameIndex + 1).trim();
       namespace = simpleName.substring(0, nameIndex);
