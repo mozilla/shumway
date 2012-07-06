@@ -6,7 +6,7 @@ function Event(type, bubbles, cancelable) {
   });
 
   this._canceled = false;
-  this._eventPhase = EventPhase.AT_TARGET;
+  this._eventPhase = 2 // EventPhase.AT_TARGET;
   this._currentTarget = null;
   this._target = null;
 }
