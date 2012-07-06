@@ -20,6 +20,9 @@ Transform.prototype = Object.create(null, {
       );
     },
     function (val) {
+      if (!(val instanceof ColorTransform))
+        throw TypeError();
+
       this._colorTransform = val;
     }
   ),
@@ -47,6 +50,9 @@ Transform.prototype = Object.create(null, {
       return m;
     },
     function (val) {
+      if (!(val instanceof Matrix))
+        throw TypeError();
+
       var target = this._target;
       var sx = Math.sqrt(val.d * val.d + val.c * val.c);
       var sy = Math.sqrt(val.a * val.a + val.b * val.b);

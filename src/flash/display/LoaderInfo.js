@@ -70,6 +70,9 @@ LoaderInfo.prototype = Object.create(new EventDispatcher, {
     notImplemented();
   }),
   swfVersion: descAccessor(function() {
+    if (!this._swfVersion)
+      throw Error();
+
     return this._swfVersion;
   }),
   uncaughtErrorEvents: descAccessor(function() {

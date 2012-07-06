@@ -93,6 +93,9 @@ Loader.prototype = Object.create(baseProto, {
     this._load(request.url);
   }),
   loadBytes: descMethod(function (bytes, context) {
+    if (!bytes.length)
+      throw ArgumentError();
+
     this._load(bytes);
   }),
   removeChild: descMethod(function (child) {
