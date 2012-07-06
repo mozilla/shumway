@@ -364,16 +364,6 @@ var Namespace = (function () {
   return namespace;
 })();
 
-/*
-function getQualifiedName(ns, name) {
-  if (ns.isPublic() && ns.name === "") {
-    return name;
-  } else {
-    return ns.qualifiedName + "$" + name;
-  }
-}
-*/
-
 /**
  * Section 2.3 and 4.4.3
  *
@@ -681,7 +671,7 @@ var Multiname = (function () {
   var simpleNameCache = {};
 
   /**
-   * Creates a multiname from a simple names qualified with one ore more namespaces, for example:
+   * Creates a multiname from a simple name qualified with one ore more namespaces, for example:
    * flash.display.Graphics
    * private flash.display.Graphics
    * [private flash.display, private flash, public].Graphics
