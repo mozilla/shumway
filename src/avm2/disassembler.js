@@ -327,32 +327,38 @@ var SourceTracer = (function () {
       writer.writeLn("Cut and paste the following into `native.js' and edit accordingly");
       writer.writeLn("8< --------------------------------------------------------------");
       writer.enter("natives." + native.cls + " = function " + native.cls + "(runtime, scope, instance, baseClass) {");
-      writer.writeLn("var c = new Class(\"" + name + "\", instance, C(instance));");
+      writer.writeLn("var c = new Class(\"" + name + "\", instance, Class.passthroughCallable(instance));");
       writer.writeLn("c.extend(baseClass);\n");
 
       function traceTraits(traits, isStatic) {
-        traits.traits.forEach(function (trait, i) {
-          var traitName = trait.name.getName();
-          if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-            var mi = trait.methodInfo;
-            if (mi.isNative()) {
-              writer.writeLn("// " + traitName + " :: " +
-                             (mi.parameters.length ? getSignature(mi) : "void") + " -> " +
-                             (mi.returnType ? mi.returnType.getName() : "any"));
-              var prop;
-              if (trait.isGetter()) {
-                prop = "\"get " + traitName + "\"";
-              } else if (trait.isSetter()) {
-                prop = "\"set " + traitName + "\"";
-              } else {
-                prop = traitName;
-              }
+        var nativeMethodTraits = [];
 
-              writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
-              writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\");");
-              writer.leave("}" + (i === traits.traits.length - 1 ? "" : ",\n"));
+        traits.traits.forEach(function (trait, i) {
+          if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+            if (trait.methodInfo.isNative()) {
+              nativeMethodTraits.push(trait);
             }
           }
+        });
+
+        nativeMethodTraits.forEach(function (trait, i) {
+          var mi = trait.methodInfo;
+          var traitName = trait.name.getName();
+          writer.writeLn("// " + traitName + " :: " +
+                         (mi.parameters.length ? getSignature(mi) : "void") + " -> " +
+                         (mi.returnType ? mi.returnType.getName() : "any"));
+          var prop;
+          if (trait.isGetter()) {
+            prop = "\"get " + traitName + "\"";
+          } else if (trait.isSetter()) {
+            prop = "\"set " + traitName + "\"";
+          } else {
+            prop = traitName;
+          }
+
+          writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
+          writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\");");
+          writer.leave("}" + (i === nativeMethodTraits.length - 1 ? "" : ",\n"));
         });
       }
 
