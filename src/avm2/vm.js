@@ -17,6 +17,7 @@ var AVM2 = (function () {
     loadPlayerGlobal: function (playerGlobalSWF) {
       var sysDomain = this.systemDomain;
       // Load, but don't execute, the default player globals.
+      Timer.start("Load Player Globals");
       SWF.parse(playerGlobalSWF, {
         oncomplete: function(result) {
           var tags = result.tags;
@@ -28,6 +29,7 @@ var AVM2 = (function () {
           }
         }
       });
+      Timer.stop();
     }
   };
 

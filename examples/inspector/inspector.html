@@ -99,6 +99,7 @@
       var OptionSet = options.OptionSet;
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
@@ -114,6 +115,9 @@
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../src/avm2/interpreter.js"></script>
     <script src="../../src/avm2/vm.js"></script>
+
+    <script src="../../src/avm2/flash.events.js"></script>
+    <script src="../../src/avm2/flash.display.js"></script>
 
     <!-- Load Flash Dependencies -->
 

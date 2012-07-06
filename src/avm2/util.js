@@ -608,7 +608,7 @@ function base64ArrayBuffer(arrayBuffer) {
 }
 
 var IndentingWriter = (function () {
-  var consoleOutFn = console.info;
+  var consoleOutFn = console.info.bind(console);
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
     this.padding = "";

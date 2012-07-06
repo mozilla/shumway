@@ -321,70 +321,59 @@ var SourceTracer = (function () {
       var name = ii.name.getName();
       var native = trait.metadata ? trait.metadata.native : null;
       if (!native) {
-        return;
+        return false;
       }
-      writer.enter("Shumway Stub {");
-      writer.enter("natives." + native.cls + " = function " + native.cls + "(scope, instance, baseClass) {");
-      writer.writeLn("// Signature: " + getSignature(ii.init));
-      var initSignature = getSignature(ii.init, true);
-      writer.writeLn("function " + name + "(" + initSignature + ") {");
-      writer.writeLn("  instance.call(this" + (initSignature ? ", " + initSignature : "") + ")");
-      writer.writeLn("};");
-      writer.writeLn("var c = new Class(\"" + name + "\", " + name +
-                     ", Class.passthroughCallable(" + name + "));");
-      writer.writeLn("//");
-      writer.writeLn("// WARNING! This sets:")
-      writer.writeLn("//   " + name + ".prototype = " +
-                     "Object.create(baseClass.instance.prototype)");
-      writer.writeLn("//");
-      writer.writeLn("// If you want to manage prototypes manually, do this instead:");
-      writer.writeLn("//   c.baseClass = baseClass");
-      writer.writeLn("//");
-      writer.writeLn("c.extend(baseClass);");
+
+      writer.writeLn("Cut and paste the following into `native.js' and edit accordingly");
+      writer.writeLn("8< --------------------------------------------------------------");
+      writer.enter("natives." + native.cls + " = function " + native.cls + "(runtime, scope, instance, baseClass) {");
+      writer.writeLn("var c = new Class(\"" + name + "\", instance, Class.passthroughCallable(instance));");
+      writer.writeLn("c.extend(baseClass);\n");
 
       function traceTraits(traits, isStatic) {
-        traits.traits.forEach(function (trait) {
-          var traitName = trait.name.getName();
+        var nativeMethodTraits = [];
+
+        traits.traits.forEach(function (trait, i) {
           if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-            var mi = trait.methodInfo;
-            if (mi.isNative()) {
-              var str = isStatic ? "s" : "m";
-              if (mi.parameters.length) {
-                var returnTypeStr = "";
-                if (mi.returnType) {
-                  returnTypeStr = " -> " + mi.returnType.getName();
-                }
-                writer.writeLn("// Signature: " + getSignature(mi) + returnTypeStr);
-              }
-              var prop;
-              if (trait.isGetter()) {
-                prop = "[\"get " + traitName + "\"]";
-              } else if (trait.isSetter()) {
-                prop = "[\"set " + traitName + "\"]";
-              } else {
-                prop = "." + traitName;
-              }
-              str += prop + " = function " + traitName + "(" + getSignature(mi, true) + ")";
-              writer.writeLn(str + " {");
-              writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\"); };");
-              writer.writeLn("}");
+            if (trait.methodInfo.isNative()) {
+              nativeMethodTraits.push(trait);
             }
           }
         });
+
+        nativeMethodTraits.forEach(function (trait, i) {
+          var mi = trait.methodInfo;
+          var traitName = trait.name.getName();
+          writer.writeLn("// " + traitName + " :: " +
+                         (mi.parameters.length ? getSignature(mi) : "void") + " -> " +
+                         (mi.returnType ? mi.returnType.getName() : "any"));
+          var prop;
+          if (trait.isGetter()) {
+            prop = "\"get " + traitName + "\"";
+          } else if (trait.isSetter()) {
+            prop = "\"set " + traitName + "\"";
+          } else {
+            prop = traitName;
+          }
+
+          writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
+          writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\");");
+          writer.leave("}" + (i === nativeMethodTraits.length - 1 ? "" : ",\n"));
+        });
       }
 
-      writer.writeLn("var m = " + name + ".prototype;");
-      writer.writeLn("var s = {};");
-
+      writer.enter("c.nativeStatics = {");
       traceTraits(ci.traits, true);
+      writer.leave("};\n");
+      writer.enter("c.nativeMethods = {");
       traceTraits(ii.traits);
-
-      writer.writeLn("c.nativeMethods = m;");
-      writer.writeLn("c.nativeStatics = s;");
+      writer.leave("};\n");
 
       writer.writeLn("return c;");
       writer.leave("};");
-      writer.leave("}");
+      writer.writeLn("-------------------------------------------------------------- >8");
+
+      return true;
     },
 
     traceClass: function traceClass(ci) {
