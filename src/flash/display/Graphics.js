@@ -80,7 +80,7 @@ Graphics.prototype = Object.create(null, {
 									 								caps /* null */,
 									 								joints /* null */,
 									 								miterLimit /* 3 */) {
-	}
+	}),
 	moveTo: descMethod(function (x, y) {
 	}),
 	lineTo: descMethod(function (x, y) {
