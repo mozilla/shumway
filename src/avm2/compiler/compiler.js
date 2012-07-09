@@ -410,6 +410,7 @@ var Compiler = (function () {
   var Compilation = (function () {
     function compilation(compiler, methodInfo, scope) {
       this.compiler = compiler;
+      var abc = this.compiler.abc;
       var mi = this.methodInfo = methodInfo;
       this.bytecodes = methodInfo.analysis.bytecodes;
       this.state = new State();
@@ -449,6 +450,10 @@ var Compiler = (function () {
       }
 
       this.prologue = [];
+     
+      this.prologue.push(new ExpressionStatement(
+        call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
+
       this.prologue.push(new VariableDeclaration("var", [
         new VariableDeclarator(id(SCOPE_NAME), id(SAVED_SCOPE_NAME))
       ]));
@@ -836,9 +841,6 @@ var Compiler = (function () {
         }
       }
 
-      // Push the current runtime onto the runtime stack.
-      emit(call(id("Runtime.stack.push"), [constant(abc.runtime)]));
-
       var bytecodes = this.bytecodes;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
         var bc = bytecodes[bci];
@@ -985,11 +987,11 @@ var Compiler = (function () {
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
         case OP_returnvoid:
-          emit(call(id("Runtime.stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack.pop"), []));
           emit(new ReturnStatement());
           break;
         case OP_returnvalue:
-          emit(call(id("Runtime.stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack.pop"), []));
           emit(new ReturnStatement(state.stack.pop())); break;
         case OP_constructsuper:
           args = state.stack.popMany(bc.argCount);
