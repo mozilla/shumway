@@ -810,7 +810,7 @@ var Runtime = (function () {
             defineReadOnlyProperty(this, qn, mc);
             return mc;
           }
-          defineGetter(obj, qn, memoizeMethodClosure);
+          defineMemoizingGetter(obj, qn, memoizeMethodClosure);
         } else {
           mc = closure.bind(obj);
           defineReadOnlyProperty(mc, "public$prototype", null);

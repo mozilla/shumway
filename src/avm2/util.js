@@ -67,6 +67,12 @@ function defineGetter(obj, name, getter) {
                                      enumerable: true });
 }
 
+function defineMemoizingGetter(obj, name, getter) {
+  Object.defineProperty(obj, name, { get: getter,
+                                     configurable: false,
+                                     enumerable: false });
+}
+
 function defineSetter(obj, name, setter) {
   Object.defineProperty(obj, name, { set: setter,
                                      configurable: true,
