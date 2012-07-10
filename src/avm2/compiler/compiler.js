@@ -173,6 +173,10 @@ var Compiler = (function () {
       new UnaryExpression("typeof", value), new Literal(type));
   }
 
+  function conditional(test, consequent, alternate) {
+    return new ConditionalExpression(test, consequent, alternate);
+  }
+
   function removeBlock(node) {
     if (node instanceof BlockStatement) {
       return node.body;
@@ -767,10 +771,13 @@ var Compiler = (function () {
       function getProperty(obj, multiname) {
         assert (!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
+
+        // If the multiname is a runtime multiname and the name is a number then
+        // emit a fast object[name] property lookup.
+        // FIXME: This doesn't work for vectors, we need to chack for |indexGet|.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          return new ConditionalExpression(checkType(multiname.name, "number"),
-                                           new MemberExpression(obj, multiname.name, true),
-                                           slowPath);
+          var fastPath = new MemberExpression(obj, multiname.name, true);
+          return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
         if (multiname instanceof Constant) {
@@ -788,10 +795,10 @@ var Compiler = (function () {
       function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
 
+        // Fastpath for runtime multinames with number names.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          return new ConditionalExpression(checkType(multiname.name, "number"),
-                                           assignment(new MemberExpression(obj, multiname.name, true), value),
-                                           slowPath);
+          var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
+          return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
         return slowPath;
