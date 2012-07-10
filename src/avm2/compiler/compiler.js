@@ -168,6 +168,11 @@ var Compiler = (function () {
     return new Identifier(name);
   }
 
+  function checkType(value, type) {
+    return new BinaryExpression("===",
+      new UnaryExpression("typeof", value), new Literal(type));
+  }
+
   function removeBlock(node) {
     if (node instanceof BlockStatement) {
       return node.body;
@@ -450,7 +455,7 @@ var Compiler = (function () {
       }
 
       this.prologue = [];
-     
+
       this.prologue.push(new ExpressionStatement(
         call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
 
@@ -761,9 +766,11 @@ var Compiler = (function () {
 
       function getProperty(obj, multiname) {
         assert (!(multiname instanceof Multiname), multiname);
-
+        var slowPath = call(id("getProperty"), [obj, multiname]);
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          return new MemberExpression(obj, multiname.name, true);
+          return new ConditionalExpression(checkType(multiname.name, "number"),
+                                           new MemberExpression(obj, multiname.name, true),
+                                           slowPath);
         }
 
         if (multiname instanceof Constant) {
@@ -775,36 +782,19 @@ var Compiler = (function () {
           }
         }
 
-        /**
-         * Looping over arrays by index will use a MultinameL
-         * as it's the simplest type of late name. Instead of
-         * doing a runtime looking, quickly go through late
-         * name lookup here.
-         */
-
-        /*
-        if (multiname.isRuntimeName() && !multiname.isPublicNamespaced()) {
-          var value = state.stack.pop();
-          return call(property(obj, GET_ACCESSOR), [value]);
-        }
-        */
-
-        return call(id("getProperty"), [obj, multiname]);
-
-        /*
-         if (enableAccessors.value) {
-              push(call(property(obj, GET_ACCESSOR), [qn.name]));
-            } else {
-              push(new MemberExpression(obj, qn.name, true));
-            }
-         */
+        return slowPath;
       }
 
       function setProperty(obj, multiname, value) {
+        var slowPath = call(id("setProperty"), [obj, multiname, value]);
+
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          return assignment(new MemberExpression(obj, multiname.name, true), value);
+          return new ConditionalExpression(checkType(multiname.name, "number"),
+                                           assignment(new MemberExpression(obj, multiname.name, true), value),
+                                           slowPath);
         }
-        return call(id("setProperty"), [obj, multiname, value]);
+
+        return slowPath;
       }
 
       function getMultiname(index) {
@@ -816,26 +806,31 @@ var Compiler = (function () {
       }
 
       var RuntimeMultiname = (function () {
-        function runtimeMultiname(multiname, ns, name) {
+        function runtimeMultiname(multiname, namespaces, name) {
           this.multiname = multiname;
-          this.ns = ns;
+          this.namespaces = namespaces;
           this.name = name;
-          NewExpression.call(this, id("Multiname"), [ns, name]);
+          NewExpression.call(this, id("Multiname"), [namespaces, name]);
         }
+        runtimeMultiname.prototype.isEquivalent = function isEquivalent(other) {
+          return false;
+        };
         return runtimeMultiname;
       })();
 
       function popMultiname(index) {
         var multiname = multinames[index];
         if (multiname.isRuntime()) {
-          var ns = constant(multiname.namespaces), name = constant(multiname.name);
+          flushStack();
+          var namespaces = constant(multiname.namespaces);
+          var name = constant(multiname.name);
           if (multiname.isRuntimeName()) {
             name = state.stack.pop();
           }
           if (multiname.isRuntimeNamespace()) {
-            ns = state.stack.pop();
+            namespaces = state.stack.pop();
           }
-          return new RuntimeMultiname(multiname, ns, name);
+          return new RuntimeMultiname(multiname, namespaces, name);
         } else {
           return constant(multiname);
         }
