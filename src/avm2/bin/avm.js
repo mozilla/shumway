@@ -58,6 +58,7 @@ var Timer = metrics.Timer;
 
 load("../compiler/lljs/src/estransform.js");
 load("../compiler/lljs/src/escodegen.js");
+load("../compiler/verifier.js");
 load("../compiler/compiler.js");
 
 load("../domain.js");
