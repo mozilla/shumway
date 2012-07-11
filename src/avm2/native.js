@@ -765,7 +765,7 @@ const natives = (function () {
           parent = parentDomain.d;
         }
 
-        glue(new Domain(parent), this);
+        glue(new Domain(parent.vm, parent), this);
       },
 
       "get parentDomain": function () {

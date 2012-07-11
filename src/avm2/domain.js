@@ -7,7 +7,10 @@ const HEURISTIC_JIT = 0x2;
 
 var Domain = (function () {
 
-  function Domain(base, mode, allowNatives) {
+  function Domain(vm, base, mode, allowNatives) {
+
+    this.vm = vm;
+
     // ABCs that belong to this domain.
     this.abcs = [];
 

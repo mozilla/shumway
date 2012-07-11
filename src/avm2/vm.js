@@ -5,12 +5,12 @@ var AVM2 = (function () {
       throw new Error("Cannot initialize AVM2 without builtin.abc");
     }
 
-    var sysDomain = new Domain(null, sysMode, true);
+    var sysDomain = new Domain(this, null, sysMode, true);
     sysDomain.executeAbc(new AbcFile(builtinABC), "builtin.abc");
 
     // TODO: this will change when we implement security domains.
     this.systemDomain = sysDomain;
-    this.applicationDomain = new Domain(sysDomain, appMode, false);
+    this.applicationDomain = new Domain(this, sysDomain, appMode, false);
   }
 
   AVM2.prototype = {
