@@ -329,7 +329,7 @@ var SourceTracer = (function () {
       function traceTraits(traits, isStatic) {
         var nativeMethodTraits = [];
 
-        traits.traits.forEach(function (trait, i) {
+        traits.forEach(function (trait, i) {
           if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
             if (trait.methodInfo.isNative()) {
               nativeMethodTraits.push(trait);
