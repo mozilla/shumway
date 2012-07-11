@@ -154,11 +154,22 @@
 
       function readFile(file) {
         var reader = new FileReader();
-        reader.onload = function() {
-          var result = this.result;
-          createAVM2(true, function (avm2) {
-            SWF.embed(result, stage[0], {avm2: avm2});
-          });
+        if (file.name.endsWith(".abc")) {
+          reader.onload = function() {
+            var result = this.result;
+            createAVM2(true, function (avm2) {
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result)), file.name, true);
+            });
+          }
+        } else if (file.name.endsWith(".swf")) {
+          reader.onload = function() {
+            var result = this.result;
+            createAVM2(true, function (avm2) {
+              SWF.embed(result, stage[0], {avm2: avm2});
+            });
+          }
+        } else {
+          throw new TypeError("unsupported format");
         }
         reader.readAsArrayBuffer(file);
       }
@@ -224,28 +235,27 @@
       }
 
       var avm2Root = "../../src/avm2/";
-      var file = getQueryVariable("file");
+      var rfile = getQueryVariable("rfile");
 
       /**
-       * You can also specify the file as a query string parameters, ?file=... to load it automatically when the
-       * page loads.
+       * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
+       * when the page loads.
        */
-      if (file) {
-        if (file.endsWith(".abc")) {
+      if (rfile) {
+        if (rfile.endsWith(".abc")) {
           createAVM2(true, function(avm2) {
-            new BinaryFileReader(file).readAll(null, function(buffer) {
-              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file, true));
+            new BinaryFileReader(rfile).readAll(null, function(buffer) {
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile, true));
             });
           });
-        } else if (file.endsWith(".swf")) {
+        } else if (rfile.endsWith(".swf")) {
           createAVM2(true, function(avm2) {
-            new BinaryFileReader(file).readAll(null, function(buffer) {
+            new BinaryFileReader(rfile).readAll(null, function(buffer) {
               SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
             });
           });
         }
       }
-
     </script>
   </body>
 </html>
