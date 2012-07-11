@@ -109,7 +109,7 @@ if (file.value.endsWith(".swf")) {
       for (var i = 0, n = tags.length; i < n; i++) {
         var tag = tags[i];
         if (tag.type === "abc") {
-          processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]", true));
+          processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]"));
         } else if (tag.type === "symbols") {
           for (var j = tag.references.length - 1; j >= 0; j--) {
             if (tag.references[j].id === 0) {
@@ -126,7 +126,7 @@ if (file.value.endsWith(".swf")) {
   });
 } else {
   assert(file.value.endsWith(".abc"));
-  processAbc(new AbcFile(snarf(file.value, "binary"), file.value, true));
+  processAbc(new AbcFile(snarf(file.value, "binary"), file.value));
 }
 
 function processAbc(abc) {

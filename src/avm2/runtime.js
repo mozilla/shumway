@@ -809,7 +809,9 @@ var Runtime = (function () {
             defineReadOnlyProperty(mc, "public$prototype", null);
             defineReadOnlyProperty(this, qn, mc);
             return mc;
-          }
+          };
+          // TODO: We make the |memoizeMethodClosure| configurable since it may be
+          // overriden by a derivied class. Only do this non final classes.
           defineMemoizingGetter(obj, qn, memoizeMethodClosure);
         } else {
           mc = closure.bind(obj);

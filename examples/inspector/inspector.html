@@ -158,7 +158,7 @@
           reader.onload = function() {
             var result = this.result;
             createAVM2(true, function (avm2) {
-              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result)), file.name, true);
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result), file.name));
             });
           }
         } else if (file.name.endsWith(".swf")) {
@@ -245,7 +245,7 @@
         if (rfile.endsWith(".abc")) {
           createAVM2(true, function(avm2) {
             new BinaryFileReader(rfile).readAll(null, function(buffer) {
-              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile, true));
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
             });
           });
         } else if (rfile.endsWith(".swf")) {

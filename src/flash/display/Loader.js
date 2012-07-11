@@ -217,7 +217,7 @@ Loader.prototype = Object.create(baseProto, {
             var i = 0;
             var block;
             while (block = blocks[i++]) {
-              this.avm2.applicationDomain.executeAbc(new AbcFile(block, file, true));
+              this.avm2.applicationDomain.executeAbc(new AbcFile(block));
             }
           }
 
