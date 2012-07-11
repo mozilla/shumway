@@ -622,7 +622,7 @@ var Interpreter = (function () {
             throw e;
           }
 
-          e = translateError(e);
+          e = runtime.translateError(e);
 
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];

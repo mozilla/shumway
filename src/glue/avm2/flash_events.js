@@ -38,3 +38,70 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
 
   return c;
 };
+
+natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("Event", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {
+  };
+
+  c.nativeMethods = {
+    // ctor :: type:String, bubbles:Boolean, cancelable:Boolean -> void
+    ctor: function ctor(type, bubbles, cancelable) {
+        notImplemented("Event.ctor");
+    },
+
+    // type :: void -> String
+    "get type": function type() {
+        notImplemented("Event.type");
+    },
+
+    // bubbles :: void -> Boolean
+    "get bubbles": function bubbles() {
+        notImplemented("Event.bubbles");
+    },
+
+    // cancelable :: void -> Boolean
+    "get cancelable": function cancelable() {
+        notImplemented("Event.cancelable");
+    },
+
+    // target :: void -> Object
+    "get target": function target() {
+        notImplemented("Event.target");
+    },
+
+    // currentTarget :: void -> Object
+    "get currentTarget": function currentTarget() {
+        notImplemented("Event.currentTarget");
+    },
+
+    // eventPhase :: void -> uint
+    "get eventPhase": function eventPhase() {
+        notImplemented("Event.eventPhase");
+    },
+
+    // stopPropagation :: void -> void
+    stopPropagation: function stopPropagation() {
+        notImplemented("Event.stopPropagation");
+    },
+
+    // stopImmediatePropagation :: void -> void
+    stopImmediatePropagation: function stopImmediatePropagation() {
+        notImplemented("Event.stopImmediatePropagation");
+    },
+
+    // preventDefault :: void -> void
+    preventDefault: function preventDefault() {
+        notImplemented("Event.preventDefault");
+    },
+
+    // isDefaultPrevented :: void -> Boolean
+    isDefaultPrevented: function isDefaultPrevented() {
+        notImplemented("Event.isDefaultPrevented");
+    }
+  };
+
+  return c;
+};
