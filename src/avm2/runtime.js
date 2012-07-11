@@ -660,9 +660,9 @@ var Runtime = (function () {
         var iftraits = ii.traits;
         for (var i = 0, j = iftraits.length; i < j; i++) {
           var iftrait = iftraits[i];
-          var ifqn = trait.name.getQualifiedName();
-          var ptrait = Object.getOwnProperty(bindings, "public$" + iftrait.name.getName());
-          Object.defineProperty(bindings, qn, ptrait);
+          var ifqn = iftrait.name.getQualifiedName();
+          var ptrait = Object.getOwnPropertyDescriptor(bindings, "public$" + iftrait.name.getName());
+          Object.defineProperty(bindings, ifqn, ptrait);
         }
       }
     })(ii.interfaces);
