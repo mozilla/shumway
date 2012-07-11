@@ -1,5 +1,7 @@
+
+
 natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instance, baseClass) {
-  var c = new Class("DisplayObject", instance, Class.passthroughCallable(instance));
+  var c = new runtime.domain.system.Class("DisplayObject", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};
@@ -321,7 +323,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
 
 natives.InteractiveObjectClass = function InteractiveObjectClass(runtime, scope, instance, baseClass) {
-  var c = new Class("InteractiveObject", instance, Class.passthroughCallable(instance));
+  var c = new runtime.domain.system.Class("InteractiveObject", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};
@@ -428,7 +430,7 @@ natives.InteractiveObjectClass = function InteractiveObjectClass(runtime, scope,
 
 
 natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseClass) {
-  var c = new Class("DisplayObjectContainer", instance, Class.passthroughCallable(instance));
+  var c = new runtime.domain.system.Class("DisplayObjectContainer", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};
@@ -540,7 +542,7 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
 
 
 natives.SpriteClass = function SpriteClass(runtime, scope, instance, baseClass) {
-  var c = new Class("Sprite", instance, Class.passthroughCallable(instance));
+  var c = new runtime.domain.system.Class("Sprite", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};
@@ -630,7 +632,7 @@ natives.MovieClipClass = function MovieClipClass(runtime, scope, instance, baseC
     this.d = new MovieClip();
     return instance.apply(this, arguments);
   }
-  var c = new Class("MovieClip", ctor, Class.passthroughCallable(ctor));
+  var c = new runtime.domain.system.Class("MovieClip", ctor, Domain.passthroughCallable(ctor));
   c.extend(baseClass);
 
   c.nativeStatics = {};

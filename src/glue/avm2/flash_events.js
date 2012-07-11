@@ -1,5 +1,5 @@
 natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, instance, baseClass) {
-  var c = new Class("EventDispatcher", instance, Class.passthroughCallable(instance));
+  var c = new runtime.domain.system.Class("EventDispatcher", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};
