@@ -6,7 +6,7 @@ function Transform(target) {
 }
 
 Transform.prototype = Object.create(null, {
-  colorTransform: descAccessor(
+  colorTransform: describeAccessor(
     function () {
       return new ColorTransform(
         cxform.redMultiplier,
@@ -26,17 +26,17 @@ Transform.prototype = Object.create(null, {
       this._colorTransform = val;
     }
   ),
-  concatenatedColorTransform: descAccessor(function () {
+  concatenatedColorTransform: describeAccessor(function () {
     var cxform = this.colorTransform;
     cxform.concat(this._target.parent.transform.concatenatedColorTransform);
     return cxform;
   })
-  concatenatedMatrix: descAccessor(function () {
+  concatenatedMatrix: describeAccessor(function () {
     var m = this.matrix;
     m.concat(this._target.parent.transform.concatenatedMatrix);
     return m;
   }),
-  matrix: descAccessor(
+  matrix: describeAccessor(
     function () {
       var target = this._target;
       var m = new Matrix;

@@ -70,47 +70,47 @@ if (typeof window === 'undefined') {
 }
 
 Loader.prototype = Object.create(baseProto, {
-  content: descAccessor(function () {
+  content: describeAccessor(function () {
     return this._content;
   }),
-  contentLoaderInfo: descAccessor(function () {
+  contentLoaderInfo: describeAccessor(function () {
     return this._contentLoaderInfo || (this._contentLoaderInfo = new LoaderInfo);
   }),
-  uncaughtErrorEvents: descAccessor(function () {
+  uncaughtErrorEvents: describeAccessor(function () {
     notImplemented();
   }),
 
-  addChild: descMethod(function (child) {
+  addChild: describeMethod(function (child) {
     illegalOperation();
   }),
-  addChildAt: descMethod(function (child, index) {
+  addChildAt: describeMethod(function (child, index) {
     illegalOperation();
   }),
-  close: descMethod(function () {
+  close: describeMethod(function () {
     notImplemented();
   }),
-  load: descMethod(function (request, context) {
+  load: describeMethod(function (request, context) {
     this._load(request.url);
   }),
-  loadBytes: descMethod(function (bytes, context) {
+  loadBytes: describeMethod(function (bytes, context) {
     if (!bytes.length)
       throw ArgumentError();
 
     this._load(bytes);
   }),
-  removeChild: descMethod(function (child) {
+  removeChild: describeMethod(function (child) {
     illegalOperation();
   }),
-  removeChildAt: descMethod(function (child, index) {
+  removeChildAt: describeMethod(function (child, index) {
     illegalOperation();
   }),
-  setChildIndex: descMethod(function (child, index) {
+  setChildIndex: describeMethod(function (child, index) {
     illegalOperation();
   }),
-  unload: descMethod(function() {
+  unload: describeMethod(function() {
     notImplemented();
   }),
-  unloadAndStop: descMethod(function (gc) {
+  unloadAndStop: describeMethod(function (gc) {
     notImplemented();
   }),
 

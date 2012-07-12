@@ -2,7 +2,7 @@ function Mouse() {
 }
 
 Object.defineProperties(Mouse, {
-  cursor: descAccessor(
+  cursor: describeAccessor(
     function () {
       return 'auto'; // TODO
     },
@@ -10,23 +10,23 @@ Object.defineProperties(Mouse, {
       notImplemented();
     }
   ),
-  supportsCursor: descAccessor(function () {
+  supportsCursor: describeAccessor(function () {
     return true; // TODO
   }),
-  supportsNativeCursor: descAccessor(function () {
+  supportsNativeCursor: describeAccessor(function () {
     return true; // TODO
   }),
 
-  hide: descMethod(function () {
+  hide: describeMethod(function () {
     notImplemented();
   }),
-  registerCursor: descMethod(function (name, cursor) {
+  registerCursor: describeMethod(function (name, cursor) {
     notImplemented();
   }),
-  show: descMethod(function () {
+  show: describeMethod(function () {
     notImplemented();
   }),
-  unregisterCursor: descMethod(function (name) {
+  unregisterCursor: describeMethod(function (name) {
     notImplemented();
   })
 });

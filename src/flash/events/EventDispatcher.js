@@ -5,7 +5,7 @@ function EventDispatcher(target) {
 }
 
 EventDispatcher.prototype = Object.create(null, {
-  addEventListener: descMethod(function (type, listener, useCapture, priority, useWeakReference) {
+  addEventListener: describeMethod(function (type, listener, useCapture, priority, useWeakReference) {
     if (typeof listener !== 'function')
       throw ArgumentError();
 
@@ -40,7 +40,7 @@ EventDispatcher.prototype = Object.create(null, {
     }
     handler.listeners.push(listener);
   }),
-  dispatchEvent: descMethod(function (evt) {
+  dispatchEvent: describeMethod(function (evt) {
     evt.target = this;
 
     if (this._control) {
@@ -56,10 +56,10 @@ EventDispatcher.prototype = Object.create(null, {
 
     return !!evt.isDefaultPrevented;
   }),
-  hasEventListener: descMethod(function (type) {
+  hasEventListener: describeMethod(function (type) {
     return type in this._handlers || type in this._captureHandlers;
   }),
-  removeEventListener: descMethod(function (type, listener, useCapture) {
+  removeEventListener: describeMethod(function (type, listener, useCapture) {
     var list = useCapture ? this._captureHandlers : this._handlers;
     var handler = list[type];
     if (handler) {
@@ -75,10 +75,10 @@ EventDispatcher.prototype = Object.create(null, {
       }
     }
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return '[object EventDispatcher]';
   }),
-  willTrigger: descMethod(function (type) {
+  willTrigger: describeMethod(function (type) {
     var dispatcher = this;
     do {
       if (dispatcher.hasEventListener(type))

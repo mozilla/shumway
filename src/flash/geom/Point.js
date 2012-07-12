@@ -1,43 +1,43 @@
 function Point(x, y) {
   Object.defineProperties(this, {
-    x: descProp(x || 0),
-    y: descProp(y || 0)
+    x: describeProperty(x || 0),
+    y: describeProperty(y || 0)
   });
 }
 
 Object.defineProperties(Point, {
-  distance: descMethod(function (pt1, pt2) {
+  distance: describeMethod(function (pt1, pt2) {
     return pt1.subtract(pt2).length;
   }),
-  interpolate: descMethod(function (pt1, pt2, f) {
+  interpolate: describeMethod(function (pt1, pt2, f) {
     return new Point(pt2.x + f * (pt1.x - pt2.x), pt2.y + f * (pt1.y - pt2.y));
   }),
-  polar: descMethod(function (len, angle) {
+  polar: describeMethod(function (len, angle) {
     return new Point(len * Math.cos(angle), len * Math.sin(angle));
   })
 });
 
 Point.prototype = Object.create(null, {
-  length: descAccessor(
+  length: describeAccessor(
     function () {
       return Math.sqrt(this.x * this.x + this.y * this.y);
     }
   ),
 
-  add: descMethod(function (v) {
+  add: describeMethod(function (v) {
     return new Point(this.x + v.x, this.y + v.y);
   }),
-  clone: descMethod(function () {
+  clone: describeMethod(function () {
     return new Point(this.x, this.y);
   }),
-  copyFrom: descMethod(function (pt) {
+  copyFrom: describeMethod(function (pt) {
     this.x = pt.x;
     this.y = pt.y;
   }),
-  equals: descMethod(function (pt) {
+  equals: describeMethod(function (pt) {
     return this.x === pt.x && this.y === pt.y;
   }),
-  normalize: descMethod(function (len) {
+  normalize: describeMethod(function (len) {
     var current = Math.sqrt(this.x * this.x + this.y * this.y);
     if (current > 0) {
       var scale = len / current;
@@ -45,18 +45,18 @@ Point.prototype = Object.create(null, {
       this.y *= scale;
     }
   }),
-  offset: descMethod(function (dx, dy) {
+  offset: describeMethod(function (dx, dy) {
     this.x += dx;
     this.y += dy;
   }),
-  setTo: descMethod(function (x, y) {
+  setTo: describeMethod(function (x, y) {
     this.x = x;
     this.y = y;
   }),
-  subtract: descMethod(function (v) {
+  subtract: describeMethod(function (v) {
     return new Point(this.x - v.x, this.y - v.y);
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return '(x=' + this.x + ', y=' + this.y + ')';
   })
 });

@@ -1,20 +1,20 @@
 function ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal){
   Object.defineProperties(this, {
-    type:        descConst(type),
-    bubbles:     descConst(bubbles !== undefined ? !!bubbles : true),
-    cancelable:  descConst(!!cancelable),
-    bytesLoaded: descProp(bytesLoaded || 0),
-    bytesTotal:  descProp(bytesTotal || 0)
+    type:        describeConst(type),
+    bubbles:     describeConst(bubbles !== undefined ? !!bubbles : true),
+    cancelable:  describeConst(!!cancelable),
+    bytesLoaded: describeProperty(bytesLoaded || 0),
+    bytesTotal:  describeProperty(bytesTotal || 0)
   });
 }
 
 Object.defineProperties(ProgressEvent, {
-  PROGRESS:    descConst('progress'),
-  SOCKET_DATA: descConst('socketData')
+  PROGRESS:    describeConst('progress'),
+  SOCKET_DATA: describeConst('socketData')
 });
 
 ProgressEvent.prototype = Object.create(new Event, {
-  clone: descMethod(function () {
+  clone: describeMethod(function () {
     return new ProgressEvent(
       this.type,
       this.bubbles,
@@ -23,7 +23,7 @@ ProgressEvent.prototype = Object.create(new Event, {
       this.bytesTotal
     );
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return this.formatToString('ProgressEvent',
       'type',
       'bubbles',

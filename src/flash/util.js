@@ -1,4 +1,4 @@
-function descAccessor(get, set) {
+function describeAccessor(get, set) {
   return {
     get: get,
     set: set,
@@ -6,24 +6,24 @@ function descAccessor(get, set) {
     enumerable: true
   };
 }
-function descConst(val) {
+function describeConst(val) {
   return {
     value: val,
     configurable: true,
     enumerable: true
   };
 }
-function descLazyProp(name, getter) {
-  return descAccessor(function () {
+function describeLazyProperty(name, getter) {
+  return describeAccessor(function () {
     var val = getter.call(this);
-    Object.defineProperty(this, name, descProp(val));
+    Object.defineProperty(this, name, describeProperty(val));
     return val;
   });
 }
-function descMethod(fn) {
-  return descProp(fn);
+function describeMethod(fn) {
+  return describeProperty(fn);
 }
-function descProp(val) {
+function describeProperty(val) {
   return {
     value: val,
     writable: true,

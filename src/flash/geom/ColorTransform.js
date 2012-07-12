@@ -7,19 +7,19 @@ function ColorTransform(redMultiplier,
                         blueOffset,
                         alphaOffset) {
   Object.defineProperties(this, {
-    redMultiplier:   descProp(redMultiplier || 1),
-    greenMultiplier: descProp(greenMultiplier || 1),
-    blueMultiplier:  descProp(blueMultiplier || 1),
-    alphaMultiplier: descProp(alphaMultiplier || 1),
-    redOffset:       descProp(redOffset || 0),
-    greenOffset:     descProp(reenOffset || 0),
-    blueOffset:      descProp(blueOffset || 0),
-    alphaOffset:     descProp(alphaOffset || 0)
+    redMultiplier:   describeProperty(redMultiplier || 1),
+    greenMultiplier: describeProperty(greenMultiplier || 1),
+    blueMultiplier:  describeProperty(blueMultiplier || 1),
+    alphaMultiplier: describeProperty(alphaMultiplier || 1),
+    redOffset:       describeProperty(redOffset || 0),
+    greenOffset:     describeProperty(reenOffset || 0),
+    blueOffset:      describeProperty(blueOffset || 0),
+    alphaOffset:     describeProperty(alphaOffset || 0)
   });
 }
 
 ColorTransform.prototype = Object.create(null, {
-  color: descAccessor(
+  color: describeAccessor(
     function () {
       return this.redOffset << 16 | this.greenOffset << 8 | this.blueOffset;
     },
@@ -33,7 +33,7 @@ ColorTransform.prototype = Object.create(null, {
     }
   ),
 
-  concat: descMethod(function (cxform) {
+  concat: describeMethod(function (cxform) {
     this.redOffset += this.redMultiplier * cxform.redOffset;
     this.redMultiplier = this.redMultiplier * cxform.redMultiplier;
     this.greenOffset += this.greenMultiplier * cxform.greenOffset;
@@ -43,7 +43,7 @@ ColorTransform.prototype = Object.create(null, {
     this.alphaOffset += this.alphaMultiplier * cxform.alphaOffset;
     this.alphaMultiplier = this.alphaMultiplier * cxform.alphaMultiplier;
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return '(redMultiplier=' + this.redMultiplier +
            ', greenMultiplier=' + this.greenMultiplier +
            ', blueMultiplier=' + this.blueMultiplier +

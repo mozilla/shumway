@@ -6,30 +6,33 @@ function Graphics() {
 }
 
 function toRgba(color, alpha) {
-  return 'rgba(' + [color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF, alpha] + ')';
+  var red = color >> 16 & 0xFF;
+  var green = color >> 8 & 0xF;
+  var blue = color & 0xFF;
+  return 'rgba(' + [red, green, blue, alpha] + ')';
 }
 
 Graphics.prototype = Object.create(null, {
-	beginFill: descMethod(function (color, alpha) {
+  beginFill: describeMethod(function (color, alpha) {
     if (alpha === undefined)
       alpha = 1;
 
     delete this._currentPath;
 
     this._fillStyle = toRgba(color, alpha);
-	}),
-	beginGradientFill: descMethod(
+  }),
+  beginGradientFill: describeMethod(
     function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPoint) {
-		  if (type !== 'linear' || type !== 'radial')
-			 throw ArgumentError();
+      if (type !== 'linear' || type !== 'radial')
+       throw ArgumentError();
 
       notImplemented();
-	  }
+    }
   ),
-	beginBitmapFill: descMethod(function (bitmap, matrix, repeat, smooth) {
-	 notImplemented();
+  beginBitmapFill: describeMethod(function (bitmap, matrix, repeat, smooth) {
+   notImplemented();
   }),
-	clear: descMethod(function () {
+  clear: describeMethod(function () {
     delete this._currentPath;
 
     this._drawingStyles = null;
@@ -37,54 +40,54 @@ Graphics.prototype = Object.create(null, {
     this._strokeStyle = null;
     this._subpaths.length = 0;
   }),
-	copyFrom: descMethod(function (sourceGraphics) {
-	 notImplemented();
+  copyFrom: describeMethod(function (sourceGraphics) {
+   notImplemented();
   }),
-	cubicCurveTo: descMethod(function (controlX1, controlY1, controlX2, controlY2, anchorX, anchorY) {
-	  this._currentPath.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, anchorX, anchorY);
+  cubicCurveTo: describeMethod(function (controlX1, controlY1, controlX2, controlY2, anchorX, anchorY) {
+    this._currentPath.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, anchorX, anchorY);
   }),
-	curveTo: descMethod(function (controlX, controlY, anchorX, anchorY) {
+  curveTo: describeMethod(function (controlX, controlY, anchorX, anchorY) {
     this._currentPath.quadraticCurveTo(controlX, controlY, anchorX, anchorY);
-	}),
-  drawPath: descMethod(function (commands, data, winding) {
+  }),
+  drawPath: describeMethod(function (commands, data, winding) {
     notImplemented();
   }),
-	drawRect: descMethod(function (x, y, w, h) {
-		if (isNaN(w + h))
-			throw ArgumentError();
+  drawRect: describeMethod(function (x, y, w, h) {
+    if (isNaN(w + h))
+      throw ArgumentError();
 
     this._currentPath.rect(x, y, w, h);
-	}),
-	drawRoundRect: descMethod(function (x, y, w, h, ellipseWidth, ellipseHeight) {
-		if (isNaN(w + h + ellipseWidth) ||
-				(ellipseHeight !== undefined && isNaN(ellipseHeight)))
-			throw ArgumentError();
+  }),
+  drawRoundRect: describeMethod(function (x, y, w, h, ellipseWidth, ellipseHeight) {
+    if (isNaN(w + h + ellipseWidth) ||
+        (ellipseHeight !== undefined && isNaN(ellipseHeight)))
+      throw ArgumentError();
 
     notImplemented();
   }),
-	drawRoundRectComplex: descMethod(
+  drawRoundRectComplex: describeMethod(
     function (x, y, w, h, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius) {
-		  if (isNaN(h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
-			 throw ArgumentError();
+      if (isNaN(h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
+       throw ArgumentError();
 
       notImplemented();
     }
   ),
-	drawTriangles: descMethod(function (vertices, indices, uvtData, culling) {
-	 notImplemented();
+  drawTriangles: describeMethod(function (vertices, indices, uvtData, culling) {
+   notImplemented();
   }),
-	endFill: descMethod(function () {
+  endFill: describeMethod(function () {
     this._currentPath.closePath();
   }),
-	lineBitmapStyle: descMethod(function (bitmap, matrix, repeat, smooth) {
-	 notImplemented();
+  lineBitmapStyle: describeMethod(function (bitmap, matrix, repeat, smooth) {
+   notImplemented();
   }),
-	lineGradientStyle: descMethod(
+  lineGradientStyle: describeMethod(
     function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPoint) {
       notImplemented();
-	  }
+    }
   ),
-	lineStyle: descMethod(
+  lineStyle: describeMethod(
     function (thickness, color, alpha, pixelHinting, scaleMode, caps, joints, miterLimit) {
       delete this._currentPath;
 
@@ -100,14 +103,14 @@ Graphics.prototype = Object.create(null, {
       }
     }
   ),
-	moveTo: descMethod(function (x, y) {
+  moveTo: describeMethod(function (x, y) {
     this._currentPath.moveTo(x, y);
   }),
-	lineTo: descMethod(function (x, y) {
+  lineTo: describeMethod(function (x, y) {
     this._currentPath.lineTo(x, y);
   }),
 
-  _currentPath: descLazyProp('_currentPath', function () {
+  _currentPath: describeLazyProperty('_currentPath', function () {
     var path = new Kannvas.Path;
     path.drawingStyles = this._drawingStyles;
     path.fillStyle = this._fillStyle;

@@ -2,7 +2,7 @@ function InteractiveObject() {
 }
 
 InteractiveObject.prototype = Object.create(new DisplayObject, {
-  accessibilityImplementation: descAccessor(
+  accessibilityImplementation: describeAccessor(
     function () {
       return -1;
     },
@@ -10,7 +10,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  contextMenu: descAccessor(
+  contextMenu: describeAccessor(
     function () {
       return null;
     },
@@ -18,7 +18,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  doubleClickEnabled: descAccessor(
+  doubleClickEnabled: describeAccessor(
     function () {
       return false;
     },
@@ -26,7 +26,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  focusRect: descAccessor(
+  focusRect: describeAccessor(
     function () {
       return null;
     },
@@ -34,7 +34,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  mouseEnabled: descAccessor(
+  mouseEnabled: describeAccessor(
     function () {
       return true;
     },
@@ -42,7 +42,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  needsSoftKeyboard: descAccessor(
+  needsSoftKeyboard: describeAccessor(
     function () {
       return false;
     },
@@ -50,10 +50,10 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  requestSoftKeyboard: descMethod(function () {
+  requestSoftKeyboard: describeMethod(function () {
     notImplemented();
   }),
-  softKeyboardInputAreaOfInterest: descAccessor(
+  softKeyboardInputAreaOfInterest: describeAccessor(
     function () {
       return null;
     },
@@ -61,7 +61,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  tabEnabled: descAccessor(
+  tabEnabled: describeAccessor(
     function () {
       return false;
     },
@@ -69,7 +69,7 @@ InteractiveObject.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   ),
-  tabIndex: descAccessor(
+  tabIndex: describeAccessor(
     function () {
       return -1;
     },

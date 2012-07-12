@@ -4,28 +4,28 @@ function Stage() {
 }
 
 Stage.prototype = Object.create(new DisplayObjectContainer, {
-  accessibilityImplementation: descAccessor(
+  accessibilityImplementation: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  accessibilityProperties: descAccessor(
+  accessibilityProperties: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  alpha: descAccessor(
+  alpha: describeAccessor(
     function () {
       return 1;
     }, function (val) {
       illegalOperation();
     }
   ),
-  align: descAccessor(
+  align: describeAccessor(
     function () {
       return ''; // TODO
     },
@@ -33,13 +33,13 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  allowsFullScreen: descAccessor(function () {
+  allowsFullScreen: describeAccessor(function () {
     return false; // TODO
   }),
-  alpha: descAccessor(function () {
+  alpha: describeAccessor(function () {
     return 1; // read-only/default
   }),
-  blendMode: descAccessor(
+  blendMode: describeAccessor(
     function () {
       // TODO BlendMode.NORMAL
       return 'normal';
@@ -47,14 +47,14 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       illegalOperation();
     }
   ),
-  cacheAsBitmap: descAccessor(
+  cacheAsBitmap: describeAccessor(
     function () {
       return false;
     }, function (val) {
       illegalOperation();
     }
   ),
-  color: descAccessor(
+  color: describeAccessor(
     function () {
       return this._color;
     },
@@ -62,7 +62,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       this._color = val;
     }
   ),
-  colorCorrection: descAccessor(
+  colorCorrection: describeAccessor(
     function () {
       return 'default'; // TODO
     },
@@ -70,17 +70,17 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  colorCorrectionSupport: descAccessor(function () {
+  colorCorrectionSupport: describeAccessor(function () {
     return 'unsupported'; // TODO
   }),
-  contextMenu: descAccessor(
+  contextMenu: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  displayState: descAccessor(
+  displayState: describeAccessor(
     function () {
       return null; // TODO
     },
@@ -88,14 +88,14 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  filters: descAccessor(
+  filters: describeAccessor(
     function () {
       return [];
     }, function (val) {
       illegalOperation();
     }
   ),
-  focus: descAccessor(
+  focus: describeAccessor(
     function () {
       return null; // TODO
     },
@@ -103,14 +103,14 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  focusRect: descAccessor(
+  focusRect: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  frameRate: descAccessor(
+  frameRate: describeAccessor(
     function () {
       return this._frameRate;
     },
@@ -120,10 +120,10 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       this._frameRate = val;
     }
   ),
-  fullScreenHeight: descAccessor(function () {
+  fullScreenHeight: describeAccessor(function () {
     notImplemented();
   }),
-  fullScreenSourceRect: descAccessor(
+  fullScreenSourceRect: describeAccessor(
     function () {
       return null; // TODO
     },
@@ -131,48 +131,48 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  fullScreenWidth: descAccessor(function () {
+  fullScreenWidth: describeAccessor(function () {
     notImplemented();
   }),
-  loaderInfo: descAccessor(
+  loaderInfo: describeAccessor(
     function () {
       return this._loaderInfo;
     }, function (val) {
       illegalOperation();
     }
   ),
-  mask: descAccessor(
+  mask: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  mouseEnabled: descAccessor(
+  mouseEnabled: describeAccessor(
     function () {
       return true;
     }, function (val) {
       illegalOperation();
     }
   ),
-  name: descAccessor(
+  name: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  nativeWindow: descAccessor(function () {
+  nativeWindow: describeAccessor(function () {
     return null; // TODO
   }),
-  opaqueBackground: descAccessor(
+  opaqueBackground: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  quality: descAccessor(
+  quality: describeAccessor(
     function () {
       return 'HIGH'; // TODO
     },
@@ -180,21 +180,21 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  rotation: descAccessor(
+  rotation: describeAccessor(
     function () {
       return 0;
     }, function (val) {
       illegalOperation();
     }
   ),
-  scale9Grid: descAccessor(
+  scale9Grid: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  scaleMode: descAccessor(
+  scaleMode: describeAccessor(
     function () {
       return 'noScale'; // TODO
     },
@@ -202,28 +202,28 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  scaleX: descAccessor(
+  scaleX: describeAccessor(
     function () {
       return 1;
     }, function (val) {
       illegalOperation();
     }
   ),
-  scaleY: descAccessor(
+  scaleY: describeAccessor(
     function () {
       return 1;
     }, function (val) {
       illegalOperation();
     }
   ),
-  scrollRect: descAccessor(
+  scrollRect: describeAccessor(
     function () {
       return null;
     }, function (val) {
       illegalOperation();
     }
   ),
-  showDefaultContextMenu: descAccessor(
+  showDefaultContextMenu: describeAccessor(
     function () {
       return true; // TODO
     },
@@ -231,10 +231,10 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  softKeyboardRect: descAccessor(function () {
+  softKeyboardRect: describeAccessor(function () {
     notImplemented();
   }),
-  stageFocusRect: descAccessor(
+  stageFocusRect: describeAccessor(
     function () {
       return false; // TODO
     },
@@ -242,7 +242,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  stageHeight: descAccessor(
+  stageHeight: describeAccessor(
     function () {
       return this._stageHeight;
     },
@@ -250,7 +250,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  stageWidth: descAccessor(
+  stageWidth: describeAccessor(
     function () {
       return this._stageWidth;
     },
@@ -258,62 +258,62 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  stageVideos: descAccessor(function () {
+  stageVideos: describeAccessor(function () {
     notImplemented();
   }),
-  tabEnabled: descAccessor(
+  tabEnabled: describeAccessor(
     function () {
       return false;
     }, function (val) {
       illegalOperation();
     }
   ),
-  tabIndex: descAccessor(
+  tabIndex: describeAccessor(
     function () {
       return -1;
     }, function (val) {
       illegalOperation();
     }
   ),
-  transform: descAccessor(
+  transform: describeAccessor(
     function () {
       return this._transform;
     }, function (val) {
       illegalOperation();
     }
   ),
-  visible: descAccessor(
+  visible: describeAccessor(
     function () {
       return true;
     }, function (val) {
       illegalOperation();
     }
   ),
-  x: descAccessor(
+  x: describeAccessor(
     function () {
       return 0;
     }, function (val) {
       illegalOperation();
     }
   ),
-  y: descAccessor(
+  y: describeAccessor(
     function () {
       return 0;
     }, function (val) {
       illegalOperation();
     }
   ),
-  wmodeGPU: descAccessor(function () {
+  wmodeGPU: describeAccessor(function () {
     return false; // TODO
   }),
 
-  invalidate: descMethod(function() {
+  invalidate: describeMethod(function() {
     notImplemented();
   }),
-  isFocusInaccessible: descMethod(function() {
+  isFocusInaccessible: describeMethod(function() {
     notImplemented();
   }),
-  _attachToCanvas: descMethod(function(parameters) {
+  _attachToCanvas: describeMethod(function(parameters) {
     var canvas = parameters.canvas;
     var ctx = canvas.getContext('2d');
     var loader = new Loader({ avm1: undefined, avm2: parameters.avm2 });
