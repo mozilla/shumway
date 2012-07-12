@@ -804,12 +804,14 @@ var Runtime = (function () {
         var closure = makeClosure(trait);
         var mc;
         if (delayBinding) {
-          var memoizeMethodClosure = function () {
-            var mc = closure.bind(this);
-            defineReadOnlyProperty(mc, "public$prototype", null);
-            defineReadOnlyProperty(this, qn, mc);
-            return mc;
-          };
+          var memoizeMethodClosure = (function (closure, qn) {
+            return function () {
+              var mc = closure.bind(this);
+              defineReadOnlyProperty(mc, "public$prototype", null);
+              defineReadOnlyProperty(this, qn, mc);
+              return mc;
+            };
+          })(closure, qn);
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
           // overriden by a derivied class. Only do this non final classes.
           defineMemoizingGetter(obj, qn, memoizeMethodClosure);
