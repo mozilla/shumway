@@ -1,11 +1,11 @@
 function ColorTransform(redMultiplier,
-						            greenMultiplier,
-						            blueMultiplier,
-						            alphaMultiplier,
-						            redOffset,
-						            greenOffset,
-						            blueOffset,
-						            alphaOffset) {
+                        greenMultiplier,
+                        blueMultiplier,
+                        alphaMultiplier,
+                        redOffset,
+                        greenOffset,
+                        blueOffset,
+                        alphaOffset) {
   Object.defineProperties(this, {
     redMultiplier:   descProp(redMultiplier || 1),
     greenMultiplier: descProp(greenMultiplier || 1),
