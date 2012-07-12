@@ -13,8 +13,15 @@ function descConst(val) {
     enumerable: true
   };
 }
-function descMethod(func) {
-  return descProp(func);
+function descLazyProp(name, getter) {
+  return descAccessor(function () {
+    var val = getter.call(this);
+    Object.defineProperty(this, name, descProp(val));
+    return val;
+  });
+}
+function descMethod(fn) {
+  return descProp(fn);
 }
 function descProp(val) {
   return {
