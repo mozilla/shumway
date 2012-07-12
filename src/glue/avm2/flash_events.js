@@ -1,5 +1,10 @@
 natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, instance, baseClass) {
-  var c = new runtime.domain.system.Class("EventDispatcher", instance, Domain.passthroughCallable(instance));
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    return instance.apply(this, arguments);
+  }
+
+  var c = new runtime.domain.system.Class("EventDispatcher", constructorHook, Domain.passthroughCallable(constructorHook));
   c.extend(baseClass);
 
   c.nativeStatics = {};
@@ -40,66 +45,71 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
 };
 
 natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
-  var c = new runtime.domain.system.Class("Event", instance, Domain.passthroughCallable(instance));
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    return instance.apply(this, arguments);
+  }
+
+  var c = new runtime.domain.system.Class("Event", constructorHook, Domain.passthroughCallable(constructorHook));
   c.extend(baseClass);
 
-  c.nativeStatics = {
-  };
+  c.nativeStatics = {};
 
   c.nativeMethods = {
     // ctor :: type:String, bubbles:Boolean, cancelable:Boolean -> void
     ctor: function ctor(type, bubbles, cancelable) {
-        notImplemented("Event.ctor");
+      notImplemented("Event.ctor");
     },
 
     // type :: void -> String
     "get type": function type() {
-        notImplemented("Event.type");
+      notImplemented("Event.type");
     },
 
     // bubbles :: void -> Boolean
     "get bubbles": function bubbles() {
-        notImplemented("Event.bubbles");
+      notImplemented("Event.bubbles");
     },
 
     // cancelable :: void -> Boolean
     "get cancelable": function cancelable() {
-        notImplemented("Event.cancelable");
+      notImplemented("Event.cancelable");
     },
 
     // target :: void -> Object
     "get target": function target() {
-        notImplemented("Event.target");
+      notImplemented("Event.target");
     },
 
     // currentTarget :: void -> Object
     "get currentTarget": function currentTarget() {
-        notImplemented("Event.currentTarget");
+      notImplemented("Event.currentTarget");
     },
 
     // eventPhase :: void -> uint
     "get eventPhase": function eventPhase() {
-        notImplemented("Event.eventPhase");
+      notImplemented("Event.eventPhase");
     },
 
     // stopPropagation :: void -> void
     stopPropagation: function stopPropagation() {
-        notImplemented("Event.stopPropagation");
+      notImplemented("Event.stopPropagation");
     },
 
     // stopImmediatePropagation :: void -> void
     stopImmediatePropagation: function stopImmediatePropagation() {
-        notImplemented("Event.stopImmediatePropagation");
+      notImplemented("Event.stopImmediatePropagation");
     },
 
     // preventDefault :: void -> void
     preventDefault: function preventDefault() {
-        notImplemented("Event.preventDefault");
+      notImplemented("Event.preventDefault");
     },
 
     // isDefaultPrevented :: void -> Boolean
     isDefaultPrevented: function isDefaultPrevented() {
-        notImplemented("Event.isDefaultPrevented");
+      // notImplemented("Event.isDefaultPrevented");
+      return Boolean(false);
     }
   };
 

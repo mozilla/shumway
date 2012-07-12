@@ -867,6 +867,10 @@ var Runtime = (function () {
     return error;
   };
 
+  runtime.prototype.notifyConstruct = function notifyConstruct(instance, args) {
+    return this.domain.vm.notifyConstruct(instance, args);
+  };
+
   return runtime;
 })();
 
