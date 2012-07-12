@@ -27,6 +27,7 @@ function descProp(val) {
   return {
     value: val,
     writable: true,
+    configurable: true,
     enumerable: true
   };
 }
