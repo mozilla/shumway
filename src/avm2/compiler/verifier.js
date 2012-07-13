@@ -3,42 +3,71 @@ var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
 var Verifier = (function(abc) {
 
   var Type = (function () {
-    function type(name) {
-      this.name = name;
+
+    function type(kind, value) {
+      this.kind = kind;
+      this.value = value;
     }
+
     type.prototype.toString = function () {
-      return this.name;
+      if (this.value) {
+        return this.kind + ": " + this.value;
+      }
+      return this.kind;
     };
-    type.Atom = new type("Atom");
+
+    // Consists of Any, Undefined and Object
+    type.Atom = new type ("Atom");
+    type.Atom.Any = new type ("Atom", "Any");
+    type.Atom.Undefined = new type("Atom", "Undefined");
+    type.Atom.Object = new type("Atom", "Object");
+
     type.Int = new type("Int");
     type.Uint = new type("Uint");
     type.Boolean = new type("Boolean");
     type.Number = new type("Number");
-    type.Reference = new type("Reference");
 
-    type.fromValue = function fromValue(value) {
-      if (value === undefined) {
-        return type.Atom;
+    // Consists of Null and any sub class of Object
+    // type.Reference = new type("Reference");
+
+    type.fromName = function fromName(domain, name) {
+      if (name === undefined) {
+        return type.Atom.Undefined;
+      } else if (name.getQualifiedName() === "public$int") {
+        return type.Int;
+      } else if (name.getQualifiedName() === "public$Object") {
+        return type.Atom.Object;
       }
-      notImplemented(value);
+      return type.fromReference(domain.getProperty(name, false, false));
     };
 
+    type.fromReference = function fromReference(value) {
+      var ty = new type("Reference");
+      ty.value = value;
+      return ty;
+    };
+
+    type.Reference = {};
+    type.Reference.Null = new type("Reference", null);
+    type.Reference.String = new type("Reference", "String");
+
+    type.check = function check(a, b) {
+      assert (a.kind === b.kind);
+    }
     return type;
   })();
-
 
   /**
    * Abstract program state.
    */
   var State = (function() {
-    var stateCounter = 0;
-
+    var id = 0;
     function state() {
+      this.id = id++;
+
       this.stack = [];
       this.scope = [];
       this.local = [];
-
-      this.id = stateCounter++;
     }
     state.prototype.clone = function clone() {
       var s = new State();
@@ -48,25 +77,35 @@ var Verifier = (function(abc) {
       return s;
     };
     state.prototype.trace = function trace(writer) {
-      writer.writeLn("S: " + this.id +
-                     ", local: [" + this.local.join(", ") + "]" +
-                     ", stack: [" + this.stack.join(", ") + "]" +
-                     ", scope: [" + this.scope.join(", ") + "]");
+      writer.writeLn(this.toString());
     };
+    state.prototype.toString = function () {
+      return "<" + this.id +
+             ", L[" + this.local.join(", ") + "]" +
+             ", S[" + this.stack.join(", ") + "]" +
+             ", $[" + this.scope.join(", ") + "]>"
+    }
     return state;
   })();
 
+  function VerifierError(message) {
+    this.name = "VerifierError";
+    this.message = message || "";
+  }
+
   var Verification = (function() {
-    function verification(verifier, methodInfo) {
+    function verification(verifier, domain, methodInfo, scope) {
+      this.scope = scope;
+      this.domain = domain;
       this.verifier = verifier;
       this.methodInfo = methodInfo;
       this.writer = new IndentingWriter();
+      this.methodInfo.trace(this.writer, this.verifier.abc);
     }
 
     verification.prototype.verify = function verify() {
-
-      // this.methodInfo.analysis.trace(new IndentingWriter());
       var mi = this.methodInfo;
+      var writer = this.writer;
       var blocks = mi.analysis.blocks;
 
       // We can't deal with rest and arguments yet.
@@ -75,555 +114,626 @@ var Verifier = (function(abc) {
       }
 
       var state = new State();
- 
+
       assert (mi.localCount >= mi.parameters.length + 1);
+      // First local is the type of |this|.
+      state.local.push(Type.Atom);
+      // Initialize entry state with parameter types.
       for (var i = 0; i < mi.parameters.length; i++) {
-        state.local.push(Type.fromValue(mi.parameters[i].type));
+        state.local.push(Type.fromName(this.domain, mi.parameters[i].type));
       }
 
       state.trace(this.writer);
 
-      for (var i = 0; i < blocks.length; i++) {
-        // this.verifyBlock(blocks[i]);
+      var worklist = [];
+
+      worklist.push({block: blocks[0], state: state});
+
+      while (worklist.length) {
+        var item = worklist.shift();
+        var block = item.block;
+        var state = item.state;
+        this.verifyBlock(block, state);
+        block.succs.forEach(function (successor) {
+          worklist.push({block: successor, state: state.clone()});
+          writer.writeLn("Added Block: " + successor.bid + " to worklist.");
+        });
       }
     };
 
     verification.prototype.verifyBlock = function verifyBlock(block, state) {
+      var savedScope = this.scope;
+
+      var local = state.local;
+      var stack = state.stack;
+      var scope = state.scope;
+
       var writer = this.writer;
+      var domain = this.domain;
       var bytecodes = this.methodInfo.analysis.bytecodes;
+
+      var abc = this.verifier.abc;
+      var multinames = abc.constantPool.multinames;
+
+      var obj, multiname;
+
+      function popMultiname(index) {
+        var multiname = multinames[index];
+        if (multiname.isRuntime()) {
+          var namespaces = multiname.namespaces;
+          var name = multiname.name;
+          if (multiname.isRuntimeName()) {
+            name = state.stack.pop();
+          }
+          if (multiname.isRuntimeNamespace()) {
+            namespaces = [state.stack.pop()];
+          }
+          return new Multiname(namespaces, name);
+        } else {
+          return multiname;
+        }
+      }
+
+      function findProperty(multiname, strict) {
+        if (savedScope) {
+          var obj = savedScope.findProperty(multiname, domain, false);
+          return Type.fromReference(obj);
+        }
+      }
+
+      function resolveTrait(type, multiname) {
+        if (type.kind === "Reference" && type.value instanceof domain.system.Class) {
+          // ...
+        }
+      }
+
+      function push(v) {
+        stack.push(v);
+      }
+
+      function pop(type) {
+        var v = stack.pop();
+        if (type) {
+          Type.check(v, type);
+        }
+        return v;
+      }
+
+      writer.enter("verifyBlock: " + block.bid +
+                   ", range: [" + block.position + ", " + block.end.position +
+                   "], entryState: " + state.toString() + " {");
+
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
         var bc = bytecodes[bci];
         var op = bc.op;
 
-        if (writer) {
-          writer.writeLn("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition + ", " + bc);
-        }
-
         switch (op) {
         case OP_bkpt:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_throw:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getsuper:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_setsuper:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_dxns:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_dxnslate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_kill:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lf32x4:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sf32x4:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifnlt:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifge:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifnle:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifgt:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifngt:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifle:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifnge:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_iflt:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_jump:
-          notImplemented();
+          // Nop.
           break;
         case OP_iftrue:
-          notImplemented();
+          pop();
           break;
         case OP_iffalse:
-          notImplemented();
+          pop();
           break;
         case OP_ifeq:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifne:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifstricteq:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_ifstrictne:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lookupswitch:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushwith:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_popscope:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_nextname:
-          notImplemented();
-          break;
         case OP_nextvalue:
-          notImplemented();
+          pop(Type.Int);
+          pop();
+          push(Type.Atom.Any);
           break;
         case OP_hasnext:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_hasnext2:
-          notImplemented();
+          Type.check(local[bc.object], Type.Atom.Any);
+          Type.check(local[bc.index], Type.Int);
+          push(Type.Boolean);
           break;
         case OP_pushnull:
-          notImplemented();
+          push(Type.Reference.Null);
           break;
         case OP_pushundefined:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushfloat:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushbyte:
-          notImplemented();
+          push(Type.Int);
           break;
         case OP_pushshort:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushstring:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushint:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushuint:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushdouble:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushtrue:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushfalse:
-          notImplemented();
+          push(Type.Boolean);
           break;
         case OP_pushnan:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pop:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_dup:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_swap:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushscope:
-          notImplemented();
+          push(pop());
           break;
         case OP_pushnamespace:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_li8:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_li16:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_li32:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lf32:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lf64:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_si8:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_si16:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_si32:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sf32:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sf64:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newfunction:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_call:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_construct:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callmethod:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callstatic:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callsuper:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callproperty:
-          notImplemented();
+          stack.popMany(bc.argCount);
+          multiname = popMultiname(bc.index);
+          obj = pop();
+          resolveTrait(obj, multiname);
           break;
         case OP_returnvoid:
-          notImplemented();
+          // Nop.
           break;
         case OP_returnvalue:
-          notImplemented();
+          pop();
           break;
         case OP_constructsuper:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_constructprop:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callsuperid:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callproplex:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callinterface:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callsupervoid:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_callpropvoid:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sxi1:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sxi8:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_sxi16:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_applytype:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_pushfloat4:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newobject:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newarray:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newactivation:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newclass:
-          notImplemented();
+          throw new VerifierError("");
           break;
         case OP_getdescendants:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_newcatch:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_findpropstrict:
-          notImplemented();
+          multiname = popMultiname(bc.index);
+          stack.push(findProperty(multiname, true));
           break;
         case OP_findproperty:
-          notImplemented();
+          multiname = popMultiname(bc.index);
+          stack.push(findProperty(multiname, false));
           break;
         case OP_finddef:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getlex:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_initproperty:
         case OP_setproperty:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getlocal:
-          notImplemented();
+          push(local[bc.index]);
           break;
         case OP_setlocal:
-          notImplemented();
+          local[bc.index] = pop();
           break;
         case OP_getglobalscope:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getscopeobject:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getproperty:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getouterscope:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_setpropertylate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_deleteproperty:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_deletepropertylate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getslot:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_setslot:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getglobalslot:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_setglobalslot:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_convert_s:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_esc_xelem:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_esc_xattr:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_i:
         case OP_convert_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_u:
         case OP_convert_u:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_d:
         case OP_convert_d:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_b:
         case OP_convert_b:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_convert_o:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_checkfilter:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_convert_f:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_unplus:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_convert_f4:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_a:
           /* NOP */
           break;
         case OP_coerce_s:
-          notImplemented();
+          pop();
+          push(Type.Reference.String);
           break;
         case OP_astype:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_astypelate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_coerce_o:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_negate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_increment:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_inclocal:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_decrement:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_declocal:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_typeof:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_not:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_bitnot:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_add_d:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_add:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_subtract:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_multiply:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_divide:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_modulo:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lshift:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_rshift:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_urshift:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_bitand:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_bitor:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_bitxor:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_equals:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_strictequals:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lessthan:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_lessequals:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_greaterthan:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_greaterequals:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_instanceof:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_istype:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_istypelate:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_in:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_increment_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_decrement_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_inclocal_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_declocal_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_negate_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_add_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_subtract_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_multiply_i:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_getlocal0:
         case OP_getlocal1:
         case OP_getlocal2:
         case OP_getlocal3:
-          notImplemented();
+          push(local[op - OP_getlocal0]);
           break;
         case OP_setlocal0:
         case OP_setlocal1:
         case OP_setlocal2:
         case OP_setlocal3:
-          notImplemented();
+          local[op - OP_setlocal0] = pop();
           break;
         case OP_debug:
           /* NOP */
           break;
         case OP_debugline:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_debugfile:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_bkptline:
-          notImplemented();
+          notImplemented(bc);
           break;
         case OP_timestamp:
-          notImplemented();
+          notImplemented(bc);
           break;
         default:
           console.info("Not Implemented: " + bc);
         }
 
-        /*
         if (writer) {
-          state.trace(writer);
-          writer.enter("body: {");
-          for (var i = 0; i < body.length; i++) {
-            writer.writeLn(generate(body[i]));
-          }
-          writer.leave("}");
+          writer.writeLn("state: " + state.toString() + " -- after bci: " + bci + ", " + bc);
         }
-        */
       }
+      writer.leave("}");
     };
 
     return verification;
@@ -634,8 +744,15 @@ var Verifier = (function(abc) {
     this.abc = abc;
   }
 
-  verifier.prototype.verifyMethod = function(methodInfo) {
-    new Verification(this, methodInfo).verify();
+  verifier.prototype.verifyMethod = function(domain, methodInfo, scope) {
+    try {
+      new Verification(this, domain, methodInfo, scope).verify();
+    } catch (e) {
+      if (e instanceof VerifierError) {
+        return;
+      }
+      throw e;
+    }
   };
 
   return verifier;

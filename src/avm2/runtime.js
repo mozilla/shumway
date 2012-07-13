@@ -480,6 +480,9 @@ var Global = (function () {
     runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, false);
     script.loaded = true;
   }
+  Global.prototype.toString = function () {
+    return "[Global]";
+  }
   return Global;
 })();
 
@@ -572,7 +575,7 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var body = this.compiler.compileMethod(mi, hasDefaults, scope);
+    var body = this.compiler.compileMethod(this.domain, mi, hasDefaults, scope);
 
     var parameters = mi.parameters.map(function (p) {
       return p.name;

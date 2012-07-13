@@ -141,6 +141,7 @@
 
     <script>
       Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
+      enableVerifier.value = false;
     </script>
 
     <div id="inputBar">
@@ -220,10 +221,12 @@
         return constructor;
       })();
 
+      var mode = true ? ALWAYS_INTERPRET : null;
+
       function createAVM2(loadPlayerGlobal, next) {
         new BinaryFileReader(avm2Root + "generated/builtin.abc").readAll(null, function (buffer) {
-          var vm = new AVM2(new Uint8Array(buffer), ALWAYS_INTERPRET);
-          
+          var vm = new AVM2(new Uint8Array(buffer), mode);
+
           vm.onConstruct = function (instance, args) {
             var ci = instance.public$constructor.classInfo;
             print("Creating: " + ci.instanceInfo.name.getQualifiedName() +

@@ -1,6 +1,6 @@
 var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
-var enableVerifier = compilerOptions.register(new Option("verifier", "verifier", "boolean", false, "Enable verifier."));
+var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
 
 const T = estransform;
 
@@ -1279,12 +1279,12 @@ var Compiler = (function () {
     return compilation;
   })();
 
-  compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
+  compiler.prototype.compileMethod = function compileMethod(domain, methodInfo, hasDefaults, scope) {
     assert(methodInfo.analysis);
     // methodInfo.analysis.trace(new IndentingWriter());
 
     if (enableVerifier.value) {
-      this.verifier.verifyMethod(methodInfo);
+      this.verifier.verifyMethod(domain, methodInfo, scope);
     }
 
     Timer.start("compiler");
