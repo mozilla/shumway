@@ -17,8 +17,8 @@ var Verifier = (function(abc) {
     };
 
     // Consists of Any, Undefined and Object
-    type.Atom = new type ("Atom");
-    type.Atom.Any = new type ("Atom", "Any");
+    type.Atom = new type("Atom");
+    type.Atom.Any = new type("Atom", "Any");
     type.Atom.Undefined = new type("Atom", "Undefined");
     type.Atom.Object = new type("Atom", "Object");
 
@@ -55,6 +55,22 @@ var Verifier = (function(abc) {
       assert (a.kind === b.kind);
     };
 
+    type.prototype.isNumeric = function isNumeric() {
+      return this === type.Number || this === type.Int || this === type.Uint;
+    };
+
+    type.prototype.merge = function(other) {
+      if (this === other) {
+        return this;
+      } else if (this.kind === "Atom" && other.kind === "Atom") {
+        return type.Atom.Any;
+      } else if (this.kind === "Reference" && other.kind === "Reference") {
+        // TODO: Actually merge reference types.
+        return type.Reference.Null;
+      }
+      unexpected("Cannot merge types : " + this + " and " + other);
+    };
+
     return type;
   })();
 
@@ -66,12 +82,17 @@ var Verifier = (function(abc) {
     function state() {
       this.id = id++;
 
+      if (id > 100) {
+        throw VerifierError("Probably in an infinite loop.");
+      }
+
       this.stack = [];
       this.scope = [];
       this.local = [];
     }
     state.prototype.clone = function clone() {
       var s = new State();
+      s.originalId = this.id;
       s.stack = this.stack.slice(0);
       s.scope = this.scope.slice(0);
       s.local = this.local.slice(0);
@@ -81,11 +102,21 @@ var Verifier = (function(abc) {
       writer.writeLn(this.toString());
     };
     state.prototype.toString = function () {
-      return "<" + this.id +
+      return "<" + this.id + (this.originalId ? ":" + this.originalId : "") +
              ", L[" + this.local.join(", ") + "]" +
              ", S[" + this.stack.join(", ") + "]" +
              ", $[" + this.scope.join(", ") + "]>"
     };
+    function mergeArrays(a, b) {
+      for (var i = a.length - 1; i >= 0; i--) {
+        a[i] = a[i].merge(b[i]);
+      }
+    }
+    state.prototype.merge = function (other) {
+      mergeArrays(this.local, other.local);
+      mergeArrays(this.stack, other.stack);
+      mergeArrays(this.scope, other.scope);
+    }
     return state;
   })();
 
@@ -130,14 +161,34 @@ var Verifier = (function(abc) {
 
       worklist.push({block: blocks[0], state: state});
 
+      function inWorklist(block) {
+        for (var i = 0; i < worklist.length; i++) {
+          if (worklist[i].block === block) {
+            return worklist[i];
+          }
+        }
+        return false;
+      }
+
       while (worklist.length) {
         var item = worklist.shift();
         var block = item.block;
         var state = item.state;
         this.verifyBlock(block, state);
         block.succs.forEach(function (successor) {
-          worklist.push({block: successor, state: state.clone()});
-          writer.writeLn("Added Block: " + successor.bid + " to worklist.");
+          var item = inWorklist(successor);
+          if (item) {
+            writer.writeLn("Merged Block: " + successor.bid + " " + 
+                           state.toString() + " with " + item.state.toString());
+            item.state.merge(state);
+            writer.writeLn("Merged State: " + item.state);
+            return;
+          }
+          var entryState = state.clone();
+          worklist.push({block: successor, state: entryState});
+          writer.writeLn("Added Block: " + successor.bid +
+                         " to worklist: " + entryState.toString());
+
         });
       }
     };
@@ -156,7 +207,7 @@ var Verifier = (function(abc) {
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
 
-      var obj, multiname;
+      var obj, multiname, lVal, rVal, val;
 
       function popMultiname(index) {
         var multiname = multinames[index];
@@ -270,7 +321,8 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_iflt:
-          notImplemented(bc);
+          pop();
+          pop();
           break;
         case OP_jump:
           // Nop.
@@ -320,7 +372,7 @@ var Verifier = (function(abc) {
           push(Type.Reference.Null);
           break;
         case OP_pushundefined:
-          notImplemented(bc);
+          push(Type.Atom.Undefined);
           break;
         case OP_pushfloat:
           notImplemented(bc);
@@ -332,7 +384,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_pushstring:
-          notImplemented(bc);
+          push(Type.Reference.String);
           break;
         case OP_pushint:
           notImplemented(bc);
@@ -561,7 +613,8 @@ var Verifier = (function(abc) {
           break;
         case OP_coerce_b:
         case OP_convert_b:
-          notImplemented(bc);
+          pop();
+          push(Type.Boolean);
           break;
         case OP_convert_o:
           notImplemented(bc);
@@ -582,7 +635,8 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_coerce_a:
-          /* NOP */
+          pop();
+          push(Type.Atom.Any);
           break;
         case OP_coerce_s:
           pop();
@@ -625,7 +679,14 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_add:
-          notImplemented(bc);
+          rVal = pop();
+          lVal = pop();
+          if (lVal.isNumeric() && rVal.isNumeric()) {
+            push(Type.Number);
+          } else {
+            // TODO: Other Cases
+            push(Type.Atom);
+          }
           break;
         case OP_subtract:
           notImplemented(bc);
