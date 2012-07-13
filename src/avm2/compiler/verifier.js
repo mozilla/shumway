@@ -362,7 +362,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_pushscope:
-          push(pop());
+          scope.push(pop());
           break;
         case OP_pushnamespace:
           notImplemented(bc);
