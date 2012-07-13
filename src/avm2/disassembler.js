@@ -155,6 +155,9 @@ function traceOperands(opcode, abc, code, rewind) {
 MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
   writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
+  writer.writeLn("parameters: " + this.parameters.map(function (x) {
+    return (x.type ? x.type.getQualifiedName() + "::" : "") + x.name;
+  }));
 
   if (!this.code) {
     writer.leave("}");
