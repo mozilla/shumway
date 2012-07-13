@@ -326,7 +326,7 @@ var SourceTracer = (function () {
       writer.writeLn("Cut and paste the following into `native.js' and edit accordingly");
       writer.writeLn("8< --------------------------------------------------------------");
       writer.enter("natives." + native.cls + " = function " + native.cls + "(runtime, scope, instance, baseClass) {");
-      writer.writeLn("var c = new Class(\"" + name + "\", instance, Class.passthroughCallable(instance));");
+      writer.writeLn("var c = new runtime.domain.system.Class(\"" + name + "\", instance, Domain.passthroughCallable(instance));");
       writer.writeLn("c.extend(baseClass);\n");
 
       function traceTraits(traits, isStatic) {
