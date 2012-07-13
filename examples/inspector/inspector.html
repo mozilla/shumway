@@ -141,15 +141,40 @@
 
     <script>
       Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
-      enableVerifier.value = false;
+      
+      function getState() {
+        return document.cookie ? JSON.parse(document.cookie): {};
+      }
+      var state = getState();
+      enableVerifier.value = state.chkVerifier;
+      function setState(state) {
+        document.cookie = JSON.stringify(state);
+      }
     </script>
 
     <div id="inputBar">
       <span><a href="https://www.github.com/mozilla/shumway">Shumway</a> Inspector</span>&nbsp;&nbsp;
       <label for="file">Select SWF/ABC file (or drag'n'drop the file on the stage): </label><input type="file" id="files" name="files[]" multiple>
+      Sys Compiler: <input type="checkbox" id="chkSysCompiler" value="" title="Enables the compiler for the System domain."/>
+      App Compiler: <input type="checkbox" id="chkAppCompiler" value="" title="Enables the compiler for the Application domain."/>
+      Verifier: <input type="checkbox" id="chkVerifier" value="" />
     </div>
 
     <script>
+      // Bind checkboxes to the state.
+      $(window).load(function () {
+        for (key in state) {
+          $("#" + key).attr('checked', state[key]);
+        }
+      });
+
+      $(":checkbox").each(function() {
+        $(this).change(function () {
+          state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
+          setState(state);
+        });
+      });
+
       var body = $("body");
       var stage = $("#stage");
 
@@ -221,11 +246,12 @@
         return constructor;
       })();
 
-      var mode = true ? ALWAYS_INTERPRET : null;
+      var sysMode = state.chkSysCompiler ? null : ALWAYS_INTERPRET;
+      var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
 
       function createAVM2(loadPlayerGlobal, next) {
         new BinaryFileReader(avm2Root + "generated/builtin.abc").readAll(null, function (buffer) {
-          var vm = new AVM2(new Uint8Array(buffer), mode);
+          var vm = new AVM2(new Uint8Array(buffer), sysMode, appMode);
 
           vm.onConstruct = function (instance, args) {
             var ci = instance.public$constructor.classInfo;
