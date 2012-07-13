@@ -141,7 +141,8 @@ var Domain = (function () {
     }
     assert(!script.executing && !script.executed);
     script.executing = true;
-    abc.runtime.createFunction(script.init, null).call(script.global);
+    var scope = new Scope(null, script.global);
+    abc.runtime.createFunction(script.init, scope).call(script.global);
     script.executed = true;
   }
 
