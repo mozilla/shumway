@@ -53,7 +53,8 @@ var Verifier = (function(abc) {
 
     type.check = function check(a, b) {
       assert (a.kind === b.kind);
-    }
+    };
+
     return type;
   })();
 
@@ -84,7 +85,7 @@ var Verifier = (function(abc) {
              ", L[" + this.local.join(", ") + "]" +
              ", S[" + this.stack.join(", ") + "]" +
              ", $[" + this.scope.join(", ") + "]>"
-    }
+    };
     return state;
   })();
 
@@ -197,6 +198,18 @@ var Verifier = (function(abc) {
           Type.check(v, type);
         }
         return v;
+      }
+
+      function getSlot(type, index) {
+        if (type.kind !== "Reference") {
+          return Type.Atom;
+        }
+        var slots;
+        if (type.value instanceof Global) {
+          slots = type.value.slots;
+          assert (slots);
+          return Type.fromName(slots[index].name);
+        }
       }
 
       writer.enter("verifyBlock: " + block.bid +
@@ -328,7 +341,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_pushdouble:
-          notImplemented(bc);
+          push(Type.Number);
           break;
         case OP_pushtrue:
           notImplemented(bc);
@@ -385,8 +398,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_newfunction:
-          notImplemented(bc);
-          break;
+          throw new VerifierError("Not Supported");
         case OP_call:
           notImplemented(bc);
           break;
@@ -460,8 +472,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_newclass:
-          throw new VerifierError("");
-          break;
+          throw new VerifierError("Not Supported");
         case OP_getdescendants:
           notImplemented(bc);
           break;
@@ -484,7 +495,9 @@ var Verifier = (function(abc) {
           break;
         case OP_initproperty:
         case OP_setproperty:
-          notImplemented(bc);
+          pop();
+          popMultiname(bc.index);
+          pop();
           break;
         case OP_getlocal:
           push(local[bc.index]);
@@ -493,7 +506,7 @@ var Verifier = (function(abc) {
           local[bc.index] = pop();
           break;
         case OP_getglobalscope:
-          notImplemented(bc);
+          push(Type.fromReference(savedScope.global.object));
           break;
         case OP_getscopeobject:
           notImplemented(bc);
@@ -514,7 +527,7 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_getslot:
-          notImplemented(bc);
+          push(getSlot(pop(), bc.index));
           break;
         case OP_setslot:
           notImplemented(bc);
@@ -711,13 +724,13 @@ var Verifier = (function(abc) {
           local[op - OP_setlocal0] = pop();
           break;
         case OP_debug:
-          /* NOP */
+          // Nop.
           break;
         case OP_debugline:
-          notImplemented(bc);
+          // Nop.
           break;
         case OP_debugfile:
-          notImplemented(bc);
+          // Nop.
           break;
         case OP_bkptline:
           notImplemented(bc);
