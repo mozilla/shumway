@@ -96,7 +96,9 @@ try {
 
 var vm;
 if (execute.value) {
-  vm = new AVM2(snarf("../generated/builtin.abc", "binary"), alwaysInterpret.value ? ALWAYS_INTERPRET : null);
+  vm = new AVM2(snarf("../generated/builtin.abc", "binary"),
+                alwaysInterpret.value ? ALWAYS_INTERPRET : null,
+                alwaysInterpret.value ? ALWAYS_INTERPRET : null);
   if (loadPlayerGlobal.value) {
     vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
   }
