@@ -117,8 +117,15 @@ var Interpreter = (function () {
           case OP_bkpt:           notImplemented(); break;
           case OP_throw:
             throw stack.pop();
-          case OP_getsuper:       notImplemented(); break;
-          case OP_setsuper:       notImplemented(); break;
+          case OP_getsuper:
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(getSuper(stack.pop(), multiname));
+            break;
+          case OP_setsuper:
+            value = stack.pop();
+            multiname = createMultiname(multinames[bc.index]);
+            stack.push(setSuper(stack.pop(), multiname, value));
+            break;
           case OP_dxns:           notImplemented(); break;
           case OP_dxnslate:       notImplemented(); break;
           case OP_kill:
@@ -281,8 +288,7 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(multinames[bc.index]);
             obj = stack.pop();
-            objsuper = obj.public$constructor.baseClass.instance.prototype;
-            stack.push(getProperty(objsuper, multiname).apply(obj, args));
+            stack.push(getSuper(obj, multiname).apply(obj, args));
             break;
           case OP_callproperty:
             args = stack.popMany(bc.argCount);
@@ -319,8 +325,7 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(multinames[bc.index]);
             obj = stack.pop();
-            objsuper = obj.public$constructor.baseClass.instance.prototype;
-            getProperty(objsuper, multiname).apply(obj, args);
+            getSuper(obj, multiname).apply(obj, args);
             break;
           case OP_callpropvoid:
             args = stack.popMany(bc.argCount);

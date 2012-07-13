@@ -66,6 +66,7 @@ var Domain = (function () {
           this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
         isInstance: function (value) {

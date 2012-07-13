@@ -229,7 +229,7 @@ var Interface = (function () {
         return false;
       }
 
-      var cls = value.public$constructor;
+      var cls = value.class;
       if (cls) {
         var interfaces = cls.implementedInterfaces;
         for (var i = 0, j = interfaces.length; i < j; i++) {
@@ -367,6 +367,32 @@ function getProperty(obj, multiname) {
   return value;
 }
 
+function getSuper(obj, multiname) {
+  assert(obj != undefined, "getSuper(" + multiname + ") on undefined");
+  assert(obj.class.baseClass);
+  assert(multiname instanceof Multiname);
+
+  var superTraits = obj.class.baseClass.instance.prototype;
+
+  if (typeof multiname.name === "number") {
+    // Vector, for instance, has a special getter for [].
+    if (superTraits.indexGet) {
+      return superTraits.indexGet.call(obj, multiname.name);
+    }
+
+    return obj[multiname.name];
+  }
+
+  var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
+  var value = resolved ? obj[resolved.getQualifiedName()] : undefined;
+
+  if (tracePropertyAccess.value) {
+    print("getSuper(" + multiname + ") has value: " + !!value);
+  }
+
+  return value;
+}
+
 function setProperty(obj, multiname, value) {
   assert(obj);
   assert(multiname instanceof Multiname);
@@ -391,6 +417,25 @@ function setProperty(obj, multiname, value) {
   } else {
     obj["public$" + multiname.name] = value;
   }
+}
+
+function setSuper(obj, multiname, value) {
+  assert(obj);
+  assert(obj.class.baseClass);
+  assert(multiname instanceof Multiname);
+
+  if (tracePropertyAccess.value) {
+    print("setProperty(" + multiname + ") trait: " + value);
+  }
+
+  var superTraits = obj.class.baseClass.instance.prototype;
+  var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
+  if (!resolved) {
+    throw new ReferenceError("Cannot create property " + multiname.name +
+                             " on " + obj.class.baseClass.debugName);
+  }
+
+  obj[resolved.getQualifiedName()] = value;
 }
 
 function deleteProperty(obj, multiname) {

@@ -862,8 +862,18 @@ var Compiler = (function () {
           emit(assignment(property(getTemporary(0), "value"), state.stack.pop()));
           emit(new ThrowStatement(getTemporary(0)));
           break;
-        case OP_getsuper:       notImplemented(); break;
-        case OP_setsuper:       notImplemented(); break;
+        case OP_getsuper:
+          multiname = popMultiname(bc.index);
+          obj = state.stack.pop();
+          push(call(id("getSuper"), [obj, multiname]));
+          break;
+        case OP_setsuper:
+          value = state.stack.pop();
+          multiname = popMultiname(bc.index);
+          flushStack();
+          obj = state.stack.pop();
+          emit(call(id("setSuper"), [obj, multiname, value]));
+          break;
         case OP_dxns:           notImplemented(); break;
         case OP_dxnslate:       notImplemented(); break;
         case OP_kill:           kill(bc.index); break;
@@ -981,7 +991,7 @@ var Compiler = (function () {
           multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
-          push(call(getProperty(superOf(obj), multiname), [obj].concat(args)));
+          push(callCall(call(id("getSuper"), [obj, multiname]), [obj].concat(args)));
           break;
         case OP_callproperty:
           flushStack();
@@ -1021,7 +1031,7 @@ var Compiler = (function () {
           multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
-          emit(callCall(getProperty(superOf(obj), multiname), [obj].concat(args)));
+          emit(callCall(call(id("getSuper"), [obj, multiname]), [obj].concat(args)));
           break;
         case OP_callpropvoid:
           args = state.stack.popMany(bc.argCount);
