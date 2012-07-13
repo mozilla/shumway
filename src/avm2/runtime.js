@@ -643,9 +643,10 @@ var Runtime = (function () {
         scope = new Scope(scope, domain.system.Class);
       }
       scope = new Scope(scope, null);
-
       cls = makeNativeClass(this, scope, this.createFunction(ii.init, scope), baseClass);
-
+      cls.classInfo = classInfo;
+      cls.scope = scope;
+      scope.object = cls;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
         this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, cls.nativeMethods, true);
@@ -655,11 +656,14 @@ var Runtime = (function () {
       scope = new Scope(scope, null);
       instance = this.createFunction(ii.init, scope);
       cls = new domain.system.Class(className, instance);
+      cls.classInfo = classInfo;
+      cls.scope = scope;
+      scope.object = cls;
       cls.extend(baseClass);
       this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, false);
     }
-    scope.object = cls;
+
 
     if (ii.interfaces.length > 0) {
       cls.implementedInterfaces = [];
@@ -714,10 +718,6 @@ var Runtime = (function () {
 
     // Run the static initializer.
     this.createFunction(classInfo.init, scope).call(cls);
-
-    // Hang on to stuff we need.
-    cls.scope = scope;
-    cls.classInfo = classInfo;
 
     if (traceClasses.value) {
       domain.loadedClasses.push(cls);
