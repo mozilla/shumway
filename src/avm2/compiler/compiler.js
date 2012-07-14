@@ -1001,10 +1001,12 @@ var Compiler = (function () {
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
         case OP_returnvoid:
+          flushStack();
           emit(call(property(id("Runtime"), "stack.pop"), []));
           emit(new ReturnStatement());
           break;
         case OP_returnvalue:
+          flushStack();
           emit(call(property(id("Runtime"), "stack.pop"), []));
           emit(new ReturnStatement(state.stack.pop())); break;
         case OP_constructsuper:
