@@ -1005,7 +1005,8 @@ var ClassInfo = (function () {
 })();
 
 var ScriptInfo = (function scriptInfo() {
-  function scriptInfo(abc, stream) {
+  function scriptInfo(abc, idx, stream) {
+    this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;
@@ -1013,6 +1014,9 @@ var ScriptInfo = (function scriptInfo() {
   scriptInfo.prototype = {
     get entryPoint() {
       return this.init;
+    },
+    toString: function() {
+      return this.name;
     }
   };
   return scriptInfo;
@@ -1059,7 +1063,7 @@ var AbcFile = (function () {
     this.scripts = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
-      this.scripts.push(new ScriptInfo(this, stream));
+      this.scripts.push(new ScriptInfo(this, i, stream));
     }
 
     // Method body info just live inside methods

@@ -87,11 +87,22 @@ var file = argumentParser.addArgument("file", "file", "string", {
   positional: true
 });
 
+var argv;
+
 try {
-  argumentParser.parse(arguments);
+  argv = argumentParser.parse(arguments);
 } catch (x) {
   stdout.writeLn(x.message);
   quit();
+}
+
+function installAvmPlus(vm) {
+  var domain = vm.systemDomain;
+  domain.installNative("getArgv", function() {
+    return argv;
+  });
+
+  domain.executeAbc(new AbcFile(snarf("avmplus.abc", "binary"), "avmplus.abc"));
 }
 
 var vm;
@@ -99,6 +110,7 @@ if (execute.value) {
   vm = new AVM2(snarf("../generated/builtin.abc", "binary"),
                 alwaysInterpret.value ? ALWAYS_INTERPRET : null,
                 alwaysInterpret.value ? ALWAYS_INTERPRET : null);
+  installAvmPlus(vm);
   if (loadPlayerGlobal.value) {
     vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
   }
