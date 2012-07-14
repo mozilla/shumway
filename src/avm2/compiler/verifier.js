@@ -273,7 +273,7 @@ var Verifier = (function(abc) {
 
         switch (op) {
         case OP_bkpt:
-          notImplemented(bc);
+          // Nop.
           break;
         case OP_throw:
           notImplemented(bc);
@@ -348,11 +348,8 @@ var Verifier = (function(abc) {
         case OP_lookupswitch:
           notImplemented(bc);
           break;
-        case OP_pushwith:
-          notImplemented(bc);
-          break;
         case OP_popscope:
-          notImplemented(bc);
+          scope.pop();
           break;
         case OP_nextname:
         case OP_nextvalue:
@@ -381,85 +378,80 @@ var Verifier = (function(abc) {
           push(Type.Int);
           break;
         case OP_pushshort:
-          notImplemented(bc);
+          push(Type.Int);
           break;
         case OP_pushstring:
           push(Type.Reference.String);
           break;
         case OP_pushint:
-          notImplemented(bc);
+          push(Type.Int);
           break;
         case OP_pushuint:
-          notImplemented(bc);
+          push(Type.Uint);
           break;
         case OP_pushdouble:
           push(Type.Number);
           break;
         case OP_pushtrue:
-          notImplemented(bc);
+          push(Type.Boolean);
           break;
         case OP_pushfalse:
           push(Type.Boolean);
           break;
         case OP_pushnan:
-          notImplemented(bc);
+          push(Type.Number);
           break;
         case OP_pop:
-          notImplemented(bc);
+          pop();
           break;
         case OP_dup:
-          notImplemented(bc);
+          val = pop();
+          push(val);
+          push(val);
           break;
         case OP_swap:
-          notImplemented(bc);
+          lVal = pop();
+          rVal = pop();
+          push(lVal);
+          push(rVal);
           break;
+        case OP_pushwith:
         case OP_pushscope:
           scope.push(pop());
           break;
         case OP_pushnamespace:
-          notImplemented(bc);
+          push(Type.Atom.Object);
           break;
         case OP_li8:
-          notImplemented(bc);
-          break;
         case OP_li16:
-          notImplemented(bc);
-          break;
         case OP_li32:
-          notImplemented(bc);
+          push(Type.Int);
           break;
         case OP_lf32:
-          notImplemented(bc);
-          break;
         case OP_lf64:
-          notImplemented(bc);
+          push(Type.Number);
           break;
         case OP_si8:
-          notImplemented(bc);
-          break;
         case OP_si16:
-          notImplemented(bc);
-          break;
         case OP_si32:
-          notImplemented(bc);
+          pop(Type.Int);
           break;
         case OP_sf32:
-          notImplemented(bc);
-          break;
         case OP_sf64:
-          notImplemented(bc);
+          pop(Type.Number);
           break;
         case OP_newfunction:
           throw new VerifierError("Not Supported");
         case OP_call:
-          notImplemented(bc);
+         notImplemented(bc);
           break;
         case OP_construct:
           notImplemented(bc);
           break;
         case OP_callmethod:
-          notImplemented(bc);
-          break;
+          // callmethod is always invalid
+          // http://hg.mozilla.org/tamarin-redux/file/eb8f916bb232/core/Verifier.cpp#l1846
+          throw new VerifierError("callmethod");
         case OP_callstatic:
           notImplemented(bc);
           break;
@@ -500,13 +492,9 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_sxi1:
-          notImplemented(bc);
-          break;
         case OP_sxi8:
-          notImplemented(bc);
-          break;
         case OP_sxi16:
-          notImplemented(bc);
+          // Sign extend, nop.
           break;
         case OP_applytype:
           notImplemented(bc);
@@ -515,10 +503,14 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_newobject:
-          notImplemented(bc);
+          // Pops keys and values, pushes result.
+          stack.popMany(bc.argCount * 2);
+          push(Type.Atom.Object);
           break;
         case OP_newarray:
-          notImplemented(bc);
+          // Pops values, pushes result.
+          stack.popMany(bc.argCount);
+          push(Type.Atom.Object);
           break;
         case OP_newactivation:
           notImplemented(bc);
@@ -591,25 +583,31 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_convert_s:
-          notImplemented(bc);
+          pop();
+          push(Type.Reference.String);
           break;
         case OP_esc_xelem:
-          notImplemented(bc);
+          pop();
+          push(Type.Reference.String);
           break;
         case OP_esc_xattr:
-          notImplemented(bc);
+          pop();
+          push(Type.Reference.String);
           break;
         case OP_coerce_i:
         case OP_convert_i:
-          notImplemented(bc);
+          pop();
+          push(Type.Int);
           break;
         case OP_coerce_u:
         case OP_convert_u:
-          notImplemented(bc);
+          pop();
+          push(Type.Uint);
           break;
         case OP_coerce_d:
         case OP_convert_d:
-          notImplemented(bc);
+          pop();
+          push(Type.Number);
           break;
         case OP_coerce_b:
         case OP_convert_b:
@@ -623,7 +621,8 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_convert_f:
-          notImplemented(bc);
+          pop();
+          push(Type.Number);
           break;
         case OP_unplus:
           notImplemented(bc);
@@ -652,28 +651,21 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_negate:
-          notImplemented(bc);
-          break;
         case OP_increment:
-          notImplemented(bc);
+        case OP_decrement:
+          pop();
+          push(Type.Number);
           break;
         case OP_inclocal:
-          notImplemented(bc);
-          break;
-        case OP_decrement:
-          notImplemented(bc);
-          break;
         case OP_declocal:
-          notImplemented(bc);
+          local[bc.index] = Type.Number;
           break;
         case OP_typeof:
           notImplemented(bc);
           break;
         case OP_not:
-          notImplemented(bc);
-          break;
-        case OP_bitnot:
-          notImplemented(bc);
+          pop();
+          push(Type.Boolean);
           break;
         case OP_add_d:
           notImplemented(bc);
@@ -700,44 +692,31 @@ var Verifier = (function(abc) {
         case OP_modulo:
           notImplemented(bc);
           break;
-        case OP_lshift:
-          notImplemented(bc);
-          break;
-        case OP_rshift:
-          notImplemented(bc);
-          break;
-        case OP_urshift:
-          notImplemented(bc);
-          break;
         case OP_bitand:
-          notImplemented(bc);
-          break;
         case OP_bitor:
-          notImplemented(bc);
-          break;
         case OP_bitxor:
-          notImplemented(bc);
+        case OP_lshift:
+        case OP_rshift:
+        case OP_urshift:
+          pop();
+          pop();
+          push(Type.Int);
+          break;
+        case OP_bitnot:
+          pop();
+          push(Type.Int);
           break;
         case OP_equals:
-          notImplemented(bc);
-          break;
         case OP_strictequals:
-          notImplemented(bc);
-          break;
         case OP_lessthan:
-          notImplemented(bc);
-          break;
         case OP_lessequals:
-          notImplemented(bc);
-          break;
         case OP_greaterthan:
-          notImplemented(bc);
-          break;
         case OP_greaterequals:
-          notImplemented(bc);
-          break;
         case OP_instanceof:
-          notImplemented(bc);
+        case OP_in:
+          pop();
+          pop();
+          push(Type.Boolean);
           break;
         case OP_istype:
           notImplemented(bc);
@@ -745,23 +724,15 @@ var Verifier = (function(abc) {
         case OP_istypelate:
           notImplemented(bc);
           break;
-        case OP_in:
-          notImplemented(bc);
-          break;
-        case OP_increment_i:
-          notImplemented(bc);
+        case OP_inclocal_i:
+        case OP_declocal_i:
+          local[bc.index] = Type.Int;
           break;
         case OP_decrement_i:
-          notImplemented(bc);
-          break;
-        case OP_inclocal_i:
-          notImplemented(bc);
-          break;
-        case OP_declocal_i:
-          notImplemented(bc);
-          break;
+        case OP_increment_i:
         case OP_negate_i:
-          notImplemented(bc);
+          pop();
+          push(Type.Int);
           break;
         case OP_add_i:
           notImplemented(bc);
@@ -794,10 +765,10 @@ var Verifier = (function(abc) {
           // Nop.
           break;
         case OP_bkptline:
-          notImplemented(bc);
+          // Nop.
           break;
         case OP_timestamp:
-          notImplemented(bc);
+          // Nop.
           break;
         default:
           console.info("Not Implemented: " + bc);
