@@ -758,7 +758,11 @@ var Runtime = (function () {
       if (mi.isNative() && domain.allowNatives) {
         var md = trait.metadata;
         if (md && md.native) {
-          var makeNativeClosure = getNative(md.native.items[0].value);
+          var nativeName = md.native.items[0].value;
+          var makeNativeClosure = getNative(nativeName);
+          if (!makeNativeClosure)
+            makeNativeClosure = domain.natives[nativeName];
+
           closure = makeNativeClosure && makeNativeClosure(runtime, scope);
         } else if (md && md.unsafeJSNative) {
           closure = getNative(md.unsafeJSNative.items[0].value);

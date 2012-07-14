@@ -32,6 +32,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 
 load("../constants.js");
+load("../domain.js");
 load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");

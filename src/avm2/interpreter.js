@@ -494,7 +494,6 @@ var Interpreter = (function () {
           case OP_bitnot:
             evaluateUnary(Operator.BITWISE_NOT);
             break;
-          case OP_add_d:          notImplemented(); break;
           case OP_add:
             evaluateBinary(Operator.ADD);
             break;

@@ -6,7 +6,7 @@ var AVM2 = (function () {
     }
 
     var sysDomain = new Domain(this, null, sysMode, true);
-    sysDomain.executeAbc(new AbcFile(builtinABC), "builtin.abc");
+    sysDomain.executeAbc(new AbcFile(builtinABC, "builtin.abc"));
 
     // TODO: this will change when we implement security domains.
     this.systemDomain = sysDomain;
