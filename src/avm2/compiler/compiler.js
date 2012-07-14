@@ -1272,18 +1272,18 @@ var Compiler = (function () {
         default:
           console.info("Not Implemented: " + bc);
         }
-
-        if (writer) {
-          state.trace(writer);
-          writer.enter("body: {");
-          for (var i = 0; i < body.length; i++) {
-            writer.writeLn(generate(body[i]));
-          }
-          writer.leave("}");
-        }
       }
 
       flushStack();
+
+      if (writer) {
+        state.trace(writer);
+        writer.enter("body: {");
+        for (var i = 0; i < body.length; i++) {
+          writer.writeLn(generate(body[i]));
+        }
+        writer.leave("}");
+      }
 
       return {node: new BlockStatement(body), condition: condition, state: state};
     };
