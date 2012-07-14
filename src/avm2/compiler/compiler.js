@@ -1228,12 +1228,24 @@ var Compiler = (function () {
         case OP_decrement_i:
           push(binary(Operator.SUB, asInt32(state.stack.pop()), constant(1)));
           break;
-        case OP_inclocal_i:     notImplemented(); break;
-        case OP_declocal_i:     notImplemented(); break;
-        case OP_negate_i:       notImplemented(); break;
-        case OP_add_i:          notImplemented(); break;
-        case OP_subtract_i:     notImplemented(); break;
-        case OP_multiply_i:     notImplemented(); break;
+        case OP_inclocal_i:
+          emit(new UpdateExpression("++", asInt32(local[bc.index])));
+          break;
+        case OP_declocal_i:
+          emit(new UpdateExpression("--", asInt32(local[bc.index])));
+          break;
+        case OP_negate_i:
+          emit(new UnaryExpression(Operator.NEG.name, asInt32(state.stack.pop())));
+          break;
+        case OP_add_i:
+          emit(binary(Operator.ADD, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
+          break;
+        case OP_subtract_i:
+          emit(binary(Operator.SUB, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
+          break;
+        case OP_multiply_i:
+          emit(binary(Operator.MUL, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
+          break;
         case OP_getlocal0:
         case OP_getlocal1:
         case OP_getlocal2:
