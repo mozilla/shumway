@@ -29,6 +29,9 @@ var Domain = (function () {
     // Do we compile or interpret?
     this.mode = mode;
 
+    // Storage for custom natives
+    this.natives = {};
+
     // If we are the system domain (the root), we should initialize the Class
     // and MethodClosure classes.
     if (base) {
@@ -189,6 +192,12 @@ var Domain = (function () {
         return undefined;
       }
       return undefined;
+    },
+
+    installNative: function(name, func) {
+      this.natives[name] = function() {
+        return func;
+      };
     },
 
     /**
