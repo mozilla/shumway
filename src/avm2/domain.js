@@ -137,7 +137,7 @@ var Domain = (function () {
       abc.trace(new IndentingWriter());
     }
     if (traceExecution.value) {
-      print("Executing: " + abc.name);
+      print("Executing: " + abc.name + " " + script);
     }
     assert(!script.executing && !script.executed);
     script.executing = true;
