@@ -1188,7 +1188,6 @@ var Compiler = (function () {
           break;
         case OP_not:            expression(Operator.FALSE); break;
         case OP_bitnot:         expression(Operator.BITWISE_NOT); break;
-        case OP_add_d:          notImplemented(); break;
         case OP_add:            expression(Operator.ADD); break;
         case OP_subtract:       expression(Operator.SUB); break;
         case OP_multiply:       expression(Operator.MUL); break;

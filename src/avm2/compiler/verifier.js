@@ -667,9 +667,6 @@ var Verifier = (function(abc) {
           pop();
           push(Type.Boolean);
           break;
-        case OP_add_d:
-          notImplemented(bc);
-          break;
         case OP_add:
           rVal = pop();
           lVal = pop();
