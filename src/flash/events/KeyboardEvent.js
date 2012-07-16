@@ -6,7 +6,7 @@ function KeyboardEvent(type,
                        keyLocation,
                        ctrlKey,
                        altKey,
-                       shiftKey){
+                       shiftKey) {
   Object.defineProperties(
     type:        describeProperty(type),
     bubbles:     describeProperty(bubbles !== undefined ? !!bubbles : true),

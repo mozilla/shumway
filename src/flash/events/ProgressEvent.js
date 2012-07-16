@@ -1,4 +1,4 @@
-function ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal){
+function ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal) {
   Object.defineProperties(this, {
     type:        describeConst(type),
     bubbles:     describeConst(bubbles !== undefined ? !!bubbles : true),
