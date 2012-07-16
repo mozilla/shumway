@@ -1,3 +1,7 @@
+var EVENT_PHASE_CAPTURING_PHASE = 1;
+var EVENT_PHASE_AT_TARGET       = 2;
+var EVENT_PHASE_BUBBLING_PHASE  = 3;
+
 function Event(type, bubbles, cancelable) {
   Object.defineProperties(this, {
     type:       describeProperty(type),
@@ -6,7 +10,7 @@ function Event(type, bubbles, cancelable) {
   });
 
   this._canceled = false;
-  this._eventPhase = 2 // EventPhase.AT_TARGET;
+  this._eventPhase = EVENT_PHASE_AT_TARGET;
   this._currentTarget = null;
   this._target = null;
 }
