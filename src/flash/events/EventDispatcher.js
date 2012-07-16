@@ -1,16 +1,16 @@
 function EventDispatcher(target) {
-  this._handlers = { };
   this._captureHandlers = { };
   this._control = null;
+  this._handlers = { };
 }
 
 EventDispatcher.prototype = Object.create(null, {
-  addEventListener: describeMethod(function (type, listener, useCapture, priority, useWeakReference) {
+  addEventListener: describeMethod(function (type, listener, useCapture, prio, useWeakReference) {
     if (typeof listener !== 'function')
       throw ArgumentError();
 
-    var list = useCapture ? this._captureHandlers : this._handlers;
-    var handler = list[type];
+    var handlers = useCapture ? this._captureHandlers : this._handlers;
+    var handler = handlers[type];
     if (!handler) {
       var target = this;
       handler = {
@@ -36,9 +36,12 @@ EventDispatcher.prototype = Object.create(null, {
       if (this._control)
         this._control.addEventListener(type, handler, useCapture);
 
-      list[type] = handler;
+      handlers[type] = handler;
     }
     handler.listeners.push(listener);
+  }),
+  ctor: describeMethod(function (target) {
+
   }),
   dispatchEvent: describeMethod(function (evt) {
     evt.target = this;
@@ -60,18 +63,19 @@ EventDispatcher.prototype = Object.create(null, {
     return type in this._handlers || type in this._captureHandlers;
   }),
   removeEventListener: describeMethod(function (type, listener, useCapture) {
-    var list = useCapture ? this._captureHandlers : this._handlers;
-    var handler = list[type];
+    var handlers = useCapture ? this._captureHandlers : this._handlers;
+    var handler = handlers[type];
     if (handler) {
       var listeners = handler.listeners;
       var i = listeners.indexOf(listener);
       if (i > -1)
         listeners.splice(i, 1);
+
       if (!listeners.length) {
         if (this._control)
           this._control.removeEventListener(type, handler, useCapture);
 
-        delete list[type];
+        delete handlers[type];
       }
     }
   }),
@@ -84,6 +88,7 @@ EventDispatcher.prototype = Object.create(null, {
       if (dispatcher.hasEventListener(type))
         return true;
     } while (dispatcher = dispatcher.parent);
+
     return false;
   })
 });
