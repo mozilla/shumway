@@ -105,7 +105,38 @@ var Verifier = (function(abc) {
       return "<" + this.id + (this.originalId ? ":" + this.originalId : "") +
              ", L[" + this.local.join(", ") + "]" +
              ", S[" + this.stack.join(", ") + "]" +
-             ", $[" + this.scope.join(", ") + "]>"
+             ", $[" + this.scope.join(", ") + "]>";
+    };
+    state.prototype.equals = function(other) {
+
+      //TODO update this function for Reference types
+
+      if ((this.stack.length != other.stack.length) ||
+        (this.scope.length != other.scope.length) ||
+        (this.local.length != other.local.length)) {
+        return false;
+      }
+
+      for (var i = this.stack.length - 1; i >= 0; i--) {
+        if (this.stack[i] !== other.stack[i]) {
+          return false;
+        }
+      }
+
+      for (var i = this.scope.length - 1; i >= 0; i--) {
+        if (this.scope[i] !== other.scope[i]) {
+          return false;
+        }
+      }
+
+
+      for (var i = this.local.length - 1; i >= 0; i--) {
+        if (this.local[i] !== other.local[i]) {
+          return false;
+        }
+      }
+
+      return true;
     };
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
@@ -117,6 +148,7 @@ var Verifier = (function(abc) {
       mergeArrays(this.stack, other.stack);
       mergeArrays(this.scope, other.scope);
     }
+    
     return state;
   })();
 
@@ -145,49 +177,75 @@ var Verifier = (function(abc) {
         return;
       }
 
-      var state = new State();
-
+      var entryState = new State();
+      
       assert (mi.localCount >= mi.parameters.length + 1);
       // First local is the type of |this|.
-      state.local.push(Type.Atom);
+      entryState.local.push(Type.Atom);
       // Initialize entry state with parameter types.
       for (var i = 0; i < mi.parameters.length; i++) {
-        state.local.push(Type.fromName(this.domain, mi.parameters[i].type));
+        entryState.local.push(Type.fromName(this.domain, mi.parameters[i].type));
       }
 
-      state.trace(this.writer);
+      entryState.trace(this.writer);
 
       var worklist = [];
 
-      worklist.push({block: blocks[0], state: state});
+      blocks[0].entryState = entryState;
+
+      worklist.push(blocks[0]);
 
       function inWorklist(block) {
         for (var i = 0; i < worklist.length; i++) {
-          if (worklist[i].block === block) {
-            return worklist[i];
+          if (worklist[i] === block) {
+            return true;
           }
         }
         return false;
       }
 
       while (worklist.length) {
-        var item = worklist.shift();
-        var block = item.block;
-        var state = item.state;
-        this.verifyBlock(block, state);
+        var block = worklist.shift();
+        var currEntryState = block.entryState;
+        var currExitState = block.exitState = currEntryState.clone();
+        
+        // passed state gets mutated so it effectively becomes the exit state
+        this.verifyBlock(block, currExitState);
+
         block.succs.forEach(function (successor) {
-          var item = inWorklist(successor);
-          if (item) {
-            writer.writeLn("Merged Block: " + successor.bid + " " + 
-                           state.toString() + " with " + item.state.toString());
-            item.state.merge(state);
-            writer.writeLn("Merged State: " + item.state);
+
+          if (inWorklist(successor)) { // the block is already in the worklist
+            writer.writeLn("Forward Merged Block: " + successor.bid + " " +
+                           currExitState.toString() + " with " + successor.entryState.toString());
+            // merge existing item entry state with current block exit state
+            successor.entryState.merge(currExitState);
+            writer.writeLn("Merged State: " + successor.entryState);
             return;
           }
-          var entryState = state.clone();
-          worklist.push({block: successor, state: entryState});
+
+          // backward branch scenario
+          if(successor.entryState) { // test wheter the successor was already processed or not
+            // if successor processed, but current exit state differs from it's entry state
+            // then merge the states and add it in the work list
+            if(!successor.entryState.equals(currExitState)) {
+              writer.writeLn("Backward Merged Block: " + successor.bid + " " +
+                           currExitState.toString() + " with " + successor.entryState.toString());
+              successor.entryState.merge(currExitState);
+              worklist.push(successor);
+
+              writer.writeLn("Merged State: " + successor.entryState);
+            }
+            // if successor processed and current exit state equals with it's entry state
+            // then return; there is no need to add it in the work list
+            return;
+          }
+
+          // add unvisited succesor block to the worklist
+          //  it's entry state is current block exit state
+          successor.entryState = currExitState.clone();
+          worklist.push(successor);
           writer.writeLn("Added Block: " + successor.bid +
-                         " to worklist: " + entryState.toString());
+                         " to worklist: " + successor.entryState.toString());
 
         });
       }
@@ -337,7 +395,8 @@ var Verifier = (function(abc) {
           notImplemented(bc);
           break;
         case OP_ifne:
-          notImplemented(bc);
+          pop();
+          pop();
           break;
         case OP_ifstricteq:
           notImplemented(bc);
@@ -776,6 +835,9 @@ var Verifier = (function(abc) {
         }
       }
       writer.leave("}");
+      writer.enter("verifiedBlock: " + block.bid +
+                ", range: [" + block.position + ", " + block.end.position +
+                "], exitState: " + state.toString());
     };
 
     return verification;
