@@ -1,4 +1,5 @@
 function Sprite() {
+  this._graphics = new Graphics;
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
@@ -10,14 +11,9 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  graphics: describeAccessor(
-    function () {
-      notImplemented();
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
+  graphics: describeAccessor(function () {
+    return this._graphics;
+  }),
   hitArea: describeAccessor(
     function () {
       return null;

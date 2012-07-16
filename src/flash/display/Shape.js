@@ -1,4 +1,5 @@
 function Shape() {
+	this._graphics = new Graphics;
 }
 
 Shape.prototype = Object.create(new DisplayObject, {
@@ -10,4 +11,7 @@ Shape.prototype = Object.create(new DisplayObject, {
       notImplemented();
     }
   )
+  graphics: describeAccessor(function () {
+    return this._graphics;
+  }),
 });
