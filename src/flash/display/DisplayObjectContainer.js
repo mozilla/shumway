@@ -1,4 +1,5 @@
 function DisplayObjectContainer() {
+  this._children = [];
 }
 
 DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
@@ -11,7 +12,7 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     }
   ),
   numChildren: describeAccessor(function () {
-    notImplemented();
+    return this._children.length;
   }),
   tabChildren: describeAccessor(
     function () {
@@ -28,45 +29,126 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
   ),
 
   addChild: describeMethod(function (child) {
-    notImplemented();
+    if (child === this)
+      throw ArgumentError();
+
+    this._children.push(child);
+    return child;
   }),
   addChildAt: describeMethod(function (child, index) {
-    notImplemented();
+    if (child === this)
+      throw ArgumentError();
+
+    var children = this._children;
+
+    if (index < 0 || index > children.length)
+      throw RangeError();
+
+    children[index] = child;
+    return child;
   }),
   areInaccessibleObjectsUnderPoint: describeMethod(function (pt) {
     notImplemented();
   }),
   contains: describeMethod(function (child) {
-    notImplemented();
+    return this._children.indexOf(child) > -1;
   }),
   getChildAt: describeMethod(function (index) {
-    notImplemented();
+    var children = this._children;
+
+    if (index < 0 || index > children.length)
+      throw RangeError();
+
+    return children[index];
   }),
   getChildByName: describeMethod(function (name) {
-    notImplemented();
+    var children = this._children;
+    for (var i = 0, n = children.length; i < n; i++) {
+      var child = children[i];
+      if (child.name === name)
+        return child;
+    }
+    return null;
   }),
   getChildIndex: describeMethod(function (child) {
-    notImplemented();
+    var index = this._children.indexOf(child);
+
+    if (index < 0)
+      throw ArgumentError();
+
+    return index;
   }),
   getObjectsUnderPoint: describeMethod(function (pt) {
     notImplemented();
   }),
   removeChild: describeMethod(function (child) {
-    notImplemented();
+    var children = this._children;
+    var index = children.indexOf(child);
+
+    if (index < 0)
+      throw ArgumentError();
+
+    children.splice(index, 1);
+
+    return child;
   }),
-  removeChildAt: describeMethod(function (child, index) {
-    notImplemented();
+  removeChildAt: describeMethod(function (index) {
+    var children = this._children;
+
+    if (index < 0 || index > children.length)
+      throw RangeError();
+
+    var child = children[index];
+    children.splice(index, 1);
+
+    return child;
   }),
   setChildIndex: describeMethod(function (child, index) {
-    notImplemented();
+    var children = this._children;
+
+    if (index < 0 || index > children.length)
+      throw RangeError();
+
+    var currentIndex = children.indexOf(child);
+
+    if (currentIndex < 0)
+      throw ArgumentError();
+
+    children.splice(currentIndex, 1);
+    children.splice(index, 0, child);
+
+    return child;
   }),
   removeChildren: describeMethod(function (begin, end) {
-    notImplemented();
+    var children = this._children;
+    var numChildren = children.length;
+
+    if (begin < 0 || begin > numChildren || end < 0 || end < begin || end > numChildren)
+      throw RangeError();
+
+    children.splice(begin, end - begin);
   }),
   swapChildren: describeMethod(function (child1, child2) {
-    notImplemented();
+    var children = this._children;
+    var index1 = children.indexOf(child1);
+    var index2 = children.indexOf(child1);
+
+    if (index1 < 0 || index2 < 0)
+      throw ArgumentError();
+
+    children[index1] = child2;
+    children[index2] = child1;
   }),
   swapChildrenAt: describeMethod(function (index1, index2) {
-    notImplemented();
+    var children = this._children;
+    var numChildren = children.length;
+
+    if (index1 < 0 || index1 > numChildren || index2 < 0 || index2 > numChildren)
+      throw RangeError();
+
+    var child1 = children[index1];
+    var child2 = children[index2];
+    children[index1] = child2;
+    children[index2] = child1;
   })
 });
