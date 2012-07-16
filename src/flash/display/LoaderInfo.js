@@ -1,91 +1,112 @@
 function LoaderInfo() {
+  this._symbols = new ObjDictionary;
 }
 
+function ObjDictionary() {
+  this.promises = this;
+}
+ObjDictionary.prototype = {
+  getPromise: function(objId) {
+    if (!(objId in this.promises)) {
+      var promise = new Promise();
+      this.promises[objId] = promise;
+    }
+    return this.promises[objId];
+  },
+  isPromiseExists: function(objId) {
+    return objId in this.promises;
+  }
+};
+
 LoaderInfo.prototype = Object.create(new EventDispatcher, {
-  actionScriptVersion: describeAccessor(function() {
+  actionScriptVersion: describeAccessor(function () {
     return this._content;
   }),
-  applicationDomain: describeAccessor(function() {
+  applicationDomain: describeAccessor(function () {
     notImplemented();
   }),
-  bytes: describeAccessor(function() {
+  bytes: describeAccessor(function () {
     return this._bytes;
   }),
-  bytesLoaded: describeAccessor(function() {
+  bytesLoaded: describeAccessor(function () {
     return this._bytesLoaded;
   }),
-  bytesTotal: describeAccessor(function() {
+  bytesTotal: describeAccessor(function () {
     return this._bytesTotal;
   }),
-  childAllowsParent: describeAccessor(function() {
+  childAllowsParent: describeAccessor(function () {
     notImplemented();
   }),
   childSandboxBridge: describeAccessor(
-    function() {
+    function () {
       notImplemented();
     },
     function(val) {
       notImplemented();
     }
   ),
-  content: describeAccessor(function() {
+  content: describeAccessor(function () {
     return this._content;
   }),
-  contentType: describeAccessor(function() {
+  contentType: describeAccessor(function () {
     return this._contentType;
   }),
-  frameRate: describeAccessor(function() {
+  frameRate: describeAccessor(function () {
     return this._frameRate;
   }),
-  height: describeAccessor(function() {
+  height: describeAccessor(function () {
     return this._height;
   }),
-  isURLInaccessible: describeAccessor(function() {
+  isURLInaccessible: describeAccessor(function () {
     notImplemented();
   }),
-  loader: describeAccessor(function() {
+  loader: describeAccessor(function () {
     return this._loader;
   }),
-  loaderURL: describeAccessor(function() {
+  loaderURL: describeAccessor(function () {
     return this._loaderURL;
   }),
-  parameters: describeAccessor(function() {
+  parameters: describeAccessor(function () {
     return this._parameters;
   }),
-  parentAllowsChild: describeAccessor(function() {
+  parentAllowsChild: describeAccessor(function () {
     notImplemented();
   }),
   parentSandboxBridge: describeAccessor(
-    function() {
+    function () {
       notImplemented();
     },
     function(val) {
       notImplemented();
     }
   ),
-  sameDomain: describeAccessor(function() {
+  sameDomain: describeAccessor(function () {
     notImplemented();
   }),
-  sharedEvents: describeAccessor(function() {
+  sharedEvents: describeAccessor(function () {
     notImplemented();
   }),
-  swfVersion: describeAccessor(function() {
+  swfVersion: describeAccessor(function () {
     if (!this._swfVersion)
       throw Error();
 
     return this._swfVersion;
   }),
-  uncaughtErrorEvents: describeAccessor(function() {
+  uncaughtErrorEvents: describeAccessor(function () {
     notImplemented();
   }),
-  url: describeAccessor(function() {
+  url: describeAccessor(function () {
     return this._url;
   }),
-  width: describeAccessor(function() {
+  width: describeAccessor(function () {
     return this._width;
   }),
 
-  getLoaderInfoByDefinition: describeMethod(function() {
+  getLoaderInfoByDefinition: describeMethod(function () {
     notImplemented();
+  }),
+
+  _getSymbolById: describeMethod(function (id) {
+    return this._symbols[id];
   })
 });

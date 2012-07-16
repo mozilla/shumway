@@ -1,7 +1,6 @@
 function Loader(parameters) {
   this.avm1 = parameters.avm1;
   this.avm2 = parameters.avm2;
-  this._dictionary = new ObjDictionary;
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
@@ -114,10 +113,7 @@ Loader.prototype = Object.create(baseProto, {
     notImplemented();
   }),
 
-  _getSymbolById: { value: function (id) {
-    return this._dictionary[id];
-  } },
-  _load: { value: function (data) {
+  _load: describeMethod(function (data) {
     if (Loader.WORKERS_ENABLED) {
       var loader = this;
       var worker = new Worker(Loader.SCRIPT_PATH);
@@ -128,8 +124,8 @@ Loader.prototype = Object.create(baseProto, {
     } else {
       Loader._load(this, data);
     }
-  } },
-  _parse: { value: function (bytes) {
+  }),
+  _parse: describeMethod(function (bytes) {
     var i = 0;
     var dictionary = { };
     var controlTags = [];
@@ -175,13 +171,14 @@ Loader.prototype = Object.create(baseProto, {
         loader._process(null);
       }
     });
-  } },
-  _process: { value: function (data) {
+  }),
+  _process: describeMethod(function (data) {
     if (typeof window === 'undefined') {
       postMessage(data);
     } else {
-      var dictionary = this._dictionary;
       var loaderInfo = this.contentLoaderInfo;
+      var dictionary = loaderInfo._symbols;
+
       var pframes = this._pframes || (this._pframes = []);
 
       if (!this._content) {
@@ -207,6 +204,7 @@ Loader.prototype = Object.create(baseProto, {
         this._content = root;
 
         loaderInfo._as2Context = as2Context;
+
         loaderInfo.dispatchEvent(new Event(Event.INIT));
       } else if (data) {
         if (data.id) {
@@ -223,9 +221,11 @@ Loader.prototype = Object.create(baseProto, {
 
           if (data.symbols) {
             var symbols = data.symbols;
+            var symbolClasses = loaderInfo._symbolClasses;
             var i = 0;
             var sym;
             while (sym = symbols[i++]) {
+              symbolClasses[sym.name] = dictionary[sym.id];
               if (!sym.id) {
                 var documentClass = this.avm2.applicationDomain.getProperty(
                   Multiname.fromSimpleName(sym.name),
@@ -244,7 +244,7 @@ Loader.prototype = Object.create(baseProto, {
         loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
       }
     }
-  } }
+  })
 });
 
 Loader._cast = function cast(tags, dictionary, declare) {
@@ -394,22 +394,6 @@ Loader._cast = function cast(tags, dictionary, declare) {
     }
   }
   return pframes;
-};
-
-function ObjDictionary() {
-  this.promises = this;
-}
-ObjDictionary.prototype = {
-  getPromise: function(objId) {
-    if (!(objId in this.promises)) {
-      var promise = new Promise();
-      this.promises[objId] = promise;
-    }
-    return this.promises[objId];
-  },
-  isPromiseExists: function(objId) {
-    return objId in this.promises;
-  }
 };
 
 if (typeof document !== 'undefined') {
