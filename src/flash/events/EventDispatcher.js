@@ -44,13 +44,14 @@ EventDispatcher.prototype = Object.create(null, {
     }
 
     var listeners = handler.listeners;
-    var index = 0;
-    var n = listeners.length;
-    while (index < n) {
-      var listener = listeners[index];
+    var index = listeners.length;
+    while (index > 0) {
+      var listener = listeners[index - 1];
+
       if (prio < listener.prio)
         break;
-      index++;
+
+      index--;
     }
     listeners.splice(index, 0, { fn: listener, prio: prio });
   }),
