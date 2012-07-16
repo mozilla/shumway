@@ -331,7 +331,7 @@ var Scope = (function () {
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultiname(obj, multiname) {
-  assert(!multiname.isQName(), multiname + " already resolved");
+  assert(!multiname.isQName(), multiname, " already resolved");
 
   obj = Object(obj);
   for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
@@ -345,16 +345,16 @@ function resolveMultiname(obj, multiname) {
 }
 
 function getProperty(obj, multiname) {
-  assert(obj != undefined, "getProperty(" + multiname + ") on undefined");
+  assert(obj != undefined, "getProperty(", multiname, ") on undefined");
   assert(multiname instanceof Multiname);
 
-  if (typeof multiname.name === "number") {
+  var numericName = parseInt(multiname.name);
+  if (!isNaN(numericName)) {
     // Vector, for instance, has a special getter for [].
     if (obj.indexGet) {
-      return obj.indexGet(multiname.name);
+      return obj.indexGet(numericName);
     }
-
-    return obj[multiname.name];
+    return obj[numericName];
   }
 
   var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
@@ -397,13 +397,13 @@ function setProperty(obj, multiname, value) {
   assert(obj);
   assert(multiname instanceof Multiname);
 
-  if (typeof multiname.name === "number") {
+  var numericName = parseInt(multiname.name);
+  if (!isNaN(numericName)) {
     if (obj.indexSet) {
-      obj.indexSet(multiname.name, value);
+      obj.indexSet(numericName, value);
       return;
     }
-
-    obj[multiname.name] = value;
+    obj[numericName] = value;
     return;
   }
 
