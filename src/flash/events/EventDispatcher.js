@@ -9,8 +9,12 @@ EventDispatcher.prototype = Object.create(null, {
     if (typeof listener !== 'function')
       throw ArgumentError();
 
+    if (prio === undefined)
+      prio = 0;
+
     var handlers = useCapture ? this._captureHandlers : this._handlers;
     var handler = handlers[type];
+
     if (!handler) {
       var target = this;
       handler = {
@@ -28,7 +32,7 @@ EventDispatcher.prototype = Object.create(null, {
           var listeners = this.listeners;
           for (var i = 0, n = listeners.length; i < n; i++) {
             var listener = listeners[i];
-            listener(evt);
+            listener.fn(evt);
           }
         }
       };
@@ -38,7 +42,17 @@ EventDispatcher.prototype = Object.create(null, {
 
       handlers[type] = handler;
     }
-    handler.listeners.push(listener);
+
+    var listeners = handler.listeners;
+    var index = 0;
+    var n = listeners.length;
+    while (index < n) {
+      var listener = listeners[index];
+      if (prio < listener.prio)
+        break;
+      index++;
+    }
+    listeners.splice(index, 0, { fn: listener, prio: prio });
   }),
   ctor: describeMethod(function (target) {
 
