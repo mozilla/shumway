@@ -79,6 +79,7 @@ var Verifier = (function(abc) {
    */
   var State = (function() {
     var id = 0;
+
     function state() {
       this.id = id++;
 
@@ -110,45 +111,41 @@ var Verifier = (function(abc) {
     state.prototype.equals = function(other) {
 
       //TODO update this function for Reference types
-
       if ((this.stack.length != other.stack.length) ||
-        (this.scope.length != other.scope.length) ||
-        (this.local.length != other.local.length)) {
+          (this.scope.length != other.scope.length) ||
+          (this.local.length != other.local.length)) {
         return false;
       }
 
-      for (var i = this.stack.length - 1; i >= 0; i--) {
-        if (this.stack[i] !== other.stack[i]) {
+      if (!arraysEquals(this.stack, other.stack) ||
+          !arraysEquals(this.scope, other.scope) ||
+          !arraysEquals(this.local, other.local)) {
           return false;
-        }
-      }
-
-      for (var i = this.scope.length - 1; i >= 0; i--) {
-        if (this.scope[i] !== other.scope[i]) {
-          return false;
-        }
-      }
-
-
-      for (var i = this.local.length - 1; i >= 0; i--) {
-        if (this.local[i] !== other.local[i]) {
-          return false;
-        }
       }
 
       return true;
     };
+
+    function arraysEquals(a, b) {
+      for (var i = a.length - 1; i >= 0; i--) {
+        if (a[i] !== b[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
         a[i] = a[i].merge(b[i]);
       }
     }
-    state.prototype.merge = function (other) {
+    state.prototype.merge = function(other) {
       mergeArrays(this.local, other.local);
       mergeArrays(this.stack, other.stack);
       mergeArrays(this.scope, other.scope);
     }
-    
+
     return state;
   })();
 
@@ -195,15 +192,6 @@ var Verifier = (function(abc) {
 
       worklist.push(blocks[0]);
 
-      function inWorklist(block) {
-        for (var i = 0; i < worklist.length; i++) {
-          if (worklist[i] === block) {
-            return true;
-          }
-        }
-        return false;
-      }
-
       while (worklist.length) {
         var block = worklist.shift();
         var currEntryState = block.entryState;
@@ -214,7 +202,7 @@ var Verifier = (function(abc) {
 
         block.succs.forEach(function (successor) {
 
-          if (inWorklist(successor)) { // the block is already in the worklist
+          if (worklist.indexOf(successor) !== -1) { // the block is already in the worklist
             writer.writeLn("Forward Merged Block: " + successor.bid + " " +
                            currExitState.toString() + " with " + successor.entryState.toString());
             // merge existing item entry state with current block exit state
@@ -224,12 +212,12 @@ var Verifier = (function(abc) {
           }
 
           // backward branch scenario
-          if(successor.entryState) { // test wheter the successor was already processed or not
+          if (successor.entryState) { // test wheter the successor was already processed or not
             // if successor processed, but current exit state differs from it's entry state
             // then merge the states and add it in the work list
-            if(!successor.entryState.equals(currExitState)) {
+            if (!successor.entryState.equals(currExitState)) {
               writer.writeLn("Backward Merged Block: " + successor.bid + " " +
-                           currExitState.toString() + " with " + successor.entryState.toString());
+                              currExitState.toString() + " with " + successor.entryState.toString());
               successor.entryState.merge(currExitState);
               worklist.push(successor);
 
@@ -737,16 +725,12 @@ var Verifier = (function(abc) {
           }
           break;
         case OP_subtract:
-          notImplemented(bc);
-          break;
         case OP_multiply:
-          notImplemented(bc);
-          break;
         case OP_divide:
-          notImplemented(bc);
-          break;
         case OP_modulo:
-          notImplemented(bc);
+          pop();
+          pop();
+          push(Type.Number);
           break;
         case OP_bitand:
         case OP_bitor:
@@ -836,8 +820,8 @@ var Verifier = (function(abc) {
       }
       writer.leave("}");
       writer.enter("verifiedBlock: " + block.bid +
-                ", range: [" + block.position + ", " + block.end.position +
-                "], exitState: " + state.toString());
+                   ", range: [" + block.position + ", " + block.end.position +
+                   "], exitState: " + state.toString());
     };
 
     return verification;
