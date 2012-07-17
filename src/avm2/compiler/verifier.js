@@ -109,24 +109,18 @@ var Verifier = (function(abc) {
              ", $[" + this.scope.join(", ") + "]>";
     };
     state.prototype.equals = function(other) {
-
       //TODO update this function for Reference types
-      if ((this.stack.length != other.stack.length) ||
-          (this.scope.length != other.scope.length) ||
-          (this.local.length != other.local.length)) {
-        return false;
-      }
-
       if (!arraysEquals(this.stack, other.stack) ||
           !arraysEquals(this.scope, other.scope) ||
           !arraysEquals(this.local, other.local)) {
           return false;
       }
-
       return true;
     };
-
     function arraysEquals(a, b) {
+      if(a.length != b.length) {
+        return false;
+      }
       for (var i = a.length - 1; i >= 0; i--) {
         if (a[i] !== b[i]) {
           return false;
@@ -134,7 +128,6 @@ var Verifier = (function(abc) {
       }
       return true;
     }
-
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
         a[i] = a[i].merge(b[i]);
