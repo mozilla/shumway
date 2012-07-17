@@ -1,4 +1,3 @@
-
 ## The Shumway ActionScript Virtual Machine 2
 
 ## Overview
@@ -20,7 +19,7 @@ This means that many of new ActionScript 3 features such as: Classes, Typed Vect
 
 ## High-Level Overview
 
-![Shumway AVM2 Overview](docs/img/high-level.jpg)
+![Shumway AVM2 Overview](https://github.com/mozilla/shumway/raw/master/src/avm2/docs/img/high-level.jpg)
 
 ### 1 - ABC File Format & Execution Modes
 
@@ -125,7 +124,7 @@ Our example above becomes:
 
 and similarly, for named property accesses:
 
-    obj["ns2$p"] = obj.slot["ns2$p"]("123");
+    obj["ns2$p"] = obj.slotTypes["ns2$p"]("123");
 
 If `obj` happens to be an object without a trait named `"p"` then no coercion is needed.
 If we could prove that `obj` is always an object with a integer trait `p` then we could optimize both property accesses as:
@@ -143,7 +142,7 @@ If the property is found but the script has not been executed, the script is exe
 A `.swf` file generated from the Flash authoring tool can contain multiple `.abc` files. The `.swf` file indicates when these `.abc` files should be executed.
 Furthermore, a `.swf` file can also load other `.swf` files and organize them into something called [Application & Security Domains](http://www.senocular.com/flash/tutorials/contentdomains/?page=1).
 
-![Script Hierarchy](docs/img/tree.jpg)
+![Script Hierarchy](https://github.com/mozilla/shumway/raw/master/src/avm2/docs/img/tree.jpg)
 
 Because of ActionScript's complex scoping semantics, we can't reflect JavaScript's scope chain so instead we implement our own scope chain manually using a linked list.
 
@@ -195,7 +194,7 @@ correctly points to `Pb`.
 AS3 visiable properties are always prefixed with a namespace, in this case the `public` namespace, so there is no way for AS3
 code to get a reference to the `traitsPrototype`.
 
-![Shumway AVM2 Overview](docs/img/class.jpg)
+![Shumway AVM2 Overview](https://github.com/mozilla/shumway/raw/master/src/avm2/docs/img/class.jpg)
 
 ##### 6 - Control Flow Graph (CFG) Restructuring
 
