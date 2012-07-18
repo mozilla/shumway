@@ -495,7 +495,9 @@ var Runtime = (function () {
   function runtime(abc) {
     this.abc = abc;
     this.domain = abc.domain;
-    this.compiler = new Compiler(abc);
+    if (this.domain.mode !== ALWAYS_INTERPRET) {
+      this.compiler = new Compiler(abc);
+    }
     this.interpreter = new Interpreter(abc);
 
     /**
@@ -575,7 +577,7 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var body = this.compiler.compileMethod(this.domain, mi, hasDefaults, scope);
+    var body = this.compiler.compileMethod(mi, hasDefaults, scope);
 
     var parameters = mi.parameters.map(function (p) {
       return p.name;

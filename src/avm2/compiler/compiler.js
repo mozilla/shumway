@@ -1290,12 +1290,12 @@ var Compiler = (function () {
     return compilation;
   })();
 
-  compiler.prototype.compileMethod = function compileMethod(domain, methodInfo, hasDefaults, scope) {
+  compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
     assert(methodInfo.analysis);
     // methodInfo.analysis.trace(new IndentingWriter());
 
     if (enableVerifier.value) {
-      this.verifier.verifyMethod(domain, methodInfo, scope);
+      this.verifier.verifyMethod(methodInfo, scope);
     }
 
     Timer.start("compiler");
