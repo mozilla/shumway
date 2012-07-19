@@ -10,6 +10,8 @@ var Control = (function () {
   const EXIT = 8;
   const BREAK = 9;
   const CONTINUE = 10;
+  const TRY = 11;
+  const CATCH = 12;
 
   function Seq(body) {
     this.kind = SEQ;
@@ -187,6 +189,39 @@ var Control = (function () {
     }
   };
 
+  function Try(body, catches) {
+    this.kind = TRY;
+    this.body = body;
+    this.catches = catches;
+  }
+
+  Try.prototype = {
+    trace: function (writer) {
+      writer.enter("try {");
+      this.body.trace(writer);
+      for (var i = 0, j = this.catches.length; i < j; i++) {
+        this.catches[i].trace(writer);
+      }
+      writer.leave("}");
+    }
+  };
+
+  function Catch(varName, typeName, body) {
+    this.kind = CATCH;
+    this.varName = varName;
+    this.typeName = typeName;
+    this.body = body;
+  }
+
+  Catch.prototype = {
+    trace: function (writer) {
+      writer.outdent();
+      writer.enter("} catch (" + (this.varName || "e") +
+                   (this.typeName ? (" : " + this.typeName) : "") + ") {");
+      this.body.trace(writer);
+    }
+  };
+
   return {
     SEQ: SEQ,
     LOOP: LOOP,
@@ -198,6 +233,8 @@ var Control = (function () {
     EXIT: EXIT,
     BREAK: BREAK,
     CONTINUE: CONTINUE,
+    TRY: TRY,
+    CATCH: CATCH,
 
     Seq: Seq,
     Loop: Loop,
@@ -208,7 +245,9 @@ var Control = (function () {
     LabelSwitch: LabelSwitch,
     Exit: Exit,
     Break: Break,
-    Continue: Continue
+    Continue: Continue,
+    Try: Try,
+    Catch: Catch
   };
 
 })();
@@ -219,6 +258,13 @@ var Bytecode = (function () {
     var op = code.readU8();
     this.op = op;
     this.originalPosition = code.position;
+
+    var opdesc = opcodeTable[op];
+    if (!opdesc) {
+      unexpected("Unknown Op " + op);
+    }
+
+    this.canThrow = opdesc.canThrow;
 
     var i, n;
 
@@ -233,11 +279,6 @@ var Bytecode = (function () {
       this.offsets.push(defaultOffset);
       break;
     default:
-      var opdesc = opcodeTable[op];
-      if (!opdesc) {
-        unexpected("Unknown Op " + op);
-      }
-
       for (i = 0, n = opdesc.operands.length; i < n; i++) {
         var operand = opdesc.operands[i];
 
@@ -275,11 +316,11 @@ var Bytecode = (function () {
 
       this.bid = id;
 
-      /* CFG edges. */
+      // CFG edges.
       this.succs = [];
       this.preds = [];
 
-      /* Dominance relation edges. */
+      // Dominance relation edges.
       this.dominatees = [];
 
       return id + 1;
@@ -462,10 +503,8 @@ var Analysis = (function () {
   }
 
   function Analysis(method, options) {
-    /**
-     * Normalize the code stream. The other analyses are run by the user
-     * on demand.
-     */
+    // Normalize the code stream. The other analyses are run by the user
+    // on demand.
     this.method = method;
     this.options = options || {};
     if (this.method.code) {
@@ -475,10 +514,8 @@ var Analysis = (function () {
 
   Analysis.prototype = {
     normalizeBytecode: function normalizeBytecode() {
-      /**
-       * Internal bytecode used for bogus jumps. They should be emitted as throws
-       * so that if control flow ever reaches them, we crash.
-       */
+      // Internal bytecode used for bogus jumps. They should be emitted as throws
+      // so that if control flow ever reaches them, we crash.
       function getInvalidTarget(cache, offset) {
         if (cache && cache[offset]) {
           return cache[offset];
@@ -491,9 +528,9 @@ var Analysis = (function () {
         return code;
       }
 
-      /* This array is sparse, indexed by offset. */
+      // This array is sparse, indexed by offset.
       var bytecodesOffset = [];
-      /* This array is dense. */
+      // This array is dense.
       var bytecodes = [];
       var codeStream = new AbcStream(this.method.code);
       var code;
@@ -502,7 +539,7 @@ var Analysis = (function () {
         var pos = codeStream.position;
         code = new Bytecode(codeStream);
 
-        /* Get absolute offsets for normalization to new indices below. */
+        // Get absolute offsets for normalization to new indices below.
         switch (code.op) {
         case OP_nop:
         case OP_label:
@@ -538,7 +575,7 @@ var Analysis = (function () {
         default:;
         }
 
-        /* Cache the position in the bytecode array. */
+        // Cache the position in the bytecode array.
         code.position = bytecodes.length;
         bytecodesOffset[pos] = bytecodes.length;
         bytecodes.push(code);
@@ -586,9 +623,7 @@ var Analysis = (function () {
 
       this.bytecodes = bytecodes;
 
-      /**
-       * Normalize exceptions table to use new offsets.
-       */
+      // Normalize exceptions table to use new offsets.
       var exceptions = this.method.exceptions;
       for (var i = 0, j = exceptions.length; i < j; i++) {
         var ex = exceptions[i];
@@ -596,15 +631,29 @@ var Analysis = (function () {
         ex.end = bytecodesOffset[ex.end];
         ex.offset = bytecodesOffset[ex.target];
         ex.target = bytecodes[ex.offset];
+        ex.target.exception = ex;
       }
     },
 
     detectBasicBlocks: function detectBasicBlocks() {
       var bytecodes = this.bytecodes;
+      var exceptions = this.method.exceptions;
+      var hasExceptions = exceptions.length > 0;
       var blockById = {};
       var code;
       var pc, end;
       var id = 0;
+
+      function tryTargets(block) {
+        var targets = [];
+        for (var i = 0, j = exceptions.length; i < j; i++) {
+          var ex = exceptions[i];
+          if (block.position >= ex.start && block.end.position <= ex.end) {
+            targets.push(ex.target);
+          }
+        }
+        return targets;
+      }
 
       id = bytecodes[0].makeBlockHead(id);
       for (pc = 0, end = bytecodes.length - 1; pc < end; pc++) {
@@ -687,6 +736,21 @@ var Analysis = (function () {
       default:;
       }
 
+      // Mark exceptions.
+      if (hasExceptions) {
+        for (var i = 0, j = exceptions.length; i < j; i++) {
+          var ex = exceptions[i];
+          var tryStart = bytecodes[ex.start];
+          var afterTry = bytecodes[ex.end + 1];
+
+          id = tryStart.makeBlockHead(id);
+          if (afterTry) {
+            id = afterTry.makeBlockHead(id);
+          }
+          id = ex.target.makeBlockHead(id);
+        }
+      }
+
       var currentBlock = bytecodes[0];
       for (pc = 1, end = bytecodes.length; pc < end; pc++) {
         if (!bytecodes[pc].succs) {
@@ -740,6 +804,12 @@ var Analysis = (function () {
           currentBlock.succs.push(nextBlock);
         }
 
+        if (hasExceptions) {
+          var targets = tryTargets(currentBlock);
+          currentBlock.hasCatches = targets.length > 0;
+          currentBlock.succs.push.apply(currentBlock.succs, targets);
+        }
+
         currentBlock = nextBlock;
       }
       blockById[currentBlock.bid] = currentBlock;
@@ -766,7 +836,7 @@ var Analysis = (function () {
     normalizeReachableBlocks: function normalizeReachableBlocks() {
       var root = this.bytecodes[0];
 
-      /* The root must not have preds! */
+      // The root must not have preds!
       assert(root.preds.length === 0);
 
       const ONCE = 1;
@@ -778,7 +848,6 @@ var Analysis = (function () {
       var ancestors = {};
       var worklist = [root];
       var node;
-      var level = root.level || 0;
 
       ancestors[root.bid] = true;
       while (node = worklist.top()) {
@@ -787,7 +856,7 @@ var Analysis = (function () {
             visited[node.bid] = BUNCH_OF_TIMES;
             blocks.push(node);
 
-            /* Doubly link reachable blocks. */
+            // Doubly link reachable blocks.
             var succs = node.succs;
             for (var i = 0, j = succs.length; i < j; i++) {
               succs[i].preds.push(node);
@@ -805,9 +874,6 @@ var Analysis = (function () {
         var succs = node.succs;
         for (var i = 0, j = succs.length; i < j; i++) {
           var s = succs[i];
-          if (s.level < level) {
-            continue;
-          }
 
           if (ancestors[s.bid]) {
             if (!node.spbacks) {
@@ -822,13 +888,13 @@ var Analysis = (function () {
       this.blocks = blocks.reverse();
     },
 
-    /**
-     * Calculate the dominance relation iteratively.
-     *
-     * Algorithm is from [1].
-     *
-     * [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
-     */
+    //
+    // Calculate the dominance relation iteratively.
+    //
+    // Algorithm is from [1].
+    //
+    // [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
+    //
     computeDominance: function computeDominance() {
       function intersectDominators(doms, b1, b2) {
         var finger1 = b1;
@@ -849,7 +915,7 @@ var Analysis = (function () {
       var doms = new Array(n);
       doms[0] =  0;
 
-      /* Blocks must be given to us in reverse postorder. */
+      // Blocks must be given to us in reverse postorder.
       var rpo = {};
       for (var b = 0; b < n; b++) {
         rpo[blocks[b].bid] = b;
@@ -859,13 +925,13 @@ var Analysis = (function () {
       while (changed) {
         changed = false;
 
-        /* Iterate all blocks but the starting block. */
+        // Iterate all blocks but the starting block.
         for (var b = 1; b < n; b++) {
           var preds = blocks[b].preds;
           var j = preds.length;
 
           var newIdom = rpo[preds[0].bid];
-          /* Because 0 is falsy, have to use |in| here. */
+          // Because 0 is falsy, have to use |in| here.
           if (!(newIdom in doms)) {
             for (var i = 1; i < j; i++) {
               newIdom = rpo[preds[i].bid];
@@ -899,14 +965,14 @@ var Analysis = (function () {
         var block = blocks[b];
         var idom = blocks[doms[b]];
 
-        /* Store the immediate dominator. */
+        // Store the immediate dominator.
         block.dominator = idom;
         idom.dominatees.push(block);
 
         block.npreds = block.preds.length;
       }
 
-      /* Assign dominator tree levels. */
+      // Assign dominator tree levels.
       var worklist = [blocks[0]];
       blocks[0].level || (blocks[0].level = 0);
       while (block = worklist.shift()) {
@@ -945,11 +1011,6 @@ var Analysis = (function () {
     },
 
     analyzeControlFlow: function analyzeControlFlow() {
-      /* TODO: Exceptions aren't supported. */
-      if (this.method.exceptions.length > 0) {
-        return false;
-      }
-
       assert(this.bytecodes);
       this.detectBasicBlocks();
       this.normalizeReachableBlocks();
@@ -967,10 +1028,10 @@ var Analysis = (function () {
 
       const BlockSet = this.BlockSet;
 
-      /**
-       * Find all SCCs at or below the level of some root that are not already
-       * natural loops.
-       */
+      //
+      // Find all SCCs at or below the level of some root that are not already
+      // natural loops.
+      //
       function findSCCs(root) {
         var preorderId = 1;
         var preorder = {};
@@ -1115,6 +1176,7 @@ var Analysis = (function () {
     },
 
     induceControlTree: function induceControlTree() {
+      const hasExceptions = this.method.exceptions.length > 0;
       const BlockSet = this.BlockSet;
 
       function maybe(exit, save) {
@@ -1126,9 +1188,61 @@ var Analysis = (function () {
         return exit;
       }
 
-      function induce(head, exit, save,
-                      loop, inLoopHead,
-                      lookupSwitch, fallthrough) {
+      var indent = "";
+
+      //
+      // Based on emscripten's relooper algorithm.
+      // The algorithm is O(|E|) -- it visits every edge in the CFG once.
+      //
+      // Loop header detection is done separately, using an overlaid DJ graph.
+      //
+      // For a vertex v, let succ(v) denote its non-exceptional successors.
+      //
+      // Basic blocks can be restructured into 4 types of nodes:
+      //
+      //  1. Switch. |succ(v) > 2|
+      //  2. If.     |succ(v) = 2|
+      //  3. Plain.  |succ(v) = 1|
+      //  4. Loop.   marked as a loop header.
+      //
+      // The idea is fairly simple: start at a set of heads, induce all its
+      // successors recursively in that head's context, discharging the edges
+      // that we take. If a vertex no longer has any incoming edges when we
+      // visit it, emit the vertex, else emit a label marking that we need to
+      // go to that vertex and mark that vertex as an exit in the current
+      // context.
+      //
+      // The algorithm starts at the root, the first instruction.
+      //
+      // Exceptions are restructured via rewriting. AVM bytecode stores try
+      // blocks as a range of bytecode positions. Our basic blocks respects
+      // these range boundaries. Each basic block which is in one or more of
+      // such exception ranges have exceptional successors (jumps) to all
+      // matching catch blocks. We then restructure the entire basic block as
+      // a try and have the restructuring take care of the jumps to the actual
+      // catch blocks. Finally blocks fall out naturally, but are not emitted
+      // as JavaScript |finally|.
+      //
+      // Implementation Notes
+      // --------------------
+      //
+      // We discharge edges by keeping a property |npreds| on each block that
+      // says how many incoming edges we have _not yet_ discharged. We
+      // discharge edges as we recur on the tree, but in case we can't emit a
+      // block (i.e. its |npreds| > 0), we need to restore its |npreds| before
+      // we pop out. We do this via a |save| proeprty on each block that says
+      // how many predecessors we should restore.
+      //
+      // |exit| is the set of exits in the current context, i.e. the set of
+      // vertices that we visited but have not yet discharged every incoming
+      // edge.
+      //
+      // |save| is a mapping of block id -> save numbers.
+      //
+      // When setting an exit in the exit set, the save number must be set for
+      // it also in the save set.
+      //
+      function induce(head, exit, save, loop, inLoopHead, lookupSwitch, fallthrough) {
         var v = [];
 
         while (head) {
@@ -1155,10 +1269,8 @@ var Analysis = (function () {
                   }
 
                   if (h.npreds - lheadsave > 0) {
-                    /**
-                     * Don't even enter the loop if we're just going to exit
-                     * anyways.
-                     */
+                    // Don't even enter the loop if we're just going to exit
+                    // anyways.
                     h.npreds -= head.save[bid];
                     h.save = head.save[bid];
                     c = induce(h, exit2, save2, loop);
@@ -1183,13 +1295,13 @@ var Analysis = (function () {
               }
             }
 
+            var pruned = [];
             var k = 0;
             for (var i = 0, j = cases.length; i < j; i++) {
               var c = cases[i];
               var bid = c.label;
               if (exit2.get(bid) && heads[i].npreds - save2[bid] > 0) {
-                save[bid] = (save[bid] || 0) + head.save[bid];
-                exit.set(bid);
+                pruned.push(bid);
               } else {
                 cases[k++] = c;
               }
@@ -1197,6 +1309,11 @@ var Analysis = (function () {
             cases.length = k;
 
             if (cases.length === 0) {
+              for (var i = 0, j = pruned.length; i < j; i++) {
+                var bid = pruned[i];
+                save[bid] = (save[bid] || 0) + save2[bid];
+                exit.set(bid);
+              }
               break;
             }
 
@@ -1207,6 +1324,7 @@ var Analysis = (function () {
           }
 
           var h, bid;
+
           if (head.count === 1) {
             h = head.choose();
             bid = h.bid;
@@ -1274,11 +1392,38 @@ var Analysis = (function () {
             }
           }
 
-          var succs = h.succs;
-          if (h.end.op === OP_lookupswitch) {
-            var exit2 = new BlockSet();
-            var save2 = {};
+          var sv;
+          var succs;
+          var exit2 = new BlockSet();
+          var save2 = {};
 
+          if (hasExceptions && h.hasCatches) {
+            var allSuccs = h.succs;
+            var catchSuccs = [];
+            succs = [];
+
+            for (var i = 0, j = allSuccs.length; i < j; i++) {
+              var s = allSuccs[i];
+              (s.exception ? catchSuccs : succs).push(s);
+            }
+
+            var catches = [];
+            for (var i = 0, j = catchSuccs.length; i < j; i++) {
+              var t = catchSuccs[i];
+              t.npreds -= 1;
+              t.save = 1;
+              var c = induce(t, exit2, save2, loop);
+              var ex = t.exception;
+              catches.push(new Control.Catch(ex.varName, ex.typeName, c));
+            }
+
+            sv = new Control.Try(h, catches);
+          } else {
+            succs = h.succs;
+            sv = h;
+          }
+
+          if (h.end.op === OP_lookupswitch) {
             var cases = [];
             var targets = h.end.targets;
 
@@ -1290,15 +1435,12 @@ var Analysis = (function () {
               cases.unshift(new Control.Case(i, c));
             }
 
-            /* The last case is the default case. */
+            // The last case is the default case.
             cases.top().index = undefined;
 
-            v.push(new Control.Switch(h, cases));
+            v.push(new Control.Switch(sv, cases));
             head = maybe(exit2, save2);
           } else if (succs.length === 2) {
-            var exit2 = new BlockSet();
-            var save2 = {};
-
             var branch1 = succs[0];
             var branch2 = succs[1];
 
@@ -1310,15 +1452,30 @@ var Analysis = (function () {
             branch2.save = 1;
             var c2 = induce(branch2, exit2, save2, loop);
 
-            v.push(new Control.If(h, c1, c2));
+            v.push(new Control.If(sv, c1, c2));
             head = maybe(exit2, save2);
           } else {
-            v.push(h);
-            head = succs[0];
-            if (head) {
-              head.npreds -= 1;
-              head.save = 1;
+            c = succs[0];
+
+            if (hasExceptions && h.hasCatches) {
+              if (sv.body.kind === Control.SEQ) {
+                sv.body.push(new Control.Exit(c.bid));
+              } else {
+                sv.body = new Control.Seq([sv.body, new Control.Exit(c.bid)]);
+              }
+
+              save2[c.bid] = (save2[c.bid] || 0) + 1;
+              exit2.set(c.bid);
+              head = maybe(exit2, save2);
+            } else {
+              if (c) {
+                c.npreds -= 1;
+                c.save = 1;
+              }
+              head = c;
             }
+
+            v.push(sv);
           }
         }
 
@@ -1455,9 +1612,9 @@ var Analysis = (function () {
       return true;
     },
 
-    /**
-     * Prints a normalized bytecode along with metainfo.
-     */
+    //
+    // Prints a normalized bytecode along with metainfo.
+    //
     trace: function (writer) {
       function bid(node) {
         return node.bid;
