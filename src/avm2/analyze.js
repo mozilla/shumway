@@ -1457,22 +1457,25 @@ var Analysis = (function () {
           } else {
             c = succs[0];
 
-            if (hasExceptions && h.hasCatches) {
-              if (sv.body.kind === Control.SEQ) {
-                sv.body.push(new Control.Exit(c.bid));
-              } else {
-                sv.body = new Control.Seq([sv.body, new Control.Exit(c.bid)]);
-              }
+            if (c) {
+              if (hasExceptions && h.hasCatches) {
+                if (sv.body.kind === Control.SEQ) {
+                  sv.body.push(new Control.Exit(c.bid));
+                } else {
+                  sv.body = new Control.Seq([sv.body, new Control.Exit(c.bid)]);
+                }
 
-              save2[c.bid] = (save2[c.bid] || 0) + 1;
-              exit2.set(c.bid);
-              head = maybe(exit2, save2);
-            } else {
-              if (c) {
+                save2[c.bid] = (save2[c.bid] || 0) + 1;
+                exit2.set(c.bid);
+
+                head = maybe(exit2, save2);
+              } else {
                 c.npreds -= 1;
                 c.save = 1;
+                head = c;
               }
-              head = c;
+            } else {
+              head = (hasExceptions && h.hasCatches) ? maybe(exit2, save2) : c;
             }
 
             v.push(sv);
