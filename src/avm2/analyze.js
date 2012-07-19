@@ -48,17 +48,21 @@ var Control = (function () {
     }
   };
 
-  function If(cond, then, els) {
+  function If(cond, then, els, nothingThrownLabel) {
     this.kind = IF;
     this.cond = cond;
     this.then = then;
     this.else = els;
     this.negated = false;
+    this.nothingThrownLabel = nothingThrownLabel;
   }
 
   If.prototype = {
     trace: function (writer) {
       this.cond.trace(writer);
+      if (this.nothingThrownLabel) {
+        writer.enter("if (label is " + this.nothingThrownLabel + ") {");
+      }
       writer.enter("if" + (this.negated ? " not" : "") + " {");
       this.then && this.then.trace(writer);
       if (this.else) {
@@ -67,6 +71,9 @@ var Control = (function () {
         this.else.trace(writer);
       }
       writer.leave("}");
+      if (this.nothingThrownLabel) {
+        writer.leave("}");
+      }
     }
   };
 
@@ -89,20 +96,27 @@ var Control = (function () {
     }
   };
 
-  function Switch(determinant, cases) {
+  function Switch(determinant, cases, nothingThrownLabel) {
     this.kind = SWITCH;
     this.determinant = determinant;
     this.cases = cases;
+    this.nothingThrownLabel = nothingThrownLabel;
   }
 
   Switch.prototype = {
     trace: function (writer) {
+      if (this.nothingThrownLabel) {
+        writer.enter("if (label is " + this.nothingThrownLabel + ") {");
+      }
       this.determinant.trace(writer);
       writer.writeLn("switch {");
       for (var i = 0, j = this.cases.length; i < j; i++) {
         this.cases[i].trace(writer);
       }
       writer.writeLn("}");
+      if (this.nothingThrownLabel) {
+        writer.leave("}");
+      }
     }
   };
 
@@ -1188,7 +1202,7 @@ var Analysis = (function () {
         return exit;
       }
 
-      var indent = "";
+      var exceptionId = this.blocks.length;
 
       //
       // Based on emscripten's relooper algorithm.
@@ -1417,7 +1431,7 @@ var Analysis = (function () {
               catches.push(new Control.Catch(ex.varName, ex.typeName, c));
             }
 
-            sv = new Control.Try(h, catches);
+            sv = new Control.Try(new Control.Seq([h]), catches);
           } else {
             succs = h.succs;
             sv = h;
@@ -1438,7 +1452,13 @@ var Analysis = (function () {
             // The last case is the default case.
             cases.top().index = undefined;
 
-            v.push(new Control.Switch(sv, cases));
+            if (hasExceptions && h.hasCatches) {
+              sv.body.body.push(new Control.Exit(exceptionId));
+              sv = new Control.Switch(sv, cases, exceptionId++);
+            } else {
+              sv = new Control.Switch(sv, cases);
+            }
+
             head = maybe(exit2, save2);
           } else if (succs.length === 2) {
             var branch1 = succs[0];
@@ -1452,19 +1472,20 @@ var Analysis = (function () {
             branch2.save = 1;
             var c2 = induce(branch2, exit2, save2, loop);
 
-            v.push(new Control.If(sv, c1, c2));
+            if (hasExceptions && h.hasCatches) {
+              sv.body.body.push(new Control.Exit(exceptionId));
+              sv = new Control.If(sv, c1, c2, exceptionId++);
+            } else {
+              sv = new Control.If(sv, c1, c2);
+            }
+
             head = maybe(exit2, save2);
           } else {
             c = succs[0];
 
             if (c) {
               if (hasExceptions && h.hasCatches) {
-                if (sv.body.kind === Control.SEQ) {
-                  sv.body.push(new Control.Exit(c.bid));
-                } else {
-                  sv.body = new Control.Seq([sv.body, new Control.Exit(c.bid)]);
-                }
-
+                sv.body.body.push(new Control.Exit(c.bid));
                 save2[c.bid] = (save2[c.bid] || 0) + 1;
                 exit2.set(c.bid);
 
@@ -1477,10 +1498,11 @@ var Analysis = (function () {
             } else {
               head = (hasExceptions && h.hasCatches) ? maybe(exit2, save2) : c;
             }
-
-            v.push(sv);
           }
+
+          v.push(sv);
         }
+
 
         if (v.length > 1) {
           return new Control.Seq(v);
@@ -1563,6 +1585,7 @@ var Analysis = (function () {
         case Control.EXIT:
           if (exit && exit.kind === Control.LABEL_SWITCH) {
             if (!(node.label in exit.labelMap)) {
+              // -1 is a sentinel value to kill the label register.
               node.label = -1;
             }
             return node;
