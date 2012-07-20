@@ -794,10 +794,6 @@ var Compiler = (function () {
         return slowPath;
       }
 
-      function setProperty(obj, multiname, value) {
-        setProperty(obj, multiname, value, null);
-      }
-
       function setProperty(obj, multiname, value, propertyType) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
 
