@@ -739,14 +739,21 @@ var Compiler = (function () {
         }
       }
 
-      function expression(operator) {
+      function expression(operator, intPlease) {
         var a, b;
         if (operator.isBinary()) {
           b = state.stack.pop();
           a = state.stack.pop();
+          if (intPlease) {
+            a = asInt32(a);
+            b = asInt32(b);
+          }
           push(new BinaryExpression(operator.name, a, b));
         } else {
           a = state.stack.pop();
+          if (intPlease) {
+            a = asInt32(a);
+          }
           push(new UnaryExpression(operator.name, a));
         }
       }
@@ -1243,10 +1250,12 @@ var Compiler = (function () {
           break;
         case OP_in:             notImplemented(); break;
         case OP_increment_i:
-          push(binary(Operator.ADD, asInt32(state.stack.pop()), constant(1)));
+          push(constant(1));
+          expression(Operator.ADD, true);
           break;
         case OP_decrement_i:
-          push(binary(Operator.SUB, asInt32(state.stack.pop()), constant(1)));
+          push(constant(1));
+          expression(Operator.SUB, true);
           break;
         case OP_inclocal_i:
           emit(new UpdateExpression("++", asInt32(local[bc.index])));
@@ -1254,18 +1263,10 @@ var Compiler = (function () {
         case OP_declocal_i:
           emit(new UpdateExpression("--", asInt32(local[bc.index])));
           break;
-        case OP_negate_i:
-          emit(new UnaryExpression(Operator.NEG.name, asInt32(state.stack.pop())));
-          break;
-        case OP_add_i:
-          emit(binary(Operator.ADD, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
-          break;
-        case OP_subtract_i:
-          emit(binary(Operator.SUB, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
-          break;
-        case OP_multiply_i:
-          emit(binary(Operator.MUL, asInt32(state.stack.pop()), asInt32(state.stack.pop())));
-          break;
+        case OP_negate_i:       expression(Operator.NEG, true); break;
+        case OP_add_i:          expression(Operator.ADD, true); break;
+        case OP_subtract_i:     expression(Operator.SUB, true); break;
+        case OP_multiply_i:     expression(Operator.MUL, true); break;
         case OP_getlocal0:
         case OP_getlocal1:
         case OP_getlocal2:
