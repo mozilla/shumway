@@ -673,7 +673,7 @@ var Compiler = (function () {
 
         catches.push(new CatchClause(exceptionName, null, cr.node));
         state = cr.state;
-      });
+      }, this);
 
       if (br.condition) {
       }
