@@ -148,6 +148,8 @@
       }
       var state = getState();
       enableVerifier.value = state.chkVerifier;
+      enableOpt.value = state.chkOptimizations;
+
       function setState(state) {
         document.cookie = JSON.stringify(state);
       }
@@ -159,6 +161,7 @@
       Sys Compiler: <input type="checkbox" id="chkSysCompiler" value="" title="Enables the compiler for the System domain."/>
       App Compiler: <input type="checkbox" id="chkAppCompiler" value="" title="Enables the compiler for the Application domain."/>
       Verifier: <input type="checkbox" id="chkVerifier" value="" />
+      Optimizations: <input type="checkbox" id="chkOptimizations" value="" />
     </div>
 
     <script>
