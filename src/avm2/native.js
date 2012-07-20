@@ -226,7 +226,7 @@ const natives = (function () {
     c.nativeMethods = m;
     c.nativeStatics = String;
     c.isInstance = function (value) {
-      return typeof value.valueOf() === "string";
+      return value !== null && value !== undefined && typeof value.valueOf() === "string";
     };
 
     return c;
@@ -336,7 +336,7 @@ const natives = (function () {
     c.nativeMethods = Number.prototype;
     c.defaultValue = Number(0);
     c.isInstance = function (value) {
-      return typeof value.valueOf() === "number";
+      return value !== null && value !== undefined && typeof value.valueOf() === "number";
     };
     c.coerce = Number;
     return c;
