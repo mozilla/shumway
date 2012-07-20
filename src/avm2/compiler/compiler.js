@@ -667,7 +667,7 @@ var Compiler = (function () {
           var type = this.compiler.abc.domain.getProperty(x.typeName, true, true);
           var checkType = call(property(constant(type), "isInstance"), [exceptionName]);
           var rethrow = new ThrowStatement(exceptionName);
-          var checkAndRethrow = new IfStatement(new UnaryExpression(Operator.NEG.name, checkType), rethrow, null);
+          var checkAndRethrow = new IfStatement(new UnaryExpression(Operator.FALSE.name, checkType), rethrow, null);
           cr.node.body.unshift(checkAndRethrow);
         }
 
