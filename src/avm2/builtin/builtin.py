@@ -41,61 +41,45 @@
 
 import os
 import shutil
+import subprocess
 import sys
 
 def mv(oldfile, newfile):
-    shutil.copyfile(oldfile,newfile)
+    shutil.copyfile(oldfile, newfile)
     os.remove(oldfile)
 
 def rm(file):
     if os.access(file, os.F_OK) == True:
         os.remove(file)
 
-classpath = os.environ.get('ASC')
-if classpath == None:
-    classpath = "../utils/asc.jar"
-    #print "ERROR: ASC environment variable must point to asc.jar"
-    #exit(1)
+def compile_abc(target, files, extra=None, configs=None):
+    asc_jar = os.environ.get('ASC', '../utils/asc.jar')
+    javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin']
+    if extra:
+        javacmd.extend(extra)
+    javacmd.extend(['-out', target])
+    javacmd.extend(files)
+    javacmd.extend(configs)
 
-javacmd = "java -ea -DAS3 -DAVMPLUS -classpath "+classpath
-asc = javacmd+" macromedia.asc.embedding.ScriptCompiler "
+    p = subprocess.Popen(javacmd)
+    p.wait()
 
-print("ASC="+classpath)
-print("Building builtins...")
+def move_to_completed(target):
+    rm("%s.h" % (target,))
+    rm("%s.cpp" % (target,))
+    mv("%s.abc" % (target,), "../generated/%s.abc" % (target,))
 
-# https://bugzilla.mozilla.org/show_bug.cgi?id=697977
-if len(sys.argv) == 1:
-    print('To build the float/float4 enabled builtins pass the following:');
-    print('    >$ ./builtin.py -config CONFIG::VMCFG_FLOAT=true -abcfuture');
-    print('');
-    print('To compile the builtins without float/float4 support:');
-    print('    >$ ./builtin.py -config CONFIG::VMCFG_FLOAT=false');
-    exit(1);
+def main():
+    configs = sys.argv[1:]
+    if configs == []:
+        # Build without float suppot by default
+        configs = ['-config', 'CONFIG::VMCFG_FLOAT=false']
 
-configs = " ".join(sys.argv[1:])
+    compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as"], configs=configs)
+    compile_abc("shell", ["Capabilities.as"], extra=["builtin.abc"], configs=configs)
 
-#
-# We're ignoring some serialization for now
-#
+    move_to_completed("builtin")
+    move_to_completed("shell")
 
-cmd = asc + "-builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as IDataInput.as IDataOutput.as ByteArray.as " + configs
-print cmd
-os.system(cmd)
-
-#
-# Extra classes needed by the shell.
-#
-
-cmd = asc + " -builtin builtin.abc -out shell Capabilities.as " + configs
-print cmd
-os.system(cmd)
-
-rm("builtin.h")
-rm("builtin.cpp")
-mv("builtin.abc", "../generated/builtin.abc")
-
-rm("shell.h")
-rm("shell.cpp")
-mv("shell.abc", "../generated/shell.abc")
-
-print("Done.")
+if __name__ == "__main__":
+    main()
