@@ -118,6 +118,14 @@
         var argument = null, value = token;
         if (token === "-" || token === "--") {
           var argumentName = token + tokens.shift();
+
+          if (argumentName === "--") {
+            // Lone -- means that we're forcing the rest of the
+            // arguments to be leftovers.
+            leftoverArguments = leftoverArguments.concat(tokens);
+            break;
+          }
+
           argument = nonPositionalArgumentMap[argumentName];
           assert (argument, "Argument " + argumentName + " is unknown.");
           if (argument.type !== "boolean") {
