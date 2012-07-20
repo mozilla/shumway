@@ -471,6 +471,15 @@ function isType(value, type) {
 }
 
 /**
+ * Scope object backing for catch blocks.
+ */
+function CatchScopeObject(runtime, varTrait) {
+  if (varTrait) {
+    runtime.applyTraits(this, new Scope(null, this), null, [varTrait], null, false);
+  }
+}
+
+/**
  * Global object for a script.
  */
 var Global = (function () {
@@ -510,6 +519,16 @@ var Runtime = (function () {
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
   runtime.stack = [];
+
+  // This is called from catch blocks.
+  runtime.unwindStackTo = function unwindStackTo(rt) {
+    var stack = runtime.stack;
+    var unwind = stack.length;
+    while (stack[unwind - 1] !== rt) {
+      unwind--;
+    }
+    stack.length = unwind;
+  };
 
   runtime.prototype.createActivation = function createActivation(method) {
     return Object.create(method.activationPrototype);
@@ -555,13 +574,28 @@ var Runtime = (function () {
 
     const mode = this.domain.mode;
 
-    /**
-     * We use not having an analysis to mean "not initialized".
-     */
+    // We use not having an analysis to mean "not initialized".
     if (!mi.analysis) {
       mi.analysis = new Analysis(mi, { massage: true });
+
       if (mi.traits) {
         mi.activationPrototype = this.applyTraits({}, null, null, mi.traits, null, false);
+      }
+
+      // If we have exceptions, make the catch scopes now.
+      var exceptions = mi.exceptions;
+      for (var i = 0, j = exceptions.length; i < j; i++) {
+        var handler = exceptions[i];
+        if (handler.varName) {
+          var varTrait = Object.create(Trait.prototype);
+          varTrait.kind = TRAIT_Slot;
+          varTrait.name = handler.varName;
+          varTrait.typeName = handler.typeName;
+          varTrait.holder = mi;
+          handler.scopeObject = new CatchScopeObject(this, varTrait);
+        } else {
+          handler.scopeObject = new CatchScopeObject();
+        }
       }
     }
 

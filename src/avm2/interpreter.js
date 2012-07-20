@@ -367,7 +367,7 @@ var Interpreter = (function () {
             break;
           case OP_newcatch:
             assert(exceptions[bc.index].scopeObject);
-            stack.push(new Scope(scope, exceptions[bc.index].scopeObject));
+            stack.push(exceptions[bc.index].scopeObject);
             break;
           case OP_findpropstrict:
             multiname = createMultiname(multinames[bc.index]);
@@ -633,28 +633,9 @@ var Interpreter = (function () {
             if (pc >= handler.start && pc <= handler.end &&
                 (!handler.typeName ||
                  domain.getProperty(handler.typeName, true, true).isInstance(e))) {
-              if (!handler.scopeObject) {
-                if (handler.varName) {
-                  var varTrait = Object.create(Trait.prototype);
-                  varTrait.kind = TRAIT_Slot;
-                  varTrait.name = handler.varName;
-                  varTrait.typeName = handler.typeName;
-                  varTrait.holder = method;
-                  handler.scopeObject = runtime.applyTraits({}, null, null, [varTrait], null, false);
-                } else {
-                  handler.scopeObject = {};
-                }
-              }
-
-              // Unwind the runtime stack.
-              var unwind = rtstack.length;
-              while (rtstack[unwind - 1] !== runtime) {
-                unwind--;
-              }
-              rtstack.length = unwind;
-
+              Runtime.unwindStackTo(runtime);
               scope = savedScope;
-              scopeHeight = 0;
+              scopeHeight = -1;
               stack.length = 0;
               stack.push(e);
               pc = handler.offset;
