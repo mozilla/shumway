@@ -254,7 +254,7 @@
       var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
 
       function createAVM2(loadPlayerGlobal, next) {
-        new BinaryFileReader(avm2Root + "generated/builtin.abc").readAll(null, function (buffer) {
+        new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
           var vm = new AVM2(new Uint8Array(buffer), sysMode, appMode);
 
           vm.onConstruct = function (instance, args) {

@@ -105,7 +105,7 @@ var Interpreter = (function () {
 
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
-        if (traceInterpreter.value > 0) {
+        if (traceInterpreter.value > 0 && sourcePosition.file !== undefined) {
           print("position: " + sourcePosition.file + ": " + sourcePosition.line);
         }
 
