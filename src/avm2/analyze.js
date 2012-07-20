@@ -213,6 +213,7 @@ var Control = (function () {
     trace: function (writer) {
       writer.enter("try {");
       this.body.trace(writer);
+      writer.writeLn("label = " + this.nothingThrownLabel);
       for (var i = 0, j = this.catches.length; i < j; i++) {
         this.catches[i].trace(writer);
       }
@@ -1431,7 +1432,7 @@ var Analysis = (function () {
               catches.push(new Control.Catch(ex.varName, ex.typeName, c));
             }
 
-            sv = new Control.Try(new Control.Seq([h]), catches);
+            sv = new Control.Try(h, catches);
           } else {
             succs = h.succs;
             sv = h;
@@ -1453,7 +1454,7 @@ var Analysis = (function () {
             cases.top().index = undefined;
 
             if (hasExceptions && h.hasCatches) {
-              sv.body.body.push(new Control.Exit(exceptionId));
+              sv.nothingThrownLabel = exceptionId;
               sv = new Control.Switch(sv, cases, exceptionId++);
             } else {
               sv = new Control.Switch(sv, cases);
@@ -1473,7 +1474,7 @@ var Analysis = (function () {
             var c2 = induce(branch2, exit2, save2, loop);
 
             if (hasExceptions && h.hasCatches) {
-              sv.body.body.push(new Control.Exit(exceptionId));
+              sv.nothingThrownLabel = exceptionId;
               sv = new Control.If(sv, c1, c2, exceptionId++);
             } else {
               sv = new Control.If(sv, c1, c2);
@@ -1485,7 +1486,7 @@ var Analysis = (function () {
 
             if (c) {
               if (hasExceptions && h.hasCatches) {
-                sv.body.body.push(new Control.Exit(c.bid));
+                sv.nothingThrownLabel = c.bid;
                 save2[c.bid] = (save2[c.bid] || 0) + 1;
                 exit2.set(c.bid);
 
@@ -1496,7 +1497,12 @@ var Analysis = (function () {
                 head = c;
               }
             } else {
-              head = (hasExceptions && h.hasCatches) ? maybe(exit2, save2) : c;
+              if (hasExceptions && h.hasCatches) {
+                sv.nothingThrownLabel = -1;
+                head = maybe(exit2, save2);
+              } else {
+                head = c;
+              }
             }
           }
 
