@@ -430,7 +430,9 @@ var Interpreter = (function () {
             break;
           case OP_getglobalslot:  notImplemented(); break;
           case OP_setglobalslot:  notImplemented(); break;
-          case OP_convert_s:      notImplemented(); break;
+          case OP_convert_s:
+            stack.push(toString(stack.pop()));
+            break;
           case OP_esc_xelem:      notImplemented(); break;
           case OP_esc_xattr:      notImplemented(); break;
           case OP_coerce_i:
