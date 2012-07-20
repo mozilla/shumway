@@ -122,6 +122,8 @@ var Verifier = (function() {
           return type.Int;
         } else if (name.getQualifiedName() === "public$Object") {
           return type.Atom.Object;
+        } else if (name.getQualifiedName() === "public$Number") {
+          return type.Number;
         }
         var ty = domain.getProperty(name, false, false);
         assert (ty, name + " not found");
@@ -156,6 +158,9 @@ var Verifier = (function() {
         } else if (this.kind === "Reference" && other.kind === "Reference") {
           // TODO: Actually merge reference types.
           return type.Reference.Null;
+        } else if ((this === Type.Int && other === Type.Number) ||
+                   (this === Type.Number && other === Type.Int)) {
+          return type.Number;
         }
         unexpected("Cannot merge types : " + this + " and " + other);
       };
@@ -269,6 +274,8 @@ var Verifier = (function() {
             var namespaces = multiname.namespaces;
             var name = multiname.name;
             if (multiname.isRuntimeName()) {
+              // here we actually deal with abstract multinames,
+              // i.e. name actually holds the type of the corresponding entity
               name = state.stack.pop();
             }
             if (multiname.isRuntimeNamespace()) {
@@ -580,8 +587,10 @@ var Verifier = (function() {
           case OP_initproperty:
           case OP_setproperty:
             pop();
-            popMultiname(bc.index);
+            multiname = popMultiname(bc.index);
             pop();
+            // attach the property type to the setproperty bytecode
+            bc.propertyType = multiname.name;
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -674,8 +683,12 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_coerce_a:
-            pop();
-            push(Type.Atom.Any);
+            // Note: ignoring the effect of coerce_a is a little, temporary hack
+            // to preserve types on stack since asc inserts a coerce_a
+            // after every push (e.g. pushbyte)
+            
+            // pop();
+            // push(Type.Atom.Any);
             break;
           case OP_coerce_s:
             pop();

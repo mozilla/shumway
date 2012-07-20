@@ -795,11 +795,20 @@ var Compiler = (function () {
       }
 
       function setProperty(obj, multiname, value) {
+        setProperty(obj, multiname, value, null);
+      }
+
+      function setProperty(obj, multiname, value, propertyType) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
 
         // Fastpath for runtime multinames with number names.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
+
+          if (propertyType && propertyType.isNumeric()) {
+            return fastPath;
+          }
+
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
@@ -1097,7 +1106,7 @@ var Compiler = (function () {
           multiname = popMultiname(bc.index);
           flushStack();
           obj = state.stack.pop();
-          emit(setProperty(obj, multiname, value));
+          emit(setProperty(obj, multiname, value, bc.propertyType));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
         case OP_setlocal:       setLocal(bc.index); break;
