@@ -855,7 +855,37 @@ var Runtime = (function () {
         // FIXME: Breaking compat with AS and using .bind here instead of the
         // MethodClosure class to work around a SpiderMonkey bug 771871.
         const MethodClosureClass = domain.system.MethodClosureClass;
-        var closure = makeClosure(trait);
+
+        var closure;
+
+        // FIXME: There are some regressions because of this, but leave it in
+        // place for now to help the work on the verifier progress.
+        // Here we're creating a trampoline that triggers compilation when the
+        // method is first executed and not when the trait is applied. This
+        // helps ensure that types are initialized by the time the verifier
+        // gets to work.
+        // TODO: It may be that the verifier can work with non-initialized types.
+        // It can probably find the class traits manually, so that may be worth
+        // looking into.
+        if (obj instanceof Global && this.domain.mode !== ALWAYS_INTERPRET) {
+          closure = (function (trait, obj, qn) {
+            return (function () {
+              var executed = false;
+              var mc = undefined;
+              return function () {
+                if (!executed) {
+                  mc = makeClosure(trait);
+                  defineNonEnumerableProperty(obj, qn, mc);
+                  executed = true;
+                }
+                return mc.apply(this, arguments);
+              };
+            })();
+          })(trait, obj, qn);
+        } else {
+          closure = makeClosure(trait);
+        }
+        
         var mc;
         if (delayBinding) {
           var memoizeMethodClosure = (function (closure, qn) {

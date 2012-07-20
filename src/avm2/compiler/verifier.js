@@ -123,8 +123,9 @@ var Verifier = (function() {
         } else if (name.getQualifiedName() === "public$Object") {
           return type.Atom.Object;
         }
-        print(name);
-        return type.fromReference(domain.getProperty(name, false, false));
+        var ty = domain.getProperty(name, false, false);
+        assert (ty, name + " not found");
+        return type.fromReference(ty);
       };
 
       type.fromReference = function fromReference(value) {
