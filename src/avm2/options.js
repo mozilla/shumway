@@ -98,39 +98,21 @@
           nonPositionalArgumentMap["--" + x.longName] = x;
         }
       });
-      var tokens = [];
+
       var leftoverArguments = [];
-      for (var i = 0; i < args.length; i++) {
-        if (args[i][0] === '-') {
-          if (args[i][1] === '-') {
-            tokens.push('--');
-            tokens.push(args[i].substring(2));
-          } else {
-            tokens.push('-');
-            tokens.push(args[i].substring(1));
-          }
-        } else if (args[i]) {
-          tokens.push(args[i]);
-        }
-      }
-      while (tokens.length) {
-        var token = tokens.shift();
-        var argument = null, value = token;
-        if (token === "-" || token === "--") {
-          var argumentName = token + tokens.shift();
 
-          if (argumentName === "--") {
-            // Lone -- means that we're forcing the rest of the
-            // arguments to be leftovers.
-            leftoverArguments = leftoverArguments.concat(tokens);
-            break;
-          }
-
-          argument = nonPositionalArgumentMap[argumentName];
-          assert (argument, "Argument " + argumentName + " is unknown.");
+      while (args.length) {
+        var argString = args.shift();
+        var argument = null, value = argString;
+        if (argString == '--') {
+          leftoverArguments = leftoverArguments.concat(args);
+          break;
+        } else if (argString.slice(0, 1) == '-' || argString.slice(0, 2) == '--') {
+          argument = nonPositionalArgumentMap[argString];
+          assert (argument, "Argument " + argString + " is unknown.");
           if (argument.type !== "boolean") {
-            value = tokens.shift();
-            assert (value !== "-" && value !== "--", "Argument " + argumentName + " must have a value.");
+            value = args.shift();
+            assert (value !== "-" && value !== "--", "Argument " + argString + " must have a value.");
           } else {
             value = true;
           }
