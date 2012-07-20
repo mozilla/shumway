@@ -96,25 +96,29 @@ try {
   quit();
 }
 
+function grabABC(abcname) {
+    return snarf("../generated/" + abcname + "/" + abcname + ".abc", "binary");
+}
+
 function installAvmPlus(vm) {
   var domain = vm.systemDomain;
   domain.installNative("getArgv", function() {
     return argv;
   });
 
-  domain.executeAbc(new AbcFile(snarf("avmplus.abc", "binary"), "avmplus.abc"));
+  domain.executeAbc(new AbcFile(grabABC("avmplus"), "avmplus.abc"));
 }
 
 var vm;
 if (execute.value) {
   var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
   var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
-  vm = new AVM2(snarf("../generated/builtin.abc", "binary"), sysMode, appMode);
+  vm = new AVM2(grabABC("builtin"), sysMode, appMode);
   installAvmPlus(vm);
   if (loadPlayerGlobal.value) {
     vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
   } else {
-    vm.systemDomain.executeAbc(new AbcFile(snarf("../generated/shell.abc", "binary"), "shell.abc"));
+    vm.systemDomain.executeAbc(new AbcFile(grabABC("shell"), "shell.abc"));
   }
 }
 

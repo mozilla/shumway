@@ -1,2 +1,13 @@
 *~
 .DS_Store
+
+src/avm2/generated/builtin/builtin.h
+src/avm2/generated/builtin/builtin.cpp
+src/avm2/generated/shell/shell.h
+src/avm2/generated/shell/shell.cpp
+src/avm2/generated/avmplus/avmplus.h
+src/avm2/generated/avmplus/avmplus.cpp
+
+src/avm2/utils/asc.jar
+src/avm2/utils/avmshell
+src/avm2/utils/js
