@@ -277,6 +277,7 @@ var Verifier = (function() {
               // here we actually deal with abstract multinames,
               // i.e. name actually holds the type of the corresponding entity
               name = state.stack.pop();
+              name.holdsType = true;
             }
             if (multiname.isRuntimeNamespace()) {
               namespaces = [state.stack.pop()];
@@ -590,7 +591,9 @@ var Verifier = (function() {
             multiname = popMultiname(bc.index);
             pop();
             // attach the property type to the setproperty bytecode
-            bc.propertyType = multiname.name;
+            if(multiname.name.holdsType) {
+              bc.propertyType = multiname.name;
+            }
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -605,7 +608,14 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getproperty:
-            notImplemented(bc);
+            multiname = popMultiname(bc.index);
+            pop();
+            if(multiname.name.holdsType) {
+              push(multiname.name);
+              bc.propertyType = multiname.name;
+            } else {
+              push(Type.Atom.Any);
+            }
             break;
           case OP_getouterscope:
             notImplemented(bc);

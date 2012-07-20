@@ -871,7 +871,7 @@ var Compiler = (function () {
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
       }
 
-      function getProperty(obj, multiname) {
+      function getProperty(obj, multiname, propertyType) {
         assert (!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
 
@@ -880,6 +880,12 @@ var Compiler = (function () {
         // FIXME: This doesn't work for vectors, we need to chack for |indexGet|.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = new MemberExpression(obj, multiname.name, true);
+         
+
+          if (propertyType && propertyType.isNumeric()) {
+            return fastPath;
+          }
+
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
@@ -1239,7 +1245,7 @@ var Compiler = (function () {
         case OP_getproperty:
           multiname = popMultiname(bc.index);
           obj = state.stack.pop();
-          push(getProperty(obj, multiname));
+          push(getProperty(obj, multiname, bc.propertyType));
           break;
         case OP_getouterscope:      notImplemented(); break;
         case OP_setpropertylate:    notImplemented(); break;
