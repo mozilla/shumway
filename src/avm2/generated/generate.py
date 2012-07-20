@@ -40,34 +40,20 @@
 # ***** END LICENSE BLOCK *****
 
 import os
-import shutil
 import subprocess
 import sys
 
-def mv(oldfile, newfile):
-    shutil.copyfile(oldfile, newfile)
-    os.remove(oldfile)
-
-def rm(file):
-    if os.access(file, os.F_OK) == True:
-        os.remove(file)
-
-def compile_abc(target, files, extra=None, configs=None):
-    asc_jar = os.environ.get('ASC', '../utils/asc.jar')
+def compile_abc(target, files, deps=None, configs=None):
+    asc_jar = os.environ.get('ASC', os.path.realpath('../utils/asc.jar'))
     javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin']
-    if extra:
-        javacmd.extend(extra)
+    if deps:
+        javacmd.extend("../%s/%s.abc" % (dep, dep) for dep in deps)
     javacmd.extend(['-out', target])
     javacmd.extend(files)
     javacmd.extend(configs)
 
-    p = subprocess.Popen(javacmd)
+    p = subprocess.Popen(javacmd, cwd=target)
     p.wait()
-
-def move_to_completed(target):
-    rm("%s.h" % (target,))
-    rm("%s.cpp" % (target,))
-    mv("%s.abc" % (target,), "../generated/%s.abc" % (target,))
 
 def main():
     configs = sys.argv[1:]
@@ -76,10 +62,8 @@ def main():
         configs = ['-config', 'CONFIG::VMCFG_FLOAT=false']
 
     compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as"], configs=configs)
-    compile_abc("shell", ["Capabilities.as"], extra=["builtin.abc"], configs=configs)
-
-    move_to_completed("builtin")
-    move_to_completed("shell")
+    compile_abc("shell", ["Capabilities.as"], deps=["builtin"], configs=configs)
+    compile_abc("avmplus", ["avmplus.as"], deps=["builtin"], configs=configs)
 
 if __name__ == "__main__":
     main()
