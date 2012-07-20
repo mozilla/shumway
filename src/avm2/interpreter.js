@@ -344,8 +344,10 @@ var Interpreter = (function () {
           case OP_newobject:
             obj = {};
             for (var i = 0; i < bc.argCount; i++) {
-              var pair = stack.popMany(2);
-              obj[pair[0]] = pair[1];
+              var value = stack.pop();
+              // Mangle the key
+              var key = "public$" + stack.pop();
+              obj[key] = value;
             }
             stack.push(obj);
             break;

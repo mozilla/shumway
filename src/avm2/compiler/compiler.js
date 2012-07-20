@@ -1179,8 +1179,12 @@ var Compiler = (function () {
         case OP_newobject:
           var properties = [];
           for (var i = 0; i < bc.argCount; i++) {
-            var pair = state.stack.popMany(2);
-            properties.unshift(new T.Property(pair[0], pair[1], "init"));
+            var value = state.stack.pop();
+            var key = state.stack.pop();
+            assert (key.value !== undefined && typeof key.value !== "object");
+
+            var mangledKey = "public$" + key.value;
+            properties.unshift(new T.Property(new Literal(mangledKey), value, "init"));
           }
           push(new ObjectExpression(properties));
           break;
