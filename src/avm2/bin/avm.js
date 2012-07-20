@@ -113,6 +113,8 @@ if (execute.value) {
   installAvmPlus(vm);
   if (loadPlayerGlobal.value) {
     vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
+  } else {
+    vm.systemDomain.executeAbc(new AbcFile(snarf("../generated/shell.abc", "binary"), "shell.abc"));
   }
 }
 

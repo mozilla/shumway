@@ -74,17 +74,28 @@ if len(sys.argv) == 1:
 
 configs = " ".join(sys.argv[1:])
 
-# print asc + " -builtin -apiversioning -out builtin builtin.as Math.as Error.as Date.as RegExp.as JSON.as XML.as IDataInput.as IDataOutput.as ByteArray.as Proxy.as flash_net_classes.as Dictionary.as IDynamicPropertyOutput.as IDynamicPropertyWriter.as DynamicPropertyOutput.as ObjectInput.as ObjectOutput.as IExternalizable.as ObjectEncoding.as " + configs
-
 #
 # We're ignoring some serialization for now
 #
-print asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as IDataInput.as IDataOutput.as ByteArray.as " + configs
 
-os.system(asc + " -builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as IDataInput.as IDataOutput.as ByteArray.as " + configs)
+cmd = asc + "-builtin -out builtin builtin.as Math.as Error.as Date.as RegExp.as IDataInput.as IDataOutput.as ByteArray.as " + configs
+print cmd
+os.system(cmd)
+
+#
+# Extra classes needed by the shell.
+#
+
+cmd = asc + " -builtin builtin.abc -out shell Capabilities.as " + configs
+print cmd
+os.system(cmd)
 
 rm("builtin.h")
 rm("builtin.cpp")
 mv("builtin.abc", "../generated/builtin.abc")
+
+rm("shell.h")
+rm("shell.cpp")
+mv("shell.abc", "../generated/shell.abc")
 
 print("Done.")
