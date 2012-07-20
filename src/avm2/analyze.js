@@ -104,19 +104,15 @@ var Control = (function () {
     }
   };
 
-  function LabelCase(label, body) {
+  function LabelCase(labels, body) {
     this.kind = LABEL_CASE;
-    this.label = label;
+    this.labels = labels;
     this.body = body;
   }
 
   LabelCase.prototype = {
     trace: function (writer) {
-      if (this.label.length) {
-        writer.enter("if (label is " + this.label.join(" or ") + ") {");
-      } else {
-        writer.enter("if (label is " + this.label + ") {");
-      }
+      writer.enter("if (label is " + this.labels.join(" or ") + ") {");
       this.body && this.body.trace(writer);
       writer.leave("}");
     }
@@ -127,12 +123,8 @@ var Control = (function () {
 
     for (var i = 0, j = cases.length; i < j; i++) {
       var c = cases[i];
-      if (c.label.length) {
-        for (var k = 0, l = c.label.length; k < l; k++) {
-          labelMap[c.label[k]] = c;
-        }
-      } else {
-        labelMap[c.label] = c;
+      for (var k = 0, l = c.labels.length; k < l; k++) {
+        labelMap[c.labels[k]] = c;
       }
     }
 
@@ -1162,7 +1154,7 @@ var Analysis = (function () {
                     h.npreds -= head.save[bid];
                     h.save = head.save[bid];
                     c = induce(h, exit2, save2, loop);
-                    cases.push(new Control.LabelCase(bid, c));
+                    cases.push(new Control.LabelCase([bid], c));
                   } else {
                     for (k = 0, l = lheads.length; k < l; k++) {
                       var lh = lheads[k];
@@ -1179,19 +1171,22 @@ var Analysis = (function () {
                 h.npreds -= head.save[bid];
                 h.save = head.save[bid];
                 c = induce(h, exit2, save2, loop);
-                cases.push(new Control.LabelCase(bid, c));
+                cases.push(new Control.LabelCase([bid], c));
               }
             }
 
             var k = 0;
             for (var i = 0, j = cases.length; i < j; i++) {
               var c = cases[i];
-              var bid = c.label;
-              if (exit2.get(bid) && heads[i].npreds - save2[bid] > 0) {
-                save[bid] = (save[bid] || 0) + head.save[bid];
-                exit.set(bid);
-              } else {
-                cases[k++] = c;
+              var labels = c.labels;
+              for (var ln = 0; ln < labels.length; ln++) {
+                var bid = labels[ln];
+                if (exit2.get(bid) && heads[i].npreds - save2[bid] > 0) {
+                  save[bid] = (save[bid] || 0) + head.save[bid];
+                  exit.set(bid);
+                } else {
+                  cases[k++] = c;
+                }
               }
             }
             cases.length = k;
@@ -1262,7 +1257,7 @@ var Analysis = (function () {
                   var lh = lheads[i];
                   var lbid = lh.bid;
                   var c = induce(lh, null, null, l, true);
-                  lcases.push(new Control.LabelCase(lbid, c));
+                  lcases.push(new Control.LabelCase([lbid], c));
                 }
 
                 body = new Control.LabelSwitch(lcases);
@@ -1387,13 +1382,9 @@ var Analysis = (function () {
               c.body = body;
               cases[k++] = c;
             } else {
-              var label = c.label;
-              if (label.length) {
-                for (var n = 0, m = label.length; n < m; n++) {
-                  delete labelMap[label[n]];
-                }
-              } else {
-                delete labelMap[label];
+              var labels = c.labels;
+              for (var n = 0, m = labels.length; n < m; n++) {
+                delete labelMap[labels[n]];
               }
             }
           }

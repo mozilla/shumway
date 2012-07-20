@@ -517,9 +517,22 @@ var Compiler = (function () {
       var node = null;
       var firstCase = true;
 
+      function labelEq(labelId) {
+        assert (typeof labelId === "number");
+        return new BinaryExpression("===", id("$label"), new Literal(labelId));
+      }
+
       for (var i = item.cases.length - 1; i >=0; i--) {
         var c = item.cases[i];
-        node = new IfStatement(new BinaryExpression("===", id("$label"), constant(c.label)),
+        var labels = c.labels;
+
+        var labelExpr = labelEq(labels[0]);
+
+        for (var j = 1; j < labels.length; j++) {
+          labelExpr = new BinaryExpression("||", labelExpr, labelEq(labels[j]));
+        }
+
+        node = new IfStatement(labelExpr,
                                c.body ? c.body.compile(this, state).node : new BlockStatement(),
                                node);
       }
