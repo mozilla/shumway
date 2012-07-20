@@ -55,6 +55,8 @@ var Domain = (function () {
       };
 
       Class.prototype = {
+        forceConstify: true,
+
         extendBuiltin: function(baseClass) {
           // Some natives handle their own prototypes/it's impossible to do the
           // traits/public prototype BS, e.g. Object, Array, etc.

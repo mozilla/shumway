@@ -124,7 +124,8 @@ var Compiler = (function () {
                 value instanceof ClassInfo ||
                 value instanceof AbcFile ||
                 value instanceof Array ||
-                value instanceof CatchScopeObject,
+                value instanceof CatchScopeObject ||
+                value.forceConstify === true,
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
       } else {
