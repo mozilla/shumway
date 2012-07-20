@@ -1315,7 +1315,7 @@ var Analysis = (function () {
             for (var i = 0, j = cases.length; i < j; i++) {
               var c = cases[i];
               var bid = c.label;
-              if (exit2.get(bid) && heads[i].npreds - save2[bid] > 0) {
+              if (exit2.get(bid) && heads[i].npreds - head.save[bid] > 0) {
                 pruned.push(bid);
               } else {
                 cases[k++] = c;
@@ -1326,7 +1326,7 @@ var Analysis = (function () {
             if (cases.length === 0) {
               for (var i = 0, j = pruned.length; i < j; i++) {
                 var bid = pruned[i];
-                save[bid] = (save[bid] || 0) + save2[bid];
+                save[bid] = (save[bid] || 0) + head.save[bid];
                 exit.set(bid);
               }
               break;
