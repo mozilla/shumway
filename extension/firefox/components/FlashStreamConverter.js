@@ -42,6 +42,28 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
+// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
+// absolute URL, it will be returned as is.
+function combineUrl(baseUrl, url) {
+  if (url.indexOf(':') >= 0)
+    return url;
+  if (url.charAt(0) == '/') {
+    // absolute path
+    var i = baseUrl.indexOf('://');
+    i = baseUrl.indexOf('/', i + 3);
+    return baseUrl.substring(0, i) + url;
+  } else {
+    // relative path
+    var pathLength = baseUrl.length, i;
+    i = baseUrl.lastIndexOf('#');
+    pathLength = i >= 0 ? i : pathLength;
+    i = baseUrl.lastIndexOf('?', pathLength);
+    pathLength = i >= 0 ? i : pathLength;
+    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
+    return baseUrl.substring(0, prefixLength + 1) + url;
+  }
+}
+
 // All the priviledged actions.
 function ChromeActions(url, params, referer, window) {
   this.url = url;
@@ -340,10 +362,9 @@ FlashStreamConverter2.prototype.createChromeActions = function(window, url) {
       });
     }
   }
-  if (movie && movie.indexOf('://') < 0) {
-    var i = baseUrl.lastIndexOf('/');
-    movie = baseUrl.substr(0, i + 1) + movie;
-  }
+  if (movie)
+    movie = combineUrl(baseUrl, movie);
+
   return new ChromeActions(movie, params, baseUrl, window);
 };
 
