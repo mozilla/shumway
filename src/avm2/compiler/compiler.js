@@ -656,7 +656,7 @@ var Compiler = (function () {
       var br = item.body.compile(this, state);
       var cx = this;
       var catches = [];
-      var exceptionName = id("e");
+      var exceptionName = id("$e");
 
       if (br.condition) {
         br.node.body.push(new ExpressionStatement(assignment(id("$c"), br.condition)));
