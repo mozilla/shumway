@@ -307,24 +307,24 @@ const natives = (function () {
     return c;
   }
 
-  function VectorClass(runtime, scope, instance) {
-    return createVectorClass(runtime, undefined);
+  function VectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime, undefined, baseClass);
   }
 
   function ObjectVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Object"));
+    return createVectorClass(runtime, runtime.domain.getClass("Object"), baseClass);
   }
 
   function IntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("int"));
+    return createVectorClass(runtime, runtime.domain.getClass("int"), baseClass);
   }
 
   function UIntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("uint"));
+    return createVectorClass(runtime, runtime.domain.getClass("uint"), baseClass);
   }
 
   function DoubleVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Number"));
+    return createVectorClass(runtime, runtime.domain.getClass("Number"), baseClass);
   }
 
   /**
