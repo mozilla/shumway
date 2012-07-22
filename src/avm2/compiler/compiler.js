@@ -640,8 +640,6 @@ var Compiler = (function () {
 
       var node;
       if (item.nothingThrownLabel) {
-        var inner = cr.inner;
-        var condition = item.negated ? negate(inner.condition) : inner.condition;
         var ifs = new IfStatement(new BinaryExpression("===", id("$label"), constant(item.nothingThrownLabel)),
                                   new IfStatement(id("$c"), tr ? tr.node : new BlockStatement([]),
                                                   er ? er.node : null));
