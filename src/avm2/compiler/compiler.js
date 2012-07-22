@@ -164,6 +164,7 @@ var Compiler = (function () {
     assert (args instanceof Array);
     args.forEach(function (x) {
       assert (!(x instanceof Array));
+      assert (x !== undefined);
     });
     return new CallExpression(callee, args);
   }
