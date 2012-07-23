@@ -54,10 +54,10 @@ Transform.prototype = Object.create(null, {
         throw TypeError();
 
       var target = this._target;
-      var sx = Math.sqrt(val.d * val.d + val.c * val.c);
-      var sy = Math.sqrt(val.a * val.a + val.b * val.b);
-      target.scaleX = val.a > 0 ? sx : -sx;
       target.rotation = Math.atan(val.a / val.b) * 180 / Math.PI;
+      var sx = Math.sqrt(val.d * val.d + val.c * val.c);
+      target.scaleX = val.a > 0 ? sx : -sx;
+      var sy = Math.sqrt(val.a * val.a + val.b * val.b);
       target.scaleY = val.d > 0 ? sy : -sy;
       target.x = val.tx;
       target.y = val.ty;
