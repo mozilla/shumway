@@ -61,24 +61,17 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
-function defineGetter(obj, name, getter) {
-  Object.defineProperty(obj, name, { get: getter,
-                                     configurable: true,
-                                     enumerable: true });
-}
-
-function defineMemoizingGetter(obj, name, getter) {
+function defineNonEnumerableGetter(obj, name, getter) {
   Object.defineProperty(obj, name, { get: getter,
                                      configurable: true,
                                      enumerable: false });
 }
 
-function defineSetter(obj, name, setter) {
+function defineNonEnumerableSetter(obj, name, setter) {
   Object.defineProperty(obj, name, { set: setter,
                                      configurable: true,
-                                     enumerable: true });
+                                     enumerable: false });
 }
-
 
 function defineNonEnumerableProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value,

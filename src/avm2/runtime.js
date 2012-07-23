@@ -837,12 +837,13 @@ var Runtime = (function () {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
       }
-      obj.bindings = base.bindings.slice();
+      defineNonEnumerableProperty(obj, "bindings", base.bindings.slice());
+      defineNonEnumerableProperty(obj, "slots", base.slots.slice());
       obj.slots = base.slots.slice();
       baseSlotId = obj.slots.length;
     } else {
-      obj.bindings = [];
-      obj.slots = [];
+      defineNonEnumerableProperty(obj, "bindings", []);
+      defineNonEnumerableProperty(obj, "slots", []);
       baseSlotId = 0;
     }
 
@@ -901,7 +902,7 @@ var Runtime = (function () {
         // TODO: It may be that the verifier can work with non-initialized types.
         // It can probably find the class traits manually, so that may be worth
         // looking into.
-        if (obj instanceof Global && this.domain.mode !== ALWAYS_INTERPRET) {
+        if (true && obj instanceof Global && this.domain.mode !== ALWAYS_INTERPRET) {
           closure = (function (trait, obj, qn) {
             return (function () {
               var executed = false;
@@ -932,16 +933,16 @@ var Runtime = (function () {
           })(closure, qn);
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
           // overriden by a derivied class. Only do this non final classes.
-          defineMemoizingGetter(obj, qn, memoizeMethodClosure);
+          defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
         } else {
           mc = closure.bind(obj);
           defineReadOnlyProperty(mc, "public$prototype", null);
           defineNonEnumerableProperty(obj, qn, mc);
         }
       } else if (trait.isGetter()) {
-        defineGetter(obj, qn, makeClosure(trait));
+        defineNonEnumerableGetter(obj, qn, makeClosure(trait));
       } else if (trait.isSetter()) {
-        defineSetter(obj, qn, makeClosure(trait));
+        defineNonEnumerableSetter(obj, qn, makeClosure(trait));
       } else {
         assert(false);
       }
