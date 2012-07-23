@@ -41,7 +41,7 @@ Graphics.prototype = Object.create(null, {
       if (type === 'linear')
         gradient = fillContext.createLinearGradient(-819.2, 0, 819.2, 0);
       else if (type == 'radial')
-        gradient = fillContext.createRadialGradient(819.2 * ~~focalPos, 0, 0, 0, 0, 819.2);
+        gradient = fillContext.createRadialGradient(819.2 * (focalPos || 0), 0, 0, 0, 0, 819.2);
       else
        throw ArgumentError();
 
