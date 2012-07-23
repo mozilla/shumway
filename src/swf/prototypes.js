@@ -157,8 +157,6 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
 
           if (pframe.initActionsData) {
             for (var spriteId in pframe.initActionsData) {
-              if (!pframe.initActionsData.hasOwnProperty(spriteId))
-                continue;
               instance.$createAS2Script(pframe.initActionsData[spriteId]).call(instance);
             }
           }
@@ -409,8 +407,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
               });
             });
             for (var child in children) {
-              if (children.hasOwnProperty(child))
-                registerChild(child, children[child]);
+              registerChild(child, children[child]);
             }
             var oldAddChild = proto.$addChild;
             proto.$addChild = (function(name, child) {
