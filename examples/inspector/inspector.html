@@ -144,14 +144,14 @@
       Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
 
       function getState() {
-        return document.cookie ? JSON.parse(document.cookie): {};
+        return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]): {};
       }
       var state = getState();
       enableVerifier.value = state.chkVerifier;
       enableOpt.value = state.chkOptimizations;
 
       function setState(state) {
-        document.cookie = JSON.stringify(state);
+        localStorage["Inspector-Settings"] = JSON.stringify(state);
       }
     </script>
 
