@@ -5,9 +5,10 @@ function MovieClip() {
   this._currentScene = {};
   this._enabled = true;
   this._framesLoaded = 1;
-  this._scenes = [{}];
+  this._isPlaying = false;
+  this._scenes = { };
   this._totalFrames = 1;
-  this._scenes = [{}];
+  this._scenes = { };
 }
 
 MovieClip.prototype = Object.create(new Sprite, {
@@ -47,7 +48,7 @@ MovieClip.prototype = Object.create(new Sprite, {
     notImplemented();
   }),
   isPlaying: describeMethod(function () {
-    notImplemented();
+    return this._isPlaying;
   }),
   nextFrame: describeMethod(function () {
     notImplemented();
@@ -56,7 +57,7 @@ MovieClip.prototype = Object.create(new Sprite, {
     notImplemented();
   }),
   play: describeMethod(function () {
-    notImplemented();
+    this._isPlaying = true;
   }),
   prevFrame: describeMethod(function () {
     notImplemented();
@@ -65,7 +66,7 @@ MovieClip.prototype = Object.create(new Sprite, {
     notImplemented();
   }),
   stop: describeMethod(function () {
-    notImplemented();
+    this._isPlaying = false;
   }),
   totalFrames: describeAccessor(function () {
     return this._totalFrames;
