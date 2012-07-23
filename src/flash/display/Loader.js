@@ -1,6 +1,8 @@
 function Loader(parameters) {
   this.avm1 = parameters.avm1;
   this.avm2 = parameters.avm2;
+
+  this.dictionary = new ObjDictionary;
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
@@ -177,7 +179,7 @@ Loader.prototype = Object.create(baseProto, {
       postMessage(data);
     } else {
       var loaderInfo = this.contentLoaderInfo;
-      var dictionary = loaderInfo._symbols;
+      var dictionary = this.dictionary;
 
       var pframes = this._pframes || (this._pframes = []);
 

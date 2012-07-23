@@ -44,15 +44,15 @@ for (var i = 0; i < 256; i++) {
       c = (c >> 1) & 0x7fffffff;
   }
   crcTable[i] = c;
-}  
+}
 
 function crc32(data){
   var crc = -1;
   for (var i = 0, n = data.length; i < n; ++i) {
     var a = (crc ^ data.charCodeAt(i)) & 0xff;
-    var b = crcTable[a]; 
+    var b = crcTable[a];
     crc = (crc >>> 8) ^ b;
-  } 
+  }
   return crc ^ -1;
 }
 
@@ -60,7 +60,7 @@ function createPngChunk(type, data) {
   var body = type + data;
   return toString32(data.length) + body + toString32(crc32(body));
 }
- 
+
 function adler32(data) {
   var a = 1;
   var b = 0;
@@ -120,6 +120,22 @@ Promise.all = function(promises, collectResults) {
     })(i));
   }
   return promise;
+};
+
+function ObjDictionary() {
+  this.promises = this;
+}
+ObjDictionary.prototype = {
+  getPromise: function(objId) {
+    if (!(objId in this.promises)) {
+      var promise = new Promise();
+      this.promises[objId] = promise;
+    }
+    return this.promises[objId];
+  },
+  isPromiseExists: function(objId) {
+    return objId in this.promises;
+  }
 };
 
 (function checkWeakMap() {

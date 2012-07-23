@@ -1,22 +1,5 @@
 function LoaderInfo() {
-  this._symbols = new ObjDictionary;
 }
-
-function ObjDictionary() {
-  this.promises = this;
-}
-ObjDictionary.prototype = {
-  getPromise: function(objId) {
-    if (!(objId in this.promises)) {
-      var promise = new Promise();
-      this.promises[objId] = promise;
-    }
-    return this.promises[objId];
-  },
-  isPromiseExists: function(objId) {
-    return objId in this.promises;
-  }
-};
 
 LoaderInfo.prototype = Object.create(new EventDispatcher, {
   actionScriptVersion: describeAccessor(function () {
@@ -104,9 +87,5 @@ LoaderInfo.prototype = Object.create(new EventDispatcher, {
 
   getLoaderInfoByDefinition: describeMethod(function () {
     notImplemented();
-  }),
-
-  _getSymbolById: describeMethod(function (id) {
-    return this._symbols[id];
   })
 });
