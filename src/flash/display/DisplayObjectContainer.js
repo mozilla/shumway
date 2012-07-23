@@ -44,7 +44,7 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     if (index < 0 || index > children.length)
       throw RangeError();
 
-    children[index] = child;
+    children.splice(index, 0, child);
     return child;
   }),
   areInaccessibleObjectsUnderPoint: describeMethod(function (pt) {
