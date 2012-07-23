@@ -76,6 +76,7 @@ const lastCaughtName = new Identifier("$E");
 const exceptionName = new Identifier("$e");
 const labelTestName = new Identifier("$label");
 const labelConditionName = new Identifier("$condition");
+const activationName = new Identifier("$activation");
 
 /**
  * To embed object references in compiled code we index into globally accessible constant table [$C].
@@ -1254,10 +1255,10 @@ var Compiler = (function () {
         case OP_newactivation:
           assert (this.methodInfo.needsActivation());
           emit(new VariableDeclaration("var", [
-            new VariableDeclarator(id("activation"),
+            new VariableDeclarator(activationName,
                                    call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
           ]));
-          push(id("activation"));
+          push(activationName);
           break;
         case OP_newclass:
           push(call(property(constant(abc), "runtime.createClass"),
