@@ -625,7 +625,7 @@ var Runtime = (function () {
     });
 
     if (hasDynamicScope) {
-      parameters.unshift(SAVED_SCOPE_NAME);
+      parameters.unshift(savedScopeName);
     }
 
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);

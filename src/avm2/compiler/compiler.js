@@ -48,15 +48,11 @@ const CatchClause = T.CatchClause;
  */
 
 var $C = [];
-const SCOPE_NAME = "$S";
-const SCOPE_OBJECT_NAME = "$O";
-const GLOBAL_SCOPE_OBJECT_NAME = "$G";
-const SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
 
-const scopeName = new Identifier(SCOPE_NAME);
-const scopeObjectName = new Identifier(SCOPE_OBJECT_NAME);
-const globalScopeObjectName = new Identifier(GLOBAL_SCOPE_OBJECT_NAME);
-const savedScopeName = new Identifier(SAVED_SCOPE_NAME);
+const scopeName = new Identifier("$S");
+const scopeObjectName = new Identifier("$O");
+const globalScopeObjectName = new Identifier("$G");
+const savedScopeName = new Identifier("$$S");
 const constantsName = new Identifier("$C");
 const lastCaughtName = new Identifier("$E");
 
@@ -498,7 +494,8 @@ var Compiler = (function () {
       this.prologue.push(new VariableDeclaration("var", [
         new VariableDeclarator(scopeName, savedScopeName),
         new VariableDeclarator(scopeObjectName, property(scopeName, "object")),
-        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global.object"))
+        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global.object")),
+        new VariableDeclarator(scopeName, savedScopeName)
       ]));
 
       /* Declare local variables. */
