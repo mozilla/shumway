@@ -6,28 +6,30 @@ function KeyboardEvent(type,
                        keyLocation,
                        ctrlKey,
                        altKey,
-                       shiftKey){
+                       shiftKey) {
   Object.defineProperties(
-    type:        descProp(type),
-    bubbles:     descProp(bubbles !== undefined ? !!bubbles : true),
-    cancelable:  descProp(!!cancelable)
-    charCode:    descProp(charCode || 0),
-    keyCode:     descProp(keyCode || 0),
-    keyLocation: descProp(keyLocation || 0),
-    ctrlKey:     descProp(!!ctrlKey),
-    altKey:      descProp(!!altKey),
-    shiftKey:    descProp(!!shiftKey)
+    type:        describeProperty(type),
+    bubbles:     describeProperty(bubbles !== undefined ? !!bubbles : true),
+    cancelable:  describeProperty(!!cancelable)
+    charCode:    describeProperty(charCode || 0),
+    keyCode:     describeProperty(keyCode || 0),
+    keyLocation: describeProperty(keyLocation || 0),
+    ctrlKey:     describeProperty(!!ctrlKey),
+    altKey:      describeProperty(!!altKey),
+    shiftKey:    describeProperty(!!shiftKey)
   );
 }
 
 Object.defineProperties(KeyboardEvent, {
-  KEY_DOWN: descConst('keyDown'),
-  KEY_UP:   descConst('keyUp')
+  KEY_DOWN: describeConst('keyDown'),
+  KEY_UP:   describeConst('keyUp')
 });
 
 KeyboardEvent.prototype = Object.create(new Event, {
-  clone: descMethod(function () {
-    return new Event (
+  __class__: describeProperty('flash.events.KeyboardEvent'),
+
+  clone: describeMethod(function () {
+    return new Event(
       this.type,
       this.bubbles,
       this.cancelable,
@@ -39,7 +41,7 @@ KeyboardEvent.prototype = Object.create(new Event, {
       this.shiftKeyValue
     );
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return this.formatToString(
       'KeyboardEvent',
       'type',
@@ -54,7 +56,7 @@ KeyboardEvent.prototype = Object.create(new Event, {
       'shiftKey'
     );
   }),
-  updateAfterEvent: descMethod(function () {
+  updateAfterEvent: describeMethod(function () {
     notImplemented();
   })
 });

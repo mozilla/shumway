@@ -198,7 +198,6 @@ const OP_declocal = 0x94;
 const OP_typeof = 0x95;
 const OP_not = 0x96;
 const OP_bitnot = 0x97;
-const OP_add_d = 0x9B;
 const OP_add = 0xA0;
 const OP_subtract = 0xA1;
 const OP_multiply = 0xA2;

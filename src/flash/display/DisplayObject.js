@@ -1,6 +1,7 @@
 function DisplayObject() {
   this._alpha = 1;
   this._cacheAsBitmap = false;
+  this._control = document.createElement('div');
   this._mouseX = 0;
   this._mouseY = 0;
   this._name = null;
@@ -18,7 +19,7 @@ function DisplayObject() {
 }
 
 DisplayObject.prototype = Object.create(new EventDispatcher, {
-  accessibilityProperties: descAccessor(
+  accessibilityProperties: describeAccessor(
     function () {
       return null;
     },
@@ -26,7 +27,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  alpha: descAccessor(
+  alpha: describeAccessor(
     function () {
       return this._alpha;
     },
@@ -34,7 +35,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._alpha = val;
     }
   ),
-  blendMode: descAccessor(
+  blendMode: describeAccessor(
     function () {
       return 'normal';
     },
@@ -42,7 +43,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  cacheAsBitmap: descAccessor(
+  cacheAsBitmap: describeAccessor(
     function () {
       return this._cacheAsBitmap;
     },
@@ -50,7 +51,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._cacheAsBitmap = val;
     }
   ),
-  filters: descAccessor(
+  filters: describeAccessor(
     function () {
       return [];
     },
@@ -58,31 +59,31 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  getBounds: descMethod(function (targetCoordSpace) {
+  getBounds: describeMethod(function (targetCoordSpace) {
     notImplemented();
   }),
-  getRect: descMethod(function (targetCoordSpace) {
+  getRect: describeMethod(function (targetCoordSpace) {
     notImplemented();
   }),
-  globalToLocal: descMethod(function (pt) {
+  globalToLocal: describeMethod(function (pt) {
     notImplemented();
   }),
-  height: descAccessor(function () {
+  height: describeAccessor(function () {
     notImplemented();
   }),
-  hitTestObject: descMethod(function (obj) {
+  hitTestObject: describeMethod(function (obj) {
     notImplemented();
   }),
-  hitTestPoint: descMethod(function (x, y, shapeFlag) {
+  hitTestPoint: describeMethod(function (x, y, shapeFlag) {
     notImplemented();
   }),
-  loaderInfo: descAccessor(function () {
+  loaderInfo: describeAccessor(function () {
     notImplemented();
   }),
-  localToGlobal: descMethod(function (pt) {
+  localToGlobal: describeMethod(function (pt) {
     notImplemented();
   }),
-  mask: descAccessor(
+  mask: describeAccessor(
     function () {
       return null;
     },
@@ -90,7 +91,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  name: descAccessor(
+  name: describeAccessor(
     function () {
       return this._name;
     },
@@ -98,17 +99,17 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._name = val;
     }
   ),
-  mouseX: descAccessor(
+  mouseX: describeAccessor(
     function () {
       return this._mouseX;
     }
   ),
-  mouseY: descAccessor(
+  mouseY: describeAccessor(
     function () {
       return this._mouseY;
     }
   ),
-  opaqueBackground: descAccessor(
+  opaqueBackground: describeAccessor(
     function () {
       return this._opaqueBackground;
     },
@@ -116,13 +117,13 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._opaqueBackground = val;
     }
   ),
-  parent: descAccessor(function () {
+  parent: describeAccessor(function () {
     return this._parent;
   }),
-  root: descAccessor(function () {
+  root: describeAccessor(function () {
     return this._return;
   }),
-  rotation: descAccessor(
+  rotation: describeAccessor(
     function () {
       return this._rotation;
     },
@@ -130,10 +131,10 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._rotation = val;
     }
   ),
-  stage: descAccessor(function () {
+  stage: describeAccessor(function () {
     return this._stage;
   }),
-  scaleX: descAccessor(
+  scaleX: describeAccessor(
     function () {
       return this._scaleX;
     },
@@ -141,7 +142,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._scaleX = val;
     }
   ),
-  scaleY: descAccessor(
+  scaleY: describeAccessor(
     function () {
       return this._scaleY;
     },
@@ -149,7 +150,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._scaleY = val;
     }
   ),
-  scale9Grid: descAccessor(
+  scale9Grid: describeAccessor(
     function () {
       return null;
     },
@@ -157,7 +158,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  scrollRect: descAccessor(
+  scrollRect: describeAccessor(
     function () {
       return null;
     },
@@ -165,7 +166,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       notImplemented();
     }
   ),
-  transform: descAccessor(
+  transform: describeAccessor(
     function () {
       return this._transform;
     },
@@ -173,7 +174,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._transform = val;
     }
   ),
-  visible: descAccessor(
+  visible: describeAccessor(
     function () {
       return this._visible;
     },
@@ -181,10 +182,10 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._visible = val;
     }
   ),
-  width: descAccessor(function () {
+  width: describeAccessor(function () {
     notImplemented();
   }),
-  x: descAccessor(
+  x: describeAccessor(
     function () {
       return this._x;
     },
@@ -192,7 +193,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._x = val;
     }
   ),
-  y: descAccessor(
+  y: describeAccessor(
     function () {
       return this._y;
     },

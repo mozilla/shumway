@@ -99,11 +99,10 @@ function readTags(context, stream, version, onprogress) {
       if (handler)
         handler(subbytes, substream, tag, version, tagCode);
     }
-
     tags.push(tag);
 
     if (tagCode === 1) {
-      while (stream.getUint16(stream.pos, true) >> 6 === 1) {
+      while (stream.pos < stream.end && stream.getUint16(stream.pos, true) >> 6 === 1) {
         tags.push(tag);
         stream.pos += 2;
       }
@@ -112,7 +111,7 @@ function readTags(context, stream, version, onprogress) {
     } else if (onprogress && ('id' in tag || 'ref' in tag)) {
       onprogress(context);
     }
-  } while (tagCode);
+  } while (tagCode && stream.pos < stream.end);
 }
 
 SWF.parse = function(buffer, options) {
@@ -144,7 +143,7 @@ SWF.parse = function(buffer, options) {
 
   swf.tags = [];
   readTags(swf, stream, version, options.onprogress);
-  
+
   if (options.oncomplete)
     options.oncomplete(swf);
 };

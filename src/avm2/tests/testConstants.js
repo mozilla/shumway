@@ -18,7 +18,8 @@ var doubles = [
     -9.87e-100,
 ];
 
-load("../DataView.js");
+load("../../../lib/DataView.js/DataView.js");
+
 load("../constants.js");
 load("../parser.js");
 var abc = parseAbcFile(snarf("testConstants.abc", "binary"));

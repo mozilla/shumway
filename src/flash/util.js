@@ -1,15 +1,4 @@
-function descProperty(val) {
-  return {
-    value: val,
-    writable: true,
-    configurable: true,
-    enumerable: true
-  };
-}
-function descMethod(func) {
-  return descProperty(func);
-}
-function descAccessor(get, set) {
+function describeAccessor(get, set) {
   return {
     get: get,
     set: set,
@@ -17,13 +6,32 @@ function descAccessor(get, set) {
     enumerable: true
   };
 }
-function descConst(val) {
+function describeConst(val) {
   return {
-    value:  val,
+    value: val,
     configurable: true,
     enumerable: true
   };
 }
+function describeLazyProperty(name, getter) {
+  return describeAccessor(function () {
+    var val = getter.call(this);
+    Object.defineProperty(this, name, describeProperty(val));
+    return val;
+  });
+}
+function describeMethod(fn) {
+  return describeProperty(fn);
+}
+function describeProperty(val) {
+  return {
+    value: val,
+    writable: true,
+    configurable: true,
+    enumerable: true
+  };
+}
+
 function illegalOperation() {
   throw Error('Illegal Operation');
 }

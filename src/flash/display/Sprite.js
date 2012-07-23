@@ -1,8 +1,11 @@
 function Sprite() {
+  this._graphics = new Graphics;
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
-  buttonMode: descAccessor(
+  __class__: describeProperty('flash.display.Sprite'),
+
+  buttonMode: describeAccessor(
     function () {
       return false;
     },
@@ -10,15 +13,10 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  graphics: descAccessor(
-    function () {
-      notImplemented();
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  hitArea: descAccessor(
+  graphics: describeAccessor(function () {
+    return this._graphics;
+  }),
+  hitArea: describeAccessor(
     function () {
       return null;
     },
@@ -26,7 +24,7 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  soundTransform: descAccessor(
+  soundTransform: describeAccessor(
     function () {
       notImplemented();
     },
@@ -34,22 +32,19 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
       notImplemented();
     }
   ),
-  startDrag: descMethod(function (lockCenter, bounds) {
+  startDrag: describeMethod(function (lockCenter, bounds) {
     notImplemented();
   }),
-  startTouchDrag: descMethod(function (touchPointID, lockCenter, bounds) {
+  startTouchDrag: describeMethod(function (touchPointID, lockCenter, bounds) {
     notImplemented();
   }),
-  stopDrag: descMethod(function () {
+  stopDrag: describeMethod(function () {
     notImplemented();
   }),
-  stopTouchDrag: descMethod(function (touchPointID) {
+  stopTouchDrag: describeMethod(function (touchPointID) {
     notImplemented();
   }),
-  toString: descMethod(function () {
-    return '[object Sprite]';
-  }),
-  useHandCursor: descAccessor(
+  useHandCursor: describeAccessor(
     function () {
       return true;
     },

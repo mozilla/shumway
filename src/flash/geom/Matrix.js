@@ -1,28 +1,32 @@
 function Matrix(a, b, c, d, tx, ty) {
-  this.a = a || 1;
-  this.b = b || 0;
-  this.c = c || 0;
-  this.d = d || 1;
-  this.tx = tx || 0;
-  this.ty = ty || 0;
+  Object.defineProperties(this, {
+    a:  describeProperty(a || 1),
+    b:  describeProperty(b || 0),
+    c:  describeProperty(c || 0),
+    d:  describeProperty(d || 1),
+    tx: describeProperty(tx || 0),
+    ty: describeProperty(ty || 0)
+  });
 }
 
 Matrix.prototype = Object.create(null, {
-  clone: descMethod(function () {
+  __class__: describeProperty('flash.geom.Matrix'),
+
+  clone: describeMethod(function () {
     return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
   }),
-  concat: descMethod(function (m) {
+  concat: describeMethod(function (m) {
     var a1 = this.a;
-    var a2 = m.a;
     var b1 = this.b;
-    var b2 = m.b;
     var c1 = this.c;
-    var c2 = m.c;
     var d1 = this.d;
-    var d2 = m.d;
     var tx1 = this.tx;
-    var tx2 = m.tx;
     var ty1 = this.ty;
+    var a2 = m.a;
+    var b2 = m.b;
+    var c2 = m.c;
+    var d2 = m.d;
+    var tx2 = m.tx;
     var ty2 = m.ty;
     this.a = a1 * a2 + b1 * c2;
     this.b = a1 * b2 + b1 * d2;
@@ -31,7 +35,7 @@ Matrix.prototype = Object.create(null, {
     this.tx = (tx1 * a2 + tx2) + ty1 * c2;
     this.ty = (ty1 * d2 + ty2) + tx1 * b2;
   }),
-  copyFrom: descMethod(function (m) {
+  copyFrom: describeMethod(function (m) {
     this.a = m.a;
     this.b = m.b;
     this.c = m.c;
@@ -39,7 +43,7 @@ Matrix.prototype = Object.create(null, {
     this.tx = m.tx;
     this.ty = m.ty;
   }),
-  createBox: descMethod(function (scaleX, scaleY, rotation, tx, ty) {
+  createBox: describeMethod(function (scaleX, scaleY, rotation, tx, ty) {
     var u = Math.cos(rotation);
     var v = Math.sin(rotation);
     this.a = u * scaleX;
@@ -49,7 +53,7 @@ Matrix.prototype = Object.create(null, {
     this.tx = tx;
     this.ty = ty;
   }),
-  createGradientBox: descMethod(function (width, height, rotation, tx, ty) {
+  createGradientBox: describeMethod(function (width, height, rotation, tx, ty) {
     this.createBox(
       width / 1638.4,
       height / 1638.4,
@@ -58,13 +62,10 @@ Matrix.prototype = Object.create(null, {
       ty + height / 2
     );
   }),
-  deltaTransformPoint: descMethod(function (pt) {
-    return new Point(
-      this.a * pt.x + this.c * pt.y,
-      this.d * pt.y + this.b * pt.x
-    );
+  deltaTransformPoint: describeMethod(function (pt) {
+    return new Point(this.a * pt.x + this.c * pt.y, this.d * pt.y + this.b * pt.x);
   }),
-  identity: descMethod(function () {
+  identity: describeMethod(function () {
     this.a = 1;
     this.b = 0;
     this.c = 0;
@@ -72,7 +73,7 @@ Matrix.prototype = Object.create(null, {
     this.tx = 0;
     this.ty = 0;
   }),
-  invert: descMethod(function () {
+  invert: describeMethod(function () {
     var a = this.a;
     var b = this.b;
     var c = this.c;
@@ -80,12 +81,10 @@ Matrix.prototype = Object.create(null, {
     var tx = this.tx;
     var ty = this.ty;
     var det = a * d - b * c;
-
     if (!det) {
       this.identity();
       return;
     }
-
     det = 1 / det;
     this.a = d * det;
     this.b = -b * det;
@@ -95,15 +94,15 @@ Matrix.prototype = Object.create(null, {
     this.ty = -(b * tx + d * ty);
   }),
 
-  rotate: descMethod(function (angle) {
-    var u = Math.cos(angle);
-    var v = Math.sin(angle);
+  rotate: describeMethod(function (angle) {
     var a = this.a;
     var b = this.b;
     var c = this.c;
     var d = this.d;
     var tx = this.tx;
     var ty = this.ty;
+    var u = Math.cos(angle);
+    var v = Math.sin(angle);
     this.a = u * a - v * b;
     this.b = v * a + u * b;
     this.c = u * c - v * d;
@@ -111,7 +110,7 @@ Matrix.prototype = Object.create(null, {
     this.tx = u * tx - v * ty;
     this.ty = v * tx + u * ty;
   }),
-  scale: descMethod(function (sx, sy) {
+  scale: describeMethod(function (sx, sy) {
     this.a *= sx;
     this.b *= sy;
     this.c *= sx;
@@ -119,7 +118,7 @@ Matrix.prototype = Object.create(null, {
     this.tx *= sx;
     this.ty *= sy;
   }),
-  setTo: descMethod(function (a, b, c, d, tx, ty) {
+  setTo: describeMethod(function (a, b, c, d, tx, ty) {
     this.a = a;
     this.b = b;
     this.c = c;
@@ -127,21 +126,21 @@ Matrix.prototype = Object.create(null, {
     this.tx = tx;
     this.ty = ty;
   }),
-  toString: descMethod(function () {
-    return '(a=' + this.a + ',' +
-           ' b=' + this.b + ',' +
-           ' c=' + this.c + ',' +
-           ' d=' + this.d + ',' +
-           ' tx=' + this.tx + ',' +
-           ' ty=' + this.ty + ')';
+  toString: describeMethod(function () {
+    return '(a=' + this.a +
+           ', b=' + this.b +
+           ', c=' + this.c +
+           ', d=' + this.d +
+           ', tx=' + this.tx +
+           ', ty=' + this.ty;
   }),
-  transformPoint: descMethod(function (pt) {
+  transformPoint: describeMethod(function (pt) {
     return new Point(
       this.a * pt.x + this.c * pt.y + this.tx,
       this.d * pt.y + this.b * pt.x + this.ty
     );
   }),
-  translate: descMethod(function (dx, dy) {
+  translate: describeMethod(function (dx, dy) {
     this.tx += dx;
     this.ty += dy;
   })

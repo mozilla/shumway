@@ -51,9 +51,9 @@
     <script>
       var abcFiles = [];
       var filesLoaded = 0;
-      ["builtin.abc", "playerGlobal.abc"].forEach(function (v, i, a) {
+      ["builtin", "playerGlobal"].forEach(function (v, i, a) {
           var xhr = new XMLHttpRequest;
-          xhr.open("GET", "../../src/avm2/generated/" + v);
+          xhr.open("GET", "../../src/avm2/generated/" + v + "/" + v + ".abc");
           xhr.responseType = "arraybuffer";
           xhr.onload = function () {
             abcFiles[i] = new AbcFile(new Uint8Array(this.response), v, true);

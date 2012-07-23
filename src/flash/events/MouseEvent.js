@@ -10,35 +10,37 @@ function MouseEvent(type,
                     buttonDown,
                     delta){
   Object.defineProperties(
-    type:          descProp(type),
-    bubbles:       descProp(bubbles !== undefined ? !!bubbles : true),
-    cancelable:    descProp(!!cancelable)
-    localX:        descProp(localX || 0),
-    localY:        descProp(localY || 0),
-    relatedObject: descProp(relatedObject || null),
-    ctrlKey:       descProp(!!ctrlKey),
-    altKey:        descProp(!!altKey),
-    shiftKey:      descProp(!!shiftKey),
-    buttonDown:    descProp(!!buttonDown),
-    delta:         descProp(delta || 0)
+    type:          describeProperty(type),
+    bubbles:       describeProperty(bubbles !== undefined ? !!bubbles : true),
+    cancelable:    describeProperty(!!cancelable)
+    localX:        describeProperty(localX || 0),
+    localY:        describeProperty(localY || 0),
+    relatedObject: describeProperty(relatedObject || null),
+    ctrlKey:       describeProperty(!!ctrlKey),
+    altKey:        describeProperty(!!altKey),
+    shiftKey:      describeProperty(!!shiftKey),
+    buttonDown:    describeProperty(!!buttonDown),
+    delta:         describeProperty(delta || 0)
   );
 }
 
 Object.defineProperties(MouseEvent, {
-  CLICK:        descConst('click'),
-  DOUBLE_CLICK: descConst('doubleClick'),
-  MOUSE_DOWN:   descConst('mouseDown'),
-  MOUSE_MOVE:   descConst('mouseMove'),
-  MOUSE_OUT:    descConst('mouseOut'),
-  MOUSE_OVER:   descConst('mouseOver'),
-  MOUSE_UP:     descConst('mouseUp'),
-  MOUSE_WHEEL:  descConst('mouseWheel'),
-  ROLL_OUT:     descConst('rollOut'),
-  ROLL_OVER:    descConst('rollOver')
+  CLICK:        describeConst('click'),
+  DOUBLE_CLICK: describeConst('doubleClick'),
+  MOUSE_DOWN:   describeConst('mouseDown'),
+  MOUSE_MOVE:   describeConst('mouseMove'),
+  MOUSE_OUT:    describeConst('mouseOut'),
+  MOUSE_OVER:   describeConst('mouseOver'),
+  MOUSE_UP:     describeConst('mouseUp'),
+  MOUSE_WHEEL:  describeConst('mouseWheel'),
+  ROLL_OUT:     describeConst('rollOut'),
+  ROLL_OVER:    describeConst('rollOver')
 });
 
 MouseEvent.prototype = Object.create(new Event, {
-  isRelatedObjectInaccessible: descAccessor(
+  __class__: describeProperty('flash.events.MouseEvent'),
+
+  isRelatedObjectInaccessible: describeAccessor(
     function () {
       return false;
     },
@@ -46,15 +48,15 @@ MouseEvent.prototype = Object.create(new Event, {
       notImplemented();
     }
   ),
-  stageX: descAccessor(function () {
+  stageX: describeAccessor(function () {
     notImplemented();
   }),
-  stageY: descAccessor(function () {
+  stageY: describeAccessor(function () {
     notImplemented();
   }),
 
-  clone: descMethod(function () {
-    return new Event (
+  clone: describeMethod(function () {
+    return new Event(
       this.type,
       this.bubbles,
       this.cancelable,
@@ -68,7 +70,7 @@ MouseEvent.prototype = Object.create(new Event, {
       this.delta
     );
   }),
-  toString: descMethod(function () {
+  toString: describeMethod(function () {
     return this.formatToString(
       'MouseEvent',
       'type',
@@ -87,7 +89,7 @@ MouseEvent.prototype = Object.create(new Event, {
       'delta'
     );
   }),
-  updateAfterEvent: descMethod(function () {
+  updateAfterEvent: describeMethod(function () {
     notImplemented();
   })
 });

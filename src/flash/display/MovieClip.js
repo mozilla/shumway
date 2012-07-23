@@ -5,31 +5,34 @@ function MovieClip() {
   this._currentScene = {};
   this._enabled = true;
   this._framesLoaded = 1;
-  this._scenes = [{}];
+  this._isPlaying = false;
+  this._scenes = { };
   this._totalFrames = 1;
-  this._scenes = [{}];
+  this._scenes = { };
 }
 
 MovieClip.prototype = Object.create(new Sprite, {
-  addFrameScript: descMethod(function () {
+  __class__: describeProperty('flash.display.MovieClip'),
+
+  addFrameScript: describeMethod(function () {
     notImplemented();
   }),
-  currentFrame: descAccessor(function () {
+  currentFrame: describeAccessor(function () {
     return this._currentFrame;
   }),
-  currentFrameLabel: descAccessor(function () {
+  currentFrameLabel: describeAccessor(function () {
     return this._currentFrameLabel;
   }),
-  currentLabel: descAccessor(function () {
+  currentLabel: describeAccessor(function () {
     return this._currentLabel;
   }),
-  currentLabels: descAccessor(function () {
+  currentLabels: describeAccessor(function () {
     return this._currentScene.labels;
   }),
-  currentScene: descAccessor(function () {
+  currentScene: describeAccessor(function () {
     return this._currentScene;
   }),
-  enabled: descAccessor(
+  enabled: describeAccessor(
     function () {
       return this._enabled;
     },
@@ -37,43 +40,43 @@ MovieClip.prototype = Object.create(new Sprite, {
       this._enabled = val;
     }
   ),
-  framesLoaded: descAccessor(function () {
+  framesLoaded: describeAccessor(function () {
     return this._framesLoaded;
   }),
-  gotoAndPlay: descMethod(function (frame, scene) {
+  gotoAndPlay: describeMethod(function (frame, scene) {
     notImplemented();
   }),
-  gotoAndStop: descMethod(function (frame, scene) {
+  gotoAndStop: describeMethod(function (frame, scene) {
     notImplemented();
   }),
-  isPlaying: descMethod(function () {
+  isPlaying: describeMethod(function () {
+    return this._isPlaying;
+  }),
+  nextFrame: describeMethod(function () {
     notImplemented();
   }),
-  nextFrame: descMethod(function () {
+  nextScene: describeMethod(function () {
     notImplemented();
   }),
-  nextScene: descMethod(function () {
+  play: describeMethod(function () {
+    this._isPlaying = true;
+  }),
+  prevFrame: describeMethod(function () {
     notImplemented();
   }),
-  play: descMethod(function () {
+  prevScene: describeMethod(function () {
     notImplemented();
   }),
-  prevFrame: descMethod(function () {
-    notImplemented();
+  stop: describeMethod(function () {
+    this._isPlaying = false;
   }),
-  prevScene: descMethod(function () {
-    notImplemented();
-  }),
-  stop: descMethod(function () {
-    notImplemented();
-  }),
-  totalFrames: descAccessor(function () {
+  totalFrames: describeAccessor(function () {
     return this._totalFrames;
   }),
-  totalFrames: descAccessor(function () {
+  totalFrames: describeAccessor(function () {
     return this._totalFrames;
   }),
-  trackAsMenu: descAccessor(
+  trackAsMenu: describeAccessor(
     function () {
       return false;
     },

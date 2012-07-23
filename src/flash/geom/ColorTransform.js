@@ -1,23 +1,27 @@
 function ColorTransform(redMultiplier,
-						            greenMultiplier,
-						            blueMultiplier,
-						            alphaMultiplier,
-						            redOffset,
-						            greenOffset,
-						            blueOffset,
-						            alphaOffset) {
-  this.redMultiplier = redMultiplier || 1;
-  this.greenMultiplier = greenMultiplier || 1;
-  this.blueMultiplier = blueMultiplier || 1;
-  this.alphaMultiplier = alphaMultiplier || 1;
-  this.redOffset = redOffset || 0;
-  this.greenOffset = greenOffset || 0;
-  this.blueOffset = blueOffset || 0;
-  this.alphaOffset = alphaOffset || 0;
+                        greenMultiplier,
+                        blueMultiplier,
+                        alphaMultiplier,
+                        redOffset,
+                        greenOffset,
+                        blueOffset,
+                        alphaOffset) {
+  Object.defineProperties(this, {
+    redMultiplier:   describeProperty(redMultiplier || 1),
+    greenMultiplier: describeProperty(greenMultiplier || 1),
+    blueMultiplier:  describeProperty(blueMultiplier || 1),
+    alphaMultiplier: describeProperty(alphaMultiplier || 1),
+    redOffset:       describeProperty(redOffset || 0),
+    greenOffset:     describeProperty(reenOffset || 0),
+    blueOffset:      describeProperty(blueOffset || 0),
+    alphaOffset:     describeProperty(alphaOffset || 0)
+  });
 }
 
 ColorTransform.prototype = Object.create(null, {
-  color: descAccessor(
+  __class__: describeProperty('flash.geom.ColorTransform'),
+
+  color: describeAccessor(
     function () {
       return this.redOffset << 16 | this.greenOffset << 8 | this.blueOffset;
     },
@@ -31,7 +35,7 @@ ColorTransform.prototype = Object.create(null, {
     }
   ),
 
-  concat: descMethod(function (cxform) {
+  concat: describeMethod(function (cxform) {
     this.redOffset += this.redMultiplier * cxform.redOffset;
     this.redMultiplier = this.redMultiplier * cxform.redMultiplier;
     this.greenOffset += this.greenMultiplier * cxform.greenOffset;
@@ -41,14 +45,14 @@ ColorTransform.prototype = Object.create(null, {
     this.alphaOffset += this.alphaMultiplier * cxform.alphaOffset;
     this.alphaMultiplier = this.alphaMultiplier * cxform.alphaMultiplier;
   }),
-  toString: descMethod(function () {
-    return '(redMultiplier=' + this.redMultiplier + ',' +
-           ' greenMultiplier=' + this.greenMultiplier + ',' +
-           ' blueMultiplier=' + this.blueMultiplier + ',' +
-           ' alphaMultiplier=' + this.alphaMultiplier + ',' +
-           ' redOffset=' + this.redOffset + ',' +
-           ' greenOffset=' + this.greenOffset + ',' +
-           ' blueOffset=' + this.blueOffset + ',' +
-           ' alphaOffset=' + this.alphaOffset +')';
+  toString: describeMethod(function () {
+    return '(redMultiplier=' + this.redMultiplier +
+           ', greenMultiplier=' + this.greenMultiplier +
+           ', blueMultiplier=' + this.blueMultiplier +
+           ', alphaMultiplier=' + this.alphaMultiplier +
+           ', redOffset=' + this.redOffset +
+           ', greenOffset=' + this.greenOffset +
+           ', blueOffset=' + this.blueOffset +
+           ', alphaOffset=' + this.alphaOffset;
   })
 });

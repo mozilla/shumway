@@ -22,9 +22,11 @@ function error(message) {
   throw new Error(message);
 }
 
-function assert(condition, message) {
+function assert(condition) {
   if (!condition) {
-    error(message);
+    var message = Array.prototype.slice.call(arguments);
+    message.shift();
+    error(message.join(""));
   }
 }
 
@@ -63,6 +65,12 @@ function defineGetter(obj, name, getter) {
   Object.defineProperty(obj, name, { get: getter,
                                      configurable: true,
                                      enumerable: true });
+}
+
+function defineMemoizingGetter(obj, name, getter) {
+  Object.defineProperty(obj, name, { get: getter,
+                                     configurable: true,
+                                     enumerable: false });
 }
 
 function defineSetter(obj, name, setter) {
@@ -105,7 +113,11 @@ function defineNonEnumerableProperty(obj, name, value) {
   });
 
   extendBuiltin(Sp, "trim", function () {
-	  return this.replace(/^\s+|\s+$/g,"");
+    return this.replace(/^\s+|\s+$/g,"");
+  });
+
+  extendBuiltin(Sp, "endsWith", function (str) {
+    return this.indexOf(str, this.length - str.length) !== -1;
   });
 
   var Ap = Array.prototype;
@@ -207,63 +219,6 @@ function getFlags(value, flags) {
   }
   return str.trim();
 }
-
-
-var OptionSet = (function () {
-  function optionSet (name) {
-    this.name = name;
-    this.options = [];
-  }
-  optionSet.prototype.register = function register(option) {
-    this.options.push(option);
-    return option;
-  };
-  optionSet.prototype.parse = function parse(arguments) {
-    var args = arguments.slice(0);
-    this.options.forEach(function (option) {
-      for (var i = 0; i < args.length; i++) {
-        if (args[i] && option.tryParse(args[i])) {
-          args[i] = null;
-        }
-      }
-    });
-  };
-  optionSet.prototype.trace = function trace(writer) {
-    writer.enter(this.name + " {");
-    this.options.forEach(function (option) {
-      option.trace(writer);
-    });
-    writer.leave("}");
-  };
-  return optionSet;
-})();
-
-var Option = (function () {
-  function option(name, shortName, defaultValue, description) {
-    this.name = name;
-    this.shortName = shortName;
-    this.defaultValue = defaultValue;
-    this.value = defaultValue;
-    this.description = description;
-  }
-  option.prototype.trace = function trace(writer) {
-    writer.writeLn(("-" + this.shortName + " (" + this.name + ")").padRight(" ", 20) + " = " + this.value + " [" + this.defaultValue + "]" + " (" + this.description + ")");
-  };
-  option.prototype.tryParse = function tryParse(str) {
-    if (str.indexOf("-" + this.shortName) === 0) {
-      if (str.indexOf("=") >= 0) {
-        this.value = str.slice(str.indexOf("=") + 1).trim();
-      } else if (str == "-" + this.shortName) {
-        this.value = true;
-      } else {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  };
-  return option;
-})();
 
 /**
  * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
@@ -605,3 +560,116 @@ function BitSetFunctor(length) {
 
   return Ctor;
 };
+
+// https://gist.github.com/958841
+function base64ArrayBuffer(arrayBuffer) {
+  var base64 = '';
+  var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+  var bytes = new Uint8Array(arrayBuffer);
+  var byteLength = bytes.byteLength;
+  var byteRemainder = byteLength % 3;
+  var mainLength = byteLength - byteRemainder;
+
+  var a, b, c, d;
+  var chunk;
+
+  // Main loop deals with bytes in chunks of 3
+  for (var i = 0; i < mainLength; i = i + 3) {
+    // Combine the three bytes into a single integer
+    chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
+
+    // Use bitmasks to extract 6-bit segments from the triplet
+    a = (chunk & 16515072) >> 18; // 16515072 = (2^6 - 1) << 18
+    b = (chunk & 258048) >> 12; // 258048 = (2^6 - 1) << 12
+    c = (chunk & 4032) >> 6; // 4032 = (2^6 - 1) << 6
+    d = chunk & 63; // 63 = 2^6 - 1
+
+    // Convert the raw binary segments to the appropriate ASCII encoding
+    base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
+  }
+
+  // Deal with the remaining bytes and padding
+  if (byteRemainder == 1) {
+    chunk = bytes[mainLength];
+
+    a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2
+
+    // Set the 4 least significant bits to zero
+    b = (chunk & 3) << 4; // 3 = 2^2 - 1
+
+    base64 += encodings[a] + encodings[b] + '==';
+  } else if (byteRemainder == 2) {
+    chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
+
+    a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10
+    b = (chunk & 1008) >> 4; // 1008 = (2^6 - 1) << 4
+
+    // Set the 2 least significant bits to zero
+    c = (chunk & 15) << 2; // 15 = 2^4 - 1
+
+    base64 += encodings[a] + encodings[b] + encodings[c] + '=';
+  }
+  return base64;
+}
+
+var IndentingWriter = (function () {
+  var consoleOutFn = console.info.bind(console);
+  function indentingWriter(suppressOutput, outFn) {
+    this.tab = "  ";
+    this.padding = "";
+    this.suppressOutput = suppressOutput;
+    this.out = outFn || consoleOutFn;
+  }
+
+  indentingWriter.prototype.writeLn = function writeLn(str) {
+    if (!this.suppressOutput) {
+      this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.enter = function enter(str) {
+    if (!this.suppressOutput) {
+      this.out(this.padding + str);
+    }
+    this.indent();
+  };
+
+  indentingWriter.prototype.leave = function leave(str) {
+    this.outdent();
+    if (!this.suppressOutput) {
+      this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.indent = function indent() {
+    this.padding += this.tab;
+  };
+
+  indentingWriter.prototype.outdent = function outdent() {
+    if (this.padding.length > 0) {
+      this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
+    }
+  };
+
+  indentingWriter.prototype.writeArray = function writeArray(arr, detailed, noNumbers) {
+    detailed = detailed || false;
+    for (var i = 0, j = arr.length; i < j; i++) {
+      var prefix = "";
+      if (detailed) {
+        if (arr[i] === null) {
+          prefix = "null";
+        } else if (arr[i] === undefined) {
+          prefix = "undefined";
+        } else {
+          prefix = arr[i].constructor.name;
+        }
+        prefix += " ";
+      }
+      var number = noNumbers ? "" : ("" + i).padRight(' ', 4);
+      this.writeLn(number + prefix + arr[i]);
+    }
+  };
+
+  return indentingWriter;
+})();

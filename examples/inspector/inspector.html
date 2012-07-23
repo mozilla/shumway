@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>SWF Inspector</title>
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font: 11px/18px "Lucida Grande","Lucida Sans Unicode", Helvetica, Arial, Verdana, sans-serif
+      }
+      #stage {
+        position: absolute;
+        top: 0; left: 0;
+        bottom: 38px; right: 0px;
+      }
+      #inputBar {
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 28px;
+        padding: 8px;
+        color: white !important;
+        background-color: #3F003F;
+        border-top: 2px solid black;
+        background: -moz-linear-gradient(top, #595959 0%, #2b2b2b 100%); /* FF3.6+ */
+        background: -webkit-linear-gradient(top, #595959 0%,#2b2b2b 100%); /* Chrome10+,Safari5.1+ */
+      }
+      #inputBar a {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+
+    <script src="jquery.min.js"></script>
+    <script src="../../lib/DataView.js/DataView.js"></script>
+    <script src="../../lib/Kanvas/kanvas.js"></script>
+
+    <!-- Load SWF Dependencies -->
+    <script src="../../src/swf/util.js"></script>
+    <script src="../../src/swf/swf.js"></script>
+    <script src="../../src/swf/types.js"></script>
+    <script src="../../src/swf/structs.js"></script>
+    <script src="../../src/swf/tags.js"></script>
+    <script src="../../src/swf/inflate.js"></script>
+    <script src="../../src/swf/stream.js"></script>
+    <script src="../../src/swf/templates.js"></script>
+    <script src="../../src/swf/generator.js"></script>
+    <script src="../../src/swf/parser.js"></script>
+    <script src="../../src/swf/bitmap.js"></script>
+    <script src="../../src/swf/button.js"></script>
+    <script src="../../src/swf/font.js"></script>
+    <script src="../../src/swf/image.js"></script>
+    <script src="../../src/swf/label.js"></script>
+    <script src="../../src/swf/shape.js"></script>
+    <script src="../../src/swf/text.js"></script>
+
+
+    <script src="../../src/swf/prototypes.js"></script>
+
+    <!-- Load AVM1 Dependencies -->
+    <script src="../../src/avm1/classes.js"></script>
+    <script src="../../src/avm1/globals.js"></script>
+    <script src="../../src/avm1/stream.js"></script>
+    <script src="../../src/avm1/interpreter.js"></script>
+    <script src="../../src/swf/embed.js"></script>
+    <script src="../../src/swf/renderer.js"></script>
+
+
+    <script>
+      window.print = function (msg) {
+        console.log(msg);
+      };
+      var webShell = true;
+      function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+          var pair = vars[i].split("=");
+          if (pair[0] == variable) {
+            return unescape(pair[1]);
+          }
+        }
+        return undefined;
+      }
+    </script>
+
+    <!-- Load AVM2 Dependencies -->
+    <script src="../../src/avm2/util.js"></script>
+    <script src="../../src/avm2/options.js"></script>
+    <script src="../../src/avm2/metrics.js"></script>
+
+    <script>
+      var Timer = metrics.Timer;
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+    </script>
+
+    <script src="../../src/avm2/constants.js"></script>
+    <script src="../../src/avm2/opcodes.js"></script>
+    <script src="../../src/avm2/parser.js"></script>
+    <script src="../../src/avm2/analyze.js"></script>
+    <script src="../../src/avm2/compiler/lljs/src/estransform.js"></script>
+    <script src="../../src/avm2/compiler/lljs/src/escodegen.js"></script>
+    <script src="../../src/avm2/compiler/verifier.js"></script>
+    <script src="../../src/avm2/compiler/compiler.js"></script>
+    <script src="../../src/avm2/domain.js"></script>
+    <script src="../../src/avm2/native.js"></script>
+    <script src="../../src/avm2/runtime.js"></script>
+    <script src="../../src/avm2/disassembler.js"></script>
+    <script src="../../src/avm2/interpreter.js"></script>
+    <script src="../../src/avm2/vm.js"></script>
+
+    <script src="../../src/glue/avm2/flash_events.js"></script>
+    <script src="../../src/glue/avm2/flash_display.js"></script>
+
+    <!-- Load Flash Dependencies -->
+
+    <script src="../../src/flash/util.js"></script>
+    <script src="../../src/flash/events/Event.js"></script>
+    <script src="../../src/flash/events/ProgressEvent.js"></script>
+    <script src="../../src/flash/events/EventDispatcher.js"></script>
+    <script src="../../src/flash/display/DisplayObject.js"></script>
+    <script src="../../src/flash/display/InteractiveObject.js"></script>
+    <script src="../../src/flash/display/DisplayObjectContainer.js"></script>
+    <script src="../../src/flash/display/Graphics.js"></script>
+    <script src="../../src/flash/display/Shape.js"></script>
+    <script src="../../src/flash/display/Sprite.js"></script>
+    <script src="../../src/flash/display/Loader.js"></script>
+    <script src="../../src/flash/display/LoaderInfo.js"></script>
+    <script src="../../src/flash/display/MovieClip.js"></script>
+    <script src="../../src/flash/display/Stage.js"></script>
+    <script src="../../src/flash/ui/Keyboard.js"></script>
+    <script src="../../src/flash/ui/Mouse.js"></script>
+
+    <script>
+      Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
+
+      function getState() {
+        return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]): {};
+      }
+      var state = getState();
+      enableVerifier.value = state.chkVerifier;
+      enableOpt.value = state.chkOptimizations;
+
+      function setState(state) {
+        localStorage["Inspector-Settings"] = JSON.stringify(state);
+      }
+    </script>
+
+    <div id="inputBar">
+      <span><a href="https://www.github.com/mozilla/shumway">Shumway</a> Inspector</span>&nbsp;&nbsp;
+      <label for="file">Select SWF/ABC file (or drag'n'drop the file on the stage): </label><input type="file" id="files" name="files[]" multiple>
+      Sys Compiler: <input type="checkbox" id="chkSysCompiler" value="" title="Enables the compiler for the System domain."/>
+      App Compiler: <input type="checkbox" id="chkAppCompiler" value="" title="Enables the compiler for the Application domain."/>
+      Verifier: <input type="checkbox" id="chkVerifier" value="" />
+      Optimizations: <input type="checkbox" id="chkOptimizations" value="" />
+    </div>
+
+    <script>
+      // Bind checkboxes to the state.
+      $(window).load(function () {
+        for (key in state) {
+          $("#" + key).attr('checked', state[key]);
+        }
+      });
+
+      $(":checkbox").each(function() {
+        $(this).change(function () {
+          state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
+          setState(state);
+        });
+      });
+
+      var body = $("body");
+      var stage = $("#stage");
+
+      function readFile(file) {
+        var reader = new FileReader();
+        if (file.name.endsWith(".abc")) {
+          reader.onload = function() {
+            var result = this.result;
+            createAVM2(true, function (avm2) {
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result), file.name));
+            });
+          }
+        } else if (file.name.endsWith(".swf")) {
+          reader.onload = function() {
+            var result = this.result;
+            createAVM2(true, function (avm2) {
+              SWF.embed(result, stage[0], {avm2: avm2});
+            });
+          }
+        } else {
+          throw new TypeError("unsupported format");
+        }
+        reader.readAsArrayBuffer(file);
+      }
+
+      body.on("dragenter dragover", function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+      });
+      body.on("drop", function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        var file = event.originalEvent.dataTransfer.files[0];
+        readFile(file);
+      });
+      $("#files").on("change", function(event) {
+        var file = event.originalEvent.target.files[0];
+        readFile(file);
+      });
+    </script>
+
+    <script>
+      var BinaryFileReader = (function binaryFileReader() {
+        function constructor(url, responseType) {
+          this.url = url;
+          this.responseType = responseType || "arraybuffer";
+        }
+
+        constructor.prototype = {
+          readAll: function(progress, complete) {
+            var xhr = new XMLHttpRequest();
+            var async = true;
+            xhr.open("GET", this.url, async);
+            xhr.responseType = this.responseType;
+            if (progress) {
+              xhr.onprogress = function(event) {
+                progress(xhr.response, event.loaded, event.total);
+              };
+            }
+            xhr.onreadystatechange = function(event) {
+              if (xhr.readyState === 4) {
+                complete(xhr.response);
+              }
+            }
+            xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+            xhr.send(null);
+          }
+        };
+        return constructor;
+      })();
+
+      var sysMode = state.chkSysCompiler ? null : ALWAYS_INTERPRET;
+      var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
+
+      function createAVM2(loadPlayerGlobal, next) {
+        new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
+          var vm = new AVM2(new Uint8Array(buffer), sysMode, appMode);
+
+          vm.onConstruct = function (instance, args) {
+            var ci = instance.public$constructor.classInfo;
+            print("Creating: " + ci.instanceInfo.name.getQualifiedName() +
+                  ", with args: [" + args + "]");
+          };
+
+          if (loadPlayerGlobal) {
+            new BinaryFileReader(avm2Root + "generated/playerGlobal.swf").readAll(null, function (buffer) {
+              vm.loadPlayerGlobal(new Uint8Array(buffer));
+              next(vm);
+            });
+          } else {
+            next(vm);
+          }
+        });
+      }
+
+      var avm2Root = "../../src/avm2/";
+      var rfile = getQueryVariable("rfile");
+
+      /**
+       * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
+       * when the page loads.
+       */
+      if (rfile) {
+        if (rfile.endsWith(".abc")) {
+          createAVM2(true, function(avm2) {
+            new BinaryFileReader(rfile).readAll(null, function(buffer) {
+              avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
+            });
+          });
+        } else if (rfile.endsWith(".swf")) {
+          createAVM2(true, function(avm2) {
+            new BinaryFileReader(rfile).readAll(null, function(buffer) {
+              SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
+            });
+          });
+        }
+      }
+    </script>
+  </body>
+</html>

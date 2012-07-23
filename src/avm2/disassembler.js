@@ -1,64 +1,6 @@
-var filter = options.register(new Option("filter", "f", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
+var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
 
-var IndentingWriter = (function () {
-  function indentingWriter(suppressOutput, out) {
-    this.tab = "  ";
-    this.padding = "";
-    this.suppressOutput = suppressOutput;
-    this.out = out || console;
-  }
-
-  indentingWriter.prototype.writeLn = function writeLn(str) {
-    if (!this.suppressOutput) {
-      this.out.info(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.enter = function enter(str) {
-    if (!this.suppressOutput) {
-      this.out.info(this.padding + str);
-    }
-    this.indent();
-  };
-
-  indentingWriter.prototype.leave = function leave(str) {
-    this.outdent();
-    if (!this.suppressOutput) {
-      this.out.info(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.indent = function indent() {
-    this.padding += this.tab;
-  };
-
-  indentingWriter.prototype.outdent = function outdent() {
-    if (this.padding.length > 0) {
-      this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
-    }
-  };
-
-  indentingWriter.prototype.writeArray = function writeArray(arr, detailed, noNumbers) {
-    detailed = detailed || false;
-    for (var i = 0, j = arr.length; i < j; i++) {
-      var prefix = "";
-      if (detailed) {
-        if (arr[i] === null) {
-          prefix = "null";
-        } else if (arr[i] === undefined) {
-          prefix = "undefined";
-        } else {
-          prefix = arr[i].constructor.name;
-        }
-        prefix += " ";
-      }
-      var number = noNumbers ? "" : ("" + i).padRight(' ', 4);
-      this.writeLn(number + prefix + arr[i]);
-    }
-  };
-
-  return indentingWriter;
-})();
+var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {
@@ -122,13 +64,9 @@ ConstantPool.prototype.traceMultinamesOnly = function (writer) {
   writer.writeArray(this.multinames, null, true);
 };
 
-Traits.prototype.trace = function (writer) {
-  traceArray(writer, "traits", this.traits);
-};
-
 ClassInfo.prototype.trace = function (writer) {
   writer.enter("class " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
@@ -142,13 +80,13 @@ MetaDataInfo.prototype.trace = function (writer) {
 
 InstanceInfo.prototype.trace = function (writer) {
   writer.enter("instance " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
 ScriptInfo.prototype.trace = function (writer) {
   writer.enter("script " + this + " {");
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
   writer.leave("}");
 };
 
@@ -217,6 +155,9 @@ function traceOperands(opcode, abc, code, rewind) {
 MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
   writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
+  writer.writeLn("parameters: " + this.parameters.map(function (x) {
+    return (x.type ? x.type.getQualifiedName() + "::" : "") + x.name;
+  }));
 
   if (!this.code) {
     writer.leave("}");
@@ -225,7 +166,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
 
   var code = new AbcStream(this.code);
 
-  this.traits.trace(writer);
+  traceArray(writer, "traits", this.traits);
 
   writer.enter("code {");
   while (code.remaining() > 0) {
@@ -264,7 +205,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.leave("}");
 }
 
-var SourceTracer = (function (writer) {
+var SourceTracer = (function () {
   function literal(value) {
     if (value === undefined) {
       return "undefined";
@@ -292,201 +233,205 @@ var SourceTracer = (function (writer) {
     }).join(", ");
   }
 
+  function SourceTracer(writer) {
+    this.writer = writer;
+  }
 
-  function traceTraits(traits, isStatic, inInterfaceNamespace) {
-    traits.traits.forEach(function (trait) {
-      var str;
-      var accessModifier = trait.name.getAccessModifier();
-      var namespaceName = trait.name.namespaces[0].originalURI;
-      if (namespaceName) {
-        if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
-          namespaceName = "AS3";
-        }
-        if (accessModifier === "public") {
-          str = inInterfaceNamespace === namespaceName ? "" : namespaceName;
+  SourceTracer.prototype = {
+    traceTraits: function traceTraits(traits, isStatic, inInterfaceNamespace) {
+      const writer = this.writer;
+      const tracer = this;
+
+      traits.forEach(function (trait) {
+        var str;
+        var accessModifier = trait.name.getAccessModifier();
+        var namespaceName = trait.name.namespaces[0].originalURI;
+        if (namespaceName) {
+          if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
+            namespaceName = "AS3";
+          }
+          if (accessModifier === "public") {
+            str = inInterfaceNamespace === namespaceName ? "" : namespaceName;
+          } else {
+            str = accessModifier;
+          }
         } else {
           str = accessModifier;
         }
-      } else {
-        str = accessModifier;
-      }
-      if (isStatic) {
-        str += " static";
-      }
-      if (trait.isSlot() || trait.isConst()) {
-        traceMetadata(trait.metadata);
-        if (trait.isConst()) {
-          str += " const";
-        } else {
-          str += " var";
+        if (isStatic) {
+          str += " static";
         }
-        str += " " + trait.name.getName();
-        if (trait.typeName) {
-          str += ":" + trait.typeName.getName();
-        }
-        if (trait.value) {
-          str += " = " + literal(trait.value);
-        }
-        writer.writeLn(str + ";");
-      } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-        traceMetadata(trait.metadata);
-        var mi = trait.methodInfo;
-        if (trait.attributes & ATTR_Override) {
-          str += " override";
-        }
-        if (mi.isNative()) {
-          str += " native";
-        }
-        str += " function";
-        str += trait.isGetter() ? " get" : (trait.isSetter() ? " set" : "");
-        str += " " + trait.name.getName();
-        str += "(" + getSignature(mi) + ")";
-        str += mi.returnType ? ":" + mi.returnType.getName() : "";
-        if (mi.isNative()) {
+        if (trait.isSlot() || trait.isConst()) {
+          tracer.traceMetadata(trait.metadata);
+          if (trait.isConst()) {
+            str += " const";
+          } else {
+            str += " var";
+          }
+          str += " " + trait.name.getName();
+          if (trait.typeName) {
+            str += ":" + trait.typeName.getName();
+          }
+          if (trait.value) {
+            str += " = " + literal(trait.value);
+          }
           writer.writeLn(str + ";");
-        } else {
-          if (inInterfaceNamespace) {
+        } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+          tracer.traceMetadata(trait.metadata);
+          var mi = trait.methodInfo;
+          if (trait.attributes & ATTR_Override) {
+            str += " override";
+          }
+          if (mi.isNative()) {
+            str += " native";
+          }
+          str += " function";
+          str += trait.isGetter() ? " get" : (trait.isSetter() ? " set" : "");
+          str += " " + trait.name.getName();
+          str += "(" + getSignature(mi) + ")";
+          str += mi.returnType ? ":" + mi.returnType.getName() : "";
+          if (mi.isNative()) {
             writer.writeLn(str + ";");
           } else {
-            writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
-          }
-        }
-      } else if (trait.isClass()) {
-        var className = trait.classInfo.instanceInfo.name;
-        writer.enter("package " + className.namespaces[0].originalURI + " {\n");
-        traceMetadata(trait.metadata);
-        traceClass(trait.classInfo);
-        writer.leave("\n}");
-        traceClassStub(trait);
-      } else {
-        notImplemented();
-      }
-    });
-  }
-
-  function traceClassStub(trait) {
-    var ci = trait.classInfo;
-    var ii = ci.instanceInfo;
-    var name = ii.name.getName();
-    var native = trait.metadata ? trait.metadata.native : null;
-    if (!native) {
-      return;
-    }
-    writer.enter("Shumway Stub {");
-    writer.enter("function " + native.cls + "(scope, instance, baseClass) {");
-    writer.writeLn("function " + name + "() {};");
-    writer.writeLn("var c = new Class(\"" + name + "\", " + name +
-                   ", Class.passthroughCallable(" + name + "));");
-    writer.writeLn("//");
-    writer.writeLn("// WARNING! This sets: ")
-    writer.writeLn("//   " + name + ".prototype = " +
-                   "Object.create(baseClass.instance.prototype)");
-    writer.writeLn("//");
-    writer.writeLn("// If you want to manage prototypes manually, do this instead:");
-    writer.writeLn("//   c.baseClass = baseClass");
-    writer.writeLn("//");
-    writer.writeLn("c.extend(baseClass);");
-
-    function traceTraits(traits, isStatic) {
-      traits.traits.forEach(function (trait) {
-        var traitName = trait.name.getName();
-        if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-          var mi = trait.methodInfo;
-          if (mi.isNative()) {
-            var str = isStatic ? "s" : "m";
-            if (mi.parameters.length) {
-              var returnTypeStr = "";
-              if (mi.returnType) {
-                returnTypeStr = " -> " + mi.returnType.getName();
-              }
-              writer.writeLn("// Signature: " + getSignature(mi) + returnTypeStr);
-            }
-            var prop;
-            if (trait.isGetter()) {
-              prop = "[\"get " + traitName + "\"]";
-            } else if (trait.isSetter()) {
-              prop = "[\"set " + traitName + "\"]";
+            if (inInterfaceNamespace) {
+              writer.writeLn(str + ";");
             } else {
-              prop = "." + traitName;
+              writer.writeLn(str + " { notImplemented(\"" + trait.name.getName() + "\"); }");
             }
-            str += prop + " = function " + traitName + "(" + getSignature(mi, true) + ")";
-            writer.writeLn(str + " { notImplemented(); }");
           }
+        } else if (trait.isClass()) {
+          var className = trait.classInfo.instanceInfo.name;
+          writer.enter("package " + className.namespaces[0].originalURI + " {\n");
+          tracer.traceMetadata(trait.metadata);
+          tracer.traceClass(trait.classInfo);
+          writer.leave("\n}");
+          tracer.traceClassStub(trait);
+        } else {
+          notImplemented();
         }
       });
-    }
+    },
 
-    writer.writeLn("var m = " + name + ".prototype;");
-    writer.writeLn("var s = {};");
+    traceClassStub: function traceClassStub(trait) {
+      const writer = this.writer;
 
-    traceTraits(ci.traits, true);
-    traceTraits(ii.traits);
+      var ci = trait.classInfo;
+      var ii = ci.instanceInfo;
+      var name = ii.name.getName();
+      var native = trait.metadata ? trait.metadata.native : null;
+      if (!native) {
+        return false;
+      }
 
-    writer.writeLn("c.nativeMethods = m;");
-    writer.writeLn("c.nativeStatics = s;");
+      writer.writeLn("Cut and paste the following into `native.js' and edit accordingly");
+      writer.writeLn("8< --------------------------------------------------------------");
+      writer.enter("natives." + native.cls + " = function " + native.cls + "(runtime, scope, instance, baseClass) {");
+      writer.writeLn("var c = new runtime.domain.system.Class(\"" + name + "\", instance, Domain.passthroughCallable(instance));");
+      writer.writeLn("c.extend(baseClass);\n");
 
-    writer.writeLn("return c;");
-    writer.leave("}");
-    writer.leave("}");
-  }
+      function traceTraits(traits, isStatic) {
+        var nativeMethodTraits = [];
 
-  function traceClass(ci) {
-    var ii = ci.instanceInfo;
-    var name = ii.name;
-    var str = name.getAccessModifier();
-    if (ii.isFinal()) {
-      str += " final";
-    }
-    if (!ii.isSealed()) {
-      str += " dynamic";
-    }
-    str += ii.isInterface() ? " interface " : " class ";
-    str += name.getName();
-    if (ii.superName && ii.superName.getName() !== "Object") {
-      str += " extends " + ii.superName.getName();
-    }
-    if (ii.interfaces.length) {
-      str += " implements " + ii.interfaces.map(function (x) {
-        return x.getName();
-      }).join(", ");
-    }
-    writer.enter(str + " {");
-    if (!ii.isInterface()) {
-      writer.writeLn("public function " + name.getName() + "(" + getSignature(ii.init) + ") {}");
-    }
-    var interfaceNamespace;
-    if (ii.isInterface()) {
-      interfaceNamespace = name.namespaces[0].originalURI + ":" + name.name;
-    }
-    traceTraits(ci.traits, true, interfaceNamespace);
-    traceTraits(ii.traits, false, interfaceNamespace);
-    writer.leave("}");
-  }
+        traits.forEach(function (trait, i) {
+          if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+            if (trait.methodInfo.isNative()) {
+              nativeMethodTraits.push(trait);
+            }
+          }
+        });
 
-  function traceMetadata(metadata) {
-    for (var key in metadata) {
-      if (metadata.hasOwnProperty(key)) {
-        if (key.indexOf("__") === 0) {
-          continue;
+        nativeMethodTraits.forEach(function (trait, i) {
+          var mi = trait.methodInfo;
+          var traitName = trait.name.getName();
+          writer.writeLn("// " + traitName + " :: " +
+                         (mi.parameters.length ? getSignature(mi) : "void") + " -> " +
+                         (mi.returnType ? mi.returnType.getName() : "any"));
+          var prop;
+          if (trait.isGetter()) {
+            prop = "\"get " + traitName + "\"";
+          } else if (trait.isSetter()) {
+            prop = "\"set " + traitName + "\"";
+          } else {
+            prop = traitName;
+          }
+
+          writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
+          writer.writeLn("  notImplemented(\"" + name + "." + traitName + "\");");
+          writer.leave("}" + (i === nativeMethodTraits.length - 1 ? "" : ",\n"));
+        });
+      }
+
+      writer.enter("c.nativeStatics = {");
+      traceTraits(ci.traits, true);
+      writer.leave("};\n");
+      writer.enter("c.nativeMethods = {");
+      traceTraits(ii.traits);
+      writer.leave("};\n");
+
+      writer.writeLn("return c;");
+      writer.leave("};");
+      writer.writeLn("-------------------------------------------------------------- >8");
+
+      return true;
+    },
+
+    traceClass: function traceClass(ci) {
+      const writer = this.writer;
+
+      var ii = ci.instanceInfo;
+      var name = ii.name;
+      var str = name.getAccessModifier();
+      if (ii.isFinal()) {
+        str += " final";
+      }
+      if (!ii.isSealed()) {
+        str += " dynamic";
+      }
+      str += ii.isInterface() ? " interface " : " class ";
+      str += name.getName();
+      if (ii.superName && ii.superName.getName() !== "Object") {
+        str += " extends " + ii.superName.getName();
+      }
+      if (ii.interfaces.length) {
+        str += " implements " + ii.interfaces.map(function (x) {
+          return x.getName();
+        }).join(", ");
+      }
+      writer.enter(str + " {");
+      if (!ii.isInterface()) {
+        writer.writeLn("public function " + name.getName() + "(" + getSignature(ii.init) + ") {}");
+      }
+      var interfaceNamespace;
+      if (ii.isInterface()) {
+        interfaceNamespace = name.namespaces[0].originalURI + ":" + name.name;
+      }
+      this.traceTraits(ci.traits, true, interfaceNamespace);
+      this.traceTraits(ii.traits, false, interfaceNamespace);
+      writer.leave("}");
+    },
+
+    traceMetadata: function traceMetadata(metadata) {
+      const writer = this.writer;
+
+      for (var key in metadata) {
+        if (metadata.hasOwnProperty(key)) {
+          if (key.indexOf("__") === 0) {
+            continue;
+          }
+          writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
+            var str = m.key ? m.key + "=" : "";
+            return str + "\"" + m.value + "\"";
+          }).join(", ") + ")]");
         }
-        writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
-          var str = m.key ? m.key + "=" : "";
-          return str + "\"" + m.value + "\"";
-        }).join(", ") + ")]");
       }
     }
-  }
-
-  return {
-    traceMetadata: traceMetadata,
-    traceTraits: traceTraits,
-    traceClass: traceClass,
-    traceClassStub: traceClassStub
   };
-});
+
+  return SourceTracer;
+})();
 
 function traceSource(writer, abc) {
-  var tracer = SourceTracer(writer);
+  var tracer = new SourceTracer(writer);
   abc.scripts.forEach(function (script) {
     tracer.traceTraits(script.traits);
   });
