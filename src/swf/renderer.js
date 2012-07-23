@@ -6,8 +6,6 @@ function render(displayList, renderingContext) {
   var ctx = renderingContext.beginDrawing();
   // displayList is array, so items are sorted by depth
   for (var depth in displayList) {
-    if (!+depth)
-      continue;
     var item = displayList[depth];
     if (item) {
       var character = item.character;

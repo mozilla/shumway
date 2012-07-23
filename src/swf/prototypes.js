@@ -197,8 +197,6 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
         }
         var displayList = [];
         for (var depth in frame) {
-          if (!+depth)
-            continue;
           if (previousFrame && previousFrame[depth] === frame[depth]) {
             displayList[depth] = previousDisplayList[depth];
             continue;
@@ -487,8 +485,6 @@ var MovieClipPrototype = function(obj, timelineLoader) {
           var frame = timeline[currentFrame - 1];
           var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
           for (var i in frame) {
-            if (!+i)
-              continue;
             var character = frame[i].character;
             var b = character.bounds || character.getBounds(this);
             xMin = Math.min(xMin, b.xMin);
