@@ -42,9 +42,6 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
   stopTouchDrag: describeMethod(function (touchPointID) {
     notImplemented();
   }),
-  toString: describeMethod(function () {
-    return '[object Sprite]';
-  }),
   useHandCursor: describeAccessor(
     function () {
       return true;
