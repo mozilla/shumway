@@ -38,7 +38,24 @@ const ContinueStatement = T.ContinueStatement;
 const TryStatement = T.TryStatement;
 const CatchClause = T.CatchClause;
 
-
+/**
+ * When adding a new "magic" variable that the compiler has
+ * a fixed constant for, please add it as a global identifier
+ * instead of using id("$foo") in the code.
+ *
+ * Please make sure that magic variable identifiers start with
+ * a '$' so that they cannot collide with any identifiers in the
+ * method itself.
+ */
+const scopeName = new Identifier("$S");
+const scopeObjectName = new Identifier("$O");
+const globalScopeObjectName = new Identifier("$G");
+const savedScopeName = new Identifier("$$S");
+const constantsName = new Identifier("$C");
+const lastCaughtName = new Identifier("$E");
+const exceptionName = new Identifier("$e");
+const labelTestName = new Identifier("$label");
+const labelConditionName = new Identifier("$condition");
 
 /**
  * To embed object references in compiled code we index into globally accessible constant table [$C].
@@ -48,13 +65,6 @@ const CatchClause = T.CatchClause;
  */
 
 var $C = [];
-
-const scopeName = new Identifier("$S");
-const scopeObjectName = new Identifier("$O");
-const globalScopeObjectName = new Identifier("$G");
-const savedScopeName = new Identifier("$$S");
-const constantsName = new Identifier("$C");
-const lastCaughtName = new Identifier("$E");
 
 function generate(node) {
   return escodegen.generate(node, {base: "", indent: "  "});
@@ -550,7 +560,7 @@ var Compiler = (function () {
 
       function labelEq(labelId) {
         assert (typeof labelId === "number");
-        return new BinaryExpression("===", id("$label"), new Literal(labelId));
+        return new BinaryExpression("===", labelTestName, new Literal(labelId));
       }
 
       for (var i = item.cases.length - 1; i >=0; i--) {
@@ -574,7 +584,7 @@ var Compiler = (function () {
       var body = [];
       if (item.label) {
         body.push(new VariableDeclaration("var", [
-          new VariableDeclarator(id("$label"), id(item.label))
+          new VariableDeclarator(labelTestName, id(item.label))
         ]));
       }
       return body;
@@ -633,8 +643,8 @@ var Compiler = (function () {
 
       var node;
       if (item.nothingThrownLabel) {
-        var ifs = new IfStatement(new BinaryExpression("===", id("$label"), constant(item.nothingThrownLabel)),
-                                  new IfStatement(id("$c"), tr ? tr.node : new BlockStatement([]),
+        var ifs = new IfStatement(new BinaryExpression("===", labelTestName, constant(item.nothingThrownLabel)),
+                                  new IfStatement(labelConditionName, tr ? tr.node : new BlockStatement([]),
                                                   er ? er.node : null));
         cr.node = new BlockStatement([cr.node, ifs]);
       } else {
@@ -649,15 +659,14 @@ var Compiler = (function () {
       var br = item.body.compile(this, state);
       var cx = this;
       var catches = [];
-      var exceptionName = id("$e");
 
       if (br.condition) {
-        br.node.body.push(new ExpressionStatement(assignment(id("$c"), br.condition)));
+        br.node.body.push(new ExpressionStatement(assignment(labelConditionName, br.condition)));
       }
 
       if (item.nothingThrownLabel > 0) {
         var nothingThrownLabel = new VariableDeclaration("var", [
-          new VariableDeclarator(id("$label"), id(item.nothingThrownLabel))
+          new VariableDeclarator(labelTestItem, id(item.nothingThrownLabel))
         ]);
         if (br.node instanceof BlockStatement) {
           br.node.body.push(nothingThrownLabel);
