@@ -15,7 +15,6 @@ function Graphics() {
   this._fillStyle = null;
   this._strokeStyle = null;
   this._subpaths = [];
-  this._winding = GRAPHICS_PATH_WINDING_EVEN_ODD;
 }
 
 function toRgba(color, alpha) {
@@ -171,8 +170,8 @@ Graphics.prototype = Object.create(null, {
     }
   }),
   drawPath: describeMethod(function (commands, data, winding) {
-    if (winding !== undefined && winding !== this._winding)
-      delete this._currentPath;
+    delete this._currentPath;
+    this._currentPath.fillRule = winding || GRAPHICS_PATH_WINDING_EVEN_ODD;
 
     for (var i = 0, j = 0, n = commands.length; i < n; i++) {
       switch (commands[i]) {
