@@ -6,6 +6,8 @@ build:
 	-rm -rf content/flash
 	-rm -rf content/avm1
 	-rm -rf content/avm2
+	-rm -rf content/glue
+	-rm -rf content/lib
 	-rm shumway.xpi
 	# Coping JavaScript content files
 	mkdir content/swf
@@ -24,8 +26,20 @@ build:
 	cp ../../src/avm1/*.js content/avm1/
 	mkdir content/avm2
 	cp ../../src/avm2/*.js content/avm2/
-	mkdir content/avm2/utils
-	cp ../../src/avm2/utils/*.js content/avm2/utils/
+	mkdir content/avm2/compiler
+	cp ../../src/avm2/compiler/*.js content/avm2/compiler/
+	mkdir content/avm2/compiler/lljs
+	mkdir content/avm2/compiler/lljs/src
+	cp ../../src/avm2/compiler/lljs/src/*.js content/avm2/compiler/lljs/src/
+	# TODO src/avm2/generated/playerGlobal.swf and src/avm2/generated/builtin/builtin.abc
+	mkdir content/glue
+	mkdir content/glue/avm2
+	cp ../../src/glue/avm2/*.js content/glue/avm2/
+	mkdir content/lib
+	mkdir content/lib/Kanvas
+	cp ../../lib/Kanvas/* content/lib/Kanvas/
+	mkdir content/lib/DataView.js
+	cp ../../lib/DataView.js/* content/lib/DataView.js/
 	cp ../../LICENSE .
 	# Removing hidden files
 	-find . -name ".DS_Store" | xargs rm
