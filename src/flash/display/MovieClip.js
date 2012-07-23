@@ -12,6 +12,8 @@ function MovieClip() {
 }
 
 MovieClip.prototype = Object.create(new Sprite, {
+  __class__: describeProperty('flash.display.MovieClip'),
+
   addFrameScript: describeMethod(function () {
     notImplemented();
   }),

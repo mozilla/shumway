@@ -19,6 +19,8 @@ function ColorTransform(redMultiplier,
 }
 
 ColorTransform.prototype = Object.create(null, {
+  __class__: describeProperty('flash.geom.ColorTransform'),
+
   color: describeAccessor(
     function () {
       return this.redOffset << 16 | this.greenOffset << 8 | this.blueOffset;

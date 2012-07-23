@@ -8,6 +8,8 @@ function Rectangle(x, y, width, height) {
 }
 
 Rectangle.prototype = Object.create(null, {
+  __class__: describeProperty('flash.geom.Rectangle'),
+
   bottomRight: describeAccessor(
     function() {
       return new Point(this.right, this.bottom);

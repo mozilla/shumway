@@ -57,6 +57,8 @@ Object.defineProperties(Event, {
 });
 
 Event.prototype = Object.create(null, {
+  __class__: describeProperty('flash.events.Event'),
+
   clone: describeMethod(function () {
     return new Event(this.type, this.bubbles, this.cancelable);
   }),

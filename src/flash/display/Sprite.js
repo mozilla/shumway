@@ -3,6 +3,8 @@ function Sprite() {
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
+  __class__: describeProperty('flash.display.Sprite'),
+
   buttonMode: describeAccessor(
     function () {
       return false;

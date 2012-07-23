@@ -18,6 +18,8 @@ Object.defineProperties(Point, {
 });
 
 Point.prototype = Object.create(null, {
+  __class__: describeProperty('flash.geom.Point'),
+
   length: describeAccessor(
     function () {
       return Math.sqrt(this.x * this.x + this.y * this.y);

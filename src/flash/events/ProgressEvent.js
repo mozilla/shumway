@@ -14,6 +14,8 @@ Object.defineProperties(ProgressEvent, {
 });
 
 ProgressEvent.prototype = Object.create(new Event, {
+  __class__: describeProperty('flash.events.ProgressEvent'),
+
   clone: describeMethod(function () {
     return new ProgressEvent(
       this.type,

@@ -5,6 +5,8 @@ function EventDispatcher(target) {
 }
 
 EventDispatcher.prototype = Object.create(null, {
+  __class__: describeProperty('flash.events.EventDispatcher'),
+
   addEventListener: describeMethod(function (type, listener, useCapture, prio, useWeakReference) {
     if (typeof listener !== 'function')
       throw ArgumentError();
@@ -95,7 +97,7 @@ EventDispatcher.prototype = Object.create(null, {
     }
   }),
   toString: describeMethod(function () {
-    return '[object EventDispatcher]';
+    return '[object ' + this.__class__.replace(/^.*\./, '') + ']';
   }),
   willTrigger: describeMethod(function (type) {
     var dispatcher = this;

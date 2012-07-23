@@ -25,6 +25,8 @@ function toRgba(color, alpha) {
 }
 
 Graphics.prototype = Object.create(null, {
+  __class__: describeProperty('flash.display.Graphics'),
+
   beginFill: describeMethod(function (color, alpha) {
     if (alpha === undefined)
       alpha = 1;
