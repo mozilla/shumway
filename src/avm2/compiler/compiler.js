@@ -573,35 +573,30 @@ var Compiler = (function () {
       return {node: node, state: state};
     };
 
-    compilation.prototype.compileContinue = function compileContinue(item, state) {
+    function labelTestBody(item) {
       var body = [];
       if (item.label) {
         body.push(new VariableDeclaration("var", [
           new VariableDeclarator(id("$label"), id(item.label))
         ]));
       }
+      return body;
+    }
+
+    compilation.prototype.compileContinue = function compileContinue(item, state) {
+      var body = labelTestBody(item);
       body.push(new ContinueStatement(null));
       return {node: new BlockStatement(body), state: state};
     };
 
     compilation.prototype.compileBreak = function compileBreak(item, state) {
-      var body = [];
-      if (item.label) {
-        body.push(new VariableDeclaration("var", [
-          new VariableDeclarator(id("$label"), id(item.label))
-        ]));
-      }
+      var body = labelTestBody(item);
       body.push(new BreakStatement(null));
       return {node: new BlockStatement(body), state: state};
     };
 
     compilation.prototype.compileExit = function compileBreak(item, state) {
-      var body = [];
-      if (item.label) {
-        body.push(new VariableDeclaration("var", [
-          new VariableDeclarator(id("$label"), id(item.label))
-        ]));
-      }
+      var body = labelTestBody(item);
       return {node: new BlockStatement(body), state: state};
     };
 
