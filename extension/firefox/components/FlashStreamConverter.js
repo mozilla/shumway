@@ -3,50 +3,73 @@
 
 'use strict';
 
-var EXPORTED_SYMBOLS = ['FlashStreamConverter'];
+var EXPORTED_SYMBOLS = ['FlashStreamConverter1', 'FlashStreamConverter2'];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
-const FALSH_CONTENT_TYPE = 'application/x-shockwave-flash';
-const EXT_PREFIX = 'shumway@research.mozilla.org';
+
+// True only if this is the version of pdf.js that is included with firefox.
+const SHUMWAY_CONTENT_TYPE = 'application/x-shockwave-flash';
+const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
+                                    SHUMWAY_CONTENT_TYPE + ',';
+
+const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
+const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
+Cu.import('resource://gre/modules/NetUtil.jsm');
+
+
+let appInfo = Cc['@mozilla.org/xre/app-info;1']
+                  .getService(Ci.nsIXULAppInfo);
+let Svc = {};
+XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
+                                   '@mozilla.org/mime;1',
+                                   'nsIMIMEService');
 
 function log(aMsg) {
   let msg = 'FlashStreamConverter.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
+  Services.console.logStringMessage(msg);
+  dump(msg + '\n');
+}
 
-  var consoleService = Components.classes["@mozilla.org/consoleservice;1"]
-                                 .getService(Components.interfaces.nsIConsoleService);
-  consoleService.logStringMessage(msg);
+function getDOMWindow(aChannel) {
+  var requestor = aChannel.notificationCallbacks;
+  var win = requestor.getInterface(Components.interfaces.nsIDOMWindow);
+  return win;
 }
-function getWindow(top, id) {
-  return top.QueryInterface(Ci.nsIInterfaceRequestor)
-            .getInterface(Ci.nsIDOMWindowUtils)
-            .getOuterWindowWithId(id);
-}
-function windowID(win) {
-  return win.QueryInterface(Ci.nsIInterfaceRequestor)
-            .getInterface(Ci.nsIDOMWindowUtils)
-            .outerWindowID;
-}
-function topWindow(win) {
-  return win.QueryInterface(Ci.nsIInterfaceRequestor)
-            .getInterface(Ci.nsIWebNavigation)
-            .QueryInterface(Ci.nsIDocShellTreeItem)
-            .rootTreeItem
-            .QueryInterface(Ci.nsIInterfaceRequestor)
-            .getInterface(Ci.nsIDOMWindow);
-}
-let application = Cc['@mozilla.org/fuel/application;1']
-                    .getService(Ci.fuelIApplication);
-let privateBrowsing = Cc['@mozilla.org/privatebrowsing;1']
-                        .getService(Ci.nsIPrivateBrowsingService);
-let inPrivateBrowswing = privateBrowsing.privateBrowsingEnabled;
 
-function ChromeActions() {
+// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
+// absolute URL, it will be returned as is.
+function combineUrl(baseUrl, url) {
+  if (url.indexOf(':') >= 0)
+    return url;
+  if (url.charAt(0) == '/') {
+    // absolute path
+    var i = baseUrl.indexOf('://');
+    i = baseUrl.indexOf('/', i + 3);
+    return baseUrl.substring(0, i) + url;
+  } else {
+    // relative path
+    var pathLength = baseUrl.length, i;
+    i = baseUrl.lastIndexOf('#');
+    pathLength = i >= 0 ? i : pathLength;
+    i = baseUrl.lastIndexOf('?', pathLength);
+    pathLength = i >= 0 ? i : pathLength;
+    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
+    return baseUrl.substring(0, prefixLength + 1) + url;
+  }
+}
+
+// All the priviledged actions.
+function ChromeActions(url, params, referer, window) {
+  this.url = url;
+  this.params = params;
+  this.referer = referer;
+  this.window = window;
 }
 
 ChromeActions.prototype = {
@@ -54,28 +77,11 @@ ChromeActions.prototype = {
     return this.url;
   },
   getParams: function getParams() {
-    var element = this.window.frameElement;
-    var params = {};
-    if (element) {
-      var tagName = element.nodeName;
-      if (tagName == 'EMBED') {
-        for (var i = 0; i < element.attributes.length; ++i) {
-          params[element.attributes[i].localName] = element.attributes[i].nodeValue;
-        }
-      } else {
-        for (var i = 0; i < element.childNodes.length; ++i) {
-          var paramElement = element.childNodes[i];
-          if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM') continue;
-
-          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
-        }
-      }
-    }
-    return JSON.stringify(params);
+    return JSON.stringify(this.params);
   },
   loadFile: function loadFile(data) {
     var url = data;
+
     if (url != this.url) {
       // TODO flash cross-origin request
       log("bad url " + url + " " + this.url);
@@ -91,12 +97,10 @@ ChromeActions.prototype = {
     oXHR.open("GET", data, true);
     oXHR.responseType = "arraybuffer";
 
-    var element = this.window.frameElement;
-    if (element) {
+    if (this.referer) {
       // Setting the referer uri, some site doing checks if swf is embedded
       // on the original page.
-      var documentURI = element.ownerDocument.location.href;
-      oXHR.setRequestHeader("Referer", documentURI);
+      oXHR.setRequestHeader("Referer", this.referer);
     }
 
     oXHR.onreadystatechange = function (oEvent) {
@@ -116,16 +120,47 @@ ChromeActions.prototype = {
   }
 };
 
-function FlashStreamConverter() {
+// Event listener to trigger chrome privedged code.
+function RequestListener(actions) {
+  this.actions = actions;
+}
+// Receive an event and synchronously or asynchronously responds.
+RequestListener.prototype.receive = function(event) {
+  var message = event.target;
+  var doc = message.ownerDocument;
+  var action = message.getUserData('action');
+  var data = message.getUserData('data');
+  var sync = message.getUserData('sync');
+  var actions = this.actions;
+  if (!(action in actions)) {
+    log('Unknown action: ' + action);
+    return;
+  }
+  if (sync) {
+    var response = actions[action].call(this.actions, data);
+    message.setUserData('response', response, null);
+  } else {
+    var response;
+    if (!message.getUserData('callback')) {
+      doc.documentElement.removeChild(message);
+      response = null;
+    } else {
+      response = function sendResponse(response) {
+        message.setUserData('response', response, null);
+
+        var listener = doc.createEvent('HTMLEvents');
+        listener.initEvent('shumway.response', true, false);
+        return message.dispatchEvent(listener);
+      }
+    }
+    actions[action].call(this.actions, data, response);
+  }
+};
+
+function FlashStreamConverterBase() {
 }
 
-FlashStreamConverter.prototype = {
-
-  // properties required for XPCOM registration:
-  classID: Components.ID('{af1397b9-381f-4008-ba2f-67770e1c7d5d}'),
-  classDescription: 'shumway streamconv component',
-  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*',
-
+FlashStreamConverterBase.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsISupports,
       Ci.nsIStreamConverter,
@@ -137,7 +172,7 @@ FlashStreamConverter.prototype = {
    * This component works as such:
    * 1. asyncConvertData stores the listener
    * 2. onStartRequest creates a new channel, streams the viewer and cancels
-   *    the request so shumway can do the request
+   *    the request so pdf.js can do the request
    * Since the request is cancelled onDataAvailable should not be called. The
    * onStopRequest does nothing. The convert function just returns the stream,
    * it's just the synchronous version of asyncConvertData.
@@ -148,10 +183,19 @@ FlashStreamConverter.prototype = {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
 
+  isValidRequest: function() {
+    return true;
+  },
+
+  createChromeActions: function(window, url) {
+    throw 'Not implemented: createChromeActions';
+  },
+
   // nsIStreamConverter::asyncConvertData
   asyncConvertData: function(aFromType, aToType, aListener, aCtxt) {
-    if (!Services.prefs.getBoolPref('extensions.shumway.active'))
+    if(!this.isValidRequest(aCtxt))
       throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+
     // Store the listener passed to us
     this.listener = aListener;
   },
@@ -170,56 +214,42 @@ FlashStreamConverter.prototype = {
     // Cancel the request so the viewer can handle it.
     aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
-    // Create a new channel that is viewer loaded as a resource.
     var originalURI = aRequest.URI;
+
+    // Create a new channel that is viewer loaded as a resource.
     var ioService = Services.io;
     var channel = ioService.newChannel(
                     'resource://shumway/web/viewer.html', null, null);
 
-    // Keep the URL the same so the browser sees it as the same.
-    // channel.originalURI = originalURI;
-    channel.asyncOpen(this.listener, aContext);
-
-    let actions = Object.create(ChromeActions.prototype);
-    actions.url = originalURI.spec;
-
-    // Setup a global listener waiting for the next DOM to be created and verfiy
-    // that its the one we want by its URL. When the correct DOM is found create
-    // an event listener on that window for the shumway events that require
-    // chrome priviledges. Code snippet from John Galt.
-    let window = aRequest.loadGroup.groupObserver
-                         .QueryInterface(Ci.nsIWebProgress)
-                         .DOMWindow;
-    let top = topWindow(window);
-    let id = windowID(window);
-    window = null;
-
-    top.addEventListener('DOMWindowCreated', function onDOMWinCreated(event) {
-      let doc = event.originalTarget;
-      let win = doc.defaultView;
-
-      if (id == windowID(win)) {
-        top.removeEventListener('DOMWindowCreated', onDOMWinCreated, true);
-        if (!doc.documentURIObject.equals(channel.originalURI))
-          return;
-
-        actions.window = win;
-
-        win.addEventListener("shumway.message", function(event) {
-            var message = event.target;
-            var action = message.getUserData('action');
-            var data = message.getUserData('data');
-
-            if (typeof actions[action] === 'function') {
-              var response = actions[action](data);
-              message.setUserData('response', response, null);
-            }
-        }, false, true);
-
-      } else if (!getWindow(top, id)) {
-        top.removeEventListener('DOMWindowCreated', onDOMWinCreated, true);
+    var converter = this;
+    var listener = this.listener;
+    // Proxy all the request observer calls, when it gets to onStopRequest
+    // we can get the dom window.
+    var proxy = {
+      onStartRequest: function() {
+        listener.onStartRequest.apply(listener, arguments);
+      },
+      onDataAvailable: function() {
+        listener.onDataAvailable.apply(listener, arguments);
+      },
+      onStopRequest: function() {
+        var domWindow = getDOMWindow(channel);
+        // Double check the url is still the correct one.
+        if (domWindow.document.documentURIObject.equals(channel.originalURI)) {
+          let actions = converter.createChromeActions(domWindow,
+                                                      originalURI.spec);
+          let requestListener = new RequestListener(actions);
+          domWindow.addEventListener('shumway.message', function(event) {
+            requestListener.receive(event);
+          }, false, true);
+        }
+        listener.onStopRequest.apply(listener, arguments);
       }
-    }, true);
+    };
+
+    // XXX? Keep the URL the same so the browser sees it as the same.
+    // channel.originalURI = aRequest.URI;
+    channel.asyncOpen(proxy, aContext);
   },
 
   // nsIRequestObserver::onStopRequest
@@ -228,4 +258,115 @@ FlashStreamConverter.prototype = {
   }
 };
 
-var NSGetFactory = XPCOMUtils.generateNSGetFactory([FlashStreamConverter]);
+// properties required for XPCOM registration:
+function copyProperties(obj, template) {
+  for (var prop in template) {
+    obj[prop] = template[prop];
+  }
+}
+
+function FlashStreamConverter1() {}
+FlashStreamConverter1.prototype = new FlashStreamConverterBase();
+copyProperties(FlashStreamConverter1.prototype, {
+  classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
+  classDescription: 'Shumway Content Converter Component',
+  contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*'
+});
+FlashStreamConverter1.prototype.createChromeActions = function(window, url) {
+  function getParams() {
+    var element = window.frameElement;
+    var params = {};
+    if (element) {
+      var tagName = element.nodeName;
+      if (tagName == 'EMBED') {
+        for (var i = 0; i < element.attributes.length; ++i) {
+          params[element.attributes[i].localName] = element.attributes[i].nodeValue;
+        }
+      } else {
+        for (var i = 0; i < element.childNodes.length; ++i) {
+          var paramElement = element.childNodes[i];
+          if (paramElement.nodeType != 1 ||
+              paramElement.nodeName != 'PARAM') continue;
+
+          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+        }
+      }
+    }
+    return params;
+  }
+
+  function getReferer() {
+    var element = window.frameElement;
+    return element ? element.ownerDocument.location.href : null;
+  }
+
+  return new ChromeActions(url, getParams(), getReferer(), window);
+};
+
+function FlashStreamConverter2() {}
+FlashStreamConverter2.prototype = new FlashStreamConverterBase();
+copyProperties(FlashStreamConverter2.prototype, {
+  classID: Components.ID('{4c6030f7-e20a-264f-5f9b-ada3a9e97384}'),
+  classDescription: 'Shumway PlayPreview Component',
+  contractID: '@mozilla.org/streamconv;1?from=application/x-moz-playpreview&to=*/*'
+});
+FlashStreamConverter2.prototype.isValidRequest =
+  (function(aCtxt) {
+    try {
+      var request = aCtxt;
+      request.QueryInterface(Ci.nsIChannel);
+      var spec = request.URI.spec;
+      return spec.substr(0, EXPECTED_PLAYPREVIEW_URI_PREFIX.length) == EXPECTED_PLAYPREVIEW_URI_PREFIX;
+    } catch (e) {
+      return false;
+    }
+  });
+FlashStreamConverter2.prototype.createChromeActions = function(window, url) {
+  function decodeHTML(s) {
+    return s.replace(/&([^;]+);/g, function(all, name) {
+      switch (name) {
+        case 'amp': return '&';
+        case 'quot': return '"';
+      };
+      return all;
+    });
+  }
+
+  var parts = url.split(','); // prefix, mime type, base url, html
+  var baseUrl = decodeURIComponent(parts[2]);
+  var markup = decodeURIComponent(parts[3]);
+  var params = {}, movie;
+  // XXX simple markup parsing
+  if (markup.substr(0, 6) == '<embed') {
+    markup.replace(/(\w+)=\"([^\"]+)/gi, function(all, key, value) {
+      params[key] = decodeHTML(value);
+    });
+    movie = params.src;
+  } else {
+    var markupParts = markup.split('>');
+    for (var i = 1; i < markupParts.length; i++) {
+      if (markupParts[i].indexOf('<param') < 0)
+        continue;
+      var name, value;
+      markupParts[i].replace(/\bname=\"([^\"]+)/gi, function(all, attr) {
+        name = decodeHTML(attr);
+      }).replace(/\bvalue=\"([^\"]+)/gi, function(all, attr) {
+        value = decodeHTML(attr);
+      });
+      params[name] = value;
+    }
+    movie = params.movie || params.src;
+    if (!movie) {
+      markupParts[0].replace(/\bdata=\"([^\"]+)/gi, function(all, attr) {
+        movie = decodeHTML(attr);
+      });
+    }
+  }
+  if (movie)
+    movie = combineUrl(baseUrl, movie);
+
+  return new ChromeActions(movie, params, baseUrl, window);
+};
+
+var NSGetFactory1 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter1]);
+var NSGetFactory2 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter2]);

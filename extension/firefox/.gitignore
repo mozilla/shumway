@@ -1,5 +1,8 @@
 content/swf/*
+content/flash/*
 content/avm1/*
 content/avm2/*
+content/glue/*
+content/lib/*
 LICENSE
 *.xpi

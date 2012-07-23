@@ -6,15 +6,27 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>shumway@research.mozilla.org</em:id>
     <em:name>shumway</em:name>
-    <em:version>0.1.0</em:version>
+    <em:version>0.2.0</em:version>
 	  <em:iconURL>chrome://shumway/skin/logo.png</em:iconURL>
+
+    <!-- Firefox -->
     <em:targetApplication>
       <Description>
-       <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-       <em:minVersion>10.0</em:minVersion>
-       <em:maxVersion>15.0a1</em:maxVersion>
-     </Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>10.0</em:minVersion>
+        <em:maxVersion>17.0a1</em:maxVersion>
+      </Description>
     </em:targetApplication>
+
+    <!-- Android -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{aa3c5121-dab2-40e2-81ca-7ea25febc110}</em:id>
+        <em:minVersion>10.0</em:minVersion>
+        <em:maxVersion>17.0a1</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>true</em:unpack>
     <em:creator>Mozilla Research</em:creator>
