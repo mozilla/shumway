@@ -176,13 +176,17 @@ var Verifier = (function() {
         this.verifier = verifier;
         this.methodInfo = methodInfo;
         this.writer = new IndentingWriter();
-        this.methodInfo.trace(this.writer, this.verifier.abc);
       }
 
       verification.prototype.verify = function verify() {
         var mi = this.methodInfo;
-        var writer = this.writer;
+        var writer = traceLevel.value <= 1 ? null : this.writer;
+  
         var blocks = mi.analysis.blocks;
+
+        if (writer) {
+          this.methodInfo.trace(writer, this.verifier.abc);
+        }
 
         // We can't deal with rest and arguments yet.
         if (mi.needsRest() || mi.needsArguments()) {
@@ -199,7 +203,9 @@ var Verifier = (function() {
           entryState.local.push(Type.fromName(mi.parameters[i].type));
         }
 
-        entryState.trace(this.writer);
+        if (writer) {
+          entryState.trace(writer);
+        }
 
         var worklist = [];
 
@@ -218,11 +224,15 @@ var Verifier = (function() {
           block.succs.forEach(function (successor) {
 
             if (worklist.indexOf(successor) !== -1) { // the block is already in the worklist
-              writer.writeLn("Forward Merged Block: " + successor.bid + " " +
-                             currExitState.toString() + " with " + successor.entryState.toString());
+              if (writer) {
+                writer.writeLn("Forward Merged Block: " + successor.bid + " " +
+                               currExitState.toString() + " with " + successor.entryState.toString());
+              }
               // merge existing item entry state with current block exit state
               successor.entryState.merge(currExitState);
-              writer.writeLn("Merged State: " + successor.entryState);
+              if (writer) {
+                writer.writeLn("Merged State: " + successor.entryState);
+              }
               return;
             }
 
@@ -231,12 +241,16 @@ var Verifier = (function() {
               // if successor processed, but current exit state differs from it's entry state
               // then merge the states and add it in the work list
               if (!successor.entryState.equals(currExitState)) {
-                writer.writeLn("Backward Merged Block: " + successor.bid + " " +
-                                currExitState.toString() + " with " + successor.entryState.toString());
+                if (writer) {
+                  writer.writeLn("Backward Merged Block: " + successor.bid + " " +
+                                  currExitState.toString() + " with " + successor.entryState.toString());
+                }
                 successor.entryState.merge(currExitState);
                 worklist.push(successor);
 
-                writer.writeLn("Merged State: " + successor.entryState);
+                if (writer) {
+                  writer.writeLn("Merged State: " + successor.entryState);
+                }
               }
               // if successor processed and current exit state equals with it's entry state
               // then return; there is no need to add it in the work list
@@ -247,8 +261,10 @@ var Verifier = (function() {
             //  it's entry state is current block exit state
             successor.entryState = currExitState.clone();
             worklist.push(successor);
-            writer.writeLn("Added Block: " + successor.bid +
-                           " to worklist: " + successor.entryState.toString());
+            if (writer) {
+              writer.writeLn("Added Block: " + successor.bid +
+                             " to worklist: " + successor.entryState.toString());
+            }
 
           });
         }
@@ -261,7 +277,8 @@ var Verifier = (function() {
         var stack = state.stack;
         var scope = state.scope;
 
-        var writer = this.writer;
+        // var writer = this.writer;
+        var writer = traceLevel.value <= 1 ? null : this.writer;
         var bytecodes = this.methodInfo.analysis.bytecodes;
 
         var abc = this.verifier.abc;
@@ -327,9 +344,11 @@ var Verifier = (function() {
           }
         }
 
-        writer.enter("verifyBlock: " + block.bid +
-                     ", range: [" + block.position + ", " + block.end.position +
-                     "], entryState: " + state.toString() + " {");
+        if (writer) {
+          writer.enter("verifyBlock: " + block.bid +
+                       ", range: [" + block.position + ", " + block.end.position +
+                       "], entryState: " + state.toString() + " {");
+        }
 
         for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
           var bc = bytecodes[bci];
@@ -836,10 +855,12 @@ var Verifier = (function() {
             writer.writeLn("state: " + state.toString() + " -- after bci: " + bci + ", " + bc);
           }
         }
-        writer.leave("}");
-        writer.enter("verifiedBlock: " + block.bid +
-                     ", range: [" + block.position + ", " + block.end.position +
-                     "], exitState: " + state.toString());
+        if (writer) {
+          writer.leave("}");
+          writer.enter("verifiedBlock: " + block.bid +
+                       ", range: [" + block.position + ", " + block.end.position +
+                       "], exitState: " + state.toString());
+        }
       };
 
       return verification;
