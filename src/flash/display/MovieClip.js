@@ -5,7 +5,7 @@ function MovieClip() {
   this._currentScene = {};
   this._enabled = true;
   this._framesLoaded = 1;
-  this._isPlaying = false;
+  this._isPlaying = true;
   this._scenes = { };
   this._totalFrames = 1;
   this._scenes = { };

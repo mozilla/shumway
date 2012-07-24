@@ -224,12 +224,14 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
 
 var MovieClipPrototype = function(obj, timelineLoader) {
 
-  this.constructor = function MovieClip(as2Context) {
-    if (this instanceof MovieClip)
-      return;
+  this.constructor = function (as2Context) {
+    //if (this instanceof MovieClip)
+    //  return;
+
+    this.__proto__ = MovieClip.prototype;
+    MovieClip.call(this);
 
     var currentFrame = 0;
-    var paused = false;
     var rotation = 0;
     var width, height;
     var timeline = [];
@@ -295,18 +297,19 @@ var MovieClipPrototype = function(obj, timelineLoader) {
 
     var proto = create(this);
     var as2Object;
+
     var instance = create(proto, {
-      _currentframe: {
+      currentframe: {
         get: function() {
           return currentFrame;
         }
       },
-      _framesloaded: {
+      framesloaded: {
         get: function() {
           return timelineLoader.framesLoaded;
         }
       },
-      _totalframes: {
+      totalframes: {
         get: function() {
           return timelineLoader.totalFrames;
         }
@@ -326,7 +329,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     proto.gotoAndPlay = function(frame) {
       if (this !== instance)
         return;
-      paused = false;
+      this.play();
       if (isNaN(frame))
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
@@ -334,7 +337,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     proto.gotoAndStop = function(frame, scene) {
       if (this !== instance)
         return;
-      paused = true;
+      this.stop();
       if (isNaN(frame))
         return this.gotoLabel(frame);
       gotoFrame.call(instance, frame);
@@ -348,7 +351,7 @@ var MovieClipPrototype = function(obj, timelineLoader) {
       gotoFrame.call(instance, timelineLoader.frameLabels[label]);
     };
     proto.renderNextFrame = function(context) {
-      if (!paused)
+      if (this.isPlaying())
         gotoFrame.call(instance, (currentFrame % timelineLoader.totalFrames) + 1);
 
       var frameIndex = currentFrame - 1;
@@ -361,18 +364,8 @@ var MovieClipPrototype = function(obj, timelineLoader) {
     proto.nextFrame = function() {
       this.gotoAndStop((currentFrame % timelineLoader.totalFrames) + 1);
     };
-    proto.play = function() {
-      if (this !== instance)
-        return;
-      paused = false;
-    };
     proto.prevFrame = function() {
       this.gotoAndStop(currentFrame > 1 ? currentFrame - 1 : totalFrames);
-    };
-    proto.stop = function() {
-      if (this !== instance)
-        return;
-      paused = true;
     };
     proto.$dispatchEvent = dispatchEvent;
     proto.$addFrameScript = addFrameScript;
