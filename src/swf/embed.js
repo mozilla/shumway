@@ -38,6 +38,8 @@ SWF.embed = function(data, container, options) {
 
     AS2Key.$bind(canvas);
     AS2Mouse.$bind(canvas);
+
+    stage.addChild(loader.content);
   });
   loaderInfo.addEventListener(Event.PROGRESS, function () {
     //if (obj.bgcolor) {
@@ -45,8 +47,7 @@ SWF.embed = function(data, container, options) {
     //  canvas.style.background = obj.bgcolor;
     //}
     if (!isPlaying) {
-      var root = loader.content;
-      renderMovieClip(root, stage, ctx);
+      renderStage(stage, ctx);
       isPlaying = true;
     }
   });

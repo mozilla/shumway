@@ -98,7 +98,7 @@ function renderShadowCanvas(character) {
   cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
 }
 
-function renderMovieClip(mc, stage, ctx) {
+function renderStage(stage, ctx) {
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
   var frameWidth = ctx.canvas.width;
@@ -141,11 +141,13 @@ function renderMovieClip(mc, stage, ctx) {
     }
   };
 
+  var root = stage.getChildAt(0);
+
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      mc.renderNextFrame(renderingContext);
+      root.renderNextFrame(renderingContext);
     }
     requestAnimationFrame(draw);
   })();
