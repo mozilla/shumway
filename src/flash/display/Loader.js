@@ -3,7 +3,7 @@ function Loader() {
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
-Loader.WORKERS_ENABLED = false;
+Loader.WORKERS_ENABLED = true;
 Loader.WORKER_SCRIPTS = [
   '../../../lib/DataView.js/DataView.js',
 
@@ -303,7 +303,7 @@ Loader.prototype = Object.create(baseProto, {
   }),
   loadData: describeMethod(function (data, context) {
     var loader = this;
-    if (Loader.WORKERS_ENABLED) {
+    if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.SCRIPT_PATH);
       worker.onmessage = function (evt) {
         loader._process(evt.data);
