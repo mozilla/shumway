@@ -200,7 +200,7 @@ function defineShape(tag, dictionary) {
         dx = record.moveX;
         dy = record.moveY;
         if (isMorph) {
-          var recordMorph = recordsMorph[j++];  
+          var recordMorph = recordsMorph[j++];
           dxm = recordMorph.moveX;
           dym = recordMorph.moveY;
           dpt = morph(dx, dxm) + ',' + morph(dy, dym);

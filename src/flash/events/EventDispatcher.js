@@ -20,7 +20,7 @@ EventDispatcher.prototype = Object.create(null, {
     if (!handler) {
       var target = this;
       handler = {
-        listeners: [],
+        queue: [],
 
         handleEvent: function (evt) {
           if (!(evt instanceof Event)) {
@@ -31,10 +31,10 @@ EventDispatcher.prototype = Object.create(null, {
 
           evt._currentTarget = this;
 
-          var listeners = this.listeners;
-          for (var i = 0, n = listeners.length; i < n; i++) {
-            var listener = listeners[i];
-            listener.fn(evt);
+          var queue = this.queue;
+          for (var i = 0, n = queue.length; i < n; i++) {
+            var entry = queue[i];
+            entry.listener(evt);
           }
         }
       };
@@ -45,17 +45,17 @@ EventDispatcher.prototype = Object.create(null, {
       handlers[type] = handler;
     }
 
-    var listeners = handler.listeners;
-    var index = listeners.length;
+    var queue = handler.queue;
+    var index = queue.length;
     while (index > 0) {
-      var listener = listeners[index - 1];
+      var listener = queue[index - 1];
 
       if (prio < listener.prio)
         break;
 
       index--;
     }
-    listeners.splice(index, 0, { fn: listener, prio: prio });
+    queue.splice(index, 0, { listener: listener, prio: prio });
   }),
   ctor: describeMethod(function (target) {
 
@@ -77,7 +77,7 @@ EventDispatcher.prototype = Object.create(null, {
     return !!evt.isDefaultPrevented;
   }),
   hasEventListener: describeMethod(function (type) {
-    return type in this._handlers || type in this._captureHandlers;
+    return type in this._captureHandlers || type in this._handlers;
   }),
   removeEventListener: describeMethod(function (type, listener, useCapture) {
     var handlers = useCapture ? this._captureHandlers : this._handlers;

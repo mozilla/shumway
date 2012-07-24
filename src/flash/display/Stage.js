@@ -324,10 +324,10 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
     var isPlaying = false;
 
     loaderInfo.addEventListener(Event.INIT, function () {
-      stage._loaderInfo = loaderInfo;
-      stage._stageWidth = loaderInfo.width;
-      stage._stageHeight = loaderInfo.height;
       stage._frameRate = loaderInfo.frameRate;
+      stage._loaderInfo = loaderInfo;
+      stage._stageHeight = loaderInfo.height;
+      stage._stageWidth = loaderInfo.width;
 
       loaderInfo._as2Context.stage = stage; // TODO make it better
 
