@@ -153,6 +153,9 @@ var Verifier = (function() {
       };
 
       type.prototype.merge = function(other) {
+        // TODO: Merging Atom.Undefined and Atom.Any bellow is a hack to
+        // circumvent the fact that the verifier's type hierrchy doesn't
+        // form a semilatice and solve the incompatible types merge situations
         if (this === other) {
           return this;
         } else if (this.kind === "Atom" && other.kind === "Atom") {
@@ -163,6 +166,10 @@ var Verifier = (function() {
         } else if ((this === Type.Int && other === Type.Number) ||
                    (this === Type.Number && other === Type.Int)) {
           return type.Number;
+        } else if (this === Type.Atom.Undefined || other === Type.Atom.Undefined) {
+            return Type.Atom.Undefined;
+        } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
+            return Type.Atom.Any;
         }
         unexpected("Cannot merge types : " + this + " and " + other);
       };
@@ -172,7 +179,7 @@ var Verifier = (function() {
 
     this.verification = (function() {
       function verification(verifier, methodInfo, scope) {
-        this.scope = scope;
+        this.scope = scope; // this.scope is the saved scope
         this.verifier = verifier;
         this.methodInfo = methodInfo;
         this.writer = new IndentingWriter();
@@ -277,7 +284,6 @@ var Verifier = (function() {
         var stack = state.stack;
         var scope = state.scope;
 
-        // var writer = this.writer;
         var writer = traceLevel.value <= 1 ? null : this.writer;
         var bytecodes = this.methodInfo.analysis.bytecodes;
 
@@ -315,7 +321,7 @@ var Verifier = (function() {
         }
 
         function resolveTrait(type, multiname) {
-          if (type.kind === "Reference" && type.value instanceof domain.system.Class) {
+          if (type && type.kind === "Reference" && type.value instanceof domain.system.Class) {
             // ...
           }
         }
@@ -340,6 +346,9 @@ var Verifier = (function() {
           if (type.value instanceof Global) {
             slots = type.value.slots;
             assert (slots);
+            // TODO: Type.fromName expects a multiname but in case of constants
+            // the slots of the global object are strings.
+            // This can be replicated by running tests/regress/correctness/arrays.abc
             return Type.fromName(slots[index].name);
           }
         }
@@ -524,14 +533,16 @@ var Verifier = (function() {
             multiname = popMultiname(bc.index);
             obj = pop();
             resolveTrait(obj, multiname); // ??
-            // TODO push(what)?
+            //TODO: Implement resolveTrait and figure out the return type of the call
+            push(Type.Atom.Any);
             break;
           case OP_callproperty:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc.index);
             obj = pop();
             resolveTrait(obj, multiname);
-            //TODO shouldn't a push(value) be here ?
+            //TODO: Implement resolveTrait and figure out the return type of the call
+            push(Type.Atom.Any);
             break;
           case OP_returnvoid:
             // Nop.
@@ -540,7 +551,8 @@ var Verifier = (function() {
             pop();
             break;
           case OP_constructsuper:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            stack.pop();
             break;
           case OP_constructprop:
             notImplemented(bc);
@@ -626,7 +638,10 @@ var Verifier = (function() {
             push(Type.fromReference(savedScope.global.object));
             break;
           case OP_getscopeobject:
-            notImplemented(bc);
+            // Get scope object from index position of the scope stack
+            // TODO: Verify this for correctness; should it look through saved
+            // scope chain instead ?
+            push(scope[bc.index]);
             break;
           case OP_getproperty:
             multiname = popMultiname(bc.index);
@@ -711,7 +726,10 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_coerce:
-            notImplemented(bc);
+            // The multiname in case of coerce bytecode cannot be
+            // a runtime multiname and should be in the constant pool
+            pop();
+            push(Type.fromName(multinames[bc.index]));
             break;
           case OP_coerce_a:
             // Note: ignoring the effect of coerce_a is a little, temporary hack
@@ -745,7 +763,9 @@ var Verifier = (function() {
             local[bc.index] = Type.Number;
             break;
           case OP_typeof:
-            notImplemented(bc);
+            pop();
+            // TODO: Push string type on the stack?
+            push(Type.Atom.Any);
             break;
           case OP_not:
             pop();
