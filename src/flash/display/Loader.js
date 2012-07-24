@@ -1,7 +1,4 @@
-function Loader(parameters) {
-  this.avm1 = parameters.avm1;
-  this.avm2 = parameters.avm2;
-
+function Loader() {
   this.dictionary = new ObjDictionary;
 }
 
@@ -187,7 +184,7 @@ if (typeof window === 'undefined') {
 
   onmessage = function (evt) {
     var loader = new Loader;
-    loader.loadFrom(loader, evt.data);
+    loader.loadData(loader, evt.data);
   };
 } else {
   var head = document.head;
@@ -296,40 +293,40 @@ Loader.prototype = Object.create(baseProto, {
     }
   }),
   load: describeMethod(function (request, context) {
-    this.loadFrom(request.url);
+    this.loadData(request.url);
   }),
   loadBytes: describeMethod(function (bytes, context) {
     if (!bytes.length)
       throw ArgumentError();
 
-    this.loadFrom(bytes);
+    this.loadData(bytes);
   }),
-  loadFrom: describeMethod(function (source, context) {
+  loadData: describeMethod(function (data, context) {
     var loader = this;
     if (Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.SCRIPT_PATH);
       worker.onmessage = function (evt) {
         loader._process(evt.data);
       };
-      worker.postMessage(source);
+      worker.postMessage(data);
     } else {
-      if (typeof source === 'object') {
-        if (source instanceof ArrayBuffer) {
-          this._parse(source);
+      if (typeof data === 'object') {
+        if (data instanceof ArrayBuffer) {
+          this._parse(data);
         } else if (typeof FileReaderSync !== 'undefined') {
           var reader = new FileReaderSync;
-          var buffer = reader.readAsArrayBuffer(source);
+          var buffer = reader.readAsArrayBuffer(data);
           loader._parse(buffer);
         } else {
           var reader = new FileReader;
           reader.onload = function () {
             loader._parse(this.result);
           };
-          reader.readAsArrayBuffer(source);
+          reader.readAsArrayBuffer(data);
         }
       } else {
         var xhr = new XMLHttpRequest;
-        xhr.open('GET', source);
+        xhr.open('GET', data);
         xhr.responseType = 'arraybuffer';
         xhr.onload = function () {
           loader._parse(this.response);

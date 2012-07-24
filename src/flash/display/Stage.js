@@ -314,40 +314,5 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   }),
   isFocusInaccessible: describeMethod(function() {
     notImplemented();
-  }),
-  _attachToCanvas: describeMethod(function(parameters) {
-    var canvas = parameters.canvas;
-    var ctx = canvas.getContext('2d');
-    var loader = new Loader({ avm1: undefined, avm2: parameters.avm2 });
-    var loaderInfo = loader.contentLoaderInfo;
-    var stage = this;
-    var isPlaying = false;
-
-    loaderInfo.addEventListener(Event.INIT, function () {
-      stage._frameRate = loaderInfo.frameRate;
-      stage._loaderInfo = loaderInfo;
-      stage._stageHeight = loaderInfo.height;
-      stage._stageWidth = loaderInfo.width;
-
-      loaderInfo._as2Context.stage = stage; // TODO make it better
-
-      parameters.onstart(loader.content, stage);
-    });
-    loaderInfo.addEventListener(Event.PROGRESS, function () {
-      //if (obj.bgcolor) {
-      //  stage._color = obj.bgcolor; // TODO convert to numeric
-      //  canvas.style.background = obj.bgcolor;
-      //}
-      var root = loader.content;
-      if (!isPlaying) {
-        renderMovieClip(root, stage, ctx);
-        isPlaying = true;
-      }
-    });
-    loaderInfo.addEventListener(Event.COMPLETE, function () {
-      parameters.oncomplete(loader.content);
-    });
-
-    loader.load({ url: parameters.file });
   })
 });
