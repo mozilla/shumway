@@ -31,227 +31,7 @@ Loader.WORKER_SCRIPTS = [
   '../../swf/text.js'
 ];
 
-Loader._load = function (instance, data) {
-  if (typeof data === 'object') {
-    if (data instanceof ArrayBuffer) {
-      instance._parse(data);
-    } else if (typeof FileReaderSync !== 'undefined') {
-      var reader = new FileReaderSync;
-      var buffer = reader.readAsArrayBuffer(data);
-      instance._parse(buffer);
-    } else {
-      var reader = new FileReader;
-      reader.onload = function() {
-        instance._parse(this.result);
-      };
-      reader.readAsArrayBuffer(data);
-    }
-  } else {
-    var xhr = new XMLHttpRequest;
-    xhr.open('GET', data);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function () {
-      instance._parse(this.response);
-    };
-    xhr.send();
-  }
-};
-
-var baseProto = null;
-
-if (typeof window === 'undefined') {
-  importScripts.apply(null, Loader.WORKER_SCRIPTS);
-
-  onmessage = function (evt) {
-    var loader = new Loader;
-    Loader._load(loader, evt.data);
-  };
-} else {
-  baseProto = new DisplayObjectContainer;
-}
-
-Loader.prototype = Object.create(baseProto, {
-  __class__: describeProperty('flash.display.Loader'),
-
-  content: describeAccessor(function () {
-    return this._content;
-  }),
-  contentLoaderInfo: describeAccessor(function () {
-    return this._contentLoaderInfo || (this._contentLoaderInfo = new LoaderInfo);
-  }),
-  uncaughtErrorEvents: describeAccessor(function () {
-    notImplemented();
-  }),
-
-  addChild: describeMethod(function (child) {
-    illegalOperation();
-  }),
-  addChildAt: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  close: describeMethod(function () {
-    notImplemented();
-  }),
-  load: describeMethod(function (request, context) {
-    this._load(request.url);
-  }),
-  loadBytes: describeMethod(function (bytes, context) {
-    if (!bytes.length)
-      throw ArgumentError();
-
-    this._load(bytes);
-  }),
-  removeChild: describeMethod(function (child) {
-    illegalOperation();
-  }),
-  removeChildAt: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  setChildIndex: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  unload: describeMethod(function() {
-    notImplemented();
-  }),
-  unloadAndStop: describeMethod(function (gc) {
-    notImplemented();
-  }),
-
-  _load: describeMethod(function (data) {
-    if (Loader.WORKERS_ENABLED) {
-      var loader = this;
-      var worker = new Worker(Loader.SCRIPT_PATH);
-      worker.onmessage = function (evt) {
-        loader._process(evt.data);
-      };
-      worker.postMessage(data);
-    } else {
-      Loader._load(this, data);
-    }
-  }),
-  _parse: describeMethod(function (bytes) {
-    var i = 0;
-    var dictionary = { };
-    var controlTags = [];
-
-    var loader = this;
-
-    function declare(obj) {
-      if (obj.id)
-        loader._process(obj);
-    }
-
-    SWF.parse(bytes, {
-      onstart: function(result) {
-        loader._process(result);
-      },
-      onprogress: function(result) {
-        var tags = result.tags.slice(i);
-        i += tags.length;
-        var tag = tags[tags.length - 1];
-        if ('id' in tag) {
-          Loader._cast(tags.splice(-1, 1), dictionary, declare);
-          push.apply(controlTags, tags);
-        } else if ('ref' in tag) {
-          var id = tag.ref - 0x4001;
-          assert(id in dictionary, 'undefined object', 'ref');
-          var obj = create(dictionary[id]);
-          for (var prop in tag) {
-            if (prop !== 'id' && prop !== 'ref')
-              obj[prop] = tag[prop];
-          }
-          dictionary[id] = obj;
-        } else {
-          var pframes = Loader._cast(controlTags.concat(tags), dictionary);
-          controlTags = [];
-          var j = 0;
-          var pframe;
-          while (pframe = pframes[j++])
-            loader._process(pframe);
-        }
-      },
-      oncomplete: function(result) {
-        loader._process(result);
-        loader._process(null);
-      }
-    });
-  }),
-  _process: describeMethod(function (data) {
-    if (typeof window === 'undefined') {
-      postMessage(data);
-    } else {
-      var loaderInfo = this.contentLoaderInfo;
-      var dictionary = this.dictionary;
-
-      var pframes = this._pframes || (this._pframes = []);
-
-      if (!this._content) {
-        loaderInfo._swfVersion = data.version;
-
-        var bounds = data.bounds;
-        loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-        loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
-
-        loaderInfo._frameRate = data.frameRate;
-
-        // TODO disable AVM1 if AVM2 is enabled
-        var as2Context = new AS2Context(data.version);
-
-        var timelineLoader = new TimelineLoader(data.frameCount, pframes, dictionary);
-        var proto = new MovieClipPrototype({ }, timelineLoader);
-        var root = proto.constructor(as2Context);
-        root.name = '_root';
-
-        var globals = as2Context.globals;
-        globals._root = globals._level0 = root.$as2Object;
-
-        this._content = root;
-
-        loaderInfo._as2Context = as2Context;
-
-        loaderInfo.dispatchEvent(new Event(Event.INIT));
-      } else if (data) {
-        if (data.id) {
-          Loader._definePrototype(dictionary, data);
-        } else if (data.type === 'pframe') {
-          if (data.abcBlocks) {
-            var blocks = data.abcBlocks;
-            var i = 0;
-            var block;
-            while (block = blocks[i++]) {
-              this.avm2.applicationDomain.executeAbc(new AbcFile(block));
-            }
-          }
-
-          if (data.symbols) {
-            var symbols = data.symbols;
-            var symbolClasses = loaderInfo._symbolClasses;
-            var i = 0;
-            var sym;
-            while (sym = symbols[i++]) {
-              symbolClasses[sym.name] = dictionary[sym.id];
-              if (!sym.id) {
-                var documentClass = this.avm2.applicationDomain.getProperty(
-                  Multiname.fromSimpleName(sym.name),
-                  true, true
-                );
-                new (documentClass.instance)();
-              }
-            }
-          }
-
-          pframes.push(data);
-
-          loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
-        }
-      } else {
-        loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
-      }
-    }
-  })
-});
-
-Loader._cast = function cast(tags, dictionary, declare) {
+function cast(tags, dictionary, declare) {
   var pframes = [];
   var pframe = { };
   var i = 0;
@@ -310,7 +90,7 @@ Loader._cast = function cast(tags, dictionary, declare) {
       defineProperty(dictionary, tag.id, {
         get: (function(id, factory, obj) {
           var undeclared = true;
-          return function() {
+          return function () {
             if (undeclared) {
               if (!obj)
                 obj = factory(dictionary[id], dictionary);
@@ -398,14 +178,49 @@ Loader._cast = function cast(tags, dictionary, declare) {
     }
   }
   return pframes;
-};
+}
 
-if (typeof document !== 'undefined') {
+var baseProto = null;
+
+if (typeof window === 'undefined') {
+  importScripts.apply(null, Loader.WORKER_SCRIPTS);
+
+  onmessage = function (evt) {
+    var loader = new Loader;
+    loader.loadFrom(loader, evt.data);
+  };
+} else {
   var head = document.head;
   head.insertBefore(document.createElement('style'), head.firstChild);
   var style = document.styleSheets[0];
 
-  Loader._definePrototype = function (dictionary, obj) {
+  baseProto = new DisplayObjectContainer;
+}
+
+Loader.prototype = Object.create(baseProto, {
+  __class__: describeProperty('flash.display.Loader'),
+
+  content: describeAccessor(function () {
+    return this._content;
+  }),
+  contentLoaderInfo: describeAccessor(function () {
+    return this._contentLoaderInfo || (this._contentLoaderInfo = new LoaderInfo);
+  }),
+  uncaughtErrorEvents: describeAccessor(function () {
+    notImplemented();
+  }),
+
+  addChild: describeMethod(function (child) {
+    illegalOperation();
+  }),
+  addChildAt: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  close: describeMethod(function () {
+    notImplemented();
+  }),
+  commitSymbol: describeMethod(function (obj) {
+    var dictionary = this.dictionary;
     var id = obj.id;
     var requirePromise = Promise.resolved;
     if (obj.require && obj.require.length > 0) {
@@ -430,7 +245,7 @@ if (typeof document !== 'undefined') {
         ctx.font = '1024px "' + obj.name + '"';
         var defaultWidth = ctx.measureText(charset).width;
 
-        requirePromise.then(function() {
+        requirePromise.then(function () {
           promise.resolve(obj);
         });
       }
@@ -438,33 +253,38 @@ if (typeof document !== 'undefined') {
     case 'image':
       var img = new Image;
       img.src = 'data:' + obj.mimeType + ';base64,' + btoa(obj.data);
-      img.onload = function() {
+      img.onload = function () {
         var proto = create(obj);
         proto.img = img;
-        requirePromise.then(function() {
+        requirePromise.then(function () {
           promise.resolve(proto);
         });
       };
       break;
     case 'sprite':
-      requirePromise.then(function() {
+      requirePromise.then(function () {
         var timelineLoader = new TimelineLoader(obj.frameCount || 1, obj.pframes || [], dictionary);
-        promise.resolve(new MovieClipPrototype(obj, timelineLoader));
+        var proto = new MovieClipPrototype(obj, timelineLoader);
+        proto.__class__ = 'flash.display.MovieClip';
+        promise.resolve(proto);
       });
       break;
     case 'shape':
     case 'text':
       var proto = create(obj);
+      proto.__class__ = 'flash.display.Shape';
+
       var drawFn = new Function('d,c,r', obj.data);
       proto.draw = (function(c, r) {
         return drawFn.call(this, dictionary, c, r);
       });
-      requirePromise.then(function() {
+
+      requirePromise.then(function () {
         promise.resolve(proto);
       });
       break;
     case 'button':
-      requirePromise.then(function() {
+      requirePromise.then(function () {
         var timelineLoader = new TimelineLoader(4,
           [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest],
           dictionary);
@@ -474,5 +294,185 @@ if (typeof document !== 'undefined') {
     default:
       fail('unknown object type', 'define');
     }
-  };
-}
+  }),
+  load: describeMethod(function (request, context) {
+    this.loadFrom(request.url);
+  }),
+  loadBytes: describeMethod(function (bytes, context) {
+    if (!bytes.length)
+      throw ArgumentError();
+
+    this.loadFrom(bytes);
+  }),
+  loadFrom: describeMethod(function (source, context) {
+    var loader = this;
+    if (Loader.WORKERS_ENABLED) {
+      var worker = new Worker(Loader.SCRIPT_PATH);
+      worker.onmessage = function (evt) {
+        loader._process(evt.data);
+      };
+      worker.postMessage(source);
+    } else {
+      if (typeof source === 'object') {
+        if (source instanceof ArrayBuffer) {
+          this._parse(source);
+        } else if (typeof FileReaderSync !== 'undefined') {
+          var reader = new FileReaderSync;
+          var buffer = reader.readAsArrayBuffer(source);
+          loader._parse(buffer);
+        } else {
+          var reader = new FileReader;
+          reader.onload = function () {
+            loader._parse(this.result);
+          };
+          reader.readAsArrayBuffer(source);
+        }
+      } else {
+        var xhr = new XMLHttpRequest;
+        xhr.open('GET', source);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          loader._parse(this.response);
+        };
+        xhr.send();
+      }
+    }
+  }),
+  removeChild: describeMethod(function (child) {
+    illegalOperation();
+  }),
+  removeChildAt: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  setChildIndex: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  unload: describeMethod(function () {
+    notImplemented();
+  }),
+  unloadAndStop: describeMethod(function (gc) {
+    notImplemented();
+  }),
+
+  _parse: describeMethod(function (bytes) {
+    var i = 0;
+    var dictionary = { };
+    var controlTags = [];
+
+    var loader = this;
+
+    function declare(obj) {
+      if (obj.id)
+        loader._process(obj);
+    }
+
+    SWF.parse(bytes, {
+      onstart: function(result) {
+        loader._process(result);
+      },
+      onprogress: function(result) {
+        var tags = result.tags.slice(i);
+        i += tags.length;
+        var tag = tags[tags.length - 1];
+        if ('id' in tag) {
+          cast(tags.splice(-1, 1), dictionary, declare);
+          push.apply(controlTags, tags);
+        } else if ('ref' in tag) {
+          var id = tag.ref - 0x4001;
+          assert(id in dictionary, 'undefined object', 'ref');
+          var obj = create(dictionary[id]);
+          for (var prop in tag) {
+            if (prop !== 'id' && prop !== 'ref')
+              obj[prop] = tag[prop];
+          }
+          dictionary[id] = obj;
+        } else {
+          var pframes = cast(controlTags.concat(tags), dictionary);
+          controlTags = [];
+          var j = 0;
+          var pframe;
+          while (pframe = pframes[j++])
+            loader._process(pframe);
+        }
+      },
+      oncomplete: function(result) {
+        loader._process(result);
+        loader._process(null);
+      }
+    });
+  }),
+  _process: describeMethod(function (data) {
+    if (typeof window === 'undefined') {
+      postMessage(data);
+    } else {
+      var loaderInfo = this.contentLoaderInfo;
+      var dictionary = this.dictionary;
+
+      var pframes = this._pframes || (this._pframes = []);
+
+      if (!this._content) {
+        loaderInfo._swfVersion = data.version;
+
+        var bounds = data.bounds;
+        loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
+        loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+
+        loaderInfo._frameRate = data.frameRate;
+
+        // TODO disable AVM1 if AVM2 is enabled
+        var as2Context = new AS2Context(data.version);
+
+        var timelineLoader = new TimelineLoader(data.frameCount, pframes, dictionary);
+        var proto = new MovieClipPrototype({ }, timelineLoader);
+        var root = proto.constructor(as2Context);
+        root.name = '_root';
+
+        var globals = as2Context.globals;
+        globals._root = globals._level0 = root.$as2Object;
+
+        this._content = root;
+
+        loaderInfo._as2Context = as2Context;
+
+        loaderInfo.dispatchEvent(new Event(Event.INIT));
+      } else if (data) {
+        if (data.id) {
+          this.commitSymbol(data);
+        } else if (data.type === 'pframe') {
+          if (data.abcBlocks) {
+            var blocks = data.abcBlocks;
+            var i = 0;
+            var block;
+            while (block = blocks[i++]) {
+              this.avm2.applicationDomain.executeAbc(new AbcFile(block));
+            }
+          }
+
+          if (data.symbols) {
+            var references = data.symbols;
+            //var symbolClasses = loaderInfo._symbolClasses;
+            for (var i = 0, n = references.length; i < n; i++) {
+              var reference = references[i++];
+              var symbol = dictionary[rererence.id];
+              symbol.__class__ = reference.name;
+              //symbolClasses[sym.name] = dictionary[sym.id];
+              //if (!sym.id) {
+              //  var documentClass = this.avm2.applicationDomain.getProperty(
+              //    Multiname.fromSimpleName(sym.name),
+              //    true, true
+              //  );
+              //  new (documentClass.instance)();
+              //}
+            }
+          }
+
+          pframes.push(data);
+
+          loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+        }
+      } else {
+        loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+      }
+    }
+  })
+});
