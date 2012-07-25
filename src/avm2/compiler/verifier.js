@@ -149,7 +149,7 @@ var Verifier = (function() {
         } else if (name.getQualifiedName() === "public$Number") {
           return type.Number;
         }
-        var ty = domain.getProperty(name, false, false);
+        var ty = domain.getProperty(name, false, true);
         assert (ty, name + " not found");
         return type.fromReference(ty);
       };
