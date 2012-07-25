@@ -389,14 +389,3 @@ var DEFINE_SOUND = {
   samplesCound: UI32,
   soundData: BINARY(0)
 };
-var EXPORT_ASSETS = {
-  type: '"assets"',
-  $$assetsCount: UI16,
-  references: {
-    $: {
-      id: UI16,
-      name: STRING(0)
-    },
-    count: 'assetsCount'
-  }
-};
