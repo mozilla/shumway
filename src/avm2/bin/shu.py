@@ -138,7 +138,7 @@ class Base:
       sys.exit();
 
   def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, sc = False):
-    
+
     if sc:
       outf = os.path.splitext(files[-1])[0]
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
@@ -157,7 +157,7 @@ class Base:
       args.extend(["-import", self.global_abc])
 
     if playerGlobal:
-      playerGlobalAbcs = []      
+      playerGlobalAbcs = []
       if not os.path.isdir(self.player_global_abc):
         playerGlobalAbcs.append(self.player_global_abc)
       else:
@@ -165,7 +165,7 @@ class Base:
           for file in abcFiles:
             if file.endswith(".abc"):
               playerGlobalAbcs.append(os.path.join(root, file))
-              
+
       for abc in playerGlobalAbcs:
         args.extend(["-import", abc])
 
@@ -459,6 +459,8 @@ class Test(Command):
             counter.update([k + "-" + c]);
             out.append(color(c))
           out.append(str(round(results[k][1], 2)) if results[k] != None else "N/A")
+          if "a" in results and k != "a":
+            out.append("(" + str(round(results["a"][1] / results[k][1], 2)) + " X)")
 
         out.append(test);
 
