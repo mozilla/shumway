@@ -347,7 +347,7 @@ class Test(Command):
     parser.add_argument('src', nargs='?', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
-    parser.add_argument('-m', '--mode', type=str, default="aico", help="mode")
+    parser.add_argument('-m', '--mode', type=str, default="aicov", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
     parser.add_argument('-i', '--include', nargs="?", action='append', help="include tests from file")
     parser.add_argument('-e', '--exclude', nargs="?", action='append', help="exclude tests from file")
