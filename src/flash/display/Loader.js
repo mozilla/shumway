@@ -1,5 +1,5 @@
 function Loader() {
-  this.dictionary = new ObjDictionary;
+  this._dictionary = new ObjDictionary;
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
@@ -214,7 +214,7 @@ Loader.prototype = Object.create(baseProto, {
     notImplemented();
   }),
   commitSymbol: describeMethod(function (obj) {
-    var dictionary = this.dictionary;
+    var dictionary = this._dictionary;
     var id = obj.id;
     var requirePromise = Promise.resolved;
     if (obj.require && obj.require.length > 0) {
@@ -288,6 +288,18 @@ Loader.prototype = Object.create(baseProto, {
     default:
       fail('unknown object type', 'define');
     }
+  }),
+  getSymbolByClassName: describeMethod(function (className) {
+    var dictionary = this._dictionary;
+    for (var id in dictionary) {
+      var symbol = dictionary[id];
+      if (symbol.__class__ === className)
+        return symbol
+    }
+    return null;
+  }),
+  getSymbolById: describeMethod(function (id) {
+    return this._dictionary[id] || null;
   }),
   load: describeMethod(function (request, context) {
     this.loadFrom(request.url);
@@ -403,7 +415,6 @@ Loader.prototype = Object.create(baseProto, {
 
       loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
-      var dictionary = this.dictionary;
       var pframes = this._pframes || (this._pframes = []);
 
       if (!this._content) {
@@ -418,7 +429,7 @@ Loader.prototype = Object.create(baseProto, {
         // TODO disable AVM1 if AVM2 is enabled
         var as2Context = new AS2Context(data.version);
 
-        var timelineLoader = new TimelineLoader(data.frameCount, pframes, dictionary);
+        var timelineLoader = new TimelineLoader(data.frameCount, pframes, this._dictionary);
         var proto = new MovieClipPrototype({ }, timelineLoader);
         var root = proto.constructor(as2Context);
         root.name = '_root';
@@ -447,7 +458,7 @@ Loader.prototype = Object.create(baseProto, {
             //var symbolClasses = loaderInfo._symbolClasses;
             for (var i = 0, n = references.length; i < n; i++) {
               var reference = references[i++];
-              var symbol = dictionary[reference.id];
+              var symbol = this.getSymbolById(reference.id);
               if (symbol)
                 symbol.__class__ = reference.name;
               //symbolClasses[sym.name] = dictionary[sym.id];
