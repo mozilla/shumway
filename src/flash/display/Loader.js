@@ -403,8 +403,10 @@ Loader.prototype = Object.create(baseProto, {
       postMessage(data);
     } else {
       var loaderInfo = this.contentLoaderInfo;
-      var dictionary = this.dictionary;
 
+      loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+
+      var dictionary = this.dictionary;
       var pframes = this._pframes || (this._pframes = []);
 
       if (!this._content) {
@@ -430,8 +432,6 @@ Loader.prototype = Object.create(baseProto, {
         this._content = root;
 
         loaderInfo._as2Context = as2Context;
-
-        loaderInfo.dispatchEvent(new Event(Event.INIT));
       } else if (data) {
         if (data.id) {
           this.commitSymbol(data);
@@ -465,7 +465,9 @@ Loader.prototype = Object.create(baseProto, {
 
           pframes.push(data);
 
-          loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+          if (pframes.length === 1) {
+            loaderInfo.dispatchEvent(new Event(Event.INIT));
+          }
         }
       } else {
         loaderInfo.dispatchEvent(new Event(Event.COMPLETE));

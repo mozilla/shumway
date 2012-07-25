@@ -4,7 +4,6 @@ SWF.embed = function(data, container, options) {
 
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
-  var isPlaying = false;
   var loader = new Loader;
 
   // TODO choose between AVM1/2 based on FileAttribute settings
@@ -40,16 +39,7 @@ SWF.embed = function(data, container, options) {
     AS2Mouse.$bind(canvas);
 
     stage.addChild(loader.content);
-  });
-  loaderInfo.addEventListener(Event.PROGRESS, function () {
-    //if (obj.bgcolor) {
-    //  stage._color = obj.bgcolor; // TODO convert to numeric
-    //  canvas.style.background = obj.bgcolor;
-    //}
-    if (!isPlaying) {
-      renderStage(stage, ctx);
-      isPlaying = true;
-    }
+    renderStage(stage, ctx);
   });
 
   loader.loadData(data);
