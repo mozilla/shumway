@@ -165,12 +165,9 @@ function cast(tags, dictionary, declare) {
       pframe[tag.depth] = null;
       break;
     case 'symbols':
-      pframe.symbols = tag.references;
-      break;
-    case 'assets':
-      if (!pframe.assets)
-        pframe.assets = [];
-      pframe.assets = pframe.assets.concat(tag.references);
+      if (!pframe.symbols)
+        pframe.symbols = [];
+      pframe.symbols = pframe.symbols.concat(tag.references);
       break;
     }
   }
