@@ -774,11 +774,29 @@ var Compiler = (function () {
       }
 
       function getSlot(obj, index) {
+        if (enableOpt.value && obj.ty) {
+          var trait = obj.ty.getTrait(index);
+          if (trait) {
+            if (trait.isConst()) {
+              push(constant(trait.value));
+              return;
+            }
+            push(property(obj, trait.name.getQualifiedName()));
+            return;
+          }
+        }
         push(call(id("getSlot"), [obj, constant(index)]));
       }
 
       function setSlot(obj, index, value) {
         flushStack();
+        if (enableOpt.value && obj.ty) {
+          var trait = obj.ty.getTrait(index);
+          if (trait) {
+            push(assignment(property(obj, trait.name.getQualifiedName()), value));
+            return;
+          }
+        }
         emit(call(id("setSlot"), [obj, constant(index), value]));
       }
 
@@ -1261,10 +1279,14 @@ var Compiler = (function () {
           flushStack();
           break;
         case OP_deletepropertylate: notImplemented(); break;
-        case OP_getslot:            getSlot(state.stack.pop(), bc.index); break;
+        case OP_getslot:
+          var obj = state.stack.pop();
+          obj.ty = bc.objTy;
+          getSlot(obj, bc.index); break;
         case OP_setslot:
           value = state.stack.pop();
           obj = state.stack.pop();
+          obj.ty = bc.objTy;
           setSlot(obj, bc.index, value);
           break;
         case OP_getglobalslot:  notImplemented(); break;

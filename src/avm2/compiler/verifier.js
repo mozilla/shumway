@@ -77,6 +77,15 @@ var Verifier = (function() {
     this.message = message || "";
   }
 
+  function findTrait(traits, slotId) {
+    for (var i = traits.length - 1; i >= 0; i--) {
+      if (traits[i].slotId === slotId) {
+        return traits[i];
+      }
+    }
+    unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
+  }
+
   function verifier(abc) {
     this.writer = new IndentingWriter();
     this.abc = abc;
@@ -150,6 +159,16 @@ var Verifier = (function() {
 
       type.prototype.isNumeric = function isNumeric() {
         return this === type.Number || this === type.Int || this === type.Uint;
+      };
+
+      type.prototype.getTrait = function getTrait(slotId) {
+        if (this.kind !== "Reference") {
+          return null;
+        }
+        if (this.value instanceof Global) {
+          return findTrait(this.value.scriptInfo.traits, slotId);
+        }
+        return null;
       };
 
       type.prototype.merge = function(other) {
@@ -342,14 +361,11 @@ var Verifier = (function() {
           if (type.kind !== "Reference") {
             return Type.Atom;
           }
-          var slots;
+          
           if (type.value instanceof Global) {
-            slots = type.value.slots;
-            assert (slots);
-            // TODO: Type.fromName expects a multiname but in case of constants
-            // the slots of the global object are strings.
-            // This can be replicated by running tests/regress/correctness/arrays.abc
-            return Type.fromName(slots[index].name);
+            var global = type.value;
+            var trait = findTrait(global.scriptInfo.traits, index);
+            return Type.fromName(trait.typeName);
           }
         }
 
@@ -666,10 +682,11 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getslot:
-            push(getSlot(pop(), bc.index));
+            push(getSlot(bc.objTy = pop(), bc.index));
             break;
           case OP_setslot:
-            notImplemented(bc);
+            pop();
+            pop();
             break;
           case OP_getglobalslot:
             notImplemented(bc);
