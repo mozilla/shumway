@@ -877,7 +877,7 @@ var Verifier = (function() {
         }
         if (writer) {
           writer.leave("}");
-          writer.enter("verifiedBlock: " + block.bid +
+          writer.writeLn("verifiedBlock: " + block.bid +
                        ", range: [" + block.position + ", " + block.end.position +
                        "], exitState: " + state.toString());
         }
