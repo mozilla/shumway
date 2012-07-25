@@ -177,18 +177,21 @@ var Verifier = (function() {
         // form a semilatice and solve the incompatible types merge situations
         if (this === other) {
           return this;
-        } else if (this.kind === "Atom" && other.kind === "Atom") {
-          return type.Atom.Any;
+        } else if (this.kind === "Atom" || other.kind === "Atom") {
+          return type.Atom;
         } else if (this.kind === "Reference" && other.kind === "Reference") {
           // TODO: Actually merge reference types.
           return type.Reference.Null;
+        } else if ((this === Type.Int && other.kind === "Reference") ||
+                   (this.kind === "Reference" && other === Type.Int)) {
+          return Type.Atom.Any;
         } else if ((this === Type.Int && other === Type.Number) ||
                    (this === Type.Number && other === Type.Int)) {
           return type.Number;
         } else if (this === Type.Atom.Undefined || other === Type.Atom.Undefined) {
-            return Type.Atom.Undefined;
+          return Type.Atom;
         } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
-            return Type.Atom.Any;
+          return Type.Atom.Any;
         }
         unexpected("Cannot merge types : " + this + " and " + other);
       };
