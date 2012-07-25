@@ -1453,11 +1453,13 @@ var Compiler = (function () {
     assert(methodInfo.analysis);
     // methodInfo.analysis.trace(new IndentingWriter());
 
-    if (enableVerifier.value) {
-      this.verifier.verifyMethod(methodInfo, scope);
-    }
-
     Timer.start("compiler");
+
+    if (enableVerifier.value) {
+      Timer.start("ver");
+      this.verifier.verifyMethod(methodInfo, scope);
+      Timer.stop();
+    }
     var cx = new Compilation(this, methodInfo, scope);
     Timer.start("ast");
     var node = cx.compile();
