@@ -60,7 +60,11 @@ var Verifier = (function() {
     }
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
-        a[i] = a[i].merge(b[i]);
+        // TODO: Locals are 'undefined' before setlocal is called;
+        // should we initialize them to Atom.Undefined
+        if(a[i] && b[i]) {
+          a[i] = a[i].merge(b[i]);
+        }
       }
     }
     state.prototype.merge = function(other) {
@@ -551,7 +555,7 @@ var Verifier = (function() {
           case OP_construct:
             stack.popMany(bc.argCount);
             obj = pop();
-            push(Type.Reference); //TODO infer obj's type ??
+            push(Type.Atom.Any); //TODO infer obj's type ??
             break;
           case OP_callmethod:
             // callmethod is always invalid
@@ -587,13 +591,22 @@ var Verifier = (function() {
             stack.pop();
             break;
           case OP_constructprop:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            multiname = popMultiname(bc);
+            obj = stack.pop();
+            // TODO: Figure out the type of the generated instance.
+            stack.push(Type.Atom.Any);
             break;
           case OP_callsuperid:
             notImplemented(bc);
             break;
           case OP_callproplex:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            multiname = popMultiname(bc);
+            obj = pop();
+            resolveTrait(obj, multiname);
+            //TODO: Implement resolveTrait and figure out the return type of the call
+            push(Type.Atom.Any);
             break;
           case OP_callinterface:
             notImplemented(bc);
@@ -623,10 +636,11 @@ var Verifier = (function() {
           case OP_newarray:
             // Pops values, pushes result.
             stack.popMany(bc.argCount);
+            // push(Type.Atom.Object);
             push(Type.Atom.Object);
             break;
           case OP_newactivation:
-            notImplemented(bc);
+            push(Type.fromReference(runtime.createActivation(this.methodInfo)));
             break;
           case OP_newclass:
             throw new VerifierError("Not Supported");
