@@ -52,6 +52,7 @@ const lastCaughtName = new Identifier("$E");
 
 var $C = [];
 const SCOPE_NAME = "$S";
+const GLOBAL_SCOPE_NAME = "$G";
 const SAVED_SCOPE_NAME = "$" + SCOPE_NAME;
 
 function generate(node) {
@@ -476,7 +477,8 @@ var Compiler = (function () {
         call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
 
       this.prologue.push(new VariableDeclaration("var", [
-        new VariableDeclarator(id(SCOPE_NAME), id(SAVED_SCOPE_NAME))
+        new VariableDeclarator(id(SCOPE_NAME), id(SAVED_SCOPE_NAME)),
+        new VariableDeclarator(id(GLOBAL_SCOPE_NAME), property(id(SCOPE_NAME), "global.object"))
       ]));
 
       /* Declare local variables. */
@@ -1259,7 +1261,7 @@ var Compiler = (function () {
         case OP_getlocal:       push(local[bc.index]); break;
         case OP_setlocal:       setLocal(bc.index); break;
         case OP_getglobalscope:
-          push(property(scopeName, "global.object"));
+          push(id(GLOBAL_SCOPE_NAME));
           break;
         case OP_getscopeobject:
           obj = scopeName;
