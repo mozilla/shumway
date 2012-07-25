@@ -1,3 +1,19 @@
+var BLEND_MODE_ADD        = 'add';
+var BLEND_MODE_ALPHA      = 'alpha';
+var BLEND_MODE_DARKEN     = 'darken';
+var BLEND_MODE_DIFFERENCE = 'difference';
+var BLEND_MODE_ERASE      = 'erase';
+var BLEND_MODE_HARDLIGHT  = 'hardlight';
+var BLEND_MODE_INVERT     = 'invert';
+var BLEND_MODE_LAYER      = 'layer';
+var BLEND_MODE_LIGHTEN    = 'lighten';
+var BLEND_MODE_MULTIPLY   = 'multiply';
+var BLEND_MODE_NORMAL     = 'normal';
+var BLEND_MODE_OVERLAY    = 'overlay';
+var BLEND_MODE_SCREEN     = 'screen';
+var BLEND_MODE_SHADER     = 'shader';
+var BLEND_MODE_SUBTRACT   = 'subtract';
+
 function DisplayObject() {
   this._alpha = 1;
   this._cacheAsBitmap = false;
@@ -37,7 +53,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
   ),
   blendMode: describeAccessor(
     function () {
-      return 'normal';
+      return BLEND_MODE_NORMAL;
     },
     function (val) {
       notImplemented();
