@@ -28,53 +28,46 @@
 //
 //  Contributed by Ian Osgood
 
-package {
-        function pad(n:int, width:int):String {
-          var s:String = n.toString();
-          while (s.length < width) s = ' ' + s;
-          return s;
-        }
+function pad(n,width) {
+  var s = n.toString();
+  while (s.length < width) s = ' ' + s;
+  return s;
+}
 
-        function primes(isPrime:Array, n:int):int {
-          var i:int, count:int = 0, m:int = 10000<<n, size:int = m+31>>5;
+function primes(isPrime, n) {
+  var i, count = 0, m = 10000<<n, size = m+31>>5;
 
-          for (i=0; i<size; i++) isPrime[i] = 0xffffffff;
+  for (i=0; i<size; i++) isPrime[i] = 0xffffffff;
 
-          for (i=2; i<m; i++)
-            if (isPrime[i>>5] & 1<<(i&31)) {
-              for (var j:int=i+i; j<m; j+=i)
-                isPrime[j>>5] &= ~(1<<(j&31));
-              count++;
-            }
-          return count;
-        }
+  for (i=2; i<m; i++)
+    if (isPrime[i>>5] & 1<<(i&31)) {
+      for (var j=i+i; j<m; j+=i)
+        isPrime[j>>5] &= ~(1<<(j&31));
+      count++;
+    }
+  return count;
+}
 
-        function sieve():int {
-            var res:int=0;
-            for (var i:int = 4; i <= 12; i++) {
-                var isPrime:Array = new Array((10000<<i)+31>>5);
-                print(isPrime.length);
-                res=primes(isPrime, i);
-            }
-            return res;
-        }
+function sieve() {
+    var res;
+    for (var i = 4; i <= 4; i++) {
+        var isPrime = new Array((10000<<i)+31>>5);
+        res=primes(isPrime, i);
+    }
+    return res;
+}
 
-    
-        var start:Number = new Date();
-        var res:int = sieve();
-        var totaltime:Number = new Date() - start;
+var start=new Date();
+var res=sieve();
+var totaltime=new Date()-start;
 
-
-
-        if (res==2488465)
-          print("PASSED res=" + res);
-        else
-          print("FAILED nsieveBits expecting 2488465 got "+res);
-}    
+if (res==2488465)
+  print("PASSED res=" + res);
+else
+  print("FAILED nsieveBits expecting 2488465 got "+res);
 /*    
         if (res==14683)
           print("metric time " + totaltime);
         else
           print("error nsieveBits expecting 14683 got "+res);
 */
-
