@@ -184,7 +184,7 @@ if (typeof window === 'undefined') {
 
   onmessage = function (evt) {
     var loader = new Loader;
-    loader.loadData(loader, evt.data);
+    loader.loadFrom(loader, evt.data);
   };
 } else {
   var head = document.head;
@@ -293,40 +293,40 @@ Loader.prototype = Object.create(baseProto, {
     }
   }),
   load: describeMethod(function (request, context) {
-    this.loadData(request.url);
+    this.loadFrom(request.url);
   }),
   loadBytes: describeMethod(function (bytes, context) {
     if (!bytes.length)
       throw ArgumentError();
 
-    this.loadData(bytes);
+    this.loadFrom(bytes);
   }),
-  loadData: describeMethod(function (data, context) {
+  loadFrom: describeMethod(function (input, context) {
     var loader = this;
     if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.SCRIPT_PATH);
       worker.onmessage = function (evt) {
         loader._process(evt.data);
       };
-      worker.postMessage(data);
+      worker.postMessage(input);
     } else {
-      if (typeof data === 'object') {
-        if (data instanceof ArrayBuffer) {
-          this._parse(data);
+      if (typeof input === 'object') {
+        if (input instanceof ArrayBuffer) {
+          this._parse(input);
         } else if (typeof FileReaderSync !== 'undefined') {
           var reader = new FileReaderSync;
-          var buffer = reader.readAsArrayBuffer(data);
+          var buffer = reader.readAsArrayBuffer(input);
           loader._parse(buffer);
         } else {
           var reader = new FileReader;
           reader.onload = function () {
             loader._parse(this.result);
           };
-          reader.readAsArrayBuffer(data);
+          reader.readAsArrayBuffer(input);
         }
       } else {
         var xhr = new XMLHttpRequest;
-        xhr.open('GET', data);
+        xhr.open('GET', input);
         xhr.responseType = 'arraybuffer';
         xhr.onload = function () {
           loader._parse(this.response);

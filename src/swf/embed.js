@@ -1,4 +1,4 @@
-SWF.embed = function(data, container, options) {
+SWF.embed = function(file, container, options) {
   if (!options)
     options = { };
 
@@ -42,5 +42,5 @@ SWF.embed = function(data, container, options) {
     renderStage(stage, ctx);
   });
 
-  loader.loadData(data);
+  loader.loadFrom(file);
 };
