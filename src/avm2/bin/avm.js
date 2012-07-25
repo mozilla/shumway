@@ -43,6 +43,7 @@ var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0
 var traceGraphViz = shellOptions.register(new Option("v", "traceGraphViz" , "boolean", false, "trace GraphViz output"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
+var compileSys = shellOptions.register(new Option("csys", "compileSystemDomain", "boolean", false, "compile system domain"));
 var loadPlayerGlobal = shellOptions.register(new Option("p", "loadPlayerGlobal", "boolean", false, "load player global"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
@@ -111,7 +112,7 @@ function installAvmPlus(vm) {
 
 var vm;
 if (execute.value) {
-  var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
+  var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : (compileSys.value ? null : ALWAYS_INTERPRET);
   var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
   vm = new AVM2(grabABC("builtin"), sysMode, appMode);
   installAvmPlus(vm);
