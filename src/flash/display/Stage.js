@@ -4,7 +4,7 @@ function Stage() {
 }
 
 Stage.prototype = Object.create(new DisplayObjectContainer, {
-  __class__: describeProperty('flash.display.Stage'),
+  __class__: describeInternalProperty('flash.display.Stage'),
 
   accessibilityImplementation: describeAccessor(
     function () {

@@ -195,7 +195,7 @@ if (typeof window === 'undefined') {
 }
 
 Loader.prototype = Object.create(baseProto, {
-  __class__: describeProperty('flash.display.Loader'),
+  __class__: describeInternalProperty('flash.display.Loader'),
 
   content: describeAccessor(function () {
     return this._content;

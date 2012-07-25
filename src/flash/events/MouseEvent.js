@@ -38,7 +38,7 @@ Object.defineProperties(MouseEvent, {
 });
 
 MouseEvent.prototype = Object.create(new Event, {
-  __class__: describeProperty('flash.events.MouseEvent'),
+  __class__: describeInternalProperty('flash.events.MouseEvent'),
 
   isRelatedObjectInaccessible: describeAccessor(
     function () {
