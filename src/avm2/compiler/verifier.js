@@ -223,7 +223,7 @@ var Verifier = (function() {
       verification.prototype.verify = function verify() {
         var mi = this.methodInfo;
         var writer = traceLevel.value <= 1 ? null : this.writer;
-  
+
         var blocks = mi.analysis.blocks;
 
         if (writer) {
@@ -236,7 +236,7 @@ var Verifier = (function() {
         }
 
         var entryState = new State();
-        
+
         assert (mi.localCount >= mi.parameters.length + 1);
         // First local is the type of |this|.
         entryState.local.push(Type.Atom);
@@ -259,7 +259,7 @@ var Verifier = (function() {
           var block = worklist.shift();
           var currEntryState = block.entryState;
           var currExitState = block.exitState = currEntryState.clone();
-          
+
           // passed state gets mutated so it effectively becomes the exit state
           this.verifyBlock(block, currExitState);
 
@@ -381,7 +381,7 @@ var Verifier = (function() {
           if (type.kind !== "Reference") {
             return Type.Atom;
           }
-          
+
           if (type.value instanceof Global) {
             var global = type.value;
             var trait = findTrait(global.scriptInfo.traits, index);
@@ -777,7 +777,7 @@ var Verifier = (function() {
             // Note: ignoring the effect of coerce_a is a little, temporary hack
             // to preserve types on stack since asc inserts a coerce_a
             // after every push (e.g. pushbyte)
-            
+
             // pop();
             // push(Type.Atom.Any);
             break;
@@ -930,6 +930,7 @@ var Verifier = (function() {
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
+    assert (scope.object, "Verifier needs a scope object.");
     try {
       new this.verification(this, methodInfo, scope).verify();
     } catch (e) {

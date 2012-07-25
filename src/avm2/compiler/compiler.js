@@ -1450,12 +1450,12 @@ var Compiler = (function () {
   })();
 
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
+    assert(scope);
     assert(methodInfo.analysis);
-    // methodInfo.analysis.trace(new IndentingWriter());
 
     Timer.start("compiler");
 
-    if (enableVerifier.value) {
+    if (enableVerifier.value && scope.object) {
       Timer.start("ver");
       this.verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
