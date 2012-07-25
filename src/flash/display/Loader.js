@@ -450,8 +450,9 @@ Loader.prototype = Object.create(baseProto, {
             //var symbolClasses = loaderInfo._symbolClasses;
             for (var i = 0, n = references.length; i < n; i++) {
               var reference = references[i++];
-              var symbol = dictionary[rererence.id];
-              symbol.__class__ = reference.name;
+              var symbol = dictionary[reference.id];
+              if (symbol)
+                symbol.__class__ = reference.name;
               //symbolClasses[sym.name] = dictionary[sym.id];
               //if (!sym.id) {
               //  var documentClass = this.avm2.applicationDomain.getProperty(
