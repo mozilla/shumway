@@ -890,7 +890,7 @@ var Compiler = (function () {
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
       }
 
-      function getProperty(obj, multiname, propertyType) {
+      function getProperty(obj, multiname) {
         assert (!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
 
@@ -899,12 +899,10 @@ var Compiler = (function () {
         // FIXME: This doesn't work for vectors, we need to chack for |indexGet|.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = new MemberExpression(obj, multiname.name, true);
-         
-
-          if (propertyType && propertyType.isNumeric()) {
+          var nameTy = multiname.name.ty;
+          if (nameTy && nameTy.isNumeric()) {
             return fastPath;
           }
-
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
@@ -920,17 +918,16 @@ var Compiler = (function () {
         return slowPath;
       }
 
-      function setProperty(obj, multiname, value, propertyType) {
+      function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
 
         // Fastpath for runtime multinames with number names.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
-
-          if (propertyType && propertyType.isNumeric()) {
+          var nameTy = multiname.name.ty;
+          if (nameTy && nameTy.isNumeric()) {
             return fastPath;
           }
-
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
@@ -958,17 +955,23 @@ var Compiler = (function () {
         return runtimeMultiname;
       })();
 
-      function popMultiname(index) {
-        var multiname = multinames[index];
+      function popMultiname(bc) {
+        var multiname = multinames[bc.index];
         if (multiname.isRuntime()) {
           flushStack();
           var namespaces = constant(multiname.namespaces);
           var name = constant(multiname.name);
           if (multiname.isRuntimeName()) {
             name = state.stack.pop();
+            if (bc.multinameTy) {
+              name.ty = bc.multinameTy.name;
+            }
           }
           if (multiname.isRuntimeNamespace()) {
             namespaces = state.stack.pop();
+            if (bc.multinameTy) {
+              namespaces.ty = bc.multinameTy.namespaces;
+            }
           }
           return new RuntimeMultiname(multiname, namespaces, name);
         } else {
@@ -1007,13 +1010,13 @@ var Compiler = (function () {
           emit(new ThrowStatement(state.stack.pop()));
           break;
         case OP_getsuper:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           push(call(id("getSuper"), [obj, multiname]));
           break;
         case OP_setsuper:
           value = state.stack.pop();
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           flushStack();
           obj = state.stack.pop();
           emit(call(id("setSuper"), [obj, multiname, value]));
@@ -1140,7 +1143,7 @@ var Compiler = (function () {
         case OP_callproperty:
           flushStack();
           args = state.stack.popMany(bc.argCount);
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
@@ -1181,7 +1184,7 @@ var Compiler = (function () {
           break;
         case OP_callpropvoid:
           args = state.stack.popMany(bc.argCount);
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           emit(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
@@ -1221,7 +1224,7 @@ var Compiler = (function () {
                     [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
           break;
         case OP_getdescendants:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           push(call(id("getDescendants"), [multiname, obj]));
           break;
@@ -1233,11 +1236,11 @@ var Compiler = (function () {
           state.scopeHeight += 1;
           break;
         case OP_findpropstrict:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           push(findProperty(multiname, true));
           break;
         case OP_findproperty:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           push(findProperty(multiname, false));
           break;
         case OP_finddef:        notImplemented(); break;
@@ -1248,10 +1251,10 @@ var Compiler = (function () {
         case OP_initproperty:
         case OP_setproperty:
           value = state.stack.pop();
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           flushStack();
           obj = state.stack.pop();
-          emit(setProperty(obj, multiname, value, bc.propertyType));
+          emit(setProperty(obj, multiname, value));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
         case OP_setlocal:       setLocal(bc.index); break;
@@ -1266,14 +1269,14 @@ var Compiler = (function () {
           push(property(obj, "object"));
           break;
         case OP_getproperty:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           push(getProperty(obj, multiname, bc.propertyType));
           break;
         case OP_getouterscope:      notImplemented(); break;
         case OP_setpropertylate:    notImplemented(); break;
         case OP_deleteproperty:
-          multiname = popMultiname(bc.index);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
           push(call(id("deleteProperty"), [obj, multiname]));
           flushStack();

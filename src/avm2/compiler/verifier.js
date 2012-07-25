@@ -77,6 +77,15 @@ var Verifier = (function() {
     this.message = message || "";
   }
 
+  var RuntimeMultiname = (function () {
+    function runtimeMultiname(multiname, namespaces, name) {
+      this.multiname = multiname;
+      this.namespaces = namespaces;
+      this.name = name;
+    }
+    return runtimeMultiname;
+  })();
+
   function findTrait(traits, slotId) {
     for (var i = traits.length - 1; i >= 0; i--) {
       if (traits[i].slotId === slotId) {
@@ -312,11 +321,16 @@ var Verifier = (function() {
         var abc = this.verifier.abc;
         var multinames = abc.constantPool.multinames;
         var mmethods = abc.mmethods;
+        var runtime = abc.runtime;
 
         var obj, func, mi, multiname, lVal, rVal, val;
 
-        function popMultiname(index) {
-          var multiname = multinames[index];
+        /**
+         * Optionally pops a runtime multiname of the stack and stores a |RuntimeMultiname|
+         * object in the specified bytecode's |multinameTy| property.
+         */
+        function popMultiname(bc) {
+          var multiname = multinames[bc.index];
           if (multiname.isRuntime()) {
             var namespaces = multiname.namespaces;
             var name = multiname.name;
@@ -324,12 +338,11 @@ var Verifier = (function() {
               // here we actually deal with abstract multinames,
               // i.e. name actually holds the type of the corresponding entity
               name = state.stack.pop();
-              name.holdsType = true;
             }
             if (multiname.isRuntimeNamespace()) {
               namespaces = [state.stack.pop()];
             }
-            return new Multiname(namespaces, name);
+            return bc.multinameTy = new RuntimeMultiname(multiname, namespaces, name);
           } else {
             return multiname;
           }
@@ -549,7 +562,7 @@ var Verifier = (function() {
             break;
           case OP_callsuper:
             stack.popMany(bc.argCount);
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             obj = pop();
             resolveTrait(obj, multiname); // ??
             //TODO: Implement resolveTrait and figure out the return type of the call
@@ -557,7 +570,7 @@ var Verifier = (function() {
             break;
           case OP_callproperty:
             stack.popMany(bc.argCount);
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             obj = pop();
             resolveTrait(obj, multiname);
             //TODO: Implement resolveTrait and figure out the return type of the call
@@ -624,11 +637,11 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_findpropstrict:
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             stack.push(findProperty(multiname, true));
             break;
           case OP_findproperty:
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             stack.push(findProperty(multiname, false));
             break;
           case OP_finddef:
@@ -640,10 +653,10 @@ var Verifier = (function() {
           case OP_initproperty:
           case OP_setproperty:
             pop();
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             pop();
             // attach the property type to the setproperty bytecode
-            if(multiname.name.holdsType) {
+            if (multiname.name instanceof Type) {
               bc.propertyType = multiname.name;
             }
             break;
@@ -663,14 +676,9 @@ var Verifier = (function() {
             push(scope[bc.index]);
             break;
           case OP_getproperty:
-            multiname = popMultiname(bc.index);
+            popMultiname(bc);
             pop();
-            if(multiname.name.holdsType) {
-              push(multiname.name);
-              bc.propertyType = multiname.name;
-            } else {
-              push(Type.Atom.Any);
-            }
+            push(Type.Atom.Any);
             break;
           case OP_getouterscope:
             notImplemented(bc);
