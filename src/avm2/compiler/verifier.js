@@ -60,7 +60,11 @@ var Verifier = (function() {
     }
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
-        a[i] = a[i].merge(b[i]);
+        // TODO: Locals are 'undefined' before setlocal is called;
+        // should we initialize them to Atom.Undefined
+        if(a[i] && b[i]) {
+          a[i] = a[i].merge(b[i]);
+        }
       }
     }
     state.prototype.merge = function(other) {
@@ -75,6 +79,24 @@ var Verifier = (function() {
   function VerifierError(message) {
     this.name = "VerifierError";
     this.message = message || "";
+  }
+
+  var RuntimeMultiname = (function () {
+    function runtimeMultiname(multiname, namespaces, name) {
+      this.multiname = multiname;
+      this.namespaces = namespaces;
+      this.name = name;
+    }
+    return runtimeMultiname;
+  })();
+
+  function findTrait(traits, slotId) {
+    for (var i = traits.length - 1; i >= 0; i--) {
+      if (traits[i].slotId === slotId) {
+        return traits[i];
+      }
+    }
+    unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
   }
 
   function verifier(abc) {
@@ -127,7 +149,7 @@ var Verifier = (function() {
         } else if (name.getQualifiedName() === "public$Number") {
           return type.Number;
         }
-        var ty = domain.getProperty(name, false, false);
+        var ty = domain.getProperty(name, false, true);
         assert (ty, name + " not found");
         return type.fromReference(ty);
       };
@@ -152,24 +174,37 @@ var Verifier = (function() {
         return this === type.Number || this === type.Int || this === type.Uint;
       };
 
+      type.prototype.getTrait = function getTrait(slotId) {
+        if (this.kind !== "Reference") {
+          return null;
+        }
+        if (this.value instanceof Global) {
+          return findTrait(this.value.scriptInfo.traits, slotId);
+        }
+        return null;
+      };
+
       type.prototype.merge = function(other) {
         // TODO: Merging Atom.Undefined and Atom.Any bellow is a hack to
         // circumvent the fact that the verifier's type hierrchy doesn't
         // form a semilatice and solve the incompatible types merge situations
         if (this === other) {
           return this;
-        } else if (this.kind === "Atom" && other.kind === "Atom") {
-          return type.Atom.Any;
+        } else if (this.kind === "Atom" || other.kind === "Atom") {
+          return type.Atom;
         } else if (this.kind === "Reference" && other.kind === "Reference") {
           // TODO: Actually merge reference types.
           return type.Reference.Null;
+        } else if ((this === Type.Int && other.kind === "Reference") ||
+                   (this.kind === "Reference" && other === Type.Int)) {
+          return Type.Atom.Any;
         } else if ((this === Type.Int && other === Type.Number) ||
                    (this === Type.Number && other === Type.Int)) {
           return type.Number;
         } else if (this === Type.Atom.Undefined || other === Type.Atom.Undefined) {
-            return Type.Atom.Undefined;
+          return Type.Atom;
         } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
-            return Type.Atom.Any;
+          return Type.Atom.Any;
         }
         unexpected("Cannot merge types : " + this + " and " + other);
       };
@@ -188,7 +223,7 @@ var Verifier = (function() {
       verification.prototype.verify = function verify() {
         var mi = this.methodInfo;
         var writer = traceLevel.value <= 1 ? null : this.writer;
-  
+
         var blocks = mi.analysis.blocks;
 
         if (writer) {
@@ -201,7 +236,7 @@ var Verifier = (function() {
         }
 
         var entryState = new State();
-        
+
         assert (mi.localCount >= mi.parameters.length + 1);
         // First local is the type of |this|.
         entryState.local.push(Type.Atom);
@@ -224,7 +259,7 @@ var Verifier = (function() {
           var block = worklist.shift();
           var currEntryState = block.entryState;
           var currExitState = block.exitState = currEntryState.clone();
-          
+
           // passed state gets mutated so it effectively becomes the exit state
           this.verifyBlock(block, currExitState);
 
@@ -290,11 +325,16 @@ var Verifier = (function() {
         var abc = this.verifier.abc;
         var multinames = abc.constantPool.multinames;
         var mmethods = abc.mmethods;
+        var runtime = abc.runtime;
 
         var obj, func, mi, multiname, lVal, rVal, val;
 
-        function popMultiname(index) {
-          var multiname = multinames[index];
+        /**
+         * Optionally pops a runtime multiname of the stack and stores a |RuntimeMultiname|
+         * object in the specified bytecode's |multinameTy| property.
+         */
+        function popMultiname(bc) {
+          var multiname = multinames[bc.index];
           if (multiname.isRuntime()) {
             var namespaces = multiname.namespaces;
             var name = multiname.name;
@@ -302,12 +342,11 @@ var Verifier = (function() {
               // here we actually deal with abstract multinames,
               // i.e. name actually holds the type of the corresponding entity
               name = state.stack.pop();
-              name.holdsType = true;
             }
             if (multiname.isRuntimeNamespace()) {
               namespaces = [state.stack.pop()];
             }
-            return new Multiname(namespaces, name);
+            return bc.multinameTy = new RuntimeMultiname(multiname, namespaces, name);
           } else {
             return multiname;
           }
@@ -342,14 +381,11 @@ var Verifier = (function() {
           if (type.kind !== "Reference") {
             return Type.Atom;
           }
-          var slots;
+
           if (type.value instanceof Global) {
-            slots = type.value.slots;
-            assert (slots);
-            // TODO: Type.fromName expects a multiname but in case of constants
-            // the slots of the global object are strings.
-            // This can be replicated by running tests/regress/correctness/arrays.abc
-            return Type.fromName(slots[index].name);
+            var global = type.value;
+            var trait = findTrait(global.scriptInfo.traits, index);
+            return Type.fromName(trait.typeName);
           }
         }
 
@@ -519,7 +555,7 @@ var Verifier = (function() {
           case OP_construct:
             stack.popMany(bc.argCount);
             obj = pop();
-            push(Type.Reference); //TODO infer obj's type ??
+            push(Type.Atom.Any); //TODO infer obj's type ??
             break;
           case OP_callmethod:
             // callmethod is always invalid
@@ -530,7 +566,7 @@ var Verifier = (function() {
             break;
           case OP_callsuper:
             stack.popMany(bc.argCount);
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             obj = pop();
             resolveTrait(obj, multiname); // ??
             //TODO: Implement resolveTrait and figure out the return type of the call
@@ -538,7 +574,7 @@ var Verifier = (function() {
             break;
           case OP_callproperty:
             stack.popMany(bc.argCount);
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             obj = pop();
             resolveTrait(obj, multiname);
             //TODO: Implement resolveTrait and figure out the return type of the call
@@ -555,13 +591,22 @@ var Verifier = (function() {
             stack.pop();
             break;
           case OP_constructprop:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            multiname = popMultiname(bc);
+            obj = stack.pop();
+            // TODO: Figure out the type of the generated instance.
+            stack.push(Type.Atom.Any);
             break;
           case OP_callsuperid:
             notImplemented(bc);
             break;
           case OP_callproplex:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            multiname = popMultiname(bc);
+            obj = pop();
+            resolveTrait(obj, multiname);
+            //TODO: Implement resolveTrait and figure out the return type of the call
+            push(Type.Atom.Any);
             break;
           case OP_callinterface:
             notImplemented(bc);
@@ -591,10 +636,11 @@ var Verifier = (function() {
           case OP_newarray:
             // Pops values, pushes result.
             stack.popMany(bc.argCount);
+            // push(Type.Atom.Object);
             push(Type.Atom.Object);
             break;
           case OP_newactivation:
-            notImplemented(bc);
+            push(Type.fromReference(runtime.createActivation(this.methodInfo)));
             break;
           case OP_newclass:
             throw new VerifierError("Not Supported");
@@ -605,11 +651,11 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_findpropstrict:
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             stack.push(findProperty(multiname, true));
             break;
           case OP_findproperty:
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             stack.push(findProperty(multiname, false));
             break;
           case OP_finddef:
@@ -621,10 +667,10 @@ var Verifier = (function() {
           case OP_initproperty:
           case OP_setproperty:
             pop();
-            multiname = popMultiname(bc.index);
+            multiname = popMultiname(bc);
             pop();
             // attach the property type to the setproperty bytecode
-            if(multiname.name.holdsType) {
+            if (multiname.name instanceof Type) {
               bc.propertyType = multiname.name;
             }
             break;
@@ -644,14 +690,9 @@ var Verifier = (function() {
             push(scope[bc.index]);
             break;
           case OP_getproperty:
-            multiname = popMultiname(bc.index);
+            popMultiname(bc);
             pop();
-            if(multiname.name.holdsType) {
-              push(multiname.name);
-              bc.propertyType = multiname.name;
-            } else {
-              push(Type.Atom.Any);
-            }
+            push(Type.Atom.Any);
             break;
           case OP_getouterscope:
             notImplemented(bc);
@@ -666,10 +707,11 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getslot:
-            push(getSlot(pop(), bc.index));
+            push(getSlot(bc.objTy = pop(), bc.index));
             break;
           case OP_setslot:
-            notImplemented(bc);
+            pop();
+            pop();
             break;
           case OP_getglobalslot:
             notImplemented(bc);
@@ -735,7 +777,7 @@ var Verifier = (function() {
             // Note: ignoring the effect of coerce_a is a little, temporary hack
             // to preserve types on stack since asc inserts a coerce_a
             // after every push (e.g. pushbyte)
-            
+
             // pop();
             // push(Type.Atom.Any);
             break;
@@ -877,7 +919,7 @@ var Verifier = (function() {
         }
         if (writer) {
           writer.leave("}");
-          writer.enter("verifiedBlock: " + block.bid +
+          writer.writeLn("verifiedBlock: " + block.bid +
                        ", range: [" + block.position + ", " + block.end.position +
                        "], exitState: " + state.toString());
         }
@@ -888,6 +930,7 @@ var Verifier = (function() {
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
+    assert (scope.object, "Verifier needs a scope object.");
     try {
       new this.verification(this, methodInfo, scope).verify();
     } catch (e) {

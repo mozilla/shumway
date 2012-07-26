@@ -258,7 +258,7 @@ var Namespace = (function () {
   }
 
   function buildNamespace() {
-    this.uri = this.uri.replace(/\.|:|\//gi,"$"); /* No dots, colons, and /s */
+    this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
 
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */

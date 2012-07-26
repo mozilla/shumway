@@ -138,7 +138,7 @@ class Base:
       sys.exit();
 
   def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, sc = False):
-    
+
     if sc:
       outf = os.path.splitext(files[-1])[0]
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
@@ -157,7 +157,7 @@ class Base:
       args.extend(["-import", self.global_abc])
 
     if playerGlobal:
-      playerGlobalAbcs = []      
+      playerGlobalAbcs = []
       if not os.path.isdir(self.player_global_abc):
         playerGlobalAbcs.append(self.player_global_abc)
       else:
@@ -165,7 +165,7 @@ class Base:
           for file in abcFiles:
             if file.endswith(".abc"):
               playerGlobalAbcs.append(os.path.join(root, file))
-              
+
       for abc in playerGlobalAbcs:
         args.extend(["-import", abc])
 
@@ -347,7 +347,7 @@ class Test(Command):
     parser.add_argument('src', nargs='?', help=".abc search path")
     parser.add_argument('-j', '--jobs', type=int, default=multiprocessing.cpu_count(), help="number of jobs to run in parallel")
     parser.add_argument('-t', '--timeout', type=int, default=5, help="timeout (s)")
-    parser.add_argument('-m', '--mode', type=str, default="aico", help="mode")
+    parser.add_argument('-m', '--mode', type=str, default="aicov", help="mode")
     parser.add_argument('-n', '--noColors', action='store_true', help="disable colors")
     parser.add_argument('-i', '--include', nargs="?", action='append', help="include tests from file")
     parser.add_argument('-e', '--exclude', nargs="?", action='append', help="exclude tests from file")
@@ -459,6 +459,8 @@ class Test(Command):
             counter.update([k + "-" + c]);
             out.append(color(c))
           out.append(str(round(results[k][1], 2)) if results[k] != None else "N/A")
+          if "a" in results and k != "a":
+            out.append("(" + str(round(results["a"][1] / results[k][1], 2)) + " X)")
 
         out.append(test);
 

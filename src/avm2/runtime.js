@@ -484,6 +484,7 @@ function CatchScopeObject(runtime, varTrait) {
  */
 var Global = (function () {
   function Global(runtime, script) {
+    this.scriptInfo = script;
     script.global = this;
     script.abc = runtime.abc;
     runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, false);
