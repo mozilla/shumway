@@ -13,7 +13,7 @@ const Cu = Components.utils;
 // True only if this is the version of pdf.js that is included with firefox.
 const SHUMWAY_CONTENT_TYPE = 'application/x-shockwave-flash';
 const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
-                                    SHUMWAY_CONTENT_TYPE + ',';
+                                        SHUMWAY_CONTENT_TYPE;
 
 const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
 const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
@@ -187,8 +187,40 @@ FlashStreamConverterBase.prototype = {
     return true;
   },
 
-  createChromeActions: function(window, url) {
-    throw 'Not implemented: createChromeActions';
+  createChromeActions: function(window, urlHint) {
+    var url;
+    var element = window.frameElement;
+    var params = {};
+    if (element) {
+      var tagName = element.nodeName;
+      if (tagName == 'HTML:IFRAME') {
+        // plugin overlay
+        element = element.parentNode;
+        tagName = element.nodeName;
+      }
+      if (tagName == 'EMBED') {
+        for (var i = 0; i < element.attributes.length; ++i) {
+          params[element.attributes[i].localName] = element.attributes[i].value;
+        }
+        url = params.src;
+      } else {
+        for (var i = 0; i < element.childNodes.length; ++i) {
+          var paramElement = element.childNodes[i];
+          if (paramElement.nodeType != 1 ||
+              paramElement.nodeName != 'PARAM') continue;
+
+          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+        }
+        var dataAttribute = element.getAttribute('data');
+        url = dataAttribute || params.movie || params.src;
+      }
+    }
+    var element = window.frameElement;
+    var baseUrl = element ? element.ownerDocument.location.href : null; // XXX base url?
+
+    url = url ? combineUrl(baseUrl, url) : urlHint;
+
+    return new ChromeActions(url, params, baseUrl, window);
   },
 
   // nsIStreamConverter::asyncConvertData
@@ -272,36 +304,6 @@ copyProperties(FlashStreamConverter1.prototype, {
   classDescription: 'Shumway Content Converter Component',
   contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*'
 });
-FlashStreamConverter1.prototype.createChromeActions = function(window, url) {
-  function getParams() {
-    var element = window.frameElement;
-    var params = {};
-    if (element) {
-      var tagName = element.nodeName;
-      if (tagName == 'EMBED') {
-        for (var i = 0; i < element.attributes.length; ++i) {
-          params[element.attributes[i].localName] = element.attributes[i].nodeValue;
-        }
-      } else {
-        for (var i = 0; i < element.childNodes.length; ++i) {
-          var paramElement = element.childNodes[i];
-          if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM') continue;
-
-          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
-        }
-      }
-    }
-    return params;
-  }
-
-  function getReferer() {
-    var element = window.frameElement;
-    return element ? element.ownerDocument.location.href : null;
-  }
-
-  return new ChromeActions(url, getParams(), getReferer(), window);
-};
 
 function FlashStreamConverter2() {}
 FlashStreamConverter2.prototype = new FlashStreamConverterBase();
@@ -316,57 +318,11 @@ FlashStreamConverter2.prototype.isValidRequest =
       var request = aCtxt;
       request.QueryInterface(Ci.nsIChannel);
       var spec = request.URI.spec;
-      return spec.substr(0, EXPECTED_PLAYPREVIEW_URI_PREFIX.length) == EXPECTED_PLAYPREVIEW_URI_PREFIX;
+      return spec == EXPECTED_PLAYPREVIEW_URI_PREFIX;
     } catch (e) {
       return false;
     }
   });
-FlashStreamConverter2.prototype.createChromeActions = function(window, url) {
-  function decodeHTML(s) {
-    return s.replace(/&([^;]+);/g, function(all, name) {
-      switch (name) {
-        case 'amp': return '&';
-        case 'quot': return '"';
-      };
-      return all;
-    });
-  }
-
-  var parts = url.split(','); // prefix, mime type, base url, html
-  var baseUrl = decodeURIComponent(parts[2]);
-  var markup = decodeURIComponent(parts[3]);
-  var params = {}, movie;
-  // XXX simple markup parsing
-  if (markup.substr(0, 6) == '<embed') {
-    markup.replace(/(\w+)=\"([^\"]+)/gi, function(all, key, value) {
-      params[key] = decodeHTML(value);
-    });
-    movie = params.src;
-  } else {
-    var markupParts = markup.split('>');
-    for (var i = 1; i < markupParts.length; i++) {
-      if (markupParts[i].indexOf('<param') < 0)
-        continue;
-      var name, value;
-      markupParts[i].replace(/\bname=\"([^\"]+)/gi, function(all, attr) {
-        name = decodeHTML(attr);
-      }).replace(/\bvalue=\"([^\"]+)/gi, function(all, attr) {
-        value = decodeHTML(attr);
-      });
-      params[name] = value;
-    }
-    movie = params.movie || params.src;
-    if (!movie) {
-      markupParts[0].replace(/\bdata=\"([^\"]+)/gi, function(all, attr) {
-        movie = decodeHTML(attr);
-      });
-    }
-  }
-  if (movie)
-    movie = combineUrl(baseUrl, movie);
-
-  return new ChromeActions(movie, params, baseUrl, window);
-};
 
 var NSGetFactory1 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter1]);
 var NSGetFactory2 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter2]);
