@@ -42,11 +42,13 @@ SWF.embed = function(data, container, options) {
     stage.addChild(loader.content);
   });
   loaderInfo.addEventListener(Event.PROGRESS, function () {
-    //if (obj.bgcolor) {
-    //  stage._color = obj.bgcolor; // TODO convert to numeric
-    //  canvas.style.background = obj.bgcolor;
-    //}
     if (!isPlaying) {
+      var obj = loader._pframes[0]; // HACK using first frame color
+      if (obj.bgcolor) {
+        stage._color = obj.bgcolor; // TODO convert to numeric
+        canvas.style.background = obj.bgcolor;
+      }
+
       renderStage(stage, ctx);
       isPlaying = true;
     }
