@@ -5,14 +5,15 @@ var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
 var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
 var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
 
-var GRAPHICS_PATH_WINDING_EVEN_ODD = 'evenOdd';
-var GRAPHICS_PATH_WINDING_NON_ZERO = 'nonZero';
+var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
+var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
 
 var fillContext = document.createElement('canvas').getContext('2d');
 
 function Graphics() {
   this._drawingStyles = null;
   this._fillStyle = null;
+  this._fillTransform = null;
   this._strokeStyle = null;
   this._subpaths = [];
 }
@@ -33,7 +34,8 @@ Graphics.prototype = Object.create(null, {
 
     delete this._currentPath;
 
-    this._fillStyle = toRgba(color, alpha);
+    this._fillStyle = alpha ? toRgba(color, alpha) : null;
+    this._fillTransform = null;
   }),
   beginGradientFill: describeMethod(
     function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
@@ -50,6 +52,7 @@ Graphics.prototype = Object.create(null, {
         gradient.addColorStop(ratios[i], toRgba(colors[i], alphas[i]));
 
       this._fillStyle = gradient;
+      this._fillTransform = matrix;
     }
   ),
   beginBitmapFill: describeMethod(function (bitmap, matrix, repeat, smooth) {
@@ -91,7 +94,7 @@ Graphics.prototype = Object.create(null, {
     var stroke = null;
     var fill = null;
 
-    if (stroke !== null && stroke.__class__ === 'flash.display.GraphicsStroke')
+    if (istroke !== null && istroke.__class__ === 'flash.display.GraphicsStroke')
       stroke = istroke;
     if (stroke && stroke.fill && stroke.fill.__isIGraphicsFill__)
       fill = stroke.fill;
@@ -148,6 +151,7 @@ Graphics.prototype = Object.create(null, {
 
     this._drawingStyles = null;
     this._fillStyle = null;
+    this._fillTransform = null;
     this._strokeStyle = null;
     this._subpaths.length = 0;
   }),
@@ -182,6 +186,7 @@ Graphics.prototype = Object.create(null, {
         break;
       case GRAPHICS_PATH_COMMAND_CURVE_TO:
         this.curveTo(data[j++], data[j++], data[j++], data[j++]);
+        break;
       case GRAPHICS_PATH_COMMAND_LINE_TO:
         this.lineTo(data[j++], data[j++]);
         break;
@@ -197,9 +202,9 @@ Graphics.prototype = Object.create(null, {
   }),
   drawPathObject: describeMethod(function (path) {
     if (path.__class__ === 'flash.display.GraphicsPath')
-      this.drawPath(item.commands, item.data, item.winding);
+      this.drawPath(path.commands, path.data, path.winding);
     else if (path.__class__ === 'flash.display.GraphicsTrianglePath')
-      this.drawTriangles(item.vertices, item.indices, item.uvtData, item.culling);
+      this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
   }),
   drawRect: describeMethod(function (x, y, w, h) {
     if (isNaN(w + h))
@@ -267,6 +272,7 @@ Graphics.prototype = Object.create(null, {
     var path = new Kanvas.Path;
     path.drawingStyles = this._drawingStyles;
     path.fillStyle = this._fillStyle;
+    path.fillTransform = this._fillTransform;
     path.strokeStyle = this._lineStyle;
     path.winding = this._winding;
 
