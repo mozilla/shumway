@@ -28,18 +28,21 @@ SWF.embed = function(file, container, options) {
 
     if (container.clientHeight) {
       fitCanvas(container, canvas);
-      window.addEventListener('resize', fitCanvas.bind(null, container, canvas), false);
+      window.addEventListener('resize', function () {
+        fitCanvas.bind(container, canvas);
+      });
     } else {
       canvas.width = stage.stageWidth;
       canvas.height = stage.stageHeight;
     }
-    container.appendChild(canvas);
 
     AS2Key.$bind(canvas);
     AS2Mouse.$bind(canvas);
 
     stage.addChild(loader.content);
     renderStage(stage, ctx);
+
+    container.appendChild(canvas);
   });
 
   loader.loadFrom(file);
