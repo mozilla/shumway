@@ -1,10 +1,37 @@
+var COLOR_CORRECTION_DEFAULT     = 'default';
+var COLOR_CORRECTION_OFF         = 'on';
+var COLOR_CORRECTION_ON          = 'off';
+
+var COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
+var COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
+var COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
+
+var STAGE_ALIGN_BOTTOM           = 'B';
+var STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
+var STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
+var STAGE_ALIGN_LEFT             = 'L';
+var STAGE_ALIGN_RIGHT            = 'R';
+var STAGE_ALIGN_TOP              = 'T';
+var STAGE_ALIGN_TOP_LEFT         = 'TL';
+var STAGE_ALIGN_TOP_RIGHT        = 'TR';
+
+var STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
+var STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
+var STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
+var STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
+
+var STAGE_QUALITY_BEST           = 'best';
+var STAGE_QUALITY_HIGH           = 'high';
+var STAGE_QUALITY_LOW            = 'low';
+var STAGE_QUALITY_MEDIUM         = 'medium';
+
 function Stage() {
   this._color = 0xFFFFFFFF;
   this._transform = { };
 }
 
 Stage.prototype = Object.create(new DisplayObjectContainer, {
-  __class__: describeProperty('flash.display.Stage'),
+  __class__: describeInternalProperty('flash.display.Stage'),
 
   accessibilityImplementation: describeAccessor(
     function () {
@@ -29,22 +56,21 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   align: describeAccessor(
     function () {
-      return ''; // TODO
+      return '';
     },
     function (val) {
       notImplemented();
     }
   ),
   allowsFullScreen: describeAccessor(function () {
-    return false; // TODO
+    return false;
   }),
   alpha: describeAccessor(function () {
-    return 1; // read-only/default
+    return 1;
   }),
   blendMode: describeAccessor(
     function () {
-      // TODO BlendMode.NORMAL
-      return 'normal';
+      return BLEND_MODE_NORMAL;
     }, function (val) {
       illegalOperation();
     }
@@ -66,14 +92,14 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   colorCorrection: describeAccessor(
     function () {
-      return 'default'; // TODO
+      return COLOR_CORRECTION_DEFAULT;
     },
     function (val) {
       notImplemented();
     }
   ),
   colorCorrectionSupport: describeAccessor(function () {
-    return 'unsupported'; // TODO
+    return COLOR_CORRECTION_UNSUPPORTED;
   }),
   contextMenu: describeAccessor(
     function () {
@@ -84,7 +110,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   displayState: describeAccessor(
     function () {
-      return null; // TODO
+      return null;
     },
     function (val) {
       notImplemented();
@@ -99,7 +125,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   focus: describeAccessor(
     function () {
-      return null; // TODO
+      return null;
     },
     function (val) {
       notImplemented();
@@ -117,8 +143,6 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
       return this._frameRate;
     },
     function (val) {
-      if (val < 0.01 || val > 1000)
-        throw 'Invalid frame rate';
       this._frameRate = val;
     }
   ),
@@ -127,7 +151,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   }),
   fullScreenSourceRect: describeAccessor(
     function () {
-      return null; // TODO
+      return null;
     },
     function (val) {
       notImplemented();
@@ -165,7 +189,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
     }
   ),
   nativeWindow: describeAccessor(function () {
-    return null; // TODO
+    return null;
   }),
   opaqueBackground: describeAccessor(
     function () {
@@ -176,7 +200,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   quality: describeAccessor(
     function () {
-      return 'HIGH'; // TODO
+      return STAGE_QUALITY_HIGH;
     },
     function (val) {
       notImplemented();
@@ -198,7 +222,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   scaleMode: describeAccessor(
     function () {
-      return 'noScale'; // TODO
+      return STAGE_SCALE_MODE_NO_SCALE;
     },
     function (val) {
       notImplemented();
@@ -227,7 +251,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   ),
   showDefaultContextMenu: describeAccessor(
     function () {
-      return true; // TODO
+      return true;
     },
     function (val) {
       notImplemented();
@@ -238,7 +262,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
   }),
   stageFocusRect: describeAccessor(
     function () {
-      return false; // TODO
+      return false;
     },
     function (val) {
       notImplemented();
@@ -306,7 +330,7 @@ Stage.prototype = Object.create(new DisplayObjectContainer, {
     }
   ),
   wmodeGPU: describeAccessor(function () {
-    return false; // TODO
+    return false;
   }),
 
   invalidate: describeMethod(function() {

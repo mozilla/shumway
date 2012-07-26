@@ -8,7 +8,7 @@ function Rectangle(x, y, width, height) {
 }
 
 Rectangle.prototype = Object.create(null, {
-  __class__: describeProperty('flash.geom.Rectangle'),
+  __class__: describeInternalProperty('flash.geom.Rectangle'),
 
   bottomRight: describeAccessor(
     function() {

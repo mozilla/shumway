@@ -26,7 +26,7 @@ Object.defineProperties(KeyboardEvent, {
 });
 
 KeyboardEvent.prototype = Object.create(new Event, {
-  __class__: describeProperty('flash.events.KeyboardEvent'),
+  __class__: describeInternalProperty('flash.events.KeyboardEvent'),
 
   clone: describeMethod(function () {
     return new Event(
