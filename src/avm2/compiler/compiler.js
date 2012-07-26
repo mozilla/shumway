@@ -126,6 +126,7 @@ var Compiler = (function () {
                 value instanceof AbcFile ||
                 value instanceof Array ||
                 value instanceof CatchScopeObject ||
+                value instanceof Scope ||
                 value.forceConstify === true,
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
@@ -430,7 +431,7 @@ var Compiler = (function () {
 
   var Compilation = (function () {
 
-    function compilation(compiler, methodInfo, scope) {
+    function compilation(compiler, methodInfo, scope, hasDynamicScope) {
       this.compiler = compiler;
       var abc = this.compiler.abc;
       var mi = this.methodInfo = methodInfo;
@@ -475,6 +476,14 @@ var Compiler = (function () {
 
       this.prologue.push(new ExpressionStatement(
         call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
+
+      if (!hasDynamicScope) {
+        // TODO: Here we also need to take care of the |this| pointer since it may
+        // be equal to the |jsGlobal|. We should only do this if it's ever used.
+        this.prologue.push(new VariableDeclaration("var", [
+          new VariableDeclarator(id(SAVED_SCOPE_NAME), constant(scope)),
+        ]));
+      }
 
       this.prologue.push(new VariableDeclaration("var", [
         new VariableDeclarator(id(SCOPE_NAME), id(SAVED_SCOPE_NAME)),
@@ -1121,7 +1130,7 @@ var Compiler = (function () {
         case OP_sf32:           notImplemented(); break;
         case OP_sf64:           notImplemented(); break;
         case OP_newfunction:
-          push(call(runtimeProperty("createFunction"), [constant(methods[bc.index]), scopeName]));
+          push(call(runtimeProperty("createFunction"), [constant(methods[bc.index]), scopeName, constant(true)]));
           break;
         case OP_call:
           args = state.stack.popMany(bc.argCount);
@@ -1451,18 +1460,18 @@ var Compiler = (function () {
 
   })();
 
-  compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope) {
+  compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope, hasDynamicScope) {
     assert(scope);
     assert(methodInfo.analysis);
 
     Timer.start("compiler");
-
-    if (enableVerifier.value && scope.object) {
+    if (enableVerifier.value && !hasDynamicScope && scope.object) {
+      // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("ver");
       this.verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
     }
-    var cx = new Compilation(this, methodInfo, scope);
+    var cx = new Compilation(this, methodInfo, scope, hasDynamicScope);
     Timer.start("ast");
     var node = cx.compile();
     Timer.stop();
