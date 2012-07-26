@@ -137,7 +137,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
     return this._parent;
   }),
   root: describeAccessor(function () {
-    return this._return;
+    return this._root;
   }),
   rotation: describeAccessor(
     function () {
