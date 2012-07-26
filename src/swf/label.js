@@ -2,19 +2,10 @@
 
 function defineLabel(tag, dictionary) {
   var records = tag.records;
-  var matrix = tag.matrix;
+  var m = tag.matrix;
   var cmds = [
     'c.save()',
-    'c.transform(' +
-      [
-        matrix.scaleX,
-        matrix.skew0,
-        matrix.skew1,
-        matrix.scaleY,
-        matrix.translateX,
-        matrix.translateY
-      ].join(',') +
-    ')'
+    'c.transform(' + [m.a, m.b, m.c, m.d, m.e, m.f].join(',') + ')'
   ];
   var dependencies = [];
   var x = 0;

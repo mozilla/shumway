@@ -33,29 +33,29 @@ var MATRIX = {
   $0: ['hasScale', [
     {
       $$bits: UB(5),
-      scaleX: FB('bits'),
-      scaleY: FB('bits')
+      a: FB('bits'),
+      d: FB('bits')
     },
     {
-      scaleX: '1',
-      scaleY: '1'
+      a: '1',
+      d: '1'
     }
   ]],
   $$hasRotate: UB(1),
   $1: ['hasRotate', [
     {
       $$bits: UB(5),
-      skew0: FB('bits'),
-      skew1: FB('bits')
+      b: FB('bits'),
+      c: FB('bits')
     },
     {
-      skew0: '0',
-      skew1: '0'
+      b: '0',
+      c: '0'
     }
   ]],
   $$bits: UB(5),
-  translateX: SB('bits'),
-  translateY: SB('bits'),
+  e: SB('bits'),
+  f: SB('bits'),
   $$1: ALIGN
 };
 var CXFORM = {

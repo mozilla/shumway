@@ -15,15 +15,8 @@ function render(displayList, renderingContext) {
         character.cxform = create(item.cxform);
 
       ctx.save();
-      var matrix = character.matrix;
-      ctx.transform(
-        matrix.scaleX,
-        matrix.skew0,
-        matrix.skew1,
-        matrix.scaleY,
-        matrix.translateX,
-        matrix.translateY
-      );
+      var m = character.matrix;
+      ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
       var rotation = character.rotation;
       if (rotation)
         ctx.rotate(rotation * Math.PI / 180);

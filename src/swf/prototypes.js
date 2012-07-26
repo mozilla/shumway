@@ -515,8 +515,8 @@ var MovieClipPrototype = function(obj, timelineLoader) {
             };
           }
           var result = !m ? pt : {
-            x: m.scaleX * pt.x + m.skew0 * pt.y + m.translateX / 20,
-            y: m.skew1 * pt.x + m.scaleY * pt.y + m.translateY / 20
+            x: m.a * pt.x + m.b * pt.y + m.e / 20,
+            y: m.c * pt.x + m.d * pt.y + m.f / 20
           };
           return this.parent ? this.parent.localToGlobal(result) : result;
         },
@@ -526,12 +526,12 @@ var MovieClipPrototype = function(obj, timelineLoader) {
         value: function globalToLocal(pt) {
           var result = this.parent ? this.parent.globalToLocal(pt) : pt;
           var m = this.matrix;
-          var k = m ? 1 / (m.scaleX * m.scaleY - m.skew0 * m.skew1) : 0;
+          var k = m ? 1 / (m.a * m.d - m.b * m.c) : 0;
           var result = !m ? result : {
-            x: m.scaleY * k * result.x - m.skew0 * k * result.y +
-               (m.translateY * m.skew0 - m.translateX * m.scaleY) * k / 20,
-            y: -m.skew1 * k * result.x + m.scaleX * k * result.y +
-               (m.translateX * m.skew1 - m.translateY * m.scaleX) * k / 20
+            x: m.a * k * result.x - m.b * k * result.y +
+               (m.e * m.b - m.e * m.a) * k / 20,
+            y: -m.c * k * result.x + m.d * k * result.y +
+               (m.f * m.c - m.f * m.d) * k / 20
           };
           if (rotation) {
             var rotationCos = Math.cos(rotation * Math.PI / 180);
@@ -588,22 +588,22 @@ var MovieClipPrototype = function(obj, timelineLoader) {
       },
       x: {
         get: function get$x() {
-          return this.matrix.translateX / 20;
+          return this.matrix.e / 20;
         },
         set: function set$x(value) {
           if (!this.matrix)
             debugger;
-          this.matrix.translateX = ~~(value * 20);
+          this.matrix.e = ~~(value * 20);
           this.$fixMatrix = true;
         },
         enumerable: true
       },
       y: {
         get: function get$y() {
-          return this.matrix.translateY / 20;
+          return this.matrix.f / 20;
         },
         set: function set$y(value) {
-          this.matrix.translateY = ~~(value * 20);
+          this.matrix.f = ~~(value * 20);
           this.$fixMatrix = true;
         },
         enumerable: true
