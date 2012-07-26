@@ -2,8 +2,9 @@ function MovieClip() {
   this._currentFrame = 1;
   this._currentFrameLabel = null;
   this._currentLabel = false;
-  this._currentScene = {};
+  this._currentScene = { };
   this._enabled = true;
+  this._frameScripts = { };
   this._framesLoaded = 1;
   this._isPlaying = true;
   this._scenes = { };
@@ -15,7 +16,13 @@ MovieClip.prototype = Object.create(new Sprite, {
   __class__: describeInternalProperty('flash.display.MovieClip'),
 
   addFrameScript: describeMethod(function () {
-    notImplemented();
+    var frameScripts = this._frameScripts;
+    for (var i = 0, n = arguments.length; i < n; i += 2) {
+      var frameNum = arguments[i];
+      if (!frameScripts[frameNum])
+        frameScripts[frameNum] = [];
+      frameScripts[frameNum].push(arguments[i + 1]);
+    }
   }),
   currentFrame: describeAccessor(function () {
     return this._currentFrame;
