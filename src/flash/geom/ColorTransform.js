@@ -19,7 +19,7 @@ function ColorTransform(redMultiplier,
 }
 
 ColorTransform.prototype = Object.create(null, {
-  __class__: describeProperty('flash.geom.ColorTransform'),
+  __class__: describeInternalProperty('flash.geom.ColorTransform'),
 
   color: describeAccessor(
     function () {

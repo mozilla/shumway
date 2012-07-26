@@ -5,7 +5,7 @@ function EventDispatcher(target) {
 }
 
 EventDispatcher.prototype = Object.create(null, {
-  __class__: describeProperty('flash.events.EventDispatcher'),
+  __class__: describeInternalProperty('flash.events.EventDispatcher'),
 
   addEventListener: describeMethod(function (type, listener, useCapture, prio, useWeakReference) {
     if (typeof listener !== 'function')

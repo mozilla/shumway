@@ -1,5 +1,5 @@
 function Loader() {
-  this.dictionary = new ObjDictionary;
+  this._dictionary = new ObjDictionary;
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
@@ -165,12 +165,9 @@ function cast(tags, dictionary, declare) {
       pframe[tag.depth] = null;
       break;
     case 'symbols':
-      pframe.symbols = tag.references;
-      break;
-    case 'assets':
-      if (!pframe.assets)
-        pframe.assets = [];
-      pframe.assets = pframe.assets.concat(tag.references);
+      if (!pframe.symbols)
+        pframe.symbols = [];
+      pframe.symbols = pframe.symbols.concat(tag.references);
       break;
     }
   }
@@ -184,7 +181,7 @@ if (typeof window === 'undefined') {
 
   onmessage = function (evt) {
     var loader = new Loader;
-    loader.loadData(loader, evt.data);
+    loader.loadFrom(loader, evt.data);
   };
 } else {
   var head = document.head;
@@ -195,7 +192,7 @@ if (typeof window === 'undefined') {
 }
 
 Loader.prototype = Object.create(baseProto, {
-  __class__: describeProperty('flash.display.Loader'),
+  __class__: describeInternalProperty('flash.display.Loader'),
 
   content: describeAccessor(function () {
     return this._content;
@@ -217,7 +214,7 @@ Loader.prototype = Object.create(baseProto, {
     notImplemented();
   }),
   commitSymbol: describeMethod(function (obj) {
-    var dictionary = this.dictionary;
+    var dictionary = this._dictionary;
     var id = obj.id;
     var requirePromise = Promise.resolved;
     if (obj.require && obj.require.length > 0) {
@@ -292,41 +289,53 @@ Loader.prototype = Object.create(baseProto, {
       fail('unknown object type', 'define');
     }
   }),
+  getSymbolByClassName: describeMethod(function (className) {
+    var dictionary = this._dictionary;
+    for (var id in dictionary) {
+      var symbol = dictionary[id];
+      if (symbol.__class__ === className)
+        return symbol
+    }
+    return null;
+  }),
+  getSymbolById: describeMethod(function (id) {
+    return this._dictionary[id] || null;
+  }),
   load: describeMethod(function (request, context) {
-    this.loadData(request.url);
+    this.loadFrom(request.url);
   }),
   loadBytes: describeMethod(function (bytes, context) {
     if (!bytes.length)
       throw ArgumentError();
 
-    this.loadData(bytes);
+    this.loadFrom(bytes);
   }),
-  loadData: describeMethod(function (data, context) {
+  loadFrom: describeMethod(function (input, context) {
     var loader = this;
     if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.SCRIPT_PATH);
       worker.onmessage = function (evt) {
         loader._process(evt.data);
       };
-      worker.postMessage(data);
+      worker.postMessage(input);
     } else {
-      if (typeof data === 'object') {
-        if (data instanceof ArrayBuffer) {
-          this._parse(data);
+      if (typeof input === 'object') {
+        if (input instanceof ArrayBuffer) {
+          this._parse(input);
         } else if (typeof FileReaderSync !== 'undefined') {
           var reader = new FileReaderSync;
-          var buffer = reader.readAsArrayBuffer(data);
+          var buffer = reader.readAsArrayBuffer(input);
           loader._parse(buffer);
         } else {
           var reader = new FileReader;
           reader.onload = function () {
             loader._parse(this.result);
           };
-          reader.readAsArrayBuffer(data);
+          reader.readAsArrayBuffer(input);
         }
       } else {
         var xhr = new XMLHttpRequest;
-        xhr.open('GET', data);
+        xhr.open('GET', input);
         xhr.responseType = 'arraybuffer';
         xhr.onload = function () {
           loader._parse(this.response);
@@ -403,7 +412,8 @@ Loader.prototype = Object.create(baseProto, {
       postMessage(data);
     } else {
       var loaderInfo = this.contentLoaderInfo;
-      var dictionary = this.dictionary;
+
+      loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
       var pframes = this._pframes || (this._pframes = []);
 
@@ -419,7 +429,7 @@ Loader.prototype = Object.create(baseProto, {
         // TODO disable AVM1 if AVM2 is enabled
         var as2Context = new AS2Context(data.version);
 
-        var timelineLoader = new TimelineLoader(data.frameCount, pframes, dictionary);
+        var timelineLoader = new TimelineLoader(data.frameCount, pframes, this._dictionary);
         var proto = new MovieClipPrototype({ }, timelineLoader);
         var root = proto.constructor(as2Context);
         root.name = '_root';
@@ -430,8 +440,6 @@ Loader.prototype = Object.create(baseProto, {
         this._content = root;
 
         loaderInfo._as2Context = as2Context;
-
-        loaderInfo.dispatchEvent(new Event(Event.INIT));
       } else if (data) {
         if (data.id) {
           this.commitSymbol(data);
@@ -450,8 +458,9 @@ Loader.prototype = Object.create(baseProto, {
             //var symbolClasses = loaderInfo._symbolClasses;
             for (var i = 0, n = references.length; i < n; i++) {
               var reference = references[i++];
-              var symbol = dictionary[rererence.id];
-              symbol.__class__ = reference.name;
+              var symbol = this.getSymbolById(reference.id);
+              if (symbol)
+                symbol.__class__ = reference.name;
               //symbolClasses[sym.name] = dictionary[sym.id];
               //if (!sym.id) {
               //  var documentClass = this.avm2.applicationDomain.getProperty(
@@ -465,7 +474,9 @@ Loader.prototype = Object.create(baseProto, {
 
           pframes.push(data);
 
-          loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+          if (pframes.length === 1) {
+            loaderInfo.dispatchEvent(new Event(Event.INIT));
+          }
         }
       } else {
         loaderInfo.dispatchEvent(new Event(Event.COMPLETE));

@@ -160,8 +160,8 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
               instance.$createAS2Script(pframe.initActionsData[spriteId]).call(instance);
             }
           }
-          if (pframe.assets) {
-            instance.$addChild('soundmc', new SoundMock(pframe.assets));
+          if (pframe.symbols) {
+            instance.$addChild('soundmc', new SoundMock(pframe.symbols));
           }
           if (currentFrame == 1)
             instance.$dispatchEvent('onLoad');

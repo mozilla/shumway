@@ -6,7 +6,7 @@ function Transform(target) {
 }
 
 Transform.prototype = Object.create(null, {
-  __class__: describeProperty('flash.geom.Transform'),
+  __class__: describeInternalProperty('flash.geom.Transform'),
 
   colorTransform: describeAccessor(
     function () {

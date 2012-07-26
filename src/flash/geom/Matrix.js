@@ -10,7 +10,7 @@ function Matrix(a, b, c, d, tx, ty) {
 }
 
 Matrix.prototype = Object.create(null, {
-  __class__: describeProperty('flash.geom.Matrix'),
+  __class__: describeInternalProperty('flash.geom.Matrix'),
 
   clone: describeMethod(function () {
     return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);

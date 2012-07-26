@@ -2,7 +2,7 @@ function LoaderInfo() {
 }
 
 LoaderInfo.prototype = Object.create(new EventDispatcher, {
-  __class__: describeProperty('flash.display.LoaderInfo'),
+  __class__: describeInternalProperty('flash.display.LoaderInfo'),
 
   actionScriptVersion: describeAccessor(function () {
     return this._content;

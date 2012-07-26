@@ -1,17 +1,11 @@
 function describeAccessor(get, set) {
-  return {
-    get: get,
-    set: set,
-    configurable: true,
-    enumerable: true
-  };
+  return { get: get, set: set, configurable: true, enumerable: true };
 }
 function describeConst(val) {
-  return {
-    value: val,
-    configurable: true,
-    enumerable: true
-  };
+  return { value: val, configurable: true, enumerable: true };
+}
+function describeInternalProperty(val) {
+  return { value: val, writable: true };
 }
 function describeLazyProperty(name, getter) {
   return describeAccessor(function () {
@@ -24,12 +18,7 @@ function describeMethod(fn) {
   return describeProperty(fn);
 }
 function describeProperty(val) {
-  return {
-    value: val,
-    writable: true,
-    configurable: true,
-    enumerable: true
-  };
+  return { value: val, writable: true, configurable: true, enumerable: true };
 }
 
 function illegalOperation() {

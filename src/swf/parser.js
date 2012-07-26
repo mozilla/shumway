@@ -37,7 +37,7 @@ var tagHandler = {
   /* SoundStreamHead2 */              45: undefined,
   /* DefineMorphShape */              46: DEFINE_SHAPE,
   /* DefineFont2 */                   48: DEFINE_FONT2,
-  /* ExportAssets */                  56: EXPORT_ASSETS,
+  /* ExportAssets */                  56: SYMBOL_CLASS,
   /* ImportAssets */                  57: undefined,
   /* EnableDebugger */                58: undefined,
   /* DoInitAction */                  59: DO_ACTION,
