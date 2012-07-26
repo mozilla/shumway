@@ -90,6 +90,15 @@ var Verifier = (function() {
     return runtimeMultiname;
   })();
 
+  function Activation (methodInfo) {
+    assert (methodInfo.needsActivation());
+    this.methodInfo = methodInfo;
+  }
+
+  Activation.prototype.toString = function () {
+    return "[Activation]";
+  }
+
   function findTrait(traits, slotId) {
     for (var i = traits.length - 1; i >= 0; i--) {
       if (traits[i].slotId === slotId) {
@@ -165,6 +174,7 @@ var Verifier = (function() {
       type.Reference.Null = new type("Reference", null);
       type.Reference.String = new type("Reference", getType("String"));
       type.Reference.Array = new type("Reference", getType("Array"));
+      type.Reference.Function = new type("Reference", getType("Function"));
 
       type.check = function check(a, b) {
         assert (a.kind === b.kind);
@@ -180,6 +190,8 @@ var Verifier = (function() {
         }
         if (this.value instanceof Global) {
           return findTrait(this.value.scriptInfo.traits, slotId);
+        } else if (this.value instanceof Activation) {
+          return findTrait(this.value.methodInfo.traits, slotId);
         }
         return null;
       };
@@ -381,12 +393,15 @@ var Verifier = (function() {
           if (type.kind !== "Reference") {
             return Type.Atom;
           }
-
+          var traits;
           if (type.value instanceof Global) {
-            var global = type.value;
-            var trait = findTrait(global.scriptInfo.traits, index);
-            return Type.fromName(trait.typeName);
+            traits = type.value.scriptInfo.traits;
+          } else if (type.value instanceof Activation) {
+            traits = type.value.methodInfo.traits;
           }
+          assert (traits);
+          var trait = findTrait(traits, index);
+          return Type.fromName(trait.typeName);
         }
 
         if (writer) {
@@ -545,7 +560,8 @@ var Verifier = (function() {
             pop(Type.Number);
             break;
           case OP_newfunction:
-            throw new VerifierError("Not Supported");
+            push(Type.Reference.Function);
+            break;
           case OP_call:
             stack.popMany(bc.argCount);
             obj = pop();
@@ -640,7 +656,7 @@ var Verifier = (function() {
             push(Type.Atom.Object);
             break;
           case OP_newactivation:
-            push(Type.fromReference(runtime.createActivation(this.methodInfo)));
+            push(Type.fromReference(new Activation(this.methodInfo)));
             break;
           case OP_newclass:
             throw new VerifierError("Not Supported");
@@ -711,7 +727,7 @@ var Verifier = (function() {
             break;
           case OP_setslot:
             pop();
-            pop();
+            bc.objTy = pop();
             break;
           case OP_getglobalslot:
             notImplemented(bc);
