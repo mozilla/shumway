@@ -42,7 +42,7 @@ function defineLabel(tag, dictionary) {
   }
   cmds.push('c.restore()');
   var shape = {
-    type: 'shape',
+    type: 'label',
     id: tag.id,
     bounds: tag.bounds,
     data: cmds.join('\n')

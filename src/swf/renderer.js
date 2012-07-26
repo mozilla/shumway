@@ -25,6 +25,35 @@ function render(displayList, renderingContext) {
         // We only support alpha channel transformation for now
         ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
       }
+
+      if (character._graphics) {
+        var graphics = character._graphics;
+        var subpaths = graphics._subpaths;
+        for (var i = 0, n = subpaths.length; i < n; i++) {
+          var path = subpaths[i];
+          if (path.fillStyle) {
+            ctx.fillStyle = path.fillStyle;
+            if (path.fillTransform) {
+              var m = path.fillTransform;
+              path.__draw__(ctx);
+              ctx.save();
+              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+              ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.fill(path);
+            }
+          }
+          if (path.strokeStyle) {
+            ctx.strokeStyle = path.strokeStyle;
+            var drawStyles = path.drawStyles;
+            for (prop in drawStyles)
+              ctx[prop] = drawStyles[prop];
+            ctx.stroke(path);
+          }
+        }
+      }
+
       if (character.draw)
         character.draw(ctx, character.ratio);
       else if (character.nextFrame)

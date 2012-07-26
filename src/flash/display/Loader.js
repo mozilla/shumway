@@ -264,16 +264,25 @@ Loader.prototype = Object.create(baseProto, {
       });
       break;
     case 'shape':
-    case 'text':
       var proto = create(obj);
       proto.__class__ = 'flash.display.Shape';
+      var createGraphicsData = new Function('d,r', 'return ' + obj.data);
+      var graphics = new Graphics;
+      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+      proto._graphics = graphics;
 
+      requirePromise.then(function () {
+        promise.resolve(proto);
+      });
+      break;
+    case 'label':
+    case 'text':
+      var proto = create(obj);
       var drawFn = new Function('d,c,r', obj.data);
       proto.draw = (function(c, r) {
         return drawFn.call(this, dictionary, c, r);
       });
-
-      requirePromise.then(function () {
+      requirePromise.then(function() {
         promise.resolve(proto);
       });
       break;
