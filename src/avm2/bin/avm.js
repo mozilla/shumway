@@ -23,7 +23,6 @@ var traceGraphViz = shellOptions.register(new Option("v", "traceGraphViz" , "boo
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var compileSys = shellOptions.register(new Option("csys", "compileSystemDomain", "boolean", false, "compile system domain"));
-var loadPlayerGlobal = shellOptions.register(new Option("p", "loadPlayerGlobal", "boolean", false, "load player global"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 
@@ -38,31 +37,6 @@ load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");
 load("../analyze.js");
-
-/**
- * Load SWF Dependencies
- */
-var SWF = {};
-Timer.start("Loading SWF Dependencies");
-load("../../swf/util.js");
-load("../../swf/types.js");
-load("../../swf/structs.js");
-load("../../swf/tags.js");
-load("../../swf/inflate.js");
-load("../../swf/stream.js");
-load("../../swf/templates.js");
-load("../../swf/generator.js");
-Timer.start("Loading SWF Parser");
-load("../../swf/parser.js");
-Timer.stop();
-load("../../swf/bitmap.js");
-load("../../swf/button.js");
-load("../../swf/font.js");
-load("../../swf/image.js");
-load("../../swf/label.js");
-load("../../swf/shape.js");
-load("../../swf/text.js");
-Timer.stop();
 
 Timer.start("Loading Compiler");
 load("../compiler/lljs/src/estransform.js");
@@ -128,11 +102,7 @@ if (execute.value) {
   var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
   vm = new AVM2(grabABC("builtin"), sysMode, appMode);
   installAvmPlus(vm);
-  if (loadPlayerGlobal.value) {
-    vm.loadPlayerGlobal(snarf("../generated/playerGlobal.swf", "binary"));
-  } else {
-    vm.systemDomain.executeAbc(new AbcFile(grabABC("shell"), "shell.abc"));
-  }
+  vm.systemDomain.executeAbc(new AbcFile(grabABC("shell"), "shell.abc"));
 }
 
 if (file.value.endsWith(".swf")) {
