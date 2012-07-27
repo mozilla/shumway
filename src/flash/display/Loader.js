@@ -1,5 +1,6 @@
 function Loader() {
   this._dictionary = new ObjDictionary;
+  this._symbols = { };
 }
 
 Loader.SCRIPT_PATH = './Loader.js';
@@ -27,152 +28,6 @@ Loader.WORKER_SCRIPTS = [
   '../../swf/shape.js',
   '../../swf/text.js'
 ];
-
-function cast(tags, dictionary, declare) {
-  var pframes = [];
-  var pframe = { };
-  var i = 0;
-  var tag;
-  while (tag = tags[i++]) {
-    if ('id' in tag) {
-      var factory = null;
-      var obj = null;
-      switch (tag.type) {
-      case 'bitmap':
-        var factory = defineBitmap;
-        break;
-      case 'font':
-        var factory = defineFont;
-        break;
-      case 'image':
-        var factory = defineImage;
-        break;
-      case 'label':
-        var factory = defineLabel;
-        break;
-      case 'shape':
-        var factory = defineShape;
-        break;
-      case 'sprite':
-        var dependencies = [];
-        obj = {
-          type: 'sprite',
-          id: tag.id,
-          frameCount: tag.frameCount,
-          require: dependencies,
-          pframes: cast(tag.tags, dictionary, (function(dependencies, obj) {
-            dependencies.push(obj.id);
-            declare(obj);
-          }).bind(null, dependencies))
-        };
-        break;
-      case 'text':
-        var factory = defineText;
-        break;
-      case 'button':
-        var factory = defineButton;
-        break;
-      case 'sound':
-        var obj = {
-          type: 'sound',
-          id: tag.id
-        };
-        break;
-      default:
-        fail('unknown object type', 'cast');
-      }
-
-      var id = tag.id - 0x4001;
-      dictionary[id] = tag;
-      defineProperty(dictionary, tag.id, {
-        get: (function(id, factory, obj) {
-          var undeclared = true;
-          return function () {
-            if (undeclared) {
-              if (!obj)
-                obj = factory(dictionary[id], dictionary);
-              if (obj.id)
-                declare(obj);
-              undeclared = false;
-            }
-            return obj;
-          };
-        })(id, factory, obj)
-      });
-      continue;
-    }
-    switch (tag.type) {
-    case 'abc':
-      if (!pframe.abcBlocks)
-        pframe.abcBlocks = [];
-      pframe.abcBlocks.push(tag.data);
-      break;
-    case 'actions':
-      if (!pframe.actionsData) {
-        pframe.initActionsData = {};
-        pframe.actionsData = [];
-      }
-      if (tag.spriteId)
-        pframe.initActionsData[tag.spriteId] = tag.actionsData;
-      else
-        pframe.actionsData.push(tag.actionsData);
-      break;
-    case 'background':
-      pframe.bgcolor = toStringRgba(tag.color);
-      break;
-    case 'frame':
-      var n = 1;
-      for (; tag = tags[i]; ++n, ++i) {
-        if (tag.type !== 'frame')
-          break;
-      }
-      if (n > 1)
-        pframe.repeat = n;
-      pframe.type = 'pframe';
-      pframes.push(pframe);
-      pframe = { };
-      break;
-    case 'frameLabel':
-      pframe.name = tag.name;
-      break;
-    case 'place':
-      var entry = { };
-      if (tag.place) {
-        var obj = dictionary[tag.objId];
-        assert(obj, 'undefined object', 'place');
-        entry.id = obj.id;
-      }
-      if (tag.events) {
-        var events = tag.events;
-        if (events[events.length - 1].eoe)
-          events = events.slice(0, events.length - 1);
-        entry.events = events;
-      }
-      if (tag.move)
-        entry.move = true;
-      if (tag.name)
-        entry.name = tag.name;
-      if (tag.hasMatrix)
-        entry.matrix = tag.matrix;
-      if (tag.hasCxform)
-        entry.cxform = tag.cxform;
-      if (tag.hasRatio)
-        entry.ratio = tag.ratio / 0xffff;
-      pframe[tag.depth] = entry;
-
-      break;
-    case 'remove':
-      pframe[tag.depth] = null;
-      break;
-    case 'symbols':
-      if (!pframe.symbols)
-        pframe.symbols = [];
-      pframe.symbols = pframe.symbols.concat(tag.references);
-      break;
-    }
-  }
-  return pframes;
-}
 
 var baseProto = null;
 
@@ -213,210 +68,7 @@ Loader.prototype = Object.create(baseProto, {
   close: describeMethod(function () {
     notImplemented();
   }),
-  commitSymbol: describeMethod(function (obj) {
-    var dictionary = this._dictionary;
-    var id = obj.id;
-    var requirePromise = Promise.resolved;
-    if (obj.require && obj.require.length > 0) {
-      var requirePromises = [];
-      for (var i = 0; i < obj.require.length; i++)
-        requirePromises.push(dictionary.getPromise(obj.require[i]));
-      requirePromise = Promise.all(requirePromises);
-    }
-    var promise = dictionary.getPromise(id);
-    switch (obj.type) {
-    case 'font':
-      var charset = fromCharCode.apply(null, obj.codes);
-      if (charset) {
-        style.insertRule(
-          '@font-face{' +
-            'font-family:"' + obj.name + '";' +
-            'src:url(data:font/opentype;base64,' + btoa(obj.data) + ')' +
-          '}',
-          style.cssRules.length
-        );
-        var ctx = (document.createElement('canvas')).getContext('2d');
-        ctx.font = '1024px "' + obj.name + '"';
-        var defaultWidth = ctx.measureText(charset).width;
-
-        requirePromise.then(function () {
-          promise.resolve(obj);
-        });
-      }
-      break;
-    case 'image':
-      var img = new Image;
-      img.src = 'data:' + obj.mimeType + ';base64,' + btoa(obj.data);
-      img.onload = function () {
-        var proto = create(obj);
-        proto.img = img;
-        requirePromise.then(function () {
-          promise.resolve(proto);
-        });
-      };
-      break;
-    case 'sprite':
-      requirePromise.then(function () {
-        var timelineLoader = new TimelineLoader(obj.frameCount || 1, obj.pframes || [], dictionary);
-        var proto = new MovieClipPrototype(obj, timelineLoader);
-        proto.__class__ = 'flash.display.MovieClip';
-        promise.resolve(proto);
-      });
-      break;
-    case 'shape':
-      var proto = create(obj);
-      proto.__class__ = 'flash.display.Shape';
-      var createGraphicsData = new Function('d,r', 'return ' + obj.data);
-      var graphics = new Graphics;
-      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
-      proto._graphics = graphics;
-
-      requirePromise.then(function () {
-        promise.resolve(proto);
-      });
-      break;
-    case 'label':
-    case 'text':
-      var proto = create(obj);
-      var drawFn = new Function('d,c,r', obj.data);
-      proto.draw = (function(c, r) {
-        return drawFn.call(this, dictionary, c, r);
-      });
-      requirePromise.then(function() {
-        promise.resolve(proto);
-      });
-      break;
-    case 'button':
-      requirePromise.then(function () {
-        var timelineLoader = new TimelineLoader(4,
-          [obj.states.up,obj.states.over,obj.states.down,obj.states.hitTest],
-          dictionary);
-        promise.resolve(new ButtonPrototype(obj, timelineLoader));
-      });
-      break;
-    default:
-      fail('unknown object type', 'define');
-    }
-  }),
-  getSymbolByClassName: describeMethod(function (className) {
-    var dictionary = this._dictionary;
-    for (var id in dictionary) {
-      var symbol = dictionary[id];
-      if (symbol.__class__ === className)
-        return symbol
-    }
-    return null;
-  }),
-  getSymbolById: describeMethod(function (id) {
-    return this._dictionary[id] || null;
-  }),
-  load: describeMethod(function (request, context) {
-    this.loadFrom(request.url);
-  }),
-  loadBytes: describeMethod(function (bytes, context) {
-    if (!bytes.length)
-      throw ArgumentError();
-
-    this.loadFrom(bytes);
-  }),
-  loadFrom: describeMethod(function (input, context) {
-    var loader = this;
-    if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
-      var worker = new Worker(Loader.SCRIPT_PATH);
-      worker.onmessage = function (evt) {
-        loader._process(evt.data);
-      };
-      worker.postMessage(input);
-    } else {
-      if (typeof input === 'object') {
-        if (input instanceof ArrayBuffer) {
-          this._parse(input);
-        } else if (typeof FileReaderSync !== 'undefined') {
-          var reader = new FileReaderSync;
-          var buffer = reader.readAsArrayBuffer(input);
-          loader._parse(buffer);
-        } else {
-          var reader = new FileReader;
-          reader.onload = function () {
-            loader._parse(this.result);
-          };
-          reader.readAsArrayBuffer(input);
-        }
-      } else {
-        var xhr = new XMLHttpRequest;
-        xhr.open('GET', input);
-        xhr.responseType = 'arraybuffer';
-        xhr.onload = function () {
-          loader._parse(this.response);
-        };
-        xhr.send();
-      }
-    }
-  }),
-  removeChild: describeMethod(function (child) {
-    illegalOperation();
-  }),
-  removeChildAt: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  setChildIndex: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  unload: describeMethod(function () {
-    notImplemented();
-  }),
-  unloadAndStop: describeMethod(function (gc) {
-    notImplemented();
-  }),
-
-  _parse: describeMethod(function (bytes) {
-    var i = 0;
-    var dictionary = { };
-    var controlTags = [];
-
-    var loader = this;
-
-    function declare(obj) {
-      if (obj.id)
-        loader._process(obj);
-    }
-
-    SWF.parse(bytes, {
-      onstart: function(result) {
-        loader._process(result);
-      },
-      onprogress: function(result) {
-        var tags = result.tags.slice(i);
-        i += tags.length;
-        var tag = tags[tags.length - 1];
-        if ('id' in tag) {
-          cast(tags.splice(-1, 1), dictionary, declare);
-          push.apply(controlTags, tags);
-        } else if ('ref' in tag) {
-          var id = tag.ref - 0x4001;
-          assert(id in dictionary, 'undefined object', 'ref');
-          var obj = create(dictionary[id]);
-          for (var prop in tag) {
-            if (prop !== 'id' && prop !== 'ref')
-              obj[prop] = tag[prop];
-          }
-          dictionary[id] = obj;
-        } else {
-          var pframes = cast(controlTags.concat(tags), dictionary);
-          controlTags = [];
-          var j = 0;
-          var pframe;
-          while (pframe = pframes[j++])
-            loader._process(pframe);
-        }
-      },
-      oncomplete: function(result) {
-        loader._process(result);
-        loader._process(null);
-      }
-    });
-  }),
-  _process: describeMethod(function (data) {
+  commitData: describeMethod(function (data) {
     if (typeof window === 'undefined') {
       postMessage(data);
     } else {
@@ -439,8 +91,7 @@ Loader.prototype = Object.create(baseProto, {
         var as2Context = new AS2Context(data.version);
 
         var timelineLoader = new TimelineLoader(data.frameCount, pframes, this._dictionary);
-        var proto = new MovieClipPrototype({ }, timelineLoader);
-        var root = proto.constructor(as2Context);
+        var root = new MovieClipClass({ }, timelineLoader, as2Context);
         root.name = '_root';
 
         var globals = as2Context.globals;
@@ -491,5 +142,410 @@ Loader.prototype = Object.create(baseProto, {
         loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
       }
     }
+  }),
+  commitSymbol: describeMethod(function (symbol) {
+    var dictionary = this._dictionary;
+    var id = symbol.id;
+    var promise = dictionary.getPromise(id);
+    var requirePromise = Promise.resolved;
+    if (symbol.require && symbol.require.length > 0) {
+      var requirePromises = [];
+      for (var i = 0; i < symbol.require.length; i++)
+        requirePromises.push(dictionary.getPromise(symbol.require[i]));
+      requirePromise = Promise.all(requirePromises);
+    }
+    switch (symbol.type) {
+    case 'font':
+      var charset = fromCharCode.apply(null, symbol.codes);
+      if (charset) {
+        style.insertRule(
+          '@font-face{' +
+            'font-family:"' + symbol.name + '";' +
+            'src:url(data:font/opentype;base64,' + btoa(symbol.data) + ')' +
+          '}',
+          style.cssRules.length
+        );
+        var ctx = (document.createElement('canvas')).getContext('2d');
+        ctx.font = '1024px "' + symbol.name + '"';
+        var defaultWidth = ctx.measureText(charset).width;
+
+        requirePromise.then(function () {
+          promise.resolve(symbol);
+        });
+      }
+      break;
+    case 'image':
+      var img = new Image;
+      img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+      img.onload = function () {
+        var proto = Object.create(symbol);
+        proto.img = img;
+        requirePromise.then(function () {
+          promise.resolve(proto);
+        });
+      };
+      break;
+    case 'sprite':
+      var timelineLoader = new TimelineLoader(
+        symbol.frameCount || 1,
+        symbol.pframes || [],
+        dictionary
+      );
+      var symbolClass = function (as2Context) {
+        return new MovieClipClass(symbol, timelineLoader, as2Context);
+      };
+      symbolClass.prototype = Object.create(new MovieClip);
+      requirePromise.then(function () {
+        promise.resolve(symbolClass);
+      });
+      break;
+    case 'shape':
+      var bounds = symbol.bounds;
+      var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+      var graphics = new Graphics;
+      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+      var symbolClass = function () { };
+      symbolClass.prototype = Object.create(new Shape, {
+        _bounds: describeProperty(new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height)),
+        _graphics: describeProperty(graphics)
+      });
+      requirePromise.then(function () {
+        promise.resolve(symbolClass);
+      });
+      break;
+    case 'label':
+    case 'text':
+      var proto = Object.create(symbol);
+      var drawFn = new Function('d,c,r', symbol.data);
+      proto.draw = (function(c, r) {
+        return drawFn.call(this, dictionary, c, r);
+      });
+      requirePromise.then(function() {
+        promise.resolve(proto);
+      });
+      break;
+    case 'button':
+      requirePromise.then(function () {
+        var timelineLoader = new TimelineLoader(
+          4,
+          [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
+          dictionary
+        );
+        promise.resolve(new ButtonPrototype(obj, timelineLoader));
+      });
+      break;
+    default:
+      fail('unknown object type', 'define');
+    }
+  }),
+  defineSymbol: describeMethod(function (swfTag) {
+    var dictionary = this._symbols;
+    var factory = null;
+    var loader = this;
+    var obj = null;
+
+    switch (swfTag.type) {
+    case 'bitmap':
+      var factory = defineBitmap;
+      break;
+    case 'font':
+      var factory = defineFont;
+      break;
+    case 'image':
+      var factory = defineImage;
+      break;
+    case 'label':
+      var factory = defineLabel;
+      break;
+    case 'shape':
+      var factory = defineShape;
+      break;
+    case 'sprite':
+      var dependencies = [];
+      var pframes = [];
+      var pframe = { };
+      var tags = swfTag.tags;
+      for (var i = 0, n = tags.length; i < n; i++) {
+        var tag = tags[i];
+        switch (tag.type) {
+        case 'abc':
+          if (!pframe.abcBlocks)
+            pframe.abcBlocks = [];
+          pframe.abcBlocks.push(tag.data);
+          break;
+        case 'actions':
+          if (!pframe.actionsData) {
+            pframe.initActionsData = { };
+            pframe.actionsData = [];
+          }
+          if (tag.spriteId)
+            pframe.initActionsData[tag.spriteId] = tag.actionsData;
+          else
+            pframe.actionsData.push(tag.actionsData);
+          break;
+        case 'frame':
+          var repeat = 1;
+          while (i < n) {
+            var nextTag = tags[i + 1];
+            if (nextTag.type !== 'frame')
+              break;
+            i++;
+            repeat++;
+          }
+          if (repeat > 1)
+            pframe.repeat = repeat;
+          pframe.type = 'pframe';
+          pframes.push(pframe);
+          pframe = { };
+          break;
+        case 'frameLabel':
+          pframe.name = tag.name;
+          break;
+        case 'place':
+          var entry = { };
+          if (tag.place) {
+            var obj = dictionary[tag.objId];
+            entry.id = obj.id;
+            dependencies.push(obj.id);
+          }
+          if (tag.events) {
+            var events = tag.events;
+            if (events[events.length - 1].eoe)
+              events = events.slice(0, events.length - 1);
+            entry.events = events;
+          }
+          if (tag.move)
+            entry.move = true;
+          if (tag.name)
+            entry.name = tag.name;
+          if (tag.hasMatrix)
+            entry.matrix = tag.matrix;
+          if (tag.hasCxform)
+            entry.cxform = tag.cxform;
+          if (tag.hasRatio)
+            entry.ratio = tag.ratio / 0xffff;
+          pframe[tag.depth] = entry;
+          break;
+        case 'remove':
+          pframe[tag.depth] = null;
+          break;
+        }
+      }
+      obj = {
+        type: 'sprite',
+        id: swfTag.id,
+        frameCount: swfTag.frameCount,
+        require: dependencies,
+        pframes: pframes
+      };
+      break;
+    case 'text':
+      var factory = defineText;
+      break;
+    case 'button':
+      var factory = defineButton;
+      break;
+    case 'sound':
+      var obj = {
+        type: 'sound',
+        id: swfTag.id
+      };
+      break;
+    default:
+      fail('unknown object type', 'defineSymbol');
+    }
+
+    var id = swfTag.id - 0x4001;
+    dictionary[id] = swfTag;
+    Object.defineProperty(dictionary, swfTag.id, {
+      get: (function(id, factory, obj) {
+        var undeclared = true;
+        return function () {
+          if (undeclared) {
+            if (!obj)
+              obj = factory(dictionary[id], dictionary);
+            if (obj.id)
+              loader.commitData(obj);
+            undeclared = false;
+          }
+          return obj;
+        };
+      })(id, factory, obj)
+    });
+  }),
+  getSymbolByClassName: describeMethod(function (className) {
+    var dictionary = this._dictionary;
+    for (var id in dictionary) {
+      var symbol = dictionary[id];
+      if (symbol.__class__ === className)
+        return symbol
+    }
+    return null;
+  }),
+  getSymbolById: describeMethod(function (id) {
+    return this._dictionary[id] || null;
+  }),
+  load: describeMethod(function (request, context) {
+    this.loadFrom(request.url);
+  }),
+  loadBytes: describeMethod(function (bytes, context) {
+    if (!bytes.length)
+      throw ArgumentError();
+
+    this.loadFrom(bytes);
+  }),
+  loadFrom: describeMethod(function (input, context) {
+    var loader = this;
+    if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
+      var worker = new Worker(Loader.SCRIPT_PATH);
+      worker.onmessage = function (evt) {
+        loader.commitData(evt.data);
+      };
+      worker.postMessage(input);
+    } else {
+      if (typeof input === 'object') {
+        if (input instanceof ArrayBuffer) {
+          this.parseBytes(input);
+        } else if (typeof FileReaderSync !== 'undefined') {
+          var reader = new FileReaderSync;
+          var buffer = reader.readAsArrayBuffer(input);
+          loader.parseBytes(buffer);
+        } else {
+          var reader = new FileReader;
+          reader.onload = function () {
+            loader.parseBytes(this.result);
+          };
+          reader.readAsArrayBuffer(input);
+        }
+      } else {
+        var xhr = new XMLHttpRequest;
+        xhr.open('GET', input);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function () {
+          loader.parseBytes(this.response);
+        };
+        xhr.send();
+      }
+    }
+  }),
+  parseBytes: describeMethod(function (bytes) {
+    var dictionary = this._symbols;
+    var loader = this;
+    var numProcessedTags = 0;
+    var pframe = { };
+
+    SWF.parse(bytes, {
+      onstart: function(result) {
+        loader.commitData(result);
+      },
+      onprogress: function(result) {
+        var tags = result.tags;
+
+        for (var n = tags.length; numProcessedTags < n; numProcessedTags++) {
+          var tag = tags[numProcessedTags];
+          if ('id' in tag) {
+            loader.defineSymbol(tag);
+          } else if ('ref' in tag) {
+            var id = tag.ref - 0x4001;
+            var obj = Object.create(dictionary[id]);
+            for (var prop in tag) {
+              if (prop !== 'id' && prop !== 'ref')
+                obj[prop] = tag[prop];
+            }
+            dictionary[id] = obj;
+          } else {
+            switch (tag.type) {
+            case 'background':
+              pframe.bgcolor = toStringRgba(tag.color);
+              break;
+            case 'symbols':
+              if (!pframe.symbols)
+                pframe.symbols = [];
+              pframe.symbols = pframe.symbols.concat(tag.references);
+              break;
+            case 'abc':
+              if (!pframe.abcBlocks)
+                pframe.abcBlocks = [];
+              pframe.abcBlocks.push(tag.data);
+              break;
+            case 'actions':
+              if (!pframe.actionsData) {
+                pframe.initActionsData = { };
+                pframe.actionsData = [];
+              }
+              if (tag.spriteId)
+                pframe.initActionsData[tag.spriteId] = tag.actionsData;
+              else
+                pframe.actionsData.push(tag.actionsData);
+              break;
+            case 'frame':
+              var repeat = 1;
+              while (numProcessedTags < n) {
+                var nextTag = tags[numProcessedTags + 1];
+                if (!nextTag || nextTag.type !== 'frame')
+                  break;
+                numProcessedTags++;
+                repeat++;
+              }
+              if (repeat > 1)
+                pframe.repeat = repeat;
+              pframe.type = 'pframe';
+              loader.commitData(pframe);
+              pframe = { };
+              break;
+            case 'frameLabel':
+              pframe.name = tag.name;
+              break;
+            case 'place':
+              var entry = { };
+              if (tag.place) {
+                var obj = dictionary[tag.objId];
+                entry.id = obj.id;
+              }
+              if (tag.events) {
+                var events = tag.events;
+                if (events[events.length - 1].eoe)
+                  events = events.slice(0, events.length - 1);
+                entry.events = events;
+              }
+              if (tag.move)
+                entry.move = true;
+              if (tag.name)
+                entry.name = tag.name;
+              if (tag.hasMatrix)
+                entry.matrix = tag.matrix;
+              if (tag.hasCxform)
+                entry.cxform = tag.cxform;
+              if (tag.hasRatio)
+                entry.ratio = tag.ratio / 0xffff;
+              pframe[tag.depth] = entry;
+              break;
+            case 'remove':
+              pframe[tag.depth] = null;
+              break;
+            }
+          }
+        }
+      },
+      oncomplete: function(result) {
+        loader.commitData(result);
+        loader.commitData(null);
+      }
+    });
+  }),
+  removeChild: describeMethod(function (child) {
+    illegalOperation();
+  }),
+  removeChildAt: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  setChildIndex: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  unload: describeMethod(function () {
+    notImplemented();
+  }),
+  unloadAndStop: describeMethod(function (gc) {
+    notImplemented();
   })
 });

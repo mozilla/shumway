@@ -41,13 +41,20 @@ function defineLabel(tag, dictionary) {
     }
   }
   cmds.push('c.restore()');
-  var shape = {
+  var bounds = tag.bounds;
+  var label = {
     type: 'label',
     id: tag.id,
-    bounds: tag.bounds,
+    bounds: {
+      __class__: 'flash.geom.Rectangle',
+      x: bounds.xMin,
+      y: bounds.yMIn,
+      width: bounds.xMax - bounds.xMin,
+      height: bounds.yMax - bounds.yMin
+    },
     data: cmds.join('\n')
   };
   if (dependencies.length)
-    shape.require = dependencies;
-  return shape;
+    label.require = dependencies;
+  return label;
 }

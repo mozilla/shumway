@@ -449,10 +449,17 @@ function defineShape(tag, dictionary) {
   var path;
   while (path = paths[i++])
     push.apply(cmds, path.cmds);
+  var bounds = tag.bounds;
   var shape = {
     type: 'shape',
     id: tag.id,
-    bounds: tag.bounds,
+    bounds: {
+      __class__: 'flash.geom.Rectangle',
+      x: bounds.xMin,
+      y: bounds.yMIn,
+      width: bounds.xMax - bounds.xMin,
+      height: bounds.yMax - bounds.yMin
+    },
     data: '[' + cmds.join(',') + ']'
   };
   if (dependencies.length)

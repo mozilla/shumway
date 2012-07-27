@@ -70,11 +70,11 @@ function render(displayList, renderingContext) {
 function renderShadowCanvas(character) {
   var cache = character.hitTestCache;
 
-  var bounds = 'getBounds' in character ? character.getBounds() : character.bounds;
-  var offsetX = Math.floor(bounds.xMin / 20);
-  var offsetY = Math.floor(bounds.yMin / 20);
-  var sizeX = Math.ceil(bounds.xMax / 20) - offsetX;
-  var sizeY = Math.ceil(bounds.yMax / 20) - offsetY;
+  var bounds = character.getBounds();
+  var offsetX = Math.floor(bounds.x / 20);
+  var offsetY = Math.floor(bounds.y / 20);
+  var sizeX = Math.ceil(bounds.width / 20);
+  var sizeY = Math.ceil(bounds.height / 20);
 
   var canvas = cache.canvas;
   if (!canvas) {
