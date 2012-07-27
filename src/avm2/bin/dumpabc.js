@@ -59,6 +59,7 @@ try {
   quit();
 }
 
+/*
 SWF.parse(snarf(swfFile.value, "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;
@@ -66,11 +67,31 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     for (var i = 0, n = tags.length; i < n; i++) {
       var tag = tags[i];
       if (tag.type === "abc") {
-        // sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
         stdout.writeLn("<<< BASE64 " + prefix.value + "-" + abcCount++ + ".abc");
         print (base64ArrayBuffer(tag.data));
         stdout.writeLn(">>>");
       }
     }
+  }
+});
+*/
+
+SWF.parse(snarf(swfFile.value, "binary"), {
+  oncomplete: function(result) {
+    var tags = result.tags;
+    var abcCount = 0;
+    var offset = 0;
+    var files = [];
+    var data = "";
+    for (var i = 0, n = tags.length; i < n; i++) {
+      var tag = tags[i];
+      if (tag.type === "abc") {
+        offset += tag.data.length;
+        files.push({name: tag.name, offset: offset, length: + tag.data.length});
+        data += base64ArrayBuffer(tag.data);
+      }
+    }
+    print (JSON.stringify(files, true, 2));
+    print (data);
   }
 });
