@@ -458,9 +458,9 @@ class Test(Command):
             c = compare(results["a"] if "a" in results else None, results[k])
             counter.update([k + "-" + c]);
             out.append(color(c))
-          out.append(str(round(results[k][1], 2)) if results[k] != None else "N/A")
+          out.append((str(round(results[k][1], 2)) if results[k] != None else "N/A").ljust(5));
           if "a" in results and k != "a":
-            out.append("(" + str(round(results["a"][1] / results[k][1], 2)) + " X)")
+            out.append((str(round(results["a"][1] / results[k][1], 2)) + " X").ljust(5));
 
         out.append(test);
 
