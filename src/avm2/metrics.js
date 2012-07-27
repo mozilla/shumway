@@ -49,6 +49,36 @@
     return timer;
   })();
 
+  /**
+   * Quick way to count named events.
+   */
+  var Counter = (function () {
+    function counter(enabled) {
+      this.enabled = !!enabled;
+      this.counts = {};
+    }
+    counter.prototype.setEnabled = function (enabled) {
+      this.enabled = enabled;
+    };
+    counter.prototype.count = function (name, increment) {
+      if (!this.enabled) {
+        return;
+      }
+      increment = increment !== undefined ? increment : 1;
+      if (this.counts[name] === undefined) {
+        this.counts[name] = 0;
+      }
+      this.counts[name] += increment;
+    };
+    counter.prototype.trace = function (writer) {
+      for (var name in this.counts) {
+        writer.writeLn(name + ": " + this.counts[name]);
+      }
+    };
+    return counter;
+  })();
+
   exports.Timer = Timer;
+  exports.Counter = Counter;
 
 })(typeof exports === "undefined" ? (metrics = {}) : exports);

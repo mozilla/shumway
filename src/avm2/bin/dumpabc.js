@@ -59,6 +59,7 @@ try {
   quit();
 }
 
+/*
 SWF.parse(snarf(swfFile.value, "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;
@@ -66,11 +67,34 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     for (var i = 0, n = tags.length; i < n; i++) {
       var tag = tags[i];
       if (tag.type === "abc") {
-        // sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
         stdout.writeLn("<<< BASE64 " + prefix.value + "-" + abcCount++ + ".abc");
         print (base64ArrayBuffer(tag.data));
         stdout.writeLn(">>>");
       }
     }
+  }
+});
+*/
+
+SWF.parse(snarf(swfFile.value, "binary"), {
+  oncomplete: function(result) {
+    var tags = result.tags;
+    var abcCount = 0;
+    var offset = 0;
+    var files = [];
+    for (var i = 0, n = tags.length; i < n; i++) {
+      var tag = tags[i];
+      if (tag.type === "abc") {
+        files.push({name: tag.name, offset: offset, length: + tag.data.length, data: tag.data});
+        offset += tag.data.length;
+      }
+    }
+    var data = new Uint8Array(offset);
+    for (var i = 0; i < files.length; i++) {
+      var file = files[i];
+      data.set(file.data, file.offset);
+      print ("Name: " + file.name + ", Offset: " + file.offset + ", Length: " + file.length);
+    }
+    print (base64ArrayBuffer(data));
   }
 });

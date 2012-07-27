@@ -1,27 +1,6 @@
 load("../../../lib/DataView.js/DataView.js");
 
 /**
- * Load SWF Dependencies
- */
-var SWF = {};
-load("../../swf/util.js");
-load("../../swf/types.js");
-load("../../swf/structs.js");
-load("../../swf/tags.js");
-load("../../swf/inflate.js");
-load("../../swf/stream.js");
-load("../../swf/templates.js");
-load("../../swf/generator.js");
-load("../../swf/parser.js");
-load("../../swf/bitmap.js");
-load("../../swf/button.js");
-load("../../swf/font.js");
-load("../../swf/image.js");
-load("../../swf/label.js");
-load("../../swf/shape.js");
-load("../../swf/text.js");
-
-/**
  * Load AVM2 Dependencies
  */
 
@@ -48,27 +27,58 @@ var loadPlayerGlobal = shellOptions.register(new Option("p", "loadPlayerGlobal",
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 
+load("../metrics.js");
+var Timer = metrics.Timer;
+var Counter = new metrics.Counter();
+
+Timer.start("Loading VM");
+
 load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");
 load("../analyze.js");
-load("../metrics.js");
 
-var Timer = metrics.Timer;
+/**
+ * Load SWF Dependencies
+ */
+var SWF = {};
+Timer.start("Loading SWF Dependencies");
+load("../../swf/util.js");
+load("../../swf/types.js");
+load("../../swf/structs.js");
+load("../../swf/tags.js");
+load("../../swf/inflate.js");
+load("../../swf/stream.js");
+load("../../swf/templates.js");
+load("../../swf/generator.js");
+Timer.start("Loading SWF Parser");
+load("../../swf/parser.js");
+Timer.stop();
+load("../../swf/bitmap.js");
+load("../../swf/button.js");
+load("../../swf/font.js");
+load("../../swf/image.js");
+load("../../swf/label.js");
+load("../../swf/shape.js");
+load("../../swf/text.js");
+Timer.stop();
 
+Timer.start("Loading Compiler");
 load("../compiler/lljs/src/estransform.js");
 load("../compiler/lljs/src/escodegen.js");
 load("../compiler/verifier.js");
 load("../compiler/compiler.js");
+Timer.stop();
+
 
 load("../domain.js");
 load("../runtime.js");
 load("../viz.js");
 load("../interpreter.js");
 load("../native.js");
-
 load("../vm.js");
+Timer.stop();
 
 argumentParser.addBoundOptionSet(systemOptions);
 
@@ -96,6 +106,8 @@ try {
   stdout.writeLn(x.message);
   quit();
 }
+
+Counter.setEnabled(traceMetrics.value);
 
 function grabABC(abcname) {
     return snarf("../generated/" + abcname + "/" + abcname + ".abc", "binary");
@@ -198,4 +210,5 @@ function processAbc(abc) {
 
 if (traceMetrics.value) {
   metrics.Timer.trace(stdout);
+  Counter.trace(stdout);
 }
