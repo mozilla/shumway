@@ -91,7 +91,10 @@ Loader.prototype = Object.create(baseProto, {
         var as2Context = new AS2Context(data.version);
 
         var timelineLoader = new TimelineLoader(data.frameCount, pframes, this._dictionary);
-        var root = new MovieClipClass({ }, timelineLoader, as2Context);
+        var root = new MovieClip;
+        root._as2Context = as2Context;
+        root._timelineLoader = timelineLoader;
+        MovieClipClass.call(root);
         root.name = '_root';
 
         var globals = as2Context.globals;
@@ -192,9 +195,12 @@ Loader.prototype = Object.create(baseProto, {
         dictionary
       );
       var symbolClass = function (as2Context) {
-        return new MovieClipClass(symbol, timelineLoader, as2Context);
+        this._as2Context = as2Context;
+        MovieClipClass.call(this);
       };
-      symbolClass.prototype = Object.create(new MovieClip);
+      symbolClass.prototype = Object.create(new MovieClip, {
+        _timelineLoader: describeProperty(timelineLoader)
+      });
       requirePromise.then(function () {
         promise.resolve(symbolClass);
       });
@@ -206,7 +212,9 @@ Loader.prototype = Object.create(baseProto, {
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
       var symbolClass = function () { };
       symbolClass.prototype = Object.create(new Shape, {
-        _bounds: describeProperty(new Rectangle(bounds.x, bounds.y, bounds.width, bounds.height)),
+        _bounds: describeProperty(
+          new Rectangle(bounds.x / 20, bounds.y / 20, bounds.width / 20, bounds.height / 20)
+        ),
         _graphics: describeProperty(graphics)
       });
       requirePromise.then(function () {
@@ -231,7 +239,7 @@ Loader.prototype = Object.create(baseProto, {
           [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
           dictionary
         );
-        promise.resolve(new ButtonPrototype(obj, timelineLoader));
+        promise.resolve(new ButtonPrototype(symbol, timelineLoader));
       });
       break;
     default:

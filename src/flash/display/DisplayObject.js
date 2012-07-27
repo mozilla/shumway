@@ -85,9 +85,15 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
   globalToLocal: describeMethod(function (pt) {
     notImplemented();
   }),
-  height: describeAccessor(function () {
-    notImplemented();
-  }),
+  height: describeAccessor(
+    function () {
+      var bounds = this.getBounds();
+      return bounds.height;
+    },
+    function () {
+      notImplemented();
+    }
+  ),
   hitTestObject: describeMethod(function (obj) {
     notImplemented();
   }),
@@ -199,9 +205,15 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
       this._visible = val;
     }
   ),
-  width: describeAccessor(function () {
-    notImplemented();
-  }),
+  width: describeAccessor(
+    function () {
+      var bounds = this.getBounds();
+      return bounds.width;
+    },
+    function () {
+      notImplemented();
+    }
+  ),
   x: describeAccessor(
     function () {
       return this._x;

@@ -153,7 +153,7 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
         function initialize(instance) {
           if (pframe.actionsData && pframe.actionsData.length > 0) {
             for (var i = 0; i < pframe.actionsData.length; i++)
-              instance.$addFrameScript(currentFrame,
+              instance.addFrameScript(currentFrame,
                 instance.$createAS2Script(pframe.actionsData[i]));
           }
 
@@ -224,34 +224,23 @@ function TimelineLoader(totalFrames, pframes, dictionary) {
   this.prepareTimeline = prepareTimeline;
 }
 
-function MovieClipClass(obj, timelineLoader, as2Context) {
-  var currentFrame = 0;
-  var rotation = 0;
-  var width, height;
+function MovieClipClass() {
   var timeline = [];
   var children = {};
-  var frameScripts = [];
   var instance = this;
+  var timelineLoader = this._timelineLoader;
+  var as2Context = this._as2Context;
 
   function createAS2Script(data) {
     return (function() {
       var as2Object = this.$as2Object;
 
-      //try {
+      try {
         executeActions(data, as2Context, as2Object);
-      //} catch (e) {
-      //  console.log('Error during ActionScript execution: ' + e);
-      //}
+      } catch (e) {
+        console.log('Error during ActionScript execution: ' + e);
+      }
     });
-  }
-
-  function addFrameScript() {
-    for (var i = 0, n = arguments.length; i < n; i += 2) {
-      var frameNum = arguments[i];
-      if (!frameScripts[frameNum])
-        frameScripts[frameNum] = [];
-      frameScripts[frameNum].push(arguments[i + 1]);
-    }
   }
 
   function dispatchEvent(eventName, args) {
@@ -272,43 +261,7 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
     }
   }
 
-  function gotoFrame(frame) {
-    var frameNum = frame;
-    if (frameNum > timelineLoader.totalFrames)
-      frameNum = 1;
-    timelineLoader.ensureFrame(frameNum, instance);
-    if (frameNum > timelineLoader.framesLoaded)
-      frameNum = timelineLoader.framesLoaded;
-    currentFrame = frameNum;
-
-    // execute scripts
-    dispatchEvent('onEnterFrame');
-    if (currentFrame in frameScripts) {
-      var scripts = frameScripts[currentFrame];
-      for (var i = 0, n = scripts.length; i < n; ++i)
-        scripts[i].call(instance);
-    }
-  }
-
   var as2Object;
-
-  Object.defineProperties(this, {
-    currentFrame: {
-      get: function() {
-        return currentFrame;
-      }
-    },
-    framesLoaded: {
-      get: function() {
-        return timelineLoader.framesLoaded;
-      }
-    },
-    totalFrames: {
-      get: function() {
-        return timelineLoader.totalFrames;
-      }
-    }
-  });
 
   var lastMouseCoordinates = null;
   function getMouseCoordinates() {
@@ -320,49 +273,30 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
     return lastMouseCoordinates;
   }
 
-  this.gotoAndPlay = function(frame) {
-    if (this !== instance)
-      return;
-    this.play();
-    if (isNaN(frame))
-      return this.gotoLabel(frame);
-    gotoFrame.call(instance, frame);
-  };
-  this.gotoAndStop = function(frame, scene) {
-    if (this !== instance)
-      return;
-    this.stop();
-    if (isNaN(frame))
-      return this.gotoLabel(frame);
-    gotoFrame.call(instance, frame);
-  };
   this.gotoLabel = function(label) {
     if (this !== instance)
       return;
     label = label.toLowerCase(); // labels are case insensitive
     if (!(label in timelineLoader.frameLabels))
       return; // label is not found, skipping ?
-    gotoFrame.call(instance, timelineLoader.frameLabels[label]);
+    this.gotoFrame(timelineLoader.frameLabels[label]);
   };
+
   this.renderNextFrame = function(context) {
     if (this.isPlaying())
-      gotoFrame.call(instance, (currentFrame % timelineLoader.totalFrames) + 1);
+      this.gotoFrame((this._currentFrame % timelineLoader.totalFrames) + 1);
 
-    var frameIndex = currentFrame - 1;
+    var frameIndex = this._currentFrame - 1;
     var displayList = timeline[frameIndex];
     if (!displayList)
       return; // skiping non-prepared frame
 
     render(displayList, context);
   }
-  this.nextFrame = function() {
-    this.gotoAndStop((currentFrame % timelineLoader.totalFrames) + 1);
-  };
-  this.prevFrame = function() {
-    this.gotoAndStop(currentFrame > 1 ? currentFrame - 1 : totalFrames);
-  };
+
+
+
   this.$dispatchEvent = dispatchEvent;
-  this.$addFrameScript = addFrameScript;
   this.$createAS2Script = createAS2Script;
   this.$addChild = function(name, child) {
     children[name] = child;
@@ -466,10 +400,11 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
       },
       enumerable: false
     },
+
     getBounds: {
       value: function getBounds(bounds) {
         // TODO move the getBounds into utility/core classes
-        var frame = timeline[currentFrame - 1];
+        var frame = timeline[this._currentFrame - 1];
         var rect = new Rectangle;
         for (var i in frame) {
           var character = frame[i].character;
@@ -499,9 +434,9 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
     localToGlobal: {
       value: function localToGlobal(pt) {
         var m = this.matrix;
-        if (rotation) {
-          var rotationCos = Math.cos(rotation * Math.PI / 180);
-          var rotationSin = Math.sin(rotation * Math.PI / 180);
+        if (this.rotation) {
+          var rotationCos = Math.cos(this.rotation * Math.PI / 180);
+          var rotationSin = Math.sin(this.rotation * Math.PI / 180);
           pt = {
             x: rotationCos * pt.x - rotationSin * pt.y,
             y: rotationSin * pt.x + rotationCos * pt.y
@@ -526,9 +461,9 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
           y: -m.c * k * result.x + m.d * k * result.y +
              (m.f * m.c - m.f * m.d) * k / 20
         };
-        if (rotation) {
-          var rotationCos = Math.cos(rotation * Math.PI / 180);
-          var rotationSin = Math.sin(rotation * Math.PI / 180);
+        if (this.rotation) {
+          var rotationCos = Math.cos(this.rotation * Math.PI / 180);
+          var rotationSin = Math.sin(this.rotation * Math.PI / 180);
           result = {
             x: rotationCos * result.x + rotationSin * result.y,
             y: -rotationSin * result.x + rotationCos * result.y
@@ -601,30 +536,6 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
       },
       enumerable: true
     },
-    width: {
-      get: function get$width() {
-        if (typeof width !== 'undefined')
-          return width;
-        var bounds = this.getBounds();
-        return bounds.xMax / 20;
-      },
-      set: function set$width(value) {
-        width = value; // TODO adjust the scaleX
-      },
-      enumerable: true
-    },
-    height: {
-      get: function get$height() {
-        if (typeof height !== 'undefined')
-          return height;
-        var bounds = this.getBounds();
-        return bounds.yMax / 20;
-      },
-      set: function set$height(value) {
-        height = value; // TODO adjust the scaleY
-      },
-      enumerable: true
-    },
     mouseX: {
       get: function get$mouseY() {
         return getMouseCoordinates().x;
@@ -634,15 +545,6 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
     mouseY: {
       get: function get$mouseY() {
         return getMouseCoordinates().y;
-      },
-      enumerable: true
-    },
-    rotation: {
-      get: function get$rotation() {
-        return rotation || 0;
-      },
-      set: function set$rotation(value) {
-        rotation = value;
       },
       enumerable: true
     }
@@ -675,8 +577,8 @@ function MovieClipClass(obj, timelineLoader, as2Context) {
   AS2Key.addListener(events);
 
   timelineLoader.prepareTimeline(instance, as2Context);
+  this._totalFrames = timelineLoader.totalFrames;
 };
-MovieClipClass.prototype = new MovieClip;
 
 // HACK button as movieclip
 var ButtonPrototype = function(obj, timelineLoader) {
@@ -767,6 +669,7 @@ var ButtonPrototype = function(obj, timelineLoader) {
     onMouseWheel: function () {}
   };
 
+  this._timelineLoader = timelineLoader;
   var proto = MovieClipClass.apply(this, arguments) || this;
   proto.nativeObjectContructor = AS2Button;
   proto.buttonActions = obj.buttonActions;
