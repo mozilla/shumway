@@ -17,6 +17,7 @@ var AVM2 = (function () {
   }
 
   AVM2.prototype = {
+    /*
     loadPlayerGlobal: function (playerGlobalSWF) {
       var sysDomain = this.systemDomain;
       // Load, but don't execute, the default player globals.
@@ -34,6 +35,7 @@ var AVM2 = (function () {
       });
       Timer.stop();
     },
+    */
     notifyConstruct: function notifyConstruct (instance, args) {
       return this.onConstruct ? this.onConstruct(instance, args) : undefined;
     }
