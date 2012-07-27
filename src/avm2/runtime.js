@@ -535,19 +535,16 @@ var Runtime = (function () {
     return Object.create(method.activationPrototype);
   };
 
-  runtime.prototype.createFunction = function createFunction(methodInfo, scope) {
+  /**
+   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the 
+   * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
+   * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
+   * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
+   * compiler bakes it in as a constant which should be much more efficient.
+   */
+  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope) {
     const mi = methodInfo;
     assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
-
-    function closeOverScope(fn, scope) {
-      var closure = function () {
-        Array.prototype.unshift.call(arguments, scope);
-        var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
-      };
-      closure.instance = closure;
-      return closure;
-    }
 
     var hasDefaults = false;
     const defaults = mi.parameters.map(function (p) {
@@ -604,20 +601,34 @@ var Runtime = (function () {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
+    function bindScope(fn, scope) {
+      var closure = function () {
+        Array.prototype.unshift.call(arguments, scope);
+        var global = (this === jsGlobal ? scope.global.object : this);
+        return fn.apply(global, arguments);
+      };
+      closure.instance = closure;
+      return closure;
+    }
+
     if (mi.compiledMethod) {
-      return closeOverScope(mi.compiledMethod, scope);
+      assert (hasDynamicScope);
+      return bindScope(mi.compiledMethod, scope);
     }
 
     if (!mi.analysis.restructureControlFlow()) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
-    var body = this.compiler.compileMethod(mi, hasDefaults, scope);
-
     var parameters = mi.parameters.map(function (p) {
       return p.name;
     });
-    parameters.unshift(SAVED_SCOPE_NAME);
+
+    if (hasDynamicScope) {
+      parameters.unshift(SAVED_SCOPE_NAME);
+    }
+
+    var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? mi.name.getQualifiedName() : "fn" + functionCount;
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
@@ -630,7 +641,12 @@ var Runtime = (function () {
       mi.compiledMethod = new Function(parameters, body);
     }
     functionCount++;
-    return closeOverScope(mi.compiledMethod, scope);
+
+    if (hasDynamicScope) {
+      return bindScope(mi.compiledMethod, scope);
+    } else {
+      return mi.compiledMethod;
+    }
   };
 
   /**

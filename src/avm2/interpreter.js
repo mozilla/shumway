@@ -270,7 +270,7 @@ var Interpreter = (function () {
           case OP_sf32:           notImplemented(); break;
           case OP_sf64:           notImplemented(); break;
           case OP_newfunction:
-            stack.push(runtime.createFunction(methods[bc.index], scope));
+            stack.push(runtime.createFunction(methods[bc.index], scope, true));
             break;
           case OP_call:
             args = stack.popMany(bc.argCount);

@@ -39,6 +39,12 @@ SWF.embed = function(file, container, options) {
     AS2Key.$bind(canvas);
     AS2Mouse.$bind(canvas);
 
+    var obj = loader._pframes[0]; // HACK using first frame color
+    if (obj.bgcolor) {
+      stage._color = obj.bgcolor; // TODO convert to numeric
+      canvas.style.background = obj.bgcolor;
+    }
+
     stage.addChild(loader.content);
     renderStage(stage, ctx);
 
