@@ -261,6 +261,36 @@ var Verifier = (function() {
           entryState.trace(writer);
         }
 
+        /*
+        To avoid revisiting the same block more than necesarry while iterating
+        to a fixed point, the blocks need to be processed in dominator order.
+        The same problem for tamarin is discussed here: https://bugzilla.mozilla.org/show_bug.cgi?id=661133
+
+        The blocks in the mi.analysis.blocks are in the dominator order.
+        Iterate over the blocks array and assign an id (bdo = blockDominatorOrder)
+        that gives the dominator order for the que insert.
+        */
+        for (var bi = 0, len = blocks.length; bi < len; bi++) {
+          blocks[bi].bdo = bi;
+        }
+
+        /*
+        Use a liniar search to find the right insertion position and keep the list sorted.
+        This is a naive priority que implementation based on an array.
+        The reque operation takes O(n), the pull operations takes O(1).
+        */
+        function addToWorklist(worklist, block) {
+          // find the insertion position in the list
+          for (var i = 0, len = worklist.length; i < len; i++) {
+            if (worklist[i].bdo > block.bdo) {
+              worklist.splice(i, 0, block);
+              return;
+            }
+          }
+          // if the list was empty or the block just falls at the end push it in the list
+          worklist.push(block);
+        }
+
         var worklist = [];
 
         blocks[0].entryState = entryState;
@@ -300,7 +330,7 @@ var Verifier = (function() {
                                   currExitState.toString() + " with " + successor.entryState.toString());
                 }
                 successor.entryState.merge(currExitState);
-                worklist.push(successor);
+                addToWorklist(worklist, successor);
 
                 if (writer) {
                   writer.writeLn("Merged State: " + successor.entryState);
@@ -314,7 +344,7 @@ var Verifier = (function() {
             // add unvisited succesor block to the worklist
             //  it's entry state is current block exit state
             successor.entryState = currExitState.clone();
-            worklist.push(successor);
+            addToWorklist(worklist, successor);
             if (writer) {
               writer.writeLn("Added Block: " + successor.bid +
                              " to worklist: " + successor.entryState.toString());
