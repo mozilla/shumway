@@ -100,7 +100,7 @@ Graphics.prototype = Object.create(null, {
       fill = stroke.fill;
 
     if (stroke === null || fill === null) {
-      this.lineStyle();
+      this.lineStyle(null);
     } else if (fill.__isGraphicsSolidFill__) {
       this.lineStyle(
         stroke.thickness,
