@@ -1,5 +1,5 @@
 function Sprite() {
-  this._graphics = new Graphics;
+  this._graphics = null;
 }
 
 Sprite.prototype = Object.create(new DisplayObjectContainer, {
@@ -14,7 +14,7 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
     }
   ),
   graphics: describeAccessor(function () {
-    return this._graphics;
+    return this._graphics || (this._graphics = new Graphics);
   }),
   hitArea: describeAccessor(
     function () {
