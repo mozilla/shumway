@@ -18,6 +18,11 @@ var AbcStream = (function () {
     readU8: function() {
       return this.bytes[this.pos++];
     },
+    readU8s: function(count) {
+      var b = this.bytes.subarray(this.pos, this.pos + count);
+      this.pos += count;
+      return b;
+    },
     readS8: function() {
       return this.bytes[this.pos++] << 24 >> 24;
     },
@@ -898,12 +903,7 @@ var MethodInfo = (function () {
     info.localCount = stream.readU30();
     info.initScopeDepth = stream.readU30();
     info.maxScopeDepth = stream.readU30();
-
-    var code = new Uint8Array(stream.readU30());
-    for (var i = 0; i < code.length; ++i) {
-      code[i] = stream.readU8();
-    }
-    info.code = code;
+    info.code = stream.readU8s(stream.readU30());
 
     var exceptions = [];
     var exceptionCount = stream.readU30();
