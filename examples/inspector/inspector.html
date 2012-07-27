@@ -256,21 +256,12 @@
       function createAVM2(loadPlayerGlobal, next) {
         new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
           var vm = new AVM2(new Uint8Array(buffer), sysMode, appMode);
-
           vm.onConstruct = function (instance, args) {
             var ci = instance.public$constructor.classInfo;
             print("Creating: " + ci.instanceInfo.name.getQualifiedName() +
                   ", with args: [" + args + "]");
           };
-
-          if (loadPlayerGlobal) {
-            new BinaryFileReader(avm2Root + "generated/playerGlobal.swf").readAll(null, function (buffer) {
-              vm.loadPlayerGlobal(new Uint8Array(buffer));
-              next(vm);
-            });
-          } else {
-            next(vm);
-          }
+          next(vm);
         });
       }
 
