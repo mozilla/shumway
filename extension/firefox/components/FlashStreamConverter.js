@@ -65,19 +65,21 @@ function combineUrl(baseUrl, url) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, referer, window) {
+function ChromeActions(url, params, referer, overlay, window) {
   this.url = url;
   this.params = params;
   this.referer = referer;
+  this.overlay = overlay;
   this.window = window;
 }
 
 ChromeActions.prototype = {
-  getUrl: function getUrl(data) {
-    return this.url;
-  },
-  getParams: function getParams() {
-    return JSON.stringify(this.params);
+  getPluginParams: function getPluginParams() {
+    return JSON.stringify({
+      url: this.url,
+      arguments: this.params,
+      isOverlay: this.overlay
+     });
   },
   loadFile: function loadFile(data) {
     var url = data;
@@ -117,6 +119,13 @@ ChromeActions.prototype = {
     };
 
     oXHR.send(null);
+  },
+  fallback: function() {
+    var obj = this.window.frameElement;
+    var doc = obj.ownerDocument;
+    var e = doc.createEvent("CustomEvent");
+    e.initCustomEvent("MozPlayPlugin", true, true, null);
+    obj.dispatchEvent(e);
   }
 };
 
@@ -190,12 +199,16 @@ FlashStreamConverterBase.prototype = {
   createChromeActions: function(window, urlHint) {
     var url;
     var element = window.frameElement;
+    var isOverlay = false;
     var params = {};
     if (element) {
       var tagName = element.nodeName;
-      if (tagName == 'HTML:IFRAME') {
-        // plugin overlay
+      while (tagName != 'EMBED' && tagName != 'OBJECT') {
+        // plugin overlay skipping until the target plugin is found
+        isOverlay = true;
         element = element.parentNode;
+        if (!element)
+          throw 'Plugin element is not found';
         tagName = element.nodeName;
       }
       if (tagName == 'EMBED') {
@@ -220,7 +233,7 @@ FlashStreamConverterBase.prototype = {
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
 
-    return new ChromeActions(url, params, baseUrl, window);
+    return new ChromeActions(url, params, baseUrl, isOverlay, window);
   },
 
   // nsIStreamConverter::asyncConvertData
