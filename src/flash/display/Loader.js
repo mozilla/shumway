@@ -34,7 +34,7 @@ var baseProto = null;
 if (typeof window === 'undefined') {
   importScripts.apply(null, Loader.WORKER_SCRIPTS);
 
-  onmessage = function (evt) {
+  self.onmessage = function (evt) {
     var loader = new Loader;
     loader.loadFrom(loader, evt.data);
   };
@@ -70,7 +70,7 @@ Loader.prototype = Object.create(baseProto, {
   }),
   commitData: describeMethod(function (data) {
     if (typeof window === 'undefined') {
-      postMessage(data);
+      self.postMessage(data);
     } else {
       var loaderInfo = this.contentLoaderInfo;
 
