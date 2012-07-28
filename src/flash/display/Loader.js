@@ -464,7 +464,7 @@ Loader.prototype = Object.create(baseProto, {
           } else {
             switch (tag.type) {
             case 'background':
-              pframe.bgcolor = toStringRgba(tag.color);
+              pframe.bgcolor = tag.color;
               break;
             case 'symbols':
               if (!pframe.symbols)

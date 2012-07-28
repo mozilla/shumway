@@ -20,16 +20,13 @@ function morph(start, end) {
 
   return start;
 }
-function toColor(obj) {
-  return obj.red << 16 | obj.green << 8 | obj.blue;
-}
 function toColorProperties(color, colorMorph) {
   if (colorMorph) {
-    return 'color:' + morph(toColor(color), toColor(colorMorph)) + ','
+    return 'color:' + morph(color.color, colorMorph.color) + ','
            'alpha:' + morph(color.alpha / 255, colorMorph.alpha / 255);
   }
 
-  return 'color:' + toColor(color) + ',alpha:' + (color.alpha / 255);
+  return 'color:' + color.color + ',alpha:' + (color.alpha / 255);
 }
 function toMatrixInstance(matrix, matrixMorph) {
   if (matrixMorph) {
@@ -285,11 +282,11 @@ function defineShape(tag, dictionary) {
           var color = record.color;
           if (record.colorMorph) {
             var colorMorph = record.colorMorph;
-            colors.push(morph(toColor(color), toColor(colorMorph)));
-            alphas.push(morph(color.alpha, colorMorph.alpha));
+            colors.push(morph(color.color, colorMorph.color));
+            alphas.push(morph(color.alpha / 255, colorMorph.alpha / 255));
             ratios.push(morph(record.ratio / 255, record.ratioMorph / 255));
           } else {
-            colors.push(toColor(color));
+            colors.push(color.color);
             alphas.push(color.alpha);
             ratios.push(record.ratio / 255);
           }

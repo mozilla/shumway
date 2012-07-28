@@ -41,8 +41,8 @@ SWF.embed = function(file, container, options) {
 
     var obj = loader._pframes[0]; // HACK using first frame color
     if (obj.bgcolor) {
-      stage._color = obj.bgcolor; // TODO convert to numeric
-      canvas.style.background = obj.bgcolor;
+      stage._color = obj.bgcolor;
+      canvas.style.background = toStringRgba(obj.bgcolor);
     }
 
     stage.addChild(loader.content);
