@@ -274,6 +274,8 @@ Loader.prototype = Object.create(baseProto, {
     case SWF_TAG_CODE_DEFINE_FONT4:
       symbol = defineFont(swfTag, symbols);
       break;
+    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
+    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
     case SWF_TAG_CODE_DEFINE_SHAPE:
     case SWF_TAG_CODE_DEFINE_SHAPE2:
     case SWF_TAG_CODE_DEFINE_SHAPE3:
