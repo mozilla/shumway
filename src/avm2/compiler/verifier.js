@@ -262,7 +262,7 @@ var Verifier = (function() {
         }
 
         /*
-        To avoid revisiting the same block more than necesarry while iterating
+        To avoid revisiting the same block more than necessary while iterating
         to a fixed point, the blocks need to be processed in dominator order.
         The same problem for tamarin is discussed here: https://bugzilla.mozilla.org/show_bug.cgi?id=661133
 
@@ -275,30 +275,21 @@ var Verifier = (function() {
         }
 
         /*
-        Use a liniar search to find the right insertion position and keep the list sorted.
-        This is a naive priority que implementation based on an array.
-        The reque operation takes O(n), the pull operations takes O(1).
+        Keep the blocks sorted in dominator order.
+        The SortedList structure is based on a linked list and uses a liniar search 
+        to find the right insertion position and keep the list sorted. 
+        The push operation takes O(n), the pull operations takes O(1).
         */
-        function addToWorklist(worklist, block) {
-          // find the insertion position in the list
-          for (var i = 0, len = worklist.length; i < len; i++) {
-            if (worklist[i].bdo > block.bdo) {
-              worklist.splice(i, 0, block);
-              return;
-            }
-          }
-          // if the list was empty or the block just falls at the end push it in the list
-          worklist.push(block);
-        }
-
-        var worklist = [];
+        var worklist = new SortedList(function compare(blockA, blockB) {
+          return blockA.bdo - blockB.bdo;
+        });
 
         blocks[0].entryState = entryState;
-
         worklist.push(blocks[0]);
 
-        while (worklist.length) {
-          var block = worklist.shift();
+        while (worklist.peek()) {
+
+          var block = worklist.pop();
           var currEntryState = block.entryState;
           var currExitState = block.exitState = currEntryState.clone();
 
@@ -307,7 +298,7 @@ var Verifier = (function() {
 
           block.succs.forEach(function (successor) {
 
-            if (worklist.indexOf(successor) !== -1) { // the block is already in the worklist
+            if (worklist.contains(successor)) { // the block is already in the worklist
               if (writer) {
                 writer.writeLn("Forward Merged Block: " + successor.bid + " " +
                                currExitState.toString() + " with " + successor.entryState.toString());
@@ -330,7 +321,7 @@ var Verifier = (function() {
                                   currExitState.toString() + " with " + successor.entryState.toString());
                 }
                 successor.entryState.merge(currExitState);
-                addToWorklist(worklist, successor);
+                worklist.push(successor);
 
                 if (writer) {
                   writer.writeLn("Merged State: " + successor.entryState);
@@ -344,7 +335,7 @@ var Verifier = (function() {
             // add unvisited succesor block to the worklist
             //  it's entry state is current block exit state
             successor.entryState = currExitState.clone();
-            addToWorklist(worklist, successor);
+            worklist.push(successor);
             if (writer) {
               writer.writeLn("Added Block: " + successor.bid +
                              " to worklist: " + successor.entryState.toString());
