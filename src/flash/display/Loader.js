@@ -209,6 +209,22 @@ Loader.prototype = Object.create(baseProto, {
         promise.resolve(proto);
       });
       break;
+    case 'shape':
+      var bounds = symbol.bounds;
+      var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+      var graphics = new Graphics;
+      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+      var symbolClass = function () { };
+      symbolClass.prototype = Object.create(new Shape, {
+        _bounds: describeProperty(
+          new Rectangle(bounds.x / 20, bounds.y / 20, bounds.width / 20, bounds.height / 20)
+        ),
+        _graphics: describeProperty(graphics)
+      });
+      requirePromise.then(function () {
+        promise.resolve(symbolClass);
+      });
+      break;
     case 'sprite':
       var timelineLoader = new TimelineLoader(
         symbol.frameCount || 1,
@@ -226,22 +242,6 @@ Loader.prototype = Object.create(baseProto, {
         promise.resolve(symbolClass);
       });
       break;
-    case 'shape':
-      var bounds = symbol.bounds;
-      var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
-      var graphics = new Graphics;
-      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
-      var symbolClass = function () { };
-      symbolClass.prototype = Object.create(new Shape, {
-        _bounds: describeProperty(
-          new Rectangle(bounds.x / 20, bounds.y / 20, bounds.width / 20, bounds.height / 20)
-        ),
-        _graphics: describeProperty(graphics)
-      });
-      requirePromise.then(function () {
-        promise.resolve(symbolClass);
-      });
-      break;
     }
   }),
   defineSymbol: describeMethod(function (swfTag) {
@@ -249,39 +249,52 @@ Loader.prototype = Object.create(baseProto, {
     var symbol;
     var symbols = this._symbols;
 
-    switch (swfTag.type) {
-    case 'bitmap':
-      symbol = defineBitmap(swfTag, symbols);
-      break;
-    case 'button':
-      symbol = defineButton(swfTag, symbols);
-      break;
-    case 'font':
-      symbol = defineFont(swfTag, symbols);
-      break;
-    case 'image':
+    switch (swfTag.code) {
+    case SWF_TAG_CODE_DEFINE_BITS:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG2:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG3:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG4:
+    case SWF_TAG_CODE_JPEG_TABLES:
       symbol = defineImage(swfTag, symbols);
       break;
-    case 'label':
-      symbol = defineLabel(swfTag, symbols);
+    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
+    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
+      symbol = defineBitmap(swfTag, symbols);
       break;
-    case 'shape':
+    case SWF_TAG_CODE_DEFINE_BUTTON:
+    case SWF_TAG_CODE_DEFINE_BUTTON2:
+      symbol = defineButton(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
+      symbol = defineText(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_FONT:
+    case SWF_TAG_CODE_DEFINE_FONT2:
+    case SWF_TAG_CODE_DEFINE_FONT3:
+    case SWF_TAG_CODE_DEFINE_FONT4:
+      symbol = defineFont(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_SHAPE:
+    case SWF_TAG_CODE_DEFINE_SHAPE2:
+    case SWF_TAG_CODE_DEFINE_SHAPE3:
+    case SWF_TAG_CODE_DEFINE_SHAPE4:
       symbol = defineShape(swfTag, symbols);
       break;
-    case 'sprite':
+    case SWF_TAG_CODE_DEFINE_SPRITE:
       var dependencies = [];
       var pframes = [];
       var pframe = { };
       var tags = swfTag.tags;
       for (var i = 0, n = tags.length; i < n; i++) {
         var tag = tags[i];
-        switch (tag.type) {
-        case 'abc':
+        switch (tag.code) {
+        case SWF_TAG_CODE_DO_ABC:
           if (!pframe.abcBlocks)
             pframe.abcBlocks = [];
           pframe.abcBlocks.push(tag.data);
           break;
-        case 'actions':
+        case SWF_TAG_CODE_DO_ACTION:
+        case SWF_TAG_CODE_DO_INIT_ACTION:
           if (!pframe.actionsData) {
             pframe.initActionsData = { };
             pframe.actionsData = [];
@@ -291,25 +304,12 @@ Loader.prototype = Object.create(baseProto, {
           else
             pframe.actionsData.push(tag.actionsData);
           break;
-        case 'frame':
-          var repeat = 1;
-          while (i < n) {
-            var nextTag = tags[i + 1];
-            if (nextTag.type !== 'frame')
-              break;
-            i++;
-            repeat++;
-          }
-          if (repeat > 1)
-            pframe.repeat = repeat;
-          pframe.type = 'pframe';
-          pframes.push(pframe);
-          pframe = { };
-          break;
-        case 'frameLabel':
+        case SWF_TAG_CODE_FRAME_LABEL:
           pframe.name = tag.name;
           break;
-        case 'place':
+        case SWF_TAG_CODE_PLACE_OBJECT:
+        case SWF_TAG_CODE_PLACE_OBJECT2:
+        case SWF_TAG_CODE_PLACE_OBJECT3:
           var entry = { };
           if (tag.place) {
             var symbol = symbols[tag.objId];
@@ -334,8 +334,24 @@ Loader.prototype = Object.create(baseProto, {
             entry.ratio = tag.ratio / 0xffff;
           pframe[tag.depth] = entry;
           break;
-        case 'remove':
+        case SWF_TAG_CODE_REMOVE_OBJECT:
+        case SWF_TAG_CODE_REMOVE_OBJECT2:
           pframe[tag.depth] = null;
+          break;
+        case SWF_TAG_CODE_SHOW_FRAME:
+          var repeat = 1;
+          while (i < n) {
+            var nextTag = tags[i + 1];
+            if (nextTag.type !== 'frame')
+              break;
+            i++;
+            repeat++;
+          }
+          if (repeat > 1)
+            pframe.repeat = repeat;
+          pframe.type = 'pframe';
+          pframes.push(pframe);
+          pframe = { };
           break;
         }
       }
@@ -347,8 +363,9 @@ Loader.prototype = Object.create(baseProto, {
         pframes: pframes
       };
       break;
-    case 'text':
-      symbol = defineText(swfTag, symbols);
+    case SWF_TAG_CODE_DEFINE_TEXT:
+    case SWF_TAG_CODE_DEFINE_TEXT2:
+      symbol = defineLabel(swfTag, symbols);
       break;
     }
 
@@ -422,27 +439,19 @@ Loader.prototype = Object.create(baseProto, {
       },
       onprogress: function(result) {
         var tags = result.tags;
-
         for (var n = tags.length; numProcessedTags < n; numProcessedTags++) {
           var tag = tags[numProcessedTags];
           if ('id' in tag) {
             loader.defineSymbol(tag);
           } else {
-            switch (tag.type) {
-            case 'background':
-              pframe.bgcolor = tag.color;
-              break;
-            case 'symbols':
-              if (!pframe.symbols)
-                pframe.symbols = [];
-              pframe.symbols = pframe.symbols.concat(tag.references);
-              break;
-            case 'abc':
+            switch (tag.code) {
+            case SWF_TAG_CODE_DO_ABC:
               if (!pframe.abcBlocks)
                 pframe.abcBlocks = [];
               pframe.abcBlocks.push(tag.data);
               break;
-            case 'actions':
+            case SWF_TAG_CODE_DO_ACTION:
+            case SWF_TAG_CODE_DO_INIT_ACTION:
               if (!pframe.actionsData) {
                 pframe.initActionsData = { };
                 pframe.actionsData = [];
@@ -452,25 +461,18 @@ Loader.prototype = Object.create(baseProto, {
               else
                 pframe.actionsData.push(tag.actionsData);
               break;
-            case 'frame':
-              var repeat = 1;
-              while (numProcessedTags < n) {
-                var nextTag = tags[numProcessedTags + 1];
-                if (!nextTag || nextTag.type !== 'frame')
-                  break;
-                numProcessedTags++;
-                repeat++;
-              }
-              if (repeat > 1)
-                pframe.repeat = repeat;
-              pframe.type = 'pframe';
-              loader.commitData(pframe);
-              pframe = { };
+            case SWF_TAG_CODE_EXPORT_ASSETS:
+            case SWF_TAG_CODE_SYMBOL_CLASS:
+              if (!pframe.symbols)
+                pframe.symbols = [];
+              pframe.symbols = pframe.symbols.concat(tag.references);
               break;
-            case 'frameLabel':
+            case SWF_TAG_CODE_FRAME_LABEL:
               pframe.name = tag.name;
               break;
-            case 'place':
+            case SWF_TAG_CODE_PLACE_OBJECT:
+            case SWF_TAG_CODE_PLACE_OBJECT2:
+            case SWF_TAG_CODE_PLACE_OBJECT3:
               var entry = { };
               if (tag.place) {
                 var obj = symbols[tag.objId];
@@ -494,8 +496,27 @@ Loader.prototype = Object.create(baseProto, {
                 entry.ratio = tag.ratio / 0xffff;
               pframe[tag.depth] = entry;
               break;
-            case 'remove':
+            case SWF_TAG_CODE_REMOVE_OBJECT:
+            case SWF_TAG_CODE_REMOVE_OBJECT2:
               pframe[tag.depth] = null;
+              break;
+            case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
+              pframe.bgcolor = tag.color;
+              break;
+            case SWF_TAG_CODE_SHOW_FRAME:
+              var repeat = 1;
+              while (numProcessedTags < n) {
+                var nextTag = tags[numProcessedTags + 1];
+                if (!nextTag || nextTag.type !== 'frame')
+                  break;
+                numProcessedTags++;
+                repeat++;
+              }
+              if (repeat > 1)
+                pframe.repeat = repeat;
+              pframe.type = 'pframe';
+              loader.commitData(pframe);
+              pframe = { };
               break;
             }
           }

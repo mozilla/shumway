@@ -1,7 +1,6 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
 var DEFINE_BITMAP = {
-  type: "'bitmap'",
   id: UI16,
   $format: UI8,
   width: UI16,
@@ -11,7 +10,6 @@ var DEFINE_BITMAP = {
   bmpData: BINARY(0)
 };
 var DEFINE_FONT = {
-  type: '"font"',
   id: UI16,
   $$firstOffset: UI16,
   $glyphCount: 'firstOffset/2',
@@ -26,7 +24,6 @@ var DEFINE_FONT = {
   }
 };
 var DEFINE_FONT2 = {
-  type: '"font"',
   id: UI16,
   $hasLayout: UB(1),
   $0: ['version>5', [
@@ -104,7 +101,6 @@ var DEFINE_FONT2 = {
   }]]
 };
 var DEFINE_IMAGE = {
-  type: '"image"',
   id: UI16,
   $0: ['tagCode>21', [
     {
@@ -124,13 +120,11 @@ var DEFINE_IMAGE = {
   incomplete: ['tagCode===6', ['1']]
 };
 var DEFINE_JPEG_TABLES = {
-  type: '"image"',
   id: '0',
   imgData: BINARY(0),
   mimeType: '"application/octet-stream"'
 };
 var DEFINE_LABEL = {
-  type: '"label"',
   id: UI16,
   bounds: RECT,
   matrix: MATRIX,
@@ -142,7 +136,6 @@ var DEFINE_LABEL = {
   }
 };
 var DEFINE_SHAPE = {
-  type: '"shape"',
   id: UI16,
   bounds: RECT,
   $isMorph: 'tagCode===46||tagCode===84',
@@ -165,7 +158,6 @@ var DEFINE_SHAPE = {
   ]]
 };
 var DEFINE_TEXT = {
-  type: '"text"',
   id: UI16,
   bounds: RECT,
   $$flags: UI16,
@@ -201,7 +193,6 @@ var DEFINE_TEXT = {
   initialText: ['hasText', [STRING(0)]]
 };
 var DEFINE_BUTTON = {
-  type: '"button"',
   id: UI16,
   $0: ['tagCode==7', [{
     characters: {
@@ -226,13 +217,11 @@ var DEFINE_BUTTON = {
   }]]
 };
 var DO_ABC = {
-  type: '"abc"',
   flags: UI32,
   name: STRING(0),
   data: BINARY(0)
 };
 var DO_ACTION = {
-  type: '"actions"',
   spriteId: ['tagCode===59', [UI16]],
   actionsData: BINARY(0)
 };
@@ -248,7 +237,6 @@ var FILE_ATTRIBUTES = {
   $$pad: UB(24)
 };
 var PLACE_OBJECT = {
-  type: '"place"',
   $0: ['tagCode>4', [
     {
       $$flags: ['tagCode>26', [UI16, UI8]],
@@ -318,19 +306,13 @@ var PLACE_OBJECT = {
   ]]
 };
 var REMOVE_OBJECT = {
-  type: '"remove"',
   objId: ['tagCode===5', [UI16]],
   depth: UI16
 };
 var SET_BACKGROUND_COLOR = {
-  type: '"background"',
   color: RGB
 };
-var SHOW_FRAME = {
-  type: '"frame"'
-};
 var SYMBOL_CLASS = {
-  type: '"symbols"',
   $$symbolCount: UI16,
   references: {
     $: {
@@ -341,11 +323,9 @@ var SYMBOL_CLASS = {
   }
 };
 var FRAME_LABEL = {
-  type: '"frameLabel"',
   name: STRING(0)
 };
 var DEFINE_SOUND = {
-  type: '"sound"',
   id: UI16,
   $$soundFlags: UI8,
   samplesCound: UI32,

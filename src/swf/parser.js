@@ -2,7 +2,7 @@
 
 var tagHandler = {
   /* End */                           0: undefined,
-  /* ShowFrame */                     1: SHOW_FRAME,
+  /* ShowFrame */                     1: undefined,
   /* DefineShape */                   2: DEFINE_SHAPE,
   /* PlaceObject */                   4: PLACE_OBJECT,
   /* RemoveObject */                  5: REMOVE_OBJECT,
