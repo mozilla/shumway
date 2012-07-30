@@ -205,14 +205,6 @@ var ANY_FILTER = {
     7: FILTER_GLOW
   }]
 };
-var EXTERNAL = {
-  objectId: UI16,
-  symbolName: STRING
-};
-var PARAMS = {
-  register: UI8,
-  name: STRING
-};
 var FILL_SOLID = {
   color: ['tagCode>22||isMorph', [RGBA, RGB]],
   colorMorph: ['isMorph', [RGBA]]
@@ -441,20 +433,6 @@ var TEXT_RECORD = {
       count: 'glyphCount'
     }
   }]]
-};
-var ZONE_DATA = {
-  coord: FLOAT16,
-  range: FLOAT16
-};
-var ZONE_ARRAY = {
-  $count: UI8,
-  zoneData: {
-    $: ZONE_DATA,
-    count: 'count'
-  },
-  $$reserved: UB(6),
-  zoneY: UB(1),
-  zoneX: UB(1)
 };
 var ENVELOPE = {
   pos: UI32,
