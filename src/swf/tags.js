@@ -266,7 +266,7 @@ var PLACE_OBJECT = {
       ]],
       depth: UI16,
       className: ['hasClassName', [STRING(0)]],
-      objId: ['place', [UI16]],
+      symbolId: ['place', [UI16]],
       matrix: ['hasMatrix', [MATRIX]],
       cxform: ['hasCxform', [CXFORM]],
       ratio: ['hasRatio', [UI16]],
@@ -294,7 +294,7 @@ var PLACE_OBJECT = {
     },
     {
       place: '1',
-      objId: UI16,
+      symbolId: UI16,
       depth: UI16,
       hasMatrix: '1',
       matrix: MATRIX,
@@ -306,7 +306,7 @@ var PLACE_OBJECT = {
   ]]
 };
 var REMOVE_OBJECT = {
-  objId: ['tagCode===5', [UI16]],
+  symbolId: ['tagCode===5', [UI16]],
   depth: UI16
 };
 var SET_BACKGROUND_COLOR = {

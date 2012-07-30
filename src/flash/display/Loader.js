@@ -314,7 +314,7 @@ Loader.prototype = Object.create(baseProto, {
         case SWF_TAG_CODE_PLACE_OBJECT3:
           var entry = { };
           if (tag.place) {
-            var symbol = symbols[tag.objId];
+            var symbol = symbols[tag.symbolId];
             entry.id = symbol.id;
             dependencies.push(symbol.id);
           }
@@ -477,7 +477,7 @@ Loader.prototype = Object.create(baseProto, {
             case SWF_TAG_CODE_PLACE_OBJECT3:
               var entry = { };
               if (tag.place) {
-                var obj = symbols[tag.objId];
+                var obj = symbols[tag.symbolId];
                 entry.id = obj.id;
               }
               if (tag.events) {
