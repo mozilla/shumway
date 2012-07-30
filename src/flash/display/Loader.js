@@ -121,9 +121,9 @@ Loader.prototype = Object.create(baseProto, {
             //var symbolClasses = loaderInfo._symbolClasses;
             for (var i = 0, n = references.length; i < n; i++) {
               var reference = references[i++];
-              var symbol = this.getSymbolById(reference.id);
-              if (symbol)
-                symbol.__class__ = reference.name;
+              var symbolClass = this.getSymbolClassById(reference.id);
+              if (symbolClass)
+                symbolClass.__class__ = reference.name;
               //symbolClasses[sym.name] = dictionary[sym.id];
               //if (!sym.id) {
               //  var documentClass = this.avm2.applicationDomain.getProperty(
@@ -158,6 +158,16 @@ Loader.prototype = Object.create(baseProto, {
       requirePromise = Promise.all(requirePromises);
     }
     switch (symbol.type) {
+    case 'button':
+      requirePromise.then(function () {
+        var timelineLoader = new TimelineLoader(
+          4,
+          [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
+          dictionary
+        );
+        promise.resolve(new ButtonPrototype(symbol, timelineLoader));
+      });
+      break;
     case 'font':
       var charset = fromCharCode.apply(null, symbol.codes);
       if (charset) {
@@ -187,6 +197,17 @@ Loader.prototype = Object.create(baseProto, {
           promise.resolve(proto);
         });
       };
+      break;
+    case 'label':
+    case 'text':
+      var proto = Object.create(symbol);
+      var drawFn = new Function('d,c,r', symbol.data);
+      proto.draw = (function(c, r) {
+        return drawFn.call(this, dictionary, c, r);
+      });
+      requirePromise.then(function() {
+        promise.resolve(proto);
+      });
       break;
     case 'sprite':
       var timelineLoader = new TimelineLoader(
@@ -221,52 +242,31 @@ Loader.prototype = Object.create(baseProto, {
         promise.resolve(symbolClass);
       });
       break;
-    case 'label':
-    case 'text':
-      var proto = Object.create(symbol);
-      var drawFn = new Function('d,c,r', symbol.data);
-      proto.draw = (function(c, r) {
-        return drawFn.call(this, dictionary, c, r);
-      });
-      requirePromise.then(function() {
-        promise.resolve(proto);
-      });
-      break;
-    case 'button':
-      requirePromise.then(function () {
-        var timelineLoader = new TimelineLoader(
-          4,
-          [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
-          dictionary
-        );
-        promise.resolve(new ButtonPrototype(symbol, timelineLoader));
-      });
-      break;
-    default:
-      fail('unknown object type', 'define');
     }
   }),
   defineSymbol: describeMethod(function (swfTag) {
-    var dictionary = this._symbols;
-    var factory = null;
     var loader = this;
-    var obj = null;
+    var symbol;
+    var symbols = this._symbols;
 
     switch (swfTag.type) {
     case 'bitmap':
-      var factory = defineBitmap;
+      symbol = defineBitmap(swfTag, symbols);
+      break;
+    case 'button':
+      symbol = defineButton(swfTag, symbols);
       break;
     case 'font':
-      var factory = defineFont;
+      symbol = defineFont(swfTag, symbols);
       break;
     case 'image':
-      var factory = defineImage;
+      symbol = defineImage(swfTag, symbols);
       break;
     case 'label':
-      var factory = defineLabel;
+      symbol = defineLabel(swfTag, symbols);
       break;
     case 'shape':
-      var factory = defineShape;
+      symbol = defineShape(swfTag, symbols);
       break;
     case 'sprite':
       var dependencies = [];
@@ -312,9 +312,9 @@ Loader.prototype = Object.create(baseProto, {
         case 'place':
           var entry = { };
           if (tag.place) {
-            var obj = dictionary[tag.objId];
-            entry.id = obj.id;
-            dependencies.push(obj.id);
+            var symbol = symbols[tag.objId];
+            entry.id = symbol.id;
+            dependencies.push(symbol.id);
           }
           if (tag.events) {
             var events = tag.events;
@@ -339,7 +339,7 @@ Loader.prototype = Object.create(baseProto, {
           break;
         }
       }
-      obj = {
+      symbol = {
         type: 'sprite',
         id: swfTag.id,
         frameCount: swfTag.frameCount,
@@ -348,40 +348,14 @@ Loader.prototype = Object.create(baseProto, {
       };
       break;
     case 'text':
-      var factory = defineText;
+      symbol = defineText(swfTag, symbols);
       break;
-    case 'button':
-      var factory = defineButton;
-      break;
-    case 'sound':
-      var obj = {
-        type: 'sound',
-        id: swfTag.id
-      };
-      break;
-    default:
-      fail('unknown object type', 'defineSymbol');
     }
 
-    var id = swfTag.id - 0x4001;
-    dictionary[id] = swfTag;
-    Object.defineProperty(dictionary, swfTag.id, {
-      get: (function(id, factory, obj) {
-        var undeclared = true;
-        return function () {
-          if (undeclared) {
-            if (!obj)
-              obj = factory(dictionary[id], dictionary);
-            if (obj.id)
-              loader.commitData(obj);
-            undeclared = false;
-          }
-          return obj;
-        };
-      })(id, factory, obj)
-    });
+    symbols[swfTag.id] = symbol;
+    loader.commitData(symbol);
   }),
-  getSymbolByClassName: describeMethod(function (className) {
+  getSymbolClassByName: describeMethod(function (className) {
     var dictionary = this._dictionary;
     for (var id in dictionary) {
       var symbol = dictionary[id];
@@ -390,7 +364,7 @@ Loader.prototype = Object.create(baseProto, {
     }
     return null;
   }),
-  getSymbolById: describeMethod(function (id) {
+  getSymbolClassById: describeMethod(function (id) {
     return this._dictionary[id] || null;
   }),
   load: describeMethod(function (request, context) {
@@ -437,10 +411,10 @@ Loader.prototype = Object.create(baseProto, {
     }
   }),
   parseBytes: describeMethod(function (bytes) {
-    var dictionary = this._symbols;
     var loader = this;
     var numProcessedTags = 0;
     var pframe = { };
+    var symbols = this._symbols;
 
     SWF.parse(bytes, {
       onstart: function(result) {
@@ -453,14 +427,6 @@ Loader.prototype = Object.create(baseProto, {
           var tag = tags[numProcessedTags];
           if ('id' in tag) {
             loader.defineSymbol(tag);
-          } else if ('ref' in tag) {
-            var id = tag.ref - 0x4001;
-            var obj = Object.create(dictionary[id]);
-            for (var prop in tag) {
-              if (prop !== 'id' && prop !== 'ref')
-                obj[prop] = tag[prop];
-            }
-            dictionary[id] = obj;
           } else {
             switch (tag.type) {
             case 'background':
@@ -507,7 +473,7 @@ Loader.prototype = Object.create(baseProto, {
             case 'place':
               var entry = { };
               if (tag.place) {
-                var obj = dictionary[tag.objId];
+                var obj = symbols[tag.objId];
                 entry.id = obj.id;
               }
               if (tag.events) {
