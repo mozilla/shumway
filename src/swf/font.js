@@ -1,5 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var nextFontId = 1;
+
 function maxPower2(num) {
   var maxPower = 0;
   var val = num;
@@ -12,30 +14,42 @@ function maxPower2(num) {
 
 function defineFont(tag, dictionary) {
   var tables = { };
-  var codes = tag.codes.slice();
+  var codes = [];
   var glyphIndex = { };
-  for (var i = 0, code; code = codes[i]; ++i)
-    glyphIndex[code] = i;
-  codes.sort(function(a, b) {
-    return a - b;
-  });
-  var ranges = [];
-  var i = 0;
-  var code;
-  while (code = codes[i++]) {
-    var start = code;
-    var end = start;
-    var indices = [i - 1];
-    while ((code = codes[i]) && end + 1 === code) {
-      ++end;
-      indices.push(i);
-      ++i;
+
+  if (tag.codes) {
+    codes = codes.concat(tag.codes);
+    for (var i = 0, code; code = codes[i]; ++i)
+      glyphIndex[code] = i;
+    codes.sort(function(a, b) {
+      return a - b;
+    });
+    var ranges = [];
+    var i = 0;
+    var code;
+    while (code = codes[i++]) {
+      var start = code;
+      var end = start;
+      var indices = [i - 1];
+      while ((code = codes[i]) && end + 1 === code) {
+        ++end;
+        indices.push(i);
+        ++i;
+      }
+      ranges.push([start, end, indices]);
     }
-    ranges.push([start, end, indices]);
+  } else {
+    for (var i = 0; i < glyphCount; i++) {
+      var code = 0xe000 + i;
+      codes.push(code);
+      glyphIndex[code] = i;
+      indices.push(i);
+    }
+    ranges.push([0, glyphCount - 1, indices]);
   }
 
-  var ascent = tag.ascent;
-  var descent = tag.descent;
+  var ascent = tag.ascent || 1024;
+  var descent = tag.descent || 1024;
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
@@ -62,11 +76,11 @@ function defineFont(tag, dictionary) {
     toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20: 0)) + // fsSelection
     toString16(codes[0]) + // usFirstCharIndex
     toString16(codes[codes.length - 1]) + // usLastCharIndex
-    toString16(ascent || 1024) + // sTypoAscender
-    toString16(descent || 1024) + // sTypoDescender
+    toString16(ascent) + // sTypoAscender
+    toString16(descent) + // sTypoDescender
     '\x00\x00' + // sTypoLineGap
-    toString16(ascent || 1024) + // usWinAscent
-    toString16(descent || 1024) + // usWinDescent
+    toString16(ascent) + // usWinAscent
+    toString16(descent) + // usWinDescent
     '\x00\x00\x00\x00' + // ulCodePageRange1
     '\x00\x00\x00\x00' // ulCodePageRange2
   ;
@@ -271,8 +285,8 @@ function defineFont(tag, dictionary) {
   var glyphCount = glyphs.length;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
-    toString16(ascent || 1024) + // ascender
-    toString16(descent || 1024) + // descender
+    toString16(ascent) + // ascender
+    toString16(descent) + // descender
     '\x00\x00' + // lineGap
     toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
@@ -341,8 +355,8 @@ function defineFont(tag, dictionary) {
     '\x00\x00' // maxComponentDepth
   ;
 
-  var uniqueId = (+new Date) + '';
-  var fontName = tag.name;
+  var uniqueId = 'swf-font-' + nextFontId++;
+  var fontName = tag.name || uniqueId;
   var psName = fontName.replace(/ /g, '');
   var strings = [
     tag.copyright || 'Original licence', // 0. Copyright
@@ -426,7 +440,7 @@ function defineFont(tag, dictionary) {
     type: 'font',
     id: tag.id,
     name: psName + uniqueId,
-    codes: tag.codes,
+    codes: codes,
     data: otf
   };
 }
