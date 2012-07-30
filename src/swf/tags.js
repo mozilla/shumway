@@ -247,9 +247,6 @@ var FILE_ATTRIBUTES = {
   network: UB(1),
   $$pad: UB(24)
 };
-var METADATA = {
-  metadata: STRING(0)
-};
 var PLACE_OBJECT = {
   type: '"place"',
   $0: ['tagCode>4', [
