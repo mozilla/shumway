@@ -367,10 +367,8 @@ function defineShape(tag, dictionary) {
         'commands:[' + commands.join(',') + '],' +
         'data:[' + data.join(',') + ']' +
       '},{' +
-        '__class__:"flash.display.GraphicsSolidFill",' +
+        '__class__:"flash.display.GraphicsEndFill",' +
         '__isIGraphicsFill__:true,' +
-        'color:0,' +
-        'alpha:0' +
       '}');
 
       paths.push({ i: path[0].i, cmds: cmds});
