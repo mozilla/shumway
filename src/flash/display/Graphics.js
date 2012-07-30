@@ -230,7 +230,10 @@ Graphics.prototype = Object.create(null, {
    notImplemented();
   }),
   endFill: describeMethod(function () {
-    this._currentPath.closePath();
+    delete this._currentPath;
+
+    this._fillStyle = null;
+    this._fillTransform = null;
   }),
   lineBitmapStyle: describeMethod(function (bitmap, matrix, repeat, smooth) {
    notImplemented();
@@ -274,10 +277,7 @@ Graphics.prototype = Object.create(null, {
     path.fillStyle = this._fillStyle;
     path.fillTransform = this._fillTransform;
     path.strokeStyle = this._lineStyle;
-    path.winding = this._winding;
-
     this._subpaths.push(path);
-
     return path;
   })
 });
