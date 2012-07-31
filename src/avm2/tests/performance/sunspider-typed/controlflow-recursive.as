@@ -48,7 +48,7 @@ package {
     
         var start:Number = new Date();
     
-    for ( var i:int = 3; i <= 5; i++ ) {
+    for ( var i:int = 3; i <= 6 /*7*/; i++ ) {
         results['ack'+i]=ack(3,i);
         results['fib'+(17+i)]=fib(17.0+i);
         results['tak'+i]=tak(3*i+3,2*i+2,i+1);
@@ -61,12 +61,19 @@ package {
     expectedresults['ack3']=61;
     expectedresults['ack4']=125;
     expectedresults['ack5']=253;
+    expectedresults['ack6']=509;
+    //expectedresults['ack7']=1021;
     expectedresults['fib20']=10946;
     expectedresults['fib21']=17711;
     expectedresults['fib22']=28657;
+    expectedresults['fib23']=46368;
+    //expectedresults['fib24']=75025;
     expectedresults['tak3']=5;
     expectedresults['tak4']=10;
     expectedresults['tak5']=7;
+    expectedresults['tak6']=14;
+    //expectedresults['tak7']=9;
+
 
     var msg:String="";
     for (var a:String in results) {
@@ -75,7 +82,7 @@ package {
     }
 
     if (msg=="")
-        print("PASSED msg="+msg);
+        print("PASSED");
     else
         print("FAILED "+msg);
 

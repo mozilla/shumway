@@ -6,7 +6,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>shumway@research.mozilla.org</em:id>
     <em:name>shumway</em:name>
-    <em:version>0.2.0</em:version>
+    <em:version>0.2.1</em:version>
 	  <em:iconURL>chrome://shumway/skin/logo.png</em:iconURL>
 
     <!-- Firefox -->

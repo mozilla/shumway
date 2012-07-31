@@ -119,11 +119,25 @@
         };
       })();
 
+      function fallback() {
+        FirefoxCom.requestSync('fallback', null)
+      }
+
       function runViewer() {
-        var movieUrl = FirefoxCom.requestSync('getUrl', null);
-        var movieParams = FirefoxCom.requestSync('getParams', null);
-        console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
+        var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
+        var movieUrl = flashParams.url;
+        var movieArgs = flashParams.arguments;
+        var isOverlay = flashParams.isOverlay;
+        console.log("url=" + movieUrl + ";params=" + uneval(movieArgs));
         FirefoxCom.requestSync('loadFile', movieUrl);
+        if (isOverlay) {
+          var fallbackDiv = document.getElementById('fallback');
+          fallbackDiv.className = 'enabled';
+          fallbackDiv.addEventListener('click', function(e) {
+            fallback();
+            e.preventDefault();
+          });
+        }
       }
 
       addEventListener("message", function handlerMessage(e) {
@@ -141,9 +155,35 @@
       }
         
     </script>
+    <style>
+      #viewer {
+        position:fixed;left:0;top:0;bottom:0;right:0;
+        background-color:magenta;
+      }
+
+      #fallback {
+        display: none;
+      }
+      #fallback.enabled {
+        display: block;
+        position:fixed; right: 10px; bottom: 10px; width: 70px; height: 14px;
+        color: white;
+        background-color: #400040;
+        font: bold 10px sans-serif;
+        text-align: center;
+        text-decoration: none;
+        border-radius: 5px;
+        box-shadow: 0px 0px 3px 3px #888;
+      }
+      #fallback .icon {
+        display: inline-block;
+        color: white;
+      }
+    </style>
   </head>
 
   <body onload="runViewer()">
-      <div id="viewer" style="position:fixed;left:0;top:0;bottom:0;right:0;background-color:magenta;"></div>      
+      <div id="viewer"></div>
+      <a id="fallback" href="#">shumway <span class="icon">&times;</span></a>
   </body>
 </html>
