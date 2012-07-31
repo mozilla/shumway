@@ -16,7 +16,7 @@ function initializeGlobalObject(global) {
     var keys = [];
     for (var key in obj) {
       if (PUBLIC_MANGLED.test(key) &&
-          !(obj.bindings && obj.bindings.indexOf(key) >= 0)) {
+          !(obj.vm$bindings && obj.vm$bindings.indexOf(key) >= 0)) {
         keys.push(key.substr(7));
       }
     }
@@ -139,11 +139,11 @@ function typeOf(x) {
 }
 
 function getSlot(obj, index) {
-  return obj[obj.slots[index].name];
+  return obj[obj.vm$slots[index].name];
 }
 
 function setSlot(obj, index, value) {
-  var binding = obj.slots[index];
+  var binding = obj.vm$slots[index];
   if (binding.const) {
     return;
   }
@@ -536,7 +536,7 @@ var Runtime = (function () {
   };
 
   /**
-   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the 
+   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the
    * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
    * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
    * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
@@ -849,18 +849,18 @@ var Runtime = (function () {
 
     // Copy over base trait bindings.
     if (base) {
-      var bindings = base.bindings;
+      var bindings = base.vm$bindings;
       for (var i = 0, j = bindings.length; i < j; i++) {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
       }
-      defineNonEnumerableProperty(obj, "bindings", base.bindings.slice());
-      defineNonEnumerableProperty(obj, "slots", base.slots.slice());
-      obj.slots = base.slots.slice();
-      baseSlotId = obj.slots.length;
+      defineNonEnumerableProperty(obj, "vm$bindings", base.vm$bindings.slice());
+      defineNonEnumerableProperty(obj, "vm$slots", base.vm$slots.slice());
+      obj.vm$slots = base.vm$slots.slice();
+      baseSlotId = obj.vm$slots.length;
     } else {
-      defineNonEnumerableProperty(obj, "bindings", []);
-      defineNonEnumerableProperty(obj, "slots", []);
+      defineNonEnumerableProperty(obj, "vm$bindings", []);
+      defineNonEnumerableProperty(obj, "vm$slots", []);
       baseSlotId = 0;
     }
 
@@ -886,7 +886,7 @@ var Runtime = (function () {
           var res = domain.findDefiningScript(trait.name, false);
           if (res) {
             var abc = res.script.abc;
-            if (!abc.domain.base && abc.name === "builtin.abc") {
+            if (!abc.domain.base && abc.name === "bltin.abc") {
               continue;
             }
           }
@@ -898,7 +898,7 @@ var Runtime = (function () {
 
         var tyname = trait.typeName;
         defineNonEnumerableProperty(obj, qn, trait.value);
-        obj.slots[trait.slotId] = {
+        obj.vm$slots[trait.slotId] = {
           name: qn,
           const: trait.isConst(),
           type: tyname ? domain.getProperty(tyname, false, false) : null
@@ -937,7 +937,7 @@ var Runtime = (function () {
         } else {
           closure = makeClosure(trait);
         }
-        
+
         var mc;
         if (delayBinding) {
           var memoizeMethodClosure = (function (closure, qn) {
@@ -964,7 +964,7 @@ var Runtime = (function () {
         assert(false);
       }
 
-      obj.bindings.push(qn);
+      obj.vm$bindings.push(qn);
     }
 
     return obj;
