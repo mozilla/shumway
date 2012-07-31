@@ -26,7 +26,7 @@ var DEFINE_FONT = {
 var DEFINE_FONT2 = {
   id: UI16,
   $hasLayout: UB(1),
-  $0: ['version>5', [
+  $0: ['swfVersion>5', [
     { shiftJis: UB(1) },
     { $$reserved: UB(1) }
   ]],
@@ -36,7 +36,7 @@ var DEFINE_FONT2 = {
   $wide: UB(1),
   italic: UB(1),
   bold: UB(1),
-  $1: ['version>5', [
+  $1: ['swfVersion>5', [
     { language: UI8 },
     {
       $$reserved: UI8,
@@ -283,7 +283,7 @@ var PLACE_OBJECT = {
       bmpCache: ['cache', [UI8]],
       $3: ['hasEvents', [{
         $$reserved: UI16,
-        $$allFlags: ['version>=6', [UI32, UI16]],
+        $$allFlags: ['swfVersion>=6', [UI32, UI16]],
         events: {
           $: EVENT,
           condition: '!eoe'
@@ -314,10 +314,10 @@ var SET_BACKGROUND_COLOR = {
 };
 var SYMBOL_CLASS = {
   $$symbolCount: UI16,
-  references: {
+  exports: {
     $: {
-      id: UI16,
-      name: STRING(0)
+      symbolId: UI16,
+      className: STRING(0)
     },
     count: 'symbolCount'
   }

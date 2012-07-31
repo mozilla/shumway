@@ -69,12 +69,12 @@ var tagHandler = {
 for (var tag in tagHandler) {
   var handler = tagHandler[tag];
   if (typeof handler === 'object')
-    tagHandler[tag] = generateParser(handler, 'version', 'tagCode');
+    tagHandler[tag] = generateParser(handler, 'swfVersion', 'tagCode');
 }
 
 var readHeader = generateParser(MOVIE_HEADER);
 
-function readTags(context, stream, version, onprogress) {
+function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
   do {
@@ -93,11 +93,11 @@ function readTags(context, stream, version, onprogress) {
       tag.id = readUi16(subbytes, substream);
       tag.frameCount = readUi16(subbytes, substream);
       tag.tags = [];
-      readTags(tag, substream, version);
+      readTags(tag, substream, swfVersion);
     } else {
       var handler = tagHandler[tagCode];
       if (handler)
-        handler(subbytes, substream, tag, version, tagCode);
+        handler(subbytes, substream, tag, swfVersion, tagCode);
     }
     tags.push(tag);
 
@@ -126,7 +126,7 @@ SWF.parse = function(buffer, options) {
   var compressed = magic1 === 67;
   assert((magic1 === 70 || compressed) && magic2 === 87 && magic3 === 83,
          'unsupported file format', 'parse');
-  var version = bytes[3];
+  var swfVersion = bytes[3];
   stream.pos += 4;
   var fileLength = readUi32(bytes, stream);
 
@@ -136,13 +136,13 @@ SWF.parse = function(buffer, options) {
     stream.ensure(21);
   }
 
-  var swf = { version: version };
+  var swf = { swfVersion: swfVersion };
   readHeader(bytes, stream, swf);
   if (options.onstart)
     options.onstart(swf);
 
   swf.tags = [];
-  readTags(swf, stream, version, options.onprogress);
+  readTags(swf, stream, swfVersion, options.onprogress);
 
   if (options.oncomplete)
     options.oncomplete(swf);

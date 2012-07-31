@@ -103,7 +103,7 @@ var MOVIE_HEADER = {
   frameCount: UI16
 };
 var EVENT = {
-  $$flags: ['version>=6', [UI32, UI16]],
+  $$flags: ['swfVersion>=6', [UI32, UI16]],
   $eoe: '!flags',
   onKeyUp: 'flags>>7&1',
   onKeyDown: 'flags>>6&1',
@@ -113,7 +113,7 @@ var EVENT = {
   onUnload: 'flags>>2&1',
   onEnterFrame: 'flags>>1&1',
   onLoad: 'flags&1',
-  $0: ['version>=6', [
+  $0: ['swfVersion>=6', [
     {
       onDragOver: 'flags>>15&1',
       onRollOut: 'flags>>14&1',
@@ -123,7 +123,7 @@ var EVENT = {
       onPress: 'flags>>10&1',
       onInitialize: 'flags>>9&1',
       onData: 'flags>>8&1',
-      onConstruct: ['version>=7', ['flags>>18&1', '0']],
+      onConstruct: ['swfVersion>=7', ['flags>>18&1', '0']],
       $keyPress: 'flags>>17&1',
       onDragOut: 'flags>>16&1'
     }
@@ -427,7 +427,7 @@ var TEXT_RECORD = {
   $0: TEXT_RECORD_SETUP,
   $1: ['!eot', [{
     $$tmp: UI8,
-    $glyphCount: ['version>6', ['tmp', 'tmp&0x7f']],
+    $glyphCount: ['swfVersion>6', ['tmp', 'tmp&0x7f']],
     entries: {
       $: TEXT_ENTRY,
       count: 'glyphCount'
@@ -462,7 +462,7 @@ var SOUND_INFO = {
 var BUTTON = {
   $$flags: UI8,
   $eob: '!flags',
-  $0: ['version>=8', [
+  $0: ['swfVersion>=8', [
     {
       $blend: 'flags>>5&1',
       $hasFilters: 'flags>>4&1'
