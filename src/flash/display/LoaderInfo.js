@@ -10,6 +10,9 @@ LoaderInfo.prototype = Object.create(new EventDispatcher, {
   applicationDomain: describeAccessor(function () {
     notImplemented();
   }),
+  backgroundColor: describeAccessor(function () {
+    return this._backgroundColor;
+  }),
   bytes: describeAccessor(function () {
     return this._bytes;
   }),
