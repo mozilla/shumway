@@ -4,9 +4,10 @@
  * This script performs several source level transformations:
  * - Expands "load(file);" expression statements.
  * - Removes assertion statements.
- * - Replaces identifiers, useful for constant folding, e.g.
- *   |$CHROME ? ... : ...|  can be optimized away by the closure compiler
- *   if the identifier $CHROME is replaced with |true| or |false|.
+ * - Replaces identifiers. This useful for constant folding, e.g.
+ *   |$DEBUG ? A : B| can be optimized away to |B| by the closure compiler
+ *   if the identifier $DEBUG is replaced with |false|.
+ * - Optionally runs the closure compiler.
  */
 
 var path = require('path');
@@ -132,7 +133,6 @@ if (closure.value) {
     process.exit();
   }
   closureOptions.push(closure.value === "a" ? "ADVANCED_OPTIMIZATIONS" : "SIMPLE_OPTIMIZATIONS");
-  console.log(closureOptions);
   var cc = spawn("java", closureOptions);
   cc.stdout.on('data', function (data) {
     process.stdout.write(data);
