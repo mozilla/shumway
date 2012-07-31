@@ -12,6 +12,7 @@
 var path = require('path');
 var fs   = require('fs');
 var readFile = fs.readFileSync;
+var spawn = require('child_process').spawn;
 
 global.assert = function () { };
 
@@ -37,10 +38,30 @@ const BlockStatement = T.BlockStatement;
 // Parse arguments
 var arguments = process.argv.slice(2);
 var argumentParser = new ArgumentParser();
+var buildOptions = new OptionSet("Build Options");
+
+var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
+argumentParser.addBoundOptionSet(buildOptions);
+
+argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
+  console.log("build.js " + argumentParser.getUsage());
+  process.exit();
+}});
+
 var file = argumentParser.addArgument("file", "file", "string", {
   positional: true
 });
-argumentParser.parse(arguments);
+
+try {
+  argumentParser.parse(arguments);
+} catch (x) {
+  console.log(x.message);
+  process.exit();
+}
+
+if (!file.value) {
+  process.exit();
+}
 
 Node.prototype.transform = T.makePass("transform", "transformNode");
 
@@ -93,4 +114,31 @@ var constants = {
 
 node = node.transform({constants: constants});
 var code = escodegen.generate(node, { base: "", indent: "  ", comment: false });
-console.log(code);
+
+if (closure.value) {
+  if (!("CLOSURE" in process.env)) {
+    console.log("Set the |CLOSURE| environment variable to the Closure-Compiler compiler.jar file");
+    process.exit();
+  }
+  var closureOptions = ["-jar", process.env["CLOSURE"]];
+  closureOptions.push("--accept_const_keyword");
+  closureOptions.push("--language_in");
+  closureOptions.push("ECMASCRIPT5");
+  closureOptions.push("--compilation_level");
+  var optimizations = {a: "ADVANCED_OPTIMIZATIONS", s: "SIMPLE_OPTIMIZATIONS", w: "WHITESPACE_ONLY"};
+  if (!(closure.value in optimizations)) {
+    console.log("Unknown optimization level: " + closure.value + ", must be one of:");
+    console.log(optimizations);
+    process.exit();
+  }
+  closureOptions.push(closure.value === "a" ? "ADVANCED_OPTIMIZATIONS" : "SIMPLE_OPTIMIZATIONS");
+  console.log(closureOptions);
+  var cc = spawn("java", closureOptions);
+  cc.stdout.on('data', function (data) {
+    process.stdout.write(data);
+  });
+  cc.stdin.write(code);
+  cc.stdin.end();
+} else {
+  console.log(code);
+}
