@@ -756,18 +756,28 @@ var Runtime = (function () {
     // Luckily, interface methods are always public.
     (function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
-        var iface = domain.getProperty(interfaces[i], true, true);
-        var ii = iface.classInfo.instanceInfo;
-        cls.implementedInterfaces.push(iface);
+        var interface = domain.getProperty(interfaces[i], true, true);
+        var ii = interface.classInfo.instanceInfo;
+        cls.implementedInterfaces.push(interface);
         applyInterfaceTraits(ii.interfaces);
 
         var bindings = instance.prototype;
-        var iftraits = ii.traits;
-        for (var i = 0, j = iftraits.length; i < j; i++) {
-          var iftrait = iftraits[i];
-          var ifqn = iftrait.name.getQualifiedName();
-          var ptrait = Object.getOwnPropertyDescriptor(bindings, "public$" + iftrait.name.getName());
-          Object.defineProperty(bindings, ifqn, ptrait);
+        var interfaceTraits = ii.traits;
+        for (var i = 0, j = interfaceTraits.length; i < j; i++) {
+          var interfaceTrait = interfaceTraits[i];
+          var interfaceTraitQn = interfaceTrait.name.getQualifiedName();
+          var interfaceTraitBindingQn = "public$" + interfaceTrait.name.getName();
+          // TODO: We should just copy over the property descriptor but we can't because it may be a
+          // memoizer which will fail to patch the interface trait name. We need to make the memoizer patch
+          // all traits bound to it.
+          // var interfaceTraitDescriptor = Object.getOwnPropertyDescriptor(bindings, interfaceTraitBindingQn);
+          // Object.defineProperty(bindings, interfaceTraitQn, interfaceTraitDescriptor);
+          var getter = function (target) {
+            return function () {
+              return this[target];
+            }
+          }(interfaceTraitBindingQn);
+          defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }
     })(ii.interfaces);
@@ -942,12 +952,18 @@ var Runtime = (function () {
         if (delayBinding) {
           var memoizeMethodClosure = (function (closure, qn) {
             return function () {
+              if (this.hasOwnProperty(qn)) {
+                Counter.count("Runtime: Unpatched Memoizer");
+                return this[qn];
+              }
               var mc = closure.bind(this);
               defineReadOnlyProperty(mc, "public$prototype", null);
               defineReadOnlyProperty(this, qn, mc);
+              Counter.count("Runtime: Method Closures");
               return mc;
             };
           })(closure, qn);
+          Counter.count("Runtime: Memoizers");
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
           // overriden by a derivied class. Only do this non final classes.
           defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
