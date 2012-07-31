@@ -136,7 +136,11 @@ var Compiler = (function () {
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
       } else {
-        Literal.call(this, value);
+        if (typeof value === "number" && value < 0) {
+          UnaryExpression.call(this, "-", new Literal(Math.abs(value)));
+        } else {
+          Literal.call(this, value);
+        }
       }
     }
     constant.prototype.isEquivalent = function (other) {
