@@ -2,35 +2,35 @@
 
 var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 
-function render(displayList, renderingContext) {
+function render(container, renderingContext) {
   var ctx = renderingContext.beginDrawing();
   // displayList is array, so items are sorted by depth
-  for (var depth in displayList) {
-    var item = displayList[depth];
-    if (item) {
-      var character = item.character;
-      if (item.matrix && !character.$fixMatrix)
-        character.matrix = create(item.matrix);
-      if (item.cxform && !character.$fixCxform)
-        character.cxform = create(item.cxform);
+  var children = container._children;
+  for (var i = 0, n = children.length; i < n; i++) {
+    var child = children[i];
+    if (child) {
+      if (item.matrix && !child.$fixMatrix)
+        child.matrix = create(item.matrix);
+      if (item.cxform && !child.$fixCxform)
+        child.cxform = create(item.cxform);
 
       ctx.save();
-      var m = character.matrix;
+      var m = child.matrix;
       ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-      var rotation = character.rotation;
+      var rotation = child.rotation;
       if (rotation)
         ctx.rotate(rotation * Math.PI / 180);
-      var cxform = character.cxform;
+      var cxform = child.cxform;
       if (cxform) {
         // We only support alpha channel transformation for now
         ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
       }
 
-      if (character._graphics) {
-        var graphics = character._graphics;
+      if (child._graphics) {
+        var graphics = child._graphics;
         var subpaths = graphics._subpaths;
-        for (var i = 0, n = subpaths.length; i < n; i++) {
-          var path = subpaths[i];
+        for (var j = 0, n = subpaths.length; j < n; j++) {
+          var path = subpaths[j];
           if (path.fillStyle) {
             ctx.fillStyle = path.fillStyle;
             if (path.fillTransform) {
@@ -54,23 +54,23 @@ function render(displayList, renderingContext) {
         }
       }
 
-      if (character.draw)
-        character.draw(ctx, character.ratio);
-      else if (character.nextFrame)
-        character.renderNextFrame(renderingContext);
+      if (child.draw)
+        child.draw(ctx, child.ratio);
+      else if (child.nextFrame)
+        child.renderNextFrame(renderingContext);
 
       ctx.restore();
-      if (character.hitTestCache && character.hitTestCache.ratio != character.ratio)
-        renderShadowCanvas(character);
+      if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
+        renderShadowCanvas(child);
     }
   }
   renderingContext.endDrawing();
 }
 
-function renderShadowCanvas(character) {
-  var cache = character.hitTestCache;
+function renderShadowCanvas(child) {
+  var cache = child.hitTestCache;
 
-  var bounds = character.getBounds();
+  var bounds = child.getBounds();
   var offsetX = Math.floor(bounds.x / 20);
   var offsetY = Math.floor(bounds.y / 20);
   var sizeX = Math.ceil(bounds.width / 20);
@@ -103,20 +103,20 @@ function renderShadowCanvas(character) {
   ctx.translate(-offsetX, -offsetY);
   ctx.scale(0.05, 0.05);
 
-  if (character.draw)
-    character.draw(ctx, character.ratio);
-  else if (character.nextFrame) {
+  if (child.draw)
+    child.draw(ctx, child.ratio);
+  else if (child.nextFrame) {
     var renderContext = {
       isHitTestRendering: true,
       beginDrawing: function() { return ctx; },
       endDrawing: function() {}
     };
-    character.renderNextFrame(renderContext);
+    child.renderNextFrame(renderContext);
   }
 
   ctx.restore();
 
-  cache.ratio = character.ratio;
+  cache.ratio = child.ratio;
   cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
 }
 
@@ -169,7 +169,9 @@ function renderStage(stage, ctx) {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      root.renderNextFrame(renderingContext);
+      if (root.isPlaying())
+        root.nextFrame();
+      render(root, renderingContext);
     }
     requestAnimationFrame(draw);
   })();

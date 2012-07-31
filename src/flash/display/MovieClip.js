@@ -1,13 +1,16 @@
 function MovieClip() {
+  this._currentDisplayList = null;
   this._currentFrame = 0;
   this._currentFrameLabel = null;
   this._currentLabel = false;
   this._currentScene = { };
   this._enabled = true;
   this._frameScripts = { };
+  this._frameLabels = { };
   this._framesLoaded = 1;
   this._isPlaying = true;
   this._scenes = { };
+  this._timeline = null;
   this._totalFrames = 1;
   this._scenes = { };
 }
@@ -48,19 +51,24 @@ MovieClip.prototype = Object.create(new Sprite, {
     }
   ),
   framesLoaded: describeAccessor(function () {
-    return this._timelineLoader.framesLoaded
+    return this._timeline.length;
   }),
 
   gotoFrame: describeMethod(function (frameNum, scene) {
     if (frameNum > this._totalFrames)
       frameNum = 1;
 
-    this._timelineLoader.ensureFrame(frameNum, this);
-
     if (frameNum > this.framesLoaded)
       frameNum = this.framesLoaded;
 
     this._currentFrame = frameNum;
+
+    var currentDisplayList = this._currentDisplayList;
+    var displayList = this._timeline[frameNum - 1];
+
+    console.log(displayList);
+
+    this._currentDisplayList = displayList;
 
     this.$dispatchEvent('onEnterFrame');
 
@@ -84,11 +92,16 @@ MovieClip.prototype = Object.create(new Sprite, {
     else
       this.gotoFrame(frame);
   }),
+  gotoLabel: describeMethod(function (labelName) {
+    var frameLabel = this._frameLabels[labelName];
+    if (frameLabel)
+      this.gotoFrame(frameLabel.frame);
+  }),
   isPlaying: describeMethod(function () {
     return this._isPlaying;
   }),
   nextFrame: describeMethod(function () {
-    this.gotoAndStop((this._currentFrame % this._totalFrames) + 1);
+    this.gotoAndPlay((this._currentFrame % this._totalFrames) + 1);
   }),
   nextScene: describeMethod(function () {
     notImplemented();

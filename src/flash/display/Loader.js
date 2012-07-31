@@ -71,79 +71,107 @@ Loader.prototype = Object.create(baseProto, {
   commitData: describeMethod(function (data) {
     if (typeof window === 'undefined') {
       self.postMessage(data);
-    } else {
-      var loaderInfo = this.contentLoaderInfo;
+      return;
+    }
 
-      loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+    var dictionary = this._dictionary;
+    var loaderInfo = this.contentLoaderInfo;
 
-      var pframes = this._pframes || (this._pframes = []);
+    loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
-      if (!this._content) {
-        loaderInfo._swfVersion = data.version;
+    var frameLabels = this._frameLabels || (this._frameLabels = { });
+    var timeline = this._timeline || (this._timeline = []);
 
-        var bounds = data.bounds;
-        loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-        loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+    if (!dictionary[0]) {
+      loaderInfo._swfVersion = data.swfVersion;
 
-        loaderInfo._frameRate = data.frameRate;
+      var bounds = data.bounds;
+      loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
+      loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
 
-        // TODO disable AVM1 if AVM2 is enabled
-        var as2Context = new AS2Context(data.version);
+      loaderInfo._frameRate = data.frameRate;
 
-        var timelineLoader = new TimelineLoader(data.frameCount, pframes, this._dictionary);
-        var root = new MovieClip;
-        root._as2Context = as2Context;
-        root._timelineLoader = timelineLoader;
-        MovieClipClass.call(root);
-        root.name = '_root';
+      // TODO disable AVM1 if AVM2 is enabled
+      var as2Context = new AS2Context(data.swfVersion);
+      loaderInfo._as2Context = as2Context;
 
-        var globals = as2Context.globals;
-        globals._root = globals._level0 = root.$as2Object;
+      var symbolClass = function (as2Context) {
+        this._as2Context = as2Context;
+        MovieClipClass.call(this);
+      };
+      symbolClass.prototype = Object.create(new MovieClip, {
+        _frameLabels: describeProperty(frameLabels),
+        _timeline: describeProperty(timeline),
+        _totalFrames: describeProperty(data.frameCount)
+      });
 
-        this._content = root;
-
-        loaderInfo._as2Context = as2Context;
-      } else if (data) {
-        if (data.id) {
-          this.commitSymbol(data);
-        } else if (data.type === 'pframe') {
-          if (data.abcBlocks) {
-            var blocks = data.abcBlocks;
-            var i = 0;
-            var block;
-            while (block = blocks[i++]) {
-              this.avm2.applicationDomain.executeAbc(new AbcFile(block));
-            }
-          }
-
-          if (data.symbols) {
-            var references = data.symbols;
-            //var symbolClasses = loaderInfo._symbolClasses;
-            for (var i = 0, n = references.length; i < n; i++) {
-              var reference = references[i++];
-              var symbolClass = this.getSymbolClassById(reference.id);
-              if (symbolClass)
-                symbolClass.__class__ = reference.name;
-              //symbolClasses[sym.name] = dictionary[sym.id];
-              //if (!sym.id) {
-              //  var documentClass = this.avm2.applicationDomain.getProperty(
-              //    Multiname.fromSimpleName(sym.name),
-              //    true, true
-              //  );
-              //  new (documentClass.instance)();
-              //}
-            }
-          }
-
-          pframes.push(data);
-
-          if (pframes.length === 1) {
-            loaderInfo.dispatchEvent(new Event(Event.INIT));
+      dictionary[0] = symbolClass;
+    } else if (data) {
+      if (data.id) {
+        this.commitSymbol(data);
+      } else if (data.type === 'frame') {
+        if (data.abcBlocks) {
+          var blocks = data.abcBlocks;
+          for (var i = 0, n = blocks.length; i < n; i++) {
+            var block = blocks[i];
+            this.avm2.applicationDomain.executeAbc(new AbcFile(block));
           }
         }
-      } else {
-        loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+
+        if (data.bgcolor)
+          loaderInfo._backgroundColor = data.bgcolor;
+
+        if (data.exports) {
+          var exports = data.exports;
+          for (var i = 0, n = exports.length; i < n; i++) {
+            var asset = exports[i];
+            var symbolClass = dictionary[asset.symbolId];
+            if (symbolClass)
+              symbolClass.__class__ = asset.className;
+            //symbolClasses[sym.name] = dictionary[sym.id];
+            //if (!sym.id) {
+            //  var documentClass = this.avm2.applicationDomain.getProperty(
+            //    Multiname.fromSimpleName(sym.name),
+            //    true, true
+            //  );
+            //  new (documentClass.instance)();
+            //}
+          }
+        }
+
+        if (!this._content) {
+          var documentClass = dictionary[0];
+          var root = new documentClass(loaderInfo._as2Context);
+          root.name = '_root';
+
+          var globals = root._as2Context.globals;
+          globals._root = globals._level0 = root.$as2Object;
+
+          this._content = root;
+        }
+
+        var frameNum = timeline.length + 1;
+
+        if (data.labelName)
+          frameLabels[data.labelName] = { frame: frameNum, name: data.labelName };
+
+        var depths = data.depths;
+        var displayList = Object.create(frameNum > 1 ? timeline[frameNum - 2] : null);
+
+        if (depths) {
+          for (var depth in depths)
+            displayList[depth] = depths[depth];
+        }
+
+        var i = data.repeat || 1;
+        while (i--)
+          timeline.push(displayList);
+
+        if (frameNum === 1)
+          loaderInfo.dispatchEvent(new Event(Event.INIT));
       }
+    } else {
+      loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
     }
   }),
   commitSymbol: describeMethod(function (symbol) {
@@ -159,16 +187,23 @@ Loader.prototype = Object.create(baseProto, {
     }
     switch (symbol.type) {
     case 'button':
+      var timelineLoader = new TimelineLoader(
+        4,
+        [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
+        dictionary
+      );
+      symbolClass = function (as2Context) {
+        this._as2Context = as2Context;
+        ButtonPrototype.call(this, symbol, timelineLoader);
+      };
+      symbolClass.prototype = Object.create(new SimpleButton);
       requirePromise.then(function () {
-        var timelineLoader = new TimelineLoader(
-          4,
-          [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
-          dictionary
-        );
-        promise.resolve(new ButtonPrototype(symbol, timelineLoader));
+        promise.resolve(symbolClass);
       });
       break;
     case 'font':
+      symbolClass = function () { };
+      symbolClass.prototype = Object.create(new Font, { });
       var charset = fromCharCode.apply(null, symbol.codes);
       if (charset) {
         style.insertRule(
@@ -178,35 +213,36 @@ Loader.prototype = Object.create(baseProto, {
           '}',
           style.cssRules.length
         );
-        var ctx = (document.createElement('canvas')).getContext('2d');
-        ctx.font = '1024px "' + symbol.name + '"';
-        var defaultWidth = ctx.measureText(charset).width;
-
+        //var ctx = (document.createElement('canvas')).getContext('2d');
+        //ctx.font = '1024px "' + symbol.name + '"';
+        //var defaultWidth = ctx.measureText(charset).width;
         requirePromise.then(function () {
-          promise.resolve(symbol);
+          promise.resolve(symbolClass);
         });
       }
       break;
     case 'image':
       var img = new Image;
+      symbolClass = function () { };
+      symbolClass.prototype = Object.create(new BitmapData, { img: describeProperty(img) });
       img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
       img.onload = function () {
-        var proto = Object.create(symbol);
-        proto.img = img;
         requirePromise.then(function () {
-          promise.resolve(proto);
+          promise.resolve(symbolClass);
         });
       };
       break;
     case 'label':
     case 'text':
-      var proto = Object.create(symbol);
       var drawFn = new Function('d,c,r', symbol.data);
-      proto.draw = (function(c, r) {
-        return drawFn.call(this, dictionary, c, r);
+      symbolClass = function () { };
+      symbolClass.prototype = Object.create(new TextField, {
+        draw: describeMethod(function (c, r) {
+          return drawFn.call(this, dictionary, c, r);
+        })
       });
-      requirePromise.then(function() {
-        promise.resolve(proto);
+      requirePromise.then(function () {
+        promise.resolve(symbolClass);
       });
       break;
     case 'shape':
@@ -226,17 +262,13 @@ Loader.prototype = Object.create(baseProto, {
       });
       break;
     case 'sprite':
-      var timelineLoader = new TimelineLoader(
-        symbol.frameCount || 1,
-        symbol.pframes || [],
-        dictionary
-      );
       var symbolClass = function (as2Context) {
         this._as2Context = as2Context;
         MovieClipClass.call(this);
       };
       symbolClass.prototype = Object.create(new MovieClip, {
-        _timelineLoader: describeProperty(timelineLoader)
+        _timeline: symbol.timeline,
+        _totalFrames: describeProperty(symbol.frameCount)
       });
       requirePromise.then(function () {
         promise.resolve(symbolClass);
@@ -284,61 +316,41 @@ Loader.prototype = Object.create(baseProto, {
       break;
     case SWF_TAG_CODE_DEFINE_SPRITE:
       var dependencies = [];
-      var pframes = [];
-      var pframe = { };
+      var displayList = { };
+      var frame = { type: 'frame' };
       var tags = swfTag.tags;
+      var timeline = [];
       for (var i = 0, n = tags.length; i < n; i++) {
         var tag = tags[i];
         switch (tag.code) {
         case SWF_TAG_CODE_DO_ABC:
-          if (!pframe.abcBlocks)
-            pframe.abcBlocks = [];
-          pframe.abcBlocks.push(tag.data);
+          if (!frame.abcBlocks)
+            frame.abcBlocks = [];
+          frame.abcBlocks.push(tag.data);
           break;
         case SWF_TAG_CODE_DO_ACTION:
         case SWF_TAG_CODE_DO_INIT_ACTION:
-          if (!pframe.actionsData) {
-            pframe.initActionsData = { };
-            pframe.actionsData = [];
+          if (!frame.actionsData) {
+            frame.initActionsData = { };
+            frame.actionsData = [];
           }
           if (tag.spriteId)
-            pframe.initActionsData[tag.spriteId] = tag.actionsData;
+            frame.initActionsData[tag.spriteId] = tag.actionsData;
           else
-            pframe.actionsData.push(tag.actionsData);
+            frame.actionsData.push(tag.actionsData);
           break;
         case SWF_TAG_CODE_FRAME_LABEL:
-          pframe.name = tag.name;
+          frame.labelName = tag.name;
           break;
         case SWF_TAG_CODE_PLACE_OBJECT:
         case SWF_TAG_CODE_PLACE_OBJECT2:
         case SWF_TAG_CODE_PLACE_OBJECT3:
-          var entry = { };
-          if (tag.place) {
-            var symbol = symbols[tag.symbolId];
-            entry.id = symbol.id;
-            dependencies.push(symbol.id);
-          }
-          if (tag.events) {
-            var events = tag.events;
-            if (events[events.length - 1].eoe)
-              events = events.slice(0, events.length - 1);
-            entry.events = events;
-          }
-          if (tag.move)
-            entry.move = true;
-          if (tag.name)
-            entry.name = tag.name;
-          if (tag.hasMatrix)
-            entry.matrix = tag.matrix;
-          if (tag.hasCxform)
-            entry.cxform = tag.cxform;
-          if (tag.hasRatio)
-            entry.ratio = tag.ratio / 0xffff;
-          pframe[tag.depth] = entry;
+          dependencies.push(tag.symbolId);
+          displayList[tag.depth] = tag;
           break;
         case SWF_TAG_CODE_REMOVE_OBJECT:
         case SWF_TAG_CODE_REMOVE_OBJECT2:
-          pframe[tag.depth] = null;
+          displayList[tag.depth] = null;
           break;
         case SWF_TAG_CODE_SHOW_FRAME:
           var repeat = 1;
@@ -350,10 +362,11 @@ Loader.prototype = Object.create(baseProto, {
             repeat++;
           }
           if (repeat > 1)
-            pframe.repeat = repeat;
-          pframe.type = 'pframe';
-          pframes.push(pframe);
-          pframe = { };
+            frame.repeat = repeat;
+          frame.displayList = displayList;
+          timeline.push(frame);
+          displayList = Object.create(displayList);
+          frame = { type: 'frame' };
           break;
         }
       }
@@ -362,7 +375,7 @@ Loader.prototype = Object.create(baseProto, {
         id: swfTag.id,
         frameCount: swfTag.frameCount,
         require: dependencies,
-        pframes: pframes
+        timeline: timeline
       };
       break;
     case SWF_TAG_CODE_DEFINE_TEXT:
@@ -403,37 +416,39 @@ Loader.prototype = Object.create(baseProto, {
         loader.commitData(evt.data);
       };
       worker.postMessage(input);
-    } else {
-      if (typeof input === 'object') {
-        if (input instanceof ArrayBuffer) {
-          this.parseBytes(input);
-        } else if (typeof FileReaderSync !== 'undefined') {
-          var reader = new FileReaderSync;
-          var buffer = reader.readAsArrayBuffer(input);
-          loader.parseBytes(buffer);
-        } else {
-          var reader = new FileReader;
-          reader.onload = function () {
-            loader.parseBytes(this.result);
-          };
-          reader.readAsArrayBuffer(input);
-        }
+      return;
+    }
+
+    if (typeof input === 'object') {
+      if (input instanceof ArrayBuffer) {
+        this.parseBytes(input);
+      } else if (typeof FileReaderSync !== 'undefined') {
+        var reader = new FileReaderSync;
+        var buffer = reader.readAsArrayBuffer(input);
+        loader.parseBytes(buffer);
       } else {
-        var xhr = new XMLHttpRequest;
-        xhr.open('GET', input);
-        xhr.responseType = 'arraybuffer';
-        xhr.onload = function () {
-          loader.parseBytes(this.response);
+        var reader = new FileReader;
+        reader.onload = function () {
+          loader.parseBytes(this.result);
         };
-        xhr.send();
+        reader.readAsArrayBuffer(input);
       }
+    } else {
+      var xhr = new XMLHttpRequest;
+      xhr.open('GET', input);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function () {
+        loader.parseBytes(this.response);
+      };
+      xhr.send();
     }
   }),
   parseBytes: describeMethod(function (bytes) {
+    var depths = { };
     var loader = this;
-    var numProcessedTags = 0;
-    var pframe = { };
+    var frame = { type: 'frame' };
     var symbols = this._symbols;
+    var tagsProcessed = 0;
 
     SWF.parse(bytes, {
       onstart: function(result) {
@@ -441,86 +456,67 @@ Loader.prototype = Object.create(baseProto, {
       },
       onprogress: function(result) {
         var tags = result.tags;
-        for (var n = tags.length; numProcessedTags < n; numProcessedTags++) {
-          var tag = tags[numProcessedTags];
+        for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
+          var tag = tags[tagsProcessed];
           if ('id' in tag) {
             loader.defineSymbol(tag);
-          } else {
-            switch (tag.code) {
-            case SWF_TAG_CODE_DO_ABC:
-              if (!pframe.abcBlocks)
-                pframe.abcBlocks = [];
-              pframe.abcBlocks.push(tag.data);
-              break;
-            case SWF_TAG_CODE_DO_ACTION:
-            case SWF_TAG_CODE_DO_INIT_ACTION:
-              if (!pframe.actionsData) {
-                pframe.initActionsData = { };
-                pframe.actionsData = [];
-              }
-              if (tag.spriteId)
-                pframe.initActionsData[tag.spriteId] = tag.actionsData;
-              else
-                pframe.actionsData.push(tag.actionsData);
-              break;
-            case SWF_TAG_CODE_EXPORT_ASSETS:
-            case SWF_TAG_CODE_SYMBOL_CLASS:
-              if (!pframe.symbols)
-                pframe.symbols = [];
-              pframe.symbols = pframe.symbols.concat(tag.references);
-              break;
-            case SWF_TAG_CODE_FRAME_LABEL:
-              pframe.name = tag.name;
-              break;
-            case SWF_TAG_CODE_PLACE_OBJECT:
-            case SWF_TAG_CODE_PLACE_OBJECT2:
-            case SWF_TAG_CODE_PLACE_OBJECT3:
-              var entry = { };
-              if (tag.place) {
-                var obj = symbols[tag.symbolId];
-                entry.id = obj.id;
-              }
-              if (tag.events) {
-                var events = tag.events;
-                if (events[events.length - 1].eoe)
-                  events = events.slice(0, events.length - 1);
-                entry.events = events;
-              }
-              if (tag.move)
-                entry.move = true;
-              if (tag.name)
-                entry.name = tag.name;
-              if (tag.hasMatrix)
-                entry.matrix = tag.matrix;
-              if (tag.hasCxform)
-                entry.cxform = tag.cxform;
-              if (tag.hasRatio)
-                entry.ratio = tag.ratio / 0xffff;
-              pframe[tag.depth] = entry;
-              break;
-            case SWF_TAG_CODE_REMOVE_OBJECT:
-            case SWF_TAG_CODE_REMOVE_OBJECT2:
-              pframe[tag.depth] = null;
-              break;
-            case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
-              pframe.bgcolor = tag.color;
-              break;
-            case SWF_TAG_CODE_SHOW_FRAME:
-              var repeat = 1;
-              while (numProcessedTags < n) {
-                var nextTag = tags[numProcessedTags + 1];
-                if (!nextTag || nextTag.type !== 'frame')
-                  break;
-                numProcessedTags++;
-                repeat++;
-              }
-              if (repeat > 1)
-                pframe.repeat = repeat;
-              pframe.type = 'pframe';
-              loader.commitData(pframe);
-              pframe = { };
-              break;
+            continue;
+          }
+
+          switch (tag.code) {
+          case SWF_TAG_CODE_DO_ABC:
+            if (!frame.abcBlocks)
+              frame.abcBlocks = [];
+            frame.abcBlocks.push(tag.data);
+            break;
+          case SWF_TAG_CODE_DO_ACTION:
+          case SWF_TAG_CODE_DO_INIT_ACTION:
+            if (!frame.actionsData) {
+              frame.initActionsData = { };
+              frame.actionsData = [];
             }
+            if (tag.spriteId)
+              frame.initActionsData[tag.spriteId] = tag.actionsData;
+            else
+              frame.actionsData.push(tag.actionsData);
+            break;
+          case SWF_TAG_CODE_EXPORT_ASSETS:
+          case SWF_TAG_CODE_SYMBOL_CLASS:
+            if (!frame.exports)
+              frame.exports = [];
+            frame.exports = frame.exports.concat(tag.exports);
+            break;
+          case SWF_TAG_CODE_FRAME_LABEL:
+            frame.labelName = tag.name;
+            break;
+          case SWF_TAG_CODE_PLACE_OBJECT:
+          case SWF_TAG_CODE_PLACE_OBJECT2:
+          case SWF_TAG_CODE_PLACE_OBJECT3:
+            depths[tag.depth] = tag;
+            break;
+          case SWF_TAG_CODE_REMOVE_OBJECT:
+          case SWF_TAG_CODE_REMOVE_OBJECT2:
+            depths[tag.depth] = null;
+            break;
+          case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
+            frame.bgcolor = tag.color;
+            break;
+          case SWF_TAG_CODE_SHOW_FRAME:
+            var repeat = 1;
+            while (tagsProcessed < n) {
+              var nextTag = tags[tagsProcessed + 1];
+              if (!nextTag || nextTag.type !== 'frame')
+                break;
+              tagsProcessed++;
+              repeat++;
+            }
+            if (repeat > 1)
+              frame.repeat = repeat;
+            frame.depths = depths;
+            loader.commitData(frame);
+            depths = { };
+            frame = { type: 'frame' };
+            break;
           }
         }
       },
