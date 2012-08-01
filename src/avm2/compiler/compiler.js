@@ -66,10 +66,11 @@ const CatchClause = T.CatchClause;
  *     store stack values when needed are of the format "stack_%d"
  *     where the "%d" is the stack index that the value occupies.
  */
+const SAVED_SCOPE_NAME = "$SS";
 const scopeName = new Identifier("$S");
 const scopeObjectName = new Identifier("$O");
 const globalScopeObjectName = new Identifier("$G");
-const savedScopeName = new Identifier("$$S");
+const savedScopeName = new Identifier(SAVED_SCOPE_NAME);
 const constantsName = new Identifier("$C");
 const lastCaughtName = new Identifier("$E");
 const exceptionName = new Identifier("$e");
