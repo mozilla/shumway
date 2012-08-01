@@ -163,7 +163,7 @@ var Compiler = (function () {
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
       } else {
-        if (typeof value === "number" && value < 0) {
+        if (typeof value === "number" && (1 / value) < 0) {
           UnaryExpression.call(this, "-", new Literal(Math.abs(value)));
         } else {
           Literal.call(this, value);
@@ -684,7 +684,7 @@ var Compiler = (function () {
 
       if (item.nothingThrownLabel > 0) {
         var nothingThrownLabel = new VariableDeclaration("var", [
-          new VariableDeclarator(labelTestItem, id(item.nothingThrownLabel))
+          new VariableDeclarator(labelTestName, id(item.nothingThrownLabel))
         ]);
         if (br.node instanceof BlockStatement) {
           br.node.body.push(nothingThrownLabel);
