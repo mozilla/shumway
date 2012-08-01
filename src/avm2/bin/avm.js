@@ -25,6 +25,7 @@ var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "
 var compileSys = shellOptions.register(new Option("csys", "compileSystemDomain", "boolean", false, "compile system domain"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
+var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
 
 load("../metrics.js");
 var Timer = metrics.Timer;
@@ -179,6 +180,6 @@ function processAbc(abc) {
 }
 
 if (traceMetrics.value) {
-  metrics.Timer.trace(stdout);
-  Counter.trace(stdout);
+  metrics.Timer.trace(stdout, traceJson.value);
+  Counter.trace(stdout, traceJson.value);
 }
