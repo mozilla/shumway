@@ -85,7 +85,9 @@ try {
 Counter.setEnabled(traceMetrics.value);
 
 function grabABC(abcname) {
-    return snarf("../generated/" + abcname + "/" + abcname + ".abc", "binary");
+  var filename = abcname + ".abc";
+  var stream = snarf("../generated/" + abcname + "/" + filename, "binary");
+  return new AbcFile(stream, filename);
 }
 
 function installAvmPlus(vm) {
@@ -94,7 +96,7 @@ function installAvmPlus(vm) {
     return argv;
   });
 
-  domain.executeAbc(new AbcFile(grabABC("avmplus"), "avmplus.abc"));
+  domain.executeAbc(grabABC("avmplus"));
 }
 
 var vm;
@@ -103,7 +105,7 @@ if (execute.value) {
   var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
   vm = new AVM2(grabABC("builtin"), sysMode, appMode);
   installAvmPlus(vm);
-  vm.systemDomain.executeAbc(new AbcFile(grabABC("shell"), "shell.abc"));
+  vm.systemDomain.executeAbc(grabABC("shell"));
 }
 
 if (file.value.endsWith(".swf")) {
