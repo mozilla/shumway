@@ -208,8 +208,6 @@ function count(name) {
   counts[name] ++;
 }
 
-tests = tests.slice(0, 20);
-
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
