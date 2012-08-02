@@ -617,11 +617,7 @@ var Multiname = (function () {
     } else {
       assert(this.isQName());
       var ns = this.namespaces[0];
-      if (ns.isPublic() && ns.name === "") {
-        qualifiedName = "public$" + this.getName();
-      } else {
-        qualifiedName = ns.qualifiedName + "$" + this.getName();
-      }
+      qualifiedName = ns.qualifiedName + "$" + this.getName();
       return this.qualifiedName = qualifiedName;
     }
   };
