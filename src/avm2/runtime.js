@@ -10,6 +10,7 @@ const VM_SLOTS = "vm slots";
 const VM_LENGTH = "vm length";
 const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
+const VM_PUBLIC_KEYS = "vm public keys";
 
 var originals = [
   { object: Object, overrides: ["toString", "valueOf"] }
@@ -17,6 +18,7 @@ var originals = [
 
 function initializeGlobalObject(global) {
   const PUBLIC_MANGLED = /^public\$/;
+
   function publicKeys(obj) {
     var keys = [];
     for (var key in obj) {
@@ -35,15 +37,22 @@ function initializeGlobalObject(global) {
   defineReadOnlyProperty(global.Object.prototype, "nextNameIndex", function (index) {
     if (index === 0) {
       /*
-       * We're starting a new iteration. Hope that _publicKeys haven't been
+       * We're starting a new iteration. Hope that VM_PUBLIC_KEYS haven't been
        * defined already.
        */
-      this._publicKeys = publicKeys(this);
+      this[VM_PUBLIC_KEYS] = publicKeys(this);
     }
-    if (index < this._publicKeys.length) {
-      return index + 1;
+
+    var keys = this[VM_PUBLIC_KEYS];
+
+    while (index < keys.length) {
+      if (keys[index]) {
+        return index + 1;
+      }
+      index ++;
     }
-    delete this._publicKeys;
+
+    delete this[VM_PUBLIC_KEYS];
     return 0;
   });
 
@@ -52,7 +61,7 @@ function initializeGlobalObject(global) {
    * be index + 1, but it's actually index - 1;
    */
   defineReadOnlyProperty(global.Object.prototype, "nextName", function (index) {
-    var keys = this._publicKeys;
+    var keys = this[VM_PUBLIC_KEYS];
     assert (keys && index > 0 && index < keys.length + 1);
     return keys[index - 1];
   });
@@ -65,7 +74,7 @@ function initializeGlobalObject(global) {
     var object = originals[i].object;
     originals[i].overrides.forEach(function (originalFunctionName) {
       var originalFunction = object.prototype[originalFunctionName];
-      var overrideFunctionName = "public$" + originalFunctionName;
+      var overrideFunctionName = Multiname.publicQName(originalFunctionName).getQualifiedName();
       global[object.name].prototype[originalFunctionName] = function () {
         if (this[overrideFunctionName]) {
           return this[overrideFunctionName]();
@@ -187,7 +196,7 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
-  return obj["public$" + obj.nextName(index)];
+  return obj[Multiname.publicQName(obj.nextName(index)).getQualifiedName()];
 }
 
 /**
@@ -392,17 +401,16 @@ function getProperty(obj, multiname) {
   assert(obj != undefined, "getProperty(", multiname, ") on undefined");
   assert(multiname instanceof Multiname);
 
-  var numericName = parseInt(multiname.name);
-  if (!isNaN(numericName)) {
-    // Vector, for instance, has a special getter for [].
-    if (obj.indexGet) {
-      return obj.indexGet(numericName);
-    }
-    return obj[numericName];
-  }
-
   var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
-  var value = resolved ? obj[resolved.getQualifiedName()] : undefined;
+  var value = undefined;
+
+  if (resolved) {
+    if (resolved.isNumeric() && obj.indexGet) {
+      value = obj.indexGet(resolved.getQualifiedName(), value);
+    } else {
+      value = obj[resolved.getQualifiedName()];
+    }
+  }
 
   if (tracePropertyAccess.value) {
     print("getProperty(" + multiname + " -> " + resolved + ") has value: " + !!value);
@@ -418,17 +426,16 @@ function getSuper(obj, multiname) {
 
   var superTraits = obj.class.baseClass.instance.prototype;
 
-  if (typeof multiname.name === "number") {
-    // Vector, for instance, has a special getter for [].
-    if (superTraits.indexGet) {
-      return superTraits.indexGet.call(obj, multiname.name);
-    }
-
-    return obj[multiname.name];
-  }
-
   var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
-  var value = resolved ? obj[resolved.getQualifiedName()] : undefined;
+  var value = undefined;
+
+  if (resolved) {
+    if (resolved.isNumeric() && superTraits.indexGet) {
+      value = superTraits.indexGet(resolved.getQualifiedName(), value);
+    } else {
+      value = obj[resolved.getQualifiedName()];
+    }
+  }
 
   if (tracePropertyAccess.value) {
     print("getSuper(" + multiname + ") has value: " + !!value);
@@ -441,28 +448,22 @@ function setProperty(obj, multiname, value) {
   assert(obj);
   assert(multiname instanceof Multiname);
 
-  var numericName = parseInt(multiname.name);
-  if (!isNaN(numericName)) {
-    if (obj.indexSet) {
-      obj.indexSet(numericName, value);
-      return;
-    }
-    obj[numericName] = value;
-    return;
-  }
-
   var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
 
-  if (resolved) {
-    obj[resolved.getQualifiedName()] = value;
-    if (tracePropertyAccess.value) {
-      print("setProperty(" + multiname + " -> " + resolved + ") trait: " + value);
-    }
+  if (tracePropertyAccess.value) {
+    print("setProperty(" + multiname + ") trait: " + value);
+  }
+
+  if (!resolved) {
+    // If we couldn't find the property, create one dynamically.
+    // TODO: check sealed status
+    resolved = Multiname.publicQName(multiname.name);
+  }
+
+  if (resolved.isNumeric() && obj.indexSet) {
+    obj.indexSet(resolved.getQualifiedName(), value);
   } else {
-    obj["public$" + multiname.name] = value;
-    if (tracePropertyAccess.value) {
-      print("setDynamicProperty(" + multiname + " -> " + ("public$" + multiname.name) + ") trait: " + value);
-    }
+    obj[resolved.getQualifiedName()] = value;
   }
 }
 
@@ -477,29 +478,43 @@ function setSuper(obj, multiname, value) {
 
   var superTraits = obj.class.baseClass.instance.prototype;
   var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
-  if (!resolved) {
+
+  if (resolved) {
+    if (resolved.isNumeric() && superTraits.indexSet) {
+      superTraits.indexSet(resolved.getQualifiedName(), value);
+    } else {
+      obj[resolved.getQualifiedName()] = value;
+    }
+  } else {
     throw new ReferenceError("Cannot create property " + multiname.name +
                              " on " + obj.class.baseClass.debugName);
   }
-
-  obj[resolved.getQualifiedName()] = value;
 }
 
 function deleteProperty(obj, multiname) {
   assert(obj);
   assert(multiname instanceof Multiname);
 
-  if (typeof multiname.name === "number") {
-    if (obj.indexDelete) {
-      return obj.indexDelete(multiname.name);
-    }
-    return delete obj[multiname.name];
+  var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
+
+  if (!resolved) {
+    return true;
   }
 
   // Only dynamic properties can be deleted, so only look for those.
-  var pubname = "public$" + multiname.name;
-  if (!(pubname in Object.getPrototypeOf(obj))) {
-    return delete obj["public$" + multiname.name];
+  if (!resolved.namespaces[0].isPublic()) {
+    return false;
+  }
+
+  var qn = resolved.getQualifiedName();
+  if (!(qn in Object.getPrototypeOf(obj))) {
+    if (obj[VM_PUBLIC_KEYS]) {
+      var index = obj[VM_PUBLIC_KEYS].indexOf(resolved.getName());
+      if (index >= 0) {
+        obj[VM_PUBLIC_KEYS][index] = undefined;
+      }
+    }
+    return delete obj[resolved.getQualifiedName()];
   }
 }
 
@@ -813,7 +828,7 @@ var Runtime = (function () {
         for (var i = 0, j = interfaceTraits.length; i < j; i++) {
           var interfaceTrait = interfaceTraits[i];
           var interfaceTraitQn = interfaceTrait.name.getQualifiedName();
-          var interfaceTraitBindingQn = "public$" + interfaceTrait.name.getName();
+          var interfaceTraitBindingQn = Multiname.publicQName(interfaceTrait.name.getName());
           // TODO: We should just copy over the property descriptor but we can't because it may be a
           // memoizer which will fail to patch the interface trait name. We need to make the memoizer patch
           // all traits bound to it.
@@ -823,7 +838,7 @@ var Runtime = (function () {
             return function () {
               return this[target];
             }
-          }(interfaceTraitBindingQn);
+          }(interfaceTraitBindingQn.getQualifiedName());
           defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }

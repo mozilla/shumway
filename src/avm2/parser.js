@@ -636,8 +636,9 @@ var Multiname = (function () {
       // Since numeric names can't be namespaced, there's no sense
       // in giving them a prefix. This also lets us reuse the standard
       // implementations of Array, Vector, etc. without too much pain.
-      if (this.isNumeric())
+      if (ns.isDynamic() && this.isNumeric()) {
         return this.qualifiedName = this.name;
+      }
 
       qualifiedName = '';
       if (this.isAttribute())

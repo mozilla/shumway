@@ -144,7 +144,10 @@ const natives = (function () {
     c.nativeMethods = {
       isPrototypeOf: Object.prototype.isPrototypeOf,
       hasOwnProperty: function (name) {
-        name = "public$" + name;
+        if (!name) {
+          return false;
+        }
+        name = Multiname.publicQName(name).getQualifiedName();
         if (this.hasOwnProperty(name)) {
           return true;
         }
@@ -152,15 +155,19 @@ const natives = (function () {
         return Object.getPrototypeOf(this).hasOwnProperty(name);
       },
       propertyIsEnumerable: function (name) {
-        return Object.prototype.propertyIsEnumerable.call(this, "public$" + name);
+        if (!name) {
+          return false;
+        }
+        name = Multiname.publicQName(name).getQualifiedName();
+        return Object.prototype.propertyIsEnumerable.call(this, name);
       }
     };
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        var prop = "public$" + name;
-        var descriptor = Object.getOwnPropertyDescriptor(obj, prop);
+        name = Multiname.publicQName(name).getQualifiedName();
+        var descriptor = Object.getOwnPropertyDescriptor(obj, name);
         descriptor.enumerable = false;
-        Object.defineProperty(obj, prop, descriptor);
+        Object.defineProperty(obj, name, descriptor);
       }
     };
 

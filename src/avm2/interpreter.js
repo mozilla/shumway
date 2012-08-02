@@ -345,9 +345,8 @@ var Interpreter = (function () {
             obj = {};
             for (var i = 0; i < bc.argCount; i++) {
               var value = stack.pop();
-              // Mangle the key
-              var key = "public$" + stack.pop();
-              obj[key] = value;
+              var key = Multiname.publicQName(stack.pop());
+              obj[key.getQualifiedName()] = value;
             }
             stack.push(obj);
             break;
