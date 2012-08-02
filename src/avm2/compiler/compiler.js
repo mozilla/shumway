@@ -1505,7 +1505,7 @@ var Compiler = (function () {
     assert(scope);
     assert(methodInfo.analysis);
 
-    Timer.start("compiler");
+    Timer.start("Compiler");
     if (enableVerifier.value && !hasDynamicScope && scope.object) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("ver");
