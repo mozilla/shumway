@@ -170,9 +170,10 @@ var Trait = (function () {
       this.classInfo = classes[stream.readU30()];
       this.classInfo.name = this.name;
       break;
-    case TRAIT_Function: // TODO
-      this.slotId = stream.readU30();
-      this.methodInfo = methods[stream.readU30()];
+    case TRAIT_Function:
+      // TRAIT_Function is a leftover. it's not supported at all in
+      // Tamarin/Flash and will cause a verify error.
+      assert(false, "Function encountered in the wild, should not happen");
       break;
     }
 
