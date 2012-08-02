@@ -168,6 +168,7 @@ var Trait = (function () {
       this.slotId = stream.readU30();
       assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
       this.classInfo = classes[stream.readU30()];
+      this.classInfo.name = this.name;
       break;
     case TRAIT_Function: // TODO
       this.slotId = stream.readU30();
