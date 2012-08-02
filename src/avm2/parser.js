@@ -666,6 +666,11 @@ var Multiname = (function () {
 
   var simpleNameCache = {};
 
+  multiname.publicQName = function publicQName(name) {
+    var mn = new multiname([Namespace.PUBLIC], name, QNAME);
+    return simpleNameCache[mn.getQualifiedName()] = mn;
+  };
+
   /**
    * Creates a multiname from a simple name qualified with one ore more namespaces, for example:
    * flash.display.Graphics
