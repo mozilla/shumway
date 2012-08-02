@@ -877,6 +877,10 @@ var Compiler = (function () {
         body.push(value);
       }
 
+      function printThing(context, thing) {
+        emit(call(id("print"), [constant(context), thing]));
+      }
+
       function emitComment(value) {
         storedComments.push({ type: 'Line', value: value.toString() });
       }
