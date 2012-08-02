@@ -612,6 +612,10 @@ var Multiname = (function () {
     }
   };
 
+  multiname.prototype.isNumeric = function isNumeric() {
+    return !isNaN(parseInt(this.getName(), 10));
+  };
+
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     var qualifiedName = this.qualifiedName;
     if (qualifiedName) {
@@ -619,6 +623,13 @@ var Multiname = (function () {
     } else {
       assert(this.isQName());
       var ns = this.namespaces[0];
+
+      // Since numeric names can't be namespaced, there's no sense
+      // in giving them a prefix. This also lets us reuse the standard
+      // implementations of Array, Vector, etc. without too much pain.
+      if (this.isNumeric())
+        return this.name;
+
       qualifiedName = '';
       if (this.isAttribute())
         qualifiedName += '@';
