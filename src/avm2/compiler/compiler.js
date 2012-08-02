@@ -88,7 +88,7 @@ const activationName = new Identifier("$activation");
 var $C = [];
 
 function generate(node) {
-  return escodegen.generate(node, {base: "", indent: "  "});
+  return escodegen.generate(node, {base: "", indent: "  ", comment: true});
 }
 
 var Compiler = (function () {
@@ -751,6 +751,8 @@ var Compiler = (function () {
       var savedScope = this.savedScope;
       var multiname, args, value, obj, qn, ns, name, type, factory, index;
 
+      var storedComments = [];
+
       function classObject() {
         return property(savedScopeName, "object");
       }
@@ -868,11 +870,15 @@ var Compiler = (function () {
         if (!(value instanceof Statement)) {
           value = new ExpressionStatement(value);
         }
+        if (storedComments.length > 0) {
+          value.leadingComments = storedComments;
+        }
+        storedComments = [];
         body.push(value);
       }
 
       function emitComment(value) {
-        // TODO
+        storedComments.push({ type: 'Line', value: value.toString() });
       }
 
       if (enableOpt.value) {
@@ -1484,6 +1490,10 @@ var Compiler = (function () {
       }
 
       flushStack();
+
+      if (storedComments.length > 0) {
+        body.top().trailingComments = storedComments;
+      }
 
       if (writer) {
         state.trace(writer);
