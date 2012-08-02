@@ -619,7 +619,10 @@ var Multiname = (function () {
     } else {
       assert(this.isQName());
       var ns = this.namespaces[0];
-      qualifiedName = ns.qualifiedName + "$" + this.getName();
+      qualifiedName = '';
+      if (this.isAttribute())
+        qualifiedName += '@';
+      qualifiedName += ns.qualifiedName + "$" + this.getName();
       return this.qualifiedName = qualifiedName;
     }
   };
