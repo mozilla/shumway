@@ -132,7 +132,7 @@ if (closure.value) {
     console.log(optimizations);
     process.exit();
   }
-  closureOptions.push(closure.value === "a" ? "ADVANCED_OPTIMIZATIONS" : "SIMPLE_OPTIMIZATIONS");
+  closureOptions.push(optimizations[closure.value]);
   var cc = spawn("java", closureOptions);
   cc.stdout.on('data', function (data) {
     process.stdout.write(data);
