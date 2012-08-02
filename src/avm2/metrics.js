@@ -39,7 +39,7 @@
     };
     timer.prototype.trace = function (writer, json) {
       if (json) {
-        writer.writeLn("SHUMWAY$JSON Timer " + JSON.stringify(this));
+        writer.writeLn("SHUMWAY$JSON " + JSON.stringify({timer: this}));
         return;
       }
       writer.enter(this.name + ": " + this.total + " ms" +
@@ -82,7 +82,7 @@
     };
     counter.prototype.trace = function (writer, json) {
       if (json) {
-        writer.writeLn("SHUMWAY$JSON Counter " + JSON.stringify(this));
+        writer.writeLn("SHUMWAY$JSON " + JSON.stringify({counter: this}));
         return;
       }
       for (var name in this.counts) {
