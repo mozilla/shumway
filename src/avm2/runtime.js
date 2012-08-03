@@ -16,7 +16,7 @@ function initializeGlobalObject(global) {
     var keys = [];
     for (var key in obj) {
       if (PUBLIC_MANGLED.test(key) &&
-          !(obj.bindings && obj.bindings.indexOf(key) >= 0)) {
+          !(obj.vm$bindings && obj.vm$bindings.indexOf(key) >= 0)) {
         keys.push(key.substr(7));
       }
     }
@@ -139,11 +139,11 @@ function typeOf(x) {
 }
 
 function getSlot(obj, index) {
-  return obj[obj.slots[index].name];
+  return obj[obj.vm$slots[index].name];
 }
 
 function setSlot(obj, index, value) {
-  var binding = obj.slots[index];
+  var binding = obj.vm$slots[index];
   if (binding.const) {
     return;
   }
@@ -536,7 +536,7 @@ var Runtime = (function () {
   };
 
   /**
-   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the 
+   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the
    * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
    * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
    * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
@@ -621,7 +621,7 @@ var Runtime = (function () {
     }
 
     var parameters = mi.parameters.map(function (p) {
-      return p.name;
+      return "arg_" + p.name;
     });
 
     if (hasDynamicScope) {
@@ -756,18 +756,28 @@ var Runtime = (function () {
     // Luckily, interface methods are always public.
     (function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
-        var iface = domain.getProperty(interfaces[i], true, true);
-        var ii = iface.classInfo.instanceInfo;
-        cls.implementedInterfaces.push(iface);
+        var interface = domain.getProperty(interfaces[i], true, true);
+        var ii = interface.classInfo.instanceInfo;
+        cls.implementedInterfaces.push(interface);
         applyInterfaceTraits(ii.interfaces);
 
         var bindings = instance.prototype;
-        var iftraits = ii.traits;
-        for (var i = 0, j = iftraits.length; i < j; i++) {
-          var iftrait = iftraits[i];
-          var ifqn = iftrait.name.getQualifiedName();
-          var ptrait = Object.getOwnPropertyDescriptor(bindings, "public$" + iftrait.name.getName());
-          Object.defineProperty(bindings, ifqn, ptrait);
+        var interfaceTraits = ii.traits;
+        for (var i = 0, j = interfaceTraits.length; i < j; i++) {
+          var interfaceTrait = interfaceTraits[i];
+          var interfaceTraitQn = interfaceTrait.name.getQualifiedName();
+          var interfaceTraitBindingQn = "public$" + interfaceTrait.name.getName();
+          // TODO: We should just copy over the property descriptor but we can't because it may be a
+          // memoizer which will fail to patch the interface trait name. We need to make the memoizer patch
+          // all traits bound to it.
+          // var interfaceTraitDescriptor = Object.getOwnPropertyDescriptor(bindings, interfaceTraitBindingQn);
+          // Object.defineProperty(bindings, interfaceTraitQn, interfaceTraitDescriptor);
+          var getter = function (target) {
+            return function () {
+              return this[target];
+            }
+          }(interfaceTraitBindingQn);
+          defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }
     })(ii.interfaces);
@@ -849,18 +859,18 @@ var Runtime = (function () {
 
     // Copy over base trait bindings.
     if (base) {
-      var bindings = base.bindings;
+      var bindings = base.vm$bindings;
       for (var i = 0, j = bindings.length; i < j; i++) {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
       }
-      defineNonEnumerableProperty(obj, "bindings", base.bindings.slice());
-      defineNonEnumerableProperty(obj, "slots", base.slots.slice());
-      obj.slots = base.slots.slice();
-      baseSlotId = obj.slots.length;
+      defineNonEnumerableProperty(obj, "vm$bindings", base.vm$bindings.slice());
+      defineNonEnumerableProperty(obj, "vm$slots", base.vm$slots.slice());
+      obj.vm$slots = base.vm$slots.slice();
+      baseSlotId = obj.vm$slots.length;
     } else {
-      defineNonEnumerableProperty(obj, "bindings", []);
-      defineNonEnumerableProperty(obj, "slots", []);
+      defineNonEnumerableProperty(obj, "vm$bindings", []);
+      defineNonEnumerableProperty(obj, "vm$slots", []);
       baseSlotId = 0;
     }
 
@@ -886,7 +896,7 @@ var Runtime = (function () {
           var res = domain.findDefiningScript(trait.name, false);
           if (res) {
             var abc = res.script.abc;
-            if (!abc.domain.base && abc.name === "builtin.abc") {
+            if (!abc.domain.base && abc.name === "bltin.abc") {
               continue;
             }
           }
@@ -898,7 +908,7 @@ var Runtime = (function () {
 
         var tyname = trait.typeName;
         defineNonEnumerableProperty(obj, qn, trait.value);
-        obj.slots[trait.slotId] = {
+        obj.vm$slots[trait.slotId] = {
           name: qn,
           const: trait.isConst(),
           type: tyname ? domain.getProperty(tyname, false, false) : null
@@ -937,17 +947,23 @@ var Runtime = (function () {
         } else {
           closure = makeClosure(trait);
         }
-        
+
         var mc;
         if (delayBinding) {
           var memoizeMethodClosure = (function (closure, qn) {
             return function () {
+              if (this.hasOwnProperty(qn)) {
+                Counter.count("Runtime: Unpatched Memoizer");
+                return this[qn];
+              }
               var mc = closure.bind(this);
               defineReadOnlyProperty(mc, "public$prototype", null);
               defineReadOnlyProperty(this, qn, mc);
+              Counter.count("Runtime: Method Closures");
               return mc;
             };
           })(closure, qn);
+          Counter.count("Runtime: Memoizers");
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
           // overriden by a derivied class. Only do this non final classes.
           defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
@@ -964,7 +980,7 @@ var Runtime = (function () {
         assert(false);
       }
 
-      obj.bindings.push(qn);
+      obj.vm$bindings.push(qn);
     }
 
     return obj;
@@ -974,17 +990,22 @@ var Runtime = (function () {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       assert (types.length === 1);
-      var typeClassName = types[0].classInfo.instanceInfo.name.name;
-      switch (typeClassName) {
-      case "int":
-      case "uint":
-      case "double":
-        break;
-      default:
-        typeClassName = "object";
-        break;
+      if (types[0] !== null && types[0] !== undefined) {
+        var typeClassName = types[0].classInfo.instanceInfo.name.name;
+        switch (typeClassName) {
+        case "int":
+        case "uint":
+        case "double":
+          break;
+        default:
+          typeClassName = "object";
+          break;
+        }
+
+        return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
+      } else {
+        return this.domain.getClass("public __AS3__$vec.Vector");
       }
-      return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
     } else {
       return notImplemented(factoryClassName);
     }

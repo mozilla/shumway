@@ -310,7 +310,7 @@ function BitSetFunctor(length) {
       this.dirty = 0;
     },
 
-    union: function union(other) {
+    _union: function _union(other) {
       var dirty = this.dirty;
       var bits = this.bits;
       var otherBits = other.bits;
@@ -485,7 +485,7 @@ function BitSetFunctor(length) {
       this.dirty = 0;
     },
 
-    union: function union(other) {
+    _union: function _union(other) {
       var old = this.bits;
       var b = old | other.bits;
       this.bits = b;

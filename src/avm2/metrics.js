@@ -34,7 +34,14 @@
       top.stop();
       top = top.parent;
     };
-    timer.prototype.trace = function (writer) {
+    timer.prototype.toJSON = function () {
+      return {name: this.name, total: this.total, timers: this.timers};
+    };
+    timer.prototype.trace = function (writer, json) {
+      if (json) {
+        writer.writeLn("SHUMWAY$JSON " + JSON.stringify({timer: this}));
+        return;
+      }
       writer.enter(this.name + ": " + this.total + " ms" +
                    ", count: " + this.count +
                    ", average: " + (this.total / this.count).toFixed(2) + " ms");
@@ -43,8 +50,8 @@
       }
       writer.outdent();
     };
-    timer.trace = function (writer) {
-      base.trace(writer);
+    timer.trace = function (writer, json) {
+      base.trace(writer, json);
     };
     return timer;
   })();
@@ -60,6 +67,9 @@
     counter.prototype.setEnabled = function (enabled) {
       this.enabled = enabled;
     };
+    counter.prototype.toJSON = function () {
+      return {counts: this.counts};
+    };
     counter.prototype.count = function (name, increment) {
       if (!this.enabled) {
         return;
@@ -70,7 +80,11 @@
       }
       this.counts[name] += increment;
     };
-    counter.prototype.trace = function (writer) {
+    counter.prototype.trace = function (writer, json) {
+      if (json) {
+        writer.writeLn("SHUMWAY$JSON " + JSON.stringify({counter: this}));
+        return;
+      }
       for (var name in this.counts) {
         writer.writeLn(name + ": " + this.counts[name]);
       }
