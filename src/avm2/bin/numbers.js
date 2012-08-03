@@ -27,6 +27,7 @@ var argumentParser = new ArgumentParser();
 var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
+var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 
 argumentParser.addBoundOptionSet(numbersOptions);
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
@@ -96,21 +97,21 @@ var shuShell = {path: "js", options: "-m -n avm.js".split(" ")};
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
   {name: "avm", timeout: 500, command: avmShell.path},
-]
+];
 
 if (release.value) {
-  configurations = configurations.concat([
-    {name: "shu-i", timeout: 2000, command: "js avm-release.js -x -i -tm -tj"},
-    {name: "shu-c", timeout: 2000, command: "js avm-release.js -x -tm -tj"},
-    {name: "shu-o", timeout: 2000, command: "js avm-release.js -x -opt -tm -tj"},
-    {name: "shu-v", timeout: 2000, command: "js avm-release.js -x -opt -verify -tm -tj"}
+  configurations.push.apply(configurations, [
+    {name: "shu-i", timeout: timeout.value, command: "js -m -n avm-release.js -x -i -tm -tj"},
+    {name: "shu-c", timeout: timeout.value, command: "js -m -n avm-release.js -x -tm -tj"},
+    {name: "shu-o", timeout: timeout.value, command: "js -m -n avm-release.js -x -opt -tm -tj"},
+    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm-release.js -x -opt -verify -tm -tj"}
   ]);
 } else {
-  configurations = configurations.concat([
-    {name: "shu-i", timeout: 2000, command: "js avm.js -x -i -tm -tj"},
-    {name: "shu-c", timeout: 2000, command: "js avm.js -x -tm -tj"},
-    {name: "shu-o", timeout: 2000, command: "js avm.js -x -opt -tm -tj"},
-    {name: "shu-v", timeout: 2000, command: "js avm.js -x -opt -verify -tm -tj"},
+  configurations.push.apply(configurations, [
+    {name: "shu-i", timeout: timeout.value, command: "js -m -n avm.js -x -i -tm -tj"},
+    {name: "shu-c", timeout: timeout.value, command: "js -m -n avm.js -x -tm -tj"},
+    {name: "shu-o", timeout: timeout.value, command: "js -m -n avm.js -x -opt -tm -tj"},
+    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm.js -x -opt -verify -tm -tj"},
   ]);
 }
 
@@ -208,6 +209,7 @@ function count(name) {
   counts[name] ++;
 }
 
+var pathLength = 40;
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
@@ -215,7 +217,7 @@ function runNextTest () {
   if (test) {
     if (!inParallel) {
       process.stdout.write(padLeft((testNumber ++).toString(), ' ', 4));
-      process.stdout.write(" " + padRight(shortPath(test, 40), ' ', 40) + " ");
+      process.stdout.write(" " + padRight(shortPath(test, pathLength), ' ', pathLength) + " ");
     }
     function runNextConfiguration() {
       var config = configs.shift();
@@ -238,7 +240,7 @@ function runNextTest () {
         var someFailed = false;
         if (inParallel) {
           process.stdout.write(padLeft((testNumber ++).toString(), ' ', 4));
-          process.stdout.write(" " + padRight(shortPath(test, 40), ' ', 40) + " ");
+          process.stdout.write(" " + padRight(shortPath(test, pathLength), ' ', pathLength) + " ");
         }
         for (var i = 0; i < configurations.length; i++) {
           var configuration = configurations[i];
