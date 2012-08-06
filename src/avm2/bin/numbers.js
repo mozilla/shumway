@@ -28,6 +28,7 @@ var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
+var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
 
 argumentParser.addBoundOptionSet(numbersOptions);
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
@@ -104,22 +105,20 @@ var configurations = [
   {name: "avm", timeout: 500, command: avmShell.path}
 ];
 
-if (release.value) {
-  configurations.push.apply(configurations, [
-    {name: "shu-i", timeout: timeout.value, command: "js -m -n avm-release.js -x -i -tm -tj"},
-    {name: "shu-c", timeout: timeout.value, command: "js -m -n avm-release.js -x -tm -tj"},
-    {name: "shu-o", timeout: timeout.value, command: "js -m -n avm-release.js -x -opt -tm -tj"},
-    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm-release.js -x -opt -verify -tm -tj"}
-  ]);
-} else {
-  configurations.push.apply(configurations, [
-    {name: "shu-i", timeout: timeout.value, command: "js -m -n avm.js -x -i -tm -tj"},
-    {name: "shu-c", timeout: timeout.value, command: "js -m -n avm.js -x -tm -tj"},
-    {name: "shu-o", timeout: timeout.value, command: "js -m -n avm.js -x -opt -tm -tj"},
-    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm.js -x -opt -verify -tm -tj"}
-  ]);
-}
+var avmName = release.value ? "avm-release.js" : "avm.js";
 
+if (configurationSet.value.indexOf("i") >= 0) {
+  configurations.push({name: "shu-i", timeout: timeout.value, command: "js -m -n " + avmName + " -x -i -tm -tj"});
+}
+if (configurationSet.value.indexOf("c") >= 0) {
+  configurations.push({name: "shu-c", timeout: timeout.value, command: "js -m -n " + avmName + " -x -tm -tj"});
+}
+if (configurationSet.value.indexOf("o") >= 0) {
+  configurations.push({name: "shu-o", timeout: timeout.value, command: "js -m -n " + avmName + " -x -opt -tm -tj"});
+}
+if (configurationSet.value.indexOf("v") >= 0) {
+  configurations.push({name: "shu-v", timeout: timeout.value, command: "js -m -n " + avmName + " -x -opt -verify -tm -tj"});
+}
 
 console.log(padRight("=== Configurations ", "=", 120));
 configurations.forEach(function (x) {
