@@ -84,7 +84,7 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     var files = [];
     for (var i = 0, n = tags.length; i < n; i++) {
       var tag = tags[i];
-      if (tag.type === "abc") {
+      if (tag.code === 82) {
         files.push({name: tag.name, offset: offset, length: + tag.data.length, data: tag.data});
         offset += tag.data.length;
       }
