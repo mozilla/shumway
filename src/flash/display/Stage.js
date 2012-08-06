@@ -27,6 +27,7 @@ var STAGE_QUALITY_MEDIUM         = 'medium';
 
 function Stage() {
   this._color = 0xFFFFFFFF;
+  this._stage = this;
   this._transform = { };
 }
 

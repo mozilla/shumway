@@ -1,4 +1,5 @@
 function InteractiveObject() {
+  this._control = document.createElement('div');
 }
 
 InteractiveObject.prototype = Object.create(new DisplayObject, {

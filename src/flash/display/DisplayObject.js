@@ -19,6 +19,7 @@ function DisplayObject() {
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
   this._bounds = { };
+  this._loaderInfo = null;
   this._mouseX = 0;
   this._mouseY = 0;
   this._name = null;
@@ -28,7 +29,6 @@ function DisplayObject() {
   this._rotation = 0;
   this._scaleX = 1;
   this._scaleY = 1;
-  this._stage = null;
   this._transform = null;
   this._visible = true;
   this._x = 0;
@@ -101,7 +101,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
     notImplemented();
   }),
   loaderInfo: describeAccessor(function () {
-    notImplemented();
+    return this._loaderInfo || this._parent.loaderInfo;
   }),
   localToGlobal: describeMethod(function (pt) {
     notImplemented();
@@ -155,7 +155,7 @@ DisplayObject.prototype = Object.create(new EventDispatcher, {
     }
   ),
   stage: describeAccessor(function () {
-    return this._stage;
+    return this._stage || this._parent.stage;
   }),
   scaleX: describeAccessor(
     function () {

@@ -32,8 +32,7 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     if (child === this)
       throw ArgumentError();
 
-    this._children.push(child);
-    return child;
+    return this.addChildAt(child, this._children.length);
   }),
   addChildAt: describeMethod(function (child, index) {
     if (child === this)
@@ -44,7 +43,10 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     if (index < 0 || index > children.length)
       throw RangeError();
 
+    if (child._parent)
+      child._parent.removeChild(child);
     children.splice(index, 0, child);
+    child._parent = this;
     return child;
   }),
   areInaccessibleObjectsUnderPoint: describeMethod(function (pt) {
@@ -88,9 +90,8 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     if (index < 0)
       throw ArgumentError();
 
-    children.splice(index, 1);
 
-    return child;
+    return this.removeChildAt(index);
   }),
   removeChildAt: describeMethod(function (index) {
     var children = this._children;
@@ -100,6 +101,7 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
 
     var child = children[index];
     children.splice(index, 1);
+    child._parent = null;
 
     return child;
   }),
@@ -126,7 +128,8 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
     if (begin < 0 || begin > numChildren || end < 0 || end < begin || end > numChildren)
       throw RangeError();
 
-    children.splice(begin, end - begin);
+    for (var i = begin; i < end; i++)
+      this.removeChildAt(i);
   }),
   swapChildren: describeMethod(function (child1, child2) {
     var children = this._children;
