@@ -88,7 +88,7 @@ const activationName = new Identifier("$activation");
 var $C = [];
 
 function generate(node) {
-  return escodegen.generate(node, {base: "", indent: "  "});
+  return escodegen.generate(node, {base: "", indent: "  ", comment: true});
 }
 
 var Compiler = (function () {
@@ -478,6 +478,7 @@ var Compiler = (function () {
       this.compiler = compiler;
       var abc = this.compiler.abc;
       var mi = this.methodInfo = methodInfo;
+      var parameterCount = mi.parameters.length;
       this.bytecodes = methodInfo.analysis.bytecodes;
       this.state = new State();
       this.variablePool = new VariablePool("var_");
@@ -489,7 +490,7 @@ var Compiler = (function () {
       var freeVariableNames = "abcdefghijklmnopqrstuvwxyz".split("");
 
       /* Create variables for the method's parameters. */
-      for (var i = 0; i < mi.parameters.length; i++) {
+      for (var i = 0; i < parameterCount; i++) {
         var name = "arg_" + mi.parameters[i].name;
         this.local.push(new Variable(name));
       }
@@ -508,7 +509,7 @@ var Compiler = (function () {
       }
 
       /* Create variables for the method's remaining locals. */
-      for (var i = mi.parameters.length; i < mi.localCount; i++) {
+      for (var i = parameterCount; i < mi.localCount; i++) {
         this.local.push(new Variable(newVariableName()));
       }
 
@@ -532,14 +533,13 @@ var Compiler = (function () {
         new VariableDeclarator(scopeName, savedScopeName)
       ]));
 
-      /* Declare local variables. */
-      if (this.local.length > 1) {
-        this.prologue.push(new VariableDeclaration("var", this.local.slice(1).map(function (x) {
+      /* Declare local variables that aren't parameters or this. */
+      if (this.local.length > parameterCount + 1) {
+        this.prologue.push(new VariableDeclaration("var", this.local.slice(parameterCount + 1).map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
 
-      var parameterCount = mi.parameters.length;
       if (mi.needsRest() || mi.needsArguments()) {
         this.prologue.push(new ExpressionStatement(
           assignment(this.local[parameterCount + 1],
@@ -751,6 +751,8 @@ var Compiler = (function () {
       var savedScope = this.savedScope;
       var multiname, args, value, obj, qn, ns, name, type, factory, index;
 
+      var storedComments = [];
+
       function classObject() {
         return property(savedScopeName, "object");
       }
@@ -868,11 +870,19 @@ var Compiler = (function () {
         if (!(value instanceof Statement)) {
           value = new ExpressionStatement(value);
         }
+        if (storedComments.length > 0) {
+          value.leadingComments = storedComments;
+        }
+        storedComments = [];
         body.push(value);
       }
 
+      function printThing(context, thing) {
+        emit(call(id("print"), [constant(context), thing]));
+      }
+
       function emitComment(value) {
-        // TODO
+        storedComments.push({ type: 'Line', value: value.toString() });
       }
 
       if (enableOpt.value) {
@@ -1484,6 +1494,10 @@ var Compiler = (function () {
       }
 
       flushStack();
+
+      if (storedComments.length > 0) {
+        body.top().trailingComments = storedComments;
+      }
 
       if (writer) {
         state.trace(writer);

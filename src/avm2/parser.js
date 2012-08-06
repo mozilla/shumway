@@ -168,10 +168,12 @@ var Trait = (function () {
       this.slotId = stream.readU30();
       assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
       this.classInfo = classes[stream.readU30()];
+      this.classInfo.name = this.name;
       break;
-    case TRAIT_Function: // TODO
-      this.slotId = stream.readU30();
-      this.methodInfo = methods[stream.readU30()];
+    case TRAIT_Function:
+      // TRAIT_Function is a leftover. it's not supported at all in
+      // Tamarin/Flash and will cause a verify error.
+      assert(false, "Function encountered in the wild, should not happen");
       break;
     }
 
@@ -610,18 +612,28 @@ var Multiname = (function () {
     }
   };
 
+  multiname.prototype.isNumeric = function isNumeric() {
+    return !isNaN(parseInt(this.getName(), 10));
+  };
+
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     var qualifiedName = this.qualifiedName;
-    if (qualifiedName) {
+    if (qualifiedName !== undefined) {
       return qualifiedName;
     } else {
       assert(this.isQName());
       var ns = this.namespaces[0];
-      if (ns.isPublic() && ns.name === "") {
-        qualifiedName = "public$" + this.getName();
-      } else {
-        qualifiedName = ns.qualifiedName + "$" + this.getName();
-      }
+
+      // Since numeric names can't be namespaced, there's no sense
+      // in giving them a prefix. This also lets us reuse the standard
+      // implementations of Array, Vector, etc. without too much pain.
+      if (this.isNumeric())
+        return this.qualifiedName = this.name;
+
+      qualifiedName = '';
+      if (this.isAttribute())
+        qualifiedName += '@';
+      qualifiedName += ns.qualifiedName + "$" + this.getName();
       return this.qualifiedName = qualifiedName;
     }
   };
@@ -669,6 +681,11 @@ var Multiname = (function () {
   };
 
   var simpleNameCache = {};
+
+  multiname.publicQName = function publicQName(name) {
+    var mn = new multiname([Namespace.PUBLIC], name, QNAME);
+    return simpleNameCache[mn.getQualifiedName()] = mn;
+  };
 
   /**
    * Creates a multiname from a simple name qualified with one ore more namespaces, for example:

@@ -62,7 +62,7 @@ The bytecode normalizer also rewrites the indices of each bytecode instruction s
 
 ### 4 - Bytecode Interpreter
 
-The bytecode interpreter is a simple `switch` based interpreter. It emulates an execution stack using a JavaScript array and delegates most of its work by calling into to the Runtime `runtime.js`.
+The bytecode interpreter is a simple `switch` based interpreter. It emulates an execution stack using a JavaScript array and delegates most of its work by calling into the Runtime `runtime.js`.
 
 ### 5 - Runtime
 
@@ -80,7 +80,7 @@ If we don't reflect the prototype object, then we would have to emulate the prot
 #### Namespaces & Multinames
 
 In ActionScript, a semingly benign property access operation such as `obj.p` turns out to be quite complex.
-When you lookup a property `p` on an object `obi` you are actually looking for a property named `"p"` in a set of open namespaces on `obj`.
+When you lookup a property `p` on an object `obj` you are actually looking for a property named `"p"` in a set of open namespaces on `obj`.
 The ActionScript compiler does not compile `obj.p` as `obj["p"]` but rather:
 
     obj[[n1, n2, n3]::"p"]
@@ -191,12 +191,12 @@ The nice thing is that we don't have to copy down the default trait properties w
 The `__proto__` of object `b` points to Class `B`'s `traitsPrototype` which in turn points to `Pb` then to `Pa`.
 If the client AS3 program wants to access the `__proto__` of `b` it actually gets the `public$__proto__` which
 correctly points to `Pb`.
-AS3 visiable properties are always prefixed with a namespace, in this case the `public` namespace, so there is no way for AS3
+AS3 visible properties are always prefixed with a namespace, in this case the `public` namespace, so there is no way for AS3
 code to get a reference to the `traitsPrototype`.
 
 ![Shumway AVM2 Overview](https://github.com/mozilla/shumway/raw/master/src/avm2/docs/img/class.jpg)
 
-##### 6 - Control Flow Graph (CFG) Restructuring
+### 6 - Control Flow Graph (CFG) Restructuring
 
 After normalizing the bytecode, the analysis phase (`analysis.js`) constructs a tree of structured control flow constructs: `if`, `else if`, `while`, `break`, `exit`, `return` and `label` that represent the control flow represented in the bytecode. This information is then used by the compiler to generate JavaScript source. This is a lot more complicated than it sounds, see for example [Chapter 6 of this Dissertation](http://zyloid.com/recomposer/files/decompilation_thesis.pdf).
 

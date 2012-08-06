@@ -92,6 +92,7 @@
     <script src="../../src/avm2/metrics.js"></script>
 
     <script>
+      var Counter = new metrics.Counter();
       var Timer = metrics.Timer;
       var Option = options.Option;
       var OptionSet = options.OptionSet;
@@ -259,7 +260,7 @@
 
       function createAVM2(loadPlayerGlobal, next) {
         new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
-          var vm = new AVM2(new Uint8Array(buffer), sysMode, appMode);
+          var vm = new AVM2(new AbcFile(new Uint8Array(buffer), "builtin.abc"), sysMode, appMode);
           vm.onConstruct = function (instance, args) {
             var ci = instance.public$constructor.classInfo;
             print("Creating: " + ci.instanceInfo.name.getQualifiedName() +

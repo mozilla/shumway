@@ -501,7 +501,12 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_hasnext2:
-            Type.check(local[bc.object], Type.Atom.Any);
+            // FIXME: Line commented out to fix tests/tamarin/as3/Statements/e12_6_3_12.abc.
+            // By inspecting the tamaring source it seems that local[bc.object] does not
+            // always have to be a reference, however this should be reverted after the
+            // type semi lattice gets a proper implementation; then a reference will be a
+            // subtype of Atom.Any.
+            // Type.check(local[bc.object], Type.Reference);
             Type.check(local[bc.index], Type.Int);
             push(Type.Boolean);
             break;
