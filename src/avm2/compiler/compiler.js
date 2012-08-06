@@ -35,6 +35,8 @@ const IfStatement = T.IfStatement;
 const WhileStatement = T.WhileStatement;
 const BreakStatement = T.BreakStatement;
 const ContinueStatement = T.ContinueStatement;
+const SwitchStatement = T.SwitchStatement;
+const SwitchCase = T.SwitchCase;
 const TryStatement = T.TryStatement;
 const CatchClause = T.CatchClause;
 
@@ -76,6 +78,7 @@ const lastCaughtName = new Identifier("$E");
 const exceptionName = new Identifier("$e");
 const labelTestName = new Identifier("$label");
 const labelConditionName = new Identifier("$condition");
+const labelDeterminantName = new Identifier("$determinant");
 const activationName = new Identifier("$activation");
 
 /**
@@ -357,6 +360,10 @@ var Compiler = (function () {
     return new UnaryExpression(Operator.FALSE.name, node);
   }
 
+  function tryFallthrough(nothingThrownLabel, body) {
+    return new IfStatement(new BinaryExpression("===", labelTestName, constant(nothingThrownLabel)), body);
+  }
+
   var FindProperty = (function () {
     function findProperty(multiname, domain, strict) {
       this.strict = strict;
@@ -587,7 +594,7 @@ var Compiler = (function () {
         return new BinaryExpression("===", labelTestName, new Literal(labelId));
       }
 
-      for (var i = item.cases.length - 1; i >=0; i--) {
+      for (var i = item.cases.length - 1; i >= 0; i--) {
         var c = item.cases[i];
         var labels = c.labels;
 
@@ -608,7 +615,7 @@ var Compiler = (function () {
       var body = [];
       if (item.label) {
         body.push(new VariableDeclaration("var", [
-          new VariableDeclarator(labelTestName, id(item.label))
+          new VariableDeclarator(labelTestName, new Literal(item.label))
         ]));
       }
       return body;
@@ -626,7 +633,7 @@ var Compiler = (function () {
       return {node: new BlockStatement(body), state: state};
     };
 
-    compilation.prototype.compileExit = function compileBreak(item, state) {
+    compilation.prototype.compileExit = function compileExit(item, state) {
       var body = labelTestBody(item);
       return {node: new BlockStatement(body), state: state};
     };
@@ -652,6 +659,25 @@ var Compiler = (function () {
     };
 
     compilation.prototype.compileSwitch = function compileSwitch(item, state) {
+      var dt = item.determinant.compile(this, state);
+      assert(dt.determinant);
+
+      var cases = [];
+      item.cases.forEach(function (x) {
+        var result = x.body.compile(this, dt.state.clone());
+        cases.push(new SwitchCase(typeof x.index === "number" ? new Literal(x.index) : undefined, result.node));
+        // TODO: Merge states.
+        assert(result.state.stack.length === 0);
+      }, this);
+
+      if (item.nothingThrownLabel) {
+        var ft = tryFallthrough(item.nothingThrownLabel, new SwitchStatement(labelDeterminantName, cases, false));
+        dt.node = new BlockStatement([dt.node, ft]);
+      } else {
+        dt.node.body.push(new SwitchStatement(dt.determinant, cases, false));
+      }
+
+      return {node: dt.node, state: state};
     };
 
     compilation.prototype.compileIf = function compileIf(item, state) {
@@ -667,10 +693,16 @@ var Compiler = (function () {
 
       var node;
       if (item.nothingThrownLabel) {
-        var ifs = new IfStatement(new BinaryExpression("===", labelTestName, constant(item.nothingThrownLabel)),
-                                  new IfStatement(labelConditionName, tr ? tr.node : new BlockStatement([]),
-                                                  er ? er.node : null));
-        cr.node = new BlockStatement([cr.node, ifs]);
+        var condition;
+        if (item.negated) {
+          condition = new UnaryExpression(Operators.FALSE.name, labelConditionName);
+        } else {
+          condition = labelConditionName;
+        }
+        var ft = tryFallthrough(item.nothingThrownLabel,
+                                new IfStatement(condition, tr ? tr.node : new BlockStatement([]),
+                                                er ? er.node : null));
+        cr.node = new BlockStatement([cr.node, ft]);
       } else {
         var condition = item.negated ? negate(cr.condition) : cr.condition;
         cr.node.body.push(new IfStatement(condition, tr ? tr.node : new BlockStatement([]), er ? er.node : null));
@@ -681,11 +713,14 @@ var Compiler = (function () {
 
     compilation.prototype.compileTry = function compileTry(item, state) {
       var br = item.body.compile(this, state);
-      var cx = this;
       var catches = [];
 
       if (br.condition) {
         br.node.body.push(new ExpressionStatement(assignment(labelConditionName, br.condition)));
+      }
+
+      if (br.determinant) {
+        br.node.body.push(new ExpressionStatement(assignment(labelDeterminantName, br.determinant)));
       }
 
       if (item.nothingThrownLabel > 0) {
@@ -699,32 +734,45 @@ var Compiler = (function () {
         }
       }
 
-      item.catches.forEach(function (x) {
-        var cr = x.body.compile(cx, state);
+      var assign = new VariableDeclaration("var", [new VariableDeclarator(lastCaughtName, exceptionName)]);
 
-        var assign = new VariableDeclaration("var", [new VariableDeclarator(lastCaughtName, exceptionName)]);
-        if (cr.node instanceof BlockStatement) {
-          cr.node.body.unshift(assign);
-        } else {
-          cr.node = new BlockStatement([assign, cr.node]);
-        }
+      var catchIf = null;
+      var catchElse;
+      item.catches.forEach(function (x) {
+        var cr = x.body.compile(this, state);
 
         if (x.typeName) {
           var type = this.compiler.abc.domain.getProperty(x.typeName, true, true);
           var checkType = call(property(constant(type), "isInstance"), [exceptionName]);
-          var rethrow = new ThrowStatement(exceptionName);
-          var checkAndRethrow = new IfStatement(new UnaryExpression(Operator.FALSE.name, checkType), rethrow, null);
-          cr.node.body.unshift(checkAndRethrow);
+          if (catchIf) {
+            catchIf.alternate = new IfStatement(checkType, cr.node, null);
+          } else {
+            catchIf = new IfStatement(checkType, cr.node, null);
+          }
+        } else if (!catchElse) {
+          // We ignore all the but the first unconditional catch. Finally
+          // blocks generate extraneous unconditional catches. I don't even
+          // know if this is right.
+          catchElse = cr.node;
         }
-
-        catches.push(new CatchClause(exceptionName, null, cr.node));
-        state = cr.state;
       }, this);
 
-      if (br.condition) {
+      if (catchElse && catchIf) {
+        catchIf.alternate = catchElse;
+      } else {
+        catchIf = catchElse;
       }
 
-      return {node: new TryStatement(br.node, catches, null), inner: br, state: state};
+      var catchBody;
+      if (catchIf instanceof BlockStatement) {
+        catchIf.body.unshift(assign);
+        catchBody = catchIf;
+      } else {
+        catchBody = new BlockStatement([assign, catchIf]);
+      }
+
+      var cc = new CatchClause(exceptionName, null, catchBody);
+      return {node: new TryStatement(br.node, [cc], null), inner: br, state: state};
     };
 
     compilation.prototype.compileBytecode = function compileBytecode(block, state) {
@@ -914,6 +962,7 @@ var Compiler = (function () {
       }
 
       var condition = null;
+      var determinant = null;
 
       /**
        * Remembers the branch condition for this block, which is passed and used by the If control
@@ -1103,7 +1152,7 @@ var Compiler = (function () {
         case OP_ifstricteq:     setCondition(Operator.SEQ); break;
         case OP_ifstrictne:     setCondition(Operator.SNE); break;
         case OP_lookupswitch:
-          // notImplemented();
+          determinant = state.stack.pop();
           break;
         case OP_pushwith:
           flushStack();
@@ -1212,7 +1261,8 @@ var Compiler = (function () {
         case OP_returnvalue:
           flushStack();
           emit(call(property(id("Runtime"), "stack.pop"), []));
-          emit(new ReturnStatement(state.stack.pop())); break;
+          emit(new ReturnStatement(state.stack.pop()));
+          break;
         case OP_constructsuper:
           args = state.stack.popMany(bc.argCount);
           obj = state.stack.pop();
@@ -1508,7 +1558,7 @@ var Compiler = (function () {
         writer.leave("}");
       }
 
-      return {node: new BlockStatement(body), condition: condition, state: state};
+      return {node: new BlockStatement(body), condition: condition, determinant: determinant, state: state};
     };
 
     return compilation;
