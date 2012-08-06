@@ -90,22 +90,18 @@ function grabABC(abcname) {
   return new AbcFile(stream, filename);
 }
 
-function installAvmPlus(vm) {
-  var domain = vm.systemDomain;
-  domain.installNative("getArgv", function() {
-    return argv;
-  });
-
-  domain.executeAbc(grabABC("avmplus"));
-}
-
 var vm;
 if (execute.value) {
   var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : (compileSys.value ? null : ALWAYS_INTERPRET);
   var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
-  vm = new AVM2(grabABC("builtin"), sysMode, appMode);
-  installAvmPlus(vm);
+  vm = new AVM2(sysMode, appMode);
+  vm.systemDomain.executeAbc(grabABC("builtin"));
   vm.systemDomain.executeAbc(grabABC("shell"));
+
+  vm.systemDomain.installNative("getArgv", function() {
+    return argv;
+  });
+  vm.systemDomain.executeAbc(grabABC("avmplus"));
 }
 
 if (file.value.endsWith(".swf")) {

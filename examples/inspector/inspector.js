@@ -31,13 +31,14 @@ var sysMode = state.chkSysCompiler ? null : ALWAYS_INTERPRET;
 var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
 
 function createAVM2(next) {
+  var vm = new AVM2(sysMode, appMode);
   new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
-    var vm = new AVM2(new AbcFile(new Uint8Array(buffer), "builtin.abc"), sysMode, appMode);
     vm.onConstruct = function (instance, args) {
       var ci = instance.public$constructor.classInfo;
       print("Creating: " + ci.instanceInfo.name.getQualifiedName() +
             ", with args: [" + args + "]");
     };
+    vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     next(vm);
   });
 }

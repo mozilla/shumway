@@ -1,18 +1,9 @@
 var AVM2 = (function () {
 
-  function AVM2(builtinABC, sysMode, appMode) {
-    if (!builtinABC) {
-      throw new Error("Cannot initialize AVM2 without builtin.abc");
-    }
-
-    assert(builtinABC.name === "builtin.abc", "builtinABC's name must be 'builtin.abc'");
-
-    var sysDomain = new Domain(this, null, sysMode, true);
-    sysDomain.executeAbc(builtinABC);
-
+  function AVM2(sysMode, appMode) {
     // TODO: this will change when we implement security domains.
-    this.systemDomain = sysDomain;
-    this.applicationDomain = new Domain(this, sysDomain, appMode, false);
+    this.systemDomain = new Domain(this, null, sysMode, true);
+    this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
 
     // Triggered whenever an AS3 class instance is constructed.
     this.onConstruct = undefined;
