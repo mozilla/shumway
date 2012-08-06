@@ -618,7 +618,7 @@ var Multiname = (function () {
 
   multiname.prototype.getQualifiedName = function getQualifiedName() {
     var qualifiedName = this.qualifiedName;
-    if (qualifiedName) {
+    if (qualifiedName !== undefined) {
       return qualifiedName;
     } else {
       assert(this.isQName());
@@ -628,7 +628,7 @@ var Multiname = (function () {
       // in giving them a prefix. This also lets us reuse the standard
       // implementations of Array, Vector, etc. without too much pain.
       if (this.isNumeric())
-        return this.name;
+        return this.qualifiedName = this.name;
 
       qualifiedName = '';
       if (this.isAttribute())
