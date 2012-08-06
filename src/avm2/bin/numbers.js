@@ -194,7 +194,12 @@ function extractData(str) {
   const jsonPrefix = "SHUMWAY$JSON";
   var textLines = lines.filter(function (x) {
     if (x.indexOf(jsonPrefix) === 0) {
-      var lineData = JSON.parse(x.substring(jsonPrefix.length + 1));
+      var lineData = {};
+      try {
+        lineData = JSON.parse(x.substring(jsonPrefix.length + 1));
+      } catch (e) {
+        // Nop
+      }
       for (var k in lineData) {
         data[k] = lineData[k];
       }
