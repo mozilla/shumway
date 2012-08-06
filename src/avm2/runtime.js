@@ -929,7 +929,11 @@ var Runtime = (function () {
         // TODO: It may be that the verifier can work with non-initialized types.
         // It can probably find the class traits manually, so that may be worth
         // looking into.
-        if (true && obj instanceof Global && this.domain.mode !== ALWAYS_INTERPRET) {
+        if (true ||
+            (obj instanceof Global ||
+             this.domain.Class && obj instanceof this.domain.Class
+            ) &&
+            this.domain.mode !== ALWAYS_INTERPRET) {
           closure = (function (trait, obj, qn) {
             return (function () {
               var executed = false;
