@@ -69,14 +69,14 @@ Event.prototype = Object.create(null, {
     return this._eventPhase;
   }),
   formatToString: describeMethod(function (className) {
-    var str = '[' + className;
+    var result = '[' + className;
     for (var i = 0, n = arguments.length; i < n; i++) {
       var prop = arguments[i];
       var val = this[prop];
-      str += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
+      result += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
     }
-    str += ']';
-    return str;
+    result += ']';
+    return result;
   }),
   isDefaultPrevented: describeMethod(function () {
     return this._isDefaultPrevented;
