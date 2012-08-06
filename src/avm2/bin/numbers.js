@@ -91,12 +91,17 @@ try {
   process.exit();
 }
 
+if (!process.env.AVM) {
+  console.log("Set the AVM environment variable to the avmshell path.");
+  process.exit();
+}
+
 var avmShell = {path: process.env.AVM, options: []};
 var shuShell = {path: "js", options: "-m -n avm.js".split(" ")};
 
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
-  {name: "avm", timeout: 500, command: avmShell.path},
+  {name: "avm", timeout: 500, command: avmShell.path}
 ];
 
 if (release.value) {
@@ -111,7 +116,7 @@ if (release.value) {
     {name: "shu-i", timeout: timeout.value, command: "js -m -n avm.js -x -i -tm -tj"},
     {name: "shu-c", timeout: timeout.value, command: "js -m -n avm.js -x -tm -tj"},
     {name: "shu-o", timeout: timeout.value, command: "js -m -n avm.js -x -opt -tm -tj"},
-    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm.js -x -opt -verify -tm -tj"},
+    {name: "shu-v", timeout: timeout.value, command: "js -m -n avm.js -x -opt -verify -tm -tj"}
   ]);
 }
 
