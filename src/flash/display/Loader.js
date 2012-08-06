@@ -1,9 +1,11 @@
 function Loader() {
-  this._dictionary = new ObjDictionary;
+  this._contentLoaderInfo = null;
+  this._dictionary = { };
   this._symbols = { };
 }
 
-Loader.SCRIPT_PATH = './Loader.js';
+Loader.LOADER_PATH = './Loader.js';
+Loader.PLAYER_GLOBAL_PATH = '../../src/avm2/generated/playerGlobal/playerGlobal.abc';
 Loader.WORKERS_ENABLED = true;
 Loader.WORKER_SCRIPTS = [
   '../../../lib/DataView.js/DataView.js',
@@ -53,7 +55,28 @@ Loader.prototype = Object.create(baseProto, {
     return this._content;
   }),
   contentLoaderInfo: describeAccessor(function () {
-    return this._contentLoaderInfo || (this._contentLoaderInfo = new LoaderInfo);
+    var loaderInfo = this._contentLoaderInfo;
+    if (!loaderInfo) {
+      loaderInfo = new LoaderInfo;
+      loaderInfo._loader = this;
+      this._contentLoaderInfo = loaderInfo;
+    }
+    return loaderInfo;
+  }),
+  createSymbolClass: describeMethod(function (init) {
+    return function () {
+      if (init)
+        init.apply(this, [].slice.call(arguments));
+
+      //symbolClasses[sym.name] = dictionary[sym.id];
+      //if (!sym.id) {
+      //  var documentClass = this.avm2.applicationDomain.getProperty(
+      //    Multiname.fromSimpleName(sym.name),
+      //    true, true
+      //  );
+      //  new (documentClass.instance)();
+      //}
+    };
   }),
   uncaughtErrorEvents: describeAccessor(function () {
     notImplemented();
@@ -74,117 +97,113 @@ Loader.prototype = Object.create(baseProto, {
       return;
     }
 
-    var dictionary = this._dictionary;
     var loaderInfo = this.contentLoaderInfo;
 
     loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
-    var frameLabels = this._frameLabels || (this._frameLabels = { });
-    var timeline = this._timeline || (this._timeline = []);
-
-    if (!dictionary[0]) {
-      loaderInfo._swfVersion = data.swfVersion;
-
-      var bounds = data.bounds;
-      loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-      loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
-
-      loaderInfo._frameRate = data.frameRate;
-
-      // TODO disable AVM1 if AVM2 is enabled
-      var as2Context = new AS2Context(data.swfVersion);
-      loaderInfo._as2Context = as2Context;
-
-      var symbolClass = function (as2Context) {
-        this._as2Context = as2Context;
-        MovieClipClass.call(this);
-      };
-      symbolClass.prototype = Object.create(new MovieClip, {
-        _frameLabels: describeProperty(frameLabels),
-        _timeline: describeProperty(timeline),
-        _totalFrames: describeProperty(data.frameCount)
-      });
-
-      dictionary[0] = symbolClass;
+    if (!this._dictionary[0]) {
+      this.setup(data);
     } else if (data) {
-      if (data.id) {
+      if (data.id)
         this.commitSymbol(data);
-      } else if (data.type === 'frame') {
-        if (data.abcBlocks) {
-          var blocks = data.abcBlocks;
-          for (var i = 0, n = blocks.length; i < n; i++) {
-            var block = blocks[i];
-            this.avm2.applicationDomain.executeAbc(new AbcFile(block));
-          }
-        }
-
-        if (data.bgcolor)
-          loaderInfo._backgroundColor = data.bgcolor;
-
-        if (data.exports) {
-          var exports = data.exports;
-          for (var i = 0, n = exports.length; i < n; i++) {
-            var asset = exports[i];
-            var symbolClass = dictionary[asset.symbolId];
-            if (symbolClass)
-              symbolClass.__class__ = asset.className;
-            //symbolClasses[sym.name] = dictionary[sym.id];
-            //if (!sym.id) {
-            //  var documentClass = this.avm2.applicationDomain.getProperty(
-            //    Multiname.fromSimpleName(sym.name),
-            //    true, true
-            //  );
-            //  new (documentClass.instance)();
-            //}
-          }
-        }
-
-        if (!this._content) {
-          var documentClass = dictionary[0];
-          var root = new documentClass(loaderInfo._as2Context);
-          root.name = '_root';
-
-          var globals = root._as2Context.globals;
-          globals._root = globals._level0 = root.$as2Object;
-
-          this._content = root;
-        }
-
-        var frameNum = timeline.length + 1;
-
-        if (data.labelName)
-          frameLabels[data.labelName] = { frame: frameNum, name: data.labelName };
-
-        var depths = data.depths;
-        var displayList = Object.create(frameNum > 1 ? timeline[frameNum - 2] : null);
-
-        if (depths) {
-          for (var depth in depths)
-            displayList[depth] = depths[depth];
-        }
-
-        var i = data.repeat || 1;
-        while (i--)
-          timeline.push(displayList);
-
-        if (frameNum === 1)
-          loaderInfo.dispatchEvent(new Event(Event.INIT));
-      }
+      else if (data.type === 'frame')
+        this.commitFrame(data);
     } else {
       loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
     }
   }),
+  commitFrame: describeMethod(function (frame) {
+    var loader = this;
+    var depths = frame.depths;
+    var dictionary = loader._dictionary;
+    var displayList = Object.create(null);
+    var frameLabels = loader._frameLabels;
+    var loaderInfo = loader.contentLoaderInfo;
+    var timeline = loader._timeline;
+    var frameNum = timeline.length + 1;
+    var framePromise = new Promise;
+    var prevPromise = frameNum > 1 ? timeline[frameNum - 2] : dictionary[0];
+    var promiseQueue = [prevPromise];
+
+    if (depths) {
+      for (var depth in depths) {
+        var cmd = depths[depth];
+        if (cmd.symbolId) {
+          var symbolPromise = dictionary[cmd.symbolId];
+          if (symbolPromise && !symbolPromise.resolved)
+            promiseQueue.push(symbolPromise);
+        }
+        displayList[depth] = cmd;
+      }
+    }
+
+    Promise.when.apply(Promise, promiseQueue).then(function (val) {
+      if (frame.abcBlocks) {
+        var appDomain = loader.avm2.applicationDomain;
+        var blocks = frame.abcBlocks;
+        for (var i = 0, n = blocks.length; i < n; i++) {
+          var abc = new AbcFile(blocks[i]);
+          appDomain.executeAbc(abc);
+        }
+      }
+
+      if (frame.exports) {
+        var exports = frame.exports;
+        for (var i = 0, n = exports.length; i < n; i++) {
+          var asset = exports[i];
+          var symbolClass = loader.getSymbolClassById(asset.symbolId);
+          if (symbolClass)
+            symbolClass.__class__ = asset.className;
+        }
+      }
+
+      var root = loader._content;
+
+      if (!loader._content) {
+        root = new val(loaderInfo._as2Context);
+
+        root.name = '_root';
+        var globals = root._as2Context.globals;
+        globals._root = globals._level0 = root.$as2Object;
+
+        loader._content = root;
+      } else {
+        displayList.__proto__ = val;
+      }
+
+      framePromise.resolve(displayList);
+      root._framesLoaded++;
+
+      if (frameNum === 1)
+        loaderInfo.dispatchEvent(new Event(Event.INIT));
+    });
+
+    var i = frame.repeat || 1;
+    while (i--)
+      timeline.push(framePromise);
+
+    if (frame.bgcolor)
+      loaderInfo._backgroundColor = frame.bgcolor;
+
+    if (frame.labelName)
+      frameLabels[frame.labelName] = { frame: frameNum, name: frame.labelName };
+  }),
   commitSymbol: describeMethod(function (symbol) {
     var dictionary = this._dictionary;
-    var id = symbol.id;
-    var promise = dictionary.getPromise(id);
-    var requirePromise = Promise.resolved;
-    if (symbol.require && symbol.require.length > 0) {
-      var requirePromises = [];
-      for (var i = 0; i < symbol.require.length; i++)
-        requirePromises.push(dictionary.getPromise(symbol.require[i]));
-      requirePromise = Promise.all(requirePromises);
+    var symbolPromise = new Promise;
+    var promiseQueue = [];
+    if (symbol.require && symbol.require.length) {
+      var promiseQueue = [];
+      var require = symbol.require;
+      for (var i = 0, n = require.length; i < n; i++) {
+        var symbolId = require[i];
+        var symbolPromise = dictionary[symbolId];
+        if (symbolPromise && !symbolPromise.resolved)
+          promiseQueue.push(symbolPromise);
+      }
     }
+    var requirePromise = Promise.when.apply(Promise, promiseQueue);
+
     switch (symbol.type) {
     case 'button':
       var timelineLoader = new TimelineLoader(
@@ -192,17 +211,17 @@ Loader.prototype = Object.create(baseProto, {
         [symbol.states.up, symbol.states.over, symbol.states.down, symbol.states.hitTest],
         dictionary
       );
-      symbolClass = function (as2Context) {
+      var symbolClass = this.createSymbolClass(function (as2Context) {
         this._as2Context = as2Context;
         ButtonPrototype.call(this, symbol, timelineLoader);
-      };
+      });
       symbolClass.prototype = Object.create(new SimpleButton);
       requirePromise.then(function () {
-        promise.resolve(symbolClass);
+        symbolPromise.resolve(symbolClass);
       });
       break;
     case 'font':
-      symbolClass = function () { };
+      var symbolClass = this.createSymbolClass();
       symbolClass.prototype = Object.create(new Font, { });
       var charset = fromCharCode.apply(null, symbol.codes);
       if (charset) {
@@ -217,32 +236,32 @@ Loader.prototype = Object.create(baseProto, {
         //ctx.font = '1024px "' + symbol.name + '"';
         //var defaultWidth = ctx.measureText(charset).width;
         requirePromise.then(function () {
-          promise.resolve(symbolClass);
+          symbolPromise.resolve(symbolClass);
         });
       }
       break;
     case 'image':
       var img = new Image;
-      symbolClass = function () { };
+      var symbolClass = this.createSymbolClass();
       symbolClass.prototype = Object.create(new BitmapData, { img: describeProperty(img) });
       img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
       img.onload = function () {
         requirePromise.then(function () {
-          promise.resolve(symbolClass);
+          symbolPromise.resolve(symbolClass);
         });
       };
       break;
     case 'label':
     case 'text':
       var drawFn = new Function('d,c,r', symbol.data);
-      symbolClass = function () { };
+      var symbolClass = this.createSymbolClass();
       symbolClass.prototype = Object.create(new TextField, {
         draw: describeMethod(function (c, r) {
           return drawFn.call(this, dictionary, c, r);
         })
       });
       requirePromise.then(function () {
-        promise.resolve(symbolClass);
+        symbolPromise.resolve(symbolClass);
       });
       break;
     case 'shape':
@@ -250,7 +269,7 @@ Loader.prototype = Object.create(baseProto, {
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
       var graphics = new Graphics;
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
-      var symbolClass = function () { };
+      var symbolClass = this.createSymbolClass();
       symbolClass.prototype = Object.create(new Shape, {
         _bounds: describeProperty(
           new Rectangle(bounds.x / 20, bounds.y / 20, bounds.width / 20, bounds.height / 20)
@@ -258,23 +277,27 @@ Loader.prototype = Object.create(baseProto, {
         _graphics: describeProperty(graphics)
       });
       requirePromise.then(function () {
-        promise.resolve(symbolClass);
+        symbolPromise.resolve(symbolClass);
       });
       break;
     case 'sprite':
-      var symbolClass = function (as2Context) {
+      var frameCount = symbol.frameCount;
+      var symbolClass = this.createSymbolClass(function (as2Context) {
         this._as2Context = as2Context;
         MovieClipClass.call(this);
-      };
+      });
       symbolClass.prototype = Object.create(new MovieClip, {
         _timeline: symbol.timeline,
-        _totalFrames: describeProperty(symbol.frameCount)
+        _framesLoaded: describeProperty(frameCount),
+        _totalFrames: describeProperty(frameCount)
       });
       requirePromise.then(function () {
-        promise.resolve(symbolClass);
+        symbolPromise.resolve(symbolClass);
       });
       break;
     }
+
+    dictionary[symbol.id] = symbolPromise;
   }),
   defineSymbol: describeMethod(function (swfTag) {
     var loader = this;
@@ -390,14 +413,16 @@ Loader.prototype = Object.create(baseProto, {
   getSymbolClassByName: describeMethod(function (className) {
     var dictionary = this._dictionary;
     for (var id in dictionary) {
-      var symbol = dictionary[id];
-      if (symbol.__class__ === className)
-        return symbol
+      var promise = dictionary[id];
+      var symbolClass = promise.value;
+      if (symbolClass && symbolClass.__class__ === className)
+        return symbolClass;
     }
     return null;
   }),
   getSymbolClassById: describeMethod(function (id) {
-    return this._dictionary[id] || null;
+    var promise = this._dictionary[id];
+    return promise.value || null;
   }),
   load: describeMethod(function (request, context) {
     this.loadFrom(request.url);
@@ -411,7 +436,7 @@ Loader.prototype = Object.create(baseProto, {
   loadFrom: describeMethod(function (input, context) {
     var loader = this;
     if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
-      var worker = new Worker(Loader.SCRIPT_PATH);
+      var worker = new Worker(Loader.LOADER_PATH);
       worker.onmessage = function (evt) {
         loader.commitData(evt.data);
       };
@@ -534,6 +559,49 @@ Loader.prototype = Object.create(baseProto, {
   }),
   setChildIndex: describeMethod(function (child, index) {
     illegalOperation();
+  }),
+  setup: describeMethod(function (info) {
+    var loader = this;
+    var loaderInfo = loader.contentLoaderInfo;
+
+    loaderInfo._swfVersion = info.swfVersion;
+
+    var bounds = info.bounds;
+    loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
+    loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+
+    loaderInfo._frameRate = info.frameRate;
+
+    // TODO disable AVM1 if AVM2 is enabled
+    var as2Context = new AS2Context(info.swfVersion);
+    loaderInfo._as2Context = as2Context;
+
+    var frameLabels = loader._frameLabels || (loader._frameLabels = { });
+    var timeline = loader._timeline || (loader._timeline = []);
+
+    var symbolClass = loader.createSymbolClass(function (as2Context) {
+      this._as2Context = as2Context;
+      MovieClipClass.call(this);
+    });
+    symbolClass.prototype = Object.create(new MovieClip, {
+      _frameLabels: describeProperty(frameLabels),
+      _timeline: describeProperty(timeline),
+      _totalFrames: describeProperty(info.frameCount)
+    });
+
+    var symbolPromise = new Promise;
+    loader._dictionary[0] = symbolPromise;
+
+    var xhr = new XMLHttpRequest;
+    xhr.open('GET', Loader.PLAYER_GLOBAL_PATH);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
+      var abc = new AbcFile(new Uint8Array(this.response));
+      loader.avm2.systemDomain.loadAbc(abc);
+
+      symbolPromise.resolve(symbolClass);
+    };
+    xhr.send();
   }),
   unload: describeMethod(function () {
     notImplemented();
