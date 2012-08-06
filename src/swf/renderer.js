@@ -9,13 +9,13 @@ function render(container, renderingContext) {
   for (var i = 0, n = children.length; i < n; i++) {
     var child = children[i];
     if (child) {
-      if (item.matrix && !child.$fixMatrix)
-        child.matrix = create(item.matrix);
-      if (item.cxform && !child.$fixCxform)
-        child.cxform = create(item.cxform);
+      if (child.matrix && !child.$fixMatrix)
+        child.matrix = create(child.matrix);
+      if (child.cxform && !child.$fixCxform)
+        child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child.matrix;
+      var m = child.transform.matrix;
       ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
       var rotation = child.rotation;
       if (rotation)

@@ -1,9 +1,9 @@
 function MovieClip() {
-  this._currentDisplayList = null;
   this._currentFrame = 0;
   this._currentFrameLabel = null;
   this._currentLabel = false;
   this._currentScene = { };
+  this._displayList = null;
   this._enabled = true;
   this._frameScripts = { };
   this._frameLabels = { };
@@ -51,7 +51,7 @@ MovieClip.prototype = Object.create(new Sprite, {
     }
   ),
   framesLoaded: describeAccessor(function () {
-    return this._timeline.length;
+    return this._framesLoaded;
   }),
 
   gotoFrame: describeMethod(function (frameNum, scene) {
@@ -64,13 +64,25 @@ MovieClip.prototype = Object.create(new Sprite, {
     this._currentFrame = frameNum;
 
     var currentDisplayList = this._currentDisplayList;
-    var displayList = this._timeline[frameNum - 1];
-
-    console.log(displayList);
-
-    this._currentDisplayList = displayList;
+    var framePromise = this._timeline[frameNum - 1];
+    var displayList = framePromise.value;
 
     this.$dispatchEvent('onEnterFrame');
+
+    if (displayList === this._displayList)
+      return;
+
+    var loader = this.loaderInfo._loader;
+    for (var depth in displayList) {
+      var cmd = displayList[depth];
+      if (cmd.symbolId) {
+        var symbolClass = loader.getSymbolClassById(cmd.symbolId);
+        var child = new symbolClass;
+        this.addChild(child);
+      }
+    }
+
+    this._displayList = displayList;
 
     if (frameNum in this._frameScripts) {
       var scripts = this._frameScripts[frameNum];
@@ -101,7 +113,7 @@ MovieClip.prototype = Object.create(new Sprite, {
     return this._isPlaying;
   }),
   nextFrame: describeMethod(function () {
-    this.gotoAndPlay((this._currentFrame % this._totalFrames) + 1);
+    this.gotoAndPlay(this._currentFrame % this._totalFrames + 1);
   }),
   nextScene: describeMethod(function () {
     notImplemented();
