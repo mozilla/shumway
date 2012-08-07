@@ -269,7 +269,7 @@ Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype
         graphics: describeAccessor(function () {
           throw Error();
         }),
-        _children: describeProperty([]),
+        _children: describeLazyProperty([]),
         _timeline: describeProperty(symbol.timeline),
         _framesLoaded: describeProperty(frameCount),
         _totalFrames: describeProperty(frameCount)
