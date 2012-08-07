@@ -6,6 +6,7 @@ function render(container, renderingContext) {
   var ctx = renderingContext.beginDrawing();
   // displayList is array, so items are sorted by depth
   var children = container._children;
+
   for (var i = 0, n = children.length; i < n; i++) {
     var child = children[i];
     if (child) {
@@ -29,7 +30,7 @@ function render(container, renderingContext) {
       if (child._graphics) {
         var graphics = child._graphics;
         var subpaths = graphics._subpaths;
-        for (var j = 0, n = subpaths.length; j < n; j++) {
+        for (var j = 0, o = subpaths.length; j < o; j++) {
           var path = subpaths[j];
           if (path.fillStyle) {
             ctx.fillStyle = path.fillStyle;
@@ -46,9 +47,9 @@ function render(container, renderingContext) {
           }
           if (path.strokeStyle) {
             ctx.strokeStyle = path.strokeStyle;
-            var drawStyles = path.drawStyles;
-            for (prop in drawStyles)
-              ctx[prop] = drawStyles[prop];
+            var drawingStyles = path.drawingStyles;
+            for (prop in drawingStyles)
+              ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
           }
         }

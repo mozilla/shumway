@@ -259,12 +259,12 @@ function defineShape(tag, dictionary) {
       push.apply(path, subpath);
     }
     if (path.length) {
-      var cmds = [];
+      var commands = [];
 
       var fillStyle = fillStyles[i - 1];
       switch (fillStyle.type) {
       case GRAPHICS_FILL_SOLID:
-        cmds.push('{' +
+        commands.push('{' +
           '__class__:"flash.display.GraphicsSolidFill",' +
           '__isIGraphicsFill__:true,' +
           toColorProperties(fillStyle.color, fillStyle.colorMorph) +
@@ -291,7 +291,7 @@ function defineShape(tag, dictionary) {
             ratios.push(record.ratio / 255);
           }
         }
-        cmds.push('{' +
+        commands.push('{' +
           '__class__:"flash.display.GraphicsGradientFill",' +
           '__isIGraphicsFill__:true,' +
           'type:' + (GRAPHICS_FILL_LINEAR_GRADIENT ? '"linear"' : '"radial"') + ',' +
@@ -309,7 +309,7 @@ function defineShape(tag, dictionary) {
       case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
       case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
         var bitmap = dictionary[fillStyle.bitmapId];
-        cmds.push('{' +
+        commands.push('{' +
           '__class__:"flash.display.GraphicsBitmapFill",' +
           '__isIGraphicsFill__:true,' +
           'bitmapData:d[' + bitmap.id + ']' +
@@ -322,14 +322,14 @@ function defineShape(tag, dictionary) {
         fail('invalid fill style', 'shape');
       }
 
-      var commands = [];
+      var cmds = [];
       var data = [];
       var j = 0;
       var subpath;
       var prev = { };
       while (subpath = path[j++]) {
         if (subpath.spt !== prev.dpt) {
-          commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+          cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
           data.push(subpath.spt);
         }
         var edges = subpath.edges;
@@ -338,10 +338,10 @@ function defineShape(tag, dictionary) {
           var edge;
           while (edge = edges[--k]) {
             if (edge.cpt) {
-              commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+              cmds.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
               data.push(edge.cpt, edge.spt);
             } else {
-              commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+              cmds.push(GRAPHICS_PATH_COMMAND_LINE_TO);
               data.push(edge.spt);
             }
           }
@@ -350,10 +350,10 @@ function defineShape(tag, dictionary) {
           var edge;
           while (edge = edges[k++]) {
             if (edge.cpt) {
-              commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+              cmds.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
               data.push(edge.cpt, edge.dpt);
             } else {
-              commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+              cmds.push(GRAPHICS_PATH_COMMAND_LINE_TO);
               data.push(edge.dpt);
             }
           }
@@ -361,17 +361,17 @@ function defineShape(tag, dictionary) {
         prev = subpath;
       }
 
-      cmds.push('{' +
+      commands.push('{' +
         '__class__:"flash.display.GraphicsPath",' +
         '__isIGraphicsPath__:true,' +
-        'commands:[' + commands.join(',') + '],' +
+        'commands:[' + cmds.join(',') + '],' +
         'data:[' + data.join(',') + ']' +
       '},{' +
         '__class__:"flash.display.GraphicsEndFill",' +
         '__isIGraphicsFill__:true,' +
       '}');
 
-      paths.push({ i: path[0].i, cmds: cmds});
+      paths.push({ i: path[0].i, commands: commands});
     }
   }
 
@@ -387,15 +387,14 @@ function defineShape(tag, dictionary) {
       var segment;
       while (segment = segments[j++]) {
         var edges = segment.edges;
-        var cmds = [];
+        var commands = [];
         var k = 0;
         var edge;
         var prev = { };
 
-        cmds.push('{' +
+        commands.push('{' +
           '__class__:"flash.display.GraphicsStroke",' +
           '__isIGraphicsStroke__:true,' +
-          '__isGraphicsSolidFill__:true,' +
           'thickness:' + lineWidth + ',' +
           'pixelHinting:false,' +
           'caps:"round",' +
@@ -403,35 +402,37 @@ function defineShape(tag, dictionary) {
           'miterLimit:3,' +
           'scaleMode:"normal",' +
           'fill:{' +
-            '__isIGraphicsFill__:true,' +
             '__class__:"flash.display.GraphicsSolidFill",' +
+            '__isIGraphicsFill__:true,' +
             colorProps +
           '}' +
         '}');
 
+        var cmds = [];
+        var data = [];
         while (edge = edges[k++]) {
           if (edge.spt !== prev.dpt) {
-            commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+            cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
             data.push(edge.spt);
           }
           if (edge.cpt) {
-            commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+            cmds.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
             data.push(edge.cpt, edge.dpt);
           } else {
-            commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+            cmds.push(GRAPHICS_PATH_COMMAND_LINE_TO);
             data.push(edge.dpt);
           }
           prev = edge;
         }
 
-        cmds.push('{' +
+        commands.push('{' +
           '__class__:"flash.display.GraphicsPath",' +
           '__isIGraphicsPath__:true,' +
-          'commands:[' + commands.join(',') + '],' +
+          'commands:[' + cmds.join(',') + '],' +
           'data:[' + data.join(',') + ']' +
         '}');
 
-        paths.push({ i: segment.i, cmds: cmds });
+        paths.push({ i: segment.i, commands: commands });
       }
     }
   }
@@ -439,11 +440,11 @@ function defineShape(tag, dictionary) {
   paths.sort(function (a, b) {
     return a.i - b.i;
   });
-  var cmds = [];
+  var commands = [];
   var i = 0;
   var path;
   while (path = paths[i++])
-    push.apply(cmds, path.cmds);
+    push.apply(commands, path.commands);
   var bounds = tag.bounds;
   var shape = {
     type: 'shape',
@@ -455,7 +456,7 @@ function defineShape(tag, dictionary) {
       width: bounds.xMax - bounds.xMin,
       height: bounds.yMax - bounds.yMin
     },
-    data: '[' + cmds.join(',') + ']'
+    data: '[' + commands.join(',') + ']'
   };
   if (dependencies.length)
     shape.require = dependencies;

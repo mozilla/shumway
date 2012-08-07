@@ -101,7 +101,7 @@ Graphics.prototype = Object.create(null, {
 
     if (stroke === null || fill === null) {
       this.lineStyle(null);
-    } else if (fill.__isGraphicsSolidFill__) {
+    } else if (fill.__class__ === 'flash.display.GraphicsSolidFill') {
       this.lineStyle(
         stroke.thickness,
         fill.color,
@@ -276,7 +276,7 @@ Graphics.prototype = Object.create(null, {
     path.drawingStyles = this._drawingStyles;
     path.fillStyle = this._fillStyle;
     path.fillTransform = this._fillTransform;
-    path.strokeStyle = this._lineStyle;
+    path.strokeStyle = this._strokeStyle;
     this._subpaths.push(path);
     return path;
   })
