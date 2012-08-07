@@ -226,7 +226,7 @@ const natives = (function () {
     c.nativeMethods = m;
     c.nativeStatics = String;
     c.isInstance = function (value) {
-      return value !== null && value !== undefined && typeof value.valueOf() === "string";
+      return typeof value.valueOf() === "string";
     };
 
     return c;
@@ -307,24 +307,24 @@ const natives = (function () {
     return c;
   }
 
-  function VectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, undefined, baseClass);
+  function VectorClass(runtime, scope, instance) {
+    return createVectorClass(runtime, undefined);
   }
 
   function ObjectVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Object"), baseClass);
+    return createVectorClass(runtime, runtime.domain.getClass("Object"));
   }
 
   function IntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("int"), baseClass);
+    return createVectorClass(runtime, runtime.domain.getClass("int"));
   }
 
   function UIntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("uint"), baseClass);
+    return createVectorClass(runtime, runtime.domain.getClass("uint"));
   }
 
   function DoubleVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Number"), baseClass);
+    return createVectorClass(runtime, runtime.domain.getClass("Number"));
   }
 
   /**
@@ -336,7 +336,7 @@ const natives = (function () {
     c.nativeMethods = Number.prototype;
     c.defaultValue = Number(0);
     c.isInstance = function (value) {
-      return value !== null && value !== undefined && typeof value.valueOf() === "number";
+      return typeof value.valueOf() === "number";
     };
     c.coerce = Number;
     return c;
