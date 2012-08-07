@@ -65,22 +65,43 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
 
     this._currentFrame = frameNum;
 
-    var currentDisplayList = this._currentDisplayList;
+    var currentDisplayList = this._displayList || { };
     var framePromise = this._timeline[frameNum - 1];
     var displayList = framePromise.value;
 
-    this.$dispatchEvent('onEnterFrame');
+    //this.$dispatchEvent('onEnterFrame');
 
-    if (displayList === this._displayList)
+    if (displayList === currentDisplayList)
       return;
 
     var loader = this.loaderInfo._loader;
     for (var depth in displayList) {
       var cmd = displayList[depth];
-      if (cmd.symbolId) {
+      var timelineInfo = currentDisplayList[depth];
+      if (cmd === null) {
+        // REMOVE
+        if (timelineInfo) {
+          this.removeChild(timelineInfo.instance);
+        }
+        var instance = currentDisplayList[depth].instance;
+      } else if (cmd.symbolId) {
         var symbolClass = loader.getSymbolClassById(cmd.symbolId);
-        var child = new symbolClass;
-        this.addChild(child);
+        var instance = new symbolClass;
+        if (timelineInfo) {
+          // REPLACE
+          var oldInstance = timelineInfo.instance;
+          var index = this.getChildIndex(oldInstance);
+          this.removeChildAt(index);
+          instance._matrix = cmd.matrix || oldInstance._matrix;
+          instance._cxform = cmd.cxform || oldInstance._cxform;
+          this.addChildAt(instance, index);
+        } else {
+          // PLACE
+          instance._matrix = cmd.matrix;
+          instance._cxform = cmd.cxform;
+          this.addChild(instance);
+        }
+        cmd.instance = instance;
       }
     }
 
