@@ -15,16 +15,16 @@ function render(container, renderingContext) {
         child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child.transform.matrix;
+      var m = child._matrix;
       ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-      var rotation = child.rotation;
-      if (rotation)
-        ctx.rotate(rotation * Math.PI / 180);
-      var cxform = child.cxform;
-      if (cxform) {
-        // We only support alpha channel transformation for now
-        ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
-      }
+      //var rotation = child.rotation;
+      //if (rotation)
+      //  ctx.rotate(rotation * Math.PI / 180);
+      //var cxform = child.cxform;
+      //if (cxform) {
+      //  // We only support alpha channel transformation for now
+      //  ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
+      //}
 
       if (child._graphics) {
         var graphics = child._graphics;
@@ -60,65 +60,65 @@ function render(container, renderingContext) {
         child.renderNextFrame(renderingContext);
 
       ctx.restore();
-      if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
-        renderShadowCanvas(child);
+      //if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
+      //  renderShadowCanvas(child);
     }
   }
   renderingContext.endDrawing();
 }
 
-function renderShadowCanvas(child) {
-  var cache = child.hitTestCache;
-
-  var bounds = child.getBounds();
-  var offsetX = Math.floor(bounds.x / 20);
-  var offsetY = Math.floor(bounds.y / 20);
-  var sizeX = Math.ceil(bounds.width / 20);
-  var sizeY = Math.ceil(bounds.height / 20);
-
-  var canvas = cache.canvas;
-  if (!canvas) {
-    cache.canvas = canvas = document.createElement('canvas');
-    cache.isPixelPainted = function(x, y) {
-      x = 0 | (x - offsetX);
-      y = 0 | (y - offsetY);
-      if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
-        return false;
-      var data = cache.imageData.data;
-      var result = data[(x + sizeX * y) * 4 + 3];
-      return !!result;
-    };
-  }
-
-  if (sizeX <= 0 || sizeY <= 0)
-    return;
-
-  canvas.width = sizeX;
-  canvas.height = sizeY;
-
-  var ctx = canvas.getContext('2d');
-  ctx.save();
-  ctx.mozFillRule = 'evenodd';
-  ctx.clearRect(0, 0, sizeX, sizeY);
-  ctx.translate(-offsetX, -offsetY);
-  ctx.scale(0.05, 0.05);
-
-  if (child.draw)
-    child.draw(ctx, child.ratio);
-  else if (child.nextFrame) {
-    var renderContext = {
-      isHitTestRendering: true,
-      beginDrawing: function() { return ctx; },
-      endDrawing: function() {}
-    };
-    child.renderNextFrame(renderContext);
-  }
-
-  ctx.restore();
-
-  cache.ratio = child.ratio;
-  cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
-}
+//function renderShadowCanvas(child) {
+//  var cache = child.hitTestCache;
+//
+//  var bounds = child.getBounds();
+//  var offsetX = Math.floor(bounds.x / 20);
+//  var offsetY = Math.floor(bounds.y / 20);
+//  var sizeX = Math.ceil(bounds.width / 20);
+//  var sizeY = Math.ceil(bounds.height / 20);
+//
+//  var canvas = cache.canvas;
+//  if (!canvas) {
+//    cache.canvas = canvas = document.createElement('canvas');
+//    cache.isPixelPainted = function(x, y) {
+//      x = 0 | (x - offsetX);
+//      y = 0 | (y - offsetY);
+//      if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
+//        return false;
+//      var data = cache.imageData.data;
+//      var result = data[(x + sizeX * y) * 4 + 3];
+//      return !!result;
+//    };
+//  }
+//
+//  if (sizeX <= 0 || sizeY <= 0)
+//    return;
+//
+//  canvas.width = sizeX;
+//  canvas.height = sizeY;
+//
+//  var ctx = canvas.getContext('2d');
+//  ctx.save();
+//  ctx.mozFillRule = 'evenodd';
+//  ctx.clearRect(0, 0, sizeX, sizeY);
+//  ctx.translate(-offsetX, -offsetY);
+//  ctx.scale(0.05, 0.05);
+//
+//  if (child.draw)
+//    child.draw(ctx, child.ratio);
+//  else if (child.nextFrame) {
+//    var renderContext = {
+//      isHitTestRendering: true,
+//      beginDrawing: function() { return ctx; },
+//      endDrawing: function() {}
+//    };
+//    child.renderNextFrame(renderContext);
+//  }
+//
+//  ctx.restore();
+//
+//  cache.ratio = child.ratio;
+//  cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
+//}
 
 function renderStage(stage, ctx) {
   var frameTime = 0;

@@ -7,8 +7,8 @@ SWF.embed = function(file, container, options) {
   var loader = new Loader;
 
   // TODO choose between AVM1/2 based on FileAttribute settings
-  loader.avm1 = options.avm1;
-  loader.avm2 = options.avm2;
+  //loader.avm1 = options.avm1;
+  loader._avm2 = options.avm2;
 
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new Stage;
@@ -24,7 +24,7 @@ SWF.embed = function(file, container, options) {
     stage._stageHeight = loaderInfo.height;
     stage._stageWidth = loaderInfo.width;
 
-    loaderInfo._as2Context.stage = stage; // TODO make it better
+    //loader._avm1.stage = stage; // TODO make it better
 
     if (container.clientHeight) {
       fitCanvas(container, canvas);
