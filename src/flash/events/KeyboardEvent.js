@@ -7,6 +7,8 @@ function KeyboardEvent(type,
                        ctrlKey,
                        altKey,
                        shiftKey) {
+  Event.call(this);
+
   Object.defineProperties(
     type:        describeProperty(type),
     bubbles:     describeProperty(bubbles !== undefined ? !!bubbles : true),
@@ -25,7 +27,7 @@ Object.defineProperties(KeyboardEvent, {
   KEY_UP:   describeConst('keyUp')
 });
 
-KeyboardEvent.prototype = Object.create(new Event, {
+KeyboardEvent.prototype = Object.create(Event.prototype, {
   __class__: describeInternalProperty('flash.events.KeyboardEvent'),
 
   clone: describeMethod(function () {

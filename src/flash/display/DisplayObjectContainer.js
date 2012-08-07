@@ -1,8 +1,10 @@
 function DisplayObjectContainer() {
+  InteractiveObject.call(this);
+
   this._children = [];
 }
 
-DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
+DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
   mouseChildren: describeAccessor(
     function () {
       return true;
@@ -45,8 +47,10 @@ DisplayObjectContainer.prototype = Object.create(new InteractiveObject, {
 
     if (child._parent)
       child._parent.removeChild(child);
+
     children.splice(index, 0, child);
     child._parent = this;
+
     return child;
   }),
   areInaccessibleObjectsUnderPoint: describeMethod(function (pt) {

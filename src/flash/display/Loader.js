@@ -1,9 +1,13 @@
 function Loader() {
+  if (Loader.BASE_CLASS)
+    Loader.BASE_CLASS.call(this);
+
   this._contentLoaderInfo = null;
   this._dictionary = { };
   this._symbols = { };
 }
 
+Loader.BASE_CLASS = null;
 Loader.LOADER_PATH = './Loader.js';
 Loader.PLAYER_GLOBAL_PATH = '../../src/avm2/generated/playerGlobal/playerGlobal.abc';
 Loader.WORKERS_ENABLED = true;
@@ -31,8 +35,6 @@ Loader.WORKER_SCRIPTS = [
   '../../swf/text.js'
 ];
 
-var baseProto = null;
-
 if (typeof window === 'undefined') {
   importScripts.apply(null, Loader.WORKER_SCRIPTS);
 
@@ -45,10 +47,10 @@ if (typeof window === 'undefined') {
   head.insertBefore(document.createElement('style'), head.firstChild);
   var style = document.styleSheets[0];
 
-  baseProto = new DisplayObjectContainer;
+  Loader.BASE_CLASS = DisplayObjectContainer;
 }
 
-Loader.prototype = Object.create(baseProto, {
+Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype : null, {
   __class__: describeInternalProperty('flash.display.Loader'),
 
   content: describeAccessor(function () {

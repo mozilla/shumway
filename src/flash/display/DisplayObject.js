@@ -15,6 +15,8 @@ var BLEND_MODE_SHADER     = 'shader';
 var BLEND_MODE_SUBTRACT   = 'subtract';
 
 function DisplayObject() {
+  EventDispatcher.call(this);
+
   this._alpha = 1;
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
@@ -35,7 +37,7 @@ function DisplayObject() {
   this._y = 0;
 }
 
-DisplayObject.prototype = Object.create(new EventDispatcher, {
+DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
   accessibilityProperties: describeAccessor(
     function () {
       return null;

@@ -1,11 +1,28 @@
 function LoaderInfo() {
+  EventDispatcher.call(this);
+
+  this._actionScriptVersion = null;
+  this._backgroundColor = null;
+  this._bytes = null;
+  this._bytesLoaded = null;
+  this._bytesTotal = null;
+  this._content = null;
+  this._contentType = null;
+  this._frameRate = null;
+  this._height = null;
+  this._loader = null;
+  this._loaderURL = null;
+  this._parameters = null;
+  this._swfVersion = null;
+  this._url = null;
+  this._width = null;
 }
 
-LoaderInfo.prototype = Object.create(new EventDispatcher, {
+LoaderInfo.prototype = Object.create(EventDispatcher.prototype, {
   __class__: describeInternalProperty('flash.display.LoaderInfo'),
 
   actionScriptVersion: describeAccessor(function () {
-    return this._content;
+    return this._actionScriptVersion;
   }),
   applicationDomain: describeAccessor(function () {
     notImplemented();

@@ -1,4 +1,6 @@
 function ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal) {
+  Event.call(this);
+
   Object.defineProperties(this, {
     type:        describeConst(type),
     bubbles:     describeConst(bubbles !== undefined ? !!bubbles : true),
@@ -13,7 +15,7 @@ Object.defineProperties(ProgressEvent, {
   SOCKET_DATA: describeConst('socketData')
 });
 
-ProgressEvent.prototype = Object.create(new Event, {
+ProgressEvent.prototype = Object.create(Event.prototype, {
   __class__: describeInternalProperty('flash.events.ProgressEvent'),
 
   clone: describeMethod(function () {

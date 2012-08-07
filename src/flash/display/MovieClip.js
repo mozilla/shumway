@@ -1,4 +1,6 @@
 function MovieClip() {
+  Sprite.call(this);
+
   this._currentFrame = 0;
   this._currentFrameLabel = null;
   this._currentLabel = false;
@@ -15,7 +17,7 @@ function MovieClip() {
   this._scenes = { };
 }
 
-MovieClip.prototype = Object.create(new Sprite, {
+MovieClip.prototype = Object.create(Sprite.prototype, {
   __class__: describeInternalProperty('flash.display.MovieClip'),
 
   addFrameScript: describeMethod(function () {

@@ -1,11 +1,13 @@
 function Shape() {
-	this._graphics = null;
+  DisplayObject.call(this);
+
+	this._graphics = new Graphics;
 }
 
-Shape.prototype = Object.create(new DisplayObject, {
+Shape.prototype = Object.create(DisplayObject.prototype, {
   __class__: describeInternalProperty('flash.display.Shape'),
 
   graphics: describeAccessor(function () {
-    return this._graphics || (this._graphics = new Graphics);
+    return this._graphics;
   })
 });

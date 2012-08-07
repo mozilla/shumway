@@ -1,8 +1,10 @@
 function InteractiveObject() {
+  DisplayObject.call(this);
+
   this._control = document.createElement('div');
 }
 
-InteractiveObject.prototype = Object.create(new DisplayObject, {
+InteractiveObject.prototype = Object.create(DisplayObject.prototype, {
   accessibilityImplementation: describeAccessor(
     function () {
       return -1;

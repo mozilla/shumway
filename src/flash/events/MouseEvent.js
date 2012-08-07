@@ -9,6 +9,8 @@ function MouseEvent(type,
                     shiftKey,
                     buttonDown,
                     delta){
+  Event.call(this);
+
   Object.defineProperties(
     type:          describeProperty(type),
     bubbles:       describeProperty(bubbles !== undefined ? !!bubbles : true),
@@ -37,7 +39,7 @@ Object.defineProperties(MouseEvent, {
   ROLL_OVER:    describeConst('rollOver')
 });
 
-MouseEvent.prototype = Object.create(new Event, {
+MouseEvent.prototype = Object.create(Event, {
   __class__: describeInternalProperty('flash.events.MouseEvent'),
 
   isRelatedObjectInaccessible: describeAccessor(

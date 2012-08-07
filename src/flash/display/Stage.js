@@ -26,12 +26,14 @@ var STAGE_QUALITY_LOW            = 'low';
 var STAGE_QUALITY_MEDIUM         = 'medium';
 
 function Stage() {
+  DisplayObjectContainer.call(this);
+
   this._color = 0xFFFFFFFF;
   this._stage = this;
   this._transform = { };
 }
 
-Stage.prototype = Object.create(new DisplayObjectContainer, {
+Stage.prototype = Object.create(DisplayObjectContainer.prototype, {
   __class__: describeInternalProperty('flash.display.Stage'),
 
   accessibilityImplementation: describeAccessor(

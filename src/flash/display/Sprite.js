@@ -1,8 +1,10 @@
 function Sprite() {
-  this._graphics = null;
+  DisplayObjectContainer.call(this);
+
+  this._graphics = new Graphics;
 }
 
-Sprite.prototype = Object.create(new DisplayObjectContainer, {
+Sprite.prototype = Object.create(DisplayObjectContainer.prototype, {
   __class__: describeInternalProperty('flash.display.Sprite'),
 
   buttonMode: describeAccessor(
@@ -14,7 +16,7 @@ Sprite.prototype = Object.create(new DisplayObjectContainer, {
     }
   ),
   graphics: describeAccessor(function () {
-    return this._graphics || (this._graphics = new Graphics);
+    return this._graphics;
   }),
   hitArea: describeAccessor(
     function () {
