@@ -1591,8 +1591,10 @@ var Analysis = (function () {
         case Control.EXIT:
           if (exit && exit.kind === Control.LABEL_SWITCH) {
             if (!(node.label in exit.labelMap)) {
-              // -1 is a sentinel value to kill the label register.
-              node.label = -1;
+              // 0 is a sentinel value to kill the label register. This is
+              // safe as block id #0 is always the entry block and so should
+              // never be targeted by a label.
+              node.label = 0;
             }
             return node;
           }
@@ -1601,7 +1603,7 @@ var Analysis = (function () {
         case Control.BREAK:
           if (br && br.kind === Control.LABEL_SWITCH) {
             if (!(node.label in br.labelMap)) {
-              node.label = -1;
+              node.label = 0;
             }
           } else {
             delete node.label;
@@ -1611,7 +1613,7 @@ var Analysis = (function () {
         case Control.CONTINUE:
           if (cont && cont.kind === Control.LABEL_SWITCH) {
             if (!(node.label in cont.labelMap)) {
-              node.label = -1;
+              node.label = 0;
             }
           } else {
             delete node.label;
