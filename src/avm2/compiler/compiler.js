@@ -222,6 +222,10 @@ var Compiler = (function () {
     return binary(Operator.OR, value, constant(0));
   }
 
+  function asUint32(value) {
+    return binary(Operator.URSH, value, constant(0));
+  }
+
   function id(name) {
     return new Identifier(name);
   }
@@ -870,7 +874,7 @@ var Compiler = (function () {
 
       function getSlot(obj, index) {
         if (enableOpt.value && obj.ty) {
-          var trait = obj.ty.getTrait(index);
+          var trait = obj.ty.getTraitBySlotId(index);
           if (trait) {
             if (trait.isConst()) {
               push(constant(trait.value));
@@ -886,7 +890,7 @@ var Compiler = (function () {
       function setSlot(obj, index, value) {
         flushStack();
         if (enableOpt.value && obj.ty) {
-          var trait = obj.ty.getTrait(index);
+          var trait = obj.ty.getTraitBySlotId(index);
           if (trait) {
             push(assignment(property(obj, trait.name.getQualifiedName()), value));
             return;
@@ -1025,16 +1029,47 @@ var Compiler = (function () {
       function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
 
-        // Fastpath for runtime multinames with number names.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
+
+          var objTy = obj.ty;
           var nameTy = multiname.name.ty;
+          var valueTy = value.ty;
+          
+          if (objTy && objTy.isVector()) { // [Reference: Vector]
+            if (objTy.value.isVectorInt()) { // Vector.<int>
+              value = asInt32(value); // value = value | 0
+              // Counter.count("Compiler: setProperty Vector<Int> optimized");
+            } else if (objTy.value.isVectorUint()) { // Vector.<uint>
+              value = asUint32(value); // value = value >>> 0
+            } else if (objTy.value.isVectorObject()) { // Vector.<Object>
+
+              // FIXME - in case of Vector.<X> verify that the type of the value set is
+              // a subtype of X, or X. If it is not, throw an AVM error.
+              // This should also be fixed in the Interpreter.
+              // Vector inner type can be found in |objTy.value.innerType.value|
+              // Value type  can be found in |valueTy.value|
+              // if (objTy.value.innerType.value === valueTy.value) {}
+              // Counter.count("Compiler: setProperty Vector<Object>  optimized");
+            } else { // Vector.<undefined>
+              // Counter.count("Compiler: setProperty Vector<undefined> UNOPTIMIZED");
+              return slowPath;
+            }
+          }
+
+          // Fastpath default is simple array case (a[i] = x;)
+          var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
+
+          // Return fastpath for runtime multinames with number names
           if (nameTy && nameTy.isNumeric()) {
+            // Counter.count("Compiler: setProperty array[index] optimized");
             return fastPath;
           }
+
+          // Counter.count("Compiler: setProperty index == 'number' ? array[index] : ... optimized");
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
+        // Counter.count("Compiler: setProperty UNOPTIMIZED");
         return slowPath;
       }
 
@@ -1081,6 +1116,22 @@ var Compiler = (function () {
         } else {
           return constant(multiname);
         }
+      }
+
+      function popObject(bc) {
+        var obj = state.stack.pop();
+        if (bc.objTy) {
+          obj.ty = bc.objTy;
+        }
+        return obj;
+      }
+
+      function popValueOffStack(bc) {
+        var val = state.stack.pop();
+        if (bc.valTy) {
+          val.ty = bc.valTy;
+        }
+        return val;
       }
 
       // If this is a catch block, we need clear the stack, the scope stack,
@@ -1357,10 +1408,10 @@ var Compiler = (function () {
           break;
         case OP_initproperty:
         case OP_setproperty:
-          value = state.stack.pop();
+          value = popValueOffStack(bc);
           multiname = popMultiname(bc);
           flushStack();
-          obj = state.stack.pop();
+          obj = popObject(bc);
           emit(setProperty(obj, multiname, value));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
@@ -1383,7 +1434,7 @@ var Compiler = (function () {
         case OP_getproperty:
           multiname = popMultiname(bc);
           obj = state.stack.pop();
-          push(getProperty(obj, multiname, bc.propertyType));
+          push(getProperty(obj, multiname));
           break;
         case OP_getouterscope:      notImplemented(); break;
         case OP_setpropertylate:    notImplemented(); break;

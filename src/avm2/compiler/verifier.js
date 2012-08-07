@@ -13,7 +13,7 @@ var Verifier = (function() {
 
       // TODO this should be removed or at least the limit should be
       // increased to a bigger number
-      if (id > 1000) {
+      if (this.id > 100000) {
         throw new VerifierError("Probably in an infinite loop.");
       }
 
@@ -97,15 +97,33 @@ var Verifier = (function() {
 
   Activation.prototype.toString = function () {
     return "[Activation]";
-  }
+  };
 
-  function findTrait(traits, slotId) {
+  function findTraitBySlotId(traits, slotId) {
     for (var i = traits.length - 1; i >= 0; i--) {
       if (traits[i].slotId === slotId) {
         return traits[i];
       }
     }
     unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
+  }
+
+  function findTrait(traits, multiname) {
+    var trait;
+    for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
+      var qn = multiname.getQName(i);
+      for (var k = 0, l = traits.length; k < l; k++) {
+        if (qn.getQualifiedName() === traits[k].name.getQualifiedName()) {
+          if(!trait) {
+            trait = traits[k];
+          } else {
+            unexpected("Found name " + qn.getQualifiedName() + " twice in traits: " + traits);
+          }
+        }
+      }
+    }
+
+    return trait;
   }
 
   function verifier(abc) {
@@ -157,6 +175,10 @@ var Verifier = (function() {
           return type.Atom.Object;
         } else if (name.getQualifiedName() === "public$Number") {
           return type.Number;
+        } else if (name.getQualifiedName() === "public$__AS3__$vec$Vector") {
+          // FIXME There should be no standalone type Vector,
+          // this results into Vector<undefined>
+          return Type.fromReference(new Vector());
         }
         var ty = domain.getProperty(name, false, true);
         assert (ty, name + " not found");
@@ -170,8 +192,14 @@ var Verifier = (function() {
         return ty;
       };
 
-      type.Reference = {};
+      type.Reference = new type("Reference");
+      type.Reference.Dynamic = new type("Reference", "Dynamic");
       type.Reference.Null = new type("Reference", null);
+      type.Reference.Int = new type("Reference", getType("int"));
+      type.Reference.Uint = new type("Reference", getType("uint"));
+      type.Reference.Object = new type("Reference", getType("Object"));
+      type.Reference.Number = new type("Reference", getType("Number"));
+      type.Reference.Vector = new type("Reference", domain.getClass("public __AS3__$vec.Vector"));
       type.Reference.String = new type("Reference", getType("String"));
       type.Reference.Array = new type("Reference", getType("Array"));
       type.Reference.Function = new type("Reference", getType("Function"));
@@ -184,14 +212,34 @@ var Verifier = (function() {
         return this === type.Number || this === type.Int || this === type.Uint;
       };
 
-      type.prototype.getTrait = function getTrait(slotId) {
+      type.prototype.isReference = function isReference() {
+        return this.kind === "Reference";
+      };
+
+      type.prototype.isVector = function() {
+        return this.kind === "Reference" && this.value instanceof Vector;
+      };
+
+      type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
         if (this.kind !== "Reference") {
           return null;
         }
         if (this.value instanceof Global) {
-          return findTrait(this.value.scriptInfo.traits, slotId);
+          return findTraitBySlotId(this.value.scriptInfo.traits, slotId);
         } else if (this.value instanceof Activation) {
-          return findTrait(this.value.methodInfo.traits, slotId);
+          return findTraitBySlotId(this.value.methodInfo.traits, slotId);
+        }
+        return null;
+      };
+
+      type.prototype.getTrait = function getTrait(multiname) {
+        if (this.kind !== "Reference") {
+          return null;
+        }
+        if (this.value instanceof Global) {
+          return findTrait(this.value.scriptInfo.traits, multiname);
+        } else if (this.value instanceof Activation) {
+          return findTrait(this.value.methodInfo.traits, multiname);
         }
         return null;
       };
@@ -206,6 +254,7 @@ var Verifier = (function() {
           return type.Atom;
         } else if (this.kind === "Reference" && other.kind === "Reference") {
           // TODO: Actually merge reference types.
+          // TODO: Merge Vector
           return type.Reference.Null;
         } else if ((this === Type.Int && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Int)) {
@@ -218,11 +267,38 @@ var Verifier = (function() {
         } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
           return Type.Atom.Any;
         }
+        // TODO: Merge vectors
         unexpected("Cannot merge types : " + this + " and " + other);
       };
 
       return type;
     })();
+
+    function Vector (innerType) {
+      this.innerType = innerType;
+    }
+  
+    Vector.prototype.isVectorInt = function() {
+      // assert(this.innerType, "Vector's inner type is undefined.");
+      return this.innerType && this.innerType === Type.Int;
+    };
+  
+    Vector.prototype.isVectorUint = function() {
+      // assert(this.innerType, "Vector's inner type is undefined.");
+      return this.innerType && this.innerType === Type.Uint;
+    };
+
+    Vector.prototype.isVectorObject = function() {
+      // assert(this.innerType, "Vector's inner type is undefined.");
+      return this.innerType && this.innerType.isReference();
+    };
+
+    Vector.prototype.toString = function () {
+      return "[Vector<" + this.innerType + ">]";
+    };
+
+    Vector.Int = new Vector(Type.Int);
+    Vector.Uint = new Vector(Type.Uint);
 
     this.verification = (function() {
       function verification(verifier, methodInfo, scope) {
@@ -250,6 +326,10 @@ var Verifier = (function() {
         var entryState = new State();
 
         assert (mi.localCount >= mi.parameters.length + 1);
+        
+        // FIXME: Type of |this| is Type.Atom, not the actual class type.
+        // Is the class type contained in method analysis when the method is a class member?
+
         // First local is the type of |this|.
         entryState.local.push(Type.Atom);
         // Initialize entry state with parameter types.
@@ -360,7 +440,7 @@ var Verifier = (function() {
         var mmethods = abc.mmethods;
         var runtime = abc.runtime;
 
-        var obj, func, mi, multiname, lVal, rVal, val;
+        var obj, func, mi, multiname, lVal, rVal, val, valTy, factory, type, typeName, name, trait;
 
         /**
          * Optionally pops a runtime multiname of the stack and stores a |RuntimeMultiname|
@@ -383,6 +463,14 @@ var Verifier = (function() {
           } else {
             return multiname;
           }
+        }
+
+        function popObject(bc) {
+          return bc.objTy = state.stack.pop();
+        }
+
+        function popValue(bc) {
+          return bc.valTy = state.stack.pop();
         }
 
         function findProperty(multiname, strict) {
@@ -421,7 +509,12 @@ var Verifier = (function() {
             traits = type.value.methodInfo.traits;
           }
           assert (traits);
-          var trait = findTrait(traits, index);
+          var trait = findTraitBySlotId(traits, index);
+
+          if (trait.isClass()) {
+            return Type.fromName(trait.name);
+          }
+
           return Type.fromName(trait.typeName);
         }
 
@@ -588,7 +681,7 @@ var Verifier = (function() {
           case OP_newfunction:
             push(Type.Reference.Function);
             break;
-          case OP_call:
+          case OP_call: //resolve prop on the receiver
             stack.popMany(bc.argCount);
             obj = pop();
             func = pop();
@@ -596,8 +689,9 @@ var Verifier = (function() {
             break;
           case OP_construct:
             stack.popMany(bc.argCount);
-            obj = pop();
-            push(Type.Atom.Any); //TODO infer obj's type ??
+            // TODO don't pop and push the same value!
+            obj = pop(); // pop the type of the object to be constructed
+            push(obj);
             break;
           case OP_callmethod:
             // callmethod is always invalid
@@ -665,7 +759,20 @@ var Verifier = (function() {
             // Sign extend, nop.
             break;
           case OP_applytype:
-            notImplemented(bc);
+            assert(bc.argCount === 1);
+            type = pop();
+            factory = pop();
+            // no need to check for the factory type since is allways vector
+            if (type === Type.Int) {
+              type = Type.fromReference(Vector.Int);
+            } else if (type === Type.Uint) {
+              type = Type.fromReference(Vector.Uint);
+            } else if (type.kind === "Reference") {
+              type = Type.fromReference(new Vector(type));
+            } else {
+              type = Type.Atom.Any;
+            }
+            push(type);
             break;
           case OP_pushfloat4:
             notImplemented(bc);
@@ -673,7 +780,8 @@ var Verifier = (function() {
           case OP_newobject:
             // Pops keys and values, pushes result.
             stack.popMany(bc.argCount * 2);
-            push(Type.Atom.Object);
+            // push(Type.Reference.Dynamic);
+            push(Type.Reference.Any);
             break;
           case OP_newarray:
             // Pops values, pushes result.
@@ -708,13 +816,11 @@ var Verifier = (function() {
             break;
           case OP_initproperty:
           case OP_setproperty:
-            pop();
-            multiname = popMultiname(bc);
-            pop();
+            popValue(bc);
+            popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
+            popObject(bc); // attaches the type of the object to bc.objTy
+
             // attach the property type to the setproperty bytecode
-            if (multiname.name instanceof Type) {
-              bc.propertyType = multiname.name;
-            }
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -732,9 +838,25 @@ var Verifier = (function() {
             push(scope[bc.index]);
             break;
           case OP_getproperty:
-            popMultiname(bc);
-            pop();
-            push(Type.Atom.Any);
+            multiname = popMultiname(bc);
+            obj = pop();
+            type = Type.Atom.Any;
+            if (obj.isReference()) {
+
+              trait = obj.getTrait(multiname);
+              if (trait && trait.isClass()) {
+                val = getProperty(obj.value, multiname);
+                switch (val) {
+                  case Type.Reference.Int.value:
+                    type = Type.Int;
+                    break;
+                  case Type.Reference.Vector.value:
+                    type = Type.fromReference(new Vector());
+                    break;
+                }
+              }
+            }
+            push(type);
             break;
           case OP_getouterscope:
             notImplemented(bc);
@@ -752,7 +874,7 @@ var Verifier = (function() {
             push(getSlot(bc.objTy = pop(), bc.index));
             break;
           case OP_setslot:
-            pop();
+            value = pop();
             bc.objTy = pop();
             break;
           case OP_getglobalslot:
@@ -812,7 +934,32 @@ var Verifier = (function() {
           case OP_coerce:
             // The multiname in case of coerce bytecode cannot be
             // a runtime multiname and should be in the constant pool
-            pop();
+            valTy = pop(); // the type of the value to be coerced
+            typeName = multinames[bc.index].getQualifiedName(); // name of type to coerce to
+            
+            if ( typeName === "public$__AS3__$vec$Vector") {
+              // FIXME: In case of Vector's the type that the value shold be coerced to is
+              // allways Vector, instead of the more specialized types as Vector.<int>,
+              // Vector.<Object>, etc. This happens because the parser does not get the inner
+              // type of vectors (instead of Vector.<int> it gets only Vector).
+              // That is why the coerce operation looks like:
+              //    coerce __AS3__.vec::Vector
+              // when it should look like
+              //    coerce __AS3__.vec::Vector.<int>
+              // [At least this is what other dissasemblers (like SWF Investigator) show]
+
+              // As a temporary fix, if type of the value to be coerced is one of specialized
+              // vector types (Vector.Int, Vector.Uint or Vector.Object) just push this type
+              // instead of Vector.
+              if (valTy.isVector()) {
+                push(valTy);
+              } else {
+                // But, if coercion to vector happens from a different type the desired Vector.<X>
+                // type cannot be guessed from valTy, so just push Type.Atom.Any.
+                push(Type.Atom.Any);
+              }
+              break;
+            }
             push(Type.fromName(multinames[bc.index]));
             break;
           case OP_coerce_a:
@@ -956,7 +1103,7 @@ var Verifier = (function() {
           }
 
           if (writer) {
-            writer.writeLn("state: " + state.toString() + " -- after bci: " + bci + ", " + bc);
+            writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " -- after bci: " + bci + ", " + bc);
           }
         }
         if (writer) {
