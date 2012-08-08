@@ -27,6 +27,7 @@ var argumentParser = new ArgumentParser();
 var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
+var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
 
@@ -105,19 +106,23 @@ var configurations = [
   {name: "avm", timeout: 500, command: avmShell.path}
 ];
 
-var avmName = release.value ? "avm-release.js" : "avm.js";
+var commandPrefix = "js";
+if (jsOptimazations.value) {
+  commandPrefix += " -m -n";
+}
+commandPrefix += " " + (release.value ? "avm-release.js" : "avm.js");
 
 if (configurationSet.value.indexOf("i") >= 0) {
-  configurations.push({name: "shu-i", timeout: timeout.value, command: "js -m -n " + avmName + " -x -i -tm -tj"});
+  configurations.push({name: "shu-i", timeout: timeout.value, command: commandPrefix + " -x -i -tm -tj"});
 }
 if (configurationSet.value.indexOf("c") >= 0) {
-  configurations.push({name: "shu-c", timeout: timeout.value, command: "js -m -n " + avmName + " -x -tm -tj"});
+  configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x -tm -tj"});
 }
 if (configurationSet.value.indexOf("o") >= 0) {
-  configurations.push({name: "shu-o", timeout: timeout.value, command: "js -m -n " + avmName + " -x -opt -tm -tj"});
+  configurations.push({name: "shu-o", timeout: timeout.value, command: commandPrefix + " -x -opt -tm -tj"});
 }
 if (configurationSet.value.indexOf("v") >= 0) {
-  configurations.push({name: "shu-v", timeout: timeout.value, command: "js -m -n " + avmName + " -x -opt -verify -tm -tj"});
+  configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify -tm -tj"});
 }
 
 console.log(padRight("=== Configurations ", "=", 120));
