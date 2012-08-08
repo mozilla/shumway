@@ -549,7 +549,8 @@ var Multiname = (function () {
         }
         index = stream.readU32();
         assert(index === 1);
-        setTypeParameter.call(this, stream.readU32());
+        index = stream.readU32();
+        setTypeParameter.call(this, multinames[index]);
         break;
       default:
         unexpected();
@@ -583,6 +584,10 @@ var Multiname = (function () {
 
   multiname.prototype.isQName = function isQName() {
     return this.flags & QNAME;
+  };
+
+  multiname.prototype.hasTypeParameter = function isQName() {
+    return this.flags & TYPE_PARAMETER;
   };
 
   multiname.prototype.isPublicNamespaced = function setName(name) {
@@ -677,6 +682,11 @@ var Multiname = (function () {
       }
       str += "}::" + this.nameToString();
     }
+
+    if (this.hasTypeParameter()) {
+        str += "<" + this.typeParameter.toString() + ">";
+      }
+
     return str;
   };
 

@@ -1004,7 +1004,6 @@ var Compiler = (function () {
 
         // If the multiname is a runtime multiname and the name is a number then
         // emit a fast object[name] property lookup.
-        // FIXME: This doesn't work for vectors, we need to chack for |indexGet|.
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = new MemberExpression(obj, multiname.name, true);
           var nameTy = multiname.name.ty;
