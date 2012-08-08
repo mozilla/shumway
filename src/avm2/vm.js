@@ -18,6 +18,10 @@ var AVM2 = (function () {
     this.onConstruct = undefined;
   }
 
+  AVM2.currentVM = function () {
+    return Runtime.stack.top().domain.vm;
+  };
+
   AVM2.prototype = {
     /*
     loadPlayerGlobal: function (playerGlobalSWF) {
