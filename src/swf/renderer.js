@@ -10,13 +10,13 @@ function render(container, renderingContext) {
   for (var i = 0, n = children.length; i < n; i++) {
     var child = children[i];
     if (child) {
-      if (child.matrix && !child.$fixMatrix)
-        child.matrix = create(child.matrix);
-      if (child.cxform && !child.$fixCxform)
-        child.cxform = create(child.cxform);
+      //if (child.matrix && !child.$fixMatrix)
+      //  child.matrix = create(child.matrix);
+      //if (child.cxform && !child.$fixCxform)
+      //  child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child._matrix;
+      var m = child._timelineInfo[0] ? child._timelineInfo[0].matrix : child.transform.matrix;
       ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
       //var rotation = child.rotation;
       //if (rotation)
@@ -55,10 +55,13 @@ function render(container, renderingContext) {
         }
       }
 
-      if (child.draw)
+      if (child.draw) {
         child.draw(ctx, child.ratio);
-      else if (child.nextFrame)
-        child.renderNextFrame(renderingContext);
+      } else if (child instanceof MovieClip) {
+        if (child.isPlaying())
+          child.nextFrame();
+        render(child, renderingContext);
+      }
 
       ctx.restore();
       //if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)

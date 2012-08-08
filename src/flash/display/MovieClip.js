@@ -5,7 +5,7 @@ function MovieClip() {
   this._currentFrameLabel = null;
   this._currentLabel = false;
   this._currentScene = { };
-  this._displayList = null;
+  this._depth = null;
   this._enabled = true;
   this._frameScripts = { };
   this._frameLabels = { };
@@ -63,49 +63,55 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     if (frameNum > this.framesLoaded)
       frameNum = this.framesLoaded;
 
-    this._currentFrame = frameNum;
+    if (frameNum === this._currentFrame)
+      return;
 
-    var currentDisplayList = this._displayList || { };
     var framePromise = this._timeline[frameNum - 1];
     var displayList = framePromise.value;
+    var loader = this.loaderInfo._loader;
+    var timelineInfo = this._timelineInfo;
 
     //this.$dispatchEvent('onEnterFrame');
 
-    if (displayList === currentDisplayList)
-      return;
-
-    var loader = this.loaderInfo._loader;
     for (var depth in displayList) {
       var cmd = displayList[depth];
-      var timelineInfo = currentDisplayList[depth];
+      var info = timelineInfo[depth];
       if (cmd === null) {
-        // REMOVE
-        if (timelineInfo) {
-          this.removeChild(timelineInfo.instance);
+        if (info) {
+          this.removeChild(info.instance);
+          delete timelineInfo[depth];
         }
-        var instance = currentDisplayList[depth].instance;
       } else if (cmd.symbolId) {
         var symbolClass = loader.getSymbolClassById(cmd.symbolId);
         var instance = new symbolClass;
-        if (timelineInfo) {
-          // REPLACE
-          var oldInstance = timelineInfo.instance;
-          var index = this.getChildIndex(oldInstance);
+        if (info) {
+          var index = this.getChildIndex(info.instance);
           this.removeChildAt(index);
-          instance._matrix = cmd.matrix || oldInstance._matrix;
-          instance._cxform = cmd.cxform || oldInstance._cxform;
+          info.instance = instance;
+          if (cmd.cxform)
+            info.cxform = cmd.cxform;
+          if (cmd.matrix)
+            info.matrix = cmd.matrix;
           this.addChildAt(instance, index);
         } else {
-          // PLACE
-          instance._matrix = cmd.matrix;
-          instance._cxform = cmd.cxform;
+          info = {
+            cxform: cmd.cxform,
+            instance: instance,
+            matrix: cmd.matrix
+          };
+          timelineInfo[depth] = info;
           this.addChild(instance);
         }
-        cmd.instance = instance;
+        instance._timelineInfo[0] = info;
+      } else if (info) {
+        if (cmd.cxform)
+          info.cxform = cmd.cxform;
+        if (cmd.matrix)
+          info.matrix = cmd.matrix;
       }
     }
 
-    this._displayList = displayList;
+    this._currentFrame = frameNum;
 
     if (frameNum in this._frameScripts) {
       var scripts = this._frameScripts[frameNum];
