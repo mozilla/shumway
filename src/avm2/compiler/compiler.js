@@ -699,7 +699,7 @@ var Compiler = (function () {
       if (item.nothingThrownLabel) {
         var condition;
         if (item.negated) {
-          condition = new UnaryExpression(Operators.FALSE.name, labelConditionName);
+          condition = new UnaryExpression(Operator.FALSE.name, labelConditionName);
         } else {
           condition = labelConditionName;
         }
