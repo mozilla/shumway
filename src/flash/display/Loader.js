@@ -68,18 +68,29 @@ Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype
     return loaderInfo;
   }),
   createSymbolClass: describeMethod(function () {
+    var loader = this;
     return function () {
       if (this._init)
         this._init();
 
-      //symbolClasses[sym.name] = dictionary[sym.id];
-      //if (!sym.id) {
-      //  var documentClass = this._avm2.applicationDomain.getProperty(
-      //    Multiname.fromSimpleName(sym.name),
-      //    true, true
-      //  );
-      //  new (documentClass.instance)();
-      //}
+      /*
+      symbolClasses[sym.name] = dictionary[sym.id];
+      if (!sym.id) {
+        var documentClass = this._avm2.applicationDomain.getProperty(
+          Multiname.fromSimpleName(sym.name),
+          true, true
+        );
+        new (documentClass.instance)();
+      }
+      */
+     
+     var movieClipClass = loader._avm2.applicationDomain.getProperty (
+       Multiname.fromSimpleName("public flash.display.MovieClip"), true, true
+     );
+
+     var a = movieClipClass.createInstance();
+     var b = new MovieClip();
+     var c = movieClipClass.createInstanceWithBoundNative(b, true);
     };
   }),
   uncaughtErrorEvents: describeAccessor(function () {

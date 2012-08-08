@@ -628,11 +628,7 @@ natives.SpriteClass = function SpriteClass(runtime, scope, instance, baseClass) 
 };
 
 natives.MovieClipClass = function MovieClipClass(runtime, scope, instance, baseClass) {
-  function ctor() {
-    this.d = new MovieClip();
-    return instance.apply(this, arguments);
-  }
-  var c = new runtime.domain.system.Class("MovieClip", ctor, Domain.passthroughCallable(ctor));
+  var c = new runtime.domain.system.Class("MovieClip", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};

@@ -58,7 +58,25 @@ var Domain = (function () {
 
       Class.prototype = {
         forceConstify: true,
-
+        createInstance: function createInstance() {
+          var o = Object.create(this.instance.prototype);
+          this.instance.apply(o, arguments);
+          return o;
+        },
+        /**
+         * Binds the specified |nativeObject| to a new instance of this class before calling the
+         * constructor. The if the |bindScriptObject| parameter is |true| then it also binds the
+         * created scriptObject to the specified |nativeObject|. 
+         */
+        createInstanceWithBoundNative: function createInstanceWithBoundNative(nativeObject, bindScriptObject) {
+          var o = Object.create(this.instance.prototype);
+          defineReadOnlyProperty(o, "nativeObject", nativeObject);
+          if (bindScriptObject) {
+            defineReadOnlyProperty(nativeObject, "scriptObject", o);
+          }
+          this.instance.apply(o, arguments);
+          return o;
+        },
         extendBuiltin: function(baseClass) {
           // Some natives handle their own prototypes/it's impossible to do the
           // traits/public prototype BS, e.g. Object, Array, etc.
