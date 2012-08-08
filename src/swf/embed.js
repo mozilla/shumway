@@ -1,14 +1,7 @@
-SWF.embed = function(file, container, options) {
-  if (!options)
-    options = { };
-
+SWF.embed = function(file, container) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
   var loader = new Loader;
-
-  // TODO choose between AVM1/2 based on FileAttribute settings
-  //loader.avm1 = options.avm1;
-  loader._avm2 = options.avm2;
 
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new Stage;
@@ -49,5 +42,14 @@ SWF.embed = function(file, container, options) {
     container.appendChild(canvas);
   });
 
-  loader.loadFrom(file);
+
+  // TODO choose between AVM1/2 based on FileAttribute settings
+  // loader.avm1 = options.avm1;
+
+  var sysMode = EXECUTION_MODE.INTERPRET;
+  var appMode = EXECUTION_MODE.COMPILE;
+  createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
+    loader._avm2 = vm;
+    loader.loadFrom(file);
+  });
 };

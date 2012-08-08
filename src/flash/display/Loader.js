@@ -10,6 +10,7 @@ function Loader() {
 
 Loader.BASE_CLASS = null;
 Loader.LOADER_PATH = './Loader.js';
+Loader.BUILTIN_PATH = '../../src/avm2/generated/builtin/builtin.abc';
 Loader.PLAYER_GLOBAL_PATH = '../../src/flash/playerGlobal.min.abc';
 Loader.WORKERS_ENABLED = true;
 Loader.WORKER_SCRIPTS = [
@@ -142,6 +143,9 @@ Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype
       }
     }
 
+    if (frame.bgcolor)
+      loaderInfo._backgroundColor = frame.bgcolor;
+
     Promise.when.apply(Promise, promiseQueue).then(function (val) {
       if (abcBlocks) {
         var appDomain = loader._avm2.applicationDomain;
@@ -192,8 +196,6 @@ Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype
     while (i--)
       timeline.push(framePromise);
 
-    if (frame.bgcolor)
-      loaderInfo._backgroundColor = frame.bgcolor;
   }),
   commitSymbol: describeMethod(function (symbol) {
     var dictionary = this._dictionary;
@@ -609,17 +611,7 @@ Loader.prototype = Object.create(Loader.BASE_CLASS ? Loader.BASE_CLASS.prototype
     });
 
     var documentPromise = new Promise;
-    var xhr = new XMLHttpRequest;
-    xhr.open('GET', Loader.PLAYER_GLOBAL_PATH);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function () {
-      var abc = new AbcFile(new Uint8Array(this.response));
-      loader._avm2.systemDomain.loadAbc(abc);
-
-      documentPromise.resolve(documentClass);
-    };
-    xhr.send();
-
+    documentPromise.resolve(documentClass);
     loader._dictionary = { 0: documentPromise };
     loader._timeline = timeline;
   }),

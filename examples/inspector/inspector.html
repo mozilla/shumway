@@ -207,9 +207,7 @@
         } else if (file.name.endsWith(".swf")) {
           reader.onload = function() {
             var result = this.result;
-            createAVM2(builtinPath, null, sysMode, appMode, function (avm2) {
-              SWF.embed(result, stage[0], {avm2: avm2});
-            });
+            SWF.embed(this.result, stage[0]);
           }
         } else {
           throw new TypeError("unsupported format");
@@ -248,11 +246,11 @@
             });
           });
         } else if (remoteFile.endsWith(".swf")) {
-          createAVM2(builtinPath, null, sysMode, appMode, function(vm) {
+          // createAVM2(builtinPath, null, sysMode, appMode, function(vm) {
             new BinaryFileReader(remoteFile).readAll(null, function(buffer) {
-              SWF.embed(buffer, $("#stage")[0], {avm2: vm});
+              SWF.embed(buffer, $("#stage")[0], {});
             });
-          });
+          // });
         }
       }
     </script>
