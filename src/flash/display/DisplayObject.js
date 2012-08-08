@@ -21,6 +21,7 @@ function DisplayObject() {
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
   this._bounds = { };
+  this._graphics = null;
   this._loaderInfo = null;
   this._mouseX = 0;
   this._mouseY = 0;
@@ -31,6 +32,7 @@ function DisplayObject() {
   this._rotation = 0;
   this._scaleX = 1;
   this._scaleY = 1;
+  this._timelineInfo = { };
   this._transform = null;
   this._visible = true;
   this._x = 0;
