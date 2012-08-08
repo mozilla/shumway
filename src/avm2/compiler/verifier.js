@@ -171,14 +171,18 @@ var Verifier = (function() {
           return type.Atom.Undefined;
         } else if (name.getQualifiedName() === "public$int") {
           return type.Int;
+        } else if (name.getQualifiedName() === "public$uint") {
+          return type.Uint;
         } else if (name.getQualifiedName() === "public$Object") {
           return type.Atom.Object;
         } else if (name.getQualifiedName() === "public$Number") {
           return type.Number;
-        } else if (name.getQualifiedName() === "public$__AS3__$vec$Vector") {
-          // FIXME There should be no standalone type Vector,
-          // this results into Vector<undefined>
-          return Type.fromReference(new Vector());
+        } else if (name.hasTypeParameter()) { // generic type
+          if (name.getQualifiedName() === "public$__AS3__$vec$Vector") {
+            return Type.fromReference(new Vector(type.fromName(name.typeParameter)));
+          }
+          // For now only Vectors should have type parameters.
+          unexpected();
         }
         var ty = domain.getProperty(name, false, true);
         assert (ty, name + " not found");
@@ -240,6 +244,8 @@ var Verifier = (function() {
           return findTrait(this.value.scriptInfo.traits, multiname);
         } else if (this.value instanceof Activation) {
           return findTrait(this.value.methodInfo.traits, multiname);
+        } else {
+          // TODO for other object types ?
         }
         return null;
       };
@@ -296,9 +302,6 @@ var Verifier = (function() {
     Vector.prototype.toString = function () {
       return "[Vector<" + this.innerType + ">]";
     };
-
-    Vector.Int = new Vector(Type.Int);
-    Vector.Uint = new Vector(Type.Uint);
 
     this.verification = (function() {
       function verification(verifier, methodInfo, scope) {
@@ -763,11 +766,7 @@ var Verifier = (function() {
             type = pop();
             factory = pop();
             // no need to check for the factory type since is allways vector
-            if (type === Type.Int) {
-              type = Type.fromReference(Vector.Int);
-            } else if (type === Type.Uint) {
-              type = Type.fromReference(Vector.Uint);
-            } else if (type.kind === "Reference") {
+            if (type === Type.Int || type === Type.Uint || type.kind === "Reference") {
               type = Type.fromReference(new Vector(type));
             } else {
               type = Type.Atom.Any;
@@ -816,11 +815,9 @@ var Verifier = (function() {
             break;
           case OP_initproperty:
           case OP_setproperty:
-            popValue(bc);
+            popValue(bc); // attaches the of the value to bc.valTy
             popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
             popObject(bc); // attaches the type of the object to bc.objTy
-
-            // attach the property type to the setproperty bytecode
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -842,17 +839,20 @@ var Verifier = (function() {
             obj = pop();
             type = Type.Atom.Any;
             if (obj.isReference()) {
-
-              trait = obj.getTrait(multiname);
-              if (trait && trait.isClass()) {
-                val = getProperty(obj.value, multiname);
-                switch (val) {
-                  case Type.Reference.Int.value:
-                    type = Type.Int;
-                    break;
-                  case Type.Reference.Vector.value:
-                    type = Type.fromReference(new Vector());
-                    break;
+              if (obj.isVector() && multiname.name.isNumeric !== undefined && multiname.name.isNumeric()) {
+                type = obj.value.innerType;
+              } else {
+                trait = obj.getTrait(multiname);
+                if (trait && trait.isClass()) {
+                  val = getProperty(obj.value, multiname);
+                  switch (val) {
+                    case Type.Reference.Int.value:
+                      type = Type.Int;
+                      break;
+                    case Type.Reference.Vector.value:
+                      type = Type.fromReference(new Vector());
+                      break;
+                  }
                 }
               }
             }
@@ -935,31 +935,6 @@ var Verifier = (function() {
             // The multiname in case of coerce bytecode cannot be
             // a runtime multiname and should be in the constant pool
             valTy = pop(); // the type of the value to be coerced
-            typeName = multinames[bc.index].getQualifiedName(); // name of type to coerce to
-            
-            if ( typeName === "public$__AS3__$vec$Vector") {
-              // FIXME: In case of Vector's the type that the value shold be coerced to is
-              // allways Vector, instead of the more specialized types as Vector.<int>,
-              // Vector.<Object>, etc. This happens because the parser does not get the inner
-              // type of vectors (instead of Vector.<int> it gets only Vector).
-              // That is why the coerce operation looks like:
-              //    coerce __AS3__.vec::Vector
-              // when it should look like
-              //    coerce __AS3__.vec::Vector.<int>
-              // [At least this is what other dissasemblers (like SWF Investigator) show]
-
-              // As a temporary fix, if type of the value to be coerced is one of specialized
-              // vector types (Vector.Int, Vector.Uint or Vector.Object) just push this type
-              // instead of Vector.
-              if (valTy.isVector()) {
-                push(valTy);
-              } else {
-                // But, if coercion to vector happens from a different type the desired Vector.<X>
-                // type cannot be guessed from valTy, so just push Type.Atom.Any.
-                push(Type.Atom.Any);
-              }
-              break;
-            }
             push(Type.fromName(multinames[bc.index]));
             break;
           case OP_coerce_a:
