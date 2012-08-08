@@ -896,7 +896,7 @@ var Runtime = (function () {
           var res = domain.findDefiningScript(trait.name, false);
           if (res) {
             var abc = res.script.abc;
-            if (!abc.domain.base && abc.name === "bltin.abc") {
+            if (!abc.domain.base && abc.name === "builtin.abc") {
               continue;
             }
           }
@@ -934,8 +934,8 @@ var Runtime = (function () {
              this.domain.Class && obj instanceof this.domain.Class
             ) &&
             this.domain.mode !== ALWAYS_INTERPRET) {
-          closure = (function (trait, obj, qn) {
-            return (function () {
+          closure = (function trampolineClosure(trait, obj, qn) {
+            return (function trampoline() {
               var executed = false;
               var mc = undefined;
               return function () {
