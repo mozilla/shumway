@@ -40,7 +40,7 @@ if (help.value) {
 
 for (var i = 0; i < 374; i++) {
   var path = "../playerGlobal/library-" + i + ".abc";
-  prepareAbc(new AbcFile(snarf(path, "binary"), path), ALWAYS_INTERPRET);
+  prepareAbc(new AbcFile(snarf(path, "binary"), path), EXECUTION_MODE.INTERPRET);
 }
 
 var name = Multiname.fromQualifiedName(classQName);

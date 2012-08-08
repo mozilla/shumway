@@ -199,7 +199,10 @@ const natives = (function () {
     var m = Function.prototype;
     defineNonEnumerableProperty(m, "get prototype", function () { return this.prototype; });
     defineNonEnumerableProperty(m, "set prototype", function (p) { this.prototype = p; });
-    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
+    defineNonEnumerableProperty(m, "get length", function () { 
+      print(AVM2.currentVM());
+      return this.length; 
+    });
     c.nativeMethods = m;
     c.isInstance = function (value) {
       return typeof value === "function";

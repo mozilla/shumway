@@ -2,8 +2,10 @@ var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceDomain = domainOptions.register(new Option("tdpa", "traceDomain", "boolean", false, "trace domain property access"));
 
-const ALWAYS_INTERPRET = 0x1;
-const HEURISTIC_JIT = 0x2;
+const EXECUTION_MODE = {
+  INTERPRET: 0x1,
+  COMPILE: 0x2
+};
 
 var Domain = (function () {
 

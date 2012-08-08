@@ -505,7 +505,7 @@ var Runtime = (function () {
   function runtime(abc) {
     this.abc = abc;
     this.domain = abc.domain;
-    if (this.domain.mode !== ALWAYS_INTERPRET) {
+    if (this.domain.mode !== EXECUTION_MODE.INTERPRET) {
       this.compiler = new Compiler(abc);
     }
     this.interpreter = new Interpreter(abc);
@@ -597,7 +597,7 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === ALWAYS_INTERPRET) {
+    if (mode === EXECUTION_MODE.INTERPRET) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
@@ -933,7 +933,7 @@ var Runtime = (function () {
             (obj instanceof Global ||
              this.domain.Class && obj instanceof this.domain.Class
             ) &&
-            this.domain.mode !== ALWAYS_INTERPRET) {
+            this.domain.mode !== EXECUTION_MODE.INTERPRET) {
           closure = (function trampolineClosure(trait, obj, qn) {
             return (function trampoline() {
               var executed = false;

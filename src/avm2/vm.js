@@ -19,29 +19,10 @@ var AVM2 = (function () {
   }
 
   AVM2.currentVM = function () {
-    return Runtime.stack.top().domain.vm;
+    return Runtime.stack.top().domain.system.vm;
   };
 
   AVM2.prototype = {
-    /*
-    loadPlayerGlobal: function (playerGlobalSWF) {
-      var sysDomain = this.systemDomain;
-      // Load, but don't execute, the default player globals.
-      Timer.start("Load Player Globals");
-      SWF.parse(playerGlobalSWF, {
-        oncomplete: function(result) {
-          var tags = result.tags;
-          for (var i = 0, n = tags.length; i < n; i++) {
-            var tag = tags[i];
-            if (tag.type === "abc") {
-              sysDomain.loadAbc(new AbcFile(tag.data, "playerGlobal/library" + i + ".abc"));
-            }
-          }
-        }
-      });
-      Timer.stop();
-    },
-    */
     notifyConstruct: function notifyConstruct (instance, args) {
       return this.onConstruct ? this.onConstruct(instance, args) : undefined;
     }

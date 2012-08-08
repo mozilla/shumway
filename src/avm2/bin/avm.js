@@ -101,8 +101,12 @@ function installAvmPlus(vm) {
 
 var vm;
 if (execute.value) {
-  var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : (compileSys.value ? null : ALWAYS_INTERPRET);
-  var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
+  var sysMode = alwaysInterpret.value ? 
+                EXECUTION_MODE.INTERPRET : (compileSys.value ? 
+                                            EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET);
+  var appMode = alwaysInterpret.value ? 
+                EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
+                
   vm = new AVM2(grabABC("builtin"), sysMode, appMode);
   installAvmPlus(vm);
   vm.systemDomain.executeAbc(grabABC("shell"));
