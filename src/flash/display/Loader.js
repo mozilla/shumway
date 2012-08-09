@@ -70,6 +70,10 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   createSymbolClass: describeMethod(function (baseClass, props) {
     var loader = this;
     var symbolClass = function () {
+      baseClass.call(this);
+
+      Object.defineProperties(this, props);
+
       var scriptClass = loader._avm2.applicationDomain.getProperty(
         Multiname.fromSimpleName('public ' + this.__class__),
         true,
@@ -77,7 +81,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       );
       scriptClass.createInstanceWithBoundNative(this, true);
     };
-    symbolClass.prototype = Object.create(new baseClass, props || { });
+    symbolClass.prototype = Object.create(baseClass.prototype);
 
     return symbolClass;
   }),
@@ -264,6 +268,8 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     case 'shape':
       var bounds = symbol.bounds;
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+      var graphics = new Graphics;
+      graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
       symbolClass = this.createSymbolClass(Shape, {
         graphics: describeAccessor(function () {
           throw Error();
@@ -273,9 +279,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
           bounds.y / 20,
           bounds.width / 20,
           bounds.height / 20
-        ))
+        )),
+        _graphics: describeProperty(graphics)
       });
-      symbolClass.prototype._graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
       break;
     case 'sprite':
       var displayList = null;
@@ -322,9 +328,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       symbolClass = this.createSymbolClass(MovieClip, {
         graphics: describeAccessor(function () {
           throw Error();
-        }),
-        _children: describeLazyProperty('_children', function () {
-          return [];
         }),
         _timeline: describeProperty(timeline),
         _framesLoaded: describeProperty(frameCount),
