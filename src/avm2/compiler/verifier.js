@@ -259,8 +259,13 @@ var Verifier = (function() {
         } else if (this.kind === "Atom" || other.kind === "Atom") {
           return type.Atom;
         } else if (this.kind === "Reference" && other.kind === "Reference") {
+          if (this.isVector() && other.isVector()) {
+            // Merge Vector
+            if (this.value.equals(other.value)) {
+              return this;
+            }
+          }
           // TODO: Actually merge reference types.
-          // TODO: Merge Vector
           return type.Reference.Null;
         } else if ((this === Type.Int && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Int)) {
@@ -297,6 +302,16 @@ var Verifier = (function() {
     Vector.prototype.isVectorObject = function() {
       // assert(this.innerType, "Vector's inner type is undefined.");
       return this.innerType && this.innerType.isReference();
+    };
+
+    // Determine if two vector types are equal
+    // The basic rule is that they have the same dimension (1D, 2D, 3D, etc.)
+    // and have the same innerType
+    Vector.prototype.equals = function (other) {
+      if (this.innerType.isVector() && other.innerType.isVector()) {
+        return this.value.equals(other.value);
+      }
+      return this.innerType === other.innerType;
     };
 
     Vector.prototype.toString = function () {
@@ -839,7 +854,7 @@ var Verifier = (function() {
             obj = pop();
             type = Type.Atom.Any;
             if (obj.isReference()) {
-              if (obj.isVector() && multiname.name.isNumeric !== undefined && multiname.name.isNumeric()) {
+              if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) {
                 type = obj.value.innerType;
               } else {
                 trait = obj.getTrait(multiname);
@@ -848,6 +863,9 @@ var Verifier = (function() {
                   switch (val) {
                     case Type.Reference.Int.value:
                       type = Type.Int;
+                      break;
+                    case Type.Reference.Uint.value:
+                      type = Type.Uint;
                       break;
                     case Type.Reference.Vector.value:
                       type = Type.fromReference(new Vector());
