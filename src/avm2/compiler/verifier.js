@@ -259,8 +259,13 @@ var Verifier = (function() {
         } else if (this.kind === "Atom" || other.kind === "Atom") {
           return type.Atom;
         } else if (this.kind === "Reference" && other.kind === "Reference") {
+          if (this.isVector() && other.isVector()) {
+            // Merge Vector
+            if (this.value.equals(other.value)) {
+              return this;
+            }
+          }
           // TODO: Actually merge reference types.
-          // TODO: Merge Vector
           return type.Reference.Null;
         } else if ((this === Type.Int && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Int)) {
@@ -280,27 +285,37 @@ var Verifier = (function() {
       return type;
     })();
 
-    function Vector (innerType) {
-      this.innerType = innerType;
+    function Vector (elementType) {
+      this.elementType = elementType;
     }
   
     Vector.prototype.isVectorInt = function() {
-      // assert(this.innerType, "Vector's inner type is undefined.");
-      return this.innerType && this.innerType === Type.Int;
+      // assert(this.elementType, "Vector's element type is undefined.");
+      return this.elementType && this.elementType === Type.Int;
     };
   
     Vector.prototype.isVectorUint = function() {
-      // assert(this.innerType, "Vector's inner type is undefined.");
-      return this.innerType && this.innerType === Type.Uint;
+      // assert(this.elementType, "Vector's element type is undefined.");
+      return this.elementType && this.elementType === Type.Uint;
     };
 
     Vector.prototype.isVectorObject = function() {
-      // assert(this.innerType, "Vector's inner type is undefined.");
-      return this.innerType && this.innerType.isReference();
+      // assert(this.elementType, "Vector's element type is undefined.");
+      return this.elementType && this.elementType.isReference();
+    };
+
+    // Determine if two vector types are equal
+    // The basic rule is that they have the same dimension (1D, 2D, 3D, etc.)
+    // and have the same elementType
+    Vector.prototype.equals = function (other) {
+      if (this.elementType.isVector() && other.elementType.isVector()) {
+        return this.value.equals(other.value);
+      }
+      return this.elementType === other.elementType;
     };
 
     Vector.prototype.toString = function () {
-      return "[Vector<" + this.innerType + ">]";
+      return "[Vector<" + this.elementType + ">]";
     };
 
     this.verification = (function() {
@@ -839,15 +854,17 @@ var Verifier = (function() {
             obj = pop();
             type = Type.Atom.Any;
             if (obj.isReference()) {
-              if (obj.isVector() && multiname.name.isNumeric !== undefined && multiname.name.isNumeric()) {
-                type = obj.value.innerType;
+              if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) {
+                type = obj.value.elementType;
               } else {
                 trait = obj.getTrait(multiname);
                 if (trait && trait.isClass()) {
-                  val = getProperty(obj.value, multiname);
                   switch (val) {
                     case Type.Reference.Int.value:
                       type = Type.Int;
+                      break;
+                    case Type.Reference.Uint.value:
+                      type = Type.Uint;
                       break;
                     case Type.Reference.Vector.value:
                       type = Type.fromReference(new Vector());

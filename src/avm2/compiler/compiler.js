@@ -1045,9 +1045,9 @@ var Compiler = (function () {
               // FIXME - in case of Vector.<X> verify that the type of the value set is
               // a subtype of X, or X. If it is not, throw an AVM error.
               // This should also be fixed in the Interpreter.
-              // Vector inner type can be found in |objTy.value.innerType.value|
+              // Vector element type can be found in |objTy.value.elementType.value|
               // Value type  can be found in |valueTy.value|
-              // if (objTy.value.innerType.value === valueTy.value) {}
+              // if (objTy.value.elementType.value === valueTy.value) {}
               // Counter.count("Compiler: setProperty Vector<Object>  optimized");
             } else { // Vector.<undefined>
               // Counter.count("Compiler: setProperty Vector<undefined> UNOPTIMIZED");
