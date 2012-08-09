@@ -9,6 +9,10 @@ var AVM2 = (function () {
     this.onConstruct = undefined;
   }
 
+  /**
+   * Returns the current VM context. This can be used to find out the VM execution context
+   * when running in native code.
+   */
   AVM2.currentVM = function () {
     return Runtime.stack.top().domain.system.vm;
   };
