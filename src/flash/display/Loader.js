@@ -82,7 +82,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       scriptClass.createInstanceWithBoundNative(this, true);
     };
     symbolClass.prototype = Object.create(baseClass.prototype);
-
     return symbolClass;
   }),
   uncaughtErrorEvents: describeAccessor(function () {
@@ -176,10 +175,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
       if (!root) {
         root = new val(loader._avm1);
-        //root.name = '_root';
-        //var globals = root._as2Context.globals;
-        //globals._root = globals._level0 = root.$as2Object;
-
         loader._content = root;
       } else {
         displayList.__proto__ = val;
@@ -600,10 +595,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
 
     loaderInfo._frameRate = info.frameRate;
-
-    // TODO disable AVM1 if AVM2 is enabled
-    //var avm1 = new AS2Context(info.swfVersion);
-    //loader._avm1 = avm1;
 
     var timeline = [];
     var documentClass = loader.createSymbolClass(MovieClip, {

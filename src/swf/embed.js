@@ -17,8 +17,6 @@ SWF.embed = function(file, container) {
     stage._stageHeight = loaderInfo.height;
     stage._stageWidth = loaderInfo.width;
 
-    //loader._avm1.stage = stage; // TODO make it better
-
     if (container.clientHeight) {
       fitCanvas(container, canvas);
       window.addEventListener('resize', function () {
@@ -41,10 +39,6 @@ SWF.embed = function(file, container) {
 
     container.appendChild(canvas);
   });
-
-
-  // TODO choose between AVM1/2 based on FileAttribute settings
-  // loader.avm1 = options.avm1;
 
   var sysMode = EXECUTION_MODE.INTERPRET;
   var appMode = EXECUTION_MODE.COMPILE;
