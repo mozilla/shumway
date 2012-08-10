@@ -6,6 +6,10 @@ var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "traceProper
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
+const VM_SLOTS = "vm slots";
+const VM_LENGTH = "vm length";
+const VM_BINDINGS = "vm bindings";
+
 var originals = [
   { object: Object, overrides: ["toString", "valueOf"] }
 ];
@@ -16,7 +20,7 @@ function initializeGlobalObject(global) {
     var keys = [];
     for (var key in obj) {
       if (PUBLIC_MANGLED.test(key) &&
-          !(obj.vm$bindings && obj.vm$bindings.indexOf(key) >= 0)) {
+          !(obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0)) {
         keys.push(key.substr(7));
       }
     }
@@ -139,11 +143,11 @@ function typeOf(x) {
 }
 
 function getSlot(obj, index) {
-  return obj[obj.vm$slots[index].name];
+  return obj[obj[VM_SLOTS][index].name];
 }
 
 function setSlot(obj, index, value) {
-  var binding = obj.vm$slots[index];
+  var binding = obj[VM_SLOTS][index];
   if (binding.const) {
     return;
   }
@@ -859,18 +863,18 @@ var Runtime = (function () {
 
     // Copy over base trait bindings.
     if (base) {
-      var bindings = base.vm$bindings;
+      var bindings = base[VM_BINDINGS];
       for (var i = 0, j = bindings.length; i < j; i++) {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
       }
-      defineNonEnumerableProperty(obj, "vm$bindings", base.vm$bindings.slice());
-      defineNonEnumerableProperty(obj, "vm$slots", base.vm$slots.slice());
-      obj.vm$slots = base.vm$slots.slice();
-      baseSlotId = obj.vm$slots.length;
+      defineNonEnumerableProperty(obj, [VM_BINDINGS], base[VM_BINDINGS].slice());
+      defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
+      obj[VM_SLOTS] = base[VM_SLOTS].slice();
+      baseSlotId = obj[VM_SLOTS].length;
     } else {
-      defineNonEnumerableProperty(obj, "vm$bindings", []);
-      defineNonEnumerableProperty(obj, "vm$slots", []);
+      defineNonEnumerableProperty(obj, VM_BINDINGS, []);
+      defineNonEnumerableProperty(obj, VM_SLOTS, []);
       baseSlotId = 0;
     }
 
@@ -908,7 +912,7 @@ var Runtime = (function () {
 
         var tyname = trait.typeName;
         defineNonEnumerableProperty(obj, qn, trait.value);
-        obj.vm$slots[trait.slotId] = {
+        obj[VM_SLOTS][trait.slotId] = {
           name: qn,
           const: trait.isConst(),
           type: tyname ? domain.getProperty(tyname, false, false) : null
@@ -935,19 +939,23 @@ var Runtime = (function () {
             ) &&
             this.domain.mode !== ALWAYS_INTERPRET) {
           closure = (function (trait, obj, qn) {
-            return (function () {
+            return (function trampolineContext() {
               var executed = false;
-              var mc = undefined;
-              return function () {
+              var fn = undefined;
+              return function trampoline() {
                 if (!executed) {
-                  mc = makeClosure(trait);
-                  defineNonEnumerableProperty(obj, qn, mc);
+                  fn = makeClosure(trait);
+                  defineNonEnumerableProperty(obj, qn, fn);
                   executed = true;
                 }
-                return mc.apply(this, arguments);
+                return fn.apply(this, arguments);
               };
             })();
           })(trait, obj, qn);
+          // Make sure that the length property of the trampoline matches the trait's number of
+          // parameters. However, since we can't redefine the |length| property of a function,
+          // we define a new hidden |VM_LENGTH| property to cache this value.
+          defineReadOnlyProperty(closure, VM_LENGTH, trait.methodInfo.parameters.length);
         } else {
           closure = makeClosure(trait);
         }
@@ -955,7 +963,7 @@ var Runtime = (function () {
         var mc;
         if (delayBinding) {
           var memoizeMethodClosure = (function (closure, qn) {
-            return function () {
+            return function memoizer() {
               if (this.hasOwnProperty(qn)) {
                 Counter.count("Runtime: Unpatched Memoizer");
                 return this[qn];
@@ -969,10 +977,11 @@ var Runtime = (function () {
           })(closure, qn);
           Counter.count("Runtime: Memoizers");
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
-          // overriden by a derivied class. Only do this non final classes.
+          // overridden by a derived class. Only do this non final classes.
           defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
         } else {
           mc = closure.bind(obj);
+          defineReadOnlyProperty(mc, VM_LENGTH, closure[VM_LENGTH]);
           defineReadOnlyProperty(mc, "public$prototype", null);
           defineNonEnumerableProperty(obj, qn, mc);
         }
@@ -984,7 +993,7 @@ var Runtime = (function () {
         assert(false);
       }
 
-      obj.vm$bindings.push(qn);
+      obj[VM_BINDINGS].push(qn);
     }
 
     return obj;
