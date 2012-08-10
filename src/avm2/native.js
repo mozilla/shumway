@@ -318,19 +318,19 @@ const natives = (function () {
   }
 
   function ObjectVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Object"));
+    return createVectorClass(runtime, runtime.domain.getClass("Object"), baseClass);
   }
 
   function IntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("int"));
+    return createVectorClass(runtime, runtime.domain.getClass("int"), baseClass);
   }
 
   function UIntVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("uint"));
+    return createVectorClass(runtime, runtime.domain.getClass("uint"), baseClass);
   }
 
   function DoubleVectorClass(runtime, scope, instance, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Number"));
+    return createVectorClass(runtime, runtime.domain.getClass("Number"), baseClass);
   }
 
   /**
@@ -342,7 +342,7 @@ const natives = (function () {
     c.nativeMethods = Number.prototype;
     c.defaultValue = Number(0);
     c.isInstance = function (value) {
-      return typeof value.valueOf() === "number";
+      return value !== null && value !== undefined &&  typeof value.valueOf() === "number";
     };
     c.coerce = Number;
     return c;
