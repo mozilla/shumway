@@ -232,7 +232,7 @@ const natives = (function () {
     c.nativeMethods = m;
     c.nativeStatics = String;
     c.isInstance = function (value) {
-      return typeof value.valueOf() === "string";
+      return value !== null && value !== undefined && typeof value.valueOf() === "string";
     };
 
     return c;
@@ -313,8 +313,8 @@ const natives = (function () {
     return c;
   }
 
-  function VectorClass(runtime, scope, instance) {
-    return createVectorClass(runtime, undefined);
+  function VectorClass(runtime, scope, instance, baseClass) {
+    return createVectorClass(runtime, undefined, baseClass);
   }
 
   function ObjectVectorClass(runtime, scope, instance, baseClass) {
