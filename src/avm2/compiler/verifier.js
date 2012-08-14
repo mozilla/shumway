@@ -859,6 +859,7 @@ var Verifier = (function() {
               } else {
                 trait = obj.getTrait(multiname);
                 if (trait && trait.isClass()) {
+                  val = getProperty(obj.value, multiname);
                   switch (val) {
                     case Type.Reference.Int.value:
                       type = Type.Int;
