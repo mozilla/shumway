@@ -116,7 +116,14 @@ function coerce(obj, type) {
   if (obj === null || type.isInstance(obj)) {
     return obj;
   } else {
-    throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
+    // FIXME throwErrorFromVM needs to be called from within the runtime
+    // because it needs access to the domain or the domain has to be
+    // aquired through some other mechanism.
+    // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
+
+    // For now just assert false to print the message.
+    assert(false, "Cannot coerce " + obj + " to type " + type);
+
   }
 }
 
