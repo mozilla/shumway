@@ -152,7 +152,7 @@ var Trait = (function () {
       this.slotId = stream.readU30();
       this.typeName = constantPool.multinames[stream.readU30()];
       var valueIndex = stream.readU30();
-      this.value = null;
+      this.value = undefined;
       if (valueIndex !== 0) {
         this.value = constantPool.getValue(stream.readU8(), valueIndex);
       }
