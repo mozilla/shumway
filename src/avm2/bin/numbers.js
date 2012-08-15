@@ -223,7 +223,7 @@ function count(name) {
   counts[name] ++;
 }
 
-var pathLength = 40;
+var pathLength = 100;
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
