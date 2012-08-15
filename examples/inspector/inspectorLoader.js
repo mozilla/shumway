@@ -6,14 +6,14 @@ function readFile(file) {
   if (file.name.endsWith(".abc")) {
     reader.onload = function() {
       var result = this.result;
-      createAVM2(true, function (avm2) {
+      createAVM2(function (avm2) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result), file.name));
       });
     }
   } else if (file.name.endsWith(".swf")) {
     reader.onload = function() {
       var result = this.result;
-      createAVM2(true, function (avm2) {
+      createAVM2(function (avm2) {
         SWF.embed(result, stage[0], {avm2: avm2});
       });
     }
