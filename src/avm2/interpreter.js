@@ -403,7 +403,9 @@ var Interpreter = (function () {
             break;
           case OP_getscopeobject:
             obj = scope;
-            for (var i = 0; i < (scopeHeight - 1) - bc.index; i++) {
+            var scopeDistance = (scopeHeight - 1) - bc.index;
+            assert (scopeDistance >= 0);
+            for (var i = 0; i < scopeDistance; i++) {
               obj = obj.parent;
             }
             stack.push(obj.object);
