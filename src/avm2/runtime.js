@@ -796,6 +796,12 @@ var Runtime = (function () {
     // Run the static initializer.
     this.createFunction(classInfo.init, scope).call(cls);
 
+    // Seal constant traits in the class object.
+    this.sealConstantTraits(cls, ci.traits);
+
+    // TODO: Seal constant traits in the instance object. This should be done after
+    // the instance constructor has executed.
+
     if (traceClasses.value) {
       domain.loadedClasses.push(cls);
       domain.traceLoadedClasses();
@@ -819,6 +825,32 @@ var Runtime = (function () {
     return new Interface(classInfo);
   };
 
+  /**
+   * In ActionScript, assigning to a property defined as "const" outside of a static or instance
+   * initializer throws a |ReferenceError| exception. To emulate this behaviour in JavaScript,
+   * we "seal" constant traits properties by replacing them with setters that throw exceptions.
+   */
+  runtime.prototype.sealConstantTraits = function sealConstTraits(obj, traits) {
+    var rt = this;
+    for (var i = 0, j = traits.length; i < j; i++) {
+      var trait = traits[i];
+      if (trait.isConst()) {
+        var qn = trait.name.getQualifiedName();
+        var value = obj[qn];
+        (function (qn, value) {
+          Object.defineProperty(obj, qn, { configurable: false, enumerable: false,
+            get: function () {
+              return value;
+            },
+            set: function () {
+              rt.throwErrorFromVM("ReferenceError", "Illegal write to read-only property " + qn + ".");
+            }
+          });
+        })(qn, value);
+      }
+    }
+  };
+
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, delayBinding) {
     const runtime = this;
     const domain = this.domain;
@@ -836,7 +868,6 @@ var Runtime = (function () {
           var makeNativeClosure = getNative(nativeName);
           if (!makeNativeClosure)
             makeNativeClosure = domain.natives[nativeName];
-
           closure = makeNativeClosure && makeNativeClosure(runtime, scope);
         } else if (md && md.unsafeJSNative) {
           closure = getNative(md.unsafeJSNative.items[0].value);
@@ -907,7 +938,7 @@ var Runtime = (function () {
           var res = domain.findDefiningScript(trait.name, false);
           if (res) {
             var abc = res.script.abc;
-            if (!abc.domain.base && abc.name === "bltin.abc") {
+            if (!abc.domain.base && abc.name === "builtin.abc") {
               continue;
             }
           }
@@ -917,12 +948,12 @@ var Runtime = (function () {
           }
         }
 
-        var tyname = trait.typeName;
+        var typeName = trait.typeName;
         defineNonEnumerableProperty(obj, qn, trait.value);
         obj[VM_SLOTS][trait.slotId] = {
           name: qn,
           const: trait.isConst(),
-          type: tyname ? domain.getProperty(tyname, false, false) : null
+          type: typeName ? domain.getProperty(typeName, false, false) : null
         };
       } else if (trait.isMethod()) {
         // FIXME: Breaking compat with AS and using .bind here instead of the
@@ -1032,6 +1063,7 @@ var Runtime = (function () {
   };
 
   runtime.prototype.throwErrorFromVM = function (errorClass, message) {
+    print(backtrace());
     throw new (this.domain.getClass(errorClass)).instance(message);
   };
 
