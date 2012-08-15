@@ -67,7 +67,11 @@ function getTests(path) {
     if (endsWith(path, ".abc")) {
       files.push(path);
     } else {
-      files = readFile(path).toString().split("\n");
+      files = readFile(path).toString().split("\n").filter(function (x) {
+        return x.trim() && x.trim()[0] != "#"
+      }).map(function (x) {
+         return x.trim();
+      });
     }
   }
   return files;
