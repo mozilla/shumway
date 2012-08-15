@@ -631,7 +631,6 @@ var Interpreter = (function () {
           }
 
           e = runtime.translateError(e);
-
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
@@ -639,7 +638,7 @@ var Interpreter = (function () {
                  domain.getProperty(handler.typeName, true, true).isInstance(e))) {
               Runtime.unwindStackTo(runtime);
               scope = savedScope;
-              scopeHeight = -1;
+              scopeHeight = 0;
               stack.length = 0;
               stack.push(e);
               pc = handler.offset;
