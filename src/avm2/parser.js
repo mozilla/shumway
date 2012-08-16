@@ -292,7 +292,7 @@ var Namespace = (function () {
     return new namespace(CONSTANT_Namespace, uri);
   };
 
-  namespace.prototype = {
+  namespace.prototype = Object.create({
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();
       this.originalURI = this.uri = constantPool.strings[stream.readU30()];
@@ -326,7 +326,7 @@ var Namespace = (function () {
     getAccessModifier: function getAccessModifier() {
       return kinds[this.kind];
     }
-  };
+  });
 
   namespace.PUBLIC = namespace.createNamespace();
 

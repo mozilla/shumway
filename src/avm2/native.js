@@ -512,12 +512,10 @@ const natives = (function () {
       return ns;
     }
 
-    var Np = Namespace.prototype;
-    ASNamespace.prototype = Np;
-
     var c = new runtime.domain.system.Class("Namespace", ASNamespace, C(ASNamespace));
-    c.extendBuiltin(baseClass);
+    c.extendNative(baseClass, Namespace);
 
+    var Np = Namespace.prototype;
     c.nativeMethods = {
       "get prefix": Np.getPrefix,
       "get uri": Np.getURI

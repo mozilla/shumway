@@ -74,6 +74,14 @@ var Domain = (function () {
           defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
+        extendNative: function (baseClass, native) {
+          this.baseClass = baseClass;
+          this.dynamicPrototype = native.prototype.__proto__;
+          this.instance.prototype = native.prototype;
+          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineReadOnlyProperty(this.instance.prototype, "class", this);
+        },
+
         isInstance: function (value) {
           if (value === null || typeof value !== "object") {
             return false;
