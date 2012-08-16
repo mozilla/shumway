@@ -164,6 +164,9 @@ const natives = (function () {
       }
     };
 
+    defineNonEnumerableProperty(Object.prototype, "get length", function() { return this.length; });
+    defineNonEnumerableProperty(Object.prototype, "set length", function(l) { this.length = l; });
+
     c.dynamicPrototype = Object.prototype;
     c.defaultValue = null;
     return c;

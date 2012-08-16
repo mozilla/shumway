@@ -105,8 +105,8 @@ package flash.utils
     public native function readUTF():String;
     public native function readUTFBytes(length:uint):String;
 
-    public native function get length():uint;
-    public native function set length(value:uint):void;
+    public override native function get length():uint;
+    public override native function set length(value:uint);
 
     public native function writeObject(object:*):void;
     public native function readObject():*;
