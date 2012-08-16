@@ -9,6 +9,7 @@ const jsGlobal = (function() { return this || (1, eval)('this'); })();
 const VM_SLOTS = "vm slots";
 const VM_LENGTH = "vm length";
 const VM_BINDINGS = "vm bindings";
+const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 
 var originals = [
   { object: Object, overrides: ["toString", "valueOf"] }
@@ -73,6 +74,20 @@ function initializeGlobalObject(global) {
       };
     });
   }
+
+  [Number, Boolean, String, Array, Date, RegExp].forEach(function (o) {
+    defineReadOnlyProperty(o.prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
+  });
+}
+
+/**
+ * Checks if the specified |obj| is the prototype of a native JavaScript object. When the global
+ * object is initialized using |initializeGlobalObject| the prototypes of JavaScript native objects
+ * are assigned the property |VM_NATIVE_PROTOTYPE_FLAG|. Here we check if the specified |obj|
+ * has this property set.
+ */
+function isNativePrototype(obj) {
+  return obj.hasOwnProperty(VM_NATIVE_PROTOTYPE_FLAG);
 }
 
 initializeGlobalObject(jsGlobal);
@@ -345,13 +360,31 @@ function resolveMultiname(obj, multiname) {
   assert(!multiname.isQName(), multiname, " already resolved");
 
   obj = Object(obj);
+
+  var publicQn;
+
+  // Check if the object that we are resolving the multiname on is a JavaScript native prototype
+  // and if so only look for public (dynamic) properties. The reason for this is because we cannot
+  // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
+  // work around it here during name resolution.
+
+  var isNative = isNativePrototype(obj);
   for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
     var qn = multiname.getQName(i);
-    if (qn.getQualifiedName() in obj) {
-      return qn;
+    if (multiname.namespaces[i].isDynamic()) {
+      publicQn = qn;
+      if (isNative) {
+        break;
+      }
+    } else if (!isNative) {
+      if (qn.getQualifiedName() in obj) {
+        return qn;
+      }
     }
   }
-
+  if (publicQn && (publicQn.getQualifiedName() in obj)) {
+    return publicQn;
+  }
   return undefined;
 }
 
@@ -372,7 +405,7 @@ function getProperty(obj, multiname) {
   var value = resolved ? obj[resolved.getQualifiedName()] : undefined;
 
   if (tracePropertyAccess.value) {
-    print("getProperty(" + multiname + ") has value: " + !!value);
+    print("getProperty(" + multiname + " -> " + resolved + ") has value: " + !!value);
   }
 
   return value;
@@ -418,15 +451,18 @@ function setProperty(obj, multiname, value) {
     return;
   }
 
-  if (tracePropertyAccess.value) {
-    print("setProperty(" + multiname + ") trait: " + value);
-  }
-
   var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
+
   if (resolved) {
     obj[resolved.getQualifiedName()] = value;
+    if (tracePropertyAccess.value) {
+      print("setProperty(" + multiname + " -> " + resolved + ") trait: " + value);
+    }
   } else {
     obj["public$" + multiname.name] = value;
+    if (tracePropertyAccess.value) {
+      print("setDynamicProperty(" + multiname + " -> " + ("public$" + multiname.name) + ") trait: " + value);
+    }
   }
 }
 

@@ -303,6 +303,10 @@ var Namespace = (function () {
       return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
     },
 
+    isDynamic: function isDynamic() {
+      return this.isPublic() && !this.uri;
+    },
+
     getPrefix: function getPrefix() {
       return this.prefix;
     },
