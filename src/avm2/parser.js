@@ -428,6 +428,7 @@ var Multiname = (function () {
         this.flags = NAMESPACE_SET;
       }
     }
+    Counter.count("multiname");
   }
 
   multiname.prototype.clone = function clone() {
@@ -694,6 +695,35 @@ var Multiname = (function () {
       return name;
     }
     return "public$" + name;
+  };
+
+  multiname.getMultiname = function getMultiname(namespaces, name) {
+    if (isNumeric(name)) {
+      return multiname.getNumericMultiname(name);
+    }
+    return new multiname(namespaces, name);
+  };
+
+  var numericMultinameCache = [];
+  var numericMultinameCacheCount = 0;
+
+  /**
+   * Caches numeric multinames.
+   * TODO: Treat numeric multinames as primitive number values and don't box them in
+   * Multiname objects.
+   */
+  multiname.getNumericMultiname = function getNumericMultiname(name) {
+    assert (isNumeric(name));
+    var index = parseInt(name, 10);
+    var mn = numericMultinameCache[index];
+    if (mn) {
+      return mn;
+    } else if (numericMultinameCacheCount < 1024 * 8) {
+      numericMultinameCacheCount ++;
+      return numericMultinameCache[index] = multiname.publicQName(name);
+    } else {
+      return multiname.publicQName(name);
+    }
   };
 
   multiname.publicQName = function publicQName(name) {

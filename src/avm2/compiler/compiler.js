@@ -1091,7 +1091,7 @@ var Compiler = (function () {
           this.multiname = multiname;
           this.namespaces = namespaces;
           this.name = name;
-          NewExpression.call(this, id("Multiname"), [namespaces, name]);
+          CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
         }
         runtimeMultiname.prototype.isEquivalent = function isEquivalent(other) {
           return false;

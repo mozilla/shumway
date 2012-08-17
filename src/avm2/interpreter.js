@@ -84,6 +84,10 @@ var Interpreter = (function () {
           if (multiname.isRuntimeName()) {
             name = stack.pop();
           }
+          if (isNumeric(name)) {
+            assert (!multiname.isRuntimeNamespace());
+            return Multiname.getNumericMultiname(name);
+          }
           if (multiname.isRuntimeNamespace()) {
             namespaces = [stack.pop()];
           }
