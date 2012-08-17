@@ -31,6 +31,8 @@ var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations"
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
 
+var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
+
 argumentParser.addBoundOptionSet(numbersOptions);
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
   console.log("numbers.js " + argumentParser.getUsage());
@@ -307,7 +309,40 @@ function runNextTest () {
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
         console.log(counts);
         console.log(padRight("=== DONE ", "=", 120));
+        if (summary.value) {
+          printSummary();
+        }
       });
     }
   }
 }
+
+function printSummary() {
+  console.log(padRight("SUMMARY", "=", 120));
+  for (var k in results) {
+    for (var c in results[k]) {
+      if (c === "avm") {
+        continue;
+      }
+      try {
+        var counts = results[k][c].output.data.counter.counts;
+        var line = "Execution: " + shortPath(k, 30) + ":" + c + ": ";
+
+        for (var x in counts) {
+          line += x + ": " + (counts[x] > 10000 ? FAIL : PASS) + counts[x] + ENDC + " ";
+        }
+        console.log(line);
+      } catch (x) {
+
+      }
+    }
+  }
+  console.log(padRight("=== DONE ", "=", 120));
+}
+
+process.on('SIGINT', function () {
+  if (summary.value) {
+    printSummary();
+  }
+  process.exit();
+});
