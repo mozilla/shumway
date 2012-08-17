@@ -688,6 +688,14 @@ var Multiname = (function () {
 
   var simpleNameCache = {};
 
+
+  multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
+    if (isNumeric(name)) {
+      return name;
+    }
+    return "public$" + name;
+  };
+
   multiname.publicQName = function publicQName(name) {
     var mn = new multiname([Namespace.PUBLIC], name, QNAME);
     return simpleNameCache[mn.getQualifiedName()] = mn;

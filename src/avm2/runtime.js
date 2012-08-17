@@ -75,7 +75,7 @@ function initializeGlobalObject(global) {
     var object = originals[i].object;
     originals[i].overrides.forEach(function (originalFunctionName) {
       var originalFunction = object.prototype[originalFunctionName];
-      var overrideFunctionName = Multiname.publicQName(originalFunctionName).getQualifiedName();
+      var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
       global[object.name].prototype[originalFunctionName] = function () {
         if (this[overrideFunctionName]) {
           return this[overrideFunctionName]();
@@ -197,7 +197,7 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
-  return obj[Multiname.publicQName(obj.nextName(index)).getQualifiedName()];
+  return obj[Multiname.getPublicQualifiedName(obj.nextName(index))];
 }
 
 /**
@@ -834,7 +834,7 @@ var Runtime = (function () {
         for (var i = 0, j = interfaceTraits.length; i < j; i++) {
           var interfaceTrait = interfaceTraits[i];
           var interfaceTraitQn = interfaceTrait.name.getQualifiedName();
-          var interfaceTraitBindingQn = Multiname.publicQName(interfaceTrait.name.getName());
+          var interfaceTraitBindingQn = Multiname.getPublicQualifiedName(interfaceTrait.name.getName());
           // TODO: We should just copy over the property descriptor but we can't because it may be a
           // memoizer which will fail to patch the interface trait name. We need to make the memoizer patch
           // all traits bound to it.
@@ -844,7 +844,7 @@ var Runtime = (function () {
             return function () {
               return this[target];
             }
-          }(interfaceTraitBindingQn.getQualifiedName());
+          }(interfaceTraitBindingQn);
           defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }

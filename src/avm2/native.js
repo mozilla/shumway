@@ -147,7 +147,7 @@ const natives = (function () {
         if (!name) {
           return false;
         }
-        name = Multiname.publicQName(name).getQualifiedName();
+        name = Multiname.getPublicQualifiedName(name);
         if (this.hasOwnProperty(name)) {
           return true;
         }
@@ -158,13 +158,13 @@ const natives = (function () {
         if (!name) {
           return false;
         }
-        name = Multiname.publicQName(name).getQualifiedName();
+        name = Multiname.getPublicQualifiedName(name);
         return Object.prototype.propertyIsEnumerable.call(this, name);
       }
     };
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        name = Multiname.publicQName(name).getQualifiedName();
+        name = Multiname.getPublicQualifiedName(name);
         var descriptor = Object.getOwnPropertyDescriptor(obj, name);
         descriptor.enumerable = false;
         Object.defineProperty(obj, name, descriptor);

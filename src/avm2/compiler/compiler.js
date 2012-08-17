@@ -1368,7 +1368,7 @@ var Compiler = (function () {
             var key = state.stack.pop();
             assert (key.value !== undefined && typeof key.value !== "object");
 
-            var mangledKey = Multiname.publicQName(key.value).getQualifiedName();
+            var mangledKey = Multiname.getPublicQualifiedName(key.value);
             properties.unshift(new T.Property(new Literal(mangledKey), value, "init"));
           }
           push(new ObjectExpression(properties));
