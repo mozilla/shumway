@@ -10,7 +10,7 @@ const VM_SLOTS = "vm slots";
 const VM_LENGTH = "vm length";
 const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-const VM_PUBLIC_KEYS = "vm public keys";
+const VM_ENUMERATION_KEYS = "vm enumeration keys";
 
 var originals = [
   { object: Object, overrides: ["toString", "valueOf"] }
@@ -19,7 +19,7 @@ var originals = [
 function initializeGlobalObject(global) {
   const PUBLIC_MANGLED = /^public\$/;
 
-  function publicKeys(obj) {
+  function getEnumerationKeys(obj) {
     var keys = [];
     for (var key in obj) {
       if (PUBLIC_MANGLED.test(key) &&
@@ -36,23 +36,24 @@ function initializeGlobalObject(global) {
    */
   defineReadOnlyProperty(global.Object.prototype, "nextNameIndex", function (index) {
     if (index === 0) {
-      /*
-       * We're starting a new iteration. Hope that VM_PUBLIC_KEYS haven't been
+      /**
+       * We're starting a new iteration. Hope that VM_ENUMERATION_KEYS haven't been
        * defined already.
        */
-      this[VM_PUBLIC_KEYS] = publicKeys(this);
+      this[VM_ENUMERATION_KEYS] = getEnumerationKeys(this);
     }
 
-    var keys = this[VM_PUBLIC_KEYS];
+    var keys = this[VM_ENUMERATION_KEYS];
 
     while (index < keys.length) {
+      //
       if (keys[index]) {
         return index + 1;
       }
       index ++;
     }
 
-    delete this[VM_PUBLIC_KEYS];
+    delete this[VM_ENUMERATION_KEYS];
     return 0;
   });
 
@@ -61,7 +62,7 @@ function initializeGlobalObject(global) {
    * be index + 1, but it's actually index - 1;
    */
   defineReadOnlyProperty(global.Object.prototype, "nextName", function (index) {
-    var keys = this[VM_PUBLIC_KEYS];
+    var keys = this[VM_ENUMERATION_KEYS];
     assert (keys && index > 0 && index < keys.length + 1);
     return keys[index - 1];
   });
@@ -508,10 +509,15 @@ function deleteProperty(obj, multiname) {
 
   var qn = resolved.getQualifiedName();
   if (!(qn in Object.getPrototypeOf(obj))) {
-    if (obj[VM_PUBLIC_KEYS]) {
-      var index = obj[VM_PUBLIC_KEYS].indexOf(resolved.getName());
+    /**
+     * If we're in the middle of an enumeration "delete" the property from the
+     * enumeration keys as well. Setting it to |undefined| will cause it to be
+     * skipped by the enumeration bytecodes.
+     */
+    if (obj[VM_ENUMERATION_KEYS]) {
+      var index = obj[VM_ENUMERATION_KEYS].indexOf(resolved.getName());
       if (index >= 0) {
-        obj[VM_PUBLIC_KEYS][index] = undefined;
+        obj[VM_ENUMERATION_KEYS][index] = undefined;
       }
     }
     return delete obj[resolved.getQualifiedName()];
