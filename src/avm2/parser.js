@@ -163,12 +163,14 @@ var Trait = (function () {
       this.dispId = stream.readU30();
       this.methodInfo = methods[stream.readU30()];
       this.methodInfo.name = this.name;
+      // make sure that the holder was not already set
+      assert(!this.methodInfo.holder);
+      this.methodInfo.holder = this.holder;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
       assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
       this.classInfo = classes[stream.readU30()];
-      this.classInfo.name = this.name;
       break;
     case TRAIT_Function:
       // TRAIT_Function is a leftover. it's not supported at all in
@@ -1006,6 +1008,11 @@ var ClassInfo = (function () {
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
   }
+
+  classInfo.prototype.toString = function() {
+    return "" + this.name;
+  };
+
   return classInfo;
 })();
 
