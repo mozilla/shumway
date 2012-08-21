@@ -1013,7 +1013,7 @@ var Compiler = (function () {
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = new MemberExpression(obj, multiname.name, true);
           var nameTy = multiname.name.ty;
-          if (nameTy && Multiname.isNumeric(nameTy)) {
+          if (nameTy && nameTy.isNumeric()) {
             return fastPath;
           }
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
@@ -1065,7 +1065,7 @@ var Compiler = (function () {
           var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
 
           // Return fastpath for runtime multinames with number names
-          if (nameTy && Multiname.isNumeric(nameTy)) {
+          if (nameTy && nameTy.isNumeric()) {
             // Counter.count("Compiler: setProperty array[index] optimized");
             return fastPath;
           }
