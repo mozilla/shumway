@@ -317,36 +317,36 @@ var Scope = (function () {
     this.global = parent ? parent.global : this;
   }
 
-  scope.prototype.findProperty = function findProperty(multiname, domain, strict) {
+  scope.prototype.findProperty = function findProperty(mn, domain, strict) {
     assert(this.object);
-    assert(multiname instanceof Multiname);
+    assert(mn instanceof Multiname);
 
     if (traceScope.value || tracePropertyAccess.value) {
-      print("Scope.findProperty(" + multiname + ")");
+      print("Scope.findProperty(" + mn + ")");
     }
 
     var obj = this.object;
     // First check trait bindings.
-    if (multiname.isQName()) {
-      if (multiname.getQualifiedName() in obj) {
+    if (Multiname.isQName(mn)) {
+      if (Multiname.getQualifiedName(mn) in obj) {
         return obj;
       }
-    } else if (resolveMultiname(obj, multiname)) {
+    } else if (resolveMultiname(obj, mn)) {
       return obj;
     }
 
     if (this.parent) {
-      return this.parent.findProperty(multiname, domain, strict);
+      return this.parent.findProperty(mn, domain, strict);
     }
 
     // If we can't find it still, then look at the domain toplevel.
     var r;
-    if ((r = domain.findProperty(multiname, strict, true))) {
+    if ((r = domain.findProperty(mn, strict, true))) {
       return r;
     }
 
     if (strict) {
-      unexpected("Cannot find property " + multiname);
+      unexpected("Cannot find property " + mn);
     }
 
     return this.global.object;
@@ -367,7 +367,7 @@ var Scope = (function () {
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultiname(obj, multiname) {
-  assert(!multiname.isQName(), multiname, " already resolved");
+  assert(!Multiname.isQName(multiname), multiname, " already resolved");
 
   obj = Object(obj);
 
@@ -387,12 +387,12 @@ function resolveMultiname(obj, multiname) {
         break;
       }
     } else if (!isNative) {
-      if (qn.getQualifiedName() in obj) {
+      if (Multiname.getQualifiedName(qn) in obj) {
         return qn;
       }
     }
   }
-  if (publicQn && (publicQn.getQualifiedName() in obj)) {
+  if (publicQn && (Multiname.getQualifiedName(publicQn) in obj)) {
     return publicQn;
   }
   return undefined;
@@ -400,16 +400,16 @@ function resolveMultiname(obj, multiname) {
 
 function getProperty(obj, multiname) {
   assert(obj != undefined, "getProperty(", multiname, ") on undefined");
-  assert(multiname instanceof Multiname);
+  assert(Multiname.isMultiname(multiname));
 
-  var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
+  var resolved = Multiname.isQName(multiname) ? multiname : resolveMultiname(obj, multiname);
   var value = undefined;
 
-  if (resolved) {
-    if (resolved.isNumeric() && obj.indexGet) {
-      value = obj.indexGet(resolved.getQualifiedName(), value);
+  if (resolved !== undefined) {
+    if (Multiname.isNumeric(resolved) && obj.indexGet) {
+      value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = obj[resolved.getQualifiedName()];
+      value = obj[Multiname.getQualifiedName(resolved)];
     }
   }
 
@@ -431,10 +431,10 @@ function getSuper(obj, multiname) {
   var value = undefined;
 
   if (resolved) {
-    if (resolved.isNumeric() && superTraits.indexGet) {
-      value = superTraits.indexGet(resolved.getQualifiedName(), value);
+    if (Multiname.isNumeric(resolved) && superTraits.indexGet) {
+      value = superTraits.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = obj[resolved.getQualifiedName()];
+      value = obj[Multiname.getQualifiedName(resolved)];
     }
   }
 
@@ -445,26 +445,26 @@ function getSuper(obj, multiname) {
   return value;
 }
 
-function setProperty(obj, multiname, value) {
+function setProperty(obj, mn, value) {
   assert(obj);
-  assert(multiname instanceof Multiname);
+  assert(Multiname.isMultiname(mn));
 
-  var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
+  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
 
   if (tracePropertyAccess.value) {
-    print("setProperty(" + multiname + ") trait: " + value);
+    print("setProperty(" + mn + ") trait: " + value);
   }
 
-  if (!resolved) {
+  if (resolved === undefined) {
     // If we couldn't find the property, create one dynamically.
     // TODO: check sealed status
-    resolved = Multiname.publicQName(multiname.name);
+    resolved = Multiname.getPublicQualifiedName(mn.name);
   }
 
-  if (resolved.isNumeric() && obj.indexSet) {
-    obj.indexSet(resolved.getQualifiedName(), value);
+  if (Multiname.isNumeric(resolved) && obj.indexSet) {
+    obj.indexSet(Multiname.getQualifiedName(resolved), value);
   } else {
-    obj[resolved.getQualifiedName()] = value;
+    obj[Multiname.getQualifiedName(resolved)] = value;
   }
 }
 
@@ -481,10 +481,10 @@ function setSuper(obj, multiname, value) {
   var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
 
   if (resolved) {
-    if (resolved.isNumeric() && superTraits.indexSet) {
-      superTraits.indexSet(resolved.getQualifiedName(), value);
+    if (Multiname.isNumeric(resolved) && superTraits.indexSet) {
+      superTraits.indexSet(Multiname.getQualifiedName(resolved), value);
     } else {
-      obj[resolved.getQualifiedName()] = value;
+      obj[Multiname.getQualifiedName(resolved)] = value;
     }
   } else {
     throw new ReferenceError("Cannot create property " + multiname.name +
@@ -494,20 +494,20 @@ function setSuper(obj, multiname, value) {
 
 function deleteProperty(obj, multiname) {
   assert(obj);
-  assert(multiname instanceof Multiname);
+  assert(Multiname.isMultiname(multiname), multiname);
 
-  var resolved = multiname.isQName() ? multiname : resolveMultiname(obj, multiname);
+  var resolved = Multiname.isQName(multiname) ? multiname : resolveMultiname(obj, multiname);
 
-  if (!resolved) {
+  if (resolved === undefined) {
     return true;
   }
 
   // Only dynamic properties can be deleted, so only look for those.
-  if (!resolved.namespaces[0].isPublic()) {
+  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic()) {
     return false;
   }
 
-  var qn = resolved.getQualifiedName();
+  var qn = Multiname.getQualifiedName(resolved);
   if (!(qn in Object.getPrototypeOf(obj))) {
     /**
      * If we're in the middle of an enumeration "delete" the property from the
@@ -520,7 +520,7 @@ function deleteProperty(obj, multiname) {
         obj[VM_ENUMERATION_KEYS][index] = undefined;
       }
     }
-    return delete obj[resolved.getQualifiedName()];
+    return delete obj[Multiname.getQualifiedName(resolved)];
   }
 }
 
@@ -698,7 +698,7 @@ var Runtime = (function () {
 
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
-    var fnName = mi.name ? mi.name.getQualifiedName() : "fn" + functionCount;
+    var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + functionCount;
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 0) {
       print (fnSource);
@@ -745,7 +745,7 @@ var Runtime = (function () {
 
     const domain = this.domain;
 
-    var className = ii.name.getName();
+    var className = Multiname.getName(ii.name);
     if (traceExecution.value) {
       print("Creating class " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
@@ -833,8 +833,8 @@ var Runtime = (function () {
         var interfaceTraits = ii.traits;
         for (var i = 0, j = interfaceTraits.length; i < j; i++) {
           var interfaceTrait = interfaceTraits[i];
-          var interfaceTraitQn = interfaceTrait.name.getQualifiedName();
-          var interfaceTraitBindingQn = Multiname.getPublicQualifiedName(interfaceTrait.name.getName());
+          var interfaceTraitQn = Multiname.getQualifiedName(interfaceTrait.name);
+          var interfaceTraitBindingQn = Multiname.getPublicQualifiedName(Multiname.getName(interfaceTrait.name));
           // TODO: We should just copy over the property descriptor but we can't because it may be a
           // memoizer which will fail to patch the interface trait name. We need to make the memoizer patch
           // all traits bound to it.
@@ -892,7 +892,7 @@ var Runtime = (function () {
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
       if (trait.isConst()) {
-        var qn = trait.name.getQualifiedName();
+        var qn = Multiname.getQualifiedName(trait.name);
         var value = obj[qn];
         (function (qn, value) {
           Object.defineProperty(obj, qn, { configurable: false, enumerable: false,
@@ -931,7 +931,7 @@ var Runtime = (function () {
         } else if (classNatives) {
           // At this point the native class already had the scope, so we don't
           // need to close over the method again.
-          var k = mi.name.getName();
+          var k = Multiname.getName(mi.name);
           if (trait.isGetter()) {
             k = "get " + k;
           } else if (trait.isSetter()) {
@@ -946,7 +946,7 @@ var Runtime = (function () {
       if (!closure) {
         return (function (mi) {
           return function () {
-            print("Calling undefined native method: " + mi.name.getQualifiedName());
+            print("Calling undefined native method: " + Multiname.getQualifiedName(mi.name));
           };
         })(mi);
       }
@@ -977,7 +977,7 @@ var Runtime = (function () {
 
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
-      var qn = trait.name.getQualifiedName();
+      var qn = Multiname.getQualifiedName(trait.name);
 
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
         if (!trait.slotId) {

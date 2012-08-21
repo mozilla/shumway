@@ -78,23 +78,23 @@ var Interpreter = (function () {
         return operator.fn(stack.pop()) ? bc.offset : pc + 1;
       }
 
-      function createMultiname(multiname) {
-        if (multiname.isRuntime()) {
-          var namespaces = multiname.namespaces, name = multiname.name;
-          if (multiname.isRuntimeName()) {
+      function createMultiname(mn) {
+        if (Multiname.isRuntime(mn)) {
+          var namespaces = mn.namespaces, name = mn.name;
+          if (Multiname.isRuntimeName(mn)) {
             name = stack.pop();
           }
           if (isNumeric(name)) {
-            assert (!multiname.isRuntimeNamespace());
-            return Multiname.getNumericMultiname(name);
+            assert (!Multiname.isRuntimeNamespace(mn));
+            return name;
           }
-          if (multiname.isRuntimeNamespace()) {
+          if (Multiname.isRuntimeNamespace(mn)) {
             namespaces = [stack.pop()];
           }
-          multiname = new Multiname(namespaces, name);
+          mn = new Multiname(namespaces, name);
         }
-        assert(!multiname.isRuntime());
-        return multiname;
+        assert(!Multiname.isRuntime(mn));
+        return mn;
       }
 
       var args, obj, objsuper, type, index, multiname, ns, name, res;
@@ -102,7 +102,7 @@ var Interpreter = (function () {
       var sourcePosition = {file: undefined, line: undefined};
 
       if (traceInterpreter.value > 0) {
-        var methodName = method.name ? method.name.getQualifiedName() : "unknown";
+        var methodName = method.name ? Multiname.getQualifiedName(method.name) : "unknown";
         print("methodName: " + methodName);
         method.trace(new IndentingWriter(), abc);
       }

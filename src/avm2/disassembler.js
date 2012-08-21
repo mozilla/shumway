@@ -156,7 +156,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
   writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
   writer.writeLn("parameters: " + this.parameters.map(function (x) {
-    return (x.type ? x.type.getQualifiedName() + "::" : "") + x.name;
+    return (x.type ? Multiname.getQualifiedName(x.type) + "::" : "") + x.name;
   }));
 
   if (!this.code) {

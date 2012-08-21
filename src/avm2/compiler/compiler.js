@@ -886,7 +886,7 @@ var Compiler = (function () {
               push(constant(trait.value));
               return;
             }
-            push(property(obj, trait.name.getQualifiedName()));
+            push(property(obj, Multiname.getQualifiedName(trait.name)));
             return;
           }
         }
@@ -898,7 +898,7 @@ var Compiler = (function () {
         if (enableOpt.value && obj.ty) {
           var trait = obj.ty.getTraitBySlotId(index);
           if (trait) {
-            push(assignment(property(obj, trait.name.getQualifiedName()), value));
+            push(assignment(property(obj, Multiname.getQualifiedName(trait.name)), value));
             return;
           }
         }
@@ -1013,7 +1013,7 @@ var Compiler = (function () {
         if (enableOpt.value && multiname instanceof RuntimeMultiname) {
           var fastPath = new MemberExpression(obj, multiname.name, true);
           var nameTy = multiname.name.ty;
-          if (nameTy && nameTy.isNumeric()) {
+          if (nameTy && Multiname.isNumeric(nameTy)) {
             return fastPath;
           }
           return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
@@ -1022,8 +1022,8 @@ var Compiler = (function () {
         if (multiname instanceof Constant) {
           var val = obj instanceof Variable ? obj.value : obj;
           if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
-            if (multiname.value.isQName()) {
-              return property(obj, multiname.value.getQualifiedName());
+            if (Multiname.isQName(multiname.value)) {
+              return property(obj, Multiname.getQualifiedName(multiname.value));
             }
           }
         }
@@ -1065,7 +1065,7 @@ var Compiler = (function () {
           var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
 
           // Return fastpath for runtime multinames with number names
-          if (nameTy && nameTy.isNumeric()) {
+          if (nameTy && Multiname.isNumeric(nameTy)) {
             // Counter.count("Compiler: setProperty array[index] optimized");
             return fastPath;
           }

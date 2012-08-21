@@ -58,7 +58,7 @@ function writeTraits(name, traits, instance) {
       var method = trait.method;
       if (method.isNative() || all.value) {
         var prefix = trait.isGetter() ? "get$" : trait.isSetter() ? "set$" : "";
-        var methodQName = (instance ? "instance$" : "static$") + prefix + method.name.getQualifiedName();
+        var methodQName = (instance ? "instance$" : "static$") + prefix + Multiname.getQualifiedName(method.name);
         var methodName = prefix + method.name.name;
         var signature = trait.method.parameters.map(function (p) { return p.name; }).join(", ");
         var comment = trait.method.parameters.map(function (p) {

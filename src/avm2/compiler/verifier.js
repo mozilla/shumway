@@ -113,11 +113,11 @@ var Verifier = (function() {
     for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
       var qn = multiname.getQName(i);
       for (var k = 0, l = traits.length; k < l; k++) {
-        if (qn.getQualifiedName() === traits[k].name.getQualifiedName()) {
+        if (Multiname.getQualifiedName(qn) === Multiname.getQualifiedName(traits[k].name)) {
           if(!trait) {
             trait = traits[k];
           } else {
-            unexpected("Found name " + qn.getQualifiedName() + " twice in traits: " + traits);
+            unexpected("Found name " + Multiname.getQualifiedName(qn) + " twice in traits: " + traits);
           }
         }
       }
@@ -169,16 +169,16 @@ var Verifier = (function() {
       type.fromName = function fromName(name) {
         if (name === undefined) {
           return type.Atom.Undefined;
-        } else if (name.getQualifiedName() === "public$int") {
+        } else if (Multiname.getQualifiedName(name) === "public$int") {
           return type.Int;
-        } else if (name.getQualifiedName() === "public$uint") {
+        } else if (Multiname.getQualifiedName(name) === "public$uint") {
           return type.Uint;
-        } else if (name.getQualifiedName() === "public$Object") {
+        } else if (Multiname.getQualifiedName(name) === "public$Object") {
           return type.Atom.Object;
-        } else if (name.getQualifiedName() === "public$Number") {
+        } else if (Multiname.getQualifiedName(name) === "public$Number") {
           return type.Number;
         } else if (name.hasTypeParameter()) { // generic type
-          if (name.getQualifiedName() === "public$__AS3__$vec$Vector") {
+          if (Multiname.getQualifiedName(name) === "public$__AS3__$vec$Vector") {
             return Type.fromReference(new Vector(type.fromName(name.typeParameter)));
           }
           // For now only Vectors should have type parameters.
