@@ -319,7 +319,7 @@ var Scope = (function () {
 
   scope.prototype.findProperty = function findProperty(mn, domain, strict) {
     assert(this.object);
-    assert(mn instanceof Multiname);
+    assert(Multiname.isMultiname(mn));
 
     if (traceScope.value || tracePropertyAccess.value) {
       print("Scope.findProperty(" + mn + ")");
@@ -366,8 +366,8 @@ var Scope = (function () {
 /**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, multiname) {
-  assert(!Multiname.isQName(multiname), multiname, " already resolved");
+function resolveMultiname(obj, mn) {
+  assert(!Multiname.isQName(mn), mn, " already resolved");
 
   obj = Object(obj);
 
@@ -379,9 +379,9 @@ function resolveMultiname(obj, multiname) {
   // work around it here during name resolution.
 
   var isNative = isNativePrototype(obj);
-  for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
-    var qn = multiname.getQName(i);
-    if (multiname.namespaces[i].isDynamic()) {
+  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+    var qn = mn.getQName(i);
+    if (mn.namespaces[i].isDynamic()) {
       publicQn = qn;
       if (isNative) {
         break;
@@ -398,11 +398,11 @@ function resolveMultiname(obj, multiname) {
   return undefined;
 }
 
-function getProperty(obj, multiname) {
-  assert(obj != undefined, "getProperty(", multiname, ") on undefined");
-  assert(Multiname.isMultiname(multiname));
+function getProperty(obj, mn) {
+  assert(obj != undefined, "getProperty(", mn, ") on undefined");
+  assert(Multiname.isMultiname(mn));
 
-  var resolved = Multiname.isQName(multiname) ? multiname : resolveMultiname(obj, multiname);
+  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
 
   if (resolved !== undefined) {
@@ -414,20 +414,20 @@ function getProperty(obj, multiname) {
   }
 
   if (tracePropertyAccess.value) {
-    print("getProperty(" + multiname + " -> " + resolved + ") has value: " + !!value);
+    print("getProperty(" + mn + " -> " + resolved + ") has value: " + !!value);
   }
 
   return value;
 }
 
-function getSuper(obj, multiname) {
-  assert(obj != undefined, "getSuper(" + multiname + ") on undefined");
+function getSuper(obj, mn) {
+  assert(obj != undefined, "getSuper(" + mn + ") on undefined");
   assert(obj.class.baseClass);
-  assert(multiname instanceof Multiname);
+  assert(Multiname.isMultiname(mn));
 
   var superTraits = obj.class.baseClass.instance.prototype;
 
-  var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
+  var resolved = mn.isQName() ? mn : resolveMultiname(superTraits, mn);
   var value = undefined;
 
   if (resolved) {
@@ -439,7 +439,7 @@ function getSuper(obj, multiname) {
   }
 
   if (tracePropertyAccess.value) {
-    print("getSuper(" + multiname + ") has value: " + !!value);
+    print("getSuper(" + mn + ") has value: " + !!value);
   }
 
   return value;
@@ -468,35 +468,35 @@ function setProperty(obj, mn, value) {
   }
 }
 
-function setSuper(obj, multiname, value) {
+function setSuper(obj, mn, value) {
   assert(obj);
   assert(obj.class.baseClass);
-  assert(multiname instanceof Multiname);
+  assert(Multiname.isMultiname(mn));
 
   if (tracePropertyAccess.value) {
-    print("setProperty(" + multiname + ") trait: " + value);
+    print("setProperty(" + mn + ") trait: " + value);
   }
 
   var superTraits = obj.class.baseClass.instance.prototype;
-  var resolved = multiname.isQName() ? multiname : resolveMultiname(superTraits, multiname);
+  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraits, mn);
 
-  if (resolved) {
+  if (resolved !== undefined) {
     if (Multiname.isNumeric(resolved) && superTraits.indexSet) {
       superTraits.indexSet(Multiname.getQualifiedName(resolved), value);
     } else {
       obj[Multiname.getQualifiedName(resolved)] = value;
     }
   } else {
-    throw new ReferenceError("Cannot create property " + multiname.name +
+    throw new ReferenceError("Cannot create property " + mn.name +
                              " on " + obj.class.baseClass.debugName);
   }
 }
 
-function deleteProperty(obj, multiname) {
+function deleteProperty(obj, mn) {
   assert(obj);
-  assert(Multiname.isMultiname(multiname), multiname);
+  assert(Multiname.isMultiname(mn), mn);
 
-  var resolved = Multiname.isQName(multiname) ? multiname : resolveMultiname(obj, multiname);
+  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
 
   if (resolved === undefined) {
     return true;
