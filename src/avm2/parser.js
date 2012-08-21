@@ -197,10 +197,6 @@ var Trait = (function () {
     return this.kind === TRAIT_Const;
   };
 
-  trait.prototype.isConstant = function isConstant() {
-    return this.kind === TRAIT_Const;
-  };
-
   trait.prototype.isMethod = function isMethod() {
     return this.kind === TRAIT_Method;
   };
