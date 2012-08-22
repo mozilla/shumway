@@ -2,6 +2,21 @@ var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
 var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
 
+var compilerEnableExceptions = compilerOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
+var compilerMaximumMethodSize = compilerOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
+
+/**
+ * Checks if the specified method should be compiled. For now we just ignore very large methods.
+ */
+function shouldCompile(mi) {
+  if (mi.hasExceptions() && !compilerEnableExceptions.value) {
+    return false;
+  } else if (mi.code.length > compilerMaximumMethodSize.value) {
+    return false;
+  }
+  return true;
+}
+
 const T = estransform;
 
 const Literal = T.Literal;

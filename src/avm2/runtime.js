@@ -665,7 +665,7 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === ALWAYS_INTERPRET) {
+    if (mode === ALWAYS_INTERPRET || !shouldCompile(mi)) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 

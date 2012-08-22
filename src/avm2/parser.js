@@ -917,6 +917,9 @@ var MethodInfo = (function () {
     info.traits = parseTraits(abc, stream, info);
   };
 
+  methodInfo.prototype.hasExceptions = function hasExceptions() {
+    return this.exceptions.length > 0;
+  };
   return methodInfo;
 })();
 
