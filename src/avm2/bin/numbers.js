@@ -105,11 +105,10 @@ if (!process.env.AVM) {
 }
 
 var avmShell = {path: process.env.AVM, options: []};
-var shuShell = {path: "js", options: "-m -n avm.js".split(" ")};
 
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
-  {name: "avm", timeout: 500, command: avmShell.path}
+  {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
 var commandPrefix = "js";
