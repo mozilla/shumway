@@ -559,8 +559,11 @@ var Global = (function () {
     script.loaded = true;
   }
   Global.prototype.toString = function () {
-    return "[Global]";
-  }
+    return "[object global]";
+  };
+  defineNonEnumerableProperty(Global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
+    return this.toString();
+  });
   return Global;
 })();
 
