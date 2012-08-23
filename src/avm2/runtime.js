@@ -1028,6 +1028,7 @@ var Runtime = (function () {
         // TODO: It may be that the verifier can work with non-initialized types.
         // It can probably find the class traits manually, so that may be worth
         // looking into.
+
         if (true ||
             (obj instanceof Global ||
              this.domain.Class && obj instanceof this.domain.Class
@@ -1128,7 +1129,7 @@ var Runtime = (function () {
     if (error instanceof Error) {
       var type = this.domain.getClass(error.name);
       if (type) {
-        return new type.instance(error.message);
+        return new type.instance(translateErrorMessage(error));
       }
       unexpected("Can't translate error: " + error);
     }
@@ -1141,4 +1142,3 @@ var Runtime = (function () {
 
   return runtime;
 })();
-

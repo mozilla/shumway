@@ -34,6 +34,7 @@ var Counter = new metrics.Counter();
 Timer.start("Loading VM");
 
 load("../constants.js");
+load("../errors.js");
 load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");

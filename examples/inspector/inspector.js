@@ -33,7 +33,7 @@ var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
 function createAVM2(next, loadShellAbc) {
   var vm = new AVM2(sysMode, appMode);
   new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
-    var vm = new AVM2(new AbcFile(new Uint8Array(buffer), "builtin.abc"), sysMode, appMode);
+    vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     if (loadShellAbc) {
       new BinaryFileReader(avm2Root + "generated/shell/shell.abc").readAll(null, function (buffer) {
         vm.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
