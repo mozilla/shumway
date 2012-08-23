@@ -12,9 +12,13 @@ const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 const VM_ENUMERATION_KEYS = "vm enumeration keys";
 
-var originals = [
-  { object: Object, overrides: ["toString", "valueOf"] }
+const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
+
+var VM_NATIVE_BUILTIN_SURROGATES = [
+  { object: Object, methods: ["toString", "valueOf"] }
 ];
+
+const VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 function initializeGlobalObject(global) {
   const PUBLIC_MANGLED = /^public\$/;
@@ -68,24 +72,31 @@ function initializeGlobalObject(global) {
   });
 
   /**
-   * To get |toString| and |valueOf| to work transparently, as in without
-   * reimplementing stuff like trace and +.
+   * Surrogates are used to make |toString| and |valueOf| work transparently. For instance, the expression
+   * |a + b| should implicitly expand to |a.public$valueOf() + b.public$valueOf()|. Since, we don't want
+   * to call |public$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native
+   * builtins to call the |public$valueOf| instead.
    */
-  for (var i = 0, j = originals.length; i < j; i++) {
-    var object = originals[i].object;
-    originals[i].overrides.forEach(function (originalFunctionName) {
+  var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = {};
+  VM_NATIVE_BUILTIN_SURROGATES.forEach(function (surrogate) {
+    var object = surrogate.object;
+    originals[object.name] = {};
+    surrogate.methods.forEach(function (originalFunctionName) {
       var originalFunction = object.prototype[originalFunctionName];
+      // Save the original method in case |getNative| needs it.
+      originals[object.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-      global[object.name].prototype[originalFunctionName] = function () {
+      // Patch the native builtin with a surrogate.
+      global[object.name].prototype[originalFunctionName] = function surrogate() {
         if (this[overrideFunctionName]) {
           return this[overrideFunctionName]();
         }
         return originalFunction.call(this);
       };
     });
-  }
+  });
 
-  [Number, Boolean, String, Array, Date, RegExp].forEach(function (o) {
+  VM_NATIVE_BUILTINS.forEach(function (o) {
     defineReadOnlyProperty(o.prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
   });
 }
@@ -414,7 +425,7 @@ function getProperty(obj, mn) {
   }
 
   if (tracePropertyAccess.value) {
-    print("getProperty(" + mn + " -> " + resolved + ") has value: " + !!value);
+    print("getProperty(" + obj.toString() + ", " + mn + " -> " + resolved + ") has value: " + !!value);
   }
 
   return value;

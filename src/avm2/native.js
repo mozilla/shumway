@@ -861,6 +861,7 @@ const natives = (function () {
     Math: Math,
     Date: Date,
     RegExp: RegExp,
+    Object: Object,
 
     /**
      * Classes.
@@ -916,7 +917,9 @@ const natives = (function () {
       } else {
         return notImplemented(value);
       }
-    })
+    }),
+
+    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
   };
 
 })();
@@ -927,5 +930,7 @@ function getNative(p) {
   for (var i = 0, j = chain.length; i < j; i++) {
     v = v && v[chain[i]];
   }
+  // TODO: This assertion should always pass, find out why it doesn't.
+  // assert (v, "getNative(" + p + ") not found.");
   return v;
 }
