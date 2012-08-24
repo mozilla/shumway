@@ -124,6 +124,11 @@
  *   };
  */
 
+function debugBreak(message) {
+  // TODO: Set Breakpoint Here
+  print("\033[91mdebugBreak: " + message + "\033[0m");
+}
+
 const natives = (function () {
 
   function glue(inner, proxy) {
@@ -818,11 +823,6 @@ const natives = (function () {
     };
 
     return c;
-  }
-
-  function debugBreak(message) {
-    // TODO: Set Breakpoint Here
-    return message;
   }
 
   return {

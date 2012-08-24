@@ -1662,7 +1662,7 @@ var Compiler = (function () {
     assert(methodInfo.analysis);
 
     Timer.start("Compiler");
-    if (enableVerifier.value && !hasDynamicScope && scope.object) {
+    if (enableVerifier.value && scope.object) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("ver");
       this.verifier.verifyMethod(methodInfo, scope);

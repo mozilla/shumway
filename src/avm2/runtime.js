@@ -3,6 +3,7 @@ var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
+var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
@@ -721,6 +722,9 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + functionCount;
+    if (functionCount == functionBreak.value) {
+      body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
+    }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 0) {
       print (fnSource);
@@ -1000,7 +1004,6 @@ var Runtime = (function () {
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
       var qn = Multiname.getQualifiedName(trait.name);
-
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
         if (!trait.slotId) {
           trait.slotId = ++freshSlotId;
