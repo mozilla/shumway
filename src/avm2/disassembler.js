@@ -244,7 +244,7 @@ var SourceTracer = (function () {
 
       traits.forEach(function (trait) {
         var str;
-        var accessModifier = trait.name.getAccessModifier();
+        var accessModifier = Multiname.getAccessModifier(trait.name);
         var namespaceName = trait.name.namespaces[0].originalURI;
         if (namespaceName) {
           if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
@@ -380,7 +380,7 @@ var SourceTracer = (function () {
 
       var ii = ci.instanceInfo;
       var name = ii.name;
-      var str = name.getAccessModifier();
+      var str = Multiname.getAccessModifier(name);
       if (ii.isFinal()) {
         str += " final";
       }

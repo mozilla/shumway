@@ -558,6 +558,15 @@ var Multiname = (function () {
     return "public$" + name;
   };
 
+  multiname.getAccessModifier = function getAccessModifier(mn) {
+    assert (Multiname.isQName(mn));
+    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
+      return "public";
+    }
+    assert (mn instanceof multiname);
+    return mn.namespaces[0].getAccessModifier();
+  };
+
   multiname.isAnyName = function isAnyName(mn) {
     return mn instanceof Multiname && mn.name === undefined;
   };
