@@ -32,7 +32,10 @@ var AbcStream = (function () {
     readU30: function() {
       var result = this.readU32();
       if (result & 0xc0000000) {
-        error("Corrupt ABC File");
+        // TODO: Spec says this is a corrupt ABC file, but it seems that some content
+        // has this, e.g. 1000-0.abc
+        // error("Corrupt ABC File");
+        return result;
       }
       return result;
     },
