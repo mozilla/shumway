@@ -357,6 +357,12 @@ var Verifier = (function() {
         } else if ((this === Type.Int && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Int)) {
           return Type.Atom.Any;
+        } else if ((this === Type.Boolean && other.kind === "Reference") ||
+                   (this.kind === "Reference" && other === Type.Boolean)) {
+          return Type.Atom.Any;
+        } else if ((this === Type.Int && other === Type.Boolean) ||
+                   (this === Type.Boolean && other === Type.Int)) {
+          return Type.Atom.Any;
         } else if ((this === Type.Int && other === Type.Number) ||
                    (this === Type.Number && other === Type.Int)) {
           return type.Number;
