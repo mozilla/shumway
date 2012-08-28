@@ -128,7 +128,7 @@ var Verifier = (function() {
           }
           if(!trait) {
             trait = traits[k];
-          } else {
+          } else if ((trait.isGetter() && traits[k].isGetter()) || (trait.isSetter() && traits[k].isSetter())) {
             unexpected("Found name " + Multiname.getQualifiedName(qn) + " twice in traits: " + traits);
           }
         }
@@ -315,7 +315,14 @@ var Verifier = (function() {
           } else if (this.value instanceof Activation) {
             return findTrait(this.value.methodInfo.traits, multiname, kind);
           } else if (this.value instanceof domain.system.Class) {
-            return findTrait(this.value.classInfo.instanceInfo.traits, multiname, kind);
+            // Look into base's calss traits
+            var currentClass = this.value;
+            var trait = findTrait(currentClass.classInfo.instanceInfo.traits, multiname, kind);
+            while (!trait && currentClass.baseClass) {
+              currentClass = currentClass.baseClass;
+              trait = findTrait(currentClass.classInfo.instanceInfo.traits, multiname, kind);
+            }
+            return trait;
           }
         } else if (this.isClass()) {
           return findTrait(this.value.classInfo.traits, multiname, kind);
@@ -546,7 +553,7 @@ var Verifier = (function() {
         var mmethods = abc.mmethods;
         var runtime = abc.runtime;
 
-        var obj, func, mi, multiname, lVal, rVal, val, valTy, factory, type, typeName, name, trait;
+        var obj, objTy, func, mi, multiname, lVal, rVal, val, valTy, factory, type, typeName, name, trait;
 
         /**
          * Optionally pops a runtime multiname of the stack and stores a |RuntimeMultiname|
@@ -580,16 +587,81 @@ var Verifier = (function() {
         }
 
         function findProperty(multiname, strict) {
+
+          // |findProperty| should look first into the scope stack and then
+          // into the savedScope (which is the scope at the time the method
+          // was created). Since we deal with an abstract view of the saved
+          // scope stack, we look into saved scope object's traits 
+
+          for (var idx = scope.length - 1; idx >= 0; idx--) {
+            var scopeObj = scope[idx];
+            if (scopeObj.getTrait(multiname)) {
+              return scopeObj;
+            }              
+          }
+          
+          // the property was not found in the scope stack, search the saved scope  
           if (savedScope) {
-            var obj = savedScope.findProperty(multiname, domain, false);
+            obj = savedScope.findProperty(multiname, domain, false);
+
             if (obj instanceof domain.system.Class) {
               return Type.fromClass(obj);
             }
             return Type.fromReference(obj);
           }
+
+          return Type.Atom.Any;
         }
 
-        function resolveTrait(type, multiname) {
+        function getPropertyType(obj, multiname) {
+          var type = Type.Atom.Any;
+
+          // |getPropertyType| resolves the type of property with the name specified
+          // by the multiname in object.
+          
+          if (multiname instanceof RuntimeMultiname) {
+            type = multiname.name;
+          } else if (obj.isReference() || obj.isClass()) { // what about classes?
+            if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) { // recheck vectors
+              type = obj.value.elementType;
+            } else {
+              // |getTraitEnforceGetter| makes sure that we get the getter, 
+              // not the setter, which is required because we need the accessor
+              // property type which can be retrieved from getter's return type
+              trait = obj.getTraitEnforceGetter(multiname);
+              // trait = obj.getTrait(multiname);
+
+              if (trait && trait.isClass()) {
+                // If the obj is a verifier Class type we have access
+                // to the actual object holding the property, so we can call
+                // runtime's |getPropery| function to retrieve the actual value
+                // needed in case of a class trait                
+                val = getProperty(obj.value, multiname);
+                switch (val) {
+                  case Type.Class.Int.value:
+                    type = Type.Int;
+                    break;
+                  case Type.Class.Uint.value:
+                    type = Type.Uint;
+                    break;
+                  case Type.Class.Vector.value:
+                    type = Type.fromClass(new Vector());
+                    break;
+                }
+              } else if (trait && trait.isSlot()) {
+                type = Type.referenceFromName(trait.typeName);
+              } else if (trait && trait.isGetter()) {
+                type = Type.referenceFromName(trait.methodInfo.returnType);
+              } else if (trait === undefined) {
+                bc.isDynamicProperty = true;
+              }
+            }
+          }
+
+          return type;
+        }
+
+        function resolveTrait(type, multiname) { // TODO replace it with findTrait
           if (type && type.kind === "Reference" && type.value instanceof domain.system.Class) {
             // ...
           }
@@ -839,8 +911,18 @@ var Verifier = (function() {
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
             obj = stack.pop();
-            // TODO: Figure out the type of the generated instance.
-            stack.push(Type.Atom.Any);
+            type = Type.Atom.Any;
+
+            if (!(multiname instanceof RuntimeMultiname)) {
+               if (obj.isReference() || obj.isClass()) {
+                  trait = obj.getTrait(multiname);
+                  if (trait && trait.isClass()) {
+                    val = getProperty(obj.value, multiname);
+                    type = Type.fromReference(val);
+                }
+              }
+            }
+            stack.push(type);
             break;
           case OP_callsuperid:
             notImplemented(bc);
@@ -885,8 +967,7 @@ var Verifier = (function() {
           case OP_newobject:
             // Pops keys and values, pushes result.
             stack.popMany(bc.argCount * 2);
-            // push(Type.Reference.Dynamic);
-            push(Type.Reference.Any);
+            push(Type.Atom.Any);
             break;
           case OP_newarray:
             // Pops values, pushes result.
@@ -903,7 +984,7 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_newcatch:
-            notImplemented(bc);
+            push(Type.Atom.Any);
             break;
           case OP_findpropstrict:
             multiname = popMultiname(bc);
@@ -921,9 +1002,21 @@ var Verifier = (function() {
             break;
           case OP_initproperty:
           case OP_setproperty:
-            popValue(bc); // attaches the of the value to bc.valTy
-            popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
-            popObject(bc); // attaches the type of the object to bc.objTy
+            valTy = popValue(bc); // attaches the type of the value to bc.valTy
+            multiname = popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
+            objTy = popObject(bc); // attaches the type of the object to bc.objTy
+
+            // TODO: This logic would not work for runtime multinames since the
+            // actual value of the name could be a trait, thus not a dynamic property,
+            // unless something can be proven about the value of the runtime multinames
+            if (!(multiname instanceof RuntimeMultiname)) {
+              trait = objTy.getTrait(multiname);
+
+              if (trait === undefined) {
+                bc.isDynamicProperty = true;
+              }
+            }
+
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -943,36 +1036,7 @@ var Verifier = (function() {
           case OP_getproperty:
             multiname = popMultiname(bc);
             obj = pop();
-            type = Type.Atom.Any;
-
-            if (multiname instanceof RuntimeMultiname) {
-              type = multiname.name;
-            } else if (obj.isReference() || obj.isClass()) { // what about classes?
-              if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) { // recheck vectors
-                type = obj.value.elementType;
-              } else {
-                trait = obj.getTraitEnforceGetter(multiname);
-                if (trait && trait.isClass()) {
-                  val = getProperty(obj.value, multiname);
-                  switch (val) {
-                    case Type.Class.Int.value:
-                      type = Type.Int;
-                      break;
-                    case Type.Class.Uint.value:
-                      type = Type.Uint;
-                      break;
-                    case Type.Class.Vector.value:
-                      type = Type.fromClass(new Vector());
-                      break;
-                  }
-                } else if (trait && trait.isSlot()) {
-                  type = Type.referenceFromName(trait.typeName);
-                } else if (trait && trait.isGetter()) { // TODO make sure you get the getter, not the setter
-                  type = Type.referenceFromName(trait.methodInfo.returnType);
-                }
-              }
-            }
-            push(type);
+            push(getPropertyType(obj, multiname));
             break;
           case OP_getouterscope:
             notImplemented(bc);
@@ -1141,7 +1205,9 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_istypelate:
-            notImplemented(bc);
+              pop();
+              pop();
+              push(Type.Boolean);
             break;
           case OP_inclocal_i:
           case OP_declocal_i:

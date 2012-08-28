@@ -1022,74 +1022,91 @@ var Compiler = (function () {
       function getProperty(obj, multiname) {
         assert (!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
+        Counter.count("getProperty");
 
         // If the multiname is a runtime multiname and the name is a number then
         // emit a fast object[name] property lookup.
-        if (enableOpt.value && multiname instanceof RuntimeMultiname) {
-          var fastPath = new MemberExpression(obj, multiname.name, true);
-          var nameTy = multiname.name.ty;
-          if (nameTy && nameTy.isNumeric()) {
-            return fastPath;
+
+        if (enableOpt.value) {
+          if (multiname instanceof RuntimeMultiname) {
+            var fastPath = new MemberExpression(obj, multiname.name, true);
+            var nameTy = multiname.name.ty;
+            if (nameTy && nameTy.isNumeric()) {
+              Counter.count("getProperty->fastPathNumeric");
+              return fastPath;
+            }
+            Counter.count("getProperty->conditional");
+            return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
+          } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
+            Counter.count("getProperty->fastPathDynamic");
+            return property(obj, Multiname.getPublicQualifiedName(multiname.value.name));
           }
-          return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
         if (multiname instanceof Constant) {
           var val = obj instanceof Variable ? obj.value : obj;
           if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
             if (Multiname.isQName(multiname.value)) {
+              Counter.count("getProperty->property");
               return property(obj, Multiname.getQualifiedName(multiname.value));
             }
           }
         }
 
+        Counter.count("getProperty->slowPath");
         return slowPath;
       }
 
       function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
+        Counter.count("setProperty");
 
-        if (enableOpt.value && multiname instanceof RuntimeMultiname) {
+        if (enableOpt.value) {
+          if (multiname instanceof RuntimeMultiname) {
 
-          var objTy = obj.ty;
-          var nameTy = multiname.name.ty;
-          var valueTy = value.ty;
-          
-          if (objTy && objTy.isVector()) { // [Reference: Vector]
-            if (objTy.value.isVectorInt()) { // Vector.<int>
-              value = asInt32(value); // value = value | 0
-              // Counter.count("Compiler: setProperty Vector<Int> optimized");
-            } else if (objTy.value.isVectorUint()) { // Vector.<uint>
-              value = asUint32(value); // value = value >>> 0
-            } else if (objTy.value.isVectorObject()) { // Vector.<Object>
+            var objTy = obj.ty;
+            var nameTy = multiname.name.ty;
+            var valueTy = value.ty;
+            
+            if (objTy && objTy.isVector()) { // [Reference: Vector]
+              if (objTy.value.isVectorInt()) { // Vector.<int>
+                value = asInt32(value); // value = value | 0
+              } else if (objTy.value.isVectorUint()) { // Vector.<uint>
+                value = asUint32(value); // value = value >>> 0
+              } else if (objTy.value.isVectorObject()) { // Vector.<Object>
 
-              // FIXME - in case of Vector.<X> verify that the type of the value set is
-              // a subtype of X, or X. If it is not, throw an AVM error.
-              // This should also be fixed in the Interpreter.
-              // Vector element type can be found in |objTy.value.elementType.value|
-              // Value type  can be found in |valueTy.value|
-              // if (objTy.value.elementType.value === valueTy.value) {}
-              // Counter.count("Compiler: setProperty Vector<Object>  optimized");
-            } else { // Vector.<undefined>
-              // Counter.count("Compiler: setProperty Vector<undefined> UNOPTIMIZED");
-              return slowPath;
+                // FIXME - in case of Vector.<X> verify that the type of the value set is
+                // a subtype of X, or X. If it is not, throw an AVM error.
+                // This should also be fixed in the Interpreter.
+                // Vector element type can be found in |objTy.value.elementType.value|
+                // Value type  can be found in |valueTy.value|
+                // if (objTy.value.elementType.value === valueTy.value) {}
+                // Counter.count("Compiler: setProperty Vector<Object>  optimized");
+              } else { // Vector.<undefined>
+                Counter.count("setProperty->slowPath");
+                return slowPath;
+              }
             }
+
+            // Fastpath default is simple array case (a[i] = x;)
+            var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
+
+            // Return fastpath for runtime multinames with number names
+            if (nameTy && nameTy.isNumeric()) {
+              Counter.count("setProperty->fastPathNumeric");
+              return fastPath;
+            }
+
+            Counter.count("setProperty->conditional");
+            return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
+          } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
+            Counter.count("setProperty->fastPathDynamic");
+            return fastPath = assignment(property(obj,
+              Multiname.getPublicQualifiedName(multiname.value.name), true), value);
           }
-
-          // Fastpath default is simple array case (a[i] = x;)
-          var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
-
-          // Return fastpath for runtime multinames with number names
-          if (nameTy && nameTy.isNumeric()) {
-            // Counter.count("Compiler: setProperty array[index] optimized");
-            return fastPath;
-          }
-
-          // Counter.count("Compiler: setProperty index == 'number' ? array[index] : ... optimized");
-          return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
         }
 
-        // Counter.count("Compiler: setProperty UNOPTIMIZED");
+        Counter.count("setProperty->slowPath");
         return slowPath;
       }
 
@@ -1134,7 +1151,11 @@ var Compiler = (function () {
           }
           return new RuntimeMultiname(multiname, namespaces, name);
         } else {
-          return constant(multiname);
+          var c = constant(multiname); 
+          if (bc.isDynamicProperty) {
+            c.isDynamicProperty = true;
+          }
+          return c;
         }
       }
 
