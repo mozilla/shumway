@@ -284,7 +284,14 @@ var Verifier = (function() {
           } else if (this.value instanceof Activation) {
             return findTraitBySlotId(this.value.methodInfo.traits, slotId);
           } else if (this.value instanceof domain.system.Class) {
-            return findTraitBySlotId(this.value.classInfo.instanceInfo.traits, slotId);
+            // Look into base's calss traits
+            var currentClass = this.value;
+            var trait = findTraitBySlotId(currentClass.classInfo.instanceInfo.traits, slotId);
+            while (!trait && currentClass.baseClass) {
+              currentClass = currentClass.baseClass;
+              trait = findTraitBySlotId(currentClass.classInfo.instanceInfo.traits, slotId);
+            }
+            return trait;
           }
         } else if (this.isClass()) {
           return findTraitBySlotId(this.value.classInfo.traits, multiname);
