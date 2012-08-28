@@ -409,12 +409,20 @@ function resolveMultiname(obj, mn) {
   return undefined;
 }
 
+function isPrimitiveType(x) {
+  return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
+}
+
 function getProperty(obj, mn) {
   assert(obj != undefined, "getProperty(", mn, ") on undefined");
   assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
+
+  if (!resolved && (isPrimitiveType(obj))) {
+    throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
+  }
 
   if (resolved !== undefined) {
     if (Multiname.isNumeric(resolved) && obj.indexGet) {

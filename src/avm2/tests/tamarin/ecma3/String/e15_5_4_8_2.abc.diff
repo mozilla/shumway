@@ -1,0 +1,21 @@
+--- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-12779-x2gwh6	2012-08-27 18:45:42.000000000 -0700
++++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-12779-19rl7ua	2012-08-27 18:45:42.000000000 -0700
+@@ -23,12 +23,12 @@
+ var s = new String( this is a string object ); s.split('')[20] = e PASSED!
+ var s = new String( this is a string object ); s.split('')[21] = c PASSED!
+ var s = new String( this is a string object ); s.split('')[22] = t PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0).length = 5 PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[0] = this PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[1] = is PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[2] = a PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[3] = string PASSED!
+-var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[4] = object PASSED!
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0).length = 1 FAILED! expected: 5
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[0] = thisundefinedisundefinedaundefinedstringundefinedobject FAILED! expected: this
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[1] = undefined FAILED! expected: is
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[2] = undefined FAILED! expected: a
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[3] = undefined FAILED! expected: string
++var s = new String( thisundefinedisundefinedaundefinedstringundefinedobject ); s.split(void 0)[4] = undefined FAILED! expected: object
+ var s = new String( thisnullisnullanullstringnullobject ); s.split(null).length = 5 PASSED!
+ var s = new String( thisnullisnullanullstringnullobject ); s.split(null)[0] = this PASSED!
+ var s = new String( thisnullisnullanullstringnullobject ); s.split(null)[1] = is PASSED!

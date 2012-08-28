@@ -1298,3 +1298,8 @@
 ../tests/tamarin/as3/Types/Number/tan.abc
 ../tests/tamarin/as3/Types/Number/sin.abc
 ../tests/tamarin/as3/Types/Number/log.abc
+
+../tests/tamarin/spidermonkey/js1_6/Regress/regress-351795.abc
+../tests/tamarin/ecma3/String/e15_5_4_7_3_rt.abc
+../tests/tamarin/ecma3/String/e15_5_4_8_2.abc
+../tests/tamarin/ecma3/String/e15_5_4_5_6_rt.abc
