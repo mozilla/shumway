@@ -1052,7 +1052,9 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_deleteproperty:
-            notImplemented(bc);
+            popMultiname(bc);
+            pop();
+            push(Type.Boolean);
             break;
           case OP_deletepropertylate:
             notImplemented(bc);
