@@ -913,7 +913,7 @@ var Compiler = (function () {
         if (enableOpt.value && obj.ty) {
           var trait = obj.ty.getTraitBySlotId(index);
           if (trait) {
-            push(assignment(property(obj, Multiname.getQualifiedName(trait.name)), value));
+            emit(assignment(property(obj, Multiname.getQualifiedName(trait.name)), value));
             return;
           }
         }
