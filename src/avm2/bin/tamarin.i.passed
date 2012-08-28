@@ -1277,3 +1277,24 @@
 ../tests/tamarin/as3/Expressions/deleteOperator/deleteFixedVar.abc
 ../tests/tamarin/as3/Expressions/deleteOperator/deleteFixedFunction.abc
 ../tests/tamarin/as3/Definitions/Function/bug152222.abc
+
+###########################################################
+# Working After Output Patching                           #
+###########################################################
+
+../tests/tamarin/as3/Types/Number/exp.abc
+../tests/tamarin/as3/Types/Number/random.abc
+../tests/tamarin/as3/Types/Number/cos.abc
+../tests/tamarin/as3/Types/Number/floor.abc
+../tests/tamarin/as3/Types/Number/ceil.abc
+../tests/tamarin/as3/Types/Number/atan.abc
+../tests/tamarin/as3/Types/Number/asin.abc
+../tests/tamarin/as3/Types/Number/acos.abc
+../tests/tamarin/as3/Types/Number/abs.abc
+../tests/tamarin/as3/Types/Number/atan2.abc
+../tests/tamarin/as3/Types/Number/max.abc
+../tests/tamarin/as3/Types/Number/min.abc
+../tests/tamarin/as3/Types/Number/sqrt.abc
+../tests/tamarin/as3/Types/Number/tan.abc
+../tests/tamarin/as3/Types/Number/sin.abc
+../tests/tamarin/as3/Types/Number/log.abc
