@@ -583,7 +583,7 @@ var Compiler = (function () {
       var argumentCount = property(id("arguments"), "length");
       for (var i = 0; i < parameterCount; i++) {
         var value = mi.parameters[i].value;
-        if (value) {
+        if (value !== undefined) {
           var local = this.local[i + 1];
           this.prologue.push(new IfStatement(binary(Operator.LT, argumentCount, constant(i + 2)),
                                              new ExpressionStatement(assignment(local, constant(value))),

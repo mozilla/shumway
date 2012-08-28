@@ -639,7 +639,7 @@ var Runtime = (function () {
 
     var hasDefaults = false;
     const defaults = mi.parameters.map(function (p) {
-      if (p.value) {
+      if (p.value !== undefined) {
         hasDefaults = true;
       }
       return p.value;
