@@ -1064,8 +1064,6 @@ var Verifier = (function() {
             break;
           case OP_getscopeobject:
             // Get scope object from index position of the scope stack
-            // TODO: Verify this for correctness; should it look through saved
-            // scope chain instead ?
             push(scope[bc.index]);
             break;
           case OP_getproperty:
@@ -1187,7 +1185,6 @@ var Verifier = (function() {
             break;
           case OP_typeof:
             pop();
-            // TODO: Push string type on the stack?
             push(Type.Reference.String);
             break;
           case OP_not:
