@@ -99,7 +99,7 @@ function getTests(path) {
  * Patch the given |text| with |file|.diff if one exists.
  */
 function patchTest(file, text, next) {
-  if (path.existsSync(file + ".diff")) {
+  if (fs.existsSync(file + ".diff")) {
     temp.open("out", function (err, info) {
       fs.writeSync(info.fd, text);
       var command = "patch " + info.path + " " + file + ".diff";
