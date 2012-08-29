@@ -24,9 +24,12 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     var frameScripts = this._frameScripts;
     for (var i = 0, n = arguments.length; i < n; i += 2) {
       var frameNum = arguments[i];
-      if (!frameScripts[frameNum])
-        frameScripts[frameNum] = [];
-      frameScripts[frameNum].push(arguments[i + 1]);
+      var fn = arguments[i + 1];
+      var scripts = frameScripts[frameNum];
+      if (scripts)
+        scripts.push(fn);
+      else
+        frameScripts[frameNum] = [fn];
     }
   }),
   currentFrame: describeAccessor(function () {
@@ -70,8 +73,6 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     var displayList = framePromise.value;
     var loader = this.loaderInfo._loader;
     var timelineInfo = this._timelineInfo;
-
-    //this.$dispatchEvent('onEnterFrame');
 
     for (var depth in displayList) {
       var cmd = displayList[depth];

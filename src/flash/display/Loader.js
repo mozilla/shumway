@@ -74,12 +74,12 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
       Object.defineProperties(this, props);
 
-      var scriptClass = loader._avm2.applicationDomain.getProperty(
-        Multiname.fromSimpleName('public ' + this.__class__),
-        true,
-        true
-      );
-      scriptClass.createInstanceWithBoundNative(this, true);
+      //var scriptClass = loader._avm2.applicationDomain.getProperty(
+      //  Multiname.fromSimpleName('public ' + this.__class__),
+      //  true,
+      //  true
+      //);
+      //scriptClass.createInstanceWithBoundNative(this, true);
     };
     symbolClass.prototype = Object.create(baseClass.prototype);
     return symbolClass;
@@ -174,7 +174,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       var root = loader._content;
 
       if (!root) {
-        root = new val(loader._avm1);
+        root = new val;
         loader._content = root;
       } else {
         displayList.__proto__ = val;
@@ -200,15 +200,15 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       timeline.push(framePromise);
   }),
   commitSymbol: describeMethod(function (symbol) {
+    var dependencies = symbol.require;
     var dictionary = this._dictionary;
     var promiseQueue = [];
-    var require = symbol.require;
     var symbolClass = null;
     var symbolPromise = new Promise;
 
-    if (require && require.length) {
-      for (var i = 0, n = require.length; i < n; i++) {
-        var symbolId = require[i];
+    if (dependencies && dependencies.length) {
+      for (var i = 0, n = dependencies.length; i < n; i++) {
+        var symbolId = dependencies[i];
         var symbolPromise = dictionary[symbolId];
         if (symbolPromise && !symbolPromise.resolved)
           promiseQueue.push(symbolPromise);
@@ -237,12 +237,13 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       break;
     case 'image':
       var img = new Image;
-      img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
-      symbolClass = this.createSymbolClass(BitmapData, { img: describeProperty(img) });
-      requirePromise = Promise.when(requirePromise);
+      var imgPromise = new Promise;
       img.onload = function () {
-        requirePromise.resolve();
+        imgPromise.resolve();
       };
+      img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+      promiseQueue.push(imgPromise);
+      symbolClass = this.createSymbolClass(BitmapData, { img: describeProperty(img) });
       break;
     case 'label':
       var drawFn = new Function('d,c,r', symbol.data);
@@ -262,7 +263,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       break;
     case 'shape':
       var bounds = symbol.bounds;
+      try {
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+    }catch(e){console.log(symbol.data);}
       var graphics = new Graphics;
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
       symbolClass = this.createSymbolClass(Shape, {
@@ -289,7 +292,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         var frame = frames[i];
         var frameNum = i + 1;
         var framePromise = new Promise;
-        var depths = frame.depth;
+        var depths = frame.depths;
 
         displayList = Object.create(displayList);
 
@@ -383,11 +386,13 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       for (var i = 0, n = tags.length; i < n; i++) {
         var tag = tags[i];
         switch (tag.code) {
-        case SWF_TAG_CODE_DO_ACTION:
-          if (!frame.actionsData)
-            frame.actionsData = [];
-          frame.actionsData.push(tag.actionsData);
-          break;
+        //case SWF_TAG_CODE_DO_ACTION:
+        //  var actionBlocks = frame.actionBlocks;
+        //  if (!actionBlocks)
+        //    frame.actionBlocks = [tag.actionsData];
+        //  else
+        //    actionBlocks.push(tag.actionsData);
+        //  break;
         case SWF_TAG_CODE_FRAME_LABEL:
           frame.labelName = tag.name;
           break;
@@ -514,26 +519,34 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
           switch (tag.code) {
           case SWF_TAG_CODE_DO_ABC:
-            if (!frame.abcBlocks)
-              frame.abcBlocks = [];
-            frame.abcBlocks.push(tag.data);
-            break;
-          case SWF_TAG_CODE_DO_ACTION:
-          case SWF_TAG_CODE_DO_INIT_ACTION:
-            if (!frame.actionsData) {
-              frame.initActionsData = { };
-              frame.actionsData = [];
-            }
-            if (tag.spriteId)
-              frame.initActionsData[tag.spriteId] = tag.actionsData;
+            var abcBlocks = frame.abcBlocks;
+            if (abcBlocks)
+              abcBlocks.push(tag.data);
             else
-              frame.actionsData.push(tag.actionsData);
+              frame.abcBlocks = [tag.data];
             break;
+          //case SWF_TAG_CODE_DO_ACTION:
+          //  var actionBlocks = frame.actionBlocks;
+          //  if (actionBlocks)
+          //    actionBlocks.push(tag.actionData);
+          //  else
+          //    frame.actionBlocks = [tag.actionData];
+          //  break;
+          //case SWF_TAG_CODE_DO_INIT_ACTION:
+          //  var initActionBlocks = frame.initActionBlocks;
+          //  if (!initActionBlocks) {
+          //    initActionBlocks = { };
+          //    frame.initActionBlocks = initActionBlocks;
+          //  }
+          //  initActionBlocks[tag.spriteId] = tag.actionsData;
+          //  break;
           case SWF_TAG_CODE_EXPORT_ASSETS:
           case SWF_TAG_CODE_SYMBOL_CLASS:
-            if (!frame.exports)
-              frame.exports = [];
-            frame.exports = frame.exports.concat(tag.exports);
+            var exports = frame.exports;
+            if (exports)
+              frame.exports = exports.concat(tag.exports);
+            else
+              frame.exports = tag.exports.slice(0);
             break;
           case SWF_TAG_CODE_FRAME_LABEL:
             frame.labelName = tag.name;
@@ -604,7 +617,14 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     });
 
     var documentPromise = new Promise;
-    documentPromise.resolve(documentClass);
+
+    var sysMode = EXECUTION_MODE.INTERPRET;
+    var appMode = EXECUTION_MODE.COMPILE;
+    createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
+      loader._avm2 = vm;
+      documentPromise.resolve(documentClass);
+    });
+
     loader._dictionary = { 0: documentPromise };
     loader._timeline = timeline;
   }),

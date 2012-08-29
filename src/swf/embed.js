@@ -40,10 +40,5 @@ SWF.embed = function(file, container) {
     container.appendChild(canvas);
   });
 
-  var sysMode = EXECUTION_MODE.INTERPRET;
-  var appMode = EXECUTION_MODE.COMPILE;
-  createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
-    loader._avm2 = vm;
-    loader.loadFrom(file);
-  });
+  loader.loadFrom(file);
 };

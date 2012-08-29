@@ -16,6 +16,7 @@ function defineFont(tag, dictionary) {
   var tables = { };
   var codes = [];
   var glyphIndex = { };
+  var ranges = [];
 
   if (tag.codes) {
     codes = codes.concat(tag.codes);
@@ -24,7 +25,6 @@ function defineFont(tag, dictionary) {
     codes.sort(function(a, b) {
       return a - b;
     });
-    var ranges = [];
     var i = 0;
     var code;
     while (code = codes[i++]) {
