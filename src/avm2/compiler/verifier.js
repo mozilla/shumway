@@ -121,8 +121,8 @@ var Verifier = (function() {
       var qn = multiname.getQName(i);
       for (var k = 0, l = traits.length; k < l; k++) {
         if (Multiname.getQualifiedName(qn) === Multiname.getQualifiedName(traits[k].name)) {
-          if (kind && ((kind === TRAIT_Getter && traits[k].isSetter())
-              || (kind === TRAIT_Setter && traits[k].isGetter()))) {
+          if (kind && ((kind === TRAIT_Getter && traits[k].isSetter()) ||
+                       (kind === TRAIT_Setter && traits[k].isGetter()))) {
             // skip getters or setters according to the kind
             continue;
           }
