@@ -285,9 +285,9 @@ var Verifier = (function() {
         var trait = this.getTraitEnforceGetter(multiname);
         if (trait && (trait.isMethod() || trait.isGetter())) {
           return Type.referenceFromName(trait.methodInfo.returnType);
-        }                
+        }
         return Type.Atom.Any;
-      }
+      };
 
       type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
         if (this.isReference()) {
@@ -314,11 +314,11 @@ var Verifier = (function() {
 
       type.prototype.getTraitEnforceGetter = function getTraitEnforceGetter(multiname) {
         return this.getTrait(multiname, TRAIT_Getter);
-      }
+      };
 
       type.prototype.getTraitEnforceSetter = function getTraitEnforceSetter(multiname) {
         return this.getTrait(multiname, TRAIT_Setter);
-      }
+      };
 
       /**
        * Gets a trait by multiname.
@@ -494,8 +494,8 @@ var Verifier = (function() {
 
         /*
         Keep the blocks sorted in dominator order.
-        The SortedList structure is based on a linked list and uses a liniar search 
-        to find the right insertion position and keep the list sorted. 
+        The SortedList structure is based on a linked list and uses a liniar search
+        to find the right insertion position and keep the list sorted.
         The push operation takes O(n), the pull operations takes O(1).
         */
         var worklist = new SortedList(function compare(blockA, blockB) {
@@ -616,16 +616,16 @@ var Verifier = (function() {
           // |findProperty| should look first into the scope stack and then
           // into the savedScope (which is the scope at the time the method
           // was created). Since we deal with an abstract view of the saved
-          // scope stack, we look into saved scope object's traits 
+          // scope stack, we look into saved scope object's traits
 
           for (var idx = scope.length - 1; idx >= 0; idx--) {
             var scopeObj = scope[idx];
             if (scopeObj.getTrait(multiname)) {
               return scopeObj;
-            }              
+            }
           }
           
-          // the property was not found in the scope stack, search the saved scope  
+          // the property was not found in the scope stack, search the saved scope
           if (savedScope) {
             obj = savedScope.findProperty(multiname, domain, false);
 
@@ -650,7 +650,7 @@ var Verifier = (function() {
             if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) { // recheck vectors
               type = obj.value.elementType;
             } else {
-              // |getTraitEnforceGetter| makes sure that we get the getter, 
+              // |getTraitEnforceGetter| makes sure that we get the getter,
               // not the setter, which is required because we need the accessor
               // property type which can be retrieved from getter's return type
               trait = obj.getTraitEnforceGetter(multiname);
@@ -660,7 +660,7 @@ var Verifier = (function() {
                 // If the obj is a verifier Class type we have access
                 // to the actual object holding the property, so we can call
                 // runtime's |getPropery| function to retrieve the actual value
-                // needed in case of a class trait                
+                // needed in case of a class trait
                 val = getProperty(obj.value, multiname);
                 switch (val) {
                   case Type.Class.Int.value:
