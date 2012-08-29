@@ -579,15 +579,22 @@ var Compiler = (function () {
                           [id("arguments"), constant(mi.needsRest() ? parameterCount + 1 : 1)]))));
       }
 
-      /* Initialize default arguments. */
+      /* Initialize default arguments, and coerce arguments passed. */
       var argumentCount = property(id("arguments"), "length");
       for (var i = 0; i < parameterCount; i++) {
-        var value = mi.parameters[i].value;
+        var parameter = mi.parameters[i];
+        var value = parameter.value;
+        var local = this.local[i + 1];
         if (value !== undefined) {
-          var local = this.local[i + 1];
           this.prologue.push(new IfStatement(binary(Operator.LT, argumentCount, constant(i + 2)),
                                              new ExpressionStatement(assignment(local, constant(value))),
                                              null));
+        }
+
+        if (parameter.type && !parameter.type.isAnyName()) {
+          var type = abc.domain.getProperty(parameter.type, true, true);
+          var coerced = assignment(local, call(id("coerce"), [local, constant(type)]));
+          this.prologue.push(new ExpressionStatement(coerced));
         }
       }
     }

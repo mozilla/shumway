@@ -56,6 +56,10 @@ var Interpreter = (function () {
           value = parameter.value;
         }
 
+        if (parameter.type && !parameter.type.isAnyName()) {
+          value = coerce(value, domain.getProperty(parameter.type, true, true));
+        }
+
         locals.push(value);
       }
 
