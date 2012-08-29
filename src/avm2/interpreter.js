@@ -43,10 +43,21 @@ var Interpreter = (function () {
 
       const Apslice = [].slice;
       var parameterCount = method.parameters.length;
+      var argCount = args.length;
 
       rtstack.push(runtime);
 
-      locals.push.apply(locals, Apslice.call(args, 0, parameterCount));
+      for (var i = 0; i < parameterCount; i++) {
+        var value;
+        var parameter = method.parameters[i];
+        if (i < argCount) {
+          value = args[i];
+        } else {
+          value = parameter.value;
+        }
+
+        locals.push(value);
+      }
 
       if (method.needsRest()) {
         locals.push(Apslice.call(args, parameterCount));
