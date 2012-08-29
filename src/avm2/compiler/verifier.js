@@ -161,6 +161,7 @@ var Verifier = (function() {
       type.Atom = new type("Atom");
       type.Atom.Any = new type("Atom", "Any");
       type.Atom.Undefined = new type("Atom", "Undefined");
+      type.Atom.Void = new type("Atom", "Void");
       type.Atom.Object = new type("Atom", "Object");
 
       type.Int = new type("Int");
@@ -181,6 +182,8 @@ var Verifier = (function() {
       type.fromName = function fromName(name) {
         if (name === undefined) {
           return type.Atom.Undefined;
+        } else if (Multiname.getQualifiedName(name) === "public$void") {
+          return type.Atom.Void;
         } else if (Multiname.getQualifiedName(name) === "public$int") {
           return type.Int;
         } else if (Multiname.getQualifiedName(name) === "public$uint") {
@@ -276,6 +279,15 @@ var Verifier = (function() {
       type.prototype.isVector = function() {
         return this.kind === "Reference" && this.value instanceof Vector;
       };
+
+      type.prototype.getMethodReturnType = function getMethodReturnType(multiname) {
+        assert(this.isReference());
+        var trait = this.getTraitEnforceGetter(multiname);
+        if (trait && (trait.isMethod() || trait.isGetter())) {
+          return Type.referenceFromName(trait.methodInfo.returnType);
+        }                
+        return Type.Atom.Any;
+      }
 
       type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
         if (this.isReference()) {
@@ -897,18 +909,25 @@ var Verifier = (function() {
           case OP_callsuper:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname); // ??
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+
+            if (objTy.isReference() && objTy.value.baseClass) {
+                var baseType = Type.fromReference(objTy.value.baseClass);
+                type = baseType.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_callproperty:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname);
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+
+            if (objTy.isReference()) {
+              type = objTy.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_returnvoid:
             // Nop.
@@ -941,21 +960,30 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_callproplex:
+            // Very similar with op_callproperty, only difference being that
+            // callproplex uses |null| as the |this| parameter for [[Call]]
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname);
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+                        
+            if (objTy.isReference()) {
+              type = objTy.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_callinterface:
             notImplemented(bc);
             break;
           case OP_callsupervoid:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            popMultiname(bc);
+            pop();
             break;
           case OP_callpropvoid:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            popMultiname(bc);
+            pop();
             break;
           case OP_sxi1:
           case OP_sxi8:
