@@ -1188,7 +1188,7 @@ var Verifier = (function() {
           case OP_typeof:
             pop();
             // TODO: Push string type on the stack?
-            push(Type.Atom.Any);
+            push(Type.Reference.String);
             break;
           case OP_not:
             pop();
