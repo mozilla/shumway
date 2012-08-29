@@ -686,12 +686,6 @@ var Verifier = (function() {
           return type;
         }
 
-        function resolveTrait(type, multiname) { // TODO replace it with findTrait
-          if (type && type.kind === "Reference" && type.value instanceof domain.system.Class) {
-            // ...
-          }
-        }
-
         function push(v) {
           stack.push(v);
         }
