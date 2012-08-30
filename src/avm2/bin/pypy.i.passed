@@ -73,3 +73,6 @@
 ../tests/pypy/TestAVM2Int.test_char_constant.tamarin.abc
 ../tests/pypy/TestAVM2Int.test_cast_to_float_exc_check.tamarin.abc
 ../tests/pypy/TestAVM2Int.test_and_or.tamarin.abc
+
+../tests/pypy/TestRunTest.test_try.tamarin.abc
+../tests/pypy/TestRunTest.test_object_or_none.tamarin.abc

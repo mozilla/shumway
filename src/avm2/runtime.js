@@ -426,6 +426,9 @@ function getProperty(obj, mn) {
   }
 
   if (resolved !== undefined) {
+    if (Multiname.isAnyName(resolved)) {
+      return undefined;
+    }
     if (Multiname.isNumeric(resolved) && obj.indexGet) {
       value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
