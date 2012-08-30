@@ -366,11 +366,16 @@ var Verifier = (function() {
           }
           // TODO: Actually merge reference types.
           return type.Reference.Null;
+        } else if (this.kind === "Class" && other.kind === "Class") {
+          return type.Class;
         } else if ((this === Type.Int && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Int)) {
           return Type.Atom.Any;
         } else if ((this === Type.Boolean && other.kind === "Reference") ||
                    (this.kind === "Reference" && other === Type.Boolean)) {
+          return Type.Atom.Any;
+        } else if ((this === Type.Number && other === Type.Boolean) ||
+                   (this === Type.Boolean && other === Type.Number)) {
           return Type.Atom.Any;
         } else if ((this === Type.Int && other === Type.Boolean) ||
                    (this === Type.Boolean && other === Type.Int)) {
@@ -654,35 +659,48 @@ var Verifier = (function() {
               // not the setter, which is required because we need the accessor
               // property type which can be retrieved from getter's return type
               trait = obj.getTraitEnforceGetter(multiname);
-              // trait = obj.getTrait(multiname);
 
-              if (trait && trait.isClass()) {
-                // If the obj is a verifier Class type we have access
-                // to the actual object holding the property, so we can call
-                // runtime's |getPropery| function to retrieve the actual value
-                // needed in case of a class trait
-                val = getProperty(obj.value, multiname);
-                switch (val) {
-                  case Type.Class.Int.value:
-                    type = Type.Int;
-                    break;
-                  case Type.Class.Uint.value:
-                    type = Type.Uint;
-                    break;
-                  case Type.Class.Vector.value:
-                    type = Type.fromClass(new Vector());
-                    break;
-                }
-              } else if (trait && trait.isSlot()) {
-                type = Type.referenceFromName(trait.typeName);
-              } else if (trait && trait.isGetter()) {
-                type = Type.referenceFromName(trait.methodInfo.returnType);
+              if (trait) {
+                type = getTraitType(trait, obj);
               } else if (trait === undefined) {
                 bc.isDynamicProperty = true;
+                type = Type.Atom.Undefined;
               }
             }
           }
 
+          return type;
+        }
+
+        function getTraitType(trait, obj) {
+          assert(trait);
+          var type = Type.Atom.Any;
+          if (trait.isClass()) {
+            // If the obj is a verifier Class type we have access
+            // to the actual object holding the property, so we can call
+            // runtime's |getPropery| function to retrieve the actual value
+            // needed in case of a class trait
+            // In case of a class the object holding it must be the global object.
+            val = getProperty(obj.value, trait.name);
+            switch (val) {
+              case Type.Class.Int.value:
+                type = Type.Int;
+                break;
+              case Type.Class.Uint.value:
+                type = Type.Uint;
+                break;
+              case Type.Class.Vector.value:
+                type = Type.fromClass(new Vector());
+                break;
+              default:
+                type = Type.fromClass(val);
+                break;
+            }
+          } else if (trait && (trait.isSlot() || trait.isConst())) {
+            type = Type.referenceFromName(trait.typeName);
+          } else if (trait && trait.isGetter()) {
+            type = Type.referenceFromName(trait.methodInfo.returnType);
+          }
           return type;
         }
 
@@ -698,24 +716,15 @@ var Verifier = (function() {
           return v;
         }
 
-        function getSlot(type, index) {
-          if (type.kind !== "Reference") {
+        function getSlot(objTy, index) {
+          if (!objTy.isReference()) {
             return Type.Atom;
           }
-          var traits;
-          if (type.value instanceof Global) {
-            traits = type.value.scriptInfo.traits;
-          } else if (type.value instanceof Activation) {
-            traits = type.value.methodInfo.traits;
+          trait = objTy.getTraitBySlotId(index);
+          if (trait) {
+            return getTraitType(trait, objTy);
           }
-          assert (traits);
-          var trait = findTraitBySlotId(traits, index);
-
-          if (trait.isClass()) {
-            return Type.classFromName(trait.name);
-          }
-
-          return Type.referenceFromName(trait.typeName);
+          return Type.Atom.Undefined;
         }
 
         if (writer) {
