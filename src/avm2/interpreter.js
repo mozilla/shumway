@@ -509,7 +509,7 @@ var Interpreter = (function () {
             --locals[bc.index];
             break;
           case OP_typeof:
-            stack.push(typeof stack.pop());
+            stack.push(typeOf(stack.pop()));
             break;
           case OP_not:
             evaluateUnary(Operator.FALSE);
@@ -571,19 +571,19 @@ var Interpreter = (function () {
           case OP_instanceof:
             type = stack.pop();
             value = stack.pop();
-            stack.push(instanceOf(value, type));
+            stack.push(isInstanceOf(value, type));
             break;
           case OP_istype:
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
             type = domain.getProperty(multiname, true, true);
-            stack.push(isType(value, type));
+            stack.push(isInstance(value, type));
             break;
           case OP_istypelate:
             type = stack.pop();
             value = stack.pop();
-            stack.push(isType(value, type));
+            stack.push(isInstance(value, type));
             break;
           case OP_in:             notImplemented(); break;
           case OP_increment_i:

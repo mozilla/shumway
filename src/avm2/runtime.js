@@ -150,6 +150,10 @@ function toString(x) {
 }
 
 function coerce(obj, type) {
+  if (type.coerce) {
+    return type.coerce(obj);
+  }
+
   if (obj === null || type.isInstance(obj)) {
     return obj;
   } else {
@@ -159,8 +163,7 @@ function coerce(obj, type) {
     // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
 
     // For now just assert false to print the message.
-    assert(false, "Cannot coerce " + obj + " to type " + type);
-
+    assert(false, "Cannot coerce " + obj + ": " + typeof(obj) + " to type " + type);
   }
 }
 
@@ -547,7 +550,8 @@ function deleteProperty(obj, mn) {
   }
 }
 
-function instanceOf(value, type) {
+function isInstanceOf(value, type) {
+  /*
   if (type instanceof Class) {
     return value instanceof type.instance;
   } else if (typeof type === "function") {
@@ -555,10 +559,12 @@ function instanceOf(value, type) {
   } else {
     return false;
   }
+  */
+  return type.isInstanceOf(value);
 }
 
-function isType(value, type) {
-  return typeof type.isInstance === "function" ? type.isInstance(value) : false;
+function isInstance(value, type) {
+  return type.isInstance(value);
 }
 
 /**

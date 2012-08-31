@@ -1582,18 +1582,18 @@ var Compiler = (function () {
         case OP_instanceof:
           type = state.stack.pop();
           value = state.stack.pop();
-          push(call(id("instanceOf"), [value, type]));
+          push(call(property(type, "isInstanceOf"), [value]));
           break;
         case OP_istype:
           value = state.stack.pop();
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
-          push(call(id("isType"), [value, type]));
+          push(call(id("isInstance"), [value, type]));
           break;
         case OP_istypelate:
           type = state.stack.pop();
           value = state.stack.pop();
-          push(call(id("isType"), [value, type]));
+          push(call(id("isInstance"), [value, type]));
           break;
         case OP_in:             notImplemented(); break;
         case OP_increment_i:

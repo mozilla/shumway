@@ -181,6 +181,33 @@ const natives = (function () {
 
     c.dynamicPrototype = Object.prototype;
     c.defaultValue = null;
+
+    c.coerce = function (value) {
+      if (value === null || value === undefined) {
+        return null;
+      }
+      if (typeof value === 'string') {
+        return value;
+      }
+      return Object(value);
+    };
+
+    c.isInstanceOf = function (value) {
+      if (value === null) {
+        return false;
+      }
+      // In AS3, |true instanceof Object| is true. It seems that is the case for all primitive values
+      // except for |undefined| which should throw an exception (TODO).
+      return true;
+    };
+
+    c.isInstance = function (value) {
+      if (value === null || value === undefined) {
+        return false;
+      }
+      return true;
+    };
+
     return c;
   }
 
@@ -201,6 +228,15 @@ const natives = (function () {
     c.extendBuiltin(baseClass);
     c.nativeMethods = Boolean.prototype;
     c.coerce = Boolean;
+    c.isInstanceOf = function (value) {
+      return typeof value === "boolean" || value instanceof Boolean;
+    };
+    c.isInstance = function (value) {
+      if (typeof value === "boolean" || value instanceof Boolean) {
+        return true;
+      }
+      return false;
+    };
     return c;
   }
 
@@ -221,11 +257,16 @@ const natives = (function () {
       }
       return this.length;
     });
+    m.toString = function () {
+      return "function Function() {}";
+    };
     c.nativeMethods = m;
+    c.isInstanceOf = function (value) {
+      return typeof value === "function";
+    };
     c.isInstance = function (value) {
       return typeof value === "function";
     };
-
     return c;
   }
 
@@ -249,7 +290,18 @@ const natives = (function () {
     c.isInstance = function (value) {
       return value !== null && value !== undefined && typeof value.valueOf() === "string";
     };
-
+    c.coerce = function (value) {
+      if (value === null || value === undefined) {
+        return null;
+      }
+      return String(value);
+    };
+    c.isInstanceOf = function (value) {
+      return Object(value) instanceof String;
+    };
+    c.isInstance = function (value) {
+      return Object(value) instanceof String;
+    };
     return c;
   }
 
@@ -360,6 +412,12 @@ const natives = (function () {
       return value !== null && value !== undefined &&  typeof value.valueOf() === "number";
     };
     c.coerce = Number;
+    c.isInstanceOf = function (value) {
+      return Object(value) instanceof Number;
+    };
+    c.isInstance = function (value) {
+      return Object(value) instanceof Number;
+    };
     return c;
   }
 
@@ -371,10 +429,16 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("int", int, C(int));
     c.extendBuiltin(baseClass);
     c.defaultValue = 0;
+    c.coerce = int;
+    c.isInstanceOf = function (value) {
+      return false;
+    };
     c.isInstance = function (value) {
+      if (value instanceof Number) {
+        value = value.valueOf();
+      }
       return (value | 0) === value;
     };
-    c.coerce = int;
     return c;
   }
 
@@ -386,7 +450,13 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("uint", uint, C(uint));
     c.extend(baseClass);
     c.defaultValue = 0;
+    c.isInstanceOf = function (value) {
+      return false;
+    };
     c.isInstance = function (value) {
+      if (value instanceof Number) {
+        value = value.valueOf();
+      }
       return (value >>> 0) === value;
     };
     c.coerce = uint;
