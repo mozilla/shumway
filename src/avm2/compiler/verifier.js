@@ -157,6 +157,15 @@ var Verifier = (function() {
         return this.kind;
       };
 
+      type.prototype.equals = function equals(other) {
+        if (this.isVector() && other.isVector()) {
+          return this.value.equals(other.value); // Vector.prototype.equals
+        }
+
+        return ((this.kind === other.kind) &&
+                (this.value === other.value));
+      };
+
       // Consists of Any, Undefined and Object
       type.Atom = new type("Atom");
       type.Atom.Any = new type("Atom", "Any");
@@ -268,6 +277,10 @@ var Verifier = (function() {
         return this === type.Number || this === type.Int || this === type.Uint;
       };
 
+      type.prototype.isAtom = function isAtom() {
+        return this.kind === "Atom";
+      };
+
       type.prototype.isReference = function isReference() {
         return this.kind === "Reference";
       };
@@ -349,46 +362,80 @@ var Verifier = (function() {
         return null;
       };
 
+      /*
+      Returns the lowest common base class of two reference types.
+      The implementation assumes that the types are nodes in a tree
+      where the root is |Object|, so they always have a common ancestor.
+      */
+      type.getLowestCommonAncestor = function getLowestCommonAncestor(first, second) {
+        assert(first.isReference() && second.isReference());
+
+        if (first.equals(second)) {
+          return first;
+        }
+
+        var firstPathToRoot = [];
+        var firstBaseClass = first.value;
+        while (firstBaseClass) {
+          firstPathToRoot.push(firstBaseClass);
+          firstBaseClass = firstBaseClass.baseClass;
+        }
+
+        var secondPathToRoot = [];
+        var secondBaseClass = second.value;
+        while (secondBaseClass) {
+          secondPathToRoot.push(secondBaseClass);
+          secondBaseClass = secondBaseClass.baseClass;
+        }
+
+        var commonBaseClass;
+        while (firstBaseClass === secondBaseClass  &&
+               firstPathToRoot.length > 0 && secondPathToRoot.length > 0) {
+          commonBaseClass = firstBaseClass;
+          firstBaseClass = firstPathToRoot.pop();
+          secondBaseClass = secondPathToRoot.pop();
+        }
+
+        if (firstBaseClass === secondBaseClass) {
+          // one class is descendent from the other
+          return Type.fromReference(firstBaseClass);
+        }
+        // neither is descendant from the other
+        return Type.fromReference(commonBaseClass);
+      };
+
       type.prototype.merge = function(other) {
         // TODO: Merging Atom.Undefined and Atom.Any bellow is a hack to
         // circumvent the fact that the verifier's type hierrchy doesn't
         // form a semilatice and solve the incompatible types merge situations
+
         if (this === other) {
           return this;
-        } else if (this.kind === "Atom" || other.kind === "Atom") {
+        } else if (this.isAtom() || other.isAtom()) {
           return type.Atom;
-        } else if (this.kind === "Reference" && other.kind === "Reference") {
-          if (this.isVector() && other.isVector()) {
-            // Merge Vector
-            if (this.value.equals(other.value)) {
-              return this;
-            }
-          }
-          // TODO: Actually merge reference types.
-          return type.Reference.Null;
-        } else if (this.kind === "Class" && other.kind === "Class") {
+        } else if (this.isReference() && other.isReference()) {
+          return type.getLowestCommonAncestor(this, other);
+        } else if (this.isClass() && other.isClass()) {
           return type.Class;
-        } else if ((this === Type.Int && other.kind === "Reference") ||
-                   (this.kind === "Reference" && other === Type.Int)) {
-          return Type.Atom.Any;
-        } else if ((this === Type.Boolean && other.kind === "Reference") ||
-                   (this.kind === "Reference" && other === Type.Boolean)) {
-          return Type.Atom.Any;
-        } else if ((this === Type.Number && other === Type.Boolean) ||
-                   (this === Type.Boolean && other === Type.Number)) {
-          return Type.Atom.Any;
-        } else if ((this === Type.Int && other === Type.Boolean) ||
-                   (this === Type.Boolean && other === Type.Int)) {
-          return Type.Atom.Any;
-        } else if ((this === Type.Int && other === Type.Number) ||
-                   (this === Type.Number && other === Type.Int)) {
+        } else if (this.isReference() ^ other.isReference()) {
+          return type.Atom.Any;
+        } else if (this.isClass() ^ other.isClass()) {
+          return type.Atom.Any;
+        } else if (this === type.Boolean ^ other === type.Boolean) {
+          return type.Atom.Any;
+        } else if ((this === type.Int && other === type.Number) ||
+                   (this === type.Number && other === type.Int) ||
+                   (this === type.Uint && other === type.Number) ||
+                   (this === type.Number && other === type.Uint) ||
+                   (this === type.Int && other === type.Uint) ||
+                   (this === type.Uint && other === type.Int)) {
           return type.Number;
-        } else if (this === Type.Atom.Undefined || other === Type.Atom.Undefined) {
-          return Type.Atom;
-        } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
+        } else if (this === type.Atom.Undefined || other === type.Atom.Undefined) {
+          return type.Atom;
+        } else if (this === type.Atom.Any || other === type.Atom.Any) {
           return Type.Atom.Any;
         }
-        // TODO: Merge vectors
+
         unexpected("Cannot merge types : " + this + " and " + other);
       };
 
@@ -419,7 +466,7 @@ var Verifier = (function() {
     // and have the same elementType
     Vector.prototype.equals = function (other) {
       if (this.elementType.isVector() && other.elementType.isVector()) {
-        return this.value.equals(other.value);
+        return this.elementType.equals(other.elementType);
       }
       return this.elementType === other.elementType;
     };
@@ -998,7 +1045,7 @@ var Verifier = (function() {
             type = pop();
             factory = pop();
             // no need to check for the factory type since is allways vector
-            if (type === Type.Int || type === Type.Uint || type.kind === "Reference") {
+            if (type === Type.Int || type === Type.Uint || type.isReference()) {
               type = Type.fromReference(new Vector(type));
             } else {
               type = Type.Atom.Any;
