@@ -805,7 +805,7 @@ var ConstantPool = (function constantPool() {
     case CONSTANT_Undefined:
       return undefined;
     case CONSTANT_Namespace:
-    case CONSTANT_PackageInternalNS:
+    case CONSTANT_PackageInternalNs:
       return this.namespaces[index];
     case CONSTANT_QName:
     case CONSTANT_MultinameA:
@@ -1047,7 +1047,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    Timer.start("parse");
+    Timer.start("Parse");
     this.name = name;
 
     var n, i;
