@@ -1,0 +1,22 @@
+diff --git a/test/util/runtestBase.py b/test/util/runtestBase.py
+--- a/test/util/runtestBase.py
++++ b/test/util/runtestBase.py
+@@ -1232,17 +1232,17 @@ class RuntestBase(object):
+                         self.compile_aot( test )
+                         continue
+                 if test.endswith(self.executableExtensions):
+                     continue
+                 self.js_print('%d\tcompiling %s' % (total,test))
+                 self.compile_test(test)
+                 if self.ascOutputOnly:
+                     continue  # no .abc created
+-                if not exists(testdir+".abc"):
++                if not exists(testdir+".abc") and self.aotsdk:
+                     print("ERROR abc files %s.abc not created" % (testdir))
+                     self.ashErrors.append("abc files %s.abc not created" % (testdir))
+                     continue
+ 
+                 if self.aotsdk: # ABC compiled, so now AOT compile
+                     # Need to figure out how to deal with additional required abc files
+                     self.compile_aot(testdir+".abc")
+ 
