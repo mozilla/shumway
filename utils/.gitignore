@@ -1,6 +1,8 @@
 *
 !.gitignore
 !avm1tests
+!patches
+!Makefile
 !README.md
 *~
 

@@ -1,0 +1,27 @@
+diff --git a/configure.py b/configure.py
+--- a/configure.py
++++ b/configure.py
+@@ -96,18 +96,22 @@ def _setSDKParams(sdk_version, os_ver, x
+     elif sdk_version == '106':
+         os_ver,sdk_number = '10.6','10.6'
+         if xcode_version is None:
+             xcode_version = '3'
+     elif sdk_version == '107':
+         os_ver,sdk_number = '10.7','10.7'
+         if xcode_version is None:
+             xcode_version = '4'
++    elif sdk_version == '108':
++        os_ver,sdk_number = '10.8','10.8'
++        if xcode_version is None:
++            xcode_version = '4'
+     else:
+-        print'Unknown SDK version -> %s. Expected values are 104u, 105, 106 or 107.' % sdk_version
++        print'Unknown SDK version -> %s. Expected values are 104u, 105, 106, 107 or 108.' % sdk_version
+         sys.exit(2)
+ 
+     sdk_prefix = None
+     if xcode_version is not None:
+        xcode_major_version = xcode_version.split(".")[0]
+        if int(xcode_major_version) >= 4:
+           sdk_prefix = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX"
+     if sdk_prefix is None:
