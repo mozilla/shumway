@@ -1089,7 +1089,8 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getlex:
-            notImplemented(bc);
+            multiname = popMultiname(bc);
+            push(getPropertyType(findProperty(multiname, true), multiname));
             break;
           case OP_initproperty:
           case OP_setproperty:
@@ -1310,13 +1311,11 @@ var Verifier = (function() {
             push(Type.Int);
             break;
           case OP_add_i:
-            notImplemented(bc);
-            break;
           case OP_subtract_i:
-            notImplemented(bc);
-            break;
           case OP_multiply_i:
-            notImplemented(bc);
+            pop();
+            pop();
+            push(Type.Int); // or Number?
             break;
           case OP_getlocal0:
           case OP_getlocal1:
