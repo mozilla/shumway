@@ -1,5 +1,12 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var expect = require('expect.js');
+require('./domstubs.js');
+require('../stream.js');
+require('../classes.js');
+require('../globals.js');
+require('../interpreter.js');
+
 describe('AVM1 Interpreter', function() {
   var DefaultSwfVersion = 11;
 

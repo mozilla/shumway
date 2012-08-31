@@ -1051,3 +1051,9 @@ var ActionNamesMap = {
   0x9E: 'ActionCall',
   0x9F: 'ActionGotoFrame2'
 };
+
+// exports for testing
+if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.executeActions = executeActions;
+  GLOBAL.AS2Context = AS2Context;
+}

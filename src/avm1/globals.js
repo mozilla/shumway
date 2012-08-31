@@ -239,3 +239,8 @@ AS2Globals.prototype = {
   Key: AS2Key,
   Mouse: AS2Mouse
 };
+
+// exports for testing
+if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.AS2Globals = AS2Globals;
+}

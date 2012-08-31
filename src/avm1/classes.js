@@ -1344,3 +1344,16 @@ function createBuiltinType(obj, args) {
   if (obj === Object)
     return {};
 }
+
+// exports for testing
+if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.AS2MovieClip = AS2MovieClip;
+  GLOBAL.AS2Button = AS2Button;
+  GLOBAL.AS2Broadcaster = AS2Broadcaster;
+  GLOBAL.AS2Key = AS2Key;
+  GLOBAL.AS2Mouse = AS2Mouse;
+  GLOBAL.AS2Stage = AS2Stage;
+  GLOBAL.AS2Rectangle = AS2Rectangle;
+  GLOBAL.flash = flash;
+  GLOBAL.createBuiltinType = createBuiltinType;
+}

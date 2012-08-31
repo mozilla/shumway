@@ -127,3 +127,8 @@ ActionsDataStream.prototype = {
     return subarray;
   }
 };
+
+// exports for testing
+if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.ActionsDataStream = ActionsDataStream;
+}
