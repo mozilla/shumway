@@ -1,1 +1,2 @@
-.\apparat\scala-2.8.0.final\bin\scala.bat -cp ".;%~dp0\apparat\apparat-1.0-RC9\*" apparat.tools.reducer.Reducer %*
+@set UTILS_HOME=%~dp0..\..\utils
+%UTILS_HOME%\apparat\scala-2.8.0.final\bin\scala.bat -cp ".;%UTILS_HOME%\apparat\apparat-1.0-RC9\*" apparat.tools.reducer.Reducer %*

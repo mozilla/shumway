@@ -3,22 +3,11 @@ UNAME = $(shell uname)
 PLAYERGLOBAL_URL = http://download.macromedia.com/get/flashplayer/updaters/11/playerglobal11_4.swc
 BUILD_DIR = ./bin
 
-APPARAT_URL = http://apparat.googlecode.com/files/apparat-1.0-RC9-bin.tar.gz
-APPARAT_HOME = ./apparat
-SCALA_URL = http://www.scala-lang.org/sites/default/files/linuxsoft_archives/downloads/distrib/files/scala-2.8.0.final.tgz
+UTILS_HOME = ../../utils
+APPARAT_HOME = $(UTILS_HOME)/apparat
 SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
 APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
-
-JSSHELL_HOME = ./jsshell
-ifneq ("$(findstring MINGW32, $(UNAME))", "")
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-win32.zip
-else
-ifeq ($(UNAME), Darwin)
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-mac.zip
-else
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-linux-x86_64.zip
-endif
-endif
+JSSHELL_HOME = $(UTILS_HOME)/jsshell
 
 ifeq ("$(shell which base64)", "")
 BASE64DEC = python -c "import base64, sys; f = open(sys.argv[1], 'wb'); base64.decode(sys.stdin, f); f.close()"
@@ -27,7 +16,7 @@ BASE64DEC = base64 -D -o
 endif
 
 default:
-	echo run: make install-apparat install-js build
+	echo "run: make build"
 
 build: $(BUILD_DIR)/library.min.swf
 	$(JSSHELL_HOME)/js playerglobal-dumpabc.js | $(BASE64DEC) $(BUILD_DIR)/playerGlobal.min.abc
@@ -49,17 +38,5 @@ $(BUILD_DIR)/playerglobal.swc:
 clear:
 	-rm -rf $(BUILD_DIR)
 
-install-apparat:
-	mkdir -p $(APPARAT_HOME)
-	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
-	wget $(SCALA_URL) -O $(APPARAT_HOME)/scala.tgz
-	tar -xkf $(APPARAT_HOME)/apparat.tar.gz -C $(APPARAT_HOME)/
-	tar -xkf $(APPARAT_HOME)/scala.tgz -C $(APPARAT_HOME)/
-
-install-js:
-	mkdir -p $(JSSHELL_HOME)
-	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
-	unzip $(JSSHELL_HOME)/jsshell.zip -d $(JSSHELL_HOME)
-
-.PHONY: install-apparat install-js build default clear
+.PHONY: build default clear
 

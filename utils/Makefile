@@ -31,8 +31,15 @@ endif
 endif
 endif
 
+APPARAT_URL = http://apparat.googlecode.com/files/apparat-1.0-RC9-bin.tar.gz
+APPARAT_HOME = ./apparat
+SCALA_URL = http://www.scala-lang.org/sites/default/files/linuxsoft_archives/downloads/distrib/files/scala-2.8.0.final.tgz
+SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
+APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
+
+
 default:
-	echo "run: make [install-asc|install-tamarin|install-js|build-tamarin-tests]"
+	echo "run: make install-asc install-tamarin install-js install-apparat install-node-modules build-tamarin-tests"
 
 install-asc: $(ASC_JAR)
 
@@ -56,4 +63,14 @@ install-js:
 	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
 	unzip $(JSSHELL_HOME)/jsshell.zip -d $(JSSHELL_HOME)
 
-.PHONY: install-tamarin install-js default
+install-apparat:
+	mkdir -p $(APPARAT_HOME)
+	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
+	wget $(SCALA_URL) -O $(APPARAT_HOME)/scala.tgz
+	tar -xkf $(APPARAT_HOME)/apparat.tar.gz -C $(APPARAT_HOME)/
+	tar -xkf $(APPARAT_HOME)/scala.tgz -C $(APPARAT_HOME)/
+
+install-node-modules:
+	npm install mocha expect.js temp
+
+.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests default

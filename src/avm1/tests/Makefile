@@ -5,14 +5,13 @@ TESTS = \
 	test.interpreter.js \
 	$(NULL)
 
+NODE_MODULES = ../../../utils/node_modules
+MOCHA_HOME = $(NODE_MODULES)/.bin
+
 default:
-	echo "run: make [install-mocha|test]"
+	echo "run: make test"
 
 test:
-	./node_modules/.bin/mocha --reporter dot $(TESTS)
+	NODE_PATH=$(NODE_MODULES) $(MOCHA_HOME)/mocha --reporter dot $(TESTS)
 
-install-mocha:
-	npm install mocha
-	npm install expect.js
-
-.PHONY: install-mocha test
+.PHONY: default test
