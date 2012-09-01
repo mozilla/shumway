@@ -183,14 +183,7 @@ function coerceString(x) {
 }
 
 function typeOf(x) {
-  if (x === null) {
-    return typeof x;
-  }
-  var type = typeof x;
-  if (type === "object") {
-    return typeof (x.valueOf());
-  }
-  return type;
+  return typeof x;
 }
 
 function getSlot(obj, index) {
