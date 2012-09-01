@@ -39,7 +39,8 @@ APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
 
 default:
-	echo "run: make install-asc install-tamarin install-js install-apparat install-node-modules build-tamarin-tests"
+	echo "run: make install-asc install-tamarin install-js install-apparat install-node-modules \\"
+	echo "     build-tamarin-tests build-playerglobal"
 
 install-asc: $(ASC_JAR)
 
@@ -73,4 +74,8 @@ install-apparat:
 install-node-modules:
 	npm install mocha expect.js temp
 
-.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests default
+build-playerglobal:
+	make -C playerGlobal/ build
+	cp playerGlobal/bin/playerGlobal.min.abc ../src/flash
+
+.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests build-playerglobal default

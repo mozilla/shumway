@@ -3,7 +3,7 @@ UNAME = $(shell uname)
 PLAYERGLOBAL_URL = http://download.macromedia.com/get/flashplayer/updaters/11/playerglobal11_4.swc
 BUILD_DIR = ./bin
 
-UTILS_HOME = ../../utils
+UTILS_HOME = ..
 APPARAT_HOME = $(UTILS_HOME)/apparat
 SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
 APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
