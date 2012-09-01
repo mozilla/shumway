@@ -17,7 +17,7 @@ function padColumn(s) {
 }
 
 function ruler(name) {
-    var n = 12;
+    var n = 16;
     var str = padRight(firstColumnWidth - columnWidth, '-', name ? "-- " + name + " " : "");
     while (n--) {
         str += padRight(columnWidth, '-', '');

@@ -149,13 +149,17 @@ function toString(x) {
   return String(x);
 }
 
-function coerce(obj, type) {
+function coerce(value, type) {
   if (type.coerce) {
-    return type.coerce(obj);
+    return type.coerce(value);
   }
 
-  if (obj === null || type.isInstance(obj)) {
-    return obj;
+  if (isNullOrUndefiend(value)) {
+    return null;
+  }
+
+  if (type.isInstance(value)) {
+    return value;
   } else {
     // FIXME throwErrorFromVM needs to be called from within the runtime
     // because it needs access to the domain or the domain has to be
@@ -163,7 +167,7 @@ function coerce(obj, type) {
     // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
 
     // For now just assert false to print the message.
-    assert(false, "Cannot coerce " + obj + ": " + typeof(obj) + " to type " + type);
+    assert(false, "Cannot coerce " + value + ": " + typeof(value) + " to type " + type);
   }
 }
 
