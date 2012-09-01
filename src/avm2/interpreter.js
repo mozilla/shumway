@@ -8,17 +8,6 @@ var interpreterBytecodeCount = 0;
 
 var Interpreter = (function () {
 
-  const Operator = Compiler.Operator;
-
-  /**
-   * N.B. These operators are two-part in that they require you to negate the
-   * result, so they can't be straightforwardly used for compilation.
-   */
-  const NLT = new Operator("!<", function (l, r) { return !(l < r); }, true, true);
-  const NLE = new Operator("!<=", function (l, r) { return !(l <= r); }, true, true);
-  const NGT = new Operator("!>", function (l, r) { return !(l > r); }, true, true);
-  const NGE = new Operator("!>=", function (l, r) { return !(l >= r); }, true, true);
-
   function Interpreter(abc) {
     this.abc = abc;
   }
@@ -29,25 +18,6 @@ var Interpreter = (function () {
     return new (Function.bind.apply(constructor.instance, [,].concat(args)));
   }
 
-  function evaluateBinary(stack, operator) {
-    var b = stack.pop();
-    var a = stack.pop();
-    stack.push(operator.fn(a, b));
-  }
-
-  function evaluateUnary(stack, operator) {
-    stack.push(operator.fn(stack.pop()));
-  }
-
-  function branchBinary(stack, operator, bc, pc) {
-    var b = stack.pop();
-    var a = stack.pop();
-    return operator.fn(a, b) ? bc.offset : pc + 1;
-  }
-
-  function branchUnary(stack, operator, bc, pc) {
-    return operator.fn(stack.pop()) ? bc.offset : pc + 1;
-  }
 
   function createMultiname(stack, mn) {
     if (Multiname.isRuntime(mn)) {
@@ -117,7 +87,7 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      var args, obj, objsuper, type, index, multiname, ns, name, res;
+      var args, obj, objsuper, type, index, multiname, ns, name, res, a, b;
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 
@@ -158,49 +128,73 @@ var Interpreter = (function () {
           case OP_lf32x4:         notImplemented(); break;
           case OP_sf32x4:         notImplemented(); break;
           case OP_ifnlt:
-            pc = branchBinary(stack, NLT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a < b) ? bc.offset : pc + 1;
             continue;
           case OP_ifge:
-            pc = branchBinary(stack, Operator.GE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a >= b ? bc.offset : pc + 1;
             continue;
           case OP_ifnle:
-            pc = branchBinary(stack, NLE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a <= b) ? bc.offset : pc + 1;
             continue;
           case OP_ifgt:
-            pc = branchBinary(stack, Operator.GT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a > b ? bc.offset : pc + 1;
             continue;
           case OP_ifngt:
-            pc = branchBinary(stack, NGT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a > b) ? bc.offset : pc + 1;
             continue;
           case OP_ifle:
-            pc = branchBinary(stack, Operator.LE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a <= b ? bc.offset : pc + 1;
             continue;
           case OP_ifnge:
-            pc = branchBinary(stack, NGE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a >= b) ? bc.offset : pc + 1;
             continue;
           case OP_iflt:
-            pc = branchBinary(stack, Operator.LT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a < b ? bc.offset : pc + 1;
             continue;
           case OP_jump:
             pc = bc.offset;
             continue;
           case OP_iftrue:
-            pc = branchUnary(stack, Operator.TRUE, bc, pc);
+            pc = !!stack.pop() ? bc.offset : pc + 1;
             continue;
           case OP_iffalse:
-            pc = branchUnary(stack, Operator.FALSE, bc, pc);
+            pc = !stack.pop() ? bc.offset : pc + 1;
             continue;
           case OP_ifeq:
-            pc = branchBinary(stack, Operator.EQ, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a == b ? bc.offset : pc + 1;
             continue;
           case OP_ifne:
-            pc = branchBinary(stack, Operator.NE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a != b ? bc.offset : pc + 1;
             continue;
           case OP_ifstricteq:
-            pc = branchBinary(stack, Operator.SEQ, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a === b ? bc.offset : pc + 1;
             continue;
           case OP_ifstrictne:
-            pc = branchBinary(stack, Operator.SNE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a !== b ? bc.offset : pc + 1;
             continue;
           case OP_lookupswitch:
             index = stack.pop();
@@ -497,18 +491,20 @@ var Interpreter = (function () {
             obj = stack.pop();
             stack.push(obj == undefined ? null : obj);
           case OP_negate:
-            evaluateUnary(stack, Operator.NEG);
+            stack.push(-stack.pop());
             break;
           case OP_increment:
-            stack.push(1);
-            evaluateBinary(stack, Operator.ADD);
+            a = stack.pop();
+            stack.push(a + 1);
             break;
           case OP_inclocal:
             ++locals[bc.index];
             break;
           case OP_decrement:
             stack.push(1);
-            evaluateBinary(stack, Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_declocal:
             --locals[bc.index];
@@ -517,61 +513,95 @@ var Interpreter = (function () {
             stack.push(typeOf(stack.pop()));
             break;
           case OP_not:
-            evaluateUnary(stack, Operator.FALSE);
+            stack.push(!stack.pop());
             break;
           case OP_bitnot:
-            evaluateUnary(stack, Operator.BITWISE_NOT);
+            stack.push(~stack.pop());
             break;
           case OP_add:
-            evaluateBinary(stack, Operator.ADD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a + b);
             break;
           case OP_subtract:
-            evaluateBinary(stack, Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_multiply:
-            evaluateBinary(stack, Operator.MUL);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a * b);
             break;
           case OP_divide:
-            evaluateBinary(stack, Operator.DIV);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a / b);
             break;
           case OP_modulo:
-            evaluateBinary(stack, Operator.MOD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a % b);
             break;
           case OP_lshift:
-            evaluateBinary(stack, Operator.LSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a << b);
             break;
           case OP_rshift:
-            evaluateBinary(stack, Operator.RSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >> b);
             break;
           case OP_urshift:
-            evaluateBinary(stack, Operator.URSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >>> b);
             break;
           case OP_bitand:
-            evaluateBinary(stack, Operator.AND);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a & b);
             break;
           case OP_bitor:
-            evaluateBinary(stack, Operator.OR);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a | b);
             break;
           case OP_bitxor:
-            evaluateBinary(stack, Operator.XOR);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a ^ b);
             break;
           case OP_equals:
-            evaluateBinary(stack, Operator.EQ);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a == b);
             break;
           case OP_strictequals:
-            evaluateBinary(stack, Operator.SEQ);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a === b);
             break;
           case OP_lessthan:
-            evaluateBinary(stack, Operator.LT);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a < b);
             break;
           case OP_lessequals:
-            evaluateBinary(stack, Operator.LE);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a <= b);
             break;
           case OP_greaterthan:
-            evaluateBinary(stack, Operator.GT);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a > b);
             break;
           case OP_greaterequals:
-            evaluateBinary(stack, Operator.GE);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >= b);
             break;
           case OP_instanceof:
             type = stack.pop();
@@ -594,12 +624,16 @@ var Interpreter = (function () {
           case OP_increment_i:
             stack.push(stack.pop() | 0);
             stack.push(1);
-            evaluateBinary(stack, Operator.ADD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a + b);
             break;
           case OP_decrement_i:
             stack.push(stack.pop() | 0);
             stack.push(1);
-            evaluateBinary(stack, Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_inclocal_i:
             locals[bc.index] = (locals[bc.index] | 0) + 1;
@@ -608,20 +642,22 @@ var Interpreter = (function () {
             locals[bc.index] = (locals[bc.index] | 0) - 1;
             break;
           case OP_negate_i:
-            stack.push(stack.pop() | 0);
-            evaluateUnary(stack, Operator.NEG);
+            stack.push(~(stack.pop() | 0));
             break;
           case OP_add_i:
-            evaluateBinary(stack, Operator.ADD);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a + b) | 0);
             break;
           case OP_subtract_i:
-            evaluateBinary(stack, Operator.SUB);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a - b) | 0);
             break;
           case OP_multiply_i:
-            evaluateBinary(stack, Operator.MUL);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a * b) | 0);
             break;
           case OP_getlocal0:
           case OP_getlocal1:
