@@ -29,7 +29,7 @@ var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
 var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
-var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
+var timeout = numbersOptions.register(new Option("t", "timeout", "number", 5000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
 
 var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
@@ -299,7 +299,11 @@ function runNextTest () {
         for (var i = 0; i < configurations.length; i++) {
           var configuration = configurations[i];
           var result = results[test][configuration.name];
-          if (baseline.output.text == result.output.text) {
+          if (Math.max(baseline.elapsed, result.elapsed) > timeout.value) {
+            someFailed = true;
+            process.stdout.write(WARN + " TIME" + ENDC);
+            count(configuration.name + ":time");
+          } else if (baseline.output.text == result.output.text) {
             if (i > 0) {
               result.output.text = "N/A";
               process.stdout.write(PASS + " PASS" + ENDC);
