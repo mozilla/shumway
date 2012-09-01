@@ -12,7 +12,7 @@ JSSHELL_HOME = $(UTILS_HOME)/jsshell
 ifeq ("$(shell which base64)", "")
 BASE64DEC = python -c "import base64, sys; f = open(sys.argv[1], 'wb'); base64.decode(sys.stdin, f); f.close()"
 else
-BASE64DEC = base64 -D -o
+BASE64DEC = base64 --decode > 
 endif
 
 default:

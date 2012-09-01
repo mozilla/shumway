@@ -3,12 +3,12 @@ THREADS = 8
 
 JSSHELL_HOME = ./jsshell
 ifneq ("$(findstring MINGW32, $(UNAME))", "")
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-win32.zip
+JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-win32.zip
 else
 ifeq ($(UNAME), Darwin)
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-mac.zip
+JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-mac.zip
 else
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/jsshell-linux-x86_64.zip
+JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-linux-i686.zip
 endif
 endif
 
@@ -28,6 +28,10 @@ TAMARIN_CONFIG_PARAMS = --mac-sdk=107 --target=x86_64-darwin
 else
 TAMARIN_CONFIG_PARAMS = --mac-sdk=106 --target=x86_64-darwin
 endif
+endif
+else
+ifeq ($(UNAME), Linux)
+TAMARIN_CONFIG_PARAMS = --target=i686-linux
 endif
 endif
 
