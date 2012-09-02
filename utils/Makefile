@@ -2,13 +2,14 @@ UNAME = $(shell uname)
 THREADS = 8
 
 JSSHELL_HOME = ./jsshell
+JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central
 ifneq ("$(findstring MINGW32, $(UNAME))", "")
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-win32.zip
+JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-win32.zip
 else
 ifeq ($(UNAME), Darwin)
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-mac.zip
+JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-mac.zip
 else
-JSSHELL_URL = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/15.0-candidates/build1/jsshell-linux-i686.zip
+JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-linux-i686.zip
 endif
 endif
 
@@ -67,6 +68,13 @@ install-js:
 	mkdir -p $(JSSHELL_HOME)
 	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
 	unzip $(JSSHELL_HOME)/jsshell.zip -d $(JSSHELL_HOME)
+ifeq ($(UNAME), Linux)
+	# we are not installing the js into the bin path so there might be
+	# a conflict with other libnspr4.so -- adding the js bash proxy
+	mv $(JSSHELL_HOME)/js $(JSSHELL_HOME)/js-bin
+	cp patches/js $(JSSHELL_HOME)/js
+	chmod +x $(JSSHELL_HOME)/js
+endif
 
 install-apparat:
 	mkdir -p $(APPARAT_HOME)
