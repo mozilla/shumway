@@ -5,7 +5,9 @@ ASC ?= $(UTILS_HOME)/asc.jar
 JSSHELL ?= $(UTILS_HOME)/jsshell/js
 THREADS ?= 8
 
-TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) node numbers.js -j $(THREADS)
+NODE_MODULES = ../../../utils/node_modules
+
+TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS)
 
 TEST_PATH ?= $(error Specify TEST_PATH variable)
 
