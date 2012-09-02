@@ -44,27 +44,31 @@ APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
 
 default:
-	echo "run: make install-asc install-tamarin install-js install-apparat install-node-modules \\"
-	echo "     build-tamarin-tests build-playerglobal"
+	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
+	@echo "           install-node-modules|build-tamarin-tests|build-playerglobal|clean]"
 
 install-asc: $(ASC_JAR)
 
 $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
 
-install-tamarin: $(ASC_JAR)
-	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
+install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+	-rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
+
+$(TAMARIN_HOME)/configure.py:
+	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 
 build-tamarin-tests:
 	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
 	cp -R $(TAMARIN_HOME)/test/acceptance ../src/avm2/tests/tamarin
 
 install-js:
+	-rm -rf $(JSSHELL_HOME)
 	mkdir -p $(JSSHELL_HOME)
 	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
 	unzip $(JSSHELL_HOME)/jsshell.zip -d $(JSSHELL_HOME)
@@ -76,12 +80,14 @@ ifeq ($(UNAME), Linux)
 	chmod +x $(JSSHELL_HOME)/js
 endif
 
-install-apparat:
-	mkdir -p $(APPARAT_HOME)
-	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
-	wget $(SCALA_URL) -O $(APPARAT_HOME)/scala.tgz
+install-apparat: $(APPARAT_HOME)/apparat.tar.gz
 	tar -xkf $(APPARAT_HOME)/apparat.tar.gz -C $(APPARAT_HOME)/
 	tar -xkf $(APPARAT_HOME)/scala.tgz -C $(APPARAT_HOME)/
+
+$(APPARAT_HOME)/apparat.tar.gz:
+	mkdir -p $(APPARAT_HOME)
+	wget $(SCALA_URL) -O $(APPARAT_HOME)/scala.tgz
+	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
 
 install-node-modules:
 	npm install mocha expect.js temp
@@ -90,4 +96,11 @@ build-playerglobal:
 	make -C playerGlobal/ build
 	cp playerGlobal/bin/playerGlobal.min.abc ../src/flash
 
-.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests build-playerglobal default
+clean:
+	-rm -rf $(ASC_JAR)
+	-rm -rf $(TAMARIN_HOME)
+	-rm -rf $(JSSHELL_HOME)
+	-rm -rf $(APPARAT_HOME)
+	make -C playerGlobal/ clean
+
+.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests build-playerglobal clean default

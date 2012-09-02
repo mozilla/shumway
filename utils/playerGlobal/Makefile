@@ -16,7 +16,7 @@ BASE64DEC = base64 --decode >
 endif
 
 default:
-	echo "run: make build"
+	@echo "run: make [build|clean]"
 
 build: $(BUILD_DIR)/library.min.swf
 	$(JSSHELL_HOME)/js playerglobal-dumpabc.js | $(BASE64DEC) $(BUILD_DIR)/playerGlobal.min.abc
@@ -35,8 +35,8 @@ $(BUILD_DIR)/playerglobal.swc:
 	mkdir -p $(BUILD_DIR)
 	wget $(PLAYERGLOBAL_URL) -O $(BUILD_DIR)/playerglobal.swc
 
-clear:
+clean:
 	-rm -rf $(BUILD_DIR)
 
-.PHONY: build default clear
+.PHONY: build default clean
 
