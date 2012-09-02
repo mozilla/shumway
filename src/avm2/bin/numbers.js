@@ -112,6 +112,13 @@ function patchTest(file, text, next) {
   }
 }
 
+var isWin = !!process.platform.match(/^win/);
+
+function pathToOSCommand(path) {
+  if (!path || !isWin) return path;
+  return path.replace(/^\/(\w)\//, "$1:\\").replace(/\//g, "\\");
+}
+
 var tests = [];
 
 // Collect test cases
@@ -137,14 +144,14 @@ if (!process.env.AVM) {
   process.exit();
 }
 
-var avmShell = {path: process.env.AVM, options: []};
+var avmShell = {path: pathToOSCommand(process.env.AVM), options: []};
 
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
   {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = "js";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
   commandPrefix += " -m -n";
 }
@@ -231,7 +238,7 @@ function shortPath(str, length) {
 }
 
 function extractData(str) {
-  var lines = str.split("\n");
+  var lines = str.replace(/\r/g, "").split("\n");
   var data = {};
   const jsonPrefix = "SHUMWAY$JSON";
   var textLines = lines.filter(function (x) {
@@ -410,9 +417,11 @@ function printSummary() {
   console.log(padRight("=== DONE ", "=", 120));
 }
 
-process.on('SIGINT', function () {
-  if (summary.value) {
-    printSummary();
-  }
-  process.exit();
-});
+if (!isWin) {
+  process.on('SIGINT', function () {
+    if (summary.value) {
+      printSummary();
+    }
+    process.exit();
+  });
+}
