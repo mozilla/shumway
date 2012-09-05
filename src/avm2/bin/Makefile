@@ -12,7 +12,7 @@ TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) NOD
 TEST_PATH ?= $(error Specify TEST_PATH variable)
 
 default:
-	echo "run: make [hello-world|test-pypy|test-interpreter|test-compiler]"
+	echo "run: make [hello-world|test-pypy|test-interpreter|test-compiler|test-all]"
 
 hello-world:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/hello-world.as
@@ -28,4 +28,7 @@ test-interpreter:
 test-compiler:
 	$(TEST_CMD) -i $(TEST_PATH) -c c
 
-.PHONY: default hello-world test-pypy test-interpreter test-compiler
+test-all:
+	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icov -jo -nm
+
+.PHONY: default hello-world test-pypy test-interpreter test-compiler test-all

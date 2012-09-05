@@ -1,0 +1,52 @@
+body {
+    background-color: #001733;
+    font-family: "Lucida Grande","Lucida Sans Unicode","DejaVu Sans",Lucida,Arial,Helvetica,sans-serif;
+    font-size: 10px;
+    color: #d3d3d3;
+    font-weight: bold;
+}
+
+table {
+    border-spacing: 1px;
+}
+
+td {
+    padding: 2px;
+}
+
+.pass {
+    font-weight: bold;
+    width: 10px;
+    background-color: #adff2f;
+    text-align: center;
+    color: black;
+}
+
+.fail {
+    font-weight: bold;
+    width: 10px;
+    text-align: center;
+    background-color: #dc143c;
+    cursor: pointer;
+    color: black;
+}
+
+.spacer {
+    width: 20px;
+}
+
+.info {
+    font-size: 14px;
+    color: white;
+    line-height: 1.4em;
+}
+
+.time {
+    font-weight: bold;
+    width: 16px;
+    text-align: center;
+    padding-right: 4px;
+    background-color: #00306e;
+    cursor: pointer;
+    color: #d3d3d3;
+}
