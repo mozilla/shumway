@@ -85,12 +85,12 @@
 
                     var timeTitle = ["Elapsed: " + result[configurationName].elapsed + " ms"];
                     if (configurationName !== "shu-i") {
-                        timeTitle.push(configurationName + " vs. shu-i: " + ((result["shu-i"].elapsed / result[configurationName].elapsed) * 100).toFixed(0));
+                        timeTitle.push(configurationName + " vs. shu-i: " + ((result["shu-i"].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "%");
                     }
                     var timeTitle = timeTitle.map(escapeTooltip).join("&#10;");
                     str += "<td class=\"time\" title=\"" + timeTitle + "\">" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
                 } else {
-                    str += "<td class='missing'>X</td>";
+                    str += "<td class='missing' colspan='2'>X</td>";
                 }
             }
             str += "<td class='spacer'></td>";
@@ -100,6 +100,5 @@
     }
     $("#container").append("<table>" + lines.join("") + "</table>");
 </script>
-</table>
 </body>
 </html>
