@@ -1064,15 +1064,9 @@ var Runtime = (function () {
             (obj instanceof Global ||
              this.domain.Class && obj instanceof this.domain.Class
             ) &&
-<<<<<<< HEAD
-            this.domain.mode !== EXECUTION_MODE.INTERPRET) {
-          closure = (function trampolineClosure(trait, obj, qn) {
-            return (function trampoline() {
-=======
             this.domain.mode !== ALWAYS_INTERPRET) {
           closure = (function (trait, obj, qn) {
             return (function trampolineContext() {
->>>>>>> master
               var executed = false;
               var fn = undefined;
               return function trampoline() {
