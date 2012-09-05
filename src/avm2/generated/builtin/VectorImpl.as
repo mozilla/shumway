@@ -38,8 +38,8 @@
 // This file is the implementation of the common vector methods for each of the different vector classes.
 // It is included in the body of the class of each of the different vector types.
 
-public native function get length():uint;
-public native function set length(value:uint);
+public override native function get length():uint;
+public override native function set length(value:uint);
 
 public native function set fixed(f:Boolean);
 public native function get fixed():Boolean;

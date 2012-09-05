@@ -32,8 +32,8 @@ var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
 
 Timer.start("Loading VM");
-
 load("../constants.js");
+load("../errors.js");
 load("../opcodes.js");
 load("../parser.js");
 load("../disassembler.js");
@@ -90,26 +90,19 @@ function grabABC(abcname) {
   return new AbcFile(stream, filename);
 }
 
-function installAvmPlus(vm) {
-  var domain = vm.systemDomain;
-  domain.installNative("getArgv", function() {
-    return argv;
-  });
-
-  domain.executeAbc(grabABC("avmplus"));
-}
-
 var vm;
 if (execute.value) {
-  var sysMode = alwaysInterpret.value ? 
-                EXECUTION_MODE.INTERPRET : (compileSys.value ? 
-                                            EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET);
-  var appMode = alwaysInterpret.value ? 
-                EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
-                
-  vm = new AVM2(grabABC("builtin"), sysMode, appMode);
-  installAvmPlus(vm);
+  var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : (compileSys.value ? null : ALWAYS_INTERPRET);
+  var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
+  vm = new AVM2(sysMode, appMode);
+  Timer.start("Initialize");
+  vm.systemDomain.executeAbc(grabABC("builtin"));
   vm.systemDomain.executeAbc(grabABC("shell"));
+  vm.systemDomain.installNative("getArgv", function() {
+    return argv;
+  });
+  vm.systemDomain.executeAbc(grabABC("avmplus"));
+  Timer.stop();
 }
 
 if (file.value.endsWith(".swf")) {

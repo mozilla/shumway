@@ -1,5 +1,9 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var expect = require('expect.js');
+require('./domstubs.js');
+require('../classes.js');
+
 describe('Array', function() {
   describe('#sort()', function() {
     it('should sort strings', function() {
@@ -54,6 +58,8 @@ describe('AS2Classes', function() {
 })
 
 describe('AS2Stage', function() {
+  return; // XXX disables AS2Stage tests
+
   describe('#width', function() {
     it('should return stage width', function() {
       AS2Context.instance = new AS2Context(11, {width: 100, height: 50});

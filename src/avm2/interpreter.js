@@ -2,27 +2,46 @@ var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Optio
 
 var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
 
+
+var interpreterMethodCount = 0;
+var interpreterBytecodeCount = 0;
+
 var Interpreter = (function () {
-
-  const Operator = Compiler.Operator;
-
-  /**
-   * N.B. These operators are two-part in that they require you to negate the
-   * result, so they can't be straightforwardly used for compilation.
-   */
-  const NLT = new Operator("!<", function (l, r) { return !(l < r); }, true, true);
-  const NLE = new Operator("!<=", function (l, r) { return !(l <= r); }, true, true);
-  const NGT = new Operator("!>", function (l, r) { return !(l > r); }, true, true);
-  const NGE = new Operator("!>=", function (l, r) { return !(l >= r); }, true, true);
 
   function Interpreter(abc) {
     this.abc = abc;
   }
 
+  const Apslice = [].slice;
+
+  function applyNew(constructor, args) {
+    return new (Function.bind.apply(constructor.instance, [,].concat(args)));
+  }
+
+
+  function createMultiname(stack, mn) {
+    if (Multiname.isRuntime(mn)) {
+      var namespaces = mn.namespaces, name = mn.name;
+      if (Multiname.isRuntimeName(mn)) {
+        name = stack.pop();
+      }
+      if (isNumeric(name)) {
+        assert (!Multiname.isRuntimeNamespace(mn));
+        return name;
+      }
+      if (Multiname.isRuntimeNamespace(mn)) {
+        namespaces = [stack.pop()];
+      }
+      mn = new Multiname(namespaces, name);
+    }
+    assert(!Multiname.isRuntime(mn));
+    return mn;
+  }
+
   Interpreter.prototype = {
     interpretMethod: function interpretMethod($this, method, savedScope, args) {
       assert(method.analysis);
-
+      interpreterMethodCount ++;
       const abc = this.abc;
       const ints = abc.constantPool.ints;
       const uints = abc.constantPool.uints;
@@ -41,12 +60,26 @@ var Interpreter = (function () {
       var scopeHeight = 0;
       var stack = [];
 
-      const Apslice = [].slice;
       var parameterCount = method.parameters.length;
+      var argCount = args.length;
 
       rtstack.push(runtime);
 
-      locals.push.apply(locals, Apslice.call(args, 0, parameterCount));
+      for (var i = 0; i < parameterCount; i++) {
+        var value;
+        var parameter = method.parameters[i];
+        if (i < argCount) {
+          value = args[i];
+        } else {
+          value = parameter.value;
+        }
+
+        if (parameter.type && !parameter.type.isAnyName()) {
+          value = coerce(value, domain.getProperty(parameter.type, true, true));
+        }
+
+        locals.push(value);
+      }
 
       if (method.needsRest()) {
         locals.push(Apslice.call(args, parameterCount));
@@ -54,61 +87,22 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      function applyNew(constructor, args) {
-        return new (Function.bind.apply(constructor.instance, [,].concat(args)));
-      }
-
-      function evaluateBinary(operator) {
-        var b = stack.pop();
-        var a = stack.pop();
-        stack.push(operator.fn(a, b));
-      }
-
-      function evaluateUnary(operator) {
-        stack.push(operator.fn(stack.pop()));
-      }
-
-      function branchBinary(operator, bc, pc) {
-        var b = stack.pop();
-        var a = stack.pop();
-        return operator.fn(a, b) ? bc.offset : pc + 1;
-      }
-
-      function branchUnary(operator, bc, pc) {
-        return operator.fn(stack.pop()) ? bc.offset : pc + 1;
-      }
-
-      function createMultiname(multiname) {
-        if (multiname.isRuntime()) {
-          var namespaces = multiname.namespaces, name = multiname.name;
-          if (multiname.isRuntimeName()) {
-            name = stack.pop();
-          }
-          if (multiname.isRuntimeNamespace()) {
-            namespaces = [stack.pop()];
-          }
-          multiname = new Multiname(namespaces, name);
-        }
-        assert(!multiname.isRuntime());
-        return multiname;
-      }
-
-      var args, obj, objsuper, type, index, multiname, ns, name, res;
+      var args, obj, objsuper, type, index, multiname, ns, name, res, a, b;
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 
       if (traceInterpreter.value > 0) {
-        var methodName = method.name ? method.name.getQualifiedName() : "unknown";
+        var methodName = method.name ? Multiname.getQualifiedName(method.name) : "unknown";
         print("methodName: " + methodName);
         method.trace(new IndentingWriter(), abc);
       }
 
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
+        interpreterBytecodeCount ++;
         if (traceInterpreter.value > 0 && sourcePosition.file !== undefined) {
           print("position: " + sourcePosition.file + ": " + sourcePosition.line);
         }
-
         try {
           var bc = bytecodes[pc];
           var op = bc.op;
@@ -118,12 +112,12 @@ var Interpreter = (function () {
           case OP_throw:
             throw stack.pop();
           case OP_getsuper:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(getSuper(stack.pop(), multiname));
             break;
           case OP_setsuper:
             value = stack.pop();
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(setSuper(stack.pop(), multiname, value));
             break;
           case OP_dxns:           notImplemented(); break;
@@ -134,49 +128,73 @@ var Interpreter = (function () {
           case OP_lf32x4:         notImplemented(); break;
           case OP_sf32x4:         notImplemented(); break;
           case OP_ifnlt:
-            pc = branchBinary(NLT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a < b) ? bc.offset : pc + 1;
             continue;
           case OP_ifge:
-            pc = branchBinary(Operator.GE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a >= b ? bc.offset : pc + 1;
             continue;
           case OP_ifnle:
-            pc = branchBinary(NLE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a <= b) ? bc.offset : pc + 1;
             continue;
           case OP_ifgt:
-            pc = branchBinary(Operator.GT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a > b ? bc.offset : pc + 1;
             continue;
           case OP_ifngt:
-            pc = branchBinary(NGT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a > b) ? bc.offset : pc + 1;
             continue;
           case OP_ifle:
-            pc = branchBinary(Operator.LE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a <= b ? bc.offset : pc + 1;
             continue;
           case OP_ifnge:
-            pc = branchBinary(NGE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = !(a >= b) ? bc.offset : pc + 1;
             continue;
           case OP_iflt:
-            pc = branchBinary(Operator.LT, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a < b ? bc.offset : pc + 1;
             continue;
           case OP_jump:
             pc = bc.offset;
             continue;
           case OP_iftrue:
-            pc = branchUnary(Operator.TRUE, bc, pc);
+            pc = !!stack.pop() ? bc.offset : pc + 1;
             continue;
           case OP_iffalse:
-            pc = branchUnary(Operator.FALSE, bc, pc);
+            pc = !stack.pop() ? bc.offset : pc + 1;
             continue;
           case OP_ifeq:
-            pc = branchBinary(Operator.EQ, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a == b ? bc.offset : pc + 1;
             continue;
           case OP_ifne:
-            pc = branchBinary(Operator.NE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a != b ? bc.offset : pc + 1;
             continue;
           case OP_ifstricteq:
-            pc = branchBinary(Operator.SEQ, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a === b ? bc.offset : pc + 1;
             continue;
           case OP_ifstrictne:
-            pc = branchBinary(Operator.SNE, bc, pc);
+            b = stack.pop();
+            a = stack.pop();
+            pc = a !== b ? bc.offset : pc + 1;
             continue;
           case OP_lookupswitch:
             index = stack.pop();
@@ -286,13 +304,13 @@ var Interpreter = (function () {
           case OP_callstatic:     notImplemented(); break;
           case OP_callsuper:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             stack.push(getSuper(obj, multiname).apply(obj, args));
             break;
           case OP_callproperty:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             stack.push(getProperty(obj, multiname).apply(obj, args));
             break;
@@ -309,27 +327,27 @@ var Interpreter = (function () {
             break;
           case OP_constructprop:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             stack.push(applyNew(getProperty(obj, multiname), args));
             break;
           case OP_callsuperid:    notImplemented(); break;
           case OP_callproplex:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             stack.push(getProperty(obj, multiname).apply(null, args));
             break;
           case OP_callinterface:  notImplemented(); break;
           case OP_callsupervoid:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             getSuper(obj, multiname).apply(obj, args);
             break;
           case OP_callpropvoid:
             args = stack.popMany(bc.argCount);
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             getProperty(obj, multiname).apply(obj, args);
             break;
@@ -345,9 +363,7 @@ var Interpreter = (function () {
             obj = {};
             for (var i = 0; i < bc.argCount; i++) {
               var value = stack.pop();
-              // Mangle the key
-              var key = "public$" + stack.pop();
-              obj[key] = value;
+              obj[Multiname.getPublicQualifiedName(stack.pop())] = value;
             }
             stack.push(obj);
             break;
@@ -364,7 +380,7 @@ var Interpreter = (function () {
             stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));
             break;
           case OP_getdescendants:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(getDescendants(multiname, stack.pop()));
             break;
           case OP_newcatch:
@@ -372,24 +388,24 @@ var Interpreter = (function () {
             stack.push(exceptions[bc.index].scopeObject);
             break;
           case OP_findpropstrict:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(scope.findProperty(multiname, domain, true));
             break;
           case OP_findproperty:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(scope.findProperty(multiname, domain, false));
             break;
           case OP_finddef:        notImplemented(); break;
           case OP_getlex:
             // TODO: Cache the resolved multiname so it doesn't have to be
             // resolved again in getProperty
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(getProperty(scope.findProperty(multiname, domain, true), multiname));
             break;
           case OP_initproperty:
           case OP_setproperty:
             value = stack.pop();
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             setProperty(stack.pop(), multiname, value);
             break;
           case OP_getlocal:
@@ -403,19 +419,21 @@ var Interpreter = (function () {
             break;
           case OP_getscopeobject:
             obj = scope;
-            for (var i = 0; i < (scopeHeight - 1) - bc.index; i++) {
+            var scopeDistance = (scopeHeight - 1) - bc.index;
+            assert (scopeDistance >= 0);
+            for (var i = 0; i < scopeDistance; i++) {
               obj = obj.parent;
             }
             stack.push(obj.object);
             break;
           case OP_getproperty:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             stack.push(getProperty(stack.pop(), multiname));
             break;
           case OP_getouterscope:      notImplemented(); break;
           case OP_setpropertylate:    notImplemented(); break;
           case OP_deleteproperty:
-            multiname = createMultiname(multinames[bc.index]);
+            multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             stack.push(deleteProperty(obj, multiname));
             break;
@@ -473,109 +491,149 @@ var Interpreter = (function () {
             obj = stack.pop();
             stack.push(obj == undefined ? null : obj);
           case OP_negate:
-            evaluateUnary(Operator.NEG);
+            stack.push(-stack.pop());
             break;
           case OP_increment:
-            stack.push(1);
-            evaluateBinary(Operator.ADD);
+            a = stack.pop();
+            stack.push(a + 1);
             break;
           case OP_inclocal:
             ++locals[bc.index];
             break;
           case OP_decrement:
             stack.push(1);
-            evaluateBinary(Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_declocal:
             --locals[bc.index];
             break;
           case OP_typeof:
-            stack.push(typeof stack.pop());
+            stack.push(typeOf(stack.pop()));
             break;
           case OP_not:
-            evaluateUnary(Operator.FALSE);
+            stack.push(!stack.pop());
             break;
           case OP_bitnot:
-            evaluateUnary(Operator.BITWISE_NOT);
+            stack.push(~stack.pop());
             break;
           case OP_add:
-            evaluateBinary(Operator.ADD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a + b);
             break;
           case OP_subtract:
-            evaluateBinary(Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_multiply:
-            evaluateBinary(Operator.MUL);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a * b);
             break;
           case OP_divide:
-            evaluateBinary(Operator.DIV);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a / b);
             break;
           case OP_modulo:
-            evaluateBinary(Operator.MOD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a % b);
             break;
           case OP_lshift:
-            evaluateBinary(Operator.LSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a << b);
             break;
           case OP_rshift:
-            evaluateBinary(Operator.RSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >> b);
             break;
           case OP_urshift:
-            evaluateBinary(Operator.URSH);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >>> b);
             break;
           case OP_bitand:
-            evaluateBinary(Operator.AND);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a & b);
             break;
           case OP_bitor:
-            evaluateBinary(Operator.OR);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a | b);
             break;
           case OP_bitxor:
-            evaluateBinary(Operator.XOR);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a ^ b);
             break;
           case OP_equals:
-            evaluateBinary(Operator.EQ);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a == b);
             break;
           case OP_strictequals:
-            evaluateBinary(Operator.SEQ);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a === b);
             break;
           case OP_lessthan:
-            evaluateBinary(Operator.LT);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a < b);
             break;
           case OP_lessequals:
-            evaluateBinary(Operator.LE);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a <= b);
             break;
           case OP_greaterthan:
-            evaluateBinary(Operator.GT);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a > b);
             break;
           case OP_greaterequals:
-            evaluateBinary(Operator.GE);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a >= b);
             break;
           case OP_instanceof:
             type = stack.pop();
             value = stack.pop();
-            stack.push(instanceOf(value, type));
+            stack.push(isInstanceOf(value, type));
             break;
           case OP_istype:
             value = stack.pop();
             multiname = multinames[bc.index];
             assert (!multiname.isRuntime());
             type = domain.getProperty(multiname, true, true);
-            stack.push(isType(value, type));
+            stack.push(isInstance(value, type));
             break;
           case OP_istypelate:
             type = stack.pop();
             value = stack.pop();
-            stack.push(isType(value, type));
+            stack.push(isInstance(value, type));
             break;
           case OP_in:             notImplemented(); break;
           case OP_increment_i:
             stack.push(stack.pop() | 0);
             stack.push(1);
-            evaluateBinary(Operator.ADD);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a + b);
             break;
           case OP_decrement_i:
             stack.push(stack.pop() | 0);
             stack.push(1);
-            evaluateBinary(Operator.SUB);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push(a - b);
             break;
           case OP_inclocal_i:
             locals[bc.index] = (locals[bc.index] | 0) + 1;
@@ -584,20 +642,22 @@ var Interpreter = (function () {
             locals[bc.index] = (locals[bc.index] | 0) - 1;
             break;
           case OP_negate_i:
-            stack.push(stack.pop() | 0);
-            evaluateUnary(Operator.NEG);
+            stack.push(~(stack.pop() | 0));
             break;
           case OP_add_i:
-            evaluateBinary(Operator.ADD);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a + b) | 0);
             break;
           case OP_subtract_i:
-            evaluateBinary(Operator.SUB);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a - b) | 0);
             break;
           case OP_multiply_i:
-            evaluateBinary(Operator.MUL);
-            stack.push(stack.pop() | 0);
+            b = stack.pop();
+            a = stack.pop();
+            stack.push((a * b) | 0);
             break;
           case OP_getlocal0:
           case OP_getlocal1:
@@ -631,7 +691,6 @@ var Interpreter = (function () {
           }
 
           e = runtime.translateError(e);
-
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
@@ -639,7 +698,7 @@ var Interpreter = (function () {
                  domain.getProperty(handler.typeName, true, true).isInstance(e))) {
               Runtime.unwindStackTo(runtime);
               scope = savedScope;
-              scopeHeight = -1;
+              scopeHeight = 0;
               stack.length = 0;
               stack.push(e);
               pc = handler.offset;

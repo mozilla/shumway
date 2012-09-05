@@ -94,6 +94,14 @@ var Domain = (function () {
           defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
+        extendNative: function (baseClass, native) {
+          this.baseClass = baseClass;
+          this.dynamicPrototype = native.prototype.__proto__;
+          this.instance.prototype = native.prototype;
+          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineReadOnlyProperty(this.instance.prototype, "class", this);
+        },
+
         isInstance: function (value) {
           if (value === null || typeof value !== "object") {
             return false;
@@ -181,7 +189,7 @@ var Domain = (function () {
     getProperty: function getProperty(multiname, strict, execute) {
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
-        return resolved.script.global[resolved.name.getQualifiedName()];
+        return resolved.script.global[Multiname.getQualifiedName(resolved.name)];
       }
       if (strict) {
         return unexpected("Cannot find property " + multiname);
@@ -228,9 +236,9 @@ var Domain = (function () {
      * ABCs are added to the list in load order, so a later loaded ABC with a
      * definition of conflicting name will never be resolved.
      */
-    findDefiningScript: function findDefiningScript(multiname, execute) {
+    findDefiningScript: function findDefiningScript(mn, execute) {
       if (this.base) {
-        var resolved = this.base.findDefiningScript(multiname, execute);
+        var resolved = this.base.findDefiningScript(mn, execute);
         if (resolved) {
           return resolved;
         }
@@ -246,20 +254,20 @@ var Domain = (function () {
             continue;
           }
           var global = script.global;
-          if (multiname.isQName()) {
-            if (multiname.getQualifiedName() in global) {
+          if (Multiname.isQName(mn)) {
+            if (Multiname.getQualifiedName(mn) in global) {
               if (traceDomain.value) {
-                print("Domain.findDefiningScript(" + multiname + ") in " + abc + ", script: " + k);
+                print("Domain.findDefiningScript(" + mn + ") in " + abc + ", script: " + k);
                 print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
-                print("Value is: " + script.global[multiname.getQualifiedName()]);
+                print("Value is: " + script.global[Multiname.getQualifiedName(mn)]);
               }
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
               }
-              return { script: script, name: multiname };
+              return { script: script, name: mn };
             }
           } else {
-            var resolved = resolveMultiname(global, multiname);
+            var resolved = resolveMultiname(global, mn);
             if (resolved) {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
@@ -273,11 +281,13 @@ var Domain = (function () {
     },
 
     executeAbc: function executeAbc(abc) {
+      Timer.start("Execute: executeAbc" + abc.name);
       this.loadAbc(abc);
       executeScript(abc, abc.lastScript);
       if (traceClasses.value) {
         this.traceLoadedClasses();
       }
+      Timer.stop();
     },
 
     loadAbc: function loadAbc(abc) {

@@ -1,0 +1,3 @@
+#!/bin/bash
+scriptpath=${0%/*}
+LD_LIBRARY_PATH=$scriptpath:$LD_LIBRARY_PATH $scriptpath/js-bin $@

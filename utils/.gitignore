@@ -1,8 +1,9 @@
-*
-!.gitignore
-!avm1tests
-!mocha
-!expect
-!README.md
+asc.jar
+apparat/
+flex_sdk*
+jsshell/
+mtasc/
+node_modules/
+tamarin-redux/
 *~
 

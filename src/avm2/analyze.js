@@ -518,7 +518,9 @@ var Analysis = (function () {
     this.method = method;
     this.options = options || {};
     if (this.method.code) {
+      Timer.start("Normalize");
       this.normalizeBytecode();
+      Timer.stop();
     }
   }
 

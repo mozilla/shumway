@@ -49,8 +49,8 @@ package
     public static const NUMERIC:uint = 16;
 
     // E262 {DontEnum, DontDelete}
-    public native function get length():uint;
-    public native function set length(newLength:uint);
+    public override native function get length():uint;
+    public override native function set length(newLength:uint);
 
     [compat]
     private function set_length(newLength:*, altLength:uint) {}

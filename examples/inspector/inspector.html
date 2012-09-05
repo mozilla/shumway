@@ -102,6 +102,7 @@
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
+    <script src="../../src/avm2/errors.js"></script>
     <script src="../../src/avm2/opcodes.js"></script>
     <script src="../../src/avm2/parser.js"></script>
     <script src="../../src/avm2/analyze.js"></script>
@@ -110,8 +111,8 @@
     <script src="../../src/avm2/compiler/verifier.js"></script>
     <script src="../../src/avm2/compiler/compiler.js"></script>
     <script src="../../src/avm2/domain.js"></script>
-    <script src="../../src/avm2/native.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
+    <script src="../../src/avm2/native.js"></script>
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../src/avm2/interpreter.js"></script>
     <script src="../../src/avm2/vm.js"></script>
@@ -145,23 +146,6 @@
     <script src="../../src/flash/ui/Keyboard.js"></script>
     <script src="../../src/flash/ui/Mouse.js"></script>
 
-    <script src="../../src/swf/prototypes.js"></script>
-
-    <script>
-      Loader.LOADER_PATH = "../../src/flash/display/Loader.js";
-
-      function getState() {
-        return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]): {};
-      }
-      var state = getState();
-      enableVerifier.value = state.chkVerifier;
-      enableOpt.value = state.chkOptimizations;
-
-      function setState(state) {
-        localStorage["Inspector-Settings"] = JSON.stringify(state);
-      }
-    </script>
-
     <div id="inputBar">
       <span><a href="https://www.github.com/mozilla/shumway">Shumway</a> Inspector</span>&nbsp;&nbsp;
       <label for="file">Select SWF/ABC file (or drag'n'drop the file on the stage): </label><input type="file" id="files" name="files[]" multiple></br>
@@ -171,88 +155,12 @@
       Optimizations: <input type="checkbox" id="chkOptimizations" value="" />
     </div>
 
-    <script>
-      // Bind checkboxes to the state.
-      $(window).load(function () {
-        for (key in state) {
-          $("#" + key).attr('checked', state[key]);
-        }
-      });
-
-      $(":checkbox").each(function() {
-        $(this).change(function () {
-          state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
-          setState(state);
-        });
-      });
-
-
-      var body = $("body");
-      var stage = $("#stage");
-
-      var avm2Root = "../../src/avm2/";
-      var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-      var sysMode = state.chkSysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-      var appMode = state.chkAppCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-
-      function readFile(file) {
-        var reader = new FileReader();
-        if (file.name.endsWith(".abc")) {
-          reader.onload = function() {
-            var result = this.result;
-            createAVM2(builtinPath, null, sysMode, appMode, function (vm) {
-              vm.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result), file.name));
-            });
-          }
-        } else if (file.name.endsWith(".swf")) {
-          reader.onload = function() {
-            var result = this.result;
-            SWF.embed(this.result, stage[0]);
-          }
-        } else {
-          throw new TypeError("unsupported format");
-        }
-        reader.readAsArrayBuffer(file);
-      }
-
-      body.on("dragenter dragover", function(event) {
-        event.stopPropagation();
-        event.preventDefault();
-      });
-      body.on("drop", function(event) {
-        event.stopPropagation();
-        event.preventDefault();
-        var file = event.originalEvent.dataTransfer.files[0];
-        readFile(file);
-      });
-      $("#files").on("change", function(event) {
-        var file = event.originalEvent.target.files[0];
-        readFile(file);
-      });
-    </script>
+    <script src="inspectorSettings.js"></script>
+    <script src="inspectorLoader.js"></script>
+    <script src="inspector.js"></script>
 
     <script>
-      var remoteFile = getQueryVariable("rfile");
-
-      /**
-       * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
-       * when the page loads.
-       */
-      if (remoteFile) {
-        if (remoteFile.endsWith(".abc")) {
-          createAVM2(builtinPath, null, sysMode, appMode, function(vm) {
-            new BinaryFileReader(remoteFile).readAll(null, function(buffer) {
-              vm.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), remoteFile));
-            });
-          });
-        } else if (remoteFile.endsWith(".swf")) {
-          // createAVM2(builtinPath, null, sysMode, appMode, function(vm) {
-            new BinaryFileReader(remoteFile).readAll(null, function(buffer) {
-              SWF.embed(buffer, $("#stage")[0], {});
-            });
-          // });
-        }
-      }
+      Loader.SCRIPT_PATH = "../../src/flash/display/Loader.js";
     </script>
   </body>
 </html>

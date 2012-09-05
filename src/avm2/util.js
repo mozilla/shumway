@@ -80,6 +80,17 @@ function defineNonEnumerableProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+function isNullOrUndefiend(value) {
+  return value === null || value === undefined;
+}
+
+/**
+ * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
+ */
+function isNumeric(x) {
+  return typeof x === "number" || !isNaN(parseInt(x, 10));
+}
+
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {

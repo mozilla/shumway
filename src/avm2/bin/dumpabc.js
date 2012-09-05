@@ -40,8 +40,8 @@ load("../analyze.js");
 load("../compiler/lljs/src/estransform.js");
 load("../compiler/lljs/src/escodegen.js");
 load("../compiler/compiler.js");
-load("../native.js");
 load("../runtime.js");
+load("../native.js");
 load("../interpreter.js");
 
 function printUsage() {
@@ -59,7 +59,7 @@ try {
   quit();
 }
 
-/*
+
 SWF.parse(snarf(swfFile.value, "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;
@@ -74,8 +74,8 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     }
   }
 });
-*/
 
+/*
 SWF.parse(snarf(swfFile.value, "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;
@@ -98,3 +98,4 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     print (base64ArrayBuffer(data));
   }
 });
+*/

@@ -1,6 +1,6 @@
 var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
 
-var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsm", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames"));
+var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNt", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics"));
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {
@@ -37,6 +37,9 @@ AbcFile.prototype.trace = function trace(writer) {
   }
   if (filter.value.indexOf("S") >= 0) {
     traceSource(writer, this);
+  }
+  if (filter.value.indexOf("t") >= 0) {
+    traceStatistics(writer, this);
   }
 };
 
@@ -156,7 +159,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
   writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
   writer.writeLn("parameters: " + this.parameters.map(function (x) {
-    return (x.type ? x.type.getQualifiedName() + "::" : "") + x.name;
+    return (x.type ? Multiname.getQualifiedName(x.type) + "::" : "") + x.name;
   }));
 
   if (!this.code) {
@@ -244,7 +247,7 @@ var SourceTracer = (function () {
 
       traits.forEach(function (trait) {
         var str;
-        var accessModifier = trait.name.getAccessModifier();
+        var accessModifier = Multiname.getAccessModifier(trait.name);
         var namespaceName = trait.name.namespaces[0].originalURI;
         if (namespaceName) {
           if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
@@ -380,7 +383,7 @@ var SourceTracer = (function () {
 
       var ii = ci.instanceInfo;
       var name = ii.name;
-      var str = name.getAccessModifier();
+      var str = Multiname.getAccessModifier(name);
       if (ii.isFinal()) {
         str += " final";
       }
@@ -435,4 +438,135 @@ function traceSource(writer, abc) {
   abc.scripts.forEach(function (script) {
     tracer.traceTraits(script.traits);
   });
+}
+
+function traceStatistics(writer, abc) {
+
+  /**
+   * Keep track of classes / methods / properties defined in this ABC file. This is very
+   * conservative, we only look at names and ignore all namespaces. Members that do not
+   * appear in this ABC file are assumed to be in the library.
+   */
+
+  var libraryClassCounter = new metrics.Counter(true);
+  var librarySuperClassCounter = new metrics.Counter(true);
+  var libraryMethodCounter = new metrics.Counter(true);
+  var libraryProperties = new metrics.Counter(true);
+
+  var definedClasses = {};
+  var definedMethods = {};
+  var definedProperties = {};
+
+  abc.classes.forEach(function (x) {
+    var className = x.instanceInfo.name.name;
+    definedClasses[className] = true;
+  });
+
+  abc.scripts.forEach(function (s) {
+    s.traits.forEach(function (t) {
+      if (t.isClass()) {
+        var superClassName = t.classInfo.instanceInfo.superName ? t.classInfo.instanceInfo.superName.name : "?";
+        if (!(superClassName in definedClasses)) {
+          librarySuperClassCounter.count(superClassName);
+        }
+        t.classInfo.traits.forEach(function (st) {
+          if (st.isMethod()) {
+            definedMethods[st.name.name] = true;
+          } else {
+            definedProperties[st.name.name] = true;
+          }
+        });
+        t.classInfo.instanceInfo.traits.forEach(function (it) {
+          if (it.isMethod() && !(it.attributes & ATTR_Override)) {
+            definedMethods[it.name.name] = true;
+          } else {
+            definedProperties[it.name.name] = true;
+          }
+        });
+      }
+    });
+  });
+
+  var opCounter = new metrics.Counter(true);
+
+  abc.methods.forEach(function (m) {
+    if (!m.code) {
+      return;
+    }
+
+    function readOperand(operand) {
+      var value = 0;
+      switch(operand.size) {
+        case "s08": value = code.readS8(); break;
+        case "u08": value = code.readU8(); break;
+        case "s16": value = code.readS16(); break;
+        case "s24": value = code.readS24(); break;
+        case "u30": value = code.readU30(); break;
+        case "u32": value = code.readU32(); break;
+        default: assert (false); break;
+      }
+      var description = "";
+      switch(operand.type) {
+        case "": break;
+        case "I": description = abc.constantPool.ints[value]; break;
+        case "U": description = abc.constantPool.uints[value]; break;
+        case "D": description = abc.constantPool.doubles[value]; break;
+        case "S": description = abc.constantPool.strings[value]; break;
+        case "N": description = abc.constantPool.namespaces[value]; break;
+        case "CI": description = abc.classes[value]; break;
+        case "M": description = abc.constantPool.multinames[value]; break;
+        default: description = "?"; break;
+      }
+      return description;
+    }
+
+    var code = new AbcStream(m.code);
+    while (code.remaining() > 0) {
+      var bc = code.readU8();
+      var op = opcodeTable[bc];
+      var operands = null;
+      if (op) {
+        opCounter.count(op.name);
+        if (op.operands) {
+          operands = op.operands.map(readOperand);
+        }
+        switch (bc) {
+          case OP_call:
+          case OP_callmethod:
+            continue;
+          case OP_callproperty:
+          case OP_callproplex:
+          case OP_callpropvoid:
+          case OP_callstatic:
+          case OP_callsuper:
+          case OP_callsupervoid:
+            if (operands[0] && !(operands[0].name in definedMethods)) {
+              libraryMethodCounter.count(operands[0].name);
+            }
+            break;
+          case OP_constructprop:
+            if (operands[0] && !(operands[0].name in definedClasses)) {
+              libraryClassCounter.count(operands[0].name);
+            }
+            break;
+          case OP_getproperty:
+          case OP_setproperty:
+            if (operands[0] && !(operands[0].name in definedProperties)) {
+              libraryProperties.count(operands[0].name);
+            }
+            break;
+        }
+      }
+    }
+  });
+  writer.writeLn(JSON.stringify({
+    definedClasses: definedClasses,
+    definedMethods: definedMethods,
+    definedProperties: definedProperties,
+    libraryClasses: libraryClassCounter.counts,
+    librarySuperClasses: librarySuperClassCounter.counts,
+    libraryMethods: libraryMethodCounter.counts,
+    libraryProperties: libraryProperties.counts,
+    operations: opCounter.counts
+  }, null, 2));
 }

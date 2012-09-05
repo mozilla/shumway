@@ -1,5 +1,10 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
+var expect = require('expect.js');
+require('./domstubs.js');
+require('../classes.js');
+require('../globals.js');
+
 describe('AS2Globals', function() {
   describe('#ASSetPropFlags()', function() {
     // see more about the function http://www.flashguru.co.uk/assetpropflags

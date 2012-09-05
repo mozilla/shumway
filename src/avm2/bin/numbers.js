@@ -14,6 +14,7 @@ var fs   = require('fs');
 var readFile = fs.readFileSync;
 var spawn = require('child_process').spawn;
 var exec = require('child_process').exec;
+var temp = require('temp');
 
 global.assert = function () { };
 var options = require("../options.js");
@@ -28,8 +29,25 @@ var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
 var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
-var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
+var timeout = numbersOptions.register(new Option("t", "timeout", "number", 5000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
+
+var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
+
+/**
+ * Output Patching:
+ *
+ * There are cases where the Shumway output is "correct" but does not match AVM output. For instance: rounding errors,
+ * the way errors are displayed, various semantics that we chose not to implement for the sake of performance, etc.
+ *
+ * If a file foo.abc.diff exists in the same directory as foo.abc, then the diff file is applied to the output of foo.abc
+ * using the "patch" command, e.g. patch foo.abc.output < foo.abc.diff. The result is then compared against the AVM output.
+ *
+ * .diff files can be generated manually, or by specifying the |generatePatches| command line argument. This automatically
+ * generates .diff files for any test case that fails and does not already have one.
+ */
+
+var generatePatches = numbersOptions.register(new Option("gp", "patches", "boolean", false, "creates patch files"));
 
 argumentParser.addBoundOptionSet(numbersOptions);
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
@@ -67,10 +85,38 @@ function getTests(path) {
     if (endsWith(path, ".abc")) {
       files.push(path);
     } else {
-      files = readFile(path).toString().split("\n");
+      files = readFile(path).toString().split("\n").filter(function (x) {
+        return x.trim() && x.trim()[0] != "#"
+      }).map(function (x) {
+         return x.trim();
+      });
     }
   }
   return files;
+}
+
+/**
+ * Patch the given |text| with |file|.diff if one exists.
+ */
+function patchTest(file, text, next) {
+  if (fs.existsSync(file + ".diff")) {
+    temp.open("out", function (err, info) {
+      fs.writeSync(info.fd, text);
+      var command = "patch " + info.path + " " + file + ".diff";
+      exec(command, {}, function (error, stdout, stderr) {
+        next(readFile(info.path).toString());
+      });
+    });
+  } else {
+    next(text);
+  }
+}
+
+var isWin = !!process.platform.match(/^win/);
+
+function pathToOSCommand(path) {
+  if (!path || !isWin) return path;
+  return path.replace(/^\/(\w)\//, "$1:\\").replace(/\//g, "\\");
 }
 
 var tests = [];
@@ -98,15 +144,14 @@ if (!process.env.AVM) {
   process.exit();
 }
 
-var avmShell = {path: process.env.AVM, options: []};
-var shuShell = {path: "js", options: "-m -n avm.js".split(" ")};
+var avmShell = {path: pathToOSCommand(process.env.AVM), options: []};
 
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
-  {name: "avm", timeout: 500, command: avmShell.path}
+  {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = "js";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
   commandPrefix += " -m -n";
 }
@@ -193,7 +238,7 @@ function shortPath(str, length) {
 }
 
 function extractData(str) {
-  var lines = str.split("\n");
+  var lines = str.replace(/\r/g, "").split("\n");
   var data = {};
   const jsonPrefix = "SHUMWAY$JSON";
   var textLines = lines.filter(function (x) {
@@ -223,7 +268,7 @@ function count(name) {
   counts[name] ++;
 }
 
-var pathLength = 40;
+var pathLength = 100;
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
@@ -242,12 +287,14 @@ function runNextTest () {
           if (!(test in results)) {
             results[test] = {};
           }
-          var output = extractData(stdout);
-          results[test][config.name] = {output: output, elapsed: new Date() - start};
-          if (!inParallel) {
-            process.stdout.write(".");
-          }
-          runNextConfiguration();
+          patchTest(test, stdout, function (output) {
+            var output = extractData(output);
+            results[test][config.name] = {output: output, elapsed: new Date() - start};
+            if (!inParallel) {
+              process.stdout.write(".");
+            }
+            runNextConfiguration();
+          });
         });
       } else {
         var baseline = results[test][configurations[0].name];
@@ -259,7 +306,11 @@ function runNextTest () {
         for (var i = 0; i < configurations.length; i++) {
           var configuration = configurations[i];
           var result = results[test][configuration.name];
-          if (baseline.output.text == result.output.text) {
+          if (Math.max(baseline.elapsed, result.elapsed) > timeout.value) {
+            someFailed = true;
+            process.stdout.write(WARN + " TIME" + ENDC);
+            count(configuration.name + ":time");
+          } else if (baseline.output.text == result.output.text) {
             if (i > 0) {
               result.output.text = "N/A";
               process.stdout.write(PASS + " PASS" + ENDC);
@@ -303,7 +354,74 @@ function runNextTest () {
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
         console.log(counts);
         console.log(padRight("=== DONE ", "=", 120));
+        if (summary.value) {
+          printSummary();
+        }
+        /**
+         * This generates .diff files for each test case that failed in its first configuration. The .diff file is
+         * generated against the avm output and stored in the same directory as the test .abc file itself. If a
+         * diff file is found when running the test case it is applied to the output before comparing against the
+         * avm output.
+         */
+        if (generatePatches.value) {
+          for (var test in results) {
+            if (path.existsSync(test + ".diff")) {
+              continue;
+            }
+            (function (test) {
+              var result = results[test];
+              var baselineName = configurations[0].name;
+              var baselineText = result[baselineName].output.text;
+              var runName = configurations[1].name;
+              var runText = result[runName].output.text;
+              if (baselineText !== runText) {
+                temp.open("out", function (err, baselineFile) {
+                  fs.writeSync(baselineFile.fd, baselineText);
+                  temp.open("out", function (err, runFile) {
+                    fs.writeSync(runFile.fd, runText);
+                    var command = "diff -u " + baselineFile.path + " " + runFile.path + " > " + test + ".diff";
+                    exec(command, {}, function (error, stdout, stderr) {
+                      console.log("Created Patch for " + test + " -> " + test + ".diff (diff -u {" + baselineName + "} {" + runName + "})");
+                    });
+                  });
+                });
+              }
+            })(test);
+          }
+        }
       });
     }
   }
+}
+
+function printSummary() {
+  console.log(padRight("SUMMARY", "=", 120));
+  for (var k in results) {
+    for (var c in results[k]) {
+      if (c === "avm") {
+        continue;
+      }
+      try {
+        var counts = results[k][c].output.data.counter.counts;
+        var line = "Execution: " + shortPath(k, 30) + ":" + c + ": ";
+
+        for (var x in counts) {
+          line += x + ": " + (counts[x] > 10000 ? FAIL : PASS) + counts[x] + ENDC + " ";
+        }
+        console.log(line);
+      } catch (x) {
+
+      }
+    }
+  }
+  console.log(padRight("=== DONE ", "=", 120));
+}
+
+if (!isWin) {
+  process.on('SIGINT', function () {
+    if (summary.value) {
+      printSummary();
+    }
+    process.exit();
+  });
 }

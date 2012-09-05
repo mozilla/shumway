@@ -2,13 +2,18 @@
 <head>
   <meta charset="utf-8">
   <title>Mocha Tests for AVM1</title>
-  <link rel="stylesheet" href="../../../utils/mocha/mocha.css" />
-  <script src="../../../inspector/jquery.min.js"></script>
-  <script src="../../../utils/expect/expect.js"></script>
-  <script src="../../../utils/mocha/mocha.js"></script>
+  <script src="../../../examples/inspector/jquery.min.js"></script>
+  <script>
+    // simple stub to make node tests work for the browser
+    function require(name) { return name == 'expect.js' ? window.expect : null; }
+  </script>
+
+  <link rel="stylesheet" href="../../../utils/node_modules/mocha/mocha.css" />
+  <script src="../../../utils/node_modules/expect.js/expect.js"></script>
+  <script src="../../../utils/node_modules/mocha/mocha.js"></script>
   <script>mocha.setup('bdd')</script>
 
-  <script src="../../swf/DataView.js"></script>
+  <script src="../../../lib/DataView.js/DataView.js"></script>
   <script src="../../swf/util.js"></script>
   <script src="../../swf/swf.js"></script>
   <script src="../../swf/types.js"></script>

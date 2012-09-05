@@ -32,7 +32,10 @@ var AbcStream = (function () {
     readU30: function() {
       var result = this.readU32();
       if (result & 0xc0000000) {
-        error("Corrupt ABC File");
+        // TODO: Spec says this is a corrupt ABC file, but it seems that some content
+        // has this, e.g. 1000-0.abc
+        // error("Corrupt ABC File");
+        return result;
       }
       return result;
     },
@@ -144,7 +147,7 @@ var Trait = (function () {
 
     this.kind = tag & 0x0F;
     this.attributes = (tag >> 4) & 0x0F;
-    assert(this.name.isQName(), "Name must be a QName: " + this.name + ", kind: " + this.kind);
+    assert(Multiname.isQName(this.name), "Name must be a QName: " + this.name + ", kind: " + this.kind);
 
     switch (this.kind) {
     case TRAIT_Slot:
@@ -152,7 +155,7 @@ var Trait = (function () {
       this.slotId = stream.readU30();
       this.typeName = constantPool.multinames[stream.readU30()];
       var valueIndex = stream.readU30();
-      this.value = null;
+      this.value = undefined;
       if (valueIndex !== 0) {
         this.value = constantPool.getValue(stream.readU8(), valueIndex);
       }
@@ -163,12 +166,14 @@ var Trait = (function () {
       this.dispId = stream.readU30();
       this.methodInfo = methods[stream.readU30()];
       this.methodInfo.name = this.name;
+      // make sure that the holder was not already set
+      assert(!this.methodInfo.holder);
+      this.methodInfo.holder = this.holder;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
       assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
       this.classInfo = classes[stream.readU30()];
-      this.classInfo.name = this.name;
       break;
     case TRAIT_Function:
       // TRAIT_Function is a leftover. it's not supported at all in
@@ -195,10 +200,6 @@ var Trait = (function () {
     return this.kind === TRAIT_Const;
   };
 
-  trait.prototype.isConstant = function isConstant() {
-    return this.kind === TRAIT_Const;
-  };
-
   trait.prototype.isMethod = function isMethod() {
     return this.kind === TRAIT_Method;
   };
@@ -216,7 +217,7 @@ var Trait = (function () {
   };
 
   trait.prototype.toString = function toString() {
-    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + this.name.getQualifiedName() + ", kind: " + this.kind;
+    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + Multiname.getQualifiedName(this.name) + ", kind: " + this.kind;
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
@@ -292,7 +293,7 @@ var Namespace = (function () {
     return new namespace(CONSTANT_Namespace, uri);
   };
 
-  namespace.prototype = {
+  namespace.prototype = Object.create({
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();
       this.originalURI = this.uri = constantPool.strings[stream.readU30()];
@@ -301,6 +302,10 @@ var Namespace = (function () {
 
     isPublic: function isPublic() {
       return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
+    },
+
+    isDynamic: function isDynamic() {
+      return this.isPublic() && !this.uri;
     },
 
     getPrefix: function getPrefix() {
@@ -326,7 +331,7 @@ var Namespace = (function () {
     getAccessModifier: function getAccessModifier() {
       return kinds[this.kind];
     }
-  };
+  });
 
   namespace.PUBLIC = namespace.createNamespace();
 
@@ -369,193 +374,269 @@ var Namespace = (function () {
 /**
  * Section 2.3 and 4.4.3
  *
- * There are 10 multiname types, those ending in "A" represent the names of attributes. Some multinames
- * have the name and/or namespace part resolved at runtime, and are referred to as runtime multinames.
+ * Multinames are (namespace set, name) pairs that are resolved to QNames (qualified names) at runtime. The terminology
+ * in general is very confusing so we follow some naming conventions to simplify things. First of all, in ActionScript 3
+ * there are 10 types of multinames. Half of them end in an "A" are used to represent the names of XML attributes. Those
+ * prefixed with "RT" are "runtime" multinames which means they get their namespace from the runtime execution stack.
+ * Multinames suffixed with "L" are called "late" which means they get their name from the runtime execution stack.
  *
- *  QName[A] - A qualified name is the simplest form of multiname, it has a name with exactly one
- *  namespace. They are usually used to represent the names of variables and for type annotations.
+ *  QName - A QName (qualified name) is the simplest form of multiname, it has one name and one namespace.
+ *  E.g. ns::n
  *
- *  RTQName[A] - A runtime qualified name is a QName whose runtime part is resolved at runtime. Whenever
- *  a RTQName is used as an operand for an instruction, the namespace part is expected to be on the stack.
- *  RTQNames are used when the namespace is not known at compile time.
- *  ex: getNamespace()::f
+ *  RTQName - A QName whose namespace part is resolved at runtime.
+ *  E.g. [x]::n
  *
- *  RTQNameL[A] - A runtime qualified name late is a QName whose name and runtime part are resolved at runtime.
- *  ex: getNamespace()::[getName()]
+ *  RTQNameL - An RTQName whose name part is resolved at runtime.
+ *  E.g. [x]::[y]
  *
- *  Multiname[A] - A multiple namespace name is a name with a namespace set. The namespace set represents
- *  a collection of namespaces. Multinames are used for unqualified names where multiple namespace may be open.
- *  ex: f
+ *  Multiname - A multiname with a namespace set.
+ *  E.g. {ns0, ns1, ns2, ...}::n
  *
- *  MultinameL[A] - A multiname where the name is resolved at runtime.
- *  ex: [f]
+ *  MultinameL - A multiname with a namespace set whose name part is resolved at runtime.
+ *  E.g. {ns0, ns1, ns2, ...}::[y]
  *
- *  Multiname Resolution: Section 2.3.6
+ * Multinames are used very frequently so it's important that we optimize their use. In Shumway, QNames are
+ * represented as either: Multiname objects, strings or numbers, depending on the information they need to carry.
+ * Typically, most named QNames will be strings while numeric QNames will be treated as numbers. All other Multiname
+ * types will be represented as Multiname objects.
  *
- *  Multinames are resolved in the object's declared traits, its dynamic properties, and finally the
- *  prototype chain, in this order, unless otherwise noted. The last two only happen if the multiname
- *  contains the public namespace (dynamic properties are always in the public namespace).
+ * Please use the following conventions when dealing with multinames:
  *
- *  If the multiname is any type of QName, the QName will resolve to the property with the same name and
- *  namespace as the QName. If no property has the same name and namespace then the QName is unresolved.
+ * In the AS3 bytecode specification the word "name" usually refers to multinames. We us the same property name in
+ * Shumway thus leading to code such as |instanceInfo.name.name| which is quite ugly. If possible, avoid using the
+ * word "name" to refer to multinames, instead use "mn" or "multiname" and use the word "name" to refer to the
+ * name part of a multiname.
  *
- *  If the multiname has a namespace set, then the object is searched for any properties with the same
- *  name and a namespace matches any of the namespaces in the namespace set.
+ * Multiname: multiname, mn
+ * QName: qualifiedName, qn
+ * Namespace: namespace, ns
+ *
+ * Because a qualified name can be either a Multiname object, a string, a number, or even a Number object use the static
+ * Multiname methods to query multinames. For instance, use |Multiname.isRuntimeMultiname(mn)| instead of
+ * |mn.isRuntimeMultiname()| since the latter will fail if |mn| is not a Multiname object.
  */
 
 var Multiname = (function () {
   const ATTRIBUTE         = 0x01;
-  const QNAME             = 0x02;
-  const RUNTIME_NAMESPACE = 0x04;
-  const RUNTIME_NAME      = 0x08;
-  const NAMESPACE_SET     = 0x10;
-  const TYPE_PARAMETER    = 0x20;
+  const RUNTIME_NAMESPACE = 0x02;
+  const RUNTIME_NAME      = 0x04;
 
   function multiname(namespaces, name, flags) {
     this.namespaces = namespaces;
     this.name = name;
-    if (flags !== undefined) {
-      this.flags = flags;
-    } else if (namespaces && name) {
-      if (namespaces.length === 1) {
-        this.flags = QNAME;
-      } else {
-        assert (namespaces.length > 1);
-        this.flags = NAMESPACE_SET;
-      }
-    }
+    this.flags = flags || 0;
   }
 
-  multiname.prototype.clone = function clone() {
-    return new multiname(this.namespaces, this.name, this.flags);
-  };
-
-  function setAnyNamespace() {
-    this.flags &= ~(NAMESPACE_SET | RUNTIME_NAMESPACE);
-    this.namespaces = null;
-  }
-
-  function setAnyName() {
-    this.flags &= ~(RUNTIME_NAME);
-    this.name = null;
-  }
-
-  function setQName() {
-    this.flags |= QNAME;
-  }
-
-  function setAttribute(set) {
-    if (set) {
-      this.flags |= ATTRIBUTE;
-    } else {
-      this.flags &= ~(ATTRIBUTE);
-    }
-  }
-
-  function setRuntimeName() {
-    this.flags |= RUNTIME_NAME;
-    this.name = null;
-  }
-
-  function setRuntimeNamespace() {
-    this.flags |= RUNTIME_NAMESPACE;
-    this.flags &= ~(NAMESPACE_SET);
-    this.namespaces = null;
-  }
-
-  function setNamespaceSet(namespaceSet) {
-    assert(namespaceSet != null);
-    this.flags &= ~(RUNTIME_NAMESPACE);
-    this.flags |= NAMESPACE_SET;
-    this.namespaces = namespaceSet;
-  }
-
-  function setTypeParameter(typeParameter) {
-    this.flags |= TYPE_PARAMETER;
-    this.typeParameter = typeParameter;
-  }
-
-  multiname.prototype.parse = function parse(constantPool, stream, multinames) {
+  multiname.parse = function parse(constantPool, stream, multinames) {
     var index = 0;
-    this.flags = 0;
-    this.kind = stream.readU8();
-
-    switch (this.kind) {
+    var kind = stream.readU8();
+    var name = undefined, namespaces = [], flags = 0, typeParameter;
+    switch (kind) {
       case CONSTANT_QName: case CONSTANT_QNameA:
         index = stream.readU30();
-        if (index === 0) {
-          setAnyNamespace.call(this);
-        } else {
-          this.namespaces = [constantPool.namespaces[index]];
+        if (index) {
+          namespaces = [constantPool.namespaces[index]];
         }
         index = stream.readU30();
-        if (index === 0) {
-          setAnyName.call(this);
-        } else {
-          this.name = constantPool.strings[index];
+        if (index) {
+          name = constantPool.strings[index];
         }
-        setQName.call(this);
-        setAttribute.call(this, this.kind === CONSTANT_QNameA);
         break;
       case CONSTANT_RTQName: case CONSTANT_RTQNameA:
         index = stream.readU30();
-        if (index === 0) {
-          setAnyName.call(this);
-        } else {
-          this.name = constantPool.strings[index];
+        if (index) {
+          name = constantPool.strings[index];
         }
-        setQName.call(this);
-        setRuntimeNamespace.call(this);
-        setAttribute.call(this, this.kind === CONSTANT_RTQNameA);
+        flags |= RUNTIME_NAMESPACE;
         break;
-      case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
-        setQName.call(this);
-        setRuntimeNamespace.call(this);
-        setRuntimeName.call(this);
-        setAttribute.call(this, this.kind === CONSTANT_RTQNameLA);
+      case CONSTANT_RTQNameL:case CONSTANT_RTQNameLA:
+        flags |= RUNTIME_NAMESPACE;
+        flags |= RUNTIME_NAME;
         break;
       case CONSTANT_Multiname: case CONSTANT_MultinameA:
         index = stream.readU30();
-        if (index === 0) {
-          setAnyName.call(this);
-        } else {
-          this.name = constantPool.strings[index];
+        if (index) {
+          name = constantPool.strings[index];
         }
         index = stream.readU30();
         assert(index != 0);
-        var nsset = constantPool.namespaceSets[index];
-        if (nsset.length === 1) {
-          setQName.call(this);
-          this.namespaces = nsset;
-        } else {
-          setNamespaceSet.call(this, nsset);
-        }
-        setAttribute.call(this, this.kind === CONSTANT_MultinameA);
+        namespaces = constantPool.namespaceSets[index];
         break;
       case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
-        setRuntimeName.call(this);
+        flags |= RUNTIME_NAME;
         index = stream.readU30();
         assert(index != 0);
-        setNamespaceSet.call(this, constantPool.namespaceSets[index]);
-        setAttribute.call(this, this.kind === CONSTANT_MultinameLA);
+        namespaces = constantPool.namespaceSets[index];
         break;
       /**
        * This is undocumented, looking at Tamarin source for this one.
        */
       case CONSTANT_TypeName:
         index = stream.readU32();
-        for (var key in multinames[index]) {
-          this[key] = multinames[index][key];
-        }
+        namespaces = multinames[index].namespaces;
+        name = multinames[index].name;
         index = stream.readU32();
         assert(index === 1);
         index = stream.readU32();
-        setTypeParameter.call(this, multinames[index]);
+        typeParameter = multinames[index];
         break;
       default:
         unexpected();
         break;
     }
+    switch (kind) {
+      case CONSTANT_QNameA:
+      case CONSTANT_RTQNameA:
+      case CONSTANT_RTQNameLA:
+      case CONSTANT_MultinameA:
+      case CONSTANT_MultinameLA:
+        flags |= ATTRIBUTE;
+        break;
+    }
+    var mn = new Multiname(namespaces, name, flags);
+    if (typeParameter) {
+      mn.typeParameter = typeParameter;
+    }
+    return mn;
+  };
+
+  /**
+   * Tests if the specified value is a valid multiname.
+   */
+  multiname.isMultiname = function (mn) {
+    return typeof mn === "number" ||
+           typeof mn === "string" ||
+           mn instanceof Multiname ||
+           mn instanceof Number;
+  };
+
+  /**
+   * Tests if the specified value is a valid qualified name.
+   */
+  multiname.isQName = function (mn) {
+    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
+      return true;
+    }
+    if (mn instanceof multiname) {
+      return mn.namespaces && mn.namespaces.length === 1;
+    }
+    return false;
+  };
+
+  /**
+   * Tests if the specified multiname has a runtime name.
+   */
+  multiname.isRuntimeName = function isRuntimeName(mn) {
+    return mn instanceof Multiname && mn.isRuntimeName();
+  };
+
+  /**
+   * Tests if the specified multiname has a runtime namespace.
+   */
+  multiname.isRuntimeNamespace = function isRuntimeNamespace(mn) {
+    return mn instanceof Multiname && mn.isRuntimeNamespace();
+  };
+
+  /**
+   * Tests if the specified multiname has a runtime name or namespace.
+   */
+  multiname.isRuntime = function (mn) {
+    return mn instanceof Multiname && mn.isRuntimeName() || mn.isRuntimeNamespace();
+  };
+
+  /**
+   * Gets the qualified name for this multiname, this is either the identity or
+   * a mangled Multiname object.
+   */
+  multiname.getQualifiedName = function getQualifiedName(mn) {
+    assert (multiname.isQName(mn));
+    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
+      return mn;
+    } else {
+      return mn.qualifiedName || (mn.qualifiedName = mn.namespaces[0].qualifiedName + "$" + mn.name);
+    }
+  };
+
+  multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
+    return "public$" + name;
+  };
+
+  multiname.getAccessModifier = function getAccessModifier(mn) {
+    assert (Multiname.isQName(mn));
+    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
+      return "public";
+    }
+    assert (mn instanceof multiname);
+    return mn.namespaces[0].getAccessModifier();
+  };
+
+  multiname.isAnyName = function isAnyName(mn) {
+    return mn instanceof Multiname && mn.name === undefined;
+  };
+
+  multiname.isNumeric = function (mn) {
+    if (typeof mn === "number") {
+      return true;
+    } else if (typeof mn === "string") {
+      return isNumeric(mn);
+    }
+    assert (mn instanceof multiname);
+    return !isNaN(parseInt(multiname.getName(mn), 10));
+  };
+
+  multiname.getName = function getName(mn) {
+    assert (mn instanceof Multiname);
+    assert (!mn.isRuntimeName());
+    return mn.getName();
+  };
+
+  /**
+   * Helper function that creates multinames without allocating objects for numeric
+   * names.
+   */
+  multiname.getMultiname = function getMultiname(namespaces, name) {
+    if (isNumeric(name)) {
+      return name;
+    }
+    return new Multiname(namespaces, name);
+  };
+
+  var simpleNameCache = {};
+
+  /**
+   * Creates a multiname from a simple name qualified with one ore more namespaces, for example:
+   * flash.display.Graphics
+   * private flash.display.Graphics
+   * [private flash.display, private flash, public].Graphics
+   */
+  multiname.fromSimpleName = function fromSimpleName(simpleName) {
+    assert (simpleName);
+    if (simpleName in simpleNameCache) {
+      return simpleNameCache[simpleName];
+    }
+
+    var nameIndex = simpleName.lastIndexOf("."), name, namespace;
+
+    if (nameIndex >= 0) {
+      name = simpleName.substring(nameIndex + 1).trim();
+      namespace = simpleName.substring(0, nameIndex);
+    } else {
+      name = simpleName;
+      namespace = "";
+    }
+    return simpleNameCache[simpleName] = new Multiname(Namespace.fromSimpleName(namespace), name);
+  };
+
+  multiname.prototype.getQName = function getQName(index) {
+    assert (index >= 0 && index < this.namespaces.length);
+    if (!this.cache) {
+      this.cache = [];
+    }
+    var name = this.cache[index];
+    if (!name) {
+      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name);
+    }
+    return name;
   };
 
   multiname.prototype.isAttribute = function isAttribute() {
@@ -563,11 +644,11 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyName = function isAnyName() {
-    return !this.isRuntimeName() && this.name === null;
+    return !this.isRuntimeName() && this.name === undefined;
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {
-    return !this.isRuntimeNamespace() && !(this.flags & NAMESPACE_SET) && this.namespaces === null;
+    return !this.isRuntimeNamespace() && this.namespaces.length === 0;
   };
 
   multiname.prototype.isRuntimeName = function isRuntimeName() {
@@ -583,30 +664,16 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isQName = function isQName() {
-    return this.flags & QNAME;
+    return this.namespaces.length === 1 && !this.isAnyName();
   };
 
-  multiname.prototype.hasTypeParameter = function isQName() {
-    return this.flags & TYPE_PARAMETER;
-  };
-
-  multiname.prototype.isPublicNamespaced = function setName(name) {
-    if (this.isRuntimeNamespace())
-      return false;
-
-    return this.namespaces.every(function(ns) {
-      return ns.isPublic() && ns.name === "";
-    });
+  multiname.prototype.hasTypeParameter = function hasTypeParameter() {
+    return !!this.typeParameter;
   };
 
   multiname.prototype.getName = function getName() {
     assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
-  };
-
-  multiname.prototype.setName = function setName(name) {
-    this.flags &= ~(RUNTIME_NAME);
-    this.name = name;
   };
 
   multiname.prototype.nameToString = function nameToString() {
@@ -615,52 +682,6 @@ var Multiname = (function () {
     } else {
       return this.isRuntimeName() ? "[]" : this.getName();
     }
-  };
-
-  multiname.prototype.isNumeric = function isNumeric() {
-    return !isNaN(parseInt(this.getName(), 10));
-  };
-
-  multiname.prototype.getQualifiedName = function getQualifiedName() {
-    var qualifiedName = this.qualifiedName;
-    if (qualifiedName !== undefined) {
-      return qualifiedName;
-    } else {
-      assert(this.isQName());
-      var ns = this.namespaces[0];
-
-      // Since numeric names can't be namespaced, there's no sense
-      // in giving them a prefix. This also lets us reuse the standard
-      // implementations of Array, Vector, etc. without too much pain.
-      if (this.isNumeric())
-        return this.qualifiedName = this.name;
-
-      qualifiedName = '';
-      if (this.isAttribute())
-        qualifiedName += '@';
-      qualifiedName += ns.qualifiedName + "$" + this.getName();
-      return this.qualifiedName = qualifiedName;
-    }
-  };
-
-  /**
-   * Creates a QName from this multiname.
-   */
-  multiname.prototype.getQName = function getQName(index) {
-    assert (index >= 0 && index < this.namespaces.length);
-    if (!this.cache) {
-      this.cache = [];
-    }
-    var name = this.cache[index];
-    if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, QNAME);
-    }
-    return name;
-  };
-
-  multiname.prototype.getAccessModifier = function getAccessModifier() {
-    assert (this.isQName());
-    return this.namespaces[0].getAccessModifier();
   };
 
   multiname.prototype.toString = function toString() {
@@ -684,41 +705,10 @@ var Multiname = (function () {
     }
 
     if (this.hasTypeParameter()) {
-        str += "<" + this.typeParameter.toString() + ">";
-      }
+      str += "<" + this.typeParameter.toString() + ">";
+    }
 
     return str;
-  };
-
-  var simpleNameCache = {};
-
-  multiname.publicQName = function publicQName(name) {
-    var mn = new multiname([Namespace.PUBLIC], name, QNAME);
-    return simpleNameCache[mn.getQualifiedName()] = mn;
-  };
-
-  /**
-   * Creates a multiname from a simple name qualified with one ore more namespaces, for example:
-   * flash.display.Graphics
-   * private flash.display.Graphics
-   * [private flash.display, private flash, public].Graphics
-   */
-  multiname.fromSimpleName = function fromSimpleName(simpleName) {
-    assert (simpleName);
-    if (simpleName in simpleNameCache) {
-      return simpleNameCache[simpleName];
-    }
-
-    var nameIndex = simpleName.lastIndexOf("."), name, namespace;
-
-    if (nameIndex >= 0) {
-      name = simpleName.substring(nameIndex + 1).trim();
-      namespace = simpleName.substring(0, nameIndex);
-    } else {
-      name = simpleName;
-      namespace = "";
-    }
-    return simpleNameCache[simpleName] = new multiname(Namespace.fromSimpleName(namespace), name);
   };
 
   return multiname;
@@ -790,9 +780,7 @@ var ConstantPool = (function constantPool() {
     var multinames = [undefined];
     n = stream.readU30();
     for (i = 1; i < n; ++i) {
-      var multiname = new Multiname(i);
-      multiname.parse(this, stream, multinames);
-      multinames.push(multiname);
+      multinames.push(Multiname.parse(this, stream, multinames));
     }
 
     this.multinames = multinames;
@@ -817,7 +805,7 @@ var ConstantPool = (function constantPool() {
     case CONSTANT_Undefined:
       return undefined;
     case CONSTANT_Namespace:
-    case CONSTANT_PackageInternalNS:
+    case CONSTANT_PackageInternalNs:
       return this.namespaces[index];
     case CONSTANT_QName:
     case CONSTANT_MultinameA:
@@ -941,6 +929,9 @@ var MethodInfo = (function () {
     info.traits = parseTraits(abc, stream, info);
   };
 
+  methodInfo.prototype.hasExceptions = function hasExceptions() {
+    return this.exceptions.length > 0;
+  };
   return methodInfo;
 })();
 
@@ -989,7 +980,7 @@ var InstanceInfo = (function () {
     const methods = abc.methods;
 
     this.name = constantPool.multinames[stream.readU30()];
-    assert(this.name.isQName());
+    assert(Multiname.isQName(this.name));
     this.superName = constantPool.multinames[stream.readU30()];
     this.flags = stream.readU8();
     this.protectedNs = 0;
@@ -1028,6 +1019,11 @@ var ClassInfo = (function () {
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
   }
+
+  classInfo.prototype.toString = function() {
+    return "" + this.name;
+  };
+
   return classInfo;
 })();
 
@@ -1051,7 +1047,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    Timer.start("parse");
+    Timer.start("Parse");
     this.name = name;
 
     var n, i;

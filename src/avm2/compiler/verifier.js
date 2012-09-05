@@ -108,16 +108,28 @@ var Verifier = (function() {
     unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
   }
 
-  function findTrait(traits, multiname) {
+  /**
+   * Finds a trait by multiname.
+   * The kind acts only like an arbitrer between getters and setters since
+   * thess two have the same multiname and differ only by kind.
+   * This means that when |kind === TRAIT_Setter| the getters will be skipped
+   * and when |kind === TRAIT_Getter| the setters will be skipped.
+   */
+  function findTrait(traits, multiname, kind) {
     var trait;
     for (var i = 0, j = multiname.namespaces.length; i < j; i++) {
       var qn = multiname.getQName(i);
       for (var k = 0, l = traits.length; k < l; k++) {
-        if (qn.getQualifiedName() === traits[k].name.getQualifiedName()) {
+        if (Multiname.getQualifiedName(qn) === Multiname.getQualifiedName(traits[k].name)) {
+          if (kind && ((kind === TRAIT_Getter && traits[k].isSetter()) ||
+                       (kind === TRAIT_Setter && traits[k].isGetter()))) {
+            // skip getters or setters according to the kind
+            continue;
+          }
           if(!trait) {
             trait = traits[k];
-          } else {
-            unexpected("Found name " + qn.getQualifiedName() + " twice in traits: " + traits);
+          } else if ((trait.isGetter() && traits[k].isGetter()) || (trait.isSetter() && traits[k].isSetter())) {
+            unexpected("Found name " + Multiname.getQualifiedName(qn) + " twice in traits: " + traits);
           }
         }
       }
@@ -145,10 +157,20 @@ var Verifier = (function() {
         return this.kind;
       };
 
+      type.prototype.equals = function equals(other) {
+        if (this.isVector() && other.isVector()) {
+          return this.value.equals(other.value); // Vector.prototype.equals
+        }
+
+        return ((this.kind === other.kind) &&
+                (this.value === other.value));
+      };
+
       // Consists of Any, Undefined and Object
       type.Atom = new type("Atom");
       type.Atom.Any = new type("Atom", "Any");
       type.Atom.Undefined = new type("Atom", "Undefined");
+      type.Atom.Void = new type("Atom", "Void");
       type.Atom.Object = new type("Atom", "Object");
 
       type.Int = new type("Int");
@@ -169,24 +191,28 @@ var Verifier = (function() {
       type.fromName = function fromName(name) {
         if (name === undefined) {
           return type.Atom.Undefined;
-        } else if (name.getQualifiedName() === "public$int") {
+        } else if (Multiname.getQualifiedName(name) === "public$void") {
+          return type.Atom.Void;
+        } else if (Multiname.getQualifiedName(name) === "public$int") {
           return type.Int;
-        } else if (name.getQualifiedName() === "public$uint") {
+        } else if (Multiname.getQualifiedName(name) === "public$uint") {
           return type.Uint;
-        } else if (name.getQualifiedName() === "public$Object") {
+        } else if (Multiname.getQualifiedName(name) === "public$Object") {
           return type.Atom.Object;
-        } else if (name.getQualifiedName() === "public$Number") {
+        } else if (Multiname.getQualifiedName(name) === "public$Number") {
           return type.Number;
         } else if (name.hasTypeParameter()) { // generic type
-          if (name.getQualifiedName() === "public$__AS3__$vec$Vector") {
-            return Type.fromReference(new Vector(type.fromName(name.typeParameter)));
+          if (Multiname.getQualifiedName(name) === "public$__AS3__$vec$Vector") {
+            // return Type.fromReference(new Vector(type.fromName(name.typeParameter)));
+            return new Vector(type.classFromName(name.typeParameter));
           }
           // For now only Vectors should have type parameters.
           unexpected();
         }
         var ty = domain.getProperty(name, false, true);
         assert (ty, name + " not found");
-        return type.fromReference(ty);
+        // return type.fromReference(ty);
+        return ty;
       };
 
       type.fromReference = function fromReference(value) {
@@ -194,6 +220,29 @@ var Verifier = (function() {
         var ty = new type("Reference");
         ty.value = value;
         return ty;
+      };
+
+      type.fromClass = function fromClass(value) {
+        // assert(value);
+        var ty = new type("Class");
+        ty.value = value;
+        return ty;
+      };
+
+      type.referenceFromName = function referenceFromName(name) {
+        var ty = type.fromName(name);
+        if (ty instanceof Type) {
+          return ty;
+        }
+        return type.fromReference(ty);
+      };
+
+      type.classFromName = function classFromName(name) {
+        var ty = type.fromName(name);
+        if (ty instanceof Type) {
+          return ty;
+        }
+        return type.fromClass(ty);
       };
 
       type.Reference = new type("Reference");
@@ -208,6 +257,18 @@ var Verifier = (function() {
       type.Reference.Array = new type("Reference", getType("Array"));
       type.Reference.Function = new type("Reference", getType("Function"));
 
+
+      type.Class = new type("Class");
+      type.Class.Int = new type("Class", getType("int"));
+      type.Class.Uint = new type("Class", getType("uint"));
+      type.Class.Object = new type("Class", getType("Object"));
+      type.Class.Number = new type("Class", getType("Number"));
+      type.Class.Vector = new type("Class", domain.getClass("public __AS3__$vec.Vector"));
+      type.Class.String = new type("Class", getType("String"));
+      type.Class.Array = new type("Class", getType("Array"));
+      type.Class.Function = new type("Class", getType("Function"));
+
+
       type.check = function check(a, b) {
         assert (a.kind === b.kind);
       };
@@ -216,69 +277,165 @@ var Verifier = (function() {
         return this === type.Number || this === type.Int || this === type.Uint;
       };
 
+      type.prototype.isAtom = function isAtom() {
+        return this.kind === "Atom";
+      };
+
       type.prototype.isReference = function isReference() {
         return this.kind === "Reference";
+      };
+
+      type.prototype.isClass = function isClass() {
+        return this.kind === "Class";
       };
 
       type.prototype.isVector = function() {
         return this.kind === "Reference" && this.value instanceof Vector;
       };
 
-      type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
-        if (this.kind !== "Reference") {
-          return null;
+      type.prototype.getMethodReturnType = function getMethodReturnType(multiname) {
+        assert(this.isReference());
+        var trait = this.getTraitEnforceGetter(multiname);
+        if (trait && (trait.isMethod() || trait.isGetter())) {
+          return Type.referenceFromName(trait.methodInfo.returnType);
         }
-        if (this.value instanceof Global) {
-          return findTraitBySlotId(this.value.scriptInfo.traits, slotId);
-        } else if (this.value instanceof Activation) {
-          return findTraitBySlotId(this.value.methodInfo.traits, slotId);
+        return Type.Atom.Any;
+      };
+
+      type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
+        if (this.isReference()) {
+          if (this.value instanceof Global) {
+            return findTraitBySlotId(this.value.scriptInfo.traits, slotId);
+          } else if (this.value instanceof Activation) {
+            return findTraitBySlotId(this.value.methodInfo.traits, slotId);
+          } else if (this.value instanceof domain.system.Class) {
+            // Look into base's calss traits
+            var currentClass = this.value;
+            var trait = findTraitBySlotId(currentClass.classInfo.instanceInfo.traits, slotId);
+            while (!trait && currentClass.baseClass) {
+              currentClass = currentClass.baseClass;
+              trait = findTraitBySlotId(currentClass.classInfo.instanceInfo.traits, slotId);
+            }
+            return trait;
+          }
+        } else if (this.isClass()) {
+          return findTraitBySlotId(this.value.classInfo.traits, multiname);
+        }
+
+        return null;
+      };
+
+      type.prototype.getTraitEnforceGetter = function getTraitEnforceGetter(multiname) {
+        return this.getTrait(multiname, TRAIT_Getter);
+      };
+
+      type.prototype.getTraitEnforceSetter = function getTraitEnforceSetter(multiname) {
+        return this.getTrait(multiname, TRAIT_Setter);
+      };
+
+      /**
+       * Gets a trait by multiname.
+       * The kind acts only like an arbitrer between getters and setters since
+       * thess two have the same multiname and differ only by kind.
+       * This means that when |kind === TRAIT_Setter| the getters will be skipped
+       * and when |kind === TRAIT_Getter| the setters will be skipped.
+       */
+      type.prototype.getTrait = function getTrait(multiname, kind) {
+        if (this.isReference()) {
+          if (this.value instanceof Global) {
+            return findTrait(this.value.scriptInfo.traits, multiname, kind);
+          } else if (this.value instanceof Activation) {
+            return findTrait(this.value.methodInfo.traits, multiname, kind);
+          } else if (this.value instanceof domain.system.Class) {
+            // Look into base's calss traits
+            var currentClass = this.value;
+            var trait = findTrait(currentClass.classInfo.instanceInfo.traits, multiname, kind);
+            while (!trait && currentClass.baseClass) {
+              currentClass = currentClass.baseClass;
+              trait = findTrait(currentClass.classInfo.instanceInfo.traits, multiname, kind);
+            }
+            return trait;
+          }
+        } else if (this.isClass()) {
+          return findTrait(this.value.classInfo.traits, multiname, kind);
         }
         return null;
       };
 
-      type.prototype.getTrait = function getTrait(multiname) {
-        if (this.kind !== "Reference") {
-          return null;
+      /*
+      Returns the lowest common base class of two reference types.
+      The implementation assumes that the types are nodes in a tree
+      where the root is |Object|, so they always have a common ancestor.
+      */
+      type.getLowestCommonAncestor = function getLowestCommonAncestor(first, second) {
+        assert(first.isReference() && second.isReference());
+
+        if (first.equals(second)) {
+          return first;
         }
-        if (this.value instanceof Global) {
-          return findTrait(this.value.scriptInfo.traits, multiname);
-        } else if (this.value instanceof Activation) {
-          return findTrait(this.value.methodInfo.traits, multiname);
-        } else {
-          // TODO for other object types ?
+
+        var firstPathToRoot = [];
+        var firstBaseClass = first.value;
+        while (firstBaseClass) {
+          firstPathToRoot.push(firstBaseClass);
+          firstBaseClass = firstBaseClass.baseClass;
         }
-        return null;
+
+        var secondPathToRoot = [];
+        var secondBaseClass = second.value;
+        while (secondBaseClass) {
+          secondPathToRoot.push(secondBaseClass);
+          secondBaseClass = secondBaseClass.baseClass;
+        }
+
+        var commonBaseClass;
+        while (firstBaseClass === secondBaseClass  &&
+               firstPathToRoot.length > 0 && secondPathToRoot.length > 0) {
+          commonBaseClass = firstBaseClass;
+          firstBaseClass = firstPathToRoot.pop();
+          secondBaseClass = secondPathToRoot.pop();
+        }
+
+        if (firstBaseClass === secondBaseClass) {
+          // one class is descendent from the other
+          return Type.fromReference(firstBaseClass);
+        }
+        // neither is descendant from the other
+        return Type.fromReference(commonBaseClass);
       };
 
       type.prototype.merge = function(other) {
         // TODO: Merging Atom.Undefined and Atom.Any bellow is a hack to
         // circumvent the fact that the verifier's type hierrchy doesn't
         // form a semilatice and solve the incompatible types merge situations
+
         if (this === other) {
           return this;
-        } else if (this.kind === "Atom" || other.kind === "Atom") {
+        } else if (this.isAtom() || other.isAtom()) {
           return type.Atom;
-        } else if (this.kind === "Reference" && other.kind === "Reference") {
-          if (this.isVector() && other.isVector()) {
-            // Merge Vector
-            if (this.value.equals(other.value)) {
-              return this;
-            }
-          }
-          // TODO: Actually merge reference types.
-          return type.Reference.Null;
-        } else if ((this === Type.Int && other.kind === "Reference") ||
-                   (this.kind === "Reference" && other === Type.Int)) {
-          return Type.Atom.Any;
-        } else if ((this === Type.Int && other === Type.Number) ||
-                   (this === Type.Number && other === Type.Int)) {
+        } else if (this.isReference() && other.isReference()) {
+          return type.getLowestCommonAncestor(this, other);
+        } else if (this.isClass() && other.isClass()) {
+          return type.Class;
+        } else if (this.isReference() ^ other.isReference()) {
+          return type.Atom.Any;
+        } else if (this.isClass() ^ other.isClass()) {
+          return type.Atom.Any;
+        } else if (this === type.Boolean ^ other === type.Boolean) {
+          return type.Atom.Any;
+        } else if ((this === type.Int && other === type.Number) ||
+                   (this === type.Number && other === type.Int) ||
+                   (this === type.Uint && other === type.Number) ||
+                   (this === type.Number && other === type.Uint) ||
+                   (this === type.Int && other === type.Uint) ||
+                   (this === type.Uint && other === type.Int)) {
           return type.Number;
-        } else if (this === Type.Atom.Undefined || other === Type.Atom.Undefined) {
-          return Type.Atom;
-        } else if (this === Type.Atom.Any || other === Type.Atom.Any) {
+        } else if (this === type.Atom.Undefined || other === type.Atom.Undefined) {
+          return type.Atom;
+        } else if (this === type.Atom.Any || other === type.Atom.Any) {
           return Type.Atom.Any;
         }
-        // TODO: Merge vectors
+
         unexpected("Cannot merge types : " + this + " and " + other);
       };
 
@@ -309,7 +466,7 @@ var Verifier = (function() {
     // and have the same elementType
     Vector.prototype.equals = function (other) {
       if (this.elementType.isVector() && other.elementType.isVector()) {
-        return this.value.equals(other.value);
+        return this.elementType.equals(other.elementType);
       }
       return this.elementType === other.elementType;
     };
@@ -345,14 +502,29 @@ var Verifier = (function() {
 
         assert (mi.localCount >= mi.parameters.length + 1);
         
-        // FIXME: Type of |this| is Type.Atom, not the actual class type.
-        // Is the class type contained in method analysis when the method is a class member?
-
         // First local is the type of |this|.
-        entryState.local.push(Type.Atom);
+        // If the current method is defined inside a class (instance or static) the current class type
+        // is in the saved scope's object
+        // The instance tratis are inside classInfo.instanceInfo
+        // The static tratis are insite classInfo
+        assert (this.scope);
+
+        if (mi.holder instanceof ClassInfo) {
+          // static method
+          entryState.local.push(Type.fromClass(this.scope.object));
+        } else if (mi.holder instanceof InstanceInfo) {
+          // instance method
+          entryState.local.push(Type.fromReference(this.scope.object));
+        } else if (mi.holder instanceof ScriptInfo) {
+          // function
+          entryState.local.push(Type.fromReference(this.scope.global));
+        } else {
+          entryState.local.push(Type.Atom);
+        }
+
         // Initialize entry state with parameter types.
         for (var i = 0; i < mi.parameters.length; i++) {
-          entryState.local.push(Type.fromName(mi.parameters[i].type));
+          entryState.local.push(Type.referenceFromName(mi.parameters[i].type));
         }
 
         if (writer) {
@@ -374,8 +546,8 @@ var Verifier = (function() {
 
         /*
         Keep the blocks sorted in dominator order.
-        The SortedList structure is based on a linked list and uses a liniar search 
-        to find the right insertion position and keep the list sorted. 
+        The SortedList structure is based on a linked list and uses a liniar search
+        to find the right insertion position and keep the list sorted.
         The push operation takes O(n), the pull operations takes O(1).
         */
         var worklist = new SortedList(function compare(blockA, blockB) {
@@ -458,7 +630,7 @@ var Verifier = (function() {
         var mmethods = abc.mmethods;
         var runtime = abc.runtime;
 
-        var obj, func, mi, multiname, lVal, rVal, val, valTy, factory, type, typeName, name, trait;
+        var obj, objTy, func, mi, multiname, lVal, rVal, val, valTy, factory, type, typeName, name, trait;
 
         /**
          * Optionally pops a runtime multiname of the stack and stores a |RuntimeMultiname|
@@ -492,16 +664,91 @@ var Verifier = (function() {
         }
 
         function findProperty(multiname, strict) {
+
+          // |findProperty| should look first into the scope stack and then
+          // into the savedScope (which is the scope at the time the method
+          // was created). Since we deal with an abstract view of the saved
+          // scope stack, we look into saved scope object's traits
+
+          for (var idx = scope.length - 1; idx >= 0; idx--) {
+            var scopeObj = scope[idx];
+            if (scopeObj.getTrait(multiname)) {
+              return scopeObj;
+            }
+          }
+          
+          // the property was not found in the scope stack, search the saved scope
           if (savedScope) {
-            var obj = savedScope.findProperty(multiname, domain, false);
+            obj = savedScope.findProperty(multiname, domain, false);
+
+            if (obj instanceof domain.system.Class) {
+              return Type.fromClass(obj);
+            }
             return Type.fromReference(obj);
           }
+
+          return Type.Atom.Any;
         }
 
-        function resolveTrait(type, multiname) {
-          if (type && type.kind === "Reference" && type.value instanceof domain.system.Class) {
-            // ...
+        function getPropertyType(obj, multiname) {
+          var type = Type.Atom.Any;
+
+          // |getPropertyType| resolves the type of property with the name specified
+          // by the multiname in object.
+          
+          if (multiname instanceof RuntimeMultiname) {
+            type = multiname.name;
+          } else if (obj.isReference() || obj.isClass()) { // what about classes?
+            if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) { // recheck vectors
+              type = obj.value.elementType;
+            } else {
+              // |getTraitEnforceGetter| makes sure that we get the getter,
+              // not the setter, which is required because we need the accessor
+              // property type which can be retrieved from getter's return type
+              trait = obj.getTraitEnforceGetter(multiname);
+
+              if (trait) {
+                type = getTraitType(trait, obj);
+              } else if (trait === undefined) {
+                bc.isDynamicProperty = true;
+                type = Type.Atom.Undefined;
+              }
+            }
           }
+
+          return type;
+        }
+
+        function getTraitType(trait, obj) {
+          assert(trait);
+          var type = Type.Atom.Any;
+          if (trait.isClass()) {
+            // If the obj is a verifier Class type we have access
+            // to the actual object holding the property, so we can call
+            // runtime's |getPropery| function to retrieve the actual value
+            // needed in case of a class trait
+            // In case of a class the object holding it must be the global object.
+            val = getProperty(obj.value, trait.name);
+            switch (val) {
+              case Type.Class.Int.value:
+                type = Type.Int;
+                break;
+              case Type.Class.Uint.value:
+                type = Type.Uint;
+                break;
+              case Type.Class.Vector.value:
+                type = Type.fromClass(new Vector());
+                break;
+              default:
+                type = Type.fromClass(val);
+                break;
+            }
+          } else if (trait && (trait.isSlot() || trait.isConst())) {
+            type = Type.referenceFromName(trait.typeName);
+          } else if (trait && trait.isGetter()) {
+            type = Type.referenceFromName(trait.methodInfo.returnType);
+          }
+          return type;
         }
 
         function push(v) {
@@ -516,24 +763,15 @@ var Verifier = (function() {
           return v;
         }
 
-        function getSlot(type, index) {
-          if (type.kind !== "Reference") {
+        function getSlot(objTy, index) {
+          if (!objTy.isReference()) {
             return Type.Atom;
           }
-          var traits;
-          if (type.value instanceof Global) {
-            traits = type.value.scriptInfo.traits;
-          } else if (type.value instanceof Activation) {
-            traits = type.value.methodInfo.traits;
+          trait = objTy.getTraitBySlotId(index);
+          if (trait) {
+            return getTraitType(trait, objTy);
           }
-          assert (traits);
-          var trait = findTraitBySlotId(traits, index);
-
-          if (trait.isClass()) {
-            return Type.fromName(trait.name);
-          }
-
-          return Type.fromName(trait.typeName);
+          return Type.Atom.Undefined;
         }
 
         if (writer) {
@@ -721,18 +959,25 @@ var Verifier = (function() {
           case OP_callsuper:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname); // ??
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+
+            if (objTy.isReference() && objTy.value.baseClass) {
+                var baseType = Type.fromReference(objTy.value.baseClass);
+                type = baseType.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_callproperty:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname);
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+
+            if (objTy.isReference()) {
+              type = objTy.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_returnvoid:
             // Nop.
@@ -748,28 +993,47 @@ var Verifier = (function() {
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
             obj = stack.pop();
-            // TODO: Figure out the type of the generated instance.
-            stack.push(Type.Atom.Any);
+            type = Type.Atom.Any;
+
+            if (!(multiname instanceof RuntimeMultiname)) {
+               if (obj.isReference() || obj.isClass()) {
+                  trait = obj.getTrait(multiname);
+                  if (trait && trait.isClass()) {
+                    val = getProperty(obj.value, multiname);
+                    type = Type.fromReference(val);
+                }
+              }
+            }
+            stack.push(type);
             break;
           case OP_callsuperid:
             notImplemented(bc);
             break;
           case OP_callproplex:
+            // Very similar with op_callproperty, only difference being that
+            // callproplex uses |null| as the |this| parameter for [[Call]]
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            obj = pop();
-            resolveTrait(obj, multiname);
-            //TODO: Implement resolveTrait and figure out the return type of the call
-            push(Type.Atom.Any);
+            objTy = pop();
+            type = Type.Atom.Any;
+                        
+            if (objTy.isReference()) {
+              type = objTy.getMethodReturnType(multiname);
+            }
+            push(type);
             break;
           case OP_callinterface:
             notImplemented(bc);
             break;
           case OP_callsupervoid:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            popMultiname(bc);
+            pop();
             break;
           case OP_callpropvoid:
-            notImplemented(bc);
+            stack.popMany(bc.argCount);
+            popMultiname(bc);
+            pop();
             break;
           case OP_sxi1:
           case OP_sxi8:
@@ -781,7 +1045,7 @@ var Verifier = (function() {
             type = pop();
             factory = pop();
             // no need to check for the factory type since is allways vector
-            if (type === Type.Int || type === Type.Uint || type.kind === "Reference") {
+            if (type === Type.Int || type === Type.Uint || type.isReference()) {
               type = Type.fromReference(new Vector(type));
             } else {
               type = Type.Atom.Any;
@@ -794,8 +1058,7 @@ var Verifier = (function() {
           case OP_newobject:
             // Pops keys and values, pushes result.
             stack.popMany(bc.argCount * 2);
-            // push(Type.Reference.Dynamic);
-            push(Type.Reference.Any);
+            push(Type.Atom.Any);
             break;
           case OP_newarray:
             // Pops values, pushes result.
@@ -812,7 +1075,7 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_newcatch:
-            notImplemented(bc);
+            push(Type.Atom.Any);
             break;
           case OP_findpropstrict:
             multiname = popMultiname(bc);
@@ -826,13 +1089,26 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getlex:
-            notImplemented(bc);
+            multiname = popMultiname(bc);
+            push(getPropertyType(findProperty(multiname, true), multiname));
             break;
           case OP_initproperty:
           case OP_setproperty:
-            popValue(bc); // attaches the of the value to bc.valTy
-            popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
-            popObject(bc); // attaches the type of the object to bc.objTy
+            valTy = popValue(bc); // attaches the type of the value to bc.valTy
+            multiname = popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
+            objTy = popObject(bc); // attaches the type of the object to bc.objTy
+
+            // TODO: This logic would not work for runtime multinames since the
+            // actual value of the name could be a trait, thus not a dynamic property,
+            // unless something can be proven about the value of the runtime multinames
+            if (!(multiname instanceof RuntimeMultiname)) {
+              trait = objTy.getTrait(multiname);
+
+              if (trait === undefined) {
+                bc.isDynamicProperty = true;
+              }
+            }
+
             break;
           case OP_getlocal:
             push(local[bc.index]);
@@ -845,35 +1121,12 @@ var Verifier = (function() {
             break;
           case OP_getscopeobject:
             // Get scope object from index position of the scope stack
-            // TODO: Verify this for correctness; should it look through saved
-            // scope chain instead ?
             push(scope[bc.index]);
             break;
           case OP_getproperty:
             multiname = popMultiname(bc);
             obj = pop();
-            type = Type.Atom.Any;
-            if (obj.isReference()) {
-              if (obj.isVector() && multiname.name instanceof Type && multiname.name.isNumeric()) {
-                type = obj.value.elementType;
-              } else {
-                trait = obj.getTrait(multiname);
-                if (trait && trait.isClass()) {
-                  switch (val) {
-                    case Type.Reference.Int.value:
-                      type = Type.Int;
-                      break;
-                    case Type.Reference.Uint.value:
-                      type = Type.Uint;
-                      break;
-                    case Type.Reference.Vector.value:
-                      type = Type.fromReference(new Vector());
-                      break;
-                  }
-                }
-              }
-            }
-            push(type);
+            push(getPropertyType(obj, multiname));
             break;
           case OP_getouterscope:
             notImplemented(bc);
@@ -882,7 +1135,9 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_deleteproperty:
-            notImplemented(bc);
+            popMultiname(bc);
+            pop();
+            push(Type.Boolean);
             break;
           case OP_deletepropertylate:
             notImplemented(bc);
@@ -952,7 +1207,7 @@ var Verifier = (function() {
             // The multiname in case of coerce bytecode cannot be
             // a runtime multiname and should be in the constant pool
             valTy = pop(); // the type of the value to be coerced
-            push(Type.fromName(multinames[bc.index]));
+            push(Type.referenceFromName(multinames[bc.index]));
             break;
           case OP_coerce_a:
             // Note: ignoring the effect of coerce_a is a little, temporary hack
@@ -987,8 +1242,7 @@ var Verifier = (function() {
             break;
           case OP_typeof:
             pop();
-            // TODO: Push string type on the stack?
-            push(Type.Atom.Any);
+            push(Type.Reference.String);
             break;
           case OP_not:
             pop();
@@ -1042,7 +1296,9 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_istypelate:
-            notImplemented(bc);
+              pop();
+              pop();
+              push(Type.Boolean);
             break;
           case OP_inclocal_i:
           case OP_declocal_i:
@@ -1055,13 +1311,11 @@ var Verifier = (function() {
             push(Type.Int);
             break;
           case OP_add_i:
-            notImplemented(bc);
-            break;
           case OP_subtract_i:
-            notImplemented(bc);
-            break;
           case OP_multiply_i:
-            notImplemented(bc);
+            pop();
+            pop();
+            push(Type.Int); // or Number?
             break;
           case OP_getlocal0:
           case OP_getlocal1:

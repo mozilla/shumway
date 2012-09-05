@@ -51,7 +51,7 @@ package
     public native function set prototype(p);
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    public native function get length():int;
+    public override native function get length():uint;
 
     //[API(CONFIG::VM_INTERNAL)]
     [compat]
