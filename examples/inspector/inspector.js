@@ -27,8 +27,8 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var sysMode = state.chkSysCompiler ? null : ALWAYS_INTERPRET;
-var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
+var sysMode = state.chkSysCompiler ? null : EXECUTION_MODE.INTERPRET;
+var appMode = state.chkAppCompiler ? null : EXECUTION_MODE.INTERPRET;
 
 function createAVM2(next, loadShellAbc) {
   var vm = new AVM2(sysMode, appMode);

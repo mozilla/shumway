@@ -59,7 +59,7 @@
             abcFiles[i] = new AbcFile(new Uint8Array(this.response), v, true);
             if (++filesLoaded === a.length) {
               abcFiles.forEach(function (abc) {
-                (filesLoaded === 1 ? executeAbc : loadAbc)(abc, ALWAYS_INTERPRET);
+                (filesLoaded === 1 ? executeAbc : loadAbc)(abc, EXECUTION_MODE.INTERPRET);
               });
               SWF.embed("../../examples/as3_tiger/tiger.swf", document.getElementById("stage"));
             }

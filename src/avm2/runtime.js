@@ -694,7 +694,7 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === ALWAYS_INTERPRET || !shouldCompile(mi)) {
+    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
@@ -1064,7 +1064,7 @@ var Runtime = (function () {
             (obj instanceof Global ||
              this.domain.Class && obj instanceof this.domain.Class
             ) &&
-            this.domain.mode !== ALWAYS_INTERPRET) {
+            this.domain.mode !== EXECUTION_MODE.INTERPRET) {
           closure = (function (trait, obj, qn) {
             return (function trampolineContext() {
               var executed = false;

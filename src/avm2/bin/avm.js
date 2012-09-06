@@ -92,8 +92,8 @@ function grabABC(abcname) {
 
 var vm;
 if (execute.value) {
-  var sysMode = alwaysInterpret.value ? ALWAYS_INTERPRET : (compileSys.value ? null : ALWAYS_INTERPRET);
-  var appMode = alwaysInterpret.value ? ALWAYS_INTERPRET : null;
+  var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : (compileSys.value ? null : EXECUTION_MODE.INTERPRET);
+  var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : null;
   vm = new AVM2(sysMode, appMode);
   Timer.start("Initialize");
   vm.systemDomain.executeAbc(grabABC("builtin"));
