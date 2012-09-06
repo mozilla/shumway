@@ -210,9 +210,35 @@ var Compiler = (function () {
     return new Constant(value);
   }
 
-  function property(obj, path) {
-    path.split(".").forEach(function(x) {
-      obj = new MemberExpression(obj, new Identifier(x), false);
+  function isIdentifierStart(c) {
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  }
+
+  function isIdentifierPart(c) {
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           ((c >= '0') && (c <= '9'));
+  }
+
+  function isIdentifier(s) {
+    if (!isIdentifierStart(s[0])) {
+      return false;
+    }
+    for (var i = 1; i < s.length; i++) {
+      if (!isIdentifierPart(s[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function property(obj) {
+    var path = Array.prototype.slice.call(arguments, 1);
+    path.forEach(function(x) {
+      if (isIdentifier(x)) {
+        obj = new MemberExpression(obj, new Identifier(x), false);
+      } else {
+        obj = new MemberExpression(obj, new Literal(x), true);
+      }
     });
     return obj;
   }
@@ -548,7 +574,7 @@ var Compiler = (function () {
       this.prologue = [];
 
       this.prologue.push(new ExpressionStatement(
-        call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
+        call(property(id("Runtime"), "stack", "push"), [constant(abc.runtime)])));
 
       if (!hasDynamicScope) {
         // TODO: Here we also need to take care of the |this| pointer since it may
@@ -561,7 +587,7 @@ var Compiler = (function () {
       this.prologue.push(new VariableDeclaration("var", [
         new VariableDeclarator(scopeName, savedScopeName),
         new VariableDeclarator(scopeObjectName, property(scopeName, "object")),
-        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global.object")),
+        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global", "object")),
         new VariableDeclarator(scopeName, savedScopeName)
       ]));
 
@@ -575,7 +601,7 @@ var Compiler = (function () {
       if (mi.needsRest() || mi.needsArguments()) {
         this.prologue.push(new ExpressionStatement(
           assignment(this.local[parameterCount + 1],
-                     call(property(id("Array"), "prototype.slice.call"),
+                     call(property(id("Array"), "prototype", "slice", "call"),
                           [id("arguments"), constant(mi.needsRest() ? parameterCount + 1 : 1)]))));
       }
 
@@ -838,11 +864,11 @@ var Compiler = (function () {
       }
 
       function superClassInstanceObject() {
-        return property(classObject(), "baseClass.instance");
+        return property(classObject(), "baseClass", "instance");
       }
 
       function superOf(obj) {
-        return property(obj, "public$constructor.baseClass.instance.prototype");
+        return property(obj, "public$constructor", "baseClass", "instance", "prototype");
       }
 
       function runtimeProperty(propertyName) {
@@ -1354,12 +1380,12 @@ var Compiler = (function () {
           break;
         case OP_returnvoid:
           flushStack();
-          emit(call(property(id("Runtime"), "stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack", "pop"), []));
           emit(new ReturnStatement());
           break;
         case OP_returnvalue:
           flushStack();
-          emit(call(property(id("Runtime"), "stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack", "pop"), []));
           emit(new ReturnStatement(state.stack.pop()));
           break;
         case OP_constructsuper:
@@ -1426,7 +1452,7 @@ var Compiler = (function () {
           push(activationName);
           break;
         case OP_newclass:
-          push(call(property(constant(abc), "runtime.createClass"),
+          push(call(property(constant(abc), "runtime", "createClass"),
                     [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
           break;
         case OP_getdescendants:
