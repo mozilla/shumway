@@ -71,7 +71,7 @@ start-build-bot:
 	echo "/JOIN #$(IRC_ROOM)" > /tmp/irc.mozilla.org/in
 	while [ 1 ] ; do \
 		make build-bot ; \
-		sleep 10 ; \
+		sleep 60 ; \
 	done
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test
