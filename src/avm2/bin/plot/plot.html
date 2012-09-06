@@ -70,15 +70,17 @@
             var baselineName = run.data.configurations[0].name;
             var result = run.data.results[resultName];
             var title = "";
-            for (var i = 1; i < run.data.configurations.length; i++) {
+            for (var i = 0; i < run.data.configurations.length; i++) {
                 var configurationName = run.data.configurations[i].name;
                 if (result) {
                     var configurationResult = result[configurationName];
                     var styleName = "pass";
-                    if (result[baselineName].output.text != result[configurationName].output.text) {
-                        styleName = "fail";
+                    if (result[configurationName].output.text != "N/A") {
+                        if (configurationName != baselineName) {
+                            styleName = "fail";
+                        }
                         title = result[configurationName].output.text.split("\n").map(escapeTooltip).join("&#10;");
-                    } else if (result[baselineName].elapsed > 1000) {
+                    } else if (result[baselineName].elapsed > 10000) {
                         styleName = "timeout";
                     }
                     str += "<td class='" + styleName + "' title=\"" + title + "\">" + getShortConfigurationName(configurationName) + "</td>";
