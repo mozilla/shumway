@@ -1,6 +1,6 @@
 default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
-	@echo "           build-playerglobal|build-extension|test|push-test]"
+	@echo "           build-playerglobal|build-extension|test|push-test|build-bot|start-build-bot]"
 
 check-system:
 	echo "Checking the presence of mercurial..."
@@ -37,9 +37,32 @@ test:
 	make -C src/avm2/bin/ hello-world
 
 push-test:
-	git pull --update
-	make THREADS=1 -C src/avm2/bin/ test-all
+	git pull origin master
+	make THREADS=8 -C src/avm2/bin/ test-all
 	rsync -r -avz -e ssh src/avm2/bin/runs/ haxpath@haxpath.com:~/public/haxpath.com/public/Shumway/src/avm2/bin/runs/
 
-.PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test
+build-bot:
+	if [ ! -f .build_bot_previous_head ] ; then \
+		git rev-parse master > .build_bot_previous_head ; \
+	fi
+	git pull origin master ;
 
+	git rev-parse master > .build_bot_latest_head ;
+	if ! diff .build_bot_latest_head .build_bot_previous_head > /dev/null ; then \
+		echo "Building" ; \
+		cat .build_bot_latest_head > .build_bot_previous_head ; \
+		echo "Started " > /tmp/irc.mozilla.org/#shumway/in ; \
+		make push-test ; \
+		echo "Finished " > /tmp/irc.mozilla.org/#shumway/in ; \
+	fi
+
+start-build-bot:
+	# Login to IRC
+	ii -i /tmp -s irc.mozilla.org -n shumway-build-bot &
+	echo "/JOIN #shumway" > /tmp/irc.mozilla.org/in
+	while [ 1 ] ; do \
+		make build-bot ; \
+		sleep 600 ; \
+	done
+
+.PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test
