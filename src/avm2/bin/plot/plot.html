@@ -63,10 +63,26 @@
         return escaper.text(x).html();
     }
 
+    function moreInfo(path, metrics) {
+        var resultName = path.split(":")[0];
+        var configurationName = path.split(":")[1];
+        var runIndex = parseInt(path.split(":")[2], 10);
+        var run = runs[runIndex];
+        var result = run.data.results[resultName];
+        var resultData = result[configurationName];
+        var str;
+        if (metrics) {
+            str = JSON.stringify(resultData, null, 2);
+        } else {
+            str = resultData.output.text ? resultData.output.text : "";
+        }
+        $("#details").text(str);
+    }
+
     var lines = [];
     for (var resultName in allNames) {
         var str = "<tr><td>" + resultName + "</td>";
-        runs.forEach(function (run) {
+        runs.forEach(function (run, runIndex) {
             var baselineName = run.data.configurations[0].name;
             var result = run.data.results[resultName];
             var title = "";
@@ -75,7 +91,7 @@
                 if (result) {
                     var configurationResult = result[configurationName];
                     var styleName = "pass";
-                    if (result[configurationName].output.text != "N/A") {
+                    if (result[configurationName].output.text) {
                         if (configurationName != baselineName) {
                             styleName = "fail";
                         }
@@ -83,14 +99,17 @@
                     } else if (result[baselineName].elapsed > 10000) {
                         styleName = "timeout";
                     }
-                    str += "<td class='" + styleName + "' title=\"" + title + "\">" + getShortConfigurationName(configurationName) + "</td>";
+                    var path = resultName + ":" + configurationName + ":" + runIndex;
+                    str += "<td class='" + styleName + "' title=\"" + title + "\" onmousemove=\'moreInfo(\"" + path + "\");\'>" + getShortConfigurationName(configurationName) + "</td>";
 
                     var timeTitle = ["Elapsed: " + result[configurationName].elapsed + " ms"];
-                    if (configurationName !== "shu-i") {
+                    if (configurationName !== "shu-i" && result["shu-i"]) {
                         timeTitle.push(configurationName + " vs. shu-i: " + ((result["shu-i"].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "%");
                     }
                     var timeTitle = timeTitle.map(escapeTooltip).join("&#10;");
-                    str += "<td class=\"time\" title=\"" + timeTitle + "\">" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
+                    if (i > 0) {
+                        str += "<td class=\"time\" title=\"" + timeTitle + "\" onmousemove=\'moreInfo(\"" + path + "\", true);\'>" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
+                    }
                 } else {
                     str += "<td class='missing' colspan='2'>X</td>";
                 }
@@ -102,5 +121,11 @@
     }
     $("#container").append("<table>" + lines.join("") + "</table>");
 </script>
+<div style="height:200px"></div>
+<pre>
+<div id="details">
+
+</div>
+</pre>
 </body>
 </html>

@@ -314,7 +314,7 @@ function runNextTest () {
             count(configuration.name + ":time");
           } else if (baseline.output.text == result.output.text) {
             if (i > 0) {
-              result.output.text = "N/A";
+              delete result.output.text;
               process.stdout.write(PASS + " PASS" + ENDC);
               count(configuration.name + ":pass");
             }
@@ -337,7 +337,7 @@ function runNextTest () {
           }
         }
         if (!someFailed) {
-          baseline.output.text = "N/A";
+          delete baseline.output.text;
           count("all-passed");
         }
         process.stdout.write("\n");
