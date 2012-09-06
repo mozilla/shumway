@@ -350,7 +350,11 @@ function runNextTest () {
       var totalTime = (new Date() - totalStart);
       var final = {sha: sha, totalTime: totalTime, jobs: jobs.value, date: new Date(), configurations: configurations, results: results};
       fs.mkdir("runs", function() {
-        var fileName = "runs/" + sha + ".json";
+        var fileName = "runs/" + sha;
+        fileName += "." + configurationSet.value;
+        fileName += (jobs.value > 1 ? ".parallel" : "");
+        fileName += (!noMetrics.value ? ".metrics" : "");
+        fileName += ".json";
         fs.writeFile(fileName, JSON.stringify(final));
         console.log(padRight("", "=", 120));
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);

@@ -36,33 +36,42 @@ test:
 	make -C src/avm1/tests/ test
 	make -C src/avm2/bin/ hello-world
 
+IRC_ROOM = shumway-build-bot
+
 push-test:
 	git pull origin master
+
+	echo "Started test-interpreter-all" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
+	make THREADS=8 -C src/avm2/bin/ test-interpreter-all
+	rsync -r -avz -e ssh src/avm2/bin/runs/ haxpath@haxpath.com:~/public/haxpath.com/public/Shumway/src/avm2/bin/runs/
+	echo "http://haxpath.com/Shumway/src/avm2/bin/plot/plot.html?runs="`cat .build_bot_latest_head`.i.parallel > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
+
+	echo "Started test-all" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
 	make THREADS=8 -C src/avm2/bin/ test-all
 	rsync -r -avz -e ssh src/avm2/bin/runs/ haxpath@haxpath.com:~/public/haxpath.com/public/Shumway/src/avm2/bin/runs/
+	echo "http://haxpath.com/Shumway/src/avm2/bin/plot/plot.html?runs="`cat .build_bot_latest_head`.icov.parallel > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in
 
 build-bot:
 	if [ ! -f .build_bot_previous_head ] ; then \
 		git rev-parse master > .build_bot_previous_head ; \
 	fi
 	git pull origin master ;
-
 	git rev-parse master > .build_bot_latest_head ;
 	if ! diff .build_bot_latest_head .build_bot_previous_head > /dev/null ; then \
 		echo "Building" ; \
 		cat .build_bot_latest_head > .build_bot_previous_head ; \
-		echo "Started " > /tmp/irc.mozilla.org/#shumway/in ; \
+		echo "Started "`cat .build_bot_latest_head` > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in ; \
 		make push-test ; \
-		echo "Finished " > /tmp/irc.mozilla.org/#shumway/in ; \
+		echo "Finished All" > /tmp/irc.mozilla.org/#$(IRC_ROOM)/in ; \
 	fi
 
 start-build-bot:
 	# Login to IRC
 	ii -i /tmp -s irc.mozilla.org -n shumway-build-bot &
-	echo "/JOIN #shumway" > /tmp/irc.mozilla.org/in
+	echo "/JOIN #$(IRC_ROOM)" > /tmp/irc.mozilla.org/in
 	while [ 1 ] ; do \
 		make build-bot ; \
-		sleep 600 ; \
+		sleep 10 ; \
 	done
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test

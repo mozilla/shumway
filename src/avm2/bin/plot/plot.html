@@ -31,6 +31,7 @@
 
     var runs = [];
     getQueryVariable("runs").split(",").forEach(function (x) {
+        try {
         var request = new XMLHttpRequest();
         request.open('GET', '../runs/' + x + '.json', false);
         request.send();
@@ -38,6 +39,9 @@
         runs.push(run);
         $("#info").append("<span class=\"info\"> Loading: " + x + ", Date: " + run.data.date +
                         ", Configurations: " + run.data.configurations.map(function (x) { return x.name; }).join(", ") + "</span><br>");
+        } catch (e) {
+          console.info("Cannot load " + x);
+        }
     });
 
     function getShortConfigurationName(name) {
@@ -85,7 +89,6 @@
         runs.forEach(function (run, runIndex) {
             var baselineName = run.data.configurations[0].name;
             var result = run.data.results[resultName];
-            var title = "";
             for (var i = 0; i < run.data.configurations.length; i++) {
                 var configurationName = run.data.configurations[i].name;
                 if (result) {
@@ -95,12 +98,11 @@
                         if (configurationName != baselineName) {
                             styleName = "fail";
                         }
-                        title = result[configurationName].output.text.split("\n").map(escapeTooltip).join("&#10;");
                     } else if (result[baselineName].elapsed > 10000) {
                         styleName = "timeout";
                     }
                     var path = resultName + ":" + configurationName + ":" + runIndex;
-                    str += "<td class='" + styleName + "' title=\"" + title + "\" onmousemove=\'moreInfo(\"" + path + "\");\'>" + getShortConfigurationName(configurationName) + "</td>";
+                    str += "<td class='" + styleName + "' onclick=\'moreInfo(\"" + path + "\");\'>" + getShortConfigurationName(configurationName) + "</td>";
 
                     var timeTitle = ["Elapsed: " + result[configurationName].elapsed + " ms"];
                     if (configurationName !== "shu-i" && result["shu-i"]) {
@@ -108,7 +110,7 @@
                     }
                     var timeTitle = timeTitle.map(escapeTooltip).join("&#10;");
                     if (i > 0) {
-                        str += "<td class=\"time\" title=\"" + timeTitle + "\" onmousemove=\'moreInfo(\"" + path + "\", true);\'>" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
+                        str += "<td class=\"time\" title=\"" + timeTitle + "\" onclick=\'moreInfo(\"" + path + "\", true);\'>" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
                     }
                 } else {
                     str += "<td class='missing' colspan='2'>X</td>";

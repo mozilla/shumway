@@ -8,7 +8,7 @@ TIMEOUT ?= 30000
 
 NODE_MODULES = ../../../utils/node_modules
 
-TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS) -t $(TIMEOUT)
+TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS) -t $(TIMEOUT) -jo
 
 TEST_PATH ?= $(error Specify TEST_PATH variable)
 
@@ -29,7 +29,10 @@ test-interpreter:
 test-compiler:
 	$(TEST_CMD) -i $(TEST_PATH) -c c
 
+test-interpreter-all:
+	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c i -nm
+
 test-all:
-	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icov -jo -nm
+	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icov -nm
 
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all
