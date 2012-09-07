@@ -1133,22 +1133,23 @@ var Runtime = (function () {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       assert (types.length === 1);
-      if (types[0] !== null && types[0] !== undefined) {
-        var typeClassName = types[0].classInfo.instanceInfo.name.name;
+      var type = types[0];
+      var typeClassName;
+      if (type !== null && type !== undefined) {
+        typeClassName = type.classInfo.instanceInfo.name.name;
         switch (typeClassName) {
-        case "int":
-        case "uint":
-        case "double":
-          break;
-        default:
-          typeClassName = "object";
-          break;
+          case "int":
+          case "uint":
+          case "double":
+            break;
+          default:
+            typeClassName = "object";
+            break;
         }
-
-        return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
       } else {
-        return this.domain.getClass("public __AS3__$vec.Vector");
+        typeClassName = "object";
       }
+      return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
     } else {
       return notImplemented(factoryClassName);
     }
