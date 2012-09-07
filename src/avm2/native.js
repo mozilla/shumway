@@ -496,9 +496,7 @@ const natives = (function () {
         }
       };
       c.nativeStatics = {
-        getErrorMessage: function() {
-          return "TODO: getErrorMessage";
-        }
+        getErrorMessage: getErrorMessage
       };
       return c;
     };

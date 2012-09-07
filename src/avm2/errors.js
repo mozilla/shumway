@@ -155,6 +155,14 @@ const Errors = {
   ReadExternalNotImplementedError      : {code: 2173, message: "Unable to read object in stream.  The class %1 does not implement flash.utils.IExternalizable but is aliased to an externalizable class."}
 };
 
+function getErrorMessage(index) {
+  for (var k in Errors) {
+    if (Errors[k].code == index) {
+      return "Error #" + index + ": " + Errors[k].message;
+    }
+  }
+}
+
 function formatErrorMessage(error) {
   var message = error.message;
   Array.prototype.slice.call(arguments, 1).forEach(function (x, i) {
