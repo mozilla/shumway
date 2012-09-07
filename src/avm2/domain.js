@@ -82,6 +82,15 @@ var Domain = (function () {
           defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
+        coerce: function (value) {
+          return value;
+        },
+
+        isInstanceOf: function (value) {
+          // TODO: Fix me.
+          return this.isInstance(value);
+        },
+
         isInstance: function (value) {
           if (value === null || typeof value !== "object") {
             return false;

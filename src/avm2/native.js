@@ -521,15 +521,6 @@ const natives = (function () {
     c.extendBuiltin(baseClass);
     c.nativeMethods = Date.prototype;
     c.nativeStatics = Date;
-    c.coerce = function (value) {
-      return value; // TODO: Fix me.
-    };
-    c.isInstanceOf = function (value) {
-      return true; // TODO: Fix me.
-    };
-    c.isInstance = function (value) {
-      return true; // TODO: Fix me.
-    };
     return c;
   }
 
@@ -547,15 +538,6 @@ const natives = (function () {
       };
       c.nativeStatics = {
         getErrorMessage: getErrorMessage
-      };
-      c.coerce = function (value) {
-        return value; // TODO: Fix me.
-      };
-      c.isInstanceOf = function (value) {
-        return true; // TODO: Fix me.
-      };
-      c.isInstance = function (value) {
-        return true; // TODO: Fix me.
       };
       return c;
     };
