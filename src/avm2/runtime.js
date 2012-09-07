@@ -167,7 +167,7 @@ function coerce(value, type) {
     // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
 
     // For now just assert false to print the message.
-    assert(false, "Cannot coerce " + value + ": " + typeof(value) + " to type " + type);
+    assert(false, "Cannot coerce " + value + " to type " + type);
   }
 }
 
