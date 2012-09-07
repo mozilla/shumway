@@ -208,10 +208,10 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
     if (dependencies && dependencies.length) {
       for (var i = 0, n = dependencies.length; i < n; i++) {
-        var symbolId = dependencies[i];
-        var symbolPromise = dictionary[symbolId];
-        if (symbolPromise && !symbolPromise.resolved)
-          promiseQueue.push(symbolPromise);
+        var dependencyId = dependencies[i];
+        var dependencyPromise = dictionary[dependencyId];
+        if (dependencyPromise && !dependencyPromise.resolved)
+          promiseQueue.push(dependencyPromise);
       }
     }
 
@@ -300,9 +300,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
           for (var depth in depths) {
             var cmd = depths[depth];
             if (cmd && cmd.symbolId) {
-              var symbolPromise = dictionary[cmd.symbolId];
-              if (symbolPromise && !symbolPromise.resolved)
-                promiseQueue.push(symbolPromise);
+              var itemPromise = dictionary[cmd.symbolId];
+              if (itemPromise && !itemPromise.resolved)
+                promiseQueue.push(itemPromise);
             }
             displayList[depth] = cmd;
           }
