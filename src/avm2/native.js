@@ -378,7 +378,7 @@ const natives = (function () {
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
       }
-      array[VM_VECTOR_IS_FIXED] = fixed;
+      array[VM_VECTOR_IS_FIXED] = !!fixed;
       return array;
     }
 
