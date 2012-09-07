@@ -732,6 +732,9 @@ var Runtime = (function () {
       body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+    if (traceLevel.value > 1) {
+      mi.trace(new IndentingWriter(), this.abc);
+    }
     if (traceLevel.value > 0) {
       print (fnSource);
     }

@@ -619,8 +619,14 @@ var Compiler = (function () {
 
         if (parameter.type && !parameter.type.isAnyName()) {
           var type = abc.domain.getProperty(parameter.type, true, true);
-          var coerced = assignment(local, call(id("coerce"), [local, constant(type)]));
-          this.prologue.push(new ExpressionStatement(coerced));
+          if (type) {
+            var coerced = assignment(local, call(id("coerce"), [local, constant(type)]));
+            this.prologue.push(new ExpressionStatement(coerced));
+          } else {
+            // TODO: We should have a type here. Most likely we are compiling a constructor that needs
+            // to get its own class type and this is not yet available because we haven't yet fully
+            // constructed the class.
+          }
         }
       }
     }

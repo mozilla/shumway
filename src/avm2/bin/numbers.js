@@ -30,7 +30,7 @@ var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs th
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
 var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
 var noMetrics = numbersOptions.register(new Option("nm", "noMetrics", "boolean", false, "runs without -tm -tj"));
-var timeout = numbersOptions.register(new Option("t", "timeout", "number", 5000, "timeout in ms"));
+var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
 
 var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
@@ -371,7 +371,7 @@ function runNextTest () {
          */
         if (generatePatches.value) {
           for (var test in results) {
-            if (path.existsSync(test + ".diff")) {
+            if (fs.existsSync(test + ".diff")) {
               continue;
             }
             (function (test) {
