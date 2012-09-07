@@ -30,7 +30,7 @@ var BinaryFileReader = (function binaryFileReader() {
 var sysMode = state.chkSysCompiler ? null : EXECUTION_MODE.INTERPRET;
 var appMode = state.chkAppCompiler ? null : EXECUTION_MODE.INTERPRET;
 
-function createAVM2(next, loadShellAbc) {
+function createSimpleAVM2(next, loadShellAbc) {
   var vm = new AVM2(sysMode, appMode);
   new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
     vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
@@ -54,13 +54,13 @@ var rfile = getQueryVariable("rfile");
  */
 if (rfile) {
   if (rfile.endsWith(".abc")) {
-    createAVM2(function(avm2) {
+    createSimpleAVM2(function(avm2) {
       new BinaryFileReader(rfile).readAll(null, function(buffer) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
       });
     }, true);
   } else if (rfile.endsWith(".swf")) {
-    createAVM2(function(avm2) {
+    createSimpleAVM2(function(avm2) {
       new BinaryFileReader(rfile).readAll(null, function(buffer) {
         SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
       });

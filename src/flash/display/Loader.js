@@ -150,7 +150,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         var asset = exports[i];
         var className = asset.className;
         var symbolPromise = dictionary[asset.symbolId];
-        if (symbolClass) {
+        if (symbolPromise) {
           symbolPromise.then(function () {
             var symbolClass = symbolPromise.value;
             symbolClass.prototype.__class__ = className;

@@ -57,7 +57,7 @@ function unexpected(message) {
 function defineReadOnlyProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value,
                                      writable: false,
-                                     configurable: false,
+                                     configurable: true,  // XXX: make it non-configurable?
                                      enumerable: false });
 }
 
