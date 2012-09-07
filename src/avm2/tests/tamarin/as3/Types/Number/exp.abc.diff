@@ -1,12 +1,10 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-1phg8tm	2012-08-27 16:16:06.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-1a35el0	2012-08-27 16:16:06.000000000 -0700
-@@ -1,8 +1,8 @@
- 15.8.2.8 public native static function exp (x:Number) :Number;
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-zezltr	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1xnbvgq	2012-09-07 00:30:39.000000000 -0700
+@@ -2,7 +2,7 @@
  Number.exp() returns a Number = Number PASSED!
  Number.exp() length is 1 = 1 PASSED!
--Asserting for ArgumentError = true PASSED!
+ Asserting for ArgumentError = true PASSED!
 -Number.exp() with no args = ArgumentError: Error #1063 PASSED!
-+Asserting for ArgumentError = false FAILED! expected: true
 +Number.exp() with no args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063
  Number.exp(undefined) = NaN PASSED!
  Number.exp(string) = NaN PASSED!

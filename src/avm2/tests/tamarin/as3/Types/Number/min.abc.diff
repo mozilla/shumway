@@ -1,5 +1,5 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-1gh2cnc	2012-08-27 16:16:06.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-akyryh	2012-08-27 16:16:06.000000000 -0700
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1no8bup	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1wxyx2c	2012-09-07 00:30:39.000000000 -0700
 @@ -52,4 +52,4 @@
  Number.min(Number.NEGATIVE_INFINITY, Number.POSITIVE_INFINITY) = -Infinity PASSED!
  Number.min(Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY) = -Infinity PASSED!

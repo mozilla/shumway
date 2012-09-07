@@ -1,12 +1,10 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98866-1lq9984	2012-08-27 16:16:59.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98866-1k4kh5m	2012-08-27 16:16:59.000000000 -0700
-@@ -3,8 +3,8 @@
- Number.abs(-0) returns a int = int PASSED!
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-10zdbum	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-11r2y5g	2012-09-07 00:30:39.000000000 -0700
+@@ -4,7 +4,7 @@
  Number.abs(1) returns a int = int PASSED!
  Number.abs() length is 1 = 1 PASSED!
--Asserting for ArgumentError = true PASSED!
+ Asserting for ArgumentError = true PASSED!
 -Number.abs() with no args = ArgumentError: Error #1063 PASSED!
-+Asserting for ArgumentError = false FAILED! expected: true
 +Number.abs() with no args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063
  Number.abs(undefined) = NaN PASSED!
  Number.abs(string) = NaN PASSED!

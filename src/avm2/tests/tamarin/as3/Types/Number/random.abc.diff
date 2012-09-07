@@ -1,10 +1,8 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-3t8js7	2012-08-27 16:16:06.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-w7fu3g	2012-08-27 16:16:06.000000000 -0700
-@@ -1,5 +1,5 @@
- 15.8.2.14 public native static function random ():Number;
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-r3e221	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1j9748t	2012-09-07 00:30:39.000000000 -0700
+@@ -2,4 +2,4 @@
  Number.random() returns a Number = Number PASSED!
  Number.random() length is 0 = 0 PASSED!
--Asserting for ArgumentError = true PASSED!
+ Asserting for ArgumentError = true PASSED!
 -Number.random() with args = ArgumentError: Error #1063 PASSED!
-+Asserting for ArgumentError = false FAILED! expected: true
 +Number.random() with args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063

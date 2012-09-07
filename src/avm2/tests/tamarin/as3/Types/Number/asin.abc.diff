@@ -1,12 +1,10 @@
---- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11284-18491-ws352f	2012-09-06 16:55:44.000000000 -0700
-+++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11284-18491-or5bzg	2012-09-06 16:55:44.000000000 -0700
-@@ -1,8 +1,8 @@
- 15.8.2.3 public native static function asin (x:Number) :Number;
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1uyx17p	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1rhc5pa	2012-09-07 00:30:39.000000000 -0700
+@@ -2,7 +2,7 @@
  Number.asin() returns a Number = Number PASSED!
  Number.asin() length is 1 = 1 PASSED!
--Asserting for ArgumentError = true PASSED!
+ Asserting for ArgumentError = true PASSED!
 -Number.asin() with no args = ArgumentError: Error #1063 PASSED!
-+Asserting for ArgumentError = false FAILED! expected: true
 +Number.asin() with no args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063
  Number.asin(undefined) = NaN PASSED!
  Number.asin(string) = NaN PASSED!

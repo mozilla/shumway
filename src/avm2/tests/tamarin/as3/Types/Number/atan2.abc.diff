@@ -1,16 +1,13 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-q6ixiw	2012-08-27 16:16:06.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-dd3tps	2012-08-27 16:16:06.000000000 -0700
-@@ -1,10 +1,10 @@
- 15.8.2.5 public native static function atan2 (y:Number, x:Number):Number;
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-1dunc9g	2012-09-07 00:30:39.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-39959-dd4rtn	2012-09-07 00:30:39.000000000 -0700
+@@ -2,9 +2,9 @@
  Number.atan2() returns a Number = Number PASSED!
  Number.atan2() length is 2 = 2 PASSED!
--Asserting for ArgumentError = true PASSED!
+ Asserting for ArgumentError = true PASSED!
 -Number.atan2() with no args = ArgumentError: Error #1063 PASSED!
--Asserting for ArgumentError = true PASSED!
--Number.atan2(0) with one args = ArgumentError: Error #1063 PASSED!
-+Asserting for ArgumentError = false FAILED! expected: true
 +Number.atan2() with no args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063
-+Asserting for ArgumentError = false FAILED! expected: true
+ Asserting for ArgumentError = true PASSED!
+-Number.atan2(0) with one args = ArgumentError: Error #1063 PASSED!
 +Number.atan2(0) with one args = No errors. None. Nada. All FAILED! expected: ArgumentError: Error #1063
  Number.atan2(0, undefined) = NaN PASSED!
  Number.atan2(undefined, 0) = NaN PASSED!
