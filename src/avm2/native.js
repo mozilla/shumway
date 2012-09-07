@@ -324,6 +324,8 @@ const natives = (function () {
    * Vector.as
    */
 
+  const VM_VECTOR_IS_FIXED = "vm vector is fixed";
+
   /**
    * Creates a typed Vector class. It steals the Array object from a new global
    * and overrides its GET/SET ACCESSOR methods to do the appropriate coercions.
@@ -334,19 +336,22 @@ const natives = (function () {
 
     // Breaks semantics with bounds checking for now.
     if (type) {
-      const coerce = type.instance;
+      const coerce = type.coerce;
       var TAp = TypedArray.prototype;
       TAp.indexGet = function (i) { return this[i]; };
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
 
     function TypedVector (length, fixed) {
+      length = int(length);
       var array = new TypedArray(length);
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
       }
+      array[VM_VECTOR_IS_FIXED] = fixed;
       return array;
     }
+
     TypedVector.prototype = TypedArray.prototype;
     var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
     var c = new runtime.domain.system.Class(name, TypedVector, C(TypedVector));
@@ -354,8 +359,8 @@ const natives = (function () {
 
     defineReadOnlyProperty(TypedArray.prototype, "class", c);
 
-    defineNonEnumerableProperty(m, "get fixed", function () { return false; });
-    defineNonEnumerableProperty(m, "set fixed", function (v) { });
+    defineNonEnumerableProperty(m, "get fixed", function () { return this[VM_VECTOR_IS_FIXED]; });
+    defineNonEnumerableProperty(m, "set fixed", function (v) { this[VM_VECTOR_IS_FIXED] = v; });
 
     defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     defineNonEnumerableProperty(m, "set length", function setLength(length) {
