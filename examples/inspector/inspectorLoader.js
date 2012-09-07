@@ -12,10 +12,7 @@ function readFile(file) {
     }
   } else if (file.name.endsWith(".swf")) {
     reader.onload = function() {
-      var result = this.result;
-      createSimpleAVM2(function (avm2) {
-        SWF.embed(result, stage[0], {avm2: avm2});
-      });
+      SWF.embed(this.result, stage[0]);
     }
   } else {
     throw new TypeError("unsupported format");

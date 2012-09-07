@@ -60,10 +60,8 @@ if (rfile) {
       });
     }, true);
   } else if (rfile.endsWith(".swf")) {
-    createSimpleAVM2(function(avm2) {
-      new BinaryFileReader(rfile).readAll(null, function(buffer) {
-        SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
-      });
+    new BinaryFileReader(rfile).readAll(null, function(buffer) {
+      SWF.embed(buffer, $("#stage")[0]);
     });
   }
 }
