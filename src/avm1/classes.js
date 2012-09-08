@@ -1,4 +1,4 @@
-﻿/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 2; indent-tabs-mode: nil -*- */
 
 function proxyNativeProperty(propertyName) {
   return {
@@ -869,7 +869,7 @@ defineObjectProperties(AS2Broadcaster, {
       obj.removeListener = AS2Broadcaster.prototype.removeListener;
     },
     enumerable: false
-  },
+  }
 });
 AS2Broadcaster.prototype = Object.create({}, {
   broadcastMessage: {
@@ -1155,7 +1155,7 @@ flash.media = {
 };
 
 function AS2SoundMixer() {
-};
+}
 defineObjectProperties(AS2SoundMixer, {
   stopAll: {
     value: function stopAll() {
@@ -1236,7 +1236,7 @@ defineObjectProperties(Object.prototype, {
     enumerable: false
   },
   unwatch: {
-    get: function unwatch() { throw 'Not implemented: unwatch' },
+    get: function unwatch() { throw 'Not implemented: unwatch'; },
     enumerable: false
   },
   addProperty: {
@@ -1284,11 +1284,12 @@ defineObjectProperties(Array.prototype, {
         }
         originalSort.call(subject, compareFunction);
         if (options & Array.UNIQUESORT) {
-          for (var i = 1; i < subject.length; ++i) {
+          var i;
+          for (i = 1; i < subject.length; ++i) {
             if (subject[i - 1] !== subject[i])
               return; // keeping array unmodified
           }
-          for (var i = 0; i < subject.length; ++i)
+          for (i = 0; i < subject.length; ++i)
             this[i] = subject[i];
           subject = this;
         }

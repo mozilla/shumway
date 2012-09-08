@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 2; indent-tabs-mode: nil -*- */
 
 function ActionsDataStream(array, swfVersion) {
   this.array = array;
@@ -20,30 +20,31 @@ function ActionsDataStream(array, swfVersion) {
     throw "big-endian platform";
 }
 ActionsDataStream.prototype = {
-  readUI8: function() {
+  readUI8: function ActionsDataStream_readUI8() {
     return this.array[this.position++];
   },
-  readUI16: function() {
+  readUI16: function ActionsDataStream_readUI16() {
     var position = this.position, array = this.array;
     var value = (array[position + 1] << 8) | array[position];
     this.position = position + 2;
     return value;
   },
-  readSI16: function() {
+  readSI16: function ActionsDataStream_readSI16() {
     var position = this.position, array = this.array;
     var value = (array[position + 1] << 8) | array[position];
     this.position = position + 2;
     return value < 0x8000 ? value : (value - 0x10000);
   },
-  readInteger: function() {
+  readInteger: function ActionsDataStream_readInteger() {
     var position = this.position, array = this.array;
     var value = array[position] | (array[position + 1] << 8) |
       (array[position + 2] << 16) | (array[position + 3] << 24);
     this.position = position + 4;
     return value;
   },
-  readFloat: function() {
-    var position = this.position, array = this.array
+  readFloat: function ActionsDataStream_readFloat() {
+    var position = this.position;
+    var array = this.array;
     var buffer = new ArrayBuffer(4);
     var bytes = new Uint8Array(buffer);
     bytes[0] = array[position];
@@ -53,8 +54,9 @@ ActionsDataStream.prototype = {
     this.position = position + 4;
     return (new Float32Array(buffer))[0];
   },
-  readDouble: function() {
-    var position = this.position, array = this.array
+  readDouble: function ActionsDataStream_readDouble() {
+    var position = this.position;
+    var array = this.array;
     var buffer = new ArrayBuffer(8);
     var bytes = new Uint8Array(buffer);
     bytes[4] = array[position];
@@ -68,38 +70,38 @@ ActionsDataStream.prototype = {
     this.position = position + 8;
     return (new Float64Array(buffer))[0];
   },
-  readBoolean: function() {
+  readBoolean: function ActionsDataStream_readBoolean() {
     return !!this.readUI8();
   },
-  readANSIString: function() {
+  readANSIString: function ActionsDataStream_readANSIString() {
     var value = '';
     var ch;
-    while (ch = this.readUI8()) {
+    while ((ch = this.readUI8())) {
       value += String.fromCharCode(ch);
     }
     return value;
   },
-  readUTF8String: function() {
+  readUTF8String: function ActionsDataStream_readUTF8String() {
     var value = '';
     var ch;
-    while (ch = this.readUI8()) {
+    while ((ch = this.readUI8())) {
       if (ch < 0x80) {
         value += String.fromCharCode(ch);
         continue;
       }
 
       if ((ch & 0xC0) == 0x80)
-          throw 'Invalid UTF8 encoding';
+        throw 'Invalid UTF8 encoding';
 
       var currentPrefix = 0xC0;
       var validBits = 5;
       do {
         var mask = (currentPrefix >> 1) | 0x80;
-        if((ch & mask) == currentPrefix)
+        if ((ch & mask) == currentPrefix)
           break;
         currentPrefix = mask;
         --validBits;
-      } while(validBits >= 0);
+      } while (validBits >= 0);
 
       var code = (ch & ((1 << validBits) - 1));
       for (var i = 5; i >= validBits; --i) {
@@ -117,7 +119,7 @@ ActionsDataStream.prototype = {
     }
     return value;
   },
-  readBytes: function(length) {
+  readBytes: function ActionsDataStream_readBytes(length) {
     var position = this.position;
     var remaining = Math.max(this.end - position, 0);
     if (remaining < length)

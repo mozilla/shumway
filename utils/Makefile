@@ -90,7 +90,7 @@ $(APPARAT_HOME)/apparat.tar.gz:
 	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
 
 install-node-modules:
-	npm install mocha expect.js temp
+	npm install mocha expect.js temp jshint
 
 build-playerglobal:
 	make -C playerGlobal/ build
