@@ -1,0 +1,9 @@
+{
+  "white": false,
+  "indent": 2,
+  "undef": true,
+  "predef": [
+    "GLOBAL", "ArrayBuffer", "Uint8Array", "Int32Array", "Float32Array", "Float64Array", "console", "window",
+    "Mouse", "AS2Context", "flash", "AS2URLRequest", "AS2Mouse", "AS2Key", "AS2MovieClip", "AS2Broadcaster", "AS2Stage", "AS2Button", "AS2Rectangle", "AS2Globals", "ActionsDataStream", "createBuiltinType"
+  ]
+}

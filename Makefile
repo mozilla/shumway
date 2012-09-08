@@ -38,6 +38,12 @@ test:
 
 IRC_ROOM = shumway-build-bot
 
+lint:
+	make -C utils/ -f lint.mk lint
+
+server:
+	python -m SimpleHTTPServer
+
 push-test:
 	git pull origin master
 
