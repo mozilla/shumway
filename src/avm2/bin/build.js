@@ -34,7 +34,18 @@ const Literal = T.Literal;
 const Identifier = T.Identifier;
 const CallExpression = T.CallExpression;
 const ExpressionStatement = T.ExpressionStatement;
+const FunctionExpression = T.FunctionExpression;
+const FunctionDeclaration = T.FunctionDeclaration;
+const MemberExpression = T.MemberExpression;
+const AssignmentExpression = T.AssignmentExpression;
 const BlockStatement = T.BlockStatement;
+const VariableDeclaration = T.VariableDeclaration;
+const VariableDeclarator = T.VariableDeclarator;
+const ArrayExpression = T.ArrayExpression;
+const BinaryExpression = T.BinaryExpression;
+const ObjectExpression = T.ObjectExpression;
+const Property = T.Property;
+
 
 // Parse arguments
 var arguments = process.argv.slice(2);
@@ -42,6 +53,8 @@ var argumentParser = new ArgumentParser();
 var buildOptions = new OptionSet("Build Options");
 
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
+var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
+
 argumentParser.addBoundOptionSet(buildOptions);
 
 argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
@@ -105,6 +118,22 @@ ExpressionStatement.prototype.transform = function (o) {
     return new BlockStatement(node.body);
   }
   return this;
+};
+
+var functionCounterMap = {};
+
+if (instrument.value) {
+  FunctionExpression.prototype.transform = FunctionDeclaration.prototype.transform = function (o) {
+    o.scopePath.push(o.scopePath.pop() + 1);
+    var functionId = "FN_" + o.scopePath.join("_");
+    functionCounterMap[functionId] = this.id ? this.id.name : functionId;
+    var a = new AssignmentExpression(new Identifier(functionId), "+=", new Literal(1));
+    o.scopePath.push(0);
+    this.body.transform(o);
+    o.scopePath.pop();
+    this.body.body.unshift(new ExpressionStatement(a));
+    return this;
+  };
 }
 
 var source = readFile(file.value).toString();
@@ -115,7 +144,38 @@ var constants = {
   // "$X": new Literal(true)
 };
 
-node = node.transform({constants: constants});
+node = node.transform({constants: constants, scopePath: [0]});
+
+// Declare function counters.
+if (Object.keys(functionCounterMap).length) {
+  // Declare counters.
+  node.body.unshift(new BlockStatement([
+    new VariableDeclaration("var", Object.keys(functionCounterMap).map(function (x) {
+      return new VariableDeclarator(new Identifier(x), new Literal(0));
+    }))
+  ]));
+
+  // Collect counters in an object expression.
+  node.body.push(new BlockStatement([
+    new VariableDeclaration("var", [
+      new VariableDeclarator(new Identifier("FUNCTION_COUNTERS"),
+        new ObjectExpression(
+          Object.keys(functionCounterMap).map(function (x) {
+            return new Property(new Literal(functionCounterMap[x]), new Identifier(x), "init");
+          })
+        )
+      )
+    ])
+  ]));
+
+  // Print out counters at the end.
+  node.body.push(new BlockStatement(esprima.parse('print(Object.keys(FUNCTION_COUNTERS).map(function (x) {' +
+    'return {name: x, value: FUNCTION_COUNTERS[x]};})' +
+    '.sort(function (a, b) { return a.value - b.value; })' +
+    '.filter(function (x) { return x.value > 1000; })' +
+    '.map(function (x) { return x.name + ": " + x.value; })' +
+    '.join("\\n"))').body));
+}
 
 for (var i = 0; i < node.body.length; i++) {
   if (node.body[i] instanceof BlockStatement) {
