@@ -32,6 +32,7 @@ var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations"
 var noMetrics = numbersOptions.register(new Option("nm", "noMetrics", "boolean", false, "runs without -tm -tj"));
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
+var output = numbersOptions.register(new Option("o", "output", "string", "", "output json file"));
 
 var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
 
@@ -355,6 +356,9 @@ function runNextTest () {
         fileName += (jobs.value > 1 ? ".parallel" : "");
         fileName += (!noMetrics.value ? ".metrics" : "");
         fileName += ".json";
+        if (output.value) {
+          fileName = output.value;
+        }
         fs.writeFile(fileName, JSON.stringify(final));
         console.log(padRight("", "=", 120));
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
