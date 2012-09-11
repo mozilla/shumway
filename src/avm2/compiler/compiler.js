@@ -1079,6 +1079,10 @@ var Compiler = (function () {
           } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
             Counter.count("getProperty->fastPathDynamic");
             return property(obj, Multiname.getPublicQualifiedName(multiname.value.name));
+          } else if (multiname instanceof Constant &&
+                     multiname.propertyName !== undefined) {
+            Counter.count("getProperty->propertyNameFromTrait");
+            return property(obj, Multiname.getQualifiedName(multiname.propertyName));
           }
         }
 
@@ -1086,7 +1090,7 @@ var Compiler = (function () {
           var val = obj instanceof Variable ? obj.value : obj;
           if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
             if (Multiname.isQName(multiname.value)) {
-              Counter.count("getProperty->property");
+              Counter.count("getProperty->propertyConstant");
               return property(obj, Multiname.getQualifiedName(multiname.value));
             }
           }
@@ -1141,7 +1145,12 @@ var Compiler = (function () {
           } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
             Counter.count("setProperty->fastPathDynamic");
             return fastPath = assignment(property(obj,
-              Multiname.getPublicQualifiedName(multiname.value.name), true), value);
+              Multiname.getPublicQualifiedName(multiname.value.name)), value);
+          } else if (multiname instanceof Constant &&
+                     multiname.propertyName !== undefined) {
+            Counter.count("setProperty->propertyNameFromTrait");
+            return fastPath = assignment(property(obj,
+              Multiname.getQualifiedName(multiname.propertyName)), value);
           }
         }
 
@@ -1194,6 +1203,10 @@ var Compiler = (function () {
           if (bc.isDynamicProperty) {
             c.isDynamicProperty = true;
           }
+          if (bc.propertyName) {
+            c.propertyName = bc.propertyName;
+          }
+
           return c;
         }
       }
@@ -1400,8 +1413,8 @@ var Compiler = (function () {
           emit(callCall(superClassInstanceObject(), [obj].concat(args)));
           break;
         case OP_constructprop:
-          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
+          multiname = popMultiname(bc);
           obj = getProperty(state.stack.pop(), multiname);
           push(new NewExpression(property(obj, "instance"), args));
           break;
