@@ -862,7 +862,7 @@ var Analysis = (function () {
       var node;
 
       ancestors[root.bid] = true;
-      while (node = worklist.top()) {
+      while ((node = worklist.top())) {
         if (visited[node.bid]) {
           if (visited[node.bid] === ONCE) {
             visited[node.bid] = BUNCH_OF_TIMES;
@@ -973,8 +973,9 @@ var Analysis = (function () {
       }
 
       blocks[0].dominator = blocks[0];
+      var block;
       for (var b = 1; b < n; b++) {
-        var block = blocks[b];
+        block = blocks[b];
         var idom = blocks[doms[b]];
 
         // Store the immediate dominator.
@@ -1054,15 +1055,16 @@ var Analysis = (function () {
         var level = root.level + 1;
         var worklist = [root];
         var node;
+        var u, s;
 
-        while (node = worklist.top()) {
+        while ((node = worklist.top())) {
           if (preorder[node.bid]) {
             if (pendingNodes.peek() === node) {
               pendingNodes.pop();
 
               var scc = [];
               do {
-                var u = unconnectedNodes.pop();
+                u = unconnectedNodes.pop();
                 assigned[u.bid] = true;
                 scc.push(u);
               } while (u !== node);
@@ -1082,7 +1084,7 @@ var Analysis = (function () {
 
           var succs = node.succs;
           for (var i = 0, j = succs.length; i < j; i++) {
-            var s = succs[i];
+            s = succs[i];
             if (s.level < level) {
               continue;
             }
@@ -1308,8 +1310,9 @@ var Analysis = (function () {
 
             var pruned = [];
             var k = 0;
+            var c;
             for (var i = 0, j = cases.length; i < j; i++) {
-              var c = cases[i];
+              c = cases[i];
               var labels = c.labels;
               var lk = 0;
               for (var ln = 0, nlabels = labels.length; ln < nlabels; ln++) {
@@ -1344,7 +1347,7 @@ var Analysis = (function () {
             continue;
           }
 
-          var h, bid;
+          var h, bid, c;
 
           if (head.count === 1) {
             h = head.choose();
@@ -1452,7 +1455,7 @@ var Analysis = (function () {
               var t = targets[i];
               t.npreds -= 1;
               t.save = 1;
-              var c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
+              c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
               cases.unshift(new Control.Case(i, c));
             }
 

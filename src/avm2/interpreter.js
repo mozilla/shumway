@@ -65,8 +65,8 @@ var Interpreter = (function () {
 
       rtstack.push(runtime);
 
+      var value;
       for (var i = 0; i < parameterCount; i++) {
-        var value;
         var parameter = method.parameters[i];
         if (i < argCount) {
           value = args[i];
@@ -490,6 +490,7 @@ var Interpreter = (function () {
           case OP_coerce_o:
             obj = stack.pop();
             stack.push(obj == undefined ? null : obj);
+            break;
           case OP_negate:
             stack.push(-stack.pop());
             break;

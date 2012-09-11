@@ -41,6 +41,9 @@ IRC_ROOM = shumway-build-bot
 lint:
 	make -C utils/ -f lint.mk lint
 
+lint-all:
+	make -C utils/ -f lint.mk lint-all
+
 server:
 	python -m SimpleHTTPServer
 
