@@ -255,7 +255,7 @@ function BitSetFunctor(length) {
     this.bits = 0;
   }
 
-  var singleword = (SIZE >> ADDRESS_BITS_PER_WORD) === 1
+  var singleword = (SIZE >> ADDRESS_BITS_PER_WORD) === 1;
   var Ctor = singleword ? BitSetS : BitSet;
 
   Ctor.ADDRESS_BITS_PER_WORD = ADDRESS_BITS_PER_WORD;
@@ -563,7 +563,7 @@ function BitSetFunctor(length) {
   };
 
   return Ctor;
-};
+}
 
 // https://gist.github.com/958841
 function base64ArrayBuffer(arrayBuffer) {

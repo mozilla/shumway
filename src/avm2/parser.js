@@ -430,7 +430,7 @@ var Multiname = (function () {
   multiname.parse = function parse(constantPool, stream, multinames) {
     var index = 0;
     var kind = stream.readU8();
-    var name = undefined, namespaces = [], flags = 0, typeParameter;
+    var name, namespaces = [], flags = 0, typeParameter;
     switch (kind) {
       case CONSTANT_QName: case CONSTANT_QNameA:
         index = stream.readU30();
@@ -828,6 +828,12 @@ var ConstantPool = (function constantPool() {
 })();
 
 var MethodInfo = (function () {
+
+  function getParameterName(i) {
+    assert (i < 26);
+    return "p" + String.fromCharCode("A".charCodeAt(0) + i);
+  }
+
   function methodInfo(abc, stream) {
     const constantPool = abc.constantPool;
 
@@ -858,10 +864,6 @@ var MethodInfo = (function () {
         parameters[i].name = constantPool.strings[stream.readU30()];
       }
     } else {
-      function getParameterName(i) {
-        assert (i < 26);
-        return "p" + String.fromCharCode("A".charCodeAt(0) + i);
-      }
       for (var i = 0; i < parameterCount; i++) {
         parameters[i].name = getParameterName(i);
       }

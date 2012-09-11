@@ -17,15 +17,15 @@ var spawn = require('child_process').spawn;
 
 global.assert = function () { };
 
-var options = require("../options.js");
+var options = require(__dirname + "/../options.js");
 
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
 var OptionSet = options.OptionSet;
 
-var esprima = require("../compiler/lljs/src/esprima.js");
-var escodegen = require("../compiler/lljs/src/escodegen.js");
-var estransform = require("../compiler/lljs/src/estransform.js");
+var esprima = require(__dirname + "/../compiler/lljs/src/esprima.js");
+var escodegen = require(__dirname + "/../compiler/lljs/src/escodegen.js");
+var estransform = require(__dirname + "/../compiler/lljs/src/estransform.js");
 
 // Import nodes
 const T = estransform;
@@ -97,7 +97,9 @@ ExpressionStatement.prototype.transform = function (o) {
       this.expression.callee.name === "load" &&
       this.expression.arguments.length === 1 &&
       this.expression.arguments[0] instanceof Literal) {
-    var node = esprima.parse(readFile(this.expression.arguments[0].value));
+    var path = __dirname + "/" + this.expression.arguments[0].value;
+    // console.info("Processing: " + path);
+    var node = esprima.parse(readFile(path));
     node = T.lift(node);
     node = node.transform(o);
     return new BlockStatement(node.body);
@@ -114,6 +116,13 @@ var constants = {
 };
 
 node = node.transform({constants: constants});
+
+for (var i = 0; i < node.body.length; i++) {
+  if (node.body[i] instanceof BlockStatement) {
+    Array.prototype.splice.apply(node.body, [i, 1].concat(node.body[i].body));
+  }
+}
+
 var code = escodegen.generate(node, { base: "", indent: "  ", comment: false });
 
 if (closure.value) {

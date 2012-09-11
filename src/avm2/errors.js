@@ -176,6 +176,8 @@ function translateErrorMessage(error) {
     switch (error.type) {
       case "undefined_method":
         return formatErrorMessage(Errors.CallOfNonFunctionError, "value");
+      default:
+        throw notImplemented(error.type);
     }
   } else {
     if (error.message.indexOf("is not a function") >= 0) {

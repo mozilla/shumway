@@ -373,7 +373,7 @@ const natives = (function () {
     }
 
     function TypedVector (length, fixed) {
-      length = int(length);
+      length = _int(length);
       var array = new TypedArray(length);
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
@@ -462,15 +462,15 @@ const natives = (function () {
     return c;
   }
 
-  function int(x) {
+  function _int(x) {
     return Number(x) | 0;
   }
 
   function intClass(runtime, scope, instance, baseClass) {
-    var c = new runtime.domain.system.Class("int", int, C(int));
+    var c = new runtime.domain.system.Class("int", _int, C(_int));
     c.extendBuiltin(baseClass);
     c.defaultValue = 0;
-    c.coerce = int;
+    c.coerce = _int;
     c.isInstanceOf = function (value) {
       return false;
     };
@@ -483,12 +483,12 @@ const natives = (function () {
     return c;
   }
 
-  function uint(x) {
+  function _uint(x) {
     return Number(x) >>> 0;
   }
 
   function uintClass(runtime, scope, instance, baseClass) {
-    var c = new runtime.domain.system.Class("uint", uint, C(uint));
+    var c = new runtime.domain.system.Class("uint", _uint, C(_uint));
     c.extend(baseClass);
     c.defaultValue = 0;
     c.isInstanceOf = function (value) {
@@ -500,7 +500,7 @@ const natives = (function () {
       }
       return (value >>> 0) === value;
     };
-    c.coerce = uint;
+    c.coerce = _uint;
     return c;
   }
 

@@ -584,7 +584,7 @@ var Analysis = (function () {
           code.offset += codeStream.position;
           break;
 
-        default:;
+        default:
         }
 
         // Cache the position in the bytecode array.
@@ -629,7 +629,7 @@ var Analysis = (function () {
           code.offset = newOffset;
           break;
 
-        default:;
+        default:
         }
       }
 
@@ -704,7 +704,7 @@ var Analysis = (function () {
           id = bytecodes[pc + 1].makeBlockHead(id);
           break;
 
-        default:;
+        default:
         }
       }
 
@@ -745,7 +745,7 @@ var Analysis = (function () {
         id = bytecodes[pc + 1].makeBlockHead(id);
         break;
 
-      default:;
+      default:
       }
 
       // Mark exceptions.
@@ -838,7 +838,7 @@ var Analysis = (function () {
         currentBlock.succs.push(code.target);
         break;
 
-      default:;
+      default:
       }
       currentBlock.end = code;
 
