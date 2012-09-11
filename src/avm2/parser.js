@@ -266,7 +266,8 @@ var Namespace = (function () {
   }
 
   function buildNamespace() {
-    this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    //this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    this.uri = escapeString(this.uri);
 
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
@@ -493,7 +494,7 @@ var Multiname = (function () {
         flags |= ATTRIBUTE;
         break;
     }
-    var mn = new Multiname(namespaces, name, flags);
+    var mn = new Multiname(namespaces, escapeString(name), flags);
     if (typeParameter) {
       mn.typeParameter = typeParameter;
     }
@@ -713,6 +714,13 @@ var Multiname = (function () {
 
   return multiname;
 })();
+
+function escapeString(str) {
+  if (str !== undefined) {
+    str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+  }
+  return str;
+}
 
 var ConstantPool = (function constantPool() {
   function constantPool(stream) {
