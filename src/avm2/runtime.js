@@ -4,6 +4,7 @@ var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
+var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
@@ -1155,9 +1156,8 @@ var Runtime = (function () {
     }
   };
 
-  runtime.prototype.throwErrorFromVM = function (errorClass, message) {
-    print(backtrace());
-    throw new (this.domain.getClass(errorClass)).instance(message);
+  runtime.prototype.throwErrorFromVM = function (errorClass, message, id) {
+    throw new (this.domain.getClass(errorClass)).instance(message, id);
   };
 
   runtime.prototype.translateError = function (error) {

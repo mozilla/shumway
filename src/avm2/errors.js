@@ -156,6 +156,9 @@ const Errors = {
 };
 
 function getErrorMessage(index) {
+  if (!debuggerMode.value) {
+    return "Error #" + index;
+  }
   for (var k in Errors) {
     if (Errors[k].code == index) {
       return "Error #" + index + ": " + Errors[k].message;

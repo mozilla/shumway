@@ -385,7 +385,7 @@ const natives = (function () {
     TypedVector.prototype = TypedArray.prototype;
     var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
     var c = new runtime.domain.system.Class(name, TypedVector, C(TypedVector));
-    var m = TypedArray.prototype;
+    var m = Object.create(TypedArray.prototype);
 
     defineReadOnlyProperty(TypedArray.prototype, "class", c);
 
@@ -399,6 +399,17 @@ const natives = (function () {
     });
 
     c.extendBuiltin(baseClass);
+
+    m.pop = function () {
+      if (this[VM_VECTOR_IS_FIXED]) {
+        var error = Errors.VectorFixedError;
+        runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
+      } else if (this.length === 0) {
+        return type.defaultValue;
+      }
+      return TypedArray.prototype.pop.call(this, arguments);
+    };
+
     c.nativeMethods = m;
     c.nativeStatics = {};
     c.vectorType = type;

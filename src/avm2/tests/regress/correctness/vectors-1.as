@@ -73,5 +73,14 @@ package {
     trace(v.length);
   })();
 
+  (function () {
+    trace("A: " + new Vector.<int>().pop());
+    trace(new Vector.<uint>().pop());
+    trace(new Vector.<Object>().pop());
+    trace(new Vector.<String>().pop());
+    trace(new Vector.<Object>(1).push("A"));
+    trace(new Vector.<Object>(10)[0]);
+  })();
+
   trace("-");
 }
