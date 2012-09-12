@@ -271,7 +271,7 @@ function count(name) {
   counts[name] ++;
 }
 
-var pathLength = 100;
+var pathLength = 140;
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
@@ -316,12 +316,24 @@ function runNextTest () {
           } else if (baseline.output.text == result.output.text) {
             if (i > 0) {
               delete result.output.text;
-              process.stdout.write(PASS + " PASS" + ENDC);
+              process.stdout.write(PASS + " PASS 100 %" + ENDC);
               count(configuration.name + ":pass");
             }
           } else {
             someFailed = true;
-            process.stdout.write(FAIL + " FAIL" + ENDC);
+            var nPassed = 0, nFailed = 0, nPassedPercentage = 1;
+            if (result.output.text) {
+              var match = result.output.text.match(/PASSED/g);
+              nPassed = match ? match.length : 0;
+              match = baseline.output.text.match(/PASSED/g);
+              var nTotal = match ? match.length : 0;
+              nPassedPercentage = (nPassed / nTotal) * 100 | 0;
+            }
+            if (nPassedPercentage >= 50) {
+              process.stdout.write(WARN + " PASS " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+            } else {
+              process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+            }
             count(configuration.name + ":fail");
           }
           process.stdout.write(" " + (result.elapsed / 1000).toFixed(2));
