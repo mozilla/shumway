@@ -1,7 +1,4 @@
-function Mouse() {
-}
-
-Object.defineProperties(Mouse, {
+var Mouse = Object.create(null, {
   cursor: describeAccessor(
     function () {
       return 'auto'; // TODO
