@@ -27,8 +27,9 @@ SWF.embed = function(file, container) {
       canvas.height = stage.stageHeight;
     }
 
-    AS2Key.$bind(canvas);
-    AS2Mouse.$bind(canvas);
+    canvas.addEventListener('click', function () {
+      Keyboard.focus = stage;
+    });
 
     var bgcolor = loaderInfo.backgroundColor;
     stage._color = bgcolor;

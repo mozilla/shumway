@@ -128,10 +128,10 @@ Stage.prototype = Object.create(DisplayObjectContainer.prototype, {
   ),
   focus: describeAccessor(
     function () {
-      return null;
+      return Keyboard._focus;
     },
     function (val) {
-      notImplemented();
+      Keyboard._focus = val;
     }
   ),
   focusRect: describeAccessor(

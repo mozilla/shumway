@@ -48,9 +48,9 @@ EventDispatcher.prototype = Object.create(null, {
     var queue = handler.queue;
     var index = queue.length;
     while (index > 0) {
-      var listener = queue[index - 1];
+      var entry = queue[index - 1];
 
-      if (prio < listener.prio)
+      if (prio < entry.prio)
         break;
 
       index--;
@@ -65,7 +65,7 @@ EventDispatcher.prototype = Object.create(null, {
 
     if (this._control) {
       var domEvent = document.createEvent('Event');
-      domEvent.init(evt.type, evt.bubbles, evt.cancelable);
+      domEvent.initEvent(evt.type, evt.bubbles, evt.cancelable);
       domEvent._originalEvent = evt;
       this._control.dispatchEvent(domEvent);
     } else {

@@ -9,17 +9,17 @@ function KeyboardEvent(type,
                        shiftKey) {
   Event.call(this);
 
-  Object.defineProperties(
+  Object.defineProperties(this, {
     type:        describeProperty(type),
     bubbles:     describeProperty(bubbles !== undefined ? !!bubbles : true),
-    cancelable:  describeProperty(!!cancelable)
+    cancelable:  describeProperty(!!cancelable),
     charCode:    describeProperty(charCode || 0),
     keyCode:     describeProperty(keyCode || 0),
     keyLocation: describeProperty(keyLocation || 0),
     ctrlKey:     describeProperty(!!ctrlKey),
     altKey:      describeProperty(!!altKey),
     shiftKey:    describeProperty(!!shiftKey)
-  );
+  });
 }
 
 Object.defineProperties(KeyboardEvent, {

@@ -1,10 +1,15 @@
-function Keyboard() {
-}
-
-Object.defineProperties(Keyboard, {
+var Keyboard = Object.create(null, {
   capsLock: describeAccessor(function () {
     return false; // TODO Stage.instance.$keyboard.capsLock;
   }),
+  focus: describeAccessor(
+    function () {
+      this._focus || null;
+    },
+    function (val) {
+      this._focus = val;
+    }
+  ),
   hasVirtualKeyboard: describeAccessor(function () {
     return false; // TODO Stage.instance.$keyboard.hasVirtualKeyboard;
   }),
@@ -17,6 +22,21 @@ Object.defineProperties(Keyboard, {
 
   isAccessible: describeMethod(function () {
     return true; // TODO
+  }),
+  handleEvent: describeMethod(function (domEvt) {
+    if (this._focus) {
+      this._focus.dispatchEvent(new KeyboardEvent(
+        domEvt.type === 'keyup' ? KeyboardEvent.KEY_UP : KeyboardEvent.KEY_DOWN,
+        true,
+        false,
+        domEvt.charCode,
+        domEvt.keyCode,
+        domEvt.keyLocation,
+        domEvt.ctrlKey,
+        domEvt.altKey,
+        domEvt.shiftKey
+      ));
+    }
   }),
 
   A:                    describeConst(65),
@@ -372,3 +392,6 @@ Object.defineProperties(Keyboard, {
     Keyboard.KEYNAME_USER
   ])
 });
+
+window.addEventListener('keydown', Keyboard);
+window.addEventListener('keyup', Keyboard);
