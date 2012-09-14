@@ -1301,7 +1301,7 @@ var Compiler = (function () {
         case OP_pushwith:
           flushStack();
           obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj])));
+          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(true)])));
           state.scopeHeight += 1;
           break;
         case OP_popscope:

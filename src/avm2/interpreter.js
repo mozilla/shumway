@@ -205,7 +205,7 @@ var Interpreter = (function () {
             pc = bc.offsets[index];
             continue;
           case OP_pushwith:
-            scope = new Scope(scope, stack.pop());
+            scope = new Scope(scope, stack.pop(), true);
             scopeHeight++;
             break;
           case OP_popscope:

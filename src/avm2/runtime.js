@@ -324,10 +324,11 @@ var Interface = (function () {
  * When functions are created, we bind the function to the current scope, using fnClosure.bind(null, this)();
  */
 var Scope = (function () {
-  function scope(parent, object) {
+  function scope(parent, object, isWith) {
     this.parent = parent;
     this.object = object;
     this.global = parent ? parent.global : this;
+    this.isWith = isWith;
   }
 
   scope.prototype.findProperty = function findProperty(mn, domain, strict) {
@@ -339,12 +340,17 @@ var Scope = (function () {
     }
 
     var obj = this.object;
-    // First check trait bindings.
     if (Multiname.isQName(mn)) {
-      if (Multiname.getQualifiedName(mn) in obj) {
-        return obj;
+      if (this.isWith) {
+        if (Multiname.getQualifiedName(mn) in obj) {
+          return obj;
+        }
+      } else {
+        if (nameInTraits(obj, Multiname.getQualifiedName(mn))) {
+          return obj;
+        }
       }
-    } else if (resolveMultiname(obj, mn)) {
+    } else if (resolveMultiname(obj, mn, !this.isWith)) {
       return obj;
     }
 
@@ -377,9 +383,24 @@ var Scope = (function () {
 })();
 
 /**
+ * Check if a qualified name is in an object's traits.
+ */
+function nameInTraits(obj, qn) {
+  // If the object itself holds traits, try to resolve it. This is true for
+  // things like global objects and activations, but also for classes, which
+  // both have their own traits and the traits of the Class class.
+  if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn))
+    return true;
+
+  // Else look on the prototype.
+  var proto = Object.getPrototypeOf(obj);
+  return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
+}
+
+/**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, mn) {
+function resolveMultiname(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
 
   obj = Object(obj);
@@ -394,6 +415,13 @@ function resolveMultiname(obj, mn) {
   var isNative = isNativePrototype(obj);
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
+    if (traitsOnly) {
+      if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+        return qn;
+      }
+      continue;
+    }
+
     if (mn.namespaces[i].isDynamic()) {
       publicQn = qn;
       if (isNative) {
@@ -405,9 +433,10 @@ function resolveMultiname(obj, mn) {
       }
     }
   }
-  if (publicQn && (Multiname.getQualifiedName(publicQn) in obj)) {
+  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
     return publicQn;
   }
+
   return undefined;
 }
 
@@ -999,7 +1028,7 @@ var Runtime = (function () {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
       }
-      defineNonEnumerableProperty(obj, [VM_BINDINGS], base[VM_BINDINGS].slice());
+      defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
       defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
       obj[VM_SLOTS] = base[VM_SLOTS].slice();
       baseSlotId = obj[VM_SLOTS].length;
