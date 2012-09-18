@@ -4,7 +4,7 @@ var Keyboard = Object.create(null, {
   }),
   focus: describeAccessor(
     function () {
-      this._focus || null;
+      return this._focus || null;
     },
     function (val) {
       this._focus = val;

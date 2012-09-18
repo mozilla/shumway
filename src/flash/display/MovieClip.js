@@ -21,9 +21,11 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
   __class__: describeInternalProperty('flash.display.MovieClip'),
 
   addFrameScript: describeMethod(function () {
+    // arguments are pairs of frameIndex and script/function
+    // frameIndex is in range 0..totalFrames-1
     var frameScripts = this._frameScripts;
     for (var i = 0, n = arguments.length; i < n; i += 2) {
-      var frameNum = arguments[i];
+      var frameNum = arguments[i] + 1;
       var fn = arguments[i + 1];
       var scripts = frameScripts[frameNum];
       if (scripts)

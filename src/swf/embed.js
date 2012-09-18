@@ -12,6 +12,7 @@ SWF.embed = function(file, container) {
   }
 
   loaderInfo.addEventListener(Event.INIT, function () {
+    stage._loader = loader;
     stage._frameRate = loaderInfo.frameRate;
     stage._loaderInfo = loaderInfo;
     stage._stageHeight = loaderInfo.height;

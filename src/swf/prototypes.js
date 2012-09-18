@@ -153,7 +153,7 @@
 //        function initialize(instance) {
 //          if (pframe.actionsData && pframe.actionsData.length > 0) {
 //            for (var i = 0; i < pframe.actionsData.length; i++)
-//              instance.addFrameScript(currentFrame,
+//              instance.addFrameScript(currentFrame - 1,
 //                instance.$createAS2Script(pframe.actionsData[i]));
 //          }
 //

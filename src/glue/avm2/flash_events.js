@@ -115,3 +115,15 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
 
   return c;
 };
+
+natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("KeyboardEvent", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
+  };
+
+  return c;
+};

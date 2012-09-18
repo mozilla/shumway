@@ -14,7 +14,15 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // stage :: void -> Stage
     "get stage": function stage() {
-      notImplemented("DisplayObject.stage");
+      var stage = this.nativeObject.stage;
+      if (stage.scriptObject)
+        return stage.scriptObject;
+      var scriptClass = stage._loader._avm2.applicationDomain.getProperty(
+        Multiname.fromSimpleName('public ' + stage.__class__),
+        true,
+        true
+      );
+      return scriptClass.createInstanceWithBoundNative(stage, true);
     },
 
     // name :: void -> String
@@ -54,22 +62,22 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // x :: void -> Number
     "get x": function x() {
-      return this.d.x;
+      return this.nativeObject.x;
     },
 
     // x :: value:Number -> void
     "set x": function x(value) {
-      this.d.x = value;
+      this.nativeObject.x = value;
     },
 
     // y :: void -> Number
     "get y": function y() {
-      return this.d.y;
+      return this.nativeObject.y;
     },
 
     // y :: value:Number -> void
     "set y": function y(value) {
-      this.d.y = value;
+      this.nativeObject.y = value;
     },
 
     // z :: void -> Number
@@ -438,12 +446,12 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
   c.nativeMethods = {
     // addChild :: child:DisplayObject -> DisplayObject
     addChild: function addChild(child) {
-      this.d.addChild(child.d);
+      this.nativeObject.addChild(child.d);
     },
 
     // addChildAt :: child:DisplayObject, index:int -> DisplayObject
     addChildAt: function addChildAt(child, index) {
-      this.d.addChild(child.d, index);
+      this.nativeObject.addChild(child.d, index);
     },
 
     // removeChild :: child:DisplayObject -> DisplayObject
@@ -691,7 +699,7 @@ natives.MovieClipClass = function MovieClipClass(runtime, scope, instance, baseC
 
     // addFrameScript :: void -> void
     addFrameScript: function addFrameScript() {
-      notImplemented("MovieClip.addFrameScript");
+      this.nativeObject.addFrameScript.apply(this.nativeObject, arguments);
     },
 
     // scenes :: void -> Array
@@ -737,6 +745,39 @@ natives.MovieClipClass = function MovieClipClass(runtime, scope, instance, baseC
     // isPlaying :: void -> Boolean
     "get isPlaying": function isPlaying() {
       notImplemented("MovieClip.isPlaying");
+    }
+  };
+
+  return c;
+};
+
+natives.ShapeClass = function ShapeClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("Shape", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
+    // graphics :: void -> Object ??
+    "get graphics": function graphics() {
+      notImplemented("Shape.graphics");
+    }
+  };
+
+  return c;
+};
+
+natives.StageClass = function StageClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("Stage", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
+    // requireOwnerPermissions :: void -> void ??
+    "requireOwnerPermissions": function() {
+     // private undocumented
+     // notImplemented("Stage.requireOwnerPermissions");
     }
   };
 
