@@ -17,12 +17,12 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
 
     // addEventListener :: type:String, listener:Function, useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false -> void
     addEventListener: function addEventListener(type, listener, useCapture, priority, useWeakReference) {
-      notImplemented("EventDispatcher.addEventListener");
+      this.nativeObject.addEventListener.apply(this.nativeObject, arguments);
     },
 
     // removeEventListener :: type:String, listener:Function, useCapture:Boolean=false -> void
     removeEventListener: function removeEventListener(type, listener, useCapture) {
-      notImplemented("EventDispatcher.removeEventListener");
+      this.nativeObject.removeEventListener.apply(this.nativeObject, arguments);
     },
 
     // hasEventListener :: type:String -> Boolean
