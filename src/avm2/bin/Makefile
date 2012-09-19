@@ -31,4 +31,8 @@ test-compiler:
 test-all:
 	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icov -jo -nm
 
+test-pilot:
+	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/pilot/*.as
+	$(TEST_CMD) -i ../tests/pilot -c icov
+
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all
