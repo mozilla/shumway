@@ -14,10 +14,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // stage :: void -> Stage
     "get stage": function stage() {
-      var stage = this.nativeObject.stage;
-      if (stage.scriptObject)
-        return stage.scriptObject;
-      return stage._loader._bindNativeObject(stage);
+      return this.nativeObject.stage.scriptObject;
     },
 
     // name :: void -> String

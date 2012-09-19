@@ -5,6 +5,7 @@ SWF.embed = function(file, container) {
 
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new Stage;
+  loader._stage = stage;
 
   function fitCanvas(container, canvas) {
     canvas.width = container.clientWidth;

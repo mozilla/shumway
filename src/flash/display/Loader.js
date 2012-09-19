@@ -647,6 +647,8 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   setupVM: describeMethod(function () {
     var loader = this;
+    var stage = loader._stage;
+
     if (loader._isAvm2Enabled) {
       var sysMode = EXECUTION_MODE.INTERPRET;
       var appMode = EXECUTION_MODE.COMPILE;
@@ -661,11 +663,17 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
             return scriptClass.createInstanceWithBoundNative(obj, true);
           }));
 
+        loader._bindNativeObject(stage);
+
         loader._avm2 = vm;
         loader._vmPromise.resolve();
       });
     } else {
       // TODO avm1 initialization
+
+      AS2Key.$bind(stage);
+      AS2Mouse.$bind(stage);
+
       loader._vmPromise.resolve();
     }
   }),

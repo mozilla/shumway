@@ -922,13 +922,13 @@ defineObjectProperties(AS2Key, {
     enumerable: false
   },
   $bind: {
-    value: function $bind(canvas) {
-      canvas.ownerDocument.addEventListener('keydown', function(e) {
+    value: function $bind(stage) {
+      stage.addEventListener('keyDown', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         AS2Key.$keyStates[e.keyCode] = 1;
         AS2Key.broadcastMessage('onKeyDown');
       }, false);
-      canvas.ownerDocument.addEventListener('keyup', function(e) {
+      stage.addEventListener('keyUp', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         delete AS2Key.$keyStates[e.keyCode];
         AS2Key.broadcastMessage('onKeyUp');
@@ -973,7 +973,7 @@ defineObjectProperties(AS2Mouse, {
     enumerable: false
   },
   $bind: {
-    value: function $bind(canvas) {
+    value: function $bind(stage) {
 
       function updateMouseState(e) {
         var transform = canvas.currentTransform;
@@ -989,19 +989,19 @@ defineObjectProperties(AS2Mouse, {
         AS2Mouse.$lastY = (mouseY - transform.offsetY) / transform.scale;
       }
 
-      canvas.addEventListener('mousedown', function(e) {
+      stage.addEventListener('mousedown', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseDown');
       }, false);
-      canvas.addEventListener('mousemove', function(e) {
+      stage.addEventListener('mousemove', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
-      canvas.addEventListener('mouseout', function(e) {
+      stage.addEventListener('mouseout', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
-      canvas.addEventListener('mouseup', function(e) {
+      stage.addEventListener('mouseup', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseUp');
       }, false);
