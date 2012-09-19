@@ -13,6 +13,7 @@ const VM_LENGTH = "vm length";
 const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 const VM_ENUMERATION_KEYS = "vm enumeration keys";
+const VM_OPEN_METHODS = "open methods";
 
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -487,7 +488,23 @@ function getSuper(obj, mn) {
     if (Multiname.isNumeric(resolved) && superTraits.indexGet) {
       value = superTraits.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = obj[Multiname.getQualifiedName(resolved)];
+      var qn = Multiname.getQualifiedName(resolved);
+      var openMethod = superTraits[VM_OPEN_METHODS][qn];
+      var superName = obj.class.baseClass.classInfo.instanceInfo.name;
+
+      // If we're getting a method closure on the super class, close the open
+      // method now and save it to a mangled name. We can't go through the
+      // normal memoizer here because we could be overriding our own method or
+      // getting into an infinite loop (getters that access the property
+      // they're set to on the same object is bad news).
+      if (openMethod) {
+        value = obj[superName + " " + qn];
+        if (!value) {
+          value = obj[superName + " " + qn] = openMethod.bind(obj);
+        }
+      } else {
+        value = superTraits[qn];
+      }
     }
   }
 
@@ -838,8 +855,10 @@ var Runtime = (function () {
       scope.object = cls;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
+        defineNonEnumerableProperty(instance.prototype, VM_OPEN_METHODS, {});
         this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, cls.nativeMethods, true);
       }
+      defineNonEnumerableProperty(cls, VM_OPEN_METHODS, {});
       this.applyTraits(cls, scope, null, ci.traits, cls.nativeStatics, false);
     } else {
       scope = new Scope(scope, null);
@@ -849,7 +868,9 @@ var Runtime = (function () {
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
+      defineNonEnumerableProperty(instance.prototype, VM_OPEN_METHODS, {});
       this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, null, true);
+      defineNonEnumerableProperty(cls, VM_OPEN_METHODS, {});
       this.applyTraits(cls, scope, null, ci.traits, null, false);
     }
 
@@ -1122,6 +1143,8 @@ var Runtime = (function () {
 
         var mc;
         if (delayBinding) {
+          assert(obj[VM_OPEN_METHODS]);
+
           var memoizeMethodClosure = (function (closure, qn) {
             return function memoizer() {
               if (this.hasOwnProperty(qn)) {
@@ -1139,6 +1162,7 @@ var Runtime = (function () {
           // TODO: We make the |memoizeMethodClosure| configurable since it may be
           // overridden by a derived class. Only do this non final classes.
           defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
+          obj[VM_OPEN_METHODS][qn] = closure;
         } else {
           mc = closure.bind(obj);
           defineReadOnlyProperty(mc, VM_LENGTH, closure[VM_LENGTH]);
