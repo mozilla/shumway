@@ -13,7 +13,7 @@ const VM_LENGTH = "vm length";
 const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 const VM_ENUMERATION_KEYS = "vm enumeration keys";
-const VM_OPEN_METHODS = "open methods";
+const VM_OPEN_METHODS = "vm open methods";
 
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -488,6 +488,7 @@ function getSuper(obj, mn) {
     if (Multiname.isNumeric(resolved) && superTraits.indexGet) {
       value = superTraits.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
+      // Which class is it really on?
       var qn = Multiname.getQualifiedName(resolved);
       var openMethod = superTraits[VM_OPEN_METHODS][qn];
       var superName = obj.class.baseClass.classInfo.instanceInfo.name;
@@ -855,10 +856,8 @@ var Runtime = (function () {
       scope.object = cls;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
-        defineNonEnumerableProperty(instance.prototype, VM_OPEN_METHODS, {});
         this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, cls.nativeMethods, true);
       }
-      defineNonEnumerableProperty(cls, VM_OPEN_METHODS, {});
       this.applyTraits(cls, scope, null, ci.traits, cls.nativeStatics, false);
     } else {
       scope = new Scope(scope, null);
@@ -868,9 +867,7 @@ var Runtime = (function () {
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
-      defineNonEnumerableProperty(instance.prototype, VM_OPEN_METHODS, {});
       this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, null, true);
-      defineNonEnumerableProperty(cls, VM_OPEN_METHODS, {});
       this.applyTraits(cls, scope, null, ci.traits, null, false);
     }
 
@@ -1045,17 +1042,23 @@ var Runtime = (function () {
     // Copy over base trait bindings.
     if (base) {
       var bindings = base[VM_BINDINGS];
+      var baseOpenMethods = base[VM_OPEN_METHODS];
+      var openMethods = {};
       for (var i = 0, j = bindings.length; i < j; i++) {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
+        if (baseOpenMethods[qn]) {
+          openMethods[qn] = baseOpenMethods[qn];
+        }
       }
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
       defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
-      obj[VM_SLOTS] = base[VM_SLOTS].slice();
+      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, openMethods);
       baseSlotId = obj[VM_SLOTS].length;
     } else {
       defineNonEnumerableProperty(obj, VM_BINDINGS, []);
       defineNonEnumerableProperty(obj, VM_SLOTS, []);
+      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
       baseSlotId = 0;
     }
 
