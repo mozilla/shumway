@@ -72,14 +72,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     var symbolClass = function () {
       baseClass.call(this);
 
-      Object.defineProperties(this, props);
+      Object.defineProperties(this, props || {});
 
-      //var scriptClass = loader._avm2.applicationDomain.getProperty(
-      //  Multiname.fromSimpleName('public ' + this.__class__),
-      //  true,
-      //  true
-      //);
-      //scriptClass.createInstanceWithBoundNative(this, true);
+      loader._bindNativeObject(this);
     };
     symbolClass.prototype = Object.create(baseClass.prototype);
     return symbolClass;
@@ -107,15 +102,25 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
     loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
-    if (!this._dictionary[0]) {
-      this.setup(data);
-    } else if (data) {
+    switch (data.command) {
+    case 'setup':
+      this.setup(data.result);
+      break;
+    case 'loading':
+      this.setupVM();
+      break;
+    case 'complete':
+      loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+      break;
+    case 'error':
+      console.log('ERROR: ' + data.message);
+      break;
+    default:
       if (data.id)
         this.commitSymbol(data);
       else if (data.type === 'frame')
         this.commitFrame(data);
-    } else {
-      loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+      break;
     }
   }),
   commitFrame: describeMethod(function (frame) {
@@ -162,8 +167,12 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     if (frame.bgcolor)
       loaderInfo._backgroundColor = frame.bgcolor;
 
+    var i = frame.repeat || 1;
+    while (i--)
+      timeline.push(framePromise);
+
     Promise.when.apply(Promise, promiseQueue).then(function (val) {
-      if (abcBlocks) {
+      if (abcBlocks && loader._isAvm2Enabled) {
         var appDomain = loader._avm2.applicationDomain;
         for (var i = 0, n = abcBlocks.length; i < n; i++) {
           var abc = new AbcFile(abcBlocks[i]);
@@ -194,10 +203,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       if (frameNum === 1)
         loaderInfo.dispatchEvent(new Event(Event.INIT));
     });
-
-    var i = frame.repeat || 1;
-    while (i--)
-      timeline.push(framePromise);
   }),
   commitSymbol: describeMethod(function (symbol) {
     var dependencies = symbol.require;
@@ -436,6 +441,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       break;
     }
 
+    if (!symbol) {
+      loader.commitData({command: 'error', message: 'unknown symbol type'});
+      return;
+    }
+
     symbols[swfTag.id] = symbol;
     loader.commitData(symbol);
   }),
@@ -506,10 +516,19 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
     SWF.parse(bytes, {
       onstart: function(result) {
-        loader.commitData(result);
+        loader.commitData({command: 'setup', result: result});
       },
       onprogress: function(result) {
         var tags = result.tags;
+        if (tagsProcessed == 0) {
+          // giving a special treatment to the first tag if it's FileAttributes
+          if (tags.length > 0 && tags[0].code == SWF_TAG_CODE_FILE_ATTRIBUTES) {
+            var tag = tags[0];
+            loader._isAvm2Enabled = tag.doAbc;
+            tagsProcessed++;
+          }
+          loader.commitData({command: 'loading'});
+        }
         for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
           var tag = tags[tagsProcessed];
           if ('id' in tag) {
@@ -584,7 +603,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       },
       oncomplete: function(result) {
         loader.commitData(result);
-        loader.commitData(null);
+        loader.commitData({command: 'complete'});
       }
     });
   }),
@@ -610,28 +629,53 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     loaderInfo._frameRate = info.frameRate;
 
     var timeline = [];
-    var documentClass = loader.createSymbolClass(MovieClip, {
-      _frameLabels: describeProperty({ }),
-      _timeline: describeProperty(timeline),
-      _totalFrames: describeProperty(info.frameCount)
-    });
-
     var documentPromise = new Promise;
 
-    var sysMode = EXECUTION_MODE.INTERPRET;
-    var appMode = EXECUTION_MODE.COMPILE;
-    createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
-      loader._avm2 = vm;
+    var vmPromise = new Promise;
+    vmPromise.then(function() {
+      var documentClass = loader.createSymbolClass(MovieClip, {
+        _frameLabels: describeProperty({ }),
+        _timeline: describeProperty(timeline),
+        _totalFrames: describeProperty(info.frameCount)
+      });
       documentPromise.resolve(documentClass);
     });
 
     loader._dictionary = { 0: documentPromise };
     loader._timeline = timeline;
+    loader._vmPromise = vmPromise;
+  }),
+  setupVM: describeMethod(function () {
+    var loader = this;
+    if (loader._isAvm2Enabled) {
+      var sysMode = EXECUTION_MODE.INTERPRET;
+      var appMode = EXECUTION_MODE.COMPILE;
+      createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
+        Object.defineProperty(loader, '_bindNativeObject',
+          describeMethod(function avm2BindNativeObject(obj) {
+            var scriptClass = vm.applicationDomain.getProperty(
+              Multiname.fromSimpleName('public ' + obj.__class__),
+              true,
+              true
+            );
+            return scriptClass.createInstanceWithBoundNative(obj, true);
+          }));
+
+        loader._avm2 = vm;
+        loader._vmPromise.resolve();
+      });
+    } else {
+      // TODO avm1 initialization
+      loader._vmPromise.resolve();
+    }
   }),
   unload: describeMethod(function () {
     notImplemented();
   }),
   unloadAndStop: describeMethod(function (gc) {
     notImplemented();
+  }),
+  _bindNativeObject: describeMethod(function (obj) {
+    // this method will be shadowed by avm1 or avm2 specific implementation
   })
 });

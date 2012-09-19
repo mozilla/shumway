@@ -17,12 +17,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
       var stage = this.nativeObject.stage;
       if (stage.scriptObject)
         return stage.scriptObject;
-      var scriptClass = stage._loader._avm2.applicationDomain.getProperty(
-        Multiname.fromSimpleName('public ' + stage.__class__),
-        true,
-        true
-      );
-      return scriptClass.createInstanceWithBoundNative(stage, true);
+      return stage._loader._bindNativeObject(stage);
     },
 
     // name :: void -> String
