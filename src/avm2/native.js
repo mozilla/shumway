@@ -129,17 +129,17 @@ function debugBreak(message) {
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
-Object.prototype.isInstance = function () {
-  assert (false, "isInstance() is not implemented on type " + this);
-};
-
-Object.prototype.isInstanceOf = function () {
+defineReadOnlyProperty(Object.prototype, "isInstanceOf", function () {
   assert (false, "isInstanceOf() is not implemented on type " + this);
-};
+});
 
-Object.prototype.coerce = function () {
+defineReadOnlyProperty(Object.prototype, "coerce", function () {
   assert (false, "coerce() is not implemented on type " + this);
-};
+});
+
+defineReadOnlyProperty(Object.prototype, "isInstance", function () {
+  assert (false, "isInstance() is not implemented on type " + this);
+});
 
 const natives = (function () {
 
