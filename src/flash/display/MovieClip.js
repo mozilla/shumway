@@ -61,6 +61,14 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     return this._framesLoaded;
   }),
 
+  _bindChildToProperty: describeMethod(function (child) {
+    if (this.scriptObject) {
+      // HACK for AVM2
+      var name = Multiname.getPublicQualifiedName(child.name);
+      setProperty(this.scriptObject, name, child.scriptObject);
+    }
+  }),
+
   gotoFrame: describeMethod(function (frameNum, scene) {
     if (frameNum > this._totalFrames)
       frameNum = 1;
@@ -104,6 +112,10 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           };
           timelineInfo[depth] = info;
           this.addChild(instance);
+          if (cmd.name) {
+            instance.name = cmd.name;
+            this._bindChildToProperty(instance);
+          }
         }
         instance._timelineInfo[0] = info;
       } else if (info) {
