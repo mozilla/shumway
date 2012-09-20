@@ -1,6 +1,7 @@
 var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
 var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+var enableInlineCaching = compilerOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
 
 var compilerEnableExceptions = compilerOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
 var compilerMaximumMethodSize = compilerOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));

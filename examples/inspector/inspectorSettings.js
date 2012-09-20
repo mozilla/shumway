@@ -5,6 +5,7 @@ function getState() {
 var state = getState();
 enableVerifier.value = state.chkVerifier;
 enableOpt.value = state.chkOptimizations;
+enableInlineCaching.value = state.chkInlineCaching;
 
 function setState(state) {
   localStorage["Inspector-Settings"] = JSON.stringify(state);
