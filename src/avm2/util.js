@@ -85,6 +85,19 @@ function isNullOrUndefiend(value) {
 }
 
 /**
+ * Converts an object to an array of key, value arrays.
+ */
+function toKeyValueArray(o) {
+  var a = [];
+  for (var k in o) {
+    if (o.hasOwnProperty(k)) {
+      a.push([k, o[k]]);
+    }
+  }
+  return a;
+}
+
+/**
  * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
  */
 function isNumeric(x) {

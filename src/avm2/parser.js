@@ -309,10 +309,6 @@ var Namespace = (function () {
       return this.isPublic() && !this.uri;
     },
 
-    getPrefix: function getPrefix() {
-      return this.prefix;
-    },
-
     getURI: function getURI() {
       return this.uri;
     },
@@ -325,8 +321,13 @@ var Namespace = (function () {
       var c = new Namespace();
       c.kind = this.kind;
       c.uri = this.uri;
+      c.originalURI = this.originalURI;
       c.qualifiedName = this.qualifiedName;
-      c.prefix = this.prefix;
+      return c;
+    },
+
+    isEqualTo: function isEqualTo(o) {
+      return this.qualifiedName === o.qualifiedName;
     },
 
     getAccessModifier: function getAccessModifier() {
@@ -675,6 +676,12 @@ var Multiname = (function () {
   multiname.prototype.getName = function getName() {
     assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
+  };
+
+  multiname.prototype.getNamespace = function getNamespace() {
+    assert(!this.isRuntimeNamespace());
+    assert(this.namespaces.length === 1);
+    return this.namespaces[0];
   };
 
   multiname.prototype.nameToString = function nameToString() {
@@ -1104,6 +1111,9 @@ var AbcFile = (function () {
     for (i = 0; i < n; ++i) {
       MethodInfo.parseBody(this, stream);
     }
+
+    InlineCacheManager.updateInlineCaches(this);
+
     Timer.stop();
   }
 
