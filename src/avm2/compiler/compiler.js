@@ -1750,27 +1750,28 @@ var Compiler = (function () {
 })();
 
 /**
- * Inline caching translates each |getProperty(o, mn)| into |get(o)| where |get| is of the form
- * get = function (o) {
- *   return o.ns0name !== undefiend ? o.ns0name :
- *                                    o.ns1name !== undefiend ? o.ns1name :
- *                                                              ... ;
- * }
- * There are many such |get| functions, one for each getProperty. The InlineCacheManager generates
- * these getters using the namespaces defined in the multiname |mn| and the qualified names of the
- * traits currently loaded. For instance, if a trait named |x| only appears in the private namespace
- * of a class and we observe the property access |o.{public, private, packageInternal}::x| we can
- * ignore |packageInternal| because it |x| cannot possibly bind to this namespace given the information
- * we have about all the traits in the system. If in the future, a .swf file is loaded that has a trait
- * named |x| in |packageInternal| namespace we have to invalidate the getter. We can overwrite the getter
- * function with a new one that checks the |packageInternal| namespace as well.
+ * Inline caching is used to optimize property access. In AS3, the property access expression |o.p| may be compiled as
+ * |o.{ns0,ns1,ns2}::p| where {ns0, ns1, ns2} is a set of currently open namespaces. Usually, if we can't determine
+ * the type of |o| then we can't resolve the multiname to a qname and we must emit a call to a slow |getProperty(o,
+ * {ns0,ns1,ns2}::p)| function which performs a linear search over all qnames in the multiname until one is found.
  *
- * We key idea here is to exploit the JS engine's PIC and inlining features.
+ * However, if we can prove that the name |p| only ever appears in the |ns1| namespace in any of the "currently" defined
+ * traits, then we can resolve the multiname to |ns1$p| since it can't possibly resolve to any other namespace. Instead
+ * of the slow |getProperty| call, we could just emit |o.ns1$p|. Unfortunately, this is not sound because another .swf
+ * file may be loaded that defines a trait |p| in the namespace |ns0| which would invalidate our previous assumption. To
+ * fix this, we instead generate a getter stub |get = function (o) { return o.ns1$p; }| that returns the value of |o.ns1$p|.
+ * We then keep track of this stub and if at a later time our assumption is invalidated we patch it with another stub
+ * that also checks the |ns0| namespace |get = function (o) { return o.ns1$p ? o.ns1$p : (o.ns0$p ? o.ns0$p : undefined); }|.
+ *
+ * Because the JS engine inlines short functions, we can expect that the getters / setter functions are inlined and
+ * guarded with PICs, so in a sense we're implementing AS3 PICs on top of JS PICs.
+ *
  */
 var InlineCacheManager = (function () {
   var writer = new IndentingWriter();
 
-  var inlineCacheSets = {};
+  var inlineCacheSets = new Map();
+
   var InlineCacheSet = (function () {
     var inlineCacheCounter = 0;
     function inlineCacheSet(name) {
@@ -1802,7 +1803,6 @@ var InlineCacheManager = (function () {
       var namespaces = this.namespaces.sort(function (a, b) {
         return a[1] - b[1]
       });
-
       var str = "";
       var count = 0;
       for (var i = 0; i < namespaces.length; i++) {
@@ -1841,10 +1841,10 @@ var InlineCacheManager = (function () {
     traits.forEach(function (trait) {
       var name = trait.name.getName();
       var namespace = trait.name.getNamespace();
-      if (!hasOwnProperty.call(inlineCacheSets, name)) {
-        inlineCacheSets[name] = new InlineCacheSet(name);
+      if (!inlineCacheSets.has(name)) {
+        inlineCacheSets.set(name, new InlineCacheSet(name));
       }
-      var inlineCacheSet = inlineCacheSets[name];
+      var inlineCacheSet = inlineCacheSets.get(name);
       inlineCacheSet.update(namespace);
     });
   }
@@ -1858,8 +1858,8 @@ var InlineCacheManager = (function () {
         return mn.inlineCacheGetter;
       }
       var name = mn.getName();
-      if (hasOwnProperty.call(inlineCacheSets, name)) {
-        var inlineCacheSet = inlineCacheSets[name];
+      if (inlineCacheSets.has(name)) {
+        var inlineCacheSet = inlineCacheSets.get(name);
         if (inlineCacheSet) {
           return mn.inlineCacheGetter = inlineCacheSet.createGetter(mn);
         }
@@ -1870,7 +1870,6 @@ var InlineCacheManager = (function () {
       if (!enableInlineCaching.value) {
         return;
       }
-      var hasOwnProperty = Object.prototype.hasOwnProperty;
       abc.scripts.forEach(function (si) {
         updateTraits(si.traits);
       });
@@ -1885,8 +1884,8 @@ var InlineCacheManager = (function () {
       });
       if (traceInlineCaching.value) {
         for (var k in inlineCacheSets) {
-          if (hasOwnProperty.call(inlineCacheSets, k)) {
-            var set = inlineCacheSets[k];
+          if (inlineCacheSets.has(k)) {
+            var set = inlineCacheSets.get(k);
             writer.writeLn("IC Set: " + k + " - " + set.namespaces.map(function (x) {
               return x[0].qualifiedName + ": " + x[1];
             }).join(", "));

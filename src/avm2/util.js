@@ -691,6 +691,29 @@ var IndentingWriter = (function () {
   return indentingWriter;
 })();
 
+var Map = (function() {
+  function map () {
+    this.elements = {};
+  }
+  map.prototype.set = function set(k, v) {
+    this.elements[k] = v;
+  };
+  map.prototype.get = function get(k) {
+    if (this.has(k)) {
+      return this.elements[k];
+    }
+    return undefined;
+  };
+  map.prototype.has = function has(k) {
+    return Object.prototype.hasOwnProperty.call(this.elements, k);
+  };
+  map.prototype.delete = function delete(k) {
+    if (this.has(k)) {
+      delete this.elements[k];
+    }
+  };
+  return map;
+})();
 
 /**
  * SortedList backed up by a linked list.
