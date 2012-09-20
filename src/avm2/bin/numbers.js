@@ -153,7 +153,7 @@ var configurations = [
   {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js --no-ion";
 if (jsOptimazations.value) {
   commandPrefix += " -m -n";
 }
