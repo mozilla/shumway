@@ -696,10 +696,13 @@ var Compiler = (function () {
 
       var cases = [];
       item.cases.forEach(function (x) {
-        var result = x.body.compile(this, dt.state.clone());
-        cases.push(new SwitchCase(typeof x.index === "number" ? new Literal(x.index) : undefined, result.node));
-        // TODO: Merge states.
-        assert(result.state.stack.length === 0);
+        var result;
+        if (x.body) {
+          result = x.body.compile(this, dt.state.clone());
+          // TODO: Merge states.
+          assert(result.state.stack.length === 0);
+        }
+        cases.push(new SwitchCase(typeof x.index === "number" ? new Literal(x.index) : undefined, result ? [result.node] : []));
       }, this);
 
       if (item.nothingThrownLabel) {
