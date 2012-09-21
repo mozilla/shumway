@@ -1565,7 +1565,7 @@ var Analysis = (function () {
           for (var i = 0, j = cases.length; i < j; i++) {
             var c = cases[i];
             if (c.body) {
-              c.body = massage(c.body, exit, cont, br);
+              c.body = massage(c.body, exit, cont, exit);
             }
           }
           return node;
