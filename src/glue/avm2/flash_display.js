@@ -124,12 +124,12 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // rotation :: void -> Number
     "get rotation": function rotation() {
-      notImplemented("DisplayObject.rotation");
+      return this.nativeObject.rotation;
     },
 
     // rotation :: value:Number -> void
     "set rotation": function rotation(value) {
-      notImplemented("DisplayObject.rotation");
+      this.nativeObject.rotation = value;
     },
 
     // rotationX :: void -> Number
@@ -174,7 +174,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // width :: void -> Number
     "get width": function width() {
-      notImplemented("DisplayObject.width");
+      return this.nativeObject.width;
     },
 
     // width :: value:Number -> void
@@ -184,7 +184,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // height :: void -> Number
     "get height": function height() {
-      notImplemented("DisplayObject.height");
+      return this.nativeObject.height;
     },
 
     // height :: value:Number -> void
