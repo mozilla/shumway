@@ -1790,7 +1790,7 @@ var InlineCacheManager = (function () {
     var inlineCacheCounter = 0;
     function inlineCacheSet(name) {
       this.name = name;
-      this.namespaces = [[Namespace.PUBLIC, 1]];
+      this.namespaces = [];
       this.dirty = true;
       this.inlineCaches = [];
     }
@@ -1810,34 +1810,42 @@ var InlineCacheManager = (function () {
         assert (this.dirty, "TODO: Invalidate inline caches.");
       }
     };
+    /**
+     * Gets the intersection of the specified multiname's qnames and the current qnames for this name.
+     */
     inlineCacheSet.prototype.getIntersection = function (mn) {
       var namespaces = this.namespaces.sort(function (a, b) {
-        return a[1] - b[1]
+        return a[1] - b[1];
       });
       var names = [];
       for (var i = 0; i < namespaces.length; i++) {
         var ns = namespaces[i][0];
         for (var j = 0; j < mn.namespaces.length; j++) {
           if (mn.namespaces[j].isEqualTo(ns)) {
-            names.push(new Multiname([ns], mn.name));
+            if (!ns.isDynamic()) {
+              names.push(new Multiname([ns], mn.name));
+            }
             break;
           }
         }
       }
+      // The public dynamic namespace needs to be last.
+      names.push(Multiname.getPublicQualifiedName(mn.name));
       return names;
     };
     inlineCacheSet.prototype.create = function (mn, isSetter) {
       this.dirty = false;
       var qns = this.getIntersection(mn);
+      qns.reverse();
       var src;
       for (var i = 0; i < qns.length; i++) {
         var qn = Multiname.getQualifiedName(qns[i]);
         if (isSetter) {
           src = i === 0 ? 'o.' + qn + ' = v' :
-                          'o.' + qn + ' !== undefined || "' + qn + '" in o ? o.' + qn + ' = v : (' + src + ')';
+                          '(o.' + qn + ' !== undefined || ("' + qn + '" in o)) ? o.' + qn + ' = v : (' + src + ')';
         } else {
           src = i === 0 ? 'o.' + qn :
-                          '(x = o.' + qn + ') !== undefined || "' + qn + '" in o ? x : (' + src + ')';
+                          '((x = o.' + qn + ') !== undefined || ("' + qn + '" in o)) ? x : (' + src + ')';
         }
       }
       assert (qns.length);
