@@ -13,16 +13,36 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
     // ctor :: target:IEventDispatcher -> void
     ctor: function ctor(target) {
       print("Ctor");
+
+      // Creating proxy listeners to wrap an Event object into native one
+      var listeners = new WeakMap();
+      this._wrapListener = function (args) {
+        var ar = Array.prototype.slice.call(args, 0);
+        var obj = this;
+        var listener = ar[1];
+        var wrapper = listeners.get(listener);
+        if (!wrapper) {
+          wrapper = function (e) {
+            // HACK create script object if one does not exist, using the loader
+            var wrappedArg = e.scriptObject ||
+              obj.nativeObject.stage._loader._bindNativeObject(e);
+            listener(wrappedArg);
+          };
+          listeners.set(listener, wrapper);
+        }
+        ar[1] = wrapper;
+        return ar;
+      };
     },
 
     // addEventListener :: type:String, listener:Function, useCapture:Boolean=false, priority:int=0, useWeakReference:Boolean=false -> void
     addEventListener: function addEventListener(type, listener, useCapture, priority, useWeakReference) {
-      this.nativeObject.addEventListener.apply(this.nativeObject, arguments);
+      this.nativeObject.addEventListener.apply(this.nativeObject, this._wrapListener(arguments));
     },
 
     // removeEventListener :: type:String, listener:Function, useCapture:Boolean=false -> void
     removeEventListener: function removeEventListener(type, listener, useCapture) {
-      this.nativeObject.removeEventListener.apply(this.nativeObject, arguments);
+      this.nativeObject.removeEventListener.apply(this.nativeObject, this._wrapListener(arguments));
     },
 
     // hasEventListener :: type:String -> Boolean
@@ -58,22 +78,22 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
   c.nativeMethods = {
     // ctor :: type:String, bubbles:Boolean, cancelable:Boolean -> void
     ctor: function ctor(type, bubbles, cancelable) {
-      notImplemented("Event.ctor");
+      print("Event.ctor");
     },
 
     // type :: void -> String
     "get type": function type() {
-      notImplemented("Event.type");
+      return this.nativeObject.type;
     },
 
     // bubbles :: void -> Boolean
     "get bubbles": function bubbles() {
-      notImplemented("Event.bubbles");
+      return this.nativeObject.bubbles;
     },
 
     // cancelable :: void -> Boolean
     "get cancelable": function cancelable() {
-      notImplemented("Event.cancelable");
+      return this.nativeObject.cancelable;
     },
 
     // target :: void -> Object
@@ -88,7 +108,7 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
 
     // eventPhase :: void -> uint
     "get eventPhase": function eventPhase() {
-      notImplemented("Event.eventPhase");
+      return this.nativeObject.eventPhase;
     },
 
     // stopPropagation :: void -> void
@@ -123,6 +143,45 @@ natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instanc
   c.nativeStatics = {};
 
   c.nativeMethods = {
+    // altKey :: void -> Boolean
+    "get altKey": function altKey() {
+      return this.nativeObject.altKey;
+    },
+
+    // altKey :: value:Boolean -> void
+    "set altKey": function altKey(value) {
+      this.nativeObject.altKey = value;
+    },
+
+    // charCode :: charCode -> Number
+    "get charCode": function charCode() {
+      return this.nativeObject.charCode;
+    },
+
+    // charCode :: value:Number -> void
+    "set charCode": function charCode(value) {
+      this.nativeObject.charCode = value;
+    },
+
+    // ctrlKey :: void -> Boolean
+    "get ctrlKey": function ctrlKey() {
+      return this.nativeObject.ctrlKey;
+    },
+
+    // ctrlKey :: value:Boolean -> void
+    "set ctrlKey": function ctrlKey(value) {
+      this.nativeObject.ctrlKey = value;
+    },
+
+    // shiftKey :: void -> Boolean
+    "get shiftKey": function shiftKey() {
+      return this.nativeObject.shiftKey;
+    },
+
+    // shiftKey :: value:Boolean -> void
+    "set shiftKey": function shiftKey(value) {
+      this.nativeObject.shiftKey = value;
+    }
   };
 
   return c;

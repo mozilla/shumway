@@ -4,6 +4,8 @@ function EventDispatcher(target) {
   this._handlers = { };
 }
 
+var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
+
 EventDispatcher.prototype = Object.create(null, {
   __class__: describeInternalProperty('flash.events.EventDispatcher'),
 
@@ -23,9 +25,9 @@ EventDispatcher.prototype = Object.create(null, {
         queue: [],
 
         handleEvent: function (evt) {
-          if (!(evt instanceof Event)) {
+          if (evt instanceof CustomEvent) {
             var domEvent = evt;
-            evt = domEvent._originalEvent;
+            evt = domEvent.detail;
             evt._eventPhase = domEvent.eventPhase;
           }
 
@@ -40,7 +42,7 @@ EventDispatcher.prototype = Object.create(null, {
       };
 
       if (this._control)
-        this._control.addEventListener(type, handler, useCapture);
+        this._control.addEventListener(CUSTOM_DOM_EVENT_PREFIX + type, handler, useCapture);
 
       handlers[type] = handler;
     }
@@ -64,9 +66,8 @@ EventDispatcher.prototype = Object.create(null, {
     evt.target = this;
 
     if (this._control) {
-      var domEvent = document.createEvent('Event');
-      domEvent.initEvent(evt.type, evt.bubbles, evt.cancelable);
-      domEvent._originalEvent = evt;
+      var domEvent = document.createEvent('CustomEvent');
+      domEvent.initCustomEvent(CUSTOM_DOM_EVENT_PREFIX + evt.type, evt.bubbles, evt.cancelable, evt);
       this._control.dispatchEvent(domEvent);
     } else {
       var handler = this._handlers[evt.type];
@@ -90,7 +91,7 @@ EventDispatcher.prototype = Object.create(null, {
 
       if (!listeners.length) {
         if (this._control)
-          this._control.removeEventListener(type, handler, useCapture);
+          this._control.removeEventListener(CUSTOM_DOM_EVENT_PREFIX + type, handler, useCapture);
 
         delete handlers[type];
       }
