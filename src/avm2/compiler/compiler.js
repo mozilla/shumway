@@ -91,6 +91,7 @@ const LOCAL_PREFIX = "l";
 const STACK_PREFIX = "s";
 const ARGUMENT_PREFIX = "a";
 const INLINE_CACHE_GETTER_PREFIX = "get";
+const INLINE_CACHE_SETTER_PREFIX = "set";
 
 const SAVED_SCOPE_NAME = "$SS";
 const scopeName = new Identifier("$S");
@@ -1069,7 +1070,7 @@ var Compiler = (function () {
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
           if (mn.namespaces.length > 1) {
-            var ic = InlineCacheManager.createInlineCacheGetter(mn);
+            var ic = InlineCacheManager.createInlineCache(mn);
             if (ic) {
               slowPath = call(id(ic), [obj]);
             }
@@ -1116,6 +1117,16 @@ var Compiler = (function () {
       function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
         Counter.count("setProperty");
+
+        if (enableInlineCaching.value && multiname instanceof Constant) {
+          var mn = multiname.value;
+          if (mn.namespaces.length > 1) {
+            var ic = InlineCacheManager.createInlineCache(mn, true);
+            if (ic) {
+              slowPath = call(id(ic), [obj, value]);
+            }
+          }
+        }
 
         if (enableOpt.value) {
           if (multiname instanceof RuntimeMultiname) {
@@ -1793,44 +1804,50 @@ var InlineCacheManager = (function () {
       }
       if (foundNewNamespace) {
         this.namespaces.push([namespace, 1]);
-        if (!this.dirty) {
-          // TODO: Invalidate caches.
-        }
-        this.dirty = true;
+        assert (this.dirty, "TODO: Invalidate inline caches.");
       }
     };
-    inlineCacheSet.prototype.createGetter = function (mn) {
+    inlineCacheSet.prototype.getIntersection = function (mn) {
       var namespaces = this.namespaces.sort(function (a, b) {
         return a[1] - b[1]
       });
-      var str = "";
-      var count = 0;
+      var names = [];
       for (var i = 0; i < namespaces.length; i++) {
         var ns = namespaces[i][0];
         for (var j = 0; j < mn.namespaces.length; j++) {
           if (mn.namespaces[j].isEqualTo(ns)) {
-            var qn = Multiname.getQualifiedName(new Multiname([ns], mn.name));
-            if (count === 0) {
-              str = "o." + qn;
-            } else {
-              str = '(x = o.' + qn + ') !== undefined ? x : ("' + qn + '" in o ? undefined : ' + '(' + str + '))';
-            }
-            count ++;
+            names.push(new Multiname([ns], mn.name));
             break;
           }
         }
       }
-      assert (count);
-      var icName = INLINE_CACHE_GETTER_PREFIX + inlineCacheCounter ++;
-      str = "return " + str + ";";
-      if (count > 1) {
-        str = "var x; " + str;
+      return names;
+    };
+    inlineCacheSet.prototype.create = function (mn, isSetter) {
+      this.dirty = false;
+      var qns = this.getIntersection(mn);
+      var src;
+      for (var i = 0; i < qns.length; i++) {
+        var qn = Multiname.getQualifiedName(qns[i]);
+        if (isSetter) {
+          src = i === 0 ? 'o.' + qn + ' = v' :
+                          'o.' + qn + ' !== undefined || "' + qn + '" in o ? o.' + qn + ' = v : (' + src + ')';
+        } else {
+          src = i === 0 ? 'o.' + qn :
+                          '(x = o.' + qn + ') !== undefined || "' + qn + '" in o ? x : (' + src + ')';
+        }
       }
-      str = "function " + icName + "(o) { " + str + " }";
+      assert (qns.length);
+      var icName = (isSetter ? INLINE_CACHE_SETTER_PREFIX : INLINE_CACHE_GETTER_PREFIX) + (inlineCacheCounter ++);
+      if (isSetter) {
+        src = 'function ' + icName + '(o, v) { ' + src + '; }';
+      } else {
+        src = 'function ' + icName + '(o) { ' + (qns.length > 1 ? 'var x; ' : '') + 'return ' + src + '; }';
+      }
       if (traceInlineCaching.value) {
-        writer.writeLn("IC Stub: " + str);
+        writer.writeLn("IC Stub: " + src);
       }
-      jsGlobal[icName] = eval('[' + str + '][0]');
+      jsGlobal[icName] = eval('[' + src + '][0]');
       this.inlineCaches.push(icName);
       return icName;
     };
@@ -1850,26 +1867,32 @@ var InlineCacheManager = (function () {
   }
 
   return {
-    createInlineCacheGetter: function createInlineCacheGetter(mn) {
+    createInlineCache: function createInlineCache(mn, isSetter) {
       assert (mn instanceof Multiname);
       assert (!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
       assert (mn.namespaces.length > 1);
-      if (mn.inlineCacheGetter) {
-        return mn.inlineCacheGetter;
+      var cache = mn.inlineCache || (mn.inlineCache = {});
+      var cacheName = isSetter ? "setter" : "getter";
+      if (cache[cacheName]) {
+        return cache[cacheName];
       }
       var name = mn.getName();
       if (inlineCacheSets.has(name)) {
         var inlineCacheSet = inlineCacheSets.get(name);
         if (inlineCacheSet) {
-          return mn.inlineCacheGetter = inlineCacheSet.createGetter(mn);
+          return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
         }
       }
       return undefined;
     },
+    /**
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     */
     updateInlineCaches: function updateInlineCaches(abc) {
       if (!enableInlineCaching.value) {
         return;
       }
+      /* Collect traits from script, classes, instances and method activations. */
       abc.scripts.forEach(function (si) {
         updateTraits(si.traits);
       });
@@ -1882,6 +1905,7 @@ var InlineCacheManager = (function () {
           updateTraits(mi.traits);
         }
       });
+      /* Trace stats. */
       if (traceInlineCaching.value) {
         for (var k in inlineCacheSets) {
           if (inlineCacheSets.has(k)) {

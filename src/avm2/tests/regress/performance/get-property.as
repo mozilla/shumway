@@ -4,13 +4,14 @@ package {
   }
 
   class B {
-    public var x = 2;
+    var x = 2;
   }
 
   function foo(o) {
     var s = 0;
     for (var i = 0; i < 10000000; i++) {
       s += o.x + o.x + o.x + o.x + o.x;
+      o.x += 1;
     }
     trace("Value : " + s);
   }
