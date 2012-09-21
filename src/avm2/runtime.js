@@ -105,10 +105,7 @@ function initializeGlobalObject(global) {
 }
 
 /**
- * Checks if the specified |obj| is the prototype of a native JavaScript object. When the global
- * object is initialized using |initializeGlobalObject| the prototypes of JavaScript native objects
- * are assigned the property |VM_NATIVE_PROTOTYPE_FLAG|. Here we check if the specified |obj|
- * has this property set.
+ * Checks if the specified |obj| is the prototype of a native JavaScript object.
  */
 function isNativePrototype(obj) {
   return obj.hasOwnProperty(VM_NATIVE_PROTOTYPE_FLAG);
@@ -1150,6 +1147,13 @@ var Runtime = (function () {
 
           var memoizeMethodClosure = (function (closure, qn) {
             return function memoizer() {
+              if (traceExecution.value) {
+                print("Memoizing: " + qn);
+              }
+              if (isNativePrototype(this)) {
+                Counter.count("Runtime: Method Closures");
+                return closure.bind(this);
+              }
               if (this.hasOwnProperty(qn)) {
                 Counter.count("Runtime: Unpatched Memoizer");
                 return this[qn];
