@@ -637,7 +637,7 @@ var Compiler = (function () {
     compilation.prototype.compile = function compile() {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
       assert (node instanceof BlockStatement);
-      if (this.temporary.length > 1) {
+      if (this.temporary.length) {
         this.prologue.push(new VariableDeclaration("var", this.temporary.map(function (x) {
           return new VariableDeclarator(x, null);
         })));
