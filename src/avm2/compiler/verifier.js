@@ -1415,6 +1415,7 @@ var Verifier = (function() {
     assert (scope.object, "Verifier needs a scope object.");
     try {
       new this.verification(this, methodInfo, scope).verify();
+      Counter.count("Verifier: Methods");
     } catch (e) {
       if (e instanceof VerifierError) {
         return;

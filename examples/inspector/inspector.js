@@ -27,8 +27,8 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var sysMode = state.chkSysCompiler ? null : ALWAYS_INTERPRET;
-var appMode = state.chkAppCompiler ? null : ALWAYS_INTERPRET;
+var sysMode = ALWAYS_INTERPRET;
+var appMode = state.appCompiler ? null : ALWAYS_INTERPRET;
 
 function createAVM2(next, loadShellAbc) {
   var vm = new AVM2(sysMode, appMode);
@@ -57,6 +57,7 @@ if (rfile) {
     createAVM2(function(avm2) {
       new BinaryFileReader(rfile).readAll(null, function(buffer) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
+        terminate();
       });
     }, true);
   } else if (rfile.endsWith(".swf")) {
@@ -66,4 +67,8 @@ if (rfile) {
       });
     });
   }
+}
+
+function terminate() {
+  console.info(Counter);
 }

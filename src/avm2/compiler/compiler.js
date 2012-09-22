@@ -1763,7 +1763,7 @@ var Compiler = (function () {
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope, hasDynamicScope) {
     assert(scope);
     assert(methodInfo.analysis);
-
+    Counter.count("Compiler: Methods");
     Timer.start("Compiler");
     if (enableVerifier.value && scope.object) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
@@ -1915,6 +1915,7 @@ var InlineCacheManager = (function () {
       if (inlineCacheSets.has(name)) {
         var inlineCacheSet = inlineCacheSets.get(name);
         if (inlineCacheSet) {
+          Counter.count("Compiler: Inline Cache")
           return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
         }
       }
