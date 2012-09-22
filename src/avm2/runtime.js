@@ -4,6 +4,7 @@ var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
+var maxCompilations = compilerOptions.register(new Option("mc", "maxCompilations", "number", Infinity, "Stops compiling after a while."));
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
@@ -739,7 +740,7 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === ALWAYS_INTERPRET || !shouldCompile(mi)) {
+    if (mode === ALWAYS_INTERPRET || !shouldCompile(mi) || functionCount + 1 > maxCompilations.value) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
