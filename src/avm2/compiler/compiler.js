@@ -119,6 +119,15 @@ function generate(node) {
   return escodegen.generate(node, {base: "", indent: "  ", comment: true});
 }
 
+function notUndefined(x) {
+  return x !== undefined;
+}
+
+const FlushStackReason = {
+  EndOfBlock: 1,
+  SetLocal: 2
+};
+
 var Compiler = (function () {
 
   function objectId(obj) {
@@ -214,7 +223,11 @@ var Compiler = (function () {
     return new Constant(value);
   }
 
-  function isIdentifierStart(c) {
+  function variableDeclaration(declarations) {
+    return new VariableDeclaration("var", declarations);
+  }
+
+    function isIdentifierStart(c) {
     return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   }
 
@@ -583,12 +596,12 @@ var Compiler = (function () {
       if (!hasDynamicScope) {
         // TODO: Here we also need to take care of the |this| pointer since it may
         // be equal to the |jsGlobal|. We should only do this if it's ever used.
-        this.prologue.push(new VariableDeclaration("var", [
+        this.prologue.push(variableDeclaration([
           new VariableDeclarator(savedScopeName, constant(scope)),
         ]));
       }
 
-      this.prologue.push(new VariableDeclaration("var", [
+      this.prologue.push(variableDeclaration([
         new VariableDeclarator(scopeName, savedScopeName),
         new VariableDeclarator(scopeObjectName, property(scopeName, "object")),
         new VariableDeclarator(globalScopeObjectName, property(scopeName, "global", "object")),
@@ -597,7 +610,7 @@ var Compiler = (function () {
 
       /* Declare local variables that aren't parameters or this. */
       if (this.local.length > parameterCount + 1) {
-        this.prologue.push(new VariableDeclaration("var", this.local.slice(parameterCount + 1).map(function (x) {
+        this.prologue.push(variableDeclaration(this.local.slice(parameterCount + 1).map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
@@ -639,13 +652,13 @@ var Compiler = (function () {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
       assert (node instanceof BlockStatement);
       if (this.temporary.length) {
-        this.prologue.push(new VariableDeclaration("var", this.temporary.map(function (x) {
+        this.prologue.push(variableDeclaration(this.temporary.filter(notUndefined).map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
       var usedVariables = this.variablePool.used;
       if (usedVariables.length) {
-        this.prologue.push(new VariableDeclaration("var", usedVariables.map(function (x) {
+        this.prologue.push(variableDeclaration(usedVariables.map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
@@ -682,7 +695,7 @@ var Compiler = (function () {
     function labelTestBody(item) {
       var body = [];
       if (item.label) {
-        body.push(new VariableDeclaration("var", [
+        body.push(variableDeclaration([
           new VariableDeclarator(labelTestName, new Literal(item.label))
         ]));
       }
@@ -795,7 +808,7 @@ var Compiler = (function () {
       }
 
       if (item.nothingThrownLabel > 0) {
-        var nothingThrownLabel = new VariableDeclaration("var", [
+        var nothingThrownLabel = variableDeclaration([
           new VariableDeclarator(labelTestName, id(item.nothingThrownLabel))
         ]);
         if (br.node instanceof BlockStatement) {
@@ -805,7 +818,7 @@ var Compiler = (function () {
         }
       }
 
-      var assign = new VariableDeclaration("var", [new VariableDeclarator(lastCaughtName, exceptionName)]);
+      var assign = variableDeclaration([new VariableDeclarator(lastCaughtName, exceptionName)]);
 
       var catchIf = null;
       var catchElse;
@@ -920,7 +933,7 @@ var Compiler = (function () {
       function setLocal(index) {
         assert (state.stack.length);
         var value = state.stack.pop();
-        flushStack();
+        flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], value));
       }
 
@@ -935,7 +948,7 @@ var Compiler = (function () {
       }
 
       function kill(index) {
-        flushStack();
+        flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], constant(undefined)));
       }
 
@@ -970,14 +983,25 @@ var Compiler = (function () {
         if (index in temporary) {
           return temporary[index];
         }
-        return temporary[index] = id(STACK_PREFIX + index);
+        var t = id(STACK_PREFIX + index);
+        t.isTemporary = true;
+        return temporary[index] = t;
       }
 
       /**
        * Emits assignments that store stack expressions into temporaries.
        */
-      function flushStack() {
+      function flushStack(reason) {
         for (var i = 0; i < state.stack.length; i++) {
+          if (reason !== FlushStackReason.EndOfBlock) {
+            if (state.stack[i] instanceof Constant) {
+              continue;
+            } else if (state.stack[i] instanceof Identifier) {
+              if (reason !== FlushStackReason.SetLocal) {
+                continue;
+              }
+            }
+          }
           if (state.stack[i] !== getTemporary(i)) {
             emit(assignment(getTemporary(i), state.stack[i]));
             state.stack[i] = getTemporary(i);
@@ -1491,7 +1515,7 @@ var Compiler = (function () {
         case OP_newarray:       push(new ArrayExpression(state.stack.popMany(bc.argCount))); break;
         case OP_newactivation:
           assert (this.methodInfo.needsActivation());
-          emit(new VariableDeclaration("var", [
+          emit(variableDeclaration([
             new VariableDeclarator(activationName,
                                    call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
           ]));
@@ -1714,7 +1738,7 @@ var Compiler = (function () {
         }
       }
 
-      flushStack();
+      flushStack(FlushStackReason.EndOfBlock);
 
       if (storedComments.length > 0) {
         body.top().trailingComments = storedComments;
