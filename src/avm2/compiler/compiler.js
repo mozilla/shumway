@@ -1,6 +1,8 @@
 var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
 var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+var enableInlineCaching = compilerOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
+var traceInlineCaching = compilerOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
 
 var compilerEnableExceptions = compilerOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
 var compilerMaximumMethodSize = compilerOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
@@ -88,6 +90,8 @@ const VAR_PREFIX = "v";
 const LOCAL_PREFIX = "l";
 const STACK_PREFIX = "s";
 const ARGUMENT_PREFIX = "a";
+const INLINE_CACHE_GETTER_PREFIX = "get";
+const INLINE_CACHE_SETTER_PREFIX = "set";
 
 const SAVED_SCOPE_NAME = "$SS";
 const scopeName = new Identifier("$S");
@@ -114,6 +118,15 @@ var $C = [];
 function generate(node) {
   return escodegen.generate(node, {base: "", indent: "  ", comment: true});
 }
+
+function notUndefined(x) {
+  return x !== undefined;
+}
+
+const FlushStackReason = {
+  EndOfBlock: 1,
+  SetLocal: 2
+};
 
 var Compiler = (function () {
 
@@ -210,9 +223,39 @@ var Compiler = (function () {
     return new Constant(value);
   }
 
-  function property(obj, path) {
-    path.split(".").forEach(function(x) {
-      obj = new MemberExpression(obj, new Identifier(x), false);
+  function variableDeclaration(declarations) {
+    return new VariableDeclaration("var", declarations);
+  }
+
+  function isIdentifierStart(c) {
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+  }
+
+  function isIdentifierPart(c) {
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           ((c >= '0') && (c <= '9'));
+  }
+
+  function isIdentifier(s) {
+    if (!isIdentifierStart(s[0])) {
+      return false;
+    }
+    for (var i = 1; i < s.length; i++) {
+      if (!isIdentifierPart(s[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function property(obj) {
+    var path = Array.prototype.slice.call(arguments, 1);
+    path.forEach(function(x) {
+      if (isIdentifier(x)) {
+        obj = new MemberExpression(obj, new Identifier(x), false);
+      } else {
+        obj = new MemberExpression(obj, new Literal(x), true);
+      }
     });
     return obj;
   }
@@ -548,26 +591,26 @@ var Compiler = (function () {
       this.prologue = [];
 
       this.prologue.push(new ExpressionStatement(
-        call(property(id("Runtime"), "stack.push"), [constant(abc.runtime)])));
+        call(property(id("Runtime"), "stack", "push"), [constant(abc.runtime)])));
 
       if (!hasDynamicScope) {
         // TODO: Here we also need to take care of the |this| pointer since it may
         // be equal to the |jsGlobal|. We should only do this if it's ever used.
-        this.prologue.push(new VariableDeclaration("var", [
+        this.prologue.push(variableDeclaration([
           new VariableDeclarator(savedScopeName, constant(scope)),
         ]));
       }
 
-      this.prologue.push(new VariableDeclaration("var", [
+      this.prologue.push(variableDeclaration([
         new VariableDeclarator(scopeName, savedScopeName),
         new VariableDeclarator(scopeObjectName, property(scopeName, "object")),
-        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global.object")),
+        new VariableDeclarator(globalScopeObjectName, property(scopeName, "global", "object")),
         new VariableDeclarator(scopeName, savedScopeName)
       ]));
 
       /* Declare local variables that aren't parameters or this. */
       if (this.local.length > parameterCount + 1) {
-        this.prologue.push(new VariableDeclaration("var", this.local.slice(parameterCount + 1).map(function (x) {
+        this.prologue.push(variableDeclaration(this.local.slice(parameterCount + 1).map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
@@ -575,7 +618,7 @@ var Compiler = (function () {
       if (mi.needsRest() || mi.needsArguments()) {
         this.prologue.push(new ExpressionStatement(
           assignment(this.local[parameterCount + 1],
-                     call(property(id("Array"), "prototype.slice.call"),
+                     call(property(id("Array"), "prototype", "slice", "call"),
                           [id("arguments"), constant(mi.needsRest() ? parameterCount + 1 : 1)]))));
       }
 
@@ -593,8 +636,14 @@ var Compiler = (function () {
 
         if (parameter.type && !parameter.type.isAnyName()) {
           var type = abc.domain.getProperty(parameter.type, true, true);
-          var coerced = assignment(local, call(id("coerce"), [local, constant(type)]));
-          this.prologue.push(new ExpressionStatement(coerced));
+          if (type) {
+            var coerced = assignment(local, call(id("coerce"), [local, constant(type)]));
+            this.prologue.push(new ExpressionStatement(coerced));
+          } else {
+            // TODO: We should have a type here. Most likely we are compiling a constructor that needs
+            // to get its own class type and this is not yet available because we haven't yet fully
+            // constructed the class.
+          }
         }
       }
     }
@@ -602,14 +651,14 @@ var Compiler = (function () {
     compilation.prototype.compile = function compile() {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
       assert (node instanceof BlockStatement);
-      if (this.temporary.length > 1) {
-        this.prologue.push(new VariableDeclaration("var", this.temporary.map(function (x) {
+      if (this.temporary.length) {
+        this.prologue.push(variableDeclaration(this.temporary.filter(notUndefined).map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
       var usedVariables = this.variablePool.used;
       if (usedVariables.length) {
-        this.prologue.push(new VariableDeclaration("var", usedVariables.map(function (x) {
+        this.prologue.push(variableDeclaration(usedVariables.map(function (x) {
           return new VariableDeclarator(x, null);
         })));
       }
@@ -646,7 +695,7 @@ var Compiler = (function () {
     function labelTestBody(item) {
       var body = [];
       if (item.label) {
-        body.push(new VariableDeclaration("var", [
+        body.push(variableDeclaration([
           new VariableDeclarator(labelTestName, new Literal(item.label))
         ]));
       }
@@ -759,7 +808,7 @@ var Compiler = (function () {
       }
 
       if (item.nothingThrownLabel > 0) {
-        var nothingThrownLabel = new VariableDeclaration("var", [
+        var nothingThrownLabel = variableDeclaration([
           new VariableDeclarator(labelTestName, id(item.nothingThrownLabel))
         ]);
         if (br.node instanceof BlockStatement) {
@@ -769,7 +818,7 @@ var Compiler = (function () {
         }
       }
 
-      var assign = new VariableDeclaration("var", [new VariableDeclarator(lastCaughtName, exceptionName)]);
+      var assign = variableDeclaration([new VariableDeclarator(lastCaughtName, exceptionName)]);
 
       var catchIf = null;
       var catchElse;
@@ -841,11 +890,11 @@ var Compiler = (function () {
       }
 
       function superClassInstanceObject() {
-        return property(classObject(), "baseClass.instance");
+        return property(classObject(), "baseClass", "instance");
       }
 
       function superOf(obj) {
-        return property(obj, "public$constructor.baseClass.instance.prototype");
+        return property(obj, "public$constructor", "baseClass", "instance", "prototype");
       }
 
       function runtimeProperty(propertyName) {
@@ -884,7 +933,7 @@ var Compiler = (function () {
       function setLocal(index) {
         assert (state.stack.length);
         var value = state.stack.pop();
-        flushStack();
+        flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], value));
       }
 
@@ -899,7 +948,7 @@ var Compiler = (function () {
       }
 
       function kill(index) {
-        flushStack();
+        flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], constant(undefined)));
       }
 
@@ -934,14 +983,25 @@ var Compiler = (function () {
         if (index in temporary) {
           return temporary[index];
         }
-        return temporary[index] = id(STACK_PREFIX + index);
+        var t = id(STACK_PREFIX + index);
+        t.isTemporary = true;
+        return temporary[index] = t;
       }
 
       /**
        * Emits assignments that store stack expressions into temporaries.
        */
-      function flushStack() {
+      function flushStack(reason) {
         for (var i = 0; i < state.stack.length; i++) {
+          if (reason !== FlushStackReason.EndOfBlock) {
+            if (state.stack[i] instanceof Constant) {
+              continue;
+            } else if (state.stack[i] instanceof Identifier) {
+              if (reason !== FlushStackReason.SetLocal) {
+                continue;
+              }
+            }
+          }
           if (state.stack[i] !== getTemporary(i)) {
             emit(assignment(getTemporary(i), state.stack[i]));
             state.stack[i] = getTemporary(i);
@@ -965,7 +1025,7 @@ var Compiler = (function () {
       }
 
       function emitComment(value) {
-        storedComments.push({ type: 'Line', value: value.toString() });
+        storedComments.push({ type: 'Line', value: " " + value.toString() });
       }
 
       if (enableOpt.value) {
@@ -1034,6 +1094,16 @@ var Compiler = (function () {
         var slowPath = call(id("getProperty"), [obj, multiname]);
         Counter.count("getProperty");
 
+        if (enableInlineCaching.value && multiname instanceof Constant) {
+          var mn = multiname.value;
+          if (mn.namespaces.length > 1) {
+            var ic = InlineCacheManager.createInlineCache(mn);
+            if (ic) {
+              slowPath = call(id(ic), [obj]);
+            }
+          }
+        }
+
         // If the multiname is a runtime multiname and the name is a number then
         // emit a fast object[name] property lookup.
 
@@ -1050,6 +1120,10 @@ var Compiler = (function () {
           } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
             Counter.count("getProperty->fastPathDynamic");
             return property(obj, Multiname.getPublicQualifiedName(multiname.value.name));
+          } else if (multiname instanceof Constant &&
+                     multiname.propertyName !== undefined) {
+            Counter.count("getProperty->propertyNameFromTrait");
+            return property(obj, Multiname.getQualifiedName(multiname.propertyName));
           }
         }
 
@@ -1057,7 +1131,7 @@ var Compiler = (function () {
           var val = obj instanceof Variable ? obj.value : obj;
           if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
             if (Multiname.isQName(multiname.value)) {
-              Counter.count("getProperty->property");
+              Counter.count("getProperty->propertyConstant");
               return property(obj, Multiname.getQualifiedName(multiname.value));
             }
           }
@@ -1070,6 +1144,16 @@ var Compiler = (function () {
       function setProperty(obj, multiname, value) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
         Counter.count("setProperty");
+
+        if (enableInlineCaching.value && multiname instanceof Constant) {
+          var mn = multiname.value;
+          if (mn.namespaces.length > 1) {
+            var ic = InlineCacheManager.createInlineCache(mn, true);
+            if (ic) {
+              slowPath = call(id(ic), [obj, value]);
+            }
+          }
+        }
 
         if (enableOpt.value) {
           if (multiname instanceof RuntimeMultiname) {
@@ -1112,7 +1196,12 @@ var Compiler = (function () {
           } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
             Counter.count("setProperty->fastPathDynamic");
             return fastPath = assignment(property(obj,
-              Multiname.getPublicQualifiedName(multiname.value.name), true), value);
+              Multiname.getPublicQualifiedName(multiname.value.name)), value);
+          } else if (multiname instanceof Constant &&
+                     multiname.propertyName !== undefined) {
+            Counter.count("setProperty->propertyNameFromTrait");
+            return fastPath = assignment(property(obj,
+              Multiname.getQualifiedName(multiname.propertyName)), value);
           }
         }
 
@@ -1165,6 +1254,10 @@ var Compiler = (function () {
           if (bc.isDynamicProperty) {
             c.isDynamicProperty = true;
           }
+          if (bc.propertyName) {
+            c.propertyName = bc.propertyName;
+          }
+
           return c;
         }
       }
@@ -1259,7 +1352,7 @@ var Compiler = (function () {
         case OP_pushwith:
           flushStack();
           obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj])));
+          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(true)])));
           state.scopeHeight += 1;
           break;
         case OP_popscope:
@@ -1357,12 +1450,12 @@ var Compiler = (function () {
           break;
         case OP_returnvoid:
           flushStack();
-          emit(call(property(id("Runtime"), "stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack", "pop"), []));
           emit(new ReturnStatement());
           break;
         case OP_returnvalue:
           flushStack();
-          emit(call(property(id("Runtime"), "stack.pop"), []));
+          emit(call(property(id("Runtime"), "stack", "pop"), []));
           emit(new ReturnStatement(state.stack.pop()));
           break;
         case OP_constructsuper:
@@ -1371,8 +1464,8 @@ var Compiler = (function () {
           emit(callCall(superClassInstanceObject(), [obj].concat(args)));
           break;
         case OP_constructprop:
-          multiname = getMultiname(bc.index);
           args = state.stack.popMany(bc.argCount);
+          multiname = popMultiname(bc);
           obj = getProperty(state.stack.pop(), multiname);
           push(new NewExpression(property(obj, "instance"), args));
           break;
@@ -1422,14 +1515,14 @@ var Compiler = (function () {
         case OP_newarray:       push(new ArrayExpression(state.stack.popMany(bc.argCount))); break;
         case OP_newactivation:
           assert (this.methodInfo.needsActivation());
-          emit(new VariableDeclaration("var", [
+          emit(variableDeclaration([
             new VariableDeclarator(activationName,
                                    call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
           ]));
           push(activationName);
           break;
         case OP_newclass:
-          push(call(property(constant(abc), "runtime.createClass"),
+          push(call(property(constant(abc), "runtime", "createClass"),
                     [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
           break;
         case OP_getdescendants:
@@ -1645,7 +1738,7 @@ var Compiler = (function () {
         }
       }
 
-      flushStack();
+      flushStack(FlushStackReason.EndOfBlock);
 
       if (storedComments.length > 0) {
         body.top().trailingComments = storedComments;
@@ -1670,7 +1763,7 @@ var Compiler = (function () {
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope, hasDynamicScope) {
     assert(scope);
     assert(methodInfo.analysis);
-
+    Counter.count("Compiler: Methods");
     Timer.start("Compiler");
     if (enableVerifier.value && scope.object) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
@@ -1692,4 +1785,174 @@ var Compiler = (function () {
   compiler.Operator = Operator;
 
   return compiler;
+})();
+
+/**
+ * Inline caching is used to optimize property access. In AS3, the property access expression |o.p| may be compiled as
+ * |o.{ns0,ns1,ns2}::p| where {ns0, ns1, ns2} is a set of currently open namespaces. Usually, if we can't determine
+ * the type of |o| then we can't resolve the multiname to a qname and we must emit a call to a slow |getProperty(o,
+ * {ns0,ns1,ns2}::p)| function which performs a linear search over all qnames in the multiname until one is found.
+ *
+ * However, if we can prove that the name |p| only ever appears in the |ns1| namespace in any of the "currently" defined
+ * traits, then we can resolve the multiname to |ns1$p| since it can't possibly resolve to any other namespace. Instead
+ * of the slow |getProperty| call, we could just emit |o.ns1$p|. Unfortunately, this is not sound because another .swf
+ * file may be loaded that defines a trait |p| in the namespace |ns0| which would invalidate our previous assumption. To
+ * fix this, we instead generate a getter stub |get = function (o) { return o.ns1$p; }| that returns the value of |o.ns1$p|.
+ * We then keep track of this stub and if at a later time our assumption is invalidated we patch it with another stub
+ * that also checks the |ns0| namespace |get = function (o) { return o.ns1$p ? o.ns1$p : (o.ns0$p ? o.ns0$p : undefined); }|.
+ *
+ * Because the JS engine inlines short functions, we can expect that the getters / setter functions are inlined and
+ * guarded with PICs, so in a sense we're implementing AS3 PICs on top of JS PICs.
+ *
+ */
+var InlineCacheManager = (function () {
+  var writer = new IndentingWriter();
+
+  var inlineCacheSets = new Map();
+
+  var InlineCacheSet = (function () {
+    var inlineCacheCounter = 0;
+    function inlineCacheSet(name) {
+      this.name = name;
+      this.namespaces = [];
+      this.dirty = true;
+      this.inlineCaches = [];
+    }
+    inlineCacheSet.prototype.update = function (namespace) {
+      assert (namespace instanceof Namespace);
+      var foundNewNamespace = true;
+      var namespaces = this.namespaces;
+      for (var i = 0; i < namespaces.length; i++) {
+        if (namespaces[i][0].isEqualTo(namespace)) {
+          namespaces[i][1] ++;
+          foundNewNamespace = false;
+          break;
+        }
+      }
+      if (foundNewNamespace) {
+        this.namespaces.push([namespace, 1]);
+        assert (this.dirty, "TODO: Invalidate inline caches.");
+      }
+    };
+    /**
+     * Gets the intersection of the specified multiname's qnames and the current qnames for this name.
+     */
+    inlineCacheSet.prototype.getIntersection = function (mn) {
+      var namespaces = this.namespaces.sort(function (a, b) {
+        return a[1] - b[1];
+      });
+      var names = [];
+      for (var i = 0; i < namespaces.length; i++) {
+        var ns = namespaces[i][0];
+        for (var j = 0; j < mn.namespaces.length; j++) {
+          if (mn.namespaces[j].isEqualTo(ns)) {
+            if (!ns.isDynamic()) {
+              names.push(new Multiname([ns], mn.name));
+            }
+            break;
+          }
+        }
+      }
+      // The public dynamic namespace needs to be last.
+      names.push(Multiname.getPublicQualifiedName(mn.name));
+      return names;
+    };
+    inlineCacheSet.prototype.create = function (mn, isSetter) {
+      this.dirty = false;
+      var qns = this.getIntersection(mn);
+      qns.reverse();
+      var src;
+      for (var i = 0; i < qns.length; i++) {
+        var qn = Multiname.getQualifiedName(qns[i]);
+        if (isSetter) {
+          src = i === 0 ? 'o.' + qn + ' = v' :
+                          '(o.' + qn + ' !== undefined || ("' + qn + '" in o)) ? o.' + qn + ' = v : (' + src + ')';
+        } else {
+          src = i === 0 ? 'o.' + qn :
+                          '((x = o.' + qn + ') !== undefined || ("' + qn + '" in o)) ? x : (' + src + ')';
+        }
+      }
+      assert (qns.length);
+      var icName = (isSetter ? INLINE_CACHE_SETTER_PREFIX : INLINE_CACHE_GETTER_PREFIX) + (inlineCacheCounter ++);
+      if (isSetter) {
+        src = 'function ' + icName + '(o, v) { ' + src + '; }';
+      } else {
+        src = 'function ' + icName + '(o) { ' + (qns.length > 1 ? 'var x; ' : '') + 'return ' + src + '; }';
+      }
+      if (traceInlineCaching.value) {
+        writer.writeLn("IC Stub: " + src);
+      }
+      jsGlobal[icName] = eval('[' + src + '][0]');
+      this.inlineCaches.push(icName);
+      return icName;
+    };
+    return inlineCacheSet;
+  })();
+
+  function updateTraits(traits) {
+    traits.forEach(function (trait) {
+      var name = trait.name.getName();
+      var namespace = trait.name.getNamespace();
+      if (!inlineCacheSets.has(name)) {
+        inlineCacheSets.set(name, new InlineCacheSet(name));
+      }
+      var inlineCacheSet = inlineCacheSets.get(name);
+      inlineCacheSet.update(namespace);
+    });
+  }
+
+  return {
+    createInlineCache: function createInlineCache(mn, isSetter) {
+      assert (mn instanceof Multiname);
+      assert (!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
+      assert (mn.namespaces.length > 1);
+      var cache = mn.inlineCache || (mn.inlineCache = {});
+      var cacheName = isSetter ? "setter" : "getter";
+      if (cache[cacheName]) {
+        return cache[cacheName];
+      }
+      var name = mn.getName();
+      if (inlineCacheSets.has(name)) {
+        var inlineCacheSet = inlineCacheSets.get(name);
+        if (inlineCacheSet) {
+          Counter.count("Compiler: Inline Cache")
+          return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
+        }
+      }
+      return undefined;
+    },
+    /**
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     */
+    updateInlineCaches: function updateInlineCaches(abc) {
+      if (!enableInlineCaching.value) {
+        return;
+      }
+      /* Collect traits from script, classes, instances and method activations. */
+      abc.scripts.forEach(function (si) {
+        updateTraits(si.traits);
+      });
+      abc.classes.forEach(function (ci) {
+        updateTraits(ci.traits);
+        updateTraits(ci.instanceInfo.traits);
+      });
+      abc.methods.forEach(function (mi) {
+        if (mi.traits) {
+          updateTraits(mi.traits);
+        }
+      });
+      /* Trace stats. */
+      if (traceInlineCaching.value) {
+        for (var k in inlineCacheSets) {
+          if (inlineCacheSets.has(k)) {
+            var set = inlineCacheSets.get(k);
+            writer.writeLn("IC Set: " + k + " - " + set.namespaces.map(function (x) {
+              return x[0].qualifiedName + ": " + x[1];
+            }).join(", "));
+          }
+        }
+      }
+    }
+  };
+
 })();

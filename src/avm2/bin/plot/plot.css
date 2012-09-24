@@ -20,6 +20,7 @@ td {
     background-color: #adff2f;
     text-align: center;
     color: black;
+    cursor: pointer;
 }
 
 .fail {
@@ -49,4 +50,21 @@ td {
     background-color: #00306e;
     cursor: pointer;
     color: #d3d3d3;
+}
+
+#details {
+    background: #2e405d;
+    padding: 10px;
+    color: white;
+    height: 200px;
+    width: 100%;
+    position: fixed;
+    bottom: 0px;
+    z-index: 5;
+    border-top: 2px solid gold;
+    margin-top: 200px;
+    font-family: "Lucida Grande","Lucida Sans Unicode","DejaVu Sans",Lucida,Arial,Helvetica,sans-serif;
+    font-size: 10px;
+    font-weight: normal;
+    overflow: scroll;
 }

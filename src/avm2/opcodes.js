@@ -295,16 +295,17 @@ var opcodeTable = [
  * Performs additional operations on the opcodeTable such as expanding the operands into objects.
  */
 (function processOpcodeTable() {
+  function splitter(value) {
+    var list = value.split(":");
+    return {name:list[0], size:list[1].substring(0,3), type:list[1].substring(3)};
+  }
   for (var i = 0; i < opcodeTable.length; i++) {
     var entry = opcodeTable[i];
-    if (entry && entry.operands != null) {
+    if (entry && entry.operands !== null) {
       if (entry.operands === "") {
         entry.operands = [];
       } else {
-        entry.operands = entry.operands.split(",").map(function (value) {
-          var list = value.split(":");
-          return {name:list[0], size:list[1].substring(0,3), type:list[1].substring(3)};
-        });
+        entry.operands = entry.operands.split(",").map(splitter);
       }
     }
   }

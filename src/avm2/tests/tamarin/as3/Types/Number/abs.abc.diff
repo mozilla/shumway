@@ -1,5 +1,5 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98866-1lq9984	2012-08-27 16:16:59.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98866-1k4kh5m	2012-08-27 16:16:59.000000000 -0700
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54285-prx6hd	2012-09-07 13:55:53.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54285-u1df7z	2012-09-07 13:55:53.000000000 -0700
 @@ -3,8 +3,8 @@
  Number.abs(-0) returns a int = int PASSED!
  Number.abs(1) returns a int = int PASSED!

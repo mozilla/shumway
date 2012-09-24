@@ -24,13 +24,20 @@ body.on("dragenter dragover", function(event) {
   event.stopPropagation();
   event.preventDefault();
 });
+
 body.on("drop", function(event) {
   event.stopPropagation();
   event.preventDefault();
   var file = event.originalEvent.dataTransfer.files[0];
   readFile(file);
 });
+
 $("#files").on("change", function(event) {
   var file = event.originalEvent.target.files[0];
   readFile(file);
 });
+
+$("#openFile").click(function () {
+  $("#files").click();
+});
+

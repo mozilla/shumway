@@ -155,6 +155,17 @@ const Errors = {
   ReadExternalNotImplementedError      : {code: 2173, message: "Unable to read object in stream.  The class %1 does not implement flash.utils.IExternalizable but is aliased to an externalizable class."}
 };
 
+function getErrorMessage(index) {
+  if (!debuggerMode.value) {
+    return "Error #" + index;
+  }
+  for (var k in Errors) {
+    if (Errors[k].code == index) {
+      return "Error #" + index + ": " + Errors[k].message;
+    }
+  }
+}
+
 function formatErrorMessage(error) {
   var message = error.message;
   Array.prototype.slice.call(arguments, 1).forEach(function (x, i) {
@@ -168,6 +179,8 @@ function translateErrorMessage(error) {
     switch (error.type) {
       case "undefined_method":
         return formatErrorMessage(Errors.CallOfNonFunctionError, "value");
+      default:
+        throw notImplemented(error.type);
     }
   } else {
     if (error.message.indexOf("is not a function") >= 0) {

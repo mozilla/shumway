@@ -85,6 +85,19 @@ function isNullOrUndefiend(value) {
 }
 
 /**
+ * Converts an object to an array of key, value arrays.
+ */
+function toKeyValueArray(o) {
+  var a = [];
+  for (var k in o) {
+    if (o.hasOwnProperty(k)) {
+      a.push([k, o[k]]);
+    }
+  }
+  return a;
+}
+
+/**
  * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
  */
 function isNumeric(x) {
@@ -255,7 +268,7 @@ function BitSetFunctor(length) {
     this.bits = 0;
   }
 
-  var singleword = (SIZE >> ADDRESS_BITS_PER_WORD) === 1
+  var singleword = (SIZE >> ADDRESS_BITS_PER_WORD) === 1;
   var Ctor = singleword ? BitSetS : BitSet;
 
   Ctor.ADDRESS_BITS_PER_WORD = ADDRESS_BITS_PER_WORD;
@@ -563,7 +576,7 @@ function BitSetFunctor(length) {
   };
 
   return Ctor;
-};
+}
 
 // https://gist.github.com/958841
 function base64ArrayBuffer(arrayBuffer) {
@@ -678,6 +691,29 @@ var IndentingWriter = (function () {
   return indentingWriter;
 })();
 
+var Map = (function() {
+  function map () {
+    this.elements = {};
+  }
+  map.prototype.set = function set(k, v) {
+    this.elements[k] = v;
+  };
+  map.prototype.get = function get(k) {
+    if (this.has(k)) {
+      return this.elements[k];
+    }
+    return undefined;
+  };
+  map.prototype.has = function has(k) {
+    return Object.prototype.hasOwnProperty.call(this.elements, k);
+  };
+  map.prototype.remove = function remove(k) {
+    if (this.has(k)) {
+      delete this.elements[k];
+    }
+  };
+  return map;
+})();
 
 /**
  * SortedList backed up by a linked list.

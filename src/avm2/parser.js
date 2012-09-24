@@ -266,7 +266,8 @@ var Namespace = (function () {
   }
 
   function buildNamespace() {
-    this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    //this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    this.uri = escapeString(this.uri);
 
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
@@ -308,10 +309,6 @@ var Namespace = (function () {
       return this.isPublic() && !this.uri;
     },
 
-    getPrefix: function getPrefix() {
-      return this.prefix;
-    },
-
     getURI: function getURI() {
       return this.uri;
     },
@@ -324,8 +321,13 @@ var Namespace = (function () {
       var c = new Namespace();
       c.kind = this.kind;
       c.uri = this.uri;
+      c.originalURI = this.originalURI;
       c.qualifiedName = this.qualifiedName;
-      c.prefix = this.prefix;
+      return c;
+    },
+
+    isEqualTo: function isEqualTo(o) {
+      return this.qualifiedName === o.qualifiedName;
     },
 
     getAccessModifier: function getAccessModifier() {
@@ -430,7 +432,7 @@ var Multiname = (function () {
   multiname.parse = function parse(constantPool, stream, multinames) {
     var index = 0;
     var kind = stream.readU8();
-    var name = undefined, namespaces = [], flags = 0, typeParameter;
+    var name, namespaces = [], flags = 0, typeParameter;
     switch (kind) {
       case CONSTANT_QName: case CONSTANT_QNameA:
         index = stream.readU30();
@@ -493,7 +495,7 @@ var Multiname = (function () {
         flags |= ATTRIBUTE;
         break;
     }
-    var mn = new Multiname(namespaces, name, flags);
+    var mn = new Multiname(namespaces, escapeString(name), flags);
     if (typeParameter) {
       mn.typeParameter = typeParameter;
     }
@@ -676,6 +678,12 @@ var Multiname = (function () {
     return this.name;
   };
 
+  multiname.prototype.getNamespace = function getNamespace() {
+    assert(!this.isRuntimeNamespace());
+    assert(this.namespaces.length === 1);
+    return this.namespaces[0];
+  };
+
   multiname.prototype.nameToString = function nameToString() {
     if (this.isAnyName()) {
       return "*";
@@ -713,6 +721,13 @@ var Multiname = (function () {
 
   return multiname;
 })();
+
+function escapeString(str) {
+  if (str !== undefined) {
+    str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+  }
+  return str;
+}
 
 var ConstantPool = (function constantPool() {
   function constantPool(stream) {
@@ -828,6 +843,12 @@ var ConstantPool = (function constantPool() {
 })();
 
 var MethodInfo = (function () {
+
+  function getParameterName(i) {
+    assert (i < 26);
+    return "p" + String.fromCharCode("A".charCodeAt(0) + i);
+  }
+
   function methodInfo(abc, stream) {
     const constantPool = abc.constantPool;
 
@@ -858,10 +879,6 @@ var MethodInfo = (function () {
         parameters[i].name = constantPool.strings[stream.readU30()];
       }
     } else {
-      function getParameterName(i) {
-        assert (i < 26);
-        return "p" + String.fromCharCode("A".charCodeAt(0) + i);
-      }
       for (var i = 0; i < parameterCount; i++) {
         parameters[i].name = getParameterName(i);
       }
@@ -1094,6 +1111,9 @@ var AbcFile = (function () {
     for (i = 0; i < n; ++i) {
       MethodInfo.parseBody(this, stream);
     }
+
+    InlineCacheManager.updateInlineCaches(this);
+
     Timer.stop();
   }
 

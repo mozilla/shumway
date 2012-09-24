@@ -4,6 +4,8 @@ var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
+var maxCompilations = compilerOptions.register(new Option("mc", "maxCompilations", "number", Infinity, "Stops compiling after a while."));
+var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
 
@@ -104,10 +106,7 @@ function initializeGlobalObject(global) {
 }
 
 /**
- * Checks if the specified |obj| is the prototype of a native JavaScript object. When the global
- * object is initialized using |initializeGlobalObject| the prototypes of JavaScript native objects
- * are assigned the property |VM_NATIVE_PROTOTYPE_FLAG|. Here we check if the specified |obj|
- * has this property set.
+ * Checks if the specified |obj| is the prototype of a native JavaScript object.
  */
 function isNativePrototype(obj) {
   return obj.hasOwnProperty(VM_NATIVE_PROTOTYPE_FLAG);
@@ -168,7 +167,7 @@ function coerce(value, type) {
     // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
 
     // For now just assert false to print the message.
-    assert(false, "Cannot coerce " + value + ": " + typeof(value) + " to type " + type);
+    assert(false, "Cannot coerce " + value + " to type " + type);
   }
 }
 
@@ -324,10 +323,11 @@ var Interface = (function () {
  * When functions are created, we bind the function to the current scope, using fnClosure.bind(null, this)();
  */
 var Scope = (function () {
-  function scope(parent, object) {
+  function scope(parent, object, isWith) {
     this.parent = parent;
     this.object = object;
     this.global = parent ? parent.global : this;
+    this.isWith = isWith;
   }
 
   scope.prototype.findProperty = function findProperty(mn, domain, strict) {
@@ -339,12 +339,17 @@ var Scope = (function () {
     }
 
     var obj = this.object;
-    // First check trait bindings.
     if (Multiname.isQName(mn)) {
-      if (Multiname.getQualifiedName(mn) in obj) {
-        return obj;
+      if (this.isWith) {
+        if (Multiname.getQualifiedName(mn) in obj) {
+          return obj;
+        }
+      } else {
+        if (nameInTraits(obj, Multiname.getQualifiedName(mn))) {
+          return obj;
+        }
       }
-    } else if (resolveMultiname(obj, mn)) {
+    } else if (resolveMultiname(obj, mn, !this.isWith)) {
       return obj;
     }
 
@@ -377,9 +382,24 @@ var Scope = (function () {
 })();
 
 /**
+ * Check if a qualified name is in an object's traits.
+ */
+function nameInTraits(obj, qn) {
+  // If the object itself holds traits, try to resolve it. This is true for
+  // things like global objects and activations, but also for classes, which
+  // both have their own traits and the traits of the Class class.
+  if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn))
+    return true;
+
+  // Else look on the prototype.
+  var proto = Object.getPrototypeOf(obj);
+  return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
+}
+
+/**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, mn) {
+function resolveMultiname(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
 
   obj = Object(obj);
@@ -394,6 +414,13 @@ function resolveMultiname(obj, mn) {
   var isNative = isNativePrototype(obj);
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
+    if (traitsOnly) {
+      if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+        return qn;
+      }
+      continue;
+    }
+
     if (mn.namespaces[i].isDynamic()) {
       publicQn = qn;
       if (isNative) {
@@ -405,9 +432,10 @@ function resolveMultiname(obj, mn) {
       }
     }
   }
-  if (publicQn && (Multiname.getQualifiedName(publicQn) in obj)) {
+  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
     return publicQn;
   }
+
   return undefined;
 }
 
@@ -712,7 +740,7 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) {
+    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi) || functionCount + 1 > maxCompilations.value) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
@@ -750,6 +778,9 @@ var Runtime = (function () {
       body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+    if (traceLevel.value > 1) {
+      mi.trace(new IndentingWriter(), this.abc);
+    }
     if (traceLevel.value > 0) {
       print (fnSource);
     }
@@ -1117,6 +1148,13 @@ var Runtime = (function () {
 
           var memoizeMethodClosure = (function (closure, qn) {
             return function memoizer() {
+              if (traceExecution.value) {
+                print("Memoizing: " + qn);
+              }
+              if (isNativePrototype(this)) {
+                Counter.count("Runtime: Method Closures");
+                return closure.bind(this);
+              }
               if (this.hasOwnProperty(qn)) {
                 Counter.count("Runtime: Unpatched Memoizer");
                 return this[qn];
@@ -1157,30 +1195,30 @@ var Runtime = (function () {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       assert (types.length === 1);
-      if (types[0] !== null && types[0] !== undefined) {
-        var typeClassName = types[0].classInfo.instanceInfo.name.name;
+      var type = types[0];
+      var typeClassName;
+      if (type !== null && type !== undefined) {
+        typeClassName = type.classInfo.instanceInfo.name.name;
         switch (typeClassName) {
-        case "int":
-        case "uint":
-        case "double":
-          break;
-        default:
-          typeClassName = "object";
-          break;
+          case "int":
+          case "uint":
+          case "double":
+            break;
+          default:
+            typeClassName = "object";
+            break;
         }
-
-        return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
       } else {
-        return this.domain.getClass("public __AS3__$vec.Vector");
+        typeClassName = "object";
       }
+      return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
     } else {
       return notImplemented(factoryClassName);
     }
   };
 
-  runtime.prototype.throwErrorFromVM = function (errorClass, message) {
-    print(backtrace());
-    throw new (this.domain.getClass(errorClass)).instance(message);
+  runtime.prototype.throwErrorFromVM = function (errorClass, message, id) {
+    throw new (this.domain.getClass(errorClass)).instance(message, id);
   };
 
   runtime.prototype.translateError = function (error) {

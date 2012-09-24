@@ -27,9 +27,10 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var sysMode = state.chkSysCompiler ? null : EXECUTION_MODE.INTERPRET;
-var appMode = state.chkAppCompiler ? null : EXECUTION_MODE.INTERPRET;
+var sysMode = EXECUTION_MODE.INTERPRET;
+var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
 
+/*
 function createSimpleAVM2(next, loadShellAbc) {
   var vm = new AVM2(sysMode, appMode);
   new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
@@ -44,24 +45,45 @@ function createSimpleAVM2(next, loadShellAbc) {
     }
   });
 }
+*/
 
 var avm2Root = "../../src/avm2/";
 var rfile = getQueryVariable("rfile");
+var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var libraryPath = avm2Root + "generated/shell/shell.abc";
+var avm2Instance = undefined;
 
 /**
  * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
  * when the page loads.
  */
 if (rfile) {
-  if (rfile.endsWith(".abc")) {
-    createSimpleAVM2(function(avm2) {
-      new BinaryFileReader(rfile).readAll(null, function(buffer) {
-        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
-      });
-    }, true);
-  } else if (rfile.endsWith(".swf")) {
-    new BinaryFileReader(rfile).readAll(null, function(buffer) {
-      SWF.embed(buffer, $("#stage")[0]);
+  executeFile(rfile);
+}
+
+
+
+
+function executeFile(file) {
+  if (!avm2Instance) {
+    createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
+      avm2Instance = avm2;
+      executeFile(file);
+    })
+    return;
+  }
+  if (file.endsWith(".abc")) {
+    new BinaryFileReader(file).readAll(null, function(buffer) {
+      avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+      terminate();
+    });
+  } else if (file.endsWith(".swf")) {
+    new BinaryFileReader(file).readAll(null, function(buffer) {
+      SWF.embed(buffer, $("#stage")[0], {avm2: avm2Instance});
     });
   }
+}
+
+function terminate() {
+  console.info(Counter);
 }

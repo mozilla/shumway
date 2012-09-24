@@ -5,8 +5,8 @@ load("../../../lib/DataView.js/DataView.js");
  */
 
 load("../util.js");
-load("../options.js");
 
+var options; load("../options.js");
 var stdout = new IndentingWriter();
 
 var ArgumentParser = options.ArgumentParser;
@@ -27,7 +27,7 @@ var help = shellOptions.register(new Option("h", "help", "boolean", false, "prin
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
 
-load("../metrics.js");
+var metrics; load("../metrics.js");
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
 
@@ -40,8 +40,8 @@ load("../disassembler.js");
 load("../analyze.js");
 
 Timer.start("Loading Compiler");
-load("../compiler/lljs/src/estransform.js");
-load("../compiler/lljs/src/escodegen.js");
+var estransform; load("../compiler/lljs/src/estransform.js");
+var escodegen; load("../compiler/lljs/src/escodegen.js");
 load("../compiler/verifier.js");
 load("../compiler/compiler.js");
 Timer.stop();

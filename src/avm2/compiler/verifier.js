@@ -277,6 +277,10 @@ var Verifier = (function() {
         return this === type.Number || this === type.Int || this === type.Uint;
       };
 
+      type.prototype.isString = function isString() {
+        return this === Type.Reference.String;
+      };
+
       type.prototype.isAtom = function isAtom() {
         return this.kind === "Atom";
       };
@@ -357,7 +361,18 @@ var Verifier = (function() {
             return trait;
           }
         } else if (this.isClass()) {
-          return findTrait(this.value.classInfo.traits, multiname, kind);
+          // TODO The value should never be undefined, since it should always 
+          // represent an AS object.
+          // However, becaue we deal with real objects, not an abstraction
+          // of them, in the Reference and Class types, and because the methods
+          // declared at the top level (they appear as slot traits on the global object 
+          // and not method traits) don't get trambolined, some user defined 
+          // objects might not exist yet when the method gets verified.
+          // This check should be removed when we implement an abstract representation
+          // for object types not yet created.
+          if (this.value) {
+            return findTrait(this.value.classInfo.traits, multiname, kind);
+          }
         }
         return null;
       };
@@ -489,13 +504,12 @@ var Verifier = (function() {
 
         var blocks = mi.analysis.blocks;
 
+        blocks.forEach(function (x) {
+          x.entryState = x.exitState = null;
+        });
+
         if (writer) {
           this.methodInfo.trace(writer, this.verifier.abc);
-        }
-
-        // We can't deal with rest and arguments yet.
-        if (mi.needsRest() || mi.needsArguments()) {
-          return;
         }
 
         var entryState = new State();
@@ -517,14 +531,24 @@ var Verifier = (function() {
           entryState.local.push(Type.fromReference(this.scope.object));
         } else if (mi.holder instanceof ScriptInfo) {
           // function
-          entryState.local.push(Type.fromReference(this.scope.global));
-        } else {
-          entryState.local.push(Type.Atom);
+          entryState.local.push(Type.fromReference(this.scope.global.object));
+        } else {          
+          // TODO - if the function is on the top level, not in a package, 
+          // the function is set in a slot on the gobal object and it's trait
+          // type is a slot and not a method/getter/setter.
+          // In thic case |this| should be |global|.
+          entryState.local.push(Type.fromReference(this.scope.global.object));
         }
 
         // Initialize entry state with parameter types.
         for (var i = 0; i < mi.parameters.length; i++) {
           entryState.local.push(Type.referenceFromName(mi.parameters[i].type));
+        }
+
+
+        // Push the |rest| or |arguments| array type in the locals.
+        if (mi.needsRest() || mi.needsArguments()) {
+          entryState.local.push(Type.Reference.Array);
         }
 
         if (writer) {
@@ -672,6 +696,14 @@ var Verifier = (function() {
 
           for (var idx = scope.length - 1; idx >= 0; idx--) {
             var scopeObj = scope[idx];
+            if (!scopeObj.isReference()) {
+              // The objects on the scope stack should be of type |Reference|
+              // to represent a real scope object.
+              // In case the scope object not |Reference| (e.g. Type.Atom.Any,
+              // Type.Atom.Undefined) return the |Any| type, avoiding to look into 
+              // the next objtects on the scope stack which would lead to a wrong result.
+              return Type.Atom.Any;              
+            }
             if (scopeObj.getTrait(multiname)) {
               return scopeObj;
             }
@@ -709,6 +741,7 @@ var Verifier = (function() {
 
               if (trait) {
                 type = getTraitType(trait, obj);
+                bc.propertyName = trait.name;
               } else if (trait === undefined) {
                 bc.isDynamicProperty = true;
                 type = Type.Atom.Undefined;
@@ -740,6 +773,10 @@ var Verifier = (function() {
                 type = Type.fromClass(new Vector());
                 break;
               default:
+                if (val === undefined) {
+                  // The type was not initialized yet; look for defining script.
+                  val = domain.getProperty(trait.name, false, true);
+                }
                 type = Type.fromClass(val);
                 break;
             }
@@ -971,11 +1008,17 @@ var Verifier = (function() {
           case OP_callproperty:
             stack.popMany(bc.argCount);
             multiname = popMultiname(bc);
-            objTy = pop();
+            obj = pop();
             type = Type.Atom.Any;
-
-            if (objTy.isReference()) {
-              type = objTy.getMethodReturnType(multiname);
+            if (obj.isReference() || obj.isClass()) {
+              var trait = obj.getTraitEnforceGetter(multiname);
+              if (trait && (trait.isMethod() || trait.isGetter())) {
+                bc.propertyName = trait.name;
+                type = Type.referenceFromName(trait.methodInfo.returnType);
+              } else if (trait && trait.isSlot()) {
+                bc.propertyName = trait.name;
+                type = Type.referenceFromName(trait.typeName);
+              }
             }
             push(type);
             break;
@@ -1001,6 +1044,7 @@ var Verifier = (function() {
                   if (trait && trait.isClass()) {
                     val = getProperty(obj.value, multiname);
                     type = Type.fromReference(val);
+                    bc.propertyName = trait.name;
                 }
               }
             }
@@ -1103,8 +1147,9 @@ var Verifier = (function() {
             // unless something can be proven about the value of the runtime multinames
             if (!(multiname instanceof RuntimeMultiname)) {
               trait = objTy.getTrait(multiname);
-
-              if (trait === undefined) {
+              if (trait) {
+                bc.propertyName = trait.name;
+              } else if (trait === undefined) {
                 bc.isDynamicProperty = true;
               }
             }
@@ -1147,7 +1192,7 @@ var Verifier = (function() {
             break;
           case OP_setslot:
             value = pop();
-            bc.objTy = pop();
+            objTy = bc.objTy = pop();
             break;
           case OP_getglobalslot:
             notImplemented(bc);
@@ -1253,6 +1298,8 @@ var Verifier = (function() {
             lVal = pop();
             if (lVal.isNumeric() && rVal.isNumeric()) {
               push(Type.Number);
+            } else if (lVal.isString() || rVal.isString()) {
+              push(Type.Reference.String);
             } else {
               // TODO: Other Cases
               push(Type.Atom);
@@ -1368,6 +1415,7 @@ var Verifier = (function() {
     assert (scope.object, "Verifier needs a scope object.");
     try {
       new this.verification(this, methodInfo, scope).verify();
+      Counter.count("Verifier: Methods");
     } catch (e) {
       if (e instanceof VerifierError) {
         return;

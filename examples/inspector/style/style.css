@@ -1,0 +1,187 @@
+html 
+{
+  height: 100%;
+}
+
+body {
+  padding-top: 100px;
+  background-image: url(images/texture.png);
+  background-color: #1a2633;
+
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  body {
+    background: #1a2633;
+  }
+}
+
+.toolbarGroup {
+  margin: 0 auto;
+  width: 600px;
+}
+
+.toolbarBox {
+  padding: 4px 8px;
+  width: 600px;
+  height: 24px;
+  background: url(images/background-noise-toolbar.png),
+              -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  border-radius: 4px;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
+              0 0 0 1px hsla(0,0%,0%,.15),
+              0 10px 14px hsla(0,0%,0%,.4);
+  font-family: Lucida Grande, sans-serif;
+}
+
+.closeButton {
+  float: left;
+  width: 16px;
+  height: 22px;
+  margin-right: 8px;
+  background-image: url(images/close-devtools-toolbar-mac.png);
+  background-repeat: no-repeat;
+  background-position: 0px center;
+}
+.closeButton:hover {
+  background-position: -16px center;
+}
+.closeButton:hover:active {
+  background-position: -32px center;
+}
+
+.toolbarLabel {
+    float: left;
+    width: 78px;
+    height: 22px;
+    margin-right: 10px;
+    0 0 0 1px hsla(210,16%,76%,.15) inset,
+    0 1px 0 hsla(210,16%,76%,.15);
+    color: hsl(210,30%,85%);
+    font-size: 12px;
+    line-height: 22px;
+    text-align: center;
+    text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+    -moz-user-select: none;
+    cursor: default;
+}
+
+.toolbarButton {
+  float: left;
+  width: 78px;
+  height: 22px;
+  margin-right: 10px;
+  border: 1px solid hsla(210,8%,5%,.45);
+  border-radius: 3px;
+  background: -moz-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background-clip: padding-box;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15) inset,
+              0 0 0 1px hsla(210,16%,76%,.15) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  -moz-user-select: none;
+  cursor: default;
+}
+
+.toolbarButton:not(.pressedState):hover:active {
+  border: 1px solid hsla(210,8%,5%,.6);
+  background: -moz-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  box-shadow: 0 0 3px hsla(210,8%,5%,.25) inset,
+              0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+}
+
+.toolbarButton.pressedState {
+  border: 1px solid hsla(210,8%,5%,.6);
+  background: -moz-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  box-shadow: 0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 3px hsla(210,8%,5%,.25) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(208,100%,60%);
+}
+.toolbarButton.pressedState:hover:active {
+  background-color: hsla(210,8%,5%,.2);
+}
+
+
+.breadcrumbBar {
+  float: left;
+  height: 24px;
+  border-radius: 3px;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  -moz-user-select: none;
+  cursor: default;
+}
+
+.breadcrumbBarStart {
+  float: left;
+  padding: 0 4px;
+  height: 24px;
+  border-width: 0 13px 0 8px;
+  -moz-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+}
+.breadcrumbBarStart:hover:active {
+  -moz-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+}
+
+.breadcrumbBarMiddle {
+  margin-left: -11px;
+  padding: 0 4px;
+  float: left;
+  height: 24px;
+  border-width: 0 13px;
+  -moz-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+}
+.breadcrumbBarMiddle:hover:active {
+  -moz-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+}
+
+.breadcrumbBarEnd {
+  margin-left: -11px;
+  padding: 0 4px;
+  float: left;
+  height: 24px;
+  border-width: 0 8px 0 13px;
+  -moz-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  color: hsl(208,100%,60%);
+}
+.breadcrumbBarEnd:hover:active {
+  -moz-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+}
+
+
+.textInput {
+    float: left;
+    -moz-appearance: none;
+    margin: 0 3px;
+    background-color: transparent;
+    height: 20px;
+    border: 1px solid hsla(210,8%,5%,.6);
+    border-radius: 6px;
+    background-image: url(magnifying-glass.png), -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+    background-repeat: no-repeat;
+    background-position: 4px center, top left, top left;
+    padding-top: 0;
+    padding-bottom: 0;
+    -moz-padding-start: 10px;
+    -moz-padding-end: 4px;
+    box-shadow: 0 1px 1px hsla(210,8%,5%,.3) inset,
+    0 0 0 1px hsla(210,16%,76%,.1) inset,
+    0 1px 0 hsla(210,16%,76%,.15);
+    color: hsl(210,30%,85%);
+    font-weight: bolder;
+
+}
+
+.textInput:-moz-locale-dir(rtl) {
+    background-position: calc(100% - 4px) center, top left, top left;
+}

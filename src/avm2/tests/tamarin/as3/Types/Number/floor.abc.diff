@@ -1,5 +1,5 @@
---- /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-p6hca8	2012-08-27 16:16:06.000000000 -0700
-+++ /private/var/folders/mx/sq278bz91b5bwgl3myhqmpw00000gn/T/out11271-98635-g1eetj	2012-08-27 16:16:06.000000000 -0700
+--- /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54285-ymzjmq	2012-09-07 13:55:53.000000000 -0700
++++ /private/var/folders/19/q3tltmvs74j1q_jjrqsj4tdr0000gp/T/out11285-54285-1p3jwkg	2012-09-07 13:55:53.000000000 -0700
 @@ -1,8 +1,8 @@
  15.8.2.9 public native static function floor (x:Number) :Number;
  Number.floor() returns a int = int PASSED!

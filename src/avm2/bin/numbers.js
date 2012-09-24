@@ -30,8 +30,9 @@ var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs th
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
 var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
 var noMetrics = numbersOptions.register(new Option("nm", "noMetrics", "boolean", false, "runs without -tm -tj"));
-var timeout = numbersOptions.register(new Option("t", "timeout", "number", 5000, "timeout in ms"));
-var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "icov", "(i)nterpreter, (c)ompiler, (o)ptimized, (v)erifier"));
+var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
+var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "iclov", "(i)nterpreter, (c)ompiler, (o)ptimized, in(l)ineCaching, (v)erifier"));
+var output = numbersOptions.register(new Option("o", "output", "string", "", "output json file"));
 
 var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
 
@@ -152,7 +153,7 @@ var configurations = [
   {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js --no-ion";
 if (jsOptimazations.value) {
   commandPrefix += " -m -n";
 }
@@ -167,6 +168,9 @@ if (configurationSet.value.indexOf("c") >= 0) {
 }
 if (configurationSet.value.indexOf("o") >= 0) {
   configurations.push({name: "shu-o", timeout: timeout.value, command: commandPrefix + " -x -opt" + commandSuffix});
+}
+if (configurationSet.value.indexOf("l") >= 0) {
+  configurations.push({name: "shu-l", timeout: timeout.value, command: commandPrefix + " -x -opt -ic" + commandSuffix});
 }
 if (configurationSet.value.indexOf("v") >= 0) {
   configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify" + commandSuffix});
@@ -270,7 +274,7 @@ function count(name) {
   counts[name] ++;
 }
 
-var pathLength = 100;
+var pathLength = 140;
 var testNumber = 0;
 function runNextTest () {
   var test = tests.pop();
@@ -314,13 +318,25 @@ function runNextTest () {
             count(configuration.name + ":time");
           } else if (baseline.output.text == result.output.text) {
             if (i > 0) {
-              result.output.text = "N/A";
-              process.stdout.write(PASS + " PASS" + ENDC);
+              delete result.output.text;
+              process.stdout.write(PASS + " PASS 100 %" + ENDC);
               count(configuration.name + ":pass");
             }
           } else {
             someFailed = true;
-            process.stdout.write(FAIL + " FAIL" + ENDC);
+            var nPassed = 0, nFailed = 0, nPassedPercentage = 1;
+            if (result.output.text) {
+              var match = result.output.text.match(/PASSED/g);
+              nPassed = match ? match.length : 0;
+              match = baseline.output.text.match(/PASSED/g);
+              var nTotal = match ? match.length : 0;
+              nPassedPercentage = (nPassed / nTotal) * 100 | 0;
+            }
+            if (nPassedPercentage >= 50) {
+              process.stdout.write(WARN + " PASS " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+            } else {
+              process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+            }
             count(configuration.name + ":fail");
           }
           process.stdout.write(" " + (result.elapsed / 1000).toFixed(2));
@@ -337,7 +353,7 @@ function runNextTest () {
           }
         }
         if (!someFailed) {
-          baseline.output.text = "N/A";
+          delete baseline.output.text;
           count("all-passed");
         }
         process.stdout.write("\n");
@@ -350,7 +366,14 @@ function runNextTest () {
       var totalTime = (new Date() - totalStart);
       var final = {sha: sha, totalTime: totalTime, jobs: jobs.value, date: new Date(), configurations: configurations, results: results};
       fs.mkdir("runs", function() {
-        var fileName = "runs/" + sha + ".json";
+        var fileName = "runs/" + sha;
+        fileName += "." + configurationSet.value;
+        fileName += (jobs.value > 1 ? ".parallel" : "");
+        fileName += (!noMetrics.value ? ".metrics" : "");
+        fileName += ".json";
+        if (output.value) {
+          fileName = output.value;
+        }
         fs.writeFile(fileName, JSON.stringify(final));
         console.log(padRight("", "=", 120));
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
@@ -367,7 +390,7 @@ function runNextTest () {
          */
         if (generatePatches.value) {
           for (var test in results) {
-            if (path.existsSync(test + ".diff")) {
+            if (fs.existsSync(test + ".diff")) {
               continue;
             }
             (function (test) {

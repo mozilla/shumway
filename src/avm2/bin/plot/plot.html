@@ -31,6 +31,7 @@
 
     var runs = [];
     getQueryVariable("runs").split(",").forEach(function (x) {
+        try {
         var request = new XMLHttpRequest();
         request.open('GET', '../runs/' + x + '.json', false);
         request.send();
@@ -38,6 +39,9 @@
         runs.push(run);
         $("#info").append("<span class=\"info\"> Loading: " + x + ", Date: " + run.data.date +
                         ", Configurations: " + run.data.configurations.map(function (x) { return x.name; }).join(", ") + "</span><br>");
+        } catch (e) {
+          console.info("Cannot load " + x);
+        }
     });
 
     function getShortConfigurationName(name) {
@@ -63,32 +67,51 @@
         return escaper.text(x).html();
     }
 
+    function moreInfo(path, metrics) {
+        var resultName = path.split(":")[0];
+        var configurationName = path.split(":")[1];
+        var runIndex = parseInt(path.split(":")[2], 10);
+        var run = runs[runIndex];
+        var result = run.data.results[resultName];
+        var resultData = result[configurationName];
+        var str;
+        if (metrics) {
+            str = JSON.stringify(resultData, null, 2);
+        } else {
+            str = resultData.output.text ? resultData.output.text : "";
+        }
+        $("#details").text(str);
+    }
+
     var lines = [];
     for (var resultName in allNames) {
         var str = "<tr><td>" + resultName + "</td>";
-        runs.forEach(function (run) {
+        runs.forEach(function (run, runIndex) {
             var baselineName = run.data.configurations[0].name;
             var result = run.data.results[resultName];
-            var title = "";
-            for (var i = 1; i < run.data.configurations.length; i++) {
+            for (var i = 0; i < run.data.configurations.length; i++) {
                 var configurationName = run.data.configurations[i].name;
                 if (result) {
                     var configurationResult = result[configurationName];
                     var styleName = "pass";
-                    if (result[baselineName].output.text != result[configurationName].output.text) {
-                        styleName = "fail";
-                        title = result[configurationName].output.text.split("\n").map(escapeTooltip).join("&#10;");
-                    } else if (result[baselineName].elapsed > 1000) {
+                    if (result[configurationName].output.text) {
+                        if (configurationName != baselineName) {
+                            styleName = "fail";
+                        }
+                    } else if (result[baselineName].elapsed > 10000) {
                         styleName = "timeout";
                     }
-                    str += "<td class='" + styleName + "' title=\"" + title + "\">" + getShortConfigurationName(configurationName) + "</td>";
+                    var path = resultName + ":" + configurationName + ":" + runIndex;
+                    str += "<td class='" + styleName + "' onclick=\'moreInfo(\"" + path + "\");\'>" + getShortConfigurationName(configurationName) + "</td>";
 
                     var timeTitle = ["Elapsed: " + result[configurationName].elapsed + " ms"];
-                    if (configurationName !== "shu-i") {
+                    if (configurationName !== "shu-i" && result["shu-i"]) {
                         timeTitle.push(configurationName + " vs. shu-i: " + ((result["shu-i"].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "%");
                     }
                     var timeTitle = timeTitle.map(escapeTooltip).join("&#10;");
-                    str += "<td class=\"time\" title=\"" + timeTitle + "\">" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
+                    if (i > 0) {
+                        str += "<td class=\"time\" title=\"" + timeTitle + "\" onclick=\'moreInfo(\"" + path + "\", true);\'>" + ((result[baselineName].elapsed / result[configurationName].elapsed) * 100).toFixed(0) + "</td>";
+                    }
                 } else {
                     str += "<td class='missing' colspan='2'>X</td>";
                 }
@@ -100,5 +123,11 @@
     }
     $("#container").append("<table>" + lines.join("") + "</table>");
 </script>
+<div style="height:200px"></div>
+<pre>
+<div id="details">
+
+</div>
+</pre>
 </body>
 </html>

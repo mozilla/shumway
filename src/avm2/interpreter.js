@@ -65,8 +65,8 @@ var Interpreter = (function () {
 
       rtstack.push(runtime);
 
+      var value;
       for (var i = 0; i < parameterCount; i++) {
-        var value;
         var parameter = method.parameters[i];
         if (i < argCount) {
           value = args[i];
@@ -205,7 +205,7 @@ var Interpreter = (function () {
             pc = bc.offsets[index];
             continue;
           case OP_pushwith:
-            scope = new Scope(scope, stack.pop());
+            scope = new Scope(scope, stack.pop(), true);
             scopeHeight++;
             break;
           case OP_popscope:
@@ -490,6 +490,7 @@ var Interpreter = (function () {
           case OP_coerce_o:
             obj = stack.pop();
             stack.push(obj == undefined ? null : obj);
+            break;
           case OP_negate:
             stack.push(-stack.pop());
             break;

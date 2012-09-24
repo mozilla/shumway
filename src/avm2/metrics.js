@@ -9,7 +9,7 @@
       this.last = 0;
       this.total = 0;
       this.count = 0;
-    };
+    }
     function getTicks() {
       return new Date().getTime();
     }

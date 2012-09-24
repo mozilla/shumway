@@ -96,10 +96,19 @@ var Domain = (function () {
 
         extendNative: function (baseClass, native) {
           this.baseClass = baseClass;
-          this.dynamicPrototype = native.prototype.__proto__;
+          this.dynamicPrototype = Object.getPrototypeOf(native.prototype);
           this.instance.prototype = native.prototype;
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
+        },
+
+        coerce: function (value) {
+          return value;
+        },
+
+        isInstanceOf: function (value) {
+          // TODO: Fix me.
+          return this.isInstance(value);
         },
 
         isInstance: function (value) {

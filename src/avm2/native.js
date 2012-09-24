@@ -129,6 +129,20 @@ function debugBreak(message) {
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
+/*
+defineReadOnlyProperty(Object.prototype, "isInstanceOf", function () {
+  assert (false, "isInstanceOf() is not implemented on type " + this);
+});
+
+defineReadOnlyProperty(Object.prototype, "coerce", function () {
+  assert (false, "coerce() is not implemented on type " + this);
+});
+
+defineReadOnlyProperty(Object.prototype, "isInstance", function () {
+  assert (false, "isInstance() is not implemented on type " + this);
+});
+*/
+
 const natives = (function () {
 
   function glue(inner, proxy) {
@@ -216,7 +230,17 @@ const natives = (function () {
    */
   function ClassClass(runtime, scope, instance, baseClass) {
     var c = runtime.domain.system.Class;
+    c.debugName = "Class";
     c.prototype.extendBuiltin.call(c, baseClass);
+    c.coerce = function (value) {
+      return value;
+    };
+    c.isInstanceOf = function (value) {
+      return true; // TODO: Fix me.
+    };
+    c.isInstance = function (value) {
+      return true; // TODO: Fix me.
+    };
     return c;
   }
 
@@ -261,6 +285,9 @@ const natives = (function () {
       return "function Function() {}";
     };
     c.nativeMethods = m;
+    c.coerce = function (value) {
+      return value; // TODO: Fix me.
+    };
     c.isInstanceOf = function (value) {
       return typeof value === "function";
     };
@@ -316,13 +343,20 @@ const natives = (function () {
     defineNonEnumerableProperty(m, "get length", function() { return this.length; });
     defineNonEnumerableProperty(m, "set length", function(l) { this.length = l; });
     c.nativeMethods = m;
-
+    c.coerce = function (value) {
+      return value; // TODO: Fix me.
+    };
+    c.isInstanceOf = function (value) {
+      return true; // TODO: Fix me.
+    };
     return c;
   }
 
   /**
    * Vector.as
    */
+
+  const VM_VECTOR_IS_FIXED = "vm vector is fixed";
 
   /**
    * Creates a typed Vector class. It steals the Array object from a new global
@@ -334,28 +368,31 @@ const natives = (function () {
 
     // Breaks semantics with bounds checking for now.
     if (type) {
-      const coerce = type.instance;
+      const coerce = type.coerce;
       var TAp = TypedArray.prototype;
       TAp.indexGet = function (i) { return this[i]; };
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
 
     function TypedVector (length, fixed) {
+      length = _int(length);
       var array = new TypedArray(length);
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
       }
+      array[VM_VECTOR_IS_FIXED] = !!fixed;
       return array;
     }
+
     TypedVector.prototype = TypedArray.prototype;
     var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
     var c = new runtime.domain.system.Class(name, TypedVector, C(TypedVector));
-    var m = TypedArray.prototype;
+    var m = Object.create(TypedArray.prototype);
 
     defineReadOnlyProperty(TypedArray.prototype, "class", c);
 
-    defineNonEnumerableProperty(m, "get fixed", function () { return false; });
-    defineNonEnumerableProperty(m, "set fixed", function (v) { });
+    defineNonEnumerableProperty(m, "get fixed", function () { return this[VM_VECTOR_IS_FIXED]; });
+    defineNonEnumerableProperty(m, "set fixed", function (v) { this[VM_VECTOR_IS_FIXED] = v; });
 
     defineNonEnumerableProperty(m, "get length", function () { return this.length; });
     defineNonEnumerableProperty(m, "set length", function setLength(length) {
@@ -364,9 +401,26 @@ const natives = (function () {
     });
 
     c.extendBuiltin(baseClass);
+
+    m.pop = function () {
+      if (this[VM_VECTOR_IS_FIXED]) {
+        var error = Errors.VectorFixedError;
+        runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
+      } else if (this.length === 0) {
+        return type.defaultValue;
+      }
+      return TypedArray.prototype.pop.call(this, arguments);
+    };
+
     c.nativeMethods = m;
     c.nativeStatics = {};
     c.vectorType = type;
+    c.coerce = function (value) {
+      return value; // TODO: Fix me.
+    };
+    c.isInstanceOf = function (value) {
+      return true; // TODO: Fix me.
+    };
     c.isInstance = function (value) {
       if (value === null || typeof value !== "object") {
         return false;
@@ -421,15 +475,15 @@ const natives = (function () {
     return c;
   }
 
-  function intClass(runtime, scope, instance, baseClass) {
-    function int(x) {
-      return Number(x) | 0;
-    }
+  function _int(x) {
+    return Number(x) | 0;
+  }
 
-    var c = new runtime.domain.system.Class("int", int, C(int));
+  function intClass(runtime, scope, instance, baseClass) {
+    var c = new runtime.domain.system.Class("int", _int, C(_int));
     c.extendBuiltin(baseClass);
     c.defaultValue = 0;
-    c.coerce = int;
+    c.coerce = _int;
     c.isInstanceOf = function (value) {
       return false;
     };
@@ -442,12 +496,12 @@ const natives = (function () {
     return c;
   }
 
-  function uintClass(runtime, scope, instance, baseClass) {
-    function uint(x) {
-      return Number(x) >>> 0;
-    }
+  function _uint(x) {
+    return Number(x) >>> 0;
+  }
 
-    var c = new runtime.domain.system.Class("uint", uint, C(uint));
+  function uintClass(runtime, scope, instance, baseClass) {
+    var c = new runtime.domain.system.Class("uint", _uint, C(_uint));
     c.extend(baseClass);
     c.defaultValue = 0;
     c.isInstanceOf = function (value) {
@@ -459,7 +513,7 @@ const natives = (function () {
       }
       return (value >>> 0) === value;
     };
-    c.coerce = uint;
+    c.coerce = _uint;
     return c;
   }
 
@@ -496,9 +550,7 @@ const natives = (function () {
         }
       };
       c.nativeStatics = {
-        getErrorMessage: function() {
-          return "TODO: getErrorMessage";
-        }
+        getErrorMessage: getErrorMessage
       };
       return c;
     };

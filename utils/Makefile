@@ -51,6 +51,7 @@ install-asc: $(ASC_JAR)
 
 $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
+	-rm asc.uris.txt
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 	-rm -rf $(TAMARIN_HOME)/bin
@@ -90,7 +91,7 @@ $(APPARAT_HOME)/apparat.tar.gz:
 	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
 
 install-node-modules:
-	npm install mocha expect.js temp
+	npm install mocha expect.js temp jshint
 
 build-playerglobal:
 	make -C playerGlobal/ build
