@@ -137,10 +137,15 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
 natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instance, baseClass) {
   function constructorHook() {
     this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
-    var result = instance.apply(this, arguments);
-    this.private$flash$events$KeyboardEvent$m_keyCode = this.nativeObject.keyCode;
-    this.private$flash$events$KeyboardEvent$m_keyLocation = this.nativeObject.keyLocation;
-    return result;
+    return instance.apply(this, [this.nativeObject.type,
+                                 this.nativeObject.bubbles,
+                                 this.nativeObject.cancelable,
+                                 this.nativeObject.charCode,
+                                 this.nativeObject.keyCode,
+                                 this.nativeObject.keyLocation,
+                                 this.nativeObject.ctrlKey,
+                                 this.nativeObject.altKey,
+                                 this.nativeObject.shiftKey]);
   }
 
   var c = new runtime.domain.system.Class("KeyboardEvent", constructorHook, Domain.passthroughCallable(constructorHook));
