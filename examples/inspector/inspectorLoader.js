@@ -6,9 +6,7 @@ function readFile(file) {
   if (file.name.endsWith(".abc")) {
     reader.onload = function() {
       var result = this.result;
-      createSimpleAVM2(function (avm2) {
-        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(result), file.name));
-      });
+      executeFile(file.name, new Uint8Array(result));
     }
   } else if (file.name.endsWith(".swf")) {
     reader.onload = function() {

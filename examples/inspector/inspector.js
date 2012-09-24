@@ -61,22 +61,24 @@ if (rfile) {
   executeFile(rfile);
 }
 
-
-
-
-function executeFile(file) {
+function executeFile(file, data) {
   if (!avm2Instance) {
     createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
       avm2Instance = avm2;
-      executeFile(file);
-    })
+      executeFile(file, data);
+    });
     return;
   }
   if (file.endsWith(".abc")) {
-    new BinaryFileReader(file).readAll(null, function(buffer) {
-      avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+    if (data) {
+      avm2Instance.applicationDomain.executeAbc(new AbcFile(data, file));
       terminate();
-    });
+    } else {
+      new BinaryFileReader(file).readAll(null, function(buffer) {
+        avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+        terminate();
+      });
+    }
   } else if (file.endsWith(".swf")) {
     new BinaryFileReader(file).readAll(null, function(buffer) {
       SWF.embed(buffer, $("#stage")[0], {avm2: avm2Instance});
