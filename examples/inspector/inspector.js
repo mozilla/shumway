@@ -53,16 +53,30 @@ var rfile = getQueryVariable("rfile");
  * when the page loads.
  */
 if (rfile) {
-  if (rfile.endsWith(".abc")) {
-    createAVM2(function(avm2) {
-      new BinaryFileReader(rfile).readAll(null, function(buffer) {
-        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), rfile));
+  executeFile(rfile);
+}
+
+var avm2Instance = undefined;
+
+function executeFile(file) {
+  if (file.endsWith(".abc")) {
+    if (avm2Instance) {
+      new BinaryFileReader(file).readAll(null, function(buffer) {
+        avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
         terminate();
-      });
-    }, true);
-  } else if (rfile.endsWith(".swf")) {
+      })
+    } else {
+      createAVM2(function(avm2) {
+        avm2Instance = avm2;
+        new BinaryFileReader(file).readAll(null, function(buffer) {
+          avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+          terminate();
+        });
+      }, true);
+    }
+  } else if (file.endsWith(".swf")) {
     createAVM2(function(avm2) {
-      new BinaryFileReader(rfile).readAll(null, function(buffer) {
+      new BinaryFileReader(file).readAll(null, function(buffer) {
         SWF.embed(buffer, $("#stage")[0], {avm2: avm2});
       });
     });

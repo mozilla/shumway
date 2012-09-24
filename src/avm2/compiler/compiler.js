@@ -227,7 +227,7 @@ var Compiler = (function () {
     return new VariableDeclaration("var", declarations);
   }
 
-    function isIdentifierStart(c) {
+  function isIdentifierStart(c) {
     return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
   }
 

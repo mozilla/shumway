@@ -707,7 +707,7 @@ var Map = (function() {
   map.prototype.has = function has(k) {
     return Object.prototype.hasOwnProperty.call(this.elements, k);
   };
-  map.prototype.delete = function delete(k) {
+  map.prototype.remove = function remove(k) {
     if (this.has(k)) {
       delete this.elements[k];
     }

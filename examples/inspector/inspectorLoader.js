@@ -27,6 +27,7 @@ body.on("dragenter dragover", function(event) {
   event.stopPropagation();
   event.preventDefault();
 });
+
 body.on("drop", function(event) {
   event.stopPropagation();
   event.preventDefault();
