@@ -15,6 +15,8 @@ const VM_BINDINGS = "vm bindings";
 const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 const VM_ENUMERATION_KEYS = "vm enumeration keys";
 const VM_OPEN_METHODS = "vm open methods";
+const VM_NEXT_NAME = "vm next name";
+const VM_NEXT_NAME_INDEX = "vm next name index";
 
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -42,7 +44,7 @@ function initializeGlobalObject(global) {
    * Gets the next name index of an object. Index |zero| is actually not an
    * index, but rather an indicator to start the iteration.
    */
-  defineReadOnlyProperty(global.Object.prototype, "nextNameIndex", function (index) {
+  defineReadOnlyProperty(global.Object.prototype, VM_NEXT_NAME_INDEX, function (index) {
     if (index === 0) {
       /**
        * We're starting a new iteration. Hope that VM_ENUMERATION_KEYS haven't been
@@ -69,7 +71,7 @@ function initializeGlobalObject(global) {
    * Gets the nextName after the specified |index|, which you would expect to
    * be index + 1, but it's actually index - 1;
    */
-  defineReadOnlyProperty(global.Object.prototype, "nextName", function (index) {
+  defineReadOnlyProperty(global.Object.prototype, VM_NEXT_NAME, function (index) {
     var keys = this[VM_ENUMERATION_KEYS];
     assert (keys && index > 0 && index < keys.length + 1);
     return keys[index - 1];
@@ -205,11 +207,11 @@ function setSlot(obj, index, value) {
 }
 
 function nextName(obj, index) {
-  return obj.nextName(index);
+  return obj[VM_NEXT_NAME](index);
 }
 
 function nextValue(obj, index) {
-  return obj[Multiname.getPublicQualifiedName(obj.nextName(index))];
+  return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
 }
 
 /**
@@ -244,11 +246,11 @@ function hasNext2(obj, index) {
    * Because I don't think hasnext/hasnext2/nextname opcodes are used outside
    * of loops in "normal" ABC code, we can deviate a little for semantics here
    * and leave the prototype-chaining to the |for..in| operator in JavaScript
-   * itself, in |obj.nextNameIndex|. That is, the object pushed onto the
+   * itself, in |obj[VM_NEXT_NAME_INDEX]|. That is, the object pushed onto the
    * stack, if the original object has any more properties left, will _always_
    * be the original object.
    */
-  return {index: obj.nextNameIndex(index), object: obj};
+  return {index: obj[VM_NEXT_NAME_INDEX](index), object: obj};
 }
 
 function getDescendants(multiname, obj) {

@@ -1897,6 +1897,7 @@ var InlineCacheManager = (function () {
         inlineCacheSets.set(name, new InlineCacheSet(name));
       }
       var inlineCacheSet = inlineCacheSets.get(name);
+      assert (inlineCacheSet, name);
       inlineCacheSet.update(namespace);
     });
   }
