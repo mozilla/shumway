@@ -770,6 +770,16 @@ natives.StageClass = function StageClass(runtime, scope, instance, baseClass) {
     "requireOwnerPermissions": function() {
      // private undocumented
      // notImplemented("Stage.requireOwnerPermissions");
+    },
+
+    // graphics :: void -> Number
+    "get stageWidth": function stageWidth() {
+      return this.nativeObject.stageWidth;
+    },
+
+    // stageHeight :: void -> Number
+    "get stageHeight": function stageHeight() {
+      return this.nativeObject.stageHeight;
     }
   };
 

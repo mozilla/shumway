@@ -12,8 +12,6 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
   c.nativeMethods = {
     // ctor :: target:IEventDispatcher -> void
     ctor: function ctor(target) {
-      print("Ctor");
-
       // Creating proxy listeners to wrap an Event object into native one
       var listeners = new WeakMap();
       this._wrapListener = function (args) {
@@ -78,7 +76,7 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
   c.nativeMethods = {
     // ctor :: type:String, bubbles:Boolean, cancelable:Boolean -> void
     ctor: function ctor(type, bubbles, cancelable) {
-      print("Event.ctor");
+      // print("Event.ctor");
     },
 
     // type :: void -> String
@@ -137,7 +135,15 @@ natives.EventClass = function EventClass(runtime, scope, instance, baseClass) {
 };
 
 natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instance, baseClass) {
-  var c = new runtime.domain.system.Class("KeyboardEvent", instance, Domain.passthroughCallable(instance));
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    var result = instance.apply(this, arguments);
+    this.private$flash$events$KeyboardEvent$m_keyCode = this.nativeObject.keyCode;
+    this.private$flash$events$KeyboardEvent$m_keyLocation = this.nativeObject.keyLocation;
+    return result;
+  }
+
+  var c = new runtime.domain.system.Class("KeyboardEvent", constructorHook, Domain.passthroughCallable(constructorHook));
   c.extend(baseClass);
 
   c.nativeStatics = {};
