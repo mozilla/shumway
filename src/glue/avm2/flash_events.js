@@ -197,3 +197,14 @@ natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instanc
 
   return c;
 };
+
+natives.MouseEventClass = function MouseEventClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("MouseEvent", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {};
+
+  return c;
+};
