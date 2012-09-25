@@ -3,14 +3,9 @@ var stage = $("#stage");
 
 function readFile(file) {
   var reader = new FileReader();
-  if (file.name.endsWith(".abc")) {
+  if (file.name.endsWith(".abc") || file.name.endsWith(".swf")) {
     reader.onload = function() {
-      var result = this.result;
-      executeFile(file.name, new Uint8Array(result));
-    }
-  } else if (file.name.endsWith(".swf")) {
-    reader.onload = function() {
-      SWF.embed(this.result, stage[0]);
+      executeFile(file.name, this.result);
     }
   } else {
     throw new TypeError("unsupported format");

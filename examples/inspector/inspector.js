@@ -28,7 +28,6 @@ var BinaryFileReader = (function binaryFileReader() {
 })();
 
 var sysMode = EXECUTION_MODE.INTERPRET;
-var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
 
 /*
 function createSimpleAVM2(next, loadShellAbc) {
@@ -61,28 +60,38 @@ if (rfile) {
   executeFile(rfile);
 }
 
-function executeFile(file, data) {
-  if (!avm2Instance) {
+function executeFile(file, buffer) {
+  if (!file.endsWith(".swf") && !avm2Instance) {
+    var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
     createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
       avm2Instance = avm2;
-      executeFile(file, data);
+      executeFile(file, buffer);
     });
     return;
   }
   if (file.endsWith(".abc")) {
-    if (data) {
-      avm2Instance.applicationDomain.executeAbc(new AbcFile(data, file));
+    function runABC(file, buffer) {
+      avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
       terminate();
-    } else {
+    }
+    if (!buffer) {
       new BinaryFileReader(file).readAll(null, function(buffer) {
-        avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-        terminate();
+        runABC(file, buffer);
       });
+    } else {
+      runABC(file, buffer);
     }
   } else if (file.endsWith(".swf")) {
-    new BinaryFileReader(file).readAll(null, function(buffer) {
-      SWF.embed(buffer, $("#stage")[0], {avm2: avm2Instance});
-    });
+    function runSWF(file, buffer) {
+      SWF.embed(buffer, $("#stage")[0], { onComplete: terminate });
+    }
+    if (!buffer) {
+      new BinaryFileReader(file).readAll(null, function(buffer) {
+        runSWF(file, buffer);
+      });
+    } else {
+      runSWF(file, buffer);
+    }
   }
 }
 

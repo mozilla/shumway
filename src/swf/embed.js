@@ -1,4 +1,4 @@
-SWF.embed = function(file, container) {
+SWF.embed = function(file, container, options) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
   var loader = new Loader;
@@ -44,6 +44,12 @@ SWF.embed = function(file, container) {
 
     container.appendChild(canvas);
   });
+
+  if (options.onComplete) {
+    loaderInfo.addEventListener(Event.COMPLETE, function () {
+      options.onComplete();
+    });
+  }
 
   loader.loadFrom(file);
 };
