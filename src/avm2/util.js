@@ -715,6 +715,42 @@ var Map = (function() {
   return map;
 })();
 
+if (typeof WeakMap === "undefined") {
+  /**
+   * Emulates WeakMaps on Chrome using a silly linear search.
+   */
+  WeakMap = (function () {
+    function weakMap() {
+      this.elements = [];
+    }
+    function indexOf(array, k) {
+      var array = this.elements;
+      for (var i = 0; i < array.length; i++) {
+        if (array[i][0] === k) {
+          return i;
+        }
+      }
+      return -1;
+    }
+    weakMap.prototype.get = function get(k) {
+      var index = indexOf(this.elements, k);
+      if (index >= 0) {
+        return this.elements[i];
+      }
+      return undefined;
+    };
+    weakMap.prototype.set = function set(k, v) {
+      var index = indexOf(this.elements, k);
+      if (index >= 0) {
+        this.elements[i] = v;
+      } else {
+        this.elements.push([k, v]);
+      }
+    };
+    return weakMap;
+  })();
+}
+
 /**
  * SortedList backed up by a linked list.
  *  sortedList(compare) - the constructor takes a |compare| function
