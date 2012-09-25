@@ -12,7 +12,7 @@ function ColorTransform(redMultiplier,
     blueMultiplier:  describeProperty(blueMultiplier || 1),
     alphaMultiplier: describeProperty(alphaMultiplier || 1),
     redOffset:       describeProperty(redOffset || 0),
-    greenOffset:     describeProperty(reenOffset || 0),
+    greenOffset:     describeProperty(greenOffset || 0),
     blueOffset:      describeProperty(blueOffset || 0),
     alphaOffset:     describeProperty(alphaOffset || 0)
   });

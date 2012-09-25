@@ -16,7 +16,7 @@ function render(container, renderingContext) {
       //  child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child._timelineInfo[0] ? child._timelineInfo[0].matrix : child.transform.matrix;
+      var m = child.transform.matrix;
       ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
       //var rotation = child.rotation;
       //if (rotation)
