@@ -2,7 +2,7 @@ function Transform(target) {
   this._target = target;
   this._colorTransform = new ColorTransform;
 
-  target.transform = this;
+  target._transform = this;
 }
 
 Transform.prototype = Object.create(null, {
@@ -32,7 +32,7 @@ Transform.prototype = Object.create(null, {
     var cxform = this.colorTransform;
     cxform.concat(this._target.parent.transform.concatenatedColorTransform);
     return cxform;
-  })
+  }),
   concatenatedMatrix: describeAccessor(function () {
     var m = this.matrix;
     m.concat(this._target.parent.transform.concatenatedMatrix);

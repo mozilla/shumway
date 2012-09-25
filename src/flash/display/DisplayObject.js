@@ -33,11 +33,11 @@ function DisplayObject() {
   this._scaleX = 1;
   this._scaleY = 1;
   this._stage = null;
-  this._timelineInfo = { };
   this._transform = null;
   this._visible = true;
   this._x = 0;
   this._y = 0;
+  new Transform(this);
 }
 
 DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
@@ -156,7 +156,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       return this._rotation;
     },
     function (val) {
-      this._rotation = val;
+      this._transform.rotate(val);
     }
   ),
   stage: describeAccessor(function () {
@@ -168,6 +168,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleX = val;
+      this._transform.scale(val, this._scaleY);
     }
   ),
   scaleY: describeAccessor(
@@ -176,6 +177,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleY = val;
+      this._transform.scale(this._scaleX, val);
     }
   ),
   scale9Grid: describeAccessor(
@@ -200,6 +202,8 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._transform = val;
+      this._transform.matrix = val.matrix;
+      this._transform.colorTransform = val.colorTransform;
     }
   ),
   visible: describeAccessor(
@@ -225,6 +229,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._x = val;
+      this._transform.translate(val, this._y);
     }
   ),
   y: describeAccessor(
@@ -233,6 +238,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._y = val;
+      this._transform.translate(this._x, val);
     }
   )
 });
