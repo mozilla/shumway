@@ -194,12 +194,15 @@ var Verifier = (function() {
         } else if (Multiname.getQualifiedName(name) === "public$uint") {
           return type.Uint;
         } else if (Multiname.getQualifiedName(name) === "public$Object") {
-          return type.Atom.Object;
+          return type.Reference.Object;
         } else if (Multiname.getQualifiedName(name) === "public$Number") {
           return type.Number;
         }
         var ty = domain.getProperty(name, false, true);        
-        assert (ty, name + " not found");
+        // assert (ty, name + " not found");
+        // Remove the assertion for now.
+        // If the class is used in the verifier before it was created by the runtime
+        // it will not be found. This should be fixed by the proxy types mechanism.
         return ty;
       };
 
@@ -233,6 +236,9 @@ var Verifier = (function() {
 
       type.referenceFromName = function referenceFromName(name) {
         var ty = type.fromName(name);
+        if (!ty) {
+          return Type.Atom.Any;
+        }
         if (ty instanceof Type) {
           return ty; // for Type.Int, Type.Number, etc.
         }
@@ -247,6 +253,9 @@ var Verifier = (function() {
 
       type.classFromName = function classFromName(name) {
         var ty = type.fromName(name);
+        if (!ty) {
+          return Type.Atom.Any;
+        }
         if (ty instanceof Type) {
           return ty; // for Type.Int, Type.Number, etc.
         }
