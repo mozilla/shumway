@@ -769,6 +769,23 @@ var Verifier = (function() {
           return Type.Atom.Any;
         }
 
+        function setProperty(obj, multiname, value) {
+          // TODO: This logic would not work for runtime multinames since the
+          // actual value of the name could be a trait, thus not a dynamic property,
+          // unless something can be proven about the value of the runtime multinames
+
+          if (!(multiname instanceof RuntimeMultiname)) {
+            if (objTy.isReference() || objTy.isClass()) {
+              trait = objTy.getTrait(multiname);
+              if (trait) {
+                bc.propertyName = trait.name;
+              } else if (trait === undefined) {
+                bc.isDynamicProperty = true;
+              }
+            }
+          }
+        }
+
         function getPropertyType(obj, multiname) {
           var type = Type.Atom.Any;
 
@@ -858,11 +875,22 @@ var Verifier = (function() {
             pop();
             break;
           case OP_getsuper:
-            notImplemented(bc);
+            type = Type.Atom.Any;
+            multiname = popMultiname(bc);
+            objTy = pop();
+            if (objTy.baseClass) {
+              type = getPropertyType(objTy.baseClass, multiname);
+            }
+            push(type);
             break;
           case OP_setsuper:
-            notImplemented(bc);
-            break;
+            value = state.stack.pop();
+            multiname = popMultiname(bc);
+            objTy = pop();
+            if (objTy.baseClass) {
+              setProperty(objTy.baseClass, multiname, value);
+            }
+          break;
           case OP_dxns:
             notImplemented(bc);
             break;
@@ -1191,20 +1219,7 @@ var Verifier = (function() {
             multiname = popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
             objTy = popObject(bc); // attaches the type of the object to bc.objTy
 
-            // TODO: This logic would not work for runtime multinames since the
-            // actual value of the name could be a trait, thus not a dynamic property,
-            // unless something can be proven about the value of the runtime multinames
-            if (!(multiname instanceof RuntimeMultiname)) {
-              if (objTy.isReference() || objTy.isClass()) {
-                trait = objTy.getTrait(multiname);
-                if (trait) {
-                  bc.propertyName = trait.name;
-                } else if (trait === undefined) {
-                  bc.isDynamicProperty = true;
-                }
-              }
-            }
-
+            setProperty(objTy, multiname, value);
             break;
           case OP_getlocal:
             push(local[bc.index]);
