@@ -1162,12 +1162,12 @@ var Compiler = (function () {
             var nameTy = multiname.name.ty;
             var valueTy = value.ty;
             
-            if (objTy && objTy.isVector()) { // [Reference: Vector]
-              if (objTy.value.isVectorInt()) { // Vector.<int>
+            if (objTy && objTy.isVectorReference()) { // [Reference: Vector]
+              if (objTy.elementTypeIsInt()) { // Vector.<int>
                 value = asInt32(value); // value = value | 0
-              } else if (objTy.value.isVectorUint()) { // Vector.<uint>
+              } else if (objTy.elementTypeIsUint()) { // Vector.<uint>
                 value = asUint32(value); // value = value >>> 0
-              } else if (objTy.value.isVectorObject()) { // Vector.<Object>
+              } else if (objTy.elementTypeIsObject()) { // Vector.<Object>
 
                 // FIXME - in case of Vector.<X> verify that the type of the value set is
                 // a subtype of X, or X. If it is not, throw an AVM error.
