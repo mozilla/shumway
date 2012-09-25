@@ -829,7 +829,8 @@ var Verifier = (function() {
           } else if (trait && trait.isGetter()) {
             type = Type.referenceFromName(trait.methodInfo.returnType);
           } else if (trait && trait.isMethod()) {
-            type = Type.referenceFromName(trait.methodInfo.returnType);
+            // type = Type.referenceFromName(trait.methodInfo.returnType);
+            type = Type.Atom.Any;
           }
           return type;
         }
