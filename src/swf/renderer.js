@@ -29,6 +29,10 @@ function render(container, renderingContext) {
 
       if (child._graphics) {
         var graphics = child._graphics;
+
+        if (graphics._usesTwips)
+          ctx.scale(0.05, 0.05);
+
         var subpaths = graphics._subpaths;
         for (var j = 0, o = subpaths.length; j < o; j++) {
           var path = subpaths[j];
@@ -148,7 +152,6 @@ function renderStage(stage, ctx) {
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
         ctx.translate(offsetX, offsetY);
-        ctx.scale(scale / 20, scale / 20);
 
         ctx.canvas.currentTransform = {
           scale: scale,

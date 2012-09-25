@@ -286,6 +286,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
     }catch(e){console.log(symbol.data);}
       var graphics = new Graphics;
+      graphics._usesTwips = true;
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
       symbolClass = this.createSymbolClass(Shape, {
         graphics: describeAccessor(function () {
