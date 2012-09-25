@@ -178,7 +178,7 @@ function renderStage(stage, ctx) {
       frameTime = now;
       if (root.isPlaying())
         root.nextFrame();
-      render(root, renderingContext);
+      render(stage, renderingContext);
     }
     requestAnimationFrame(draw);
   })();
