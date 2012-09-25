@@ -37,7 +37,9 @@ SWF.embed = function(file, container) {
     stage._color = bgcolor;
     canvas.style.background = toStringRgba(bgcolor);
 
-    stage.addChild(loader.content);
+    // Dirty hack for now.
+    //stage.addChild(loader.content);
+    stage._children[0] = loader.content;
     renderStage(stage, ctx);
 
     container.appendChild(canvas);

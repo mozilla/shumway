@@ -16,6 +16,7 @@ function Graphics() {
   this._fillTransform = null;
   this._strokeStyle = null;
   this._subpaths = [];
+  this._usesTwips = false;
 }
 
 function toRgba(color, alpha) {
