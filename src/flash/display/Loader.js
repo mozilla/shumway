@@ -156,14 +156,17 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     if (exports) {
       for (var i = 0, n = exports.length; i < n; i++) {
         var asset = exports[i];
-        var className = asset.className;
         var symbolPromise = dictionary[asset.symbolId];
-        if (symbolPromise) {
-          symbolPromise.then(function () {
-            var symbolClass = symbolPromise.value;
-            symbolClass.prototype.__class__ = className;
-          });
-        }
+        if (!symbolPromise)
+          continue;
+        symbolPromise.then(
+          (function(symbolPromise, className) {
+              return function symbolPromiseResolved() {
+                var symbolClass = symbolPromise.value;
+                symbolClass.prototype.__class__ = className;
+              };
+          })(symbolPromise, asset.className)
+        );
       }
     }
 
