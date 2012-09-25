@@ -796,7 +796,6 @@ natives.GraphicsClass = function GraphicsClass(runtime, scope, instance, baseCla
 
   c.nativeMethods = {
     lineStyle: function lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
-      debugger;
       this.nativeObject.lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit);
     },
     lineTo: function lineTo(x, y) {

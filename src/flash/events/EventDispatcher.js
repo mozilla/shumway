@@ -6,7 +6,7 @@ function EventDispatcher(target) {
 
 var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
 
-EventDispatcher.prototype = Object.create(null, {
+EventDispatcher.prototype = describePrototype({
   __class__: describeInternalProperty('flash.events.EventDispatcher'),
 
   addEventListener: describeMethod(function (type, listener, useCapture, prio, useWeakReference) {

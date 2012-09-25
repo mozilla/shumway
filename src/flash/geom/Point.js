@@ -17,7 +17,7 @@ Object.defineProperties(Point, {
   })
 });
 
-Point.prototype = Object.create(null, {
+Point.prototype = describePrototype({
   __class__: describeInternalProperty('flash.geom.Point'),
 
   length: describeAccessor(

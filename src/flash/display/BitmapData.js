@@ -1,6 +1,6 @@
 function BitmapData() {
 }
 
-BitmapData.prototype = Object.create(null, {
+BitmapData.prototype = describePrototype({
   __class__: describeInternalProperty('flash.display.BitmapData'),
 });

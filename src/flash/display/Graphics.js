@@ -26,7 +26,7 @@ function toRgba(color, alpha) {
   return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
 }
 
-Graphics.prototype = Object.create(null, {
+Graphics.prototype = describePrototype({
   __class__: describeInternalProperty('flash.display.Graphics'),
 
   beginFill: describeMethod(function (color, alpha) {

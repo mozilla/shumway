@@ -1,6 +1,6 @@
 function Font() {
 }
 
-Font.prototype = Object.create(null, {
+Font.prototype = describePrototype({
   __class__: describeInternalProperty('flash.text.Font'),
 });

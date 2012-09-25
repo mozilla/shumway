@@ -1,3 +1,9 @@
+function describePrototype() {
+  if (arguments.length === 1) {
+    return Object.create(Object.prototype, arguments[0]);
+  }
+  return Object.create(arguments[0], arguments[1]);
+}
 function describeAccessor(get, set) {
   return { get: get, set: set, configurable: true, enumerable: true };
 }

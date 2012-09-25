@@ -7,7 +7,7 @@ function Rectangle(x, y, width, height) {
   });
 }
 
-Rectangle.prototype = Object.create(null, {
+Rectangle.prototype = describePrototype({
   __class__: describeInternalProperty('flash.geom.Rectangle'),
 
   bottomRight: describeAccessor(

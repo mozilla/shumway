@@ -56,7 +56,7 @@ Object.defineProperties(Event, {
   VIDEO_FRAME:                  describeConst('videoFrame')
 });
 
-Event.prototype = Object.create(null, {
+Event.prototype = describePrototype({
   __class__: describeInternalProperty('flash.events.Event'),
 
   clone: describeMethod(function () {

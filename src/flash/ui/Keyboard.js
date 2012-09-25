@@ -1,4 +1,4 @@
-var Keyboard = Object.create(null, {
+var Keyboard = describePrototype({
   capsLock: describeAccessor(function () {
     return false; // TODO Stage.instance.$keyboard.capsLock;
   }),
