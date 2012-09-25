@@ -2,10 +2,11 @@ SWF.embed = function(file, container) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
   var loader = new Loader;
-
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new Stage;
+
   loader._stage = stage;
+  stage._loader = loader;
 
   function fitCanvas(container, canvas) {
     canvas.width = container.clientWidth;
@@ -13,7 +14,6 @@ SWF.embed = function(file, container) {
   }
 
   loaderInfo.addEventListener(Event.INIT, function () {
-    stage._loader = loader;
     stage._frameRate = loaderInfo.frameRate;
     stage._loaderInfo = loaderInfo;
     stage._stageHeight = loaderInfo.height;

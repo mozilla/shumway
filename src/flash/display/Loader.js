@@ -69,10 +69,13 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   createSymbolClass: describeMethod(function (baseClass, props) {
     var loader = this;
-    var symbolClass = function () {
+    var symbolClass = function (initObj) {
       baseClass.call(this);
 
       Object.defineProperties(this, props || {});
+
+      for (var prop in initObj)
+        this[prop] = initObj[prop];
 
       loader._bindNativeObject(this);
     };
@@ -183,7 +186,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       var root = loader._content;
 
       if (!root) {
-        root = new val;
+        var stage = loader._stage;
+        root = new val({
+          _parent: stage,
+          _stage: stage
+        });
         loader._content = root;
       } else {
         displayList.__proto__ = val;

@@ -32,6 +32,7 @@ function DisplayObject() {
   this._rotation = 0;
   this._scaleX = 1;
   this._scaleY = 1;
+  this._stage = null;
   this._timelineInfo = { };
   this._transform = null;
   this._visible = true;
