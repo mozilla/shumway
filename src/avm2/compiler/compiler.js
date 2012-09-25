@@ -1701,10 +1701,10 @@ var Compiler = (function () {
           expression(Operator.SUB, true);
           break;
         case OP_inclocal_i:
-          emit(new UpdateExpression("++", asInt32(local[bc.index])));
+          emit(assignment(local[bc.index], binary(Operator.ADD, asInt32(local[bc.index]), constant(1))));
           break;
         case OP_declocal_i:
-          emit(new UpdateExpression("--", asInt32(local[bc.index])));
+          emit(assignment(local[bc.index], binary(Operator.SUB, asInt32(local[bc.index]), constant(1))));
           break;
         case OP_negate_i:       expression(Operator.NEG, true); break;
         case OP_add_i:          expression(Operator.ADD, true); break;
