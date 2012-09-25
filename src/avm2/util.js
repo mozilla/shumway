@@ -735,14 +735,14 @@ if (typeof WeakMap === "undefined") {
     weakMap.prototype.get = function get(k) {
       var index = indexOf(this.elements, k);
       if (index >= 0) {
-        return this.elements[i];
+        return this.elements[i][1];
       }
       return undefined;
     };
     weakMap.prototype.set = function set(k, v) {
       var index = indexOf(this.elements, k);
       if (index >= 0) {
-        this.elements[i] = v;
+        this.elements[i][1] = v;
       } else {
         this.elements.push([k, v]);
       }
