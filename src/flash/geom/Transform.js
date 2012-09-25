@@ -1,6 +1,6 @@
 function Transform(target) {
+  this._cxform = { };
   this._target = target;
-  this._colorTransform = new ColorTransform;
 
   target._transform = this;
 }
@@ -10,6 +10,7 @@ Transform.prototype = Object.create(null, {
 
   colorTransform: describeAccessor(
     function () {
+      var cxform = this._cxform;
       return new ColorTransform(
         cxform.redMultiplier,
         cxform.greenMultiplier,
@@ -25,7 +26,16 @@ Transform.prototype = Object.create(null, {
       if (!(val instanceof ColorTransform))
         throw TypeError();
 
-      this._colorTransform = val;
+      this._cxform = {
+        redMultiplier: val.redMultiplier,
+        greenMultiplier: val.greenMultiplier,
+        blueMultiplier: val.blueMultiplier,
+        alphaMultiplier: val.alphaMultiplier,
+        redOffset: val.redOffset,
+        greenOffset: val.greenOffset,
+        blueOffset: val.blueOffset,
+        alphaOffset: val.alphaOffset
+      };
     }
   ),
   concatenatedColorTransform: describeAccessor(function () {
@@ -56,7 +66,7 @@ Transform.prototype = Object.create(null, {
         throw TypeError();
 
       var target = this._target;
-      target.rotation = Math.atan(val.a / val.b) * 180 / Math.PI;
+      target.rotation = Math.atan2(val.a, val.b) * 180 / Math.PI;
       var sx = Math.sqrt(val.d * val.d + val.c * val.c);
       target.scaleX = val.a > 0 ? sx : -sx;
       var sy = Math.sqrt(val.a * val.a + val.b * val.b);
