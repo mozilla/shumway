@@ -1,7 +1,7 @@
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
-    this.view = new DataView(bytes.buffer);
+    this.view = new DataView(bytes.buffer, bytes.byteOffset);
     this.pos = 0;
   }
 
