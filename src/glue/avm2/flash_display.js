@@ -29,7 +29,8 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // parent :: void -> DisplayObjectContainer
     "get parent": function parent() {
-      notImplemented("DisplayObject.parent");
+      var parent = this.nativeObject.parent;
+      return parent ? parent.scriptObject : null;
     },
 
     // mask :: void -> DisplayObject
@@ -361,12 +362,12 @@ natives.InteractiveObjectClass = function InteractiveObjectClass(runtime, scope,
 
     // mouseEnabled :: void -> Boolean
     "get mouseEnabled": function mouseEnabled() {
-      notImplemented("InteractiveObject.mouseEnabled");
+      return this.nativeObject.mouseEnabled;
     },
 
     // mouseEnabled :: enabled:Boolean -> void
     "set mouseEnabled": function mouseEnabled(enabled) {
-      notImplemented("InteractiveObject.mouseEnabled");
+      this.nativeObject.mouseEnabled = enabled;
     },
 
     // doubleClickEnabled :: void -> Boolean

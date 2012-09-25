@@ -1037,6 +1037,10 @@ const natives = (function () {
           return "Number";
         }
       } else {
+        if (typeof value === "object" && "nativeObject" in value) {
+          var name = value.class.classInfo.instanceInfo.name;
+          return name.namespaces[0].originalURI + "::" + name.name;
+        }
         return notImplemented(value);
       }
     }),

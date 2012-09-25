@@ -42,7 +42,7 @@ InteractiveObject.prototype = Object.create(DisplayObject.prototype, {
       return true;
     },
     function (val) {
-      notImplemented();
+      // notImplemented();
     }
   ),
   needsSoftKeyboard: describeAccessor(
