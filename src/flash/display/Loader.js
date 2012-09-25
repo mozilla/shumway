@@ -663,7 +663,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         Object.defineProperty(loader, '_bindNativeObject',
           describeMethod(function avm2BindNativeObject(obj) {
             var scriptClass = vm.applicationDomain.getProperty(
-              Multiname.fromSimpleName('public ' + obj.__class__),
+              Multiname.fromSimpleName(obj.__class__),
               true,
               true
             );
