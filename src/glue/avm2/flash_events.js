@@ -17,13 +17,14 @@ natives.EventDispatcherClass = function EventDispatcherClass(runtime, scope, ins
       this._wrapListener = function (args) {
         var ar = Array.prototype.slice.call(args, 0);
         var obj = this;
+        var vm = AVM2.currentVM();
         var listener = ar[1];
         var wrapper = listeners.get(listener);
         if (!wrapper) {
           wrapper = function (e) {
             // HACK create script object if one does not exist, using the loader
             var wrappedArg = e.scriptObject ||
-              obj.nativeObject.stage._loader._bindNativeObject(e);
+              bindNativeObjectUsingAvm2(vm, e);
             listener(wrappedArg);
           };
           listeners.set(listener, wrapper);
@@ -200,6 +201,17 @@ natives.KeyboardEventClass = function KeyboardEventClass(runtime, scope, instanc
 
 natives.MouseEventClass = function MouseEventClass(runtime, scope, instance, baseClass) {
   var c = new runtime.domain.system.Class("MouseEvent", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {};
+
+  return c;
+};
+
+natives.TimerEventClass = function TimerEventClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("TimerEvent", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
   c.nativeStatics = {};

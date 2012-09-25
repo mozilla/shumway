@@ -191,6 +191,10 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
           _parent: stage,
           _stage: stage
         });
+        // XXX do we need specify the _parent above? we still need to use addChild
+        root._parent = null;
+        stage.addChild(root);
+
         loader._content = root;
       } else {
         displayList.__proto__ = val;
@@ -662,12 +666,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
         Object.defineProperty(loader, '_bindNativeObject',
           describeMethod(function avm2BindNativeObject(obj) {
-            var scriptClass = vm.applicationDomain.getProperty(
-              Multiname.fromSimpleName(obj.__class__),
-              true,
-              true
-            );
-            return scriptClass.createInstanceWithBoundNative(obj, true);
+            return bindNativeObjectUsingAvm2(vm, obj);
           }));
 
         loader._bindNativeObject(stage);

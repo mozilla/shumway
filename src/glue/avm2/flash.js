@@ -50,3 +50,18 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     }
   });
 }
+
+/**
+ * Binds native object using specified AVM2 instance.
+ * @param {Object} vm The VM instance.
+ * @param {Object} obj The native object.
+ * @returns {Object} The bound/script object.
+ */
+function bindNativeObjectUsingAvm2(vm, obj) {
+  var scriptClass = vm.applicationDomain.getProperty(
+    Multiname.fromSimpleName('public ' + obj.__class__),
+    true,
+    true
+  );
+  return scriptClass.createInstanceWithBoundNative(obj, true);
+}
