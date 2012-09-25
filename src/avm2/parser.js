@@ -360,11 +360,24 @@ var Namespace = (function () {
     }
     return simpleNameCache[simpleName] = namespaceNames.map(function (name) {
       name = name.trim();
-      var kindName = "public";
-      var uri = name;
+      var kindName, uri;
+
       if (name.indexOf(" ") > 0) {
-        kindName = name.substring(0, name.indexOf(" "));
-        uri = name.substring(name.indexOf(" ") + 1);
+        kindName = name.substring(0, name.indexOf(" ")).trim();
+        uri = name.substring(name.indexOf(" ") + 1).trim();
+      } else {
+        if (name === kinds[CONSTANT_Namespace] ||
+            name === kinds[CONSTANT_PackageInternalNs] ||
+            name === kinds[CONSTANT_PrivateNs] ||
+            name === kinds[CONSTANT_ProtectedNamespace] ||
+            name === kinds[CONSTANT_ExplicitNamespace] ||
+            name === kinds[CONSTANT_StaticProtectedNs]) {
+          kindName = name;
+          uri = "";
+        } else {
+          kindName = "public";
+          uri = name;
+        }
       }
       return new namespace(namespace.kindFromString(kindName), uri);
     });
@@ -617,11 +630,15 @@ var Multiname = (function () {
       return simpleNameCache[simpleName];
     }
 
-    var nameIndex = simpleName.lastIndexOf("."), name, namespace;
+    var nameIndex, namespaceIndex, name, namespace;
+    nameIndex = simpleName.lastIndexOf(".");
+    if (nameIndex <= 0) {
+      nameIndex = simpleName.lastIndexOf(" ");
+    }
 
-    if (nameIndex >= 0) {
+    if (nameIndex > 0) {
       name = simpleName.substring(nameIndex + 1).trim();
-      namespace = simpleName.substring(0, nameIndex);
+      namespace = simpleName.substring(0, nameIndex).trim();
     } else {
       name = simpleName;
       namespace = "";

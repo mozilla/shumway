@@ -550,7 +550,8 @@ natives.SpriteClass = function SpriteClass(runtime, scope, instance, baseClass) 
   c.nativeMethods = {
     // graphics :: void -> Graphics
     "get graphics": function graphics() {
-      notImplemented("Sprite.graphics");
+      var graphics = this.nativeObject.graphics;
+      return this.nativeObject.stage._loader._bindNativeObject(graphics);
     },
 
     // buttonMode :: void -> Boolean
@@ -785,3 +786,26 @@ natives.StageClass = function StageClass(runtime, scope, instance, baseClass) {
 
   return c;
 };
+
+natives.GraphicsClass = function GraphicsClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("Graphics", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
+    lineStyle: function lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
+      debugger;
+      this.nativeObject.lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit);
+    },
+    lineTo: function lineTo(x, y) {
+      this.nativeObject.lineTo(x, y);
+    },
+    moveTo: function moveTo(x, y) {
+      this.nativeObject.moveTo(x, y);
+    }
+  };
+
+  return c;
+};
+
