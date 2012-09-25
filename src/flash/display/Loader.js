@@ -72,7 +72,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     var symbolClass = function (initObj) {
       baseClass.call(this);
 
-      Object.defineProperties(this, props || {});
+      Object.defineProperties(this, props || { });
 
       for (var prop in initObj)
         this[prop] = initObj[prop];
@@ -160,11 +160,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         if (!symbolPromise)
           continue;
         symbolPromise.then(
-          (function(symbolPromise, className) {
-              return function symbolPromiseResolved() {
-                var symbolClass = symbolPromise.value;
-                symbolClass.prototype.__class__ = className;
-              };
+          (function (symbolPromise, className) {
+            return function symbolPromiseResolved() {
+              var symbolClass = symbolPromise.value;
+              symbolClass.prototype.__class__ = className;
+            };
           })(symbolPromise, asset.className)
         );
       }

@@ -52,7 +52,7 @@ function render(container, renderingContext) {
           if (path.strokeStyle) {
             ctx.strokeStyle = path.strokeStyle;
             var drawingStyles = path.drawingStyles;
-            for (prop in drawingStyles)
+            for (var prop in drawingStyles)
               ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
           }
