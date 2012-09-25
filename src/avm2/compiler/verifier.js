@@ -1009,7 +1009,7 @@ var Verifier = (function() {
             scope.push(pop());
             break;
           case OP_pushnamespace:
-            push(Type.Atom.Object);
+            notImplemented(bc);
             break;
           case OP_li8:
           case OP_li16:
@@ -1183,18 +1183,19 @@ var Verifier = (function() {
           case OP_newarray:
             // Pops values, pushes result.
             stack.popMany(bc.argCount);
-            push(Type.Atom.Object);
+            push(Type.Reference.Array);
             break;
           case OP_newactivation:
             push(Type.fromReference(new Activation(this.methodInfo)));
             break;
           case OP_newclass:
-            // pop();
-            // push(Type.Atom.Any);
-            // break;
-            throw new VerifierError("Not Supported"); // TODO why not supported?
+            // The newclass bytecode is not supported because it needs
+            // the base class which might not always be available.
+            // The functions initializing classes should not be performance
+            // critical anyway.
+            throw new VerifierError("Not Supported");
           case OP_getdescendants:
-            notImplemented(bc);
+            notImplemented(bc); //TODO
             break;
           case OP_newcatch:
             push(Type.Atom.Any);
@@ -1407,7 +1408,8 @@ var Verifier = (function() {
             push(Type.Boolean);
             break;
           case OP_istype:
-            notImplemented(bc);
+            pop();
+            push(Type.Atom.Boolean);
             break;
           case OP_istypelate:
               pop();
