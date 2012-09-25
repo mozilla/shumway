@@ -194,9 +194,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
           _parent: stage,
           _stage: stage
         });
-        // XXX do we need specify the _parent above? we still need to use addChild
-        root._parent = null;
-        stage.addChild(root);
 
         loader._content = root;
       } else {
