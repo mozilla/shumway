@@ -36,8 +36,8 @@ function toMatrixInstance(matrix, matrixMorph) {
       'b:' + morph(matrix.b * 20, matrixMorph.b * 20) + ',' +
       'c:' + morph(matrix.c * 20, matrixMorph.c * 20) + ',' +
       'd:' + morph(matrix.d * 20, matrixMorph.d * 20) + ',' +
-      'e:' + morph(matrix.e, matrixMorph.e) + ',' +
-      'f:' + morph(matrix.f, matrixMorph.f)
+      'tx:' + morph(matrix.tx, matrixMorph.tx) + ',' +
+      'ty:' + morph(matrix.ty, matrixMorph.ty)
     '}';
   }
 
@@ -47,8 +47,8 @@ function toMatrixInstance(matrix, matrixMorph) {
     'b:' + (matrix.b * 20) + ',' +
     'c:' + (matrix.c * 20) + ',' +
     'd:' + (matrix.d * 20) + ',' +
-    'e:' + matrix.e + ',' +
-    'f:' + matrix.f +
+    'tx:' + matrix.tx + ',' +
+    'ty:' + matrix.ty +
   '}';
 }
 

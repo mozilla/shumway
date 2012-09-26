@@ -57,41 +57,41 @@ var MATRIX = {
     }
   ]],
   $$bits: UB(5),
-  e: SB('bits'),
-  f: SB('bits'),
+  tx: SB('bits'),
+  ty: SB('bits'),
   $$1: ALIGN
 };
 var CXFORM = {
   $$0: ALIGN,
-  $$hasAdd: UB(1),
-  $$hasMult: UB(1),
+  $$hasMultipliers: UB(1),
+  $$hasOffsets: UB(1),
   $$bits: UB(4),
-  $0: ['hasMult', [
+  $0: ['hasMultipliers', [
     {
-      redMult: SB('bits'),
-      greenMult: SB('bits'),
-      blueMult: SB('bits'),
-      alphaMult: ['tagCode>4', [SB('bits'), '256']]
+      redMultiplier: SB('bits'),
+      greenMultiplier: SB('bits'),
+      blueMultiplier: SB('bits'),
+      alphaMultiplier: ['tagCode>4', [SB('bits'), '256']]
     },
     {
-      redMult: '256',
-      greenMult: '256',
-      blueMult: '256',
-      alphaMult: '256'
+      redMultiplier: '256',
+      greenMultiplier: '256',
+      blueMultiplier: '256',
+      alphaMultiplier: '256'
     }
   ]],
-  $1: ['hasAdd', [
+  $1: ['hasOffsets', [
     {
-      redAdd: SB('bits'),
-      greenAdd: SB('bits'),
-      blueAdd: SB('bits'),
-      alphaAdd: ['tagCode>4', [SB('bits'), '0']]
+      redOffset: SB('bits'),
+      greenOffset: SB('bits'),
+      blueOffset: SB('bits'),
+      alphaOffset: ['tagCode>4', [SB('bits'), '0']]
     },
     {
-      redAdd: '0',
-      greenAdd: '0',
-      blueAdd: '0',
-      alphaAdd: '0'
+      redOffset: '0',
+      greenOffset: '0',
+      blueOffset: '0',
+      alphaOffset: '0'
     }
   ]],
   $$1: ALIGN

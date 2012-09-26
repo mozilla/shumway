@@ -53,26 +53,26 @@ Transform.prototype = describePrototype({
       var target = this._target;
       var m = new Matrix;
       m.createBox(
-        target.scaleX,
-        target.rotation * Math.PI / 180,
-        target.scaleY,
-        target.x,
-        target.y
+        target._scaleX,
+        target._scaleY,
+        target._rotation * Math.PI / 180,
+        target._x,
+        target._y
       );
       return m;
     },
     function (val) {
       if (!(val instanceof Matrix))
-        throw TypeError();
+        debugger;
 
       var target = this._target;
-      target.rotation = Math.atan2(val.a, val.b) * 180 / Math.PI;
+      target._rotation = Math.atan2(val.b, val.c) * 180 / Math.PI;
       var sx = Math.sqrt(val.d * val.d + val.c * val.c);
-      target.scaleX = val.a > 0 ? sx : -sx;
+      target._scaleX = val.a > 0 ? sx : -sx;
       var sy = Math.sqrt(val.a * val.a + val.b * val.b);
-      target.scaleY = val.d > 0 ? sy : -sy;
-      target.x = val.tx;
-      target.y = val.ty;
+      target._scaleY = val.d > 0 ? sy : -sy;
+      target._x = val.tx;
+      target._y = val.ty;
     }
   )
 });

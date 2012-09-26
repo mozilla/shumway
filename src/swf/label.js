@@ -5,7 +5,7 @@ function defineLabel(tag, dictionary) {
   var m = tag.matrix;
   var cmds = [
     'c.save()',
-    'c.transform(' + [m.a, m.b, m.c, m.d, m.e, m.f].join(',') + ')'
+    'c.transform(' + [m.a, m.b, m.c, m.d, m.tx, m.ty].join(',') + ')'
   ];
   var dependencies = [];
   var x = 0;

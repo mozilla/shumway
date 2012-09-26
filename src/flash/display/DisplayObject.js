@@ -32,6 +32,7 @@ function DisplayObject() {
   this._rotation = 0;
   this._scaleX = 1;
   this._scaleY = 1;
+  this._slave = false;
   this._stage = null;
   this._transform = null;
   this._visible = true;
@@ -56,6 +57,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._alpha = val;
+      this._slave = false;
     }
   ),
   blendMode: describeAccessor(
@@ -158,6 +160,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._rotation = val;
+      this._slave = false;
     }
   ),
   stage: describeAccessor(function () {
@@ -169,6 +172,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleX = val;
+      this._slave = false;
     }
   ),
   scaleY: describeAccessor(
@@ -177,6 +181,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleY = val;
+      this._slave = false;
     }
   ),
   scale9Grid: describeAccessor(
@@ -203,6 +208,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
+      this._slave = false;
     }
   ),
   visible: describeAccessor(
@@ -211,6 +217,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._visible = val;
+      this._slave = false;
     }
   ),
   width: describeAccessor(
@@ -228,6 +235,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._x = val;
+      this._slave = false;
     }
   ),
   y: describeAccessor(
@@ -236,6 +244,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._y = val;
+      this._slave = false;
     }
   )
 });

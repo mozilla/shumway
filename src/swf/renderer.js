@@ -17,7 +17,7 @@ function render(container, renderingContext) {
 
       ctx.save();
       var m = child.transform.matrix;
-      ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       //var rotation = child.rotation;
       //if (rotation)
       //  ctx.rotate(rotation * Math.PI / 180);
@@ -42,7 +42,7 @@ function render(container, renderingContext) {
               var m = path.fillTransform;
               path.__draw__(ctx);
               ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+              ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
               ctx.fill();
               ctx.restore();
             } else {

@@ -13,6 +13,7 @@ function MovieClip() {
   this._isPlaying = true;
   this._scenes = { };
   this._timeline = null;
+  this._timelineInfo = [];
   this._totalFrames = 1;
   this._scenes = { };
 }
@@ -84,6 +85,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     var framePromise = this._timeline[frameNum - 1];
     var displayList = framePromise.value;
     var loader = this.loaderInfo._loader;
+
     var timelineInfo = this._timelineInfo;
 
     for (var depth in displayList) {
@@ -91,40 +93,75 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       var info = timelineInfo[depth];
       if (cmd === null) {
         if (info) {
-          this.removeChild(info.instance);
-          delete timelineInfo[depth];
+          if (info._slave)
+            this.removeChild(info);
+
+          if (depth <= timelineInfo.length)
+            timelineInfo[depth] = undefined;
+          else
+            timelineInfo.splice(-1);
         }
       } else if (cmd.symbolId) {
         var symbolClass = loader.getSymbolClassById(cmd.symbolId);
-        var instance = new symbolClass;
-        if (info) {
-          var index = this.getChildIndex(info.instance);
-          this.removeChildAt(index);
-          info.instance = instance;
+        var instance = new symbolClass({ _slave: true });
+
+        if (info && info._slave) {
+          var transform = info.transform;
+
           if (cmd.cxform)
-            info.cxform = cmd.cxform;
-          if (cmd.matrix)
-            info.matrix = cmd.matrix;
+            instance.transform.colorTransform = cmd.cxform;
+          else
+            instance.transform.colorTransform = transform.colorTransform;
+          if (cmd.matrix) {
+            var m = cmd.matrix;
+            instance.transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
+          } else {
+            instance.transform.matrix = transform.matrix;
+          }
+
+          var index = this.getChildIndex(info);
+          this.removeChildAt(index);
           this.addChildAt(instance, index);
         } else {
-          info = {
-            cxform: cmd.cxform,
-            instance: instance,
-            matrix: cmd.matrix
-          };
-          timelineInfo[depth] = info;
-          this.addChild(instance);
+          var transform = instance.transform;
+          if (cmd.cxform)
+            transform.colorTransform = cmd.cxform;
+          if (cmd.matrix) {
+            var m = cmd.matrix;
+            transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
+          }
+
           if (cmd.name) {
             instance.name = cmd.name;
             this._bindChildToProperty(instance);
           }
+
+          var top = null;
+
+          for (var i = +depth + 1, n = timelineInfo.length; i < n; i++) {
+            var info = timelineInfo[i];
+            if (info && info._slave)
+              top = info;
+          }
+
+          if (top) {
+            var index = this.getChildIndex(top);
+            this.addChildAt(instance, index);
+          } else {
+            this.addChild(instance);
+          }
         }
-        instance._timelineInfo[0] = info;
-      } else if (info) {
+
+        timelineInfo[depth] = instance;
+      } else if (info && info._slave) {
+        var transform = info.transform;
+
         if (cmd.cxform)
-          info.cxform = cmd.cxform;
-        if (cmd.matrix)
-          info.matrix = cmd.matrix;
+          transform.colorTransform = cmd.cxform;
+        if (cmd.matrix) {
+          var m = cmd.matrix;
+          transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
+        }
       }
     }
 
