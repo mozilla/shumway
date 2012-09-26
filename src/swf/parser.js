@@ -138,6 +138,22 @@ SWF.parse = function(buffer, options) {
 
   var swf = { swfVersion: swfVersion };
   readHeader(bytes, stream, swf);
+
+  // reading FileAttributes tag, this tag shall be first in the file
+  var nextTagHeader = readUi16(bytes, stream);
+  var FILE_ATTRIBUTES_LENGTH = 4;
+  if (nextTagHeader == ((SWF_TAG_CODE_FILE_ATTRIBUTES << 6) | FILE_ATTRIBUTES_LENGTH)) {
+    stream.ensure(FILE_ATTRIBUTES_LENGTH);
+    var substream = stream.substream(stream.pos, stream.pos += FILE_ATTRIBUTES_LENGTH);
+    var handler = tagHandler[SWF_TAG_CODE_FILE_ATTRIBUTES];
+    var fileAttributesTag = {code: SWF_TAG_CODE_FILE_ATTRIBUTES};
+    handler(substream.bytes, substream, fileAttributesTag, swfVersion, SWF_TAG_CODE_FILE_ATTRIBUTES);
+    swf.fileAttributes = fileAttributesTag;
+  } else {
+    stream.pos -= 2; // FileAttributes tag was not found -- re-winding
+    swf.fileAttributes = {}; // using empty object here, defaults all attributes to false
+  }
+
   if (options.onstart)
     options.onstart(swf);
 

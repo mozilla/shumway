@@ -109,9 +109,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     case 'init':
       this.init(data.result);
       break;
-    case 'setup':
-      this.setup();
-      break;
     case 'complete':
       loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
       break;
@@ -480,6 +477,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   init: describeMethod(function (info) {
     var loader = this;
+
     var loaderInfo = loader.contentLoaderInfo;
 
     loaderInfo._swfVersion = info.swfVersion;
@@ -505,6 +503,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     loader._dictionary = { 0: documentPromise };
     loader._timeline = timeline;
     loader._vmPromise = vmPromise;
+
+    loader._isAvm2Enabled = info.fileAttributes.doAbc;
+    this.setup();
   }),
   load: describeMethod(function (request, context) {
     this.loadFrom(request.url);
@@ -563,15 +564,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       },
       onprogress: function(result) {
         var tags = result.tags;
-        if (tagsProcessed == 0) {
-          // giving a special treatment to the first tag if it's FileAttributes
-          if (tags.length > 0 && tags[0].code == SWF_TAG_CODE_FILE_ATTRIBUTES) {
-            var tag = tags[0];
-            loader._isAvm2Enabled = tag.doAbc;
-            tagsProcessed++;
-          }
-          loader.commitData({command: 'setup'});
-        }
         for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
           var tag = tags[tagsProcessed];
           if ('id' in tag) {
