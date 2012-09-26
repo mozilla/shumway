@@ -885,11 +885,12 @@ var Verifier = (function() {
             push(type);
             break;
           case OP_setsuper:
-            value = state.stack.pop();
-            multiname = popMultiname(bc);
-            objTy = pop();
+            valTy = popValue(bc); // attaches the type of the value to bc.valTy
+            multiname = popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
+            objTy = popObject(bc); // attaches the type of the object to bc.objTy
+
             if (objTy.baseClass) {
-              setProperty(objTy.baseClass, multiname, value);
+              setProperty(objTy.baseClass, multiname, valTy);
             }
           break;
           case OP_dxns:
@@ -1221,7 +1222,7 @@ var Verifier = (function() {
             multiname = popMultiname(bc); // ataches the type of the multiname to bc.multinameTy
             objTy = popObject(bc); // attaches the type of the object to bc.objTy
 
-            setProperty(objTy, multiname, value);
+            setProperty(objTy, multiname, valTy);
             break;
           case OP_getlocal:
             push(local[bc.index]);
