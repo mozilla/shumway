@@ -102,63 +102,68 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           else
             depthMap.splice(-1);
         }
-      } else if (cmd.symbolId) {
+      } else {
         var cxform = cmd.cxform;
-        var index = 0;
-        var symbolClass = loader.getSymbolClassById(cmd.symbolId);
-        var initObj = Object.create(symbolClass.prototype);
         var matrix = cmd.matrix;
-        var replace = 0;
         var target = initObj;
 
-        if (current && current._slave) {
-          if (!cxform)
-            cxform = current._cxform;
-          index = children.indexOf(current);
-          if (!matrix)
-            matrix = current.transform.matrix;
-          replace = 1;
-        } else {
-          if (cmd.name) {
-            initObj._name = cmd.name;
-            this._bindChildToProperty(initObj);
+        if (cmd.symbolId) {
+          var index = 0;
+          var symbolClass = loader.getSymbolClassById(cmd.symbolId);
+          var initObj = Object.create(symbolClass.prototype);
+          var replace = 0;
+
+          if (current && current._slave) {
+            if (!cxform)
+              cxform = current._cxform;
+            index = children.indexOf(current);
+            if (!matrix)
+              matrix = current.transform.matrix;
+            replace = 1;
+          } else {
+            if (cmd.name) {
+              initObj._name = cmd.name;
+              this._bindChildToProperty(initObj);
+            }
+
+            var top = null;
+            for (var i = +depth + 1; i < highestDepth; i++) {
+              var info = depthMap[i];
+              if (info && info._slave)
+                top = info;
+            }
+
+            index = top ? children.indexOf(top) : children.length;
           }
 
-          var top = null;
-          for (var i = +depth + 1; i < highestDepth; i++) {
-            var info = depthMap[i];
-            if (info && info._slave)
-              top = info;
-          }
+          initObj._parent = this;
+          initObj._slave = true;
 
-          index = top ? children.indexOf(top) : children.length;
+          newInstances.push({
+            depth: depth,
+            index: index,
+            initObj: initObj,
+            symbolClass: symbolClass
+          });
+
+          children.splice(index, replace, null);
+
+          target = initObj;
+        } else if (current && current._slave) {
+          target = current;
         }
 
-        initObj._parent = this;
-        initObj._slave = true;
-
-        newInstances.push({
-          depth: depth,
-          index: index,
-          initObj: initObj,
-          symbolClass: symbolClass
-        });
-
-        children.splice(index, replace, null);
-      } else if (current && current._slave) {
-        target = current;
-      }
-
-      if (cxform)
-        target._cxform = cxform;
-      if (matrix) {
-        target._rotation = Math.atan2(matrix.b, matrix.c) * 180 / Math.PI;
-        var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
-        target._scaleX = matrix.a > 0 ? sx : -sx;
-        var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-        target._scaleY = matrix.d > 0 ? sy : -sy;
-        target._x = matrix.tx / 20;
-        target._y = matrix.ty / 20;
+        if (cxform)
+          target._cxform = cxform;
+        if (matrix) {
+          target._rotation = Math.atan2(matrix.b, matrix.c) * 180 / Math.PI;
+          var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
+          target._scaleX = matrix.a > 0 ? sx : -sx;
+          var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+          target._scaleY = matrix.d > 0 ? sy : -sy;
+          target._x = matrix.tx / 20;
+          target._y = matrix.ty / 20;
+        }
       }
     }
 

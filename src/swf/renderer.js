@@ -177,14 +177,10 @@ function renderStage(stage, ctx) {
     }
   };
 
-  var root = stage.getChildAt(0);
-
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      if (root.isPlaying())
-        root.nextFrame();
       render(stage, renderingContext);
     }
     requestAnimationFrame(draw);
