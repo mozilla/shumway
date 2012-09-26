@@ -500,6 +500,7 @@ var Verifier = (function() {
         this.verifier = verifier;
         this.methodInfo = methodInfo;
         this.writer = new IndentingWriter();
+        this.returnType = Type.Atom.Undefined;
       }
 
       verification.prototype.verify = function verify() {
@@ -659,6 +660,12 @@ var Verifier = (function() {
 
           });
         }
+
+        if (writer) {
+          writer.writeLn("Inferred return type: " + this.returnType);
+        }
+        this.methodInfo.inferredReturnType = this.returnType;
+
       };
 
       verification.prototype.verifyBlock = function verifyBlock(block, state) {
@@ -1048,6 +1055,11 @@ var Verifier = (function() {
               if (trait && (trait.isMethod() || trait.isGetter())) {
                 bc.propertyName = trait.name;
                 type = Type.referenceFromName(trait.methodInfo.returnType);
+                if (trait.methodInfo.inferredReturnType) {
+                  type = trait.methodInfo.inferredReturnType;
+                } else if (trait.methodInfo.returnType) {
+                  type = Type.referenceFromName(trait.methodInfo.returnType);
+                }
               } else if (trait && trait.isSlot()) {
                 bc.propertyName = trait.name;
                 type = Type.referenceFromName(trait.typeName);
@@ -1056,10 +1068,15 @@ var Verifier = (function() {
             push(type);
             break;
           case OP_returnvoid:
-            // Nop.
+            this.returnType.merge(Type.Atom.Undefined);
             break;
           case OP_returnvalue:
-            pop();
+            retType = pop();
+            if (this.returnType.isAtom()) {
+              this.returnType = retType;
+            } else {
+              this.returnType = this.returnType.merge(retType);
+            }
             break;
           case OP_constructsuper:
             stack.popMany(bc.argCount);
