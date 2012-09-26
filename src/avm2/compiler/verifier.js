@@ -1017,9 +1017,8 @@ var Verifier = (function() {
             break;
           case OP_construct:
             stack.popMany(bc.argCount);
-            // TODO don't pop and push the same value!
-            obj = pop(); // pop the type of the object to be constructed
-            push(obj);
+            objTy = pop(); // pop the type of the object to be constructed
+            push(Type.referenceFromName(objTy.name));
             break;
           case OP_callmethod:
             // callmethod is always invalid
