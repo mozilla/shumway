@@ -14,9 +14,9 @@ function Graphics() {
   this._drawingStyles = null;
   this._fillStyle = null;
   this._fillTransform = null;
+  this._scale = 1;
   this._strokeStyle = null;
   this._subpaths = [];
-  this._usesTwips = false;
 }
 
 function toRgba(color, alpha) {

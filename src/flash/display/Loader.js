@@ -106,11 +106,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
 
     switch (data.command) {
-    case 'setup':
-      this.setup(data.result);
+    case 'init':
+      this.init(data.result);
       break;
-    case 'loading':
-      this.setupVM();
+    case 'setup':
+      this.setup();
       break;
     case 'complete':
       loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
@@ -191,12 +191,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       if (!root) {
         var stage = loader._stage;
         root = new val({
+          _frameLabels: { },
+          _framesLoaded: 0,
           _parent: stage,
           _stage: stage
         });
-        // XXX do we need specify the _parent above? we still need to use addChild
-        root._parent = null;
-        stage.addChild(root);
 
         loader._content = root;
       } else {
@@ -286,7 +285,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
     }catch(e){console.log(symbol.data);}
       var graphics = new Graphics;
+      graphics._scale = 0.05;
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+
       symbolClass = this.createSymbolClass(Shape, {
         graphics: describeAccessor(function () {
           throw Error();
@@ -477,6 +478,34 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     var promise = this._dictionary[id];
     return promise ? promise.value : null;
   }),
+  init: describeMethod(function (info) {
+    var loader = this;
+    var loaderInfo = loader.contentLoaderInfo;
+
+    loaderInfo._swfVersion = info.swfVersion;
+
+    var bounds = info.bounds;
+    loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
+    loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+
+    loaderInfo._frameRate = info.frameRate;
+
+    var timeline = [];
+    var documentPromise = new Promise;
+
+    var vmPromise = new Promise;
+    vmPromise.then(function() {
+      var documentClass = loader.createSymbolClass(MovieClip, {
+        _timeline: describeProperty(timeline),
+        _totalFrames: describeProperty(info.frameCount)
+      });
+      documentPromise.resolve(documentClass);
+    });
+
+    loader._dictionary = { 0: documentPromise };
+    loader._timeline = timeline;
+    loader._vmPromise = vmPromise;
+  }),
   load: describeMethod(function (request, context) {
     this.loadFrom(request.url);
   }),
@@ -530,7 +559,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
     SWF.parse(bytes, {
       onstart: function(result) {
-        loader.commitData({command: 'setup', result: result});
+        loader.commitData({command: 'init', result: result});
       },
       onprogress: function(result) {
         var tags = result.tags;
@@ -541,7 +570,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
             loader._isAvm2Enabled = tag.doAbc;
             tagsProcessed++;
           }
-          loader.commitData({command: 'loading'});
+          loader.commitData({command: 'setup'});
         }
         for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
           var tag = tags[tagsProcessed];
@@ -630,36 +659,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   setChildIndex: describeMethod(function (child, index) {
     illegalOperation();
   }),
-  setup: describeMethod(function (info) {
-    var loader = this;
-    var loaderInfo = loader.contentLoaderInfo;
-
-    loaderInfo._swfVersion = info.swfVersion;
-
-    var bounds = info.bounds;
-    loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-    loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
-
-    loaderInfo._frameRate = info.frameRate;
-
-    var timeline = [];
-    var documentPromise = new Promise;
-
-    var vmPromise = new Promise;
-    vmPromise.then(function() {
-      var documentClass = loader.createSymbolClass(MovieClip, {
-        _frameLabels: describeProperty({ }),
-        _timeline: describeProperty(timeline),
-        _totalFrames: describeProperty(info.frameCount)
-      });
-      documentPromise.resolve(documentClass);
-    });
-
-    loader._dictionary = { 0: documentPromise };
-    loader._timeline = timeline;
-    loader._vmPromise = vmPromise;
-  }),
-  setupVM: describeMethod(function () {
+  setup: describeMethod(function () {
     var loader = this;
     var stage = loader._stage;
 

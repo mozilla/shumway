@@ -30,8 +30,9 @@ function render(container, renderingContext) {
       if (child._graphics) {
         var graphics = child._graphics;
 
-        if (graphics._usesTwips)
-          ctx.scale(0.05, 0.05);
+        var scale = graphics._scale;
+        if (scale !== 1)
+          ctx.scale(scale, scale);
 
         var subpaths = graphics._subpaths;
         for (var j = 0, o = subpaths.length; j < o; j++) {

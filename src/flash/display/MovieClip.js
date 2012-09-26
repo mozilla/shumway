@@ -6,7 +6,7 @@ function MovieClip() {
   this._currentLabel = false;
   this._currentScene = { };
   this._depth = null;
-  this._enabled = true;
+  this._enabled = null;
   this._frameScripts = { };
   this._frameLabels = { };
   this._framesLoaded = 1;

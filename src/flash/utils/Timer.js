@@ -1,9 +1,11 @@
 function Timer_avm2(delay, repeatCount) {
   EventDispatcher.call(this);
 
-  this.delay = delay;
-  this.repeatCount = repeatCount || 0;
-  this.running = false;
+  Object.defineProperties(this, {
+    delay:       describeProperty(delay),
+    repeatCount: describeProperty(repeatCount || 0),
+    running:     describeProperty(false)
+  });
 }
 
 Timer_avm2.prototype = Object.create(EventDispatcher.prototype, {
@@ -23,14 +25,6 @@ Timer_avm2.prototype = Object.create(EventDispatcher.prototype, {
         timer._stop();
     }, this.delay);
   }),
-
-  _timerDispatch: describeMethod(function () {
-    this.dispatchEvent(new TimerEvent(
-      TimerEvent.TIMER,
-      true,
-      false));
-  }),
-
   _stop: describeMethod(function () {
     if (!this.running)
       return;
@@ -40,6 +34,12 @@ Timer_avm2.prototype = Object.create(EventDispatcher.prototype, {
 
     this.dispatchEvent(new TimerEvent(
       TimerEvent.TIMER_COMPLETE,
+      true,
+      false));
+  }),
+  _timerDispatch: describeMethod(function () {
+    this.dispatchEvent(new TimerEvent(
+      TimerEvent.TIMER,
       true,
       false));
   })
