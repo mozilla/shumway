@@ -32,6 +32,10 @@ SWF.embed = function(file, container, options) {
     canvas.addEventListener('click', function () {
       Keyboard.focus = stage;
     });
+    canvas.addEventListener('mousemove', function (domEvt) {
+      stage._mouseX = domEvt.pageX - this.offsetLeft;
+      stage._mouseY = domEvt.pageY - this.offsetTop;
+    });
 
     var bgcolor = loaderInfo.backgroundColor;
     stage._color = bgcolor;
