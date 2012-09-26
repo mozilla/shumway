@@ -1,5 +1,4 @@
 function Transform(target) {
-  this._cxform = { };
   this._target = target;
 
   target._transform = this;
@@ -10,23 +9,27 @@ Transform.prototype = describePrototype({
 
   colorTransform: describeAccessor(
     function () {
-      var cxform = this._cxform;
-      return new ColorTransform(
-        cxform.redMultiplier,
-        cxform.greenMultiplier,
-        cxform.blueMultiplier,
-        cxform.alphaMultiplier,
-        cxform.redOffset,
-        cxform.greenOffset,
-        cxform.blueOffset,
-        cxform.alphaOffset
-      );
+      var cxform = this._target._cxform;
+      if (cxform) {
+        return new ColorTransform(
+          cxform.redMultiplier,
+          cxform.greenMultiplier,
+          cxform.blueMultiplier,
+          cxform.alphaMultiplier,
+          cxform.redOffset,
+          cxform.greenOffset,
+          cxform.blueOffset,
+          cxform.alphaOffset
+        );
+      } else {
+        return new ColorTransform;
+      }
     },
     function (val) {
       if (!(val instanceof ColorTransform))
         throw TypeError();
 
-      this._cxform = {
+      this._target._cxform = {
         redMultiplier: val.redMultiplier,
         greenMultiplier: val.greenMultiplier,
         blueMultiplier: val.blueMultiplier,

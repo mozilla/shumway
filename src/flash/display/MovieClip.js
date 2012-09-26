@@ -5,7 +5,7 @@ function MovieClip() {
   this._currentFrameLabel = null;
   this._currentLabel = false;
   this._currentScene = { };
-  this._depth = null;
+  this._depthMap = [];
   this._enabled = null;
   this._frameScripts = { };
   this._frameLabels = { };
@@ -13,7 +13,6 @@ function MovieClip() {
   this._isPlaying = true;
   this._scenes = { };
   this._timeline = null;
-  this._timelineInfo = [];
   this._totalFrames = 1;
   this._scenes = { };
 }
@@ -82,87 +81,92 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     if (frameNum === this._currentFrame)
       return;
 
+    var children = this._children;
+    var depthMap = this._depthMap;
     var framePromise = this._timeline[frameNum - 1];
+    var highestDepth = depthMap.length;
     var displayList = framePromise.value;
     var loader = this.loaderInfo._loader;
-
-    var timelineInfo = this._timelineInfo;
+    var newInstances = [];
 
     for (var depth in displayList) {
       var cmd = displayList[depth];
-      var info = timelineInfo[depth];
+      var current = depthMap[depth];
       if (cmd === null) {
-        if (info) {
-          if (info._slave)
-            this.removeChild(info);
+        if (current) {
+          var index = children.indexOf(current);
+          children.splice(index, 1);
 
-          if (depth <= timelineInfo.length)
-            timelineInfo[depth] = undefined;
+          if (depth <= highestDepth)
+            depthMap[depth] = undefined;
           else
-            timelineInfo.splice(-1);
+            depthMap.splice(-1);
         }
       } else if (cmd.symbolId) {
+        var cxform = cmd.cxform;
+        var index = 0;
         var symbolClass = loader.getSymbolClassById(cmd.symbolId);
-        var instance = new symbolClass({ _slave: true });
+        var initObj = Object.create(symbolClass.prototype);
+        var matrix = cmd.matrix;
+        var replace = 0;
+        var target = initObj;
 
-        if (info && info._slave) {
-          var transform = info.transform;
-
-          if (cmd.cxform)
-            instance.transform.colorTransform = cmd.cxform;
-          else
-            instance.transform.colorTransform = transform.colorTransform;
-          if (cmd.matrix) {
-            var m = cmd.matrix;
-            instance.transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
-          } else {
-            instance.transform.matrix = transform.matrix;
-          }
-
-          var index = this.getChildIndex(info);
-          this.removeChildAt(index);
-          this.addChildAt(instance, index);
+        if (current && current._slave) {
+          if (!cxform)
+            cxform = current._cxform;
+          index = children.indexOf(current);
+          if (!matrix)
+            matrix = current.transform.matrix;
+          replace = 1;
         } else {
-          var transform = instance.transform;
-          if (cmd.cxform)
-            transform.colorTransform = cmd.cxform;
-          if (cmd.matrix) {
-            var m = cmd.matrix;
-            transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
-          }
-
           if (cmd.name) {
-            instance.name = cmd.name;
-            this._bindChildToProperty(instance);
+            initObj._name = cmd.name;
+            this._bindChildToProperty(initObj);
           }
 
           var top = null;
-
-          for (var i = +depth + 1, n = timelineInfo.length; i < n; i++) {
-            var info = timelineInfo[i];
+          for (var i = +depth + 1; i < highestDepth; i++) {
+            var info = depthMap[i];
             if (info && info._slave)
               top = info;
           }
 
-          if (top) {
-            var index = this.getChildIndex(top);
-            this.addChildAt(instance, index);
-          } else {
-            this.addChild(instance);
-          }
+          index = top ? children.indexOf(top) : children.length;
         }
 
-        timelineInfo[depth] = instance;
-      } else if (info && info._slave) {
-        var transform = info.transform;
+        initObj._parent = this;
+        initObj._slave = true;
 
-        if (cmd.cxform)
-          transform.colorTransform = cmd.cxform;
-        if (cmd.matrix) {
-          var m = cmd.matrix;
-          transform.matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
-        }
+        newInstances.push({
+          depth: depth,
+          index: index,
+          initObj: initObj,
+          symbolClass: symbolClass
+        });
+
+        children.splice(index, replace, null);
+      } else if (current && current._slave) {
+        target = current;
       }
+
+      if (cxform)
+        target._cxform = cxform;
+      if (matrix) {
+        target._rotation = Math.atan2(matrix.b, matrix.c) * 180 / Math.PI;
+        var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
+        target._scaleX = matrix.a > 0 ? sx : -sx;
+        var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+        target._scaleY = matrix.d > 0 ? sy : -sy;
+        target._x = matrix.tx / 20;
+        target._y = matrix.ty / 20;
+      }
+    }
+
+    for (var i = 0, n = newInstances.length; i < n; i++) {
+      var entry = newInstances[i];
+      var instance = new entry.symbolClass(entry.initObj);
+      children.splice(entry.index, 1, instance);
+      depthMap[entry.depth] = instance;
     }
 
     this._currentFrame = frameNum;

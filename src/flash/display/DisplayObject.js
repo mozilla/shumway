@@ -21,6 +21,7 @@ function DisplayObject() {
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
   this._bounds = { };
+  this._cxform = null;
   this._graphics = null;
   this._loaderInfo = null;
   this._mouseX = 0;
@@ -38,8 +39,6 @@ function DisplayObject() {
   this._visible = true;
   this._x = 0;
   this._y = 0;
-
-  new Transform(this);
 }
 
 DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
@@ -202,7 +201,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
   ),
   transform: describeAccessor(
     function () {
-      return this._transform;
+      return this._transform || new Transform(this);
     },
     function (val) {
       var transform = this._transform;

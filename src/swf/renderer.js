@@ -16,8 +16,14 @@ function render(container, renderingContext) {
       //  child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child.transform.matrix;
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+      //var m = child.transform.matrix;
+      //ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+      ctx.rotate(child._rotation);
+      ctx.translate(child._x, child._y);
+      ctx.scale(child._scaleX, child._scaleY);
+
       //var rotation = child.rotation;
       //if (rotation)
       //  ctx.rotate(rotation * Math.PI / 180);
