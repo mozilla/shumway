@@ -795,6 +795,15 @@ natives.GraphicsClass = function GraphicsClass(runtime, scope, instance, baseCla
   c.nativeStatics = {};
 
   c.nativeMethods = {
+    beginFill: function beginFill(color, alpha) {
+      this.nativeObject.beginFill(color, alpha);
+    },
+    curveTo: function curveTo(cpx, cpy, x, y) {
+      this.nativeObject.curveTo(cpx, cpy, x, y);
+    },
+    endFill: function endFill(cpx, cpy, x, y) {
+      this.nativeObject.endFill(cpx, cpy, x, y);
+    },
     lineStyle: function lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
       this.nativeObject.lineStyle(width, color, alpha, pxHinting, scale, cap, joint, mlimit);
     },
