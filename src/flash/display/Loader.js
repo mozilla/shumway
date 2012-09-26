@@ -42,7 +42,7 @@ if (typeof window === 'undefined') {
 
   self.onmessage = function (evt) {
     var loader = new Loader;
-    loader.loadFrom(loader, evt.data);
+    loader.loadFrom(evt.data);
   };
 } else {
   var head = document.head;
@@ -521,7 +521,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   loadFrom: describeMethod(function (input, context) {
     var loader = this;
-    if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
+    if (typeof window !== 'undefined' && Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.LOADER_PATH);
       worker.onmessage = function (evt) {
         loader.commitData(evt.data);
