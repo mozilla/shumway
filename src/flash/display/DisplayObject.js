@@ -18,6 +18,7 @@ function DisplayObject() {
   EventDispatcher.call(this);
 
   this._alpha = 1;
+  this._animated = false;
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
   this._bounds = { };
@@ -28,12 +29,12 @@ function DisplayObject() {
   this._mouseY = 0;
   this._name = null;
   this._opaqueBackground = null;
+  this._owned = false;
   this._parent = null;
   this._root = null;
   this._rotation = 0;
   this._scaleX = 1;
   this._scaleY = 1;
-  this._slave = false;
   this._stage = null;
   this._transform = null;
   this._visible = true;

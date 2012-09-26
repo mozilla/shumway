@@ -93,7 +93,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       var cmd = displayList[depth];
       var current = depthMap[depth];
       if (cmd === null) {
-        if (current) {
+        if (current && current._owned) {
           var index = children.indexOf(current);
           children.splice(index, 1);
 
@@ -105,7 +105,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       } else {
         var cxform = cmd.cxform;
         var matrix = cmd.matrix;
-        var target = initObj;
+        var target;
 
         if (cmd.symbolId) {
           var index = 0;
@@ -113,7 +113,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           var initObj = Object.create(symbolClass.prototype);
           var replace = 0;
 
-          if (current && current._slave) {
+          if (current && current._owned) {
             if (!cxform)
               cxform = current._cxform;
             index = children.indexOf(current);
@@ -129,15 +129,16 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
             var top = null;
             for (var i = +depth + 1; i < highestDepth; i++) {
               var info = depthMap[i];
-              if (info && info._slave)
+              if (info && info._animated)
                 top = info;
             }
 
             index = top ? children.indexOf(top) : children.length;
           }
 
+          initObj._animated = true;
+          initObj._owned = true;
           initObj._parent = this;
-          initObj._slave = true;
 
           newInstances.push({
             depth: depth,
@@ -149,7 +150,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           children.splice(index, replace, null);
 
           target = initObj;
-        } else if (current && current._slave) {
+        } else if (current && current._animated) {
           target = current;
         }
 

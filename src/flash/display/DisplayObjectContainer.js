@@ -49,6 +49,7 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
       child._parent.removeChild(child);
 
     children.splice(index, 0, child);
+    child._owned = false;
     child._parent = this;
 
     return child;
@@ -94,7 +95,6 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
     if (index < 0)
       throw ArgumentError();
 
-
     return this.removeChildAt(index);
   }),
   removeChildAt: describeMethod(function (index) {
@@ -122,6 +122,7 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
 
     children.splice(currentIndex, 1);
     children.splice(index, 0, child);
+    child._owned = false;
 
     return child;
   }),
@@ -143,8 +144,7 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
     if (index1 < 0 || index2 < 0)
       throw ArgumentError();
 
-    children[index1] = child2;
-    children[index2] = child1;
+    this.swapChildrenAt(index1, index2);
   }),
   swapChildrenAt: describeMethod(function (index1, index2) {
     var children = this._children;
@@ -157,5 +157,7 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
     var child2 = children[index2];
     children[index1] = child2;
     children[index2] = child1;
+    child1._owned = false;
+    child2._owned = false;
   })
 });
