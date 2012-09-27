@@ -2,7 +2,7 @@ UNAME = $(shell uname)
 THREADS = 8
 
 JSSHELL_HOME = ./jsshell
-JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2012-08-24-03-05-30-mozilla-central
+JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2012/08/2012-08-24-03-05-30-mozilla-central
 ifneq ("$(findstring MINGW32, $(UNAME))", "")
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-win32.zip
 else

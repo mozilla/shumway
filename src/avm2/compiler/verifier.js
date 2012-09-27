@@ -198,7 +198,7 @@ var Verifier = (function() {
         } else if (Multiname.getQualifiedName(name) === "public$Number") {
           return type.Number;
         }
-        var ty = domain.getProperty(name, false, true);        
+        var ty = domain.getProperty(name, false, true);
         // assert (ty, name + " not found");
         // Remove the assertion for now.
         // If the class is used in the verifier before it was created by the runtime
@@ -425,7 +425,7 @@ var Verifier = (function() {
 
         firstBaseClass = firstPathToRoot.pop();
         secondBaseClass = secondPathToRoot.pop();
-        var commonBaseClass;
+        var commonBaseClass = Type.Reference.Null;
         while (firstBaseClass.equals(secondBaseClass)  &&
                firstPathToRoot.length > 0 && secondPathToRoot.length > 0) {
           commonBaseClass = firstBaseClass;
@@ -441,39 +441,21 @@ var Verifier = (function() {
         return commonBaseClass;
       };
 
-      type.prototype.merge = function(other) {
-        // TODO: Merging Atom.Undefined and Atom.Any bellow is a hack to
-        // circumvent the fact that the verifier's type hierrchy doesn't
-        // form a semilatice and solve the incompatible types merge situations
-
+      type.prototype.merge = function merge(other) {
         if (this === other) {
           return this;
         } else if (this.isAtom() || other.isAtom()) {
+          // If any of the two is any kind of Atom, return type.Atom
           return type.Atom;
         } else if (this.isReference() && other.isReference()) {
           return type.getLowestCommonAncestor(this, other);
         } else if (this.isClass() && other.isClass()) {
           return type.Class;
-        } else if (this.isReference() ^ other.isReference()) {
-          return type.Atom.Any;
-        } else if (this.isClass() ^ other.isClass()) {
-          return type.Atom.Any;
-        } else if (this === type.Boolean ^ other === type.Boolean) {
-          return type.Atom.Any;
-        } else if ((this === type.Int && other === type.Number) ||
-                   (this === type.Number && other === type.Int) ||
-                   (this === type.Uint && other === type.Number) ||
-                   (this === type.Number && other === type.Uint) ||
-                   (this === type.Int && other === type.Uint) ||
-                   (this === type.Uint && other === type.Int)) {
+        } else if (this.isNumeric() && other.isNumeric()) {
           return type.Number;
-        } else if (this === type.Atom.Undefined || other === type.Atom.Undefined) {
-          return type.Atom;
-        } else if (this === type.Atom.Any || other === type.Atom.Any) {
-          return Type.Atom.Any;
+        } else {
+          return type.Atom.Any;
         }
-
-        unexpected("Cannot merge types : " + this + " and " + other);
       };
 
       function getType(simpleName) {
@@ -483,13 +465,15 @@ var Verifier = (function() {
         return type;
       }
 
+      // The type lattice doesn't match exactly that of tamarin's verifier
+
       type.Reference = new type("Reference");
       type.Reference.Object = type.fromReference(getType("Object"));
       type.Reference.Vector = type.fromReference(getType("public __AS3__$vec.Vector"));
       type.Reference.String = type.fromReference(getType("String"));
       type.Reference.Array = type.fromReference(getType("Array"));
       type.Reference.Function = type.fromReference(getType("Function"));
-      type.Reference.Null = new type("Reference", null);
+      type.Reference.Null = new type("Reference", "Null");
 
       type.Class = new type("Class");
       type.Class.Object = type.fromClass(getType("Object"));
@@ -502,7 +486,6 @@ var Verifier = (function() {
       type.Atom.Any = new type("Atom", "Any");
       type.Atom.Undefined = new type("Atom", "Undefined");
       type.Atom.Void = new type("Atom", "Void");
-      type.Atom.Object = new type("Atom", "Object"); // TODO according to the type lattice this should be repalced with type.Reference.Object
       type.Int = new type("Int");
       type.Uint = new type("Uint");
       type.Boolean = new type("Boolean");
@@ -517,6 +500,7 @@ var Verifier = (function() {
         this.verifier = verifier;
         this.methodInfo = methodInfo;
         this.writer = new IndentingWriter();
+        this.returnType = Type.Atom.Undefined;
       }
 
       verification.prototype.verify = function verify() {
@@ -676,6 +660,12 @@ var Verifier = (function() {
 
           });
         }
+
+        if (writer) {
+          writer.writeLn("Inferred return type: " + this.returnType);
+        }
+        this.methodInfo.inferredReturnType = this.returnType;
+
       };
 
       verification.prototype.verifyBlock = function verifyBlock(block, state) {
@@ -943,16 +933,9 @@ var Verifier = (function() {
             push(Type.Atom.Any);
             break;
           case OP_hasnext:
-            notImplemented(bc);
+            push(Type.Boolean);
             break;
           case OP_hasnext2:
-            // FIXME: Line commented out to fix tests/tamarin/as3/Statements/e12_6_3_12.abc.
-            // By inspecting the tamaring source it seems that local[bc.object] does not
-            // always have to be a reference, however this should be reverted after the
-            // type semi lattice gets a proper implementation; then a reference will be a
-            // subtype of Atom.Any.
-            // Type.check(local[bc.object], Type.Reference);
-            Type.check(local[bc.index], Type.Int);
             push(Type.Boolean);
             break;
           case OP_pushnull:
@@ -1041,9 +1024,8 @@ var Verifier = (function() {
             break;
           case OP_construct:
             stack.popMany(bc.argCount);
-            // TODO don't pop and push the same value!
-            obj = pop(); // pop the type of the object to be constructed
-            push(obj);
+            objTy = pop(); // pop the type of the object to be constructed
+            push(Type.referenceFromName(objTy.name));
             break;
           case OP_callmethod:
             // callmethod is always invalid
@@ -1073,6 +1055,11 @@ var Verifier = (function() {
               if (trait && (trait.isMethod() || trait.isGetter())) {
                 bc.propertyName = trait.name;
                 type = Type.referenceFromName(trait.methodInfo.returnType);
+                if (trait.methodInfo.inferredReturnType) {
+                  type = trait.methodInfo.inferredReturnType;
+                } else if (trait.methodInfo.returnType) {
+                  type = Type.referenceFromName(trait.methodInfo.returnType);
+                }
               } else if (trait && trait.isSlot()) {
                 bc.propertyName = trait.name;
                 type = Type.referenceFromName(trait.typeName);
@@ -1081,10 +1068,15 @@ var Verifier = (function() {
             push(type);
             break;
           case OP_returnvoid:
-            // Nop.
+            this.returnType.merge(Type.Atom.Undefined);
             break;
           case OP_returnvalue:
-            pop();
+            retType = pop();
+            if (this.returnType.isAtom()) {
+              this.returnType = retType;
+            } else {
+              this.returnType = this.returnType.merge(retType);
+            }
             break;
           case OP_constructsuper:
             stack.popMany(bc.argCount);

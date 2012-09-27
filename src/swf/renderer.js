@@ -16,8 +16,14 @@ function render(container, renderingContext) {
       //  child.cxform = create(child.cxform);
 
       ctx.save();
-      var m = child.transform.matrix;
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+      //var m = child.transform.matrix;
+      //ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+      ctx.rotate(child._rotation);
+      ctx.translate(child._x, child._y);
+      ctx.scale(child._scaleX, child._scaleY);
+
       //var rotation = child.rotation;
       //if (rotation)
       //  ctx.rotate(rotation * Math.PI / 180);
@@ -171,14 +177,10 @@ function renderStage(stage, ctx) {
     }
   };
 
-  var root = stage.getChildAt(0);
-
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      if (root.isPlaying())
-        root.nextFrame();
       render(stage, renderingContext);
     }
     requestAnimationFrame(draw);

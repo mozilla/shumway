@@ -73,8 +73,11 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
 
       Object.defineProperties(this, props || {});
 
-      for (var prop in initObj)
+      var initProps = Object.keys(initObj);
+      for (var i = 0, n = initProps.length; i < n; i++) {
+        var prop = initProps[i];
         this[prop] = initObj[prop];
+      }
 
       loader._bindNativeObject(this);
     };
@@ -403,6 +406,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   _bindNativeObject: describeMethod(function (obj) {
     // this method will be shadowed by avm1 or avm2 specific implementation
+    debugger;
   })
 });
 
