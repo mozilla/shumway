@@ -16,3 +16,19 @@ natives.SoundTransformClass = function SoundTransformClass(runtime, scope, insta
 
   return c;
 };
+
+natives.VideoClass = function VideoClass(runtime, scope, instance, baseClass) {
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    return instance.apply(this, arguments);
+  }
+
+  var c = new runtime.domain.system.Class("Video", constructorHook, Domain.passthroughCallable(constructorHook));
+  c.extend(baseClass);
+
+  c.nativeStatics = {};
+
+  c.nativeMethods = {};
+
+  return c;
+};
