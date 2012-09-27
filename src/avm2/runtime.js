@@ -505,7 +505,9 @@ function getSuper(obj, mn) {
           value = obj[superName + " " + qn] = openMethod.bind(obj);
         }
       } else {
-        value = superTraits[qn];
+        var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
+        assert(descriptor);
+        value = descriptor.get ? descriptor.get.call(obj) : obj[qn];
       }
     }
   }
