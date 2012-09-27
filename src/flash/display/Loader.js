@@ -406,7 +406,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   _bindNativeObject: describeMethod(function (obj) {
     // this method will be shadowed by avm1 or avm2 specific implementation
-    debugger;
   })
 });
 
@@ -419,7 +418,7 @@ LoaderHelper.prototype = Object.create(null, {
     var loaderHelper = this;
     var promise = new Promise;
     this._promise = promise;
-    if (typeof window === 'undefined' && Loader.WORKERS_ENABLED) {
+    if (typeof window !== 'undefined' && Loader.WORKERS_ENABLED) {
       var worker = new Worker(Loader.LOADER_PATH);
       worker.onmessage = function worker_onmessage(evt) {
         loaderHelper.commitData(evt.data);
