@@ -1,19 +1,17 @@
 SWF.embed = function(file, container, options) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
-  var loader = new Loader;
-  var loaderInfo = loader.contentLoaderInfo;
-  var stage = new Stage;
-
-  loader._stage = stage;
-  stage._loader = loader;
 
   function fitCanvas(container, canvas) {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
   }
 
-  loaderInfo.addEventListener(Event.INIT, function () {
+  var loaderHelper = new LoaderHelper();
+  var loaderPromise = loaderHelper.loadFrom(file);
+  loaderPromise.then(function (loader) {
+    var stage = loader._stage;
+    var loaderInfo = loader.contentLoaderInfo;
     stage._frameRate = loaderInfo.frameRate;
     stage._loaderInfo = loaderInfo;
     stage._stageHeight = loaderInfo.height;
@@ -47,13 +45,11 @@ SWF.embed = function(file, container, options) {
     renderStage(stage, ctx);
 
     container.appendChild(canvas);
+
+    if (options.onComplete) {
+      loaderInfo.addEventListener(Event.COMPLETE, function () {
+        options.onComplete();
+      });
+    }
   });
-
-  if (options.onComplete) {
-    loaderInfo.addEventListener(Event.COMPLETE, function () {
-      options.onComplete();
-    });
-  }
-
-  loader.loadFrom(file);
 };

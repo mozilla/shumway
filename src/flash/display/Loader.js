@@ -4,7 +4,6 @@ function Loader() {
 
   this._contentLoaderInfo = null;
   this._dictionary = { };
-  this._symbols = { };
   this._timeline = [];
 }
 
@@ -41,8 +40,8 @@ if (typeof window === 'undefined') {
   importScripts.apply(null, Loader.WORKER_SCRIPTS);
 
   self.onmessage = function (evt) {
-    var loader = new Loader;
-    loader.loadFrom(evt.data);
+    var loaderHelper = new LoaderHelper;
+    loaderHelper.loadFrom(evt.data);
   };
 } else {
   var head = document.head;
@@ -97,34 +96,6 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
   }),
   close: describeMethod(function () {
     notImplemented();
-  }),
-  commitData: describeMethod(function (data) {
-    if (typeof window === 'undefined') {
-      self.postMessage(data);
-      return;
-    }
-
-    var loaderInfo = this.contentLoaderInfo;
-
-    loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
-
-    switch (data.command) {
-    case 'init':
-      this.init(data.result);
-      break;
-    case 'complete':
-      loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
-      break;
-    case 'error':
-      console.log('ERROR: ' + data.message);
-      break;
-    default:
-      if (data.id)
-        this.commitSymbol(data);
-      else if (data.type === 'frame')
-        this.commitFrame(data);
-      break;
-    }
   }),
   commitFrame: describeMethod(function (frame) {
     var abcBlocks = frame.abcBlocks;
@@ -360,8 +331,201 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       symbolPromise.resolve(symbolClass);
     });
   }),
-  defineSymbol: describeMethod(function (swfTag) {
+  getSymbolClassByName: describeMethod(function (className) {
+    var dictionary = this._dictionary;
+    for (var id in dictionary) {
+      var promise = dictionary[id];
+      var symbolClass = promise.value;
+      if (symbolClass && symbolClass.__class__ === className)
+        return symbolClass;
+    }
+    return null;
+  }),
+  getSymbolClassById: describeMethod(function (id) {
+    var promise = this._dictionary[id];
+    return promise ? promise.value : null;
+  }),
+  init: describeMethod(function (info, properties) {
     var loader = this;
+
+    var loaderInfo = loader.contentLoaderInfo;
+    loaderInfo._swfVersion = info.swfVersion;
+
+    var bounds = info.bounds;
+    loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
+    loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+
+    loaderInfo._frameRate = info.frameRate;
+
+    var timeline = [];
+    var documentPromise = new Promise;
+
+    loader._dictionary = { 0: documentPromise };
+    loader._timeline = timeline;
+    Object.defineProperties(loader, properties);
+
+    var stage = new Stage;
+    stage._loader = loader;
+    loader._bindNativeObject(stage);
+
+    loader._stage = stage;
+
+    var documentClass = loader.createSymbolClass(MovieClip, {
+      _timeline: describeProperty(timeline),
+      _totalFrames: describeProperty(info.frameCount)
+    });
+    documentPromise.resolve(documentClass);
+
+  }),
+  load: describeMethod(function (request, context) {
+    this.loadFrom(request.url); // XXX
+  }),
+  loadBytes: describeMethod(function (bytes, context) {
+    if (!bytes.length)
+      throw ArgumentError();
+
+    this.loadFrom(bytes); // XXX
+  }),
+  loadFrom: describeMethod(function (bytes, context) {
+    throw 'not implemented: loadfrom';
+  }),
+  removeChild: describeMethod(function (child) {
+    illegalOperation();
+  }),
+  removeChildAt: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  setChildIndex: describeMethod(function (child, index) {
+    illegalOperation();
+  }),
+  unload: describeMethod(function () {
+    notImplemented();
+  }),
+  unloadAndStop: describeMethod(function (gc) {
+    notImplemented();
+  }),
+  _bindNativeObject: describeMethod(function (obj) {
+    // this method will be shadowed by avm1 or avm2 specific implementation
+  })
+});
+
+function LoaderHelper() {
+  this._symbols = { };
+  this._promise = null;
+}
+LoaderHelper.prototype = Object.create(null, {
+  loadFrom: describeMethod(function (input, context) {
+    var loaderHelper = this;
+    var promise = new Promise;
+    this._promise = promise;
+    if (typeof window !== 'undefined' && Loader.WORKERS_ENABLED) {
+      var worker = new Worker(Loader.LOADER_PATH);
+      worker.onmessage = function worker_onmessage(evt) {
+        loaderHelper.commitData(evt.data);
+      };
+      worker.postMessage(input);
+      return promise;
+    }
+
+    if (typeof input === 'object') {
+      if (input instanceof ArrayBuffer) {
+        this.parseBytes(input);
+      } else if (typeof FileReaderSync !== 'undefined') {
+        var reader = new FileReaderSync;
+        var buffer = reader.readAsArrayBuffer(input);
+        this.parseBytes(buffer);
+      } else {
+        var reader = new FileReader;
+        reader.onload = function () {
+          loaderHelper.parseBytes(this.result);
+        };
+        reader.readAsArrayBuffer(input);
+      }
+    } else {
+      var xhr = new XMLHttpRequest;
+      xhr.open('GET', input);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function () {
+        loaderHelper.parseBytes(this.response);
+      };
+      xhr.send();
+    }
+    return promise;
+  }),
+
+  init: describeMethod(function (info) {
+    this._pendingDataQueue = [];
+    var loaderHelper = this;
+    var isAvm2Enabled = info.fileAttributes.doAbc;
+    var vmPromise = new Promise;
+    vmPromise.then(function (properties) {
+      var loader = new Loader;
+      loaderHelper._loader = loader;
+
+      loader.init(info, properties);
+
+      var queue = loaderHelper._pendingDataQueue;
+      delete loaderHelper._pendingDataQueue;
+      for (var i = 0; i < queue.length; i++)
+        loaderHelper.commitData(queue[i]);
+      loaderHelper._promise.resolve(loader);
+    });
+
+    if (isAvm2Enabled) {
+      var sysMode = EXECUTION_MODE.INTERPRET;
+      var appMode = EXECUTION_MODE.COMPILE;
+      createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
+        vmPromise.resolve({
+          _isAvm2Enabled: describeConst(true),
+          _avm2: describeConst(vm),
+          _bindNativeObject: describeMethod(function avm2BindNativeObject(obj) {
+            return bindNativeObjectUsingAvm2(vm, obj);
+          })
+        });
+      });
+    } else {
+      // TODO avm1 initialization
+
+      AS2Key.$bind(stage);
+      AS2Mouse.$bind(stage);
+
+      vmPromise.resolve({});
+    }
+  }),
+
+  commitData: describeMethod(function (data) {
+    if (typeof window === 'undefined') {
+      self.postMessage(data);
+      return;
+    }
+
+    if (this._pendingDataQueue) {
+      this._pendingDataQueue.push(data);
+      return;
+    }
+
+    switch (data.command) {
+    case 'init':
+      this.init(data.result);
+      break;
+    case 'complete':
+      var loaderInfo = this._loader.contentLoaderInfo;
+      loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+      loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+      break;
+    case 'error':
+      console.log('ERROR: ' + data.message);
+      break;
+    default:
+      if (data.id)
+        this._loader.commitSymbol(data);
+      else if (data.type === 'frame')
+        this._loader.commitFrame(data);
+      break;
+    }
+  }),
+
+  defineSymbol: describeMethod(function (swfTag) {
     var symbol;
     var symbols = this._symbols;
 
@@ -457,120 +621,31 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     }
 
     if (!symbol) {
-      loader.commitData({command: 'error', message: 'unknown symbol type'});
+      this.commitData({command: 'error', message: 'unknown symbol type'});
       return;
     }
 
     symbols[swfTag.id] = symbol;
-    loader.commitData(symbol);
+    this.commitData(symbol);
   }),
-  getSymbolClassByName: describeMethod(function (className) {
-    var dictionary = this._dictionary;
-    for (var id in dictionary) {
-      var promise = dictionary[id];
-      var symbolClass = promise.value;
-      if (symbolClass && symbolClass.__class__ === className)
-        return symbolClass;
-    }
-    return null;
-  }),
-  getSymbolClassById: describeMethod(function (id) {
-    var promise = this._dictionary[id];
-    return promise ? promise.value : null;
-  }),
-  init: describeMethod(function (info) {
-    var loader = this;
 
-    var loaderInfo = loader.contentLoaderInfo;
-
-    loaderInfo._swfVersion = info.swfVersion;
-
-    var bounds = info.bounds;
-    loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-    loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
-
-    loaderInfo._frameRate = info.frameRate;
-
-    var timeline = [];
-    var documentPromise = new Promise;
-
-    var vmPromise = new Promise;
-    vmPromise.then(function() {
-      var documentClass = loader.createSymbolClass(MovieClip, {
-        _timeline: describeProperty(timeline),
-        _totalFrames: describeProperty(info.frameCount)
-      });
-      documentPromise.resolve(documentClass);
-    });
-
-    loader._dictionary = { 0: documentPromise };
-    loader._timeline = timeline;
-    loader._vmPromise = vmPromise;
-
-    loader._isAvm2Enabled = info.fileAttributes.doAbc;
-    this.setup();
-  }),
-  load: describeMethod(function (request, context) {
-    this.loadFrom(request.url);
-  }),
-  loadBytes: describeMethod(function (bytes, context) {
-    if (!bytes.length)
-      throw ArgumentError();
-
-    this.loadFrom(bytes);
-  }),
-  loadFrom: describeMethod(function (input, context) {
-    var loader = this;
-    if (typeof window !== 'undefined' && Loader.WORKERS_ENABLED) {
-      var worker = new Worker(Loader.LOADER_PATH);
-      worker.onmessage = function (evt) {
-        loader.commitData(evt.data);
-      };
-      worker.postMessage(input);
-      return;
-    }
-
-    if (typeof input === 'object') {
-      if (input instanceof ArrayBuffer) {
-        this.parseBytes(input);
-      } else if (typeof FileReaderSync !== 'undefined') {
-        var reader = new FileReaderSync;
-        var buffer = reader.readAsArrayBuffer(input);
-        loader.parseBytes(buffer);
-      } else {
-        var reader = new FileReader;
-        reader.onload = function () {
-          loader.parseBytes(this.result);
-        };
-        reader.readAsArrayBuffer(input);
-      }
-    } else {
-      var xhr = new XMLHttpRequest;
-      xhr.open('GET', input);
-      xhr.responseType = 'arraybuffer';
-      xhr.onload = function () {
-        loader.parseBytes(this.response);
-      };
-      xhr.send();
-    }
-  }),
   parseBytes: describeMethod(function (bytes) {
     var depths = { };
-    var loader = this;
+    var loaderHelper = this;
     var frame = { type: 'frame' };
     var symbols = this._symbols;
     var tagsProcessed = 0;
 
     SWF.parse(bytes, {
       onstart: function(result) {
-        loader.commitData({command: 'init', result: result});
+        loaderHelper.commitData({command: 'init', result: result});
       },
       onprogress: function(result) {
         var tags = result.tags;
         for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
           var tag = tags[tagsProcessed];
           if ('id' in tag) {
-            loader.defineSymbol(tag);
+            loaderHelper.defineSymbol(tag);
             continue;
           }
 
@@ -632,7 +707,7 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
             if (repeat > 1)
               frame.repeat = repeat;
             frame.depths = depths;
-            loader.commitData(frame);
+            loaderHelper.commitData(frame);
             depths = { };
             frame = { type: 'frame' };
             break;
@@ -640,54 +715,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         }
       },
       oncomplete: function(result) {
-        loader.commitData(result);
-        loader.commitData({command: 'complete'});
+        loaderHelper.commitData(result);
+        loaderHelper.commitData({command: 'complete'});
       }
     });
-  }),
-  removeChild: describeMethod(function (child) {
-    illegalOperation();
-  }),
-  removeChildAt: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  setChildIndex: describeMethod(function (child, index) {
-    illegalOperation();
-  }),
-  setup: describeMethod(function () {
-    var loader = this;
-    var stage = loader._stage;
-
-    if (loader._isAvm2Enabled) {
-      var sysMode = EXECUTION_MODE.INTERPRET;
-      var appMode = EXECUTION_MODE.COMPILE;
-      createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
-        Object.defineProperty(loader, '_bindNativeObject',
-          describeMethod(function avm2BindNativeObject(obj) {
-            return bindNativeObjectUsingAvm2(vm, obj);
-          }));
-
-        loader._bindNativeObject(stage);
-
-        loader._avm2 = vm;
-        loader._vmPromise.resolve();
-      });
-    } else {
-      // TODO avm1 initialization
-
-      AS2Key.$bind(stage);
-      AS2Mouse.$bind(stage);
-
-      loader._vmPromise.resolve();
-    }
-  }),
-  unload: describeMethod(function () {
-    notImplemented();
-  }),
-  unloadAndStop: describeMethod(function (gc) {
-    notImplemented();
-  }),
-  _bindNativeObject: describeMethod(function (obj) {
-    // this method will be shadowed by avm1 or avm2 specific implementation
   })
 });
