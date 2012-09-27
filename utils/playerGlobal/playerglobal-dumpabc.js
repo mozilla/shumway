@@ -1,7 +1,8 @@
 // based on src/avm2/bin/dumpabc.js
 load("../../lib/DataView.js/DataView.js");
 
-var SWF = {};
+this.self = this;
+load("../../src/swf/swf.js");
 load("../../src/swf/util.js");
 load("../../src/swf/types.js");
 load("../../src/swf/structs.js");
