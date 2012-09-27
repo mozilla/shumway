@@ -17,6 +17,7 @@ const VM_ENUMERATION_KEYS = "vm enumeration keys";
 const VM_OPEN_METHODS = "vm open methods";
 const VM_NEXT_NAME = "vm next name";
 const VM_NEXT_NAME_INDEX = "vm next name index";
+const VM_UNSAFE_CLASSES = ["Shumway"];
 
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -839,6 +840,19 @@ var Runtime = (function () {
     // a few conditionals.
     var cls, instance;
     var baseBindings = baseClass ? baseClass.instance.prototype : null;
+
+    /**
+     * Check if the class is in the list of approved VM unsafe classes and mark its method traits
+     * as native.
+     */
+    if (VM_UNSAFE_CLASSES.indexOf(className) >= 0) {
+      ci.native = {cls: className + "Class"};
+      ii.traits.concat(ci.traits).forEach(function (t) {
+        if (t.isMethod()) {
+          t.methodInfo.flags |= METHOD_Native;
+        }
+      });
+    }
 
     if (ci.native) {
       // Some natives classes need this, like Error.

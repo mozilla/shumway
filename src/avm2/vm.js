@@ -3,7 +3,7 @@ var AVM2 = (function () {
   function AVM2(sysMode, appMode) {
     // TODO: this will change when we implement security domains.
     this.systemDomain = new Domain(this, null, sysMode, true);
-    this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
+    this.applicationDomain = new Domain(this, this.systemDomain, appMode, true);
 
     // Triggered whenever an AS3 class instance is constructed.
     this.onConstruct = undefined;

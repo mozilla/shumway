@@ -671,6 +671,22 @@ const natives = (function () {
     return c;
   }
 
+  /**
+   * Shumway.as
+   */
+  function ShumwayClass(runtime, scope, instance, baseClass) {
+    function Shumway() {}
+    var c = new runtime.domain.system.Class("Shumway", Shumway, C(Shumway));
+    c.extend(baseClass);
+    c.nativeStatics = {
+      info: function (x) { console.info(x); },
+      json: function (x) { return JSON.stringify(x); },
+      eval: function (x) { return eval(x); },
+      debugger: function (x) { debugger; }
+    };
+    return c;
+  }
+
   function constant(x) {
     return function () {
       return x;
@@ -1023,6 +1039,7 @@ const natives = (function () {
     MathClass: MathClass,
     RegExpClass: RegExpClass,
 
+    ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,
     ApplicationDomainClass: ApplicationDomainClass,
 
