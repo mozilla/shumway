@@ -108,6 +108,9 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
   hitTestPoint: describeMethod(function (x, y, shapeFlag) {
     notImplemented();
   }),
+  hitTest: describeMethod(function _hitTest(use_xy, x, y, useShape, hitTestObject) {
+    notImplemented();
+  }),
   loaderInfo: describeAccessor(function () {
     return this._loaderInfo || this._parent.loaderInfo;
   }),
@@ -152,7 +155,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     return this._parent;
   }),
   root: describeAccessor(function () {
-    return this._root;
+    return this._root || (this._parent ? this._parent._root : null);
   }),
   rotation: describeAccessor(
     function () {

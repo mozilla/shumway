@@ -9,7 +9,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
   c.nativeMethods = {
     // root :: void -> DisplayObject
     "get root": function root() {
-      notImplemented("DisplayObject.root");
+      return this.nativeObject.root.scriptObject;
     },
 
     // stage :: void -> Stage
@@ -45,12 +45,12 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // visible :: void -> Boolean
     "get visible": function visible() {
-      notImplemented("DisplayObject.visible");
+      return this.nativeObject.visible;
     },
 
     // visible :: value:Boolean -> void
     "set visible": function visible(value) {
-      notImplemented("DisplayObject.visible");
+      this.nativeObject.visible = value;
     },
 
     // x :: void -> Number
@@ -265,12 +265,12 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // globalToLocal :: point:Point -> Point
     globalToLocal: function globalToLocal(point) {
-      notImplemented("DisplayObject.globalToLocal");
+      return this.nativeObject.globalToLocal(point);
     },
 
     // localToGlobal :: point:Point -> Point
     localToGlobal: function localToGlobal(point) {
-      notImplemented("DisplayObject.localToGlobal");
+      return this.nativeObject.localToGlobal(point);
     },
 
     // getBounds :: targetCoordinateSpace:DisplayObject -> Rectangle
@@ -290,7 +290,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // _hitTest :: use_xy:Boolean, x:Number, y:Number, useShape:Boolean, hitTestObject:DisplayObject -> Boolean
     _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
-      notImplemented("DisplayObject._hitTest");
+      return this.nativeObject.hitTest(use_xy, x, y, useShape, hitTestObject);
     },
 
     // accessibilityProperties :: void -> AccessibilityProperties
@@ -675,12 +675,12 @@ natives.MovieClipClass = function MovieClipClass(runtime, scope, instance, baseC
 
     // play :: void -> void
     play: function play() {
-      notImplemented("MovieClip.play");
+      this.nativeObject.play();
     },
 
     // stop :: void -> void
     stop: function stop() {
-      notImplemented("MovieClip.stop");
+      this.nativeObject.stop();
     },
 
     // nextFrame :: void -> void

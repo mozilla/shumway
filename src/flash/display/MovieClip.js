@@ -76,10 +76,10 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     if (frameNum > this.framesLoaded)
       frameNum = this.framesLoaded;
 
-    this.dispatchEvent(new Event(Event.ENTER_FRAME));
-
-    if (frameNum === this._currentFrame)
+    if (frameNum === this._currentFrame) {
+      this.dispatchEvent(new Event(Event.ENTER_FRAME));
       return;
+    }
 
     var children = this._children;
     var depthMap = this._depthMap;
@@ -176,7 +176,11 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
     }
 
     this._currentFrame = frameNum;
-
+    this._scriptExecutionPending = true;
+  }),
+  _executeScripts: describeMethod(function () {
+    this._scriptExecutionPending = false;
+    var frameNum = this._currentFrame;
     if (frameNum in this._frameScripts) {
       var scripts = this._frameScripts[frameNum];
       for (var i = 0, n = scripts.length; i < n; i++)
