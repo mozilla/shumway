@@ -74,7 +74,7 @@ natives.VideoClass = function VideoClass(runtime, scope, instance, baseClass) {
 
     // attachNetStream :: netStream:NetStream -> void
     attachNetStream: function attachNetStream(netStream) {
-      console.info("Video.attachNetStream");
+      this.nativeObject.attachNetStream(netStream.nativeObject);
     },
 
     // attachCamera :: camera:Camera -> void

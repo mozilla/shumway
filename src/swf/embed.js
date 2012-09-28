@@ -29,6 +29,8 @@ SWF.embed = function(file, container, options) {
       canvas.height = stage.stageHeight;
     }
 
+    container.setAttribute("style", "position: relative");
+
     canvas.addEventListener('click', function () {
       Keyboard.focus = stage;
     });
@@ -44,9 +46,8 @@ SWF.embed = function(file, container, options) {
     // Dirty hack for now.
     //stage.addChild(loader.content);
     stage._children[0] = loader.content;
-    renderStage(stage, ctx);
-
     container.appendChild(canvas);
+    renderStage(stage, ctx);
   });
 
   if (options.onComplete) {

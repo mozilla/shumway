@@ -161,8 +161,8 @@ natives.NetStreamClass = function NetStreamClass(runtime, scope, instance, baseC
     },
 
     // play :: void -> void
-    play: function play() {
-      console.info("NetStream.play");
+    play: function play(url) {
+      this.nativeObject.play(url);
     },
 
     // play2 :: param:NetStreamPlayOptions -> void
