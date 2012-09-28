@@ -1060,8 +1060,6 @@ var Runtime = (function () {
       return closure;
     }
 
-    var baseSlotId;
-
     // Copy over base trait bindings.
     if (base) {
       var bindings = base[VM_BINDINGS];
@@ -1077,26 +1075,26 @@ var Runtime = (function () {
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
       defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, openMethods);
-      baseSlotId = obj[VM_SLOTS].length;
     } else {
       defineNonEnumerableProperty(obj, VM_BINDINGS, []);
       defineNonEnumerableProperty(obj, VM_SLOTS, []);
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
-      baseSlotId = 0;
     }
 
-    var freshSlotId = baseSlotId;
+    var baseSlotId = obj[VM_SLOTS].length;
+    var nextSlotId = baseSlotId + 1;
 
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
       var qn = Multiname.getQualifiedName(trait.name);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
         if (!trait.slotId) {
-          trait.slotId = ++freshSlotId;
+          trait.slotId = nextSlotId++;
         }
 
-        if (trait.slotId <= baseSlotId) {
+        if (trait.slotId < baseSlotId) {
           /* XXX: Hope we don't throw while doing builtins. */
+          assert (false);
           this.throwErrorFromVM("VerifyError", "Bad slot ID.");
         }
 
