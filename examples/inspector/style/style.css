@@ -167,7 +167,7 @@ body {
     height: 22px;
     border: 1px solid hsla(210,8%,5%,.6);
     border-radius: 6px;
-    background-image: url(magnifying-glass.png), -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+    background-image: -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
     background-repeat: no-repeat;
     background-position: 4px center, top left, top left;
     padding-top: 0;
