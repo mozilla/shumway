@@ -614,6 +614,27 @@ const natives = (function () {
   }
 
   /**
+   * Dictionary.as
+   */
+  function DictionaryClass(runtime, scope, instance, baseClass) {
+    function ASDictionary(weakKeys) {
+      this.weakKeys = weakKeys;
+    }
+    ASDictionary.prototype = {
+    };
+
+    var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
+    c.extendBuiltin(baseClass);
+
+    c.nativeStatics = {};
+
+    var m = ASDictionary.prototype;
+    c.nativeMethods = m;
+
+    return c;
+  }
+
+  /**
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instance, baseClass) {
@@ -1038,6 +1059,7 @@ const natives = (function () {
     DateClass: DateClass,
     MathClass: MathClass,
     RegExpClass: RegExpClass,
+    DictionaryClass: DictionaryClass,
 
     ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,

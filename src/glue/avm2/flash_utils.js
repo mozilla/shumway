@@ -38,22 +38,3 @@ natives.TimerClass = function TimerClass(runtime, scope, instance, baseClass) {
 
   return c;
 };
-
-natives.DictionaryClass = function DictionaryClass(runtime, scope, instance, baseClass) {
-  function constructorHook() {
-    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
-    if (AVM2.isRunning()) {
-      this.nativeObject = new Dictionary(arguments[0], arguments[1]); 
-    }
-    return instance.apply(this, arguments);
-  }
-
-  var c = new runtime.domain.system.Class("Dictionary", constructorHook, Domain.passthroughCallable(constructorHook));
-  c.extend(baseClass);
-
-  c.nativeStatics = {};
-
-  c.nativeMethods = {};
-
-  return c;
-};
