@@ -34,6 +34,9 @@ build-extension:
 
 test:
 	make -C src/avm1/tests/ test
+	make -C src/avm2/bin/ test-regress
+
+hello-world:
 	make -C src/avm2/bin/ hello-world
 
 IRC_ROOM = shumway-build-bot

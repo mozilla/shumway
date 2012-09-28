@@ -37,6 +37,6 @@ test-all:
 
 test-regress:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py reg
-	$(TEST_CMD) -i ../tests/regress/correctness -c icov
+	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icov
 
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all
