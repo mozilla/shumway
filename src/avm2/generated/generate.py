@@ -62,7 +62,7 @@ def main():
         configs = ['-config', 'CONFIG::VMCFG_FLOAT=false']
 
     compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as"], configs=configs)
-    compile_abc("shell", ["Capabilities.as"], deps=["builtin"], configs=configs)
+    compile_abc("shell", ["Capabilities.as", "Dictionary.as"], deps=["builtin"], configs=configs)
     compile_abc("avmplus", ["avmplus.as"], deps=["builtin"], configs=configs)
 
 if __name__ == "__main__":
