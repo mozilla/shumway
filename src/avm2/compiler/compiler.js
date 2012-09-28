@@ -624,12 +624,13 @@ var Compiler = (function () {
 
       /* Initialize default arguments, and coerce arguments passed. */
       var argumentCount = property(id("arguments"), "length");
+      var parameterIndexOffset = hasDynamicScope ? 2 : 1;
       for (var i = 0; i < parameterCount; i++) {
         var parameter = mi.parameters[i];
         var value = parameter.value;
         var local = this.local[i + 1];
         if (value !== undefined) {
-          this.prologue.push(new IfStatement(binary(Operator.LT, argumentCount, constant(i + 2)),
+          this.prologue.push(new IfStatement(binary(Operator.LT, argumentCount, constant(i + parameterIndexOffset)),
                                              new ExpressionStatement(assignment(local, constant(value))),
                                              null));
         }
