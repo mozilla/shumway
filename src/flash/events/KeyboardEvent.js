@@ -1,64 +1,35 @@
-function KeyboardEvent(type,
-                       bubbles,
-                       cancelable,
-                       charCode,
-                       keyCode,
-                       keyLocation,
-                       ctrlKey,
-                       altKey,
-                       shiftKey) {
-  Event.call(this);
+const KeyboardEventDefinition = (function () {
+  var def = {
+    __class__: 'flash.events.KeyboardEvent',
 
-  Object.defineProperties(this, {
-    type:        describeProperty(type),
-    bubbles:     describeProperty(bubbles !== undefined ? !!bubbles : true),
-    cancelable:  describeProperty(!!cancelable),
-    charCode:    describeProperty(charCode || 0),
-    keyCode:     describeProperty(keyCode || 0),
-    keyLocation: describeProperty(keyLocation || 0),
-    ctrlKey:     describeProperty(!!ctrlKey),
-    altKey:      describeProperty(!!altKey),
-    shiftKey:    describeProperty(!!shiftKey)
-  });
-}
+    updateAfterEvent: function () {
+      notImplemented();
+    }
+  };
 
-Object.defineProperties(KeyboardEvent, {
-  KEY_DOWN: describeConst('keyDown'),
-  KEY_UP:   describeConst('keyUp')
-});
+  def.__glue__ = {
+    scriptProperties: {
+      keyCode: "private m_keyCode",
+      keyLocation: "private m_keyLocation"
+    },
 
-KeyboardEvent.prototype = Object.create(Event.prototype, {
-  __class__: describeInternalProperty('flash.events.KeyboardEvent'),
+    scriptStatics: {
+      KEY_DOWN: "public KEY_DOWN",
+      KEY_UP: "public KEY_UP"
+    },
 
-  clone: describeMethod(function () {
-    return new Event(
-      this.type,
-      this.bubbles,
-      this.cancelable,
-      this.charCodeValue,
-      this.keyCodeValue,
-      this.keyLocationValue,
-      this.ctrlKeyValue,
-      this.altKeyValue,
-      this.shiftKeyValue
-    );
-  }),
-  toString: describeMethod(function () {
-    return this.formatToString(
-      'KeyboardEvent',
-      'type',
-      'bubbles',
-      'cancelable',
-      'eventPhase',
-      'charCode',
-      'keyCode',
-      'keyLocation',
-      'ctrlKey',
-      'altKey',
-      'shiftKey'
-    );
-  }),
-  updateAfterEvent: describeMethod(function () {
-    notImplemented();
-  })
-});
+    nativeMethods: {
+      "get charCode": function () { return this.charCode; },
+      "get ctrlKey": function () { return this.ctrlKey; },
+      "get altKey": function () { return this.altKey; },
+      "get shiftKey": function () { return this.shiftKey; },
+      "set charCode": function (v) { this.charCode = v; },
+      "set ctrlKey": function (v) { this.ctrlKey = v; },
+      "set altKey": function (v) { this.altKey = v; },
+      "set shiftKey": function (v) { this.shiftKey = v; },
+      updateAfterEvent: def.updateAfterEvent
+    }
+  };
+
+  return def;
+}).call(this);

@@ -1,99 +1,92 @@
-var EVENT_PHASE_CAPTURING_PHASE = 1;
-var EVENT_PHASE_AT_TARGET       = 2;
-var EVENT_PHASE_BUBBLING_PHASE  = 3;
+const EventDefinition = (function () {
+  var EVENT_PHASE_CAPTURING_PHASE = 1;
+  var EVENT_PHASE_AT_TARGET       = 2;
+  var EVENT_PHASE_BUBBLING_PHASE  = 3;
 
-function Event(type, bubbles, cancelable) {
-  Object.defineProperties(this, {
-    type:       describeProperty(type),
-    bubbles:    describeProperty(!!bubbles),
-    cancelable: describeProperty(!!cancelable)
-  });
+  return {
+    __class__: 'flash.events.Event',
 
-  this._canceled = false;
-  this._eventPhase = EVENT_PHASE_AT_TARGET;
-  this._currentTarget = null;
-  this._target = null;
-}
-
-Object.defineProperties(Event, {
-  ACTIVATE:                     describeConst('activate'),
-  ADDED:                        describeConst('added'),
-  ADDED_TO_STAGE:               describeConst('addedToStage'),
-  CANCEL:                       describeConst('cancel'),
-  CHANGE:                       describeConst('change'),
-  CLEAR:                        describeConst('clear'),
-  CLOSE:                        describeConst('close'),
-  COMPLETE:                     describeConst('complete'),
-  CONNECT:                      describeConst('connect'),
-  COPY:                         describeConst('copy'),
-  CUT:                          describeConst('cut'),
-  DEACTIVATE:                   describeConst('deactivate'),
-  ENTER_FRAME:                  describeConst('enterFrame'),
-  FRAME_CONSTRUCTED:            describeConst('frameConstructed'),
-  EXIT_FRAME:                   describeConst('exitFrame'),
-  ID3:                          describeConst('id3'),
-  INIT:                         describeConst('init'),
-  MOUSE_LEAVE:                  describeConst('mouseLeave'),
-  OPEN:                         describeConst('open'),
-  PASTE:                        describeConst('paste'),
-  REMOVED:                      describeConst('removed'),
-  REMOVED_FROM_STAGE:           describeConst('removedFromStage'),
-  RENDER:                       describeConst('render'),
-  RESIZE:                       describeConst('resize'),
-  SCROLL:                       describeConst('scroll'),
-  TEXT_INTERACTION_MODE_CHANGE: describeConst('textInteractionModeChange'),
-  SELECT:                       describeConst('select'),
-  SELECT_ALL:                   describeConst('selectAll'),
-  SOUND_COMPLETE:               describeConst('soundComplete'),
-  TAB_CHILDREN_CHANGE:          describeConst('tabChildrenChange'),
-  TAB_INDEX_CHANGE:             describeConst('tabIndexChange'),
-  UNLOAD:                       describeConst('unload'),
-  FULLSCREEN:                   describeConst('fullscreen'),
-  HTML_BOUNDS_CHANGE:           describeConst('htmlBoundsChange'),
-  HTML_RENDER:                  describeConst('htmlRender'),
-  HTML_DOM_INITIALIZE:          describeConst('htmlDOMInitialize'),
-  LOCATION_CHANGE:              describeConst('locationChange'),
-  VIDEO_FRAME:                  describeConst('videoFrame')
-});
-
-Event.prototype = describePrototype({
-  __class__: describeInternalProperty('flash.events.Event'),
-
-  clone: describeMethod(function () {
-    return new Event(this.type, this.bubbles, this.cancelable);
-  }),
-  currentTarget: describeAccessor(function () {
-    return this._currentTarget;
-  }),
-  eventPhase: describeAccessor(function () {
-    return this._eventPhase;
-  }),
-  formatToString: describeMethod(function (className) {
-    var result = '[' + className;
-    for (var i = 0, n = arguments.length; i < n; i++) {
-      var prop = arguments[i];
-      var val = this[prop];
-      result += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
+    initialize: function () {
+      this._canceled = false;
+      this._eventPhase = EVENT_PHASE_AT_TARGET;
+      this._currentTarget = null;
+      this._target = null;
     }
-    result += ']';
-    return result;
-  }),
-  isDefaultPrevented: describeMethod(function () {
-    return this._isDefaultPrevented;
-  }),
-  preventDefault: describeMethod(function () {
-    this._isDefaultPrevented = true;
-  }),
-  stopImmediatePropagation: describeMethod(function () {
-    notImplemented();
-  }),
-  stopPropagation: describeMethod(function () {
-    notImplemented();
-  }),
-  target: describeAccessor(function () {
-    return this._target;
-  }),
-  toString: describeMethod(function () {
-    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
-  })
-});
+
+    ctor: function (type, bubbles, cancelable) {
+      this.type = type;
+      this.bubbles = !!bubbles;
+      this.cancelable = !!cancelable;
+    },
+
+    clone: function () {
+      return new Event(this.type, this.bubbles, this.cancelable);
+    },
+    get currentTarget() {
+      return this._currentTarget;
+    },
+    get eventPhase() {
+      return this._eventPhase;
+    },
+    isDefaultPrevented: function () {
+      return this._isDefaultPrevented;
+    },
+    preventDefault: function () {
+      this._isDefaultPrevented = true;
+    },
+    stopImmediatePropagation: function () {
+      notImplemented();
+    },
+    stopPropagation: function () {
+      notImplemented();
+    },
+    get target: () {
+      return this._target;
+    },
+  };
+
+  def.__glue__ = {
+    scriptStatics: {
+      ACTIVATE:                     'public ACTIVATE',
+      ADDED:                        'public ADDED',
+      ADDED_TO_STAGE:               'public ADDED_TO_STAGE',
+      CANCEL:                       'public CANCEL',
+      CHANGE:                       'public CHANGE',
+      CLEAR:                        'public CLEAR',
+      CLOSE:                        'public CLOSE',
+      COMPLETE:                     'public COMPLETE',
+      CONNECT:                      'public CONNECT',
+      COPY:                         'public COPY',
+      CUT:                          'public CUT',
+      DEACTIVATE:                   'public DEACTIVATE',
+      ENTER_FRAME:                  'public ENTER_FRAME',
+      FRAME_CONSTRUCTED:            'public FRAME_CONSTRUCTED',
+      EXIT_FRAME:                   'public EXIT_FRAME',
+      ID3:                          'public ID3',
+      INIT:                         'public INIT',
+      MOUSE_LEAVE:                  'public MOUSE_LEAVE',
+      OPEN:                         'public OPEN',
+      PASTE:                        'public PASTE',
+      REMOVED:                      'public REMOVED',
+      REMOVED_FROM_STAGE:           'public REMOVED_FROM_STAGE',
+      RENDER:                       'public RENDER',
+      RESIZE:                       'public RESIZE',
+      SCROLL:                       'public SCROLL',
+      TEXT_INTERACTION_MODE_CHANGE: 'public TEXT_INTERACTION_MODE_CHANGE',
+      SELECT:                       'public SELECT',
+      SELECT_ALL:                   'public SELECT_ALL',
+      SOUND_COMPLETE:               'public SOUND_COMPLETE',
+      TAB_CHILDREN_CHANGE:          'public TAB_CHILDREN_CHANGE',
+      TAB_INDEX_CHANGE:             'public TAB_INDEX_CHANGE',
+      UNLOAD:                       'public UNLOAD',
+      FULLSCREEN:                   'public FULLSCREEN',
+      HTML_BOUNDS_CHANGE:           'public HTML_BOUNDS_CHANGE',
+      HTML_RENDER:                  'public HTML_RENDER',
+      HTML_DOM_INITIALIZE:          'public HTML_DOM_INITIALIZE',
+      LOCATION_CHANGE:              'public LOCATION_CHANGE',
+      VIDEO_FRAME:                  'public VIDEO_FRAME'
+    }
+  };
+
+  return def;
+}).call(this);

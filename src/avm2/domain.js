@@ -60,7 +60,9 @@ var Domain = (function () {
       // behavior.
       this.ManagedClass = function ManagedClass(name, baseClass, definition, instance, callable) {
         var c = new Class(name, instance || function () {
-          this.initialize.apply(this, arguments);
+          // Initialize should be nullary. If the script needs to pass in
+          // script objects to native land, there's usually a ctor function.
+          this.initialize();
           instance.apply(this, arguments);
         }, callable);
         c.extend(baseClass);
@@ -109,6 +111,19 @@ var Domain = (function () {
         link: function (definition) {
           assert(this.dynamicPrototype);
 
+          function glueProperties(obj, props) {
+            for (var p in props) {
+              if (props.hasOwnProperty(p)) {
+                var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
+                assert(typeof qn === "string");
+                Object.defineProperty(obj, p, {
+                  get: new Function("", "return this." + qn),
+                  set: new Function("v", "this." + qn + " = v")
+                });
+              }
+            }
+          }
+
           var proto = this.dynamicPrototype;
           for (var p in definition) {
             var desc = Object.getOwnPropertyDescriptor(definition, p);
@@ -121,22 +136,16 @@ var Domain = (function () {
             proto.initialize = function () {};
           }
 
-          var glue = definition.glue;
+          var glue = definition.__glue__;
           if (!glue)
             return;
 
           // Accessors for script properties from within AVM2.
-          if (glue.script) {
-            for (var p in glue.script) {
-              if (glue.script.hasOwnProperty(p)) {
-                var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(glue.script[p]));
-                assert(typeof qn === "string");
-                Object.defineProperty(proto, p, {
-                  get: new Function("", "return this." + qn),
-                  set: new Function("v", "this." + qn + " = v")
-                });
-              }
-            }
+          if (glue.scriptProperties) {
+            glueProperties(proto, glue.scriptProperties);
+          }
+          if (glue.scriptStatics) {
+            glueProperties(this, glue.scriptStatics);
           }
 
           // Binding to member methods marked as [native].

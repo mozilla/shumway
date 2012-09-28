@@ -1,7 +1,3 @@
-function TextField() {
-  InteractiveObject.call(this);
-}
-
-TextField.prototype = Object.create(InteractiveObject.prototype, {
-  __class__: describeInternalProperty('flash.text.TextField'),
-});
+const TextFieldDefinition = {
+  __class__: 'flash.text.TextField'
+};

@@ -1,13 +1,7 @@
-function Shape() {
-  DisplayObject.call(this);
+const ShapeDefinition = {
+  __class__: 'flash.display.Shape',
 
-	this._graphics = new Graphics;
-}
-
-Shape.prototype = Object.create(DisplayObject.prototype, {
-  __class__: describeInternalProperty('flash.display.Shape'),
-
-  graphics: describeAccessor(function () {
-    return this._graphics;
-  })
-});
+  initialize: function () {
+    this.graphics = new Graphics;
+  }
+};

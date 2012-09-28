@@ -1,26 +1,24 @@
-function MovieClip() {
-  Sprite.call(this);
+const MovieClipDefinition = {
+  __class__: 'flash.display.MovieClip',
 
-  this._currentFrame = 0;
-  this._currentFrameLabel = null;
-  this._currentLabel = false;
-  this._currentScene = { };
-  this._depthMap = [];
-  this._enabled = null;
-  this._frameScripts = { };
-  this._frameLabels = { };
-  this._framesLoaded = 1;
-  this._isPlaying = true;
-  this._scenes = { };
-  this._timeline = null;
-  this._totalFrames = 1;
-  this._scenes = { };
-}
+  initialize: function () {
+    this._currentFrame = 0;
+    this._currentFrameLabel = null;
+    this._currentLabel = false;
+    this._currentScene = { };
+    this._depthMap = [];
+    this._enabled = null;
+    this._frameScripts = { };
+    this._frameLabels = { };
+    this._framesLoaded = 1;
+    this._isPlaying = true;
+    this._scenes = { };
+    this._timeline = null;
+    this._totalFrames = 1;
+    this._scenes = { };
+  },
 
-MovieClip.prototype = Object.create(Sprite.prototype, {
-  __class__: describeInternalProperty('flash.display.MovieClip'),
-
-  addFrameScript: describeMethod(function () {
+  addFrameScript: function () {
     // arguments are pairs of frameIndex and script/function
     // frameIndex is in range 0..totalFrames-1
     var frameScripts = this._frameScripts;
@@ -33,43 +31,40 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       else
         frameScripts[frameNum] = [fn];
     }
-  }),
-  currentFrame: describeAccessor(function () {
+  },
+  get currentFrame() {
     return this._currentFrame;
-  }),
-  currentFrameLabel: describeAccessor(function () {
+  },
+  get currentFrameLabel() {
     return this._currentFrameLabel;
-  }),
-  currentLabel: describeAccessor(function () {
+  },
+  get currentLabel() {
     return this._currentLabel;
-  }),
-  currentLabels: describeAccessor(function () {
+  },
+  get currentLabels() {
     return this._currentScene.labels;
-  }),
-  currentScene: describeAccessor(function () {
+  },
+  get currentScene() {
     return this._currentScene;
-  }),
-  enabled: describeAccessor(
-    function () {
-      return this._enabled;
-    },
-    function (val) {
-      this._enabled = val;
-    }
-  ),
-  framesLoaded: describeAccessor(function () {
+  },
+  get enabled() {
+    return this._enabled;
+  },
+  set enabled(val) {
+    this._enabled = val;
+  },
+  get framesLoaded() {
     return this._framesLoaded;
-  }),
-
-  _bindChildToProperty: describeMethod(function (child) {
+  },
+  _bindChildToProperty: function (child) {
+    // REMOVEME?
     if (this.scriptObject) {
       // HACK for AVM2
       var name = Multiname.getPublicQualifiedName(child.name);
       setProperty(this.scriptObject, name, child.scriptObject);
     }
-  }),
-
-  gotoFrame: describeMethod(function (frameNum, scene) {
+  },
+  gotoFrame: function (frameNum, scene) {
     if (frameNum > this._totalFrames)
       frameNum = 1;
 
@@ -182,59 +177,54 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       for (var i = 0, n = scripts.length; i < n; i++)
         scripts[i].call(this);
     }
-  }),
-  gotoAndPlay: describeMethod(function (frame, scene) {
+  },
+  gotoAndPlay: function (frame, scene) {
     this.play();
     if (isNaN(frame))
       this.gotoLabel(frame);
     else
       this.gotoFrame(frame);
-  }),
-  gotoAndStop: describeMethod(function (frame, scene) {
+  },
+  gotoAndStop: function (frame, scene) {
     this.stop();
     if (isNaN(frame))
       this.gotoLabel(frame);
     else
       this.gotoFrame(frame);
-  }),
-  gotoLabel: describeMethod(function (labelName) {
+  },
+  gotoLabel: function (labelName) {
     var frameLabel = this._frameLabels[labelName];
     if (frameLabel)
       this.gotoFrame(frameLabel.frame);
-  }),
-  isPlaying: describeMethod(function () {
+  },
+  isPlaying: function () {
     return this._isPlaying;
-  }),
-  nextFrame: describeMethod(function () {
+  },
+  nextFrame: function () {
     this.gotoAndPlay(this._currentFrame % this._totalFrames + 1);
-  }),
-  nextScene: describeMethod(function () {
+  },
+  nextScene: function () {
     notImplemented();
-  }),
-  play: describeMethod(function () {
+  },
+  play: function () {
     this._isPlaying = true;
-  }),
-  prevFrame: describeMethod(function () {
+  },
+  prevFrame: function () {
     this.gotoAndStop(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
-  }),
-  prevScene: describeMethod(function () {
+  },
+  prevScene: function () {
     notImplemented();
-  }),
-  stop: describeMethod(function () {
+  },
+  stop: function () {
     this._isPlaying = false;
-  }),
-  totalFrames: describeAccessor(function () {
+  },
+  get totalFrames() {
     return this._totalFrames;
-  }),
-  totalFrames: describeAccessor(function () {
-    return this._totalFrames;
-  }),
-  trackAsMenu: describeAccessor(
-    function () {
-      return false;
-    },
-    function (val) {
-      notImplemented();
-    }
-  )
-});
+  },
+  get trackAsMenu() {
+    return false;
+  },
+  set trackAsMenu(val) {
+    notImplemented();
+  }
+};

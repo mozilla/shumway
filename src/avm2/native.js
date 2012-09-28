@@ -536,8 +536,8 @@ const natives = (function () {
    */
   function makeErrorClass(name) {
     var ErrorDefinition = {
-      glue: {
-        script: {
+      __glue__: {
+        scriptProperties: {
           message: "public message",
           name: "public name"
         },

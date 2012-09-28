@@ -1,3 +1,7 @@
+const DisplayObjectContainerDefinition = (function () {
+  
+}).call(this);
+
 function DisplayObjectContainer() {
   InteractiveObject.call(this);
 
