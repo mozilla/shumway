@@ -220,3 +220,20 @@ natives.TimerEventClass = function TimerEventClass(runtime, scope, instance, bas
 
   return c;
 };
+
+natives.TextEventClass = function TextEventClass(runtime, scope, instance, baseClass) {
+  var c = new runtime.domain.system.Class("TextEvent", instance, Domain.passthroughCallable(instance));
+  c.extend(baseClass);
+
+  c.nativeStatics = {
+  };
+
+  c.nativeMethods = {
+    // copyNativeData :: other:TextEvent -> void
+    copyNativeData: function copyNativeData(other) {
+      notImplemented("TextEvent.copyNativeData");
+    }
+  };
+
+  return c;
+};

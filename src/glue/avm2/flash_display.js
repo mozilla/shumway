@@ -439,12 +439,12 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
   c.nativeMethods = {
     // addChild :: child:DisplayObject -> DisplayObject
     addChild: function addChild(child) {
-      this.nativeObject.addChild(child.d);
+      this.nativeObject.addChild(child.nativeObject);
     },
 
     // addChildAt :: child:DisplayObject, index:int -> DisplayObject
     addChildAt: function addChildAt(child, index) {
-      this.nativeObject.addChild(child.d, index);
+      this.nativeObject.addChild(child.nativeObject, index);
     },
 
     // removeChild :: child:DisplayObject -> DisplayObject
