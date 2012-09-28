@@ -145,12 +145,6 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
 
 const natives = (function () {
 
-  function glue(inner, proxy) {
-    inner.p = proxy;
-    proxy.d = inner;
-    return proxy;
-  }
-
   const C = Domain.passthroughCallable;
   const CC = Domain.constructingCallable;
 
@@ -181,6 +175,7 @@ const natives = (function () {
         return Object.prototype.propertyIsEnumerable.call(this, name);
       }
     };
+
     c.nativeStatics = {
       _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
         name = Multiname.getPublicQualifiedName(name);
@@ -413,7 +408,6 @@ const natives = (function () {
     };
 
     c.nativeMethods = m;
-    c.nativeStatics = {};
     c.vectorType = type;
     c.coerce = function (value) {
       return value; // TODO: Fix me.
@@ -541,18 +535,29 @@ const natives = (function () {
    * Error.as
    */
   function makeErrorClass(name) {
-    return function (runtime, scope, instance, baseClass) {
-      var c = new runtime.domain.system.Class(name, instance, CC(instance));
-      c.extend(baseClass);
-      c.nativeMethods = {
-        getStackTrace: function () {
-          return "TODO: getStackTrace";
+    var ErrorDefinition = {
+      glue: {
+        script: {
+          message: "public message",
+          name: "public name"
+        },
+
+        nativeMethods: {
+          getStackTrace: function () {
+            return "TODO: getStackTrace";
+          }
+        },
+
+        nativeStatics: {
+          getErrorMessage: getErrorMessage
         }
-      };
-      c.nativeStatics = {
-        getErrorMessage: getErrorMessage
-      };
-      return c;
+      }
+    };
+
+    return function (runtime, scope, instance, baseClass) {
+      return new runtime.domain.system.ManagedClass(name, baseClass,
+                                                    name === "Error" ? ErrorDefinition : {},
+                                                    instance, CC(instance));
     };
   }
 
@@ -903,32 +908,33 @@ const natives = (function () {
         if (!parentDomain) {
           parent = Runtime.stack.top().domain.system;
         } else {
-          parent = parentDomain.d;
+          parent = parentDomain.dom;
         }
 
-        glue(new Domain(parent.vm, parent), this);
+        this.dom = new Domain(parent.vm, parent);
+        this.dom.scriptObject = this;
       },
 
       "get parentDomain": function () {
-        var base = this.d.base;
+        var base = this.dom.base;
 
         if (!base) {
           return undefined;
         }
 
-        if (base.p) {
-          return base.p;
+        if (!base.scriptObject) {
+          base.scriptObject = new instance();
         }
 
-        return glue(base, new instance());
+        return base.scriptObject;
       },
 
       getDefinition: function (name) {
-        return this.d.getProperty(Multiname.fromSimpleName(name), false, true);
+        return this.dom.getProperty(Multiname.fromSimpleName(name), false, true);
       },
 
       hasDefinition: function (name) {
-        return !!this.d.findProperty(Multiname.fromSimpleName(name), false, false);
+        return !!this.dom.findProperty(Multiname.fromSimpleName(name), false, false);
       }
     };
 
@@ -936,11 +942,11 @@ const natives = (function () {
       "get currentDomain": function () {
         var domain = Runtime.stack.top().domain;
 
-        if (domain.p) {
-          return domain.p;
+        if (!domain.scriptObject) {
+          domain.scriptObject = new instance();
         }
 
-        return glue(domain, new instance());
+        return domain.scriptObject;
       }
     };
 

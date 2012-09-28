@@ -56,6 +56,18 @@ var Domain = (function () {
         defineNonEnumerableProperty(this, "apply", callable.apply);
       };
 
+      // Convenience constructor for classes that don't need any "special"
+      // behavior.
+      this.ManagedClass = function ManagedClass(name, baseClass, definition, instance, callable) {
+        var c = new Class(name, instance || function () {
+          this.initialize.apply(this, arguments);
+          instance.apply(this, arguments);
+        }, callable);
+        c.extend(baseClass);
+        c.link(definition);
+        return c;
+      };
+
       Class.prototype = {
         forceConstify: true,
         createInstance: function createInstance() {
@@ -92,6 +104,44 @@ var Domain = (function () {
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
+        },
+
+        link: function (definition) {
+          assert(this.dynamicPrototype);
+
+          var proto = this.dynamicPrototype;
+          for (var p in definition) {
+            var desc = Object.getOwnPropertyDescriptor(definition, p);
+            if (desc) {
+              Object.defineProperty(proto, p, desc);
+            }
+          }
+
+          if (!proto.initialize) {
+            proto.initialize = function () {};
+          }
+
+          var glue = definition.glue;
+          if (!glue)
+            return;
+
+          // Accessors for script properties from within AVM2.
+          if (glue.script) {
+            for (var p in glue.script) {
+              if (glue.script.hasOwnProperty(p)) {
+                var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(glue.script[p]));
+                assert(typeof qn === "string");
+                Object.defineProperty(proto, p, {
+                  get: new Function("", "return this." + qn),
+                  set: new Function("v", "this." + qn + " = v")
+                });
+              }
+            }
+          }
+
+          // Binding to member methods marked as [native].
+          this.nativeMethods = glue.nativeMethods;
+          this.nativeStatics = glue.nativeStatics;
         },
 
         extendNative: function (baseClass, native) {
@@ -132,9 +182,7 @@ var Domain = (function () {
       //
       // Traits are not visible to the AVM script.
       Class.nativeMethods = {
-        "get prototype": function () {
-          return this.dynamicPrototype;
-        }
+        "get prototype": function () { return this.dynamicPrototype; }
       };
 
       var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
