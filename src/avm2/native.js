@@ -624,28 +624,6 @@ const natives = (function () {
         this.keys = [];
       }
     }
-    ASDictionary.prototype = {
-      canHandleProperties: true,
-      "set": function (key, value) {
-        this.map.set(Object(key), value);
-        if (!this.weakKeys && this.keys.indexOf(key) < 0) {
-          this.keys.push(key);
-        }
-      },
-      "get": function (key) {
-        return this.map.get(Object(key));
-      },
-      "delete": function (key) {
-        this.map.delete(Object(key), value);
-        var i;
-        if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
-          this.keys.splice(i, 1);
-        }
-      },
-      enumProperties: function() {
-        return this.keys;
-      }
-    };
 
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
@@ -653,6 +631,26 @@ const natives = (function () {
     c.nativeStatics = {};
 
     var m = ASDictionary.prototype;
+    defineReadOnlyProperty(m, "canHandleProperties", true);
+    defineNonEnumerableProperty(m, "set", function (key, value) {
+      this.map.set(Object(key), value);
+      if (!this.weakKeys && this.keys.indexOf(key) < 0) {
+        this.keys.push(key);
+      }
+    });
+    defineNonEnumerableProperty(m, "get", function (key) {
+      return this.map.get(Object(key));
+    });
+    defineNonEnumerableProperty(m, "delete", function (key) {
+      this.map.delete(Object(key), value);
+      var i;
+      if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+        this.keys.splice(i, 1);
+      }
+    });
+    defineNonEnumerableProperty(m, "enumProperties", function () {
+      return this.keys;
+    });
     c.nativeMethods = m;
 
     return c;
