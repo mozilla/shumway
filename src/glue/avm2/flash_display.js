@@ -85,22 +85,22 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // scaleX :: void -> Number
     "get scaleX": function scaleX() {
-      notImplemented("DisplayObject.scaleX");
+      return this.nativeObject.scaleX;
     },
 
     // scaleX :: value:Number -> void
     "set scaleX": function scaleX(value) {
-      notImplemented("DisplayObject.scaleX");
+      this.nativeObject.scaleX = value;
     },
 
     // scaleY :: void -> Number
     "get scaleY": function scaleY() {
-      notImplemented("DisplayObject.scaleY");
+      return this.nativeObject.scaleY;
     },
 
     // scaleY :: value:Number -> void
     "set scaleY": function scaleY(value) {
-      notImplemented("DisplayObject.scaleY");
+      this.nativeObject.scaleY = value;
     },
 
     // scaleZ :: void -> Number
@@ -180,7 +180,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // width :: value:Number -> void
     "set width": function width(value) {
-      notImplemented("DisplayObject.width");
+      this.nativeObject.width = value;
     },
 
     // height :: void -> Number
@@ -190,7 +190,7 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // height :: value:Number -> void
     "set height": function height(value) {
-      notImplemented("DisplayObject.height");
+      this.nativeObject.height = value;
     },
 
     // cacheAsBitmap :: void -> Boolean
@@ -362,12 +362,14 @@ natives.InteractiveObjectClass = function InteractiveObjectClass(runtime, scope,
 
     // mouseEnabled :: void -> Boolean
     "get mouseEnabled": function mouseEnabled() {
-      return this.nativeObject.mouseEnabled;
+      // return this.nativeObject.mouseEnabled;
+      return false;
     },
 
     // mouseEnabled :: enabled:Boolean -> void
     "set mouseEnabled": function mouseEnabled(enabled) {
-      this.nativeObject.mouseEnabled = enabled;
+      // notImplemented("InteractiveObject.mouseEnabled");
+      // this.nativeObject.mouseEnabled = enabled;
     },
 
     // doubleClickEnabled :: void -> Boolean
@@ -439,6 +441,7 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
   c.nativeMethods = {
     // addChild :: child:DisplayObject -> DisplayObject
     addChild: function addChild(child) {
+      alert("addChild");
       this.nativeObject.addChild(child.d);
     },
 
@@ -543,7 +546,17 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
 
 
 natives.SpriteClass = function SpriteClass(runtime, scope, instance, baseClass) {
-  var c = new runtime.domain.system.Class("Sprite", instance, Domain.passthroughCallable(instance));
+
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    if (AVM2.isRunning()) {
+      this.nativeObject = new Sprite(); 
+    }
+    instance.apply(this, arguments);
+    return this;
+  }
+  // hack! : allow new()
+  var c = new runtime.domain.system.Class("Sprite", constructorHook, Domain.passthroughCallable(constructorHook));
   c.extend(baseClass);
 
   c.nativeStatics = {};

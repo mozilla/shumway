@@ -20,6 +20,9 @@ natives.SoundTransformClass = function SoundTransformClass(runtime, scope, insta
 natives.VideoClass = function VideoClass(runtime, scope, instance, baseClass) {
   function constructorHook() {
     this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    if (AVM2.isRunning()) {
+      this.nativeObject = new Video();
+    }
     return instance.apply(this, arguments);
   }
 

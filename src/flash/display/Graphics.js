@@ -57,7 +57,8 @@ Graphics.prototype = describePrototype({
     }
   ),
   beginBitmapFill: describeMethod(function (bitmap, matrix, repeat, smooth) {
-    notImplemented();
+    //notImplemented();
+    // stub this out
   }),
   beginFillObject: describeMethod(function (fill) {
     if (fill === null) {

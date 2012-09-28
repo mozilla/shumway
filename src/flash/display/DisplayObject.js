@@ -98,8 +98,8 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       var bounds = this.getBounds();
       return bounds.height;
     },
-    function () {
-      notImplemented();
+    function (val) {
+      //notImplemented();
     }
   ),
   hitTestObject: describeMethod(function (obj) {
@@ -225,8 +225,8 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       var bounds = this.getBounds();
       return bounds.width;
     },
-    function () {
-      notImplemented();
+    function (val) {
+      //notImplemented();
     }
   ),
   x: describeAccessor(
