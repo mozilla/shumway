@@ -558,7 +558,14 @@ function setSuper(obj, mn, value) {
     if (Multiname.isNumeric(resolved) && superTraits.indexSet) {
       superTraits.indexSet(Multiname.getQualifiedName(resolved), value);
     } else {
-      obj[Multiname.getQualifiedName(resolved)] = value;
+      var qn = Multiname.getQualifiedName(resolved);
+      var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
+      assert(descriptor);
+      if (descriptor.set) {
+        descriptor.set.call(obj, value);
+      } else {
+        obj[qn] = value;
+      }
     }
   } else {
     throw new ReferenceError("Cannot create property " + mn.name +
