@@ -112,7 +112,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     notImplemented();
   }),
   loaderInfo: describeAccessor(function () {
-    return this._loaderInfo || this._parent.loaderInfo;
+    return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
   }),
   localToGlobal: describeMethod(function (pt) {
     notImplemented();
@@ -167,7 +167,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     }
   ),
   stage: describeAccessor(function () {
-    return this._stage || this._parent.stage;
+    return this._stage || (this._parent ? this._parent.stage : null);
   }),
   scaleX: describeAccessor(
     function () {

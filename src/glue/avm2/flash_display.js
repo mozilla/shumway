@@ -14,17 +14,18 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // stage :: void -> Stage
     "get stage": function stage() {
-      return this.nativeObject.stage.scriptObject;
+      var stage = this.nativeObject.stage;
+      return stage ? stage.scriptObject : null;
     },
 
     // name :: void -> String
     "get name": function name() {
-      notImplemented("DisplayObject.name");
+      return this.nativeObject.name;
     },
 
     // name :: value:String -> void
     "set name": function name(value) {
-      notImplemented("DisplayObject.name");
+      this.nativeObject.name = value;
     },
 
     // parent :: void -> DisplayObjectContainer
@@ -35,12 +36,12 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // mask :: void -> DisplayObject
     "get mask": function mask() {
-      notImplemented("DisplayObject.mask");
+      return this.nativeObject.mask;
     },
 
     // mask :: value:DisplayObject -> void
     "set mask": function mask(value) {
-      notImplemented("DisplayObject.mask");
+      this.nativeObject.mask = value;
     },
 
     // visible :: void -> Boolean
@@ -446,7 +447,7 @@ natives.ContainerClass = function ContainerClass(runtime, scope, instance, baseC
 
     // addChildAt :: child:DisplayObject, index:int -> DisplayObject
     addChildAt: function addChildAt(child, index) {
-      this.nativeObject.addChild(child.nativeObject, index);
+      this.nativeObject.addChildAt(child.nativeObject, index);
     },
 
     // removeChild :: child:DisplayObject -> DisplayObject
