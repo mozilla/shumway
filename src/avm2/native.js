@@ -619,12 +619,36 @@ const natives = (function () {
   function DictionaryClass(runtime, scope, instance, baseClass) {
     function ASDictionary(weakKeys) {
       this.weakKeys = weakKeys;
+      this.map = new WeakMap();
+      if (!weakKeys) {
+        this.keys = [];
+      }
     }
     ASDictionary.prototype = {
+      canHandleProperties: true,
+      "set": function (key, value) {
+        this.map.set(Object(key), value);
+        if (!this.weakKeys && this.keys.indexOf(key) < 0) {
+          this.keys.push(key);
+        }
+      },
+      "get": function (key) {
+        return this.map.get(Object(key));
+      },
+      "delete": function (key) {
+        this.map.delete(Object(key), value);
+        var i;
+        if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+          this.keys.splice(i, 1);
+        }
+      },
+      enumProperties: function() {
+        return this.keys;
+      }
     };
 
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
-    c.extendBuiltin(baseClass);
+    c.extendNative(baseClass, ASDictionary);
 
     c.nativeStatics = {};
 

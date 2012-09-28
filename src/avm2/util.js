@@ -804,3 +804,29 @@ var SortedList = (function() {
 
   return sortedList;
 })();
+
+(function checkWeakMap() {
+  if (typeof this.WeakMap === 'function')
+    return; // weak map is supported
+
+  var id = 0;
+  function WeakMap() {
+    this.id = '$weakmap' + (id++);
+  };
+  WeakMap.prototype = {
+    has: function(obj) {
+      return obj.hasOwnProperty(this.id);
+    },
+    get: function(obj, defaultValue) {
+      return obj.hasOwnProperty(this.id) ? obj[this.id] : defaultValue;
+    },
+    set: function(obj, value) {
+      Object.defineProperty(obj, this.id, {
+        value: value,
+        enumerable: false,
+        configurable: true
+      });
+    }
+  };
+  this.WeakMap = WeakMap;
+})();

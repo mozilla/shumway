@@ -448,6 +448,10 @@ function isPrimitiveType(x) {
 
 function getProperty(obj, mn) {
   assert(obj != undefined, "getProperty(", mn, ") on undefined");
+  if (obj.canHandleProperties) {
+    return obj.get(mn.name);
+  }
+
   assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
@@ -521,6 +525,10 @@ function getSuper(obj, mn) {
 
 function setProperty(obj, mn, value) {
   assert(obj);
+  if (obj.canHandleProperties) {
+    return obj.set(mn.name, value);
+  }
+
   assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
@@ -575,6 +583,10 @@ function setSuper(obj, mn, value) {
 
 function deleteProperty(obj, mn) {
   assert(obj);
+  if (obj.canHandleProperties) {
+    return obj.delete(mn.name);
+  }
+
   assert(Multiname.isMultiname(mn), mn);
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
