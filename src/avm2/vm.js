@@ -17,6 +17,13 @@ var AVM2 = (function () {
     return Runtime.stack.top().domain.system.vm;
   };
 
+  /**
+   * Returns true if AVM2 code is running, otherwise false.
+   */
+  AVM2.isRunning = function () {
+    return Runtime.stack.length !== 0;
+  };
+
   AVM2.prototype = {
     notifyConstruct: function notifyConstruct (instance, args) {
       return this.onConstruct ? this.onConstruct(instance, args) : undefined;
