@@ -104,8 +104,10 @@ const MovieClipDefinition = {
 
         if (cmd.symbolId) {
           var index = 0;
-          var symbolClass = loader.getSymbolClassById(cmd.symbolId);
-          var initObj = Object.create(symbolClass.prototype);
+          var symbolInfo = loader.getSymbolInfoById(cmd.symbolId);
+          var symbolClass = avm2.systemDomain.getClass(symbolInfo.className);
+          // FIXME: What args do we pass in?
+          var instance = symbolClass.createAsSymbol([], symbolInfo.props);
           var replace = 0;
 
           if (current && current._owned) {
@@ -116,7 +118,7 @@ const MovieClipDefinition = {
               matrix = current.transform.matrix;
             replace = 1;
           } else {
-            initObj._name = cmd.name;
+            instance._name = cmd.name;
 
             var top = null;
             for (var i = +depth + 1; i < highestDepth; i++) {
@@ -128,20 +130,19 @@ const MovieClipDefinition = {
             index = top ? children.indexOf(top) : children.length;
           }
 
-          initObj._animated = true;
-          initObj._owned = true;
-          initObj._parent = this;
+          instance._animated = true;
+          instance._owned = true;
+          instance._parent = this;
 
           newInstances.push({
             depth: depth,
             index: index,
-            initObj: initObj,
-            symbolClass: symbolClass
+            instance: instance,
           });
 
           children.splice(index, replace, null);
 
-          target = initObj;
+          target = instance;
         } else if (current && current._animated) {
           target = current;
         }
@@ -162,10 +163,9 @@ const MovieClipDefinition = {
 
     for (var i = 0, n = newInstances.length; i < n; i++) {
       var entry = newInstances[i];
-      var instance = new entry.symbolClass(entry.initObj);
-      if (entry.initObj.name) {
+      var instance = entry.instance;
+      if (instance.name)
         this._bindChildToProperty(instance);
-      }
       children.splice(entry.index, 1, instance);
       depthMap[entry.depth] = instance;
     }

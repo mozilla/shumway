@@ -1,83 +1,67 @@
-function InteractiveObject() {
-  DisplayObject.call(this);
-
-  this._control = document.createElement('div');
-}
-
-InteractiveObject.prototype = Object.create(DisplayObject.prototype, {
-  accessibilityImplementation: describeAccessor(
-    function () {
-      return -1;
+const InteractiveObjectDefinition = (function () {
+  var def = {
+    initialize: function () {
+      this._control = document.createElement('div');
     },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  contextMenu: describeAccessor(
-    function () {
+
+    get accessibilityImplementation() {
       return null;
     },
-    function (val) {
+    set accessibilityImplementation(val) {
       notImplemented();
-    }
-  ),
-  doubleClickEnabled: describeAccessor(
-    function () {
+    },
+    get contextMenu() {
+      return null;
+    },
+    set contextMenu(val) {
+      notImplemented();
+    },
+    get doubleClickEnabled() {
       return false;
     },
-    function (val) {
+    set doubleClickEnabled(val) {
       notImplemented();
-    }
-  ),
-  focusRect: describeAccessor(
-    function () {
+    },
+    get focusRect() {
       return null;
     },
-    function (val) {
+    set focusRect(val) {
       notImplemented();
-    }
-  ),
-  mouseEnabled: describeAccessor(
-    function () {
+    },
+    get mouseEnabled() {
       return true;
     },
-    function (val) {
+    set mouseEnabled(val) {
       // notImplemented();
-    }
-  ),
-  needsSoftKeyboard: describeAccessor(
-    function () {
+    },
+    get needsSoftKeyboard() {
       return false;
     },
-    function (val) {
+    set needsSoftKeyboard(val) {
       notImplemented();
-    }
-  ),
-  requestSoftKeyboard: describeMethod(function () {
-    notImplemented();
-  }),
-  softKeyboardInputAreaOfInterest: describeAccessor(
-    function () {
+    },
+    requestSoftKeyboard: function () {
+      notImplemented();
+    },
+    get softKeyboardInputAreaOfInterest() {
       return null;
     },
-    function (val) {
+    set softKeyboardInputAreaOfInterest(val) {
       notImplemented();
-    }
-  ),
-  tabEnabled: describeAccessor(
-    function () {
+    },
+    get tabEnabled() {
       return false;
     },
-    function (val) {
+    set tabEnabled(val) {
       notImplemented();
-    }
-  ),
-  tabIndex: describeAccessor(
-    function () {
+    },
+    get tabIndex() {
       return -1;
     },
-    function (val) {
+    set tabEnabled(val) {
       notImplemented();
     }
-  )
-});
+  };
+
+  return def;
+}).call(this);

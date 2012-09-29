@@ -213,17 +213,6 @@ function utf8encode(bytes) {
   return decodeURIComponent(str);
 }
 
-/**
- * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
- */
-function inherit(base, properties) {
-  var prot = Object.create(base.prototype);
-  for (var p in properties) {
-    prot[p] = properties[p];
-  }
-  return prot;
-}
-
 function getFlags(value, flags) {
   var str = "";
   for (var i = 0; i < flags.length; i++) {

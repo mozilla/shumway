@@ -1,5 +1,5 @@
 function makeStub(container, className, shortName) {
-  container[shortName] = function () {
+  function ctor() {
     // Assumes that once AVM2 is initialized, it lives in the global variable avm2.
     if (!avm2) {
       throw new Error("AVM2 not initialized");
@@ -8,8 +8,13 @@ function makeStub(container, className, shortName) {
     var c = avm2.systemDomain.getClass(className);
     assert(c.instance);
     container[shortName] = c.instance;
+    // XXX: Patch our own prototype just in case someone saved a reference to
+    // the function before it was patched. We still don't get identity though.
+    ctor.prototype = c.instance.prototype;
     return c.createInstance(arguments);
   };
+
+  container[shortName] = ctor;
 }
 
 // Make special stubs for errors, which shouldn't conflict with JavaScript

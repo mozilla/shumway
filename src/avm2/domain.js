@@ -77,6 +77,17 @@ var Domain = (function () {
           this.instance.apply(o, arguments);
           return o;
         },
+
+        /**
+         * Symbols get extra properties mixed in _before_
+         * initialize/constructors are called.
+         */
+        createAsSymbol: function createAsSymbol(args, props) {
+          var o = Object.create(this.instance.prototype, props);
+          this.instance.apply(o, args);
+          return o;
+        },
+
         /**
          * Binds the specified |nativeObject| to a new instance of this class before calling the
          * constructor. The if the |bindScriptObject| parameter is |true| then it also binds the
@@ -112,24 +123,23 @@ var Domain = (function () {
           assert(this.dynamicPrototype);
 
           function glueProperties(obj, props) {
-            for (var p in props) {
-              if (props.hasOwnProperty(p)) {
-                var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
-                assert(typeof qn === "string");
-                Object.defineProperty(obj, p, {
-                  get: new Function("", "return this." + qn),
-                  set: new Function("v", "this." + qn + " = v")
-                });
-              }
+            var keys = Object.keys(props);
+            for (var i = 0, j = keys.length; i < j; i++) {
+              var p = keys[i];
+              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
+              assert(typeof qn === "string");
+              Object.defineProperty(obj, p, {
+                get: new Function("", "return this." + qn),
+                set: new Function("v", "this." + qn + " = v")
+              });
             }
           }
 
           var proto = this.dynamicPrototype;
-          for (var p in definition) {
-            var desc = Object.getOwnPropertyDescriptor(definition, p);
-            if (desc) {
-              Object.defineProperty(proto, p, desc);
-            }
+          var keys = Object.keys(definition);
+          for (var i = 0, j = keys.length; i < j; i++) {
+            var p = keys[i];
+            Object.defineProperty(proto, p, Object.getOwnPropertyDescriptor(definition, p));
           }
 
           if (!proto.initialize) {
