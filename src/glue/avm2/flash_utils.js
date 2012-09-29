@@ -38,3 +38,10 @@ natives.TimerClass = function TimerClass(runtime, scope, instance, baseClass) {
 
   return c;
 };
+
+natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {
+  var start = Date.now();
+  return function getTimer() {
+    return Date.now() - start;
+  };
+};

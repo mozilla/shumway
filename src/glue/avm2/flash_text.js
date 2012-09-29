@@ -2,19 +2,19 @@ natives.TextFieldClass = function TextFieldClass(runtime, scope, instance, baseC
   var c = new runtime.domain.system.Class("TextField", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
-  c.nativeStatics = {
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
     // text :: void -> String
     "get text": function text() {
-      notImplemented("TextField.text");
+      return this.nativeObject.text;
     },
 
     // text :: String -> void
     "set text": function text(value) {
-      notImplemented("TextField.text");
+      this.nativeObject.text = value;
     }
   };
-
-  c.nativeMethods = {};
 
   return c;
 };
@@ -23,14 +23,14 @@ natives.StaticTextClass = function StaticTextClass(runtime, scope, instance, bas
   var c = new runtime.domain.system.Class("StaticText", instance, Domain.passthroughCallable(instance));
   c.extend(baseClass);
 
-  c.nativeStatics = {
+  c.nativeStatics = {};
+
+  c.nativeMethods = {
     // text :: void -> String
     "get text": function text() {
       notImplemented("StaticText.text");
     }
   };
-
-  c.nativeMethods = {};
 
   return c;
 };
