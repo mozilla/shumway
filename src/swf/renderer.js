@@ -155,11 +155,11 @@ RenderVisitor.prototype = {
     //var rotation = child.rotation;
     //if (rotation)
     //  ctx.rotate(rotation * Math.PI / 180);
-    //var cxform = child.cxform;
-    //if (cxform) {
-    //  // We only support alpha channel transformation for now
-    //  ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMult + cxform.alphaAdd) / 256;
-    //}
+    var cxform = child._cxform;
+    if (cxform) {
+      // We only support alpha channel transformation for now
+      ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+    }
 
     if (child._graphics) {
       var graphics = child._graphics;
