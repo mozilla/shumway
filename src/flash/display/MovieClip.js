@@ -77,7 +77,6 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
       frameNum = this.framesLoaded;
 
     if (frameNum === this._currentFrame) {
-      this.dispatchEvent(new Event(Event.ENTER_FRAME));
       return;
     }
 
