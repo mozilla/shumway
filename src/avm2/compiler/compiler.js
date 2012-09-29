@@ -1,6 +1,7 @@
 var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
 var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+var enableUnsafeScopeLookup = compilerOptions.register(new Option("unsafelookup", "unsafelookup", "boolean", false, "Enable unsafe scope lookup."));
 var enableInlineCaching = compilerOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
 var traceInlineCaching = compilerOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
 
@@ -196,6 +197,7 @@ var Compiler = (function () {
                 value instanceof Array ||
                 value instanceof CatchScopeObject ||
                 value instanceof Scope ||
+                value instanceof Global ||
                 value.forceConstify === true,
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
@@ -1087,6 +1089,11 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
+        if (enableUnsafeScopeLookup.value) {
+          if (bc.foundObj) {
+              return constant(bc.foundObj);
+          }
+        }
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
       }
 

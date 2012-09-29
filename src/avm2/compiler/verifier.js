@@ -745,12 +745,19 @@ var Verifier = (function() {
           
           // the property was not found in the scope stack, search the saved scope
           if (savedScope) {
-            obj = savedScope.findProperty(multiname, domain, false);
+            var obj = savedScope.findProperty(multiname, domain, false);
 
             if (obj instanceof domain.system.Class || obj instanceof Interface) {
               return Type.fromClass(obj);
-            } else if (obj instanceof Global || obj instanceof Activation) {
+            } else if (obj instanceof Activation) {
               return Type.fromReference(obj);
+            } else if (obj instanceof Global) {
+              var objTy = Type.fromReference(obj);
+              var trait = objTy.getTraitEnforceGetter(multiname);
+              if (trait && trait.isClass()) {
+                bc.foundObj = obj;
+              }
+              return objTy;
             }
             // TODO - we cannot deal with object instances found on the scope stack
             // like in case of function instances; see ../tests/tamarin/ecma3/Array/splice2.abc

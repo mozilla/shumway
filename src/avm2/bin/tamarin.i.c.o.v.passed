@@ -1041,8 +1041,6 @@
 ../tests/tamarin/as3/AbcDecoder/impClass.abc
 ../tests/tamarin/as3/AbcDecoder/extClass.abc
 ../tests/tamarin/as3/AbcDecoder/accessSpecifiers.abc
-../tests/tamarin/regress/bug_460872.abc
-  
  ../tests/tamarin/regress/bug_460872.abc
  ../tests/tamarin/spidermonkey/js1_5/Regress/regress-417893.abc                                                                                
  ../tests/tamarin/spidermonkey/js1_5/Regress/regress-360969-01.abc                                                                             
