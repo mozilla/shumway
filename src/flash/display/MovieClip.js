@@ -152,7 +152,7 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
         if (cxform)
           target._cxform = cxform;
         if (matrix) {
-          target._rotation = Math.atan2(matrix.b, matrix.c) * 180 / Math.PI;
+          target._rotation = Math.atan(-matrix.c / matrix.a) * 180 / Math.PI;
           var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
           target._scaleX = matrix.a > 0 ? sx : -sx;
           var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
