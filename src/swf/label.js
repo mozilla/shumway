@@ -46,12 +46,11 @@ function defineLabel(tag, dictionary) {
   var label = {
     type: 'label',
     id: tag.id,
-    bounds: {
-      __class__: 'flash.geom.Rectangle',
-      x: bounds.xMin,
-      y: bounds.yMIn,
-      width: bounds.xMax - bounds.xMin,
-      height: bounds.yMax - bounds.yMin
+    bbox: {
+      left: bounds.xMin,
+      top: bounds.xMax,
+      right: bounds.yMin,
+      bottom: bounds.yMax
     },
     data: cmds.join('\n')
   };

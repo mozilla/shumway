@@ -21,7 +21,7 @@ function DisplayObject() {
   this._animated = false;
   this._cacheAsBitmap = false;
   this._control = document.createElement('div');
-  this._bounds = { };
+  this._bbox = null;
   this._cxform = null;
   this._graphics = null;
   this._loaderInfo = null;
@@ -85,7 +85,44 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     }
   ),
   getBounds: describeMethod(function (targetCoordSpace) {
-    return this._bounds;
+    var bbox = this._bbox;
+
+    if (!bbox)
+      return new Rectangle;
+
+    var rotation = this._rotation;
+    var scaleX = this._scaleX;
+    var scaleY = this._scaleY;
+
+    var u = Math.cos(rotation);
+    var v = Math.sin(rotation);
+    var a = u * scaleX;
+    var b = v * scaleY;
+    var c = -v * scaleX;
+    var d = u * scaleY;
+    var tx = this._x;
+    var ty = this._y;
+
+    var x1 = a * bbox.left + c * bbox.top;
+    var y1 = d * bbox.top + b * bbox.left;
+    var x2 = a * bbox.right + c * bbox.top;
+    var y2 = d * bbox.top + b * bbox.right;
+    var x3 = a * bbox.right + c * bbox.bottom;
+    var y3 = d * bbox.bottom + b * bbox.right;
+    var x4 = a * bbox.left + c * bbox.bottom;
+    var y4 = d * bbox.bottom + b * bbox.left;
+
+    var xMin = Math.min(x1, x2, x3, x4);
+    var xMax = Math.max(x1, x2, x3, x4);
+    var yMin = Math.min(y1, y2, y3, y4);
+    var yMax = Math.max(y1, y2, y3, y4);
+
+    return new Rectangle(
+      xMin + tx,
+      yMin + ty,
+      (xMax - xMin) + tx,
+      (yMax - yMin) + ty
+    );
   }),
   getRect: describeMethod(function (targetCoordSpace) {
     notImplemented();

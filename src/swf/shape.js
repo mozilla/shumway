@@ -449,12 +449,11 @@ function defineShape(tag, dictionary) {
   var shape = {
     type: 'shape',
     id: tag.id,
-    bounds: {
-      __class__: 'flash.geom.Rectangle',
-      x: bounds.xMin,
-      y: bounds.yMIn,
-      width: bounds.xMax - bounds.xMin,
-      height: bounds.yMax - bounds.yMin
+    bbox: {
+      left: bounds.xMin,
+      right: bounds.xMax,
+      top: bounds.yMin,
+      bottom: bounds.yMax
     },
     data: '[' + commands.join(',') + ']'
   };

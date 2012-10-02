@@ -281,10 +281,9 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
       });
       break;
     case 'shape':
-      var bounds = symbol.bounds;
-      try {
+      var bbox = symbol.bbox;
       var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
-    }catch(e){console.log(symbol.data);}
+
       var graphics = new Graphics;
       graphics._scale = 0.05;
       graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
@@ -293,12 +292,12 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
         graphics: describeAccessor(function () {
           throw Error();
         }),
-        _bounds: describeProperty(new Rectangle(
-          bounds.x / 20,
-          bounds.y / 20,
-          bounds.width / 20,
-          bounds.height / 20
-        )),
+        _bbox: describeProperty({
+          left: bbox.left / 20,
+          top: bbox.top / 20,
+          right: bbox.right / 20,
+          bottom: bbox.bottom / 20
+        }),
         _graphics: describeProperty(graphics)
       });
       break;
