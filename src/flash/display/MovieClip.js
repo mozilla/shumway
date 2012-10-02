@@ -120,8 +120,6 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
               matrix = current.transform.matrix;
             replace = 1;
           } else {
-            initObj._name = cmd.name;
-
             var top = null;
             for (var i = +depth + 1; i < highestDepth; i++) {
               var info = depthMap[i];
@@ -133,8 +131,11 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           }
 
           initObj._animated = true;
+          initObj._name = cmd.name || null;
           initObj._owned = true;
           initObj._parent = this;
+
+          target = initObj;
 
           newInstances.push({
             depth: depth,
@@ -144,8 +145,6 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
           });
 
           children.splice(index, replace, null);
-
-          target = initObj;
         } else if (current && current._animated) {
           target = current;
         }
@@ -166,12 +165,14 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
 
     for (var i = 0, n = newInstances.length; i < n; i++) {
       var entry = newInstances[i];
+      var initObj = entry.initObj;
+
       var instance = new entry.symbolClass(entry.initObj);
-      if (entry.initObj.name) {
-        this._bindChildToProperty(instance);
-      }
       children.splice(entry.index, 1, instance);
       depthMap[entry.depth] = instance;
+
+      if (initObj.name)
+        this._bindChildToProperty(instance);
     }
 
     this._currentFrame = frameNum;
