@@ -47,10 +47,10 @@ DisplayObjectContainer.prototype = Object.create(InteractiveObject.prototype, {
 
     if (child._parent)
       child._parent.removeChild(child);
+    else
 
-    children.splice(index, 0, child);
-    child._owned = false;
     child._parent = this;
+    children.splice(index, 0, child);
 
     return child;
   }),
