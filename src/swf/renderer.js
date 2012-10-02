@@ -148,9 +148,9 @@ RenderVisitor.prototype = {
     //var m = child.transform.matrix;
     //ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
-    ctx.scale(child._scaleX, child._scaleY);
     ctx.translate(child._x, child._y);
     ctx.rotate(child._rotation * Math.PI / 180);
+    ctx.scale(child._scaleX, child._scaleY);
 
     //var rotation = child.rotation;
     //if (rotation)

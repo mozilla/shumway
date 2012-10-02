@@ -94,11 +94,11 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     var scaleX = this._scaleX;
     var scaleY = this._scaleY;
 
-    var u = Math.cos(rotation);
-    var v = Math.sin(rotation);
+    var u = Math.cos(rotation / 180 * Math.PI);
+    var v = Math.sin(rotation / 180 * Math.PI);
     var a = u * scaleX;
-    var b = v * scaleY;
-    var c = -v * scaleX;
+    var b = -v * scaleY;
+    var c = v * scaleX;
     var d = u * scaleY;
     var tx = this._x;
     var ty = this._y;
@@ -120,8 +120,8 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     return new Rectangle(
       xMin + tx,
       yMin + ty,
-      (xMax - xMin) + tx,
-      (yMax - yMin) + ty
+      (xMax - xMin),
+      (yMax - yMin)
     );
   }),
   getRect: describeMethod(function (targetCoordSpace) {
