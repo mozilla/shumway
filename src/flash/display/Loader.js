@@ -661,7 +661,10 @@ Loader.prototype = Object.create((Loader.BASE_CLASS || Object).prototype, {
     if (loader._isAvm2Enabled) {
       var sysMode = EXECUTION_MODE.INTERPRET;
       var appMode = EXECUTION_MODE.COMPILE;
-      createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm) {
+      createAVM2(Loader.BUILTIN_PATH, Loader.PLAYER_GLOBAL_PATH, sysMode, appMode, function (vm, error) {
+        if (!vm) {
+          throw "AVM2 initialization failed: " + error;
+        }
         Object.defineProperty(loader, '_bindNativeObject',
           describeMethod(function avm2BindNativeObject(obj) {
             return bindNativeObjectUsingAvm2(vm, obj);

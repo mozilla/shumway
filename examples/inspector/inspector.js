@@ -17,6 +17,10 @@ var BinaryFileReader = (function binaryFileReader() {
       }
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
+          if (xhr.status !== 200 && xhr.status !== 0) {
+            complete(null, xhr.statusText);
+            return;
+          }
           complete(xhr.response);
         }
       }
@@ -86,7 +90,10 @@ function executeFile(file, buffer) {
       SWF.embed(buffer, $("#stage")[0], { onComplete: terminate });
     }
     if (!buffer) {
-      new BinaryFileReader(file).readAll(null, function(buffer) {
+      new BinaryFileReader(file).readAll(null, function(buffer, error) {
+        if (!buffer) {
+          throw "Unable to open the file " + file + ": " + error;
+        }
         runSWF(file, buffer);
       });
     } else {
