@@ -135,6 +135,8 @@ const LoaderDefinition = (function () {
               return function symbolPromiseResolved() {
                 var symbolInfo = symbolPromise.value;
                 symbolInfo.className = className;
+                // Custom classes need to know they are symbols.
+                avm2.systemDomain.getClass(className).setSymbol(props);
               };
             })(symbolPromise, asset.className)
           );
@@ -264,16 +266,13 @@ const LoaderDefinition = (function () {
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
-          graphics: describeAccessor(function () {
-            throw Error();
-          }),
-          _bounds: describeProperty(new Rectangle(
+          bounds: new Rectangle(
             bounds.x / 20,
             bounds.y / 20,
             bounds.width / 20,
             bounds.height / 20
-          )),
-          _graphics: describeProperty(graphics)
+          ),
+          graphics: graphics
         };
         break;
       case 'sprite':
@@ -320,13 +319,10 @@ const LoaderDefinition = (function () {
 
         symbolInfo.className = 'flash.display.MovieClip';
         symbolInfo.props = {
-          graphics: describeAccessor(function () {
-            throw Error();
-          }),
-          _timeline: describeProperty(timeline),
-          _framesLoaded: describeProperty(frameCount),
-          _frameLabels: describeProperty(frameLabels),
-          _totalFrames: describeProperty(frameCount)
+          timeline: timeline,
+          framesLoaded: frameCount,
+          frameLabels: frameLabels,
+          totalFrames: frameCount
         };
         break;
       }
@@ -472,11 +468,13 @@ const LoaderDefinition = (function () {
 
       var vmPromise = new Promise;
       vmPromise.then(function() {
-        var documentClass = makeSymbolConstructor(MovieClip, {
-          _timeline: describeProperty(timeline),
-          _totalFrames: describeProperty(info.frameCount)
+        documentPromise.resolve({
+          className: 'flash.display.MovieClip',
+          props: {
+            timeline: timeline,
+            totalFrames: info.frameCount
+          }
         });
-        documentPromise.resolve(documentClass);
       });
 
       loader._dictionary = { 0: documentPromise };

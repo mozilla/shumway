@@ -106,8 +106,7 @@ const MovieClipDefinition = {
           var index = 0;
           var symbolInfo = loader.getSymbolInfoById(cmd.symbolId);
           var symbolClass = avm2.systemDomain.getClass(symbolInfo.className);
-          // FIXME: What args do we pass in?
-          var instance = symbolClass.createAsSymbol([], symbolInfo.props);
+          var instance = symbolClass.createAsSymbol(symbolInfo.props);
           var replace = 0;
 
           if (current && current._owned) {
@@ -134,13 +133,8 @@ const MovieClipDefinition = {
           instance._owned = true;
           instance._parent = this;
 
-          newInstances.push({
-            depth: depth,
-            index: index,
-            instance: instance,
-          });
-
-          children.splice(index, replace, null);
+          children.splice(index, replace, instance);
+          depthMap[depth] = instance;
 
           target = instance;
         } else if (current && current._animated) {
@@ -159,15 +153,6 @@ const MovieClipDefinition = {
           target._y = matrix.ty / 20;
         }
       }
-    }
-
-    for (var i = 0, n = newInstances.length; i < n; i++) {
-      var entry = newInstances[i];
-      var instance = entry.instance;
-      if (instance.name)
-        this._bindChildToProperty(instance);
-      children.splice(entry.index, 1, instance);
-      depthMap[entry.depth] = instance;
     }
 
     this._currentFrame = frameNum;

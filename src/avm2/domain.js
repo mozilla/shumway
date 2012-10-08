@@ -70,22 +70,36 @@ var Domain = (function () {
         return c;
       };
 
+      // Calls the superclass's initialize on obj, if it has one.
+      Class.initializeSuper = function initializeSuper(obj) {
+        assert(obj);
+        assert(obj.class);
+        assert(obj.class.baseClass);
+        var s = obj.class.baseClass.initialize;
+        if (s) {
+          return s.call(this);
+        }
+      };
+
       Class.prototype = {
         forceConstify: true,
+
+        setSymbol: function setSymbol(props) {
+          this.instance.prototype.symbol = props;
+        },
+
         createInstance: function createInstance() {
           var o = Object.create(this.instance.prototype);
           this.instance.apply(o, arguments);
           return o;
         },
 
-        /**
-         * Symbols get extra properties mixed in _before_
-         * initialize/constructors are called.
-         */
-        createAsSymbol: function createAsSymbol(args, props) {
-          var o = Object.create(this.instance.prototype, props);
-          this.instance.apply(o, args);
-          return o;
+        createAsSymbol: function createAsSymbol(props) {
+          var o = Object.create(this.instance.prototype);
+          // Custom classes will have already have .symbol linked.
+          if (!o.symbol) {
+            o.symbol = props;
+          }
         },
 
         /**
