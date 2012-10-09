@@ -352,7 +352,9 @@ var Scope = (function () {
           return obj;
         }
       }
-    } else if (resolveMultiname(obj, mn, !this.isWith)) {
+    } else if (!this.isWith && resolveMultinameInTraits(obj, mn)) {
+      return obj;
+    } else if (resolveMultiname(obj, mn)) {
       return obj;
     }
 
@@ -399,10 +401,24 @@ function nameInTraits(obj, qn) {
   return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
 }
 
+function resolveMultinameInTraits(obj, mn) {
+  assert(!Multiname.isQName(mn), mn, " already resolved");
+
+  obj = Object(obj);
+
+  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+    var qn = mn.getQName(i);
+    if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+      return qn;
+    }
+  }
+  return undefined;
+}
+
 /**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, mn, traitsOnly) {
+function resolveMultiname(obj, mn) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
 
   obj = Object(obj);
@@ -415,28 +431,24 @@ function resolveMultiname(obj, mn, traitsOnly) {
   // work around it here during name resolution.
 
   var isNative = isNativePrototype(obj);
-  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-    var qn = mn.getQName(i);
-    if (traitsOnly) {
-      if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
-        return qn;
-      }
-      continue;
-    }
-
-    if (mn.namespaces[i].isDynamic()) {
-      publicQn = qn;
-      if (isNative) {
+  if (isNative) {
+    for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+      if (mn.namespaces[i].isDynamic()) {
+        var publicQn = mn.getQName(i);
+        if (Multiname.getQualifiedName(publicQn) in obj) {
+          return publicQn;
+        }
         break;
       }
-    } else if (!isNative) {
-      if (Multiname.getQualifiedName(qn) in obj) {
-        return qn;
-      }
     }
+    return undefined;
   }
-  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
-    return publicQn;
+
+  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+    var qn = mn.getQName(i);
+    if (Multiname.getQualifiedName(qn) in obj) {
+      return qn;
+    }
   }
 
   return undefined;
