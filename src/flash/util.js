@@ -27,10 +27,6 @@ function describeProperty(val) {
   return { value: val, writable: true, configurable: true, enumerable: true };
 }
 
-function illegalOperation() {
-  throw Error('Illegal Operation');
-}
-
 function Promise() {
   this.resolved = false;
   this._callbacks = [];

@@ -8,26 +8,38 @@ const KeyboardEventDefinition = (function () {
   };
 
   def.__glue__ = {
-    scriptProperties: {
-      keyCode: "private m_keyCode",
-      keyLocation: "private m_keyLocation"
+    script: {
+      instance: {
+        keyCode: "private m_keyCode",
+        keyLocation: "private m_keyLocation"
+      },
+
+      static: {
+        KEY_DOWN: "public KEY_DOWN",
+        KEY_UP: "public KEY_UP"
+      }
     },
 
-    scriptStatics: {
-      KEY_DOWN: "public KEY_DOWN",
-      KEY_UP: "public KEY_UP"
-    },
-
-    nativeMethods: {
-      "get charCode": function () { return this.charCode; },
-      "get ctrlKey": function () { return this.ctrlKey; },
-      "get altKey": function () { return this.altKey; },
-      "get shiftKey": function () { return this.shiftKey; },
-      "set charCode": function (v) { this.charCode = v; },
-      "set ctrlKey": function (v) { this.ctrlKey = v; },
-      "set altKey": function (v) { this.altKey = v; },
-      "set shiftKey": function (v) { this.shiftKey = v; },
-      updateAfterEvent: def.updateAfterEvent
+    native: {
+      instance: {
+        charCode: {
+          get: function () { return this.charCode; },
+          set: function (v) { this.charCode = v; }
+        },
+        ctrlKey: {
+          get: function () { return this.ctrlKey; },
+          set: function (v) { this.ctrlKey = v; }
+        },
+        altKey: {
+          get: function () { return this.altKey; },
+          set: function (v) { this.altKey = v; }
+        },
+        shiftKey: {
+          get: function () { return this.shiftKey; },
+          set: function (v) { this.shiftKey = v; }
+        },
+        updateAfterEvent: def.updateAfterEvent
+      }
     }
   };
 

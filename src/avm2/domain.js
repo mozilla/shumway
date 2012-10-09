@@ -59,10 +59,8 @@ var Domain = (function () {
       // Convenience constructor for classes that don't need any "special"
       // behavior.
       this.ManagedClass = function ManagedClass(name, baseClass, definition, instance, callable) {
-        var c = new Class(name, instance || function () {
-          // Initialize should be nullary. If the script needs to pass in
-          // script objects to native land, there's usually a ctor function.
-          this.initialize();
+        var c = new Class(name, function () {
+          this.class.initializeInstance(this);
           instance.apply(this, arguments);
         }, callable);
         c.extend(baseClass);
@@ -70,22 +68,25 @@ var Domain = (function () {
         return c;
       };
 
-      // Calls the superclass's initialize on obj, if it has one.
-      Class.initializeSuper = function initializeSuper(obj) {
-        assert(obj);
-        assert(obj.class);
-        assert(obj.class.baseClass);
-        var s = obj.class.baseClass.initialize;
-        if (s) {
-          return s.call(this);
-        }
-      };
-
       Class.prototype = {
         forceConstify: true,
 
         setSymbol: function setSymbol(props) {
           this.instance.prototype.symbol = props;
+        },
+
+        initializeInstance: function initializeInstance(obj) {
+          // Initialize should be nullary and nonrecursive. If the script
+          // needs to pass in script objects to native land, there's usually a
+          // ctor function.
+          var c = this;
+          while (c) {
+            var s = c.instance.prototype.initialize;
+            if (s) {
+              s.call(obj);
+            }
+            c = c.baseClass;
+          }
         },
 
         createInstance: function createInstance() {
@@ -157,7 +158,9 @@ var Domain = (function () {
           }
 
           if (!proto.initialize) {
-            proto.initialize = function () {};
+            proto.initialize = function () {
+              Class.initializeSuper(this);
+            };
           }
 
           var glue = definition.__glue__;
@@ -165,11 +168,13 @@ var Domain = (function () {
             return;
 
           // Accessors for script properties from within AVM2.
-          if (glue.script && glue.script.instance) {
-            glueProperties(proto, glue.script.instance);
-          }
-          if (glue.script && glue.script.static) {
-            glueProperties(this, glue.script.static);
+          if (glue.script) {
+            if (glue.script.instance) {
+              glueProperties(proto, glue.script.instance);
+            }
+            if (glue.script.static) {
+              glueProperties(this, glue.script.static);
+            }
           }
 
           // Binding to member methods marked as [native].

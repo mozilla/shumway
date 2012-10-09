@@ -3,7 +3,7 @@ const EventDefinition = (function () {
   var EVENT_PHASE_AT_TARGET       = 2;
   var EVENT_PHASE_BUBBLING_PHASE  = 3;
 
-  return {
+  var def = {
     __class__: 'flash.events.Event',
 
     initialize: function () {
@@ -11,14 +11,13 @@ const EventDefinition = (function () {
       this._eventPhase = EVENT_PHASE_AT_TARGET;
       this._currentTarget = null;
       this._target = null;
-    }
+    },
 
     ctor: function (type, bubbles, cancelable) {
       this.type = type;
       this.bubbles = !!bubbles;
       this.cancelable = !!cancelable;
     },
-
     clone: function () {
       return new Event(this.type, this.bubbles, this.cancelable);
     },
@@ -40,51 +39,75 @@ const EventDefinition = (function () {
     stopPropagation: function () {
       notImplemented();
     },
-    get target: () {
+    get target() {
       return this._target;
     },
   };
 
+  const desc = Object.getOwnPropertyDescriptor;
+
   def.__glue__ = {
-    scriptStatics: {
-      ACTIVATE:                     'public ACTIVATE',
-      ADDED:                        'public ADDED',
-      ADDED_TO_STAGE:               'public ADDED_TO_STAGE',
-      CANCEL:                       'public CANCEL',
-      CHANGE:                       'public CHANGE',
-      CLEAR:                        'public CLEAR',
-      CLOSE:                        'public CLOSE',
-      COMPLETE:                     'public COMPLETE',
-      CONNECT:                      'public CONNECT',
-      COPY:                         'public COPY',
-      CUT:                          'public CUT',
-      DEACTIVATE:                   'public DEACTIVATE',
-      ENTER_FRAME:                  'public ENTER_FRAME',
-      FRAME_CONSTRUCTED:            'public FRAME_CONSTRUCTED',
-      EXIT_FRAME:                   'public EXIT_FRAME',
-      ID3:                          'public ID3',
-      INIT:                         'public INIT',
-      MOUSE_LEAVE:                  'public MOUSE_LEAVE',
-      OPEN:                         'public OPEN',
-      PASTE:                        'public PASTE',
-      REMOVED:                      'public REMOVED',
-      REMOVED_FROM_STAGE:           'public REMOVED_FROM_STAGE',
-      RENDER:                       'public RENDER',
-      RESIZE:                       'public RESIZE',
-      SCROLL:                       'public SCROLL',
-      TEXT_INTERACTION_MODE_CHANGE: 'public TEXT_INTERACTION_MODE_CHANGE',
-      SELECT:                       'public SELECT',
-      SELECT_ALL:                   'public SELECT_ALL',
-      SOUND_COMPLETE:               'public SOUND_COMPLETE',
-      TAB_CHILDREN_CHANGE:          'public TAB_CHILDREN_CHANGE',
-      TAB_INDEX_CHANGE:             'public TAB_INDEX_CHANGE',
-      UNLOAD:                       'public UNLOAD',
-      FULLSCREEN:                   'public FULLSCREEN',
-      HTML_BOUNDS_CHANGE:           'public HTML_BOUNDS_CHANGE',
-      HTML_RENDER:                  'public HTML_RENDER',
-      HTML_DOM_INITIALIZE:          'public HTML_DOM_INITIALIZE',
-      LOCATION_CHANGE:              'public LOCATION_CHANGE',
-      VIDEO_FRAME:                  'public VIDEO_FRAME'
+    script: {
+      static: {
+        ACTIVATE:                     'public ACTIVATE',
+        ADDED:                        'public ADDED',
+        ADDED_TO_STAGE:               'public ADDED_TO_STAGE',
+        CANCEL:                       'public CANCEL',
+        CHANGE:                       'public CHANGE',
+        CLEAR:                        'public CLEAR',
+        CLOSE:                        'public CLOSE',
+        COMPLETE:                     'public COMPLETE',
+        CONNECT:                      'public CONNECT',
+        COPY:                         'public COPY',
+        CUT:                          'public CUT',
+        DEACTIVATE:                   'public DEACTIVATE',
+        ENTER_FRAME:                  'public ENTER_FRAME',
+        FRAME_CONSTRUCTED:            'public FRAME_CONSTRUCTED',
+        EXIT_FRAME:                   'public EXIT_FRAME',
+        ID3:                          'public ID3',
+        INIT:                         'public INIT',
+        MOUSE_LEAVE:                  'public MOUSE_LEAVE',
+        OPEN:                         'public OPEN',
+        PASTE:                        'public PASTE',
+        REMOVED:                      'public REMOVED',
+        REMOVED_FROM_STAGE:           'public REMOVED_FROM_STAGE',
+        RENDER:                       'public RENDER',
+        RESIZE:                       'public RESIZE',
+        SCROLL:                       'public SCROLL',
+        TEXT_INTERACTION_MODE_CHANGE: 'public TEXT_INTERACTION_MODE_CHANGE',
+        SELECT:                       'public SELECT',
+        SELECT_ALL:                   'public SELECT_ALL',
+        SOUND_COMPLETE:               'public SOUND_COMPLETE',
+        TAB_CHILDREN_CHANGE:          'public TAB_CHILDREN_CHANGE',
+        TAB_INDEX_CHANGE:             'public TAB_INDEX_CHANGE',
+        UNLOAD:                       'public UNLOAD',
+        FULLSCREEN:                   'public FULLSCREEN',
+        HTML_BOUNDS_CHANGE:           'public HTML_BOUNDS_CHANGE',
+        HTML_RENDER:                  'public HTML_RENDER',
+        HTML_DOM_INITIALIZE:          'public HTML_DOM_INITIALIZE',
+        LOCATION_CHANGE:              'public LOCATION_CHANGE',
+        VIDEO_FRAME:                  'public VIDEO_FRAME'
+      }
+    },
+
+    native: {
+      instance: {
+        type: {
+          get: function () { return this.type; }
+        },
+        bubbles: {
+          get: function () { return this.bubbles; }
+        },
+        cancelable: {
+          get: function () { return this.cancelable; }
+        },
+        target: desc(def, "target"),
+        currentTarget: desc(def, "currentTarget"),
+        eventPhase: desc(def, "eventPhase"),
+        stopPropagation: def.stopPropagation,
+        stopImmediatePropagation: def.stopImmediatePropagation,
+        isDefaultPrevented: def.isDefaultPrevented
+      }
     }
   };
 

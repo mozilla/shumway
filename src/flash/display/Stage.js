@@ -1,345 +1,137 @@
-var COLOR_CORRECTION_DEFAULT     = 'default';
-var COLOR_CORRECTION_OFF         = 'on';
-var COLOR_CORRECTION_ON          = 'off';
+const StageDefinition = (function () {
+  var COLOR_CORRECTION_DEFAULT     = 'default';
+  var COLOR_CORRECTION_OFF         = 'on';
+  var COLOR_CORRECTION_ON          = 'off';
 
-var COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
-var COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
-var COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
+  var COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
+  var COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
+  var COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
 
-var STAGE_ALIGN_BOTTOM           = 'B';
-var STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
-var STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
-var STAGE_ALIGN_LEFT             = 'L';
-var STAGE_ALIGN_RIGHT            = 'R';
-var STAGE_ALIGN_TOP              = 'T';
-var STAGE_ALIGN_TOP_LEFT         = 'TL';
-var STAGE_ALIGN_TOP_RIGHT        = 'TR';
+  var STAGE_ALIGN_BOTTOM           = 'B';
+  var STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
+  var STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
+  var STAGE_ALIGN_LEFT             = 'L';
+  var STAGE_ALIGN_RIGHT            = 'R';
+  var STAGE_ALIGN_TOP              = 'T';
+  var STAGE_ALIGN_TOP_LEFT         = 'TL';
+  var STAGE_ALIGN_TOP_RIGHT        = 'TR';
 
-var STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
-var STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
-var STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
-var STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
+  var STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
+  var STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
+  var STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
+  var STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
 
-var STAGE_QUALITY_BEST           = 'best';
-var STAGE_QUALITY_HIGH           = 'high';
-var STAGE_QUALITY_LOW            = 'low';
-var STAGE_QUALITY_MEDIUM         = 'medium';
+  var STAGE_QUALITY_BEST           = 'best';
+  var STAGE_QUALITY_HIGH           = 'high';
+  var STAGE_QUALITY_LOW            = 'low';
+  var STAGE_QUALITY_MEDIUM         = 'medium';
 
-function Stage() {
-  DisplayObjectContainer.call(this);
+  var def = {
+    __class__: 'flash.display.Stage',
 
-  this._color = 0xFFFFFFFF;
-  this._stage = this;
-  this._transform = { };
-}
-
-Stage.prototype = Object.create(DisplayObjectContainer.prototype, {
-  __class__: describeInternalProperty('flash.display.Stage'),
-
-  accessibilityImplementation: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  accessibilityProperties: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  alpha: describeAccessor(
-    function () {
-      return 1;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  align: describeAccessor(
-    function () {
-      return '';
+    initialize: function () {
+      this._color = 0xFFFFFFFF;
+      this._stage = this;
+      this._transform = { };
     },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  allowsFullScreen: describeAccessor(function () {
-    return false;
-  }),
-  alpha: describeAccessor(function () {
-    return 1;
-  }),
-  blendMode: describeAccessor(
-    function () {
-      return BLEND_MODE_NORMAL;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  cacheAsBitmap: describeAccessor(
-    function () {
+
+    get allowsFullScreen() {
       return false;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  color: describeAccessor(
-    function () {
-      return this._color;
     },
-    function (val) {
-      this._color = val;
-    }
-  ),
-  colorCorrection: describeAccessor(
-    function () {
+    get colorCorrection() {
       return COLOR_CORRECTION_DEFAULT;
     },
-    function (val) {
+    set colorCorrection(val) {
       notImplemented();
-    }
-  ),
-  colorCorrectionSupport: describeAccessor(function () {
-    return COLOR_CORRECTION_UNSUPPORTED;
-  }),
-  contextMenu: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  displayState: describeAccessor(
-    function () {
+    },
+    get colorCorrectionSupport() {
+      return COLOR_CORRECTION_UNSUPPORTED;
+    },
+    get displayState() {
       return null;
     },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  filters: describeAccessor(
-    function () {
-      return [];
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  focus: describeAccessor(
-    function () {
+    get focus() {
       return Keyboard._focus;
     },
-    function (val) {
+    set focus(val) {
       Keyboard._focus = val;
-    }
-  ),
-  focusRect: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  frameRate: describeAccessor(
-    function () {
+    },
+    get frameRate() {
       return this._frameRate;
     },
-    function (val) {
+    set frameRate(val) {
       this._frameRate = val;
-    }
-  ),
-  fullScreenHeight: describeAccessor(function () {
-    notImplemented();
-  }),
-  fullScreenSourceRect: describeAccessor(
-    function () {
-      return null;
     },
-    function (val) {
+    get fullScreenHeight() {
       notImplemented();
-    }
-  ),
-  fullScreenWidth: describeAccessor(function () {
-    notImplemented();
-  }),
-  loaderInfo: describeAccessor(
-    function () {
-      return this._loaderInfo;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  mask: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  mouseEnabled: describeAccessor(
-    function () {
-      return true;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  name: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  nativeWindow: describeAccessor(function () {
-    return null;
-  }),
-  opaqueBackground: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  quality: describeAccessor(
-    function () {
+    },
+    get fullScreenSourceRect() {
+        return null;
+    },
+    set fullScreenSourceRect(val) {
+      notImplemented();
+    },
+    get fullScreenWidth() {
+      notImplemented();
+    },
+    get quality() {
       return STAGE_QUALITY_HIGH;
     },
-    function (val) {
+    set quality(val) {
       notImplemented();
-    }
-  ),
-  rotation: describeAccessor(
-    function () {
-      return 0;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  scale9Grid: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  scaleMode: describeAccessor(
-    function () {
+    },
+    get scaleMode() {
       return STAGE_SCALE_MODE_NO_SCALE;
     },
-    function (val) {
+    set scaleMode(val) {
       notImplemented();
-    }
-  ),
-  scaleX: describeAccessor(
-    function () {
-      return 1;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  scaleY: describeAccessor(
-    function () {
-      return 1;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  scrollRect: describeAccessor(
-    function () {
-      return null;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  showDefaultContextMenu: describeAccessor(
-    function () {
+    },
+    get showDefaultContextMenu() {
       return true;
     },
-    function (val) {
+    set showDefaultContextMenu(val) {
       notImplemented();
-    }
-  ),
-  softKeyboardRect: describeAccessor(function () {
-    notImplemented();
-  }),
-  stageFocusRect: describeAccessor(
-    function () {
+    },
+    get stageFocusRect() {
       return false;
     },
-    function (val) {
+    set stageFocusRect(val) {
       notImplemented();
-    }
-  ),
-  stageHeight: describeAccessor(
-    function () {
+    },
+    get stageHeight() {
       return this._stageHeight;
     },
-    function (val) {
+    set stageHeight(val) {
       notImplemented();
-    }
-  ),
-  stageWidth: describeAccessor(
-    function () {
+    },
+    get stageWidth() {
       return this._stageWidth;
     },
-    function (val) {
+    set stageWidth(val) {
+      notImplemented();
+    },
+    get stageVideos() {
+      notImplemented();
+    },
+    get wmodeGPU() {
+      return false;
+    },
+    invalidate: function () {
+      notImplemented();
+    },
+    isFocusInaccessible: function() {
       notImplemented();
     }
-  ),
-  stageVideos: describeAccessor(function () {
-    notImplemented();
-  }),
-  tabEnabled: describeAccessor(
-    function () {
-      return false;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  tabIndex: describeAccessor(
-    function () {
-      return -1;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  transform: describeAccessor(
-    function () {
-      return this._transform;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  visible: describeAccessor(
-    function () {
-      return true;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  x: describeAccessor(
-    function () {
-      return 0;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  y: describeAccessor(
-    function () {
-      return 0;
-    }, function (val) {
-      illegalOperation();
-    }
-  ),
-  wmodeGPU: describeAccessor(function () {
-    return false;
-  }),
+  };
 
-  invalidate: describeMethod(function() {
-    notImplemented();
-  }),
-  isFocusInaccessible: describeMethod(function() {
-    notImplemented();
-  })
-});
+  // TODO
+  def.__glue__  = {
+    instance: {
+      requireOwnerPermissions: function () {
+        // private undocumented
+      }
+    }
+  };
+
+  return def;
+}).call(this);

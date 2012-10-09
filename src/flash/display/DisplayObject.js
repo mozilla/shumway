@@ -134,7 +134,7 @@ const DisplayObjectDefinition = (function () {
     hitTestPoint: function (x, y, shapeFlag) {
       notImplemented();
     },
-    loaderInfo: function () {
+    get loaderInfo() {
       return this._loaderInfo || this._parent.loaderInfo;
     },
     localToGlobal: function (pt) {
@@ -242,6 +242,48 @@ const DisplayObjectDefinition = (function () {
     set y(val) {
       this._y = val;
       this._slave = false;
+    }
+  };
+
+  const desc = Object.getOwnPropertyDescriptor;
+
+  def.__glue__ = {
+    native: {
+      instance: {
+        root: desc(def, "root"),
+        stage: desc(def, "stage"),
+        name: desc(def, "name"),
+        mask: desc(def, "mask"),
+        visible: desc(def, "visible"),
+        x: desc(def, "x"),
+        y: desc(def, "y"),
+        z: desc(def, "z"),
+        scaleX: desc(def, "scaleX"),
+        scaleY: desc(def, "scaleY"),
+        scaleZ: desc(def, "scaleZ"),
+        mouseX: desc(def, "mouseX"),
+        mouseY: desc(def, "mouseY"),
+        rotation: desc(def, "rotation"),
+        rotationX: desc(def, "rotationX"),
+        rotationY: desc(def, "rotationY"),
+        rotationZ: desc(def, "rotationZ"),
+        alpha: desc(def, "alpha"),
+        width: desc(def, "width"),
+        height: desc(def, "height"),
+        cacheAsBitmap: desc(def, "cacheAsBitmap"),
+        opaqueBackground: desc(def, "opaqueBackground"),
+        scrollRect: desc(def, "scrollRect"),
+        filters: desc(def, "filters"),
+        blendMode: desc(def, "blendMode"),
+        transform: desc(def, "transform"),
+        scale9Grid: desc(def, "scale9Grid"),
+        loaderInfo: desc(def, "loaderInfo"),
+        accessibilityProperties: desc(def, "accessibilityProperties"),
+        globalToLocal: def.globalToLocal,
+        localToGlobal: def.localToGlobal,
+        getBounds: def.getBounds,
+        getRect: def.getRect
+      }
     }
   };
 

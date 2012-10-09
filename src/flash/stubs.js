@@ -36,7 +36,26 @@ var as3error = {};
    makeStub(as3error, className, className);
  });
 
-[].forEach(function (className) {
+["flash.display.DisplayObject",
+ "flash.display.InteractiveObject",
+ "flash.display.DisplayObjectContainer",
+ "flash.display.Sprite",
+ "flash.display.MovieClip",
+ "flash.display.Shape",
+ "flash.display.Stage",
+ "flash.display.Loader",
+ "flash.display.LoaderInfo",
+
+ "flash.event.EventDispatcher",
+ "flash.event.Event",
+ "flash.event.KeyboardEvent",
+
+ "flash.text.TextField",
+ "flash.text.StaticText",
+
+ "flash.text.Video",
+
+ "flash.utils.Timer"].forEach(function (className) {
   var path = className.split(".");
   var container = this;
   for (var i = 0, j = path.length - 1; i < j; i++) {
@@ -48,3 +67,39 @@ var as3error = {};
 
   makeStub(container, className, path[path.length - 1]);
 });
+
+//
+// Hook up natives
+//
+function manage(name, definition) {
+  return function (runtime, scope, instance, baseClass) {
+    return new runtime.domain.system.ManagedClass(name, baseClass, definition, instance);
+  };
+}
+
+natives.DisplayObjectClass = manage("DisplayObject", DisplayObjectDefinition);
+natives.InteractiveObjectClass = manage("InteractiveObject", InteractiveObjectDefinition);
+natives.ContainerClass = manage("DisplayObjectContainer", DisplayObjectContainerDefinition);
+natives.SpriteClass = manage("Sprite", SpriteDefinition);
+natives.MovieClipClass = manage("MovieClip", MovieClipDefinition);
+natives.ShapeClass = manage("Shape", ShapeDefinition);
+natives.StageClass = manage("Stage", StageDefinition);
+natives.LoaderClass = manage("Loader", LoaderDefinition);
+natives.LoaderInfoClass = manage("LoaderInfo", LoaderInfoDefinition);
+
+natives.EventDispatcherClass = manage("EventDispatcher", EventDispatcherDefinition);
+natives.EventClass = manage("Event", EventDefinition);
+natives.KeyboardEventClass = manage("KeyboardEvent", KeyboardEventDefinition);
+
+natives.TextFieldClass = manage("TextField", TextFieldDefinition);
+natives.StaticTextClass = manage("StaticText", StaticTextDefinition);
+
+natives.VideoClass = manage("Video", VideoDefinition);
+
+natives.TimerClass = manage("Timer", TimerDefinition);
+natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {
+  var start = Date.now();
+  return function getTimer() {
+    return Date.now() - start;
+  };
+};

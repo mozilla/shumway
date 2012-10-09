@@ -8,13 +8,17 @@ const TimerEventDefinition = (function () {
   };
 
   def.__glue__ = {
-    scriptStatics: {
-      TIMER: "public TIMER",
-      TIMER_COMPLETE: "public TIMER_COMPLETE"
+    script: {
+      static: {
+        TIMER: "public TIMER",
+        TIMER_COMPLETE: "public TIMER_COMPLETE"
+      }
     },
 
-    nativeMethods: {
-      updateAfterEvent: def.updateAfterEvent
+    native: {
+      instance: {
+        updateAfterEvent: def.updateAfterEvent
+      }
     }
   };
 

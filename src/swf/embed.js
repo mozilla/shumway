@@ -1,9 +1,9 @@
 SWF.embed = function(file, container, options) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
-  var loader = new Loader;
+  var loader = new flash.display.Loader;
   var loaderInfo = loader.contentLoaderInfo;
-  var stage = new Stage;
+  var stage = new flash.display.Stage;
 
   loader._stage = stage;
   stage._loader = loader;

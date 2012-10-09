@@ -195,5 +195,28 @@ const DisplayObjectContainerDefinition = (function () {
     }
   };
 
+  const desc = Object.getOwnPropertyDescriptor;
+
+  def.__glue__ = {
+    instance: {
+      numChildren: desc(def, "numChildren"),
+      tabChildren: desc(def, "tabChildren"),
+      mouseChildren: desc(def, "mouseChildren"),
+      textSnapshot: desc(def, "textSnapshot"),
+      addChild: def.addChild,
+      addChildAt: def.addChildAt,
+      removeChild: def.removeChild,
+      removeChildAt: def.removeChildAt,
+      getChildIndex: def.getChildIndex,
+      setChildIndex: def.setChildIndex,
+      getChildAt: def.getChildAt,
+      getChildByName: def.getChildByName,
+      contains: def.contains,
+      swapChildrenAt: def.swapChildrenAt,
+      swapChildren: def.swapChildren,
+      removeChildren: def.removeChildren
+    }
+  };
+
   return def;
 }).call(this);

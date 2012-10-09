@@ -57,9 +57,23 @@ const InteractiveObjectDefinition = (function () {
     },
     get tabIndex() {
       return -1;
-    },
-    set tabEnabled(val) {
-      notImplemented();
+    }
+  };
+
+  const desc = Object.getOwnPropertyDescriptor;
+
+  def.__glue__ = {
+    instance: {
+      tabEnabled: desc(def, "tabEnabled"),
+      tabIndex: desc(def, "tabIndex"),
+      focusRect: desc(def, "focusRect"),
+      mouseEnabled: desc(def, "mouseEnabled"),
+      doubleClickEnabled: desc(def, "doubleClickEnabled"),
+      accessibilityImplementation: desc(def, "accessibilityImplementation"),
+      softKeyboardInputAreaOfInterest: desc(def, "softKeyboardInputAreaOfInterest"),
+      needsSoftKeyboard: desc(def, "needsSoftKeyboard"),
+      contextMenu: desc(def, "contextMenu"),
+      requestSoftKeyboard: def.requestSoftKeyboard
     }
   };
 

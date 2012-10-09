@@ -1,7 +1,7 @@
 const EventDispatcherDefinition = (function () {
   var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
 
-  return {
+  var def = {
     __class__: 'flash.events.EventDispatcher',
 
     initialize: function () {
@@ -108,4 +108,19 @@ const EventDispatcherDefinition = (function () {
       return false;
     }
   };
+
+  def.__glue__ = {
+    instance: {
+      ctor: function ctor(target) {
+        print("Ctor");
+      },
+      addEventListener: def.addEventListener,
+      removeEventListener: def.removeEventListener,
+      hasEventListener: def.hasEventListener,
+      willTrigger: def.willTrigger,
+      dispatchEventFunction: def.dispatchEvent
+    }
+  };
+
+  return def;
 }).call(this);
