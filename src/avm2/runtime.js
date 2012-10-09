@@ -891,9 +891,11 @@ var Runtime = (function () {
       scope.object = cls;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
-        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, cls.nativeMethods, true);
+        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits,
+                         cls.native ? cls.native.instance : undefined, true);
       }
-      this.applyTraits(cls, scope, null, ci.traits, cls.nativeStatics, false);
+      this.applyTraits(cls, scope, null, ci.traits,
+                       cls.native ? cls.native.static : undefined, false);
     } else {
       scope = new Scope(scope, null);
       instance = this.createFunction(ii.init, scope);
@@ -1051,11 +1053,12 @@ var Runtime = (function () {
           // need to close over the method again.
           var k = Multiname.getName(mi.name);
           if (trait.isGetter()) {
-            k = "get " + k;
+            closure = classNatives[k] ? classNatives[k].get : undefined;
           } else if (trait.isSetter()) {
-            k = "set " + k;
+            closure = classNatives[k] ? classNatives[k].set : undefined;
+          } else {
+            closure = classNatives[k];
           }
-          closure = classNatives[k];
         }
       } else {
         closure = runtime.createFunction(mi, scope);

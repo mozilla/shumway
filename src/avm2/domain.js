@@ -165,16 +165,15 @@ var Domain = (function () {
             return;
 
           // Accessors for script properties from within AVM2.
-          if (glue.scriptProperties) {
-            glueProperties(proto, glue.scriptProperties);
+          if (glue.script && glue.script.instance) {
+            glueProperties(proto, glue.script.instance);
           }
-          if (glue.scriptStatics) {
-            glueProperties(this, glue.scriptStatics);
+          if (glue.script && glue.script.static) {
+            glueProperties(this, glue.script.static);
           }
 
           // Binding to member methods marked as [native].
-          this.nativeMethods = glue.nativeMethods;
-          this.nativeStatics = glue.nativeStatics;
+          this.native = glue.native;
         },
 
         extendNative: function (baseClass, native) {
@@ -214,8 +213,12 @@ var Domain = (function () {
       // and we cache the dynamic instant prototype as this.dynamicPrototype.
       //
       // Traits are not visible to the AVM script.
-      Class.nativeMethods = {
-        "get prototype": function () { return this.dynamicPrototype; }
+      Class.native = {
+        instance: {
+          prototype: {
+            get: function () { return this.dynamicPrototype; }
+          }
+        }
       };
 
       var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
