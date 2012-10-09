@@ -17,6 +17,7 @@ const VM_ENUMERATION_KEYS = "vm enumeration keys";
 const VM_OPEN_METHODS = "vm open methods";
 const VM_NEXT_NAME = "vm next name";
 const VM_NEXT_NAME_INDEX = "vm next name index";
+const VM_UNSAFE_CLASSES = ["Shumway"];
 
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -447,6 +448,10 @@ function isPrimitiveType(x) {
 
 function getProperty(obj, mn) {
   assert(obj != undefined, "getProperty(", mn, ") on undefined");
+  if (obj.canHandleProperties) {
+    return obj.get(mn.name);
+  }
+
   assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
@@ -504,7 +509,9 @@ function getSuper(obj, mn) {
           value = obj[superName + " " + qn] = openMethod.bind(obj);
         }
       } else {
-        value = superTraits[qn];
+        var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
+        assert(descriptor);
+        value = descriptor.get ? descriptor.get.call(obj) : obj[qn];
       }
     }
   }
@@ -518,6 +525,10 @@ function getSuper(obj, mn) {
 
 function setProperty(obj, mn, value) {
   assert(obj);
+  if (obj.canHandleProperties) {
+    return obj.set(mn.name, value);
+  }
+
   assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
@@ -555,7 +566,14 @@ function setSuper(obj, mn, value) {
     if (Multiname.isNumeric(resolved) && superTraits.indexSet) {
       superTraits.indexSet(Multiname.getQualifiedName(resolved), value);
     } else {
-      obj[Multiname.getQualifiedName(resolved)] = value;
+      var qn = Multiname.getQualifiedName(resolved);
+      var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
+      assert(descriptor);
+      if (descriptor.set) {
+        descriptor.set.call(obj, value);
+      } else {
+        obj[qn] = value;
+      }
     }
   } else {
     throw new ReferenceError("Cannot create property " + mn.name +
@@ -565,6 +583,10 @@ function setSuper(obj, mn, value) {
 
 function deleteProperty(obj, mn) {
   assert(obj);
+  if (obj.canHandleProperties) {
+    return obj.delete(mn.name);
+  }
+
   assert(Multiname.isMultiname(mn), mn);
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
@@ -840,6 +862,19 @@ var Runtime = (function () {
     var cls, instance;
     var baseBindings = baseClass ? baseClass.instance.prototype : null;
 
+    /**
+     * Check if the class is in the list of approved VM unsafe classes and mark its method traits
+     * as native.
+     */
+    if (VM_UNSAFE_CLASSES.indexOf(className) >= 0) {
+      ci.native = {cls: className + "Class"};
+      ii.traits.concat(ci.traits).forEach(function (t) {
+        if (t.isMethod()) {
+          t.methodInfo.flags |= METHOD_Native;
+        }
+      });
+    }
+
     if (ci.native) {
       // Some natives classes need this, like Error.
       var makeNativeClass = getNative(ci.native.cls);
@@ -1037,8 +1072,6 @@ var Runtime = (function () {
       return closure;
     }
 
-    var baseSlotId;
-
     // Copy over base trait bindings.
     if (base) {
       var bindings = base[VM_BINDINGS];
@@ -1054,26 +1087,26 @@ var Runtime = (function () {
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
       defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, openMethods);
-      baseSlotId = obj[VM_SLOTS].length;
     } else {
       defineNonEnumerableProperty(obj, VM_BINDINGS, []);
       defineNonEnumerableProperty(obj, VM_SLOTS, []);
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
-      baseSlotId = 0;
     }
 
-    var freshSlotId = baseSlotId;
+    var baseSlotId = obj[VM_SLOTS].length;
+    var nextSlotId = baseSlotId + 1;
 
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
       var qn = Multiname.getQualifiedName(trait.name);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
         if (!trait.slotId) {
-          trait.slotId = ++freshSlotId;
+          trait.slotId = nextSlotId++;
         }
 
-        if (trait.slotId <= baseSlotId) {
+        if (trait.slotId < baseSlotId) {
           /* XXX: Hope we don't throw while doing builtins. */
+          assert (false);
           this.throwErrorFromVM("VerifyError", "Bad slot ID.");
         }
 

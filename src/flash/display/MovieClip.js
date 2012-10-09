@@ -71,10 +71,9 @@ const MovieClipDefinition = {
     if (frameNum > this.framesLoaded)
       frameNum = this.framesLoaded;
 
-    this.dispatchEvent(new Event(Event.ENTER_FRAME));
-
-    if (frameNum === this._currentFrame)
+    if (frameNum === this._currentFrame) {
       return;
+    }
 
     var children = this._children;
     var depthMap = this._depthMap;
@@ -117,8 +116,6 @@ const MovieClipDefinition = {
               matrix = current.transform.matrix;
             replace = 1;
           } else {
-            instance._name = cmd.name;
-
             var top = null;
             for (var i = +depth + 1; i < highestDepth; i++) {
               var info = depthMap[i];
@@ -130,6 +127,7 @@ const MovieClipDefinition = {
           }
 
           instance._animated = true;
+          instance._name = cmd.name || null;
           instance._owned = true;
           instance._parent = this;
 
@@ -144,7 +142,7 @@ const MovieClipDefinition = {
         if (cxform)
           target._cxform = cxform;
         if (matrix) {
-          target._rotation = Math.atan2(matrix.b, matrix.c) * 180 / Math.PI;
+          target._rotation = Math.atan2(matrix.c, matrix.a) * 180 / Math.PI;
           var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
           target._scaleX = matrix.a > 0 ? sx : -sx;
           var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
@@ -156,7 +154,11 @@ const MovieClipDefinition = {
     }
 
     this._currentFrame = frameNum;
-
+    this._scriptExecutionPending = true;
+  }),
+  _executeScripts: describeMethod(function () {
+    this._scriptExecutionPending = false;
+    var frameNum = this._currentFrame;
     if (frameNum in this._frameScripts) {
       var scripts = this._frameScripts[frameNum];
       for (var i = 0, n = scripts.length; i < n; i++)

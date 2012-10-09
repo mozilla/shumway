@@ -1,0 +1,5 @@
+../tests/regress/correctness/coerce-0.abc
+../tests/regress/correctness/vectors-1.abc
+../tests/regress/performance/crpto.abc
+../tests/regress/performance/get-property.abc
+

@@ -63,8 +63,8 @@ var MATRIX = {
 };
 var CXFORM = {
   $$0: ALIGN,
-  $$hasMultipliers: UB(1),
   $$hasOffsets: UB(1),
+  $$hasMultipliers: UB(1),
   $$bits: UB(4),
   $0: ['hasMultipliers', [
     {

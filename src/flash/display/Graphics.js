@@ -57,7 +57,8 @@ const GraphicsDefinition = (function () {
     },
 
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      notImplemented();
+      //notImplemented();
+      // stub this out
     },
     beginFillObject: function (fill) {
       if (fill === null) {

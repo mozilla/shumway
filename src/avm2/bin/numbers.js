@@ -176,6 +176,10 @@ if (configurationSet.value.indexOf("v") >= 0) {
   configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify" + commandSuffix});
 }
 
+if (configurationSet.value.indexOf("u") >= 0) {
+  configurations.push({name: "shu-u", timeout: timeout.value, command: commandPrefix + " -x -opt -verify -unsafelookup" + commandSuffix});
+}
+
 console.log(padRight("=== Configurations ", "=", 120));
 configurations.forEach(function (x) {
   console.log(padLeft(x.name, ' ', 10) + ", timeout: " + (x.timeout / 1000).toFixed(2) + ", command: " + x.command);
@@ -325,7 +329,7 @@ function runNextTest () {
           } else {
             someFailed = true;
             var nPassed = 0, nFailed = 0, nPassedPercentage = 1;
-            if (result.output.text) {
+            if (result.output.text && baseline.output.text) {
               var match = result.output.text.match(/PASSED/g);
               nPassed = match ? match.length : 0;
               match = baseline.output.text.match(/PASSED/g);

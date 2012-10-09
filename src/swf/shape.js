@@ -287,14 +287,14 @@ function defineShape(tag, dictionary) {
             ratios.push(morph(record.ratio / 255, record.ratioMorph / 255));
           } else {
             colors.push(color.color);
-            alphas.push(color.alpha);
+            alphas.push(color.alpha / 255);
             ratios.push(record.ratio / 255);
           }
         }
         commands.push('{' +
           '__class__:"flash.display.GraphicsGradientFill",' +
           '__isIGraphicsFill__:true,' +
-          'type:' + (GRAPHICS_FILL_LINEAR_GRADIENT ? '"linear"' : '"radial"') + ',' +
+          'type:' + (fillStyle.type == GRAPHICS_FILL_LINEAR_GRADIENT ? '"linear"' : '"radial"') + ',' +
           'colors:[' + colors.join(',') + '],' +
           'alphas:[' + alphas.join(',') + '],' +
           'ratios:[' + ratios.join(',') + '],' +
@@ -449,12 +449,11 @@ function defineShape(tag, dictionary) {
   var shape = {
     type: 'shape',
     id: tag.id,
-    bounds: {
-      __class__: 'flash.geom.Rectangle',
-      x: bounds.xMin,
-      y: bounds.yMIn,
-      width: bounds.xMax - bounds.xMin,
-      height: bounds.yMax - bounds.yMin
+    bbox: {
+      left: bounds.xMin,
+      right: bounds.xMax,
+      top: bounds.yMin,
+      bottom: bounds.yMax
     },
     data: '[' + commands.join(',') + ']'
   };

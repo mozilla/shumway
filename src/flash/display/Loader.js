@@ -169,6 +169,7 @@ const LoaderDefinition = (function () {
             _parent: stage,
             _stage: stage
           });
+          root._root = root;
 
           loader._content = root;
         } else {

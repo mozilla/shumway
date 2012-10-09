@@ -619,6 +619,49 @@ const natives = (function () {
   }
 
   /**
+   * Dictionary.as
+   */
+  function DictionaryClass(runtime, scope, instance, baseClass) {
+    function ASDictionary(weakKeys) {
+      this.weakKeys = weakKeys;
+      this.map = new WeakMap();
+      if (!weakKeys) {
+        this.keys = [];
+      }
+    }
+
+    var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
+    c.extendNative(baseClass, ASDictionary);
+
+    c.nativeStatics = {};
+
+    var m = ASDictionary.prototype;
+    defineReadOnlyProperty(m, "canHandleProperties", true);
+    defineNonEnumerableProperty(m, "set", function (key, value) {
+      this.map.set(Object(key), value);
+      if (!this.weakKeys && this.keys.indexOf(key) < 0) {
+        this.keys.push(key);
+      }
+    });
+    defineNonEnumerableProperty(m, "get", function (key) {
+      return this.map.get(Object(key));
+    });
+    defineNonEnumerableProperty(m, "delete", function (key) {
+      this.map.delete(Object(key), value);
+      var i;
+      if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+        this.keys.splice(i, 1);
+      }
+    });
+    defineNonEnumerableProperty(m, "enumProperties", function () {
+      return this.keys;
+    });
+    c.nativeMethods = m;
+
+    return c;
+  }
+
+  /**
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instance, baseClass) {
@@ -672,6 +715,22 @@ const natives = (function () {
     c.extend(baseClass);
     c.nativeStatics = {
       "get playerType": function () { return "AVMPlus"; }
+    };
+    return c;
+  }
+
+  /**
+   * Shumway.as
+   */
+  function ShumwayClass(runtime, scope, instance, baseClass) {
+    function Shumway() {}
+    var c = new runtime.domain.system.Class("Shumway", Shumway, C(Shumway));
+    c.extend(baseClass);
+    c.nativeStatics = {
+      info: function (x) { console.info(x); },
+      json: function (x) { return JSON.stringify(x); },
+      eval: function (x) { return eval(x); },
+      debugger: function (x) { debugger; }
     };
     return c;
   }
@@ -1028,7 +1087,9 @@ const natives = (function () {
     DateClass: DateClass,
     MathClass: MathClass,
     RegExpClass: RegExpClass,
+    DictionaryClass: DictionaryClass,
 
+    ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,
     ApplicationDomainClass: ApplicationDomainClass,
 

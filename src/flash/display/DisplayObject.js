@@ -23,7 +23,7 @@ const DisplayObjectDefinition = (function () {
       this._animated = false;
       this._cacheAsBitmap = false;
       this._control = document.createElement('div');
-      this._bounds = { };
+      this._bbox = null;
       this._cxform = null;
       this._graphics = null;
       this._loaderInfo = null;
@@ -76,7 +76,44 @@ const DisplayObjectDefinition = (function () {
       notImplemented();
     },
     getBounds: function (targetCoordSpace) {
-      return this._bounds;
+      var bbox = this._bbox;
+
+      if (!bbox)
+        return new Rectangle;
+
+      var rotation = this._rotation;
+      var scaleX = this._scaleX;
+      var scaleY = this._scaleY;
+
+      var u = Math.cos(rotation / 180 * Math.PI);
+      var v = Math.sin(rotation / 180 * Math.PI);
+      var a = u * scaleX;
+      var b = -v * scaleY;
+      var c = v * scaleX;
+      var d = u * scaleY;
+      var tx = this._x;
+      var ty = this._y;
+
+      var x1 = a * bbox.left + c * bbox.top;
+      var y1 = d * bbox.top + b * bbox.left;
+      var x2 = a * bbox.right + c * bbox.top;
+      var y2 = d * bbox.top + b * bbox.right;
+      var x3 = a * bbox.right + c * bbox.bottom;
+      var y3 = d * bbox.bottom + b * bbox.right;
+      var x4 = a * bbox.left + c * bbox.bottom;
+      var y4 = d * bbox.bottom + b * bbox.left;
+
+      var xMin = Math.min(x1, x2, x3, x4);
+      var xMax = Math.max(x1, x2, x3, x4);
+      var yMin = Math.min(y1, y2, y3, y4);
+      var yMax = Math.max(y1, y2, y3, y4);
+
+      return new Rectangle(
+        xMin + tx,
+        yMin + ty,
+        (xMax - xMin),
+        (yMax - yMin)
+      );
     },
     getRect: function (targetCoordSpace) {
       notImplemented();
@@ -131,7 +168,7 @@ const DisplayObjectDefinition = (function () {
       return this._parent;
     },
     get root() {
-      return this._root;
+      return this._root || (this._parent ? this._parent._root : null);
     },
     get rotation() {
       return this._rotation;
@@ -141,7 +178,7 @@ const DisplayObjectDefinition = (function () {
       this._slave = false;
     },
     get stage() {
-      return this._stage || this._parent.stage;
+      return this._stage || (this._parent ? this._parent.stage : null);
     },
     get scaleX() {
       return this._scaleX;
@@ -190,7 +227,7 @@ const DisplayObjectDefinition = (function () {
       return bounds.width;
     },
     set width() {
-      notImplemented();
+      //notImplemented();
     },
     get x() {
       return this._x;

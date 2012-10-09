@@ -704,42 +704,6 @@ var Map = (function() {
   return map;
 })();
 
-if (typeof WeakMap === "undefined") {
-  /**
-   * Emulates WeakMaps on Chrome using a silly linear search.
-   */
-  WeakMap = (function () {
-    function weakMap() {
-      this.elements = [];
-    }
-    function indexOf(array, k) {
-      var array = this.elements;
-      for (var i = 0; i < array.length; i++) {
-        if (array[i][0] === k) {
-          return i;
-        }
-      }
-      return -1;
-    }
-    weakMap.prototype.get = function get(k) {
-      var index = indexOf(this.elements, k);
-      if (index >= 0) {
-        return this.elements[i][1];
-      }
-      return undefined;
-    };
-    weakMap.prototype.set = function set(k, v) {
-      var index = indexOf(this.elements, k);
-      if (index >= 0) {
-        this.elements[i][1] = v;
-      } else {
-        this.elements.push([k, v]);
-      }
-    };
-    return weakMap;
-  })();
-}
-
 /**
  * SortedList backed up by a linked list.
  *  sortedList(compare) - the constructor takes a |compare| function
@@ -828,4 +792,30 @@ var SortedList = (function() {
   };
 
   return sortedList;
+})();
+
+(function checkWeakMap() {
+  if (typeof this.WeakMap === 'function')
+    return; // weak map is supported
+
+  var id = 0;
+  function WeakMap() {
+    this.id = '$weakmap' + (id++);
+  };
+  WeakMap.prototype = {
+    has: function(obj) {
+      return obj.hasOwnProperty(this.id);
+    },
+    get: function(obj, defaultValue) {
+      return obj.hasOwnProperty(this.id) ? obj[this.id] : defaultValue;
+    },
+    set: function(obj, value) {
+      Object.defineProperty(obj, this.id, {
+        value: value,
+        enumerable: false,
+        configurable: true
+      });
+    }
+  };
+  this.WeakMap = WeakMap;
 })();

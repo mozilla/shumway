@@ -175,7 +175,7 @@ var Verifier = (function() {
         }
 
         // The type name is a QName so it must be unique (even if the class name
-        // is the same, the namespace it belongs to should be different), thus 
+        // is the same, the namespace it belongs to should be different), thus
         // the equality condition is sufficient
         return (this.kind === other.kind && this.name === other.name);
       };
@@ -718,6 +718,11 @@ var Verifier = (function() {
 
         function findProperty(multiname, strict) {
 
+          if (multiname instanceof RuntimeMultiname) {
+            // Nothing can be done about RuntimeMultinames since
+            // the name and/or the namespaces are not known at this point
+            return Type.Atom.Any;
+          }
           // |findProperty| should look first into the scope stack and then
           // into the savedScope (which is the scope at the time the method
           // was created). Since we deal with an abstract view of the saved
@@ -740,12 +745,19 @@ var Verifier = (function() {
           
           // the property was not found in the scope stack, search the saved scope
           if (savedScope) {
-            obj = savedScope.findProperty(multiname, domain, false);
+            var obj = savedScope.findProperty(multiname, domain, false);
 
             if (obj instanceof domain.system.Class || obj instanceof Interface) {
               return Type.fromClass(obj);
-            } else if (obj instanceof Global || obj instanceof Activation) {
+            } else if (obj instanceof Activation) {
               return Type.fromReference(obj);
+            } else if (obj instanceof Global) {
+              var objTy = Type.fromReference(obj);
+              var trait = objTy.getTraitEnforceGetter(multiname);
+              if (trait && trait.isClass()) {
+                bc.foundObj = obj;
+              }
+              return objTy;
             }
             // TODO - we cannot deal with object instances found on the scope stack
             // like in case of function instances; see ../tests/tamarin/ecma3/Array/splice2.abc
@@ -1025,7 +1037,11 @@ var Verifier = (function() {
           case OP_construct:
             stack.popMany(bc.argCount);
             objTy = pop(); // pop the type of the object to be constructed
-            push(Type.referenceFromName(objTy.name));
+            type = Type.referenceFromName(objTy.name);
+            if (objTy.isVectorClass() && objTy.elementType) {
+              type.elementType = objTy.elementType;
+            }
+            push(type);
             break;
           case OP_callmethod:
             // callmethod is always invalid
@@ -1158,7 +1174,8 @@ var Verifier = (function() {
             factory = pop();
             if (factory.isVectorClass() && (elementTy === Type.Int ||
                 elementTy === Type.Uint || elementTy.isReference())) {
-                type = Type.referenceFromName(factory.name);
+                // constructs the complex type factory<elementType>
+                type = Type.classFromName(factory.name);
                 type.elementType = elementTy;
             } else {
               type = Type.Atom.Any;
