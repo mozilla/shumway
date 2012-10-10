@@ -350,25 +350,6 @@ const LoaderDefinition = (function () {
         }
       }
 
-      if (exports) {
-        for (var i = 0, n = exports.length; i < n; i++) {
-          var asset = exports[i];
-          var symbolPromise = dictionary[asset.symbolId];
-          if (!symbolPromise)
-            continue;
-          symbolPromise.then(
-            (function(symbolPromise, className) {
-              return function symbolPromiseResolved() {
-                var symbolInfo = symbolPromise.value;
-                symbolInfo.className = className;
-                // Custom classes need to know they are symbols.
-                avm2.systemDomain.getClass(className).setSymbol(props);
-              };
-            })(symbolPromise, asset.className)
-          );
-        }
-      }
-
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
 
@@ -382,6 +363,25 @@ const LoaderDefinition = (function () {
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
             var abc = new AbcFile(abcBlocks[i]);
             appDomain.executeAbc(abc);
+          }
+        }
+
+        if (exports) {
+          for (var i = 0, n = exports.length; i < n; i++) {
+            var asset = exports[i];
+            var symbolPromise = dictionary[asset.symbolId];
+            if (!symbolPromise)
+              continue;
+            symbolPromise.then(
+              (function(symbolPromise, className) {
+                return function symbolPromiseResolved() {
+                  var symbolInfo = symbolPromise.value;
+                  symbolInfo.className = className;
+                  // Custom classes need to know they are symbols.
+                  avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
+                };
+              })(symbolPromise, asset.className)
+            );
           }
         }
 
@@ -414,7 +414,7 @@ const LoaderDefinition = (function () {
         }
 
         if (frameNum === 1)
-          loaderInfo.dispatchEvent(new flash.events.Event(EventClass.INIT));
+          loaderInfo.dispatchEvent(new flash.events.Event('init'));
       });
     },
     commitSymbol: function (symbol) {
