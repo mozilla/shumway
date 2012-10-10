@@ -28,6 +28,8 @@ const LoaderDefinition = (function () {
   // Note that loader is null when calling from inside the worker, as AVM2 is
   // only initialized on the main thread.
   function loadFromWorker(loader, input, context) {
+    var symbols = { };
+
     var commitData;
     if (loader) {
       commitData = function (data) {
@@ -41,7 +43,6 @@ const LoaderDefinition = (function () {
 
     function defineSymbol(swfTag) {
       var symbol;
-      var symbols = this._symbols;
 
       switch (swfTag.code) {
       case SWF_TAG_CODE_DEFINE_BITS:
