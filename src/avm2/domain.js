@@ -143,10 +143,15 @@ var Domain = (function () {
               var p = keys[i];
               var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
               assert(typeof qn === "string");
-              Object.defineProperty(obj, p, {
-                get: new Function("", "return this." + qn),
-                set: new Function("v", "this." + qn + " = v")
-              });
+              var desc = Object.getOwnPropertyDescriptor(obj, qn);
+              if (desc && desc.get) {
+                Object.defineProperty(obj, p, desc);
+              } else {
+                Object.defineProperty(obj, p, {
+                  get: new Function("", "return this." + qn),
+                  set: new Function("v", "this." + qn + " = v")
+                });
+              }
             }
           }
 

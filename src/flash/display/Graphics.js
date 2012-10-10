@@ -18,7 +18,7 @@ const GraphicsDefinition = (function () {
     return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
   }
 
-  return {
+  var def = {
     __class__: 'flash.display.Graphics',
 
     initialize: function () {
@@ -281,4 +281,6 @@ const GraphicsDefinition = (function () {
       return path;
     }
   };
+
+  return def;
 }).call(this);

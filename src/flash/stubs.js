@@ -45,6 +45,10 @@ var as3error = {};
  "flash.display.Stage",
  "flash.display.Loader",
  "flash.display.LoaderInfo",
+ "flash.display.Graphics",
+
+ "flash.geom.Point",
+ "flash.geom.Rectangle",
 
  "flash.events.EventDispatcher",
  "flash.events.Event",
@@ -86,6 +90,10 @@ natives.ShapeClass = manage("Shape", ShapeDefinition);
 natives.StageClass = manage("Stage", StageDefinition);
 natives.LoaderClass = manage("Loader", LoaderDefinition);
 natives.LoaderInfoClass = manage("LoaderInfo", LoaderInfoDefinition);
+natives.GraphicsClass = manage("Graphics", GraphicsDefinition);
+
+natives.PointClass = manage("Point", PointDefinition);
+natives.RectangleClass = manage("Rectangle", RectangleDefinition);
 
 natives.EventDispatcherClass = manage("EventDispatcher", EventDispatcherDefinition);
 natives.EventClass = manage("Event", EventDefinition);

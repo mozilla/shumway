@@ -487,13 +487,13 @@ const LoaderDefinition = (function () {
         try {
           var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         }catch(e){console.log(symbol.data);}
-        var graphics = new Graphics;
+        var graphics = new flash.display.Graphics;
         graphics._scale = 0.05;
         graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
-          bounds: new Rectangle(
+          bounds: new flash.geom.Rectangle(
             bounds.x / 20,
             bounds.y / 20,
             bounds.width / 20,

@@ -79,7 +79,7 @@ const DisplayObjectDefinition = (function () {
       var bbox = this._bbox;
 
       if (!bbox)
-        return new Rectangle;
+        return new flash.geom.Rectangle;
 
       var rotation = this._rotation;
       var scaleX = this._scaleX;
@@ -108,7 +108,7 @@ const DisplayObjectDefinition = (function () {
       var yMin = Math.min(y1, y2, y3, y4);
       var yMax = Math.max(y1, y2, y3, y4);
 
-      return new Rectangle(
+      return new flash.geom.Rectangle(
         xMin + tx,
         yMin + ty,
         (xMax - xMin),

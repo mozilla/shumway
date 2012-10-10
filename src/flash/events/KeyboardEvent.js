@@ -9,15 +9,10 @@ const KeyboardEventDefinition = (function () {
 
   def.__glue__ = {
     script: {
-      instance: {
-        keyCode: "private m_keyCode",
-        keyLocation: "private m_keyLocation"
-      },
-
-      static: {
-        KEY_DOWN: "public KEY_DOWN",
-        KEY_UP: "public KEY_UP"
-      }
+      instance: scriptProperties("private", ["m_keyCode",
+                                             "m_keyLocation"]),
+      static: scriptProperties("public", ["KEY_DOWN",
+                                          "KEY_UP"])
     },
 
     native: {
