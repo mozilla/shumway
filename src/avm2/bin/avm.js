@@ -53,7 +53,6 @@ load("../viz.js");
 load("../interpreter.js");
 load("../native.js");
 load("../vm.js");
-load("../../flash/stubs.js");
 Timer.stop();
 
 argumentParser.addBoundOptionSet(systemOptions);
