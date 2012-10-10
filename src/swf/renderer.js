@@ -8,7 +8,7 @@ function visitContainer(container, visitor) {
   for (var i = 0, n = children.length; i < n; i++) {
     var child = children[i];
     if (child) {
-      var isContainer = child instanceof MovieClip;
+      var isContainer = child instanceof flash.display.MovieClip;
       visitor.visit(child, isContainer);
       if (isContainer) {
         visitContainer(child, visitor);
@@ -77,11 +77,11 @@ EnterFrameVisitor.prototype = {
   childrenStart: function() {},
   childrenEnd: function() {},
   visit: function (obj) {
-    if (obj instanceof MovieClip) {
+    if (obj instanceof flash.display.MovieClip) {
       if (obj.isPlaying()) {
         obj.nextFrame();
       }
-      obj.dispatchEvent(new Event(Event.ENTER_FRAME));
+      obj.dispatchEvent(new flash.events.Event("enterFrame"));
     }
   }
 };
@@ -92,8 +92,8 @@ ExitFrameVisitor.prototype = {
   childrenStart: function() {},
   childrenEnd: function() {},
   visit: function (obj) {
-    if (obj instanceof MovieClip) {
-      obj.dispatchEvent(new Event(Event.EXIT_FRAME));
+    if (obj instanceof flash.display.MovieClip) {
+      obj.dispatchEvent(new flash.events.Event("exitFrame"));
     }
   }
 };
@@ -129,7 +129,7 @@ RenderVisitor.prototype = {
     this.depth++;
 
     // TODO move into separate visitor?
-    if (parent instanceof MovieClip && parent._scriptExecutionPending) {
+    if (parent instanceof flash.display.MovieClip && parent._scriptExecutionPending) {
       parent._executeScripts();
     }
   },
