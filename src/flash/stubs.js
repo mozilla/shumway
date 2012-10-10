@@ -46,9 +46,9 @@ var as3error = {};
  "flash.display.Loader",
  "flash.display.LoaderInfo",
 
- "flash.event.EventDispatcher",
- "flash.event.Event",
- "flash.event.KeyboardEvent",
+ "flash.events.EventDispatcher",
+ "flash.events.Event",
+ "flash.events.KeyboardEvent",
 
  "flash.text.TextField",
  "flash.text.StaticText",

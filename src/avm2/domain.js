@@ -89,9 +89,9 @@ var Domain = (function () {
           }
         },
 
-        createInstance: function createInstance() {
+        createInstance: function createInstance(args) {
           var o = Object.create(this.instance.prototype);
-          this.instance.apply(o, arguments);
+          this.instance.apply(o, args);
           return o;
         },
 
@@ -155,12 +155,6 @@ var Domain = (function () {
           for (var i = 0, j = keys.length; i < j; i++) {
             var p = keys[i];
             Object.defineProperty(proto, p, Object.getOwnPropertyDescriptor(definition, p));
-          }
-
-          if (!proto.initialize) {
-            proto.initialize = function () {
-              Class.initializeSuper(this);
-            };
           }
 
           var glue = definition.__glue__;

@@ -299,15 +299,16 @@ const LoaderDefinition = (function () {
     },
     commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
+      var EventClass = avm2.systemDomain.getClass("flash.events.Event");
 
-      loaderInfo.dispatchEvent(new Event(Event.PROGRESS));
+      loaderInfo.dispatchEvent(new flash.events.Event("progress"));
 
       switch (data.command) {
       case 'init':
         this.init(data.result);
         break;
       case 'complete':
-        loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+        loaderInfo.dispatchEvent(new flash.events.Event(EventClass.COMPLETE));
         break;
       case 'error':
         console.log('ERROR: ' + data.message);
@@ -334,6 +335,7 @@ const LoaderDefinition = (function () {
       var labelName = frame.labelName;
       var prevPromise = frameNum > 1 ? timeline[frameNum - 2] : dictionary[0];
       var promiseQueue = [prevPromise];
+      var EventClass = avm2.systemDomain.getClass("flash.events.Event");
 
       if (depths) {
         for (var depth in depths) {
@@ -411,7 +413,7 @@ const LoaderDefinition = (function () {
         }
 
         if (frameNum === 1)
-          loaderInfo.dispatchEvent(new Event(Event.INIT));
+          loaderInfo.dispatchEvent(new flash.events.Event(EventClass.INIT));
       });
     },
     commitSymbol: function (symbol) {

@@ -18,9 +18,6 @@ const EventDefinition = (function () {
       this.bubbles = !!bubbles;
       this.cancelable = !!cancelable;
     },
-    clone: function () {
-      return new Event(this.type, this.bubbles, this.cancelable);
-    },
     get currentTarget() {
       return this._currentTarget;
     },
@@ -69,6 +66,7 @@ const EventDefinition = (function () {
         MOUSE_LEAVE:                  'public MOUSE_LEAVE',
         OPEN:                         'public OPEN',
         PASTE:                        'public PASTE',
+        PROGRESS:                     'public PROGRESS',
         REMOVED:                      'public REMOVED',
         REMOVED_FROM_STAGE:           'public REMOVED_FROM_STAGE',
         RENDER:                       'public RENDER',
@@ -104,6 +102,7 @@ const EventDefinition = (function () {
         target: desc(def, "target"),
         currentTarget: desc(def, "currentTarget"),
         eventPhase: desc(def, "eventPhase"),
+        ctor: def.ctor,
         stopPropagation: def.stopPropagation,
         stopImmediatePropagation: def.stopImmediatePropagation,
         isDefaultPrevented: def.isDefaultPrevented
