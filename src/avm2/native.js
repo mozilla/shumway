@@ -339,7 +339,7 @@ const natives = (function () {
         toLowerCase: Sp.toLowerCase,
         toLocaleLowerCase: Sp.toLocaleLowerCase,
         toUpperCase: Sp.toUpperCase,
-        toLocalUpperCase: Sp.toLocaleUpperCase,
+        toLocaleUpperCase: Sp.toLocaleUpperCase,
         toString: Sp.toString,
         valueOf: Sp.valueOf
       },
@@ -686,7 +686,7 @@ const natives = (function () {
     c.extendBuiltin(baseClass);
 
     var REp = RegExp.prototype;
-    c.nativeMethods = {
+    c.native = {
       instance: {
         global: {
           get: function () { return this.global; }
