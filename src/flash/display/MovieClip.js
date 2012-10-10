@@ -152,13 +152,21 @@ MovieClip.prototype = Object.create(Sprite.prototype, {
         if (cxform)
           target._cxform = cxform;
         if (matrix) {
-          target._rotation = Math.atan2(matrix.c, matrix.a) * 180 / Math.PI;
-          var sx = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
+          target._rotation = Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+          var sx = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
           target._scaleX = matrix.a > 0 ? sx : -sx;
-          var sy = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+          var sy = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
           target._scaleY = matrix.d > 0 ? sy : -sy;
           target._x = matrix.tx / 20;
           target._y = matrix.ty / 20;
+          target._currentTransformMatrix = {
+            a: matrix.a,
+            b: matrix.b,
+            c: matrix.c,
+            d: matrix.d,
+            tx: target._x,
+            ty: target._y
+          };
         }
       }
     }

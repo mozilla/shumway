@@ -25,7 +25,22 @@ natives.MatrixClass = function MatrixClass(runtime, scope, instance, baseClass) 
 };
 
 natives.PointClass = function PointClass(runtime, scope, instance, baseClass) {
-  var c = new runtime.domain.system.Class("Point", instance, Domain.passthroughCallable(instance));
+  function constructorHook() {
+    this.d = runtime.notifyConstruct(this, Array.prototype.slice.call(arguments, 0));
+    Object.defineProperties(this, {
+      x: describeAccessor(
+        function () { return this.public$x; },
+        function (val) { this.public$x = val; }
+      ),
+      y: describeAccessor(
+        function () { return this.public$y; },
+        function (val) { this.public$y = val; }
+      )
+    });
+    return instance.apply(this, arguments);
+  }
+
+  var c = new runtime.domain.system.Class("Point", constructorHook, Domain.passthroughCallable(constructorHook));
   c.extend(baseClass, Point.prototype);
 
   c.nativeStatics = {

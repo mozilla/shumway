@@ -145,16 +145,9 @@ RenderVisitor.prototype = {
     //if (child.cxform && !child.$fixCxform)
     //  child.cxform = create(child.cxform);
 
-    //var m = child.transform.matrix;
-    //ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    var m = child._currentTransformMatrix;
+    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
-    ctx.translate(child._x, child._y);
-    ctx.rotate(child._rotation * Math.PI / 180);
-    ctx.scale(child._scaleX, child._scaleY);
-
-    //var rotation = child.rotation;
-    //if (rotation)
-    //  ctx.rotate(rotation * Math.PI / 180);
     var cxform = child._cxform;
     if (cxform) {
       // We only support alpha channel transformation for now

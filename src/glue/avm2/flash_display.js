@@ -266,12 +266,28 @@ natives.DisplayObjectClass = function DisplayObjectClass(runtime, scope, instanc
 
     // globalToLocal :: point:Point -> Point
     globalToLocal: function globalToLocal(point) {
-      return this.nativeObject.globalToLocal(point);
+      var vm = AVM2.currentVM();
+      var pointClass = vm.applicationDomain.getProperty(
+        Multiname.fromSimpleName('public flash$geom$Point'),
+        true,
+        true
+      );
+      var result = pointClass.createInstance(point.x, point.y);
+      this.nativeObject._applyCurrentInverseTransform(result);
+      return result;
     },
 
     // localToGlobal :: point:Point -> Point
     localToGlobal: function localToGlobal(point) {
-      return this.nativeObject.localToGlobal(point);
+      var vm = AVM2.currentVM();
+      var pointClass = vm.applicationDomain.getProperty(
+        Multiname.fromSimpleName('public flash$geom$Point'),
+        true,
+        true
+      );
+      var result = pointClass.createInstance(point.x, point.y);
+      this.nativeObject._applyCurrentTransform(result);
+      return result;
     },
 
     // getBounds :: targetCoordinateSpace:DisplayObject -> Rectangle

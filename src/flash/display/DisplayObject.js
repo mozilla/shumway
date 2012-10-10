@@ -40,6 +40,7 @@ function DisplayObject() {
   this._visible = true;
   this._x = 0;
   this._y = 0;
+  this._updateTransformMatrix();
 }
 
 DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
@@ -84,33 +85,66 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       notImplemented();
     }
   ),
+
+  _updateTransformMatrix: describeMethod(function () {
+    var rotation = this._rotation / 180 * Math.PI;
+    var scaleX = this._scaleX;
+    var scaleY = this._scaleY;
+    var u = Math.cos(rotation);
+    var v = Math.sin(rotation);
+
+    this._currentTransformMatrix = {
+      a: u * scaleX,
+      b: v * scaleX,
+      c: -v * scaleY,
+      d: u * scaleY,
+      tx: this._x,
+      ty: this._y
+    };
+  }),
+  _applyCurrentTransform: describeMethod(function (point) {
+    var m = this._currentTransformMatrix;
+    var x = point.x;
+    var y = point.y;
+
+    point.x = m.a * x + m.c * y + m.tx;
+    point.y = m.d * y + m.b * x + m.ty;
+
+    if (this._parent !== this._stage) {
+      this._parent._applyCurrentTransform(point);
+    }
+  }),
+  _applyCurrentInverseTransform: describeMethod(function (point) {
+    if (this._parent !== this._stage) {
+      this._parent._applyCurrentInverseTransform(point);
+    }
+
+    var m = this._currentTransformMatrix;
+
+    var x = point.x - m.tx;
+    var y = point.y - m.ty;
+    var d = 1 / (m.a * m.d - m.b * m.c);
+
+    point.x = (m.d * x - m.c * y) * d;
+    point.y = (m.a * y - m.b * x) * d;
+  }),
+
   getBounds: describeMethod(function (targetCoordSpace) {
     var bbox = this._bbox;
 
     if (!bbox)
       return new Rectangle;
 
-    var rotation = this._rotation;
-    var scaleX = this._scaleX;
-    var scaleY = this._scaleY;
+    var m = this._currentTransformMatrix;
 
-    var u = Math.cos(rotation / 180 * Math.PI);
-    var v = Math.sin(rotation / 180 * Math.PI);
-    var a = u * scaleX;
-    var b = -v * scaleY;
-    var c = v * scaleX;
-    var d = u * scaleY;
-    var tx = this._x;
-    var ty = this._y;
-
-    var x1 = a * bbox.left + c * bbox.top;
-    var y1 = d * bbox.top + b * bbox.left;
-    var x2 = a * bbox.right + c * bbox.top;
-    var y2 = d * bbox.top + b * bbox.right;
-    var x3 = a * bbox.right + c * bbox.bottom;
-    var y3 = d * bbox.bottom + b * bbox.right;
-    var x4 = a * bbox.left + c * bbox.bottom;
-    var y4 = d * bbox.bottom + b * bbox.left;
+    var x1 = m.a * bbox.left + m.c * bbox.top;
+    var y1 = m.d * bbox.top + m.b * bbox.left;
+    var x2 = m.a * bbox.right + m.c * bbox.top;
+    var y2 = m.d * bbox.top + m.b * bbox.right;
+    var x3 = m.a * bbox.right + m.c * bbox.bottom;
+    var y3 = m.d * bbox.bottom + m.b * bbox.right;
+    var x4 = m.a * bbox.left + m.c * bbox.bottom;
+    var y4 = m.d * bbox.bottom + m.b * bbox.left;
 
     var xMin = Math.min(x1, x2, x3, x4);
     var xMax = Math.max(x1, x2, x3, x4);
@@ -118,8 +152,8 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     var yMax = Math.max(y1, y2, y3, y4);
 
     return new Rectangle(
-      xMin + tx,
-      yMin + ty,
+      xMin + m.tx,
+      yMin + m.ty,
       (xMax - xMin),
       (yMax - yMin)
     );
@@ -128,7 +162,10 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     notImplemented();
   }),
   globalToLocal: describeMethod(function (pt) {
-    notImplemented();
+    var result = new Point(pt.x, pt.y);
+    this._applyCurrentInverseTransform(result);
+    debugger;
+    return result;
   }),
   height: describeAccessor(
     function () {
@@ -146,13 +183,15 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     notImplemented();
   }),
   hitTest: describeMethod(function _hitTest(use_xy, x, y, useShape, hitTestObject) {
-    notImplemented();
+    return false; //notImplemented();
   }),
   loaderInfo: describeAccessor(function () {
     return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
   }),
   localToGlobal: describeMethod(function (pt) {
-    notImplemented();
+    var result = new Point(pt.x, pt.y);
+    this._applyCurrentTransform(result);
+    return result;
   }),
   mask: describeAccessor(
     function () {
@@ -200,6 +239,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._rotation = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
   ),
@@ -212,6 +252,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleX = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
   ),
@@ -221,6 +262,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._scaleY = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
   ),
@@ -248,6 +290,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
+      this._currentTransformMatrix = val.matrix;
       this._slave = false;
     }
   ),
@@ -275,6 +318,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._x = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
   ),
@@ -284,6 +328,7 @@ DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
     },
     function (val) {
       this._y = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
   )
