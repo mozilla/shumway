@@ -22,7 +22,8 @@ const VM_UNSAFE_CLASSES = ["Shumway"];
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
-  { object: Object, methods: ["toString", "valueOf"] }
+  { object: Object, methods: ["toString", "valueOf"] },
+  { object: Function, methods: ["toString", "valueOf"] }
 ];
 
 const VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";

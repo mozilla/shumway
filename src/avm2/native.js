@@ -274,21 +274,23 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("Function", Function, C(Function));
     c.extendBuiltin(baseClass);
     c.native = {
-      prototype: {
-        get: function () { return this.prototype; },
-        set: function (p) { this.prototype = p; }
-      },
-      length: {
-        get: function () {
-          // Check if we're getting the length of a trampoline.
-          if (this.hasOwnProperty(VM_LENGTH)) {
-            return this[VM_LENGTH];
+      instance: {
+        prototype: {
+          get: function () { return this.prototype; },
+          set: function (p) { this.prototype = p; }
+        },
+        length: {
+          get: function () {
+            // Check if we're getting the length of a trampoline.
+            if (this.hasOwnProperty(VM_LENGTH)) {
+              return this[VM_LENGTH];
+            }
+            return this.length;
           }
-          return this.length;
-        }
-      },
-      call: Function.prototype.call,
-      apply: Function.prototype.apply
+        },
+        call: Function.prototype.call,
+        apply: Function.prototype.apply
+      }
     };
     c.coerce = function (value) {
       return value; // TODO: Fix me.
@@ -332,11 +334,14 @@ const natives = (function () {
         search: Sp.search,
         slice: Sp.slice,
         split: Sp.split,
+        substr: Sp.substr,
         substring: Sp.substring,
         toLowerCase: Sp.toLowerCase,
+        toLocaleLowerCase: Sp.toLocaleLowerCase,
         toUpperCase: Sp.toUpperCase,
+        toLocalUpperCase: Sp.toLocaleUpperCase,
         toString: Sp.toString,
-        valueOf: Sp.valueof
+        valueOf: Sp.valueOf
       },
       static: String
     };
