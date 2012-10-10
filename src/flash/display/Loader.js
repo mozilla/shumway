@@ -389,13 +389,12 @@ const LoaderDefinition = (function () {
           var stage = loader._stage;
           var rootClass = avm2.applicationDomain.getClass(val.className);
 
-          var rootSymbol = rootClass.getSymbol();
-          rootSymbol.framesLoaded = 0;
-          rootSymbol.parent = stage;
-          rootSymbol.stage = stage;
-          rootSymbol.root = root;
-
+          // FIXME constructor order
           root = rootClass.createInstance();
+          root._framesLoaded = 0;
+          root._parent = stage;
+          root._stage = stage;
+          root._root = root;
 
           loader._content = root;
         } else {

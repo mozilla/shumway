@@ -20,9 +20,9 @@ const MovieClipDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
+        this._timeline = s.timeline || null;
         this._framesLoaded = s.framesLoaded || 1;
         this._frameLabels = s.frameLabels || {};
-        this._timeline = s.timeline || null;
         this._totalFrames = s.totalFrames || 1;
       }
     },
@@ -127,10 +127,6 @@ const MovieClipDefinition = (function () {
               index = top ? children.indexOf(top) : children.length;
             }
 
-            instance._animated = true;
-            instance._owned = true;
-            instance._parent = this;
-
             children.splice(index, replace, instance);
             depthMap[depth] = instance;
 
@@ -140,7 +136,7 @@ const MovieClipDefinition = (function () {
             //
             // XXX: I think this always has to be a trait.
             if (cmd.name) {
-              this[Multiname.getPublicQualifiedName(cmd.name)] = value;
+              this[Multiname.getPublicQualifiedName(cmd.name)] = instance;
             }
 
             // Call the constructor now that we've made the symbol instance,
@@ -150,6 +146,10 @@ const MovieClipDefinition = (function () {
             // XXX: I think we're supposed to throw if the symbol class
             // constructor is not nullary.
             symbolClass.instance.call(instance);
+
+            instance._animated = true;
+            instance._owned = true;
+            instance._parent = this;
           } else if (current && current._animated) {
             target = current;
           }

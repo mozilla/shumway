@@ -105,6 +105,7 @@ var Domain = (function () {
           if (!o.symbol) {
             o.symbol = props;
           }
+          return o;
         },
 
         /**
@@ -130,9 +131,9 @@ var Domain = (function () {
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
         },
 
-        extend: function (baseClass, dynamicPrototype) {
+        extend: function (baseClass) {
           this.baseClass = baseClass;
-          this.dynamicPrototype = dynamicPrototype || Object.create(baseClass.dynamicPrototype);
+          this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
