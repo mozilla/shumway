@@ -483,22 +483,20 @@ const LoaderDefinition = (function () {
         };
         break;
       case 'shape':
-        var bounds = symbol.bounds;
-        try {
-          var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
-        }catch(e){console.log(symbol.data);}
+        var bbox = symbol.bbox;
+        var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         var graphics = new flash.display.Graphics;
         graphics._scale = 0.05;
         graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
-          bounds: new flash.geom.Rectangle(
-            bounds.x / 20,
-            bounds.y / 20,
-            bounds.width / 20,
-            bounds.height / 20
-          ),
+          bbox: {
+            left: bbox.left / 20,
+            top: bbox.top / 20,
+            right: bbox.right / 20,
+            bottom: bbox.bottom / 20
+          },
           graphics: graphics
         };
         break;

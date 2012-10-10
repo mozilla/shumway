@@ -37,11 +37,19 @@ var BinaryFileReader = (function binaryFileReader() {
  */
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   assert (builtinPath);
-  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+  new BinaryFileReader(builtinPath).readAll(null, function (buffer, error) {
+    if (!buffer) {
+      next(null, "Unable to read builtin at " + builtinPath + ": " + error);
+      return;
+    }
     var vm = new AVM2(sysMode, appMode);
     vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     if (libraryPath) {
-      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+      new BinaryFileReader(libraryPath).readAll(null, function (buffer, error) {
+        if (!buffer) {
+          next(null, "Unable to read library at " + libraryPath + ": " + error);
+          return;
+        }
         vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
         next(vm);
       });

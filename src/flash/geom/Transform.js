@@ -69,10 +69,10 @@ Transform.prototype = describePrototype({
         debugger;
 
       var target = this._target;
-      target._rotation = Math.atan2(val.b, val.c) * 180 / Math.PI;
-      var sx = Math.sqrt(val.d * val.d + val.c * val.c);
+      target._rotation = Math.atan2(val.b, val.a) * 180 / Math.PI;
+      var sx = Math.sqrt(val.a * val.a + val.b * val.b);
       target._scaleX = val.a > 0 ? sx : -sx;
-      var sy = Math.sqrt(val.a * val.a + val.b * val.b);
+      var sy = Math.sqrt(val.d * val.d + val.c * val.c);
       target._scaleY = val.d > 0 ? sy : -sy;
       target._x = val.tx;
       target._y = val.ty;
