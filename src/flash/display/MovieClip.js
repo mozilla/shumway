@@ -17,6 +17,14 @@ const MovieClipDefinition = (function () {
       this._timeline = null;
       this._totalFrames = 1;
       this._scenes = { };
+
+      var s = this.symbol;
+      if (s) {
+        this._framesLoaded = s.framesLoaded || 1;
+        this._frameLabels = s.frameLabels || {};
+        this._timeline = s.timeline || null;
+        this._totalFrames = s.totalFrames || 1;
+      }
     },
 
     addFrameScript: function () {

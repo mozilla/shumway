@@ -43,6 +43,14 @@ const DisplayObjectDefinition = (function () {
       this._x = 0;
       this._y = 0;
       this._updateTransformMatrix();
+
+      var s = this.symbol;
+      if (s) {
+        this._bbox = s.bbox || null;
+        this._parent = s.parent || null;
+        this._stage = s.stage || null;
+        this._root = s.root || null;
+      }
     },
 
     get accessibilityProperties() {

@@ -75,6 +75,10 @@ var Domain = (function () {
           this.instance.prototype.symbol = props;
         },
 
+        getSymbol: function getSymbol() {
+          return this.instance.prototype.symbol;
+        },
+
         initializeInstance: function initializeInstance(obj) {
           // Initialize should be nullary and nonrecursive. If the script
           // needs to pass in script objects to native land, there's usually a

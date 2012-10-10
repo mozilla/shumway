@@ -3,14 +3,19 @@ const ShapeDefinition = (function () {
     __class__: 'flash.display.Shape',
 
     initialize: function () {
-      this.graphics = new Graphics;
+      var s = this.symbol;
+      if (s) {
+        this._graphics = s.graphics || new flash.display.Graphics;
+      } else {
+        this._graphics = new flash.display.Graphics;
+      }
     }
   };
 
   def.__glue__ = {
     instance: {
       graphics: {
-        get: function () { return this.graphics; }
+        get: function () { return this._graphics; }
       }
     }
   };

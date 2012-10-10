@@ -389,13 +389,15 @@ const LoaderDefinition = (function () {
 
         if (!root) {
           var stage = loader._stage;
-          root = new val({
-            _frameLabels: { },
-            _framesLoaded: 0,
-            _parent: stage,
-            _stage: stage
-          });
-          root._root = root;
+          var rootClass = avm2.applicationDomain.getClass(val.className);
+
+          var rootSymbol = rootClass.getSymbol();
+          rootSymbol.framesLoaded = 0;
+          rootSymbol.parent = stage;
+          rootSymbol.stage = stage;
+          rootSymbol.root = root;
+
+          root = rootClass.createInstance();
 
           loader._content = root;
         } else {

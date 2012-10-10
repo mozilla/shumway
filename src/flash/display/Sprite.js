@@ -3,7 +3,12 @@ const SpriteDefinition = (function () {
     __class__: 'flash.display.Sprite',
 
     initialize: function () {
-      this._graphics = new Graphics;
+      var s = this.symbol;
+      if (s) {
+        this._graphics = s.graphics || new flash.display.Graphics;
+      } else {
+        this._graphics = new flash.display.Graphics;
+      }
     },
 
     get buttonMode() {
