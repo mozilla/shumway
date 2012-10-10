@@ -226,7 +226,7 @@ const DisplayObjectDefinition = (function () {
       var bounds = this.getBounds();
       return bounds.width;
     },
-    set width() {
+    set width(val) {
       //notImplemented();
     },
     get x() {
