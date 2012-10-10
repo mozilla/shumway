@@ -46,7 +46,6 @@ SWF.embed = function(file, container, options) {
 
     // Dirty hack for now.
     //stage.addChild(loader.content);
-    debugger;
     stage._children[0] = loader._content;
     container.appendChild(canvas);
     renderStage(stage, ctx);
