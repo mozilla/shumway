@@ -262,6 +262,10 @@ function checkFilter(value) {
   notImplemented("checkFilter");
 }
 
+function Activation (methodInfo) {
+  this.methodInfo = methodInfo;
+}
+
 var Interface = (function () {
   function Interface(classInfo) {
     var ii = classInfo.instanceInfo;
@@ -332,6 +336,19 @@ var Scope = (function () {
     this.global = parent ? parent.global : this;
     this.isWith = isWith;
   }
+
+  scope.prototype.findDepth = function findDepth(obj) {
+    var current = this;
+    var depth = 0;
+    while (current) {
+      if (current.object === obj) {
+        return depth;
+      }
+      depth ++;
+      current = current.parent;
+    }
+    return -1;
+  };
 
   scope.prototype.findProperty = function findProperty(mn, domain, strict) {
     assert(this.object);
@@ -744,7 +761,7 @@ var Runtime = (function () {
       mi.analysis = new Analysis(mi, { massage: true });
 
       if (mi.traits) {
-        mi.activationPrototype = this.applyTraits({}, null, null, mi.traits, null, false);
+        mi.activationPrototype = this.applyTraits(new Activation(mi), null, null, mi.traits, null, false);
       }
 
       // If we have exceptions, make the catch scopes now.
