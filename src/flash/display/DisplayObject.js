@@ -103,7 +103,7 @@ const DisplayObjectDefinition = (function () {
       var yMin = Math.min(y1, y2, y3, y4);
       var yMax = Math.max(y1, y2, y3, y4);
 
-      return new Rectangle(
+      return new flash.geom.Rectangle(
         xMin + m.tx,
         yMin + m.ty,
         (xMax - xMin),
@@ -255,7 +255,7 @@ const DisplayObjectDefinition = (function () {
       notImplemented();
     },
     get transform() {
-      return this._transform || new Transform(this);
+      return this._transform || new flash.geom.Transform(this);
     },
     set transform(val) {
       var transform = this._transform;

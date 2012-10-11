@@ -4,7 +4,6 @@ SWF.embed = function(file, container, options) {
   var loader = new flash.display.Loader;
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new flash.display.Stage;
-  var EventClass = avm2.systemDomain.getClass("flash.events.Event");
 
   loader._stage = stage;
   stage._loader = loader;
@@ -14,7 +13,7 @@ SWF.embed = function(file, container, options) {
     canvas.height = container.clientHeight;
   }
 
-  loaderInfo.addEventListener(EventClass.INIT, function () {
+  loaderInfo.addEventListener("init", function () {
     stage._frameRate = loaderInfo.frameRate;
     stage._loaderInfo = loaderInfo;
     stage._stageHeight = loaderInfo.height;
@@ -52,7 +51,7 @@ SWF.embed = function(file, container, options) {
   });
 
   if (options.onComplete) {
-    loaderInfo.addEventListener(EventClass.COMPLETE, function () {
+    loaderInfo.addEventListener("complete", function () {
       options.onComplete();
     });
   }

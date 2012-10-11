@@ -36,75 +36,60 @@ var as3error = {};
    makeStub(as3error, className, className);
  });
 
-["flash.display.DisplayObject",
- "flash.display.InteractiveObject",
- "flash.display.DisplayObjectContainer",
- "flash.display.Sprite",
- "flash.display.MovieClip",
- "flash.display.Shape",
- "flash.display.Stage",
- "flash.display.Loader",
- "flash.display.LoaderInfo",
- "flash.display.Graphics",
-
- "flash.geom.Point",
- "flash.geom.Rectangle",
-
- "flash.events.EventDispatcher",
- "flash.events.Event",
- "flash.events.KeyboardEvent",
-
- "flash.text.TextField",
- "flash.text.StaticText",
-
- "flash.text.Video",
-
- "flash.utils.Timer"].forEach(function (className) {
-  var path = className.split(".");
-  var container = this;
-  for (var i = 0, j = path.length - 1; i < j; i++) {
-    if (!container[path[i]]) {
-      container[path[i]] = {};
-    }
-    container = container[path[i]];
+(function () {
+  function M(className, nativeName, definition) {
+    return {
+      className: className,
+      nativeName: nativeName,
+      definition: definition
+    };
   }
 
-  makeStub(container, className, path[path.length - 1]);
-});
+  [M("flash.display.DisplayObject", "DisplayObjectClass", DisplayObjectDefinition),
+   M("flash.display.InteractiveObject", "InteractiveObjectClass", InteractiveObjectDefinition),
+   M("flash.display.DisplayObjectContainer", "ContainerClass", DisplayObjectContainerDefinition),
+   M("flash.display.Sprite", "SpriteClass", SpriteDefinition),
+   M("flash.display.MovieClip", "MovieClipClass", MovieClipDefinition),
+   M("flash.display.Shape", "ShapeClass", ShapeDefinition),
+   M("flash.display.Stage", "StageClass", StageDefinition),
+   M("flash.display.Loader", "LoaderClass", LoaderDefinition),
+   M("flash.display.LoaderInfo", "LoaderInfoClass", LoaderInfoDefinition),
+   M("flash.display.Graphics", "GraphicsClass", GraphicsDefinition),
 
-//
-// Hook up natives
-//
-function manage(name, definition) {
-  return function (runtime, scope, instance, baseClass) {
-    return new runtime.domain.system.ManagedClass(name, baseClass, definition, instance);
-  };
-}
+   M("flash.geom.Point", "PointClass", PointDefinition),
+   M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
+   M("flash.geom.Matrix", "MatrixClass", MatrixDefinition),
+   M("flash.geom.Transform", "TransformClass", TransformDefinition),
+   M("flash.geom.ColorTransform", "ColorTransformClass", ColorTransformDefinition),
 
-natives.DisplayObjectClass = manage("DisplayObject", DisplayObjectDefinition);
-natives.InteractiveObjectClass = manage("InteractiveObject", InteractiveObjectDefinition);
-natives.ContainerClass = manage("DisplayObjectContainer", DisplayObjectContainerDefinition);
-natives.SpriteClass = manage("Sprite", SpriteDefinition);
-natives.MovieClipClass = manage("MovieClip", MovieClipDefinition);
-natives.ShapeClass = manage("Shape", ShapeDefinition);
-natives.StageClass = manage("Stage", StageDefinition);
-natives.LoaderClass = manage("Loader", LoaderDefinition);
-natives.LoaderInfoClass = manage("LoaderInfo", LoaderInfoDefinition);
-natives.GraphicsClass = manage("Graphics", GraphicsDefinition);
+   M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
+   M("flash.events.Event", "EventClass", EventDefinition),
+   M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
 
-natives.PointClass = manage("Point", PointDefinition);
-natives.RectangleClass = manage("Rectangle", RectangleDefinition);
+   M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
+   M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
-natives.EventDispatcherClass = manage("EventDispatcher", EventDispatcherDefinition);
-natives.EventClass = manage("Event", EventDefinition);
-natives.KeyboardEventClass = manage("KeyboardEvent", KeyboardEventDefinition);
+   M("flash.text.Video", "VideoClass", VideoDefinition),
 
-natives.TextFieldClass = manage("TextField", TextFieldDefinition);
-natives.StaticTextClass = manage("StaticText", StaticTextDefinition);
+   M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
+     var path = m.className.split(".");
+     var container = this;
+     for (var i = 0, j = path.length - 1; i < j; i++) {
+       if (!container[path[i]]) {
+         container[path[i]] = {};
+       }
+       container = container[path[i]];
+     }
 
-natives.VideoClass = manage("Video", VideoDefinition);
+     makeStub(container, m.className, path[path.length - 1]);
 
-natives.TimerClass = manage("Timer", TimerDefinition);
+     // Hook up the native.
+     natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
+       return new runtime.domain.system.ManagedClass(m.className, baseClass, m.definition, instance);
+     };
+   });
+}).call(this);
+
 natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {
   var start = Date.now();
   return function getTimer() {
