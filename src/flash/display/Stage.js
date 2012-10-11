@@ -124,11 +124,17 @@ const StageDefinition = (function () {
     }
   };
 
+  const desc = Object.getOwnPropertyDescriptor;
+
   // TODO
   def.__glue__  = {
-    instance: {
-      requireOwnerPermissions: function () {
-        // private undocumented
+    native: {
+      instance: {
+        stageHeight: desc(def, "stageHeight"),
+        stageWidth: desc(def, "stageWidth"),
+        requireOwnerPermissions: function () {
+          // private undocumented
+        }
       }
     }
   };
