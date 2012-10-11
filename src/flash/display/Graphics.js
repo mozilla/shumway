@@ -277,7 +277,7 @@ const GraphicsDefinition = (function () {
       path.fillTransform = this._fillTransform;
       path.strokeStyle = this._strokeStyle;
       this._subpaths.push(path);
-      this._currentPath = path;
+      Object.defineProperty(this, '_currentPath', { value: path });
       return path;
     }
   };

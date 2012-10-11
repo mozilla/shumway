@@ -10,6 +10,10 @@ const EventDispatcherDefinition = (function () {
       this._handlers = { };
     },
 
+    ctor: function (target) {
+      this._target = target;
+    },
+
     addEventListener: function (type, listener, useCapture, prio, useWeakReference) {
       if (typeof listener !== 'function')
         throw ArgumentError();
@@ -110,15 +114,15 @@ const EventDispatcherDefinition = (function () {
   };
 
   def.__glue__ = {
-    instance: {
-      ctor: function ctor(target) {
-        print("Ctor");
-      },
-      addEventListener: def.addEventListener,
-      removeEventListener: def.removeEventListener,
-      hasEventListener: def.hasEventListener,
-      willTrigger: def.willTrigger,
-      dispatchEventFunction: def.dispatchEvent
+    native: {
+      instance: {
+        ctor: def.ctor,
+        addEventListener: def.addEventListener,
+        removeEventListener: def.removeEventListener,
+        hasEventListener: def.hasEventListener,
+        willTrigger: def.willTrigger,
+        dispatchEventFunction: def.dispatchEvent
+      }
     }
   };
 
