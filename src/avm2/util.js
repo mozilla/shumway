@@ -620,6 +620,12 @@ function base64ArrayBuffer(arrayBuffer) {
 }
 
 var IndentingWriter = (function () {
+  var PURPLE = '\033[94m';
+  var YELLOW = '\033[93m';
+  var GREEN = '\033[92m';
+  var RED = '\033[91m';
+  var ENDC = '\033[0m';
+
   var consoleOutFn = console.info.bind(console);
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
@@ -631,6 +637,12 @@ var IndentingWriter = (function () {
   indentingWriter.prototype.writeLn = function writeLn(str) {
     if (!this.suppressOutput) {
       this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.debugLn = function writeLn(str) {
+    if (!this.suppressOutput) {
+      this.out(this.padding + PURPLE + str + ENDC);
     }
   };
 

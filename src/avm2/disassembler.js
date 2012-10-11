@@ -450,7 +450,8 @@ var SourceTracer = (function () {
         traits.properties.forEach(function(trait, i) {
           var traitName = trait.name.getName();
           var last = i === traits.properties.length - 1;
-          writer.writeLn("// " + (trait.typeName ? trait.typeName + " " : "") + traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
+          // writer.writeLn("// " + (trait.typeName ? trait.typeName + " " : "") + traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
+          writer.writeLn(traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
         });
       }
 

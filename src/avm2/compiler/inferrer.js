@@ -1,0 +1,1138 @@
+"use strict";
+
+var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
+
+var Type = (function () {
+  function type () {
+    unexpected("Type is Abstract");
+  }
+
+  type.prototype.equals = function (other) {
+    return this === other;
+  };
+
+  type.prototype.merge = function (other) {
+    return other;
+  };
+
+  type.from = function from(x, domain) {
+    if (x instanceof ClassInfo) {
+      var className = x.instanceInfo.name;
+      switch (className.name) {
+        case "int":       return type.Int;
+        case "uint":      return type.Uint;
+        case "float":     return type.Number;
+        case "Number":    return type.Number;
+      }
+    }
+    if (x instanceof ScriptInfo    ||
+        x instanceof ClassInfo     ||
+        x instanceof InstanceInfo) {
+      return new TraitsType(x);
+    } else if (x instanceof Activation) {
+      return new TraitsType(x.methodInfo);
+    } else if (x instanceof Global) {
+      return new TraitsType(x.scriptInfo);
+    } else if (x instanceof Interface) {
+      return new TraitsType(x.classInfo);
+    } else if (domain && (x instanceof (domain.system.Class))) {
+      return type.from(x.classInfo);
+    }
+    return Type.Any;
+  };
+
+  type.cache = {};
+
+  type.fromName = function fromName(mn, domain) {
+    if (mn === undefined) {
+      return Type.Undefined;
+    } else {
+      var qn = Multiname.getQualifiedName(mn);
+      var ty = type.cache[qn];
+      if (ty) {
+        return ty;
+      }
+      assert (domain, "Domain is needed.");
+      ty = domain.getProperty(mn, false, true);
+      assert (ty, "Name " + mn + " not found in domain.");
+      return type.cache[qn] = type.from(ty, domain);
+    }
+    return Type.Any;
+  };
+
+  type.prototype.applyType = function (parameter) {
+    return new ParameterizedType(this, parameter);
+  };
+
+  type.prototype.toString = function () {
+    return "[type]";
+  };
+
+  type.prototype.isNumeric = function () {
+    return this === Type.Int || this === Type.Number;
+  };
+
+  type.prototype.instance = function () {
+    return this;
+  };
+
+  type.prototype.getTrait = function () {
+    return null;
+  };
+
+  return type;
+})();
+
+var AtomType = (function () {
+  function atomType(name) {
+    this.name = name
+  }
+  atomType.prototype = Object.create(Type.prototype);
+  atomType.prototype.toString = function () {
+    if (this === Type.Undefined) {
+      return "X";
+    } else if (this === Type.Array) {
+      return "R";
+    } else if (this === Type.Null) {
+      return "L";
+    }
+    return this.name[0];
+  };
+
+  atomType.prototype.merge = function merge(other) {
+    if (other instanceof TraitsType) {
+      return Type.Any;
+    }
+
+    if (this === other) {
+      return this;
+    }
+
+    if (this === Type.Any || other === Type.Any) {
+      return Type.Any;
+    }
+
+    if (this.isNumeric() && other.isNumeric()) {
+      return Type.Number;
+    }
+
+    return Type.Any;
+  };
+  return atomType;
+})();
+
+var TraitsType = (function () {
+  function traitsType(object) {
+    assert (object && object.traits);
+    this.object = object;
+    this.traits = object.traits;
+  }
+
+  traitsType.prototype = Object.create(Type.prototype);
+
+  function nameOf(x) {
+    if (x instanceof ScriptInfo) {
+      return "SI";
+    } else if (x instanceof ClassInfo) {
+      return "CI";
+    } else if (x instanceof InstanceInfo) {
+      return "II";
+    } else if (x instanceof MethodInfo) {
+      return "MI";
+    } else if (x instanceof Activation) {
+      return "AC";
+    }
+    assert(false);
+  }
+
+  function findTraitBySlotId(traits, slotId) {
+    for (var i = traits.length - 1; i >= 0; i--) {
+      if (traits[i].slotId === slotId) {
+        return traits[i];
+      }
+    }
+    unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
+  }
+
+  function findTraitByName(traits, mn, isSetter) {
+    var isGetter = !isSetter;
+    var trait;
+    if (!Multiname.isQName(mn)) {
+      assert (mn instanceof Multiname);
+      var dy;
+      for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+        var qn = mn.getQName(i);
+        if (mn.namespaces[i].isDynamic()) {
+          dy = qn;
+        } else {
+          if (trait = findTraitByName(traits, qn, isSetter)) {
+            return trait;
+          }
+        }
+      }
+      if (dy) {
+        return findTraitByName(traits, dy, isSetter);
+      }
+    } else {
+      var qn = Multiname.getQualifiedName(mn);
+      for (var i = 0, j = traits.length; i < j; i++) {
+        trait = traits[i];
+        if (Multiname.getQualifiedName(trait.name) === qn) {
+          if (isSetter && trait.isGetter() || isGetter && trait.isSetter()) {
+            continue;
+          }
+          return trait;
+        }
+      }
+    }
+  }
+
+  traitsType.prototype.getTrait = function (mn) {
+    return findTraitByName(this.traits, mn);
+  };
+
+  traitsType.prototype.getTraitAt = function (i) {
+    if (this.object instanceof ScriptInfo ||
+      this.object instanceof MethodInfo) {
+      return findTraitBySlotId(this.traits, i);
+    }
+  };
+
+  traitsType.prototype.toString = function () {
+    return nameOf(this.object);
+  };
+
+  traitsType.prototype.instance = function () {
+    if (this.object instanceof ClassInfo) {
+      return Type.from(this.object.instanceInfo);
+    }
+    return this;
+  };
+
+  return traitsType;
+})();
+
+var MultinameType = (function () {
+  function multinameType(namespaces, name) {
+    this.namespaces = namespaces;
+    this.name = name
+  }
+  multinameType.prototype = Object.create(Type.prototype);
+  multinameType.prototype.toString = function () {
+    return "MN";
+  };
+  return multinameType;
+})();
+
+var ParameterizedType = (function () {
+  function parameterizedType(type, parameter) {
+    this.type = type;
+    this.parameter = parameter;
+  }
+  parameterizedType.prototype = Object.create(Type.prototype);
+  parameterizedType.prototype.toString = function () {
+    return this.type + "<" + this.parameter + ">";
+  };
+  return parameterizedType;
+})();
+
+Type.Undefined = new AtomType("Undefined");
+Type.Any = new AtomType("Any");
+Type.Int = new AtomType("Int");
+Type.Uint = new AtomType("Uint");
+Type.Null = new AtomType("Null");
+Type.Array = new AtomType("Array");
+Type.String = new AtomType("String");
+Type.Object = new AtomType("Object");
+Type.Number = new AtomType("Number");
+Type.Boolean = new AtomType("Boolean");
+Type.Function = new AtomType("Function");
+
+var TypeInformation = (function () {
+  function typeInformation () {
+
+  }
+  typeInformation.prototype.toString = function () {
+    return toKeyValueArray(this).map(function (x) {
+      return x[0] + ": " + x[1];
+    }).join(" | ")
+  };
+  return typeInformation;
+})();
+
+var Verifier = (function() {
+  function VerifierError(message) {
+    this.name = "VerifierError";
+    this.message = message || "";
+  }
+
+  /**
+   * Abstract Program State
+   */
+  var State = (function() {
+    var id = 0;
+    function state() {
+      this.id = id += 1;
+      this.stack = [];
+      this.scope = [];
+      this.local = [];
+    }
+    state.prototype.clone = function clone() {
+      var s = new State();
+      s.originalId = this.id;
+      s.stack = this.stack.slice(0);
+      s.scope = this.scope.slice(0);
+      s.local = this.local.slice(0);
+      return s;
+    };
+    state.prototype.trace = function trace(writer) {
+      writer.writeLn(this.toString());
+    };
+    state.prototype.toString = function () {
+      return "<" + this.id + (this.originalId ? ":" + this.originalId : "") +
+        ", L[" + this.local.join(", ") + "]" +
+        ", S[" + this.stack.join(", ") + "]" +
+        ", $[" + this.scope.join(", ") + "]>";
+    };
+    state.prototype.equals = function(other) {
+      if (!arraysEqual(this.stack, other.stack) ||
+          !arraysEqual(this.scope, other.scope) ||
+          !arraysEqual(this.local, other.local)) {
+        return false;
+      }
+      return true;
+    };
+    function arraysEqual(a, b) {
+      if(a.length != b.length) {
+        return false;
+      }
+      for (var i = a.length - 1; i >= 0; i--) {
+        if (!a[i].equals(b[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    function mergeArrays(a, b) {
+      assert(a.length === b.length, "a: " + a + ", b: " + b);
+      for (var i = a.length - 1; i >= 0; i--) {
+        assert((a[i] !== undefined) && (b[i] !== undefined));
+        a[i] = a[i].merge(b[i]);
+      }
+    }
+    state.prototype.merge = function(other) {
+      mergeArrays(this.local, other.local);
+      mergeArrays(this.stack, other.stack);
+      mergeArrays(this.scope, other.scope);
+    };
+
+    return state;
+  })();
+
+  var Verification = (function() {
+    function verification(verifier, methodInfo, scope) {
+      this.scope = scope;
+      this.abc = verifier.abc;
+      this.domain = this.abc.domain;
+      this.verifier = verifier;
+      this.methodInfo = methodInfo;
+      this.writer = new IndentingWriter();
+      this.returnType = Type.Undefined;
+    }
+
+    verification.prototype.verify = function verify() {
+      var mi = this.methodInfo;
+      var writer = traceLevel.value <= 1 ? null : this.writer;
+      var blocks = mi.analysis.blocks;
+
+      blocks.forEach(function (x) {
+        x.entryState = x.exitState = null;
+      });
+
+      if (writer) {
+        this.methodInfo.trace(writer, this.verifier.abc);
+      }
+
+      var entryState = new State();
+
+      assert (mi.localCount >= mi.parameters.length + 1);
+
+      var thisType = mi.holder ? Type.from(mi.holder) : Type.Any;
+
+      entryState.local.push(thisType);
+
+      // Initialize entry state with parameter types.
+      for (var i = 0; i < mi.parameters.length; i++) {
+        entryState.local.push(Type.fromName(mi.parameters[i].type, this.domain).instance());
+      }
+
+      var remainingLocals = mi.localCount - mi.parameters.length - 1;
+
+      // Push the |rest| or |arguments| array type in the locals.
+      if (mi.needsRest() || mi.needsArguments()) {
+        entryState.local.push(Type.Array);
+        remainingLocals -= 1;
+      }
+
+      // Initialize locals with Type.Atom.Undefined
+      for (var i = 0; i < remainingLocals; i++) {
+        entryState.local.push(Type.Undefined);
+      }
+
+      assert(entryState.local.length === mi.localCount);
+
+      if (writer) {
+        entryState.trace(writer);
+      }
+
+      /**
+       * To avoid revisiting the same block more than necessary while iterating
+       * to a fixed point, the blocks need to be processed in dominator order.
+       * The same problem for tamarin is discussed here: https://bugzilla.mozilla.org/show_bug.cgi?id=661133
+       *
+       * The blocks in the mi.analysis.blocks are in the dominator order.
+       * Iterate over the blocks array and assign an id (bdo = blockDominatorOrder)
+       * that gives the dominator order for the que insert.
+       */
+      for (var bi = 0, len = blocks.length; bi < len; bi++) {
+        blocks[bi].bdo = bi;
+      }
+
+      /**
+       * Keep the blocks sorted in dominator order.
+       * The SortedList structure is based on a linked list and uses a liniar search
+       * to find the right insertion position and keep the list sorted.
+       * The push operation takes O(n), the pull operations takes O(1).
+       */
+      var worklist = new SortedList(function compare(blockA, blockB) {
+        return blockA.bdo - blockB.bdo;
+      });
+
+      blocks[0].entryState = entryState;
+      worklist.push(blocks[0]);
+
+      while (worklist.peek()) {
+
+        var block = worklist.pop();
+        var exitState = block.exitState = block.entryState.clone();
+
+        this.verifyBlock(block, exitState);
+
+        block.succs.forEach(function (successor) {
+          if (worklist.contains(successor)) {
+            if (writer) {
+              writer.writeLn("Forward Merged Block: " + successor.bid + " " +
+                exitState.toString() + " with " + successor.entryState.toString());
+            }
+            // merge existing item entry state with current block exit state
+            successor.entryState.merge(exitState);
+            if (writer) {
+              writer.writeLn("Merged State: " + successor.entryState);
+            }
+            return;
+          }
+
+          if (successor.entryState) {
+            if (!successor.entryState.equals(exitState)) {
+              if (writer) {
+                writer.writeLn("Backward Merged Block: " + successor.bid + " " +
+                               exitState.toString() + " with " + successor.entryState.toString());
+              }
+              successor.entryState.merge(exitState);
+              worklist.push(successor);
+              if (writer) {
+                writer.writeLn("Merged State: " + successor.entryState);
+              }
+            }
+            return;
+          }
+
+          successor.entryState = exitState.clone();
+          worklist.push(successor);
+          if (writer) {
+            writer.writeLn("Added Block: " + successor.bid +
+              " to worklist: " + successor.entryState.toString());
+          }
+        });
+      }
+
+      if (writer) {
+        writer.writeLn("Inferred return type: " + this.returnType);
+      }
+      this.methodInfo.inferredReturnType = this.returnType;
+    };
+
+    verification.prototype.verifyBlock = function verifyBlock(block, state) {
+      var savedScope = this.scope;
+
+      var local = state.local;
+      var stack = state.stack;
+      var scope = state.scope;
+
+      var writer = traceLevel.value <= 1 ? null : this.writer;
+      var bytecodes = this.methodInfo.analysis.bytecodes;
+
+      var abc = this.verifier.abc;
+      var multinames = abc.constantPool.multinames;
+
+      var bc, obj, fn, mi, mn, l, r, val, type, typeName, name, trait;
+
+      if (writer) {
+        writer.enter("verifyBlock: " + block.bid +
+          ", range: [" + block.position + ", " + block.end.position +
+          "], entryState: " + state.toString() + " {");
+      }
+
+      /**
+       * Close over the current |bc| and |state|.
+       */
+
+      function ti() {
+        return bc.ti || (bc.ti = new TypeInformation());
+      }
+
+      function push(x) {
+        assert(x);
+        ti().type = x;
+        stack.push(x);
+      }
+
+      function pop() {
+        return stack.pop();
+      }
+
+      function findProperty(mn, strict) {
+        for (var i = scope.length - 1; i >= 0; i--) {
+          if (scope[i] instanceof TraitsType) {
+            var trait = scope[i].getTrait(mn);
+            if (trait) {
+              return scope[i];
+            }
+          }
+          return Type.Any;
+        }
+
+        if (savedScope && mn instanceof Multiname) {
+          var obj = savedScope.findProperty(mn, abc.domain, strict, true);
+          if (obj) {
+            ti().savedScopeDepth = savedScope.findDepth(obj);
+            if (mn.name === "x") {
+              debugger;
+              print(" >>> " + obj);
+            }
+            if (obj instanceof Global) {
+              ti().object = obj;
+            }
+            return Type.from(obj, abc.domain);
+          }
+        }
+        return Type.Any;
+      }
+
+      function popMultiname() {
+        var mn = multinames[bc.index];
+        if (mn.isRuntime()) {
+          var namespaces = mn.namespaces;
+          var name = mn.name;
+          if (mn.isRuntimeName()) {
+            name = pop();
+          }
+          if (mn.isRuntimeNamespace()) {
+            namespaces = [pop()];
+          }
+          return new MultinameType(namespaces, mn, name);
+        }
+        return mn;
+      }
+
+      function accessSlot(obj) {
+        assert (obj instanceof TraitsType);
+        var trait = obj.getTraitAt(bc.index);
+        writer && writer.debugLn("accessSlot() -> " + trait);
+        if (trait) {
+          ti().trait = trait;
+          if (trait.isSlot()) {
+            return Type.fromName(trait.typeName, abc.domain).instance();
+          } else if (trait.isClass()) {
+            return Type.from(trait.classInfo, abc.domain);
+          }
+        }
+        return Type.Any;
+      }
+
+      function getProperty(obj, mn) {
+        if (obj instanceof TraitsType && mn instanceof Multiname) {
+          var trait = obj.getTrait(mn);
+          writer && writer.debugLn("getProperty() -> " + trait);
+          if (trait) {
+            ti().trait = trait;
+            if (trait.isSlot()) {
+              return Type.fromName(trait.typeName, abc.domain).instance();
+            } else if (trait.isClass()) {
+              return Type.from(trait.classInfo, abc.domain);
+            }
+          } else {
+          //  ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+          }
+        }
+        return Type.Any;
+      }
+
+      function setProperty(obj, mn) {
+        if (obj instanceof TraitsType && mn instanceof Multiname) {
+          var trait = obj.getTrait(mn);
+          writer && writer.debugLn("setProperty() -> " + trait);
+          if (trait) {
+            ti().trait = trait;
+          } else {
+          //  ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+          }
+        }
+      }
+
+      for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
+        bc = bytecodes[bci];
+        var op = bc.op;
+
+        switch (op) {
+          case OP_bkpt:
+            // Nop.
+            break;
+          case OP_throw:
+            pop();
+            break;
+          case OP_getsuper:
+            notImplemented(bc);
+            break;
+          case OP_setsuper:
+            notImplemented(bc);
+            break;
+          case OP_dxns:
+            notImplemented(bc);
+            break;
+          case OP_dxnslate:
+            notImplemented(bc);
+            break;
+          case OP_kill:
+            state.local[bc.index] = Type.Undefined;
+            break;
+          case OP_lf32x4:
+            notImplemented(bc);
+            break;
+          case OP_sf32x4:
+            notImplemented(bc);
+            break;
+          case OP_ifnlt:
+          case OP_ifge:
+          case OP_ifnle:
+          case OP_ifgt:
+          case OP_ifngt:
+          case OP_ifle:
+          case OP_ifnge:
+          case OP_iflt:
+          case OP_ifeq:
+          case OP_ifne:
+          case OP_ifstricteq:
+          case OP_ifstrictne:
+            pop();
+            pop();
+            break;
+          case OP_jump:
+            // Nop.
+            break;
+          case OP_iftrue:
+          case OP_iffalse:
+            pop();
+            break;
+          case OP_lookupswitch:
+            pop(Type.Int);
+            break;
+          case OP_popscope:
+            scope.pop();
+            break;
+          case OP_nextname:
+          case OP_nextvalue:
+            pop(Type.Int);
+            pop();
+            push(Type.Any);
+            break;
+          case OP_hasnext:
+            push(Type.Boolean);
+            break;
+          case OP_hasnext2:
+            push(Type.Boolean);
+            break;
+          case OP_pushnull:
+            push(Type.Null);
+            break;
+          case OP_pushundefined:
+            push(Type.Undefined);
+            break;
+          case OP_pushfloat:
+            notImplemented(bc);
+            break;
+          case OP_pushbyte:
+            push(Type.Int);
+            break;
+          case OP_pushshort:
+            push(Type.Int);
+            break;
+          case OP_pushstring:
+            push(Type.String);
+            break;
+          case OP_pushint:
+            push(Type.Int);
+            break;
+          case OP_pushuint:
+            push(Type.Uint);
+            break;
+          case OP_pushdouble:
+            push(Type.Number);
+            break;
+          case OP_pushtrue:
+            push(Type.Boolean);
+            break;
+          case OP_pushfalse:
+            push(Type.Boolean);
+            break;
+          case OP_pushnan:
+            push(Type.Number);
+            break;
+          case OP_pop:
+            pop();
+            break;
+          case OP_dup:
+            val = pop();
+            push(val);
+            push(val);
+            break;
+          case OP_swap:
+            l = pop();
+            r = pop();
+            push(l);
+            push(r);
+            break;
+          case OP_pushwith:
+          case OP_pushscope:
+            scope.push(pop());
+            break;
+          case OP_pushnamespace:
+            notImplemented(bc);
+            break;
+          case OP_li8:
+          case OP_li16:
+          case OP_li32:
+            push(Type.Int);
+            break;
+          case OP_lf32:
+          case OP_lf64:
+            push(Type.Number);
+            break;
+          case OP_si8:
+          case OP_si16:
+          case OP_si32:
+            pop(Type.Int);
+            break;
+          case OP_sf32:
+          case OP_sf64:
+            pop(Type.Number);
+            break;
+          case OP_newfunction:
+            push(Type.Function);
+            break;
+          case OP_call:
+            stack.popMany(bc.argCount);
+            obj = pop();
+            fn = pop();
+            push(Type.Any);
+            break;
+          case OP_construct:
+            stack.popMany(bc.argCount);
+            obj = pop();
+            push(Type.Any);
+            break;
+          case OP_callmethod:
+            // callmethod is always invalid
+            // http://hg.mozilla.org/tamarin-redux/file/eb8f916bb232/core/Verifier.cpp#l1846
+            throw new VerifierError("callmethod");
+          case OP_callstatic:
+            notImplemented(bc);
+            break;
+          case OP_callsuper:
+            stack.popMany(bc.argCount);
+            mn = popMultiname();
+            obj = pop();
+            getProperty(obj, mn);
+            push(Type.Any);
+            break;
+          case OP_callproperty:
+          case OP_callproplex:
+            stack.popMany(bc.argCount);
+            mn = popMultiname();
+            obj = pop();
+            getProperty(obj, mn);
+            push(Type.Any);
+            break;
+          case OP_returnvoid:
+            this.returnType.merge(Type.Undefined);
+            break;
+          case OP_returnvalue:
+            pop();
+            break;
+          case OP_constructsuper:
+            stack.popMany(bc.argCount);
+            stack.pop();
+            break;
+          case OP_constructprop:
+            stack.popMany(bc.argCount);
+            mn = popMultiname();
+            obj = stack.pop();
+            push(Type.Any);
+            break;
+          case OP_callsuperid:
+            notImplemented(bc);
+            break;
+          case OP_callinterface:
+            notImplemented(bc);
+            break;
+          case OP_callsupervoid:
+            stack.popMany(bc.argCount);
+            popMultiname();
+            pop();
+            break;
+          case OP_callpropvoid:
+            stack.popMany(bc.argCount);
+            popMultiname();
+            pop();
+            break;
+          case OP_sxi1:
+          case OP_sxi8:
+          case OP_sxi16:
+            // Sign extend, nop.
+            break;
+          case OP_applytype:
+            assert(bc.argCount === 1);
+            val = pop();
+            obj = pop();
+            push(obj.applyType(val));
+            break;
+          case OP_pushfloat4:
+            notImplemented(bc);
+            break;
+          case OP_newobject:
+            stack.popMany(bc.argCount * 2);
+            push(Type.Object);
+            break;
+          case OP_newarray:
+            // Pops values, pushes result.
+            stack.popMany(bc.argCount);
+            push(Type.Array);
+            break;
+          case OP_newactivation:
+            // push(Type.fromReference(new Activation(this.methodInfo)));
+            push(Type.from(new Activation(this.methodInfo)));
+            break;
+          case OP_newclass:
+            // The newclass bytecode is not supported because it needs
+            // the base class which might not always be available.
+            // The functions initializing classes should not be performance
+            // critical anyway.
+            throw new VerifierError("Not Supported");
+          case OP_getdescendants:
+            notImplemented(bc); //TODO
+            break;
+          case OP_newcatch:
+            push(Type.Any);
+            break;
+          case OP_findpropstrict:
+            push(findProperty(popMultiname(), true));
+            break;
+          case OP_findproperty:
+            push(findProperty(popMultiname(), false));
+            break;
+          case OP_finddef:
+            notImplemented(bc);
+            break;
+          case OP_getlex:
+            // multiname = popMultiname();
+            // push(getPropertyType(findProperty(multiname, true, bc), multiname));
+            notImplemented(bc);
+            break;
+          case OP_initproperty:
+          case OP_setproperty:
+            val = pop();
+            mn = popMultiname();
+            obj = pop();
+            setProperty(obj, mn, bc);
+            break;
+          case OP_getlocal:
+            push(local[bc.index]);
+            break;
+          case OP_setlocal:
+            local[bc.index] = pop();
+            break;
+          case OP_getglobalscope:
+            push(Type.from(savedScope.global.object));
+            break;
+          case OP_getscopeobject:
+            push(scope[bc.index]);
+            break;
+          case OP_getproperty:
+            mn = popMultiname();
+            obj = pop();
+            push(getProperty(obj, mn));
+            break;
+          case OP_getouterscope:
+            notImplemented(bc);
+            break;
+          case OP_setpropertylate:
+            notImplemented(bc);
+            break;
+          case OP_deleteproperty:
+            popMultiname();
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_deletepropertylate:
+            notImplemented(bc);
+            break;
+          case OP_getslot:
+            push(accessSlot(pop()));
+            break;
+          case OP_setslot:
+            val = pop();
+            obj = pop();
+            accessSlot(obj);
+            break;
+          case OP_getglobalslot:
+            notImplemented(bc);
+            break;
+          case OP_setglobalslot:
+            notImplemented(bc);
+            break;
+          case OP_convert_s:
+            pop();
+            push(Type.String);
+            break;
+          case OP_esc_xelem:
+            pop();
+            push(Type.String);
+            break;
+          case OP_esc_xattr:
+            pop();
+            push(Type.String);
+            break;
+          case OP_coerce_i:
+          case OP_convert_i:
+            pop();
+            push(Type.Int);
+            break;
+          case OP_coerce_u:
+          case OP_convert_u:
+            pop();
+            push(Type.Uint);
+            break;
+          case OP_coerce_d:
+          case OP_convert_d:
+            pop();
+            push(Type.Number);
+            break;
+          case OP_coerce_b:
+          case OP_convert_b:
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_convert_o:
+            notImplemented(bc);
+            break;
+          case OP_checkfilter:
+            notImplemented(bc);
+            break;
+          case OP_convert_f:
+            pop();
+            push(Type.Number);
+            break;
+          case OP_unplus:
+            notImplemented(bc);
+            break;
+          case OP_convert_f4:
+            notImplemented(bc);
+            break;
+          case OP_coerce:
+            pop();
+            push(Type.fromName(multinames[bc.index], this.domain).instance());
+            break;
+          case OP_coerce_a:
+            // pop(); push(Type.Any);
+            break;
+          case OP_coerce_s:
+            pop();
+            push(Type.String);
+            break;
+          case OP_astype:
+            notImplemented(bc);
+            break;
+          case OP_astypelate:
+            notImplemented(bc);
+            break;
+          case OP_coerce_o:
+            notImplemented(bc);
+            break;
+          case OP_negate:
+          case OP_increment:
+          case OP_decrement:
+            pop();
+            push(Type.Number);
+            break;
+          case OP_inclocal:
+          case OP_declocal:
+            local[bc.index] = Type.Number;
+            break;
+          case OP_typeof:
+            pop();
+            push(Type.String);
+            break;
+          case OP_not:
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_add:
+            r = pop();
+            l = pop();
+            if (l.isNumeric() && r.isNumeric()) {
+              push(Type.Number);
+            } else if (l === Type.String || r === Type.String) {
+              push(Type.String);
+            } else {
+              push(Type.Any);
+            }
+            break;
+          case OP_subtract:
+          case OP_multiply:
+          case OP_divide:
+          case OP_modulo:
+            pop();
+            pop();
+            push(Type.Number);
+            break;
+          case OP_bitand:
+          case OP_bitor:
+          case OP_bitxor:
+          case OP_lshift:
+          case OP_rshift:
+          case OP_urshift:
+            pop();
+            pop();
+            push(Type.Int);
+            break;
+          case OP_bitnot:
+            pop();
+            push(Type.Int);
+            break;
+          case OP_equals:
+          case OP_strictequals:
+          case OP_lessthan:
+          case OP_lessequals:
+          case OP_greaterthan:
+          case OP_greaterequals:
+          case OP_instanceof:
+          case OP_in:
+            pop();
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_istype:
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_istypelate:
+            pop();
+            pop();
+            push(Type.Boolean);
+            break;
+          case OP_inclocal_i:
+          case OP_declocal_i:
+            local[bc.index] = Type.Int;
+            break;
+          case OP_decrement_i:
+          case OP_increment_i:
+          case OP_negate_i:
+            pop();
+            push(Type.Int);
+            break;
+          case OP_add_i:
+          case OP_subtract_i:
+          case OP_multiply_i:
+            pop();
+            pop();
+            push(Type.Int); // or Number?
+            break;
+          case OP_getlocal0:
+          case OP_getlocal1:
+          case OP_getlocal2:
+          case OP_getlocal3:
+            push(local[op - OP_getlocal0]);
+            break;
+          case OP_setlocal0:
+          case OP_setlocal1:
+          case OP_setlocal2:
+          case OP_setlocal3:
+            local[op - OP_setlocal0] = pop();
+            break;
+          case OP_debug:
+            // Nop.
+            break;
+          case OP_debugline:
+            // Nop.
+            break;
+          case OP_debugfile:
+            // Nop.
+            break;
+          case OP_bkptline:
+            // Nop.
+            break;
+          case OP_timestamp:
+            // Nop.
+            break;
+          default:
+            console.info("Not Implemented: " + bc);
+        }
+
+        if (writer) {
+          writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(abc));
+          if (bc.ti) {
+            writer.debugLn("> TI: " + bc.ti);
+          }
+        }
+      }
+      if (writer) {
+        writer.leave("}");
+        writer.writeLn("verifiedBlock: " + block.bid +
+          ", range: [" + block.position + ", " + block.end.position +
+          "], exitState: " + state.toString());
+      }
+    };
+
+    return verification;
+  })();
+
+  function verifier(abc) {
+    this.writer = new IndentingWriter();
+    this.abc = abc;
+  }
+
+  verifier.prototype.verifyMethod = function(methodInfo, scope) {
+    assert (scope.object, "Verifier needs a scope object.");
+    try {
+      new Verification(this, methodInfo, scope).verify();
+      Counter.count("Verifier: Methods");
+    } catch (e) {
+      if (e instanceof VerifierError) {
+        return;
+      }
+      throw e;
+    }
+  };
+
+  return verifier;
+})();

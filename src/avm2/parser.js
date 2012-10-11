@@ -217,7 +217,11 @@ var Trait = (function () {
   };
 
   trait.prototype.toString = function toString() {
-    var str = getFlags(this.attributes, "final|override|metadata".split("|")) + " " + Multiname.getQualifiedName(this.name) + ", kind: " + this.kind;
+    var str = getFlags(this.attributes, "final|override|metadata".split("|"));
+    if (str) {
+      str += " ";
+    }
+    str += Multiname.getQualifiedName(this.name) + ", kind: " + this.kind;
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
@@ -1055,7 +1059,7 @@ var ClassInfo = (function () {
   }
 
   classInfo.prototype.toString = function() {
-    return "" + this.name;
+    return this.instanceInfo.name.toString();
   };
 
   return classInfo;

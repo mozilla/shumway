@@ -42,7 +42,7 @@ load("../analyze.js");
 Timer.start("Loading Compiler");
 var estransform; load("../compiler/lljs/src/estransform.js");
 var escodegen; load("../compiler/lljs/src/escodegen.js");
-load("../compiler/verifier.js");
+load("../compiler/inferrer.js");
 load("../compiler/compiler.js");
 Timer.stop();
 

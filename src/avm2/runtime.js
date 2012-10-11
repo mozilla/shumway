@@ -351,7 +351,7 @@ var Scope = (function () {
     return -1;
   };
 
-  scope.prototype.findProperty = function findProperty(mn, domain, strict) {
+  scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     assert(this.object);
     assert(Multiname.isMultiname(mn));
 
@@ -375,7 +375,11 @@ var Scope = (function () {
     }
 
     if (this.parent) {
-      return this.parent.findProperty(mn, domain, strict);
+      return this.parent.findProperty(mn, domain, strict, scopeOnly);
+    }
+
+    if (scopeOnly) {
+      return strict ? null : this.global.object;
     }
 
     // If we can't find it still, then look at the domain toplevel.
@@ -465,7 +469,7 @@ function isPrimitiveType(x) {
 }
 
 function getProperty(obj, mn) {
-  assert(obj != undefined, "getProperty(", mn, ") on undefined");
+  assert(obj !== undefined, "getProperty(", mn, ") on undefined");
   if (obj.canHandleProperties) {
     return obj.get(mn.name);
   }
