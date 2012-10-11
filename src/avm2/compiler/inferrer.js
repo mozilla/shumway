@@ -854,9 +854,8 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_getlex:
-            // multiname = popMultiname();
-            // push(getPropertyType(findProperty(multiname, true, bc), multiname));
-            notImplemented(bc);
+            mn = popMultiname();
+            push(getProperty(findProperty(mn, true), mn));
             break;
           case OP_initproperty:
           case OP_setproperty:
