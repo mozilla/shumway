@@ -13,7 +13,7 @@ SWF.embed = function(file, container, options) {
     canvas.height = container.clientHeight;
   }
 
-  loaderInfo.addEventListener("init", function () {
+  loaderInfo.addEventListener('init', function () {
     stage._frameRate = loaderInfo.frameRate;
     stage._loaderInfo = loaderInfo;
     stage._stageHeight = loaderInfo.height;
