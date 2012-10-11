@@ -56,18 +56,6 @@ var Domain = (function () {
         defineNonEnumerableProperty(this, "apply", callable.apply);
       };
 
-      // Convenience constructor for classes that don't need any "special"
-      // behavior.
-      this.ManagedClass = function ManagedClass(name, baseClass, definition, instance, callable) {
-        var c = new Class(name, function () {
-          this.class.initializeInstance(this);
-          instance.apply(this, arguments);
-        }, callable);
-        c.extend(baseClass);
-        c.link(definition);
-        return c;
-      };
-
       Class.prototype = {
         forceConstify: true,
 

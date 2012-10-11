@@ -636,9 +636,16 @@ const natives = (function () {
     };
 
     return function (runtime, scope, instance, baseClass) {
-      return new runtime.domain.system.ManagedClass(name, baseClass,
-                                                    name === "Error" ? ErrorDefinition : {},
-                                                    instance, CC(instance));
+      var instance2 = function () {
+        this.class.initializeInstance(this);
+        instance.apply(this, arguments);
+      };
+      var c = new runtime.system.domain.Class(name, instance2, CC(instance2));
+      c.extend(baseClass);
+      if (name === "Error") {
+        c.link(ErrorDefinition);
+      }
+      return c;
     };
   }
 

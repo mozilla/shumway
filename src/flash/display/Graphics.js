@@ -278,7 +278,7 @@ const GraphicsDefinition = (function () {
       path.strokeStyle = this._strokeStyle;
       this._subpaths.push(path);
       // Cache as an own property.
-      Object.defineProperty(this, '_currentPath', describeProperty(val));
+      Object.defineProperty(this, '_currentPath', describeProperty(path));
       return path;
     }
   };

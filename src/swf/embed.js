@@ -32,7 +32,7 @@ SWF.embed = function(file, container, options) {
     container.setAttribute("style", "position: relative");
 
     canvas.addEventListener('click', function () {
-      Keyboard.focus = stage;
+      ShumwayKeyboardListener.focus = stage;
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       stage._mouseX = domEvt.pageX - this.offsetLeft;

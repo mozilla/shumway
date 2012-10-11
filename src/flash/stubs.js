@@ -66,6 +66,8 @@ var as3error = {};
    M("flash.events.Event", "EventClass", EventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
 
+   M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
+
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
@@ -85,7 +87,13 @@ var as3error = {};
 
      // Hook up the native.
      natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
-       return new runtime.domain.system.ManagedClass(m.className, baseClass, m.definition, instance);
+       var c = new runtime.domain.system.Class(name, function () {
+         this.class.initializeInstance(this);
+         instance.apply(this, arguments);
+       });
+       c.extend(baseClass);
+       c.link(m.definition);
+       return c;
      };
    });
 }).call(this);
