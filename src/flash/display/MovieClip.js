@@ -184,6 +184,7 @@ const MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
+      this._scriptExecutionPending = true;
     },
     gotoAndPlay: function (frame, scene) {
       this.play();
