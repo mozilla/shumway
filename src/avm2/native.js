@@ -640,7 +640,7 @@ const natives = (function () {
         this.class.initializeInstance(this);
         instance.apply(this, arguments);
       };
-      var c = new runtime.system.domain.Class(name, instance2, CC(instance2));
+      var c = new runtime.domain.system.Class(name, instance2, CC(instance2));
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
