@@ -393,8 +393,10 @@ const LoaderDefinition = (function () {
           root = rootClass.createInstance();
           root._framesLoaded = 0;
           root._parent = stage;
-          root._stage = stage;
           root._root = root;
+          root._stage = stage;
+          root._timeline = timeline;
+          root._totalFrames = val.props.totalFrames;
 
           loader._content = root;
         } else {
@@ -583,22 +585,17 @@ const LoaderDefinition = (function () {
 
       loaderInfo._frameRate = info.frameRate;
 
-      var timeline = [];
       var documentPromise = new Promise;
 
       var vmPromise = new Promise;
       vmPromise.then(function() {
         documentPromise.resolve({
           className: 'flash.display.MovieClip',
-          props: {
-            timeline: timeline,
-            totalFrames: info.frameCount
-          }
+          props: { totalFrames: info.frameCount }
         });
       });
 
-      loader._dictionary = { 0: documentPromise };
-      loader._timeline = timeline;
+      loader._dictionary[0] = documentPromise;
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
