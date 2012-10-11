@@ -242,26 +242,28 @@ const MovieClipDefinition = (function () {
   const desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
-    instance: {
-      currentFrame: desc(def, "currentFrame"),
-      framesLoaded: desc(def, "framesLoaded"),
-      totalFrames: desc(def, "totalFrames"),
-      trackAsMenu: desc(def, "trackAsMenu"),
-      scenes: desc(def, "scenes"),
-      currentScene: desc(def, "currentScene"),
-      currentLabel: desc(def, "currentLabel"),
-      currentFrameLabel: desc(def, "currentFrameLabel"),
-      enabled: desc(def, "enabled"),
-      isPlaying: desc(def, "isPlaying"),
-      play: def.play,
-      stop: def.stop,
-      nextFrame: def.nextFrame,
-      prevFrame: def.prevFrame,
-      gotoAndPlay: def.gotoAndPlay,
-      gotoAndStop: def.gotoAndStop,
-      addFrameScript: def.addFrameScript,
-      prevScene: def.prevScene,
-      nextScene: def.nextScene
+    native: {
+      instance: {
+        currentFrame: desc(def, "currentFrame"),
+        framesLoaded: desc(def, "framesLoaded"),
+        totalFrames: desc(def, "totalFrames"),
+        trackAsMenu: desc(def, "trackAsMenu"),
+        scenes: desc(def, "scenes"),
+        currentScene: desc(def, "currentScene"),
+        currentLabel: desc(def, "currentLabel"),
+        currentFrameLabel: desc(def, "currentFrameLabel"),
+        enabled: desc(def, "enabled"),
+        isPlaying: desc(def, "isPlaying"),
+        play: def.play,
+        stop: def.stop,
+        nextFrame: def.nextFrame,
+        prevFrame: def.prevFrame,
+        gotoAndPlay: def.gotoAndPlay,
+        gotoAndStop: def.gotoAndStop,
+        addFrameScript: def.addFrameScript,
+        prevScene: def.prevScene,
+        nextScene: def.nextScene
+      }
     }
   };
 
