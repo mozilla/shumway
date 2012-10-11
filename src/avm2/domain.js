@@ -84,12 +84,16 @@ var Domain = (function () {
           // needs to pass in script objects to native land, there's usually a
           // ctor function.
           var c = this;
+          var initializes = [];
           while (c) {
             var s = c.instance.prototype.initialize;
             if (s) {
-              s.call(obj);
+              initializes.push(s);
             }
             c = c.baseClass;
+          }
+          while (s = initializes.pop()) {
+            s.call(obj);
           }
         },
 
