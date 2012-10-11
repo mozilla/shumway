@@ -14,10 +14,10 @@ SWF.embed = function(file, container, options) {
   }
 
   loaderInfo.addEventListener('init', function () {
-    stage._frameRate = loaderInfo.frameRate;
+    stage._frameRate = loaderInfo._frameRate;
     stage._loaderInfo = loaderInfo;
-    stage._stageHeight = loaderInfo.height;
-    stage._stageWidth = loaderInfo.width;
+    stage._stageHeight = loaderInfo._height;
+    stage._stageWidth = loaderInfo._width;
 
     if (container.clientHeight) {
       fitCanvas(container, canvas);
@@ -25,8 +25,8 @@ SWF.embed = function(file, container, options) {
         fitCanvas.bind(container, canvas);
       });
     } else {
-      canvas.width = stage.stageWidth;
-      canvas.height = stage.stageHeight;
+      canvas.width = stage._stageWidth;
+      canvas.height = stage._stageHeight;
     }
 
     container.setAttribute("style", "position: relative");
@@ -39,12 +39,10 @@ SWF.embed = function(file, container, options) {
       stage._mouseY = domEvt.pageY - this.offsetTop;
     });
 
-    var bgcolor = loaderInfo.backgroundColor;
+    var bgcolor = loaderInfo._backgroundColor;
     stage._color = bgcolor;
     canvas.style.background = toStringRgba(bgcolor);
 
-    // Dirty hack for now.
-    //stage.addChild(loader.content);
     stage._children[0] = loader._content;
     container.appendChild(canvas);
     renderStage(stage, ctx);

@@ -41,6 +41,13 @@ const MovieClipDefinition = (function () {
           frameScripts[frameNum] = [fn];
       }
     },
+    callFrame: function (frameNum) {
+      if (frameNum in this._frameScripts) {
+        var scripts = this._frameScripts[frameNum];
+        for (var i = 0, n = scripts.length; i < n; i++)
+          scripts[i].call(this);
+      }
+    },
     get currentFrame() {
       return this._currentFrame;
     },
@@ -177,16 +184,6 @@ const MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
-      this._scriptExecutionPending = true;
-    },
-    _executeScripts: function () {
-      this._scriptExecutionPending = false;
-      var frameNum = this._currentFrame;
-      if (frameNum in this._frameScripts) {
-        var scripts = this._frameScripts[frameNum];
-        for (var i = 0, n = scripts.length; i < n; i++)
-          scripts[i].call(this);
-      }
     },
     gotoAndPlay: function (frame, scene) {
       this.play();

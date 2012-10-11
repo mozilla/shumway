@@ -132,7 +132,7 @@ function renderStage(stage, ctx) {
 
       // TODO move into separate visitor?
       if (MovieClipClass.isInstanceOf(parent) && parent._scriptExecutionPending) {
-        parent._executeScripts();
+        parent.callFrame(parent.currentFrame);
       }
     },
     childrenEnd: function(parent) {
