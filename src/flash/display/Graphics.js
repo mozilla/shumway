@@ -277,10 +277,8 @@ const GraphicsDefinition = (function () {
       path.fillTransform = this._fillTransform;
       path.strokeStyle = this._strokeStyle;
       this._subpaths.push(path);
-      Object.defineProperty(this, '_currentPath', {
-        value: path,
-        configurable: true
-      });
+      // Cache as an own property.
+      Object.defineProperty(this, '_currentPath', describeProperty(val));
       return path;
     }
   };
