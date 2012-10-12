@@ -506,20 +506,18 @@ var Verifier = (function() {
           if (scope[i] instanceof TraitsType) {
             var trait = scope[i].getTrait(mn);
             if (trait) {
+              ti().scopeDepth = scope.length - i - 1;
               return scope[i];
             }
+          } else {
+            return Type.Any;
           }
-          return Type.Any;
         }
 
         if (savedScope && mn instanceof Multiname) {
           var obj = savedScope.findProperty(mn, abc.domain, strict, true);
           if (obj) {
-            ti().savedScopeDepth = savedScope.findDepth(obj);
-            if (mn.name === "x") {
-              debugger;
-              print(" >>> " + obj);
-            }
+            ti().scopeDepth = savedScope.findDepth(obj) + scope.length;
             if (obj instanceof Global) {
               ti().object = obj;
             }
