@@ -213,17 +213,6 @@ function utf8encode(bytes) {
   return decodeURIComponent(str);
 }
 
-/**
- * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
- */
-function inherit(base, properties) {
-  var prot = Object.create(base.prototype);
-  for (var p in properties) {
-    prot[p] = properties[p];
-  }
-  return prot;
-}
-
 function getFlags(value, flags) {
   var str = "";
   for (var i = 0; i < flags.length; i++) {
@@ -631,6 +620,12 @@ function base64ArrayBuffer(arrayBuffer) {
 }
 
 var IndentingWriter = (function () {
+  var PURPLE = '\033[94m';
+  var YELLOW = '\033[93m';
+  var GREEN = '\033[92m';
+  var RED = '\033[91m';
+  var ENDC = '\033[0m';
+
   var consoleOutFn = console.info.bind(console);
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
@@ -642,6 +637,12 @@ var IndentingWriter = (function () {
   indentingWriter.prototype.writeLn = function writeLn(str) {
     if (!this.suppressOutput) {
       this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.debugLn = function writeLn(str) {
+    if (!this.suppressOutput) {
+      this.out(this.padding + PURPLE + str + ENDC);
     }
   };
 

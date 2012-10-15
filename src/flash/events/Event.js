@@ -1,99 +1,112 @@
-var EVENT_PHASE_CAPTURING_PHASE = 1;
-var EVENT_PHASE_AT_TARGET       = 2;
-var EVENT_PHASE_BUBBLING_PHASE  = 3;
+const EventDefinition = (function () {
+  var EVENT_PHASE_CAPTURING_PHASE = 1;
+  var EVENT_PHASE_AT_TARGET       = 2;
+  var EVENT_PHASE_BUBBLING_PHASE  = 3;
 
-function Event(type, bubbles, cancelable) {
-  Object.defineProperties(this, {
-    type:       describeProperty(type),
-    bubbles:    describeProperty(!!bubbles),
-    cancelable: describeProperty(!!cancelable)
-  });
+  var def = {
+    __class__: 'flash.events.Event',
 
-  this._canceled = false;
-  this._eventPhase = EVENT_PHASE_AT_TARGET;
-  this._currentTarget = null;
-  this._target = null;
-}
+    initialize: function () {
+      this._canceled = false;
+      this._eventPhase = EVENT_PHASE_AT_TARGET;
+      this._currentTarget = null;
+      this._target = null;
+    },
 
-Object.defineProperties(Event, {
-  ACTIVATE:                     describeConst('activate'),
-  ADDED:                        describeConst('added'),
-  ADDED_TO_STAGE:               describeConst('addedToStage'),
-  CANCEL:                       describeConst('cancel'),
-  CHANGE:                       describeConst('change'),
-  CLEAR:                        describeConst('clear'),
-  CLOSE:                        describeConst('close'),
-  COMPLETE:                     describeConst('complete'),
-  CONNECT:                      describeConst('connect'),
-  COPY:                         describeConst('copy'),
-  CUT:                          describeConst('cut'),
-  DEACTIVATE:                   describeConst('deactivate'),
-  ENTER_FRAME:                  describeConst('enterFrame'),
-  FRAME_CONSTRUCTED:            describeConst('frameConstructed'),
-  EXIT_FRAME:                   describeConst('exitFrame'),
-  ID3:                          describeConst('id3'),
-  INIT:                         describeConst('init'),
-  MOUSE_LEAVE:                  describeConst('mouseLeave'),
-  OPEN:                         describeConst('open'),
-  PASTE:                        describeConst('paste'),
-  REMOVED:                      describeConst('removed'),
-  REMOVED_FROM_STAGE:           describeConst('removedFromStage'),
-  RENDER:                       describeConst('render'),
-  RESIZE:                       describeConst('resize'),
-  SCROLL:                       describeConst('scroll'),
-  TEXT_INTERACTION_MODE_CHANGE: describeConst('textInteractionModeChange'),
-  SELECT:                       describeConst('select'),
-  SELECT_ALL:                   describeConst('selectAll'),
-  SOUND_COMPLETE:               describeConst('soundComplete'),
-  TAB_CHILDREN_CHANGE:          describeConst('tabChildrenChange'),
-  TAB_INDEX_CHANGE:             describeConst('tabIndexChange'),
-  UNLOAD:                       describeConst('unload'),
-  FULLSCREEN:                   describeConst('fullscreen'),
-  HTML_BOUNDS_CHANGE:           describeConst('htmlBoundsChange'),
-  HTML_RENDER:                  describeConst('htmlRender'),
-  HTML_DOM_INITIALIZE:          describeConst('htmlDOMInitialize'),
-  LOCATION_CHANGE:              describeConst('locationChange'),
-  VIDEO_FRAME:                  describeConst('videoFrame')
-});
+    ctor: function (type, bubbles, cancelable) {
+      this.type = type;
+      this.bubbles = !!bubbles;
+      this.cancelable = !!cancelable;
+    },
+    get currentTarget() {
+      return this._currentTarget;
+    },
+    get eventPhase() {
+      return this._eventPhase;
+    },
+    isDefaultPrevented: function () {
+      return this._isDefaultPrevented;
+    },
+    preventDefault: function () {
+      this._isDefaultPrevented = true;
+    },
+    stopImmediatePropagation: function () {
+      notImplemented();
+    },
+    stopPropagation: function () {
+      notImplemented();
+    },
+    get target() {
+      return this._target;
+    },
+  };
 
-Event.prototype = describePrototype({
-  __class__: describeInternalProperty('flash.events.Event'),
+  const desc = Object.getOwnPropertyDescriptor;
 
-  clone: describeMethod(function () {
-    return new Event(this.type, this.bubbles, this.cancelable);
-  }),
-  currentTarget: describeAccessor(function () {
-    return this._currentTarget;
-  }),
-  eventPhase: describeAccessor(function () {
-    return this._eventPhase;
-  }),
-  formatToString: describeMethod(function (className) {
-    var result = '[' + className;
-    for (var i = 0, n = arguments.length; i < n; i++) {
-      var prop = arguments[i];
-      var val = this[prop];
-      result += ' ' + prop + '=' + (val instanceof String ? '"' + val + '"' : val);
+  def.__glue__ = {
+    script: {
+      static: scriptProperties("public", ['ACTIVATE',
+                                          'ADDED',
+                                          'ADDED_TO_STAGE',
+                                          'CANCEL',
+                                          'CHANGE',
+                                          'CLEAR',
+                                          'CLOSE',
+                                          'COMPLETE',
+                                          'CONNECT',
+                                          'COPY',
+                                          'CUT',
+                                          'DEACTIVATE',
+                                          'ENTER_FRAME',
+                                          'FRAME_CONSTRUCTED',
+                                          'EXIT_FRAME',
+                                          'ID3',
+                                          'INIT',
+                                          'MOUSE_LEAVE',
+                                          'OPEN',
+                                          'PASTE',
+                                          'PROGRESS',
+                                          'REMOVED',
+                                          'REMOVED_FROM_STAGE',
+                                          'RENDER',
+                                          'RESIZE',
+                                          'SCROLL',
+                                          'TEXT_INTERACTION_MODE_CHANGE',
+                                          'SELECT',
+                                          'SELECT_ALL',
+                                          'SOUND_COMPLETE',
+                                          'TAB_CHILDREN_CHANGE',
+                                          'TAB_INDEX_CHANGE',
+                                          'UNLOAD',
+                                          'FULLSCREEN',
+                                          'HTML_BOUNDS_CHANGE',
+                                          'HTML_RENDER',
+                                          'HTML_DOM_INITIALIZE',
+                                          'LOCATION_CHANGE',
+                                          'VIDEO_FRAME'])
+    },
+
+    native: {
+      instance: {
+        type: {
+          get: function () { return this.type; }
+        },
+        bubbles: {
+          get: function () { return this.bubbles; }
+        },
+        cancelable: {
+          get: function () { return this.cancelable; }
+        },
+        target: desc(def, "target"),
+        currentTarget: desc(def, "currentTarget"),
+        eventPhase: desc(def, "eventPhase"),
+        ctor: def.ctor,
+        stopPropagation: def.stopPropagation,
+        stopImmediatePropagation: def.stopImmediatePropagation,
+        isDefaultPrevented: def.isDefaultPrevented
+      }
     }
-    result += ']';
-    return result;
-  }),
-  isDefaultPrevented: describeMethod(function () {
-    return this._isDefaultPrevented;
-  }),
-  preventDefault: describeMethod(function () {
-    this._isDefaultPrevented = true;
-  }),
-  stopImmediatePropagation: describeMethod(function () {
-    notImplemented();
-  }),
-  stopPropagation: describeMethod(function () {
-    notImplemented();
-  }),
-  target: describeAccessor(function () {
-    return this._target;
-  }),
-  toString: describeMethod(function () {
-    return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
-  })
-});
+  };
+
+  return def;
+}).call(this);

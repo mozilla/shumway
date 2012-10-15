@@ -22,7 +22,8 @@ const VM_UNSAFE_CLASSES = ["Shumway"];
 const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
-  { object: Object, methods: ["toString", "valueOf"] }
+  { object: Object, methods: ["toString", "valueOf"] },
+  { object: Function, methods: ["toString", "valueOf"] }
 ];
 
 const VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
@@ -262,6 +263,10 @@ function checkFilter(value) {
   notImplemented("checkFilter");
 }
 
+function Activation (methodInfo) {
+  this.methodInfo = methodInfo;
+}
+
 var Interface = (function () {
   function Interface(classInfo) {
     var ii = classInfo.instanceInfo;
@@ -333,7 +338,20 @@ var Scope = (function () {
     this.isWith = isWith;
   }
 
-  scope.prototype.findProperty = function findProperty(mn, domain, strict) {
+  scope.prototype.findDepth = function findDepth(obj) {
+    var current = this;
+    var depth = 0;
+    while (current) {
+      if (current.object === obj) {
+        return depth;
+      }
+      depth ++;
+      current = current.parent;
+    }
+    return -1;
+  };
+
+  scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     assert(this.object);
     assert(Multiname.isMultiname(mn));
 
@@ -357,7 +375,11 @@ var Scope = (function () {
     }
 
     if (this.parent) {
-      return this.parent.findProperty(mn, domain, strict);
+      return this.parent.findProperty(mn, domain, strict, scopeOnly);
+    }
+
+    if (scopeOnly) {
+      return strict ? null : this.global.object;
     }
 
     // If we can't find it still, then look at the domain toplevel.
@@ -447,7 +469,7 @@ function isPrimitiveType(x) {
 }
 
 function getProperty(obj, mn) {
-  assert(obj != undefined, "getProperty(", mn, ") on undefined");
+  assert(obj !== undefined, "getProperty(", mn, ") on undefined");
   if (obj.canHandleProperties) {
     return obj.get(mn.name);
   }
@@ -744,7 +766,7 @@ var Runtime = (function () {
       mi.analysis = new Analysis(mi, { massage: true });
 
       if (mi.traits) {
-        mi.activationPrototype = this.applyTraits({}, null, null, mi.traits, null, false);
+        mi.activationPrototype = this.applyTraits(new Activation(mi), null, null, mi.traits, null, false);
       }
 
       // If we have exceptions, make the catch scopes now.
@@ -891,9 +913,11 @@ var Runtime = (function () {
       scope.object = cls;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
-        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, cls.nativeMethods, true);
+        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits,
+                         cls.native ? cls.native.instance : undefined, true);
       }
-      this.applyTraits(cls, scope, null, ci.traits, cls.nativeStatics, false);
+      this.applyTraits(cls, scope, null, ci.traits,
+                       cls.native ? cls.native.static : undefined, false);
     } else {
       scope = new Scope(scope, null);
       instance = this.createFunction(ii.init, scope);
@@ -1051,11 +1075,12 @@ var Runtime = (function () {
           // need to close over the method again.
           var k = Multiname.getName(mi.name);
           if (trait.isGetter()) {
-            k = "get " + k;
+            closure = classNatives[k] ? classNatives[k].get : undefined;
           } else if (trait.isSetter()) {
-            k = "set " + k;
+            closure = classNatives[k] ? classNatives[k].set : undefined;
+          } else {
+            closure = classNatives[k];
           }
-          closure = classNatives[k];
         }
       } else {
         closure = runtime.createFunction(mi, scope);

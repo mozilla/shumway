@@ -344,9 +344,9 @@ var Bytecode = (function () {
       writer.writeLn("#" + this.bid);
     },
 
-    toString: function toString() {
-      var opdesc = opcodeTable[this.op];
-      var str = opdesc.name.padRight(' ', 20);
+    toString: function toString(abc) {
+      var opDescription = opcodeTable[this.op];
+      var str = opDescription.name.padRight(' ', 20);
       var i, j;
 
       if (this.op === OP_lookupswitch) {
@@ -355,13 +355,28 @@ var Bytecode = (function () {
           str += (i > 0 ? "," : "") + this.targets[i].position;
         }
       } else {
-        for (i = 0, j = opdesc.operands.length; i < j; i++) {
-          var operand = opdesc.operands[i];
-
+        for (i = 0, j = opDescription.operands.length; i < j; i++) {
+          var operand = opDescription.operands[i];
           if (operand.name === "offset") {
             str += "target:" + this.target.position;
           } else {
-            str += operand.name + ":" + this[operand.name];
+            str += operand.name + ": ";
+            var value = this[operand.name];
+            if (abc) {
+              switch(operand.type) {
+                case "":   str += value; break;
+                case "I":  str += abc.constantPool.ints[value]; break;
+                case "U":  str += abc.constantPool.uints[value]; break;
+                case "D":  str += abc.constantPool.doubles[value]; break;
+                case "S":  str += abc.constantPool.strings[value]; break;
+                case "N":  str += abc.constantPool.namespaces[value]; break;
+                case "CI": str += abc.classes[value]; break;
+                case "M":  str += abc.constantPool.multinames[value]; break;
+                default:   str += "?"; break;
+              }
+            } else {
+              str += value;
+            }
           }
 
           if (i < j - 1) {

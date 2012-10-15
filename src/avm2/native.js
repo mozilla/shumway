@@ -145,12 +145,6 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
 
 const natives = (function () {
 
-  function glue(inner, proxy) {
-    inner.p = proxy;
-    proxy.d = inner;
-    return proxy;
-  }
-
   const C = Domain.passthroughCallable;
   const CC = Domain.constructingCallable;
 
@@ -160,38 +154,42 @@ const natives = (function () {
   function ObjectClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Object", Object, C(Object));
 
-    c.nativeMethods = {
-      isPrototypeOf: Object.prototype.isPrototypeOf,
-      hasOwnProperty: function (name) {
-        if (!name) {
-          return false;
+    c.native = {
+      instance: {
+        length: {
+          get: function() { return this.length; },
+          set: function(l) { this.length = l }
+        },
+        isPrototypeOf: Object.prototype.isPrototypeOf,
+        hasOwnProperty: function (name) {
+          if (!name) {
+            return false;
+          }
+          name = Multiname.getPublicQualifiedName(name);
+          if (this.hasOwnProperty(name)) {
+            return true;
+          }
+          // Object.getPrototypeOf(this) are traits, not the dynamic prototype.
+          return Object.getPrototypeOf(this).hasOwnProperty(name);
+        },
+        propertyIsEnumerable: function (name) {
+          if (!name) {
+            return false;
+          }
+          name = Multiname.getPublicQualifiedName(name);
+          return Object.prototype.propertyIsEnumerable.call(this, name);
         }
-        name = Multiname.getPublicQualifiedName(name);
-        if (this.hasOwnProperty(name)) {
-          return true;
-        }
-        // Object.getPrototypeOf(this) are traits, not the dynamic prototype.
-        return Object.getPrototypeOf(this).hasOwnProperty(name);
       },
-      propertyIsEnumerable: function (name) {
-        if (!name) {
-          return false;
-        }
-        name = Multiname.getPublicQualifiedName(name);
-        return Object.prototype.propertyIsEnumerable.call(this, name);
-      }
-    };
-    c.nativeStatics = {
-      _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
-        name = Multiname.getPublicQualifiedName(name);
-        var descriptor = Object.getOwnPropertyDescriptor(obj, name);
-        descriptor.enumerable = false;
-        Object.defineProperty(obj, name, descriptor);
-      }
-    };
 
-    defineNonEnumerableProperty(Object.prototype, "get length", function() { return this.length; });
-    defineNonEnumerableProperty(Object.prototype, "set length", function(l) { this.length = l; });
+      static: {
+        _setPropertyIsEnumerable: function _setPropertyIsEnumerable(obj, name, isEnum) {
+          name = Multiname.getPublicQualifiedName(name);
+          var descriptor = Object.getOwnPropertyDescriptor(obj, name);
+          descriptor.enumerable = false;
+          Object.defineProperty(obj, name, descriptor);
+        }
+      }
+    };
 
     c.dynamicPrototype = Object.prototype;
     c.defaultValue = null;
@@ -250,7 +248,12 @@ const natives = (function () {
   function BooleanClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Boolean", Boolean, C(Boolean));
     c.extendBuiltin(baseClass);
-    c.nativeMethods = Boolean.prototype;
+    c.native = {
+      instance: {
+        toString: Boolean.prototype.toString,
+        valueOf: Boolean.prototype.valueOf
+      }
+    };
     c.coerce = Boolean;
     c.isInstanceOf = function (value) {
       return typeof value === "boolean" || value instanceof Boolean;
@@ -270,21 +273,25 @@ const natives = (function () {
   function FunctionClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Function", Function, C(Function));
     c.extendBuiltin(baseClass);
-
-    var m = Function.prototype;
-    defineNonEnumerableProperty(m, "get prototype", function () { return this.prototype; });
-    defineNonEnumerableProperty(m, "set prototype", function (p) { this.prototype = p; });
-    defineNonEnumerableProperty(m, "get length", function () {
-      // Check if we're getting the length of a trampoline.
-      if (this.hasOwnProperty(VM_LENGTH)) {
-        return this[VM_LENGTH];
+    c.native = {
+      instance: {
+        prototype: {
+          get: function () { return this.prototype; },
+          set: function (p) { this.prototype = p; }
+        },
+        length: {
+          get: function () {
+            // Check if we're getting the length of a trampoline.
+            if (this.hasOwnProperty(VM_LENGTH)) {
+              return this[VM_LENGTH];
+            }
+            return this.length;
+          }
+        },
+        call: Function.prototype.call,
+        apply: Function.prototype.apply
       }
-      return this.length;
-    });
-    m.toString = function () {
-      return "function Function() {}";
     };
-    c.nativeMethods = m;
     c.coerce = function (value) {
       return value; // TODO: Fix me.
     };
@@ -310,10 +317,34 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("String", String, C(String));
     c.extendBuiltin(baseClass);
 
-    var m = String.prototype;
-    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
-    c.nativeMethods = m;
-    c.nativeStatics = String;
+    var Sp = String.prototype;
+    c.native = {
+      instance: {
+        length: {
+          get: function () { return this.length; }
+        },
+        indexOf: Sp.indexOf,
+        lastIndexOf: Sp.lastIndexOf,
+        charAt: Sp.charAt,
+        charCodeAt: Sp.charCodeAt,
+        concat: Sp.concat,
+        localeCompare: Sp.localeCompare,
+        match: Sp.match,
+        replace: Sp.replace,
+        search: Sp.search,
+        slice: Sp.slice,
+        split: Sp.split,
+        substr: Sp.substr,
+        substring: Sp.substring,
+        toLowerCase: Sp.toLowerCase,
+        toLocaleLowerCase: Sp.toLocaleLowerCase,
+        toUpperCase: Sp.toUpperCase,
+        toLocaleUpperCase: Sp.toLocaleUpperCase,
+        toString: Sp.toString,
+        valueOf: Sp.valueOf
+      },
+      static: String
+    };
     c.isInstance = function (value) {
       return value !== null && value !== undefined && typeof value.valueOf() === "string";
     };
@@ -339,10 +370,32 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("Array", Array, C(Array));
     c.extendBuiltin(baseClass);
 
-    var m = Array.prototype;
-    defineNonEnumerableProperty(m, "get length", function() { return this.length; });
-    defineNonEnumerableProperty(m, "set length", function(l) { this.length = l; });
-    c.nativeMethods = m;
+    var Ap = Array.prototype;
+    c.native = {
+      instance: {
+        length: {
+          get: function() { return this.length; },
+          set: function(l) { this.length = l; }
+        },
+        join: Ap.join,
+        pop: Ap.pop,
+        push: Ap.push,
+        reverse: Ap.reverse,
+        concat: Ap.concat,
+        shift: Ap.shift,
+        slice: Ap.slice,
+        unshift: Ap.unshift,
+        splice: Ap.splice,
+        _sort: Ap.sort,
+        indexOf: Ap.indexOf,
+        lastIndexOf: Ap.lastIndexOf,
+        every: Ap.every,
+        filter: Ap.filter,
+        forEach: Ap.forEach,
+        map: Ap.map,
+        some: Ap.some
+      }
+    };
     c.coerce = function (value) {
       return value; // TODO: Fix me.
     };
@@ -365,11 +418,11 @@ const natives = (function () {
    */
   function createVectorClass(runtime, type, baseClass) {
     var TypedArray = createNewGlobalObject().Array;
+    var TAp = TypedArray.prototype;
 
     // Breaks semantics with bounds checking for now.
     if (type) {
       const coerce = type.coerce;
-      var TAp = TypedArray.prototype;
       TAp.indexGet = function (i) { return this[i]; };
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
@@ -384,36 +437,48 @@ const natives = (function () {
       return array;
     }
 
-    TypedVector.prototype = TypedArray.prototype;
+    TypedVector.prototype = TAp;
     var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
     var c = new runtime.domain.system.Class(name, TypedVector, C(TypedVector));
-    var m = Object.create(TypedArray.prototype);
 
     defineReadOnlyProperty(TypedArray.prototype, "class", c);
 
-    defineNonEnumerableProperty(m, "get fixed", function () { return this[VM_VECTOR_IS_FIXED]; });
-    defineNonEnumerableProperty(m, "set fixed", function (v) { this[VM_VECTOR_IS_FIXED] = v; });
-
-    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
-    defineNonEnumerableProperty(m, "set length", function setLength(length) {
-      // TODO: Fill with zeros if we need to.
-      this.length = length;
-    });
-
     c.extendBuiltin(baseClass);
 
-    m.pop = function () {
-      if (this[VM_VECTOR_IS_FIXED]) {
-        var error = Errors.VectorFixedError;
-        runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-      } else if (this.length === 0) {
-        return type.defaultValue;
+    c.native = {
+      instance: {
+        fixed: {
+          get: function () { return this[VM_VECTOR_IS_FIXED]; },
+          set: function (v) { this[VM_VECTOR_IS_FIXED] = v; }
+        },
+        length: {
+          get: function () { return this.length; },
+          set: function setLength(length) {
+            // TODO: Fill with zeros if we need to.
+            this.length = length;
+          }
+        },
+        pop: function () {
+          if (this[VM_VECTOR_IS_FIXED]) {
+            var error = Errors.VectorFixedError;
+            runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
+          } else if (this.length === 0) {
+            return type.defaultValue;
+          }
+          return TAp.pop.call(this, arguments);
+        },
+        push: TAp.push,
+        shift: TAp.shift,
+        unshift: TAp.unshift,
+        _reverse: TAp.reverse,
+        _every: TAp.every,
+        _filter: TAp.filter,
+        _forEach: TAp.forEach,
+        _map: TAp.map,
+        _some: TAp.some,
+        _sort: TAp.sort
       }
-      return TypedArray.prototype.pop.call(this, arguments);
     };
-
-    c.nativeMethods = m;
-    c.nativeStatics = {};
     c.vectorType = type;
     c.coerce = function (value) {
       return value; // TODO: Fix me.
@@ -460,7 +525,9 @@ const natives = (function () {
   function NumberClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Number", Number, C(Number));
     c.extendBuiltin(baseClass);
-    c.nativeMethods = Number.prototype;
+    c.native = {
+      instance: Number.prototype
+    };
     c.defaultValue = Number(0);
     c.isInstance = function (value) {
       return value !== null && value !== undefined &&  typeof value.valueOf() === "number";
@@ -522,7 +589,9 @@ const natives = (function () {
    */
   function MathClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Math");
-    c.nativeStatics = Math;
+    c.native = {
+      static: Math
+    };
     return c;
   }
 
@@ -532,8 +601,10 @@ const natives = (function () {
   function DateClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("Date", Date, C(Date));
     c.extendBuiltin(baseClass);
-    c.nativeMethods = Date.prototype;
-    c.nativeStatics = Date;
+    c.native = {
+      instance: Date.prototype,
+      static: Date
+    };
     return c;
   }
 
@@ -541,17 +612,39 @@ const natives = (function () {
    * Error.as
    */
   function makeErrorClass(name) {
-    return function (runtime, scope, instance, baseClass) {
-      var c = new runtime.domain.system.Class(name, instance, CC(instance));
-      c.extend(baseClass);
-      c.nativeMethods = {
-        getStackTrace: function () {
-          return "TODO: getStackTrace";
+    var ErrorDefinition = {
+      __glue__: {
+        script: {
+          instance: {
+            message: "public message",
+            name: "public name"
+          }
+        },
+
+        native: {
+          instance: {
+            getStackTrace: function () {
+              return "TODO: getStackTrace";
+            }
+          },
+
+          static: {
+            getErrorMessage: getErrorMessage
+          }
         }
+      }
+    };
+
+    return function (runtime, scope, instance, baseClass) {
+      var instance2 = function () {
+        this.class.initializeInstance(this);
+        instance.apply(this, arguments);
       };
-      c.nativeStatics = {
-        getErrorMessage: getErrorMessage
-      };
+      var c = new runtime.domain.system.Class(name, instance2, CC(instance2));
+      c.extend(baseClass);
+      if (name === "Error") {
+        c.link(ErrorDefinition);
+      }
       return c;
     };
   }
@@ -599,16 +692,35 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("RegExp", ASRegExp, C(ASRegExp));
     c.extendBuiltin(baseClass);
 
-    var m = RegExp.prototype;
-    defineNonEnumerableProperty(m, "get global", function () { return this.global; });
-    defineNonEnumerableProperty(m, "get source", function () { return this.source; });
-    defineNonEnumerableProperty(m, "get ignoreCase", function () { return this.ignoreCase; });
-    defineNonEnumerableProperty(m, "get multiline", function () { return this.multiline; });
-    defineNonEnumerableProperty(m, "get lastIndex", function () { return this.lastIndex; });
-    defineNonEnumerableProperty(m, "set lastIndex", function (i) { this.lastIndex = i; });
-    defineNonEnumerableProperty(m, "get dotall", function () { return this.dotall; });
-    defineNonEnumerableProperty(m, "get extended", function () { return this.extended; });
-    c.nativeMethods = m;
+    var REp = RegExp.prototype;
+    c.native = {
+      instance: {
+        global: {
+          get: function () { return this.global; }
+        },
+        source: {
+          get:  function () { return this.source; }
+        },
+        ignoreCase: {
+          get: function () { return this.ignoreCase; }
+        },
+        multiline: {
+          get: function () { return this.multiline; }
+        },
+        lastIndex: {
+          get: function () { return this.lastIndex; },
+          set: function (i) { this.lastIndex = i; }
+        },
+        dotall: {
+          get: function () { return this.dotall; }
+        },
+        extended: {
+          get: function () { return this.extended; }
+        },
+        exec: REp.exec,
+        test: REp.test
+      }
+    };
 
     return c;
   }
@@ -628,30 +740,32 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
 
-    c.nativeStatics = {};
-
-    var m = ASDictionary.prototype;
-    defineReadOnlyProperty(m, "canHandleProperties", true);
-    defineNonEnumerableProperty(m, "set", function (key, value) {
+    var Dp = ASDictionary.prototype;
+    defineReadOnlyProperty(Dp, "canHandleProperties", true);
+    defineNonEnumerableProperty(Dp, "set", function (key, value) {
       this.map.set(Object(key), value);
       if (!this.weakKeys && this.keys.indexOf(key) < 0) {
         this.keys.push(key);
       }
     });
-    defineNonEnumerableProperty(m, "get", function (key) {
+    defineNonEnumerableProperty(Dp, "get", function (key) {
       return this.map.get(Object(key));
     });
-    defineNonEnumerableProperty(m, "delete", function (key) {
+    defineNonEnumerableProperty(Dp, "delete", function (key) {
       this.map.delete(Object(key), value);
       var i;
       if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
         this.keys.splice(i, 1);
       }
     });
-    defineNonEnumerableProperty(m, "enumProperties", function () {
+    defineNonEnumerableProperty(Dp, "enumProperties", function () {
       return this.keys;
     });
-    c.nativeMethods = m;
+    c.native = {
+      instance: {
+        init: function () {}
+      }
+    };
 
     return c;
   }
@@ -693,9 +807,15 @@ const natives = (function () {
     c.extendNative(baseClass, Namespace);
 
     var Np = Namespace.prototype;
-    c.nativeMethods = {
-      "get prefix": Np.getPrefix,
-      "get uri": Np.getURI
+    c.native = {
+      instance: {
+        prefix: {
+          get: Np.getPrefix
+        },
+        uri: {
+          get: Np.getURI,
+        }
+      }
     };
 
     return c;
@@ -708,8 +828,12 @@ const natives = (function () {
     function Capabilities() {}
     var c = new runtime.domain.system.Class("Capabilities", Capabilities, C(Capabilities));
     c.extend(baseClass);
-    c.nativeStatics = {
-      "get playerType": function () { return "AVMPlus"; }
+    c.native = {
+      static: {
+        playerType: {
+          get: function () { return "AVMPlus"; }
+        }
+      }
     };
     return c;
   }
@@ -721,11 +845,13 @@ const natives = (function () {
     function Shumway() {}
     var c = new runtime.domain.system.Class("Shumway", Shumway, C(Shumway));
     c.extend(baseClass);
-    c.nativeStatics = {
-      info: function (x) { console.info(x); },
-      json: function (x) { return JSON.stringify(x); },
-      eval: function (x) { return eval(x); },
-      debugger: function (x) { debugger; }
+    c.native = {
+      static: {
+        info: function (x) { console.info(x); },
+        json: function (x) { return JSON.stringify(x); },
+        eval: function (x) { return eval(x); },
+        debugger: function (x) { debugger; }
+      }
     };
     return c;
   }
@@ -778,16 +904,16 @@ const natives = (function () {
 
     var c = new runtime.domain.system.Class("ByteArray", ByteArray, C(ByteArray));
 
-    var m = ByteArray.prototype;
+    var BAp = ByteArray.prototype;
 
-    m.cacheViews = function cacheViews() {
+    BAp.cacheViews = function cacheViews() {
       var a = this.a;
       this.int8v  = new Int8Array(a);
       this.uint8v = new Uint8Array(a);
       this.view   = new DataView(a);
     };
 
-    m.ensureCapacity = function ensureCapacity(size) {
+    BAp.ensureCapacity = function ensureCapacity(size) {
       var origa = this.a;
       if (origa.byteLength < size) {
         var newSize = origa.byteLength;
@@ -802,7 +928,7 @@ const natives = (function () {
       }
     };
 
-    m.clear = function clear() {
+    BAp.clear = function clear() {
       this.length = 0;
       this.position = 0;
     };
@@ -811,28 +937,28 @@ const natives = (function () {
      * For byte-sized reads and writes we can just go through the |Uint8Array| and not
      * the slower DataView.
      */
-    m.readBoolean = function readBoolean() {
+    BAp.readBoolean = function readBoolean() {
       if (this.position + 1 > this.length) {
         throwEOFError();
       }
       return this.int8v[this.position++] !== 0;
     };
 
-    m.readByte = function readByte() {
+    BAp.readByte = function readByte() {
       if (this.position + 1 > this.length) {
         throwEOFError();
       }
       return this.int8v[this.position++];
     };
 
-    m.readUnsignedByte = function readUnsignedByte() {
+    BAp.readUnsignedByte = function readUnsignedByte() {
       if (this.position + 1 > this.length) {
         throwEOFError();
       }
       return this.uint8v[this.position++];
     };
 
-    m.readBytes = function readBytes(bytes, offset, length) {
+    BAp.readBytes = function readBytes(bytes, offset, length) {
       var pos = this.position;
       if (pos + length > this.length) {
         throwEOFError();
@@ -841,7 +967,7 @@ const natives = (function () {
       this.position += length;
     };
 
-    m.writeBoolean = function writeBoolean(v) {
+    BAp.writeBoolean = function writeBoolean(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
       this.int8v[this.position++] = !!v ? 1 : 0;
@@ -850,7 +976,7 @@ const natives = (function () {
       }
     };
 
-    m.writeByte = function writeByte(v) {
+    BAp.writeByte = function writeByte(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
       this.int8v[this.position++] = v;
@@ -859,7 +985,7 @@ const natives = (function () {
       }
     };
 
-    m.writeUnsignedByte = function writeByte(v) {
+    BAp.writeUnsignedByte = function writeByte(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
       this.uint8v[this.position++] = v;
@@ -868,7 +994,7 @@ const natives = (function () {
       }
     };
 
-    m.writeRawBytes = function writeRawBytes(bytes) {
+    BAp.writeRawBytes = function writeRawBytes(bytes) {
       var len = this.position + bytes.length;
       this.ensureCapacity(len);
       this.int8v.set(bytes, this.position);
@@ -878,7 +1004,7 @@ const natives = (function () {
       }
     };
 
-    m.writeBytes = function writeBytes(bytes, offset, length) {
+    BAp.writeBytes = function writeBytes(bytes, offset, length) {
       if (offset && length) {
         this.writeRawBytes(new Int8Array(bytes.a, offset, length));
       } else {
@@ -886,25 +1012,25 @@ const natives = (function () {
       }
     };
 
-    m.readDouble = function readDouble() { return get(this, 'getFloat64', 8); };
-    m.readFloat = function readFloat() { return get(this, 'getFloat32', 4); };
-    m.readInt = function readInt() { return get(this, 'getInt32', 4); };
-    m.readShort = function readShort() { return get(this, 'getInt16', 2); };
-    m.readUnsignedInt = function readUnsignedInt() { return get(this, 'getUint32', 4); };
-    m.readUnsignedShort = function readUnsignedShort() { return get(this, 'getUint16', 2); };
+    BAp.readDouble = function readDouble() { return get(this, 'getFloat64', 8); };
+    BAp.readFloat = function readFloat() { return get(this, 'getFloat32', 4); };
+    BAp.readInt = function readInt() { return get(this, 'getInt32', 4); };
+    BAp.readShort = function readShort() { return get(this, 'getInt16', 2); };
+    BAp.readUnsignedInt = function readUnsignedInt() { return get(this, 'getUint32', 4); };
+    BAp.readUnsignedShort = function readUnsignedShort() { return get(this, 'getUint16', 2); };
 
-    m.writeDouble = function writeDouble(v) { set(this, 'setFloat64', 8, v); };
-    m.writeFloat = function writeFloat(v) { set(this, 'setFloat32', 4, v); };
-    m.writeInt = function writeInt(v) { set(this, 'setInt32', 4, v); };
-    m.writeShort = function writeShort(v) { set(this, 'setInt16', 2, v); };
-    m.writeUnsignedInt = function writeUnsignedInt(v) { set(this, 'setUint32', 4, v); };
-    m.writeUnsignedShort = function writeUnsignedShort(v) { set(this, 'setUint16', 2, v); };
+    BAp.writeDouble = function writeDouble(v) { set(this, 'setFloat64', 8, v); };
+    BAp.writeFloat = function writeFloat(v) { set(this, 'setFloat32', 4, v); };
+    BAp.writeInt = function writeInt(v) { set(this, 'setInt32', 4, v); };
+    BAp.writeShort = function writeShort(v) { set(this, 'setInt16', 2, v); };
+    BAp.writeUnsignedInt = function writeUnsignedInt(v) { set(this, 'setUint32', 4, v); };
+    BAp.writeUnsignedShort = function writeUnsignedShort(v) { set(this, 'setUint16', 2, v); };
 
-    m.readUTF = function readUTF() {
+    BAp.readUTF = function readUTF() {
       return this.readUTFBytes(this.readShort());
     };
 
-    m.readUTFBytes = function readUTFBytes(length) {
+    BAp.readUTFBytes = function readUTFBytes(length) {
       var pos = this.position;
       if (pos + length > this.length) {
         throwEOFError();
@@ -913,37 +1039,75 @@ const natives = (function () {
       return utf8encode(new Int8Array(this.a, pos, length));
     };
 
-    m.writeUTF = function writeUTF(str) {
+    BAp.writeUTF = function writeUTF(str) {
       var bytes = utf8decode(str);
       this.writeShort(bytes.length);
       this.writeRawBytes(bytes);
     };
 
-    m.writeUTFBytes = function writeUTFBytes(str) {
+    BAp.writeUTFBytes = function writeUTFBytes(str) {
       var bytes = utf8decode(str);
       this.writeRawBytes(bytes);
     };
 
-    m.toString = function toString() {
+    BAp.toString = function toString() {
       return utf8encode(new Int8Array(this.a, 0, this.length));
     };
 
-    defineNonEnumerableProperty(m, "get length", function () { return this.length; });
-    defineNonEnumerableProperty(m, "set length", function setLength(length) {
-      var cap = this.a.byteLength;
-      /* XXX: Do we need to zero the difference if length <= cap? */
-      if (length > cap) {
-        this.ensureSize(length);
-      }
-      this.length = length;
-    });
-    defineNonEnumerableProperty(m, "get bytesAvailable", function () { return this.a.byteLength - this.position; });
-    defineNonEnumerableProperty(m, "get position", function () { return this.position; });
-    defineNonEnumerableProperty(m, "set position", function (p) { this.position = p; });
-    defineNonEnumerableProperty(m, "get endian", function () { return this.le ? "littleEndian" : "bigEndian"; });
-    defineNonEnumerableProperty(m, "set endian", function (e) { this.le = e === "littleEndian"; });
+    c.native = {
+      instance: {
+        length: {
+          get: function () { return this.length; },
+          set: function setLength(length) {
+            var cap = this.a.byteLength;
+            /* XXX: Do we need to zero the difference if length <= cap? */
+            if (length > cap) {
+              this.ensureSize(length);
+            }
+            this.length = length;
+          }
+        },
 
-    c.nativeMethods = m;
+        bytesAvailable: {
+          get: function () { return this.a.byteLength - this.position; }
+        },
+
+        position: {
+          get: function () { return this.position; },
+          set: function (p) { this.position = p; }
+        },
+
+        endian: {
+          get: function () { return this.le ? "littleEndian" : "bigEndian"; },
+          set: function (e) { this.le = e === "littleEndian"; }
+        },
+
+        readBytes: BAp.readBytes,
+        writeBytes: BAp.writeBytes,
+        writeBoolean: BAp.writeBoolean,
+        writeByte: BAp.writeByte,
+        writeShort: BAp.writeShort,
+        writeInt: BAp.writeInt,
+        writeUnsignedInt: BAp.writeUnsignedInt,
+        writeDouble: BAp.writeDouble,
+        writeMultiByte: BAp.writeMultiByte,
+        writeUTF: BAp.writeUTF,
+        writeUTFBytes: BAp.writeUTFBytes,
+        readBoolean: BAp.readBoolean,
+        readByte: BAp.readByte,
+        readUnsignedByte: BAp.readUnsignedByte,
+        readShort: BAp.readShort,
+        readUnsignedShort: BAp.readUnsignedShort,
+        readInt: BAp.readInt,
+        readUnsignedInt: BAp.readUnsignedInt,
+        readFloat: BAp.readFloat,
+        readDouble: BAp.readDouble,
+        readMultiByte: BAp.readMultiByte,
+        readUTF: BAp.readUTF,
+        readUTFBytes: BAp.readUTFBytes,
+        toString: BAp.toString
+      }
+    };
 
     return c;
   }
@@ -955,51 +1119,58 @@ const natives = (function () {
     var c = new runtime.domain.system.Class("ApplicationDomain", instance, C(instance));
     c.extend(baseClass);
 
-    c.nativeMethods = {
-      ctor: function (parentDomain) {
-        // If no parent domain is passed in, get the current system domain.
-        var parent;
-        if (!parentDomain) {
-          parent = Runtime.stack.top().domain.system;
-        } else {
-          parent = parentDomain.d;
-        }
+    c.native = {
+      instance: {
+        ctor: function (parentDomain) {
+          // If no parent domain is passed in, get the current system domain.
+          var parent;
+          if (!parentDomain) {
+            parent = Runtime.stack.top().domain.system;
+          } else {
+            parent = parentDomain.dom;
+          }
 
-        glue(new Domain(parent.vm, parent), this);
+          this.dom = new Domain(parent.vm, parent);
+          this.dom.scriptObject = this;
+        },
+
+        parentDomain: {
+          get: function () {
+            var base = this.dom.base;
+
+            if (!base) {
+              return undefined;
+            }
+
+            if (!base.scriptObject) {
+              base.scriptObject = new instance();
+            }
+
+            return base.scriptObject;
+          }
+        },
+
+        getDefinition: function (name) {
+          return this.dom.getProperty(Multiname.fromSimpleName(name), false, true);
+        },
+
+        hasDefinition: function (name) {
+          return !!this.dom.findProperty(Multiname.fromSimpleName(name), false, false);
+        }
       },
 
-      "get parentDomain": function () {
-        var base = this.d.base;
+      static: {
+        currentDomain: {
+          get: function () {
+            var domain = Runtime.stack.top().domain;
 
-        if (!base) {
-          return undefined;
+            if (!domain.scriptObject) {
+              domain.scriptObject = new instance();
+            }
+
+            return domain.scriptObject;
+          }
         }
-
-        if (base.p) {
-          return base.p;
-        }
-
-        return glue(base, new instance());
-      },
-
-      getDefinition: function (name) {
-        return this.d.getProperty(Multiname.fromSimpleName(name), false, true);
-      },
-
-      hasDefinition: function (name) {
-        return !!this.d.findProperty(Multiname.fromSimpleName(name), false, false);
-      }
-    };
-
-    c.nativeStatics = {
-      "get currentDomain": function () {
-        var domain = Runtime.stack.top().domain;
-
-        if (domain.p) {
-          return domain.p;
-        }
-
-        return glue(domain, new instance());
       }
     };
 

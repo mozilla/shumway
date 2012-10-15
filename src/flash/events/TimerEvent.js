@@ -1,33 +1,26 @@
-function TimerEvent(type, bubbles, cancelable) {
-  Event.call(this);
+const TimerEventDefinition = (function () {
+  var def = {
+    __class__: 'flash.events.TimerEvent',
 
-  Object.defineProperties(this, {
-    type:        describeConst(type),
-    bubbles:     describeConst(bubbles !== undefined ? !!bubbles : true),
-    cancelable:  describeConst(!!cancelable)
-  });
-}
+    updateAfterEvent: function () {
+      notImplemented();
+    }
+  };
 
-Object.defineProperties(TimerEvent, {
-  TIMER:    describeConst('timer'),
-  TIMER_COMPLETE: describeConst('timerComplete')
-});
+  def.__glue__ = {
+    script: {
+      static: {
+        TIMER: "public TIMER",
+        TIMER_COMPLETE: "public TIMER_COMPLETE"
+      }
+    },
 
-TimerEvent.prototype = Object.create(Event.prototype, {
-  __class__: describeInternalProperty('flash.events.TimerEvent'),
+    native: {
+      instance: {
+        updateAfterEvent: def.updateAfterEvent
+      }
+    }
+  };
 
-  clone: describeMethod(function () {
-    return new TimerEvent(
-      this.type,
-      this.bubbles,
-      this.cancelable
-    );
-  }),
-  toString: describeMethod(function () {
-    return this.formatToString('TimerEvent',
-      'type',
-      'bubbles',
-      'cancelable'
-    );
-  })
-});
+  return def;
+}).call(this);

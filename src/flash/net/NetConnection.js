@@ -1,7 +1,6 @@
-function NetConnection() {
-  EventDispatcher.call(this);
-}
+const NetConnectionDefinition = (function () {
+  var def = {
+  };
 
-NetConnection.prototype = Object.create(EventDispatcher.prototype, {
-  __class__: describeInternalProperty('flash.net.NetConnection')
-});
+  return def;
+}).call(this);

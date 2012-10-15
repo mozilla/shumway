@@ -58,11 +58,48 @@ var Domain = (function () {
 
       Class.prototype = {
         forceConstify: true,
-        createInstance: function createInstance() {
+
+        setSymbol: function setSymbol(props) {
+          this.instance.prototype.symbol = props;
+        },
+
+        getSymbol: function getSymbol() {
+          return this.instance.prototype.symbol;
+        },
+
+        initializeInstance: function initializeInstance(obj) {
+          // Initialize should be nullary and nonrecursive. If the script
+          // needs to pass in script objects to native land, there's usually a
+          // ctor function.
+          var c = this;
+          var initializes = [];
+          while (c) {
+            var s = c.instance.prototype.initialize;
+            if (s) {
+              initializes.push(s);
+            }
+            c = c.baseClass;
+          }
+          while (s = initializes.pop()) {
+            s.call(obj);
+          }
+        },
+
+        createInstance: function createInstance(args) {
           var o = Object.create(this.instance.prototype);
-          this.instance.apply(o, arguments);
+          this.instance.apply(o, args);
           return o;
         },
+
+        createAsSymbol: function createAsSymbol(props) {
+          var o = Object.create(this.instance.prototype);
+          // Custom classes will have already have .symbol linked.
+          if (!o.symbol) {
+            o.symbol = props;
+          }
+          return o;
+        },
+
         /**
          * Binds the specified |nativeObject| to a new instance of this class before calling the
          * constructor. The if the |bindScriptObject| parameter is |true| then it also binds the
@@ -86,12 +123,58 @@ var Domain = (function () {
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
         },
 
-        extend: function (baseClass, dynamicPrototype) {
+        extend: function (baseClass) {
           this.baseClass = baseClass;
-          this.dynamicPrototype = dynamicPrototype || Object.create(baseClass.dynamicPrototype);
+          this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
+        },
+
+        link: function (definition) {
+          assert(this.dynamicPrototype);
+
+          function glueProperties(obj, props) {
+            var keys = Object.keys(props);
+            for (var i = 0, j = keys.length; i < j; i++) {
+              var p = keys[i];
+              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
+              assert(typeof qn === "string");
+              var desc = Object.getOwnPropertyDescriptor(obj, qn);
+              if (desc && desc.get) {
+                Object.defineProperty(obj, p, desc);
+              } else {
+                Object.defineProperty(obj, p, {
+                  get: new Function("", "return this." + qn),
+                  set: new Function("v", "this." + qn + " = v")
+                });
+              }
+            }
+          }
+
+          var proto = this.dynamicPrototype;
+          var keys = Object.keys(definition);
+          for (var i = 0, j = keys.length; i < j; i++) {
+            var p = keys[i];
+            Object.defineProperty(proto, p, Object.getOwnPropertyDescriptor(definition, p));
+          }
+
+          var glue = definition.__glue__;
+          if (!glue)
+            return;
+
+          // Accessors for script properties from within AVM2.
+          if (glue.script) {
+            if (glue.script.instance) {
+              glueProperties(proto, glue.script.instance);
+            }
+            if (glue.script.static) {
+              glueProperties(this, glue.script.static);
+            }
+          }
+
+          // Binding to member methods marked as [native].
+          this.native = glue.native;
         },
 
         extendNative: function (baseClass, native) {
@@ -131,9 +214,11 @@ var Domain = (function () {
       // and we cache the dynamic instant prototype as this.dynamicPrototype.
       //
       // Traits are not visible to the AVM script.
-      Class.nativeMethods = {
-        "get prototype": function () {
-          return this.dynamicPrototype;
+      Class.native = {
+        instance: {
+          prototype: {
+            get: function () { return this.dynamicPrototype; }
+          }
         }
       };
 

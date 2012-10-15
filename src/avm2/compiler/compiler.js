@@ -198,6 +198,7 @@ var Compiler = (function () {
                 value instanceof CatchScopeObject ||
                 value instanceof Scope ||
                 value instanceof Global ||
+                value instanceof Interface ||
                 value.forceConstify === true,
                 "Should not make constants from ", value);
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
@@ -560,6 +561,7 @@ var Compiler = (function () {
       this.state = new State();
       this.variablePool = new VariablePool(VAR_PREFIX);
       this.temporary = [];
+      this.cachedScopes = [];
 
       /* Initialize local variables, first local is the |this| reference. */
       this.local = [new Variable("this")];
@@ -664,6 +666,19 @@ var Compiler = (function () {
         this.prologue.push(variableDeclaration(usedVariables.map(function (x) {
           return new VariableDeclarator(x, null);
         })));
+      }
+      var cachedScopes = this.cachedScopes;
+      for (var i = 0; i < cachedScopes.length; i++) {
+        if (cachedScopes[i]) {
+          var name = savedScopeName;
+          for (var j = 0; j < i; j++) {
+            name = property(name, "parent");
+          }
+          name = property(name, "object");
+          this.prologue.push(variableDeclaration([
+            new VariableDeclarator(cachedScopes[i], name)
+          ]));
+        }
       }
       Array.prototype.unshift.apply(node.body, this.prologue);
       return node;
@@ -872,6 +887,7 @@ var Compiler = (function () {
       var body = [];
       var local = this.local;
       var temporary = this.temporary;
+      var cachedScopes = this.cachedScopes;
 
       const abc = this.compiler.abc;
       const ints = abc.constantPool.ints;
@@ -910,6 +926,7 @@ var Compiler = (function () {
 
       function push(value) {
         assert (typeof value !== "string");
+        bc.ti && (value.ti = bc.ti);
         state.stack.push(value);
       }
 
@@ -955,9 +972,9 @@ var Compiler = (function () {
         emit(assignment(local[index], constant(undefined)));
       }
 
-      function getSlot(obj, index) {
-        if (enableOpt.value && obj.ty) {
-          var trait = obj.ty.getTraitBySlotId(index);
+      function getSlot(obj, index, ti) {
+        if (enableOpt.value && ti) {
+          var trait = ti.trait;
           if (trait) {
             if (trait.isConst()) {
               push(constant(trait.value));
@@ -970,16 +987,23 @@ var Compiler = (function () {
         push(call(id("getSlot"), [obj, constant(index)]));
       }
 
-      function setSlot(obj, index, value) {
+      function setSlot(obj, index, value, ti) {
         flushStack();
-        if (enableOpt.value && obj.ty) {
-          var trait = obj.ty.getTraitBySlotId(index);
+        if (enableOpt.value && ti && ti.trait) {
+          var trait = ti.trait;
           if (trait) {
             emit(assignment(property(obj, Multiname.getQualifiedName(trait.name)), value));
             return;
           }
         }
         emit(call(id("setSlot"), [obj, constant(index), value]));
+      }
+
+      function getSavedScopeObject(depth) {
+        if (cachedScopes[depth]) {
+          return cachedScopes[depth];
+        }
+        return cachedScopes[depth] = new Identifier("$O_" + depth);
       }
 
       function getTemporary(index) {
@@ -1089,19 +1113,20 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
-        if (enableUnsafeScopeLookup.value) {
-          if (bc.foundObj) {
-              return constant(bc.foundObj);
+        if (bc.ti) {
+          if (bc.ti.savedScopeDepth >= 0) {
+            return getSavedScopeObject(bc.ti.savedScopeDepth);
+          } else if (bc.ti.object) {
+            return constant(bc.ti.object);
           }
         }
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
       }
 
       function getProperty(obj, multiname) {
+        Counter.count("getProperty");
         assert (!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
-        Counter.count("getProperty");
-
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
           if (mn.namespaces.length > 1) {
@@ -1112,26 +1137,20 @@ var Compiler = (function () {
           }
         }
 
-        // If the multiname is a runtime multiname and the name is a number then
-        // emit a fast object[name] property lookup.
-
         if (enableOpt.value) {
           if (multiname instanceof RuntimeMultiname) {
             var fastPath = new MemberExpression(obj, multiname.name, true);
-            var nameTy = multiname.name.ty;
-            if (nameTy && nameTy.isNumeric()) {
-              Counter.count("getProperty->fastPathNumeric");
+            if (multiname.name.ti && multiname.name.ti.type.isNumeric()) {
+              Counter.count("getProperty:computed");
               return fastPath;
             }
-            Counter.count("getProperty->conditional");
+            Counter.count("getProperty:computed:guarded");
             return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
-          } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
-            Counter.count("getProperty->fastPathDynamic");
-            return property(obj, Multiname.getPublicQualifiedName(multiname.value.name));
-          } else if (multiname instanceof Constant &&
-                     multiname.propertyName !== undefined) {
-            Counter.count("getProperty->propertyNameFromTrait");
-            return property(obj, Multiname.getQualifiedName(multiname.propertyName));
+          } else if (multiname instanceof Constant && bc.ti) {
+            var propertyQName = bc.ti.trait ? Multiname.getQualifiedName(bc.ti.trait.name) : bc.ti.propertyQName;
+            if (propertyQName) {
+              return property(obj, propertyQName);
+            }
           }
         }
 
@@ -1145,11 +1164,11 @@ var Compiler = (function () {
           }
         }
 
-        Counter.count("getProperty->slowPath");
+        Counter.count("getProperty:slow");
         return slowPath;
       }
 
-      function setProperty(obj, multiname, value) {
+      function setProperty(obj, multiname, value, ti) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
         Counter.count("setProperty");
 
@@ -1165,55 +1184,22 @@ var Compiler = (function () {
 
         if (enableOpt.value) {
           if (multiname instanceof RuntimeMultiname) {
-
-            var objTy = obj.ty;
-            var nameTy = multiname.name.ty;
-            var valueTy = value.ty;
-            
-            if (objTy && objTy.isVectorReference()) { // [Reference: Vector]
-              if (objTy.elementTypeIsInt()) { // Vector.<int>
-                value = asInt32(value); // value = value | 0
-              } else if (objTy.elementTypeIsUint()) { // Vector.<uint>
-                value = asUint32(value); // value = value >>> 0
-              } else if (objTy.elementTypeIsObject()) { // Vector.<Object>
-
-                // FIXME - in case of Vector.<X> verify that the type of the value set is
-                // a subtype of X, or X. If it is not, throw an AVM error.
-                // This should also be fixed in the Interpreter.
-                // Vector element type can be found in |objTy.value.elementType.value|
-                // Value type  can be found in |valueTy.value|
-                // if (objTy.value.elementType.value === valueTy.value) {}
-                // Counter.count("Compiler: setProperty Vector<Object>  optimized");
-              } else { // Vector.<undefined>
-                Counter.count("setProperty->slowPath");
-                return slowPath;
-              }
-            }
-
-            // Fastpath default is simple array case (a[i] = x;)
             var fastPath = assignment(new MemberExpression(obj, multiname.name, true), value);
-
-            // Return fastpath for runtime multinames with number names
-            if (nameTy && nameTy.isNumeric()) {
-              Counter.count("setProperty->fastPathNumeric");
+            if (multiname.name.ti && multiname.name.ti.type.isNumeric()) {
+              Counter.count("setProperty:computed");
               return fastPath;
             }
-
-            Counter.count("setProperty->conditional");
+            Counter.count("setProperty:computed:guarded");
             return conditional(checkType(multiname.name, "number"), fastPath, slowPath);
-          } else if (multiname instanceof Constant && multiname.isDynamicProperty) {
-            Counter.count("setProperty->fastPathDynamic");
-            return fastPath = assignment(property(obj,
-              Multiname.getPublicQualifiedName(multiname.value.name)), value);
-          } else if (multiname instanceof Constant &&
-                     multiname.propertyName !== undefined) {
-            Counter.count("setProperty->propertyNameFromTrait");
-            return fastPath = assignment(property(obj,
-              Multiname.getQualifiedName(multiname.propertyName)), value);
+          } else if (multiname instanceof Constant && ti) {
+            var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
+            if (propertyQName) {
+              return assignment(property(obj, propertyQName), value);
+            }
           }
         }
 
-        Counter.count("setProperty->slowPath");
+        Counter.count("setProperty:slow");
         return slowPath;
       }
 
@@ -1479,10 +1465,11 @@ var Compiler = (function () {
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:
-          multiname = getMultiname(bc.index);
+          flushStack();
           args = state.stack.popMany(bc.argCount);
+          multiname = popMultiname(bc);
           obj = state.stack.pop();
-          push(callCall(getProperty(obj, multiname), [obj].concat(args)));
+          push(callCall(getProperty(obj, multiname), [constant(null)].concat(args)));
           break;
         case OP_callinterface:  notImplemented(); break;
         case OP_callsupervoid:
@@ -1564,7 +1551,7 @@ var Compiler = (function () {
           multiname = popMultiname(bc);
           flushStack();
           obj = popObject(bc);
-          emit(setProperty(obj, multiname, value));
+          emit(setProperty(obj, multiname, value, bc.ti));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
         case OP_setlocal:       setLocal(bc.index); break;
@@ -1599,13 +1586,12 @@ var Compiler = (function () {
         case OP_deletepropertylate: notImplemented(); break;
         case OP_getslot:
           var obj = state.stack.pop();
-          obj.ty = bc.objTy;
-          getSlot(obj, bc.index); break;
+          getSlot(obj, bc.index, bc.ti);
+          break;
         case OP_setslot:
           value = state.stack.pop();
           obj = state.stack.pop();
-          obj.ty = bc.objTy;
-          setSlot(obj, bc.index, value);
+          setSlot(obj, bc.index, value, bc.ti);
           break;
         case OP_getglobalslot:  notImplemented(); break;
         case OP_setglobalslot:  notImplemented(); break;

@@ -1,11 +1,9 @@
-function NetStream() {
-  EventDispatcher.call(this);
-}
+const NetStreamDefinition = (function () {
+  var def = {
+    play: function (url) {
+      this._url = url;
+    }
+  };
 
-NetStream.prototype = Object.create(EventDispatcher.prototype, {
-  __class__: describeInternalProperty('flash.net.NetStream'),
-  play: describeMethod(function (url) {
-    this._url = url;
-  })
-});
-
+  return def;
+}).call(this);

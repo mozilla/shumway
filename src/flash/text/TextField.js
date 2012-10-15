@@ -1,7 +1,14 @@
-function TextField() {
-  InteractiveObject.call(this);
-}
+const TextFieldDefinition = (function () {
+  var def = {
+    __class__: 'flash.text.TextField'
+  };
 
-TextField.prototype = Object.create(InteractiveObject.prototype, {
-  __class__: describeInternalProperty('flash.text.TextField'),
-});
+  def.__glue__ = {
+    text: {
+      get: function () { return this.text; },
+      set: function (v) { this.text = v; }
+    }
+  };
+
+  return def;
+}).call(this);

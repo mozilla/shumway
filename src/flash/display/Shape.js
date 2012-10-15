@@ -1,13 +1,24 @@
-function Shape() {
-  DisplayObject.call(this);
+const ShapeDefinition = (function () {
+  var def = {
+    __class__: 'flash.display.Shape',
 
-	this._graphics = new Graphics;
-}
+    initialize: function () {
+      var s = this.symbol;
+      if (s) {
+        this._graphics = s.graphics || new flash.display.Graphics;
+      } else {
+        this._graphics = new flash.display.Graphics;
+      }
+    }
+  };
 
-Shape.prototype = Object.create(DisplayObject.prototype, {
-  __class__: describeInternalProperty('flash.display.Shape'),
+  def.__glue__ = {
+    instance: {
+      graphics: {
+        get: function () { return this._graphics; }
+      }
+    }
+  };
 
-  graphics: describeAccessor(function () {
-    return this._graphics;
-  })
-});
+  return def;
+}).call(this);

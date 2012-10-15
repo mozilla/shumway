@@ -33,28 +33,30 @@ var BinaryFileReader = (function binaryFileReader() {
 
 var sysMode = EXECUTION_MODE.INTERPRET;
 
-/*
-function createSimpleAVM2(next, loadShellAbc) {
-  var vm = new AVM2(sysMode, appMode);
-  new BinaryFileReader(avm2Root + "generated/builtin/builtin.abc").readAll(null, function (buffer) {
-    vm.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    if (loadShellAbc) {
-      new BinaryFileReader(avm2Root + "generated/shell/shell.abc").readAll(null, function (buffer) {
-        vm.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
-        next(vm);
+// avm2 must be global.
+var avm2;
+
+function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+  assert (builtinPath);
+  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+    avm2 = new AVM2(sysMode, appMode);
+    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+    if (libraryPath) {
+      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
+        next(avm2);
       });
     } else {
-      next(vm);
+      next(avm2);
     }
   });
 }
-*/
 
 var avm2Root = "../../src/avm2/";
 var rfile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var libraryPath = avm2Root + "generated/shell/shell.abc";
-var avm2Instance = undefined;
+var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
 
 /**
  * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
@@ -65,40 +67,38 @@ if (rfile) {
 }
 
 function executeFile(file, buffer) {
-  if (!file.endsWith(".swf") && !avm2Instance) {
-    var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
-    createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
-      avm2Instance = avm2;
-      executeFile(file, buffer);
-    });
-    return;
-  }
+  // All execution paths must now load AVM2.
+  var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {
-    function runABC(file, buffer) {
-      avm2Instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-      terminate();
-    }
-    if (!buffer) {
-      new BinaryFileReader(file).readAll(null, function(buffer) {
+    createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
+      function runABC(file, buffer) {
+        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+        terminate();
+      }
+      if (!buffer) {
+        new BinaryFileReader(file).readAll(null, function(buffer) {
+          runABC(file, buffer);
+        });
+      } else {
         runABC(file, buffer);
-      });
-    } else {
-      runABC(file, buffer);
-    }
+      }
+    });
   } else if (file.endsWith(".swf")) {
-    function runSWF(file, buffer) {
-      SWF.embed(buffer, $("#stage")[0], { onComplete: terminate });
-    }
-    if (!buffer) {
-      new BinaryFileReader(file).readAll(null, function(buffer, error) {
-        if (!buffer) {
-          throw "Unable to open the file " + file + ": " + error;
-        }
+    createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
+      function runSWF(file, buffer) {
+        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate });
+      }
+      if (!buffer) {
+        new BinaryFileReader(file).readAll(null, function(buffer) {
+          if (!buffer) {
+            throw "Unable to open the file " + file + ": " + error;
+          }
+          runSWF(file, buffer);
+        });
+      } else {
         runSWF(file, buffer);
-      });
-    } else {
-      runSWF(file, buffer);
-    }
+      }
+    });
   }
 }
 
