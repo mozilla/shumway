@@ -71,15 +71,15 @@
  *
  *   If |m| is a...
  *
- *     instance method - |CClass.nativeMethods.m|
- *     static method   - |CClass.nativeStatics.m|
- *     getter          - |CClass.nativeMethods["get m"]|
- *     setter          - |CClass.nativeMethods["set m"]|
- *     static getter   - |CClass.nativeStatics["get m"]|
- *     static setter   - |CClass.nativeStatics["set m"]|
+ *     instance method - |CClass.native.instance.m|
+ *     static method   - |CClass.native.static.m|
+ *     getter          - |CClass.native.instance.m.get|
+ *     setter          - |CClass.native.static.m.set|
+ *     static getter   - |CClass.native.instance.m.set|
+ *     static setter   - |CClass.native.static.m.set|
  *
- * Implementing native classes
- * ---------------------------
+ * Implementing native classes the hard way
+ * ----------------------------------------
  *
  * Like native methods, native classes also may need to do scope lookups. It
  * might also need to run the ActionScript instance constructor, so native
@@ -118,10 +118,73 @@
  *     };
  *
  *     // Export everything in CInstance.prototype.
- *     c.nativeMethods = CInstance.prototype;
+ *     c.native = {
+ *       instance: CInstance.prototype
+ *     };
  *
  *     return c;
  *   };
+ *
+ * Linking Definitions
+ * -------------------
+ *
+ * Outside of special builtins that need special behaviors, such as Function,
+ * Array, etc, most of the globals we implement are playerGlobal globals which
+ * behave more uniformly.
+ *
+ * For integration with the Flash runtime, we should like a singular
+ * representation for both AVM2 and renderer objects to reduce the need for
+ * translation from AVM2 objects to flash objects on every function call that
+ * crosses the native to ActionScript boundary (which are many).
+ *
+ * To achieve this, definitions of native objects (the methods, etc) and its
+ * glue are declared as a plain JS object and mixed in to the native instance
+ * prototype when AVM2 creates the actual native class.
+ *
+ * Glue helpers are provided for both native (calling JS from AS) and script
+ * (calling AS from JS) properties. The latter is needed for classes like
+ * Point, which have a native counterpart, but whose logic is all implemented
+ * in ActionScript.
+ *
+ * For a class C,
+ *
+ *   var CDefinition = {
+ *     initialize: function () { print("init"); },
+ *     m: function m() { print("m"); },
+ *     get x() { return 1; }
+ *   };
+ *
+ *   CDefinition.__glue__ = {
+ *     native: {
+ *       // m and x are AS-visible
+ *       instance: {
+ *         m: CDefinition.m,
+ *         // Reuse the same getter
+ *         x: Object.getOwnPropertyDescriptor(CDefinition, "x")
+ *       }
+ *     },
+ *     script: {
+ *       // I want to access an AS property 'public::y' from JS as .y
+ *       instance: {
+ *         y: "public y"
+ *       }
+ *     }
+ *   };
+ *
+ * Note that initialize is a special function that gets called upon
+ * instantiation. It is called in the usual order for its super classes,
+ * i.e. super first.
+ *
+ * Suppose c is an instance of C, is has access to the definitions:
+ *
+ *   c.m(); // calls m
+ *   print(c.x); // calls the getter
+ *   print(c.y); // calls a generated glue getter which returns c.public$y
+ *
+ * The definition itself is linked by calling .link on the created Class
+ * instance.
+ *
+ * For further examples of use of definitions, see ../src/flash/stubs.js
  */
 
 function debugBreak(message) {

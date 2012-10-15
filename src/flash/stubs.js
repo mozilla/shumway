@@ -1,6 +1,54 @@
+/**
+ * Stubs Overview
+ *
+ * Stubs are self-patching constructors which patch themselves with the actual
+ * AVM2 class instance constructor the first time they are called. They assume
+ * that AVM2 is already initialized and lives in the global variable avm2.
+ *
+ * Stubbed classes live in containers named after their Flash namespaces,
+ * i.e. flash.events.Event, and can be called like 'new flash.events.Event'.
+ *
+ * This self-patching isn't perfect; identity isn't preserved, so don't close
+ * over these constructors before you call them at least once!
+ *
+ * What this lets us have is a semi-seamless way to unify the representation
+ * of objects between the renderer and the VM.
+ *
+ * Static Properties
+ * -----------------
+ *
+ * Due to how classes work, getting static properties is not as simple as
+ * getting properties on the instance constructor. Static properties are
+ * really instance properties on the Class instance of a particular class, so
+ * they must be accessed via the Class instance.
+ *
+ * To get static properties, just get the class using avm2 and get the
+ * properties from there.
+ *
+ * Linked Definitions
+ * ------------------
+ *
+ * All stubbed classes use the linked-definition style of native. See the note
+ * in ../src/avm2/native.js. This means AVM2 manages the prototype chaining
+ * and inheritance, and the native writer should not do that manually.
+ *
+ * Adding Stubs
+ * ------------
+ *
+ * Adding a stub and exposing a Flash class to JS consists of the following
+ * steps:
+ *
+ *   1) Write a definition to be linked in.
+ *   2) Add a line to the closure at the bottom with the form
+ *      M("fully.qualified.Name", "NameClass", NameDefinition)
+ *
+ * Where "NameClass" is the string that appears in [native(cls="...")]
+ */
+
 function makeStub(container, className, shortName) {
   function ctor() {
-    // Assumes that once AVM2 is initialized, it lives in the global variable avm2.
+    // Assumes that once AVM2 is initialized, it lives in the global variable
+    // avm2.
     if (!avm2) {
       throw new Error("AVM2 not initialized");
     }
