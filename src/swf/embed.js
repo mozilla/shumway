@@ -54,5 +54,5 @@ SWF.embed = function(file, container, options) {
     });
   }
 
-  loader.loadFrom(file);
+  loader._loadFrom(file);
 };

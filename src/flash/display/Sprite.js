@@ -32,6 +32,13 @@ const SpriteDefinition = (function () {
     set soundTransform(val) {
       notImplemented();
     },
+    get useHandCursor() {
+      return true;
+    },
+    set useHandCursor(val) {
+      notImplemented();
+    },
+
     startDrag: function (lockCenter, bounds) {
       notImplemented();
     },
@@ -42,12 +49,6 @@ const SpriteDefinition = (function () {
       notImplemented();
     },
     stopTouchDrag: function (touchPointID) {
-      notImplemented();
-    },
-    get useHandCursor() {
-      return true;
-    },
-    set useHandCursor(val) {
       notImplemented();
     }
   };

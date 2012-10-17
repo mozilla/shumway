@@ -33,7 +33,7 @@ const LoaderDefinition = (function () {
     var commitData;
     if (loader) {
       commitData = function (data) {
-        return loader.commitData(data);
+        return loader._commitData(data);
       };
     } else {
       commitData = function (data) {
@@ -143,7 +143,6 @@ const LoaderDefinition = (function () {
       symbols[swfTag.id] = symbol;
       commitData(symbol);
     }
-
     function parseBytes(bytes) {
       var depths = { };
       var frame = { type: 'frame' };
@@ -284,28 +283,14 @@ const LoaderDefinition = (function () {
       this._timeline = [];
     },
 
-    get contentLoaderInfo() {
-      // XXX: Why is this lazily initialized?
-      var loaderInfo = this._contentLoaderInfo;
-      if (!loaderInfo) {
-        loaderInfo = new flash.display.LoaderInfo;
-        loaderInfo._loader = this;
-        this._contentLoaderInfo = loaderInfo;
-      }
-      return loaderInfo;
-    },
-
-    close: function () {
-      notImplemented();
-    },
-    commitData: function (data) {
+    _commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
 
       loaderInfo.dispatchEvent(new flash.events.Event("progress"));
 
       switch (data.command) {
       case 'init':
-        this.init(data.result);
+        this._init(data.result);
         break;
       case 'complete':
         loaderInfo.dispatchEvent(new flash.events.Event("complete"));
@@ -315,13 +300,13 @@ const LoaderDefinition = (function () {
         break;
       default:
         if (data.id)
-          this.commitSymbol(data);
+          this._commitSymbol(data);
         else if (data.type === 'frame')
-          this.commitFrame(data);
+          this._commitFrame(data);
         break;
       }
     },
-    commitFrame: function (frame) {
+    _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
       var depths = frame.depths;
       var exports = frame.exports;
@@ -418,7 +403,7 @@ const LoaderDefinition = (function () {
           loaderInfo.dispatchEvent(new flash.events.Event('init'));
       });
     },
-    commitSymbol: function (symbol) {
+    _commitSymbol: function (symbol) {
       var dependencies = symbol.require;
       var dictionary = this._dictionary;
       var promiseQueue = [];
@@ -558,21 +543,7 @@ const LoaderDefinition = (function () {
         symbolPromise.resolve(symbolInfo);
       });
     },
-    getSymbolInfoByName: function (className) {
-      var dictionary = this._dictionary;
-      for (var id in dictionary) {
-        var promise = dictionary[id];
-        var symbolInfo = promise.value;
-        if (symbolInfo && symbolInfo.className === className)
-          return symbolInfo;
-      }
-      return null;
-    },
-    getSymbolInfoById: function (id) {
-      var promise = this._dictionary[id];
-      return promise ? promise.value : null;
-    },
-    init: function (info) {
+    _init: function (info) {
       var loader = this;
 
       var loaderInfo = loader.contentLoaderInfo;
@@ -599,30 +570,21 @@ const LoaderDefinition = (function () {
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
-      this.setup();
+      this._setup();
     },
-    load: function (request, context) {
-      this.loadFrom(request.url);
-    },
-    loadBytes: function (bytes, context) {
-      if (!bytes.length)
-        throw ArgumentError();
-
-      this.loadFrom(bytes);
-    },
-    loadFrom: function (input, context) {
+    _loadFrom: function (input, context) {
       if (typeof window !== 'undefined' && WORKERS_ENABLED) {
         var loader = this;
         var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
         worker.onmessage = function (evt) {
-          loader.commitData(evt.data);
+          loader._commitData(evt.data);
         };
         worker.postMessage(input);
       } else {
         loadFromWorker(this, input, context);
       }
     },
-    setup: function () {
+    _setup: function () {
       var loader = this;
       var stage = loader._stage;
 
@@ -636,6 +598,30 @@ const LoaderDefinition = (function () {
 
         loader._vmPromise.resolve();
       }
+    },
+
+    get contentLoaderInfo() {
+      // XXX: Why is this lazily initialized?
+      var loaderInfo = this._contentLoaderInfo;
+      if (!loaderInfo) {
+        loaderInfo = new flash.display.LoaderInfo;
+        loaderInfo._loader = this;
+        this._contentLoaderInfo = loaderInfo;
+      }
+      return loaderInfo;
+    },
+
+    close: function () {
+      notImplemented();
+    },
+    load: function (request, context) {
+      this._loadFrom(request.url);
+    },
+    loadBytes: function (bytes, context) {
+      if (!bytes.length)
+        throw ArgumentError();
+
+      this._loadFrom(bytes);
     },
     unload: function () {
       notImplemented();

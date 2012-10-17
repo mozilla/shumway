@@ -4,6 +4,47 @@ const DisplayObjectContainerDefinition = (function () {
       this._children = [];
     },
 
+    get _bbox() {
+      var children = this._children;
+      var numChildren = children.length;
+
+      if (!numChildren) {
+        return {
+          left: 0,
+          top: 0,
+          right: 0,
+          bottom: 0
+        }
+      }
+
+      var xMin = Number.MAX_VALUE;
+      var xMax = 0;
+      var yMin = Number.MAX_VALUE;
+      var yMax = 0;
+
+      for (var i = 0; i < numChildren; i++) {
+        var child = children[i];
+        var b = child.getBounds();
+
+        var x1 = b.x;
+        var y1 = b.y;
+        var x2 = b.x + b.width;
+        var y2 = b.y + b.height;
+
+        xMin = Math.min(xMin, x1, x2);
+        xMax = Math.max(xMax, x1, x2);
+        yMin = Math.min(yMin, y1, y2);
+        yMax = Math.max(yMax, y1, y2);
+      }
+
+      return {
+        left: xMin,
+        top: yMin,
+        right: xMax,
+        bottom: yMax
+      };
+    },
+
     get mouseChildren() {
       return true;
     },
@@ -152,46 +193,6 @@ const DisplayObjectContainerDefinition = (function () {
       children[index2] = child1;
       child1._owned = false;
       child2._owned = false;
-    },
-    get _bbox() {
-      var children = this._children;
-      var numChildren = children.length;
-
-      if (!numChildren) {
-        return {
-          left: 0,
-          top: 0,
-          right: 0,
-          bottom: 0
-        }
-      }
-
-      var xMin = Number.MAX_VALUE;
-      var xMax = 0;
-      var yMin = Number.MAX_VALUE;
-      var yMax = 0;
-
-      for (var i = 0; i < numChildren; i++) {
-        var child = children[i];
-        var b = child.getBounds();
-
-        var x1 = b.x;
-        var y1 = b.y;
-        var x2 = b.x + b.width;
-        var y2 = b.y + b.height;
-
-        xMin = Math.min(xMin, x1, x2);
-        xMax = Math.max(xMax, x1, x2);
-        yMin = Math.min(yMin, y1, y2);
-        yMax = Math.max(yMax, y1, y2);
-      }
-
-      return {
-        left: xMin,
-        top: yMin,
-        right: xMax,
-        bottom: yMax
-      };
     }
   };
 

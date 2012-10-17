@@ -13,16 +13,20 @@ const EventDefinition = (function () {
       this._target = null;
     },
 
-    ctor: function (type, bubbles, cancelable) {
-      this.type = type;
-      this.bubbles = !!bubbles;
-      this.cancelable = !!cancelable;
-    },
     get currentTarget() {
       return this._currentTarget;
     },
     get eventPhase() {
       return this._eventPhase;
+    },
+    get target() {
+      return this._target;
+    },
+
+    ctor: function (type, bubbles, cancelable) {
+      this.type = type;
+      this.bubbles = !!bubbles;
+      this.cancelable = !!cancelable;
     },
     isDefaultPrevented: function () {
       return this._isDefaultPrevented;
@@ -35,10 +39,7 @@ const EventDefinition = (function () {
     },
     stopPropagation: function () {
       notImplemented();
-    },
-    get target() {
-      return this._target;
-    },
+    }
   };
 
   const desc = Object.getOwnPropertyDescriptor;

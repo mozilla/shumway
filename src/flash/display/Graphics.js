@@ -30,6 +30,18 @@ const GraphicsDefinition = (function () {
       this._subpaths = [];
     },
 
+    get _currentPath() {
+      var path = new Kanvas.Path;
+      path.drawingStyles = this._drawingStyles;
+      path.fillStyle = this._fillStyle;
+      path.fillTransform = this._fillTransform;
+      path.strokeStyle = this._strokeStyle;
+      this._subpaths.push(path);
+      // Cache as an own property.
+      Object.defineProperty(this, '_currentPath', describeProperty(path));
+      return path;
+    },
+
     beginFill: function (color, alpha) {
       if (alpha === undefined)
         alpha = 1;
@@ -268,18 +280,6 @@ const GraphicsDefinition = (function () {
     },
     lineTo: function (x, y) {
       this._currentPath.lineTo(x, y);
-    },
-
-    get _currentPath() {
-      var path = new Kanvas.Path;
-      path.drawingStyles = this._drawingStyles;
-      path.fillStyle = this._fillStyle;
-      path.fillTransform = this._fillTransform;
-      path.strokeStyle = this._strokeStyle;
-      this._subpaths.push(path);
-      // Cache as an own property.
-      Object.defineProperty(this, '_currentPath', describeProperty(path));
-      return path;
     }
   };
 
