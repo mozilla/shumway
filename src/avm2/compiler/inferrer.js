@@ -2,6 +2,8 @@
 
 var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
 
+// traceLevel.value = 2;
+
 var Type = (function () {
   function type () {
     unexpected("Type is Abstract");
@@ -12,36 +14,32 @@ var Type = (function () {
   };
 
   type.prototype.merge = function (other) {
-    return other;
+    // return other;
+    unexpected("Merging " + this + " with " + other);
   };
 
   type.from = function from(x, domain) {
-    if (x instanceof ClassInfo) {
-      var className = x.instanceInfo.name;
-      switch (className.name) {
-        case "int":       return type.Int;
-        case "uint":      return type.Uint;
-        case "float":     return type.Number;
-        case "Number":    return type.Number;
-      }
-    }
     if (x instanceof ScriptInfo    ||
         x instanceof ClassInfo     ||
         x instanceof InstanceInfo) {
-      return new TraitsType(x);
+      return new TraitsType(x, domain);
     } else if (x instanceof Activation) {
       return new TraitsType(x.methodInfo);
     } else if (x instanceof Global) {
       return new TraitsType(x.scriptInfo);
     } else if (x instanceof Interface) {
-      return new TraitsType(x.classInfo);
+      return new TraitsType(x.classInfo, domain);
     } else if (domain && (x instanceof (domain.system.Class))) {
-      return type.from(x.classInfo);
+      return type.from(x.classInfo, domain);
     }
     return Type.Any;
   };
 
   type.cache = {};
+
+  type.fromSimpleName = function (name, domain) {
+    return Type.fromName(Multiname.fromSimpleName(name), domain);
+  };
 
   type.fromName = function fromName(mn, domain) {
     if (mn === undefined) {
@@ -54,10 +52,9 @@ var Type = (function () {
       }
       assert (domain, "Domain is needed.");
       ty = domain.getProperty(mn, false, true);
-      assert (ty, "Name " + mn + " not found in domain.");
-      return type.cache[qn] = type.from(ty, domain);
+      ty = ty ? type.from(ty, domain) : Type.Any;
+      return type.cache[qn] = ty;
     }
-    return Type.Any;
   };
 
   type.prototype.applyType = function (parameter) {
@@ -80,6 +77,28 @@ var Type = (function () {
     return null;
   };
 
+  type.prototype.super = function () {
+    unexpected("Can't call super on " + this);
+  };
+
+  var typesInitialized = false;
+  type.initializeTypes = function (domain) {
+    if (typesInitialized) {
+      return;
+    }
+    type.Any = new AtomType("Any");
+    type.Null = new AtomType("Null");
+    type.Undefined = new AtomType("Undefined");
+    type.Int = Type.fromSimpleName("int", domain).instance();
+    type.Uint = Type.fromSimpleName("uint", domain).instance();
+    type.Array = Type.fromSimpleName("Array", domain).instance();
+    type.Object = Type.fromSimpleName("Object", domain).instance();
+    type.String = Type.fromSimpleName("String", domain).instance();
+    type.Number = Type.fromSimpleName("Number", domain).instance();
+    type.Boolean = Type.fromSimpleName("Boolean", domain).instance();
+    type.Function = Type.fromSimpleName("Function", domain).instance();
+    typesInitialized = true;
+  };
   return type;
 })();
 
@@ -89,14 +108,14 @@ var AtomType = (function () {
   }
   atomType.prototype = Object.create(Type.prototype);
   atomType.prototype.toString = function () {
-    if (this === Type.Undefined) {
-      return "X";
-    } else if (this === Type.Array) {
-      return "R";
+    if (this === Type.Any) {
+      return "?";
+    } else if (this === Type.Undefined) {
+      return "_";
     } else if (this === Type.Null) {
-      return "L";
+      return "X";
     }
-    return this.name[0];
+    unexpected();
   };
 
   atomType.prototype.merge = function merge(other) {
@@ -112,20 +131,20 @@ var AtomType = (function () {
       return Type.Any;
     }
 
-    if (this.isNumeric() && other.isNumeric()) {
-      return Type.Number;
-    }
-
     return Type.Any;
   };
   return atomType;
 })();
 
 var TraitsType = (function () {
-  function traitsType(object) {
+  function traitsType(object, domain) {
     assert (object && object.traits);
     this.object = object;
     this.traits = object.traits;
+    this.domain = domain;
+    if (this.object instanceof InstanceInfo) {
+      assert (this.domain);
+    }
   }
 
   traitsType.prototype = Object.create(Type.prototype);
@@ -134,9 +153,9 @@ var TraitsType = (function () {
     if (x instanceof ScriptInfo) {
       return "SI";
     } else if (x instanceof ClassInfo) {
-      return "CI";
+      return "CI:" + x.instanceInfo.name.name;
     } else if (x instanceof InstanceInfo) {
-      return "II";
+      return "II:" + x.name.name;
     } else if (x instanceof MethodInfo) {
       return "MI";
     } else if (x instanceof Activation) {
@@ -199,14 +218,68 @@ var TraitsType = (function () {
   };
 
   traitsType.prototype.toString = function () {
+    switch (this) {
+      case Type.Int: return "I";
+      case Type.Uint: return "U";
+      case Type.Array: return "A";
+      case Type.Object: return "O";
+      case Type.String: return "S";
+      case Type.Number: return "N";
+      case Type.Boolean: return "B";
+      case Type.Function: return "F";
+    }
     return nameOf(this.object);
   };
 
   traitsType.prototype.instance = function () {
-    if (this.object instanceof ClassInfo) {
-      return Type.from(this.object.instanceInfo);
+    assert (this.object instanceof ClassInfo);
+    return this.instanceCache || (this.instanceCache = Type.from(this.object.instanceInfo, this.domain));
+  };
+
+  traitsType.prototype.super = function () {
+    assert (this.object instanceof InstanceInfo);
+    if (this.object.superName) {
+      var result = Type.fromName(this.object.superName, this.domain).instance();
+      assert (result instanceof TraitsType && result.object instanceof InstanceInfo);
+      return result;
     }
-    return this;
+    return null;
+  };
+
+  traitsType.prototype.isClassInfo = function () {
+    return this.object instanceof ClassInfo;
+  };
+
+  traitsType.prototype.isInstanceInfo = function () {
+    return this.object instanceof InstanceInfo;
+  };
+
+  traitsType.prototype.equals = function (other) {
+    return this.traits === other.traits;
+  };
+
+  traitsType.prototype.merge = function (other) {
+    if (other instanceof TraitsType) {
+      if (this.equals(other)) {
+        return this;
+      }
+      if (this.isInstanceInfo() && other.isInstanceInfo()) {
+        var path = [];
+        for (var curr = this; curr; curr = curr.super()) {
+          path.push(curr);
+        }
+        // print(">>>> " + path.map(function (x) { return x.object.name; }));
+        for (var curr = other; curr; curr = curr.super()) {
+          for (var i = 0; i < path.length; i++) {
+            if (path[i].equals(curr)) {
+              return curr;
+            }
+          }
+        }
+        return Type.Object;
+      }
+    }
+    return Type.Any;
   };
 
   return traitsType;
@@ -235,18 +308,6 @@ var ParameterizedType = (function () {
   };
   return parameterizedType;
 })();
-
-Type.Undefined = new AtomType("Undefined");
-Type.Any = new AtomType("Any");
-Type.Int = new AtomType("Int");
-Type.Uint = new AtomType("Uint");
-Type.Null = new AtomType("Null");
-Type.Array = new AtomType("Array");
-Type.String = new AtomType("String");
-Type.Object = new AtomType("Object");
-Type.Number = new AtomType("Number");
-Type.Boolean = new AtomType("Boolean");
-Type.Function = new AtomType("Function");
 
 var TypeInformation = (function () {
   function typeInformation () {
@@ -357,7 +418,7 @@ var Verifier = (function() {
 
       assert (mi.localCount >= mi.parameters.length + 1);
 
-      var thisType = mi.holder ? Type.from(mi.holder) : Type.Any;
+      var thisType = mi.holder ? Type.from(mi.holder, this.domain) : Type.Any;
 
       entryState.local.push(thisType);
 
@@ -483,6 +544,15 @@ var Verifier = (function() {
           "], entryState: " + state.toString() + " {");
       }
 
+      function construct(obj) {
+        if (obj instanceof TraitsType) {
+          assert (obj.isClassInfo());
+          return obj.instance();
+        } else {
+          return Type.Any;
+        }
+      }
+
       /**
        * Close over the current |bc| and |state|.
        */
@@ -502,6 +572,7 @@ var Verifier = (function() {
       }
 
       function findProperty(mn, strict) {
+        // Try to find it in the scope stack.
         for (var i = scope.length - 1; i >= 0; i--) {
           if (scope[i] instanceof TraitsType) {
             var trait = scope[i].getTrait(mn);
@@ -514,16 +585,28 @@ var Verifier = (function() {
           }
         }
 
+        // Try the saved scope.
         if (savedScope && mn instanceof Multiname) {
           var obj = savedScope.findProperty(mn, abc.domain, strict, true);
           if (obj) {
-            ti().scopeDepth = savedScope.findDepth(obj) + scope.length;
+            var savedScopeDepth = savedScope.findDepth(obj);
+            assert (savedScopeDepth >= 0);
+            ti().scopeDepth = savedScopeDepth + scope.length;
             if (obj instanceof Global) {
               ti().object = obj;
             }
             return Type.from(obj, abc.domain);
           }
         }
+
+        // Is it in some other script?
+        obj = abc.domain.findProperty(mn, false, false);
+        if (obj) {
+          assert (obj instanceof Global);
+          ti().object = obj;
+          return Type.from(obj, abc.domain);
+        }
+
         return Type.Any;
       }
 
@@ -744,11 +827,6 @@ var Verifier = (function() {
             fn = pop();
             push(Type.Any);
             break;
-          case OP_construct:
-            stack.popMany(bc.argCount);
-            obj = pop();
-            push(Type.Any);
-            break;
           case OP_callmethod:
             // callmethod is always invalid
             // http://hg.mozilla.org/tamarin-redux/file/eb8f916bb232/core/Verifier.cpp#l1846
@@ -781,11 +859,14 @@ var Verifier = (function() {
             stack.popMany(bc.argCount);
             stack.pop();
             break;
+          case OP_construct:
+            stack.popMany(bc.argCount);
+            push(construct(pop()));
+            break;
           case OP_constructprop:
             stack.popMany(bc.argCount);
             mn = popMultiname();
-            obj = stack.pop();
-            push(Type.Any);
+            push(construct(getProperty(stack.pop(), mn)));
             break;
           case OP_callsuperid:
             notImplemented(bc);
@@ -956,6 +1037,7 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_coerce:
+            // print("<<< " + multinames[bc.index] + " >>>");
             pop();
             push(Type.fromName(multinames[bc.index], this.domain).instance());
             break;
@@ -1116,6 +1198,7 @@ var Verifier = (function() {
   function verifier(abc) {
     this.writer = new IndentingWriter();
     this.abc = abc;
+    Type.initializeTypes(abc.domain);
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
