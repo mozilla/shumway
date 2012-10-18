@@ -379,7 +379,7 @@ var Scope = (function () {
     }
 
     if (scopeOnly) {
-      return strict ? null : this.global.object;
+      return null;
     }
 
     // If we can't find it still, then look at the domain toplevel.
