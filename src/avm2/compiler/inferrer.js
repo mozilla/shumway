@@ -375,7 +375,7 @@ var Verifier = (function() {
       return true;
     }
     function mergeArrays(a, b) {
-      assert(a.length === b.length, "a: " + a + ", b: " + b);
+      assert(a.length === b.length, "a: " + a + " b: " + b);
       for (var i = a.length - 1; i >= 0; i--) {
         assert((a[i] !== undefined) && (b[i] !== undefined));
         a[i] = a[i].merge(b[i]);
@@ -536,7 +536,7 @@ var Verifier = (function() {
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
 
-      var bc, obj, fn, mi, mn, l, r, val, type, typeName, name, trait;
+      var bc, obj, fn, mn, l, r, val, type;
 
       if (writer) {
         writer.enter("verifyBlock: " + block.bid +
