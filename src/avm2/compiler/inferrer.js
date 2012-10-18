@@ -600,7 +600,7 @@ var Verifier = (function() {
         }
 
         // Is it in some other script?
-        obj = abc.domain.findProperty(mn, false, false);
+        obj = abc.domain.findProperty(mn, false, true);
         if (obj) {
           assert (obj instanceof Global);
           ti().object = obj;
