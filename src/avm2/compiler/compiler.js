@@ -930,6 +930,21 @@ var Compiler = (function () {
         state.stack.push(value);
       }
 
+      function scopeAt(scopeDepth) {
+        if (scopeDepth === 0) {
+          return scopeObjectName;
+        }
+        var scope = scopeName;
+        if (scopeDepth > state.scopeHeight) {
+          scopeDepth -= state.scopeHeight;
+          scope = savedScopeName;
+        }
+        for (var i = 0; i < scopeDepth; i++) {
+          scope = property(scope, "parent");
+        }
+        return property(scope, "object");
+      }
+
       function cseValue(value) {
         if (block.cse) {
           var otherValue = block.cse.get(value, true);
@@ -948,6 +963,12 @@ var Compiler = (function () {
         if (block.cse) {
           block.cse.reset();
         }
+      }
+
+      function pushScope(obj, isWith) {
+        emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(isWith)])));
+        emit(assignment(scopeObjectName, property(scopeName, "object")));
+        state.scopeHeight += 1;
       }
 
       function setLocal(index) {
@@ -1113,11 +1134,12 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
-        if (bc.ti) {
-          if (bc.ti.savedScopeDepth >= 0) {
-            return getSavedScopeObject(bc.ti.savedScopeDepth);
-          } else if (bc.ti.object) {
-            return constant(bc.ti.object);
+        var ti = bc.ti;
+        if (ti) {
+          if (ti.object) {
+            return constant(ti.object);
+          } else if (ti.scopeDepth !== undefined) {
+            return scopeAt(ti.scopeDepth);
           }
         }
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
@@ -1345,9 +1367,7 @@ var Compiler = (function () {
           break;
         case OP_pushwith:
           flushStack();
-          obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(true)])));
-          state.scopeHeight += 1;
+          pushScope(state.stack.pop(), true);
           break;
         case OP_popscope:
           flushStack();
@@ -1397,10 +1417,7 @@ var Compiler = (function () {
         case OP_pushscope:
           flushStack();
           flushScope();
-          obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj])));
-          emit(assignment(scopeObjectName, property(scopeName, "object")));
-          state.scopeHeight += 1;
+          pushScope(state.stack.pop());
           break;
         case OP_pushnamespace:  notImplemented(); break;
         case OP_li8:            notImplemented(); break;
@@ -1561,11 +1578,7 @@ var Compiler = (function () {
         case OP_getscopeobject:
           var scopeDepth = (state.scopeHeight - 1) - bc.index;
           if (scopeDepth) {
-            obj = scopeName;
-            for (var i = 0; i < scopeDepth; i++) {
-              obj = property(obj, "parent");
-            }
-            push(property(obj, "object"));
+            push(scopeAt(scopeDepth));
           } else {
             push(scopeObjectName);
           }

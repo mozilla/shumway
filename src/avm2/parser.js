@@ -167,8 +167,7 @@ var Trait = (function () {
       this.methodInfo = methods[stream.readU30()];
       this.methodInfo.name = this.name;
       // make sure that the holder was not already set
-      assert(!this.methodInfo.holder);
-      this.methodInfo.holder = this.holder;
+      attachHolder(this.methodInfo, this.holder);
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
@@ -1012,6 +1011,11 @@ var MetaDataInfo = (function () {
 
 })();
 
+function attachHolder(mi, holder) {
+  assert (!mi.holder);
+  mi.holder = holder;
+}
+
 var InstanceInfo = (function () {
   function instanceInfo(abc, stream) {
     const constantPool = abc.constantPool;
@@ -1031,6 +1035,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
   }
 
@@ -1054,6 +1059,7 @@ var InstanceInfo = (function () {
 var ClassInfo = (function () {
   function classInfo(abc, instanceInfo, stream) {
     this.init = abc.methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
   }
@@ -1069,6 +1075,7 @@ var ScriptInfo = (function scriptInfo() {
   function scriptInfo(abc, idx, stream) {
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;
   }
