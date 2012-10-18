@@ -804,6 +804,11 @@ var Verifier = (function() {
             push(r);
             break;
           case OP_pushwith:
+            // TODO: We need to keep track that this is a with scope and thus it can have dynamic properties
+            // attached to it. For now, push |Type.Any|.
+            pop();
+            scope.push(Type.Any);
+            break;
           case OP_pushscope:
             scope.push(pop());
             break;
