@@ -686,10 +686,17 @@ var Verifier = (function() {
             pop();
             break;
           case OP_getsuper:
-            notImplemented(bc);
+            mn = popMultiname();
+            obj = pop();
+            assert (obj.super());
+            push(getProperty(obj.super(), mn));
             break;
           case OP_setsuper:
-            notImplemented(bc);
+            val = pop();
+            mn = popMultiname();
+            obj = pop();
+            assert (obj.super());
+            setProperty(obj.super(), mn);
             break;
           case OP_dxns:
             notImplemented(bc);
