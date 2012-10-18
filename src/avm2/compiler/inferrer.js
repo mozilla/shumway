@@ -546,6 +546,9 @@ var Verifier = (function() {
 
       function construct(obj) {
         if (obj instanceof TraitsType) {
+          if (obj === Type.Function) {
+            return Type.Object;
+          }
           assert (obj.isClassInfo());
           return obj.instance();
         } else {
