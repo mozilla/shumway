@@ -18,12 +18,26 @@ var Type = (function () {
     unexpected("Merging " + this + " with " + other);
   };
 
+  type.cache = {
+    name: {},
+    classInfo: [],
+    instanceInfo: [],
+    scriptInfo: []
+  };
+
   type.from = function from(x, domain) {
-    if (x instanceof ScriptInfo    ||
-        x instanceof ClassInfo     ||
-        x instanceof InstanceInfo) {
-      return new TraitsType(x, domain);
-    } else if (x instanceof Activation) {
+    var traitsTypeCache = null;
+    if (x instanceof ClassInfo) {
+      traitsTypeCache = type.cache.classInfo;
+    } else if (x instanceof InstanceInfo) {
+      traitsTypeCache = type.cache.instanceInfo;
+    } else if (x instanceof ScriptInfo) {
+      traitsTypeCache = type.cache.scriptInfo;
+    }
+    if (traitsTypeCache) {
+      return traitsTypeCache[x.id] || (traitsTypeCache[x.id] = new TraitsType(x, domain));
+    }
+    if (x instanceof Activation) {
       return new TraitsType(x.methodInfo);
     } else if (x instanceof Global) {
       return new TraitsType(x.scriptInfo);
@@ -35,8 +49,6 @@ var Type = (function () {
     return Type.Any;
   };
 
-  type.cache = {};
-
   type.fromSimpleName = function (name, domain) {
     return Type.fromName(Multiname.fromSimpleName(name), domain);
   };
@@ -46,14 +58,14 @@ var Type = (function () {
       return Type.Undefined;
     } else {
       var qn = Multiname.getQualifiedName(mn);
-      var ty = type.cache[qn];
+      var ty = type.cache.name[qn];
       if (ty) {
         return ty;
       }
       assert (domain, "Domain is needed.");
       ty = domain.getProperty(mn, false, true);
       ty = ty ? type.from(ty, domain) : Type.Any;
-      return type.cache[qn] = ty;
+      return type.cache.name[qn] = ty;
     }
   };
 
@@ -263,6 +275,9 @@ var TraitsType = (function () {
       if (this.equals(other)) {
         return this;
       }
+      if (this.isNumeric() && other.isNumeric()) {
+        return Type.Number;
+      }
       if (this.isInstanceInfo() && other.isInstanceInfo()) {
         var path = [];
         for (var curr = this; curr; curr = curr.super()) {
@@ -356,14 +371,11 @@ var Verifier = (function() {
         ", $[" + this.scope.join(", ") + "]>";
     };
     state.prototype.equals = function(other) {
-      if (!arraysEqual(this.stack, other.stack) ||
-          !arraysEqual(this.scope, other.scope) ||
-          !arraysEqual(this.local, other.local)) {
-        return false;
-      }
-      return true;
+      return arrayEquals(this.stack, other.stack) &&
+             arrayEquals(this.scope, other.scope) &&
+             arrayEquals(this.local, other.local);
     };
-    function arraysEqual(a, b) {
+    function arrayEquals(a, b) {
       if(a.length != b.length) {
         return false;
       }
@@ -374,19 +386,40 @@ var Verifier = (function() {
       }
       return true;
     }
-    function mergeArrays(a, b) {
-      assert(a.length === b.length, "a: " + a + " b: " + b);
-      for (var i = a.length - 1; i >= 0; i--) {
-        assert((a[i] !== undefined) && (b[i] !== undefined));
-        a[i] = a[i].merge(b[i]);
+    state.prototype.isSubset = function(other) {
+      return arraySubset(this.stack, other.stack) &&
+             arraySubset(this.scope, other.scope) &&
+             arraySubset(this.local, other.local);
+    };
+    function arraySubset(a, b) {
+      if(a.length != b.length) {
+        return false;
       }
+      for (var i = a.length - 1; i >= 0; i--) {
+        if (a[i] === b[i] || a[i].equals(b[i])) {
+          continue;
+        }
+        if (a[i].merge(b[i]) !== a[i]) {
+          return false;
+        }
+      }
+      return true;
     }
     state.prototype.merge = function(other) {
       mergeArrays(this.local, other.local);
       mergeArrays(this.stack, other.stack);
       mergeArrays(this.scope, other.scope);
     };
-
+    function mergeArrays(a, b) {
+      assert(a.length === b.length, "a: " + a + " b: " + b);
+      for (var i = a.length - 1; i >= 0; i--) {
+        assert((a[i] !== undefined) && (b[i] !== undefined));
+        if (a[i] === b[i]) {
+          continue;
+        }
+        a[i] = a[i].merge(b[i]);
+      }
+    }
     return state;
   })();
 
@@ -494,9 +527,9 @@ var Verifier = (function() {
           }
 
           if (successor.entryState) {
-            if (!successor.entryState.equals(exitState)) {
+            if (!successor.entryState.isSubset(exitState)) {
               if (writer) {
-                writer.writeLn("Backward Merged Block: " + successor.bid + " " +
+                writer.writeLn("Backward Merged Block: " + block.bid + " with " + successor.bid + " " +
                                exitState.toString() + " with " + successor.entryState.toString());
               }
               successor.entryState.merge(exitState);

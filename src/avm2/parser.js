@@ -1017,7 +1017,9 @@ function attachHolder(mi, holder) {
 }
 
 var InstanceInfo = (function () {
+  var id = 1;
   function instanceInfo(abc, stream) {
+    this.id = id ++;
     const constantPool = abc.constantPool;
     const methods = abc.methods;
 
@@ -1057,7 +1059,9 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
+  var id = 1;
   function classInfo(abc, instanceInfo, stream) {
+    this.id = id ++;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
@@ -1072,7 +1076,9 @@ var ClassInfo = (function () {
 })();
 
 var ScriptInfo = (function scriptInfo() {
+  var id = 1;
   function scriptInfo(abc, idx, stream) {
+    this.id = id ++;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);
