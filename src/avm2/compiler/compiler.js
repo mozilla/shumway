@@ -976,12 +976,13 @@ var Compiler = (function () {
         var value = state.stack.pop();
         flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], value));
+        local[index].ti = value.ti;
       }
 
       function duplicate(value) {
         var temp = getTemporary(state.stack.length);
-        state.stack.push(assignment(temp, value));
-        state.stack.push(temp);
+        push(assignment(temp, value));
+        push(temp);
       }
 
       function popValue() {
@@ -1052,6 +1053,7 @@ var Compiler = (function () {
           }
           if (state.stack[i] !== getTemporary(i)) {
             emit(assignment(getTemporary(i), state.stack[i]));
+            getTemporary(i).ti = state.stack[i].ti;
             state.stack[i] = getTemporary(i);
           }
         }
@@ -1254,44 +1256,14 @@ var Compiler = (function () {
           var name = constant(multiname.name);
           if (multiname.isRuntimeName()) {
             name = state.stack.pop();
-            if (bc.multinameTy) {
-              name.ty = bc.multinameTy.name;
-            }
           }
           if (multiname.isRuntimeNamespace()) {
             namespaces = state.stack.pop();
-            if (bc.multinameTy) {
-              namespaces.ty = bc.multinameTy.namespaces;
-            }
           }
           return new RuntimeMultiname(multiname, namespaces, name);
         } else {
-          var c = constant(multiname); 
-          if (bc.isDynamicProperty) {
-            c.isDynamicProperty = true;
-          }
-          if (bc.propertyName) {
-            c.propertyName = bc.propertyName;
-          }
-
-          return c;
+          return constant(multiname);
         }
-      }
-
-      function popObject(bc) {
-        var obj = state.stack.pop();
-        if (bc.objTy) {
-          obj.ty = bc.objTy;
-        }
-        return obj;
-      }
-
-      function popValueOffStack(bc) {
-        var val = state.stack.pop();
-        if (bc.valTy) {
-          val.ty = bc.valTy;
-        }
-        return val;
       }
 
       // If this is a catch block, we need clear the stack, the scope stack,
@@ -1315,7 +1287,7 @@ var Compiler = (function () {
         var op = bc.op;
 
         if (writer) {
-          writer.writeLn("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition + ", " + bc);
+          writer.writeLn(("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition + ", " + bc).padRight(' ', 100) + " ti: " + bc.ti);
         }
 
         switch (op) {
@@ -1564,10 +1536,10 @@ var Compiler = (function () {
           break;
         case OP_initproperty:
         case OP_setproperty:
-          value = popValueOffStack(bc);
+          value = state.stack.pop();
           multiname = popMultiname(bc);
           flushStack();
-          obj = popObject(bc);
+          obj = state.stack.pop();
           emit(setProperty(obj, multiname, value, bc.ti));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
