@@ -483,7 +483,8 @@ const LoaderDefinition = (function () {
         symbolInfo.props = {
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
-          }
+          },
+          text: symbol.value
         };
         break;
       case 'shape':

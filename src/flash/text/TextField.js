@@ -6,6 +6,7 @@ const TextFieldDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this.draw = s.draw || null;
+        this.text = s.text || '';
       }
     },
 
