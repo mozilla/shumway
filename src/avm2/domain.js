@@ -302,6 +302,13 @@ var Domain = (function () {
       return c;
     },
 
+    findClass: function findClass(simpleName) {
+      if (simpleName in this.cache) {
+        return true;
+      }
+      return this.findProperty(Multiname.fromSimpleName(simpleName), false, true);
+    },
+
     findProperty: function findProperty(multiname, strict, execute) {
       if (traceDomain.value) {
         print("Domain.findProperty: " + multiname);

@@ -112,7 +112,11 @@ const MovieClipDefinition = (function () {
           if (cmd.symbolId) {
             var index = 0;
             var symbolInfo = loader.getSymbolInfoById(cmd.symbolId);
-            var symbolClass = avm2.systemDomain.getClass(symbolInfo.className);
+            // HACK application domain may have the symbol class --
+            // checking which domain has a symbol class
+            var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+              avm2.systemDomain.getClass(symbolInfo.className) :
+              avm2.applicationDomain.getClass(symbolInfo.className);
             var instance = symbolClass.createAsSymbol(symbolInfo.props);
             var replace = 0;
 
