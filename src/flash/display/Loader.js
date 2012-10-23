@@ -472,18 +472,18 @@ const LoaderDefinition = (function () {
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.StaticText';
         symbolInfo.props = {
-          draw: describeMethod(function (c, r) {
+          draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
-          })
+          }
         };
         break;
       case 'text':
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.TextField';
         symbolInfo.props = {
-          draw: describeMethod(function (c, r) {
+          draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
-          })
+          }
         };
         break;
       case 'shape':

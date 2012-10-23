@@ -2,6 +2,13 @@ const TextFieldDefinition = (function () {
   var def = {
     __class__: 'flash.text.TextField',
 
+    initialize: function () {
+      var s = this.symbol;
+      if (s) {
+        this.draw = s.draw || null;
+      }
+    },
+
     get text() {
       return this._text;
     },
