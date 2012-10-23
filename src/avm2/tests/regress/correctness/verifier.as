@@ -1,6 +1,6 @@
 package {
   trace("--");
-  /*
+
   class A {
     static var sa : int = 1;
     public var pa : int;
@@ -40,7 +40,7 @@ package {
     function boo() {
       var b = f + 1;
       function car() {
-        var c = f + b + 1;
+        var c = f + b + 1w;
         function baz() {
           with (A) {
             with (B) {
@@ -188,8 +188,16 @@ package {
     a.push(1, 2, 3);
   })();
 
-  */
+  (function () {
+    trace(typeof new Array(0));
+  })();
 
+  (function () {
+    var x;
+    with (7) {
+      trace(valueOf());
+    }
+  })();
 }
 
 function beforeX(x:X) {
