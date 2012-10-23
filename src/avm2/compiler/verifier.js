@@ -60,7 +60,7 @@ var Verifier = (function() {
     }
     function mergeArrays(a, b) {
       for (var i = a.length - 1; i >= 0; i--) {
-        assert((a[i] !== undefined) && (b[i] !== undefined));
+        release || assert((a[i] !== undefined) && (b[i] !== undefined));
         a[i] = a[i].merge(b[i]);
       }
     }
@@ -88,7 +88,7 @@ var Verifier = (function() {
   })();
 
   function Activation (methodInfo) {
-    assert (methodInfo.needsActivation());
+    release || assert(methodInfo.needsActivation());
     this.methodInfo = methodInfo;
   }
 
@@ -199,7 +199,7 @@ var Verifier = (function() {
           return type.Number;
         }
         var ty = domain.getProperty(name, false, true);
-        // assert (ty, name + " not found");
+        // release || assert(ty, name + " not found");
         // Remove the assertion for now.
         // If the class is used in the verifier before it was created by the runtime
         // it will not be found. This should be fixed by the proxy types mechanism.
@@ -245,7 +245,7 @@ var Verifier = (function() {
         var ref = type.fromReference(ty);
         if (name.hasTypeParameter()) {
           // For now only Vectors should have type parameters.
-          assert(ref.isVectorReference());
+          release || assert(ref.isVectorReference());
           ref.elementType = referenceFromName(name.typeParameter);
         }
         return ref;
@@ -262,7 +262,7 @@ var Verifier = (function() {
         var cls = type.fromClass(ty);
         if (name.hasTypeParameter()) {
           // For now only Vectors should have type parameters.
-          assert(cls.isVectorClass());
+          release || assert(cls.isVectorClass());
           cls.elementType = classFromName(name.typeParameter);
         }
         return cls;
@@ -293,11 +293,11 @@ var Verifier = (function() {
           this.name = obj.classInfo.instanceInfo.name;
           this.traits = obj.classInfo.traits;
         }
-        assert(this.name);
+        release || assert(this.name);
       };
 
       type.check = function check(a, b) {
-        assert (a.kind === b.kind);
+        release || assert(a.kind === b.kind);
       };
 
       type.prototype.isNumeric = function isNumeric() {
@@ -331,23 +331,23 @@ var Verifier = (function() {
       };
 
       type.prototype.elementTypeIsInt = function elementTypeIsInt() {
-        // assert(this.elementType, "Element type is undefined.");
+        // release || assert(this.elementType, "Element type is undefined.");
         return this.elementType && this.elementType === Type.Int;
       };
     
       type.prototype.elementTypeIsUint = function elementTypeIsUint() {
-        // assert(this.elementType, "Element type is undefined.");
+        // release || assert(this.elementType, "Element type is undefined.");
         return this.elementType && this.elementType === Type.Uint;
       };
 
       type.prototype.elementTypeIsObject = function elementTypeIsObject() {
-        // assert(this.elementType, "Element type is undefined.");
+        // release || assert(this.elementType, "Element type is undefined.");
         return this.elementType && this.elementType.isReference();
       };
 
 
       type.prototype.getMethodReturnType = function getMethodReturnType(multiname) {
-        assert(this.isReference());
+        release || assert(this.isReference());
         var trait = this.getTraitEnforceGetter(multiname);
         if (trait && (trait.isMethod() || trait.isGetter())) {
           return Type.referenceFromName(trait.methodInfo.returnType);
@@ -359,7 +359,7 @@ var Verifier = (function() {
        * Gets a trait by slotid.
        */
       type.prototype.getTraitBySlotId = function getTraitBySlotId(slotId) {
-        assert(this.isReference() || this.isClass());
+        release || assert(this.isReference() || this.isClass());
     
         var currentClass = this;
         var trait = findTraitBySlotId(currentClass.traits, slotId);
@@ -386,7 +386,7 @@ var Verifier = (function() {
        * and when |kind === TRAIT_Getter| the setters will be skipped.
        */
       type.prototype.getTrait = function getTrait(multiname, kind) {
-        assert(this.isReference() || this.isClass());
+        release || assert(this.isReference() || this.isClass());
 
         var currentClass = this;
         var trait = findTrait(currentClass.traits, multiname, kind);
@@ -403,7 +403,7 @@ var Verifier = (function() {
        * where the root is |Object|, so they always have a common ancestor.
        */
       type.getLowestCommonAncestor = function getLowestCommonAncestor(first, second) {
-        assert(first.isReference() && second.isReference());
+        release || assert(first.isReference() && second.isReference());
 
         if (first.equals(second)) {
           return first;
@@ -461,7 +461,7 @@ var Verifier = (function() {
       function getType(simpleName) {
         var name = Multiname.fromSimpleName(simpleName);
         var type = domain.getProperty(name, false, false);
-       // assert (type, "Cannot find type: " + name);
+       // release || assert(type, "Cannot find type: " + name);
         return type;
       }
 
@@ -519,14 +519,14 @@ var Verifier = (function() {
 
         var entryState = new State();
 
-        assert (mi.localCount >= mi.parameters.length + 1);
+        release || assert(mi.localCount >= mi.parameters.length + 1);
         
         // First local is the type of |this|.
         // If the current method is defined inside a class (instance or static) the current class type
         // is in the saved scope's object
         // The instance tratis are inside classInfo.instanceInfo
         // The static tratis are insite classInfo
-        assert (this.scope);
+        release || assert(this.scope);
 
         if (mi.holder instanceof ClassInfo) {
           // static method
@@ -563,7 +563,7 @@ var Verifier = (function() {
           entryState.local.push(Type.Atom.Undefined); 
         }
 
-        assert(entryState.local.length === mi.localCount);
+        release || assert(entryState.local.length === mi.localCount);
 
         if (writer) {
           entryState.trace(writer);
@@ -821,7 +821,7 @@ var Verifier = (function() {
         }
 
         function getTraitType(trait, obj) {
-          assert(trait);
+          release || assert(trait);
           var type = Type.Atom.Any;
           if (trait.isClass()) {
             // type = Type.classFromClassTrait(trait); //TODO
@@ -1169,7 +1169,7 @@ var Verifier = (function() {
             // Sign extend, nop.
             break;
           case OP_applytype:
-            assert(bc.argCount === 1);
+            release || assert(bc.argCount === 1);
             elementTy = pop();
             factory = pop();
             if (factory.isVectorClass() && (elementTy === Type.Int ||
@@ -1491,7 +1491,7 @@ var Verifier = (function() {
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
-    assert (scope.object, "Verifier needs a scope object.");
+    release || assert(scope.object, "Verifier needs a scope object.");
     try {
       new this.verification(this, methodInfo, scope).verify();
       Counter.count("Verifier: Methods");

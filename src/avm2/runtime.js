@@ -75,7 +75,7 @@ function initializeGlobalObject(global) {
    */
   defineReadOnlyProperty(global.Object.prototype, VM_NEXT_NAME, function (index) {
     var keys = this[VM_ENUMERATION_KEYS];
-    assert (keys && index > 0 && index < keys.length + 1);
+    release || assert(keys && index > 0 && index < keys.length + 1);
     return keys[index - 1];
   });
 
@@ -171,7 +171,7 @@ function coerce(value, type) {
     // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
 
     // For now just assert false to print the message.
-    assert(false, "Cannot coerce " + value + " to type " + type);
+    release || assert(false, "Cannot coerce " + value + " to type " + type);
   }
 }
 
@@ -241,8 +241,8 @@ function nextValue(obj, index) {
  * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
  */
 function hasNext2(obj, index) {
-  assert (obj);
-  assert (index >= 0);
+  release || assert(obj);
+  release || assert(index >= 0);
 
   /**
    * Because I don't think hasnext/hasnext2/nextname opcodes are used outside
@@ -270,7 +270,7 @@ function Activation (methodInfo) {
 var Interface = (function () {
   function Interface(classInfo) {
     var ii = classInfo.instanceInfo;
-    assert (ii.isInterface());
+    release || assert(ii.isInterface());
     this.name = ii.name;
     this.classInfo = classInfo;
   }
@@ -352,8 +352,8 @@ var Scope = (function () {
   };
 
   scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
-    assert(this.object);
-    assert(Multiname.isMultiname(mn));
+    release || assert(this.object);
+    release || assert(Multiname.isMultiname(mn));
 
     if (traceScope.value || tracePropertyAccess.value) {
       print("Scope.findProperty(" + mn + ")");
@@ -425,7 +425,7 @@ function nameInTraits(obj, qn) {
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultiname(obj, mn, traitsOnly) {
-  assert(!Multiname.isQName(mn), mn, " already resolved");
+  release || assert(!Multiname.isQName(mn), mn, " already resolved");
 
   obj = Object(obj);
 
@@ -469,12 +469,12 @@ function isPrimitiveType(x) {
 }
 
 function getProperty(obj, mn) {
-  assert(obj !== undefined, "getProperty(", mn, ") on undefined");
+  release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
   if (obj.canHandleProperties) {
     return obj.get(mn.name);
   }
 
-  assert(Multiname.isMultiname(mn));
+  release || assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
@@ -502,9 +502,9 @@ function getProperty(obj, mn) {
 }
 
 function getSuper(obj, mn) {
-  assert(obj != undefined, "getSuper(" + mn + ") on undefined");
-  assert(obj.class.baseClass);
-  assert(Multiname.isMultiname(mn));
+  release || assert(obj != undefined, "getSuper(" + mn + ") on undefined");
+  release || assert(obj.class.baseClass);
+  release || assert(Multiname.isMultiname(mn));
 
   var superTraits = obj.class.baseClass.instance.prototype;
 
@@ -532,7 +532,7 @@ function getSuper(obj, mn) {
         }
       } else {
         var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
-        assert(descriptor);
+        release || assert(descriptor);
         value = descriptor.get ? descriptor.get.call(obj) : obj[qn];
       }
     }
@@ -546,12 +546,12 @@ function getSuper(obj, mn) {
 }
 
 function setProperty(obj, mn, value) {
-  assert(obj);
+  release || assert(obj);
   if (obj.canHandleProperties) {
     return obj.set(mn.name, value);
   }
 
-  assert(Multiname.isMultiname(mn));
+  release || assert(Multiname.isMultiname(mn));
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
 
@@ -573,9 +573,9 @@ function setProperty(obj, mn, value) {
 }
 
 function setSuper(obj, mn, value) {
-  assert(obj);
-  assert(obj.class.baseClass);
-  assert(Multiname.isMultiname(mn));
+  release || assert(obj);
+  release || assert(obj.class.baseClass);
+  release || assert(Multiname.isMultiname(mn));
 
   if (tracePropertyAccess.value) {
     print("setProperty(" + mn + ") trait: " + value);
@@ -590,7 +590,7 @@ function setSuper(obj, mn, value) {
     } else {
       var qn = Multiname.getQualifiedName(resolved);
       var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
-      assert(descriptor);
+      release || assert(descriptor);
       if (descriptor.set) {
         descriptor.set.call(obj, value);
       } else {
@@ -604,12 +604,12 @@ function setSuper(obj, mn, value) {
 }
 
 function deleteProperty(obj, mn) {
-  assert(obj);
+  release || assert(obj);
   if (obj.canHandleProperties) {
     return obj.delete(mn.name);
   }
 
-  assert(Multiname.isMultiname(mn), mn);
+  release || assert(Multiname.isMultiname(mn), mn);
 
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
 
@@ -733,7 +733,7 @@ var Runtime = (function () {
    */
   runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope) {
     const mi = methodInfo;
-    assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
+    release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
     var hasDefaults = false;
     const defaults = mi.parameters.map(function (p) {
@@ -801,7 +801,7 @@ var Runtime = (function () {
     }
 
     if (mi.compiledMethod) {
-      assert (hasDynamicScope);
+      release || assert(hasDynamicScope);
       return bindScope(mi.compiledMethod, scope);
     }
 
@@ -900,7 +900,7 @@ var Runtime = (function () {
     if (ci.native) {
       // Some natives classes need this, like Error.
       var makeNativeClass = getNative(ci.native.cls);
-      assert(makeNativeClass, "No native for ", ci.native.cls);
+      release || assert(makeNativeClass, "No native for ", ci.native.cls);
 
       // Special case Object, which has no base class but needs the Class class on the scope.
       if (!baseClass) {
@@ -1011,7 +1011,7 @@ var Runtime = (function () {
 
   runtime.prototype.createInterface = function createInterface(classInfo) {
     var ii = classInfo.instanceInfo;
-    assert (ii.isInterface());
+    release || assert(ii.isInterface());
     if (traceExecution.value) {
       var str = "Creating interface " + ii.name;
       if (ii.interfaces.length) {
@@ -1055,7 +1055,7 @@ var Runtime = (function () {
     const domain = this.domain;
 
     function makeClosure(trait) {
-      assert(scope);
+      release || assert(scope);
 
       var mi = trait.methodInfo;
       var closure;
@@ -1131,7 +1131,7 @@ var Runtime = (function () {
 
         if (trait.slotId < baseSlotId) {
           /* XXX: Hope we don't throw while doing builtins. */
-          assert (false);
+          release || assert(false);
           this.throwErrorFromVM("VerifyError", "Bad slot ID.");
         }
 
@@ -1204,7 +1204,7 @@ var Runtime = (function () {
 
         var mc;
         if (delayBinding) {
-          assert(obj[VM_OPEN_METHODS]);
+          release || assert(obj[VM_OPEN_METHODS]);
 
           var memoizeMethodClosure = (function (closure, qn) {
             return function memoizer() {
@@ -1242,7 +1242,7 @@ var Runtime = (function () {
       } else if (trait.isSetter()) {
         defineNonEnumerableSetter(obj, qn, makeClosure(trait));
       } else {
-        assert(false);
+        release || assert(false);
       }
 
       obj[VM_BINDINGS].push(qn);
@@ -1254,7 +1254,7 @@ var Runtime = (function () {
   runtime.prototype.applyType = function applyType(factory, types) {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
-      assert (types.length === 1);
+      release || assert(types.length === 1);
       var type = types[0];
       var typeClassName;
       if (type !== null && type !== undefined) {
