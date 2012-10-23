@@ -62,7 +62,7 @@ var Type = (function () {
       if (ty) {
         return ty;
       }
-      assert (domain, "Domain is needed.");
+      release || assert(domain, "Domain is needed.");
       ty = domain.getProperty(mn, false, true);
       ty = ty ? type.from(ty, domain) : Type.Any;
       return type.cache.name[qn] = ty;
@@ -150,12 +150,12 @@ var AtomType = (function () {
 
 var TraitsType = (function () {
   function traitsType(object, domain) {
-    assert (object && object.traits);
+    release || assert(object && object.traits);
     this.object = object;
     this.traits = object.traits;
     this.domain = domain;
     if (this.object instanceof InstanceInfo) {
-      assert (this.domain);
+      release || assert(this.domain);
     }
   }
 
@@ -173,7 +173,7 @@ var TraitsType = (function () {
     } else if (x instanceof Activation) {
       return "AC";
     }
-    assert(false);
+    release || assert(false);
   }
 
   function findTraitBySlotId(traits, slotId) {
@@ -189,7 +189,7 @@ var TraitsType = (function () {
     var isGetter = !isSetter;
     var trait;
     if (!Multiname.isQName(mn)) {
-      assert (mn instanceof Multiname);
+      release || assert(mn instanceof Multiname);
       var dy;
       for (var i = 0, j = mn.namespaces.length; i < j; i++) {
         var qn = mn.getQName(i);
@@ -244,15 +244,15 @@ var TraitsType = (function () {
   };
 
   traitsType.prototype.instance = function () {
-    assert (this.object instanceof ClassInfo);
+    release || assert(this.object instanceof ClassInfo);
     return this.instanceCache || (this.instanceCache = Type.from(this.object.instanceInfo, this.domain));
   };
 
   traitsType.prototype.super = function () {
-    assert (this.object instanceof InstanceInfo);
+    release || assert(this.object instanceof InstanceInfo);
     if (this.object.superName) {
       var result = Type.fromName(this.object.superName, this.domain).instance();
-      assert (result instanceof TraitsType && result.object instanceof InstanceInfo);
+      release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo);
       return result;
     }
     return null;
@@ -411,9 +411,9 @@ var Verifier = (function() {
       mergeArrays(this.scope, other.scope);
     };
     function mergeArrays(a, b) {
-      assert(a.length === b.length, "a: " + a + " b: " + b);
+      release || assert(a.length === b.length, "a: " + a + " b: " + b);
       for (var i = a.length - 1; i >= 0; i--) {
-        assert((a[i] !== undefined) && (b[i] !== undefined));
+        release || assert((a[i] !== undefined) && (b[i] !== undefined));
         if (a[i] === b[i]) {
           continue;
         }
@@ -449,7 +449,7 @@ var Verifier = (function() {
 
       var entryState = new State();
 
-      assert (mi.localCount >= mi.parameters.length + 1);
+      release || assert(mi.localCount >= mi.parameters.length + 1);
 
       var thisType = mi.holder ? Type.from(mi.holder, this.domain) : Type.Any;
 
@@ -473,7 +473,7 @@ var Verifier = (function() {
         entryState.local.push(Type.Undefined);
       }
 
-      assert(entryState.local.length === mi.localCount);
+      release || assert(entryState.local.length === mi.localCount);
 
       if (writer) {
         entryState.trace(writer);
@@ -582,7 +582,7 @@ var Verifier = (function() {
           if (obj === Type.Function) {
             return Type.Object;
           }
-          assert (obj.isClassInfo());
+          release || assert(obj.isClassInfo());
           return obj.instance();
         } else {
           return Type.Any;
@@ -598,7 +598,7 @@ var Verifier = (function() {
       }
 
       function push(x) {
-        assert(x);
+        release || assert(x);
         ti().type = x;
         stack.push(x);
       }
@@ -626,7 +626,7 @@ var Verifier = (function() {
           var obj = savedScope.findProperty(mn, abc.domain, strict, true);
           if (obj) {
             var savedScopeDepth = savedScope.findDepth(obj);
-            assert (savedScopeDepth >= 0);
+            release || assert(savedScopeDepth >= 0);
             ti().scopeDepth = savedScopeDepth + scope.length;
             if (obj instanceof Global) {
               ti().object = obj;
@@ -638,7 +638,7 @@ var Verifier = (function() {
         // Is it in some other script?
         obj = abc.domain.findProperty(mn, false, true);
         if (obj) {
-          assert (obj instanceof Global);
+          release || assert(obj instanceof Global);
           ti().object = obj;
           return Type.from(obj, abc.domain);
         }
@@ -663,7 +663,7 @@ var Verifier = (function() {
       }
 
       function accessSlot(obj) {
-        assert (obj instanceof TraitsType);
+        release || assert(obj instanceof TraitsType);
         var trait = obj.getTraitAt(bc.index);
         writer && writer.debugLn("accessSlot() -> " + trait);
         if (trait) {
@@ -721,14 +721,14 @@ var Verifier = (function() {
           case OP_getsuper:
             mn = popMultiname();
             obj = pop();
-            assert (obj.super());
+            release || assert(obj.super());
             push(getProperty(obj.super(), mn));
             break;
           case OP_setsuper:
             val = pop();
             mn = popMultiname();
             obj = pop();
-            assert (obj.super());
+            release || assert(obj.super());
             setProperty(obj.super(), mn);
             break;
           case OP_dxns:
@@ -938,7 +938,7 @@ var Verifier = (function() {
             // Sign extend, nop.
             break;
           case OP_applytype:
-            assert(bc.argCount === 1);
+            release || assert(bc.argCount === 1);
             val = pop();
             obj = pop();
             push(obj.applyType(val));
@@ -1250,7 +1250,7 @@ var Verifier = (function() {
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
-    assert (scope.object, "Verifier needs a scope object.");
+    release || assert(scope.object, "Verifier needs a scope object.");
     try {
       new Verification(this, methodInfo, scope).verify();
       Counter.count("Verifier: Methods");

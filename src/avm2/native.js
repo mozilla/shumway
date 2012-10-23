@@ -194,15 +194,15 @@ function debugBreak(message) {
 
 /*
 defineReadOnlyProperty(Object.prototype, "isInstanceOf", function () {
-  assert (false, "isInstanceOf() is not implemented on type " + this);
+  release || assert(false, "isInstanceOf() is not implemented on type " + this);
 });
 
 defineReadOnlyProperty(Object.prototype, "coerce", function () {
-  assert (false, "coerce() is not implemented on type " + this);
+  release || assert(false, "coerce() is not implemented on type " + this);
 });
 
 defineReadOnlyProperty(Object.prototype, "isInstance", function () {
-  assert (false, "isInstance() is not implemented on type " + this);
+  release || assert(false, "isInstance() is not implemented on type " + this);
 });
 */
 
@@ -1352,6 +1352,6 @@ function getNative(p) {
     v = v && v[chain[i]];
   }
   // TODO: This assertion should always pass, find out why it doesn't.
-  // assert (v, "getNative(" + p + ") not found.");
+  // release || assert(v, "getNative(" + p + ") not found.");
   return v;
 }

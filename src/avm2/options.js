@@ -36,10 +36,10 @@
       }
       argument.prototype.parse = function parse(value) {
         if (this.type === "boolean") {
-          assert (typeof value === "boolean");
+          release || assert(typeof value === "boolean");
           this.value = value;
         } else  if (this.type === "number") {
-          assert (!isNaN(value), value + " is not a number");
+          release || assert(!isNaN(value), value + " is not a number");
           this.value = parseInt(value, 10);
         } else {
           this.value = value;
@@ -70,7 +70,7 @@
         if (x instanceof OptionSet) {
           self.addBoundOptionSet(x);
         } else {
-          assert (x instanceof Option);
+          release || assert(x instanceof Option);
           self.addBoundOption(x);
         }
       });
@@ -109,10 +109,10 @@
           break;
         } else if (argString.slice(0, 1) == '-' || argString.slice(0, 2) == '--') {
           argument = nonPositionalArgumentMap[argString];
-          assert (argument, "Argument " + argString + " is unknown.");
+          release || assert(argument, "Argument " + argString + " is unknown.");
           if (argument.type !== "boolean") {
             value = args.shift();
-            assert (value !== "-" && value !== "--", "Argument " + argString + " must have a value.");
+            release || assert(value !== "-" && value !== "--", "Argument " + argString + " must have a value.");
           } else {
             value = true;
           }
@@ -125,7 +125,7 @@
           argument.parse(value);
         }
       }
-      assert (positionalArgumentList.length === 0, "Missing positional arguments.");
+      release || assert(positionalArgumentList.length === 0, "Missing positional arguments.");
       return leftoverArguments;
     };
     return argumentParser;

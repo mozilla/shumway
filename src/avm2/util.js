@@ -1,3 +1,5 @@
+var release = false;
+
 var inBrowser = typeof console != "undefined";
 
 if (!inBrowser) {
@@ -47,11 +49,11 @@ function warning(message) {
 }
 
 function notImplemented(message) {
-  assert(false, "Not Implemented " + message);
+  release || assert(false, "Not Implemented " + message);
 }
 
 function unexpected(message) {
-  assert(false, message);
+  release || assert(false, message);
 }
 
 function defineReadOnlyProperty(obj, name, value) {
@@ -140,7 +142,7 @@ function isNumeric(x) {
   var Ap = Array.prototype;
 
   extendBuiltin(Ap, "popMany", function (count) {
-    assert (this.length >= count);
+    release || assert(this.length >= count);
     var start = this.length - count;
     var res = this.slice(start, this.length);
     this.splice(start, count);
@@ -148,12 +150,12 @@ function isNumeric(x) {
   });
 
   extendBuiltin(Ap, "first", function () {
-    assert (this.length > 0);
+    release || assert(this.length > 0);
     return this[0];
   });
 
   extendBuiltin(Ap, "peek", function() {
-    assert (this.length > 0);
+    release || assert(this.length > 0);
     return this[this.length - 1];
   });
 
@@ -375,7 +377,7 @@ function BitSetFunctor(length) {
     },
 
     forEach: function forEach(fn) {
-      assert (fn);
+      release || assert(fn);
       var bits = this.bits;
       for (var i = 0, j = bits.length; i < j; i++) {
         var word = bits[i];
@@ -527,7 +529,7 @@ function BitSetFunctor(length) {
     },
 
     forEach: function forEach(fn) {
-      assert (fn);
+      release || assert(fn);
       var word = this.bits;
       if (word) {
         for (var k = 0; k < BITS_PER_WORD; k++) {
@@ -734,13 +736,13 @@ var Map = (function() {
 var SortedList = (function() {
 
   function sortedList(compare) {
-    assert (compare);
+    release || assert(compare);
     this.compare = compare;
     this.head = null;
   }
 
   sortedList.prototype.push = function push(value) {
-    assert (value !== undefined);
+    release || assert(value !== undefined);
     if (!this.head) {
       this.head = {value: value, next: null};
       return;

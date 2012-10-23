@@ -131,7 +131,7 @@ const FlushStackReason = {
 var Compiler = (function () {
 
   function objectId(obj) {
-    assert(obj);
+    release || assert(obj);
     if (obj.hasOwnProperty("objectId")) {
       return obj.objectId;
     }
@@ -187,7 +187,7 @@ var Compiler = (function () {
       if (value === undefined) {
         Identifier.call(this, "undefined");
       } else if (value !== null && typeof value === "object") {
-        assert (value instanceof Multiname ||
+        release || assert(value instanceof Multiname ||
                 value instanceof Runtime ||
                 value instanceof Domain ||
                 value instanceof MethodInfo ||
@@ -263,10 +263,10 @@ var Compiler = (function () {
   }
 
   function call(callee, args) {
-    assert (args instanceof Array);
+    release || assert(args instanceof Array);
     args.forEach(function (x) {
-      assert (!(x instanceof Array));
-      assert (x !== undefined);
+      release || assert(!(x instanceof Array));
+      release || assert(x !== undefined);
     });
     return new CallExpression(callee, args);
   }
@@ -276,7 +276,7 @@ var Compiler = (function () {
   }
 
   function assignment(left, right) {
-    assert (left && right);
+    release || assert(left && right);
     return new AssignmentExpression(left, "=", right);
   }
 
@@ -410,7 +410,7 @@ var Compiler = (function () {
   })();
 
   function negate(node) {
-    assert (node instanceof BinaryExpression || node instanceof UnaryExpression);
+    release || assert(node instanceof BinaryExpression || node instanceof UnaryExpression);
     var left = node instanceof BinaryExpression ? node.left : node.argument;
     var right = node.right;
     var operator = Operator.fromName(node.operator);
@@ -485,7 +485,7 @@ var Compiler = (function () {
       return variable;
     };
     variablePool.prototype.release = function (variable) {
-      assert (this.used.contains(variable));
+      release || assert(this.used.contains(variable));
       this.available.push(variable);
     };
     variablePool.prototype.releaseAll = function () {
@@ -523,7 +523,7 @@ var Compiler = (function () {
       for (var i = values.length - 1; i >= 0; i--) {
         var other = values[i];
         if (value.isEquivalent(other)) {
-          assert (other.variable);
+          release || assert(other.variable);
           return other;
         }
       }
@@ -654,7 +654,7 @@ var Compiler = (function () {
 
     compilation.prototype.compile = function compile() {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
-      assert (node instanceof BlockStatement);
+      release || assert(node instanceof BlockStatement);
       if (this.temporary.length) {
         this.prologue.push(variableDeclaration(this.temporary.filter(notUndefined).map(function (x) {
           return new VariableDeclarator(x, null);
@@ -688,7 +688,7 @@ var Compiler = (function () {
       var firstCase = true;
 
       function labelEq(labelId) {
-        assert (typeof labelId === "number");
+        release || assert(typeof labelId === "number");
         return new BinaryExpression("===", labelTestName, new Literal(labelId));
       }
 
@@ -758,7 +758,7 @@ var Compiler = (function () {
 
     compilation.prototype.compileSwitch = function compileSwitch(item, state) {
       var dt = item.determinant.compile(this, state);
-      assert(dt.determinant);
+      release || assert(dt.determinant);
 
       var cases = [];
       item.cases.forEach(function (x) {
@@ -766,7 +766,7 @@ var Compiler = (function () {
         if (x.body) {
           result = x.body.compile(this, dt.state.clone());
           // TODO: Merge states.
-          assert(result.state.stack.length === 0);
+          release || assert(result.state.stack.length === 0);
         }
         cases.push(new SwitchCase(typeof x.index === "number" ? new Literal(x.index) : undefined, result ? [result.node] : []));
       }, this);
@@ -790,7 +790,7 @@ var Compiler = (function () {
       if (item.else) {
         er = item.else.compile(this, cr.state.clone());
       }
-      assert (tr || er);
+      release || assert(tr || er);
 
       var node;
       if (item.nothingThrownLabel) {
@@ -924,7 +924,7 @@ var Compiler = (function () {
       }
 
       function push(value) {
-        assert (typeof value !== "string");
+        release || assert(typeof value !== "string");
         bc.ti && (value.ti = bc.ti);
         state.stack.push(value);
       }
@@ -979,7 +979,7 @@ var Compiler = (function () {
       }
 
       function setLocal(index) {
-        assert (state.stack.length);
+        release || assert(state.stack.length);
         var value = pop();
         flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], value));
@@ -1089,7 +1089,7 @@ var Compiler = (function () {
         if (block.dominator === block) {
           block.cse = new CSE(null, this.variablePool);
         } else {
-          assert (block.dominator.cse, "Dominator should have a CSE map.");
+          release || assert(block.dominator.cse, "Dominator should have a CSE map.");
           block.cse = new CSE(block.dominator.cse, this.variablePool);
         }
       }
@@ -1121,7 +1121,7 @@ var Compiler = (function () {
        * node.
        */
       function setCondition(operator) {
-        assert (condition === null);
+        release || assert(condition === null);
         var b;
         if (operator.isBinary()) {
           b = pop();
@@ -1156,7 +1156,7 @@ var Compiler = (function () {
 
       function getProperty(obj, multiname) {
         Counter.count("getProperty");
-        assert (!(multiname instanceof Multiname), multiname);
+        release || assert(!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
@@ -1236,7 +1236,7 @@ var Compiler = (function () {
 
       function getMultiname(index) {
         var multiname = multinames[index];
-        assert (!multiname.isRuntime());
+        release || assert(!multiname.isRuntime());
         var c = constant(multiname);
         c.multiname = multiname;
         return c;
@@ -1496,7 +1496,7 @@ var Compiler = (function () {
           for (var i = 0; i < bc.argCount; i++) {
             var value = pop();
             var key = pop();
-            assert (key.value !== undefined && typeof key.value !== "object");
+            release || assert(key.value !== undefined && typeof key.value !== "object");
 
             var mangledKey = Multiname.getPublicQualifiedName(key.value);
             properties.unshift(new T.Property(new Literal(mangledKey), value, "init"));
@@ -1505,7 +1505,7 @@ var Compiler = (function () {
           break;
         case OP_newarray:       push(new ArrayExpression(popMany(bc.argCount))); break;
         case OP_newactivation:
-          assert (this.methodInfo.needsActivation());
+          release || assert(this.methodInfo.needsActivation());
           emit(variableDeclaration([
             new VariableDeclarator(activationName,
                                    call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
@@ -1522,7 +1522,7 @@ var Compiler = (function () {
           push(call(id("getDescendants"), [multiname, obj]));
           break;
         case OP_newcatch:
-          assert(exceptions[bc.index].scopeObject);
+          release || assert(exceptions[bc.index].scopeObject);
           flushStack();
           flushScope();
           push(constant(exceptions[bc.index].scopeObject));
@@ -1747,8 +1747,8 @@ var Compiler = (function () {
   })();
 
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope, hasDynamicScope) {
-    assert(scope);
-    assert(methodInfo.analysis);
+    release || assert(scope);
+    release || assert(methodInfo.analysis);
     Counter.count("Compiler: Methods");
     Timer.start("Compiler");
     if (enableVerifier.value && scope.object) {
@@ -1805,7 +1805,7 @@ var InlineCacheManager = (function () {
       this.inlineCaches = [];
     }
     inlineCacheSet.prototype.update = function (namespace) {
-      assert (namespace instanceof Namespace);
+      release || assert(namespace instanceof Namespace);
       var foundNewNamespace = true;
       var namespaces = this.namespaces;
       for (var i = 0; i < namespaces.length; i++) {
@@ -1817,7 +1817,7 @@ var InlineCacheManager = (function () {
       }
       if (foundNewNamespace) {
         this.namespaces.push([namespace, 1]);
-        assert (this.dirty, "TODO: Invalidate inline caches.");
+        release || assert(this.dirty, "TODO: Invalidate inline caches.");
       }
     };
     /**
@@ -1858,7 +1858,7 @@ var InlineCacheManager = (function () {
                           '((x = o.' + qn + ') !== undefined || ("' + qn + '" in o)) ? x : (' + src + ')';
         }
       }
-      assert (qns.length);
+      release || assert(qns.length);
       var icName = (isSetter ? INLINE_CACHE_SETTER_PREFIX : INLINE_CACHE_GETTER_PREFIX) + (inlineCacheCounter ++);
       if (isSetter) {
         src = 'function ' + icName + '(o, v) { ' + src + '; }';
@@ -1883,16 +1883,16 @@ var InlineCacheManager = (function () {
         inlineCacheSets.set(name, new InlineCacheSet(name));
       }
       var inlineCacheSet = inlineCacheSets.get(name);
-      assert (inlineCacheSet, name);
+      release || assert(inlineCacheSet, name);
       inlineCacheSet.update(namespace);
     });
   }
 
   return {
     createInlineCache: function createInlineCache(mn, isSetter) {
-      assert (mn instanceof Multiname);
-      assert (!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
-      assert (mn.namespaces.length > 1);
+      release || assert(mn instanceof Multiname);
+      release || assert(!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
+      release || assert(mn.namespaces.length > 1);
       var cache = mn.inlineCache || (mn.inlineCache = {});
       var cacheName = isSetter ? "setter" : "getter";
       if (cache[cacheName]) {

@@ -420,7 +420,7 @@ var Analysis = (function () {
 
     if (BlockSet.singleword) {
       Bsp.forEachBlock = function forEach(fn) {
-        assert (fn);
+        release || assert(fn);
         var byId = blockById;
         var word = this.bits;
         if (word) {
@@ -468,7 +468,7 @@ var Analysis = (function () {
       };
     } else {
       Bsp.forEachBlock = function forEach(fn) {
-        assert (fn);
+        release || assert(fn);
         var byId = blockById;
         var bits = this.bits;
         for (var i = 0, j = bits.length; i < j; i++) {
@@ -784,7 +784,7 @@ var Analysis = (function () {
           continue;
         }
 
-        assert(currentBlock.succs);
+        release || assert(currentBlock.succs);
 
         blockById[currentBlock.bid] = currentBlock;
         code = bytecodes[pc - 1];
@@ -864,7 +864,7 @@ var Analysis = (function () {
       var root = this.bytecodes[0];
 
       // The root must not have preds!
-      assert(root.preds.length === 0);
+      release || assert(root.preds.length === 0);
 
       const ONCE = 1;
       const BUNCH_OF_TIMES = 2;
@@ -967,7 +967,7 @@ var Analysis = (function () {
               }
             }
           }
-          assert(newIdom in doms);
+          release || assert(newIdom in doms);
 
           for (var i = 0; i < j; i++) {
             var p = rpo[preds[i].bid];
@@ -1039,7 +1039,7 @@ var Analysis = (function () {
     },
 
     analyzeControlFlow: function analyzeControlFlow() {
-      assert(this.bytecodes);
+      release || assert(this.bytecodes);
       this.detectBasicBlocks();
       this.normalizeReachableBlocks();
       this.computeDominance();

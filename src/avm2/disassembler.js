@@ -117,7 +117,7 @@ function traceOperand(operand, abc, code) {
     case "s24": value = code.readS24(); break;
     case "u30": value = code.readU30(); break;
     case "u32": value = code.readU32(); break;
-    default: assert (false); break;
+    default: release || assert(false); break;
   }
   var description = "";
   switch(operand.type) {
@@ -191,7 +191,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
         if (opcode) {
           str += opcode.name.padRight(' ', 20);
           if (!opcode.operands) {
-            assert(false, "Opcode: " + opcode.name + " has undefined operands.");
+            release || assert(false, "Opcode: " + opcode.name + " has undefined operands.");
           } else {
             if (opcode.operands.length > 0) {
               str += traceOperands(opcode, abc, code);
@@ -199,7 +199,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
             writer.writeLn(str);
           }
         } else {
-          assert(false, "Opcode: " + bc + " is not implemented.");
+          release || assert(false, "Opcode: " + bc + " is not implemented.");
         }
         break;
     }
@@ -610,7 +610,7 @@ function traceStatistics(writer, abc) {
         case "s24": value = code.readS24(); break;
         case "u30": value = code.readU30(); break;
         case "u32": value = code.readU32(); break;
-        default: assert (false); break;
+        default: release || assert(false); break;
       }
       var description = "";
       switch(operand.type) {

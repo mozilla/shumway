@@ -128,7 +128,7 @@ if (file.value.endsWith(".swf")) {
     }
   });
 } else {
-  assert(file.value.endsWith(".abc"));
+  release || assert(file.value.endsWith(".abc"));
   processAbc(new AbcFile(snarf(file.value, "binary"), file.value));
 }
 
@@ -156,7 +156,7 @@ function processAbc(abc) {
   }
 
   if (execute.value) {
-    assert(avm2);
+    release || assert(avm2);
     try {
       avm2.applicationDomain.executeAbc(abc);
     } catch(e) {
