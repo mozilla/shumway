@@ -49,24 +49,29 @@ const SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       notImplemented();
+    },
+    constructChildren: function () {
+      // notImplemented();
     }
   };
 
   const desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
-    instance: {
-      graphics: desc(def, "graphics"),
-      buttonMode: desc(def, "buttonMode"),
-      dropTarget: desc(def, "dropTarget"),
-      startDrag: def.startDrag,
-      stopDrag: def.stopDrag,
-      startTouchDrag: def.startTouchDrag,
-      stopTouchDrag: def.stopTouchDrag,
-      constructChildren: def.constructChildren,
-      hitArea: desc(def, "hitArea"),
-      useHandCursor: desc(def, "useHandCursor"),
-      soundTransform: desc(def, "soundTransform")
+    native: {
+      instance: {
+        graphics: desc(def, "graphics"),
+        buttonMode: desc(def, "buttonMode"),
+        dropTarget: desc(def, "dropTarget"),
+        startDrag: def.startDrag,
+        stopDrag: def.stopDrag,
+        startTouchDrag: def.startTouchDrag,
+        stopTouchDrag: def.stopTouchDrag,
+        constructChildren: def.constructChildren,
+        hitArea: desc(def, "hitArea"),
+        useHandCursor: desc(def, "useHandCursor"),
+        soundTransform: desc(def, "soundTransform")
+      }
     }
   };
 

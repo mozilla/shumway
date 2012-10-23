@@ -173,7 +173,7 @@ const DisplayObjectDefinition = (function () {
     hitTestPoint: function (x, y, shapeFlag) {
       notImplemented();
     },
-    hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
+    _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
       return false; //notImplemented();
     },
     get loaderInfo() {
@@ -320,6 +320,7 @@ const DisplayObjectDefinition = (function () {
         alpha: desc(def, "alpha"),
         width: desc(def, "width"),
         height: desc(def, "height"),
+        _hitTest: def._hitTest,
         cacheAsBitmap: desc(def, "cacheAsBitmap"),
         opaqueBackground: desc(def, "opaqueBackground"),
         scrollRect: desc(def, "scrollRect"),
