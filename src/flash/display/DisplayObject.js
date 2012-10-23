@@ -87,25 +87,23 @@ const DisplayObjectDefinition = (function () {
       if (!bbox)
         return new flash.geom.Rectangle;
 
-    var m = this._currentTransformMatrix;
+      var p1 = {x: bbox.left, y: bbox.top};
+      _applyCurrentTransform(p1, targetCoordSpace);
+      var p2 = {x: bbox.right, y: bbox.top};
+      _applyCurrentTransform(p2, targetCoordSpace);
+      var p3 = {x: bbox.right, y: bbox.bottom};
+      _applyCurrentTransform(p3, targetCoordSpace);
+      var p4 = {x: bbox.left, y: bbox.bottom};
+      _applyCurrentTransform(p4, targetCoordSpace);
 
-    var x1 = m.a * bbox.left + m.c * bbox.top;
-    var y1 = m.d * bbox.top + m.b * bbox.left;
-    var x2 = m.a * bbox.right + m.c * bbox.top;
-    var y2 = m.d * bbox.top + m.b * bbox.right;
-    var x3 = m.a * bbox.right + m.c * bbox.bottom;
-    var y3 = m.d * bbox.bottom + m.b * bbox.right;
-    var x4 = m.a * bbox.left + m.c * bbox.bottom;
-    var y4 = m.d * bbox.bottom + m.b * bbox.left;
-
-      var xMin = Math.min(x1, x2, x3, x4);
-      var xMax = Math.max(x1, x2, x3, x4);
-      var yMin = Math.min(y1, y2, y3, y4);
-      var yMax = Math.max(y1, y2, y3, y4);
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
       return new flash.geom.Rectangle(
-        xMin + m.tx,
-        yMin + m.ty,
+        xMin,
+        yMin,
         (xMax - xMin),
         (yMax - yMin)
       );
@@ -126,32 +124,32 @@ const DisplayObjectDefinition = (function () {
         ty: this._y
       };
     },
-  _applyCurrentTransform: function (point) {
-    var m = this._currentTransformMatrix;
-    var x = point.x;
-    var y = point.y;
+    _applyCurrentTransform: function (point, targetCoordSpace) {
+      var m = this._currentTransformMatrix;
+      var x = point.x;
+      var y = point.y;
 
-    point.x = m.a * x + m.c * y + m.tx;
-    point.y = m.d * y + m.b * x + m.ty;
+      point.x = m.a * x + m.c * y + m.tx;
+      point.y = m.d * y + m.b * x + m.ty;
 
-    if (this._parent !== this._stage) {
-      this._parent._applyCurrentTransform(point);
-    }
-  },
-  _applyCurrentInverseTransform: function (point) {
-    if (this._parent !== this._stage) {
-      this._parent._applyCurrentInverseTransform(point);
-    }
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
+        this._parent._applyCurrentTransform(point, targetCoordSpace);
+      }
+    },
+    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
+        this._parent._applyCurrentInverseTransform(point);
+      }
 
-    var m = this._currentTransformMatrix;
+      var m = this._currentTransformMatrix;
 
-    var x = point.x - m.tx;
-    var y = point.y - m.ty;
-    var d = 1 / (m.a * m.d - m.b * m.c);
+      var x = point.x - m.tx;
+      var y = point.y - m.ty;
+      var d = 1 / (m.a * m.d - m.b * m.c);
 
-    point.x = (m.d * x - m.c * y) * d;
-    point.y = (m.a * y - m.b * x) * d;
-  },
+      point.x = (m.d * x - m.c * y) * d;
+      point.y = (m.a * y - m.b * x) * d;
+    },
     getRect: function (targetCoordSpace) {
       notImplemented();
     },
@@ -168,13 +166,20 @@ const DisplayObjectDefinition = (function () {
       notImplemented();
     },
     hitTestObject: function (obj) {
-      notImplemented();
+      return this._hitTest(false, 0, 0, false, obj);
     },
     hitTestPoint: function (x, y, shapeFlag) {
-      notImplemented();
+      return this._hitTest(true, x, y, shapeFlag, null);
     },
     _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
-      return false; //notImplemented();
+      if (use_xy) {
+        debugger;
+        return false; //notImplemented();
+      } else {
+        var box1 = this.getBounds();
+        var box2 = hitTestObject.getBounds();
+        return box1.intersects(box2);
+      }
     },
     get loaderInfo() {
       return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);

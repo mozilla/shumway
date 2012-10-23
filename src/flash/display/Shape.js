@@ -13,9 +13,11 @@ const ShapeDefinition = (function () {
   };
 
   def.__glue__ = {
-    instance: {
-      graphics: {
-        get: function () { return this._graphics; }
+    native: {
+      instance: {
+        graphics: {
+          get: function () { return this._graphics; }
+        }
       }
     }
   };

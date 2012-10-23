@@ -283,5 +283,33 @@ const GraphicsDefinition = (function () {
     }
   };
 
+  def.__glue__ = {
+    native: {
+      instance: {
+        beginFill: def.beginFill,
+        beginGradientFill: def.beginGradientFill,
+        beginBitmapFill: def.beginBitmapFill,
+        beginFillObject: def.beginFillObject,
+        beginStrokeObject: def.beginStrokeObject,
+        clear: def.clear,
+        copyFrom: def.copyFrom,
+        cubicCurveTo: def.cubicCurveTo,
+        curveTo: def.curveTo,
+        drawPath: def.drawPath,
+        drawPathObject: def.drawPathObject,
+        drawRect: def.drawRect,
+        drawRoundRect: def.drawRoundRect,
+        drawRoundRectComplex: def.drawRoundRectComplex,
+        drawTriangles: def.drawTriangles,
+        endFill: def.endFill,
+        lineBitmapStyle: def.lineBitmapStyle,
+        lineGradientStyle: def.lineGradientStyle,
+        lineStyle: def.lineStyle,
+        moveTo: def.moveTo,
+        lineTo: def.lineTo
+      }
+    }
+  };
+
   return def;
 }).call(this);
