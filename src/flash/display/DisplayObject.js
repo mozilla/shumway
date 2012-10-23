@@ -158,7 +158,6 @@ const DisplayObjectDefinition = (function () {
     globalToLocal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);
       this._applyCurrentInverseTransform(result);
-      debugger;
       return result;
     },
     get height() {

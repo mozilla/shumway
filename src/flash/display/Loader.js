@@ -136,7 +136,10 @@ const LoaderDefinition = (function () {
       }
 
       if (!symbol) {
-        commitData({command: 'error', message: 'unknown symbol type'});
+        commitData({
+          command: 'error',
+          message: 'unknown symbol type: ' + swfTag.code
+        });
         return;
       }
 
