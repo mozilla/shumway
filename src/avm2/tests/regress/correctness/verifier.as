@@ -40,7 +40,7 @@ package {
     function boo() {
       var b = f + 1;
       function car() {
-        var c = f + b + 1w;
+        var c = f + b + 1;
         function baz() {
           with (A) {
             with (B) {

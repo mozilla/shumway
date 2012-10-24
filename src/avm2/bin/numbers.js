@@ -17,6 +17,7 @@ var exec = require('child_process').exec;
 var temp = require('temp');
 
 global.assert = function () { };
+global.release = false;
 var options = require("../options.js");
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
