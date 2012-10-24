@@ -1,23 +1,5 @@
 /* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
 
-var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
-
-function visitContainer(container, visitor) {
-  var children = container._children;
-  visitor.childrenStart(container);
-  for (var i = 0, n = children.length; i < n; i++) {
-    var child = children[i];
-    if (child) {
-      var isContainer = child instanceof MovieClip;
-      visitor.visit(child, isContainer);
-      if (isContainer) {
-        visitContainer(child, visitor);
-      }
-    }
-  }
-  visitor.childrenEnd(container);
-}
-
 //function renderShadowCanvas(child) {
 //  var cache = child.hitTestCache;
 //
@@ -71,148 +53,202 @@ function visitContainer(container, visitor) {
 //  cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
 //}
 
-function EnterFrameVisitor() {
-}
-EnterFrameVisitor.prototype = {
-  childrenStart: function() {},
-  childrenEnd: function() {},
-  visit: function (obj) {
-    if (obj instanceof MovieClip) {
-      if (obj.isPlaying()) {
-        obj.nextFrame();
+function renderStage(stage, ctx) {
+  // All the visitors close over this class to do instance testing.
+  const MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+
+  function visitContainer(container, visitor) {
+    var children = container._children;
+    visitor.childrenStart(container);
+    for (var i = 0, n = children.length; i < n; i++) {
+      var child = children[i];
+      if (child) {
+        var isContainer = MovieClipClass.isInstanceOf(child);
+        visitor.visit(child, isContainer);
+        if (isContainer) {
+          visitContainer(child, visitor);
+        }
       }
-      obj.dispatchEvent(new Event(Event.ENTER_FRAME));
     }
+    visitor.childrenEnd(container);
   }
-};
 
-function ExitFrameVisitor() {
-}
-ExitFrameVisitor.prototype = {
-  childrenStart: function() {},
-  childrenEnd: function() {},
-  visit: function (obj) {
-    if (obj instanceof MovieClip) {
-      obj.dispatchEvent(new Event(Event.EXIT_FRAME));
+  function EnterFrameVisitor() {
+  }
+  EnterFrameVisitor.prototype = {
+    childrenStart: function() {},
+    childrenEnd: function() {},
+    visit: function (obj) {
+      if (MovieClipClass.isInstanceOf(obj)) {
+        if (obj.isPlaying()) {
+          obj.nextFrame();
+        }
+        obj.dispatchEvent(new flash.events.Event("enterFrame"));
+      }
     }
-  }
-};
+  };
 
-function RenderVisitor(ctx) {
-  this.depth = 0;
-  this.ctx = ctx;
-}
-RenderVisitor.prototype = {
-  childrenStart: function(parent) {
-    if (this.depth == 0) {
+  function ExitFrameVisitor() {
+  }
+  ExitFrameVisitor.prototype = {
+    childrenStart: function() {},
+    childrenEnd: function() {},
+    visit: function (obj) {
+      if (MovieClipClass.isInstanceOf(obj)) {
+        obj.dispatchEvent(new flash.events.Event("exitFrame"));
+      }
+    }
+  };
+
+  function RenderVisitor(ctx) {
+    this.depth = 0;
+    this.ctx = ctx;
+  }
+  RenderVisitor.prototype = {
+    childrenStart: function(parent) {
+      if (this.depth == 0) {
+        var ctx = this.ctx;
+        var stage = parent;
+        var frameWidth = ctx.canvas.width;
+        var frameHeight = ctx.canvas.height;
+
+        var scaleX = frameWidth / stage.stageWidth;
+        var scaleY = frameHeight / stage.stageHeight;
+        var scale = Math.min(scaleX, scaleY);
+        var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
+        var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
+
+        ctx.clearRect(0, 0, frameWidth, frameHeight);
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+
+        ctx.canvas.currentTransform = {
+          scale: scale,
+          offsetX: offsetX,
+          offsetY: offsetY
+        };
+      }
+      this.depth++;
+
+      // TODO move into separate visitor?
+      if (MovieClipClass.isInstanceOf(parent) && parent._scriptExecutionPending) {
+        parent.callFrame(parent.currentFrame);
+        parent._scriptExecutionPending = false;
+      }
+    },
+    childrenEnd: function(parent) {
+      this.depth--;
+      this.ctx.restore();
+    },
+    visit: function (child, isContainer) {
       var ctx = this.ctx;
-      var stage = parent;
-      var frameWidth = ctx.canvas.width;
-      var frameHeight = ctx.canvas.height;
-
-      var scaleX = frameWidth / stage.stageWidth;
-      var scaleY = frameHeight / stage.stageHeight;
-      var scale = Math.min(scaleX, scaleY);
-      var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
-      var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
-
-      ctx.clearRect(0, 0, frameWidth, frameHeight);
       ctx.save();
-      ctx.translate(offsetX, offsetY);
+      //if (child.matrix && !child.$fixMatrix)
+      //  child.matrix = create(child.matrix);
+      //if (child.cxform && !child.$fixCxform)
+      //  child.cxform = create(child.cxform);
 
-      ctx.canvas.currentTransform = {
-        scale: scale,
-        offsetX: offsetX,
-        offsetY: offsetY
-      };
-    }
-    this.depth++;
+      var m = child._currentTransformMatrix;
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
-    // TODO move into separate visitor?
-    if (parent instanceof MovieClip && parent._scriptExecutionPending) {
-      parent._executeScripts();
-    }
-  },
-  childrenEnd: function(parent) {
-    this.depth--;
-    this.ctx.restore();
-  },
-  visit: function (child, isContainer) {
-    var ctx = this.ctx;
-    ctx.save();
-    //if (child.matrix && !child.$fixMatrix)
-    //  child.matrix = create(child.matrix);
-    //if (child.cxform && !child.$fixCxform)
-    //  child.cxform = create(child.cxform);
+      var cxform = child._cxform;
+      if (cxform) {
+        // We only support alpha channel transformation for now
+        ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+      }
 
-    //var m = child.transform.matrix;
-    //ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      if (child._graphics) {
+        var graphics = child._graphics;
 
-    ctx.translate(child._x, child._y);
-    ctx.rotate(child._rotation * Math.PI / 180);
-    ctx.scale(child._scaleX, child._scaleY);
+        var scale = graphics._scale;
+        if (scale !== 1)
+          ctx.scale(scale, scale);
 
-    //var rotation = child.rotation;
-    //if (rotation)
-    //  ctx.rotate(rotation * Math.PI / 180);
-    var cxform = child._cxform;
-    if (cxform) {
-      // We only support alpha channel transformation for now
-      ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
-    }
-
-    if (child._graphics) {
-      var graphics = child._graphics;
-
-      var scale = graphics._scale;
-      if (scale !== 1)
-        ctx.scale(scale, scale);
-
-      var subpaths = graphics._subpaths;
-      for (var j = 0, o = subpaths.length; j < o; j++) {
-        var path = subpaths[j];
-        if (path.fillStyle) {
-          ctx.fillStyle = path.fillStyle;
-          if (path.fillTransform) {
-            var m = path.fillTransform;
-            path.__draw__(ctx);
-            ctx.save();
-            ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-            ctx.fill();
-            ctx.restore();
-          } else {
-            ctx.fill(path);
+        var subpaths = graphics._subpaths;
+        for (var j = 0, o = subpaths.length; j < o; j++) {
+          var path = subpaths[j];
+          if (path.fillStyle) {
+            ctx.fillStyle = path.fillStyle;
+            if (path.fillTransform) {
+              var m = path.fillTransform;
+              path.__draw__(ctx);
+              ctx.save();
+              ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.fill(path);
+            }
+          }
+          if (path.strokeStyle) {
+            ctx.strokeStyle = path.strokeStyle;
+            var drawingStyles = path.drawingStyles;
+            for (var prop in drawingStyles)
+              ctx[prop] = drawingStyles[prop];
+            ctx.stroke(path);
           }
         }
-        if (path.strokeStyle) {
-          ctx.strokeStyle = path.strokeStyle;
-          var drawingStyles = path.drawingStyles;
-          for (var prop in drawingStyles)
-            ctx[prop] = drawingStyles[prop];
-          ctx.stroke(path);
-        }
       }
+
+      if (child.draw) {
+        child.draw(ctx, child.ratio);
+      }
+
+      if (!isContainer) {
+        // letting the container to restore transforms after all children are painted
+        ctx.restore();
+      }
+
+      //if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
+      //  renderShadowCanvas(child);
     }
+  };
 
-    if (child.draw) {
-      child.draw(ctx, child.ratio);
-    }
-
-    if (!isContainer) {
-      // letting the container to restore transforms after all children are painted
-      ctx.restore();
-    }
-
-    //if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
-    //  renderShadowCanvas(child);
-  }
-};
-
-function renderStage(stage, ctx) {
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
 
   ctx.mozFillRule = 'evenodd';
+
+  var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+
+  var FPS = (function () {
+    var width = Math.max(ctx.canvas.width / 5, 100);
+    var height = width / 8;
+    var sampleWidth = 2;
+    var sampleCount = width / (sampleWidth + 1);
+    var last = null;
+    var samples = [];
+    var max = 0;
+
+    return {
+      tick: function () {
+        var curr = new Date();
+        if (last) {
+          if (samples.length > sampleCount) {
+            samples.shift();
+          }
+          var elapsed = curr - last;
+          samples.push(elapsed);
+          var sum = 0;
+          for (var i = 0; i < samples.length; i++) {
+            sum += samples[i];
+            max = Math.max(max, samples[i]);
+          }
+          var avg = sum / samples.length;
+          var xOffset = ctx.canvas.width - width;
+          var yOffset = height;
+          for (var i = 0; i < samples.length; i++) {
+            var scaledSample = (samples[i] / (2 * avg));
+            ctx.fillRect(xOffset + i * (sampleWidth + 1), yOffset, sampleWidth, - scaledSample * height);
+          }
+          ctx.font = "6pt Verdana";
+          ctx.fillText("FPS: " + (1000 / avg).toFixed(2), xOffset, height + 15);
+        }
+        last = curr;
+      }
+    };
+  })();
+
 
   (function draw() {
     var now = +new Date;
@@ -221,6 +257,7 @@ function renderStage(stage, ctx) {
       visitContainer(stage, new EnterFrameVisitor());
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new ExitFrameVisitor());
+      FPS.tick();
     }
     requestAnimationFrame(draw);
   })();

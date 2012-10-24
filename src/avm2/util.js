@@ -1,3 +1,5 @@
+var release = false;
+
 var inBrowser = typeof console != "undefined";
 
 if (!inBrowser) {
@@ -47,11 +49,11 @@ function warning(message) {
 }
 
 function notImplemented(message) {
-  assert(false, "Not Implemented " + message);
+  release || assert(false, "Not Implemented " + message);
 }
 
 function unexpected(message) {
-  assert(false, message);
+  release || assert(false, message);
 }
 
 function defineReadOnlyProperty(obj, name, value) {
@@ -140,7 +142,7 @@ function isNumeric(x) {
   var Ap = Array.prototype;
 
   extendBuiltin(Ap, "popMany", function (count) {
-    assert (this.length >= count);
+    release || assert(this.length >= count);
     var start = this.length - count;
     var res = this.slice(start, this.length);
     this.splice(start, count);
@@ -148,12 +150,12 @@ function isNumeric(x) {
   });
 
   extendBuiltin(Ap, "first", function () {
-    assert (this.length > 0);
+    release || assert(this.length > 0);
     return this[0];
   });
 
   extendBuiltin(Ap, "peek", function() {
-    assert (this.length > 0);
+    release || assert(this.length > 0);
     return this[this.length - 1];
   });
 
@@ -211,17 +213,6 @@ function utf8encode(bytes) {
     str += b <= 0x7f ? b === 0x25 ? "%25" : fcc(b) : "%" + b.toString(16).toUpperCase();
   }
   return decodeURIComponent(str);
-}
-
-/**
- * Creates a new prototype object derived from another objects prototype along with a list of additional properties.
- */
-function inherit(base, properties) {
-  var prot = Object.create(base.prototype);
-  for (var p in properties) {
-    prot[p] = properties[p];
-  }
-  return prot;
 }
 
 function getFlags(value, flags) {
@@ -386,7 +377,7 @@ function BitSetFunctor(length) {
     },
 
     forEach: function forEach(fn) {
-      assert (fn);
+      release || assert(fn);
       var bits = this.bits;
       for (var i = 0, j = bits.length; i < j; i++) {
         var word = bits[i];
@@ -538,7 +529,7 @@ function BitSetFunctor(length) {
     },
 
     forEach: function forEach(fn) {
-      assert (fn);
+      release || assert(fn);
       var word = this.bits;
       if (word) {
         for (var k = 0; k < BITS_PER_WORD; k++) {
@@ -631,6 +622,12 @@ function base64ArrayBuffer(arrayBuffer) {
 }
 
 var IndentingWriter = (function () {
+  var PURPLE = '\033[94m';
+  var YELLOW = '\033[93m';
+  var GREEN = '\033[92m';
+  var RED = '\033[91m';
+  var ENDC = '\033[0m';
+
   var consoleOutFn = console.info.bind(console);
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
@@ -642,6 +639,12 @@ var IndentingWriter = (function () {
   indentingWriter.prototype.writeLn = function writeLn(str) {
     if (!this.suppressOutput) {
       this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.debugLn = function writeLn(str) {
+    if (!this.suppressOutput) {
+      this.out(this.padding + PURPLE + str + ENDC);
     }
   };
 
@@ -733,13 +736,13 @@ var Map = (function() {
 var SortedList = (function() {
 
   function sortedList(compare) {
-    assert (compare);
+    release || assert(compare);
     this.compare = compare;
     this.head = null;
   }
 
   sortedList.prototype.push = function push(value) {
-    assert (value !== undefined);
+    release || assert(value !== undefined);
     if (!this.head) {
       this.head = {value: value, next: null};
       return;

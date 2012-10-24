@@ -42,7 +42,7 @@ load("../analyze.js");
 Timer.start("Loading Compiler");
 var estransform; load("../compiler/lljs/src/estransform.js");
 var escodegen; load("../compiler/lljs/src/escodegen.js");
-load("../compiler/verifier.js");
+load("../compiler/inferrer.js");
 load("../compiler/compiler.js");
 Timer.stop();
 
@@ -90,18 +90,18 @@ function grabABC(abcname) {
   return new AbcFile(stream, filename);
 }
 
-var vm;
+var avm2;
 if (execute.value) {
   var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : (compileSys.value ? null : EXECUTION_MODE.INTERPRET);
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : null;
-  vm = new AVM2(sysMode, appMode);
+  avm2 = new AVM2(sysMode, appMode);
   Timer.start("Initialize");
-  vm.systemDomain.executeAbc(grabABC("builtin"));
-  vm.systemDomain.executeAbc(grabABC("shell"));
-  vm.systemDomain.installNative("getArgv", function() {
+  avm2.systemDomain.executeAbc(grabABC("builtin"));
+  avm2.systemDomain.executeAbc(grabABC("shell"));
+  avm2.systemDomain.installNative("getArgv", function() {
     return argv;
   });
-  vm.systemDomain.executeAbc(grabABC("avmplus"));
+  avm2.systemDomain.executeAbc(grabABC("avmplus"));
   Timer.stop();
 }
 
@@ -116,7 +116,7 @@ if (file.value.endsWith(".swf")) {
         } else if (tag.type === "symbols") {
           for (var j = tag.references.length - 1; j >= 0; j--) {
             if (tag.references[j].id === 0) {
-              vm.applicationDomain.getProperty(
+              avm2.applicationDomain.getProperty(
                 Multiname.fromSimpleName(tag.references[j].name),
                 true, true
               );
@@ -128,7 +128,7 @@ if (file.value.endsWith(".swf")) {
     }
   });
 } else {
-  assert(file.value.endsWith(".abc"));
+  release || assert(file.value.endsWith(".abc"));
   processAbc(new AbcFile(snarf(file.value, "binary"), file.value));
 }
 
@@ -156,9 +156,9 @@ function processAbc(abc) {
   }
 
   if (execute.value) {
-    assert(vm);
+    release || assert(avm2);
     try {
-      vm.applicationDomain.executeAbc(abc);
+      avm2.applicationDomain.executeAbc(abc);
     } catch(e) {
       print(e);
       print("");

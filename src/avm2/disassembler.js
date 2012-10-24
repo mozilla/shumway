@@ -117,7 +117,7 @@ function traceOperand(operand, abc, code) {
     case "s24": value = code.readS24(); break;
     case "u30": value = code.readU30(); break;
     case "u32": value = code.readU32(); break;
-    default: assert (false); break;
+    default: release || assert(false); break;
   }
   var description = "";
   switch(operand.type) {
@@ -191,7 +191,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
         if (opcode) {
           str += opcode.name.padRight(' ', 20);
           if (!opcode.operands) {
-            assert(false, "Opcode: " + opcode.name + " has undefined operands.");
+            release || assert(false, "Opcode: " + opcode.name + " has undefined operands.");
           } else {
             if (opcode.operands.length > 0) {
               str += traceOperands(opcode, abc, code);
@@ -199,7 +199,7 @@ MethodInfo.prototype.trace = function trace(writer, abc) {
             writer.writeLn(str);
           }
         } else {
-          assert(false, "Opcode: " + bc + " is not implemented.");
+          release || assert(false, "Opcode: " + bc + " is not implemented.");
         }
         break;
     }
@@ -229,7 +229,7 @@ var SourceTracer = (function () {
           str += ":" + x.type.getName();
         }
         if (x.value !== undefined) {
-          str += "=" + literal(x.value);
+          str += " = " + literal(x.value);
         }
       }
       return str;
@@ -315,7 +315,7 @@ var SourceTracer = (function () {
       });
     },
 
-    traceClassStub: function traceClassStub(trait) {
+    traceClassStub2: function traceClassStub(trait) {
       const writer = this.writer;
 
       var ci = trait.classInfo;
@@ -373,6 +373,113 @@ var SourceTracer = (function () {
 
       writer.writeLn("return c;");
       writer.leave("};");
+      writer.writeLn("-------------------------------------------------------------- >8");
+
+      return true;
+    },
+
+    traceClassStub: function traceClassStub(trait) {
+      const writer = this.writer;
+
+      var ci = trait.classInfo;
+      var ii = ci.instanceInfo;
+      var name = ii.name.getName();
+      var native = trait.metadata ? trait.metadata.native : null;
+
+      writer.writeLn("Cut and paste the following glue and edit accordingly.");
+      writer.writeLn("Class " + ii);
+      writer.writeLn("8< --------------------------------------------------------------");
+
+      writer.enter("const " + name + "Definition = (function () {");
+      function maxTraitNameLength(traits) {
+        var length = 0;
+        traits.forEach(function (t) {
+          length = Math.max(t.name.name.length, length);
+        });
+        return length;
+      }
+
+
+      function quote(s) {
+        return '\'' + s + '\'';
+      }
+
+      function filterTraits(traits, isNative) {
+        function isMethod(x) {
+          return x.isMethod() || x.isGetter() || x.isSetter();
+        }
+        return {
+          properties: traits.filter(function(trait) {
+            return !isNative && !isMethod(trait);
+          }),
+          methods: traits.filter(function(trait) {
+            return isMethod(trait) && (isNative === trait.methodInfo.isNative());
+          })
+        };
+      }
+
+      function writeTraits(traits, isNative, isStatic) {
+        traits = filterTraits(traits, isNative);
+        var methods = traits.methods;
+        methods.forEach(function(trait, i) {
+          var mi = trait.methodInfo;
+          var traitName = trait.name.getName();
+          writer.writeLn("// (" +
+            (mi.parameters.length ? getSignature(mi) : "void") + ") -> " +
+            (mi.returnType ? mi.returnType.getName() : "any"));
+          var prop;
+          if (trait.isGetter()) {
+            prop = "\"get " + traitName + "\"";
+          } else if (trait.isSetter()) {
+            prop = "\"set " + traitName + "\"";
+          } else {
+            prop = traitName;
+          }
+          writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
+          writer.writeLn("notImplemented(\"" + name + "." + traitName + "\");");
+          if (!isStatic) {
+            if (trait.isGetter()) {
+              writer.writeLn("return this._" + traitName + ";");
+            } else if (trait.isSetter()) {
+              writer.writeLn("this._" + traitName + " = " + mi.parameters[0].name + ";");
+            }
+          }
+          writer.leave("}" + (i === traits.methods.length - 1 ? "" : ","));
+        });
+
+        traits.properties.forEach(function(trait, i) {
+          var traitName = trait.name.getName();
+          var last = i === traits.properties.length - 1;
+          // writer.writeLn("// " + (trait.typeName ? trait.typeName + " " : "") + traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
+          writer.writeLn(traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
+        });
+      }
+
+      writer.enter("return {");
+      writer.writeLn("// (" + getSignature(ii.init, false) + ")");
+      writer.enter("initialize: function () {");
+      writer.leave("}");
+      writer.enter("__glue__: {");
+      writer.enter("native: {");
+        writer.enter("static: {");
+        writeTraits(ci.traits, true, true);
+        writer.leave("},");
+        writer.enter("instance: {");
+        writeTraits(ii.traits, true);
+        writer.leave("}");
+      writer.leave("}");
+      writer.enter("script: {");
+      writer.enter("static: {");
+      writeTraits(ci.traits, false, true);
+      writer.leave("},");
+      writer.enter("instance: {");
+      writeTraits(ii.traits);
+      writer.leave("}");
+      writer.leave("}");
+      writer.leave("}");
+      writer.leave("};");
+
+      writer.leave("}).call(this);");
       writer.writeLn("-------------------------------------------------------------- >8");
 
       return true;
@@ -503,7 +610,7 @@ function traceStatistics(writer, abc) {
         case "s24": value = code.readS24(); break;
         case "u30": value = code.readU30(); break;
         case "u32": value = code.readU32(); break;
-        default: assert (false); break;
+        default: release || assert(false); break;
       }
       var description = "";
       switch(operand.type) {

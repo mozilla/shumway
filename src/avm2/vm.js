@@ -4,9 +4,6 @@ var AVM2 = (function () {
     // TODO: this will change when we implement security domains.
     this.systemDomain = new Domain(this, null, sysMode, true);
     this.applicationDomain = new Domain(this, this.systemDomain, appMode, true);
-
-    // Triggered whenever an AS3 class instance is constructed.
-    this.onConstruct = undefined;
   }
 
   /**
@@ -26,7 +23,7 @@ var AVM2 = (function () {
 
   AVM2.prototype = {
     notifyConstruct: function notifyConstruct (instance, args) {
-      return this.onConstruct ? this.onConstruct(instance, args) : undefined;
+      // REMOVEME
     }
   };
 

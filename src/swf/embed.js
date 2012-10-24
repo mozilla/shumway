@@ -1,9 +1,9 @@
 SWF.embed = function(file, container, options) {
   var canvas = document.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
-  var loader = new Loader;
+  var loader = new flash.display.Loader;
   var loaderInfo = loader.contentLoaderInfo;
-  var stage = new Stage;
+  var stage = new flash.display.Stage;
 
   loader._stage = stage;
   stage._loader = loader;
@@ -13,11 +13,11 @@ SWF.embed = function(file, container, options) {
     canvas.height = container.clientHeight;
   }
 
-  loaderInfo.addEventListener(Event.INIT, function () {
-    stage._frameRate = loaderInfo.frameRate;
+  loaderInfo.addEventListener('init', function () {
+    stage._frameRate = loaderInfo._frameRate;
     stage._loaderInfo = loaderInfo;
-    stage._stageHeight = loaderInfo.height;
-    stage._stageWidth = loaderInfo.width;
+    stage._stageHeight = loaderInfo._height;
+    stage._stageWidth = loaderInfo._width;
 
     if (container.clientHeight) {
       fitCanvas(container, canvas);
@@ -25,33 +25,31 @@ SWF.embed = function(file, container, options) {
         fitCanvas.bind(container, canvas);
       });
     } else {
-      canvas.width = stage.stageWidth;
-      canvas.height = stage.stageHeight;
+      canvas.width = stage._stageWidth;
+      canvas.height = stage._stageHeight;
     }
 
     container.setAttribute("style", "position: relative");
 
     canvas.addEventListener('click', function () {
-      Keyboard.focus = stage;
+      ShumwayKeyboardListener.focus = stage;
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       stage._mouseX = domEvt.pageX - this.offsetLeft;
       stage._mouseY = domEvt.pageY - this.offsetTop;
     });
 
-    var bgcolor = loaderInfo.backgroundColor;
+    var bgcolor = loaderInfo._backgroundColor;
     stage._color = bgcolor;
     canvas.style.background = toStringRgba(bgcolor);
 
-    // Dirty hack for now.
-    //stage.addChild(loader.content);
-    stage._children[0] = loader.content;
+    stage._children[0] = loader._content;
     container.appendChild(canvas);
     renderStage(stage, ctx);
   });
 
   if (options.onComplete) {
-    loaderInfo.addEventListener(Event.COMPLETE, function () {
+    loaderInfo.addEventListener("complete", function () {
       options.onComplete();
     });
   }

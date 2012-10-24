@@ -1,7 +1,31 @@
-function StaticText() {
-  DisplayObject.call(this);
-}
+const StaticTextDefinition = (function () {
+  var def = {
+    __class__: 'flash.text.StaticText',
 
-StaticText.prototype = Object.create(DisplayObject.prototype, {
-  __class__: describeInternalProperty('flash.text.StaticText'),
-});
+    initialize: function () {
+      var s = this.symbol;
+      if (s) {
+        this.draw = s.draw || null;
+      }
+    },
+
+    get text() {
+      return this._text;
+    },
+    set text(val) {
+      this._text = val;
+    }
+  };
+
+  const desc = Object.getOwnPropertyDescriptor;
+
+  def.__glue__ = {
+    native: {
+      instance: {
+        text: desc(def, "text")
+      }
+    }
+  };
+
+  return def;
+}).call(this);

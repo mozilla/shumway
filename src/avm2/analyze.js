@@ -344,9 +344,9 @@ var Bytecode = (function () {
       writer.writeLn("#" + this.bid);
     },
 
-    toString: function toString() {
-      var opdesc = opcodeTable[this.op];
-      var str = opdesc.name.padRight(' ', 20);
+    toString: function toString(abc) {
+      var opDescription = opcodeTable[this.op];
+      var str = opDescription.name.padRight(' ', 20);
       var i, j;
 
       if (this.op === OP_lookupswitch) {
@@ -355,13 +355,28 @@ var Bytecode = (function () {
           str += (i > 0 ? "," : "") + this.targets[i].position;
         }
       } else {
-        for (i = 0, j = opdesc.operands.length; i < j; i++) {
-          var operand = opdesc.operands[i];
-
+        for (i = 0, j = opDescription.operands.length; i < j; i++) {
+          var operand = opDescription.operands[i];
           if (operand.name === "offset") {
             str += "target:" + this.target.position;
           } else {
-            str += operand.name + ":" + this[operand.name];
+            str += operand.name + ": ";
+            var value = this[operand.name];
+            if (abc) {
+              switch(operand.type) {
+                case "":   str += value; break;
+                case "I":  str += abc.constantPool.ints[value]; break;
+                case "U":  str += abc.constantPool.uints[value]; break;
+                case "D":  str += abc.constantPool.doubles[value]; break;
+                case "S":  str += abc.constantPool.strings[value]; break;
+                case "N":  str += abc.constantPool.namespaces[value]; break;
+                case "CI": str += abc.classes[value]; break;
+                case "M":  str += abc.constantPool.multinames[value]; break;
+                default:   str += "?"; break;
+              }
+            } else {
+              str += value;
+            }
           }
 
           if (i < j - 1) {
@@ -405,7 +420,7 @@ var Analysis = (function () {
 
     if (BlockSet.singleword) {
       Bsp.forEachBlock = function forEach(fn) {
-        assert (fn);
+        release || assert(fn);
         var byId = blockById;
         var word = this.bits;
         if (word) {
@@ -453,7 +468,7 @@ var Analysis = (function () {
       };
     } else {
       Bsp.forEachBlock = function forEach(fn) {
-        assert (fn);
+        release || assert(fn);
         var byId = blockById;
         var bits = this.bits;
         for (var i = 0, j = bits.length; i < j; i++) {
@@ -769,7 +784,7 @@ var Analysis = (function () {
           continue;
         }
 
-        assert(currentBlock.succs);
+        release || assert(currentBlock.succs);
 
         blockById[currentBlock.bid] = currentBlock;
         code = bytecodes[pc - 1];
@@ -849,7 +864,7 @@ var Analysis = (function () {
       var root = this.bytecodes[0];
 
       // The root must not have preds!
-      assert(root.preds.length === 0);
+      release || assert(root.preds.length === 0);
 
       const ONCE = 1;
       const BUNCH_OF_TIMES = 2;
@@ -952,7 +967,7 @@ var Analysis = (function () {
               }
             }
           }
-          assert(newIdom in doms);
+          release || assert(newIdom in doms);
 
           for (var i = 0; i < j; i++) {
             var p = rpo[preds[i].bid];
@@ -1024,7 +1039,7 @@ var Analysis = (function () {
     },
 
     analyzeControlFlow: function analyzeControlFlow() {
-      assert(this.bytecodes);
+      release || assert(this.bytecodes);
       this.detectBasicBlocks();
       this.normalizeReachableBlocks();
       this.computeDominance();

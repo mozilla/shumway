@@ -1,290 +1,347 @@
-var BLEND_MODE_ADD        = 'add';
-var BLEND_MODE_ALPHA      = 'alpha';
-var BLEND_MODE_DARKEN     = 'darken';
-var BLEND_MODE_DIFFERENCE = 'difference';
-var BLEND_MODE_ERASE      = 'erase';
-var BLEND_MODE_HARDLIGHT  = 'hardlight';
-var BLEND_MODE_INVERT     = 'invert';
-var BLEND_MODE_LAYER      = 'layer';
-var BLEND_MODE_LIGHTEN    = 'lighten';
-var BLEND_MODE_MULTIPLY   = 'multiply';
-var BLEND_MODE_NORMAL     = 'normal';
-var BLEND_MODE_OVERLAY    = 'overlay';
-var BLEND_MODE_SCREEN     = 'screen';
-var BLEND_MODE_SHADER     = 'shader';
-var BLEND_MODE_SUBTRACT   = 'subtract';
+const DisplayObjectDefinition = (function () {
+  var BLEND_MODE_ADD        = 'add';
+  var BLEND_MODE_ALPHA      = 'alpha';
+  var BLEND_MODE_DARKEN     = 'darken';
+  var BLEND_MODE_DIFFERENCE = 'difference';
+  var BLEND_MODE_ERASE      = 'erase';
+  var BLEND_MODE_HARDLIGHT  = 'hardlight';
+  var BLEND_MODE_INVERT     = 'invert';
+  var BLEND_MODE_LAYER      = 'layer';
+  var BLEND_MODE_LIGHTEN    = 'lighten';
+  var BLEND_MODE_MULTIPLY   = 'multiply';
+  var BLEND_MODE_NORMAL     = 'normal';
+  var BLEND_MODE_OVERLAY    = 'overlay';
+  var BLEND_MODE_SCREEN     = 'screen';
+  var BLEND_MODE_SHADER     = 'shader';
+  var BLEND_MODE_SUBTRACT   = 'subtract';
 
-function DisplayObject() {
-  EventDispatcher.call(this);
+  var def = {
+    __class__: 'flash.display.DisplayObject',
 
-  this._alpha = 1;
-  this._animated = false;
-  this._cacheAsBitmap = false;
-  this._control = document.createElement('div');
-  this._bbox = null;
-  this._cxform = null;
-  this._graphics = null;
-  this._loaderInfo = null;
-  this._mouseX = 0;
-  this._mouseY = 0;
-  this._name = null;
-  this._opaqueBackground = null;
-  this._owned = false;
-  this._parent = null;
-  this._root = null;
-  this._rotation = 0;
-  this._scaleX = 1;
-  this._scaleY = 1;
-  this._stage = null;
-  this._transform = null;
-  this._visible = true;
-  this._x = 0;
-  this._y = 0;
-}
+    initialize: function () {
+      this._alpha = 1;
+      this._animated = false;
+      this._cacheAsBitmap = false;
+      this._control = document.createElement('div');
+      this._bbox = null;
+      this._cxform = null;
+      this._graphics = null;
+      this._loaderInfo = null;
+      this._mouseX = 0;
+      this._mouseY = 0;
+      this._name = null;
+      this._opaqueBackground = null;
+      this._owned = false;
+      this._parent = null;
+      this._root = null;
+      this._rotation = 0;
+      this._scaleX = 1;
+      this._scaleY = 1;
+      this._stage = null;
+      this._transform = null;
+      this._visible = true;
+      this._x = 0;
+      this._y = 0;
+      this._updateTransformMatrix();
 
-DisplayObject.prototype = Object.create(EventDispatcher.prototype, {
-  accessibilityProperties: describeAccessor(
-    function () {
+      var s = this.symbol;
+      if (s) {
+        this._bbox = s.bbox || null;
+      }
+    },
+
+    get accessibilityProperties() {
       return null;
     },
-    function (val) {
+    set accessibilityProperties(val) {
       notImplemented();
-    }
-  ),
-  alpha: describeAccessor(
-    function () {
+    },
+    get alpha() {
       return this._alpha;
     },
-    function (val) {
+    set alpha(val) {
       this._alpha = val;
       this._slave = false;
-    }
-  ),
-  blendMode: describeAccessor(
-    function () {
+    },
+    get blendMode() {
       return BLEND_MODE_NORMAL;
     },
-    function (val) {
+    set blendMode(val) {
       notImplemented();
-    }
-  ),
-  cacheAsBitmap: describeAccessor(
-    function () {
+    },
+    get cacheAsBitmap() {
       return this._cacheAsBitmap;
     },
-    function (val) {
+    set cacheAsBitmap(val) {
       this._cacheAsBitmap = val;
-    }
-  ),
-  filters: describeAccessor(
-    function () {
+    },
+    get filters() {
       return [];
     },
-    function (val) {
+    set filters(val) {
       notImplemented();
-    }
-  ),
-  getBounds: describeMethod(function (targetCoordSpace) {
-    var bbox = this._bbox;
+    },
+    getBounds: function (targetCoordSpace) {
+      var bbox = this._bbox;
 
-    if (!bbox)
-      return new Rectangle;
+      if (!bbox)
+        return new flash.geom.Rectangle;
 
-    var rotation = this._rotation;
-    var scaleX = this._scaleX;
-    var scaleY = this._scaleY;
+      var p1 = {x: bbox.left, y: bbox.top};
+      this._applyCurrentTransform(p1, targetCoordSpace);
+      var p2 = {x: bbox.right, y: bbox.top};
+      this._applyCurrentTransform(p2, targetCoordSpace);
+      var p3 = {x: bbox.right, y: bbox.bottom};
+      this._applyCurrentTransform(p3, targetCoordSpace);
+      var p4 = {x: bbox.left, y: bbox.bottom};
+      this._applyCurrentTransform(p4, targetCoordSpace);
 
-    var u = Math.cos(rotation / 180 * Math.PI);
-    var v = Math.sin(rotation / 180 * Math.PI);
-    var a = u * scaleX;
-    var b = -v * scaleY;
-    var c = v * scaleX;
-    var d = u * scaleY;
-    var tx = this._x;
-    var ty = this._y;
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-    var x1 = a * bbox.left + c * bbox.top;
-    var y1 = d * bbox.top + b * bbox.left;
-    var x2 = a * bbox.right + c * bbox.top;
-    var y2 = d * bbox.top + b * bbox.right;
-    var x3 = a * bbox.right + c * bbox.bottom;
-    var y3 = d * bbox.bottom + b * bbox.right;
-    var x4 = a * bbox.left + c * bbox.bottom;
-    var y4 = d * bbox.bottom + b * bbox.left;
+      return new flash.geom.Rectangle(
+        xMin,
+        yMin,
+        (xMax - xMin),
+        (yMax - yMin)
+      );
+    },
+    _updateTransformMatrix: function () {
+      var rotation = this._rotation / 180 * Math.PI;
+      var scaleX = this._scaleX;
+      var scaleY = this._scaleY;
+      var u = Math.cos(rotation);
+      var v = Math.sin(rotation);
 
-    var xMin = Math.min(x1, x2, x3, x4);
-    var xMax = Math.max(x1, x2, x3, x4);
-    var yMin = Math.min(y1, y2, y3, y4);
-    var yMax = Math.max(y1, y2, y3, y4);
+      this._currentTransformMatrix = {
+        a: u * scaleX,
+        b: v * scaleX,
+        c: -v * scaleY,
+        d: u * scaleY,
+        tx: this._x,
+        ty: this._y
+      };
+    },
+    _applyCurrentTransform: function (point, targetCoordSpace) {
+      var m = this._currentTransformMatrix;
+      var x = point.x;
+      var y = point.y;
 
-    return new Rectangle(
-      xMin + tx,
-      yMin + ty,
-      (xMax - xMin),
-      (yMax - yMin)
-    );
-  }),
-  getRect: describeMethod(function (targetCoordSpace) {
-    notImplemented();
-  }),
-  globalToLocal: describeMethod(function (pt) {
-    notImplemented();
-  }),
-  height: describeAccessor(
-    function () {
+      point.x = m.a * x + m.c * y + m.tx;
+      point.y = m.d * y + m.b * x + m.ty;
+
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
+        this._parent._applyCurrentTransform(point, targetCoordSpace);
+      }
+    },
+    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
+        this._parent._applyCurrentInverseTransform(point);
+      }
+
+      var m = this._currentTransformMatrix;
+
+      var x = point.x - m.tx;
+      var y = point.y - m.ty;
+      var d = 1 / (m.a * m.d - m.b * m.c);
+
+      point.x = (m.d * x - m.c * y) * d;
+      point.y = (m.a * y - m.b * x) * d;
+    },
+    getRect: function (targetCoordSpace) {
+      notImplemented();
+    },
+    globalToLocal: function (pt) {
+      var result = new flash.geom.Point(pt.x, pt.y);
+      this._applyCurrentInverseTransform(result);
+      return result;
+    },
+    get height() {
       var bounds = this.getBounds();
       return bounds.height;
     },
-    function (val) {
-      //notImplemented();
-    }
-  ),
-  hitTestObject: describeMethod(function (obj) {
-    notImplemented();
-  }),
-  hitTestPoint: describeMethod(function (x, y, shapeFlag) {
-    notImplemented();
-  }),
-  hitTest: describeMethod(function _hitTest(use_xy, x, y, useShape, hitTestObject) {
-    notImplemented();
-  }),
-  loaderInfo: describeAccessor(function () {
-    return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
-  }),
-  localToGlobal: describeMethod(function (pt) {
-    notImplemented();
-  }),
-  mask: describeAccessor(
-    function () {
+    set height(val) {
+      notImplemented();
+    },
+    hitTestObject: function (obj) {
+      return this._hitTest(false, 0, 0, false, obj);
+    },
+    hitTestPoint: function (x, y, shapeFlag) {
+      return this._hitTest(true, x, y, shapeFlag, null);
+    },
+    _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
+      if (use_xy) {
+        debugger;
+        return false; //notImplemented();
+      } else {
+        var box1 = this.getBounds();
+        var box2 = hitTestObject.getBounds();
+        return box1.intersects(box2);
+      }
+    },
+    get loaderInfo() {
+      return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
+    },
+    localToGlobal: function (pt) {
+      var result = new flash.geom.Point(pt.x, pt.y);
+      this._applyCurrentTransform(result);
+      return result;
+    },
+    get mask() {
       return null;
     },
-    function (val) {
+    set mask(val) {
       notImplemented();
-    }
-  ),
-  name: describeAccessor(
-    function () {
+    },
+    get name() {
       return this._name;
     },
-    function (val) {
+    set name(val) {
       this._name = val;
-    }
-  ),
-  mouseX: describeAccessor(
-    function () {
+    },
+    get mouseX() {
       return this._mouseX;
-    }
-  ),
-  mouseY: describeAccessor(
-    function () {
+    },
+    get mouseY() {
       return this._mouseY;
-    }
-  ),
-  opaqueBackground: describeAccessor(
-    function () {
+    },
+    get opaqueBackground() {
       return this._opaqueBackground;
     },
-    function (val) {
+    set opaqueBackground(val) {
       this._opaqueBackground = val;
-    }
-  ),
-  parent: describeAccessor(function () {
-    return this._parent;
-  }),
-  root: describeAccessor(function () {
-    return this._root || (this._parent ? this._parent._root : null);
-  }),
-  rotation: describeAccessor(
-    function () {
+    },
+    get parent() {
+      return this._parent;
+    },
+    get root() {
+      return this._root || (this._parent ? this._parent._root : null);
+    },
+    get rotation() {
       return this._rotation;
     },
-    function (val) {
+    set rotation(val) {
       this._rotation = val;
+      this._updateTransformMatrix();
       this._slave = false;
-    }
-  ),
-  stage: describeAccessor(function () {
-    return this._stage || (this._parent ? this._parent.stage : null);
-  }),
-  scaleX: describeAccessor(
-    function () {
+    },
+    get stage() {
+      return this._stage || (this._parent ? this._parent.stage : null);
+    },
+    get scaleX() {
       return this._scaleX;
     },
-    function (val) {
+    set scaleX(val) {
       this._scaleX = val;
+      this._updateTransformMatrix();
       this._slave = false;
-    }
-  ),
-  scaleY: describeAccessor(
-    function () {
+    },
+    get scaleY() {
       return this._scaleY;
     },
-    function (val) {
+    set scaleY(val) {
       this._scaleY = val;
+      this._updateTransformMatrix();
       this._slave = false;
-    }
-  ),
-  scale9Grid: describeAccessor(
-    function () {
+    },
+    get scale9Grid() {
       return null;
     },
-    function (val) {
+    set scale9Grid(val) {
       notImplemented();
-    }
-  ),
-  scrollRect: describeAccessor(
-    function () {
+    },
+    get scrollRect() {
       return null;
     },
-    function (val) {
+    set scrollRect(val) {
       notImplemented();
-    }
-  ),
-  transform: describeAccessor(
-    function () {
-      return this._transform || new Transform(this);
     },
-    function (val) {
+    get transform() {
+      return this._transform || new flash.geom.Transform(this);
+    },
+    set transform(val) {
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
+      this._currentTransformMatrix = val.matrix;
       this._slave = false;
-    }
-  ),
-  visible: describeAccessor(
-    function () {
+    },
+    get visible() {
       return this._visible;
     },
-    function (val) {
+    set visible(val) {
       this._visible = val;
       this._slave = false;
-    }
-  ),
-  width: describeAccessor(
-    function () {
+    },
+    get width() {
       var bounds = this.getBounds();
       return bounds.width;
     },
-    function (val) {
+    set width(val) {
       //notImplemented();
-    }
-  ),
-  x: describeAccessor(
-    function () {
+    },
+    get x() {
       return this._x;
     },
-    function (val) {
+    set x(val) {
       this._x = val;
+      this._updateTransformMatrix();
       this._slave = false;
-    }
-  ),
-  y: describeAccessor(
-    function () {
+    },
+    get y() {
       return this._y;
     },
-    function (val) {
+    set y(val) {
       this._y = val;
+      this._updateTransformMatrix();
       this._slave = false;
     }
-  )
-});
+  };
+
+  const desc = Object.getOwnPropertyDescriptor;
+
+  def.__glue__ = {
+    native: {
+      instance: {
+        root: desc(def, "root"),
+        stage: desc(def, "stage"),
+        name: desc(def, "name"),
+        mask: desc(def, "mask"),
+        visible: desc(def, "visible"),
+        x: desc(def, "x"),
+        y: desc(def, "y"),
+        z: desc(def, "z"),
+        scaleX: desc(def, "scaleX"),
+        scaleY: desc(def, "scaleY"),
+        scaleZ: desc(def, "scaleZ"),
+        mouseX: desc(def, "mouseX"),
+        mouseY: desc(def, "mouseY"),
+        rotation: desc(def, "rotation"),
+        rotationX: desc(def, "rotationX"),
+        rotationY: desc(def, "rotationY"),
+        rotationZ: desc(def, "rotationZ"),
+        alpha: desc(def, "alpha"),
+        width: desc(def, "width"),
+        height: desc(def, "height"),
+        _hitTest: def._hitTest,
+        cacheAsBitmap: desc(def, "cacheAsBitmap"),
+        opaqueBackground: desc(def, "opaqueBackground"),
+        scrollRect: desc(def, "scrollRect"),
+        filters: desc(def, "filters"),
+        blendMode: desc(def, "blendMode"),
+        transform: desc(def, "transform"),
+        scale9Grid: desc(def, "scale9Grid"),
+        loaderInfo: desc(def, "loaderInfo"),
+        accessibilityProperties: desc(def, "accessibilityProperties"),
+        globalToLocal: def.globalToLocal,
+        localToGlobal: def.localToGlobal,
+        getBounds: def.getBounds,
+        getRect: def.getRect
+      }
+    }
+  };
+
+  return def;
+}).call(this);
