@@ -88,13 +88,13 @@ const DisplayObjectDefinition = (function () {
         return new flash.geom.Rectangle;
 
       var p1 = {x: bbox.left, y: bbox.top};
-      _applyCurrentTransform(p1, targetCoordSpace);
+      this._applyCurrentTransform(p1, targetCoordSpace);
       var p2 = {x: bbox.right, y: bbox.top};
-      _applyCurrentTransform(p2, targetCoordSpace);
+      this._applyCurrentTransform(p2, targetCoordSpace);
       var p3 = {x: bbox.right, y: bbox.bottom};
-      _applyCurrentTransform(p3, targetCoordSpace);
+      this._applyCurrentTransform(p3, targetCoordSpace);
       var p4 = {x: bbox.left, y: bbox.bottom};
-      _applyCurrentTransform(p4, targetCoordSpace);
+      this._applyCurrentTransform(p4, targetCoordSpace);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
       var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
