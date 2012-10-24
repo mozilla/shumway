@@ -402,8 +402,6 @@ const LoaderDefinition = (function () {
           root._totalFrames = val.props.totalFrames;
 
           loader._content = root;
-        } else {
-          displayList.__proto__ = val;
         }
 
         framePromise.resolve(displayList);
@@ -506,7 +504,6 @@ const LoaderDefinition = (function () {
         };
         break;
       case 'sprite':
-        var displayList = null;
         var frameCount = symbol.frameCount;
         var frameLabels = { };
         var frames = symbol.frames;
@@ -518,7 +515,7 @@ const LoaderDefinition = (function () {
           var framePromise = new Promise;
           var depths = frame.depths;
 
-          displayList = Object.create(displayList);
+          var displayList = Object.create(null);
 
           if (depths) {
             for (var depth in depths) {
