@@ -329,6 +329,15 @@ var Interface = (function () {
  *  }
  *
  * When functions are created, we bind the function to the current scope, using fnClosure.bind(null, this)();
+ *
+ * Scope Caching:
+ *
+ * Calls to |findProperty| are very expensive. They recurse all the way to the top of the scope chain and then
+ * laterally across other scripts. We optimize this by caching property lookups in each scope using Multiname
+ * |id|s as keys. Each Multiname object is given a unique ID when it's constructed. For QNames we only cache
+ * string QNames.
+ *
+ * TODO: This is not sound, since you can add/delete properties to/from with scopes.
  */
 var Scope = (function () {
   function scope(parent, object, isWith) {
@@ -336,6 +345,7 @@ var Scope = (function () {
     this.object = object;
     this.global = parent ? parent.global : this;
     this.isWith = isWith;
+    this.cache = Object.create(null);
   }
 
   scope.prototype.findDepth = function findDepth(obj) {
@@ -355,11 +365,18 @@ var Scope = (function () {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
 
+    var obj;
+    var cache = this.cache;
+
+    var id = typeof mn === "string" ? mn : mn.id;
+    if (id && (obj = cache[id])) {
+      return obj;
+    }
+
     if (traceScope.value || tracePropertyAccess.value) {
       print("Scope.findProperty(" + mn + ")");
     }
-
-    var obj = this.object;
+    obj = this.object;
     if (Multiname.isQName(mn)) {
       if (this.isWith) {
         if (Multiname.getQualifiedName(mn) in obj) {
@@ -367,6 +384,7 @@ var Scope = (function () {
         }
       } else {
         if (nameInTraits(obj, Multiname.getQualifiedName(mn))) {
+          id && (cache[id] = obj);
           return obj;
         }
       }
@@ -377,13 +395,16 @@ var Scope = (function () {
         }
       } else {
         if (resolveMultinameInTraits(obj, mn)) {
+          id && (cache[id] = obj);
           return obj;
         }
       }
     }
 
     if (this.parent) {
-      return this.parent.findProperty(mn, domain, strict, scopeOnly);
+      obj = this.parent.findProperty(mn, domain, strict, scopeOnly);
+      id && (cache[mn.id] = obj);
+      return obj;
     }
 
     if (scopeOnly) {
