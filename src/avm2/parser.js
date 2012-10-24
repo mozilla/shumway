@@ -438,8 +438,9 @@ var Multiname = (function () {
   const ATTRIBUTE         = 0x01;
   const RUNTIME_NAMESPACE = 0x02;
   const RUNTIME_NAME      = 0x04;
-
+  var nextID = 1;
   function multiname(namespaces, name, flags) {
+    this.id = nextID ++;
     this.namespaces = namespaces;
     this.name = name;
     this.flags = flags || 0;
@@ -1017,9 +1018,9 @@ function attachHolder(mi, holder) {
 }
 
 var InstanceInfo = (function () {
-  var id = 1;
+  var nextID = 1;
   function instanceInfo(abc, stream) {
-    this.id = id ++;
+    this.id = nextID ++;
     const constantPool = abc.constantPool;
     const methods = abc.methods;
 
@@ -1059,9 +1060,9 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
-  var id = 1;
+  var nextID = 1;
   function classInfo(abc, instanceInfo, stream) {
-    this.id = id ++;
+    this.id = nextID ++;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
@@ -1076,9 +1077,9 @@ var ClassInfo = (function () {
 })();
 
 var ScriptInfo = (function scriptInfo() {
-  var id = 1;
+  var nextID = 1;
   function scriptInfo(abc, idx, stream) {
-    this.id = id ++;
+    this.id = nextID ++;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);
