@@ -370,10 +370,16 @@ var Scope = (function () {
           return obj;
         }
       }
-    } else if (!this.isWith && resolveMultinameInTraits(obj, mn)) {
-      return obj;
-    } else if (resolveMultiname(obj, mn)) {
-      return obj;
+    } else {
+      if (this.isWith) {
+        if (resolveMultiname(obj, mn)) {
+          return obj;
+        }
+      } else {
+        if (resolveMultinameInTraits(obj, mn)) {
+          return obj;
+        }
+      }
     }
 
     if (this.parent) {
