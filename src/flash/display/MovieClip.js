@@ -72,9 +72,8 @@ const MovieClipDefinition = (function () {
 
           if (cmd.symbolId) {
             var index = 0;
-            var symbolInfo = loader._symbols[cmd.symbolId];
-            var symbolClass = avm2.systemDomain.getClass(symbolInfo.className);
-            var symbolInfo = loader.getSymbolInfoById(cmd.symbolId);
+            var symbolPromise = loader._dictionary[cmd.symbolId];
+            var symbolInfo = symbolPromise.value;
             // HACK application domain may have the symbol class --
             // checking which domain has a symbol class
             var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?

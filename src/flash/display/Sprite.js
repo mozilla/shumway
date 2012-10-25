@@ -11,6 +11,10 @@ const SpriteDefinition = (function () {
       }
     },
 
+     _constructChildren: function () {
+      // notImplemented();
+    },
+
     get buttonMode() {
       return false;
     },
@@ -39,10 +43,6 @@ const SpriteDefinition = (function () {
       notImplemented();
     },
 
-
-    constructChildren: function () {
-      // notImplemented();
-    },
     startDrag: function (lockCenter, bounds) {
       notImplemented();
     },
@@ -69,7 +69,7 @@ const SpriteDefinition = (function () {
         stopDrag: def.stopDrag,
         startTouchDrag: def.startTouchDrag,
         stopTouchDrag: def.stopTouchDrag,
-        constructChildren: def.constructChildren,
+        constructChildren: def._constructChildren,
         hitArea: desc(def, "hitArea"),
         useHandCursor: desc(def, "useHandCursor"),
         soundTransform: desc(def, "soundTransform")
@@ -79,4 +79,3 @@ const SpriteDefinition = (function () {
 
   return def;
 }).call(this);
-

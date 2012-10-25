@@ -90,7 +90,7 @@ function renderStage(stage, ctx) {
       var ctx = this.ctx;
       ctx.save();
 
-      var m = child._currentTransformMatrix;
+      var m = child._currentTransform;
       ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
       var cxform = child._cxform;
