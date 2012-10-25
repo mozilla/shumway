@@ -17,6 +17,7 @@ var exec = require('child_process').exec;
 var temp = require('temp');
 
 global.assert = function () { };
+global.release = false;
 var options = require("../options.js");
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
@@ -280,6 +281,8 @@ function count(name) {
 
 var pathLength = 140;
 var testNumber = 0;
+
+var failedTests = [];
 function runNextTest () {
   var test = tests.pop();
   var configs = configurations.slice(0);
@@ -340,6 +343,7 @@ function runNextTest () {
               process.stdout.write(WARN + " PASS " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
             } else {
               process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+              failedTests.push(test);
             }
             count(configuration.name + ":fail");
           }
@@ -383,6 +387,13 @@ function runNextTest () {
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
         console.log(counts);
         console.log(padRight("=== DONE ", "=", 120));
+        if (failedTests.length) {
+          console.log(padRight("=== FAILED TESTS ", "=", 120));
+          for (var i = 0; i < failedTests.length; i++) {
+            console.log(failedTests[i]);
+          }
+          console.log(padRight("", "=", 120));
+        }
         if (summary.value) {
           printSummary();
         }

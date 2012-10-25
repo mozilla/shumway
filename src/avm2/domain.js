@@ -45,7 +45,7 @@ var Domain = (function () {
         this.debugName = name;
 
         if (instance) {
-          assert(instance.prototype);
+          release || assert(instance.prototype);
           this.instance = instance;
         }
 
@@ -132,14 +132,14 @@ var Domain = (function () {
         },
 
         link: function (definition) {
-          assert(this.dynamicPrototype);
+          release || assert(this.dynamicPrototype);
 
           function glueProperties(obj, props) {
             var keys = Object.keys(props);
             for (var i = 0, j = keys.length; i < j; i++) {
               var p = keys[i];
               var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
-              assert(typeof qn === "string");
+              release || assert(typeof qn === "string");
               var desc = Object.getOwnPropertyDescriptor(obj, qn);
               if (desc && desc.get) {
                 Object.defineProperty(obj, p, desc);
@@ -266,7 +266,7 @@ var Domain = (function () {
     if (traceExecution.value) {
       print("Executing: " + abc.name + " " + script);
     }
-    assert(!script.executing && !script.executed);
+    release || assert(!script.executing && !script.executed);
     script.executing = true;
     var scope = new Scope(null, script.global);
     abc.runtime.createFunction(script.init, scope).call(script.global);
@@ -298,8 +298,15 @@ var Domain = (function () {
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
       }
-      assert(c instanceof this.system.Class);
+      release || assert(c instanceof this.system.Class);
       return c;
+    },
+
+    findClass: function findClass(simpleName) {
+      if (simpleName in this.cache) {
+        return true;
+      }
+      return this.findProperty(Multiname.fromSimpleName(simpleName), false, true);
     },
 
     findProperty: function findProperty(multiname, strict, execute) {
@@ -431,7 +438,7 @@ var Domain = (function () {
                 str += ": ";
                 var scope = value;
                 while (scope) {
-                  assert (scope.object);
+                  release || assert(scope.object);
                   str += scope.object.debugName || "T";
                   if (scope = scope.parent) {
                     str += " <: ";

@@ -150,6 +150,45 @@ function renderStage(stage, ctx) {
 
   var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
 
+  var FPS = (function () {
+    var width = Math.max(ctx.canvas.width / 5, 100);
+    var height = width / 8;
+    var sampleWidth = 2;
+    var sampleCount = width / (sampleWidth + 1);
+    var last = null;
+    var samples = [];
+    var max = 0;
+
+    return {
+      tick: function () {
+        var curr = new Date();
+        if (last) {
+          if (samples.length > sampleCount) {
+            samples.shift();
+          }
+          var elapsed = curr - last;
+          samples.push(elapsed);
+          var sum = 0;
+          for (var i = 0; i < samples.length; i++) {
+            sum += samples[i];
+            max = Math.max(max, samples[i]);
+          }
+          var avg = sum / samples.length;
+          var xOffset = ctx.canvas.width - width;
+          var yOffset = height;
+          for (var i = 0; i < samples.length; i++) {
+            var scaledSample = (samples[i] / (2 * avg));
+            ctx.fillRect(xOffset + i * (sampleWidth + 1), yOffset, sampleWidth, - scaledSample * height);
+          }
+          ctx.font = "6pt Verdana";
+          ctx.fillText("FPS: " + (1000 / avg).toFixed(2), xOffset, height + 15);
+        }
+        last = curr;
+      }
+    };
+  })();
+
+
   (function draw() {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
@@ -157,6 +196,7 @@ function renderStage(stage, ctx) {
       visitContainer(stage, new EnterFrameVisitor());
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new ExitFrameVisitor());
+      FPS.tick();
     }
     requestAnimationFrame(draw);
   })();

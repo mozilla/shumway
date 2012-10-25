@@ -147,7 +147,7 @@ var Trait = (function () {
 
     this.kind = tag & 0x0F;
     this.attributes = (tag >> 4) & 0x0F;
-    assert(Multiname.isQName(this.name), "Name must be a QName: " + this.name + ", kind: " + this.kind);
+    release || assert(Multiname.isQName(this.name), "Name must be a QName: " + this.name + ", kind: " + this.kind);
 
     switch (this.kind) {
     case TRAIT_Slot:
@@ -167,18 +167,17 @@ var Trait = (function () {
       this.methodInfo = methods[stream.readU30()];
       this.methodInfo.name = this.name;
       // make sure that the holder was not already set
-      assert(!this.methodInfo.holder);
-      this.methodInfo.holder = this.holder;
+      attachHolder(this.methodInfo, this.holder);
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
-      assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
+      release || assert(classes, "Classes should be passed down here, I'm guessing whenever classes are being parsed.");
       this.classInfo = classes[stream.readU30()];
       break;
     case TRAIT_Function:
       // TRAIT_Function is a leftover. it's not supported at all in
       // Tamarin/Flash and will cause a verify error.
-      assert(false, "Function encountered in the wild, should not happen");
+      release || assert(false, "Function encountered in the wild, should not happen");
       break;
     }
 
@@ -281,7 +280,7 @@ var Namespace = (function () {
         this.uri = this.uri.substring(0, n - 1);
       }
     }
-    assert (kinds[this.kind]);
+    release || assert(kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   }
 
@@ -291,7 +290,7 @@ var Namespace = (function () {
         return kind;
       }
     }
-    return assert (false, "Cannot find kind " + str);
+    return release || assert(false, "Cannot find kind " + str);
   };
 
   namespace.createNamespace = function createNamespace(uri) {
@@ -357,7 +356,7 @@ var Namespace = (function () {
     }
     var namespaceNames;
     if (simpleName.indexOf("[") === 0) {
-      assert (simpleName[simpleName.length - 1] === "]");
+      release || assert(simpleName[simpleName.length - 1] === "]");
       namespaceNames = simpleName.substring(1, simpleName.length - 1).split(",");
     } else {
       namespaceNames = [simpleName];
@@ -439,8 +438,9 @@ var Multiname = (function () {
   const ATTRIBUTE         = 0x01;
   const RUNTIME_NAMESPACE = 0x02;
   const RUNTIME_NAME      = 0x04;
-
+  var nextID = 1;
   function multiname(namespaces, name, flags) {
+    this.id = nextID ++;
     this.namespaces = namespaces;
     this.name = name;
     this.flags = flags || 0;
@@ -478,13 +478,13 @@ var Multiname = (function () {
           name = constantPool.strings[index];
         }
         index = stream.readU30();
-        assert(index != 0);
+        release || assert(index != 0);
         namespaces = constantPool.namespaceSets[index];
         break;
       case CONSTANT_MultinameL: case CONSTANT_MultinameLA:
         flags |= RUNTIME_NAME;
         index = stream.readU30();
-        assert(index != 0);
+        release || assert(index != 0);
         namespaces = constantPool.namespaceSets[index];
         break;
       /**
@@ -495,7 +495,7 @@ var Multiname = (function () {
         namespaces = multinames[index].namespaces;
         name = multinames[index].name;
         index = stream.readU32();
-        assert(index === 1);
+        release || assert(index === 1);
         index = stream.readU32();
         typeParameter = multinames[index];
         break;
@@ -568,7 +568,7 @@ var Multiname = (function () {
    * a mangled Multiname object.
    */
   multiname.getQualifiedName = function getQualifiedName(mn) {
-    assert (multiname.isQName(mn));
+    release || assert(multiname.isQName(mn));
     if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
       return mn;
     } else {
@@ -581,11 +581,11 @@ var Multiname = (function () {
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {
-    assert (Multiname.isQName(mn));
+    release || assert(Multiname.isQName(mn));
     if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
       return "public";
     }
-    assert (mn instanceof multiname);
+    release || assert(mn instanceof multiname);
     return mn.namespaces[0].getAccessModifier();
   };
 
@@ -599,13 +599,13 @@ var Multiname = (function () {
     } else if (typeof mn === "string") {
       return isNumeric(mn);
     }
-    assert (mn instanceof multiname);
+    release || assert(mn instanceof multiname);
     return !isNaN(parseInt(multiname.getName(mn), 10));
   };
 
   multiname.getName = function getName(mn) {
-    assert (mn instanceof Multiname);
-    assert (!mn.isRuntimeName());
+    release || assert(mn instanceof Multiname);
+    release || assert(!mn.isRuntimeName());
     return mn.getName();
   };
 
@@ -629,7 +629,7 @@ var Multiname = (function () {
    * [private flash.display, private flash, public].Graphics
    */
   multiname.fromSimpleName = function fromSimpleName(simpleName) {
-    assert (simpleName);
+    release || assert(simpleName);
     if (simpleName in simpleNameCache) {
       return simpleNameCache[simpleName];
     }
@@ -651,7 +651,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getQName = function getQName(index) {
-    assert (index >= 0 && index < this.namespaces.length);
+    release || assert(index >= 0 && index < this.namespaces.length);
     if (!this.cache) {
       this.cache = [];
     }
@@ -695,13 +695,13 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getName = function getName() {
-    assert(!this.isAnyName() && !this.isRuntimeName());
+    release || assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
   };
 
   multiname.prototype.getNamespace = function getNamespace() {
-    assert(!this.isRuntimeNamespace());
-    assert(this.namespaces.length === 1);
+    release || assert(!this.isRuntimeNamespace());
+    release || assert(this.namespaces.length === 1);
     return this.namespaces[0];
   };
 
@@ -856,7 +856,7 @@ var ConstantPool = (function constantPool() {
       warning("TODO: CONSTANT_Float may be deprecated?");
       break;
     default:
-      assert(false, "Not Implemented Kind " + kind);
+      release || assert(false, "Not Implemented Kind " + kind);
     }
   };
 
@@ -866,7 +866,7 @@ var ConstantPool = (function constantPool() {
 var MethodInfo = (function () {
 
   function getParameterName(i) {
-    assert (i < 26);
+    release || assert(i < 26);
     return "p" + String.fromCharCode("A".charCodeAt(0) + i);
   }
 
@@ -887,7 +887,7 @@ var MethodInfo = (function () {
     var optionals = null;
     if (flags & METHOD_HasOptional) {
       optionalCount = stream.readU30();
-      assert (parameterCount >= optionalCount);
+      release || assert(parameterCount >= optionalCount);
       for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
         var valueIndex = stream.readU30();
         parameters[i].value = constantPool.getValue(stream.readU8(), valueIndex);
@@ -941,8 +941,8 @@ var MethodInfo = (function () {
       typeName: multinames[stream.readU30()],
       varName: multinames[stream.readU30()]
     };
-    assert(!ex.typeName || !ex.typeName.isRuntime());
-    assert(!ex.varName || ex.varName.isQName());
+    release || assert(!ex.typeName || !ex.typeName.isRuntime());
+    release || assert(!ex.varName || ex.varName.isQName());
     return ex;
   }
 
@@ -951,7 +951,7 @@ var MethodInfo = (function () {
     const methods = abc.methods;
 
     var info = methods[stream.readU30()];
-    assert (!info.isNative());
+    release || assert(!info.isNative());
     info.maxStack = stream.readU30();
     info.localCount = stream.readU30();
     info.initScopeDepth = stream.readU30();
@@ -995,7 +995,7 @@ var MetaDataInfo = (function () {
     for (var i = 0; i < itemCount; i++) {
       var item = items[i] = { key: keys[i], value: values[i] };
       if (item.key) {
-        assert (!this.hasOwnProperty(item.key));
+        release || assert(!this.hasOwnProperty(item.key));
         this[item.key] = item.value;
       }
     }
@@ -1012,13 +1012,20 @@ var MetaDataInfo = (function () {
 
 })();
 
+function attachHolder(mi, holder) {
+  release || assert(!mi.holder);
+  mi.holder = holder;
+}
+
 var InstanceInfo = (function () {
+  var nextID = 1;
   function instanceInfo(abc, stream) {
+    this.id = nextID ++;
     const constantPool = abc.constantPool;
     const methods = abc.methods;
 
     this.name = constantPool.multinames[stream.readU30()];
-    assert(Multiname.isQName(this.name));
+    release || assert(Multiname.isQName(this.name));
     this.superName = constantPool.multinames[stream.readU30()];
     this.flags = stream.readU8();
     this.protectedNs = 0;
@@ -1031,6 +1038,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
   }
 
@@ -1052,8 +1060,11 @@ var InstanceInfo = (function () {
 })();
 
 var ClassInfo = (function () {
+  var nextID = 1;
   function classInfo(abc, instanceInfo, stream) {
+    this.id = nextID ++;
     this.init = abc.methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
   }
@@ -1066,9 +1077,12 @@ var ClassInfo = (function () {
 })();
 
 var ScriptInfo = (function scriptInfo() {
+  var nextID = 1;
   function scriptInfo(abc, idx, stream) {
+    this.id = nextID ++;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
+    attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;
   }
@@ -1148,7 +1162,7 @@ var AbcFile = (function () {
 
   abcFile.prototype = {
     get lastScript() {
-      assert (this.scripts.length > 0);
+      release || assert(this.scripts.length > 0);
       return this.scripts[this.scripts.length - 1];
     },
     toString: function () {

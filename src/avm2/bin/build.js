@@ -16,6 +16,7 @@ var readFile = fs.readFileSync;
 var spawn = require('child_process').spawn;
 
 global.assert = function () { };
+global.release = false;
 
 var options = require(__dirname + "/../options.js");
 

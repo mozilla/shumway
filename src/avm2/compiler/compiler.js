@@ -1,7 +1,6 @@
 var compilerOptions = systemOptions.register(new OptionSet("Compiler Options"));
 var enableOpt = compilerOptions.register(new Option("opt", "optimizations", "boolean", false, "Enable optimizations."));
 var enableVerifier = compilerOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
-var enableUnsafeScopeLookup = compilerOptions.register(new Option("unsafelookup", "unsafelookup", "boolean", false, "Enable unsafe scope lookup."));
 var enableInlineCaching = compilerOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
 var traceInlineCaching = compilerOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
 
@@ -132,7 +131,7 @@ const FlushStackReason = {
 var Compiler = (function () {
 
   function objectId(obj) {
-    assert(obj);
+    release || assert(obj);
     if (obj.hasOwnProperty("objectId")) {
       return obj.objectId;
     }
@@ -188,7 +187,7 @@ var Compiler = (function () {
       if (value === undefined) {
         Identifier.call(this, "undefined");
       } else if (value !== null && typeof value === "object") {
-        assert (value instanceof Multiname ||
+        release || assert(value instanceof Multiname ||
                 value instanceof Runtime ||
                 value instanceof Domain ||
                 value instanceof MethodInfo ||
@@ -264,10 +263,10 @@ var Compiler = (function () {
   }
 
   function call(callee, args) {
-    assert (args instanceof Array);
+    release || assert(args instanceof Array);
     args.forEach(function (x) {
-      assert (!(x instanceof Array));
-      assert (x !== undefined);
+      release || assert(!(x instanceof Array));
+      release || assert(x !== undefined);
     });
     return new CallExpression(callee, args);
   }
@@ -277,7 +276,7 @@ var Compiler = (function () {
   }
 
   function assignment(left, right) {
-    assert (left && right);
+    release || assert(left && right);
     return new AssignmentExpression(left, "=", right);
   }
 
@@ -411,7 +410,7 @@ var Compiler = (function () {
   })();
 
   function negate(node) {
-    assert (node instanceof BinaryExpression || node instanceof UnaryExpression);
+    release || assert(node instanceof BinaryExpression || node instanceof UnaryExpression);
     var left = node instanceof BinaryExpression ? node.left : node.argument;
     var right = node.right;
     var operator = Operator.fromName(node.operator);
@@ -486,7 +485,7 @@ var Compiler = (function () {
       return variable;
     };
     variablePool.prototype.release = function (variable) {
-      assert (this.used.contains(variable));
+      release || assert(this.used.contains(variable));
       this.available.push(variable);
     };
     variablePool.prototype.releaseAll = function () {
@@ -524,7 +523,7 @@ var Compiler = (function () {
       for (var i = values.length - 1; i >= 0; i--) {
         var other = values[i];
         if (value.isEquivalent(other)) {
-          assert (other.variable);
+          release || assert(other.variable);
           return other;
         }
       }
@@ -655,7 +654,7 @@ var Compiler = (function () {
 
     compilation.prototype.compile = function compile() {
       var node = this.methodInfo.analysis.controlTree.compile(this, this.state).node;
-      assert (node instanceof BlockStatement);
+      release || assert(node instanceof BlockStatement);
       if (this.temporary.length) {
         this.prologue.push(variableDeclaration(this.temporary.filter(notUndefined).map(function (x) {
           return new VariableDeclarator(x, null);
@@ -689,7 +688,7 @@ var Compiler = (function () {
       var firstCase = true;
 
       function labelEq(labelId) {
-        assert (typeof labelId === "number");
+        release || assert(typeof labelId === "number");
         return new BinaryExpression("===", labelTestName, new Literal(labelId));
       }
 
@@ -759,7 +758,7 @@ var Compiler = (function () {
 
     compilation.prototype.compileSwitch = function compileSwitch(item, state) {
       var dt = item.determinant.compile(this, state);
-      assert(dt.determinant);
+      release || assert(dt.determinant);
 
       var cases = [];
       item.cases.forEach(function (x) {
@@ -767,7 +766,7 @@ var Compiler = (function () {
         if (x.body) {
           result = x.body.compile(this, dt.state.clone());
           // TODO: Merge states.
-          assert(result.state.stack.length === 0);
+          release || assert(result.state.stack.length === 0);
         }
         cases.push(new SwitchCase(typeof x.index === "number" ? new Literal(x.index) : undefined, result ? [result.node] : []));
       }, this);
@@ -791,7 +790,7 @@ var Compiler = (function () {
       if (item.else) {
         er = item.else.compile(this, cr.state.clone());
       }
-      assert (tr || er);
+      release || assert(tr || er);
 
       var node;
       if (item.nothingThrownLabel) {
@@ -925,9 +924,32 @@ var Compiler = (function () {
       }
 
       function push(value) {
-        assert (typeof value !== "string");
+        release || assert(typeof value !== "string");
         bc.ti && (value.ti = bc.ti);
         state.stack.push(value);
+      }
+
+      function pop() {
+        return state.stack.pop();
+      }
+
+      function popMany(count) {
+        return state.stack.popMany(count);
+      }
+
+      function scopeAt(scopeDepth) {
+        if (scopeDepth === 0) {
+          return scopeObjectName;
+        }
+        var scope = scopeName;
+        if (scopeDepth > state.scopeHeight) {
+          scopeDepth -= state.scopeHeight;
+          scope = savedScopeName;
+        }
+        for (var i = 0; i < scopeDepth; i++) {
+          scope = property(scope, "parent");
+        }
+        return property(scope, "object");
       }
 
       function cseValue(value) {
@@ -950,21 +972,28 @@ var Compiler = (function () {
         }
       }
 
+      function pushScope(obj, isWith) {
+        emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(isWith)])));
+        emit(assignment(scopeObjectName, property(scopeName, "object")));
+        state.scopeHeight += 1;
+      }
+
       function setLocal(index) {
-        assert (state.stack.length);
-        var value = state.stack.pop();
+        release || assert(state.stack.length);
+        var value = pop();
         flushStack(FlushStackReason.SetLocal);
         emit(assignment(local[index], value));
+        local[index].ti = value.ti;
       }
 
       function duplicate(value) {
         var temp = getTemporary(state.stack.length);
-        state.stack.push(assignment(temp, value));
-        state.stack.push(temp);
+        push(assignment(temp, value));
+        push(temp);
       }
 
       function popValue() {
-        emit(state.stack.pop());
+        emit(pop());
       }
 
       function kill(index) {
@@ -1031,6 +1060,7 @@ var Compiler = (function () {
           }
           if (state.stack[i] !== getTemporary(i)) {
             emit(assignment(getTemporary(i), state.stack[i]));
+            getTemporary(i).ti = state.stack[i].ti;
             state.stack[i] = getTemporary(i);
           }
         }
@@ -1059,7 +1089,7 @@ var Compiler = (function () {
         if (block.dominator === block) {
           block.cse = new CSE(null, this.variablePool);
         } else {
-          assert (block.dominator.cse, "Dominator should have a CSE map.");
+          release || assert(block.dominator.cse, "Dominator should have a CSE map.");
           block.cse = new CSE(block.dominator.cse, this.variablePool);
         }
       }
@@ -1067,15 +1097,15 @@ var Compiler = (function () {
       function expression(operator, intPlease) {
         var a, b;
         if (operator.isBinary()) {
-          b = state.stack.pop();
-          a = state.stack.pop();
+          b = pop();
+          a = pop();
           if (intPlease) {
             a = asInt32(a);
             b = asInt32(b);
           }
           push(new BinaryExpression(operator.name, a, b));
         } else {
-          a = state.stack.pop();
+          a = pop();
           if (intPlease) {
             a = asInt32(a);
           }
@@ -1091,12 +1121,12 @@ var Compiler = (function () {
        * node.
        */
       function setCondition(operator) {
-        assert (condition === null);
+        release || assert(condition === null);
         var b;
         if (operator.isBinary()) {
-          b = state.stack.pop();
+          b = pop();
         }
-        var a = state.stack.pop();
+        var a = pop();
         if (b) {
           condition = new BinaryExpression(operator.name, a, b);
         } else {
@@ -1113,11 +1143,12 @@ var Compiler = (function () {
        * Find the scope object containing the specified multiname.
        */
       function findProperty(multiname, strict) {
-        if (bc.ti) {
-          if (bc.ti.savedScopeDepth >= 0) {
-            return getSavedScopeObject(bc.ti.savedScopeDepth);
-          } else if (bc.ti.object) {
-            return constant(bc.ti.object);
+        var ti = bc.ti;
+        if (ti) {
+          if (ti.object) {
+            return constant(ti.object);
+          } else if (ti.scopeDepth !== undefined) {
+            return scopeAt(ti.scopeDepth);
           }
         }
         return cseValue(new FindProperty(multiname, constant(abc.domain), strict));
@@ -1125,7 +1156,7 @@ var Compiler = (function () {
 
       function getProperty(obj, multiname) {
         Counter.count("getProperty");
-        assert (!(multiname instanceof Multiname), multiname);
+        release || assert(!(multiname instanceof Multiname), multiname);
         var slowPath = call(id("getProperty"), [obj, multiname]);
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
@@ -1205,7 +1236,7 @@ var Compiler = (function () {
 
       function getMultiname(index) {
         var multiname = multinames[index];
-        assert (!multiname.isRuntime());
+        release || assert(!multiname.isRuntime());
         var c = constant(multiname);
         c.multiname = multiname;
         return c;
@@ -1231,45 +1262,15 @@ var Compiler = (function () {
           var namespaces = constant(multiname.namespaces);
           var name = constant(multiname.name);
           if (multiname.isRuntimeName()) {
-            name = state.stack.pop();
-            if (bc.multinameTy) {
-              name.ty = bc.multinameTy.name;
-            }
+            name = pop();
           }
           if (multiname.isRuntimeNamespace()) {
-            namespaces = state.stack.pop();
-            if (bc.multinameTy) {
-              namespaces.ty = bc.multinameTy.namespaces;
-            }
+            namespaces = pop();
           }
           return new RuntimeMultiname(multiname, namespaces, name);
         } else {
-          var c = constant(multiname); 
-          if (bc.isDynamicProperty) {
-            c.isDynamicProperty = true;
-          }
-          if (bc.propertyName) {
-            c.propertyName = bc.propertyName;
-          }
-
-          return c;
+          return constant(multiname);
         }
-      }
-
-      function popObject(bc) {
-        var obj = state.stack.pop();
-        if (bc.objTy) {
-          obj.ty = bc.objTy;
-        }
-        return obj;
-      }
-
-      function popValueOffStack(bc) {
-        var val = state.stack.pop();
-        if (bc.valTy) {
-          val.ty = bc.valTy;
-        }
-        return val;
       }
 
       // If this is a catch block, we need clear the stack, the scope stack,
@@ -1293,25 +1294,25 @@ var Compiler = (function () {
         var op = bc.op;
 
         if (writer) {
-          writer.writeLn("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition + ", " + bc);
+          writer.writeLn(("bytecode bci: " + bci + ", originalBci: " + bc.originalPosition + ", " + bc).padRight(' ', 100) + " ti: " + bc.ti);
         }
 
         switch (op) {
 
         case OP_bkpt:           notImplemented(); break;
         case OP_throw:
-          emit(new ThrowStatement(state.stack.pop()));
+          emit(new ThrowStatement(pop()));
           break;
         case OP_getsuper:
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(call(id("getSuper"), [obj, multiname]));
           break;
         case OP_setsuper:
-          value = state.stack.pop();
+          value = pop();
           multiname = popMultiname(bc);
           flushStack();
-          obj = state.stack.pop();
+          obj = pop();
           emit(call(id("setSuper"), [obj, multiname, value]));
           break;
         case OP_dxns:           notImplemented(); break;
@@ -1341,13 +1342,11 @@ var Compiler = (function () {
         case OP_ifstricteq:     setCondition(Operator.SEQ); break;
         case OP_ifstrictne:     setCondition(Operator.SNE); break;
         case OP_lookupswitch:
-          determinant = state.stack.pop();
+          determinant = pop();
           break;
         case OP_pushwith:
           flushStack();
-          obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj, constant(true)])));
-          state.scopeHeight += 1;
+          pushScope(pop(), true);
           break;
         case OP_popscope:
           flushStack();
@@ -1357,13 +1356,13 @@ var Compiler = (function () {
           state.scopeHeight -= 1;
           break;
         case OP_nextname:
-          index = state.stack.pop();
-          obj = state.stack.pop();
+          index = pop();
+          obj = pop();
           push(call(id("nextName"), [obj, index]));
           break;
         case OP_nextvalue:
-          index = state.stack.pop();
-          obj = state.stack.pop();
+          index = pop();
+          obj = pop();
           push(call(id("nextValue"), [obj, index]));
           break;
         case OP_hasnext:
@@ -1392,15 +1391,12 @@ var Compiler = (function () {
         case OP_pushfalse:      push(constant(false)); break;
         case OP_pushnan:        push(constant(NaN)); break;
         case OP_pop:            popValue(); break;
-        case OP_dup:            duplicate(state.stack.pop()); break;
-        case OP_swap:           state.stack.push(state.stack.pop(), state.stack.pop()); break;
+        case OP_dup:            duplicate(pop()); break;
+        case OP_swap:           state.stack.push(pop(), pop()); break;
         case OP_pushscope:
           flushStack();
           flushScope();
-          obj = state.stack.pop();
-          emit(assignment(scopeName, new NewExpression(id("Scope"), [scopeName, obj])));
-          emit(assignment(scopeObjectName, property(scopeName, "object")));
-          state.scopeHeight += 1;
+          pushScope(pop());
           break;
         case OP_pushnamespace:  notImplemented(); break;
         case OP_li8:            notImplemented(); break;
@@ -1417,13 +1413,13 @@ var Compiler = (function () {
           push(call(runtimeProperty("createFunction"), [constant(methods[bc.index]), scopeName, constant(true)]));
           break;
         case OP_call:
-          args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
-          push(callCall(state.stack.pop(), [obj].concat(args)));
+          args = popMany(bc.argCount);
+          obj = pop();
+          push(callCall(pop(), [obj].concat(args)));
           break;
         case OP_construct:
-          args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
+          args = popMany(bc.argCount);
+          obj = pop();
           push(new NewExpression(property(obj, "instance"), args));
           break;
         case OP_callmethod:     notImplemented(); break;
@@ -1431,15 +1427,15 @@ var Compiler = (function () {
         case OP_callsuper:
           flushStack();
           multiname = getMultiname(bc.index);
-          args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
+          args = popMany(bc.argCount);
+          obj = pop();
           push(callCall(call(id("getSuper"), [obj, multiname]), [obj].concat(args)));
           break;
         case OP_callproperty:
           flushStack();
-          args = state.stack.popMany(bc.argCount);
+          args = popMany(bc.argCount);
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
         case OP_returnvoid:
@@ -1450,47 +1446,47 @@ var Compiler = (function () {
         case OP_returnvalue:
           flushStack();
           emit(call(property(id("Runtime"), "stack", "pop"), []));
-          emit(new ReturnStatement(state.stack.pop()));
+          emit(new ReturnStatement(pop()));
           break;
         case OP_constructsuper:
-          args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
+          args = popMany(bc.argCount);
+          obj = pop();
           emit(callCall(superClassInstanceObject(), [obj].concat(args)));
           break;
         case OP_constructprop:
-          args = state.stack.popMany(bc.argCount);
+          args = popMany(bc.argCount);
           multiname = popMultiname(bc);
-          obj = getProperty(state.stack.pop(), multiname);
+          obj = getProperty(pop(), multiname);
           push(new NewExpression(property(obj, "instance"), args));
           break;
         case OP_callsuperid:    notImplemented(); break;
         case OP_callproplex:
           flushStack();
-          args = state.stack.popMany(bc.argCount);
+          args = popMany(bc.argCount);
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(callCall(getProperty(obj, multiname), [constant(null)].concat(args)));
           break;
         case OP_callinterface:  notImplemented(); break;
         case OP_callsupervoid:
           flushStack();
           multiname = getMultiname(bc.index);
-          args = state.stack.popMany(bc.argCount);
-          obj = state.stack.pop();
+          args = popMany(bc.argCount);
+          obj = pop();
           emit(callCall(call(id("getSuper"), [obj, multiname]), [obj].concat(args)));
           break;
         case OP_callpropvoid:
-          args = state.stack.popMany(bc.argCount);
+          args = popMany(bc.argCount);
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           emit(callCall(getProperty(obj, multiname), [obj].concat(args)));
           break;
         case OP_sxi1:           notImplemented(); break;
         case OP_sxi8:           notImplemented(); break;
         case OP_sxi16:          notImplemented(); break;
         case OP_applytype:
-          args = state.stack.popMany(bc.argCount);
-          factory = state.stack.pop();
+          args = popMany(bc.argCount);
+          factory = pop();
           push(call(runtimeProperty("applyType"), [factory].concat(new ArrayExpression(args))));
           flushStack();
           break;
@@ -1498,18 +1494,18 @@ var Compiler = (function () {
         case OP_newobject:
           var properties = [];
           for (var i = 0; i < bc.argCount; i++) {
-            var value = state.stack.pop();
-            var key = state.stack.pop();
-            assert (key.value !== undefined && typeof key.value !== "object");
+            var value = pop();
+            var key = pop();
+            release || assert(key.value !== undefined && typeof key.value !== "object");
 
             var mangledKey = Multiname.getPublicQualifiedName(key.value);
             properties.unshift(new T.Property(new Literal(mangledKey), value, "init"));
           }
           push(new ObjectExpression(properties));
           break;
-        case OP_newarray:       push(new ArrayExpression(state.stack.popMany(bc.argCount))); break;
+        case OP_newarray:       push(new ArrayExpression(popMany(bc.argCount))); break;
         case OP_newactivation:
-          assert (this.methodInfo.needsActivation());
+          release || assert(this.methodInfo.needsActivation());
           emit(variableDeclaration([
             new VariableDeclarator(activationName,
                                    call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
@@ -1518,15 +1514,15 @@ var Compiler = (function () {
           break;
         case OP_newclass:
           push(call(property(constant(abc), "runtime", "createClass"),
-                    [constant(abc.classes[bc.index]), state.stack.pop(), scopeName]));
+                    [constant(abc.classes[bc.index]), pop(), scopeName]));
           break;
         case OP_getdescendants:
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(call(id("getDescendants"), [multiname, obj]));
           break;
         case OP_newcatch:
-          assert(exceptions[bc.index].scopeObject);
+          release || assert(exceptions[bc.index].scopeObject);
           flushStack();
           flushScope();
           push(constant(exceptions[bc.index].scopeObject));
@@ -1547,10 +1543,10 @@ var Compiler = (function () {
           break;
         case OP_initproperty:
         case OP_setproperty:
-          value = popValueOffStack(bc);
+          value = pop();
           multiname = popMultiname(bc);
           flushStack();
-          obj = popObject(bc);
+          obj = pop();
           emit(setProperty(obj, multiname, value, bc.ti));
           break;
         case OP_getlocal:       push(local[bc.index]); break;
@@ -1561,74 +1557,70 @@ var Compiler = (function () {
         case OP_getscopeobject:
           var scopeDepth = (state.scopeHeight - 1) - bc.index;
           if (scopeDepth) {
-            obj = scopeName;
-            for (var i = 0; i < scopeDepth; i++) {
-              obj = property(obj, "parent");
-            }
-            push(property(obj, "object"));
+            push(scopeAt(scopeDepth));
           } else {
             push(scopeObjectName);
           }
           break;
         case OP_getproperty:
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(getProperty(obj, multiname));
           break;
         case OP_getouterscope:      notImplemented(); break;
         case OP_setpropertylate:    notImplemented(); break;
         case OP_deleteproperty:
           multiname = popMultiname(bc);
-          obj = state.stack.pop();
+          obj = pop();
           push(call(id("deleteProperty"), [obj, multiname]));
           flushStack();
           break;
         case OP_deletepropertylate: notImplemented(); break;
         case OP_getslot:
-          var obj = state.stack.pop();
+          var obj = pop();
           getSlot(obj, bc.index, bc.ti);
           break;
         case OP_setslot:
-          value = state.stack.pop();
-          obj = state.stack.pop();
+          value = pop();
+          obj = pop();
           setSlot(obj, bc.index, value, bc.ti);
           break;
         case OP_getglobalslot:  notImplemented(); break;
         case OP_setglobalslot:  notImplemented(); break;
-        case OP_convert_s:      push(call(id("toString"), [state.stack.pop()])); break;
+        case OP_convert_s:      push(call(id("toString"), [pop()])); break;
         case OP_esc_xelem:      notImplemented(); break;
         case OP_esc_xattr:      notImplemented(); break;
         case OP_coerce_i:
         case OP_convert_i:
-          push(asInt32(state.stack.pop()));
+          push(asInt32(pop()));
           break;
         case OP_coerce_u:
         case OP_convert_u:
-          push(call(id("toUint"), [state.stack.pop()]));
+          push(call(id("toUint"), [pop()]));
           break;
         case OP_coerce_d:
         case OP_convert_d:
-          push(call(id("toDouble"), [state.stack.pop()]));
+          push(call(id("toDouble"), [pop()]));
           break;
         case OP_coerce_b:
         case OP_convert_b:
-          push(new UnaryExpression(Operator.FALSE, new UnaryExpression(Operator.FALSE, state.stack.pop())));
+          push(new UnaryExpression(Operator.FALSE, new UnaryExpression(Operator.FALSE, pop())));
           break;
         case OP_convert_o:      notImplemented(); break;
         case OP_checkfilter:
-          push(call(id("checkFilter"), [state.stack.pop()]));
+          push(call(id("checkFilter"), [pop()]));
           break;
         case OP_convert_f:      notImplemented(); break;
         case OP_unplus:         notImplemented(); break;
         case OP_convert_f4:     notImplemented(); break;
         case OP_coerce:
-          value = state.stack.pop();
+          value = pop();
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
           push(call(id("coerce"), [value, type]));
           break;
         case OP_coerce_a:       /* NOP */ break;
-        case OP_coerce_s:       push(call(id("coerceString"), [state.stack.pop()])); break;
+        case OP_coerce_s:       push(call(id("coerceString"), [pop()])); break;
         case OP_astype:         notImplemented(); break;
         case OP_astypelate:     notImplemented(); break;
         case OP_coerce_o:       notImplemented(); break;
@@ -1648,7 +1640,7 @@ var Compiler = (function () {
           emit(new UpdateExpression("--", local[bc.index]));
           break;
         case OP_typeof:
-          push(call(id("typeOf"), [state.stack.pop()]));
+          push(call(id("typeOf"), [pop()]));
           break;
         case OP_not:            expression(Operator.FALSE); break;
         case OP_bitnot:         expression(Operator.BITWISE_NOT); break;
@@ -1670,19 +1662,19 @@ var Compiler = (function () {
         case OP_greaterthan:    expression(Operator.GT); break;
         case OP_greaterequals:  expression(Operator.GE); break;
         case OP_instanceof:
-          type = state.stack.pop();
-          value = state.stack.pop();
+          type = pop();
+          value = pop();
           push(call(property(type, "isInstanceOf"), [value]));
           break;
         case OP_istype:
-          value = state.stack.pop();
+          value = pop();
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
           push(call(id("isInstance"), [value, type]));
           break;
         case OP_istypelate:
-          type = state.stack.pop();
-          value = state.stack.pop();
+          type = pop();
+          value = pop();
           push(call(id("isInstance"), [value, type]));
           break;
         case OP_in:             notImplemented(); break;
@@ -1755,8 +1747,8 @@ var Compiler = (function () {
   })();
 
   compiler.prototype.compileMethod = function compileMethod(methodInfo, hasDefaults, scope, hasDynamicScope) {
-    assert(scope);
-    assert(methodInfo.analysis);
+    release || assert(scope);
+    release || assert(methodInfo.analysis);
     Counter.count("Compiler: Methods");
     Timer.start("Compiler");
     if (enableVerifier.value && scope.object) {
@@ -1813,7 +1805,7 @@ var InlineCacheManager = (function () {
       this.inlineCaches = [];
     }
     inlineCacheSet.prototype.update = function (namespace) {
-      assert (namespace instanceof Namespace);
+      release || assert(namespace instanceof Namespace);
       var foundNewNamespace = true;
       var namespaces = this.namespaces;
       for (var i = 0; i < namespaces.length; i++) {
@@ -1825,7 +1817,7 @@ var InlineCacheManager = (function () {
       }
       if (foundNewNamespace) {
         this.namespaces.push([namespace, 1]);
-        assert (this.dirty, "TODO: Invalidate inline caches.");
+        release || assert(this.dirty, "TODO: Invalidate inline caches.");
       }
     };
     /**
@@ -1866,7 +1858,7 @@ var InlineCacheManager = (function () {
                           '((x = o.' + qn + ') !== undefined || ("' + qn + '" in o)) ? x : (' + src + ')';
         }
       }
-      assert (qns.length);
+      release || assert(qns.length);
       var icName = (isSetter ? INLINE_CACHE_SETTER_PREFIX : INLINE_CACHE_GETTER_PREFIX) + (inlineCacheCounter ++);
       if (isSetter) {
         src = 'function ' + icName + '(o, v) { ' + src + '; }';
@@ -1891,16 +1883,16 @@ var InlineCacheManager = (function () {
         inlineCacheSets.set(name, new InlineCacheSet(name));
       }
       var inlineCacheSet = inlineCacheSets.get(name);
-      assert (inlineCacheSet, name);
+      release || assert(inlineCacheSet, name);
       inlineCacheSet.update(namespace);
     });
   }
 
   return {
     createInlineCache: function createInlineCache(mn, isSetter) {
-      assert (mn instanceof Multiname);
-      assert (!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
-      assert (mn.namespaces.length > 1);
+      release || assert(mn instanceof Multiname);
+      release || assert(!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
+      release || assert(mn.namespaces.length > 1);
       var cache = mn.inlineCache || (mn.inlineCache = {});
       var cacheName = isSetter ? "setter" : "getter";
       if (cache[cacheName]) {

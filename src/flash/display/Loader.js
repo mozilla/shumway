@@ -136,7 +136,10 @@ const LoaderDefinition = (function () {
       }
 
       if (!symbol) {
-        commitData({command: 'error', message: 'unknown symbol type'});
+        commitData({
+          command: 'error',
+          message: 'unknown symbol type: ' + swfTag.code
+        });
         return;
       }
 
@@ -384,8 +387,6 @@ const LoaderDefinition = (function () {
           root._totalFrames = val.props.totalFrames;
 
           loader._content = root;
-        } else {
-          displayList.__proto__ = val;
         }
 
         framePromise.resolve(displayList);
@@ -454,18 +455,19 @@ const LoaderDefinition = (function () {
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.StaticText';
         symbolInfo.props = {
-          draw: describeMethod(function (c, r) {
+          draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
-          })
+          }
         };
         break;
       case 'text':
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.TextField';
         symbolInfo.props = {
-          draw: describeMethod(function (c, r) {
+          draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
-          })
+          },
+          text: symbol.value
         };
         break;
       case 'shape':
@@ -487,7 +489,6 @@ const LoaderDefinition = (function () {
         };
         break;
       case 'sprite':
-        var displayList = null;
         var frameCount = symbol.frameCount;
         var frameLabels = { };
         var frames = symbol.frames;
@@ -499,7 +500,7 @@ const LoaderDefinition = (function () {
           var framePromise = new Promise;
           var depths = frame.depths;
 
-          displayList = Object.create(displayList);
+          var displayList = Object.create(null);
 
           if (depths) {
             for (var depth in depths) {

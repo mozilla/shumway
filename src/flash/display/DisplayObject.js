@@ -51,15 +51,16 @@ const DisplayObjectDefinition = (function () {
         this._bbox = s.bbox || null;
     },
 
-    _applyCurrentTransform: function (point) {
+    _applyCurrentTransform: function (point, targetCoordSpace) {
       var m = this._currentTransform;
       var x = point.x;
       var y = point.y;
+
       point.x = m.a * x + m.c * y + m.tx;
       point.y = m.d * y + m.b * x + m.ty;
 
-      if (this._parent !== this._stage)
-        this._parent._applyCurrentTransform(point);
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+        this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
     _updateCurrentTransform: function () {
       var rotation = this._rotation / 180 * Math.PI;
@@ -77,8 +78,8 @@ const DisplayObjectDefinition = (function () {
         ty: this._y
       };
     },
-    _applyCurrentInverseTransform: function (point) {
-      if (this._parent !== this._stage)
+    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentInverseTransform(point);
 
       var m = this._currentTransform;
@@ -246,29 +247,23 @@ const DisplayObjectDefinition = (function () {
       if (!bbox)
         return new flash.geom.Rectangle;
 
-      var m = this._currentTransform;
-      var a = m.a;
-      var b = m.b;
-      var c = m.c;
-      var d = m.d;
+      var p1 = { x: bbox.left, y: bbox.top };
+      this._applyCurrentTransform(p1, targetCoordSpace);
+      var p2 = { x: bbox.right, y: bbox.top };
+      this._applyCurrentTransform(p2, targetCoordSpace);
+      var p3 = { x: bbox.right, y: bbox.bottom };
+      this._applyCurrentTransform(p3, targetCoordSpace);
+      var p4 = { x: bbox.left, y: bbox.bottom };
+      this._applyCurrentTransform(p4, targetCoordSpace);
 
-      var x1 = a * bbox.left + c * bbox.top;
-      var y1 = d * bbox.top + b * bbox.left;
-      var x2 = a * bbox.right + c * bbox.top;
-      var y2 = d * bbox.top + b * bbox.right;
-      var x3 = a * bbox.right + c * bbox.bottom;
-      var y3 = d * bbox.bottom + b * bbox.right;
-      var x4 = a * bbox.left + c * bbox.bottom;
-      var y4 = d * bbox.bottom + b * bbox.left;
-
-      var xMin = Math.min(x1, x2, x3, x4);
-      var xMax = Math.max(x1, x2, x3, x4);
-      var yMin = Math.min(y1, y2, y3, y4);
-      var yMax = Math.max(y1, y2, y3, y4);
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
       return new flash.geom.Rectangle(
-        xMin + m.tx,
-        yMin + m.ty,
+        xMin,
+        yMin,
         (xMax - xMin),
         (yMax - yMin)
       );
@@ -279,17 +274,23 @@ const DisplayObjectDefinition = (function () {
     globalToLocal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);
       this._applyCurrentInverseTransform(result);
-      debugger;
       return result;
     },
+    hitTest: function (use_xy, x, y, useShape, hitTestObject) {
+      if (use_xy) {
+        debugger;
+        return false; //notImplemented();
+      } else {
+        var box1 = this.getBounds();
+        var box2 = hitTestObject.getBounds();
+        return box1.intersects(box2);
+      }
+    },
     hitTestObject: function (obj) {
-      notImplemented();
+      return this.hitTest(false, 0, 0, false, obj);
     },
     hitTestPoint: function (x, y, shapeFlag) {
-      notImplemented();
-    },
-    hitTest: function (use_xy, x, y, useShape, hitTestObject) {
-      return false; //notImplemented();
+      return this.hitTest(true, x, y, shapeFlag, null);
     },
     localToGlobal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);
@@ -323,6 +324,7 @@ const DisplayObjectDefinition = (function () {
         alpha: desc(def, "alpha"),
         width: desc(def, "width"),
         height: desc(def, "height"),
+        _hitTest: def._hitTest,
         cacheAsBitmap: desc(def, "cacheAsBitmap"),
         opaqueBackground: desc(def, "opaqueBackground"),
         scrollRect: desc(def, "scrollRect"),
