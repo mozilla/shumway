@@ -62,6 +62,57 @@ const DisplayObjectDefinition = (function () {
       if (this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
+      if (use_xy) {
+        if (useShape) {
+          if (this._graphics) {
+            var canvas = document.createElement('canvas');
+            var hitCtx = canvas.getContext('kanvas-2d');
+      
+            x += this._bbox.left;
+            y += this._bbox.top;
+
+            hitCtx.transform(this._graphics._scale, 0, 0, this._graphics._scale, 0, 0);
+            
+            var subpaths = this._graphics._subpaths;
+            for (var i = 0, n = subpaths.length; i < n; i++) {
+              var path = subpaths[i];
+          
+              hitCtx.beginPath();
+              path.__draw__(hitCtx);
+
+              if (hitCtx.isPointInPath(x, y))
+                return true;
+      
+              if (path.strokeStyle && hitCtx.mozIsPointInStroke) {
+                hitCtx.strokeStyle = path.strokeStyle;
+                var drawingStyles = path.drawingStyles;
+                for (var prop in drawingStyles)
+                  hitCtx[prop] = drawingStyles[prop];
+                
+                if (hitCtx.mozIsPointInStroke(x, y))
+                  return true;
+              }
+            }
+          }
+
+          var children = this._children;
+          if (children) {
+            for (var i = 0, n = children.length; i < n; i++) {
+              var child = children[i];
+              if (child._hitTest(true, x, y, true))
+                return true;
+            }
+          }
+        }
+        
+        return false;
+      }
+      
+      var box1 = this.getBounds();
+      var box2 = hitTestObject.getBounds();
+      return box1.intersects(box2);
+    },
     _updateCurrentTransform: function () {
       var rotation = this._rotation / 180 * Math.PI;
       var scaleX = this._scaleX;
@@ -276,21 +327,11 @@ const DisplayObjectDefinition = (function () {
       this._applyCurrentInverseTransform(result);
       return result;
     },
-    hitTest: function (use_xy, x, y, useShape, hitTestObject) {
-      if (use_xy) {
-        debugger;
-        return false; //notImplemented();
-      } else {
-        var box1 = this.getBounds();
-        var box2 = hitTestObject.getBounds();
-        return box1.intersects(box2);
-      }
-    },
     hitTestObject: function (obj) {
-      return this.hitTest(false, 0, 0, false, obj);
+      return this._hitTest(false, 0, 0, false, obj);
     },
     hitTestPoint: function (x, y, shapeFlag) {
-      return this.hitTest(true, x, y, shapeFlag, null);
+      return this._hitTest(true, x, y, shapeFlag, null);
     },
     localToGlobal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);
