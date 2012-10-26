@@ -1085,7 +1085,7 @@ var Compiler = (function () {
         storedComments.push({ type: 'Line', value: " " + value.toString() });
       }
 
-      if (enableOpt.value) {
+      if (false && enableOpt.value) {
         if (block.dominator === block) {
           block.cse = new CSE(null, this.variablePool);
         } else {
