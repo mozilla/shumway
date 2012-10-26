@@ -17,6 +17,20 @@ function updateAVM2State() {
   release = state.release;
 }
 
+setTimeout(function displayInfo() {
+  var output = "";
+  var writer = new IndentingWriter(false, function (x) {
+    x = x.replace(" ", "&nbsp;");
+    output += x + "<br>";
+  });
+
+  Counter.trace(writer);
+  // Timer.trace(writer);
+
+  $("#info").html(output);
+  setTimeout(displayInfo, 1000);
+}, 1000);
+
 $(".avm2Option").each(function() {
   $(this).change(function () {
     state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
