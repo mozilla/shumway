@@ -369,7 +369,7 @@ var Scope = (function () {
     var cache = this.cache;
 
     var id = typeof mn === "string" ? mn : mn.id;
-    if (id && (obj = cache[id])) {
+    if (!scopeOnly && id && (obj = cache[id])) {
       return obj;
     }
 

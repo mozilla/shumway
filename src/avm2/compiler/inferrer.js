@@ -1100,7 +1100,9 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_astypelate:
-            notImplemented(bc);
+            pop();
+            pop();
+            push(Type.Any);
             break;
           case OP_coerce_o:
             notImplemented(bc);
