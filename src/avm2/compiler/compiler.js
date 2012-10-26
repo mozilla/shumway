@@ -1157,6 +1157,13 @@ var Compiler = (function () {
       function getProperty(obj, multiname) {
         Counter.count("getProperty");
         release || assert(!(multiname instanceof Multiname), multiname);
+
+        if (multiname instanceof Constant && multiname.value instanceof Multiname) {
+          if (Multiname.isQName(multiname.value)) {
+            return property(obj, Multiname.getQualifiedName(multiname.value));
+          }
+        }
+
         var slowPath = call(id("getProperty"), [obj, multiname]);
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
@@ -1185,16 +1192,6 @@ var Compiler = (function () {
           }
         }
 
-        if (multiname instanceof Constant) {
-          var val = obj instanceof Variable ? obj.value : obj;
-          if (val instanceof FindProperty && multiname.isEquivalent(val.multiname)) {
-            if (Multiname.isQName(multiname.value)) {
-              Counter.count("getProperty->propertyConstant");
-              return property(obj, Multiname.getQualifiedName(multiname.value));
-            }
-          }
-        }
-
         Counter.count("getProperty:slow");
         return slowPath;
       }
@@ -1202,6 +1199,12 @@ var Compiler = (function () {
       function setProperty(obj, multiname, value, ti) {
         var slowPath = call(id("setProperty"), [obj, multiname, value]);
         Counter.count("setProperty");
+
+        if (multiname instanceof Constant && multiname.value instanceof Multiname) {
+          if (Multiname.isQName(multiname.value)) {
+            return assignment(property(obj, Multiname.getQualifiedName(multiname.value)), value);
+          }
+        }
 
         if (enableInlineCaching.value && multiname instanceof Constant) {
           var mn = multiname.value;
@@ -1622,7 +1625,11 @@ var Compiler = (function () {
         case OP_coerce_a:       /* NOP */ break;
         case OP_coerce_s:       push(call(id("coerceString"), [pop()])); break;
         case OP_astype:         notImplemented(); break;
-        case OP_astypelate:     notImplemented(); break;
+        case OP_astypelate:
+          type = pop();
+          value = pop();
+          push(call(id("asInstance"), [value, type]));
+          break;
         case OP_coerce_o:       notImplemented(); break;
         case OP_negate:         expression(Operator.NEG); break;
         case OP_increment:
