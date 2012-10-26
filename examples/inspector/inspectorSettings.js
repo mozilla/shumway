@@ -14,6 +14,7 @@ function updateAVM2State() {
   enableVerifier.value = state.verifier;
   enableOpt.value = state.optimizer;
   enableInlineCaching.value = state.inlineCaching;
+  release = state.release;
 }
 
 $(".avm2Option").each(function() {
