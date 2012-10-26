@@ -113,6 +113,7 @@ var as3error = {};
    M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
    M("flash.events.Event", "EventClass", EventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
+   M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
 

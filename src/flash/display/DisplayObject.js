@@ -173,7 +173,7 @@ const DisplayObjectDefinition = (function () {
     },
     _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
-        debugger;
+        // debugger;
         return false; //notImplemented();
       } else {
         var box1 = this.getBounds();
