@@ -3,7 +3,6 @@ var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Optio
 var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
 
 
-var interpreterMethodCount = 0;
 var interpreterBytecodeCount = 0;
 
 var Interpreter = (function () {
@@ -41,7 +40,7 @@ var Interpreter = (function () {
   Interpreter.prototype = {
     interpretMethod: function interpretMethod($this, method, savedScope, args) {
       release || assert(method.analysis);
-      interpreterMethodCount ++;
+      Counter.count("Interpret Method");
       const abc = this.abc;
       const ints = abc.constantPool.ints;
       const uints = abc.constantPool.uints;

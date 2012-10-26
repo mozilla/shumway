@@ -68,7 +68,10 @@ if (rfile) {
 
 function executeFile(file, buffer) {
   // All execution paths must now load AVM2.
-  var appMode = state.appCompiler ? null : EXECUTION_MODE.INTERPRET;
+  if (!state.compiler) {
+    alert ("Running in the Interpreter");
+  }
+  var appMode = state.compiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {
     createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
       function runABC(file, buffer) {

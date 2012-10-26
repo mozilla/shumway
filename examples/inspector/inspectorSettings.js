@@ -46,8 +46,3 @@ $(".avm2Option").click(function () {
   saveState(state);
   updateAVM2State();
 });
-
-$("#execute").click(function () {
-  var file = $("#file").val();
-  executeFile(file);
-});
