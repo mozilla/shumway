@@ -486,7 +486,11 @@ var Interpreter = (function () {
             stack.push(coerceString(stack.pop()));
             break;
           case OP_astype:         notImplemented(); break;
-          case OP_astypelate:     notImplemented(); break;
+          case OP_astypelate:
+            type = stack.pop();
+            value = stack.pop();
+            stack.push(asInstance(value, type));
+            break;
           case OP_coerce_o:
             obj = stack.pop();
             stack.push(obj == undefined ? null : obj);

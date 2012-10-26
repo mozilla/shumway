@@ -691,6 +691,10 @@ function isInstanceOf(value, type) {
   return type.isInstanceOf(value);
 }
 
+function asInstance(value, type) {
+  return type.isInstance(value) ? value : null;
+}
+
 function isInstance(value, type) {
   return type.isInstance(value);
 }
@@ -1128,7 +1132,7 @@ var Runtime = (function () {
       if (!closure) {
         return (function (mi) {
           return function () {
-            print("Calling undefined native method: " + Multiname.getQualifiedName(mi.name));
+            print("Calling undefined native method: " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
           };
         })(mi);
       }
