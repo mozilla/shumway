@@ -32,9 +32,6 @@ build:
 	mkdir content/avm2/compiler/lljs/src
 	cp ../../src/avm2/compiler/lljs/src/*.js content/avm2/compiler/lljs/src/
 	# TODO src/avm2/generated/playerGlobal.swf and src/avm2/generated/builtin/builtin.abc
-	mkdir content/glue
-	mkdir content/glue/avm2
-	cp ../../src/glue/avm2/*.js content/glue/avm2/
 	mkdir content/lib
 	mkdir content/lib/Kanvas
 	cp ../../lib/Kanvas/* content/lib/Kanvas/
