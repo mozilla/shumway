@@ -309,13 +309,16 @@ const DisplayObjectDefinition = (function () {
       if (!bbox)
         return new flash.geom.Rectangle;
 
-      var p1 = { x: bbox.left, y: bbox.top };
+      var width = bbox.right - bbox.left;
+      var height = bbox.bottom - bbox.top;
+
+      var p1 = { x: 0, y: 0 };
       this._applyCurrentTransform(p1, targetCoordSpace);
-      var p2 = { x: bbox.right, y: bbox.top };
+      var p2 = { x: width, y: 0 };
       this._applyCurrentTransform(p2, targetCoordSpace);
-      var p3 = { x: bbox.right, y: bbox.bottom };
+      var p3 = { x: width, y: height };
       this._applyCurrentTransform(p3, targetCoordSpace);
-      var p4 = { x: bbox.left, y: bbox.bottom };
+      var p4 = { x: 0, y: height };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
