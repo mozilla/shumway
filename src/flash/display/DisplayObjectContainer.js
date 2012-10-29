@@ -1,9 +1,5 @@
 const DisplayObjectContainerDefinition = (function () {
   var def = {
-    initialize: function () {
-      this._children = [];
-    },
-
     get _bbox() {
       var children = this._children;
       var numChildren = children.length;

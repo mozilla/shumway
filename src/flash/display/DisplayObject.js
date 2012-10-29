@@ -22,6 +22,7 @@ const DisplayObjectDefinition = (function () {
       this._alpha = 1;
       this._animated = false;
       this._cacheAsBitmap = false;
+      this._children = [];
       this._control = document.createElement('div');
       this._bbox = null;
       this._currentTransform = null;
@@ -44,11 +45,16 @@ const DisplayObjectDefinition = (function () {
       this._x = 0;
       this._y = 0;
 
-      this._updateCurrentTransform();
-
       var s = this.symbol;
       if (s)
         this._bbox = s.bbox || null;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      var ctx = canvas.getContext('2d');
+      this._hitCtx = ctx;
+
+      this._updateCurrentTransform();
     },
 
     _applyCurrentTransform: function (point, targetCoordSpace) {
@@ -66,52 +72,57 @@ const DisplayObjectDefinition = (function () {
       if (use_xy) {
         if (useShape) {
           if (this._graphics) {
-            var canvas = document.createElement('canvas');
-            var hitCtx = canvas.getContext('kanvas-2d');
-      
-            x += this._bbox.left;
-            y += this._bbox.top;
+            var hitCtx = this._hitCtx;
 
-            hitCtx.transform(this._graphics._scale, 0, 0, this._graphics._scale, 0, 0);
-            
+            hitCtx.restore();
+            hitCtx.save();
+
+            var scale = this._graphics._scale;
+            if (scale !== 1)
+              hitCtx.scale(scale, scale);
+
+            var pt = new flash.geom.Point(x, y);
+            this._applyCurrentInverseTransform(pt, this._parent);
+
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
               var path = subpaths[i];
-          
+
               hitCtx.beginPath();
               path.__draw__(hitCtx);
 
-              if (hitCtx.isPointInPath(x, y))
+              if (hitCtx.isPointInPath(pt.x, pt.y))
                 return true;
-      
+
               if (path.strokeStyle && hitCtx.mozIsPointInStroke) {
                 hitCtx.strokeStyle = path.strokeStyle;
                 var drawingStyles = path.drawingStyles;
                 for (var prop in drawingStyles)
                   hitCtx[prop] = drawingStyles[prop];
-                
-                if (hitCtx.mozIsPointInStroke(x, y))
+
+                if (hitCtx.mozIsPointInStroke(pt.x, pt.y))
                   return true;
               }
             }
           }
 
           var children = this._children;
-          if (children) {
-            for (var i = 0, n = children.length; i < n; i++) {
-              var child = children[i];
-              if (child._hitTest(true, x, y, true))
-                return true;
-            }
+          for (var i = 0, n = children.length; i < n; i++) {
+            var child = children[i];
+            if (child._hitTest(true, pt.x, pt.y, true))
+              return true;
           }
+
+          return false;
+        } else {
+          var bbox = this.getBounds();
+          return bbox.containsPoint(pt);
         }
-        
-        return false;
       }
-      
-      var box1 = this.getBounds();
-      var box2 = hitTestObject.getBounds();
-      return box1.intersects(box2);
+
+      var bbox1 = this.getBounds();
+      var bbox2 = hitTestObject.getBounds();
+      return bbox1.intersects(bbox2);
     },
     _updateCurrentTransform: function () {
       var rotation = this._rotation / 180 * Math.PI;
