@@ -31,7 +31,10 @@ const StageDefinition = (function () {
 
     initialize: function () {
       this._color = 0xFFFFFFFF;
+      this._focus = null;
       this._stage = this;
+      this._stageHeight = 0;
+      this._stageWidth = 0;
       this._transform = { };
     },
 
