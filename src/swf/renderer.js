@@ -26,8 +26,12 @@ function renderStage(stage, ctx) {
     visit: function (obj) {
       if (MovieClipClass.isInstanceOf(obj)) {
         if (obj.isPlaying()) {
+          var currentFrame = obj._currentFrame;
+
           obj.nextFrame();
-          obj._scriptExecutionPending = true;
+
+          if (obj._currentFrame !== currentFrame)
+            obj._scriptExecutionPending = true;
         }
         obj.dispatchEvent(new flash.events.Event("enterFrame"));
       }
