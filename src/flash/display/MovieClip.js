@@ -27,61 +27,22 @@ const MovieClipDefinition = (function () {
       }
     },
 
-    addFrameScript: function () {
-      // arguments are pairs of frameIndex and script/function
-      // frameIndex is in range 0..totalFrames-1
-      var frameScripts = this._frameScripts;
-      for (var i = 0, n = arguments.length; i < n; i += 2) {
-        var frameNum = arguments[i] + 1;
-        var fn = arguments[i + 1];
-        var scripts = frameScripts[frameNum];
-        if (scripts)
-          scripts.push(fn);
-        else
-          frameScripts[frameNum] = [fn];
-      }
-    },
-    callFrame: function (frameNum) {
+    _callFrame: function (frameNum) {
       if (frameNum in this._frameScripts) {
         var scripts = this._frameScripts[frameNum];
         for (var i = 0, n = scripts.length; i < n; i++)
           scripts[i].call(this);
       }
     },
-    get currentFrame() {
-      return this._currentFrame;
-    },
-    get currentFrameLabel() {
-      return this._currentFrameLabel;
-    },
-    get currentLabel() {
-      return this._currentLabel;
-    },
-    get currentLabels() {
-      return this._currentScene.labels;
-    },
-    get currentScene() {
-      return this._currentScene;
-    },
-    get enabled() {
-      return this._enabled;
-    },
-    set enabled(val) {
-      this._enabled = val;
-    },
-    get framesLoaded() {
-      return this._framesLoaded;
-    },
-    gotoFrame: function (frameNum, scene) {
+    _gotoFrame: function (frameNum, scene) {
       if (frameNum > this._totalFrames)
         frameNum = 1;
 
       if (frameNum > this.framesLoaded)
         frameNum = this.framesLoaded;
 
-      if (frameNum === this._currentFrame) {
+      if (frameNum === this._currentFrame)
         return;
-      }
 
       var children = this._children;
       var depthMap = this._depthMap;
@@ -111,7 +72,8 @@ const MovieClipDefinition = (function () {
 
           if (cmd.symbolId) {
             var index = 0;
-            var symbolInfo = loader.getSymbolInfoById(cmd.symbolId);
+            var symbolPromise = loader._dictionary[cmd.symbolId];
+            var symbolInfo = symbolPromise.value;
             // HACK application domain may have the symbol class --
             // checking which domain has a symbol class
             var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
@@ -146,9 +108,8 @@ const MovieClipDefinition = (function () {
             // If we bound the instance to a name, set it.
             //
             // XXX: I think this always has to be a trait.
-            if (cmd.name) {
+            if (cmd.name)
               this[Multiname.getPublicQualifiedName(cmd.name)] = instance;
-            }
 
             // Call the constructor now that we've made the symbol instance,
             // instantiated all its children, and set the display list-specific
@@ -168,46 +129,100 @@ const MovieClipDefinition = (function () {
           if (cxform)
             target._cxform = cxform;
           if (matrix) {
-            target._rotation = Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
-            var sx = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-            target._scaleX = matrix.a > 0 ? sx : -sx;
-            var sy = Math.sqrt(matrix.d * matrix.d + matrix.c * matrix.c);
-            target._scaleY = matrix.d > 0 ? sy : -sy;
-            target._x = matrix.tx / 20;
-            target._y = matrix.ty / 20;
-            target._currentTransformMatrix = {
-              a: matrix.a,
-              b: matrix.b,
-              c: matrix.c,
-              d: matrix.d,
-              tx: target._x,
-              ty: target._y
+            var a = matrix.a;
+            var b = matrix.b;
+            var c = matrix.c;
+            var d = matrix.d;
+
+            target._rotation = Math.atan2(b, a) * 180 / Math.PI;
+            var sx = Math.sqrt(a * a + b * b);
+            target._scaleX = a > 0 ? sx : -sx;
+            var sy = Math.sqrt(d * d + c * c);
+            target._scaleY = d > 0 ? sy : -sy;
+            var x = target._x = matrix.tx / 20;
+            var y = target._y = matrix.ty / 20;
+
+            target._currentTransform = {
+              a: a,
+              b: b,
+              c: c,
+              d: d,
+              tx: x,
+              ty: y
             };
           }
         }
       }
 
       this._currentFrame = frameNum;
-      this._scriptExecutionPending = true;
+    },
+
+    get currentFrame() {
+      return this._currentFrame;
+    },
+    get currentFrameLabel() {
+      return this._currentFrameLabel;
+    },
+    get currentLabel() {
+      return this._currentLabel;
+    },
+    get currentLabels() {
+      return this._currentScene.labels;
+    },
+    get currentScene() {
+      return this._currentScene;
+    },
+    get enabled() {
+      return this._enabled;
+    },
+    set enabled(val) {
+      this._enabled = val;
+    },
+    get framesLoaded() {
+      return this._framesLoaded;
+    },
+    get totalFrames() {
+      return this._totalFrames;
+    },
+    get trackAsMenu() {
+      return false;
+    },
+    set trackAsMenu(val) {
+      notImplemented();
+    },
+
+    addFrameScript: function () {
+      // arguments are pairs of frameIndex and script/function
+      // frameIndex is in range 0..totalFrames-1
+      var frameScripts = this._frameScripts;
+      for (var i = 0, n = arguments.length; i < n; i += 2) {
+        var frameNum = arguments[i] + 1;
+        var fn = arguments[i + 1];
+        var scripts = frameScripts[frameNum];
+        if (scripts)
+          scripts.push(fn);
+        else
+          frameScripts[frameNum] = [fn];
+      }
     },
     gotoAndPlay: function (frame, scene) {
       this.play();
       if (isNaN(frame))
         this.gotoLabel(frame);
       else
-        this.gotoFrame(frame);
+        this._gotoFrame(frame);
     },
     gotoAndStop: function (frame, scene) {
       this.stop();
       if (isNaN(frame))
         this.gotoLabel(frame);
       else
-        this.gotoFrame(frame);
+        this._gotoFrame(frame);
     },
     gotoLabel: function (labelName) {
       var frameLabel = this._frameLabels[labelName];
       if (frameLabel)
-        this.gotoFrame(frameLabel.frame);
+        this._gotoFrame(frameLabel.frame);
     },
     isPlaying: function () {
       return this._isPlaying;
@@ -229,15 +244,6 @@ const MovieClipDefinition = (function () {
     },
     stop: function () {
       this._isPlaying = false;
-    },
-    get totalFrames() {
-      return this._totalFrames;
-    },
-    get trackAsMenu() {
-      return false;
-    },
-    set trackAsMenu(val) {
-      notImplemented();
     }
   };
 

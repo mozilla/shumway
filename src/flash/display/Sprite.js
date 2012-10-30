@@ -11,6 +11,10 @@ const SpriteDefinition = (function () {
       }
     },
 
+     _constructChildren: function () {
+      // notImplemented();
+    },
+
     get buttonMode() {
       return false;
     },
@@ -32,6 +36,13 @@ const SpriteDefinition = (function () {
     set soundTransform(val) {
       notImplemented();
     },
+    get useHandCursor() {
+      return true;
+    },
+    set useHandCursor(val) {
+      notImplemented();
+    },
+
     startDrag: function (lockCenter, bounds) {
       notImplemented();
     },
@@ -43,15 +54,6 @@ const SpriteDefinition = (function () {
     },
     stopTouchDrag: function (touchPointID) {
       notImplemented();
-    },
-    get useHandCursor() {
-      return true;
-    },
-    set useHandCursor(val) {
-      notImplemented();
-    },
-    constructChildren: function () {
-      // notImplemented();
     }
   };
 
@@ -67,7 +69,7 @@ const SpriteDefinition = (function () {
         stopDrag: def.stopDrag,
         startTouchDrag: def.startTouchDrag,
         stopTouchDrag: def.stopTouchDrag,
-        constructChildren: def.constructChildren,
+        constructChildren: def._constructChildren,
         hitArea: desc(def, "hitArea"),
         useHandCursor: desc(def, "useHandCursor"),
         soundTransform: desc(def, "soundTransform")
@@ -77,4 +79,3 @@ const SpriteDefinition = (function () {
 
   return def;
 }).call(this);
-

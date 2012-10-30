@@ -40,9 +40,6 @@ const InteractiveObjectDefinition = (function () {
     set needsSoftKeyboard(val) {
       notImplemented();
     },
-    requestSoftKeyboard: function () {
-      notImplemented();
-    },
     get softKeyboardInputAreaOfInterest() {
       return null;
     },
@@ -57,6 +54,10 @@ const InteractiveObjectDefinition = (function () {
     },
     get tabIndex() {
       return -1;
+    },
+
+    requestSoftKeyboard: function () {
+      notImplemented();
     }
   };
 

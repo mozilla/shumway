@@ -1,58 +1,3 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
-
-//function renderShadowCanvas(child) {
-//  var cache = child.hitTestCache;
-//
-//  var bounds = child.getBounds();
-//  var offsetX = Math.floor(bounds.x / 20);
-//  var offsetY = Math.floor(bounds.y / 20);
-//  var sizeX = Math.ceil(bounds.width / 20);
-//  var sizeY = Math.ceil(bounds.height / 20);
-//
-//  var canvas = cache.canvas;
-//  if (!canvas) {
-//    cache.canvas = canvas = document.createElement('canvas');
-//    cache.isPixelPainted = function(x, y) {
-//      x = 0 | (x - offsetX);
-//      y = 0 | (y - offsetY);
-//      if (x < 0 || y < 0 || x >= sizeX || y >= sizeY)
-//        return false;
-//      var data = cache.imageData.data;
-//      var result = data[(x + sizeX * y) * 4 + 3];
-//      return !!result;
-//    };
-//  }
-//
-//  if (sizeX <= 0 || sizeY <= 0)
-//    return;
-//
-//  canvas.width = sizeX;
-//  canvas.height = sizeY;
-//
-//  var ctx = canvas.getContext('2d');
-//  ctx.save();
-//  ctx.mozFillRule = 'evenodd';
-//  ctx.clearRect(0, 0, sizeX, sizeY);
-//  ctx.translate(-offsetX, -offsetY);
-//  ctx.scale(0.05, 0.05);
-//
-//  if (child.draw)
-//    child.draw(ctx, child.ratio);
-//  else if (child.nextFrame) {
-//    var renderContext = {
-//      isHitTestRendering: true,
-//      beginDrawing: function() { return ctx; },
-//      endDrawing: function() {}
-//    };
-//    child.renderNextFrame(renderContext);
-//  }
-//
-//  ctx.restore();
-//
-//  cache.ratio = child.ratio;
-//  cache.imageData = ctx.getImageData(0, 0, sizeX, sizeY);
-//}
-
 function renderStage(stage, ctx) {
   // All the visitors close over this class to do instance testing.
   const MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
@@ -82,7 +27,12 @@ function renderStage(stage, ctx) {
     visit: function (obj) {
       if (MovieClipClass.isInstanceOf(obj)) {
         if (obj.isPlaying()) {
+          var currentFrame = obj._currentFrame;
+
           obj.nextFrame();
+
+          if (obj._currentFrame !== currentFrame)
+            obj._scriptExecutionPending = true;
         }
         obj.dispatchEvent(new flash.events.Event("enterFrame"));
       }
@@ -133,7 +83,7 @@ function renderStage(stage, ctx) {
 
       // TODO move into separate visitor?
       if (MovieClipClass.isInstanceOf(parent) && parent._scriptExecutionPending) {
-        parent.callFrame(parent.currentFrame);
+        parent._callFrame(parent.currentFrame);
         parent._scriptExecutionPending = false;
       }
     },
@@ -144,12 +94,8 @@ function renderStage(stage, ctx) {
     visit: function (child, isContainer) {
       var ctx = this.ctx;
       ctx.save();
-      //if (child.matrix && !child.$fixMatrix)
-      //  child.matrix = create(child.matrix);
-      //if (child.cxform && !child.$fixCxform)
-      //  child.cxform = create(child.cxform);
 
-      var m = child._currentTransformMatrix;
+      var m = child._currentTransform;
       ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
       var cxform = child._cxform;
@@ -199,9 +145,6 @@ function renderStage(stage, ctx) {
         // letting the container to restore transforms after all children are painted
         ctx.restore();
       }
-
-      //if (child.hitTestCache && child.hitTestCache.ratio != child.ratio)
-      //  renderShadowCanvas(child);
     }
   };
 

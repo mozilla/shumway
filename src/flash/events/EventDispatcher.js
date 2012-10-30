@@ -13,7 +13,6 @@ const EventDispatcherDefinition = (function () {
     ctor: function (target) {
       this._target = target;
     },
-
     addEventListener: function (type, listener, useCapture, prio, useWeakReference) {
       if (typeof listener !== 'function')
         throw ArgumentError();

@@ -1,19 +1,19 @@
 const DisplayObjectDefinition = (function () {
-  var BLEND_MODE_ADD        = 'add';
-  var BLEND_MODE_ALPHA      = 'alpha';
-  var BLEND_MODE_DARKEN     = 'darken';
-  var BLEND_MODE_DIFFERENCE = 'difference';
-  var BLEND_MODE_ERASE      = 'erase';
-  var BLEND_MODE_HARDLIGHT  = 'hardlight';
-  var BLEND_MODE_INVERT     = 'invert';
-  var BLEND_MODE_LAYER      = 'layer';
-  var BLEND_MODE_LIGHTEN    = 'lighten';
-  var BLEND_MODE_MULTIPLY   = 'multiply';
-  var BLEND_MODE_NORMAL     = 'normal';
-  var BLEND_MODE_OVERLAY    = 'overlay';
-  var BLEND_MODE_SCREEN     = 'screen';
-  var BLEND_MODE_SHADER     = 'shader';
-  var BLEND_MODE_SUBTRACT   = 'subtract';
+  const BLEND_MODE_ADD        = 'add';
+  const BLEND_MODE_ALPHA      = 'alpha';
+  const BLEND_MODE_DARKEN     = 'darken';
+  const BLEND_MODE_DIFFERENCE = 'difference';
+  const BLEND_MODE_ERASE      = 'erase';
+  const BLEND_MODE_HARDLIGHT  = 'hardlight';
+  const BLEND_MODE_INVERT     = 'invert';
+  const BLEND_MODE_LAYER      = 'layer';
+  const BLEND_MODE_LIGHTEN    = 'lighten';
+  const BLEND_MODE_MULTIPLY   = 'multiply';
+  const BLEND_MODE_NORMAL     = 'normal';
+  const BLEND_MODE_OVERLAY    = 'overlay';
+  const BLEND_MODE_SCREEN     = 'screen';
+  const BLEND_MODE_SHADER     = 'shader';
+  const BLEND_MODE_SUBTRACT   = 'subtract';
 
   var def = {
     __class__: 'flash.display.DisplayObject',
@@ -22,8 +22,10 @@ const DisplayObjectDefinition = (function () {
       this._alpha = 1;
       this._animated = false;
       this._cacheAsBitmap = false;
+      this._children = [];
       this._control = document.createElement('div');
       this._bbox = null;
+      this._currentTransform = null;
       this._cxform = null;
       this._graphics = null;
       this._loaderInfo = null;
@@ -42,12 +44,112 @@ const DisplayObjectDefinition = (function () {
       this._visible = true;
       this._x = 0;
       this._y = 0;
-      this._updateTransformMatrix();
 
       var s = this.symbol;
-      if (s) {
+      if (s)
         this._bbox = s.bbox || null;
+
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      var ctx = canvas.getContext('2d');
+      this._hitCtx = ctx;
+
+      this._updateCurrentTransform();
+    },
+
+    _applyCurrentTransform: function (point, targetCoordSpace) {
+      var m = this._currentTransform;
+      var x = point.x;
+      var y = point.y;
+
+      point.x = m.a * x + m.c * y + m.tx;
+      point.y = m.d * y + m.b * x + m.ty;
+
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+        this._parent._applyCurrentTransform(point, targetCoordSpace);
+    },
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
+      if (use_xy) {
+        if (useShape) {
+          if (this._graphics) {
+            var hitCtx = this._hitCtx;
+
+            hitCtx.restore();
+            hitCtx.save();
+
+            var scale = this._graphics._scale;
+            if (scale !== 1)
+              hitCtx.scale(scale, scale);
+
+            var pt = new flash.geom.Point(x, y);
+            this._applyCurrentInverseTransform(pt, this._parent);
+
+            var subpaths = this._graphics._subpaths;
+            for (var i = 0, n = subpaths.length; i < n; i++) {
+              var path = subpaths[i];
+
+              hitCtx.beginPath();
+              path.__draw__(hitCtx);
+
+              if (hitCtx.isPointInPath(pt.x, pt.y))
+                return true;
+
+              if (path.strokeStyle && hitCtx.mozIsPointInStroke) {
+                hitCtx.strokeStyle = path.strokeStyle;
+                var drawingStyles = path.drawingStyles;
+                for (var prop in drawingStyles)
+                  hitCtx[prop] = drawingStyles[prop];
+
+                if (hitCtx.mozIsPointInStroke(pt.x, pt.y))
+                  return true;
+              }
+            }
+          }
+
+          var children = this._children;
+          for (var i = 0, n = children.length; i < n; i++) {
+            var child = children[i];
+            if (child._hitTest(true, pt.x, pt.y, true))
+              return true;
+          }
+
+          return false;
+        } else {
+          var bbox = this.getBounds();
+          return bbox.containsPoint(pt);
+        }
       }
+
+      var bbox1 = this.getBounds();
+      var bbox2 = hitTestObject.getBounds();
+      return bbox1.intersects(bbox2);
+    },
+    _updateCurrentTransform: function () {
+      var rotation = this._rotation / 180 * Math.PI;
+      var scaleX = this._scaleX;
+      var scaleY = this._scaleY;
+      var u = Math.cos(rotation);
+      var v = Math.sin(rotation);
+
+      this._currentTransform = {
+        a: u * scaleX,
+        b: v * scaleX,
+        c: -v * scaleY,
+        d: u * scaleY,
+        tx: this._x,
+        ty: this._y
+      };
+    },
+    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+        this._parent._applyCurrentInverseTransform(point);
+
+      var m = this._currentTransform;
+      var x = point.x - m.tx;
+      var y = point.y - m.ty;
+      var d = 1 / (m.a * m.d - m.b * m.c);
+      point.x = (m.d * x - m.c * y) * d;
+      point.y = (m.a * y - m.b * x) * d;
     },
 
     get accessibilityProperties() {
@@ -81,83 +183,6 @@ const DisplayObjectDefinition = (function () {
     set filters(val) {
       notImplemented();
     },
-    getBounds: function (targetCoordSpace) {
-      var bbox = this._bbox;
-
-      if (!bbox)
-        return new flash.geom.Rectangle;
-
-      var p1 = {x: bbox.left, y: bbox.top};
-      this._applyCurrentTransform(p1, targetCoordSpace);
-      var p2 = {x: bbox.right, y: bbox.top};
-      this._applyCurrentTransform(p2, targetCoordSpace);
-      var p3 = {x: bbox.right, y: bbox.bottom};
-      this._applyCurrentTransform(p3, targetCoordSpace);
-      var p4 = {x: bbox.left, y: bbox.bottom};
-      this._applyCurrentTransform(p4, targetCoordSpace);
-
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-      return new flash.geom.Rectangle(
-        xMin,
-        yMin,
-        (xMax - xMin),
-        (yMax - yMin)
-      );
-    },
-    _updateTransformMatrix: function () {
-      var rotation = this._rotation / 180 * Math.PI;
-      var scaleX = this._scaleX;
-      var scaleY = this._scaleY;
-      var u = Math.cos(rotation);
-      var v = Math.sin(rotation);
-
-      this._currentTransformMatrix = {
-        a: u * scaleX,
-        b: v * scaleX,
-        c: -v * scaleY,
-        d: u * scaleY,
-        tx: this._x,
-        ty: this._y
-      };
-    },
-    _applyCurrentTransform: function (point, targetCoordSpace) {
-      var m = this._currentTransformMatrix;
-      var x = point.x;
-      var y = point.y;
-
-      point.x = m.a * x + m.c * y + m.tx;
-      point.y = m.d * y + m.b * x + m.ty;
-
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
-        this._parent._applyCurrentTransform(point, targetCoordSpace);
-      }
-    },
-    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace) {
-        this._parent._applyCurrentInverseTransform(point);
-      }
-
-      var m = this._currentTransformMatrix;
-
-      var x = point.x - m.tx;
-      var y = point.y - m.ty;
-      var d = 1 / (m.a * m.d - m.b * m.c);
-
-      point.x = (m.d * x - m.c * y) * d;
-      point.y = (m.a * y - m.b * x) * d;
-    },
-    getRect: function (targetCoordSpace) {
-      notImplemented();
-    },
-    globalToLocal: function (pt) {
-      var result = new flash.geom.Point(pt.x, pt.y);
-      this._applyCurrentInverseTransform(result);
-      return result;
-    },
     get height() {
       var bounds = this.getBounds();
       return bounds.height;
@@ -165,29 +190,8 @@ const DisplayObjectDefinition = (function () {
     set height(val) {
       notImplemented();
     },
-    hitTestObject: function (obj) {
-      return this._hitTest(false, 0, 0, false, obj);
-    },
-    hitTestPoint: function (x, y, shapeFlag) {
-      return this._hitTest(true, x, y, shapeFlag, null);
-    },
-    _hitTest: function _hitTest(use_xy, x, y, useShape, hitTestObject) {
-      if (use_xy) {
-        // debugger;
-        return false; //notImplemented();
-      } else {
-        var box1 = this.getBounds();
-        var box2 = hitTestObject.getBounds();
-        return box1.intersects(box2);
-      }
-    },
     get loaderInfo() {
       return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
-    },
-    localToGlobal: function (pt) {
-      var result = new flash.geom.Point(pt.x, pt.y);
-      this._applyCurrentTransform(result);
-      return result;
     },
     get mask() {
       return null;
@@ -224,7 +228,7 @@ const DisplayObjectDefinition = (function () {
     },
     set rotation(val) {
       this._rotation = val;
-      this._updateTransformMatrix();
+      this._updateCurrentTransform();
       this._slave = false;
     },
     get stage() {
@@ -235,7 +239,7 @@ const DisplayObjectDefinition = (function () {
     },
     set scaleX(val) {
       this._scaleX = val;
-      this._updateTransformMatrix();
+      this._updateCurrentTransform();
       this._slave = false;
     },
     get scaleY() {
@@ -243,7 +247,7 @@ const DisplayObjectDefinition = (function () {
     },
     set scaleY(val) {
       this._scaleY = val;
-      this._updateTransformMatrix();
+      this._updateCurrentTransform();
       this._slave = false;
     },
     get scale9Grid() {
@@ -265,7 +269,7 @@ const DisplayObjectDefinition = (function () {
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
-      this._currentTransformMatrix = val.matrix;
+      this._currentTransform = val.matrix;
       this._slave = false;
     },
     get visible() {
@@ -287,7 +291,7 @@ const DisplayObjectDefinition = (function () {
     },
     set x(val) {
       this._x = val;
-      this._updateTransformMatrix();
+      this._updateCurrentTransform();
       this._slave = false;
     },
     get y() {
@@ -295,8 +299,58 @@ const DisplayObjectDefinition = (function () {
     },
     set y(val) {
       this._y = val;
-      this._updateTransformMatrix();
+      this._updateCurrentTransform();
       this._slave = false;
+    },
+
+    getBounds: function (targetCoordSpace) {
+      var bbox = this._bbox;
+
+      if (!bbox)
+        return new flash.geom.Rectangle;
+
+      var width = bbox.right - bbox.left;
+      var height = bbox.bottom - bbox.top;
+
+      var p1 = { x: 0, y: 0 };
+      this._applyCurrentTransform(p1, targetCoordSpace);
+      var p2 = { x: width, y: 0 };
+      this._applyCurrentTransform(p2, targetCoordSpace);
+      var p3 = { x: width, y: height };
+      this._applyCurrentTransform(p3, targetCoordSpace);
+      var p4 = { x: 0, y: height };
+      this._applyCurrentTransform(p4, targetCoordSpace);
+
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+
+      return new flash.geom.Rectangle(
+        xMin,
+        yMin,
+        (xMax - xMin),
+        (yMax - yMin)
+      );
+    },
+    getRect: function (targetCoordSpace) {
+      notImplemented();
+    },
+    globalToLocal: function (pt) {
+      var result = new flash.geom.Point(pt.x, pt.y);
+      this._applyCurrentInverseTransform(result);
+      return result;
+    },
+    hitTestObject: function (obj) {
+      return this._hitTest(false, 0, 0, false, obj);
+    },
+    hitTestPoint: function (x, y, shapeFlag) {
+      return this._hitTest(true, x, y, shapeFlag, null);
+    },
+    localToGlobal: function (pt) {
+      var result = new flash.geom.Point(pt.x, pt.y);
+      this._applyCurrentTransform(result);
+      return result;
     }
   };
 

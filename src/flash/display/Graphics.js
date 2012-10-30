@@ -30,37 +30,7 @@ const GraphicsDefinition = (function () {
       this._subpaths = [];
     },
 
-    beginFill: function (color, alpha) {
-      if (alpha === undefined)
-        alpha = 1;
-
-      delete this._currentPath;
-
-      this._fillStyle = alpha ? toRgba(color, alpha) : null;
-      this._fillTransform = null;
-    },
-    beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      var gradient;
-
-      if (type === 'linear')
-        gradient = fillContext.createLinearGradient(-819.2, 0, 819.2, 0);
-      else if (type == 'radial')
-        gradient = fillContext.createRadialGradient(819.2 * (focalPos || 0), 0, 0, 0, 0, 819.2);
-      else
-        throw ArgumentError();
-
-      for (var i = 0, n = colors.length; i < n; i++)
-        gradient.addColorStop(ratios[i], toRgba(colors[i], alphas[i]));
-
-      this._fillStyle = gradient;
-      this._fillTransform = matrix;
-    },
-
-    beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      //notImplemented();
-      // stub this out
-    },
-    beginFillObject: function (fill) {
+    _beginFillObject: function (fill) {
       if (fill === null) {
         this.endFill();
       } else {
@@ -92,7 +62,7 @@ const GraphicsDefinition = (function () {
         }
       }
     },
-    beginStrokeObject: function (istroke) {
+    _beginStrokeObject: function (istroke) {
       var stroke = null;
       var fill = null;
 
@@ -148,6 +118,55 @@ const GraphicsDefinition = (function () {
         }
       }
     },
+    _drawPathObject: function (path) {
+      if (path.__class__ === 'flash.display.GraphicsPath')
+        this.drawPath(path.commands, path.data, path.winding);
+      else if (path.__class__ === 'flash.display.GraphicsTrianglePath')
+        this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
+    },
+
+    get _currentPath() {
+      var path = new Kanvas.Path;
+      path.drawingStyles = this._drawingStyles;
+      path.fillStyle = this._fillStyle;
+      path.fillTransform = this._fillTransform;
+      path.strokeStyle = this._strokeStyle;
+      this._subpaths.push(path);
+      // Cache as an own property.
+      Object.defineProperty(this, '_currentPath', describeProperty(path));
+      return path;
+    },
+
+    beginFill: function (color, alpha) {
+      if (alpha === undefined)
+        alpha = 1;
+
+      delete this._currentPath;
+
+      this._fillStyle = alpha ? toRgba(color, alpha) : null;
+      this._fillTransform = null;
+    },
+    beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
+      var gradient;
+
+      if (type === 'linear')
+        gradient = fillContext.createLinearGradient(-819.2, 0, 819.2, 0);
+      else if (type == 'radial')
+        gradient = fillContext.createRadialGradient(819.2 * (focalPos || 0), 0, 0, 0, 0, 819.2);
+      else
+        throw ArgumentError();
+
+      for (var i = 0, n = colors.length; i < n; i++)
+        gradient.addColorStop(ratios[i], toRgba(colors[i], alphas[i]));
+
+      this._fillStyle = gradient;
+      this._fillTransform = matrix;
+    },
+
+    beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
+      //notImplemented();
+      // stub this out
+    },
     clear: function () {
       delete this._currentPath;
 
@@ -170,11 +189,11 @@ const GraphicsDefinition = (function () {
       for (var i = 0, n = graphicsData.length; i < n; i++) {
         var item = graphicsData[i];
         if (item.__isIGraphicsPath__)
-          this.drawPathObject(item);
+          this._drawPathObject(item);
         else if (item.__isIGraphicsFill__)
-          this.beginFillObject(item);
+          this._beginFillObject(item);
         else if (item.__isIGraphicsStroke__)
-          this.beginStrokeObject(item);
+          this._beginStrokeObject(item);
       }
     },
     drawPath: function (commands, data, winding) {
@@ -201,12 +220,6 @@ const GraphicsDefinition = (function () {
           break;
         }
       }
-    },
-    drawPathObject: function (path) {
-      if (path.__class__ === 'flash.display.GraphicsPath')
-        this.drawPath(path.commands, path.data, path.winding);
-      else if (path.__class__ === 'flash.display.GraphicsTrianglePath')
-        this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
@@ -263,23 +276,11 @@ const GraphicsDefinition = (function () {
         this._strokeStyle = null;
       }
     },
-    moveTo: function (x, y) {
-      this._currentPath.moveTo(x, y);
-    },
     lineTo: function (x, y) {
       this._currentPath.lineTo(x, y);
     },
-
-    get _currentPath() {
-      var path = new Kanvas.Path;
-      path.drawingStyles = this._drawingStyles;
-      path.fillStyle = this._fillStyle;
-      path.fillTransform = this._fillTransform;
-      path.strokeStyle = this._strokeStyle;
-      this._subpaths.push(path);
-      // Cache as an own property.
-      Object.defineProperty(this, '_currentPath', describeProperty(path));
-      return path;
+    moveTo: function (x, y) {
+      this._currentPath.moveTo(x, y);
     }
   };
 
