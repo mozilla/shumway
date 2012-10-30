@@ -66,10 +66,15 @@ if (rfile) {
   executeFile(rfile);
 }
 
+function showMessage(msg) {
+  $('#message').text(msg);
+  $('#message')[0].parentElement.removeAttribute('hidden');
+}
+
 function executeFile(file, buffer) {
   // All execution paths must now load AVM2.
   if (!state.compiler) {
-    alert ("Running in the Interpreter");
+    showMessage("Running in the Interpreter");
   }
   var appMode = state.compiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {

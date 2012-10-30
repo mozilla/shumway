@@ -34,3 +34,6 @@ $("#openFile").click(function () {
   $("#files").click();
 });
 
+$(".closeButton").click(function (event) {
+  event.target.parentElement.setAttribute('hidden', true);
+});

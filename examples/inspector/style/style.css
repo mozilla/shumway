@@ -58,6 +58,16 @@ body {
   font-family: Lucida Grande, sans-serif;
 }
 
+.toolbarBox.withEmphasis {
+  background: url(images/background-noise-toolbar.png),
+              -moz-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  border-radius: 4px;
+  box-shadow: 0 1px 0 hsla(0,56%,76%,.2) inset,
+              0 0 0 1px hsla(0,0%,0%,.15),
+              0 10px 14px hsla(0,0%,0%,.4);
+  font-family: Lucida Grande, sans-serif;
+}
+
 .closeButton {
   float: left;
   width: 16px;
