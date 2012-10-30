@@ -103,6 +103,7 @@ var as3error = {};
    M("flash.display.Loader", "LoaderClass", LoaderDefinition),
    M("flash.display.LoaderInfo", "LoaderInfoClass", LoaderInfoDefinition),
    M("flash.display.Graphics", "GraphicsClass", GraphicsDefinition),
+   M("flash.display.SimpleButton", "SimpleButtonClass", SimpleButtonDefinition),
 
    M("flash.geom.Point", "PointClass", PointDefinition),
    M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
@@ -113,6 +114,7 @@ var as3error = {};
    M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
    M("flash.events.Event", "EventClass", EventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
+   M("flash.events.MouseEvent", "MouseEventClass", MouseEventDefinition),
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),

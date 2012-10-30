@@ -3,6 +3,7 @@ const SpriteDefinition = (function () {
     __class__: 'flash.display.Sprite',
 
     initialize: function () {
+      this._buttonMode = false;
       var s = this.symbol;
       if (s) {
         this._graphics = s.graphics || new flash.display.Graphics;
@@ -16,10 +17,10 @@ const SpriteDefinition = (function () {
     },
 
     get buttonMode() {
-      return false;
+      return this._buttonMode;
     },
     set buttonMode(val) {
-      notImplemented();
+      this._buttonMode = val;
     },
     get graphics() {
       return this._graphics;

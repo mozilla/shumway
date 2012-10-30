@@ -31,7 +31,7 @@ const MouseEventDefinition = (function () {
         ROLL_OUT:     'public ROLL_OUT',
         ROLL_OVER:    'public ROLL_OVER'
       },
-    }
+    },
 
     native: {
       instance: {
