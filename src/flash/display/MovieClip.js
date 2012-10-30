@@ -86,8 +86,17 @@ const MovieClipDefinition = (function () {
               if (!cxform)
                 cxform = current._cxform;
               index = children.indexOf(current);
-              if (!matrix)
-                matrix = current.transform.matrix;
+              if (!matrix) {
+                var m = current._currentTransform;
+                matrix = {
+                  a: m.a,
+                  b: m.b,
+                  c: m.c,
+                  d: m.d,
+                  tx: m.tx * 20,
+                  ty: m.ty * 20
+                };
+              }
               replace = 1;
             } else {
               var top = null;
