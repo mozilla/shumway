@@ -51,7 +51,6 @@ install-asc: $(ASC_JAR)
 
 $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
-	-rm asc.uris.txt
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 	-rm -rf $(TAMARIN_HOME)/bin

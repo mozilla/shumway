@@ -1,4 +1,5 @@
 abc/
 tamarin/
 acceptance/
+regress/*/*.abc
 hello-world.abc
