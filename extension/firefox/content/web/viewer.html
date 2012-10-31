@@ -28,7 +28,7 @@
     <script src="../swf/shape.js"></script>
     <script src="../swf/text.js"></script>
 
-
+    <!-- not used in inspector -->
     <script src="../swf/prototypes.js"></script>
 
     <!-- Load AVM1 Dependencies -->
@@ -39,22 +39,72 @@
     <script src="../swf/embed.js"></script>
     <script src="../swf/renderer.js"></script>
 
+    <!-- Load AVM2 Dependencies -->
+    <script src="../avm2/util.js"></script>
+    <script src="../avm2/options.js"></script>
+    <script src="../avm2/metrics.js"></script>
+    <script src="../avm2/constants.js"></script>
+    <script src="../avm2/errors.js"></script>
+    <script src="../avm2/opcodes.js"></script>
+    <script src="../avm2/parser.js"></script>
+    <script src="../avm2/analyze.js"></script>
+    <script src="../avm2/compiler/lljs/src/estransform.js"></script>
+    <script src="../avm2/compiler/lljs/src/escodegen.js"></script>
+    <script src="../avm2/compiler/inferrer.js"></script>
+    <script src="../avm2/compiler/compiler.js"></script>
+    <script src="../avm2/domain.js"></script>
+    <script src="../avm2/runtime.js"></script>
+    <script src="../avm2/native.js"></script>
+    <script src="../avm2/disassembler.js"></script>
+    <script src="../avm2/interpreter.js"></script>
+    <script src="../avm2/vm.js"></script>
+    
+    <!-- Load Flash Dependencies -->
     <script src="../flash/util.js"></script>
+    
+    <!-- not used in inspector -->
     <script src="../flash/events/EventPhase.js"></script>
+
+    <script src="../flash/util.js"></script>
     <script src="../flash/events/Event.js"></script>
-    <script src="../flash/events/ProgressEvent.js"></script>
+    <script src="../flash/events/KeyboardEvent.js"></script>
+    <script src="../flash/events/MouseEvent.js"></script>
+    <script src="../flash/events/TimerEvent.js"></script>
     <script src="../flash/events/EventDispatcher.js"></script>
+    <script src="../flash/net/NetConnection.js"></script>
+    <script src="../flash/net/NetStream.js"></script>
     <script src="../flash/display/DisplayObject.js"></script>
     <script src="../flash/display/InteractiveObject.js"></script>
     <script src="../flash/display/DisplayObjectContainer.js"></script>
-    <script src="../flash/display/Graphics.js"></script>
     <script src="../flash/display/Sprite.js"></script>
+    <script src="../flash/display/MovieClip.js"></script>
     <script src="../flash/display/Loader.js"></script>
     <script src="../flash/display/LoaderInfo.js"></script>
-    <script src="../flash/display/MovieClip.js"></script>
     <script src="../flash/display/Stage.js"></script>
+    <script src="../flash/display/BitmapData.js"></script>
+    <script src="../flash/display/Graphics.js"></script>
+    <script src="../flash/display/Shape.js"></script>
+    <script src="../flash/display/SimpleButton.js"></script>
+    <script src="../flash/geom/Point.js"></script>
+    <script src="../flash/geom/Rectangle.js"></script>
+    <script src="../flash/geom/Matrix.js"></script>
+    <script src="../flash/geom/ColorTransform.js"></script>
+    <script src="../flash/geom/Transform.js"></script>
+    <!--
+    <script src="../flash/media/SoundTransform.js"></script>
+    -->
+    <script src="../flash/media/Video.js"></script>
+    <!--
+    <script src="../flash/text/Font.js"></script>
+    -->
+    <script src="../flash/text/StaticText.js"></script>
+    <script src="../flash/text/TextField.js"></script>
     <script src="../flash/ui/Keyboard.js"></script>
+    <!--
     <script src="../flash/ui/Mouse.js"></script>
+    -->
+    <script src="../flash/utils/Timer.js"></script>
+    <script src="../flash/stubs.js"></script>
 
     <script>
       // Extenstion communication object... as it used in pdf.js
@@ -158,7 +208,7 @@
     <style>
       #viewer {
         position:fixed;left:0;top:0;bottom:0;right:0;
-        background-color:magenta;
+        /* background-color:magenta; */
       }
 
       #fallback {
