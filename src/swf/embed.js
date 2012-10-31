@@ -33,6 +33,9 @@ SWF.embed = function(file, container, options) {
 
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
+
+      if (stage._clickTarget)
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;

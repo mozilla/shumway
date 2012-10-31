@@ -178,11 +178,16 @@ function renderStage(stage, ctx) {
           interactiveParent._mouseOver = true;
           interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
         }
+
+        stage._clickTarget = interactiveParent;
       } else {
         if (interactiveParent._mouseOver) {
           interactiveParent._mouseOver = false;
           interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
         }
+
+        if (stage._mouseTarget === interactiveParent)
+          stage._clickTarget = null;
       }
     }
   };
