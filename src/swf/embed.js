@@ -43,7 +43,10 @@ SWF.embed = function(file, container, options) {
     stage._color = bgcolor;
     canvas.style.background = toStringRgba(bgcolor);
 
-    stage._children[0] = loader._content;
+    var root = loader._content;
+    stage._children[0] = root;
+    stage._control.appendChild(root._control);
+
     container.appendChild(canvas);
     renderStage(stage, ctx);
   });

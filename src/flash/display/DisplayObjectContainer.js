@@ -82,6 +82,8 @@ const DisplayObjectContainerDefinition = (function () {
       child._owned = false;
       child._parent = this;
 
+      this._control.appendChild(child._control);
+
       return child;
     },
     areInaccessibleObjectsUnderPoint: function (pt) {
@@ -136,6 +138,8 @@ const DisplayObjectContainerDefinition = (function () {
       var child = children[index];
       children.splice(index, 1);
       child._parent = null;
+
+      this._control.removeChild(child._control);
 
       return child;
     },

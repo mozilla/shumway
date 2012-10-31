@@ -59,6 +59,7 @@ const MovieClipDefinition = (function () {
           if (current && current._owned) {
             var index = children.indexOf(current);
             children.splice(index, 1);
+            this._control.removeChild(current._control);
 
             if (depth <= highestDepth)
               depthMap[depth] = undefined;
@@ -131,6 +132,11 @@ const MovieClipDefinition = (function () {
             instance._animated = true;
             instance._owned = true;
             instance._parent = this;
+
+            if (replace)
+              this._control.replaceChild(instance._control, current._control);
+            else
+              this._control.appendChild(instance._control);
           } else if (current && current._animated) {
             target = current;
           }
