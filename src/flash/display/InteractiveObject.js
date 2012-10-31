@@ -2,6 +2,7 @@ const InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
       this._control = document.createElement('div');
+      this._hitArea = null;
     },
 
     get accessibilityImplementation() {

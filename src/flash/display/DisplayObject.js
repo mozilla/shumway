@@ -28,7 +28,6 @@ const DisplayObjectDefinition = (function () {
       this._currentTransform = null;
       this._cxform = null;
       this._graphics = null;
-      this._hitArea = null;
       this._loaderInfo = null;
       this._mouseX = 0;
       this._mouseY = 0;
