@@ -9,7 +9,7 @@ function renderStage(stage, ctx) {
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
       if (child) {
-        var isContainer = ContainerClass.isInstanceOf(child);
+        var isContainer = ContainerClass.isInstanceOf(child) || child._isContainer;
         visitor.visit(child, isContainer);
         if (isContainer) {
           visitContainer(child, visitor);

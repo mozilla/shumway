@@ -2,12 +2,11 @@
 
 function defineButton(tag, dictionary) {
   var characters = tag.characters;
-  var dependencies = [];
   var states = {
-    up: {type: 'pframe'},
-    over: {type: 'pframe'},
-    down: {type: 'pframe'},
-    hitTest: {type: 'pframe'}
+    up: {},
+    over: {},
+    down: {},
+    hitTest: {}
   };
   var i = 0;
   while (character = characters[i++]) {
@@ -16,7 +15,7 @@ function defineButton(tag, dictionary) {
     var characterItem = dictionary[character.characterId];
     assert(characterItem, 'undefined character', 'button');
     var entry = {
-      id: characterItem.id,
+      symbolId: characterItem.id,
       matrix: character.matrix
     };
     if (character.stateUp)
@@ -27,7 +26,6 @@ function defineButton(tag, dictionary) {
       states.down[character.depth] = entry;
     if (character.stateHitTest)
       states.hitTest[character.depth] = entry;
-    dependencies.push(characterItem.id);
   }
   var button = {
     type: 'button',
@@ -35,7 +33,5 @@ function defineButton(tag, dictionary) {
     buttonActions: tag.buttonActions,
     states: states
   };
-  if (dependencies.length)
-    button.require = dependencies;
   return button;
 }

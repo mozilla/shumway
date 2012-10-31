@@ -422,7 +422,39 @@ const LoaderDefinition = (function () {
 
       switch (symbol.type) {
       case 'button':
+        var states = {};
+        for (var stateName in symbol.states) {
+          var depths = symbol.states[stateName];
+          var displayList = Object.create(null);
+          for (var depth in depths) {
+            var cmd = depths[depth];
+            if (cmd && cmd.symbolId) {
+              var itemPromise = dictionary[cmd.symbolId];
+              if (itemPromise && !itemPromise.resolved)
+                promiseQueue.push(itemPromise);
+            }
+            displayList[depth] = cmd;
+          }
+
+          var spritePromise = new Promise();
+          spritePromise.resolve(displayList);
+
+          var spriteInfo = {};
+          // TODO must be Sprite or first item (if there is only one)
+          spriteInfo.className = 'flash.display.MovieClip';
+          spriteInfo.props = {
+            timeline: [spritePromise],
+            framesLoaded: 1,
+            frameLabels: {},
+            totalFrames: 1
+          };
+          states[stateName] = spriteInfo;
+        }
+
         symbolInfo.className = 'flash.display.SimpleButton';
+        symbolInfo.props = {
+          states: states
+        };
         break;
       case 'font':
         var charset = fromCharCode.apply(null, symbol.codes);
