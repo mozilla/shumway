@@ -2,18 +2,19 @@ function renderStage(stage, ctx) {
   // All the visitors close over this class to do instance testing.
   const MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
   const ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
+  const InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
 
-  function visitContainer(container, visitor) {
+  function visitContainer(container, visitor, interactiveParent) {
     var children = container._children;
     visitor.childrenStart(container);
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
       if (child) {
         var isContainer = ContainerClass.isInstanceOf(child) || child._isContainer;
-        visitor.visit(child, isContainer);
-        if (isContainer) {
-          visitContainer(child, visitor);
-        }
+        var interactiveParent = InteractiveClass.isInstanceOf(child) ? child : interactiveParent;
+        visitor.visit(child, isContainer, interactiveParent);
+        if (isContainer)
+          visitContainer(child, visitor, interactiveParent);
       }
     }
     visitor.childrenEnd(container);
@@ -93,10 +94,12 @@ function renderStage(stage, ctx) {
       this.depth--;
       this.ctx.restore();
     },
-    visit: function (child, isContainer) {
+    visit: function (child, isContainer, interactiveParent) {
       var hitTest = false;
-      var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
-        child._applyCurrentInverseTransform(pt, child._parent);
+      if (interactiveParent) {
+        var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
+          child._applyCurrentInverseTransform(pt, child._parent);
+      }
 
       var ctx = this.ctx;
       ctx.save();
@@ -141,7 +144,7 @@ function renderStage(stage, ctx) {
             ctx.stroke(path);
           }
 
-          if (ctx.isPointInPath(pt.x, pt.y) ||
+          if (interactiveParent && ctx.isPointInPath(pt.x, pt.y) ||
               (ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y)))
             hitTest = true;
         }
@@ -156,25 +159,26 @@ function renderStage(stage, ctx) {
         ctx.restore();
       }
 
-      if (child._hitArea) {
-        // Temporary hack
-        child._hitArea.nextFrame();
+      if (interactiveParent) {
+        if (child._hitArea) {
+          // Temporary hack
+          child._hitArea.nextFrame();
 
-        hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
-      }
-
-      if (hitTest) {
-        if (child._mouseOver) {
-          child.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
-        } else {
-          child._mouseOver = true;
-
-          child.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+          hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
         }
-      } else {
-        if (child._mouseOver) {
-          child._mouseOver = false;
-          child.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+
+        if (interactiveParent && hitTest) {
+          if (interactiveParent._mouseOver) {
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+          } else {
+            interactiveParent._mouseOver = true;
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+          }
+        } else {
+          if (interactiveParent._mouseOver) {
+            interactiveParent._mouseOver = false;
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+          }
         }
       }
     }
