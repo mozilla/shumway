@@ -38,10 +38,38 @@ const SimpleButtonDefinition = (function () {
         this._downState = createSprite(s.states.down, this);
         this._hitTestState = createSprite(s.states.hitTest, this);
       }
+      this._isMouseDown = false;
+      this._isMouseOver = false;
+
+      // binding mouse events
+      const MouseEventClass = avm2.systemDomain.getClass("flash.events.MouseEvent");
+      this.addEventListener(MouseEventClass.MOUSE_DOWN, function (evt) {
+        this._isMouseDown = true;
+        this._updateButton();
+      }.bind(this), true);
+      this.addEventListener(MouseEventClass.MOUSE_UP, function (evt) {
+        this._isMouseDown = false;
+        this._updateButton();
+      }.bind(this), true);
+      this.addEventListener(MouseEventClass.MOUSE_OVER, function (evt) {
+        this._isMouseOver = true;
+        this._updateButton();
+      }.bind(this), true);
+      this.addEventListener(MouseEventClass.MOUSE_OUT, function (evt) {
+        this._isMouseOver = false;
+        this._updateButton();
+      }.bind(this), true);
+
     },
 
     _updateButton: function () {
-      this._children = [this.upState];
+      var state = this.upState;
+      if (this._isMouseDown && this._isMouseOver && this.downState) {
+        state = this.downState;
+      } else if (this._isMouseOver && this.overState) {
+        state = this.overState;
+      }
+      this._children = [state];
     }
   };
 
