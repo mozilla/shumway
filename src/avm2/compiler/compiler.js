@@ -555,6 +555,7 @@ var Compiler = (function () {
       this.compiler = compiler;
       var abc = this.compiler.abc;
       var mi = this.methodInfo = methodInfo;
+
       var parameterCount = mi.parameters.length;
       this.bytecodes = methodInfo.analysis.bytecodes;
       this.state = new State();
@@ -1617,6 +1618,7 @@ var Compiler = (function () {
         case OP_unplus:         notImplemented(); break;
         case OP_convert_f4:     notImplemented(); break;
         case OP_coerce:
+
           value = pop();
           multiname = getMultiname(bc.index);
           type = getProperty(findProperty(multiname, true), multiname);
@@ -1772,6 +1774,7 @@ var Compiler = (function () {
     var code = generate(node);
     Timer.stop();
     Timer.stop();
+    builder.build(this.abc, methodInfo);
     return code;
   };
 

@@ -119,12 +119,17 @@ function isNumeric(x) {
 
   var Sp = String.prototype;
 
+  function removeColors(s) {
+    return s.replace(/\033\[[0-9]*m/g, "");
+  }
+
   extendBuiltin(Sp, "padRight", function (c, n) {
     var str = this;
-    if (!c || str.length >= n) {
+    var length = removeColors(str).length;
+    if (!c || length >= n) {
       return str;
     }
-    var max = (n - str.length) / c.length;
+    var max = (n - length) / c.length;
     for (var i = 0; i < max; i++) {
       str += c;
     }
@@ -621,13 +626,13 @@ function base64ArrayBuffer(arrayBuffer) {
   return base64;
 }
 
-var IndentingWriter = (function () {
-  var PURPLE = '\033[94m';
-  var YELLOW = '\033[93m';
-  var GREEN = '\033[92m';
-  var RED = '\033[91m';
-  var ENDC = '\033[0m';
+var PURPLE = '\033[94m';
+var YELLOW = '\033[93m';
+var GREEN = '\033[92m';
+var RED = '\033[91m';
+var ENDC = '\033[0m';
 
+var IndentingWriter = (function () {
   var consoleOutFn = console.info.bind(console);
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
