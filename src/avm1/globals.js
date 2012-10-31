@@ -39,7 +39,9 @@ AS2Globals.prototype = {
     return nativeTarget[PropertiesIndexMap[index]];
   },
   getTimer: function() {
-    return flash.utils.getTimer();
+    var getTimer = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.getTimer'), true, true);
+    return getTimer();
   },
   getURL: function(url, target, method) {
     var request = new AS2URLRequest(url);

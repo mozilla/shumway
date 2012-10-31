@@ -128,9 +128,15 @@ const MovieClipDefinition = (function () {
             // constructor is not nullary.
             symbolClass.instance.call(instance);
 
+            if (!loader._isAvm2Enabled) {
+              this._initAvm1Bindings(cmd, symbolInfo.props, instance);
+            }
+
             instance._animated = true;
             instance._owned = true;
             instance._parent = this;
+
+            instance.dispatchEvent(new flash.events.Event("load"));
           } else if (current && current._animated) {
             target = current;
           }
@@ -164,6 +170,77 @@ const MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
+    },
+    _getAS2Object: function () {
+      if (!this.$as2Object) {
+        new AS2MovieClip().$attachNativeObject(this);
+      }
+      return this.$as2Object;
+    },
+    _initAvm1Bindings: function (cmd, symbolProps, instance) {
+      var loader = this.loaderInfo._loader;
+      var avm1Context = loader._avm1Context;
+      if (symbolProps.frameScripts) {
+        var frameScripts = symbolProps.frameScripts;
+        for (var i = 0; i < frameScripts.length; i += 2) {
+            var frameIndex = frameScripts[i];
+            var actionBlock = frameScripts[i + 1];
+            instance.addFrameScript(frameIndex, function(actionBlock) {
+              return executeActions(actionBlock, avm1Context, this._getAS2Object());
+            }.bind(instance, actionBlock));
+        }
+      }
+      if (symbolProps.variableName) {
+        var variableName = symbolProps.variableName;
+        var i = variableName.lastIndexOf('.');
+        var clip;
+        if (i >= 0) {
+          var targetPath = variableName.substring(0, i).split('.');
+          if (targetPath[0] == '_root') {
+            clip = this.root._getAS2Object();
+            targetPath.shift();
+          } else {
+            clip = instance._getAS2Object();
+          }
+          while (targetPath.length > 0) {
+            if (!(targetPath[0] in clip))
+                throw 'Cannot find ' + variableName + ' variable';
+            clip = clip[targetPath.shift()];
+          }
+          variableName = variableName.substring(i + 1);
+        } else
+          clip = instance._getAS2Object();
+        if (!(variableName in clip))
+          clip[variableName] = instance.text;
+        delete instance.text;
+        Object.defineProperty(instance, 'text', {
+          get: function (variableName) {
+            return this[variableName];
+          }.bind(clip, variableName),
+          enumerable: true
+        });
+      }
+
+      if (cmd.hasEvents) {
+        for (var i = 0; i < cmd.events.length; i++) {
+          var event = cmd.events[i];
+          if (event.eoe) {
+            break;
+          }
+          var fn = function(actionBlock) {
+            return executeActions(actionBlock, avm1Context, this._getAS2Object());
+          }.bind(instance, event.actionsData);
+          for (var eventName in event) {
+            if (eventName.indexOf("on") !== 0 || !event[eventName])
+              continue;
+            var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
+            this.addEventListener(avm2EventName, fn, false);
+          }
+        }
+      }
+      if (cmd.name) {
+        this._getAS2Object()[cmd.name] = instance._getAS2Object();
+      }
     },
 
     get currentFrame() {

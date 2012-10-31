@@ -4,6 +4,9 @@ const KeyboardEventDefinition = (function () {
 
     updateAfterEvent: function () {
       notImplemented();
+    },
+    get keyCode() {
+      return this.private$flash$events$KeyboardEvent$m_keyCode;
     }
   };
 

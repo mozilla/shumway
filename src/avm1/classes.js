@@ -281,10 +281,12 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   hitTest: {
-    value: function hitTest(x, y, shapeFlag, target) {
-      if (x instanceof AS2MovieClip)
-        x = x.$nativeObject;
-      return this.$nativeObject.hitTest(x, y, shapeFlag, target);
+    value: function hitTest(x, y, shapeFlag) {
+      if (x instanceof AS2MovieClip) {
+        return this.$nativeObject.hitTestObject(x.$nativeObject);
+      } else {
+        return this.$nativeObject.hitTestPoint(x, y, shapeFlag);
+      }
     },
     enumerable: false
   },
@@ -1130,11 +1132,11 @@ AS2Stage.prototype = Object.create({}, {
   }
 });
 AS2Broadcaster.initialize(AS2Stage);
-
+/*
 var flash = {};
 
 flash.geom = {};
-
+*/
 function AS2Rectangle(x, y, width, height) {
   this.x = x;
   this.y = y;
@@ -1144,6 +1146,7 @@ function AS2Rectangle(x, y, width, height) {
 AS2Rectangle.prototype = Object.create({}, {
   // TODO methods
 });
+/*
 flash.geom.Rectangle = AS2Rectangle;
 
 // TODO flash.geom.Point
@@ -1227,6 +1230,7 @@ flash.utils = {
   setInterval: window.setInterval,
   setTimeout: window.setTimeout
 };
+*/
 
 // Built-in classes modifications
 
