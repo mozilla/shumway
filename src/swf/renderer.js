@@ -94,6 +94,10 @@ function renderStage(stage, ctx) {
       this.ctx.restore();
     },
     visit: function (child, isContainer) {
+      var hitTest = false;
+      var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
+        child._applyCurrentInverseTransform(pt, child._parent);
+
       var ctx = this.ctx;
       ctx.save();
 
@@ -136,6 +140,10 @@ function renderStage(stage, ctx) {
               ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
           }
+
+          if (ctx.isPointInPath(pt.x, pt.y) ||
+              (ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y)))
+            hitTest = true;
         }
       }
 
@@ -146,6 +154,28 @@ function renderStage(stage, ctx) {
       if (!isContainer) {
         // letting the container to restore transforms after all children are painted
         ctx.restore();
+      }
+
+      if (child._hitArea) {
+        // Temporary hack
+        child._hitArea.nextFrame();
+
+        hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
+      }
+
+      if (hitTest) {
+        if (child._mouseOver) {
+          child.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+        } else {
+          child._mouseOver = true;
+
+          child.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        }
+      } else {
+        if (child._mouseOver) {
+          child._mouseOver = false;
+          child.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+        }
       }
     }
   };
