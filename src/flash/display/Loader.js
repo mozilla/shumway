@@ -1,6 +1,6 @@
 const LoaderDefinition = (function () {
   const WORKERS_ENABLED = true;
-  const LOADER_PATH = 'src/flash/display/Loader.js';
+  const LOADER_PATH = 'flash/display/Loader.js';
   const WORKER_SCRIPTS = [
     '../../../lib/DataView.js/DataView.js',
 

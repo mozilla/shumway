@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <title>Shumway viewer</title>
 
+    <script>
+       SHUMWAY_ROOT = "resource://shumway/";
+    </script>
     <!-- <base href="resource://shumway/web/viewer.html" /> -->
+
     <script src="../lib/DataView.js/DataView.js"></script>
     <script src="../lib/Kanvas/kanvas.js"></script>
 
@@ -28,9 +32,6 @@
     <script src="../swf/shape.js"></script>
     <script src="../swf/text.js"></script>
 
-    <!-- not used in inspector -->
-    <script src="../swf/prototypes.js"></script>
-
     <!-- Load AVM1 Dependencies -->
     <script src="../avm1/classes.js"></script>
     <script src="../avm1/globals.js"></script>
@@ -43,6 +44,17 @@
     <script src="../avm2/util.js"></script>
     <script src="../avm2/options.js"></script>
     <script src="../avm2/metrics.js"></script>
+
+    <script>
+      var Counter = new metrics.Counter(true);
+      var Timer = metrics.Timer;
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+    </script>
+
     <script src="../avm2/constants.js"></script>
     <script src="../avm2/errors.js"></script>
     <script src="../avm2/opcodes.js"></script>
@@ -58,13 +70,10 @@
     <script src="../avm2/disassembler.js"></script>
     <script src="../avm2/interpreter.js"></script>
     <script src="../avm2/vm.js"></script>
-    
-    <!-- Load Flash Dependencies -->
-    <script src="../flash/util.js"></script>
-    
-    <!-- not used in inspector -->
-    <script src="../flash/events/EventPhase.js"></script>
 
+    <script src="avm2utils.js"></script>
+
+    <!-- Load Flash Dependencies -->
     <script src="../flash/util.js"></script>
     <script src="../flash/events/Event.js"></script>
     <script src="../flash/events/KeyboardEvent.js"></script>
@@ -201,7 +210,10 @@
 
       function parseSwf(url, file) {
         console.log("Parsing " + url + "...");
-        SWF.embed(file, document.getElementById("viewer"));
+        function terminate() {}
+        createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate });
+        });
       }
         
     </script>
