@@ -35,8 +35,18 @@ SWF.embed = function(file, container, options) {
       ShumwayKeyboardListener.focus = stage;
     });
     canvas.addEventListener('mousemove', function (domEvt) {
-      stage._mouseX = domEvt.pageX - this.offsetLeft;
-      stage._mouseY = domEvt.pageY - this.offsetTop;
+      var node = this;
+      var left = 0;
+      var top = 0;
+      if (node.offsetParent) {
+        do {
+          left += node.offsetLeft;
+          top += node.offsetTop;
+        } while (node = node.offsetParent);
+      }
+
+      stage._mouseX = domEvt.pageX - left;
+      stage._mouseY = domEvt.pageY - top;
     });
 
     var bgcolor = loaderInfo._backgroundColor;
