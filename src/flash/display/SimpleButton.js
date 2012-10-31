@@ -9,10 +9,10 @@ const SimpleButtonDefinition = (function () {
       this._downState = val;
     },
     get hitTestState() {
-      return this._hitTestState;
+      return this._hitArea;
     },
     set hitTestState(val) {
-      this._hitTestState = val;
+      this._hitArea = val;
     },
     get overState() {
       return this._overState;
@@ -36,7 +36,7 @@ const SimpleButtonDefinition = (function () {
         this._upState = createSprite(s.states.up, this);
         this._overState = createSprite(s.states.over, this);
         this._downState = createSprite(s.states.down, this);
-        this._hitTestState = createSprite(s.states.hitTest, this);
+        this._hitArea = createSprite(s.states.hitTest, this);
       }
       this._isMouseDown = false;
       this._isMouseOver = false;
@@ -63,11 +63,11 @@ const SimpleButtonDefinition = (function () {
     },
 
     _updateButton: function () {
-      var state = this.upState;
-      if (this._isMouseDown && this._isMouseOver && this.downState) {
-        state = this.downState;
-      } else if (this._isMouseOver && this.overState) {
-        state = this.overState;
+      var state = this._upState;
+      if (this._isMouseDown && this._isMouseOver && this._downState) {
+        state = this._downState;
+      } else if (this._isMouseOver && this._overState) {
+        state = this._overState;
       }
       this._children = [state];
     }

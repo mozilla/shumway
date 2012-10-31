@@ -26,10 +26,10 @@ const SpriteDefinition = (function () {
       return this._graphics;
     },
     get hitArea() {
-      return null;
+      return this._hitArea;
     },
     set hitArea(val) {
-      notImplemented();
+      this._hitArea = val;
     },
     get soundTransform() {
       notImplemented();
