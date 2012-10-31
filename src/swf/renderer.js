@@ -96,9 +96,21 @@ function renderStage(stage, ctx) {
     },
     visit: function (child, isContainer, interactiveParent) {
       var hitTest = false;
+      var hitTestShape = false;
+
       if (interactiveParent) {
         var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
-          child._applyCurrentInverseTransform(pt, child._parent);
+        child._applyCurrentInverseTransform(pt, child._parent);
+
+        if (child._hitArea) {
+          // Temporary hack
+          child._hitArea.nextFrame();
+
+          hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
+        }
+
+        if (!hitTest)
+          hitTestShape = true;
       }
 
       var ctx = this.ctx;
@@ -144,7 +156,7 @@ function renderStage(stage, ctx) {
             ctx.stroke(path);
           }
 
-          if (interactiveParent && ctx.isPointInPath(pt.x, pt.y) ||
+          if (hitTestShape && ctx.isPointInPath(pt.x, pt.y) ||
               (ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y)))
             hitTest = true;
         }
@@ -159,26 +171,17 @@ function renderStage(stage, ctx) {
         ctx.restore();
       }
 
-      if (interactiveParent) {
-        if (child._hitArea) {
-          // Temporary hack
-          child._hitArea.nextFrame();
-
-          hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
-        }
-
-        if (interactiveParent && hitTest) {
-          if (interactiveParent._mouseOver) {
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
-          } else {
-            interactiveParent._mouseOver = true;
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
-          }
+      if (interactiveParent && hitTest) {
+        if (interactiveParent._mouseOver) {
+          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
         } else {
-          if (interactiveParent._mouseOver) {
-            interactiveParent._mouseOver = false;
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
-          }
+          interactiveParent._mouseOver = true;
+          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        }
+      } else {
+        if (interactiveParent._mouseOver) {
+          interactiveParent._mouseOver = false;
+          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
         }
       }
     }
