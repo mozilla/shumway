@@ -63,8 +63,9 @@ function renderStage(stage, ctx) {
         var frameWidth = ctx.canvas.width;
         var frameHeight = ctx.canvas.height;
 
-        var scaleX = frameWidth / stage.stageWidth;
-        var scaleY = frameHeight / stage.stageHeight;
+        var scaleX = frameWidth / stage._stageWidth;
+        var scaleY = frameHeight / stage._stageHeight;
+
         var scale = Math.min(scaleX, scaleY);
         var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
         var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
@@ -72,6 +73,7 @@ function renderStage(stage, ctx) {
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
         ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
 
         ctx.canvas.currentTransform = {
           scale: scale,
