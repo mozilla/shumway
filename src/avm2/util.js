@@ -233,6 +233,12 @@ function getFlags(value, flags) {
   return str.trim();
 }
 
+function bitCount(i) {
+  i = i - ((i >> 1) & 0x55555555);
+  i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
+  return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}
+
 /**
  * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
  * assume that all indices are within bounds, and that set operations are applied to equal sized sets.
@@ -754,16 +760,15 @@ var SortedList = (function() {
     }
 
     var curr = this.head;
-    var prev;
+    var prev = null;
     var node = {value: value, next: null};
     var compare = this.compare;
-    // keep the list sorted
     while (curr) {
       if (compare(curr.value, node.value) > 0) {
-        if (prev) { // current node has a previous
+        if (prev) {
           node.next = curr;
           prev.next = node;
-        } else { // current node is the head
+        } else {
           node.next = this.head;
           this.head = node;
         }
@@ -773,6 +778,14 @@ var SortedList = (function() {
       curr = curr.next;
     }
     prev.next = node;
+  };
+
+  sortedList.prototype.forEach = function forEach(visitor) {
+    var curr = this.head;
+    while (curr) {
+      visitor(curr.value);
+      curr = curr.next;
+    }
   };
 
   sortedList.prototype.pop = function pop() {

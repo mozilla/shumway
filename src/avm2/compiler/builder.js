@@ -1,3 +1,6 @@
+var c2Options = systemOptions.register(new OptionSet("Compiler 2 Options"));
+var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTraceLevel", "number", 0, "Compiler Trace Level"));
+
 (function (exports) {
 
   var Node = IR.Node;
@@ -19,9 +22,9 @@
   var Scope = IR.Scope;
   var Operator = IR.Operator;
 
-  var buildCFG = IR.buildCFG;
+  var DFG = IR.DFG;
 
-  var writer = new IndentingWriter();
+  var writer;
 
   var State = (function() {
     var nextID = 0;
@@ -125,11 +128,11 @@
       var state = start.entryState = new State(0);
 
       /* First local is the |this| reference. */
-      state.local.push(new This());
+      state.local.push(new This(start));
 
       /* Create the method's parameters. */
       for (var i = 0; i < mi.parameters.length; i++) {
-        state.local.push(new Parameter(i, mi.parameters[i].name));
+        state.local.push(new Parameter(start, i, mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
@@ -158,11 +161,16 @@
 
       var stopPoints = [];
 
+      for (var i = 0; i < blocks.length; i++) {
+        blocks[i].blockDominatorOrder = i;
+      }
+
       var worklist = new SortedList(function compare(a, b) {
-        return a.block.bdo - b.block.bdo;
+        return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
       var start = this.buildStart();
+
 
       worklist.push({region: start, block: blocks[0], state: start.entryState});
 
@@ -172,28 +180,34 @@
           var target = stop.target;
           var region = target.region;
           if (region) {
-            writer.enter("Merging into region: " + region + " @ " + target.position + " {");
-            writer.writeLn("  R " + region.entryState);
-            writer.writeLn("+ I " + stop.state);
+            writer && writer.enter("Merging into region: " + region + " @ " + target.position + " {");
+            writer && writer.writeLn("  R " + region.entryState);
+            writer && writer.writeLn("+ I " + stop.state);
 
             region.entryState.merge(region, stop.state);
             region.predecessors.push(stop.control);
 
-            writer.writeLn("  = " + region.entryState);
-            writer.leave("}");
+            writer && writer.writeLn("  = " + region.entryState);
+            writer && writer.leave("}");
           } else {
             region = target.region = new Region(stop.control);
             if (target.loop) {
-              writer.writeLn("Adding PHIs to loop region.");
+              writer && writer.writeLn("Adding PHIs to loop region.");
             }
             region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
-            writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
+            writer && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target, state: region.entryState});
           }
         });
+
+        writer && writer.enter("Worklist: {");
+        worklist.forEach(function (item) {
+          writer && writer.writeLn(item.region + " " + item.block.bdo + " " + item.state);
+        });
+        writer && writer.leave("}");
       }
 
-      writer.writeLn("Done");
+      writer && writer.writeLn("Done");
 
       function buildNodes(region, block, state) {
         assert (region && block && state);
@@ -318,6 +332,7 @@
         }
 
         if (writer) {
+          writer.writeLn("Processing Region: " + region);
           writer.enter(("> state: " + region.entryState.toString()).padRight(' ', 100));
         }
 
@@ -487,17 +502,62 @@
       } else {
         stop = new Stop(stopPoints[0].region, stopPoints[0].value);
       }
-      IR.traceDFG(writer, stop);
-      return stop;
+      return new DFG(stop);
     }
     return constructor;
   })();
 
   function build(abc, methodInfo) {
-    var stop = new Builder(abc, methodInfo).build();
-    IR.traceCFG(writer, buildCFG(stop));
-    IR.traceDFG(writer, stop);
-    return stop;
+    if (compilerTraceLevel.value > 0) {
+      writer = new IndentingWriter();
+    }
+
+    Timer.start("IR Builder");
+    var dfg = new Builder(abc, methodInfo).build();
+    Timer.stop();
+
+    // dfg.traceMetrics(new IndentingWriter());
+
+    // writer && dfg.trace(writer);
+
+    Timer.start("IR CFG");
+    var cfg = dfg.buildCFG();
+    Timer.stop();
+
+    // writer && dfg.trace(writer);
+    Timer.start("IR DOM");
+    cfg.computeDominators(true);
+    Timer.stop();
+
+    // Timer.start("IR LOOP");
+    cfg.computeLoops();
+    // Timer.stop();
+
+    writer.writeLn("==================================");
+
+    writer && cfg.trace(writer);
+
+    Timer.start("IR INTERVALS");
+    // cfg.computeIntervals(true);
+    var levels = cfg.computeIntervals(true);
+    for (var i = 0; i < levels.length; i++) {
+      var level = levels[i];
+      writer.writeLn("Map: " + level.map);
+      writer.enter("> Level: " + levels.length);
+      level.intervals.forEach(function (interval) {
+        writer.writeLn(interval);
+      });
+      writer.leave("<");
+    };
+    // cfg.computeIntervalGraphs(true);
+    Timer.stop();
+
+    // Timer.start("IR SCHEDULE");
+    // cfg.scheduleEarly();
+    // Timer.stop();
+
+    writer && cfg.trace(writer);
+    return;
   }
 
   exports.build = build;
