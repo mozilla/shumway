@@ -43,6 +43,7 @@ function executeActions(actionsData, context, scope) {
   try {
     AS2Context.instance = context;
     context.defaultTarget = scope;
+    context.globals['this'] = scope;
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);

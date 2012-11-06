@@ -82,16 +82,18 @@ const LoaderDefinition = (function () {
         var frame = { type: 'frame' };
         var frames = [];
         var tags = swfTag.tags;
+        var frameScripts = null;
+        var frameIndex = 0;
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
           switch (tag.code) {
-            //case SWF_TAG_CODE_DO_ACTION:
-            //  var actionBlocks = frame.actionBlocks;
-            //  if (!actionBlocks)
-            //    frame.actionBlocks = [tag.actionsData];
-            //  else
-            //    actionBlocks.push(tag.actionsData);
-            //  break;
+          case SWF_TAG_CODE_DO_ACTION:
+            if (!frameScripts)
+              frameScripts = [];
+            frameScripts.push(frameIndex);
+            frameScripts.push(tag.actionsData);
+            break;
+          // case SWF_TAG_CODE_DO_INIT_ACTION: ??
           case SWF_TAG_CODE_FRAME_LABEL:
             frame.labelName = tag.name;
             break;
@@ -113,6 +115,7 @@ const LoaderDefinition = (function () {
               i++;
               repeat++;
             }
+            frameIndex += repeat;
             if (repeat > 1)
               frame.repeat = repeat;
             frame.depths = depths;
@@ -126,7 +129,8 @@ const LoaderDefinition = (function () {
           type: 'sprite',
           id: swfTag.id,
           frameCount: swfTag.frameCount,
-          frames: frames
+          frames: frames,
+          frameScripts: frameScripts
         };
         break;
       case SWF_TAG_CODE_DEFINE_TEXT:
@@ -173,21 +177,20 @@ const LoaderDefinition = (function () {
               else
                 frame.abcBlocks = [tag.data];
               break;
-              //case SWF_TAG_CODE_DO_ACTION:
-              //  var actionBlocks = frame.actionBlocks;
-              //  if (actionBlocks)
-              //    actionBlocks.push(tag.actionData);
-              //  else
-              //    frame.actionBlocks = [tag.actionData];
-              //  break;
-              //case SWF_TAG_CODE_DO_INIT_ACTION:
-              //  var initActionBlocks = frame.initActionBlocks;
-              //  if (!initActionBlocks) {
-              //    initActionBlocks = { };
-              //    frame.initActionBlocks = initActionBlocks;
-              //  }
-              //  initActionBlocks[tag.spriteId] = tag.actionsData;
-              //  break;
+            case SWF_TAG_CODE_DO_ACTION:
+              var actionBlocks = frame.actionBlocks;
+              if (actionBlocks)
+                actionBlocks.push(tag.actionsData);
+              else
+                frame.actionBlocks = [tag.actionsData];
+              break;
+            case SWF_TAG_CODE_DO_INIT_ACTION:
+              var initActionBlocks = frame.initActionBlocks;
+              if (!initActionBlocks) {
+                frame.initActionBlocks = initActionBlocks = {};
+              }
+              initActionBlocks[tag.spriteId] = tag.actionsData;
+              break;
             case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:
               var exports = frame.exports;
@@ -311,6 +314,7 @@ const LoaderDefinition = (function () {
     },
     _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
+      var actionBlocks = frame.actionBlocks;
       var depths = frame.depths;
       var exports = frame.exports;
       var loader = this;
@@ -352,7 +356,7 @@ const LoaderDefinition = (function () {
           }
         }
 
-        if (exports) {
+        if (exports && loader._isAvm2Enabled) {
           for (var i = 0, n = exports.length; i < n; i++) {
             var asset = exports[i];
             var symbolPromise = dictionary[asset.symbolId];
@@ -372,8 +376,8 @@ const LoaderDefinition = (function () {
         }
 
         var root = loader._content;
-
-        if (!root) {
+        var needRootObject = !root;
+        if (needRootObject) {
           var stage = loader._stage;
           var rootClass = avm2.applicationDomain.getClass(val.className);
 
@@ -387,6 +391,11 @@ const LoaderDefinition = (function () {
           root._totalFrames = val.props.totalFrames;
 
           loader._content = root;
+        }
+
+        if (!loader._isAvm2Enabled) {
+          loader._initAvm1Bindings(root, needRootObject, frameNum,
+                                   actionBlocks, exports);
         }
 
         framePromise.resolve(displayList);
@@ -403,6 +412,39 @@ const LoaderDefinition = (function () {
         if (frameNum === 1)
           loaderInfo.dispatchEvent(new flash.events.Event('init'));
       });
+    },
+    _initAvm1Bindings: function(root, initializeRoot, frameNum,
+                                actionBlocks, exports) {
+      var avm1Context = this._avm1Context;
+      if (initializeRoot) {
+        var as2Object = root._getAS2Object();
+        avm1Context.globals._root = as2Object;
+        avm1Context.globals._level0 = as2Object;
+      }
+      if (exports) {
+        // HACK mocking the sound clips presence
+        var SoundMock = function(assets) {
+          var clip = {
+            start: function() {},
+            setVolume: function() {}
+          };
+          for (var i = 0; i < assets.length; i++) {
+            if (assets[i].className) {
+              this[assets[i].className] = clip;
+            }
+          }
+        };
+
+        var as2Object = root._getAS2Object();
+        as2Object.soundmc = new SoundMock(exports);
+      }
+      if (actionBlocks) {
+        for (var i = 0; i < actionBlocks.length; i++) {
+          root.addFrameScript(frameNum - 1, function(actionBlock) {
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root);
+          }.bind(root, actionBlocks[i]));
+        }
+      }
     },
     _commitSymbol: function (symbol) {
       var dependencies = symbol.require;
@@ -499,6 +541,7 @@ const LoaderDefinition = (function () {
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
           },
+          variableName: symbol.variableName,
           text: symbol.value
         };
         break;
@@ -566,6 +609,7 @@ const LoaderDefinition = (function () {
           timeline: timeline,
           framesLoaded: frameCount,
           frameLabels: frameLabels,
+          frameScripts: symbol.frameScripts,
           totalFrames: frameCount
         };
         break;
@@ -624,7 +668,11 @@ const LoaderDefinition = (function () {
       if (loader._isAvm2Enabled) {
         loader._vmPromise.resolve();
       } else {
-        // TODO avm1 initialization
+        // avm1 initialization
+        var loaderInfo = loader.contentLoaderInfo;
+        var avm1Context = new AS2Context(loaderInfo._swfVersion);
+        avm1Context.stage = stage;
+        loader._avm1Context = avm1Context;
 
         AS2Key.$bind(stage);
         AS2Mouse.$bind(stage);
