@@ -462,6 +462,11 @@ function BitSetFunctor(length) {
         }
       }
       return set.join(", ");
+    },
+
+    isEmpty: function isEmpty() {
+      this.recount();
+      return this.count === 0;
     }
   };
 
@@ -571,6 +576,11 @@ function BitSetFunctor(length) {
     contains: function contains(other) {
       var bits = this.bits;
       return (bits | other.bits) === bits;
+    },
+
+    isEmpty: function isEmpty() {
+      this.recount();
+      return this.count === 0;
     },
 
     toBitString: BitSet.prototype.toBitString,

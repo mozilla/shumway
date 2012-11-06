@@ -391,14 +391,25 @@
 
   var Block = (function () {
     function constructor(id, start, end) {
-      assert (start instanceof Region);
+      if (start) {
+        assert (start instanceof Region);
+      }
       this.region = start;
       this.id = id;
       this.successors = [];
+      this.predecessors = [];
       this.nodes = [start, end];
     }
-    constructor.prototype.pushSuccessor = function pushSuccessor(successor) {
+    constructor.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
+      assert (successor);
       this.successors.push(successor);
+      if (pushPredecessor) {
+        successor.pushPredecessor(this);
+      }
+    };
+    constructor.prototype.pushPredecessor = function pushPredecessor(predecessor) {
+      assert (predecessor);
+      this.predecessors.push(predecessor);
     };
     constructor.prototype.visitNodes = function (fn) {
       this.nodes.forEach(fn);
@@ -412,6 +423,8 @@
       return predecessors;
     };
     constructor.prototype.visitPredecessors = function (fn) {
+      this.predecessors.forEach(fn);
+      /*
       this.region.predecessors.forEach(function (predecessor) {
         if (predecessor instanceof Projection) {
           predecessor = predecessor.project();
@@ -419,13 +432,14 @@
         var region = predecessor.control;
         fn(region.block);
       });
+      */
     };
     constructor.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
     constructor.prototype.toString = function () {
-      return "B" + this.id;
+      return "B" + this.id + (this.name ? " (" + this.name + ")" : "");
     };
     return constructor;
   })();
@@ -436,7 +450,7 @@
     }
 
     constructor.prototype.buildCFG = function () {
-      return new CFG(this);
+      return CFG.fromDFG(this);
     };
 
     function preOrderDepthFirstSearch(root, visitChildren, pre) {
@@ -546,16 +560,20 @@
   })();
 
   var CFG = (function () {
-    function constructor(dfg) {
-      assert (dfg && dfg instanceof DFG);
-      this.dfg = dfg;
+    function constructor() {
+      this.nextBlockID = 0;
+      this.blocks = [];
       this.exit;
       this.root;
-      this.blocks = [];
-      this.nextBlockID = 0;
+    }
+
+    constructor.fromDFG = function fromDFG(dfg) {
+      var cfg = new CFG();
+
+      assert (dfg && dfg instanceof DFG);
+      cfg.dfg = dfg;
 
       var visited = [];
-      var cfg = this;
 
       function buildEnd(end) {
         if (end instanceof Projection) {
@@ -585,13 +603,55 @@
             d = d.project();
           }
           buildEnd(d);
-          d.control.block.pushSuccessor(block);
+          d.control.block.pushSuccessor(block, true);
         }
       }
 
       buildEnd(dfg.exit);
       cfg.exit = dfg.exit.control.block;
-    }
+      return cfg;
+    };
+
+    constructor.prototype.build = function (list) {
+      var cfg = this;
+      var names = cfg.blockNames || (cfg.blockNames = {});
+      var blocks = cfg.blocks;
+
+      var sets = list.replace(/\ /g,"").split(",");
+      sets.forEach(function (set) {
+        var edgeList = set.split("->");
+        var last = null;
+        for (var i = 0; i < edgeList.length; i++) {
+          var next = edgeList[i];
+          if (last) {
+            buildEdge(last, next);
+          } else {
+            buildBlock(next);
+          }
+          last = next;
+        }
+      });
+
+      function buildBlock(name) {
+        var block = names[name];
+        if (block) {
+          return block;
+        }
+        names[name] = block = new Block(cfg.nextBlockID++);
+        block.name = name;
+        if (blocks.length === 0) {
+          cfg.root = block;
+        }
+        blocks.push(block);
+        return block;
+      }
+
+      function buildEdge(from, to) {
+        print("" + from + " -> " + to);
+        buildBlock(from).pushSuccessor(buildBlock(to), true);
+        // buildBlock(to).pushPredecessor(buildBlock(from));
+      }
+    };
 
     constructor.prototype.buildBlock = function (start, end) {
       var block = new Block(this.nextBlockID++, start, end);
@@ -607,9 +667,15 @@
     };
 
     constructor.prototype.computeReversePostOrder = function computeReversePostOrder() {
-      var order = [];
+      if (this.order) {
+        return this.order;
+      }
+      var order = this.order = [];
       this.depthFirstSearch(null, order.push.bind(order));
       order.reverse();
+      for (var i = 0; i < order.length; i++) {
+        order[i].rpo = i;
+      }
       return order;
     };
 
@@ -800,8 +866,7 @@
     })();
 
     /**
-     * Computes the Allen-Cocke interval partitioning. Optionally, the interval information
-     * can be applied to blocks directly, so that blocks point to their containing interval.
+     * Computes the Allen-Cocke interval partitioning.
      *
      * Definitions:
      *
@@ -839,6 +904,7 @@
         });
         return predecessors;
       }
+
 
       var levels = [];
       while (order.length > 1) {
@@ -908,8 +974,8 @@
         var newMap = [];
         intervals.forEach(function (interval) {
           order.push(interval.header);
-          interval.set.forEach(function (id) {
-            newMap[id] = interval.header;
+          interval.set.forEach(function (blockID) {
+            newMap[blockID] = interval.header;
           });
         });
 
@@ -928,6 +994,348 @@
       }
 
       return levels;
+    };
+
+    constructor.prototype.restructure = function restructure() {
+      var isHeaderOrLatch = this.createBlockSet();
+      this.restructureLoops(isHeaderOrLatch);
+      this.restructureIfs(isHeaderOrLatch);
+
+      this.buildStructure();
+    };
+
+    var Control = {
+      If: function (block, _then, _else) {
+        this.block = block;
+        this.then = _then;
+        this.else = _else;
+      },
+      Block: function (block) {
+        this.block = block;
+      },
+      Sequence: function () {
+        this.elements = [];
+      }
+    };
+
+    constructor.prototype.buildStructure = function buildStructure() {
+
+      function notFollow(block) {
+        assert (block.successors.length === 2);
+        if (block.successors[0] === block.follow) {
+          return block.successors[1];
+        }
+        return block.successors[0];
+      }
+
+      var writer = new IndentingWriter();
+
+      function build(block) {
+        if (block.ifType === IfType.IF_THEN) {
+                        
+        }
+      }
+
+      /*
+      var inFollow = this.createBlockSet();
+      function build(block) {
+        var current = block;
+        var control = new Control.Sequence();
+        while (current) {
+          writer.enter("> Build: " + current);
+          if (current.ifType === IfType.IF_THEN) {
+            inFollow.set(current.follow.id);
+            var _then = build(notFollow(current));
+            control.elements.push(new Control.If(current, _then));
+            inFollow.clear(current.follow.id);
+          }
+          if (inFollow.get(current.follow.id)) {
+            return control;
+          }
+          current = current.follow;
+          writer.leave("<");
+        }
+      }
+      */
+
+      return build(this.root);
+    };
+
+    constructor.prototype.traceStructure = function (writer) {
+
+      function notFollow(block) {
+        if (block.successors[0] === block.follow) {
+          return block.successors[1];
+        }
+        return block.successors[0];
+      }
+
+      function nest(block) {
+        if (block.loopType) {
+          if (block.loopType === LoopType.PRE_TESTED) {
+            writer.enter("while () { " + block);
+            next(notFollow(block));
+            writer.leave("}");
+          } else if (block.loopType === LoopType.POST_TESTED) {
+            writer.enter("do { " + block);
+            next(notFollow(block));
+            writer.leave("} while ();");
+          } else if (block.loopType === LoopType.ENDLESS) {
+            writer.enter("loop { " + block);
+            next(notFollow(block));
+            writer.leave("} while ();");
+          }
+        } else if (block.ifType) {
+          if (block.ifType === IfType.IF_THEN) {
+            writer.enter("if () { " + block);
+            next(notFollow(block));
+            writer.leave("}");
+          } else if (block.ifType === IfType.IF_THEN_ELSE) {
+            writer.enter("if () { " + block);
+            next(block.successors[0]);
+            writer.leave("} else { " + block);
+            writer.indent();
+            next(block.successors[1]);
+            writer.leave("}");
+          }
+        } else {
+          writer.writeLn("... " + block);
+        }
+      }
+
+      function next(block) {
+        while (block) {
+          nest(block);
+          block = block.follow;
+        }
+      }
+
+      next(this.root.successors[0]);
+    };
+
+    var IfType = {
+      IF_THEN: "If Then",
+      IF_THEN_ELSE: "If Else"
+    };
+
+    var LoopType = {
+      POST_TESTED: "Post Tested",
+      PRE_TESTED: "Pre Tested",
+      ENDLESS: "Endless"
+    };
+
+    constructor.prototype.restructureIfs = function restructureIfs(isStructured) {
+      var order = this.order;
+      var blocks = this.blocks;
+      var follow;
+
+      function blockType(node) {
+        return node.successors.length;
+      }
+
+      var unresolved = this.createBlockSet();
+      for (var i = order.length - 1; i >= 0; i--) {
+        var block = order[i];
+        // Find 2-Way header block.
+        if (blockType(block) === 2 && !isStructured.get(block.id)) {
+          print("2-Way Header Block: " + block);
+          // Find follow block.
+          follow = null;
+          for (var j = i; j < order.length; j++) {
+            if (order[j].dominator === block && order[j].predecessors.length >= 2) {
+              follow = order[j];
+            }
+          }
+          if (follow) {
+            assert (follow);
+            print("2-Way Follow Block: " + follow);
+            block.ifType = findIfType(block, follow);
+            block.follow = follow;
+            isStructured.set(block.id);
+            unresolved.forEach(function (blockID) {
+              var unresolvedBlock = blocks[blockID];
+              unresolvedBlock.ifType = findIfType(unresolvedBlock, follow);
+              unresolvedBlock.follow = follow;
+              isStructured.set(blockID);
+              unresolved.clear(blockID);
+            });
+          } else {
+            unresolved.set(block.id);
+          }
+        }
+      }
+
+      function findIfType(header, follow) {
+        print ("H: " + header);
+        print ("F: " + follow);
+        print ("H: Succ: " + header.successors);
+        if (header.successors[0] === follow || header.successors[1] === follow) {
+          return IfType.IF_THEN;
+        }
+        return IfType.IF_THEN_ELSE;
+      }
+    };
+
+    constructor.prototype.restructureLoops = function restructureLoops(isHeaderOrLatch) {
+      var levels = this.computeIntervals();
+      var writer = new IndentingWriter();
+      var blocks = this.blocks;
+
+      function getPredecessors(node, map) {
+        return node.predecessors.map(function (predecessor) {
+          return map ? map[predecessor.id] : predecessor;
+        });
+      }
+
+      function getSuccessors(node, map) {
+        return node.successors.map(function (successor) {
+          return map ? map[successor.id] : successor;
+        });
+      }
+
+      function blockType(node) {
+        return node.successors.length;
+      }
+
+      var inLoop = this.createBlockSet();
+      var inAnyLoop = this.createBlockSet();
+
+      /**
+       * Marks the blocks belonging to the loop that is induced by the back edge
+       * from the latch to the interval header. This is the set of blocks in the
+       * interval whose reverse-post-order (rpo) number is less than or equal to
+       * the latch's rpo.
+       */
+      function markLoopBlocks(inLoop, interval, latch) {
+        assert (inLoop.isEmpty());
+        interval.set.forEach(function (blockID) {
+          var block = blocks[blockID];
+          assert (block.rpo >= interval.header.rpo);
+          if (block.rpo <= latch.rpo) {
+            assert (!inLoop.get(block.id));
+            inLoop.set(block.id);
+          }
+        });
+      }
+
+      function findLoopType(inLoop, header, latch, map) {
+        print("Header: " + header);
+        print("Header Succ: " + header.successors);
+        print("Latch: " + latch);
+        print("Latch  Succ: " + latch.successors);
+
+        var latchType = blockType(latch);
+        var headerType = blockType(header);
+
+        print("headerType: " + headerType + ", latchType: " + latchType);
+
+        if (header === latch) {
+          return LoopType.POST_TESTED;
+        } else if (latchType === 1) {
+          if (headerType === 1) {
+            return LoopType.ENDLESS;
+          } else if (headerType === 2) {
+            return LoopType.PRE_TESTED;
+          }
+        } else if (latchType === 2) {
+          if (headerType === 1) {
+            return LoopType.POST_TESTED;
+          } else if (headerType === 2) {
+            var successors = getSuccessors(header, map);
+            print("inLoop: " + inLoop + " succ " + successors);
+            if (inLoop.get(successors[0].id) && inLoop.get(successors[1].id)) {
+              return LoopType.POST_TESTED;
+            } else {
+              return LoopType.PRE_TESTED;
+            }
+          }
+        }
+      }
+
+      function findLoopFollow(inLoop, header, latch, map) {
+        assert (header.loopType);
+
+        var loopType = header.loopType;
+        var successors;
+        if (loopType === LoopType.PRE_TESTED) {
+          successors = getSuccessors(header, map);
+          if (inLoop.get(successors[0].id)) {
+            return successors[1];
+          } else {
+            return successors[0];
+          }
+        } else if (loopType === LoopType.POST_TESTED) {
+          successors = getSuccessors(latch, map);
+          if (inLoop.get(successors[0].id)) {
+            return successors[1];
+          } else {
+            return successors[0];
+          }
+        } else if (loopType === LoopType.ENDLESS) {
+          var max = {rpo: Number.MAX_VALUE};
+          var follow = max;
+          inLoop.forEach(function (blockID) {
+            var block = blocks[blockID];
+            if (block.successors.length !== 2) {
+              return;
+            }
+            successors = getSuccessors(block, map);
+            for (var i = 0; i < 2; i++) {
+              if (!inLoop.get(successors[i].id) && successors[i].rpo < follow.rpo) {
+                follow = successors[i];
+                break;
+              }
+            }
+          });
+          if (follow != max) {
+            return follow;
+          } else {
+            return null;
+          }
+        }
+      }
+
+      for (var i = 0; i < levels.length; i++) {
+        inAnyLoop.clearAll();
+        var intervals = levels[i].intervals;
+        writer.enter("> Restructuring Level: " + i);
+        for (var j = 0; j < intervals.length; j++) {
+          var interval = intervals[j];
+          var header = interval.header;
+          var predecessors = getPredecessors(header, map);
+          writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
+
+          // Find Latching Node, there can be many, what to do about the rest??
+          // Insert continues i guess.
+          // Should we look for the last latch node?
+          var latch = null;
+          for (var k = 0; k < predecessors.length; k++) {
+            var predecessor = predecessors[k];
+            if (interval.set.get(predecessor.id) && !inAnyLoop.get(predecessor.id)) {
+              latch = predecessor;
+              break;
+            }
+          }
+
+          writer.writeLn("Header Node Type: " + blockType(header));
+
+          if (latch) {
+            writer.writeLn("Latch Node: " + latch);
+            inLoop.clearAll();
+            markLoopBlocks(inLoop, interval, latch);
+            writer.writeLn("In Loop: " + inLoop);
+
+            header.loopType = findLoopType(inLoop, header, latch, map);
+            header.follow = findLoopFollow(inLoop, header, latch, map);
+            inAnyLoop._union(inLoop);
+
+            isHeaderOrLatch.set(header.id);
+            isHeaderOrLatch.set(latch.id);
+          }
+        }
+        writer.leave("<");
+        var map = levels[i].map;
+      }
     };
 
     constructor.prototype.trace = function (writer) {
@@ -951,14 +1359,19 @@
         return "white";
       }
 
+      function styleOf(block) {
+        if (block.loopType) {
+          return "rounded";
+        }
+      }
       function shapeOf(block) {
         assert (block);
         if (block === root) {
           return "house";
         } else if (block === exit) {
           return "invhouse";
-        } else if (block.isLoopHeader) {
-          return "circle"
+        } else if (block.loopType) {
+          return "box"
         }
         return "box";
       }
@@ -975,17 +1388,29 @@
         var loopInfo = "";
         var blockInfo = "";
         var intervalInfo = "";
-        if (block.dominatorDepth !== undefined) {
-          blockInfo = " D" + block.dominatorDepth;
-        }
+        // if (block.dominatorDepth !== undefined) {
+        //  blockInfo = " D" + block.dominatorDepth;
+        // }
         if (block.loops !== undefined) {
           // loopInfo = "loop: " + block.loops + ", nest: " + bitCount(block.loops);
           // loopInfo = " L" + bitCount(block.loops);
         }
-        if (block.interval) {
-          intervalInfo = " I";
+        if (block.name !== undefined) {
+          blockInfo += " " + block.name;
         }
-        writer.writeLn("B" + block.id + " [label = \"" + block.id + loopInfo + blockInfo + intervalInfo + "\", color = \"" + colorOf(block) + "\", shape=" + shapeOf(block) + "];");
+        if (block.rpo !== undefined) {
+          blockInfo += " O" + block.rpo;
+        }
+        if (block.loopType) {
+          blockInfo += ", " + block.loopType;
+        }
+        if (block.ifType) {
+          blockInfo += ", " + block.ifType;
+        }
+        if (block.follow) {
+          blockInfo += ", follow: " + block.follow;
+        }
+        writer.writeLn("B" + block.id + " [label = \"B" + block.id + blockInfo + loopInfo + "\", color = \"" + colorOf(block) + "\", shape=" + shapeOf(block) + ", style=" + styleOf(block) + "];");
       });
 
       blocks.forEach(function (block) {
@@ -994,11 +1419,6 @@
         });
         if (block.dominator) {
           writer.writeLn("B" + block.id + " -> " + "B" + block.dominator.id + " [color = orange];");
-        }
-        if (block.interval) {
-          for (var i = 0; i < block.interval.length; i++) {
-            writer.writeLn("B" + block.id + " -> " + "B" + block.interval[i].header.id + ' [label = "G' + i + '",  color = blue];');
-          }
         }
       });
 
@@ -1029,5 +1449,6 @@
   exports.Operator = Operator;
 
   exports.DFG = DFG;
+  exports.CFG= CFG;
 
 })(typeof exports === "undefined" ? (IR = {}) : exports);

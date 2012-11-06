@@ -23,6 +23,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Operator = IR.Operator;
 
   var DFG = IR.DFG;
+  var CFG = IR.CFG;
 
   var writer;
 
@@ -331,6 +332,11 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return new Binary(Operator.OR, value, constant(0));
         }
 
+        function toDouble(value) {
+          // TODO: FIX THIS;
+          return new Binary(Operator.OR, value, constant(0));
+        }
+
         if (writer) {
           writer.writeLn("Processing Region: " + region);
           writer.enter(("> state: " + region.entryState.toString()).padRight(' ', 100));
@@ -454,6 +460,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_convert_i:
               push(toInt32(pop()));
               break;
+            case OP_convert_d:
+              push(toDouble(pop()));
+              break;
             case OP_convert_b:
               push(new Unary(Operator.FALSE, new Unary(Operator.FALSE, pop())));
               break;
@@ -538,25 +547,50 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     writer && cfg.trace(writer);
 
     Timer.start("IR INTERVALS");
-    // cfg.computeIntervals(true);
-    var levels = cfg.computeIntervals(true);
-    for (var i = 0; i < levels.length; i++) {
-      var level = levels[i];
-      writer.writeLn("Map: " + level.map);
-      writer.enter("> Level: " + levels.length);
-      level.intervals.forEach(function (interval) {
-        writer.writeLn(interval);
-      });
-      writer.leave("<");
-    };
+    var levels = cfg.computeIntervals();
+
+    function traceIntervals(levels) {
+      for (var i = 0; i < levels.length; i++) {
+        var level = levels[i];
+        writer.writeLn("Map: " + level.map);
+        writer.enter("> Level: " + i);
+        level.intervals.forEach(function (interval) {
+          writer.writeLn(interval);
+        });
+        writer.leave("<");
+      }
+    }
+
+    // traceIntervals(levels);
+
     // cfg.computeIntervalGraphs(true);
     Timer.stop();
+
+    // writer && cfg.trace(writer);
+
+    cfg.restructure();
+
+    // cfg.traceStructure(writer);
+
+    cfg.trace(writer);
+
+    writer.writeLn("-------------------------------\n");
+
+    // var c = new CFG();
+
+    // c.build("1->2->3->6->7,6->2,3->4->5,1->4");
+    // c.build("1->2->3->5,1->5,2->4->5, 5->6->7->8->9->10->11,7->9,8->10, 6->12->13->14->15->6,14->13");
+    // levels = c.computeIntervals();
+    // traceIntervals(levels);
+
+    // c.restructure();
+
+    // writer && c.trace(writer);
 
     // Timer.start("IR SCHEDULE");
     // cfg.scheduleEarly();
     // Timer.stop();
 
-    writer && cfg.trace(writer);
     return;
   }
 
