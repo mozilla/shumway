@@ -218,17 +218,26 @@
         
     </script>
     <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
       #viewer {
-        position:fixed;left:0;top:0;bottom:0;right:0;
+        position:fixed;
+        left:0;top:0;bottom:0;right:0;
+        overflow: hidden;
         /* background-color:magenta; */
       }
+
 
       #fallback {
         display: none;
       }
       #fallback.enabled {
         display: block;
-        position:fixed; right: 10px; bottom: 10px; width: 70px; height: 14px;
+        position:fixed;
+        right: 10px; bottom: 10px; width: 70px; height: 14px;
         color: white;
         background-color: #400040;
         font: bold 10px sans-serif;
