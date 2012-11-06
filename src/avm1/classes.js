@@ -24,6 +24,32 @@ function proxyNativeMethod(methodName) {
   };
 }
 
+function proxyEventHandler(eventName, argsConverter) {
+  var currentHandler = null;
+  function handlerRunner() {
+    if (currentHandler) {
+      var args = argsConverter ? argsConverter(arguments) : null;
+      return currentHandler.apply(this, args);
+    }
+  }
+  return {
+    get: function() {
+      return handlerRunner;
+    },
+    set: function(newHandler) {
+      if (currentHandler) {
+        this.$nativeObject.removeEventListener(eventName, currentHandler);
+      }
+      currentHandler = newHandler;
+      if (newHandler) {
+        this.$nativeObject.addEventListener(eventName, newHandler);
+      }
+    },
+    configurable: false,
+    enumerable: false
+  };
+}
+
 function createConstant(value) {
   return {
     value: value,
@@ -355,108 +381,23 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  onData: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onDragOut: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onDragOver: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onEnterFrame: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKeyDown: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKeyUp: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKillFocus: {
-    value: function(newFocus) {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onLoad: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onMouseDown: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onMouseUp: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onPress: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRelease: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onReleaseOutside: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRollOut: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRollOver: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onSetFocus: {
-    value: function(oldFocus) {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onUnload: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
+  onData: proxyEventHandler('data'),
+  onDragOut: proxyEventHandler('dragOut'),
+  onDragOut: proxyEventHandler('dragOver'),
+  onEnterFrame: proxyEventHandler('enterFrame'),
+  onKeyDown: proxyEventHandler('keyDown'),
+  onKeyUp: proxyEventHandler('keyUp'),
+  onKillFocus: proxyEventHandler('focusOut', function(e) { return [e.relatedObject]; }),
+  onLoad: proxyEventHandler('load'),
+  onMouseDown: proxyEventHandler('mouseDown'),
+  onMouseUp: proxyEventHandler('mouseUp'),
+  onPress: proxyEventHandler('mouseDown'),
+  onRelease: proxyEventHandler('mouseUp'),
+  onReleaseOutside: proxyEventHandler('releaseOutside'),
+  onRollOut: proxyEventHandler('rollOut'),
+  onRollOver: proxyEventHandler('rollOver'),
+  onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
+  onUnload: proxyEventHandler('unload'),
   opaqueBackground: { // @flash.display.DisplayObject
     get: function get$opaqueBackground() { return this.$nativeObject.opaqueBackground; },
     set: function set$opaqueBackground(value) { this.$nativeObject.opaqueBackground = value; },
@@ -700,72 +641,17 @@ AS2Button.prototype = Object.create({}, {
     set: function set$_name(value) { this.$nativeObject.name = value; },
     enumerable: true
   },
-  onDragOut: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onDragOver: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKeyDown: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKeyUp: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKillFocus: {
-    value: function(newFocus) {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onPress: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRelease: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onReleaseOutside: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRollOut: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onRollOver: {
-    value: function() {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onSetFocus: {
-    value: function(oldFocus) {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
+  onDragOut: proxyEventHandler('dragOut'),
+  onDragOut: proxyEventHandler('dragOver'),
+  onKeyDown: proxyEventHandler('keyDown'),
+  onKeyUp: proxyEventHandler('keyUp'),
+  onKillFocus: proxyEventHandler('focusOut', function(e) { return [e.relatedObject]; }),
+  onPress: proxyEventHandler('mouseDown'),
+  onRelease: proxyEventHandler('mouseUp'),
+  onReleaseOutside: proxyEventHandler('releaseOutside'),
+  onRollOut: proxyEventHandler('rollOut'),
+  onRollOver: proxyEventHandler('rollOver'),
+  onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   _parent: { // @flash.display.DisplayObject
     get: function get$_parent() { return this.$nativeObject.parent; },
     set: function set$_parent(value) { this.$nativeObject.parent = value; },
@@ -944,20 +830,6 @@ defineObjectProperties(AS2Key, {
     }
   }
 });
-AS2Key.prototype = Object.create({}, {
-  onKeyDown: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onKeyUp: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  }
-});
 AS2Broadcaster.initialize(AS2Key);
 
 function AS2Mouse() {}
@@ -1020,32 +892,6 @@ defineObjectProperties(AS2Mouse, {
     value: function show() {
       Mouse.show();
     },
-    enumerable: false
-  }
-});
-AS2Mouse.prototype = Object.create({}, {
-  onMouseDown: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onMouseMove: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onMouseUp: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onMouseWheel: {
-    value: function () {},
-    writable: true,
-    configurable: true,
     enumerable: false
   }
 });
@@ -1117,26 +963,8 @@ defineObjectProperties(AS2Stage, {
     enumerable: true
   }
 });
-AS2Stage.prototype = Object.create({}, {
-  onFullScreen: {
-    value: function (bFull) {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  },
-  onResize: {
-    value: function () {},
-    writable: true,
-    configurable: true,
-    enumerable: false
-  }
-});
 AS2Broadcaster.initialize(AS2Stage);
-/*
-var flash = {};
 
-flash.geom = {};
-*/
 function AS2Rectangle(x, y, width, height) {
   this.x = x;
   this.y = y;
@@ -1146,91 +974,6 @@ function AS2Rectangle(x, y, width, height) {
 AS2Rectangle.prototype = Object.create({}, {
   // TODO methods
 });
-/*
-flash.geom.Rectangle = AS2Rectangle;
-
-// TODO flash.geom.Point
-// TODO flash.geom.Matrix
-// TODO flash.geom.ColorTransform
-// TODO flash.geom.Transform
-
-flash.media = {
-};
-
-function AS2SoundMixer() {
-}
-defineObjectProperties(AS2SoundMixer, {
-  stopAll: {
-    value: function stopAll() {
-      // TODO stop all sounds
-      console.log('SoundMixer: stopAll');
-    },
-    enumerable: false
-  }
-});
-flash.media.SoundMixer = AS2SoundMixer;
-
-flash.net = {
-  navigateToURL: function navigateToURL(request, window) {
-    if (request.method == 'GET') {
-      // HACK trying to perform simple case of the navigateToURL
-      window.open(request.url, window);
-      return;
-    }
-    throw 'Not implemented: navigateToURL';
-  }
-};
-
-function AS2URLRequest(url) {
-  this.url = url;
-}
-AS2URLRequest.prototype = Object.create({}, {
-  url: {
-    value: null,
-    writable: true,
-    configurable: true,
-    enumerable: true
-  },
-  method: {
-    value: 'GET',
-    writable: true,
-    configurable: true,
-    enumerable: true
-  }
-});
-flash.net.URLRequest = AS2URLRequest;
-
-flash.system = {
-  fscommand: function fscommand(command, parameters) {
-    // TODO ignoring all fscommand
-    console.log('FSCommand: ' + command + '; ' + parameters);
-  }
-};
-
-function AS2Capabilities() {}
-defineObjectProperties(AS2Capabilities, {
-  version: {
-    get: function get$version() {
-      return 'SHUMWAY ' + AS2Context.instance.swfVersion + ',0,0,0';
-    },
-    enumerable: true
-  }
-});
-flash.system.Capalilities = AS2Capabilities;
-
-flash.utils = {
-  clearInterval: window.clearInterval,
-  clearTimeout: window.clearTimeout,
-  getTimer: (function() {
-    var startTime = Date.now();
-    return (function() {
-      return Date.now() - startTime;
-    });
-  })(),
-  setInterval: window.setInterval,
-  setTimeout: window.setTimeout
-};
-*/
 
 // Built-in classes modifications
 
