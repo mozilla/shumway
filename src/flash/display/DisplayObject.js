@@ -47,8 +47,10 @@ const DisplayObjectDefinition = (function () {
       this._y = 0;
 
       var s = this.symbol;
-      if (s)
+      if (s) {
         this._bbox = s.bbox || null;
+        this._children = s.children || [];
+      }
 
       var canvas = document.createElement('canvas');
       canvas.width = canvas.height = 1;

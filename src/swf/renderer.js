@@ -108,12 +108,8 @@ function renderStage(stage, ctx) {
         var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
         child._applyCurrentInverseTransform(pt, child._parent);
 
-        if (child._hitArea) {
-          // Temporary hack
-          child._hitArea.nextFrame();
-
+        if (child._hitArea)
           hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
-        }
 
         if (!hitTest)
           hitTestShape = true;

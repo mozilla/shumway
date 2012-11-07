@@ -26,20 +26,28 @@ const SimpleButtonDefinition = (function () {
     set upState(val) {
       this._upState = val;
     },
-    get _isContainer() {
-      return true;
-    },
 
     initialize: function () {
-      var s = this.symbol;
-      if (s) {
-        this._upState = createSprite(s.states.up, this);
-        this._overState = createSprite(s.states.over, this);
-        this._downState = createSprite(s.states.down, this);
-        this._hitArea = createSprite(s.states.hitTest, this);
-      }
+      this._downState = null;
+      this._hitArea = null;
       this._isMouseDown = false;
       this._isMouseOver = false;
+      this._mouseChildren = false;
+      this._overState = null;
+      this._upState = null;
+
+      var s = this.symbol;
+      if (s) {
+        var states = s.states;
+        if (states.down)
+          this._downState = createState(states.down.value, this);
+        if (states.hitTest)
+          this._hitArea = createState(states.hitTest.value, this);
+        if (states.over)
+          this._overState = createState(states.over.value, this);
+        if (states.up)
+          this._upState = createState(states.up.value, this);
+      }
 
       // binding mouse events
       const MouseEventClass = avm2.systemDomain.getClass("flash.events.MouseEvent");
@@ -47,19 +55,18 @@ const SimpleButtonDefinition = (function () {
         this._isMouseDown = true;
         this._updateButton();
       }.bind(this), true);
-      this.addEventListener(MouseEventClass.MOUSE_UP, function (evt) {
-        this._isMouseDown = false;
+      this.addEventListener(MouseEventClass.MOUSE_OUT, function (evt) {
+        this._isMouseOver = false;
         this._updateButton();
       }.bind(this), true);
       this.addEventListener(MouseEventClass.MOUSE_OVER, function (evt) {
         this._isMouseOver = true;
         this._updateButton();
       }.bind(this), true);
-      this.addEventListener(MouseEventClass.MOUSE_OUT, function (evt) {
-        this._isMouseOver = false;
+      this.addEventListener(MouseEventClass.MOUSE_UP, function (evt) {
+        this._isMouseDown = false;
         this._updateButton();
       }.bind(this), true);
-
     },
 
     _updateButton: function () {
@@ -72,10 +79,10 @@ const SimpleButtonDefinition = (function () {
     }
   };
 
-  function createSprite(symbolInfo, parent) {
-    if (!symbolInfo) {
+  function createState(symbolInfo, parent) {
+    if (!symbolInfo)
       return null;
-    }
+
     var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
       avm2.systemDomain.getClass(symbolInfo.className) :
       avm2.applicationDomain.getClass(symbolInfo.className);

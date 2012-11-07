@@ -466,31 +466,32 @@ const LoaderDefinition = (function () {
       case 'button':
         var states = { };
         for (var stateName in symbol.states) {
+          var children = [];
+
           var depths = symbol.states[stateName];
-          var displayList = Object.create(null);
           for (var depth in depths) {
             var cmd = depths[depth];
             if (cmd && cmd.symbolId) {
-              var itemPromise = dictionary[cmd.symbolId];
-              if (itemPromise && !itemPromise.resolved)
-                promiseQueue.push(itemPromise);
+              var childPromise = dictionary[cmd.symbolId];
+              if (childPromise && !childPromise.resolved)
+                promiseQueue.push(childPromise);
             }
-            displayList[depth] = cmd;
+            children.push(childPromise);
           }
 
-          var spritePromise = new Promise();
-          spritePromise.resolve(displayList);
+          var stateInfo;
+          if (children.length === 1) {
+            stateInfo = children[0];
+          } else {
+            stateInfo = { };
+            stateInfo.className = 'flash.display.Sprite';
+            stateInfo.props = { children: children };
+          }
 
-          var spriteInfo = {};
-          // TODO must be Sprite or first item (if there is only one)
-          spriteInfo.className = 'flash.display.MovieClip';
-          spriteInfo.props = {
-            timeline: [spritePromise],
-            framesLoaded: 1,
-            frameLabels: {},
-            totalFrames: 1
-          };
-          states[stateName] = spriteInfo;
+          var statePromise = new Promise;
+          statePromise.resolve(stateInfo);
+
+          states[stateName] = statePromise;
         }
 
         symbolInfo.className = 'flash.display.SimpleButton';
