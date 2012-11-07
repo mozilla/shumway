@@ -37,6 +37,14 @@ SWF.embed = function(file, container, options) {
       if (stage._clickTarget)
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
     });
+    canvas.addEventListener('dblclick', function () {
+      if (stage._clickTarget && stage._clickTarget._doubleClickEnabled)
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('doubleClick'));
+    });
+    canvas.addEventListener('mousedown', function () {
+      if (stage._clickTarget)
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+    });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
       var left = 0;
@@ -50,6 +58,10 @@ SWF.embed = function(file, container, options) {
 
       stage._mouseX = domEvt.pageX - left;
       stage._mouseY = domEvt.pageY - top;
+    });
+    canvas.addEventListener('mouseup', function () {
+      if (stage._clickTarget)
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
     });
 
     var bgcolor = loaderInfo._backgroundColor;

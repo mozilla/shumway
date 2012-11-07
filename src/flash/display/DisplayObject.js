@@ -29,6 +29,7 @@ const DisplayObjectDefinition = (function () {
       this._cxform = null;
       this._graphics = null;
       this._loaderInfo = null;
+      this._mouseChildren = true;
       this._mouseX = 0;
       this._mouseY = 0;
       this._name = null;

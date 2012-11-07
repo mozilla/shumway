@@ -2,7 +2,9 @@ const InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
       this._control = document.createElement('div');
+      this._doubleClickEnabled = false;
       this._hitArea = null;
+      this._mouseEnabled = true;
     },
 
     get accessibilityImplementation() {
@@ -18,10 +20,10 @@ const InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get doubleClickEnabled() {
-      return false;
+      return this._doubleClickEnabled;
     },
     set doubleClickEnabled(val) {
-      notImplemented();
+      this._doubleClickEnabled = val;
     },
     get focusRect() {
       return null;
@@ -30,10 +32,10 @@ const InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get mouseEnabled() {
-      return true;
+      return this._mouseEnabled;
     },
     set mouseEnabled(val) {
-      // notImplemented();
+      this._mouseEnabled = val;
     },
     get needsSoftKeyboard() {
       return false;

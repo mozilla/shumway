@@ -11,8 +11,14 @@ function renderStage(stage, ctx) {
       var child = children[i];
       if (child) {
         var isContainer = ContainerClass.isInstanceOf(child) || child._isContainer;
-        var interactiveParent = InteractiveClass.isInstanceOf(child) ? child : interactiveParent;
+
+        if (InteractiveClass.isInstanceOf(child)) {
+          if (!interactiveParent || interactiveParent._mouseChildren)
+            interactiveParent = child;
+        }
+
         visitor.visit(child, isContainer, interactiveParent);
+
         if (isContainer)
           visitContainer(child, visitor, interactiveParent);
       }

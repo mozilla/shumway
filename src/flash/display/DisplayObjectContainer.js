@@ -1,10 +1,10 @@
 const DisplayObjectContainerDefinition = (function () {
   var def = {
     get mouseChildren() {
-      return true;
+      return this._mouseChildren;
     },
     set mouseChildren(val) {
-      notImplemented();
+      this._mouseChildren = val;
     },
     get numChildren() {
       return this._children.length;
