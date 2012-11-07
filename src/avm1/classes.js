@@ -1102,6 +1102,5 @@ if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2Mouse = AS2Mouse;
   GLOBAL.AS2Stage = AS2Stage;
   GLOBAL.AS2Rectangle = AS2Rectangle;
-  GLOBAL.flash = flash;
   GLOBAL.createBuiltinType = createBuiltinType;
 }
