@@ -34,6 +34,12 @@ const MovieClipDefinition = (function () {
           scripts[i].call(this);
       }
     },
+    _getAS2Object: function () {
+      if (!this.$as2Object) {
+        new AS2MovieClip().$attachNativeObject(this);
+      }
+      return this.$as2Object;
+    },
     _gotoFrame: function (frameNum, scene) {
       if (frameNum > this._totalFrames)
         frameNum = 1;
@@ -50,7 +56,6 @@ const MovieClipDefinition = (function () {
       var highestDepth = depthMap.length;
       var displayList = framePromise.value;
       var loader = this.loaderInfo._loader;
-      var newInstances = [];
 
       for (var depth in displayList) {
         var cmd = displayList[depth];
@@ -177,12 +182,6 @@ const MovieClipDefinition = (function () {
 
       this._currentFrame = frameNum;
     },
-    _getAS2Object: function () {
-      if (!this.$as2Object) {
-        new AS2MovieClip().$attachNativeObject(this);
-      }
-      return this.$as2Object;
-    },
     _initAvm1Bindings: function (cmd, symbolProps, instance) {
       var loader = this.loaderInfo._loader;
       var avm1Context = loader._avm1Context;
@@ -210,7 +209,7 @@ const MovieClipDefinition = (function () {
           }
           while (targetPath.length > 0) {
             if (!(targetPath[0] in clip))
-                throw 'Cannot find ' + variableName + ' variable';
+              throw 'Cannot find ' + variableName + ' variable';
             clip = clip[targetPath.shift()];
           }
           variableName = variableName.substring(i + 1);
