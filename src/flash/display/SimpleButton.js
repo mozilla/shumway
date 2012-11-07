@@ -64,11 +64,10 @@ const SimpleButtonDefinition = (function () {
 
     _updateButton: function () {
       var state = this._upState;
-      if (this._isMouseDown && this._isMouseOver && this._downState) {
+      if (this._isMouseDown && this._isMouseOver && this._downState)
         state = this._downState;
-      } else if (this._isMouseOver && this._overState) {
+      else if (this._isMouseOver && this._overState)
         state = this._overState;
-      }
       this._children = [state];
     }
   };

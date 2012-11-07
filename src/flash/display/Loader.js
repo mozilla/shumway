@@ -450,7 +450,7 @@ const LoaderDefinition = (function () {
       var dependencies = symbol.require;
       var dictionary = this._dictionary;
       var promiseQueue = [];
-      var symbolInfo = {};
+      var symbolInfo = { };
       var symbolPromise = new Promise;
 
       if (dependencies && dependencies.length) {
@@ -464,7 +464,7 @@ const LoaderDefinition = (function () {
 
       switch (symbol.type) {
       case 'button':
-        var states = {};
+        var states = { };
         for (var stateName in symbol.states) {
           var depths = symbol.states[stateName];
           var displayList = Object.create(null);
