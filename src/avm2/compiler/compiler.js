@@ -908,7 +908,7 @@ var Compiler = (function () {
       }
 
       function superClassInstanceObject() {
-        return property(classObject(), "baseClass", "instance");
+        return property(classObject(), "baseClass", "instanceNoInitialize");
       }
 
       function superOf(obj) {

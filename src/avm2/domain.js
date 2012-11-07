@@ -47,6 +47,8 @@ var Domain = (function () {
         if (instance) {
           release || assert(instance.prototype);
           this.instance = instance;
+          this.instanceNoInitialize = instance;
+          this.hasInitialize = false;
         }
 
         if (!callable) {
@@ -126,6 +128,15 @@ var Domain = (function () {
         extend: function (baseClass) {
           this.baseClass = baseClass;
           this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
+          if (baseClass.hasInitialize) {
+            var instanceNoInitialize = this.instance;
+            var self = this;
+            this.instance = function () {
+              self.initializeInstance(this);
+              instanceNoInitialize.apply(this, arguments);
+            };
+            this.hasInitialize = true;
+          }
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
@@ -150,6 +161,17 @@ var Domain = (function () {
                 });
               }
             }
+          }
+
+          if (definition.initialize && !this.hasInitialize) {
+            var instanceNoInitialize = this.instance;
+            var self = this;
+            this.instance = function () {
+              self.initializeInstance(this);
+              instanceNoInitialize.apply(this, arguments);
+            };
+            this.instance.prototype = instanceNoInitialize.prototype;
+            this.hasInitialize = true;
           }
 
           var proto = this.dynamicPrototype;

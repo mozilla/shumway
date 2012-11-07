@@ -322,7 +322,7 @@ var Interpreter = (function () {
           case OP_constructsuper:
             args = stack.popMany(bc.argCount);
             obj = stack.pop();
-            savedScope.object.baseClass.instance.apply(obj, args);
+            savedScope.object.baseClass.instanceNoInitialize.apply(obj, args);
             break;
           case OP_constructprop:
             args = stack.popMany(bc.argCount);

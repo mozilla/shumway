@@ -138,10 +138,7 @@ var as3error = {};
 
      // Hook up the native.
      natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
-       var c = new runtime.domain.system.Class(name, function () {
-         this.class.initializeInstance(this);
-         instance.apply(this, arguments);
-       });
+       var c = new runtime.domain.system.Class(name, instance);
        c.extend(baseClass);
        c.link(m.definition);
        return c;

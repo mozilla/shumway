@@ -699,11 +699,7 @@ const natives = (function () {
     };
 
     return function (runtime, scope, instance, baseClass) {
-      var instance2 = function () {
-        this.class.initializeInstance(this);
-        instance.apply(this, arguments);
-      };
-      var c = new runtime.domain.system.Class(name, instance2, CC(instance2));
+      var c = new runtime.domain.system.Class(name, instance);
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
