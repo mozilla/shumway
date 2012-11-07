@@ -1,6 +1,14 @@
 (function (exports) {
 
   /**
+   * Sea-of-Nodes IR based on Cliff Click's Work:
+   * A simple graph-based intermediate representation (http://doi.acm.org/10.1145/202530.202534)
+   *
+   * Control flow restructuring is based on Cristina Cifuentes's Work:
+   * Reverse Compilation Techniques (http://www.phatcode.net/res/228/files/decompilation_thesis.pdf)
+   */
+
+  /**
    * Describes binary and unary operators.
    */
   var Operator = (function () {
@@ -1001,7 +1009,7 @@
       this.restructureLoops(isHeaderOrLatch);
       this.restructureIfs(isHeaderOrLatch);
 
-      this.buildStructure();
+      // this.buildStructure();
     };
 
     var Control = {
@@ -1018,7 +1026,10 @@
       }
     };
 
-    constructor.prototype.buildStructure = function buildStructure() {
+    constructor.prototype.walkStructure = function walkStructure() {
+      var exit = this.exit;
+
+      var writer = new IndentingWriter();
 
       function notFollow(block) {
         assert (block.successors.length === 2);
@@ -1028,89 +1039,116 @@
         return block.successors[0];
       }
 
-      var writer = new IndentingWriter();
-
-      function build(block) {
-        if (block.ifType === IfType.IF_THEN) {
-                        
-        }
+      function walkIfThen(block) {
+        writer.writeLn(block);
+        writer.enter("if () {");
+        walk(notFollow(block), block.follow);
+        writer.leave("}");
+        return block.follow;
       }
 
-      /*
-      var inFollow = this.createBlockSet();
-      function build(block) {
-        var current = block;
-        var control = new Control.Sequence();
-        while (current) {
-          writer.enter("> Build: " + current);
-          if (current.ifType === IfType.IF_THEN) {
-            inFollow.set(current.follow.id);
-            var _then = build(notFollow(current));
-            control.elements.push(new Control.If(current, _then));
-            inFollow.clear(current.follow.id);
-          }
-          if (inFollow.get(current.follow.id)) {
-            return control;
-          }
-          current = current.follow;
-          writer.leave("<");
-        }
-      }
-      */
-
-      return build(this.root);
-    };
-
-    constructor.prototype.traceStructure = function (writer) {
-
-      function notFollow(block) {
-        if (block.successors[0] === block.follow) {
-          return block.successors[1];
-        }
-        return block.successors[0];
+      function walkIfThenElse(block) {
+        writer.enter("if (" + block + ") {");
+        walk(block.successors[1], block.follow);
+        writer.leaveAndEnter("} else {");
+        walk(block.successors[0], block.follow);
+        writer.leave("}");
+        return block.follow;
       }
 
-      function nest(block) {
-        if (block.loopType) {
-          if (block.loopType === LoopType.PRE_TESTED) {
-            writer.enter("while () { " + block);
-            next(notFollow(block));
-            writer.leave("}");
-          } else if (block.loopType === LoopType.POST_TESTED) {
-            writer.enter("do { " + block);
-            next(notFollow(block));
-            writer.leave("} while ();");
-          } else if (block.loopType === LoopType.ENDLESS) {
-            writer.enter("loop { " + block);
-            next(notFollow(block));
-            writer.leave("} while ();");
+      function walkPreTestedLoop(block) {
+        loopStack.push(block);
+        writer.enter("while (" + block + ") { ");
+        walk(notFollow(block), block.follow);
+        writer.leave("}");
+        loopStack.pop();
+        return block.follow;
+      }
+
+      var loopStack = [];
+
+      function walkPostTestedLoop(block) {
+        loopStack.push(block);
+        writer.enter("do {");
+        writer.writeLn(block);
+        if (block.successors[0] !== block.follow && block.successors[1] !== block.follow) {
+          writer.enter("if () {");
+          walk(block.successors[0], block.follow);
+          writer.leaveAndEnter("} else {");
+          walk(block.successors[1], block.follow);
+          writer.leave("}");
+          // writer.writeLn(block.latch);
+        } else if (notFollow(block) !== block) {
+          walk(notFollow(block), block.follow);
+        }
+        writer.leave("} while (" + block.latch + ")");
+        loopStack.pop();
+        return block.follow;
+      }
+
+      function walkBlock(block) {
+        // writer.writeLn("walkBlock: " + block);
+        assert (!block.loopType && !block.ifType);
+        if (block.loopHeader) {
+          if (block.loopHeader.latch !== block) {
+            writer.writeLn(block);
+            writer.writeLn("continue;");
           }
-        } else if (block.ifType) {
-          if (block.ifType === IfType.IF_THEN) {
-            writer.enter("if () { " + block);
-            next(notFollow(block));
-            writer.leave("}");
-          } else if (block.ifType === IfType.IF_THEN_ELSE) {
-            writer.enter("if () { " + block);
-            next(block.successors[0]);
-            writer.leave("} else { " + block);
-            writer.indent();
-            next(block.successors[1]);
-            writer.leave("}");
+          block = null;
+        } else if (block.successors.length === 1) {
+          writer.writeLn(block);
+          var successor = block.successors[0];
+          // print ("STAK: " + loopStack);
+          // print ("SUCC: " + successor);
+          if (successor === exit) {
+            writer.writeLn("return " + successor);
+            block = null;
+          } else if (loopStack.length) {
+            var loopHeader = loopStack.peek();
+            if (successor === loopHeader) {
+              writer.writeLn("continue; ?");
+              block = null;
+            } else if (successor === loopHeader.follow) {
+              writer.writeLn("break;");
+              block = null;
+            } else {
+              block = successor;
+            }
+          } else {
+            block = successor;
           }
+        } else if (block.successors.length === 0) {
+          writer.writeLn(block);
+          block = null;
         } else {
-          writer.writeLn("... " + block);
+          unexpected(block);
         }
+        return block;
       }
 
-      function next(block) {
+      function walk(block, follow) {
+        // writer.enter("> Walking: " + block);
         while (block) {
-          nest(block);
-          block = block.follow;
+          // writer.writeLn("Next: " + block);
+          if (block.ifType === IfType.IF_THEN) {
+            block = walkIfThen(block);
+          } else if (block.ifType === IfType.IF_THEN_ELSE) {
+            block = walkIfThenElse(block);
+          } else if (block.loopType === LoopType.PRE_TESTED) {
+            block = walkPreTestedLoop(block);
+          } else if (block.loopType === LoopType.POST_TESTED) {
+            block = walkPostTestedLoop(block);
+          } else {
+            block = walkBlock(block);
+          }
+          if (block === follow) {
+            block = null;
+          }
         }
+        // writer.leave("<");
       }
 
-      next(this.root.successors[0]);
+      walk(this.root);
     };
 
     var IfType = {
@@ -1124,7 +1162,15 @@
       ENDLESS: "Endless"
     };
 
-    constructor.prototype.restructureIfs = function restructureIfs(isStructured) {
+    /**
+     * Traverses blocks in reverse dominator order and marks 2-way header blocks as: if-then or if-then-else.
+     * The if follow node (the last node (in dominator order) to immediately dominate the if header) is also
+     * computed.
+     *
+     * Blocks that are marked as loop headers or latches are not considered.
+     *
+     */
+    constructor.prototype.restructureIfs = function restructureIfs(isHeaderOrLatch) {
       var order = this.order;
       var blocks = this.blocks;
       var follow;
@@ -1136,27 +1182,29 @@
       var unresolved = this.createBlockSet();
       for (var i = order.length - 1; i >= 0; i--) {
         var block = order[i];
-        // Find 2-Way header block.
-        if (blockType(block) === 2 && !isStructured.get(block.id)) {
+        // Is it a 2-Way header block?
+        if (blockType(block) === 2 && !isHeaderOrLatch.get(block.id)) {
           print("2-Way Header Block: " + block);
-          // Find follow block.
+          // Search for a follow block.
           follow = null;
           for (var j = i; j < order.length; j++) {
+            // Is the block immediately dominated by the header and does it have at least two
+            // predecessors. It must be reached by at least two paths from the header.
             if (order[j].dominator === block && order[j].predecessors.length >= 2) {
+              follow = order[j];
+            }
+            if (order[j].loopHeader) {
               follow = order[j];
             }
           }
           if (follow) {
-            assert (follow);
-            print("2-Way Follow Block: " + follow);
+            print("2-Way Follow Block: " + follow + " for Header Block: " + block);
             block.ifType = findIfType(block, follow);
             block.follow = follow;
-            isStructured.set(block.id);
             unresolved.forEach(function (blockID) {
               var unresolvedBlock = blocks[blockID];
               unresolvedBlock.ifType = findIfType(unresolvedBlock, follow);
               unresolvedBlock.follow = follow;
-              isStructured.set(blockID);
               unresolved.clear(blockID);
             });
           } else {
@@ -1166,9 +1214,6 @@
       }
 
       function findIfType(header, follow) {
-        print ("H: " + header);
-        print ("F: " + follow);
-        print ("H: Succ: " + header.successors);
         if (header.successors[0] === follow || header.successors[1] === follow) {
           return IfType.IF_THEN;
         }
@@ -1309,11 +1354,14 @@
           // Insert continues i guess.
           // Should we look for the last latch node?
           var latch = null;
+
           for (var k = 0; k < predecessors.length; k++) {
             var predecessor = predecessors[k];
             if (interval.set.get(predecessor.id) && !inAnyLoop.get(predecessor.id)) {
-              latch = predecessor;
-              break;
+              predecessor.loopHeader = header;
+              if (!latch || latch.rpo < predecessor.rpo) {
+                latch = predecessor;
+              }
             }
           }
 
@@ -1325,8 +1373,10 @@
             markLoopBlocks(inLoop, interval, latch);
             writer.writeLn("In Loop: " + inLoop);
 
+
             header.loopType = findLoopType(inLoop, header, latch, map);
             header.follow = findLoopFollow(inLoop, header, latch, map);
+            header.latch = latch;
             inAnyLoop._union(inLoop);
 
             isHeaderOrLatch.set(header.id);
@@ -1372,6 +1422,8 @@
           return "invhouse";
         } else if (block.loopType) {
           return "box"
+        } else if (block.loopHeader) {
+          return "hexagon";
         }
         return "box";
       }
@@ -1410,6 +1462,9 @@
         if (block.follow) {
           blockInfo += ", follow: " + block.follow;
         }
+        if (block.latch) {
+          blockInfo += ", latch: " + block.latch;
+        }
         writer.writeLn("B" + block.id + " [label = \"B" + block.id + blockInfo + loopInfo + "\", color = \"" + colorOf(block) + "\", shape=" + shapeOf(block) + ", style=" + styleOf(block) + "];");
       });
 
@@ -1419,6 +1474,12 @@
         });
         if (block.dominator) {
           writer.writeLn("B" + block.id + " -> " + "B" + block.dominator.id + " [color = orange];");
+        }
+        if (block.follow) {
+          writer.writeLn("B" + block.id + " -> " + "B" + block.follow.id + " [color = purple];");
+        }
+        if (block.loopHeader) {
+          writer.writeLn("B" + block.id + " -> " + "B" + block.loopHeader.id + " [color = red];");
         }
       });
 

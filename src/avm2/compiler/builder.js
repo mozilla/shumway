@@ -574,6 +574,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
 
     cfg.trace(writer);
 
+    cfg.walkStructure();
+
     writer.writeLn("-------------------------------\n");
 
     // var c = new CFG();

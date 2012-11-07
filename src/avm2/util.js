@@ -676,6 +676,11 @@ var IndentingWriter = (function () {
     this.indent();
   };
 
+  indentingWriter.prototype.leaveAndEnter = function leaveAndEnter(str) {
+    this.leave(str);
+    this.indent();
+  };
+
   indentingWriter.prototype.leave = function leave(str) {
     this.outdent();
     if (!this.suppressOutput) {
