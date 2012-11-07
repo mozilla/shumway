@@ -306,8 +306,40 @@ const DisplayObjectDefinition = (function () {
     getBounds: function (targetCoordSpace) {
       var bbox = this._bbox;
 
-      if (!bbox)
-        return new flash.geom.Rectangle;
+      if (!bbox) {
+        var children = this._children;
+        var numChildren = children.length;
+
+        if (!numChildren)
+          return new flash.geom.Rectangle;
+
+        var xMin = Number.MAX_VALUE;
+        var xMax = 0;
+        var yMin = Number.MAX_VALUE;
+        var yMax = 0;
+
+        for (var i = 0; i < numChildren; i++) {
+          var child = children[i];
+          var b = child.getBounds();
+
+          var x1 = b.x;
+          var y1 = b.y;
+          var x2 = b.x + b.width;
+          var y2 = b.y + b.height;
+
+          xMin = Math.min(xMin, x1, x2);
+          xMax = Math.max(xMax, x1, x2);
+          yMin = Math.min(yMin, y1, y2);
+          yMax = Math.max(yMax, y1, y2);
+        }
+
+        bbox = {
+          left: xMin,
+          top: yMin,
+          right: xMax,
+          bottom: yMax
+        };
+      }
 
       var width = bbox.right - bbox.left;
       var height = bbox.bottom - bbox.top;
