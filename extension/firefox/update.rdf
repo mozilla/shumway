@@ -8,12 +8,12 @@
       <RDF:Seq>
         <RDF:li>
           <RDF:Description>
-            <em:version>0.2.5</em:version>
+            <em:version>0.2.6</em:version>
             <em:targetApplication>
               <RDF:Description>
                 <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
                 <em:minVersion>17.0</em:minVersion>
-                <em:maxVersion>19.*</em:maxVersion>
+                <em:maxVersion>19.0a1</em:maxVersion>
                 <!-- Use the raw link for updates so we we can use SSL. -->
                 <em:updateLink>https://github.com/mozilla/shumway/raw/gh-pages/extensions/firefox/shumway.xpi</em:updateLink>
               </RDF:Description>
