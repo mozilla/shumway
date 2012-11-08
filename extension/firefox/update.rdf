@@ -15,7 +15,7 @@
                 <em:minVersion>17.0</em:minVersion>
                 <em:maxVersion>19.0a1</em:maxVersion>
                 <!-- Use the raw link for updates so we we can use SSL. -->
-                <em:updateLink>https://github.com/mozilla/shumway/raw/gh-pages/extensions/firefox/shumway.xpi</em:updateLink>
+                <em:updateLink>https://github.com/mozilla/shumway/raw/gh-pages/extension/firefox/shumway.xpi</em:updateLink>
               </RDF:Description>
             </em:targetApplication>
           </RDF:Description>
