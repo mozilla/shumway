@@ -19,7 +19,7 @@ function backtrace() {
 
 function error(message) {
   if (!inBrowser) {
-    console.info(backtrace());
+    // console.info(backtrace());
   }
   throw new Error(message);
 }
@@ -154,6 +154,10 @@ function isNumeric(x) {
     return res;
   });
 
+  extendBuiltin(Ap, "clone", function () {
+    return this.slice(0);
+  });
+
   extendBuiltin(Ap, "first", function () {
     release || assert(this.length > 0);
     return this[0];
@@ -166,6 +170,12 @@ function isNumeric(x) {
 
   extendBuiltin(Ap, "empty", function() {
     return this.length === 0;
+  });
+
+  extendBuiltin(Ap, "pushUnique", function(v) {
+    if (this.indexOf(v) < 0) {
+      this.push(v);
+    }
   });
 
   extendBuiltin(Ap, "notEmpty", function() {

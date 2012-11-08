@@ -620,7 +620,38 @@
       return cfg;
     };
 
-    constructor.prototype.build = function (list) {
+    constructor.prototype.fromAnalysis = function (analysis) {
+      var blocks = analysis.blocks;
+
+      var map = [];
+      for (var i = 0; i < blocks.length; i++) {
+        var block = new Block(this.nextBlockID++);
+        map[blocks[i].bid] = block;
+        this.blocks.push(block);
+      }
+
+      for (var i = 0; i < blocks.length; i++) {
+        var block = blocks[i];
+        var succs = block.succs;
+        for (var j = 0; j < succs.length; j++) {
+          map[block.bid].pushSuccessor(map[succs[j].bid], true);
+        }
+      }
+
+      this.root = this.blocks[0];
+      this.exit = new Block(this.nextBlockID++);
+
+      for (var i = 0; i < this.blocks.length; i++) {
+        var block = this.blocks[i];
+        if (block.successors.length === 0) {
+          block.pushSuccessor(this.exit, true);
+        }
+      }
+
+      this.blocks.push(this.exit);
+    };
+
+    constructor.prototype.fromEdgeList = function (list) {
       var cfg = this;
       var names = cfg.blockNames || (cfg.blockNames = {});
       var blocks = cfg.blocks;
@@ -655,7 +686,6 @@
       }
 
       function buildEdge(from, to) {
-        print("" + from + " -> " + to);
         buildBlock(from).pushSuccessor(buildBlock(to), true);
         // buildBlock(to).pushPredecessor(buildBlock(from));
       }
@@ -888,33 +918,24 @@
      * encoded as a sequence of |Interval| objects and a map from blocks to their respective
      * interval headers.
      */
-    constructor.prototype.computeIntervals = function computeIntervals() {
-      var map = this.blocks.slice(0);
+    constructor.prototype.computeIntervals = function computeIntervals(callback) {
+
       var root = this.root;
       var order = this.computeReversePostOrder();
+      var blocks = this.blocks;
       var headers = [root];
       var processedHeaders = this.createBlockSet();
 
-      function getPredecessors(node) {
-        var predecessors = [];
-        // writer.writeLn(map);
-        node.visitPredecessors(function (predecessor) {
-          if (levels.length) {
-            predecessor = map[predecessor.id];
-            assert (predecessor);
-            // Can't have back edges to headers at this level.
-            if (predecessor !== node) {
-              predecessors.push(predecessor);
-            }
-          } else {
-            predecessors.push(predecessor);
-          }
-        });
-        return predecessors;
-      }
+      var edges = {
+        successors: [],
+        predecessors: []
+      };
 
+      order.forEach(function (block) {
+        edges.successors[block.id] = block.successors;
+        edges.predecessors[block.id] = block.predecessors;
+      });
 
-      var levels = [];
       while (order.length > 1) {
         // writer.writeLn("Order: " + order);
         var intervals = [];
@@ -926,20 +947,20 @@
           set.set(header.id);
 
           /**
-           * Expand interval by adding all nodes whose predecessors are within the interval.
+           * Expand the interval by adding all nodes whose predecessors are within the interval.
            */
-          var expandedSet = true;
-          while (expandedSet) {
-            expandedSet = false;
+          var expanded = true;
+          while (expanded) {
+            expanded = false;
             for (var i = 0; i < order.length; i++) {
-              var node = order[i];
-              if (node === root) {
+              var block = order[i];
+              if (block === root) {
                 continue;
               }
-              if (set.get(node.id)) {
+              if (set.get(block.id)) {
                 continue;
               }
-              var predecessors = getPredecessors(node);
+              var predecessors = edges.predecessors[block.id];
               var allPredecessorsInSet = predecessors.length > 0;
               for (var j = 0; j < predecessors.length; j++) {
                 if (!set.get(predecessors[j].id)) {
@@ -948,8 +969,8 @@
                 }
               }
               if (allPredecessorsInSet) {
-                set.set(node.id);
-                expandedSet = true;
+                set.set(block.id);
+                expanded = true;
               }
             }
           }
@@ -961,23 +982,70 @@
            * in the interval.
            */
           for (var i = 0; i < order.length; i++) {
-            var node = order[i];
-            if (processedHeaders.get(node.id)) {
+            var block = order[i];
+            if (processedHeaders.get(block.id)) {
               continue;
             }
-            if (set.get(node.id)) {
+            if (set.get(block.id)) {
               continue;
             }
-            var predecessors = getPredecessors(node);
+            var predecessors = edges.predecessors[block.id];
             for (var j = 0; j < predecessors.length; j++) {
               if (set.get(predecessors[j].id)) {
-                headers.push(node);
+                headers.push(block);
                 break;
               }
             }
           }
         }
 
+        function findIntervalContaining(block) {
+          for (var i = 0; i < intervals.length; i++) {
+            if (intervals[i].set.get(block.id)) {
+              return intervals[i];
+            }
+          }
+          unexpected("Cannot find an interval for " + block);
+        }
+
+//        intervals = intervals.sort(function compare(a, b) {
+//          return a.header.rpo - b.header.rpo;
+//        });
+
+        order = [];
+        var newEdges = { successors: [], predecessors: [] };
+
+        // Collapse intervals.
+        intervals.forEach(function (interval) {
+          var header = interval.header;
+          order.push(header);
+          var newSuccessors = newEdges.successors[header.id] = [];
+          var newPredecessors = newEdges.predecessors[header.id] = [];
+          interval.set.forEach(function (blockID) {
+            var block = blocks[blockID];
+            // newMap[blockID] = interval.header;
+            var successors = edges.successors[blockID];
+            for (var i = 0; i < successors.length; i++) {
+              if (!interval.set.get(successors[i].id)) {
+                newSuccessors.pushUnique(findIntervalContaining(successors[i]).header);
+              }
+            }
+            var predecessors = edges.predecessors[blockID];
+            for (var i = 0; i < predecessors.length; i++) {
+              if (!interval.set.get(predecessors[i].id)) {
+                newPredecessors.pushUnique(findIntervalContaining(predecessors[i]).header);
+              }
+            }
+          });
+        });
+
+        callback(intervals, order, edges, newEdges);
+
+        edges = newEdges;
+        headers = [root];
+        processedHeaders.clearAll();
+
+        /*
         order = [];
         var newMap = [];
         intervals.forEach(function (interval) {
@@ -999,9 +1067,8 @@
           intervals: intervals,
           map: map.slice(0)
         });
+        */
       }
-
-      return levels;
     };
 
     constructor.prototype.restructure = function restructure() {
@@ -1193,7 +1260,7 @@
             if (order[j].dominator === block && order[j].predecessors.length >= 2) {
               follow = order[j];
             }
-            if (order[j].loopHeader) {
+            if (order[j].loopHeader) { // ?
               follow = order[j];
             }
           }
@@ -1349,6 +1416,7 @@
           var header = interval.header;
           var predecessors = getPredecessors(header, map);
           writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
+          writer.writeLn("Interval, set: " + interval.set);
 
           // Find Latching Node, there can be many, what to do about the rest??
           // Insert continues i guess.
@@ -1381,6 +1449,8 @@
 
             isHeaderOrLatch.set(header.id);
             isHeaderOrLatch.set(latch.id);
+          } else {
+            writer.writeLn("No Latch ??");
           }
         }
         writer.leave("<");
@@ -1413,6 +1483,7 @@
         if (block.loopType) {
           return "rounded";
         }
+        return "none";
       }
       function shapeOf(block) {
         assert (block);

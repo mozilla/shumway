@@ -539,7 +539,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     Timer.stop();
 
     // Timer.start("IR LOOP");
-    cfg.computeLoops();
+    // cfg.computeLoops();
     // Timer.stop();
 
     writer.writeLn("==================================");
