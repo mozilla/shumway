@@ -141,6 +141,7 @@ function renderStage(stage, ctx) {
             ctx.fillStyle = path.fillStyle;
             if (path.fillTransform) {
               var m = path.fillTransform;
+              ctx.beginPath();
               path.__draw__(ctx);
               ctx.save();
               ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);

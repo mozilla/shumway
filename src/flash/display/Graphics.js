@@ -148,11 +148,10 @@ const GraphicsDefinition = (function () {
     },
     beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
       var gradient;
-
       if (type === 'linear')
-        gradient = fillContext.createLinearGradient(-819.2, 0, 819.2, 0);
+        gradient = fillContext.createLinearGradient(-1, 0, 1, 0);
       else if (type == 'radial')
-        gradient = fillContext.createRadialGradient(819.2 * (focalPos || 0), 0, 0, 0, 0, 819.2);
+        gradient = fillContext.createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
       else
         throw ArgumentError();
 
@@ -160,7 +159,12 @@ const GraphicsDefinition = (function () {
         gradient.addColorStop(ratios[i], toRgba(colors[i], alphas[i]));
 
       this._fillStyle = gradient;
-      this._fillTransform = matrix;
+
+      // NOTE firefox really sensitive to really small scale when painting gradients
+      var scale = 819.2;
+      this._fillTransform = matrix ?
+        {a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, tx: matrix.tx, ty: matrix.ty} :
+        {a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0};
     },
 
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
