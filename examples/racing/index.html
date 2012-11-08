@@ -24,9 +24,10 @@
         color: Yellow;
       }
     </style>
-  </head>
-  <body>
-    <div id="stage"></div>
+
+    <script>
+      SHUMWAY_ROOT = "../../src/";
+    </script>
 
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
@@ -50,9 +51,6 @@
     <script src="../../src/swf/shape.js"></script>
     <script src="../../src/swf/text.js"></script>
 
-
-    <script src="../../src/swf/prototypes.js"></script>
-
     <!-- Load AVM1 Dependencies -->
     <script src="../../src/avm1/classes.js"></script>
     <script src="../../src/avm1/globals.js"></script>
@@ -61,29 +59,99 @@
     <script src="../../src/swf/embed.js"></script>
     <script src="../../src/swf/renderer.js"></script>
 
+        <!-- Load AVM2 Dependencies -->
+    <script src="../../src/avm2/util.js"></script>
+    <script src="../../src/avm2/options.js"></script>
+    <script src="../../src/avm2/metrics.js"></script>
+
+    <script>
+      var Counter = new metrics.Counter(true);
+      var Timer = metrics.Timer;
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+    </script>
+
+    <script src="../../src/avm2/constants.js"></script>
+    <script src="../../src/avm2/errors.js"></script>
+    <script src="../../src/avm2/opcodes.js"></script>
+    <script src="../../src/avm2/parser.js"></script>
+    <script src="../../src/avm2/analyze.js"></script>
+    <script src="../../src/avm2/compiler/lljs/src/estransform.js"></script>
+    <script src="../../src/avm2/compiler/lljs/src/escodegen.js"></script>
+    <script src="../../src/avm2/compiler/inferrer.js"></script>
+    <script src="../../src/avm2/compiler/compiler.js"></script>
+    <script src="../../src/avm2/domain.js"></script>
+    <script src="../../src/avm2/runtime.js"></script>
+    <script src="../../src/avm2/native.js"></script>
+    <script src="../../src/avm2/disassembler.js"></script>
+    <script src="../../src/avm2/interpreter.js"></script>
+    <script src="../../src/avm2/vm.js"></script>
+
+    <script src="avm2utils.js"></script>
+
+    <!-- Load Flash Dependencies -->
+
     <script src="../../src/flash/util.js"></script>
     <script src="../../src/flash/events/Event.js"></script>
-    <script src="../../src/flash/events/ProgressEvent.js"></script>
+    <script src="../../src/flash/events/KeyboardEvent.js"></script>
+    <script src="../../src/flash/events/MouseEvent.js"></script>
+    <script src="../../src/flash/events/TimerEvent.js"></script>
     <script src="../../src/flash/events/EventDispatcher.js"></script>
+    <script src="../../src/flash/net/NetConnection.js"></script>
+    <script src="../../src/flash/net/NetStream.js"></script>
     <script src="../../src/flash/display/DisplayObject.js"></script>
     <script src="../../src/flash/display/InteractiveObject.js"></script>
     <script src="../../src/flash/display/DisplayObjectContainer.js"></script>
-    <script src="../../src/flash/display/Graphics.js"></script>
     <script src="../../src/flash/display/Sprite.js"></script>
+    <script src="../../src/flash/display/MovieClip.js"></script>
     <script src="../../src/flash/display/Loader.js"></script>
     <script src="../../src/flash/display/LoaderInfo.js"></script>
-    <script src="../../src/flash/display/MovieClip.js"></script>
     <script src="../../src/flash/display/Stage.js"></script>
-    <script src="../../src/flash/display/StaticText.js"></script>
+    <script src="../../src/flash/display/Bitmap.js"></script>
+    <script src="../../src/flash/display/BitmapData.js"></script>
+    <script src="../../src/flash/display/Graphics.js"></script>
+    <script src="../../src/flash/display/Shape.js"></script>
+    <script src="../../src/flash/display/SimpleButton.js"></script>
+    <script src="../../src/flash/geom/Point.js"></script>
+    <script src="../../src/flash/geom/Rectangle.js"></script>
+    <script src="../../src/flash/geom/Matrix.js"></script>
+    <script src="../../src/flash/geom/ColorTransform.js"></script>
+    <script src="../../src/flash/geom/Transform.js"></script>
+    <!--
+    <script src="../../src/flash/media/SoundTransform.js"></script>
+    -->
+    <script src="../../src/flash/media/Video.js"></script>
+    <!--
+    <script src="../../src/flash/text/Font.js"></script>
+    -->
+    <script src="../../src/flash/text/StaticText.js"></script>
+    <script src="../../src/flash/text/TextField.js"></script>
     <script src="../../src/flash/ui/Keyboard.js"></script>
+    <!--
     <script src="../../src/flash/ui/Mouse.js"></script>
+    -->
+    <script src="../../src/flash/utils/Timer.js"></script>
+    <script src="../../src/flash/stubs.js"></script>
+  </head>
+  <body>
+    <div id="stage"></div>
+
 
     <script>
-      Loader.LOADER_PATH = "../../src/flash/display/Loader.js";
-    </script>
+      var SWF_PATH = "race.swf";
+      createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+        function loaded() {}
 
-    <script>
-      SWF.embed("../../examples/racing/race.swf", document.getElementById("stage"));
+        new BinaryFileReader(SWF_PATH).readAll(null, function(buffer) {
+          if (!buffer) {
+            throw "Unable to open the file " + SWF_PATH + ": " + error;
+          }
+          SWF.embed(buffer, document.getElementById("stage"), { onComplete: loaded });
+        });
+      });
     </script>
     <div id="footer">
      <sup>*</sup>
