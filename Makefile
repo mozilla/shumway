@@ -32,6 +32,9 @@ build-playerglobal:
 build-extension:
 	make -C extension/firefox/ build
 
+build-web:
+	make -C web/ build
+
 test:
 	make -C src/avm1/tests/ test
 	make -C src/avm2/bin/ test-regress
