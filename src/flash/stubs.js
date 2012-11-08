@@ -99,6 +99,8 @@ var as3error = {};
    M("flash.display.Sprite", "SpriteClass", SpriteDefinition),
    M("flash.display.MovieClip", "MovieClipClass", MovieClipDefinition),
    M("flash.display.Shape", "ShapeClass", ShapeDefinition),
+   M("flash.display.Bitmap", "BitmapClass", BitmapDefinition),
+   M("flash.display.BitmapData", "BitmapDataClass", BitmapDataDefinition),
    M("flash.display.Stage", "StageClass", StageDefinition),
    M("flash.display.Loader", "LoaderClass", LoaderDefinition),
    M("flash.display.LoaderInfo", "LoaderInfoClass", LoaderInfoDefinition),

@@ -401,7 +401,7 @@ const LoaderDefinition = (function () {
         framePromise.resolve(displayList);
         root._framesLoaded++;
 
-        if (labelName) {
+        if (labelName && root._frameLabels) {
           root._frameLabels[labelName] = {
             __class__: 'flash.display.FrameLabel',
             frame: frameNum,

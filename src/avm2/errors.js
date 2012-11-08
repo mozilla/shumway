@@ -139,6 +139,7 @@ const Errors = {
   NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},
   InvalidEnumError                     : {code: 2008, message: "Parameter %1 must be one of the accepted values."},
   CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
+  ArgumentError                        : {code: 2015, message: "Invalid BitmapData."},
   EOFError                             : {code: 2030, message: "End of file was encountered."},
   CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
   EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
