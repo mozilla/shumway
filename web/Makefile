@@ -50,6 +50,7 @@ build: clean \
 	# Copy extensions
 	mkdir -p build/extension/firefox
 	cp $(SHUMWAY_ROOT)/extension/firefox/build/shumway.xpi build/extension/firefox/
+	cp $(SHUMWAY_ROOT)/extension/firefox/build/update.rdf build/extension/firefox/
 	# Removing hidden files
 	-find build -name ".DS_Store" | xargs rm
 	# Creating commit
@@ -60,10 +61,11 @@ build: clean \
 
 $(SHUMWAY_ROOT)/extension/firefox/build/shumway.xpi:
 	$(MAKE) -C $(SHUMWAY_ROOT)/extension/firefox build
-clean:
-	-rm -rf build
 
 $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc:
 	make -C $(SHUMWAY_ROOT) build-playerglobal
+
+clean:
+	-rm -rf build
 
 PHONY: build clean

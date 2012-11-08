@@ -3,7 +3,7 @@
 build: clean
 	# Coping extension files
 	mkdir build
-	cp -R ../../LICENSE components content bootstrap.js install.rdf build/
+	cp -R ../../LICENSE components content bootstrap.js install.rdf update.rdf build/
 	# Coping JavaScript content files
 	mkdir build/content/swf
 	cp ../../src/swf/*.js build/content/swf/
