@@ -175,7 +175,7 @@
  * instantiation. It is called in the usual order for its super classes,
  * i.e. super first.
  *
- * Suppose c is an instance of C, is has access to the definitions:
+ * Suppose c is an instance of C, it has access to the definitions:
  *
  *   c.m(); // calls m
  *   print(c.x); // calls the getter
@@ -929,8 +929,7 @@ const natives = (function () {
     const INITIAL_SIZE = 128;
 
     function ByteArray() {
-      var a = new ArrayBuffer(INITIAL_SIZE);
-      this.a = a;
+      this.a = new ArrayBuffer(INITIAL_SIZE);
       this.length = 0;
       this.position = 0;
       this.cacheViews();
@@ -1029,7 +1028,7 @@ const natives = (function () {
     BAp.writeBoolean = function writeBoolean(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
-      this.int8v[this.position++] = !!v ? 1 : 0;
+      this.int8v[this.position++] = v ? 1 : 0;
       if (len > this.length) {
         this.length = len;
       }
