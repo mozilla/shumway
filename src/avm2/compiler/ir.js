@@ -903,6 +903,11 @@
       return constructor;
     })();
 
+    function Edges () {
+      this.successors = [];
+      this.predecessors = [];
+    }
+
     /**
      * Computes the Allen-Cocke interval partitioning.
      *
@@ -914,31 +919,40 @@
      *  Interval Header: h, in I(h), is the sole entry point of the interval and is called the
      *    interval header.
      *
-     * This function returns a derived sequence of interval graphs. Each interval graph is
-     * encoded as a sequence of |Interval| objects and a map from blocks to their respective
-     * interval headers.
+     * This function derives a sequence of collapsed interval graphs and passes its results to
+     * a callback.
+     *
+     * @param {function(Array.<Interval>, Edges)} callback
+     *
+     * @return {Boolean}
      */
     constructor.prototype.computeIntervals = function computeIntervals(callback) {
 
       var root = this.root;
       var order = this.computeReversePostOrder();
-      var blocks = this.blocks;
       var headers = [root];
       var processedHeaders = this.createBlockSet();
 
-      var edges = {
-        successors: [],
-        predecessors: []
-      };
+      var edges = new Edges();
 
       order.forEach(function (block) {
         edges.successors[block.id] = block.successors;
         edges.predecessors[block.id] = block.predecessors;
       });
 
+      var intervals;
+
+      function findIntervalContaining(block) {
+        for (var i = 0; i < intervals.length; i++) {
+          if (intervals[i].set.get(block.id)) {
+            return intervals[i];
+          }
+        }
+        unexpected("Cannot find an interval for " + block);
+      }
+
       while (order.length > 1) {
-        // writer.writeLn("Order: " + order);
-        var intervals = [];
+        intervals = [];
 
         while (headers.length) {
           var header = headers.pop();
@@ -992,38 +1006,23 @@
             var predecessors = edges.predecessors[block.id];
             for (var j = 0; j < predecessors.length; j++) {
               if (set.get(predecessors[j].id)) {
-                headers.push(block);
+                headers.pushUnique(block);
                 break;
               }
             }
           }
         }
 
-        function findIntervalContaining(block) {
-          for (var i = 0; i < intervals.length; i++) {
-            if (intervals[i].set.get(block.id)) {
-              return intervals[i];
-            }
-          }
-          unexpected("Cannot find an interval for " + block);
-        }
-
-//        intervals = intervals.sort(function compare(a, b) {
-//          return a.header.rpo - b.header.rpo;
-//        });
-
-        order = [];
-        var newEdges = { successors: [], predecessors: [] };
+        var newOrder = [];
+        var newEdges = new Edges();
 
         // Collapse intervals.
         intervals.forEach(function (interval) {
           var header = interval.header;
-          order.push(header);
+          newOrder.push(header);
           var newSuccessors = newEdges.successors[header.id] = [];
           var newPredecessors = newEdges.predecessors[header.id] = [];
           interval.set.forEach(function (blockID) {
-            var block = blocks[blockID];
-            // newMap[blockID] = interval.header;
             var successors = edges.successors[blockID];
             for (var i = 0; i < successors.length; i++) {
               if (!interval.set.get(successors[i].id)) {
@@ -1039,42 +1038,26 @@
           });
         });
 
-        callback(intervals, order, edges, newEdges);
+        var notReducible = newOrder.length === order.length;
+        if (notReducible) {
+          return false;
+        }
 
+        callback(intervals, edges);
+
+        order = newOrder;
         edges = newEdges;
         headers = [root];
         processedHeaders.clearAll();
-
-        /*
-        order = [];
-        var newMap = [];
-        intervals.forEach(function (interval) {
-          order.push(interval.header);
-          interval.set.forEach(function (blockID) {
-            newMap[blockID] = interval.header;
-          });
-        });
-
-        // Remap all blocks to new interval headers.
-        for (var i = 0; i < map.length; i++) {
-          map[i] = newMap[map[i].id];
-        }
-
-        headers = [root];
-        processedHeaders.clearAll();
-
-        levels.push({
-          intervals: intervals,
-          map: map.slice(0)
-        });
-        */
       }
+
+      return true;
     };
 
     constructor.prototype.restructure = function restructure() {
       var isHeaderOrLatch = this.createBlockSet();
       this.restructureLoops(isHeaderOrLatch);
-      this.restructureIfs(isHeaderOrLatch);
+      // this.restructureIfs(isHeaderOrLatch);
 
       // this.buildStructure();
     };
@@ -1289,10 +1272,10 @@
     };
 
     constructor.prototype.restructureLoops = function restructureLoops(isHeaderOrLatch) {
-      var levels = this.computeIntervals();
       var writer = new IndentingWriter();
       var blocks = this.blocks;
 
+      /*
       function getPredecessors(node, map) {
         return node.predecessors.map(function (predecessor) {
           return map ? map[predecessor.id] : predecessor;
@@ -1304,9 +1287,10 @@
           return map ? map[successor.id] : successor;
         });
       }
+      */
 
-      function blockType(node) {
-        return node.successors.length;
+      function blockType(node, edges) {
+        return edges.successors[node.id].length;
       }
 
       var inLoop = this.createBlockSet();
@@ -1330,16 +1314,16 @@
         });
       }
 
-      function findLoopType(inLoop, header, latch, map) {
-        print("Header: " + header);
-        print("Header Succ: " + header.successors);
-        print("Latch: " + latch);
-        print("Latch  Succ: " + latch.successors);
+      function findLoopType(inLoop, header, latch, edges) {
+        writer.writeLn("Header: " + header);
+        writer.writeLn("Header Succ: " + edges.successors[header.id]);
+        writer.writeLn("Latch: " + latch);
+        writer.writeLn("Latch  Succ: " + edges.successors[latch.id]);
 
-        var latchType = blockType(latch);
-        var headerType = blockType(header);
+        var latchType = blockType(latch, edges);
+        var headerType = blockType(header, edges);
 
-        print("headerType: " + headerType + ", latchType: " + latchType);
+        writer.writeLn("headerType: " + headerType + ", latchType: " + latchType);
 
         if (header === latch) {
           return LoopType.POST_TESTED;
@@ -1353,8 +1337,8 @@
           if (headerType === 1) {
             return LoopType.POST_TESTED;
           } else if (headerType === 2) {
-            var successors = getSuccessors(header, map);
-            print("inLoop: " + inLoop + " succ " + successors);
+            var successors = edges.successors[header.id];
+            writer.writeLn("inLoop: " + inLoop + " succ " + successors);
             if (inLoop.get(successors[0].id) && inLoop.get(successors[1].id)) {
               return LoopType.POST_TESTED;
             } else {
@@ -1364,20 +1348,20 @@
         }
       }
 
-      function findLoopFollow(inLoop, header, latch, map) {
+      function findLoopFollow(inLoop, header, latch, edges) {
         assert (header.loopType);
 
         var loopType = header.loopType;
         var successors;
         if (loopType === LoopType.PRE_TESTED) {
-          successors = getSuccessors(header, map);
+          successors = edges.successors[header.id];
           if (inLoop.get(successors[0].id)) {
             return successors[1];
           } else {
             return successors[0];
           }
         } else if (loopType === LoopType.POST_TESTED) {
-          successors = getSuccessors(latch, map);
+          successors = edges.successors[latch.id];
           if (inLoop.get(successors[0].id)) {
             return successors[1];
           } else {
@@ -1391,8 +1375,8 @@
             if (block.successors.length !== 2) {
               return;
             }
-            successors = getSuccessors(block, map);
-            for (var i = 0; i < 2; i++) {
+            successors = edges.successors[block.id];
+            for (var i = 0; i < successors.length; i++) {
               if (!inLoop.get(successors[i].id) && successors[i].rpo < follow.rpo) {
                 follow = successors[i];
                 break;
@@ -1407,14 +1391,19 @@
         }
       }
 
-      for (var i = 0; i < levels.length; i++) {
+      var level = 0;
+      this.computeIntervals(function foo(x, y) {
+
+      });
+
+      this.computeIntervals(function process(intervals, edges) {
         inAnyLoop.clearAll();
-        var intervals = levels[i].intervals;
-        writer.enter("> Restructuring Level: " + i);
+
+        writer.enter("> Restructuring Level: " + level++);
         for (var j = 0; j < intervals.length; j++) {
           var interval = intervals[j];
           var header = interval.header;
-          var predecessors = getPredecessors(header, map);
+          var predecessors = edges.predecessors[header.id];
           writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
           writer.writeLn("Interval, set: " + interval.set);
 
@@ -1433,7 +1422,7 @@
             }
           }
 
-          writer.writeLn("Header Node Type: " + blockType(header));
+          writer.writeLn("Header Node Type: " + blockType(header, edges));
 
           if (latch) {
             writer.writeLn("Latch Node: " + latch);
@@ -1442,8 +1431,8 @@
             writer.writeLn("In Loop: " + inLoop);
 
 
-            header.loopType = findLoopType(inLoop, header, latch, map);
-            header.follow = findLoopFollow(inLoop, header, latch, map);
+            header.loopType = findLoopType(inLoop, header, latch, edges);
+            header.follow = findLoopFollow(inLoop, header, latch, edges);
             header.latch = latch;
             inAnyLoop._union(inLoop);
 
@@ -1454,8 +1443,7 @@
           }
         }
         writer.leave("<");
-        var map = levels[i].map;
-      }
+      });
     };
 
     constructor.prototype.trace = function (writer) {

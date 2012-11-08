@@ -150,10 +150,14 @@ function processAbc(abc) {
           return "B" + i + "->X";
         }
         return "B" + i + "->[" + v + "]";
-      }).join(", ");
+      }).join(",");
     }
 
     var CFG = IR.CFG;
+    var count = 0;
+
+    var levelCount = 0;
+    var maxLevel = 0;
     abc.methods.forEach(function (method) {
       try {
         method.analysis = new Analysis(method, opts);
@@ -161,43 +165,57 @@ function processAbc(abc) {
       } catch (x) {
         return;
       }
+
       // stdout.writeLn("Method: " + method);
       var cfg = new CFG();
       cfg.fromAnalysis(method.analysis);
       cfg.computeDominators();
+
+      if (count++ < 6) {
+        return;
+      }
+
+      stdout.writeLn("--------------------------------------");
       stdout.writeLn("ORIGINAL");
+
       cfg.trace(stdout);
+
       var level = 0;
-      cfg.computeIntervals(function (intervals, order, oldEdges, newEdges) {
 
-        var list = [];
-        newEdges.successors.forEach(function (s, i) {
-          print("AA " + s.length + " I " + i);
-          for (var j = 0; j < s.length; j++) {
-            list.push("B" + i + "-> B" + s[j].id);
-          }
-        });
+      cfg.restructure();
 
-        var tmp = new CFG();
-        tmp.fromEdgeList(list.join(", "))
-        stdout.writeLn("NEW GRPAH from " + list.join(", "));
-        tmp.trace(stdout);
+      stdout.writeLn("AFTER");
+      cfg.trace(stdout);
 
-        stdout.writeLn("Intervals: " + level++);
+      false && cfg.computeIntervals(function (intervals, edges) {
+        levelCount ++;
+        level ++;
+        return;
+
+//        var list = [];
+//        newEdges.successors.forEach(function (s, i) {
+//          for (var j = 0; j < s.length; j++) {
+//            list.push("B" + i + "-> B" + s[j].id);
+//          }
+//        });
+//        var tmp = new CFG();
+//        tmp.fromEdgeList(list.join(","));
+//        stdout.writeLn("NEW GRAPH from " + list.join(", "));
+//        tmp.trace(stdout);
+//        stdout.writeLn("Intervals: " + level++);
+
         // return;
         intervals.forEach(function (interval) {
           stdout.writeLn(interval);
         });
+
         stdout.outdent();
         stdout.writeLn("Order: " + order);
         stdout.enter("Old Edges");
-        stdout.writeLn("Successors   [" + mapToString(oldEdges.successors) + "]");
-        stdout.writeLn("Predecessors [" + mapToString(oldEdges.predecessors) + "]");
+        stdout.writeLn("Successors   [" + mapToString(edges.successors) + "]");
+        stdout.writeLn("Predecessors [" + mapToString(edges.predecessors) + "]");
         stdout.outdent();
-        stdout.enter("New Edges");
-        stdout.writeLn("Successors   [" + mapToString(newEdges.successors) + "]");
-        stdout.writeLn("Predecessors [" + mapToString(newEdges.predecessors) + "]");
-        stdout.outdent();
+
         stdout.writeLn("");
       });
       // cfg.trace(stdout);
@@ -207,7 +225,13 @@ function processAbc(abc) {
       // cfg.trace(stdout);
       // cfg.walkStructure();
       // cfg.trace(stdout);
+
+      maxLevel = Math.max(maxLevel, level);
     });
+
+
+    stdout.writeLn("Methods: " + abc.methods.length + ", Average: " + (levelCount / abc.methods.length) + ", Max: " + maxLevel);
+
     quit();
   }
 
