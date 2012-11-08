@@ -479,19 +479,16 @@ const LoaderDefinition = (function () {
             children.push(childPromise);
           }
 
-          var stateInfo;
           if (children.length === 1) {
-            stateInfo = children[0];
+            states[stateName] = children[0];
           } else {
+            var statePromise = new Promise;
             stateInfo = { };
             stateInfo.className = 'flash.display.Sprite';
             stateInfo.props = { children: children };
+            statePromise.resolve(stateInfo);
+            states[stateName] = statePromise;
           }
-
-          var statePromise = new Promise;
-          statePromise.resolve(stateInfo);
-
-          states[stateName] = statePromise;
         }
 
         symbolInfo.className = 'flash.display.SimpleButton';
