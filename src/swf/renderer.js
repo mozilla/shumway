@@ -2,6 +2,7 @@ function renderStage(stage, ctx) {
   // All the visitors close over this class to do instance testing.
   const MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
   const ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
+  const SimpleButtonClass = avm2.systemDomain.getClass("flash.display.SimpleButton");
   const InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
 
   function visitContainer(container, visitor, interactiveParent) {
@@ -10,7 +11,8 @@ function renderStage(stage, ctx) {
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
       if (child) {
-        var isContainer = ContainerClass.isInstanceOf(child) || child._isContainer;
+        var isContainer = ContainerClass.isInstanceOf(child) ||
+                          SimpleButtonClass.isInstanceOf(child);
 
         if (InteractiveClass.isInstanceOf(child)) {
           if (!interactiveParent || interactiveParent._mouseChildren)

@@ -27,9 +27,6 @@ const SimpleButtonDefinition = (function () {
       this._upState = val;
     },
 
-    get _isContainer() {
-      return true;
-    },
     _getAS2Object: function () {
       if (!this.$as2Object) {
         new AS2Button().$attachNativeObject(this);
