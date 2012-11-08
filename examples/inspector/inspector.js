@@ -63,6 +63,7 @@ var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
  * when the page loads.
  */
 if (rfile) {
+  $('#openFileToolbar')[0].setAttribute('hidden', true);
   executeFile(rfile);
 }
 
