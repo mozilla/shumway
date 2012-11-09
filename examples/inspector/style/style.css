@@ -22,15 +22,15 @@ body {
 }
 
 .toolbarInfo {
+    font-family: Consolas, Lucida Grande, sans-serif;
+
     padding: 4px 8px;
     background: url(images/background-noise-toolbar.png),
     -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
     border-radius: 4px;
     box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
     0 0 0 1px hsla(0,0%,0%,.15),
-    0 10px 14px hsla(0,0%,0%,.4);
-    font-family: Consolas, Lucida Grande, sans-serif;
-
+    0 10px 14px hsla(0,0%,0%,.4),
     0 0 0 1px hsla(210,16%,76%,.15) inset,
     0 1px 0 hsla(210,16%,76%,.15);
     color: hsl(210,30%,85%);
