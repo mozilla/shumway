@@ -1,7 +1,7 @@
 # Just builds a ff extension
 
 VERSION_BASELINE=c9d3aa7c886ce53648082
-VERSION=0.3.`git log --format=oneline $(VERSION_BASELINE)..|wc -l`
+VERSION=0.3.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 
 build: clean
 	# Coping extension files
