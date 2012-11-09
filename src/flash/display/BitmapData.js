@@ -16,7 +16,18 @@ var BitmapDataDefinition = (function () {
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
       }
     },
+    _checkCanvas: function() {
+      if (this._canvas === null)
+        avm2.throwErrorFromVM("ArgumentError");
+    },
+    dispose: function() {
+      this._canvas.width = 0;
+      this._canvas.height = 0;
+      this._canvas = null;
+      this._ctx = null;
+    },
     fillRect : function(rect, color) {
+      this._checkCanvas();
       if (!this._transparent) {
         color |= 0xff000000 >>> 0;
       }
@@ -30,7 +41,8 @@ def.__glue__ = {
   native: {
     instance: {
       ctor : def.ctor,
-      fillRect : def.fillRect
+      fillRect : def.fillRect,
+      dispose : def.dispose,
     }
   }
 };
