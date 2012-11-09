@@ -5,7 +5,7 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>shumway@research.mozilla.org</em:id>
-    <em:name>shumway</em:name>
+    <em:name>Shumway</em:name>
     <em:version>(SHUMWAY_VERSION)</em:version>
 	  <em:iconURL>chrome://shumway/skin/logo.png</em:iconURL>
 
@@ -30,7 +30,7 @@
     <em:bootstrap>true</em:bootstrap>
     <em:unpack>true</em:unpack>
     <em:creator>Mozilla Research</em:creator>
-    <em:description>shumway loader</em:description>
+    <em:description>Shumway loader</em:description>
     <em:homepageURL>https://github.com/mozilla/shumway/</em:homepageURL>
     <em:type>2</em:type>
     <!-- Use the raw link for updates so we we can use SSL. -->
