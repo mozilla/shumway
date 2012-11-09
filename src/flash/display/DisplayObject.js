@@ -224,7 +224,7 @@ const DisplayObjectDefinition = (function () {
       return this._parent;
     },
     get root() {
-      return this._root || (this._parent ? this._parent._root : null);
+      return this._root || (this._parent ? this._parent.root : null);
     },
     get rotation() {
       return this._rotation;
