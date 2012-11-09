@@ -124,7 +124,8 @@ var as3error = {};
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
-   M("flash.text.Video", "VideoClass", VideoDefinition),
+   M("flash.media.Sound", "SoundClass", SoundDefinition),
+   M("flash.media.Video", "VideoClass", VideoDefinition),
 
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");
