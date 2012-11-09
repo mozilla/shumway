@@ -45,7 +45,7 @@ Promise.when = function () {
     promise.resolve();
   } else {
     var values = [];
-    for (var i = 0; i < numPromises; i++) {
+    for (var i = 0, n = numPromises; i < n; i++) {
       var arg = arguments[i];
       arg.then(function (val) {
         values.push(val);
