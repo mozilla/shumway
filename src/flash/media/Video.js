@@ -11,6 +11,9 @@ const VideoDefinition = (function () {
       this._netStream = netStream;
       this._element.src = netStream._url;
     },
+    ctor: function(width, height) {
+      // notImplemented();
+    },
     draw: function (ctx) {
       if (!this._added) {
         ctx.canvas.parentNode.appendChild(this._element);
@@ -23,7 +26,8 @@ const VideoDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        attachNetStream: def.attachNetStream
+        attachNetStream: def.attachNetStream,
+        ctor: def.ctor
       }
     }
   };

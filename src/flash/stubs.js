@@ -117,6 +117,7 @@ var as3error = {};
    M("flash.events.Event", "EventClass", EventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
    M("flash.events.MouseEvent", "MouseEventClass", MouseEventDefinition),
+   M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
@@ -127,6 +128,10 @@ var as3error = {};
    M("flash.media.Sound", "SoundClass", SoundDefinition),
    M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
    M("flash.media.Video", "VideoClass", VideoDefinition),
+
+   M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
+   M("flash.net.NetStream", "NetStreamClass", NetStreamDefinition),
+   M("flash.net.Responder", "ResponderClass", ResponderDefinition),
 
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
