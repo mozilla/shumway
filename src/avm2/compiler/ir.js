@@ -638,20 +638,52 @@
         }
       }
 
-      this.root = this.blocks[0];
-      this.exit = new Block(this.nextBlockID++);
+      this.buildRootAndExit();
+    };
 
+    /**
+     * Makes sure root node has no predecessors and that there is only one
+     * exit node.
+     */
+    constructor.prototype.buildRootAndExit = function buildRootAndExit() {
+      assert (!this.root && !this.exit);
+
+      // Create new root node if the root node has predecessors.
+      if (this.blocks[0].predecessors.length > 0) {
+        this.root = new Block(this.nextBlockID++);
+        this.blocks.push(this.root);
+        this.root.pushSuccessor(this.blocks[0], true);
+      } else {
+        this.root = this.blocks[0];
+      }
+      var exitBlocks = [];
+
+      // Collect exit blocks (blocks with no successors).
       for (var i = 0; i < this.blocks.length; i++) {
         var block = this.blocks[i];
         if (block.successors.length === 0) {
-          block.pushSuccessor(this.exit, true);
+          exitBlocks.push(block);
         }
       }
 
-      this.blocks.push(this.exit);
+      if (exitBlocks.length === 0) {
+        unexpected("Must have an exit block.");
+      } else if (exitBlocks.length === 1 && exitBlocks[0] !== this.root) {
+        this.exit = exitBlocks[0];
+      } else {
+        // Create new exit block to merge flow.
+        this.exit = new Block(this.nextBlockID++);
+        this.blocks.push(this.exit);
+        for (var i = 0; i < exitBlocks.length; i++) {
+          exitBlocks[i].pushSuccessor(this.exit, true);
+        }
+      }
+
+      assert (this.root && this.exit);
+      assert (this.root !== this.exit);
     };
 
-    constructor.prototype.fromEdgeList = function (list) {
+    constructor.prototype.fromString = function (list) {
       var cfg = this;
       var names = cfg.blockNames || (cfg.blockNames = {});
       var blocks = cfg.blocks;
@@ -678,17 +710,15 @@
         }
         names[name] = block = new Block(cfg.nextBlockID++);
         block.name = name;
-        if (blocks.length === 0) {
-          cfg.root = block;
-        }
         blocks.push(block);
         return block;
       }
 
       function buildEdge(from, to) {
         buildBlock(from).pushSuccessor(buildBlock(to), true);
-        // buildBlock(to).pushPredecessor(buildBlock(from));
       }
+
+      this.buildRootAndExit();
     };
 
     constructor.prototype.buildBlock = function (start, end) {
@@ -735,8 +765,12 @@
     };
 
     constructor.prototype.computeDominators = function (apply) {
+      assert (this.root.predecessors.length === 0, "Root node " + this.root + " must not have predecessors.");
+
       var dom = new Int32Array(this.blocks.length);
-      for (var i = 0; i < dom.length; i++) dom[i] = -1;
+      for (var i = 0; i < dom.length; i++) {
+        dom[i] = -1;
+      }
       var map = this.createBlockSet();
       function computeCommonDominator(a, b) {
         map.clearAll();
@@ -1043,7 +1077,7 @@
           return false;
         }
 
-        callback(intervals, edges);
+        callback && callback(intervals, edges);
 
         order = newOrder;
         edges = newEdges;
@@ -1056,10 +1090,9 @@
 
     constructor.prototype.restructure = function restructure() {
       var isHeaderOrLatch = this.createBlockSet();
+      this.computeDominators(true);
       this.restructureLoops(isHeaderOrLatch);
-      // this.restructureIfs(isHeaderOrLatch);
-
-      // this.buildStructure();
+      this.restructureIfs(isHeaderOrLatch);
     };
 
     var Control = {
@@ -1115,6 +1148,15 @@
         return block.follow;
       }
 
+      function walkEndlessLoop(block) {
+        loopStack.push(block);
+        writer.enter("while (true) { ");
+        // walk(notFollow(block), block.follow);
+        writer.leave("}");
+        loopStack.pop();
+        return null;
+      }
+
       var loopStack = [];
 
       function walkPostTestedLoop(block) {
@@ -1140,8 +1182,8 @@
         // writer.writeLn("walkBlock: " + block);
         assert (!block.loopType && !block.ifType);
         if (block.loopHeader) {
+          writer.writeLn(block);
           if (block.loopHeader.latch !== block) {
-            writer.writeLn(block);
             writer.writeLn("continue;");
           }
           block = null;
@@ -1188,6 +1230,8 @@
             block = walkPreTestedLoop(block);
           } else if (block.loopType === LoopType.POST_TESTED) {
             block = walkPostTestedLoop(block);
+          } else if (block.loopType === LoopType.ENDLESS) {
+            block = walkEndlessLoop(block);
           } else {
             block = walkBlock(block);
           }
@@ -1218,7 +1262,6 @@
      * computed.
      *
      * Blocks that are marked as loop headers or latches are not considered.
-     *
      */
     constructor.prototype.restructureIfs = function restructureIfs(isHeaderOrLatch) {
       var order = this.order;
@@ -1234,7 +1277,7 @@
         var block = order[i];
         // Is it a 2-Way header block?
         if (blockType(block) === 2 && !isHeaderOrLatch.get(block.id)) {
-          print("2-Way Header Block: " + block);
+          // print("2-Way Header Block: " + block);
           // Search for a follow block.
           follow = null;
           for (var j = i; j < order.length; j++) {
@@ -1248,7 +1291,7 @@
             }
           }
           if (follow) {
-            print("2-Way Follow Block: " + follow + " for Header Block: " + block);
+            // print("2-Way Follow Block: " + follow + " for Header Block: " + block);
             block.ifType = findIfType(block, follow);
             block.follow = follow;
             unresolved.forEach(function (blockID) {
@@ -1271,23 +1314,12 @@
       }
     };
 
+    /**
+     * Find loop structures.
+     */
     constructor.prototype.restructureLoops = function restructureLoops(isHeaderOrLatch) {
-      var writer = new IndentingWriter();
+      var writer; // = new IndentingWriter();
       var blocks = this.blocks;
-
-      /*
-      function getPredecessors(node, map) {
-        return node.predecessors.map(function (predecessor) {
-          return map ? map[predecessor.id] : predecessor;
-        });
-      }
-
-      function getSuccessors(node, map) {
-        return node.successors.map(function (successor) {
-          return map ? map[successor.id] : successor;
-        });
-      }
-      */
 
       function blockType(node, edges) {
         return edges.successors[node.id].length;
@@ -1315,15 +1347,11 @@
       }
 
       function findLoopType(inLoop, header, latch, edges) {
-        writer.writeLn("Header: " + header);
-        writer.writeLn("Header Succ: " + edges.successors[header.id]);
-        writer.writeLn("Latch: " + latch);
-        writer.writeLn("Latch  Succ: " + edges.successors[latch.id]);
+        writer && writer.writeLn("header: " + header + ", successors: " + edges.successors[header.id]);
+        writer && writer.writeLn(" latch: " + latch + ", successors: " + edges.successors[latch.id]);
 
         var latchType = blockType(latch, edges);
         var headerType = blockType(header, edges);
-
-        writer.writeLn("headerType: " + headerType + ", latchType: " + latchType);
 
         if (header === latch) {
           return LoopType.POST_TESTED;
@@ -1338,7 +1366,7 @@
             return LoopType.POST_TESTED;
           } else if (headerType === 2) {
             var successors = edges.successors[header.id];
-            writer.writeLn("inLoop: " + inLoop + " succ " + successors);
+            writer && writer.writeLn("inLoop: " + inLoop + " succ " + successors);
             if (inLoop.get(successors[0].id) && inLoop.get(successors[1].id)) {
               return LoopType.POST_TESTED;
             } else {
@@ -1372,10 +1400,10 @@
           var follow = max;
           inLoop.forEach(function (blockID) {
             var block = blocks[blockID];
-            if (block.successors.length !== 2) {
+            successors = edges.successors[block.id];
+            if (successors.length !== 2) {
               return;
             }
-            successors = edges.successors[block.id];
             for (var i = 0; i < successors.length; i++) {
               if (!inLoop.get(successors[i].id) && successors[i].rpo < follow.rpo) {
                 follow = successors[i];
@@ -1383,7 +1411,7 @@
               }
             }
           });
-          if (follow != max) {
+          if (follow !== max) {
             return follow;
           } else {
             return null;
@@ -1392,20 +1420,16 @@
       }
 
       var level = 0;
-      this.computeIntervals(function foo(x, y) {
-
-      });
-
       this.computeIntervals(function process(intervals, edges) {
         inAnyLoop.clearAll();
 
-        writer.enter("> Restructuring Level: " + level++);
+        writer && writer.enter("> Restructuring Level: " + level++);
         for (var j = 0; j < intervals.length; j++) {
           var interval = intervals[j];
           var header = interval.header;
           var predecessors = edges.predecessors[header.id];
-          writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
-          writer.writeLn("Interval, set: " + interval.set);
+          writer && writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
+          writer && writer.writeLn("Interval, set: " + interval.set);
 
           // Find Latching Node, there can be many, what to do about the rest??
           // Insert continues i guess.
@@ -1422,27 +1446,29 @@
             }
           }
 
-          writer.writeLn("Header Node Type: " + blockType(header, edges));
-
           if (latch) {
-            writer.writeLn("Latch Node: " + latch);
+            writer && writer.writeLn("Latch Node: " + latch);
             inLoop.clearAll();
             markLoopBlocks(inLoop, interval, latch);
-            writer.writeLn("In Loop: " + inLoop);
+            writer && writer.writeLn("Loop Blocks: " + inLoop);
 
-
+            writer && writer.enter("findLoopType");
             header.loopType = findLoopType(inLoop, header, latch, edges);
+            writer && writer.writeLn("loopType: " + header.loopType);
+            writer && writer.leaveAndEnter("findLoopFollow");
             header.follow = findLoopFollow(inLoop, header, latch, edges);
+            writer && writer.writeLn(header.follow);
+            writer && writer.outdent();
             header.latch = latch;
             inAnyLoop._union(inLoop);
 
             isHeaderOrLatch.set(header.id);
             isHeaderOrLatch.set(latch.id);
           } else {
-            writer.writeLn("No Latch ??");
+            writer && writer.writeLn("No latch found.");
           }
         }
-        writer.leave("<");
+        writer && writer.leave("<");
       });
     };
 
@@ -1548,6 +1574,24 @@
 
     return constructor;
   })();
+
+  const selfTest = false;
+
+  if (selfTest) {
+    var writer = new IndentingWriter();
+    function build(str) {
+      var cfg = new CFG();
+      cfg.fromString(str);
+      return cfg;
+    }
+
+    // var a = build("0->0, 0->1->2->4->5, 1->3->4");
+    var a = build("0->0");
+    a.computeDominators(true);
+    a.trace(writer);
+
+    writer.writeLn("DONE SELF TESTING");
+  }
 
   exports.Node = Node;
   exports.Start = Start;

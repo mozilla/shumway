@@ -525,56 +525,24 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     var dfg = new Builder(abc, methodInfo).build();
     Timer.stop();
 
-    // dfg.traceMetrics(new IndentingWriter());
-
-    // writer && dfg.trace(writer);
+    writer && dfg.trace(writer);
 
     Timer.start("IR CFG");
     var cfg = dfg.buildCFG();
     Timer.stop();
 
-    // writer && dfg.trace(writer);
     Timer.start("IR DOM");
     cfg.computeDominators(true);
     Timer.stop();
 
-    // Timer.start("IR LOOP");
-    // cfg.computeLoops();
-    // Timer.stop();
-
-    writer.writeLn("==================================");
 
     writer && cfg.trace(writer);
 
-    Timer.start("IR INTERVALS");
-    var levels = cfg.computeIntervals();
-
-    function traceIntervals(levels) {
-      for (var i = 0; i < levels.length; i++) {
-        var level = levels[i];
-        writer.writeLn("Map: " + level.map);
-        writer.enter("> Level: " + i);
-        level.intervals.forEach(function (interval) {
-          writer.writeLn(interval);
-        });
-        writer.leave("<");
-      }
-    }
-
-    // traceIntervals(levels);
-
-    // cfg.computeIntervalGraphs(true);
-    Timer.stop();
-
-    // writer && cfg.trace(writer);
-
     cfg.restructure();
-
-    // cfg.traceStructure(writer);
 
     cfg.trace(writer);
 
-    cfg.walkStructure();
+    // cfg.walkStructure();
 
     writer.writeLn("-------------------------------\n");
 

@@ -169,23 +169,13 @@ function processAbc(abc) {
       // stdout.writeLn("Method: " + method);
       var cfg = new CFG();
       cfg.fromAnalysis(method.analysis);
-      cfg.computeDominators();
-
-      if (count++ < 6) {
-        return;
-      }
-
       stdout.writeLn("--------------------------------------");
-      stdout.writeLn("ORIGINAL");
-
+      stdout.writeLn("BEFORE");
       cfg.trace(stdout);
-
-      var level = 0;
-
       cfg.restructure();
-
       stdout.writeLn("AFTER");
       cfg.trace(stdout);
+      cfg.walkStructure();
 
       false && cfg.computeIntervals(function (intervals, edges) {
         levelCount ++;
@@ -203,8 +193,8 @@ function processAbc(abc) {
 //        stdout.writeLn("NEW GRAPH from " + list.join(", "));
 //        tmp.trace(stdout);
 //        stdout.writeLn("Intervals: " + level++);
-
         // return;
+
         intervals.forEach(function (interval) {
           stdout.writeLn(interval);
         });
@@ -226,7 +216,6 @@ function processAbc(abc) {
       // cfg.walkStructure();
       // cfg.trace(stdout);
 
-      maxLevel = Math.max(maxLevel, level);
     });
 
 
