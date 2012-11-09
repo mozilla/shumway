@@ -204,7 +204,7 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   _framesloaded: { // @flash.display.MovieClip
-    get: function get$_framesloaded() { return this.$nativeObject._framesloaded; },
+    get: function get$_framesloaded() { return this.$nativeObject._framesLoaded; },
     enumerable: true
   },
   getBounds: {

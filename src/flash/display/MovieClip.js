@@ -50,6 +50,12 @@ const MovieClipDefinition = (function () {
       if (frameNum === this._currentFrame)
         return;
 
+      if (frameNum === 0) {
+        // HACK there is no data for this frame, but AS2 can jump to this frame index
+        this._currentFrame = 0;
+        return;
+      }
+
       var children = this._children;
       var depthMap = this._depthMap;
       var framePromise = this._timeline[frameNum - 1];
