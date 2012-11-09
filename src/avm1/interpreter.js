@@ -250,7 +250,7 @@ function interpretActions(actionsData, scopeContainer,
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
         var frame = stream.readUI16();
-        _global.gotoAndPlay(frame);
+        _global.gotoAndPlay(frame + 1);
         break;
       case 0x83: // ActionGetURL
         var urlString = stream.readString();
