@@ -59,3 +59,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     }
   });
 }
+
+window.print = function (msg) {
+  console.log(msg);
+};
