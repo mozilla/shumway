@@ -77,6 +77,12 @@ const LoaderDefinition = (function () {
       case SWF_TAG_CODE_DEFINE_SHAPE4:
         symbol = defineShape(swfTag, symbols);
         break;
+      case SWF_TAG_CODE_DEFINE_SOUND:
+        symbol = {
+          type: 'sound',
+          id: swfTag.id
+        };
+        break;
       case SWF_TAG_CODE_DEFINE_SPRITE:
         var depths = { };
         var frame = { type: 'frame' };
@@ -560,6 +566,10 @@ const LoaderDefinition = (function () {
           },
           graphics: graphics
         };
+        break;
+      case 'sound':
+        symbolInfo.className = 'flash.media.Sound';
+        symbolInfo.props = { };
         break;
       case 'sprite':
         var frameCount = symbol.frameCount;

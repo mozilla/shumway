@@ -328,6 +328,6 @@ var FRAME_LABEL = {
 var DEFINE_SOUND = {
   id: UI16,
   $$soundFlags: UI8,
-  samplesCound: UI32,
+  samplesCount: UI32,
   soundData: BINARY(0)
 };
