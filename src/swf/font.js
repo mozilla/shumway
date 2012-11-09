@@ -18,6 +18,10 @@ function defineFont(tag, dictionary) {
   var glyphIndex = { };
   var ranges = [];
 
+  var indices = [];
+  var glyphs = tag.glyphs;
+  var glyphCount = glyphs.length;
+
   if (tag.codes) {
     codes = codes.concat(tag.codes);
     for (var i = 0, code; code = codes[i]; ++i)
@@ -30,7 +34,7 @@ function defineFont(tag, dictionary) {
     while (code = codes[i++]) {
       var start = code;
       var end = start;
-      var indices = [i - 1];
+      indices.push(i - 1);
       while ((code = codes[i]) && end + 1 === code) {
         ++end;
         indices.push(i);
@@ -130,7 +134,6 @@ function defineFont(tag, dictionary) {
     format314
   ;
 
-  var glyphs = tag.glyphs;
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var resolution = tag.resolution || 1;
@@ -282,7 +285,6 @@ function defineFont(tag, dictionary) {
 
   var advance = tag.advance;
   var resolution = tag.resolution || 1;
-  var glyphCount = glyphs.length;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
