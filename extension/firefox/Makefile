@@ -1,9 +1,15 @@
 # Just builds a ff extension
 
+VERSION_BASELINE=c9d3aa7c886ce53648082
+VERSION=0.3.`git log --format=oneline $(VERSION_BASELINE)..|wc -l`
+
 build: clean
 	# Coping extension files
+	echo "Creating extension verions: $(VERSION)"
 	mkdir build
-	cp -R ../../LICENSE components content bootstrap.js install.rdf update.rdf build/
+	cp -R ../../LICENSE components content bootstrap.js build/
+	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > build/install.rdf
+	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > build/update.rdf
 	# Coping JavaScript content files
 	mkdir build/content/swf
 	cp ../../src/swf/*.js build/content/swf/
