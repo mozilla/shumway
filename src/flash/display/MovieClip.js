@@ -147,6 +147,7 @@ const MovieClipDefinition = (function () {
             instance._animated = true;
             instance._owned = true;
             instance._parent = this;
+            instance._name = cmd.name || null;
 
             if (replace)
               this._control.replaceChild(instance._control, current._control);

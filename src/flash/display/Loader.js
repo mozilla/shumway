@@ -441,8 +441,16 @@ const LoaderDefinition = (function () {
           }
         };
 
-        var as2Object = root._getAS2Object();
-        as2Object.soundmc = new SoundMock(exports);
+        var rootAS2Object = root._getAS2Object();
+        rootAS2Object.soundmc = new SoundMock(exports);
+        var soundClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+        var soundMock = soundClass.createInstance();
+        soundMock._name = 'soundmc';
+        soundMock._timeline = [new Promise];
+        soundMock._timeline[0].resolve([]);
+        soundMock._exports = exports;
+        soundMock.$as2Object = rootAS2Object.soundmc;
+        root.addChild(soundMock);
       }
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {

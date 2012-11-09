@@ -125,7 +125,11 @@ var as3error = {};
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
    M("flash.media.Sound", "SoundClass", SoundDefinition),
+   M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
    M("flash.media.Video", "VideoClass", VideoDefinition),
+
+   M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
+   M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
 
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");

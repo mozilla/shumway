@@ -32,7 +32,9 @@ AS2Globals.prototype = {
     nativeTarget.duplicateMovieClip(newname, depth);
   },
   fscommand: function (command, parameters) {
-    flash.system.fscommand.apply(null, arguments);
+    var fscommand = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+    fscommand.apply(null, arguments);
   },
   getProperty: function(target, index) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
@@ -50,7 +52,7 @@ AS2Globals.prototype = {
     flash.net.navigateToURL(request, target);
   },
   getVersion: function() {
-    return flash.system.Capalilities.version;
+    return flash.system.Capabilities.version;
   },
   gotoAndPlay: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
@@ -181,7 +183,8 @@ AS2Globals.prototype = {
     nativeTarget.stop();
   },
   stopAllSounds: function() {
-    flash.media.SoundMixer.stopAll();
+    var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+    soundMixerClass.native.static.stopAll();
   },
   stopDrag: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);

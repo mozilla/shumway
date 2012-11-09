@@ -24,6 +24,8 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/src/flash/media/*.js build/src/flash/media/
 	mkdir build/src/flash/net
 	cp $(SHUMWAY_ROOT)/src/flash/net/*.js build/src/flash/net/
+	mkdir build/src/flash/system
+	cp $(SHUMWAY_ROOT)/src/flash/system/*.js build/src/flash/system/
 	mkdir build/src/flash/text
 	cp $(SHUMWAY_ROOT)/src/flash/text/*.js build/src/flash/text/
 	mkdir build/src/flash/ui

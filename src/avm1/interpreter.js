@@ -148,7 +148,21 @@ function interpretActions(actionsData, scopeContainer,
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      var obj = defaultTarget.$lookupChild(parts[0]);
+      var path = parts[0].split('/');
+      if (path[path.length - 1] === '') {
+        path.pop();
+      }
+      var obj = defaultTarget;
+      if (path[0] === '') {
+        defaultTarget = _global._root;
+        path.shift();
+      }
+      while (path.length > 0) {
+        obj = obj.$lookupChild(path[0]);
+        if (!obj)
+          throw path[0] + ' is undefined in ' + variableName;
+        path.shift();
+      }
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference

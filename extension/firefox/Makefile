@@ -26,6 +26,8 @@ build: clean
 	cp ../../src/flash/media/*.js build/content/flash/media/
 	mkdir build/content/flash/net
 	cp ../../src/flash/net/*.js build/content/flash/net/
+	mkdir build/content/flash/system
+	cp ../../src/flash/system/*.js build/content/flash/system/
 	mkdir build/content/flash/text
 	cp ../../src/flash/text/*.js build/content/flash/text/
 	mkdir build/content/flash/ui
