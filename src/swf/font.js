@@ -18,7 +18,6 @@ function defineFont(tag, dictionary) {
   var glyphIndex = { };
   var ranges = [];
 
-  var indices = [];
   var glyphs = tag.glyphs;
   var glyphCount = glyphs.length;
 
@@ -34,7 +33,7 @@ function defineFont(tag, dictionary) {
     while (code = codes[i++]) {
       var start = code;
       var end = start;
-      indices.push(i - 1);
+      var indices = [i - 1];
       while ((code = codes[i]) && end + 1 === code) {
         ++end;
         indices.push(i);
@@ -43,13 +42,15 @@ function defineFont(tag, dictionary) {
       ranges.push([start, end, indices]);
     }
   } else {
+    var indices = [];
+    var UAC_OFFSET = 0xe000;
     for (var i = 0; i < glyphCount; i++) {
-      var code = 0xe000 + i;
+      var code = UAC_OFFSET + i;
       codes.push(code);
       glyphIndex[code] = i;
       indices.push(i);
     }
-    ranges.push([0, glyphCount - 1, indices]);
+    ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
   var ascent = tag.ascent || 1024;
