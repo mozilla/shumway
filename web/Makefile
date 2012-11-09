@@ -4,7 +4,7 @@ SHUMWAY_ROOT=..
 
 build: clean \
        $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc \
-       $(SHUMWAY_ROOT)/extension/firefox/build/shumway.xpi
+       build-extension
 	mkdir build
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html build/
 	# Coping JavaScript content files
@@ -59,7 +59,7 @@ build: clean \
 	echo "Success gh-pages is created. To push:"
 	echo "  cd web/build; git push -f git@github.com:mozilla/shumway.git gh-pages"
 
-$(SHUMWAY_ROOT)/extension/firefox/build/shumway.xpi:
+build-extension:
 	$(MAKE) -C $(SHUMWAY_ROOT)/extension/firefox build
 
 $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc:
@@ -68,4 +68,4 @@ $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc:
 clean:
 	-rm -rf build
 
-PHONY: build clean
+PHONY: build clean build-extension

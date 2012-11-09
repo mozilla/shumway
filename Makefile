@@ -1,6 +1,7 @@
 default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
-	@echo "           build-playerglobal|build-extension|test|push-test|build-bot|start-build-bot]"
+	@echo "           build-playerglobal|build-extension|build-web|"
+	@echo "           test|push-test|build-bot|start-build-bot]"
 
 check-system:
 	echo "Checking the presence of mercurial..."
@@ -89,4 +90,5 @@ start-build-bot:
 		sleep 60 ; \
 	done
 
-.PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test
+.PHONY: check-system install-libs install-utils build-tamarin-tests \
+        build-playerglobal build-extension build-web test default
