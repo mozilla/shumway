@@ -6,7 +6,7 @@ build: clean \
        $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc \
        build-extension
 	mkdir build
-	cp -R $(SHUMWAY_ROOT)/LICENSE index.html build/
+	cp -R $(SHUMWAY_ROOT)/LICENSE index.html images build/
 	# Coping JavaScript content files
 	mkdir build/src
 	mkdir build/src/swf
