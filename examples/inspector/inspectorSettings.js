@@ -1,5 +1,11 @@
 function loadState() {
-  return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]): {};
+  return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]) : {
+    compiler: true,
+    verifier: true,
+    optimizer: true,
+    inlineCaching: true,
+    release: true
+  };
 }
 
 function saveState(state) {
