@@ -683,7 +683,7 @@
       assert (this.root !== this.exit);
     };
 
-    constructor.prototype.fromString = function (list) {
+    constructor.prototype.fromString = function (list, rootName) {
       var cfg = this;
       var names = cfg.blockNames || (cfg.blockNames = {});
       var blocks = cfg.blocks;
@@ -718,7 +718,8 @@
         buildBlock(from).pushSuccessor(buildBlock(to), true);
       }
 
-      this.buildRootAndExit();
+      assert (rootName && names[rootName]);
+      this.root = names[rootName];
     };
 
     constructor.prototype.buildBlock = function (start, end) {
@@ -975,7 +976,7 @@
       });
 
       var intervals;
-
+      var intervalMap = [];
       function findIntervalContaining(block) {
         for (var i = 0; i < intervals.length; i++) {
           if (intervals[i].set.get(block.id)) {
@@ -1056,7 +1057,9 @@
           newOrder.push(header);
           var newSuccessors = newEdges.successors[header.id] = [];
           var newPredecessors = newEdges.predecessors[header.id] = [];
-          interval.set.forEach(function (blockID) {
+          var set = interval.set.toArray();
+          // Collapse intervals into nodes.
+          set.forEach(function (blockID) {
             var successors = edges.successors[blockID];
             for (var i = 0; i < successors.length; i++) {
               if (!interval.set.get(successors[i].id)) {
@@ -1069,7 +1072,14 @@
                 newPredecessors.pushUnique(findIntervalContaining(predecessors[i]).header);
               }
             }
+            // Merge interval sets.
+            var oldInterval = intervalMap[blockID];
+            if (oldInterval) {
+              interval.set._union(oldInterval.set);
+            }
           });
+          // Remember interval so it can be merged next level.
+          intervalMap[header.id] = interval;
         });
 
         var notReducible = newOrder.length === order.length;
@@ -1077,7 +1087,7 @@
           return false;
         }
 
-        callback && callback(intervals, edges);
+        callback && callback(intervals, edges, newEdges);
 
         order = newOrder;
         edges = newEdges;
@@ -1151,6 +1161,8 @@
       function walkEndlessLoop(block) {
         loopStack.push(block);
         writer.enter("while (true) { ");
+        walk(block.successors[0]);
+        walk(block.successors[1]);
         // walk(notFollow(block), block.follow);
         writer.leave("}");
         loopStack.pop();
@@ -1318,7 +1330,7 @@
      * Find loop structures.
      */
     constructor.prototype.restructureLoops = function restructureLoops(isHeaderOrLatch) {
-      var writer; // = new IndentingWriter();
+      var writer = new IndentingWriter();
       var blocks = this.blocks;
 
       function blockType(node, edges) {
@@ -1377,7 +1389,7 @@
       }
 
       function findLoopFollow(inLoop, header, latch, edges) {
-        assert (header.loopType);
+        assert (header.loopType, header);
 
         var loopType = header.loopType;
         var successors;
@@ -1420,12 +1432,29 @@
       }
 
       var level = 0;
-      this.computeIntervals(function process(intervals, edges) {
+      this.computeIntervals(function process(intervals, edges, newEdges) {
         inAnyLoop.clearAll();
+
+        // /*
+        var links = [];
+        intervals.forEach(function (interval) {
+          var header = interval.header;
+          links.push(header.id);
+          newEdges.successors[header.id].forEach(function (successor) {
+            links.push(header.id + "->" + successor.id);
+          });
+        });
+
+        var str = links.join(",");
+        var cfg = new CFG();
+        cfg.fromString(str, "" + intervals[0].header.id);
+        cfg.trace(writer);
+        // */
 
         writer && writer.enter("> Restructuring Level: " + level++);
         for (var j = 0; j < intervals.length; j++) {
           var interval = intervals[j];
+          // print(interval);
           var header = interval.header;
           var predecessors = edges.predecessors[header.id];
           writer && writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
@@ -1557,9 +1586,9 @@
         block.visitSuccessors(function (successor) {
           writer.writeLn("B" + block.id + " -> " + "B" + successor.id);
         });
-        if (block.dominator) {
-          writer.writeLn("B" + block.id + " -> " + "B" + block.dominator.id + " [color = orange];");
-        }
+        // if (block.dominator) {
+        //  writer.writeLn("B" + block.id + " -> " + "B" + block.dominator.id + " [color = orange];");
+        // }
         if (block.follow) {
           writer.writeLn("B" + block.id + " -> " + "B" + block.follow.id + " [color = purple];");
         }

@@ -517,6 +517,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   })();
 
   function build(abc, methodInfo) {
+    return;
     if (compilerTraceLevel.value > 0) {
       writer = new IndentingWriter();
     }

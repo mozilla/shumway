@@ -169,13 +169,20 @@ function processAbc(abc) {
       // stdout.writeLn("Method: " + method);
       var cfg = new CFG();
       cfg.fromAnalysis(method.analysis);
-      stdout.writeLn("--------------------------------------");
-      stdout.writeLn("BEFORE");
-      cfg.trace(stdout);
-      cfg.restructure();
-      stdout.writeLn("AFTER");
-      cfg.trace(stdout);
-      cfg.walkStructure();
+      // stdout.writeLn("--------------------------------------");
+      // stdout.writeLn("BEFORE");
+      // cfg.trace(stdout);
+
+      cfg.computeIntervals(function (intervals) {
+        intervals.forEach(function (interval) {
+          // stdout.writeLn(interval);
+        })
+      });
+
+      // cfg.restructure();
+      // stdout.writeLn("AFTER");
+      // cfg.trace(stdout);
+      // cfg.walkStructure();
 
       false && cfg.computeIntervals(function (intervals, edges) {
         levelCount ++;
