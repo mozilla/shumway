@@ -943,6 +943,10 @@
       this.predecessors = [];
     }
 
+    function blockType(node) {
+      return node.successors.length;
+    }
+
     /**
      * Computes the Allen-Cocke interval partitioning.
      *
@@ -1119,143 +1123,136 @@
       }
     };
 
-    constructor.prototype.walkStructure = function walkStructure() {
-      var exit = this.exit;
 
+    /**
+     * Builds a tree of control structures.
+     */
+    constructor.prototype.buildStructure = function buildStructure() {
       var writer = new IndentingWriter();
 
-      function notFollow(block) {
-        assert (block.successors.length === 2);
-        if (block.successors[0] === block.follow) {
-          return block.successors[1];
+      function walkBlock(block) {
+        assert (block);
+        writer.writeLn(block);
+        // writer.writeLn("walkBlock: " + block);
+        if (blockType(block) === 0) {
+          writer.writeLn("return");
+          return null;
         }
-        return block.successors[0];
+        assert (!block.loopType && !block.ifType);
+        var successor = block.successors[0];
+        assert (successor !== block);
+        return successor;
+      }
+
+      var loopHeadersOrFollows = [];
+
+      function walkPostTestedLoop(block) {
+        loopHeadersOrFollows.push(block);
+        // writer.writeLn("walkPostTestedLoop: " + block + " " + block.follow);
+        var left = block.successors[0];
+        var right = block.successors[1];
+        var follow = block.follow;
+
+        writer.enter("while (true) {");
+        writer.writeLn(block);
+        if (blockType(block) === 1) {
+          assert (left !== follow);
+          walk(left);
+        } else if (blockType(block) === 2) {
+          writer.enter("if () {");
+          if (left !== follow) {
+            walk(left);
+          }
+          writer.leaveAndEnter("} else {");
+          if (right !== follow) {
+            walk(right);
+          }
+          writer.leave("}");
+        } else {
+          unexpected();
+        }
+        writer.leave("}");
+
+        loopHeadersOrFollows.pop();
+        return follow;
       }
 
       function walkIfThen(block) {
         writer.writeLn(block);
         writer.enter("if () {");
-        walk(notFollow(block), block.follow);
+        var left = block.successors[0];
+        var right = block.successors[1];
+        var follow = block.follow;
+        loopHeadersOrFollows.push(follow);
+        if (left !== follow) {
+          walk(left);
+        } else {
+          assert (right !== follow);
+          walk(right);
+        }
         writer.leave("}");
-        return block.follow;
+        loopHeadersOrFollows.pop();
+        return follow;
       }
 
       function walkIfThenElse(block) {
-        writer.enter("if (" + block + ") {");
-        walk(block.successors[1], block.follow);
-        writer.leaveAndEnter("} else {");
-        walk(block.successors[0], block.follow);
-        writer.leave("}");
-        return block.follow;
-      }
-
-      function walkPreTestedLoop(block) {
-        loopStack.push(block);
-        writer.enter("while (" + block + ") { ");
-        walk(notFollow(block), block.follow);
-        writer.leave("}");
-        loopStack.pop();
-        return block.follow;
-      }
-
-      function walkEndlessLoop(block) {
-        loopStack.push(block);
-        writer.enter("while (true) { ");
-        walk(block.successors[0]);
-        walk(block.successors[1]);
-        // walk(notFollow(block), block.follow);
-        writer.leave("}");
-        loopStack.pop();
-        return null;
-      }
-
-      var loopStack = [];
-
-      function walkPostTestedLoop(block) {
-        loopStack.push(block);
-        writer.enter("do {");
         writer.writeLn(block);
-        if (block.successors[0] !== block.follow && block.successors[1] !== block.follow) {
-          writer.enter("if () {");
-          walk(block.successors[0], block.follow);
-          writer.leaveAndEnter("} else {");
-          walk(block.successors[1], block.follow);
-          writer.leave("}");
-          // writer.writeLn(block.latch);
-        } else if (notFollow(block) !== block) {
-          walk(notFollow(block), block.follow);
-        }
-        writer.leave("} while (" + block.latch + ")");
-        loopStack.pop();
-        return block.follow;
+        writer.enter("if () {");
+        var left = block.successors[0];
+        var right = block.successors[1];
+        var follow = block.follow;
+        loopHeadersOrFollows.push(follow);
+        walk(left);
+        writer.leaveAndEnter("} else {");
+        walk(right);
+        writer.leave("}");
+        loopHeadersOrFollows.pop();
+        return follow;
       }
 
-      function walkBlock(block) {
-        // writer.writeLn("walkBlock: " + block);
-        assert (!block.loopType && !block.ifType);
-        if (block.loopHeader) {
-          writer.writeLn(block);
-          if (block.loopHeader.latch !== block) {
-            writer.writeLn("continue;");
+      function walk(block) {
+        var follow;
+
+        if (loopHeadersOrFollows.indexOf(block) >= 0) {
+          writer.writeLn("continue");
+          return;
+        }
+
+        while (block) {
+          // writer.writeLn("Walking: " + block);
+          // writer.writeLn("Loops: " + loops);
+          if (block.ifType === IfType.IF_THEN) {
+            follow = walkIfThen(block);
+          } else if (block.ifType === IfType.IF_THEN_ELSE) {
+            follow = walkIfThenElse(block);
+          } else if (block.loopType === LoopType.PRE_TESTED) {
+            follow = walkPreTestedLoop(block);
+          } else if (block.loopType === LoopType.POST_TESTED) {
+            follow = walkPostTestedLoop(block);
+          } else if (block.loopType === LoopType.ENDLESS) {
+            follow = walkEndlessLoop(block);
+          } else {
+            follow = walkBlock(block);
           }
-          block = null;
-        } else if (block.successors.length === 1) {
-          writer.writeLn(block);
-          var successor = block.successors[0];
-          // print ("STAK: " + loopStack);
-          // print ("SUCC: " + successor);
-          if (successor === exit) {
-            writer.writeLn("return " + successor);
+          // writer.writeLn("Follow: " + follow);
+
+          if (loopHeadersOrFollows.indexOf(follow) >= 0) {
             block = null;
-          } else if (loopStack.length) {
-            var loopHeader = loopStack.peek();
-            if (successor === loopHeader) {
-              writer.writeLn("continue; ?");
-              block = null;
-            } else if (successor === loopHeader.follow) {
-              writer.writeLn("break;");
+          } else {
+            if (block === follow) {
               block = null;
             } else {
-              block = successor;
+              block = follow;
             }
-          } else {
-            block = successor;
-          }
-        } else if (block.successors.length === 0) {
-          writer.writeLn(block);
-          block = null;
-        } else {
-          unexpected(block);
-        }
-        return block;
-      }
-
-      function walk(block, follow) {
-        // writer.enter("> Walking: " + block);
-        while (block) {
-          // writer.writeLn("Next: " + block);
-          if (block.ifType === IfType.IF_THEN) {
-            block = walkIfThen(block);
-          } else if (block.ifType === IfType.IF_THEN_ELSE) {
-            block = walkIfThenElse(block);
-          } else if (block.loopType === LoopType.PRE_TESTED) {
-            block = walkPreTestedLoop(block);
-          } else if (block.loopType === LoopType.POST_TESTED) {
-            block = walkPostTestedLoop(block);
-          } else if (block.loopType === LoopType.ENDLESS) {
-            block = walkEndlessLoop(block);
-          } else {
-            block = walkBlock(block);
-          }
-          if (block === follow) {
-            block = null;
           }
         }
         // writer.leave("<");
       }
 
       walk(this.root);
+
     };
+
 
     var IfType = {
       IF_THEN: "If Then",
@@ -1280,30 +1277,27 @@
       var blocks = this.blocks;
       var follow;
 
-      function blockType(node) {
-        return node.successors.length;
-      }
-
       var unresolved = this.createBlockSet();
       for (var i = order.length - 1; i >= 0; i--) {
         var block = order[i];
         // Is it a 2-Way header block?
         if (blockType(block) === 2 && !isHeaderOrLatch.get(block.id)) {
-          // print("2-Way Header Block: " + block);
+          print("2-Way Header Block: " + block);
           // Search for a follow block.
           follow = null;
+          print("Order: " + order + " I " + i);
           for (var j = i; j < order.length; j++) {
             // Is the block immediately dominated by the header and does it have at least two
             // predecessors. It must be reached by at least two paths from the header.
             if (order[j].dominator === block && order[j].predecessors.length >= 2) {
               follow = order[j];
             }
-            if (order[j].loopHeader) { // ?
-              follow = order[j];
-            }
+            // if (order[j].loopHeader) { // ?
+            //  follow = order[j];
+            // }
           }
           if (follow) {
-            // print("2-Way Follow Block: " + follow + " for Header Block: " + block);
+            print("2-Way Follow Block: " + follow + " for Header Block: " + block);
             block.ifType = findIfType(block, follow);
             block.follow = follow;
             unresolved.forEach(function (blockID) {
@@ -1333,12 +1327,12 @@
       var writer = new IndentingWriter();
       var blocks = this.blocks;
 
-      function blockType(node, edges) {
-        return edges.successors[node.id].length;
-      }
-
       var inLoop = this.createBlockSet();
       var inAnyLoop = this.createBlockSet();
+
+      function inSet(set, block) {
+        return set.get(block.id);
+      }
 
       /**
        * Marks the blocks belonging to the loop that is induced by the back edge
@@ -1358,12 +1352,12 @@
         });
       }
 
-      function findLoopType(inLoop, header, latch, edges) {
-        writer && writer.writeLn("header: " + header + ", successors: " + edges.successors[header.id]);
-        writer && writer.writeLn(" latch: " + latch + ", successors: " + edges.successors[latch.id]);
+      function findLoopType(inLoop, header, latch) {
+        writer && writer.writeLn("header: " + header + ", successors: " + header.successors);
+        writer && writer.writeLn(" latch: " + latch + ", successors: " + latch.successors);
 
-        var latchType = blockType(latch, edges);
-        var headerType = blockType(header, edges);
+        var latchType = blockType(latch);
+        var headerType = blockType(header);
 
         if (header === latch) {
           return LoopType.POST_TESTED;
@@ -1377,9 +1371,9 @@
           if (headerType === 1) {
             return LoopType.POST_TESTED;
           } else if (headerType === 2) {
-            var successors = edges.successors[header.id];
+            var successors = header.successors;
             writer && writer.writeLn("inLoop: " + inLoop + " succ " + successors);
-            if (inLoop.get(successors[0].id) && inLoop.get(successors[1].id)) {
+            if (inSet(inLoop, successors[0]) && inSet(inLoop, successors[1])) {
               return LoopType.POST_TESTED;
             } else {
               return LoopType.PRE_TESTED;
@@ -1388,21 +1382,25 @@
         }
       }
 
-      function findLoopFollow(inLoop, header, latch, edges) {
+      function findLoopFollow(inLoop, header, latch) {
         assert (header.loopType, header);
 
         var loopType = header.loopType;
         var successors;
         if (loopType === LoopType.PRE_TESTED) {
-          successors = edges.successors[header.id];
-          if (inLoop.get(successors[0].id)) {
+          successors = header.successors;
+          if (inSet(inLoop, successors[0])) {
             return successors[1];
           } else {
             return successors[0];
           }
         } else if (loopType === LoopType.POST_TESTED) {
-          successors = edges.successors[latch.id];
-          if (inLoop.get(successors[0].id)) {
+          successors = latch.successors;
+          print ("HERE : "+ successors);
+          if (inSet(inLoop, successors[0])) {
+            if (inSet(inLoop, successors[1])) {
+              return null;
+            }
             return successors[1];
           } else {
             return successors[0];
@@ -1412,12 +1410,12 @@
           var follow = max;
           inLoop.forEach(function (blockID) {
             var block = blocks[blockID];
-            successors = edges.successors[block.id];
+            successors = block.successors;
             if (successors.length !== 2) {
               return;
             }
             for (var i = 0; i < successors.length; i++) {
-              if (!inLoop.get(successors[i].id) && successors[i].rpo < follow.rpo) {
+              if (!inSet(inLoop, successors[i]) && successors[i].rpo < follow.rpo) {
                 follow = successors[i];
                 break;
               }
@@ -1432,15 +1430,15 @@
       }
 
       var level = 0;
-      this.computeIntervals(function process(intervals, edges, newEdges) {
+      this.computeIntervals(function process(intervals) {
         inAnyLoop.clearAll();
 
-        // /*
+        /*
         var links = [];
         intervals.forEach(function (interval) {
           var header = interval.header;
           links.push(header.id);
-          newEdges.successors[header.id].forEach(function (successor) {
+          header.successors.forEach(function (successor) {
             links.push(header.id + "->" + successor.id);
           });
         });
@@ -1449,14 +1447,14 @@
         var cfg = new CFG();
         cfg.fromString(str, "" + intervals[0].header.id);
         cfg.trace(writer);
-        // */
+        */
 
         writer && writer.enter("> Restructuring Level: " + level++);
         for (var j = 0; j < intervals.length; j++) {
           var interval = intervals[j];
           // print(interval);
           var header = interval.header;
-          var predecessors = edges.predecessors[header.id];
+          var predecessors = header.predecessors;
           writer && writer.writeLn("Interval, header: " + header + ", predecessors: " + predecessors);
           writer && writer.writeLn("Interval, set: " + interval.set);
 
@@ -1467,7 +1465,7 @@
 
           for (var k = 0; k < predecessors.length; k++) {
             var predecessor = predecessors[k];
-            if (interval.set.get(predecessor.id) && !inAnyLoop.get(predecessor.id)) {
+            if (inSet(interval.set, predecessor) && !inSet(inAnyLoop, predecessor)) {
               predecessor.loopHeader = header;
               if (!latch || latch.rpo < predecessor.rpo) {
                 latch = predecessor;
@@ -1482,10 +1480,11 @@
             writer && writer.writeLn("Loop Blocks: " + inLoop);
 
             writer && writer.enter("findLoopType");
-            header.loopType = findLoopType(inLoop, header, latch, edges);
+            header.loopType = findLoopType(inLoop, header, latch);
             writer && writer.writeLn("loopType: " + header.loopType);
             writer && writer.leaveAndEnter("findLoopFollow");
-            header.follow = findLoopFollow(inLoop, header, latch, edges);
+            header.follow = findLoopFollow(inLoop, header, latch);
+            latch.isLatch = true;
             writer && writer.writeLn(header.follow);
             writer && writer.outdent();
             header.latch = latch;
@@ -1592,9 +1591,9 @@
         if (block.follow) {
           writer.writeLn("B" + block.id + " -> " + "B" + block.follow.id + " [color = purple];");
         }
-        if (block.loopHeader) {
-          writer.writeLn("B" + block.id + " -> " + "B" + block.loopHeader.id + " [color = red];");
-        }
+        // if (block.loopHeader) {
+          // writer.writeLn("B" + block.id + " -> " + "B" + block.loopHeader.id + " [color = red];");
+        // }
       });
 
       writer.leave("}");

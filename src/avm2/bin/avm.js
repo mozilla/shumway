@@ -170,19 +170,27 @@ function processAbc(abc) {
       var cfg = new CFG();
       cfg.fromAnalysis(method.analysis);
       // stdout.writeLn("--------------------------------------");
-      // stdout.writeLn("BEFORE");
-      // cfg.trace(stdout);
 
-      cfg.computeIntervals(function (intervals) {
+      if (count ++ !== 0) {
+        return;
+      }
+
+      stdout.writeLn("BEFORE");
+      cfg.trace(stdout);
+
+      false && cfg.computeIntervals(function (intervals) {
         intervals.forEach(function (interval) {
-          // stdout.writeLn(interval);
-        })
+          stdout.writeLn(interval);
+        });
+        stdout.writeLn("");
       });
 
-      // cfg.restructure();
-      // stdout.writeLn("AFTER");
-      // cfg.trace(stdout);
+      cfg.restructure();
+
+      stdout.writeLn("AFTER");
+      cfg.trace(stdout);
       // cfg.walkStructure();
+      cfg.buildStructure();
 
       false && cfg.computeIntervals(function (intervals, edges) {
         levelCount ++;
