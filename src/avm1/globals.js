@@ -239,6 +239,7 @@ AS2Globals.prototype = {
   AsBroadcaster: AS2Broadcaster,
   Stage: AS2Stage,
   Button: AS2Button,
+  TextField: AS2TextField,
   Rectangle: AS2Rectangle,
   Key: AS2Key,
   Mouse: AS2Mouse

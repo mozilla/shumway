@@ -83,8 +83,7 @@ AS2MovieClip.prototype = Object.create({}, {
   $lookupChild: {
     value: function lookupChild(id) {
       var child = this.$nativeObject.getChildByName(id);
-      if (!child) debugger;
-      return child._getAS2Object();
+      return child ? child._getAS2Object() : null;
     },
     enumerable: false
   },
@@ -747,6 +746,259 @@ AS2Button.prototype = Object.create({}, {
   }
 });
 
+function AS2TextField() {
+}
+AS2TextField.prototype = Object.create({}, {
+  $nativeObject: {
+    value: null,
+    writable: true
+  },
+  $attachNativeObject: {
+    value: function attachNativeObject(nativeButton) {
+      this.$nativeObject = nativeButton;
+      nativeButton.$as2Object = this;
+    },
+    enumerable: false
+  },
+  _alpha: { // @flash.display.DisplayObject
+    get: function get$_alpha() { return this.$nativeObject.alpha; },
+    set: function set$_alpha(value) { this.$nativeObject.alpha = value; },
+    enumerable: true
+  },
+  antiAliasType: { // @flash.text.TextField
+    get: function get$antiAliasType() { return this.$nativeObject.antiAliasType; },
+    set: function set$antiAliasType(value) { this.$nativeObject.antiAliasType = value; },
+    enumerable: true
+  },
+  autoSize: { // @flash.text.TextField
+    get: function get$autoSize() { return this.$nativeObject.autoSize; },
+    set: function set$autoSize(value) { this.$nativeObject.autoSize = value; },
+    enumerable: true
+  },
+  background: { // @flash.text.TextField
+    get: function get$background() { return this.$nativeObject.background; },
+    set: function set$background(value) { this.$nativeObject.background = value; },
+    enumerable: true
+  },
+  backgroundColor: { // @flash.text.TextField
+    get: function get$backgroundColor() { return this.$nativeObject.backgroundColor; },
+    set: function set$backgroundColor(value) { this.$nativeObject.backgroundColor = value; },
+    enumerable: true
+  },
+  border: { // @flash.text.TextField
+    get: function get$border() { return this.$nativeObject.border; },
+    set: function set$bborder(value) { this.$nativeObject.border = value; },
+    enumerable: true
+  },
+  borderColor: { // @flash.text.TextField
+    get: function get$borderColor() { return this.$nativeObject.borderColor; },
+    set: function set$borderColor(value) { this.$nativeObject.borderColor = value; },
+    enumerable: true
+  },
+  bottomScroll: { // @flash.text.TextField
+    get: function get$bottomScroll() { return this.$nativeObject.bottomScrollV; },
+    enumerable: true
+  },
+  condenseWhite: { // @flash.text.TextField
+    get: function get$condenseWhite() { return this.$nativeObject.condenseWhite; },
+    set: function set$condenseWhite(value) { this.$nativeObject.condenseWhite = value; },
+    enumerable: true
+  },
+  embedFonts: { // @flash.text.TextField
+    get: function get$embedFonts() { return this.$nativeObject.embedFonts; },
+    set: function set$embedFonts(value) { this.$nativeObject.embedFonts = value; },
+    enumerable: true
+  },
+  _height: { // @flash.display.DisplayObject
+    get: function get$_height() { return this.$nativeObject.height; },
+    set: function set$_height(value) { this.$nativeObject.height = value; },
+    enumerable: true
+  },
+  _highquality: {
+    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
+    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    enumerable: true
+  },
+  hscroll: { // @flash.text.TextField
+    get: function get$embedFonts() { return this.$nativeObject.embedFonts; },
+    set: function set$embedFonts(value) { this.$nativeObject.embedFonts = value; },
+    enumerable: true
+  },
+  html: { // @flash.text.TextField
+    get: function get$embedFonts() { throw 'Not implemented: get$_html'; },
+    set: function set$embedFonts(value) { throw 'Not implemented: set$_html'; },
+    enumerable: true
+  },
+  htmlText: { // @flash.text.TextField
+    get: function get$htmlText() { return this.$nativeObject.htmlText; },
+    set: function set$htmlText(value) { this.$nativeObject.htmlText = value; },
+    enumerable: true
+  },
+  length: { // @flash.text.TextField
+    get: function get$length() { return this.$nativeObject.length; },
+    enumerable: true
+  },
+  maxChars: {
+    get: function get$maxChars() { return this.$nativeObject.maxChars; },
+    set: function set$maxChars(value) { this.$nativeObject.maxChars = value; },
+    enumerable: true
+  },
+  maxhscroll: {
+    get: function get$maxhscroll() { return this.$nativeObject.maxScrollH; },
+    enumerable: true
+  },
+  maxscroll: {
+    get: function get$maxscroll() { return this.$nativeObject.maxScrollV; },
+    enumerable: true
+  },
+  multiline: {
+    get: function get$multiline() { return this.$nativeObject.multiline; },
+    set: function set$multiline(value) { this.$nativeObject.multiline = value; },
+    enumerable: true
+  },
+  _name: { // @flash.display.DisplayObject
+    get: function get$_name() { return this.$nativeObject.name; },
+    set: function set$_name(value) { this.$nativeObject.name = value; },
+    enumerable: true
+  },
+  onDragOut: proxyEventHandler('dragOut'),
+  onDragOut: proxyEventHandler('dragOver'),
+  onKeyDown: proxyEventHandler('keyDown'),
+  onKeyUp: proxyEventHandler('keyUp'),
+  onKillFocus: proxyEventHandler('focusOut', function(e) { return [e.relatedObject]; }),
+  onPress: proxyEventHandler('mouseDown'),
+  onRelease: proxyEventHandler('mouseUp'),
+  onReleaseOutside: proxyEventHandler('releaseOutside'),
+  onRollOut: proxyEventHandler('rollOut'),
+  onRollOver: proxyEventHandler('rollOver'),
+  onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
+  _parent: { // @flash.display.DisplayObject
+    get: function get$_parent() { return this.$nativeObject.parent; },
+    set: function set$_parent(value) { this.$nativeObject.parent = value; },
+    enumerable: true
+  },
+  password: {
+    get: function get$password() { return this.$nativeObject.displayAsPassword; },
+    set: function set$password(value) { this.$nativeObject.displayAsPassword = value; },
+    enumerable: true
+  },
+  _quality: {
+    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
+    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    enumerable: true
+  },
+  _rotation: { // @flash.display.DisplayObject
+    get: function get$_rotation() { return this.$nativeObject.rotation; },
+    set: function set$_rotation(value) { this.$nativeObject.rotation = value; },
+    enumerable: true
+  },
+  scroll: { // @flash.display.TextField
+    get: function get$scroll() { return this.$nativeObject.scrollV; },
+    set: function set$scroll(value) { this.$nativeObject.rotation = value; },
+    enumerable: true
+  },
+  selectable: { // @flash.display.TextField
+    get: function get$selectable() { return this.$nativeObject.selectable; },
+    set: function set$selectable(value) { this.$nativeObject.selectable = value; },
+    enumerable: true
+  },
+  _soundbuftime: {
+    get: function get$_soundbuftime() { throw 'Not implemented: get$_soundbuftime'; },
+    set: function set$_soundbuftime(value) { throw 'Not implemented: set$_soundbuftime'; },
+    enumerable: true
+  },
+  tabEnabled: { // @flash.display.InteractiveObject
+    get: function get$tabEnabled() { return this.$nativeObject.tabEnabled; },
+    set: function set$tabEnabled(value) { this.$nativeObject.tabEnabled = value; },
+    enumerable: true
+  },
+  tabIndex: { // @flash.display.InteractiveObject
+    get: function get$tabIndex() { return this.$nativeObject.tabIndex; },
+    set: function set$tabIndex(value) { return this.$nativeObject.tabIndex = value; },
+    enumerable: true
+  },
+  _target: {
+    get: function get$_target() { throw 'Not implemented: get$_target'; },
+    enumerable: true
+  },
+  text: { // @flash.display.TextField
+    get: function get$text() { return this.$nativeObject.text; },
+    set: function set$text(value) { this.$nativeObject.text = value; },
+    enumerable: true
+  },
+  textColor: { // @flash.display.TextField
+    get: function get$textColort() { return this.$nativeObject.textColor; },
+    set: function set$textColor(value) { this.$nativeObject.textColor = value; },
+    enumerable: true
+  },
+  textHeight: { // @flash.display.TextField
+    get: function get$textHeight() { return this.$nativeObject.textHeight; },
+    set: function set$textHeight(value) { this.$nativeObject.textHeight = value; },
+    enumerable: true
+  },
+  textWidth: { // @flash.display.TextField
+    get: function get$textWidth() { return this.$nativeObject.textWidth; },
+    set: function set$textWidth(value) { this.$nativeObject.textWidth = value; },
+    enumerable: true
+  },
+  type: { // @flash.display.TextField
+    get: function get$type() { return this.$nativeObject.type; },
+    set: function set$type(value) { this.$nativeObject.type = value; },
+    enumerable: true
+  },
+  _url: {
+    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    enumerable: true
+  },
+  variable: {
+    get: function get$variable() { throw 'Not implemented: get$variable'; },
+    set: function set$variable(value) { throw 'Not implemented: set$variable'; },
+    enumerable: true
+  },
+  _visible: { // @flash.display.DisplayObject
+    get: function get$_visible() { return this.$nativeObject.visible; },
+    set: function set$_visible(value) { this.$nativeObject.visible = value; },
+    enumerable: true
+  },
+  _width: { // @flash.display.DisplayObject
+    get: function get$_width() { return this.$nativeObject.width; },
+    set: function set$_width(value) { this.$nativeObject.width = value; },
+    enumerable: true
+  },
+  wordWrap: { // @flash.display.TextField
+    get: function get$wordWrap() { return this.$nativeObject.wordWrap; },
+    set: function set$wordWrap(value) { this.$nativeObject.wordWrap = value; },
+    enumerable: true
+  },
+  _x: {
+    get: function get$_x() { return this.$nativeObject.x; },
+    set: function set$_x(value) { this.$nativeObject.x = value; },
+    enumerable: true
+  },
+  _xmouse: { // @flash.display.DisplayObject
+    get: function get$_xmouse() { return this.$nativeObject.mouseX; },
+    enumerable: true
+  },
+  _xscale: { // @flash.display.DisplayObject
+    get: function get$_xscale() { return this.$nativeObject.scaleX; },
+    set: function set$_xscale(value) { this.$nativeObject.scaleX = value; },
+    enumerable: true
+  },
+  _y: { // @flash.display.DisplayObject
+    get: function get$_y() { return this.$nativeObject.y; },
+    set: function set$_y(value) { this.$nativeObject.y = value; },
+    enumerable: true
+  },
+  _ymouse: { // @flash.display.DisplayObject
+    get: function get$_ymouse() { return this.$nativeObject.mouseY; },
+    enumerable: true
+  },
+  _yscale: { // @flash.display.DisplayObject
+    get: function get$_yscale() { return this.$nativeObject.scaleY; },
+    set: function set$_yscale(value) { this.$nativeObject.scale = value; },
+    enumerable: true
+  }
+});
 
 function AS2Broadcaster() {
 }

@@ -10,6 +10,13 @@ const TextFieldDefinition = (function () {
       }
     },
 
+    _getAS2Object: function () {
+      if (!this.$as2Object) {
+        new AS2TextField().$attachNativeObject(this);
+      }
+      return this.$as2Object;
+    },
+
     get text() {
       return this._text;
     },
