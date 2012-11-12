@@ -5,12 +5,24 @@ SWF.embed = function(file, container, options) {
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new flash.display.Stage;
 
+  // HACK support of HiDPI displays
+  var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+  if (pixelRatio > 1) {
+    var cssScale = 'scale(' + (1/pixelRatio) + ', ' + (1/pixelRatio) + ')';
+    canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
+                                 '-webkit-transform: ' + cssScale + ';' +
+                                 'transform: ' + cssScale + ';' +
+                                 '-moz-transform-origin: 0% 0%;' +
+                                 '-webkit-transform-origin: 0% 0%;' +
+                                 'transform-origin: 0% 0%;');
+  }
+
   loader._stage = stage;
   stage._loader = loader;
 
   function fitCanvas(container, canvas) {
-    canvas.width = container.clientWidth;
-    canvas.height = container.clientHeight;
+    canvas.width = container.clientWidth * pixelRatio;
+    canvas.height = container.clientHeight * pixelRatio;
   }
 
   loaderInfo.addEventListener('init', function () {
@@ -25,11 +37,11 @@ SWF.embed = function(file, container, options) {
         fitCanvas.bind(container, canvas);
       });
     } else {
-      canvas.width = stage._stageWidth;
-      canvas.height = stage._stageHeight;
+      canvas.width = stage._stageWidth * pixelRatio;
+      canvas.height = stage._stageHeight * pixelRatio;
     }
 
-    container.setAttribute("style", "position: relative");
+    container.setAttribute("style", "position: relative; overflow:hidden;");
 
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
