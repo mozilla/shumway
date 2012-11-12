@@ -7,6 +7,7 @@ SWF.embed = function(file, container, options) {
 
   // HACK support of HiDPI displays
   var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+  var canvasHolder = null;
   if (pixelRatio > 1) {
     var cssScale = 'scale(' + (1/pixelRatio) + ', ' + (1/pixelRatio) + ')';
     canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
@@ -15,12 +16,19 @@ SWF.embed = function(file, container, options) {
                                  '-moz-transform-origin: 0% 0%;' +
                                  '-webkit-transform-origin: 0% 0%;' +
                                  'transform-origin: 0% 0%;');
+    canvasHolder = document.createElement('div');
+    canvasHolder.setAttribute('style', 'display: inline-block; overflow: hidden;');
+    canvasHolder.appendChild(canvas);
   }
 
   loader._stage = stage;
   stage._loader = loader;
 
   function fitCanvas(container, canvas) {
+    if (canvasHolder) {
+      canvasHolder.style.width = container.clientWidth + 'px';
+      canvasHolder.style.height = container.clientHeight + 'px';
+    }
     canvas.width = container.clientWidth * pixelRatio;
     canvas.height = container.clientHeight * pixelRatio;
   }
@@ -37,11 +45,15 @@ SWF.embed = function(file, container, options) {
         fitCanvas.bind(container, canvas);
       });
     } else {
+      if (canvasHolder) {
+        canvasHolder.style.width = stage._stageWidth + 'px';
+        canvasHolder.style.height = stage._stageHeight + 'px';
+      }
       canvas.width = stage._stageWidth * pixelRatio;
       canvas.height = stage._stageHeight * pixelRatio;
     }
 
-    container.setAttribute("style", "position: relative; overflow:hidden;");
+    container.setAttribute("style", "position: relative;");
 
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
@@ -84,7 +96,7 @@ SWF.embed = function(file, container, options) {
     stage._children[0] = root;
     stage._control.appendChild(root._control);
 
-    container.appendChild(canvas);
+    container.appendChild(canvasHolder || canvas);
     renderStage(stage, ctx);
   });
 
