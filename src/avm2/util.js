@@ -19,7 +19,7 @@ function backtrace() {
 
 function error(message) {
   if (!inBrowser) {
-    console.info(backtrace());
+    // console.info(backtrace());
   }
   throw new Error(message);
 }

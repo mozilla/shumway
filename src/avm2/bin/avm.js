@@ -47,6 +47,7 @@ var escodegen; load("../compiler/lljs/src/escodegen.js");
 load("../compiler/inferrer.js");
 load("../compiler/compiler.js");
 load("../compiler/ir.js");
+load("../compiler/looper.js");
 load("../compiler/builder.js");
 Timer.stop();
 
@@ -154,7 +155,6 @@ function processAbc(abc) {
     }
 
     var CFG = IR.CFG;
-    var count = 0;
 
     var levelCount = 0;
     var maxLevel = 0;
@@ -169,60 +169,25 @@ function processAbc(abc) {
       // stdout.writeLn("Method: " + method);
       var cfg = new CFG();
       cfg.fromAnalysis(method.analysis);
-      // stdout.writeLn("--------------------------------------");
+      stdout.writeLn("--------------------------------------");
 
-      if (count ++ !== 0) {
-        return;
-      }
+      // stdout.writeLn("BEFORE");
+      // cfg.trace(stdout);
 
-      stdout.writeLn("BEFORE");
-      cfg.trace(stdout);
+      // cfg.computeReversePostOrder();
+      // stdout.writeLn("BEFORE 2");
+      // cfg.trace(stdout);
 
-      false && cfg.computeIntervals(function (intervals) {
-        intervals.forEach(function (interval) {
-          stdout.writeLn(interval);
-        });
-        stdout.writeLn("");
-      });
+      stdout.enter("control-tree {");
+      var tree = cfg.buildStructure();
+      tree.trace(stdout);
+      stdout.leave("}");
 
-      cfg.restructure();
-
-      stdout.writeLn("AFTER");
-      cfg.trace(stdout);
+      // stdout.writeLn("AFTER");
+      // cfg.trace(stdout);
       // cfg.walkStructure();
-      cfg.buildStructure();
+      // cfg.buildStructure();
 
-      false && cfg.computeIntervals(function (intervals, edges) {
-        levelCount ++;
-        level ++;
-        return;
-
-//        var list = [];
-//        newEdges.successors.forEach(function (s, i) {
-//          for (var j = 0; j < s.length; j++) {
-//            list.push("B" + i + "-> B" + s[j].id);
-//          }
-//        });
-//        var tmp = new CFG();
-//        tmp.fromEdgeList(list.join(","));
-//        stdout.writeLn("NEW GRAPH from " + list.join(", "));
-//        tmp.trace(stdout);
-//        stdout.writeLn("Intervals: " + level++);
-        // return;
-
-        intervals.forEach(function (interval) {
-          stdout.writeLn(interval);
-        });
-
-        stdout.outdent();
-        stdout.writeLn("Order: " + order);
-        stdout.enter("Old Edges");
-        stdout.writeLn("Successors   [" + mapToString(edges.successors) + "]");
-        stdout.writeLn("Predecessors [" + mapToString(edges.predecessors) + "]");
-        stdout.outdent();
-
-        stdout.writeLn("");
-      });
       // cfg.trace(stdout);
 
       // cfg.trace(stdout);
