@@ -212,7 +212,11 @@ function renderStage(stage, ctx) {
 
   ctx.mozFillRule = 'evenodd';
 
-  var requestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+  var requestAnimationFrame = window.requestAnimationFrame ||
+                              window.mozRequestAnimationFrame ||
+                              window.webkitRequestAnimationFrame ||
+                              window.oRequestAnimationFrame ||
+                              window.msRequestAnimationFrame;
 
   var FPS = (function () {
     var width = Math.max(ctx.canvas.width / 5, 100);
