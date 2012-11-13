@@ -430,6 +430,9 @@ function defineShape(tag, dictionary) {
           '__isIGraphicsPath__:true,' +
           'commands:[' + cmds.join(',') + '],' +
           'data:[' + data.join(',') + ']' +
+        '},{' +
+          '__isIGraphicsStroke__:true,' +
+          'fill:null' +
         '}');
 
         paths.push({ i: segment.i, commands: commands });
