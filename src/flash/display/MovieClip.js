@@ -47,7 +47,9 @@ const MovieClipDefinition = (function () {
       if (frameNum > this.framesLoaded)
         frameNum = this.framesLoaded;
 
-      if (frameNum === this._currentFrame)
+      var currentFrame = this._currentFrame;
+
+      if (frameNum === currentFrame)
         return;
 
       if (frameNum === 0) {
@@ -56,122 +58,126 @@ const MovieClipDefinition = (function () {
         return;
       }
 
-      var children = this._children;
-      var depthMap = this._depthMap;
-      var framePromise = this._timeline[frameNum - 1];
-      var highestDepth = depthMap.length;
-      var displayList = framePromise.value;
-      var loader = this.loaderInfo._loader;
+      while (currentFrame++ < frameNum) {
+        var children = this._children;
+        var depthMap = this._depthMap;
+        var framePromise = this._timeline[currentFrame - 1];
+        var highestDepth = depthMap.length;
+        var displayList = framePromise.value;
+        var loader = this.loaderInfo._loader;
 
-      for (var depth in displayList) {
-        var cmd = displayList[depth];
-        var current = depthMap[depth];
-        if (cmd === null) {
-          if (current && current._owned) {
-            var index = children.indexOf(current);
-            children.splice(index, 1);
-            this._control.removeChild(current._control);
-
-            if (depth <= highestDepth)
-              depthMap[depth] = undefined;
-            else
-              depthMap.splice(-1);
-          }
-        } else {
-          var clipDepth = cmd.clipDepth;
-          var cxform = cmd.cxform;
-          var matrix = cmd.matrix;
-          var target;
-
-          if (cmd.symbolId) {
-            var index = 0;
-            var symbolPromise = loader._dictionary[cmd.symbolId];
-            var symbolInfo = symbolPromise.value;
-            // HACK application domain may have the symbol class --
-            // checking which domain has a symbol class
-            var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-              avm2.systemDomain.getClass(symbolInfo.className) :
-              avm2.applicationDomain.getClass(symbolInfo.className);
-            var instance = symbolClass.createAsSymbol(symbolInfo.props);
-            var replace = 0;
-
+        for (var depth in displayList) {
+          var cmd = displayList[depth];
+          var current = depthMap[depth];
+          if (cmd === null) {
             if (current && current._owned) {
-              if (!clipDepth)
-                clipDepth = current._clipDepth;
-              if (!cxform)
-                cxform = current._cxform;
-              index = children.indexOf(current);
-              if (!matrix)
-                matrix = current._currentTransform;
-              replace = 1;
-            } else {
-              var top = null;
-              for (var i = +depth + 1; i < highestDepth; i++) {
-                var info = depthMap[i];
-                if (info && info._animated)
-                  top = info;
+              var index = children.indexOf(current);
+              children.splice(index, 1);
+              this._control.removeChild(current._control);
+
+              if (depth < highestDepth)
+                depthMap[depth] = undefined;
+              else
+                depthMap.splice(-1);
+            }
+          } else {
+            var clipDepth = cmd.clipDepth;
+            var cxform = cmd.cxform;
+            var matrix = cmd.matrix;
+            var target;
+
+            if (cmd.symbolId) {
+              var index = 0;
+              var symbolPromise = loader._dictionary[cmd.symbolId];
+              var symbolInfo = symbolPromise.value;
+              // HACK application domain may have the symbol class --
+              // checking which domain has a symbol class
+              var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+                avm2.systemDomain.getClass(symbolInfo.className) :
+                avm2.applicationDomain.getClass(symbolInfo.className);
+              var instance = symbolClass.createAsSymbol(symbolInfo.props);
+              var replace = 0;
+
+              if (current && current._owned) {
+                if (!clipDepth)
+                  clipDepth = current._clipDepth;
+                if (!cxform)
+                  cxform = current._cxform;
+                index = children.indexOf(current);
+                if (!matrix)
+                  matrix = current._currentTransform;
+                replace = 1;
+              } else {
+                var top = null;
+                for (var i = +depth + 1; i < highestDepth; i++) {
+                  var info = depthMap[i];
+                  if (info && info._animated) {
+                    top = info;
+                    break;
+                  }
+                }
+
+                index = top ? children.indexOf(top) : children.length;
               }
 
-              index = top ? children.indexOf(top) : children.length;
+              children.splice(index, replace, instance);
+              depthMap[depth] = instance;
+
+              target = instance;
+
+              // If we bound the instance to a name, set it.
+              //
+              // XXX: I think this always has to be a trait.
+              if (cmd.name)
+                this[Multiname.getPublicQualifiedName(cmd.name)] = instance;
+
+              // Call the constructor now that we've made the symbol instance,
+              // instantiated all its children, and set the display list-specific
+              // properties.
+              //
+              // XXX: I think we're supposed to throw if the symbol class
+              // constructor is not nullary.
+              symbolClass.instance.call(instance);
+
+              if (!loader._isAvm2Enabled) {
+                this._initAvm1Bindings(cmd, symbolInfo.props, instance);
+              }
+
+              instance._animated = true;
+              instance._owned = true;
+              instance._parent = this;
+              instance._name = cmd.name || null;
+
+              if (replace)
+                this._control.replaceChild(instance._control, current._control);
+              else
+                this._control.appendChild(instance._control);
+
+              instance.dispatchEvent(new flash.events.Event("load"));
+            } else if (current && current._animated) {
+              target = current;
             }
 
-            children.splice(index, replace, instance);
-            depthMap[depth] = instance;
+            if (clipDepth)
+              target._clipDepth = clipDepth;
+            if (cxform)
+              target._cxform = cxform;
+            if (matrix) {
+              var a = matrix.a;
+              var b = matrix.b;
+              var c = matrix.c;
+              var d = matrix.d;
 
-            target = instance;
+              target._rotation = Math.atan2(b, a) * 180 / Math.PI;
+              var sx = Math.sqrt(a * a + b * b);
+              target._scaleX = a > 0 ? sx : -sx;
+              var sy = Math.sqrt(d * d + c * c);
+              target._scaleY = d > 0 ? sy : -sy;
+              var x = target._x = matrix.tx;
+              var y = target._y = matrix.ty;
 
-            // If we bound the instance to a name, set it.
-            //
-            // XXX: I think this always has to be a trait.
-            if (cmd.name)
-              this[Multiname.getPublicQualifiedName(cmd.name)] = instance;
-
-            // Call the constructor now that we've made the symbol instance,
-            // instantiated all its children, and set the display list-specific
-            // properties.
-            //
-            // XXX: I think we're supposed to throw if the symbol class
-            // constructor is not nullary.
-            symbolClass.instance.call(instance);
-
-            if (!loader._isAvm2Enabled) {
-              this._initAvm1Bindings(cmd, symbolInfo.props, instance);
+              target._currentTransform = matrix;
             }
-
-            instance._animated = true;
-            instance._owned = true;
-            instance._parent = this;
-            instance._name = cmd.name || null;
-
-            if (replace)
-              this._control.replaceChild(instance._control, current._control);
-            else
-              this._control.appendChild(instance._control);
-
-            instance.dispatchEvent(new flash.events.Event("load"));
-          } else if (current && current._animated) {
-            target = current;
-          }
-
-          if (clipDepth)
-            target._clipDepth = clipDepth;
-          if (cxform)
-            target._cxform = cxform;
-          if (matrix) {
-            var a = matrix.a;
-            var b = matrix.b;
-            var c = matrix.c;
-            var d = matrix.d;
-
-            target._rotation = Math.atan2(b, a) * 180 / Math.PI;
-            var sx = Math.sqrt(a * a + b * b);
-            target._scaleX = a > 0 ? sx : -sx;
-            var sy = Math.sqrt(d * d + c * c);
-            target._scaleY = d > 0 ? sy : -sy;
-            var x = target._x = matrix.tx;
-            var y = target._y = matrix.ty;
-
-            target._currentTransform = matrix;
           }
         }
       }
