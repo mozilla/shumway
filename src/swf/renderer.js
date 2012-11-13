@@ -108,6 +108,11 @@ function renderStage(stage, ctx) {
       this.ctx.restore();
     },
     visit: function (child, isContainer, interactiveParent) {
+      if (child._clipDepth) {
+        // TODO handle masking
+        return;
+      }
+
       var hitTest = false;
       var hitTestShape = false;
 

@@ -25,6 +25,7 @@ const DisplayObjectDefinition = (function () {
       this._children = [];
       this._control = document.createElement('div');
       this._bbox = null;
+      this._clipDepth = 0;
       this._currentTransform = null;
       this._cxform = null;
       this._graphics = null;

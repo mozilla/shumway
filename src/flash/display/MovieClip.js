@@ -78,6 +78,7 @@ const MovieClipDefinition = (function () {
               depthMap.splice(-1);
           }
         } else {
+          var clipDepth = cmd.clipDepth;
           var cxform = cmd.cxform;
           var matrix = cmd.matrix;
           var target;
@@ -95,6 +96,8 @@ const MovieClipDefinition = (function () {
             var replace = 0;
 
             if (current && current._owned) {
+              if (!clipDepth)
+                clipDepth = current._clipDepth;
               if (!cxform)
                 cxform = current._cxform;
               index = children.indexOf(current);
@@ -159,6 +162,8 @@ const MovieClipDefinition = (function () {
             target = current;
           }
 
+          if (clipDepth)
+            target._clipDepth = clipDepth;
           if (cxform)
             target._cxform = cxform;
           if (matrix) {
