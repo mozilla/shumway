@@ -57,8 +57,10 @@ var MATRIX = {
     }
   ]],
   $$bits: UB(5),
-  tx: SB('bits'),
-  ty: SB('bits'),
+  $$e: SB('bits'),
+  $$f: SB('bits'),
+  tx: 'e/20',
+  ty: 'f/20',
   $$1: ALIGN
 };
 var CXFORM = {

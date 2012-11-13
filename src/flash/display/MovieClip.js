@@ -101,17 +101,8 @@ const MovieClipDefinition = (function () {
               if (!cxform)
                 cxform = current._cxform;
               index = children.indexOf(current);
-              if (!matrix) {
-                var m = current._currentTransform;
-                matrix = {
-                  a: m.a,
-                  b: m.b,
-                  c: m.c,
-                  d: m.d,
-                  tx: m.tx * 20,
-                  ty: m.ty * 20
-                };
-              }
+              if (!matrix)
+                matrix = current._currentTransform;
               replace = 1;
             } else {
               var top = null;
@@ -177,17 +168,10 @@ const MovieClipDefinition = (function () {
             target._scaleX = a > 0 ? sx : -sx;
             var sy = Math.sqrt(d * d + c * c);
             target._scaleY = d > 0 ? sy : -sy;
-            var x = target._x = matrix.tx / 20;
-            var y = target._y = matrix.ty / 20;
+            var x = target._x = matrix.tx;
+            var y = target._y = matrix.ty;
 
-            target._currentTransform = {
-              a: a,
-              b: b,
-              c: c,
-              d: d,
-              tx: x,
-              ty: y
-            };
+            target._currentTransform = matrix;
           }
         }
       }
