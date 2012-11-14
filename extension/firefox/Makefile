@@ -50,7 +50,7 @@ build: clean
 	mkdir build/content/lib/DataView.js
 	cp ../../lib/DataView.js/* build/content/lib/DataView.js/
 	# Removing hidden files
-	-find build -name ".DS_Store" | xargs rm
+	-find build -name ".DS_Store" -exec rm {} \;
 	# Packaging XPI file
 	cd build; zip -r shumway.xpi *
 

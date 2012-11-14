@@ -54,7 +54,7 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/extension/firefox/build/shumway.xpi build/extension/firefox/
 	cp $(SHUMWAY_ROOT)/extension/firefox/build/update.rdf build/extension/firefox/
 	# Removing hidden files
-	-find build -name ".DS_Store" | xargs rm
+	-find build -name ".DS_Store" -exec rm {} \;
 	# Creating commit
 	cd build; git init .; git checkout -b gh-pages;
 	cd build; git add -A; git commit -m "Updates shumway gh-pages files"
