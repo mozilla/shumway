@@ -31,6 +31,7 @@ function renderStage(stage, ctx) {
           dirty = true;
       }
     }
+
     visitor.childrenEnd(container);
 
     container._dirty = dirty;
@@ -272,7 +273,6 @@ function renderStage(stage, ctx) {
       }
     };
   })();
-
 
   (function draw() {
     var now = +new Date;

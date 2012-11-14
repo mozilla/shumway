@@ -63,6 +63,17 @@ var DisplayObjectDefinition = (function () {
       this._updateCurrentTransform();
     },
 
+    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
+      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+        this._parent._applyCurrentInverseTransform(point);
+
+      var m = this._currentTransform;
+      var x = point.x - m.tx;
+      var y = point.y - m.ty;
+      var d = 1 / (m.a * m.d - m.b * m.c);
+      point.x = (m.d * x - m.c * y) * d;
+      point.y = (m.a * y - m.b * x) * d;
+    },
     _applyCurrentTransform: function (point, targetCoordSpace) {
       var m = this._currentTransform;
       var x = point.x;
@@ -145,17 +156,6 @@ var DisplayObjectDefinition = (function () {
         tx: this._x,
         ty: this._y
       };
-    },
-    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
-        this._parent._applyCurrentInverseTransform(point);
-
-      var m = this._currentTransform;
-      var x = point.x - m.tx;
-      var y = point.y - m.ty;
-      var d = 1 / (m.a * m.d - m.b * m.c);
-      point.x = (m.d * x - m.c * y) * d;
-      point.y = (m.a * y - m.b * x) * d;
     },
 
     get accessibilityProperties() {
