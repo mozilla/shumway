@@ -43,6 +43,8 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.appendChild(child._control);
 
+      this._dirty = true;
+
       return child;
     },
     areInaccessibleObjectsUnderPoint: function (pt) {
@@ -100,6 +102,8 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.removeChild(child._control);
 
+      this._dirty = true;
+
       return child;
     },
     setChildIndex: function (child, index) {
@@ -116,6 +120,8 @@ var DisplayObjectContainerDefinition = (function () {
       children.splice(currentIndex, 1);
       children.splice(index, 0, child);
       child._owned = false;
+
+      this._dirty = true;
 
       return child;
     },
@@ -152,6 +158,8 @@ var DisplayObjectContainerDefinition = (function () {
       children[index2] = child1;
       child1._owned = false;
       child2._owned = false;
+
+      this._dirty = true;
     }
   };
 

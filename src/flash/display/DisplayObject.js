@@ -28,6 +28,7 @@ var DisplayObjectDefinition = (function () {
       this._clipDepth = 0;
       this._currentTransform = null;
       this._cxform = null;
+      this._dirty = true;
       this._graphics = null;
       this._loaderInfo = null;
       this._mouseChildren = true;
@@ -37,6 +38,7 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = null;
       this._owned = false;
       this._parent = null;
+      this._revision = 0;
       this._root = null;
       this._rotation = 0;
       this._scaleX = 1;
@@ -242,17 +244,19 @@ var DisplayObjectDefinition = (function () {
       return this._scaleX;
     },
     set scaleX(val) {
+      this._dirty = true;
       this._scaleX = val;
-      this._updateCurrentTransform();
       this._slave = false;
+      this._updateCurrentTransform();
     },
     get scaleY() {
       return this._scaleY;
     },
     set scaleY(val) {
+      this._dirty = true;
       this._scaleY = val;
-      this._updateCurrentTransform();
       this._slave = false;
+      this._updateCurrentTransform();
     },
     get scale9Grid() {
       return null;
@@ -270,41 +274,47 @@ var DisplayObjectDefinition = (function () {
       return this._transform || new flash.geom.Transform(this);
     },
     set transform(val) {
+      this._currentTransform = val.matrix;
+      this._dirty = true;
+      this._slave = false;
+      this._slave = false;
+
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
-      this._currentTransform = val.matrix;
-      this._slave = false;
     },
     get visible() {
       return this._visible;
     },
     set visible(val) {
-      this._visible = val;
+      this._dirty = true;
       this._slave = false;
+      this._visible = val;
     },
     get width() {
       var bounds = this.getBounds();
       return bounds.width;
     },
     set width(val) {
-      //notImplemented();
+      notImplemented();
     },
     get x() {
       return this._x;
     },
     set x(val) {
-      this._x = val;
-      this._updateCurrentTransform();
+      this._dirty = true;
       this._slave = false;
+      this._updateCurrentTransform();
+      this._x = val;
     },
     get y() {
       return this._y;
     },
     set y(val) {
+      this._dirty = true;
+      this._slave = false;
       this._y = val;
       this._updateCurrentTransform();
-      this._slave = false;
     },
 
     getBounds: function (targetCoordSpace) {

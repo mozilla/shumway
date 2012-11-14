@@ -7,7 +7,10 @@ function renderStage(stage, ctx) {
 
   function visitContainer(container, visitor, interactiveParent) {
     var children = container._children;
+    var dirty = false;
+
     visitor.childrenStart(container);
+
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
       if (child) {
@@ -23,9 +26,14 @@ function renderStage(stage, ctx) {
 
         if (isContainer)
           visitContainer(child, visitor, interactiveParent);
+
+        if (child._dirty)
+          dirty = true;
       }
     }
     visitor.childrenEnd(container);
+
+    container._dirty = dirty;
   }
 
   function EnterFrameVisitor() {
@@ -45,6 +53,9 @@ function renderStage(stage, ctx) {
         }
         obj.dispatchEvent(new flash.events.Event("enterFrame"));
       }
+
+      if (obj._graphics && (obj._graphics._revision !== obj._revision))
+        obj._dirty = true;
     }
   };
 
@@ -176,6 +187,8 @@ function renderStage(stage, ctx) {
               (ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y)))
             hitTest = true;
         }
+
+        child._revision = graphics._revision;
       }
 
       if (child.draw) {
@@ -205,6 +218,8 @@ function renderStage(stage, ctx) {
         if (stage._mouseTarget === interactiveParent)
           stage._clickTarget = null;
       }
+
+      child._dirty = false;
     }
   };
 

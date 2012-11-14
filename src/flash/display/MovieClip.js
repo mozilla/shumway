@@ -178,7 +178,11 @@ var MovieClipDefinition = (function () {
 
               target._currentTransform = matrix;
             }
+
+            target._dirty = true;
           }
+
+          this._dirty = true;
         }
       }
 

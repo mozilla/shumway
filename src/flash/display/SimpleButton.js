@@ -82,6 +82,7 @@ var SimpleButtonDefinition = (function () {
       else if (this._isMouseOver && this._overState)
         state = this._overState;
       this._children = [state];
+      this._dirty = true;
     }
   };
 

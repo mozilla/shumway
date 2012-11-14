@@ -25,6 +25,7 @@ var GraphicsDefinition = (function () {
       this._drawingStyles = null;
       this._fillStyle = null;
       this._fillTransform = null;
+      this._revision = 0;
       this._scale = 1;
       this._strokeStyle = null;
       this._subpaths = [];
@@ -177,6 +178,7 @@ var GraphicsDefinition = (function () {
       this._drawingStyles = null;
       this._fillStyle = null;
       this._fillTransform = null;
+      this._revision = 0;
       this._strokeStyle = null;
       this._subpaths.length = 0;
     },
@@ -185,9 +187,11 @@ var GraphicsDefinition = (function () {
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
       this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+      this._revision++;
     },
     curveTo: function (cpx, cpy, x, y) {
       this._currentPath.quadraticCurveTo(cpx, cpy, x, y);
+      this._revision++;
     },
     drawGraphicsData: function (graphicsData) {
       for (var i = 0, n = graphicsData.length; i < n; i++) {
@@ -230,6 +234,7 @@ var GraphicsDefinition = (function () {
         throw ArgumentError();
 
       this._currentPath.rect(x, y, w, h);
+      this._revision++;
     },
     drawRoundRect: function (x, y, w, h, ellipseWidth, ellipseHeight) {
       if (isNaN(w + h + ellipseWidth) || (ellipseHeight !== undefined && isNaN(ellipseHeight)))
@@ -282,9 +287,11 @@ var GraphicsDefinition = (function () {
     },
     lineTo: function (x, y) {
       this._currentPath.lineTo(x, y);
+      this._revision++;
     },
     moveTo: function (x, y) {
       this._currentPath.moveTo(x, y);
+      this._revision++;
     }
   };
 
