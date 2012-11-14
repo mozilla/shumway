@@ -558,7 +558,6 @@ var LoaderDefinition = (function () {
         };
         break;
       case 'shape':
-        var bbox = symbol.bbox;
         var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         var graphics = new flash.display.Graphics;
         graphics._scale = 0.05;
@@ -566,12 +565,7 @@ var LoaderDefinition = (function () {
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
-          bbox: {
-            left: bbox.left / 20,
-            top: bbox.top / 20,
-            right: bbox.right / 20,
-            bottom: bbox.bottom / 20
-          },
+          bbox: symbol.bbox,
           graphics: graphics
         };
         break;
@@ -643,9 +637,9 @@ var LoaderDefinition = (function () {
 
       loaderInfo._swfVersion = info.swfVersion;
 
-      var bounds = info.bounds;
-      loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-      loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+      var bbox = info.bbox;
+      loaderInfo._width = bbox.right - bbox.left;
+      loaderInfo._height = bbox.bottom - bbox.top;
 
       loaderInfo._frameRate = info.frameRate;
 

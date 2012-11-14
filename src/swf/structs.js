@@ -24,10 +24,14 @@ var ARGB = {
 var RECT = {
   $$0: ALIGN,
   $$bits: UB(5),
-  xMin: SB('bits'),
-  xMax: SB('bits'),
-  yMin: SB('bits'),
-  yMax: SB('bits'),
+  $$xMin: SB('bits'),
+  $$xMax: SB('bits'),
+  $$yMin: SB('bits'),
+  $$yMax: SB('bits'),
+  left: 'xMin/20',
+  right: 'xMax/20',
+  top: 'yMin/20',
+  bottom: 'yMax/20',
   $$1: ALIGN
 };
 var MATRIX = {
@@ -99,7 +103,7 @@ var CXFORM = {
   $$1: ALIGN
 };
 var MOVIE_HEADER = {
-  bounds: RECT,
+  bbox: RECT,
   $$reserved: UI8,
   frameRate: UI8,
   frameCount: UI16

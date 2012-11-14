@@ -47,8 +47,8 @@ function toMatrixInstance(matrix, matrixMorph) {
     'b:' + (matrix.b * 20) + ',' +
     'c:' + (matrix.c * 20) + ',' +
     'd:' + (matrix.d * 20) + ',' +
-    'tx:' + matrix.tx + ',' +
-    'ty:' + matrix.ty +
+    'tx:' + (matrix.tx * 20) + ',' +
+    'ty:' + (matrix.ty * 20) +
   '}';
 }
 
@@ -448,16 +448,10 @@ function defineShape(tag, dictionary) {
   var path;
   while (path = paths[i++])
     push.apply(commands, path.commands);
-  var bounds = tag.bounds;
   var shape = {
     type: 'shape',
     id: tag.id,
-    bbox: {
-      left: bounds.xMin,
-      right: bounds.xMax,
-      top: bounds.yMin,
-      bottom: bounds.yMax
-    },
+    bbox: tag.bbox,
     data: '[' + commands.join(',') + ']'
   };
   if (dependencies.length)

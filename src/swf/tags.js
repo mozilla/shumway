@@ -89,7 +89,7 @@ var DEFINE_FONT2 = {
       $: SI16,
       count: 'glyphCount'
     },
-    bounds: {
+    bbox: {
       $: RECT,
       count: 'glyphCount'
     },
@@ -126,7 +126,7 @@ var DEFINE_JPEG_TABLES = {
 };
 var DEFINE_LABEL = {
   id: UI16,
-  bounds: RECT,
+  bbox: RECT,
   matrix: MATRIX,
   $glyphBits: UI8,
   $advanceBits: UI8,
@@ -137,13 +137,13 @@ var DEFINE_LABEL = {
 };
 var DEFINE_SHAPE = {
   id: UI16,
-  bounds: RECT,
+  bbox: RECT,
   $isMorph: 'tagCode===46||tagCode===84',
-  boundsMorph: ['isMorph', [RECT]],
+  bboxMorph: ['isMorph', [RECT]],
   $hasStrokes: 'tagCode===83||tagCode===84',
   $0: ['hasStrokes', [{
-    strokeBounds: RECT,
-    strokeBoundsMorph: ['isMorph', [RECT]],
+    strokeBbox: RECT,
+    strokeBboxMorph: ['isMorph', [RECT]],
     $$reserved: UB(5),
     fillWinding: UB(1),
     nonScalingStrokes: UB(1),
@@ -159,7 +159,7 @@ var DEFINE_SHAPE = {
 };
 var DEFINE_TEXT = {
   id: UI16,
-  bounds: RECT,
+  bbox: RECT,
   $$flags: UI16,
   $hasText: 'flags>>7&1',
   wordWrap: 'flags>>6&1',

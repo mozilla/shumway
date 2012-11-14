@@ -42,16 +42,10 @@ function defineLabel(tag, dictionary) {
     }
   }
   cmds.push('c.restore()');
-  var bounds = tag.bounds;
   var label = {
     type: 'label',
     id: tag.id,
-    bbox: {
-      left: bounds.xMin,
-      top: bounds.xMax,
-      right: bounds.yMin,
-      bottom: bounds.yMax
-    },
+    bbox: tag.bbox,
     data: cmds.join('\n')
   };
   if (dependencies.length)
