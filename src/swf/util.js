@@ -75,3 +75,51 @@ function adler32(data) {
   }
   return (b << 16) | a;
 }
+
+// Some browser feature testing
+(function functionNameSupport() {
+  function t() {}
+  if (t.name === 't') {
+    return; // function name feature is supported
+  }
+  Object.defineProperty(Function.prototype, 'name', {
+    get: function () {
+      if (this.__name) return this.__name;
+      var m = /function\s([^\(]+)/.exec(this.toString());
+      var name = m && m[1] !== 'anonymous' ? m[1] : null;
+      return (this.__name = name);
+    },
+    set: function (value) {
+      this.__name = value;
+    },
+    configurable: true,
+    enumerable: false
+  });
+})();
+
+(function protoPropertySupport() {
+  var obj1 = { t: true }, obj2 = {};
+  obj2.__proto__ = obj1;
+  if (obj2.t) {
+    return; // __proto__ property is supported
+  }
+
+  Object.defineProperty(Object.prototype, '__proto__', {
+    get: function () {
+      return this.__proto;
+    },
+    set: function (value) {
+      this.__proto = value;
+      for (var i in value) {
+        if (i === '__name' || i === '__proto') continue;
+        var p = value, d;
+        while (!(d = Object.getOwnPropertyDescriptor(p, i))) {
+          p = Object.getPrototypeOf(p);
+        }
+        Object.defineProperty(this, i, d);
+      }
+    },
+    configurable: true,
+    enumerable: false
+  });
+})();
