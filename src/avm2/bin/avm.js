@@ -48,6 +48,7 @@ load("../compiler/inferrer.js");
 load("../compiler/compiler.js");
 load("../compiler/ir.js");
 load("../compiler/looper.js");
+load("../compiler/backend.js");
 load("../compiler/builder.js");
 Timer.stop();
 
@@ -162,40 +163,12 @@ function processAbc(abc) {
       try {
         method.analysis = new Analysis(method, opts);
         method.analysis.analyzeControlFlow();
+        method.analysis.markLoops();
       } catch (x) {
         return;
       }
 
-      // stdout.writeLn("Method: " + method);
-      var cfg = new CFG();
-      cfg.fromAnalysis(method.analysis);
-      stdout.writeLn("--------------------------------------");
-
-      // stdout.writeLn("BEFORE");
-      // cfg.trace(stdout);
-
-      // cfg.computeReversePostOrder();
-      // stdout.writeLn("BEFORE 2");
-      // cfg.trace(stdout);
-
-      stdout.enter("control-tree {");
-      var tree = cfg.buildStructure();
-      tree.trace(stdout);
-      stdout.leave("}");
-
-      // stdout.writeLn("AFTER");
-      // cfg.trace(stdout);
-      // cfg.walkStructure();
-      // cfg.buildStructure();
-
-      // cfg.trace(stdout);
-
-      // cfg.trace(stdout);
-      // cfg.restructure();
-      // cfg.trace(stdout);
-      // cfg.walkStructure();
-      // cfg.trace(stdout);
-
+      builder.build(abc, method);
     });
 
 

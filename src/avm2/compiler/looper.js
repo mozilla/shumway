@@ -423,7 +423,7 @@
         var worklist = [root];
         var node;
 
-        ancestors[root.bid] = true;
+        ancestors[root.id] = true;
         while ((node = worklist.top())) {
           if (visited[node.id]) {
             if (visited[node.id] === ONCE) {
@@ -1356,6 +1356,8 @@
     return Analysis;
 
   })();
+
+  exports.Control = Control;
 
   exports.analyze = function (cfg) {
     var analysis = new Analysis(cfg, {massage: true});

@@ -21,6 +21,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Jump = IR.Jump;
   var Scope = IR.Scope;
   var Operator = IR.Operator;
+  var Parameter = IR.Parameter;
 
   var DFG = IR.DFG;
   var CFG = IR.CFG;
@@ -74,9 +75,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     }
 
     function mergeValue(control, a, b) {
-      if (a === b) {
-        return a;
-      }
       var phi = a instanceof Phi ? a : new Phi(control, a);
       phi.pushValue(b);
       return phi;
@@ -171,7 +169,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       });
 
       var start = this.buildStart();
-
 
       worklist.push({region: start, block: blocks[0], state: start.entryState});
 
@@ -341,6 +338,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           writer.writeLn("Processing Region: " + region);
           writer.enter(("> state: " + region.entryState.toString()).padRight(' ', 100));
         }
+
+        region.processed = true;
 
         var bc;
         for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
@@ -516,8 +515,14 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     return constructor;
   })();
 
+  var count = 0;
+
   function build(abc, methodInfo) {
-    return;
+    if (count ++ !== 1) {
+      print("Skipping " + (count - 1));
+      return;
+    }
+
     if (compilerTraceLevel.value > 0) {
       writer = new IndentingWriter();
     }
@@ -532,36 +537,22 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     var cfg = dfg.buildCFG();
     Timer.stop();
 
+    Timer.start("IR SCHEDULE");
+    cfg.scheduleEarly();
+    Timer.stop();
+
+    writer && dfg.trace(writer);
+
+    Timer.start("IR ALLOCATE VARIABLES");
+    cfg.allocateVariables();
+    Timer.stop();
+
     Timer.start("IR DOM");
     cfg.computeDominators(true);
     Timer.stop();
 
-
     writer && cfg.trace(writer);
-
-    cfg.restructure();
-
-    cfg.trace(writer);
-
-    // cfg.walkStructure();
-
-    writer.writeLn("-------------------------------\n");
-
-    // var c = new CFG();
-
-    // c.build("1->2->3->6->7,6->2,3->4->5,1->4");
-    // c.build("1->2->3->5,1->5,2->4->5, 5->6->7->8->9->10->11,7->9,8->10, 6->12->13->14->15->6,14->13");
-    // levels = c.computeIntervals();
-    // traceIntervals(levels);
-
-    // c.restructure();
-
-    // writer && c.trace(writer);
-
-    // Timer.start("IR SCHEDULE");
-    // cfg.scheduleEarly();
-    // Timer.stop();
-
+    Backend.generate(cfg);
     return;
   }
 

@@ -89,6 +89,8 @@
         return o.value.name;
       }
       return o.value;
+    } else if (o instanceof Variable) {
+      return o.name;
     } else if (o instanceof Phi) {
       return result = "|" + o.id + "|", useColors ? PURPLE + result + ENDC : result;
     } else if (o instanceof Control) {
@@ -181,7 +183,6 @@
       Control.call(this);
       this.predecessors = predecessor ? [predecessor] : [];
       this.phis = [];
-      this.verify();
     }
     constructor.prototype = extend(Control, "Region");
 
@@ -213,7 +214,7 @@
   var Phi = (function () {
     function constructor(control, value) {
       Node.call(this);
-      assert (control instanceof Control);
+      assert (control instanceof Region);
       this.control = control;
       this.arguments = value ? [value] : [];
     }
@@ -221,6 +222,27 @@
     constructor.prototype.pushValue = function pushValue(x) {
       this.arguments.push(x);
     }
+    return constructor;
+  })();
+
+  var Variable = (function () {
+    function constructor(name) {
+      this.name = name;
+    }
+    constructor.prototype = extend(Value, "Variable");
+    return constructor;
+  })();
+
+  var Move = (function () {
+    function constructor(to, from) {
+      assert (to instanceof Variable);
+      this.to = to;
+      this.from = from;
+    }
+    constructor.prototype = extend(Value, "Move");
+    constructor.prototype.toString = function () {
+      return this.to.name + " <= " + this.from;
+    };
     return constructor;
   })();
 
@@ -362,9 +384,9 @@
   })();
 
   var Call = (function () {
-    function constructor(obj, args) {
+    function constructor(callee, args) {
       Node.call(this);
-      this.obj = obj;
+      this.callee = callee;
       this.args = args;
     }
     constructor.prototype = extend(Value, "Call");
@@ -869,6 +891,54 @@
       return node instanceof Projection ? node.project() : node;
     }
 
+    constructor.prototype.allocateVariables = function allocateVariables() {
+      var writer = new IndentingWriter();
+      var order = this.computeReversePostOrder();
+
+      function allocate (node) {
+        if (node instanceof Value) {
+          node.variable = new Variable("V" + node.id);
+        }
+      }
+
+      order.forEach(function (block) {
+        block.nodes.forEach(allocate);
+        block.phis && block.phis.forEach(allocate);
+      });
+
+      /*
+      function Move(to, from) {
+        assert (to && from, String(to) + " <- " + from);
+        this.to = to;
+        this.from = from;
+      }
+      */
+
+      var blockMoves = [];
+      order.forEach(function (block) {
+        if (block.phis) {
+          block.phis.forEach(function (phi) {
+            var predecessors = block.predecessors;
+            var arguments = phi.arguments;
+            assert (predecessors.length === arguments.length);
+            for (var i = 0; i < predecessors.length; i++) {
+              var predecessor = predecessors[i];
+              var moves = blockMoves[predecessor.id] || (blockMoves[predecessor.id] = []);
+              moves.push(new Move(phi.variable, arguments[i]));
+            }
+          });
+        }
+      });
+
+      var blocks = this.blocks;
+      blockMoves.forEach(function (moves, i) {
+        print (i + " Moves: " + moves);
+        moves.forEach(function (move) {
+          blocks[i].append(move);
+        });
+      });
+    };
+
     constructor.prototype.scheduleEarly = function scheduleEarly() {
       var writer = new IndentingWriter();
 
@@ -919,16 +989,13 @@
 
       dfg.forEach(function (node) {
         if (node instanceof Phi) {
-          node.control.block.append(node);
+          var block = node.control.block;
+          (block.phis || (block.phis = [])).push(node);
         }
         if (node.control) {
           schedule(node);
         }
       });
-    };
-
-    constructor.prototype.buildStructure = function () {
-      return Looper.analyze(this);
     };
 
     constructor.prototype.trace = function (writer) {
@@ -1031,6 +1098,7 @@
     writer.writeLn("DONE SELF TESTING");
   }
 
+  exports.Block = Block;
   exports.Node = Node;
   exports.Start = Start;
   exports.Undefined = Undefined;
@@ -1046,9 +1114,13 @@
   exports.Phi = Phi;
   exports.Stop = Stop;
   exports.If = If;
+  exports.End = End;
   exports.Jump = Jump;
   exports.Scope = Scope;
   exports.Operator = Operator;
+  exports.Variable = Variable;
+  exports.Move = Move;
+  exports.Parameter = Parameter;
 
   exports.DFG = DFG;
   exports.CFG= CFG;

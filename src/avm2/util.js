@@ -19,7 +19,7 @@ function backtrace() {
 
 function error(message) {
   if (!inBrowser) {
-    // console.info(backtrace());
+    console.info(backtrace());
   }
   throw new Error(message);
 }
@@ -161,6 +161,11 @@ function isNumeric(x) {
   extendBuiltin(Ap, "first", function () {
     release || assert(this.length > 0);
     return this[0];
+  });
+
+  extendBuiltin(Ap, "last", function () {
+    release || assert(this.length > 0);
+    return this[this.length - 1];
   });
 
   extendBuiltin(Ap, "peek", function() {
