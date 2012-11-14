@@ -37,6 +37,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       this.stack = [];
       this.scope = [];
       this.memory = Undefined;
+      this.savedScope = Undefined;
     }
     constructor.prototype.clone = function clone(bci) {
       var s = new State();
@@ -44,13 +45,14 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       s.local = this.local.slice(0);
       s.stack = this.stack.slice(0);
       s.scope = this.scope.slice(0);
+      s.savedScope = this.savedScope;
       s.memory = this.memory;
       return s;
     };
     constructor.prototype.matches = function matches(other) {
       return this.stack.length === other.stack.length &&
-        this.scope.length === other.scope.length &&
-        this.local.length === other.local.length;
+             this.scope.length === other.scope.length &&
+             this.local.length === other.local.length;
     }
     constructor.prototype.makePhis = function makePhis(control) {
       var s = new State();
@@ -62,6 +64,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       s.local = this.local.map(makePhi);
       s.stack = this.stack.map(makePhi);
       s.scope = this.scope.map(makePhi);
+      s.savedScope = this.savedScope;
       s.memory = makePhi(this.memory);
       return s;
     }
@@ -106,7 +109,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     }
     constructor.prototype.toString = function () {
       return "<" + String(this.id + " @ " + this.bci).padRight(' ', 10) +
-        ("M: " + toBriefString(this.memory)).padRight(' ', 9) +
+        ("M: " + toBriefString(this.memory)).padRight(' ', 8) +
+        ("$$: " + toBriefString(this.savedScope)).padRight(' ', 9) +
         ("$: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 9) +
         ("L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 80) +
         ("S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 20);
@@ -140,6 +144,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       }
 
       state.memory = new Projection(start, Projection.Type.STORE);
+      state.savedScope = new Projection(start, Projection.Type.SCOPE);
 
       return start;
     };
@@ -214,6 +219,13 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         var stack = state.stack;
         var scope = state.scope;
 
+        function topScope() {
+          if (scope.length > 0) {
+            return scope.top();
+          }
+          return state.savedScope;
+        }
+
         var obj, value, multiname, type;
 
         function push(x) {
@@ -259,7 +271,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function call(obj, args) {
-          return new Call(obj, args);
+          return new Call(region, obj, args);
         }
 
         function constant(value) {
@@ -366,7 +378,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               popLocal(op - OP_setlocal0);
               break;
             case OP_pushscope:
-              scope.push(new Scope(pop()));
+              scope.push(new Scope(topScope(), pop()));
               break;
             case OP_findpropstrict:
               push(findProperty(buildMultiname(bc.index)));
@@ -383,7 +395,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               args = stack.popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               obj = pop();
-              push(call(getProperty(obj, multiname), obj, args));
+              push(call(getProperty(obj, multiname), args));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_returnvalue:
@@ -518,7 +530,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var count = 0;
 
   function build(abc, methodInfo) {
-    if (count ++ !== 1) {
+    if (count ++ !== 0) {
       print("Skipping " + (count - 1));
       return;
     }

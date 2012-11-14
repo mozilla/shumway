@@ -166,6 +166,10 @@
     return new AssignmentExpression(left, "=", right);
   }
 
+  function variableDeclaration(declarations) {
+    return new VariableDeclaration("var", declarations);
+  }
+
   function negate(node) {
     if (node instanceof Constant) {
       if (node.value === true || node.value === false) {
@@ -199,13 +203,10 @@
   }
 
   Context.prototype.useParameter = function (parameter) {
-    this.parameters[parameter.index] = parameter;
+    return this.parameters[parameter.index] = parameter;
   };
 
   Context.prototype.compileBreak = function compileBreak(node) {
-    // var body = labelTestBody(item);
-    // body.push(new BreakStatement(null));
-    // return {node: new BlockStatement(body), state: state};
     var body = [new BreakStatement(null)];
     return new BlockStatement(body);
   };
@@ -223,35 +224,6 @@
     condition = node.negated ? negate(condition) : condition;
     cr.body.push(new IfStatement(condition, tr || new BlockStatement([]), er || null));
     return cr;
-
-    /*
-    var cr = item.cond.compile(this, state);
-    var tr = null, er = null;
-    if (item.then) {
-      tr = item.then.compile(this);
-    }
-    if (item.else) {
-      er = item.else.compile(this);
-    }
-    release || assert(tr || er);
-    if (item.nothingThrownLabel) {
-      var condition;
-      if (item.negated) {
-        condition = new UnaryExpression(Operator.FALSE.name, labelConditionName);
-      } else {
-        condition = labelConditionName;
-      }
-      var ft = tryFallthrough(item.nothingThrownLabel,
-        new IfStatement(condition, tr ? tr.node : new BlockStatement([]),
-          er ? er.node : null));
-      cr.node = new BlockStatement([cr.node, ft]);
-    } else {
-      var condition = item.negated ? negate(cr.condition) : cr.condition;
-      cr.node.body.push(new IfStatement(condition, tr ? tr.node : new BlockStatement([]), er ? er.node : null));
-    }
-
-    return {node: cr.node, state: (tr || er).state};
-    */
   };
 
   Context.prototype.compileLoop = function compileLoop(node) {
@@ -284,7 +256,9 @@
       if (node instanceof IR.Move) {
         statement = new ExpressionStatement(assignment(id(node.to.name), compileValue(node.from, this)));
       } else {
-        statement = new ExpressionStatement(assignment(id(node.variable.name), compileValue(node, this, true)));
+        statement = variableDeclaration([
+          new VariableDeclarator(id(node.variable.name), compileValue(node, this, true))
+        ]);
       }
 
       print(generateSource(statement));
@@ -293,7 +267,7 @@
     print("<<");
     var end = block.nodes.last();
     if (end instanceof IR.Stop) {
-      body.push(new ReturnStatement(compileValue(end.value, this)));
+      body.push(new ReturnStatement(compileValue(end.argument, this)));
     }
     var result = new BlockStatement(body);
     result.end = block.nodes.last();
@@ -302,6 +276,7 @@
   };
 
   function compileValue(value, cx, noVariable) {
+    assert (value);
     assert (value.compile, "Implement |compile| for " + value);
     assert (cx instanceof Context);
 
@@ -331,15 +306,18 @@
   };
 
   IR.FindProperty.prototype.compile = function (cx) {
-    return call(id("findProperty"), []);
+    var scope = compileValue(this.scope, cx);
+    return call(property(scope, "findProperty"), []);
   };
 
   IR.GetProperty.prototype.compile = function (cx) {
-    return call(id("getProperty"), []);
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    return call(id("getProperty"), [object, name]);
   };
 
   IR.Unary.prototype.compile = function (cx) {
-    return new UnaryExpression(this.operator.name, compileValue(this.value, cx));
+    return new UnaryExpression(this.operator.name, compileValue(this.argument, cx));
   };
 
   IR.Binary.prototype.compile = function (cx) {
@@ -351,7 +329,6 @@
       return compileValue(arg, cx);
     });
     return call(compileValue(this.callee, cx), args);
-    // return new BinaryExpression(this.operator.name, compileValue(this.left, cx), compileValue(this.right, cx));
   };
 
   function generateSource(node) {

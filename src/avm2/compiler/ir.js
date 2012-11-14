@@ -79,8 +79,6 @@
     return Object.create(c.prototype, {nodeName: { value: name }});
   }
 
-
-
   function nameOf(o) {
     var useColors = true;
     var result;
@@ -163,7 +161,7 @@
   })();
 
   var Control = (function () {
-    function constructor(control) {
+    function constructor() {
       Node.apply(this);
     }
     constructor.prototype = extend(Node);
@@ -171,7 +169,7 @@
   })();
 
   var Value = (function () {
-    function constructor(control) {
+    function constructor() {
       Node.apply(this);
     }
     constructor.prototype = extend(Node);
@@ -227,6 +225,7 @@
 
   var Variable = (function () {
     function constructor(name) {
+      assert (isString(name));
       this.name = name;
     }
     constructor.prototype = extend(Value, "Variable");
@@ -236,6 +235,7 @@
   var Move = (function () {
     function constructor(to, from) {
       assert (to instanceof Variable);
+      assert (from instanceof Value);
       this.to = to;
       this.from = from;
     }
@@ -274,37 +274,42 @@
   })();
 
   var Stop = (function () {
-    function constructor(control, value) {
+    function constructor(control, argument) {
       Control.call(this);
       this.control = control;
-      this.value = value;
+      this.argument = argument;
     }
     constructor.prototype = extend(End, "Stop");
     return constructor;
   })();
 
   var Projection = (function () {
-    function constructor(value, type) {
+    function constructor(argument, type) {
       Value.call(this);
       assert (type);
-      assert (!(value instanceof Projection));
-      this.value = value;
+      assert (!(argument instanceof Projection));
+      this.argument = argument;
       this.type = type;
     }
     constructor.Type = {
       TRUE: "true",
       FALSE: "false",
-      STORE: "store"
+      STORE: "store",
+      SCOPE: "scope"
     };
     constructor.prototype = extend(Value, "Projection");
     constructor.prototype.project = function () {
-      return this.value;
+      return this.argument;
     };
     constructor.prototype.toStringDetails = function () {
       return String(this.type).toUpperCase();
     };
     return constructor;
   })();
+
+  function isProjection(node, type) {
+    return node instanceof Projection && node.type === type;
+  }
 
   var Binary = (function () {
     function constructor(operator, left, right) {
@@ -321,10 +326,12 @@
   })();
 
   var Unary = (function () {
-    function constructor(operator, value) {
+    function constructor(operator, argument) {
       Node.call(this);
+      assert (operator instanceof Operator);
+      assert (argument)
       this.operator = operator;
-      this.value = value;
+      this.argument = argument;
     }
     constructor.prototype = extend(Value, "Unary");
     constructor.prototype.toStringDetails = function () {
@@ -342,10 +349,38 @@
     return constructor;
   })();
 
+
+  function isPhi(phi) {
+    return phi instanceof Phi;
+  }
+
+  function isScope(scope) {
+    return isPhi(scope) || scope instanceof Scope || isProjection(scope, Projection.Type.SCOPE);
+  }
+
+  function isStore(store) {
+    return isPhi(store) || store instanceof Store || isProjection(store, Projection.Type.STORE);
+  }
+
+  function isString(string) {
+    return typeof string === "string";
+  }
+
+  function isInteger(integer) {
+    return integer | 0 === integer;
+  }
+
+  function isArray(array) {
+    return array instanceof Array;
+  }
+
   var Scope = (function () {
-    function constructor(parent) {
+    function constructor(parent, object) {
       Node.call(this);
+      assert (isScope(parent));
+      assert (object);
       this.parent = parent;
+      this.object = object;
     }
     constructor.prototype = extend(Value, "Scope");
     return constructor;
@@ -361,12 +396,20 @@
     return constructor;
   })();
 
+  function isControlOrNull(control) {
+    return control instanceof Control || control === null;
+  }
+
   var GetProperty = (function () {
-    function constructor(control, store, obj, name) {
+    function constructor(control, store, object, name) {
       Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (name);
       this.control = control;
       this.store = store;
-      this.obj = obj;
+      this.object = object;
       this.name = name;
     }
     constructor.prototype = extend(Value, "GetProperty");
@@ -376,6 +419,8 @@
   var FindProperty = (function () {
     function constructor(scope, name) {
       Node.call(this);
+      assert (isScope(scope));
+      assert (name);
       this.scope = scope;
       this.name = name;
     }
@@ -384,8 +429,11 @@
   })();
 
   var Call = (function () {
-    function constructor(callee, args) {
+    function constructor(control, callee, args) {
       Node.call(this);
+      assert (isControlOrNull(control));
+      assert (callee);
+      assert (isArray(args));
       this.callee = callee;
       this.args = args;
     }
@@ -411,6 +459,8 @@
     function constructor(control, index, name) {
       Node.call(this);
       assert (control);
+      assert (isInteger(index));
+      assert (isString(name));
       this.control = control;
       this.index = index;
       this.name = name;
@@ -897,7 +947,7 @@
 
       function allocate (node) {
         if (node instanceof Value) {
-          node.variable = new Variable("V" + node.id);
+          node.variable = new Variable("l" + node.id);
         }
       }
 
