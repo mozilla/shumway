@@ -1351,6 +1351,7 @@ function createBuiltinType(obj, args) {
 if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2MovieClip = AS2MovieClip;
   GLOBAL.AS2Button = AS2Button;
+  GLOBAL.AS2TextField = AS2TextField;
   GLOBAL.AS2Broadcaster = AS2Broadcaster;
   GLOBAL.AS2Key = AS2Key;
   GLOBAL.AS2Mouse = AS2Mouse;
