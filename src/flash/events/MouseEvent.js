@@ -1,4 +1,4 @@
-const MouseEventDefinition = (function () {
+var MouseEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.MouseEvent',
 

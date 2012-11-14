@@ -1,19 +1,19 @@
-const DisplayObjectDefinition = (function () {
-  const BLEND_MODE_ADD        = 'add';
-  const BLEND_MODE_ALPHA      = 'alpha';
-  const BLEND_MODE_DARKEN     = 'darken';
-  const BLEND_MODE_DIFFERENCE = 'difference';
-  const BLEND_MODE_ERASE      = 'erase';
-  const BLEND_MODE_HARDLIGHT  = 'hardlight';
-  const BLEND_MODE_INVERT     = 'invert';
-  const BLEND_MODE_LAYER      = 'layer';
-  const BLEND_MODE_LIGHTEN    = 'lighten';
-  const BLEND_MODE_MULTIPLY   = 'multiply';
-  const BLEND_MODE_NORMAL     = 'normal';
-  const BLEND_MODE_OVERLAY    = 'overlay';
-  const BLEND_MODE_SCREEN     = 'screen';
-  const BLEND_MODE_SHADER     = 'shader';
-  const BLEND_MODE_SUBTRACT   = 'subtract';
+var DisplayObjectDefinition = (function () {
+  var BLEND_MODE_ADD        = 'add';
+  var BLEND_MODE_ALPHA      = 'alpha';
+  var BLEND_MODE_DARKEN     = 'darken';
+  var BLEND_MODE_DIFFERENCE = 'difference';
+  var BLEND_MODE_ERASE      = 'erase';
+  var BLEND_MODE_HARDLIGHT  = 'hardlight';
+  var BLEND_MODE_INVERT     = 'invert';
+  var BLEND_MODE_LAYER      = 'layer';
+  var BLEND_MODE_LIGHTEN    = 'lighten';
+  var BLEND_MODE_MULTIPLY   = 'multiply';
+  var BLEND_MODE_NORMAL     = 'normal';
+  var BLEND_MODE_OVERLAY    = 'overlay';
+  var BLEND_MODE_SCREEN     = 'screen';
+  var BLEND_MODE_SHADER     = 'shader';
+  var BLEND_MODE_SUBTRACT   = 'subtract';
 
   var def = {
     __class__: 'flash.display.DisplayObject',
@@ -390,7 +390,7 @@ const DisplayObjectDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

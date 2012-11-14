@@ -1,4 +1,4 @@
-const ResponderDefinition = (function () {
+var ResponderDefinition = (function () {
   var def = {
     ctor: function(result, status) {
       // notImplemented();

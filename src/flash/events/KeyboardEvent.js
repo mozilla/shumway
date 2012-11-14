@@ -1,4 +1,4 @@
-const KeyboardEventDefinition = (function () {
+var KeyboardEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.KeyboardEvent',
 

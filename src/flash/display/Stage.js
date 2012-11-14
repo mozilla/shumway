@@ -1,30 +1,30 @@
-const StageDefinition = (function () {
-  const COLOR_CORRECTION_DEFAULT     = 'default';
-  const COLOR_CORRECTION_OFF         = 'on';
-  const COLOR_CORRECTION_ON          = 'off';
+var StageDefinition = (function () {
+  var COLOR_CORRECTION_DEFAULT     = 'default';
+  var COLOR_CORRECTION_OFF         = 'on';
+  var COLOR_CORRECTION_ON          = 'off';
 
-  const COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
-  const COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
-  const COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
+  var COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
+  var COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
+  var COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
 
-  const STAGE_ALIGN_BOTTOM           = 'B';
-  const STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
-  const STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
-  const STAGE_ALIGN_LEFT             = 'L';
-  const STAGE_ALIGN_RIGHT            = 'R';
-  const STAGE_ALIGN_TOP              = 'T';
-  const STAGE_ALIGN_TOP_LEFT         = 'TL';
-  const STAGE_ALIGN_TOP_RIGHT        = 'TR';
+  var STAGE_ALIGN_BOTTOM           = 'B';
+  var STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
+  var STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
+  var STAGE_ALIGN_LEFT             = 'L';
+  var STAGE_ALIGN_RIGHT            = 'R';
+  var STAGE_ALIGN_TOP              = 'T';
+  var STAGE_ALIGN_TOP_LEFT         = 'TL';
+  var STAGE_ALIGN_TOP_RIGHT        = 'TR';
 
-  const STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
-  const STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
-  const STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
-  const STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
+  var STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
+  var STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
+  var STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
+  var STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
 
-  const STAGE_QUALITY_BEST           = 'best';
-  const STAGE_QUALITY_HIGH           = 'high';
-  const STAGE_QUALITY_LOW            = 'low';
-  const STAGE_QUALITY_MEDIUM         = 'medium';
+  var STAGE_QUALITY_BEST           = 'best';
+  var STAGE_QUALITY_HIGH           = 'high';
+  var STAGE_QUALITY_LOW            = 'low';
+  var STAGE_QUALITY_MEDIUM         = 'medium';
 
   var def = {
     __class__: 'flash.display.Stage',
@@ -129,7 +129,7 @@ const StageDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   // TODO
   def.__glue__  = {

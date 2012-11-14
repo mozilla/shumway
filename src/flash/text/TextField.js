@@ -1,4 +1,4 @@
-const TextFieldDefinition = (function () {
+var TextFieldDefinition = (function () {
   var def = {
     __class__: 'flash.text.TextField',
 
@@ -25,7 +25,7 @@ const TextFieldDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

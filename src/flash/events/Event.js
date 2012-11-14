@@ -1,4 +1,4 @@
-const EventDefinition = (function () {
+var EventDefinition = (function () {
   var EVENT_PHASE_CAPTURING_PHASE = 1;
   var EVENT_PHASE_AT_TARGET       = 2;
   var EVENT_PHASE_BUBBLING_PHASE  = 3;
@@ -42,7 +42,7 @@ const EventDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     script: {

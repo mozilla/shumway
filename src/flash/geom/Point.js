@@ -1,4 +1,4 @@
-const PointDefinition = (function () {
+var PointDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Point',
 

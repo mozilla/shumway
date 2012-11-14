@@ -11,7 +11,7 @@ var Interpreter = (function () {
     this.abc = abc;
   }
 
-  const Apslice = [].slice;
+  var Apslice = [].slice;
 
   function applyNew(constructor, args) {
     return new (Function.bind.apply(constructor.instance, [,].concat(args)));
@@ -41,16 +41,16 @@ var Interpreter = (function () {
     interpretMethod: function interpretMethod($this, method, savedScope, args) {
       release || assert(method.analysis);
       Counter.count("Interpret Method");
-      const abc = this.abc;
-      const ints = abc.constantPool.ints;
-      const uints = abc.constantPool.uints;
-      const doubles = abc.constantPool.doubles;
-      const strings = abc.constantPool.strings;
-      const methods = abc.methods;
-      const multinames = abc.constantPool.multinames;
-      const runtime = abc.runtime;
-      const domain = abc.domain;
-      const rtstack = Runtime.stack;
+      var abc = this.abc;
+      var ints = abc.constantPool.ints;
+      var uints = abc.constantPool.uints;
+      var doubles = abc.constantPool.doubles;
+      var strings = abc.constantPool.strings;
+      var methods = abc.methods;
+      var multinames = abc.constantPool.multinames;
+      var runtime = abc.runtime;
+      var domain = abc.domain;
+      var rtstack = Runtime.stack;
 
       var exceptions = method.exceptions;
 

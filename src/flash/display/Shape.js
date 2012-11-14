@@ -1,4 +1,4 @@
-const ShapeDefinition = (function () {
+var ShapeDefinition = (function () {
   var def = {
     __class__: 'flash.display.Shape',
 

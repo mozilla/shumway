@@ -1,4 +1,4 @@
-const BitmapDefinition = (function () {
+var BitmapDefinition = (function () {
   var def = {
     __class__: 'flash.display.Bitmap',
     draw : function(ctx, ratio) {

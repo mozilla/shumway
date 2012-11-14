@@ -1,4 +1,4 @@
-const TextEventDefinition = (function () {
+var TextEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.TextEvent'
   };

@@ -1,4 +1,4 @@
-const Errors = {
+var Errors = {
   OutOfMemoryError                     : {code: 1000, message: "The system is out of memory."},
   NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},

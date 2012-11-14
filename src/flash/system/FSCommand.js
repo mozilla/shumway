@@ -1,4 +1,4 @@
-const FSCommandDefinition = (function () {
+var FSCommandDefinition = (function () {
   var def = {};
 
   function fscommand(command, parameters) {

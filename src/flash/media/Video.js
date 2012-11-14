@@ -1,4 +1,4 @@
-const VideoDefinition = (function () {
+var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
       this._element = document.createElement('video');

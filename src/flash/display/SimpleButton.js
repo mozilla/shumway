@@ -1,4 +1,4 @@
-const SimpleButtonDefinition = (function () {
+var SimpleButtonDefinition = (function () {
   var def = {
     __class__: 'flash.display.SimpleButton',
 
@@ -56,7 +56,7 @@ const SimpleButtonDefinition = (function () {
       }
 
       // binding mouse events
-      const MouseEventClass = avm2.systemDomain.getClass("flash.events.MouseEvent");
+      var MouseEventClass = avm2.systemDomain.getClass("flash.events.MouseEvent");
       this.addEventListener(MouseEventClass.MOUSE_DOWN, function (evt) {
         this._isMouseDown = true;
         this._updateButton();
@@ -99,7 +99,7 @@ const SimpleButtonDefinition = (function () {
     return instance;
   }
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

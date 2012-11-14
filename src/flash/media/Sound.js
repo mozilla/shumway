@@ -1,4 +1,4 @@
-const SoundDefinition = (function () {
+var SoundDefinition = (function () {
   var def = {
     initialize: function initialize() {
     }

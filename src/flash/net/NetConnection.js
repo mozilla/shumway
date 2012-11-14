@@ -1,4 +1,4 @@
-const NetConnectionDefinition = (function () {
+var NetConnectionDefinition = (function () {
   var def = {
     connect: function(command /*, ...arguments */) {
       // notImplemented();

@@ -1,9 +1,9 @@
 function renderStage(stage, ctx) {
   // All the visitors close over this class to do instance testing.
-  const MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
-  const ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
-  const SimpleButtonClass = avm2.systemDomain.getClass("flash.display.SimpleButton");
-  const InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
+  var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+  var ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
+  var SimpleButtonClass = avm2.systemDomain.getClass("flash.display.SimpleButton");
+  var InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
 
   function visitContainer(container, visitor, interactiveParent) {
     var children = container._children;

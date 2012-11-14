@@ -1,4 +1,4 @@
-const CapabilitiesDefinition = (function () {
+var CapabilitiesDefinition = (function () {
   var def = {};
 
   def.__glue__ = {

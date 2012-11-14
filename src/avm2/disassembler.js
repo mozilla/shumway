@@ -242,8 +242,8 @@ var SourceTracer = (function () {
 
   SourceTracer.prototype = {
     traceTraits: function traceTraits(traits, isStatic, inInterfaceNamespace) {
-      const writer = this.writer;
-      const tracer = this;
+      var writer = this.writer;
+      var tracer = this;
 
       traits.forEach(function (trait) {
         var str;
@@ -316,7 +316,7 @@ var SourceTracer = (function () {
     },
 
     traceClassStub2: function traceClassStub(trait) {
-      const writer = this.writer;
+      var writer = this.writer;
 
       var ci = trait.classInfo;
       var ii = ci.instanceInfo;
@@ -379,7 +379,7 @@ var SourceTracer = (function () {
     },
 
     traceClassStub: function traceClassStub(trait) {
-      const writer = this.writer;
+      var writer = this.writer;
 
       var ci = trait.classInfo;
       var ii = ci.instanceInfo;
@@ -486,7 +486,7 @@ var SourceTracer = (function () {
     },
 
     traceClass: function traceClass(ci) {
-      const writer = this.writer;
+      var writer = this.writer;
 
       var ii = ci.instanceInfo;
       var name = ii.name;
@@ -521,7 +521,7 @@ var SourceTracer = (function () {
     },
 
     traceMetadata: function traceMetadata(metadata) {
-      const writer = this.writer;
+      var writer = this.writer;
 
       for (var key in metadata) {
         if (metadata.hasOwnProperty(key)) {

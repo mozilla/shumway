@@ -1,4 +1,4 @@
-const NetStreamDefinition = (function () {
+var NetStreamDefinition = (function () {
   var def = {
     ctor: function(connection, peerID) {
       // notImplemented();

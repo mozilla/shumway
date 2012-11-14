@@ -1,4 +1,4 @@
-const SoundMixerDefinition = (function () {
+var SoundMixerDefinition = (function () {
   var def = {};
 
   function stopAll() {

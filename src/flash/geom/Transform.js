@@ -1,4 +1,4 @@
-const TransformDefinition = (function () {
+var TransformDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Transform',
 
@@ -87,7 +87,7 @@ const TransformDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

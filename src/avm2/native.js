@@ -206,10 +206,10 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
 });
 */
 
-const natives = (function () {
+var natives = (function () {
 
-  const C = Domain.passthroughCallable;
-  const CC = Domain.constructingCallable;
+  var C = Domain.passthroughCallable;
+  var CC = Domain.constructingCallable;
 
   /**
    * Object.as
@@ -472,7 +472,7 @@ const natives = (function () {
    * Vector.as
    */
 
-  const VM_VECTOR_IS_FIXED = "vm vector is fixed";
+  var VM_VECTOR_IS_FIXED = "vm vector is fixed";
 
   /**
    * Creates a typed Vector class. It steals the Array object from a new global
@@ -485,7 +485,7 @@ const natives = (function () {
 
     // Breaks semantics with bounds checking for now.
     if (type) {
-      const coerce = type.coerce;
+      var coerce = type.coerce;
       TAp.indexGet = function (i) { return this[i]; };
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
@@ -926,7 +926,7 @@ const natives = (function () {
    */
   function ByteArrayClass(runtime, scope, instance, baseClass) {
     /* The initial size of the backing, in bytes. Doubled every OOM. */
-    const INITIAL_SIZE = 128;
+    var INITIAL_SIZE = 128;
 
     function ByteArray() {
       this.a = new ArrayBuffer(INITIAL_SIZE);

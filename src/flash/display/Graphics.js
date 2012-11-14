@@ -1,4 +1,4 @@
-const GraphicsDefinition = (function () {
+var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
   var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
   var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;

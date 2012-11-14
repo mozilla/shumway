@@ -1,4 +1,4 @@
-const LoaderInfoDefinition = (function () {
+var LoaderInfoDefinition = (function () {
   var def = {
     __class__: 'flash.display.LoaderInfo',
 

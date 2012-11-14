@@ -1,4 +1,4 @@
-const DisplayObjectContainerDefinition = (function () {
+var DisplayObjectContainerDefinition = (function () {
   var def = {
     get mouseChildren() {
       return this._mouseChildren;
@@ -155,7 +155,7 @@ const DisplayObjectContainerDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

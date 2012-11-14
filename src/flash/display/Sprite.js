@@ -1,4 +1,4 @@
-const SpriteDefinition = (function () {
+var SpriteDefinition = (function () {
   var def = {
     __class__: 'flash.display.Sprite',
 
@@ -68,7 +68,7 @@ const SpriteDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

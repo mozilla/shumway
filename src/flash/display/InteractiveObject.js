@@ -1,4 +1,4 @@
-const InteractiveObjectDefinition = (function () {
+var InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
       this._control = document.createElement('div');
@@ -64,7 +64,7 @@ const InteractiveObjectDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     instance: {

@@ -1,4 +1,4 @@
-const BitmapDataDefinition = (function () {
+var BitmapDataDefinition = (function () {
   var def = {
     __class__: 'flash.display.BitmapData',
 

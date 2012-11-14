@@ -1,4 +1,4 @@
-const MatrixDefinition = (function () {
+var MatrixDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Matrix',
 

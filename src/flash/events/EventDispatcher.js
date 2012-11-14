@@ -1,4 +1,4 @@
-const EventDispatcherDefinition = (function () {
+var EventDispatcherDefinition = (function () {
   var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
 
   var def = {

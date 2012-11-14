@@ -19,43 +19,43 @@ function shouldCompile(mi) {
   return true;
 }
 
-const T = estransform;
+var T = estransform;
 
-const Literal = T.Literal;
-const Identifier = T.Identifier;
-const VariableDeclaration = T.VariableDeclaration;
-const VariableDeclarator = T.VariableDeclarator;
-const MemberExpression = T.MemberExpression;
-const BinaryExpression = T.BinaryExpression;
-const SequenceExpression = T.SequenceExpression;
-const CallExpression = T.CallExpression;
-const AssignmentExpression = T.AssignmentExpression;
-const ExpressionStatement = T.ExpressionStatement;
-const ReturnStatement = T.ReturnStatement;
-const Program = T.Program;
-const Statement = T.Statement;
-const FunctionDeclaration = T.FunctionDeclaration;
-const FunctionExpression = T.FunctionExpression;
-const ConditionalExpression = T.ConditionalExpression;
-const ObjectExpression = T.ObjectExpression;
-const ArrayExpression = T.ArrayExpression;
-const UnaryExpression = T.UnaryExpression;
-const NewExpression = T.NewExpression;
-const UpdateExpression = T.UpdateExpression;
-const ForStatement = T.ForStatement;
-const BlockStatement = T.BlockStatement;
-const ThisExpression = T.ThisExpression;
-const TypeAliasDirective = T.TypeAliasDirective;
-const CastExpression = T.CastExpression;
-const ThrowStatement = T.ThrowStatement;
-const IfStatement = T.IfStatement;
-const WhileStatement = T.WhileStatement;
-const BreakStatement = T.BreakStatement;
-const ContinueStatement = T.ContinueStatement;
-const SwitchStatement = T.SwitchStatement;
-const SwitchCase = T.SwitchCase;
-const TryStatement = T.TryStatement;
-const CatchClause = T.CatchClause;
+var Literal = T.Literal;
+var Identifier = T.Identifier;
+var VariableDeclaration = T.VariableDeclaration;
+var VariableDeclarator = T.VariableDeclarator;
+var MemberExpression = T.MemberExpression;
+var BinaryExpression = T.BinaryExpression;
+var SequenceExpression = T.SequenceExpression;
+var CallExpression = T.CallExpression;
+var AssignmentExpression = T.AssignmentExpression;
+var ExpressionStatement = T.ExpressionStatement;
+var ReturnStatement = T.ReturnStatement;
+var Program = T.Program;
+var Statement = T.Statement;
+var FunctionDeclaration = T.FunctionDeclaration;
+var FunctionExpression = T.FunctionExpression;
+var ConditionalExpression = T.ConditionalExpression;
+var ObjectExpression = T.ObjectExpression;
+var ArrayExpression = T.ArrayExpression;
+var UnaryExpression = T.UnaryExpression;
+var NewExpression = T.NewExpression;
+var UpdateExpression = T.UpdateExpression;
+var ForStatement = T.ForStatement;
+var BlockStatement = T.BlockStatement;
+var ThisExpression = T.ThisExpression;
+var TypeAliasDirective = T.TypeAliasDirective;
+var CastExpression = T.CastExpression;
+var ThrowStatement = T.ThrowStatement;
+var IfStatement = T.IfStatement;
+var WhileStatement = T.WhileStatement;
+var BreakStatement = T.BreakStatement;
+var ContinueStatement = T.ContinueStatement;
+var SwitchStatement = T.SwitchStatement;
+var SwitchCase = T.SwitchCase;
+var TryStatement = T.TryStatement;
+var CatchClause = T.CatchClause;
 
 /**
  * When adding a new "magic" variable that the compiler has
@@ -86,25 +86,25 @@ const CatchClause = T.CatchClause;
  *     where the "%d" is the stack index that the value occupies.
  */
 
-const VAR_PREFIX = "v";
-const LOCAL_PREFIX = "l";
-const STACK_PREFIX = "s";
-const ARGUMENT_PREFIX = "a";
-const INLINE_CACHE_GETTER_PREFIX = "get";
-const INLINE_CACHE_SETTER_PREFIX = "set";
+var VAR_PREFIX = "v";
+var LOCAL_PREFIX = "l";
+var STACK_PREFIX = "s";
+var ARGUMENT_PREFIX = "a";
+var INLINE_CACHE_GETTER_PREFIX = "get";
+var INLINE_CACHE_SETTER_PREFIX = "set";
 
-const SAVED_SCOPE_NAME = "$SS";
-const scopeName = new Identifier("$S");
-const scopeObjectName = new Identifier("$O");
-const globalScopeObjectName = new Identifier("$G");
-const savedScopeName = new Identifier(SAVED_SCOPE_NAME);
-const constantsName = new Identifier("$C");
-const lastCaughtName = new Identifier("$E");
-const exceptionName = new Identifier("$e");
-const labelTestName = new Identifier("$label");
-const labelConditionName = new Identifier("$condition");
-const labelDeterminantName = new Identifier("$determinant");
-const activationName = new Identifier("$activation");
+var SAVED_SCOPE_NAME = "$SS";
+var scopeName = new Identifier("$S");
+var scopeObjectName = new Identifier("$O");
+var globalScopeObjectName = new Identifier("$G");
+var savedScopeName = new Identifier(SAVED_SCOPE_NAME);
+var constantsName = new Identifier("$C");
+var lastCaughtName = new Identifier("$E");
+var exceptionName = new Identifier("$e");
+var labelTestName = new Identifier("$label");
+var labelConditionName = new Identifier("$condition");
+var labelDeterminantName = new Identifier("$determinant");
+var activationName = new Identifier("$activation");
 
 /**
  * To embed object references in compiled code we index into globally accessible constant table [$C].
@@ -123,7 +123,7 @@ function notUndefined(x) {
   return x !== undefined;
 }
 
-const FlushStackReason = {
+var FlushStackReason = {
   EndOfBlock: 1,
   SetLocal: 2
 };
@@ -888,15 +888,15 @@ var Compiler = (function () {
       var temporary = this.temporary;
       var cachedScopes = this.cachedScopes;
 
-      const abc = this.compiler.abc;
-      const ints = abc.constantPool.ints;
-      const uints = abc.constantPool.uints;
-      const doubles = abc.constantPool.doubles;
-      const strings = abc.constantPool.strings;
-      const methods = abc.methods;
-      const multinames = abc.constantPool.multinames;
-      const runtime = abc.runtime;
-      const exceptions = this.methodInfo.exceptions;
+      var abc = this.compiler.abc;
+      var ints = abc.constantPool.ints;
+      var uints = abc.constantPool.uints;
+      var doubles = abc.constantPool.doubles;
+      var strings = abc.constantPool.strings;
+      var methods = abc.methods;
+      var multinames = abc.constantPool.multinames;
+      var runtime = abc.runtime;
+      var exceptions = this.methodInfo.exceptions;
 
       var savedScope = this.savedScope;
       var multiname, args, value, obj, qn, ns, name, type, factory, index;

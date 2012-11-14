@@ -1,4 +1,4 @@
-const MovieClipDefinition = (function () {
+var MovieClipDefinition = (function () {
   var def = {
     __class__: 'flash.display.MovieClip',
 
@@ -340,7 +340,7 @@ const MovieClipDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {
