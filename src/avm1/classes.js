@@ -1104,17 +1104,17 @@ defineObjectProperties(AS2Mouse, {
     value: function $bind(stage) {
 
       function updateMouseState(e) {
-        var transform = canvas.currentTransform;
-        if (!transform)
+        var state = stage._canvasState;
+        if (!state)
           return;
 
         var mouseX = e.clientX, mouseY = e.clientY;
-        for (var p = canvas; p; p = p.offsetParent) {
+        for (var p = state.canvas; p; p = p.offsetParent) {
           mouseX -= p.offsetLeft;
           mouseY -= p.offsetTop;
         }
-        AS2Mouse.$lastX = (mouseX - transform.offsetX) / transform.scale;
-        AS2Mouse.$lastY = (mouseY - transform.offsetY) / transform.scale;
+        AS2Mouse.$lastX = (mouseX - state.offsetX) / state.scale;
+        AS2Mouse.$lastY = (mouseY - state.offsetY) / state.scale;
       }
 
       stage.addEventListener('mousedown', function(e) {

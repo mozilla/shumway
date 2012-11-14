@@ -84,7 +84,8 @@ function renderStage(stage, ctx) {
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
 
-        ctx.canvas.currentTransform = {
+        stage._canvasState = {
+          canvas: ctx.canvas,
           scale: scale,
           offsetX: offsetX,
           offsetY: offsetY
@@ -216,7 +217,8 @@ function renderStage(stage, ctx) {
                               window.mozRequestAnimationFrame ||
                               window.webkitRequestAnimationFrame ||
                               window.oRequestAnimationFrame ||
-                              window.msRequestAnimationFrame;
+                              window.msRequestAnimationFrame ||
+                              window.setTimeout;
 
   var FPS = (function () {
     var width = Math.max(ctx.canvas.width / 5, 100);
