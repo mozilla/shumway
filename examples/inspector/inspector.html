@@ -11,6 +11,7 @@
     <script src="jquery.min.js"></script>
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
+    <script src="../../lib/xstats/xstats.js"></script>
 
     <!-- Load SWF Dependencies -->
     <script src="../../src/swf/util.js"></script>
@@ -175,6 +176,11 @@
 
     <script>
         SHUMWAY_ROOT = "../../src/";
+    </script>
+
+    <script>
+        var stats = new xStats;
+        document.body.appendChild(stats.element);
     </script>
 
   </body>
