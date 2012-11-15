@@ -6,7 +6,9 @@
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
-    <div id="stage"></div>
+    <div id="stage">
+        <div style="position: absolute; right: 0; top: 0; z-index: 1" id="xstats"></div>
+    </div>
 
     <script src="jquery.min.js"></script>
     <script src="../../lib/DataView.js/DataView.js"></script>
@@ -180,7 +182,7 @@
 
     <script>
         var stats = new xStats;
-        document.body.appendChild(stats.element);
+        document.getElementById('xstats').appendChild(stats.element);
     </script>
 
   </body>
