@@ -138,19 +138,19 @@ function renderStage(stage, ctx) {
         return;
       }
 
-      var hitTest = false;
-      var hitTestShape = false;
-
-      if (interactiveParent) {
-        var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
-        child._applyCurrentInverseTransform(pt, child._parent);
-
-        if (child._hitArea)
-          hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
-
-        if (!hitTest)
-          hitTestShape = true;
-      }
+      //var hitTest = false;
+      //var hitTestShape = false;
+      //
+      //if (interactiveParent) {
+      //  var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
+      //  child._applyCurrentInverseTransform(pt, child._parent);
+      //
+      //  if (child._hitArea)
+      //    hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
+      //
+      //  if (!hitTest)
+      //    hitTestShape = true;
+      //}
 
       var ctx = this.ctx;
       ctx.save();
@@ -188,8 +188,8 @@ function renderStage(stage, ctx) {
               ctx.fill(path);
             }
 
-            if (hitTestShape && !hitTest && ctx.isPointInPath(pt.x, pt.y))
-              hitTest = true;
+            //if (hitTestShape && !hitTest && ctx.isPointInPath(pt.x, pt.y))
+            //  hitTest = true;
           }
           if (path.strokeStyle) {
             ctx.strokeStyle = path.strokeStyle;
@@ -198,9 +198,9 @@ function renderStage(stage, ctx) {
               ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
 
-            if (hitTestShape && !hitTest &&
-                ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y))
-              hitTest = true;
+            //if (hitTestShape && !hitTest &&
+            //    ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y))
+            //  hitTest = true;
           }
         }
 
@@ -215,24 +215,24 @@ function renderStage(stage, ctx) {
         ctx.restore();
       }
 
-      if (interactiveParent && hitTest) {
-        if (interactiveParent._mouseOver) {
-          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
-        } else {
-          interactiveParent._mouseOver = true;
-          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
-        }
-
-        stage._clickTarget = interactiveParent;
-      } else {
-        if (interactiveParent._mouseOver) {
-          interactiveParent._mouseOver = false;
-          interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
-        }
-
-        if (stage._mouseTarget === interactiveParent)
-          stage._clickTarget = null;
-      }
+      //if (interactiveParent && hitTest) {
+      //  if (interactiveParent._mouseOver) {
+      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      //  } else {
+      //    interactiveParent._mouseOver = true;
+      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+      //  }
+      //
+      //  stage._clickTarget = interactiveParent;
+      //} else {
+      //  if (interactiveParent._mouseOver) {
+      //    interactiveParent._mouseOver = false;
+      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+      //  }
+      //
+      //  if (stage._mouseTarget === interactiveParent)
+      //    stage._clickTarget = null;
+      //}
 
       if (stage._showRedrawRegions && child._dirtyArea) {
         var bounds = child._dirtyArea;
