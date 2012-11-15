@@ -99,10 +99,14 @@ function renderStage(stage, ctx) {
         var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
 
         ctx.save();
+
         ctx.clip();
+
         ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
+
+        ctx.mozFillRule = 'evenodd';
 
         stage._canvasState = {
           canvas: ctx.canvas,
@@ -246,8 +250,6 @@ function renderStage(stage, ctx) {
 
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
-
-  ctx.mozFillRule = 'evenodd';
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
