@@ -53,7 +53,7 @@ SWF.embed = function(file, container, options) {
       canvas.height = stage._stageHeight * pixelRatio;
     }
 
-    container.setAttribute("style", "position: relative; float: left");
+    container.setAttribute("style", "position: relative");
 
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;

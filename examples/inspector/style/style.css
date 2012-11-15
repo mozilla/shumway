@@ -1,4 +1,4 @@
-html 
+html
 {
   height: 100%;
 }
@@ -218,4 +218,15 @@ body {
 
 .textInput:-moz-locale-dir(rtl) {
     background-position: calc(100% - 4px) center, top left, top left;
+}
+
+#stage {
+  float: left;
+}
+
+#xstats {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 1;
 }
