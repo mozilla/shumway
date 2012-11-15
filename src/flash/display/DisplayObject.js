@@ -28,7 +28,7 @@ var DisplayObjectDefinition = (function () {
       this._clipDepth = 0;
       this._currentTransform = null;
       this._cxform = null;
-      this._dirty = true;
+      this._dirty = false;
       this._graphics = null;
       this._loaderInfo = null;
       this._mouseChildren = true;
@@ -156,6 +156,8 @@ var DisplayObjectDefinition = (function () {
         tx: this._x,
         ty: this._y
       };
+
+      this._dirty = true;
     },
 
     get accessibilityProperties() {
@@ -244,7 +246,6 @@ var DisplayObjectDefinition = (function () {
       return this._scaleX;
     },
     set scaleX(val) {
-      this._dirty = true;
       this._scaleX = val;
       this._slave = false;
       this._updateCurrentTransform();
@@ -253,7 +254,6 @@ var DisplayObjectDefinition = (function () {
       return this._scaleY;
     },
     set scaleY(val) {
-      this._dirty = true;
       this._scaleY = val;
       this._slave = false;
       this._updateCurrentTransform();
@@ -302,7 +302,6 @@ var DisplayObjectDefinition = (function () {
       return this._x;
     },
     set x(val) {
-      this._dirty = true;
       this._slave = false;
       this._updateCurrentTransform();
       this._x = val;
@@ -311,7 +310,6 @@ var DisplayObjectDefinition = (function () {
       return this._y;
     },
     set y(val) {
-      this._dirty = true;
       this._slave = false;
       this._y = val;
       this._updateCurrentTransform();
