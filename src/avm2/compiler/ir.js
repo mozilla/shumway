@@ -3,9 +3,6 @@
   /**
    * Sea-of-Nodes IR based on Cliff Click's Work:
    * A simple graph-based intermediate representation (http://doi.acm.org/10.1145/202530.202534)
-   *
-   * Control flow restructuring is based on Cristina Cifuentes's Work:
-   * Reverse Compilation Techniques (http://www.phatcode.net/res/228/files/decompilation_thesis.pdf)
    */
 
   /**
@@ -235,7 +232,7 @@
   var Move = (function () {
     function constructor(to, from) {
       assert (to instanceof Variable);
-      assert (from instanceof Value);
+      assert (from instanceof Variable || from instanceof Constant);
       this.to = to;
       this.from = from;
     }
@@ -274,9 +271,13 @@
   })();
 
   var Stop = (function () {
-    function constructor(control, argument) {
+    function constructor(control, store, argument) {
       Control.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (argument);
       this.control = control;
+      this.store = store;
       this.argument = argument;
     }
     constructor.prototype = extend(End, "Stop");
@@ -308,7 +309,7 @@
   })();
 
   function isProjection(node, type) {
-    return node instanceof Projection && node.type === type;
+    return node instanceof Projection && (!type || node.type === type);
   }
 
   var Binary = (function () {
@@ -349,6 +350,10 @@
     return constructor;
   })();
 
+
+  function isNotPhi(phi) {
+    return !isPhi(phi);
+  }
 
   function isPhi(phi) {
     return phi instanceof Phi;
@@ -397,7 +402,15 @@
   })();
 
   function isControlOrNull(control) {
-    return control instanceof Control || control === null;
+    return isControl(control) || control === null;
+  }
+
+  function isControl(control) {
+    return control instanceof Control;
+  }
+
+  function isValue(value) {
+    return value instanceof Value;
   }
 
   var GetProperty = (function () {
@@ -429,12 +442,15 @@
   })();
 
   var Call = (function () {
-    function constructor(control, callee, args) {
+    function constructor(control, store, callee, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
+      assert (isStore(store));
       assert (isArray(args));
+      this.control = control;
       this.callee = callee;
+      this.store = store;
       this.args = args;
     }
     constructor.prototype = extend(Value, "Call");
@@ -497,11 +513,6 @@
     constructor.prototype.visitSuccessors = function (fn) {
       this.successors.forEach(fn);
     };
-    constructor.prototype.getPredecessors = function () {
-      var predecessors = [];
-      this.visitPredecessors(predecessors.push.bind(predecessors));
-      return predecessors;
-    };
     constructor.prototype.visitPredecessors = function (fn) {
       this.predecessors.forEach(fn);
       /*
@@ -516,6 +527,8 @@
     };
     constructor.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
+      assert (isValue(node), node);
+      assert (isNotPhi(node));
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
     constructor.prototype.toString = function () {
@@ -941,11 +954,83 @@
       return node instanceof Projection ? node.project() : node;
     }
 
+    constructor.prototype.computeUses = function computeUses() {
+      writer.enter("> Compute Uses");
+      writer.leave("<");
+    };
+
+    constructor.prototype.optimizePhis = function optimizePhis() {
+      var writer = new IndentingWriter();
+      writer.enter("> Optimizing PHIs");
+
+      var dfg = this.dfg;
+      var map = [];
+
+      function get(node) {
+        return map[node.id] || node;
+      }
+
+      function forward(from, to) {
+        assert (get(to) === to);
+        map[from.id] = to;
+      }
+
+      dfg.forEach(function (node) {
+        if (isPhi(node)) {
+          map[node.id] = node;
+          print (node);
+        }
+      });
+
+      function count(array, element) {
+        var x = 0;
+        for (var i = 0; i < array.length; i++) {
+          if (array[i] === element) {
+            x ++;
+          }
+        }
+        return x;
+      }
+
+      /**
+       * x = phi(y) -> y
+       * x = phi (x, y, x, x, ...) -> y
+       */
+      function simplify(phi) {
+        var arguments = phi.arguments;
+        // x = phi(y) -> y
+        if (arguments.length === 1) {
+          return arguments[0];
+        } else if (arguments.length === 2) {
+
+        }
+      }
+      var changed = true;
+      while (changed) {
+        changed = false;
+        map.forEach(function (node) {
+          if (isPhi(node)) {
+
+          }
+        });
+      }
+
+      writer.leave("<");
+    };
+
+    /**
+     * Allocate virtual registers and break out of SSA.
+     */
     constructor.prototype.allocateVariables = function allocateVariables() {
       var writer = new IndentingWriter();
+
+      writer.enter("> Allocating Virtual Registers");
       var order = this.computeReversePostOrder();
 
-      function allocate (node) {
+      function allocate(node) {
+        if (isProjection(node, Projection.Type.STORE)) {
+          return;
+        }
         if (node instanceof Value) {
           node.variable = new Variable("l" + node.id);
         }
@@ -953,28 +1038,28 @@
 
       order.forEach(function (block) {
         block.nodes.forEach(allocate);
-        block.phis && block.phis.forEach(allocate);
+        if (block.phis) {
+          block.phis.forEach(allocate);
+        }
       });
-
-      /*
-      function Move(to, from) {
-        assert (to && from, String(to) + " <- " + from);
-        this.to = to;
-        this.from = from;
-      }
-      */
 
       var blockMoves = [];
       order.forEach(function (block) {
         if (block.phis) {
           block.phis.forEach(function (phi) {
+            writer.writeLn("Emitting moves for: " + phi);
             var predecessors = block.predecessors;
             var arguments = phi.arguments;
             assert (predecessors.length === arguments.length);
             for (var i = 0; i < predecessors.length; i++) {
               var predecessor = predecessors[i];
+              var argument = arguments[i];
+              if (isProjection(argument, Projection.Type.STORE)) {
+                continue;
+              }
               var moves = blockMoves[predecessor.id] || (blockMoves[predecessor.id] = []);
-              moves.push(new Move(phi.variable, arguments[i]));
+              argument = argument.variable || argument;
+              moves.push(new Move(phi.variable, argument));
             }
           });
         }
@@ -982,11 +1067,13 @@
 
       var blocks = this.blocks;
       blockMoves.forEach(function (moves, i) {
-        print (i + " Moves: " + moves);
+        writer.writeLn(i + " Moves: " + moves);
         moves.forEach(function (move) {
           blocks[i].append(move);
         });
       });
+
+      writer.leave("<");
     };
 
     constructor.prototype.scheduleEarly = function scheduleEarly() {
@@ -995,8 +1082,14 @@
       var cfg = this;
       var dfg = this.dfg;
 
+      writer.enter("> Schedule Early");
+
       function schedule(node) {
         writer.enter("> Scheduling: " + node);
+        if (node.isScheduled) {
+          writer.leave("< Already scheduled");
+          return;
+        }
         var inputs = [];
         node.visitInputs(function (input) {
           if (!(input instanceof Control)) {
@@ -1005,18 +1098,28 @@
         });
         for (var i = 0; i < inputs.length; i++) {
           if (!inputs[i].control) {
-            writer.writeLn("Scheduling Input: " + i + " : " + inputs[i]);
+            writer.writeLn("Scheduling input: " + i + " : " + inputs[i]);
             schedule(inputs[i]);
           }
         }
-        if (node.control || node instanceof Start) {
-          writer.leave("< Already Scheduled or is Start Node");
+        if (isControl(node)) {
+          writer.leave("< Control node is already scheduled");
+          return;
+        }
+        if (isPhi(node)) {
+          writer.leave("< Phi nodes should not be scheduled");
+          return;
+        }
+        if (node.control && isValue(node)) {
+            node.isScheduled = true;
+            node.control.block.append(node);
+            writer.leave("< Scheduled: " + node + " in " + node.control);
           return;
         }
         if (inputs.length === 0) {
           node.control = cfg.root.region;
           cfg.root.append(node);
-          writer.leave("< No Inputs");
+          writer.leave("< No inputs");
           writer.writeLn("Scheduled: " + node + " in " + node.control);
           return;
         }
@@ -1032,9 +1135,10 @@
 
         node.control = a.region;
         a.append(node);
+        node.isScheduled = true;
         writer.writeLn("Scheduled: " + node + " in " + node.control);
         assert (node.control, a.region);
-        writer.leave();
+        writer.leave("<");
       }
 
       dfg.forEach(function (node) {
@@ -1046,6 +1150,8 @@
           schedule(node);
         }
       });
+
+      writer.leave("<");
     };
 
     constructor.prototype.trace = function (writer) {

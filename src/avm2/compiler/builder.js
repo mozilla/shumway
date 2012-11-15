@@ -30,23 +30,23 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
 
   var State = (function() {
     var nextID = 0;
-    function constructor(bci) {
+    function constructor(index) {
       this.id = nextID += 1;
-      this.bci = bci;
+      this.index = index;
       this.local = [];
       this.stack = [];
       this.scope = [];
-      this.memory = Undefined;
-      this.savedScope = Undefined;
+      this.store = Undefined;
+      this.saved = Undefined;
     }
-    constructor.prototype.clone = function clone(bci) {
+    constructor.prototype.clone = function clone(index) {
       var s = new State();
-      s.bci = bci !== undefined ? bci : this.bci;
+      s.index = index !== undefined ? index : this.index;
       s.local = this.local.slice(0);
       s.stack = this.stack.slice(0);
       s.scope = this.scope.slice(0);
-      s.savedScope = this.savedScope;
-      s.memory = this.memory;
+      s.saved = this.saved;
+      s.store = this.store;
       return s;
     };
     constructor.prototype.matches = function matches(other) {
@@ -60,12 +60,12 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       function makePhi(x) {
         return new Phi(control, x);
       }
-      s.bci = this.bci;
+      s.index = this.index;
       s.local = this.local.map(makePhi);
       s.stack = this.stack.map(makePhi);
       s.scope = this.scope.map(makePhi);
-      s.savedScope = this.savedScope;
-      s.memory = makePhi(this.memory);
+      s.saved = this.saved;
+      s.store = makePhi(this.store);
       return s;
     }
 
@@ -95,7 +95,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
-      this.memory = mergeValue(control, this.memory, other.memory);
+      this.store = mergeValue(control, this.store, other.store);
     };
 
     constructor.prototype.trace = function trace(writer) {
@@ -108,12 +108,12 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       return x;
     }
     constructor.prototype.toString = function () {
-      return "<" + String(this.id + " @ " + this.bci).padRight(' ', 10) +
-        ("M: " + toBriefString(this.memory)).padRight(' ', 8) +
-        ("$$: " + toBriefString(this.savedScope)).padRight(' ', 9) +
+      return "<" + String(this.id + " @ " + this.index).padRight(' ', 10) +
+        ("M: " + toBriefString(this.store)).padRight(' ', 8) +
+        ("$$: " + toBriefString(this.saved)).padRight(' ', 9) +
         ("$: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 9) +
-        ("L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 80) +
-        ("S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 20);
+        ("L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 40) +
+        ("S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 60);
     };
     return constructor;
   })();
@@ -143,8 +143,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         state.local.push(Undefined);
       }
 
-      state.memory = new Projection(start, Projection.Type.STORE);
-      state.savedScope = new Projection(start, Projection.Type.SCOPE);
+      state.store = new Projection(start, Projection.Type.STORE);
+      state.saved = new Projection(start, Projection.Type.SCOPE);
 
       return start;
     };
@@ -223,7 +223,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           if (scope.length > 0) {
             return scope.top();
           }
-          return state.savedScope;
+          return state.saved;
         }
 
         var obj, value, multiname, type;
@@ -267,11 +267,13 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function getProperty(obj, name) {
-          return new GetProperty(null, state.memory, obj, name);
+          return new GetProperty(null, state.store, obj, name);
         }
 
         function call(obj, args) {
-          return new Call(region, obj, args);
+          var node = new Call(region, state.store, obj, args);
+          state.store = new Projection(node, Projection.Type.STORE);
+          return node;
         }
 
         function constant(value) {
@@ -332,7 +334,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           }];
         }
 
-        function buildReturnstop() {
+        function buildReturnStop() {
           assert (!stops);
           stops = [];
         }
@@ -354,10 +356,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         region.processed = true;
 
         var bc;
-        for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
-          bc = bytecodes[bci];
+        for (var index = block.position, end = block.end.position; index <= end; index++) {
+          bc = bytecodes[index];
           var op = bc.op;
-          state.bci = bci;
+          state.index = index;
           switch (op) {
             case OP_getlocal:
               pushLocal(bc.index);
@@ -401,9 +403,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_returnvalue:
               stopPoints.push({
                 region: region,
+                store: state.store,
                 value: pop()
               });
-              buildReturnstop();
+              buildReturnStop();
               break;
             case OP_pushnull:       push(constant(null)); break;
             case OP_pushundefined:  push(Undefined); break;
@@ -489,7 +492,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             continue;
           }
           if (writer) {
-            writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(this.abc));
+            writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + index + ", " + bc.toString(this.abc));
           }
         }
         if (writer) {
@@ -513,14 +516,16 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       var stop;
       if (stopPoints.length > 1) {
         var stopRegion = new Region();
-        var stopPhi = new Phi(stopRegion);
+        var stopValuePhi = new Phi(stopRegion);
+        var stopStorePhi = new Phi(stopRegion);
         stopPoints.forEach(function (stopPoint) {
           stopRegion.predecessors.push(stopPoint.region);
-          stopPhi.pushValue(stopPoint.value);
+          stopValuePhi.pushValue(stopPoint.value);
+          stopStorePhi.pushValue(stopPoint.store);
         });
-        stop = new Stop(stopRegion, stopPhi);
+        stop = new Stop(stopRegion, stopStorePhi, stopValuePhi);
       } else {
-        stop = new Stop(stopPoints[0].region, stopPoints[0].value);
+        stop = new Stop(stopPoints[0].region, stopPoints[0].store, stopPoints[0].value);
       }
       return new DFG(stop);
     }
@@ -549,11 +554,15 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     var cfg = dfg.buildCFG();
     Timer.stop();
 
+    Timer.start("IR OPTIMIZE PHIs");
+    cfg.optimizePhis();
+    Timer.stop();
+
     Timer.start("IR SCHEDULE");
     cfg.scheduleEarly();
     Timer.stop();
 
-    writer && dfg.trace(writer);
+    // writer && dfg.trace(writer);
 
     Timer.start("IR ALLOCATE VARIABLES");
     cfg.allocateVariables();
@@ -563,7 +572,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     cfg.computeDominators(true);
     Timer.stop();
 
-    writer && cfg.trace(writer);
+    // writer && cfg.trace(writer);
+
     Backend.generate(cfg);
     return;
   }

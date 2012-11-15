@@ -249,17 +249,28 @@
     print(">>");
     var body = [];
     for (var i = 1; i < block.nodes.length - 1; i++) {
+      print("Block[" + i + "]: " + block.nodes[i]);
+    }
+    for (var i = 1; i < block.nodes.length - 1; i++) {
       var node = block.nodes[i];
-      print(node);
+      print("Generating: " + node);
 
       var statement;
+
+      var to;
+      var from;
+
       if (node instanceof IR.Move) {
-        statement = new ExpressionStatement(assignment(id(node.to.name), compileValue(node.from, this)));
+        to = id(node.to.name);
+        from = compileValue(node.from, this);
       } else {
-        statement = variableDeclaration([
-          new VariableDeclarator(id(node.variable.name), compileValue(node, this, true))
-        ]);
+        to = id(node.variable.name);
+        from = compileValue(node, this, true);
       }
+
+      statement = variableDeclaration([
+        new VariableDeclarator(to, from)
+      ]);
 
       print(generateSource(statement));
       body.push(statement);
@@ -277,7 +288,7 @@
 
   function compileValue(value, cx, noVariable) {
     assert (value);
-    assert (value.compile, "Implement |compile| for " + value);
+    assert (value.compile, "Implement |compile| for " + value + " (" + value.nodeName + ")");
     assert (cx instanceof Context);
 
     if (noVariable || !value.variable) {
@@ -294,6 +305,10 @@
 
   IR.Constant.prototype.compile = function (cx) {
     return constant(this.value);
+  };
+
+  IR.Variable.prototype.compile = function (cx) {
+    return id(this.name);
   };
 
   IR.Phi.prototype.compile = function (cx) {
@@ -329,6 +344,10 @@
       return compileValue(arg, cx);
     });
     return call(compileValue(this.callee, cx), args);
+  };
+
+  IR.This.prototype.compile = function (cx) {
+    return new ThisExpression();
   };
 
   function generateSource(node) {
