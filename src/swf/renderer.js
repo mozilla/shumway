@@ -72,9 +72,9 @@ function renderStage(stage, ctx) {
 
       if (obj._dirtyArea) {
         var b = obj._dirtyArea;
-        this.ctx.rect((b.x) - 2, (b.y) - 2, (b.width) + 4, (b.height) + 4);
+        this.ctx.rect((~~b.x) - 2, (~~b.y) - 2, (~~b.width) + 4, (~~b.height) + 4);
         b = obj.getBounds();
-        this.ctx.rect((b.x) - 2, (b.y) - 2, (b.width) + 4, (b.height) + 4);
+        this.ctx.rect((~~b.x) - 2, (~~b.y) - 2, (~~b.width) + 4, (~~b.height) + 4);
       } else if (obj._graphics && (obj._graphics._revision !== obj._revision)) {
         obj._markAsDirty();
       }
