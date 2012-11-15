@@ -21,14 +21,15 @@ var DisplayObjectDefinition = (function () {
     initialize: function () {
       this._alpha = 1;
       this._animated = false;
+      this._bbox = null;
+      this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
       this._control = document.createElement('div');
-      this._bbox = null;
       this._clipDepth = 0;
       this._currentTransform = null;
       this._cxform = null;
-      this._dirty = false;
+      this._dirtyArea = null;
       this._graphics = null;
       this._loaderInfo = null;
       this._mouseChildren = true;
@@ -141,6 +142,12 @@ var DisplayObjectDefinition = (function () {
       var bbox2 = hitTestObject.getBounds();
       return bbox1.intersects(bbox2);
     },
+    _markAsDirty: function() {
+      if (!this._dirtyArea)
+        this._dirtyArea = this.getBounds();
+
+      this._bounds = null;
+    },
     _updateCurrentTransform: function () {
       var rotation = this._rotation / 180 * Math.PI;
       var scaleX = this._scaleX;
@@ -157,7 +164,7 @@ var DisplayObjectDefinition = (function () {
         ty: this._y
       };
 
-      this._dirty = true;
+      this._markAsDirty();
     },
 
     get accessibilityProperties() {
@@ -275,21 +282,22 @@ var DisplayObjectDefinition = (function () {
     },
     set transform(val) {
       this._currentTransform = val.matrix;
-      this._dirty = true;
-      this._slave = false;
       this._slave = false;
 
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
+
+      this._markAsDirty();
     },
     get visible() {
       return this._visible;
     },
     set visible(val) {
-      this._dirty = true;
       this._slave = false;
       this._visible = val;
+
+      this._markAsDirty();
     },
     get width() {
       var bounds = this.getBounds();
@@ -316,6 +324,9 @@ var DisplayObjectDefinition = (function () {
     },
 
     getBounds: function (targetCoordSpace) {
+      if (this._bounds)
+        return this._bounds;
+
       var bbox = this._bbox;
 
       var xMin = Number.MAX_VALUE;

@@ -22,6 +22,8 @@ var TextFieldDefinition = (function () {
     },
     set text(val) {
       this._text = val;
+
+      this._markAsDirty();
     }
   };
 

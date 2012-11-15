@@ -27,17 +27,19 @@ function renderStage(stage, ctx) {
         if (isContainer)
           visitContainer(child, visitor, interactiveParent);
 
-        if (child._dirty)
+        if (child._dirtyArea)
           dirty = true;
       }
     }
 
     visitor.childrenEnd(container);
 
-    container._dirty = dirty;
+    if (dirty)
+      container._bounds = null;
   }
 
-  function EnterFrameVisitor() {
+  function EnterFrameVisitor(ctx) {
+    this.ctx = ctx;
   }
   EnterFrameVisitor.prototype = {
     childrenStart: function() {},
@@ -55,26 +57,31 @@ function renderStage(stage, ctx) {
         obj.dispatchEvent(new flash.events.Event("enterFrame"));
       }
 
-      if (obj._graphics && (obj._graphics._revision !== obj._revision))
-        obj._dirty = true;
+      if (obj._dirtyArea) {
+        var b = obj._dirtyArea;
+        this.ctx.rect((b.x * 2) - 2, (b.y * 2) - 2, (b.width * 2) + 4, (b.height * 2) + 4);
+        b = obj.getBounds();
+        this.ctx.rect((b.x * 2) - 2, (b.y * 2) - 2, (b.width * 2) + 4, (b.height * 2) + 4);
+      } else if (obj._graphics && (obj._graphics._revision !== obj._revision)) {
+        obj._markAsDirty();
+      }
     }
   };
 
   function ExitFrameVisitor() {
   }
   ExitFrameVisitor.prototype = {
-    childrenStart: function() {},
-    childrenEnd: function() {},
+    childrenStart: function() { this.depth++; },
+    childrenEnd: function() { this.depth--; },
     visit: function (obj) {
-      if (MovieClipClass.isInstanceOf(obj)) {
+      if (MovieClipClass.isInstanceOf(obj))
         obj.dispatchEvent(new flash.events.Event("exitFrame"));
-      }
     }
   };
 
   function RenderVisitor(ctx) {
-    this.depth = 0;
     this.ctx = ctx;
+    this.depth = 0;
   }
   RenderVisitor.prototype = {
     childrenStart: function(parent) {
@@ -91,8 +98,9 @@ function renderStage(stage, ctx) {
         var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
         var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
 
-        ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.save();
+        ctx.clip();
+        ctx.clearRect(0, 0, frameWidth, frameHeight);
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
 
@@ -175,6 +183,9 @@ function renderStage(stage, ctx) {
             } else {
               ctx.fill(path);
             }
+
+            if (hitTestShape && !hitTest && ctx.isPointInPath(pt.x, pt.y))
+              hitTest = true;
           }
           if (path.strokeStyle) {
             ctx.strokeStyle = path.strokeStyle;
@@ -182,19 +193,18 @@ function renderStage(stage, ctx) {
             for (var prop in drawingStyles)
               ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
-          }
 
-          if (hitTestShape && ctx.isPointInPath(pt.x, pt.y) ||
-              (ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y)))
-            hitTest = true;
+            if (hitTestShape && !hitTest &&
+                ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y))
+              hitTest = true;
+          }
         }
 
         child._revision = graphics._revision;
       }
 
-      if (child.draw) {
+      if (child.draw)
         child.draw(ctx, child.ratio);
-      }
 
       if (!isContainer) {
         // letting the container to restore transforms after all children are painted
@@ -220,7 +230,17 @@ function renderStage(stage, ctx) {
           stage._clickTarget = null;
       }
 
-      child._dirty = false;
+      if (stage._showRedrawRegions && child._dirtyArea) {
+        var bounds = child._dirtyArea;
+        ctx.save();
+        ctx.setTransform(2, 0, 0, 2, 0, 0);
+        ctx.strokeStyle = '#f00';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        ctx.restore();
+      }
+
+      child._dirtyArea = null;
     }
   };
 
@@ -262,6 +282,7 @@ function renderStage(stage, ctx) {
           var avg = sum / samples.length;
           var xOffset = ctx.canvas.width - width;
           var yOffset = height;
+          ctx.clearRect(xOffset, yOffset, width, height);
           for (var i = 0; i < samples.length; i++) {
             var scaledSample = (samples[i] / (2 * avg));
             ctx.fillRect(xOffset + i * (sampleWidth + 1), yOffset, sampleWidth, - scaledSample * height);
@@ -278,7 +299,10 @@ function renderStage(stage, ctx) {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
-      visitContainer(stage, new EnterFrameVisitor());
+
+      ctx.beginPath();
+
+      visitContainer(stage, new EnterFrameVisitor(ctx));
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new ExitFrameVisitor());
       FPS.tick();

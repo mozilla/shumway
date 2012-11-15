@@ -43,7 +43,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.appendChild(child._control);
 
-      this._dirty = true;
+      this._markAsDirty();
 
       return child;
     },
@@ -102,7 +102,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.removeChild(child._control);
 
-      this._dirty = true;
+      this._markAsDirty();
 
       return child;
     },
@@ -121,7 +121,7 @@ var DisplayObjectContainerDefinition = (function () {
       children.splice(index, 0, child);
       child._owned = false;
 
-      this._dirty = true;
+      this._markAsDirty();
 
       return child;
     },
@@ -159,7 +159,7 @@ var DisplayObjectContainerDefinition = (function () {
       child1._owned = false;
       child2._owned = false;
 
-      this._dirty = true;
+      this._markAsDirty();
     }
   };
 

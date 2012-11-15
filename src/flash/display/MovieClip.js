@@ -65,8 +65,9 @@ var MovieClipDefinition = (function () {
         var highestDepth = depthMap.length;
         var displayList = framePromise.value;
         var loader = this.loaderInfo._loader;
+        var depth;
 
-        for (var depth in displayList) {
+        for (depth in displayList) {
           var cmd = displayList[depth];
           var current = depthMap[depth];
           if (cmd === null) {
@@ -179,11 +180,12 @@ var MovieClipDefinition = (function () {
               target._currentTransform = matrix;
             }
 
-            target._dirty = true;
+            target._markAsDirty();
           }
-
-          this._dirty = true;
         }
+
+        if (depth)
+          this._markAsDirty();
       }
 
       this._currentFrame = frameNum;
