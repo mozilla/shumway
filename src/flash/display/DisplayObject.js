@@ -320,6 +320,11 @@ var DisplayObjectDefinition = (function () {
     getBounds: function (targetCoordSpace) {
       var bbox = this._bbox;
 
+      var xMin = Number.MAX_VALUE;
+      var xMax = 0;
+      var yMin = Number.MAX_VALUE;
+      var yMax = 0;
+
       if (!bbox) {
         var children = this._children;
         var numChildren = children.length;
@@ -327,14 +332,9 @@ var DisplayObjectDefinition = (function () {
         if (!numChildren)
           return new flash.geom.Rectangle;
 
-        var xMin = Number.MAX_VALUE;
-        var xMax = 0;
-        var yMin = Number.MAX_VALUE;
-        var yMax = 0;
-
         for (var i = 0; i < numChildren; i++) {
           var child = children[i];
-          var b = child.getBounds();
+          var b = child.getBounds(this);
 
           var x1 = b.x;
           var y1 = b.y;
@@ -353,24 +353,26 @@ var DisplayObjectDefinition = (function () {
           right: xMax,
           bottom: yMax
         };
+      } else {
+        xMin = bbox.left;
+        xMax = bbox.right;
+        yMin = bbox.top;
+        yMax = bbox.bottom;
       }
 
-      var width = bbox.right - bbox.left;
-      var height = bbox.bottom - bbox.top;
-
-      var p1 = { x: 0, y: 0 };
+      var p1 = { x: xMin, y: yMin };
       this._applyCurrentTransform(p1, targetCoordSpace);
-      var p2 = { x: width, y: 0 };
+      var p2 = { x: xMax, y: yMin };
       this._applyCurrentTransform(p2, targetCoordSpace);
-      var p3 = { x: width, y: height };
+      var p3 = { x: xMax, y: yMax };
       this._applyCurrentTransform(p3, targetCoordSpace);
-      var p4 = { x: 0, y: height };
+      var p4 = { x: xMin, y: yMax };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+      xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
       return new flash.geom.Rectangle(
         xMin,
