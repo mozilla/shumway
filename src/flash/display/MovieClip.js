@@ -65,9 +65,10 @@ var MovieClipDefinition = (function () {
         var highestDepth = depthMap.length;
         var displayList = framePromise.value;
         var loader = this.loaderInfo._loader;
-        var depth;
 
-        for (depth in displayList) {
+        for (var depth in displayList) {
+          this._markAsDirty();
+
           var cmd = displayList[depth];
           var current = depthMap[depth];
           if (cmd === null) {
@@ -183,9 +184,6 @@ var MovieClipDefinition = (function () {
             target._markAsDirty();
           }
         }
-
-        if (depth)
-          this._markAsDirty();
       }
 
       this._currentFrame = frameNum;
