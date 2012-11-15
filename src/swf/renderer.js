@@ -1,4 +1,17 @@
 function renderStage(stage, ctx) {
+  var frameWidth = ctx.canvas.width;
+  var frameHeight = ctx.canvas.height;
+
+  var scaleX = frameWidth / stage._stageWidth;
+  var scaleY = frameHeight / stage._stageHeight;
+
+  var scale = Math.min(scaleX, scaleY);
+  var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
+  var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
+
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(scale, scale);
+
   // All the visitors close over this class to do instance testing.
   var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
   var ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
@@ -59,9 +72,9 @@ function renderStage(stage, ctx) {
 
       if (obj._dirtyArea) {
         var b = obj._dirtyArea;
-        this.ctx.rect((b.x * 2) - 2, (b.y * 2) - 2, (b.width * 2) + 4, (b.height * 2) + 4);
+        this.ctx.rect((b.x) - 2, (b.y) - 2, (b.width) + 4, (b.height) + 4);
         b = obj.getBounds();
-        this.ctx.rect((b.x * 2) - 2, (b.y * 2) - 2, (b.width * 2) + 4, (b.height * 2) + 4);
+        this.ctx.rect((b.x) - 2, (b.y) - 2, (b.width) + 4, (b.height) + 4);
       } else if (obj._graphics && (obj._graphics._revision !== obj._revision)) {
         obj._markAsDirty();
       }
@@ -87,24 +100,12 @@ function renderStage(stage, ctx) {
     childrenStart: function(parent) {
       if (this.depth == 0) {
         var ctx = this.ctx;
-        var stage = parent;
-        var frameWidth = ctx.canvas.width;
-        var frameHeight = ctx.canvas.height;
-
-        var scaleX = frameWidth / stage._stageWidth;
-        var scaleY = frameHeight / stage._stageHeight;
-
-        var scale = Math.min(scaleX, scaleY);
-        var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
-        var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
 
         ctx.save();
 
         ctx.clip();
 
         ctx.clearRect(0, 0, frameWidth, frameHeight);
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
 
         ctx.mozFillRule = 'evenodd';
 
@@ -237,7 +238,6 @@ function renderStage(stage, ctx) {
       if (stage._showRedrawRegions && child._dirtyArea) {
         var bounds = child._dirtyArea;
         ctx.save();
-        ctx.setTransform(2, 0, 0, 2, 0, 0);
         ctx.strokeStyle = '#f00';
         ctx.lineWidth = 1;
         ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
