@@ -70,6 +70,10 @@ function renderStage(stage, ctx) {
         child.dispatchEvent(new flash.events.Event("enterFrame"));
       }
 
+      if (child._refreshAS2Variables) {
+        child._refreshAS2Variables();
+      }
+
       if (interactiveParent) {
         var hitArea = child._hitArea || child;
         var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);

@@ -223,13 +223,9 @@ var MovieClipDefinition = (function () {
           clip = instance._getAS2Object();
         if (!(variableName in clip))
           clip[variableName] = instance.text;
-        delete instance.text;
-        Object.defineProperty(instance, 'text', {
-          get: function (variableName) {
-            return this[variableName];
-          }.bind(clip, variableName),
-          enumerable: true
-        });
+        instance._refreshAS2Variables = function() {
+          instance.text = clip[variableName];
+        };
       }
 
       if (cmd.hasEvents) {
