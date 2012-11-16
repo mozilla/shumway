@@ -138,9 +138,11 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _markAsDirty: function() {
-      if (!this._dirtyArea)
+      if (!this._dirtyArea) {
         this._dirtyArea = this.getBounds();
-
+      } else {
+        this._dirtyArea = this.getBounds().union(this._dirtyArea);
+      }
       this._bounds = null;
     },
     _updateCurrentTransform: function () {
