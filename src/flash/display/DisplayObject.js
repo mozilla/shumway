@@ -56,11 +56,6 @@ var DisplayObjectDefinition = (function () {
         this._children = s.children || [];
       }
 
-      var canvas = document.createElement('canvas');
-      canvas.width = canvas.height = 1;
-      var ctx = canvas.getContext('2d');
-      this._hitCtx = ctx;
-
       this._updateCurrentTransform();
     },
 
@@ -88,26 +83,21 @@ var DisplayObjectDefinition = (function () {
     },
     _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
+        var pt = { x: x, y: y };
+        this._applyCurrentInverseTransform(pt);
+
         if (useShape) {
           if (this._graphics) {
-            var hitCtx = this._hitCtx;
-
-            hitCtx.restore();
-            hitCtx.save();
-
             var scale = this._graphics._scale;
-            if (scale !== 1)
-              hitCtx.scale(scale, scale);
-
-            var pt = new flash.geom.Point(x, y);
-            this._applyCurrentInverseTransform(pt, this._parent);
+            if (scale !== 1) {
+              pt.x /= scale;
+              pt.y /= scale;
+            }
 
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
               var path = subpaths[i];
-
-              hitCtx.beginPath();
-              path.__draw__(hitCtx);
+              var hitCtx = path.__hitContext__;
 
               if (hitCtx.isPointInPath(pt.x, pt.y))
                 return true;
@@ -127,20 +117,25 @@ var DisplayObjectDefinition = (function () {
           var children = this._children;
           for (var i = 0, n = children.length; i < n; i++) {
             var child = children[i];
-            if (child._hitTest(true, pt.x, pt.y, true))
+            if (child._hitTest(true, x, y, true))
               return true;
           }
 
           return false;
         } else {
-          var bbox = this.getBounds();
-          return bbox.containsPoint(pt);
+          var b = this.getBounds();
+          return (pt.x >= b.x && pt.x < b.x + b.width &&
+                 pt.y >= b.y && pt.y < b.y + b.height);
         }
       }
 
-      var bbox1 = this.getBounds();
-      var bbox2 = hitTestObject.getBounds();
-      return bbox1.intersects(bbox2);
+      var b1 = this.getBounds();
+      var b2 = hitTestObject.getBounds();
+      var x = Math.max(b1.x, b2.x);
+      var y = Math.max(b1.y, b2.y);
+      var width = Math.min(b1.x + b1.width, b2.x + b2.width) - x;
+      var height = Math.min(b1.y + b1.height, b2.y + b2.height) - y;
+      return width > 0 && height > 0;
     },
     _markAsDirty: function() {
       if (!this._dirtyArea)

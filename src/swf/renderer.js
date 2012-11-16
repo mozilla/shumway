@@ -51,44 +51,69 @@ function renderStage(stage, ctx) {
       container._bounds = null;
   }
 
-  function EnterFrameVisitor(ctx) {
+  function PreVisitor(ctx) {
     this.ctx = ctx;
   }
-  EnterFrameVisitor.prototype = {
+  PreVisitor.prototype = {
     childrenStart: function() {},
     childrenEnd: function() {},
-    visit: function (obj) {
-      if (MovieClipClass.isInstanceOf(obj)) {
-        if (obj.isPlaying()) {
-          var currentFrame = obj._currentFrame;
+    visit: function (child, isContainer, interactiveParent) {
+      if (MovieClipClass.isInstanceOf(child)) {
+        if (child.isPlaying()) {
+          var currentFrame = child._currentFrame;
 
-          obj.nextFrame();
+          child.nextFrame();
 
-          if (obj._currentFrame !== currentFrame)
-            obj._scriptExecutionPending = true;
+          if (child._currentFrame !== currentFrame)
+            child._scriptExecutionPending = true;
         }
-        obj.dispatchEvent(new flash.events.Event("enterFrame"));
+        child.dispatchEvent(new flash.events.Event("enterFrame"));
       }
 
-      if (obj._dirtyArea) {
-        var b = obj._dirtyArea;
-        this.ctx.rect((~~b.x) - 2, (~~b.y) - 2, (~~b.width) + 4, (~~b.height) + 4);
-        b = obj.getBounds();
-        this.ctx.rect((~~b.x) - 2, (~~b.y) - 2, (~~b.width) + 4, (~~b.height) + 4);
-      } else if (obj._graphics && (obj._graphics._revision !== obj._revision)) {
-        obj._markAsDirty();
+      if (interactiveParent) {
+        var hitArea = child._hitArea || child;
+        var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
+        child._applyCurrentInverseTransform(pt, child._parent);
+
+        if (child._hitTest(true, pt.x, pt.y, true)) {
+          if (interactiveParent._mouseOver) {
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+          } else {
+            interactiveParent._mouseOver = true;
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+          }
+
+          stage._clickTarget = interactiveParent;
+        } else {
+          if (interactiveParent._mouseOver) {
+            interactiveParent._mouseOver = false;
+            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+          }
+
+          if (stage._clickTarget === interactiveParent)
+            stage._clickTarget = null;
+        }
+      }
+
+      if (child._dirtyArea) {
+        var b1 = child._dirtyArea;
+        var b2 = child.getBounds();
+        this.ctx.rect((~~b1.x) - 5, (~~b1.y) - 5, (~~b1.width) + 10, (~~b1.height) + 10);
+        this.ctx.rect((~~b2.x) - 5, (~~b2.y) - 5, (~~b2.width) + 10, (~~b2.height) + 10);
+      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
+        child._markAsDirty();
       }
     }
   };
 
-  function ExitFrameVisitor() {
+  function PostVisitor() {
   }
-  ExitFrameVisitor.prototype = {
+  PostVisitor.prototype = {
     childrenStart: function() { this.depth++; },
     childrenEnd: function() { this.depth--; },
-    visit: function (obj) {
-      if (MovieClipClass.isInstanceOf(obj))
-        obj.dispatchEvent(new flash.events.Event("exitFrame"));
+    visit: function (child) {
+      if (MovieClipClass.isInstanceOf(child))
+        child.dispatchEvent(new flash.events.Event("exitFrame"));
     }
   };
 
@@ -133,25 +158,11 @@ function renderStage(stage, ctx) {
       this.depth--;
       this.ctx.restore();
     },
-    visit: function (child, isContainer, interactiveParent) {
+    visit: function (child, isContainer) {
       if (child._clipDepth) {
         // TODO handle masking
         return;
       }
-
-      //var hitTest = false;
-      //var hitTestShape = false;
-      //
-      //if (interactiveParent) {
-      //  var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
-      //  child._applyCurrentInverseTransform(pt, child._parent);
-      //
-      //  if (child._hitArea)
-      //    hitTest = child._hitArea._hitTest(true, pt.x, pt.y, true);
-      //
-      //  if (!hitTest)
-      //    hitTestShape = true;
-      //}
 
       var ctx = this.ctx;
       ctx.save();
@@ -188,9 +199,6 @@ function renderStage(stage, ctx) {
             } else {
               ctx.fill(path);
             }
-
-            //if (hitTestShape && !hitTest && ctx.isPointInPath(pt.x, pt.y))
-            //  hitTest = true;
           }
           if (path.strokeStyle) {
             ctx.strokeStyle = path.strokeStyle;
@@ -198,10 +206,6 @@ function renderStage(stage, ctx) {
             for (var prop in drawingStyles)
               ctx[prop] = drawingStyles[prop];
             ctx.stroke(path);
-
-            //if (hitTestShape && !hitTest &&
-            //    ctx.mozIsPointInStroke && ctx.mozIsPointInStroke(pt.x, pt.y))
-            //  hitTest = true;
           }
         }
 
@@ -216,31 +220,12 @@ function renderStage(stage, ctx) {
         ctx.restore();
       }
 
-      //if (interactiveParent && hitTest) {
-      //  if (interactiveParent._mouseOver) {
-      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
-      //  } else {
-      //    interactiveParent._mouseOver = true;
-      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
-      //  }
-      //
-      //  stage._clickTarget = interactiveParent;
-      //} else {
-      //  if (interactiveParent._mouseOver) {
-      //    interactiveParent._mouseOver = false;
-      //    interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
-      //  }
-      //
-      //  if (stage._mouseTarget === interactiveParent)
-      //    stage._clickTarget = null;
-      //}
-
       if (stage._showRedrawRegions && child._dirtyArea) {
-        var bounds = child._dirtyArea;
+        var b = child._dirtyArea;
         ctx.save();
         ctx.strokeStyle = '#f00';
         ctx.lineWidth = 1;
-        ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        ctx.strokeRect(b.x, b.y, b.width, b.height);
         ctx.restore();
       }
 
@@ -265,9 +250,9 @@ function renderStage(stage, ctx) {
 
       ctx.beginPath();
 
-      visitContainer(stage, new EnterFrameVisitor(ctx));
+      visitContainer(stage, new PreVisitor(ctx));
       visitContainer(stage, new RenderVisitor(ctx));
-      visitContainer(stage, new ExitFrameVisitor());
+      visitContainer(stage, new PostVisitor());
     }
     requestAnimationFrame(draw);
   })();
