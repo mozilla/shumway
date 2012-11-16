@@ -21,7 +21,10 @@ var TextFieldDefinition = (function () {
       return this._text;
     },
     set text(val) {
-      this._text = val;
+      if (this._text !== val) {
+        this._text = val;
+        this._markAsDirty();
+      }
     }
   };
 

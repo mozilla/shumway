@@ -67,6 +67,8 @@ var MovieClipDefinition = (function () {
         var loader = this.loaderInfo._loader;
 
         for (var depth in displayList) {
+          this._markAsDirty();
+
           var cmd = displayList[depth];
           var current = depthMap[depth];
           if (cmd === null) {
@@ -139,6 +141,8 @@ var MovieClipDefinition = (function () {
               // constructor is not nullary.
               symbolClass.instance.call(instance);
 
+              instance._markAsDirty();
+
               if (!loader._isAvm2Enabled) {
                 this._initAvm1Bindings(cmd, symbolInfo.props, instance);
               }
@@ -178,11 +182,7 @@ var MovieClipDefinition = (function () {
 
               target._currentTransform = matrix;
             }
-
-            target._dirty = true;
           }
-
-          this._dirty = true;
         }
       }
 
@@ -228,13 +228,9 @@ var MovieClipDefinition = (function () {
           clip = instance._getAS2Object();
         if (!(variableName in clip))
           clip[variableName] = instance.text;
-        delete instance.text;
-        Object.defineProperty(instance, 'text', {
-          get: function (variableName) {
-            return this[variableName];
-          }.bind(clip, variableName),
-          enumerable: true
-        });
+        instance._refreshAS2Variables = function() {
+          instance.text = clip[variableName];
+        };
       }
 
       if (cmd.hasEvents) {

@@ -47,6 +47,8 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/lib/Kanvas/* build/lib/Kanvas/
 	mkdir build/lib/DataView.js
 	cp $(SHUMWAY_ROOT)/lib/DataView.js/* build/lib/DataView.js/
+	mkdir build/lib/xstats
+	cp -R $(SHUMWAY_ROOT)/lib/xstats/* build/lib/xstats/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples build
 	# Copy extensions

@@ -6,11 +6,14 @@
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
-    <div id="stage"></div>
+    <div id="stage">
+        <div id="xstats"></div>
+    </div>
 
     <script src="jquery.min.js"></script>
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
+    <script src="../../lib/xstats/xstats.js"></script>
 
     <!-- Load SWF Dependencies -->
     <script src="../../src/swf/util.js"></script>
@@ -175,6 +178,11 @@
 
     <script>
         SHUMWAY_ROOT = "../../src/";
+    </script>
+
+    <script>
+        var stats = new xStats;
+        document.getElementById('xstats').appendChild(stats.element);
     </script>
 
   </body>

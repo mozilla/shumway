@@ -451,7 +451,7 @@ function defineShape(tag, dictionary) {
   var shape = {
     type: 'shape',
     id: tag.id,
-    bbox: tag.bbox,
+    bbox: tag.strokeBbox || tag.bbox,
     data: '[' + commands.join(',') + ']'
   };
   if (dependencies.length)
