@@ -45,12 +45,7 @@ function renderStage(stage, ctx) {
     visit: function (obj) {
       if (MovieClipClass.isInstanceOf(obj)) {
         if (obj.isPlaying()) {
-          var currentFrame = obj._currentFrame;
-
           obj.nextFrame();
-
-          if (obj._currentFrame !== currentFrame)
-            obj._scriptExecutionPending = true;
         }
         obj.dispatchEvent(new flash.events.Event("enterFrame"));
       }
@@ -68,6 +63,20 @@ function renderStage(stage, ctx) {
     visit: function (obj) {
       if (MovieClipClass.isInstanceOf(obj)) {
         obj.dispatchEvent(new flash.events.Event("exitFrame"));
+      }
+    }
+  };
+
+  function ScriptExecutionVisitor() {}
+  ScriptExecutionVisitor.prototype = {
+    childrenStart: function() {},
+    childrenEnd: function() {},
+    visit: function (obj) {
+      if (obj._scriptExecutionPending) {
+        obj._scriptExecutionPending = false;
+
+        var currentFrame = obj._currentFrame;
+        obj._callFrame(currentFrame);
       }
     }
   };
@@ -104,17 +113,6 @@ function renderStage(stage, ctx) {
         };
       }
       this.depth++;
-
-      // TODO move into separate visitor?
-      if (MovieClipClass.isInstanceOf(parent) && parent._scriptExecutionPending) {
-        var currentFrame;
-        do {
-          currentFrame = parent._currentFrame;
-          parent._callFrame(currentFrame);
-          // currentFrame can be changed, calling scripts again
-        } while (currentFrame != parent._currentFrame);
-        parent._scriptExecutionPending = false;
-      }
     },
     childrenEnd: function(parent) {
       this.depth--;
@@ -278,7 +276,12 @@ function renderStage(stage, ctx) {
     var now = +new Date;
     if (now - frameTime >= maxDelay) {
       frameTime = now;
+      stage._callFrameRequested = false;
       visitContainer(stage, new EnterFrameVisitor());
+      while (stage._callFrameRequested) {
+        stage._callFrameRequested = false;
+        visitContainer(stage, new ScriptExecutionVisitor());
+      }
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new ExitFrameVisitor());
       FPS.tick();

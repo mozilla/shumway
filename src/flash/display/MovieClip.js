@@ -187,6 +187,11 @@ var MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
+      this._requestCallFrame();
+    },
+    _requestCallFrame: function () {
+       this._scriptExecutionPending = true;
+       this.stage._callFrameRequested = true;
     },
     _initAvm1Bindings: function (cmd, symbolProps, instance) {
       var loader = this.loaderInfo._loader;
