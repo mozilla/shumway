@@ -110,8 +110,8 @@ function renderStage(stage, ctx) {
   function PostVisitor() {
   }
   PostVisitor.prototype = {
-    childrenStart: function() { this.depth++; },
-    childrenEnd: function() { this.depth--; },
+    childrenStart: function() {},
+    childrenEnd: function() {},
     visit: function (child) {
       if (MovieClipClass.isInstanceOf(child))
         child.dispatchEvent(new flash.events.Event("exitFrame"));
