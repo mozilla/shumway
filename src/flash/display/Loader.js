@@ -541,6 +541,7 @@ var LoaderDefinition = (function () {
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.StaticText';
         symbolInfo.props = {
+          bbox: symbol.bbox,
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
           }
