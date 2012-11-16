@@ -109,9 +109,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     }
     constructor.prototype.toString = function () {
       return "<" + String(this.id + " @ " + this.index).padRight(' ', 10) +
-        ("M: " + toBriefString(this.store)).padRight(' ', 8) +
-        ("$$: " + toBriefString(this.saved)).padRight(' ', 9) +
-        ("$: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 9) +
+        ("M: " + toBriefString(this.store)).padRight(' ', 14) +
+        ("X: " + toBriefString(this.saved)).padRight(' ', 14) +
+        ("$: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 20) +
         ("L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 40) +
         ("S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 60);
     };

@@ -183,6 +183,38 @@ function isNumeric(x) {
     }
   });
 
+  extendBuiltin(Ap, "unique", function() {
+    var unique = [];
+    for (var i = 0; i < this.length; i++) {
+      unique.pushUnique(this[i]);
+    }
+    return unique;
+  });
+
+  extendBuiltin(Ap, "replace", function(x, y) {
+    if (x === y) {
+      return 0;
+    }
+    var count = 0;
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] === x) {
+        this[i] = y;
+        count ++;
+      }
+    }
+    return count;
+  });
+
+  extendBuiltin(Ap, "count", function(x) {
+    var count = 0;
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] === x) {
+        count ++;
+      }
+    }
+    return count;
+  });
+
   extendBuiltin(Ap, "notEmpty", function() {
     return this.length > 0;
   });

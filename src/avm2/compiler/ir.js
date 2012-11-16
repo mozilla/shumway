@@ -1,4 +1,8 @@
-(function (exports) {
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+ (function (exports) {
 
   /**
    * Sea-of-Nodes IR based on Cliff Click's Work:
@@ -92,7 +96,7 @@
       return result = "{" + o.id + "}", useColors ? RED + result + ENDC : result;
     } else if (o instanceof Projection) {
       if (o.type === Projection.Type.STORE) {
-        return result = "[" + o.id + "]", useColors ? YELLOW + result + ENDC : result;
+        return result = "[" + o.id + "->" + o.argument.id + "]", useColors ? YELLOW + result + ENDC : result;
       }
       return result = "(" + o.id + ")", useColors ? GREEN + result + ENDC : result;
     } else if (o instanceof Value) {
@@ -101,6 +105,10 @@
       return o.id;
     }
     unexpected(o);
+  }
+
+  function toID(node) {
+    return node.id;
   }
 
   var Node = (function () {
@@ -148,6 +156,24 @@
         }
       }
     };
+
+    constructor.prototype.replaceInput = function(oldInput, newInput) {
+      var count = 0;
+      for (var k in this) {
+        var v = this[k];
+        if (v instanceof Node) {
+          if (v === oldInput) {
+            this[k] = newInput;
+            count ++;
+          }
+        }
+        if (v instanceof Array) {
+          count += v.replace(oldInput, newInput);
+        }
+      }
+      return count;
+    };
+
     constructor.prototype.push = function (value) {
       if (this.length === undefined) {
         this.length = 0;
@@ -529,6 +555,7 @@
       assert (this.nodes.length >= 2);
       assert (isValue(node), node);
       assert (isNotPhi(node));
+      assert (this.nodes.indexOf(node) < 0);
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
     constructor.prototype.toString = function () {
@@ -954,67 +981,122 @@
       return node instanceof Projection ? node.project() : node;
     }
 
+    /**
+     * Computes use-def chains.
+     *
+     * () -> Map[id -> {def:Node, uses:Array[Node]}]
+     */
     constructor.prototype.computeUses = function computeUses() {
+      var writer = new IndentingWriter();
       writer.enter("> Compute Uses");
+      var dfg = this.dfg;
+
+      var useEntries = [];
+
+      function addUse(def, use) {
+        var entry = useEntries[def.id];
+        if (!entry) {
+          entry = useEntries[def.id] = {def: def, uses:[]};
+        }
+        entry.uses.pushUnique(use);
+      }
+
+      dfg.forEach(function (use) {
+        use.visitInputs(function (def) {
+          addUse(def, use);
+        });
+      });
+
+      writer.enter("> Uses");
+      useEntries.forEach(function (entry) {
+        writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "]");
+      });
       writer.leave("<");
+      writer.leave("<");
+      return useEntries;
     };
 
+    /**
+     * Simplifies phis of the form:
+     *
+     * replace |x = phi(y)| -> y
+     * replace |x = phi(x, y)| -> y
+     * replace |x = phi(y, y, x, y, x)| -> |phi(y, x)| -> y
+     */
     constructor.prototype.optimizePhis = function optimizePhis() {
       var writer = new IndentingWriter();
-      writer.enter("> Optimizing PHIs");
+      writer.enter("> Optimizing Phis");
 
-      var dfg = this.dfg;
-      var map = [];
-
-      function get(node) {
-        return map[node.id] || node;
-      }
-
-      function forward(from, to) {
-        assert (get(to) === to);
-        map[from.id] = to;
-      }
-
-      dfg.forEach(function (node) {
-        if (isPhi(node)) {
-          map[node.id] = node;
-          print (node);
+      var phis = [];
+      var useEntries = this.computeUses();
+      useEntries.forEach(function (entry) {
+        if (isPhi(entry.def)) {
+          phis.push(entry.def);
         }
       });
 
-      function count(array, element) {
-        var x = 0;
-        for (var i = 0; i < array.length; i++) {
-          if (array[i] === element) {
-            x ++;
+      /**
+       * Updates all uses to a new definition. Retruns true if anything was updated
+       */
+      function updateUses(def, value) {
+        writer.writeLn("Update " + def + " with " + value);
+        var entry = useEntries[def.id];
+        if (entry.uses.length === 0) {
+          return false;
+        }
+        writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
+        var count = 0;
+        entry.uses.forEach(function (use) {
+          count += use.replaceInput(def, value);
+        });
+        assert (count >= entry.uses.length);
+        entry.uses = [];
+        return true;
+      }
+
+      function simplify(phi, args) {
+        // x = phi(y) -> y
+        if (args.length === 1) {
+          return args[0];
+        }
+        // x = phi(y, x) -> y
+        else if (args.length === 2) {
+          if (args[0] === phi) {
+            return args[1];
+          } else if (args[1] === phi) {
+            return args[0];
+          }
+          return phi;
+        }
+        // x = phi(y, y, x, y, x) -> y
+        else {
+          var unique = args.unique();
+          writer.writeLn("ARGS: " + unique);
+          if (unique.length <= 2) {
+            return simplify(phi, unique);
           }
         }
-        return x;
+        return phi;
       }
 
-      /**
-       * x = phi(y) -> y
-       * x = phi (x, y, x, x, ...) -> y
-       */
-      function simplify(phi) {
-        var arguments = phi.arguments;
-        // x = phi(y) -> y
-        if (arguments.length === 1) {
-          return arguments[0];
-        } else if (arguments.length === 2) {
-
-        }
-      }
+      var count = 0;
+      var iterations = 0;
       var changed = true;
       while (changed) {
+        iterations ++;
         changed = false;
-        map.forEach(function (node) {
-          if (isPhi(node)) {
-
+        phis.forEach(function (phi) {
+          var value = simplify(phi, phi.arguments);
+          if (value !== phi) {
+            if (updateUses(phi, value)) {
+              changed = true;
+              count ++;
+            }
           }
         });
       }
 
+      writer.writeLn("Simplified " + count + " phis, in " + iterations + " iterations.");
       writer.leave("<");
     };
 
@@ -1111,14 +1193,16 @@
           return;
         }
         if (node.control && isValue(node)) {
-            node.isScheduled = true;
-            node.control.block.append(node);
-            writer.leave("< Scheduled: " + node + " in " + node.control);
+          assert (!node.isScheduled);
+          node.isScheduled = true;
+          node.control.block.append(node);
+          writer.leave("< Scheduled: " + node + " in " + node.control);
           return;
         }
         if (inputs.length === 0) {
           node.control = cfg.root.region;
           cfg.root.append(node);
+          node.isScheduled = true;
           writer.leave("< No inputs");
           writer.writeLn("Scheduled: " + node + " in " + node.control);
           return;

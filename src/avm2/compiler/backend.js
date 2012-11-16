@@ -246,7 +246,6 @@
   };
 
   Context.prototype.compileBlock = function compileBlock(block) {
-    print(">>");
     var body = [];
     for (var i = 1; i < block.nodes.length - 1; i++) {
       print("Block[" + i + "]: " + block.nodes[i]);
@@ -275,7 +274,6 @@
       print(generateSource(statement));
       body.push(statement);
     }
-    print("<<");
     var end = block.nodes.last();
     if (end instanceof IR.Stop) {
       body.push(new ReturnStatement(compileValue(end.argument, this)));
