@@ -178,7 +178,6 @@ var GraphicsDefinition = (function () {
       this._drawingStyles = null;
       this._fillStyle = null;
       this._fillTransform = null;
-      this._revision = 0;
       this._strokeStyle = null;
       this._subpaths.length = 0;
     },
