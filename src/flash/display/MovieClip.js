@@ -141,6 +141,8 @@ var MovieClipDefinition = (function () {
               // constructor is not nullary.
               symbolClass.instance.call(instance);
 
+              instance._markAsDirty();
+
               if (!loader._isAvm2Enabled) {
                 this._initAvm1Bindings(cmd, symbolInfo.props, instance);
               }
@@ -180,8 +182,6 @@ var MovieClipDefinition = (function () {
 
               target._currentTransform = matrix;
             }
-
-            target._markAsDirty();
           }
         }
       }

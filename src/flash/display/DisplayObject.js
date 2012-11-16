@@ -124,8 +124,8 @@ var DisplayObjectDefinition = (function () {
           return false;
         } else {
           var b = this.getBounds();
-          return (pt.x >= b.x && pt.x < b.x + b.width &&
-                 pt.y >= b.y && pt.y < b.y + b.height);
+          return pt.x >= b.x && pt.x < b.x + b.width &&
+                 pt.y >= b.y && pt.y < b.y + b.height;
         }
       }
 
@@ -158,8 +158,6 @@ var DisplayObjectDefinition = (function () {
         tx: this._x,
         ty: this._y
       };
-
-      this._markAsDirty();
     },
 
     get accessibilityProperties() {
@@ -237,9 +235,12 @@ var DisplayObjectDefinition = (function () {
       return this._rotation;
     },
     set rotation(val) {
+      this._markAsDirty();
+
       this._rotation = val;
-      this._updateCurrentTransform();
       this._slave = false;
+
+      this._updateCurrentTransform();
     },
     get stage() {
       return this._stage || (this._parent ? this._parent.stage : null);
@@ -248,16 +249,22 @@ var DisplayObjectDefinition = (function () {
       return this._scaleX;
     },
     set scaleX(val) {
+      this._markAsDirty();
+
       this._scaleX = val;
       this._slave = false;
+
       this._updateCurrentTransform();
     },
     get scaleY() {
       return this._scaleY;
     },
     set scaleY(val) {
+      this._markAsDirty();
+
       this._scaleY = val;
       this._slave = false;
+
       this._updateCurrentTransform();
     },
     get scale9Grid() {
@@ -305,16 +312,22 @@ var DisplayObjectDefinition = (function () {
       return this._x;
     },
     set x(val) {
+      this._markAsDirty();
+
       this._slave = false;
-      this._updateCurrentTransform();
       this._x = val;
+
+      this._updateCurrentTransform();
     },
     get y() {
       return this._y;
     },
     set y(val) {
+      this._markAsDirty();
+
       this._slave = false;
       this._y = val;
+
       this._updateCurrentTransform();
     },
 
