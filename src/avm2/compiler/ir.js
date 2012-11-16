@@ -1025,7 +1025,7 @@
      */
     constructor.prototype.optimizePhis = function optimizePhis() {
       var writer = new IndentingWriter();
-      writer.enter("> Optimizing Phis");
+      writer.enter("> Optimize Phis");
 
       var phis = [];
       var useEntries = this.computeUses();
@@ -1036,7 +1036,7 @@
       });
 
       /**
-       * Updates all uses to a new definition. Retruns true if anything was updated
+       * Updates all uses to a new definition. Returns true if anything was updated.
        */
       function updateUses(def, value) {
         writer.writeLn("Update " + def + " with " + value);
@@ -1147,12 +1147,58 @@
         }
       });
 
+      /**
+       * All move instructions must execute simultaneously. Since there may be dependencies between
+       * source and destination operands we need to sort moves topologically. This is not always
+       * possible because of cyclic dependencies. In such cases break the cycles using temporaries.
+       *
+       * Simplest example where this happens:
+       *   var a, b, t;
+       *   while (true) {
+       *     t = a; a = b; b = t;
+       *   }
+       */
       var blocks = this.blocks;
-      blockMoves.forEach(function (moves, i) {
+      blockMoves.forEach(function (moves, blockID) {
+        var temporary = 0;
         writer.writeLn(i + " Moves: " + moves);
-        moves.forEach(function (move) {
-          blocks[i].append(move);
-        });
+        while (moves.length) {
+          // Find a move that is safe to emit, i.e. no other move depends on its destination.
+          for (var i = 0; i < moves.length; i++) {
+            var move = moves[i];
+            // Find a move that depends on the move's destination?
+            for (var j = 0; j < moves.length; j++) {
+              if (i === j) {
+                continue;
+              }
+              if (moves[j].from === move.to) {
+                move = null;
+                break;
+              }
+            }
+            if (move) {
+              moves.splice(i--, 1);
+              blocks[blockID].append(move);
+            }
+          }
+
+          if (moves.length) {
+            // We have a cycle, break it with a temporary.
+            writer.writeLn("Breaking Cycle");
+            // 1. Pick any move.
+            var move = moves[0];
+            // 2. Emit a move to save its destination in a temporary.
+            var temp = new Variable("t" + temporary++);
+            blocks[blockID].append(new Move(temp, move.to));
+            // 3. Update all moves's source to refer to the temporary.
+            for (var i = 1; i < moves.length; i++) {
+              if (moves[i].from === move.to) {
+                moves[i].from = temp;
+              }
+            }
+            // 4. Loop, baby, loop.
+          }
+        }
       });
 
       writer.leave("<");
