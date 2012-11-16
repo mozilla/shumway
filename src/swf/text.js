@@ -23,6 +23,7 @@ function defineText(tag, dictionary) {
   var text = {
     type: 'text',
     id: tag.id,
+    bbox: tag.bbox,
     variableName: tag.variableName,
     value: initialText,
     data: cmds.join('\n')

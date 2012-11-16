@@ -550,11 +550,12 @@ var LoaderDefinition = (function () {
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.TextField';
         symbolInfo.props = {
+          bbox: symbol.bbox,
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
           },
-          variableName: symbol.variableName,
-          text: symbol.value
+          text: symbol.value,
+          variableName: symbol.variableName
         };
         break;
       case 'shape':
