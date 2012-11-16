@@ -102,6 +102,8 @@ function renderStage(stage, ctx) {
         this.ctx.rect((~~b2.x) - 5, (~~b2.y) - 5, (~~b2.width) + 10, (~~b2.height) + 10);
       } else if (child._graphics && (child._graphics._revision !== child._revision)) {
         child._markAsDirty();
+        // redraw entire stage till we calculate bounding boxes for dynamic graphics
+        this.ctx.rect(0, 0, frameWidth, frameHeight);
       }
     }
   };
