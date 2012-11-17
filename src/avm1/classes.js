@@ -91,7 +91,14 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   $lookupChild: {
     value: function lookupChild(id) {
-      var child = this.$nativeObject.getChildByName(id);
+      var child;
+      if (id == '.') {
+        return this;
+      } else if (id == '..') {
+        child = this.$nativeObject.$parent;
+      } else {
+        child = this.$nativeObject.getChildByName(id);
+      }
       return child ? child._getAS2Object() : null;
     },
     enumerable: false
