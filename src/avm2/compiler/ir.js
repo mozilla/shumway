@@ -731,6 +731,7 @@
       }
 
       buildEnd(dfg.exit);
+      cfg.splitCriticalEdges();
       cfg.exit = dfg.exit.control.block;
       return cfg;
     };
@@ -1097,6 +1098,30 @@
       }
 
       writer.writeLn("Simplified " + count + " phis, in " + iterations + " iterations.");
+      writer.leave("<");
+    };
+
+    /**
+     * "A critical edge is an edge which is neither the only edge leaving its source block, nor the only edge entering
+     * its destination block. These edges must be split: a new block must be created in the middle of the edge, in order
+     * to insert computations on the edge without affecting any other edges." - Wikipedia
+     */
+    constructor.prototype.splitCriticalEdges = function splitCriticalEdges() {
+      var writer = new IndentingWriter();
+      var blocks = this.blocks;
+      var criticalEdges = [];
+      writer.enter("> Splitting Critical Edges");
+      for (var i = 0; i < blocks.length; i++) {
+        var successors = blocks[i].successors;
+        for (var j = 1; j < successors.length; j++) {
+          if (successors[j].predecessors.length > 1) {
+            criticalEdges.push([blocks[i], successors[j]]);
+          }
+        }
+      }
+      if (criticalEdges.length) {
+        notImplemented();
+      }
       writer.leave("<");
     };
 
