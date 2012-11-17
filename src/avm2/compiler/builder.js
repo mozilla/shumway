@@ -200,6 +200,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
             writer && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target, state: region.entryState});
+            worklist.push({region: region, block: target, state: region.entryState.clone(target.position)});
           }
         });
 
