@@ -216,8 +216,8 @@ function interpretActions(actionsData, scopeContainer,
       target.obj[target.name] = value;
       return;
     }
-
-    scope[variableName] = value;
+    var _this = scope.this || getVariable('this');
+    _this[variableName] = value;
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
