@@ -711,7 +711,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x45: // ActionTargetPath
         var obj = stack.pop();
-        stack.push(isMovieClip(obj) ? obj.getTargetPath() : void(0));
+        stack.push(isMovieClip(obj) ? obj._target : void(0));
         break;
       case 0x94: // ActionWith
         var codeSize = stream.readUI16();

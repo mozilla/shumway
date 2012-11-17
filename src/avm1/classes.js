@@ -66,6 +66,15 @@ function defineObjectProperties(obj, propeties) {
 
 // AS2 Classes
 
+function getTargetPath(nativeObject) {
+  var path = [];
+  while (nativeObject) {
+    path.push(nativeObject.$name);
+    nativeObject = nativeObject.$parent;
+  }
+  return '/' + path.join('/');
+}
+
 function AS2MovieClip() {
 }
 AS2MovieClip.prototype = Object.create({}, {
@@ -499,8 +508,8 @@ AS2MovieClip.prototype = Object.create({}, {
     set: function set$tabIndex(value) { return this.$nativeObject.tabIndex = value; },
     enumerable: true
   },
-  _target: { // this.$nativeObject.getPath() ?
-    get: function get$_target() { throw 'Not implemented: get$_target'; },
+  _target: {
+    get: function get$_target() { return getTargetPath(this.$nativeObject) },
     enumerable: true
   },
   _totalframes: { // @flash.display.MovieClip
