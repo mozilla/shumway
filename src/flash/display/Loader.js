@@ -455,7 +455,7 @@ var LoaderDefinition = (function () {
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
           root.addFrameScript(frameNum - 1, function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, avm1Context.globals._root);
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
           }.bind(root, actionBlocks[i]));
         }
       }

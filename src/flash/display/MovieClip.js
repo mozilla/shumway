@@ -73,6 +73,44 @@ var MovieClipDefinition = (function () {
 
       instance.dispatchEvent(new flash.events.Event("added"));
     },
+
+    _constructSymbol: function(symbolId, name) {
+      var loader = this.loaderInfo._loader;
+      var symbolPromise = loader._dictionary[symbolId];
+      var symbolInfo = symbolPromise.value;
+      // HACK application domain may have the symbol class --
+      // checking which domain has a symbol class
+      var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+        avm2.systemDomain.getClass(symbolInfo.className) :
+        avm2.applicationDomain.getClass(symbolInfo.className);
+      var instance = symbolClass.createAsSymbol(symbolInfo.props);
+
+      // If we bound the instance to a name, set it.
+      //
+      // XXX: I think this always has to be a trait.
+      if (name)
+        this[Multiname.getPublicQualifiedName(name)] = instance;
+
+      // Call the constructor now that we've made the symbol instance,
+      // instantiated all its children, and set the display list-specific
+      // properties.
+      //
+      // XXX: I think we're supposed to throw if the symbol class
+      // constructor is not nullary.
+      symbolClass.instance.call(instance);
+
+      instance._markAsDirty();
+
+      instance._animated = true;
+      instance._owned = true;
+      instance._parent = this;
+      instance._name = name || null;
+
+      instance.dispatchEvent(new flash.events.Event("load"));
+
+      return instance;
+    },
+
     _gotoFrame: function (frameNum, scene) {
       if (frameNum > this._totalFrames)
         frameNum = 1;
@@ -124,42 +162,12 @@ var MovieClipDefinition = (function () {
             var target;
 
             if (cmd.symbolId) {
-              var symbolPromise = loader._dictionary[cmd.symbolId];
-              var symbolInfo = symbolPromise.value;
-              // HACK application domain may have the symbol class --
-              // checking which domain has a symbol class
-              var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-                avm2.systemDomain.getClass(symbolInfo.className) :
-                avm2.applicationDomain.getClass(symbolInfo.className);
-              var instance = symbolClass.createAsSymbol(symbolInfo.props);
-
-              target = instance;
-
-              // If we bound the instance to a name, set it.
-              //
-              // XXX: I think this always has to be a trait.
-              if (cmd.name)
-                this[Multiname.getPublicQualifiedName(cmd.name)] = instance;
-
-              // Call the constructor now that we've made the symbol instance,
-              // instantiated all its children, and set the display list-specific
-              // properties.
-              //
-              // XXX: I think we're supposed to throw if the symbol class
-              // constructor is not nullary.
-              symbolClass.instance.call(instance);
-
-              instance._markAsDirty();
-
+              var name = cmd.name;
+              var events = cmd.hasEvents ? cmd.events : null;
+              var instance = this._constructSymbol(cmd.symbolId, name);
               if (!loader._isAvm2Enabled) {
-                this._initAvm1Bindings(cmd, symbolInfo.props, instance);
+                this._initAvm1Bindings(instance, name, events);
               }
-
-              instance._animated = true;
-              instance._owned = true;
-              instance._parent = this;
-              instance._name = cmd.name || null;
-
               this._insertChildAtDepth(instance, depth);
               if (current && current._owned) {
                 if (!clipDepth)
@@ -169,8 +177,7 @@ var MovieClipDefinition = (function () {
                 if (!matrix)
                   matrix = current._currentTransform;
               }
-
-              instance.dispatchEvent(new flash.events.Event("load"));
+              target = instance;
             } else if (current && current._animated) {
               target = current;
             }
@@ -179,6 +186,7 @@ var MovieClipDefinition = (function () {
               target._clipDepth = clipDepth;
             if (cxform)
               target._cxform = cxform;
+
             if (matrix) {
               var a = matrix.a;
               var b = matrix.b;
@@ -206,9 +214,10 @@ var MovieClipDefinition = (function () {
        this._scriptExecutionPending = true;
        this.stage._callFrameRequested = true;
     },
-    _initAvm1Bindings: function (cmd, symbolProps, instance) {
+    _initAvm1Bindings: function (instance, name, events) {
       var loader = this.loaderInfo._loader;
       var avm1Context = loader._avm1Context;
+      var symbolProps = instance.symbol;
       if (symbolProps.frameScripts) {
         var frameScripts = symbolProps.frameScripts;
         for (var i = 0; i < frameScripts.length; i += 2) {
@@ -246,10 +255,10 @@ var MovieClipDefinition = (function () {
         };
       }
 
-      if (cmd.hasEvents) {
+      if (events) {
         var eventsBound = [];
-        for (var i = 0; i < cmd.events.length; i++) {
-          var event = cmd.events[i];
+        for (var i = 0; i < events.length; i++) {
+          var event = events[i];
           if (event.eoe) {
             break;
           }
@@ -272,8 +281,8 @@ var MovieClipDefinition = (function () {
           }.bind(this, eventsBound), false);
         }
       }
-      if (cmd.name) {
-        this._getAS2Object()[cmd.name] = instance._getAS2Object();
+      if (name) {
+        this._getAS2Object()[name] = instance._getAS2Object();
       }
     },
 

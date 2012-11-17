@@ -148,7 +148,15 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   attachMovie: {
     value: function attachMovie(id, name, depth, initObject) {
-      throw 'Not implemented: attachMovie';
+      var mc = this.$nativeObject._constructSymbol(symbolId, name);
+      this._insertChildAtDepth(mc, depth);
+
+      var as2mc = mc._getAS2Object();
+      for (var i in initObject) {
+        as2mc[i] = initObject[i];
+      }
+
+      return as2mc;
     },
     enumerable: false
   },
