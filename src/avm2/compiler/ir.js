@@ -1171,7 +1171,7 @@
             assert (predecessors.length === arguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
-              var argument = arguments[i];
+              var argument = arguments[k];
               if (isProjection(argument, Projection.Type.STORE)) {
                 continue;
               }
