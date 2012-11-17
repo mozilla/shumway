@@ -116,7 +116,7 @@ function renderStage(stage, ctx) {
         child._refreshAS2Variables();
       }
 
-      if (interactiveParent) {
+      if (interactiveParent && stage._mouseOver) {
         var hitArea = child._hitArea || child;
         var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
         child._applyCurrentInverseTransform(pt, child._parent);

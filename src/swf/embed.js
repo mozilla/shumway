@@ -87,6 +87,12 @@ SWF.embed = function(file, container, options) {
       if (stage._clickTarget)
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
     });
+    canvas.addEventListener('mouseover', function () {
+      stage._mouseOver = true;
+    });
+    canvas.removeEventListener('mouseout', function () {
+      stage._mouseOver = false;
+    });
 
     var bgcolor = loaderInfo._backgroundColor;
     if (bgcolor) {
