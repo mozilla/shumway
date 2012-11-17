@@ -1774,7 +1774,10 @@ var Compiler = (function () {
     var code = generate(node);
     Timer.stop();
     Timer.stop();
-    builder.build(this.abc, methodInfo);
+    var opto = builder.build(this.abc, methodInfo);
+    if (opto) {
+      return opto;
+    }
     return code;
   };
 

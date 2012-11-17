@@ -371,6 +371,8 @@
     writer.writeLn("==================================");
     writer.writeLn(generateSource(node));
     writer.writeLn("==================================");
+
+    return generateSource(body);
   }
 
   Backend.generate = generate;

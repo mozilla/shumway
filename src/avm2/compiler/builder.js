@@ -135,7 +135,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
 
       /* Create the method's parameters. */
       for (var i = 0; i < mi.parameters.length; i++) {
-        state.local.push(new Parameter(start, i, mi.parameters[i].name));
+        state.local.push(new Parameter(start, i, ARGUMENT_PREFIX + mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
@@ -199,7 +199,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             }
             region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
             writer && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
-            worklist.push({region: region, block: target, state: region.entryState});
             worklist.push({region: region, block: target, state: region.entryState.clone(target.position)});
           }
         });
@@ -536,7 +535,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var count = 0;
 
   function build(abc, methodInfo) {
-    if (count ++ !== 0) {
+    if (count ++ !== 1) {
       print("Skipping " + (count - 1));
       return;
     }
@@ -575,8 +574,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
 
     // writer && cfg.trace(writer);
 
-    Backend.generate(cfg);
-    return;
+    return Backend.generate(cfg);
   }
 
   exports.build = build;
