@@ -96,6 +96,24 @@ SWF.embed = function(file, container, options) {
     stage._children[0] = root;
     stage._control.appendChild(root._control);
 
+    var cursorVisible = true;
+    function syncCursor() {
+      var newCursor;
+      if (cursorVisible) {
+        newCursor = 'auto';
+      } else {
+        newCursor = 'none';
+      }
+
+      container.style.cursor = newCursor;
+    }
+
+    stage._setCursorVisible = function(val) {
+      cursorVisible = val;
+      syncCursor();
+    };
+    syncCursor();
+
     container.appendChild(canvasHolder || canvas);
     renderStage(stage, ctx);
   });

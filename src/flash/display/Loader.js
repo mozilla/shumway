@@ -678,6 +678,10 @@ var LoaderDefinition = (function () {
       var stage = loader._stage;
 
       if (loader._isAvm2Enabled) {
+        // HACK: bind the mouse through awful shenanigans.
+        var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
+        mouseClass.dynamicPrototype.$bind(stage);
+
         loader._vmPromise.resolve();
       } else {
         // avm1 initialization

@@ -1,15 +1,19 @@
 var MouseDefinition = (function() {
 
   var def = {
-    __class__: 'flash.ui.Mouse'
+    __class__: 'flash.ui.Mouse',
+
+    $bind: function(stage) {
+      this._stage = stage;
+    },
   };
 
   function hide() {
-    notImplemented();
+    this._stage._setCursorVisible(false);
   }
 
   function show() {
-    notImplemented();
+    this._stage._setCursorVisible(true);
   }
 
   function registerCursor() {
