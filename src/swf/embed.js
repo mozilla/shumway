@@ -92,6 +92,7 @@ SWF.embed = function(file, container, options) {
     });
     canvas.removeEventListener('mouseout', function () {
       stage._mouseOver = false;
+      stage._mouseJustLeft = true;
     });
 
     var bgcolor = loaderInfo._backgroundColor;

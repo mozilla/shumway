@@ -41,6 +41,7 @@ var StageDefinition = (function () {
       this._mouseX = 0;
       this._mouseY = 0;
       this._mouseOver = false;
+      this._mouseJustLeft = false;
     },
 
     get allowsFullScreen() {

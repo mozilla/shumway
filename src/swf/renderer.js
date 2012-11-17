@@ -116,7 +116,7 @@ function renderStage(stage, ctx) {
         child._refreshAS2Variables();
       }
 
-      if (interactiveParent && stage._mouseOver) {
+      if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
         var hitArea = child._hitArea || child;
         var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
         child._applyCurrentInverseTransform(pt, child._parent);
@@ -139,6 +139,7 @@ function renderStage(stage, ctx) {
           if (stage._clickTarget === interactiveParent)
             stage._clickTarget = null;
         }
+        stage._mouseJustLeft = false;
       }
 
       if (child._dirtyArea) {
