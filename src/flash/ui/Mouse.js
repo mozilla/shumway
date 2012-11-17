@@ -1,29 +1,47 @@
-var Mouse = describePrototype({
-  cursor: describeAccessor(
-    function () {
-      return 'auto'; // TODO
-    },
-    function (val) {
-      notImplemented();
-    }
-  ),
-  supportsCursor: describeAccessor(function () {
-    return true; // TODO
-  }),
-  supportsNativeCursor: describeAccessor(function () {
-    return true; // TODO
-  }),
+var MouseDefinition = (function() {
 
-  hide: describeMethod(function () {
+  var def = {
+    __class__: 'flash.ui.Mouse'
+  };
+
+  function hide() {
     notImplemented();
-  }),
-  registerCursor: describeMethod(function (name, cursor) {
+  }
+
+  function show() {
     notImplemented();
-  }),
-  show: describeMethod(function () {
+  }
+
+  function registerCursor() {
     notImplemented();
-  }),
-  unregisterCursor: describeMethod(function (name) {
+  }
+
+  function unregisterCursor() {
     notImplemented();
-  })
-});
+  }
+
+  def.__glue__ = {
+    native: {
+      static: {
+        cursor: {
+          get: function () { return 'auto'; }, //TODO
+          set: function () { notImplemented(); }
+        },
+
+        supportsCursor: {
+          get: function () { return true; } // TODO
+        },
+        supportsNativeCursor: {
+          get: function () { return true; } // TODO
+        },
+
+        hide: hide,
+        show: show,
+        registerCursor: registerCursor,
+        unregisterCursor: unregisterCursor
+      },
+    },
+  };
+
+  return def;
+}).call(this);
