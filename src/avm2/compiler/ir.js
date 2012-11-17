@@ -1125,16 +1125,27 @@
         }
       });
 
+      /**
+       * To break out of SSA form we need to emit moves in the phi's predecessor blocks. Here we
+       * collect the set of all moves in |blockMoves| : Map[id -> Array[Move]]
+       *
+       * The moves actually need to be emitted along the phi's predecessor edges. Emitting them in the
+       * predecessor blocks is only correct in the absence of CFG critical edges.
+       */
+
       var blockMoves = [];
-      order.forEach(function (block) {
-        if (block.phis) {
-          block.phis.forEach(function (phi) {
+      for (var i = 0; i < order.length; i++) {
+        var block = order[i];
+        var phis = block.phis;
+        var predecessors = block.predecessors;
+        if (phis) {
+          for (var j = 0; j < phis.length; j++) {
+            var phi = phis[j];
             writer.writeLn("Emitting moves for: " + phi);
-            var predecessors = block.predecessors;
             var arguments = phi.arguments;
             assert (predecessors.length === arguments.length);
-            for (var i = 0; i < predecessors.length; i++) {
-              var predecessor = predecessors[i];
+            for (var k = 0; k < predecessors.length; k++) {
+              var predecessor = predecessors[k];
               var argument = arguments[i];
               if (isProjection(argument, Projection.Type.STORE)) {
                 continue;
@@ -1143,9 +1154,9 @@
               argument = argument.variable || argument;
               moves.push(new Move(phi.variable, argument));
             }
-          });
+          }
         }
-      });
+      }
 
       /**
        * All move instructions must execute simultaneously. Since there may be dependencies between
