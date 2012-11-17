@@ -51,6 +51,15 @@ var BitmapDataDefinition = (function () {
     setPixel32 : function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
     },
+    draw : function(source, matrix, colorTransform, blendMode, clipRect) {
+      this._checkCanvas();
+      this._ctx.save();
+      this._ctx.beginPath();
+      this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+      this._ctx.clip();
+      renderDisplayObject(source, this._ctx, matrix, colorTransform);
+      this._ctx.restore();
+    }
   };
 
 def.__glue__ = {
@@ -62,7 +71,8 @@ def.__glue__ = {
       getPixel : def.getPixel,
       getPixel32 : def.getPixel32,
       setPixel : def.setPixel,
-      setPixel32 : def.setPixel32
+      setPixel32 : def.setPixel32,
+      draw : def.draw
     }
   }
 };

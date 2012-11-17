@@ -1,3 +1,50 @@
+function renderDisplayObject(child, ctx, transform, cxform) {
+  var m = transform;
+  ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+  if (cxform) {
+    // We only support alpha channel transformation for now
+    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+  }
+
+  if (child._graphics) {
+    var graphics = child._graphics;
+
+    var scale = graphics._scale;
+    if (scale !== 1)
+      ctx.scale(scale, scale);
+
+    var subpaths = graphics._subpaths;
+    for (var j = 0, o = subpaths.length; j < o; j++) {
+      var path = subpaths[j];
+      if (path.fillStyle) {
+        ctx.fillStyle = path.fillStyle;
+        if (path.fillTransform) {
+          var m = path.fillTransform;
+          ctx.beginPath();
+          path.__draw__(ctx);
+          ctx.save();
+          ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.fill(path);
+        }
+      }
+      if (path.strokeStyle) {
+        ctx.strokeStyle = path.strokeStyle;
+        var drawingStyles = path.drawingStyles;
+        for (var prop in drawingStyles)
+          ctx[prop] = drawingStyles[prop];
+        ctx.stroke(path);
+      }
+    }
+  }
+
+  if (child.draw)
+    child.draw(ctx, child.ratio);
+}
+
 function renderStage(stage, ctx) {
   var frameWidth = ctx.canvas.width;
   var frameHeight = ctx.canvas.height;
@@ -172,51 +219,7 @@ function renderStage(stage, ctx) {
       var ctx = this.ctx;
       ctx.save();
 
-      var m = child._currentTransform;
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-
-      var cxform = child._cxform;
-      if (cxform) {
-        // We only support alpha channel transformation for now
-        ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
-      }
-
-      if (child._graphics) {
-        var graphics = child._graphics;
-
-        var scale = graphics._scale;
-        if (scale !== 1)
-          ctx.scale(scale, scale);
-
-        var subpaths = graphics._subpaths;
-        for (var j = 0, o = subpaths.length; j < o; j++) {
-          var path = subpaths[j];
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle;
-            if (path.fillTransform) {
-              var m = path.fillTransform;
-              ctx.beginPath();
-              path.__draw__(ctx);
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-              ctx.fill();
-              ctx.restore();
-            } else {
-              ctx.fill(path);
-            }
-          }
-          if (path.strokeStyle) {
-            ctx.strokeStyle = path.strokeStyle;
-            var drawingStyles = path.drawingStyles;
-            for (var prop in drawingStyles)
-              ctx[prop] = drawingStyles[prop];
-            ctx.stroke(path);
-          }
-        }
-      }
-
-      if (child.draw)
-        child.draw(ctx, child.ratio);
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform);
 
       if (!isContainer) {
         // letting the container to restore transforms after all children are painted
