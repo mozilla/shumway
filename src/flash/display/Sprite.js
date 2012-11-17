@@ -24,6 +24,8 @@ var SpriteDefinition = (function () {
         var child = symbolClass.createAsSymbol(symbolInfo.props);
         symbolClass.instance.call(child);
         children[i] = child;
+        child._owned = false;
+        child._parent = this;
       }
     },
 
