@@ -676,13 +676,15 @@ function interpretActions(actionsData, scopeContainer,
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
+        var method;
         var result = {};
         if (methodName) {
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
-          obj[methodName].apply(result, args);
-        } else
-          obj.apply(result, args);
+          method = obj[methodName];
+        } else {
+          method = obj;
+        }
         result.constructor = method;
         method.apply(result, args);
         stack.push(result);
