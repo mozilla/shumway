@@ -7,6 +7,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Start = IR.Start;
   var Undefined = IR.Undefined;
   var This = IR.This;
+  var Global = IR.Global;
   var Projection = IR.Projection;
   var Region = IR.Region;
   var Binary = IR.Binary;
@@ -14,6 +15,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Constant = IR.Constant;
   var FindProperty = IR.FindProperty;
   var GetProperty = IR.GetProperty;
+  var SetProperty = IR.SetProperty;
+  var GetSlot = IR.GetSlot;
+  var SetSlot = IR.SetSlot;
   var Call = IR.Call;
   var Phi = IR.Phi;
   var Stop = IR.Stop;
@@ -270,10 +274,25 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return new GetProperty(null, state.store, obj, name);
         }
 
-        function call(obj, args) {
-          var node = new Call(region, state.store, obj, args);
+        function store(node) {
           state.store = new Projection(node, Projection.Type.STORE);
           return node;
+        }
+
+        function setProperty(obj, name, value) {
+          store(new SetProperty(null, state.store, obj, name, value));
+        }
+
+        function getSlot(obj, index, ti) {
+          return new GetSlot(region, state.store, obj, index);
+        }
+
+        function setSlot(obj, index, value, ti) {
+          store(new SetSlot(region, state.store, obj, index, value));
+        }
+
+        function call(obj, args) {
+          return store(new Call(region, state.store, obj, args));
         }
 
         function constant(value) {
@@ -382,6 +401,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_pushscope:
               scope.push(new Scope(topScope(), pop()));
               break;
+            case OP_getglobalscope:
+              push(new Global(null, topScope()));
+              break;
             case OP_findpropstrict:
               push(findProperty(buildMultiname(bc.index)));
               break;
@@ -389,6 +411,21 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               multiname = buildMultiname(bc.index);
               obj = pop();
               push(getProperty(obj, multiname));
+              break;
+            case OP_setproperty:
+              value = pop();
+              multiname = buildMultiname(bc.index);
+              obj = pop();
+              setProperty(obj, multiname, value);
+              break;
+            case OP_getslot:
+              var obj = pop();
+              push(getSlot(obj, constant(bc.index), bc.ti));
+              break;
+            case OP_setslot:
+              value = pop();
+              obj = pop();
+              setSlot(obj, constant(bc.index), value, bc.ti);
               break;
             case OP_debugfile:
             case OP_debugline:

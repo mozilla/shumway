@@ -397,6 +397,10 @@
     return typeof string === "string";
   }
 
+  function isConstant(constant) {
+    return constant instanceof Constant;
+  }
+
   function isInteger(integer) {
     return integer | 0 === integer;
   }
@@ -424,6 +428,18 @@
       this.control = control;
     }
     constructor.prototype = extend(Value, "This");
+    return constructor;
+  })();
+
+  var Global = (function () {
+    function constructor(control, scope) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isScope(scope));
+      this.control = control;
+      this.scope = scope;
+    }
+    constructor.prototype = extend(Value, "Global");
     return constructor;
   })();
 
@@ -455,7 +471,59 @@
     return constructor;
   })();
 
-  var FindProperty = (function () {
+  var SetProperty = (function () {
+    function constructor(control, store, object, name, value) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (name);
+      assert (value);
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+    }
+    constructor.prototype = extend(Value, "SetProperty");
+    return constructor;
+  })();
+
+   var GetSlot = (function () {
+     function constructor(control, store, object, index) {
+       Node.call(this);
+       assert (isControlOrNull(control));
+       assert (isStore(store));
+       assert (object);
+       assert (isValue(index));
+       this.control = control;
+       this.store = store;
+       this.object = object;
+       this.index = index;
+     }
+     constructor.prototype = extend(Value, "GetSlot");
+     return constructor;
+   })();
+
+   var SetSlot = (function () {
+     function constructor(control, store, object, index, value) {
+       Node.call(this);
+       assert (isControlOrNull(control));
+       assert (isStore(store));
+       assert (object);
+       assert (isValue(index));
+       assert (value);
+       this.control = control;
+       this.store = store;
+       this.object = object;
+       this.index = index;
+       this.value = value;
+     }
+     constructor.prototype = extend(Value, "SetSlot");
+     return constructor;
+   })();
+
+   var FindProperty = (function () {
     function constructor(scope, name) {
       Node.call(this);
       assert (isScope(scope));
@@ -1425,6 +1493,7 @@
   exports.Start = Start;
   exports.Undefined = Undefined;
   exports.This = This;
+  exports.Global = Global;
   exports.Projection = Projection;
   exports.Region = Region;
   exports.Binary = Binary;
@@ -1432,6 +1501,9 @@
   exports.Constant = Constant;
   exports.FindProperty = FindProperty;
   exports.GetProperty = GetProperty;
+  exports.SetProperty = SetProperty;
+  exports.GetSlot = GetSlot;
+  exports.SetSlot = SetSlot;
   exports.Call = Call;
   exports.Phi = Phi;
   exports.Stop = Stop;

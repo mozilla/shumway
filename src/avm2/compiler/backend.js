@@ -315,7 +315,8 @@
   };
 
   IR.Scope.prototype.compile = function (cx) {
-    return new NewExpression(id("Scope"), []);
+    var parent = compileValue(this.parent, cx);
+    return new NewExpression(id("Scope"), [parent]);
   };
 
   IR.FindProperty.prototype.compile = function (cx) {
@@ -346,6 +347,32 @@
 
   IR.This.prototype.compile = function (cx) {
     return new ThisExpression();
+  };
+
+  IR.Global.prototype.compile = function (cx) {
+    var scope = compileValue(this.scope, cx);
+    return property(scope, "global", "object");
+  };
+
+  IR.SetProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var value = compileValue(this.value, cx);
+    return call(id("setProperty"), [object, name, value]);
+  };
+
+  IR.GetProperty.prototype.compile = function (cx) {
+    notImplemented();
+  };
+
+  IR.SetSlot.prototype.compile = function (cx) {
+    notImplemented();
+  };
+
+  IR.GetSlot.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var index = compileValue(this.index, cx);
+    return(call(id("getSlot"), [object, index]));
   };
 
   function generateSource(node) {
