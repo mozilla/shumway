@@ -100,6 +100,7 @@ function renderStage(stage, ctx) {
         this.ctx.rect((~~b1.x) - 5, (~~b1.y) - 5, (~~b1.width) + 10, (~~b1.height) + 10);
         this.ctx.rect((~~b2.x) - 5, (~~b2.y) - 5, (~~b2.width) + 10, (~~b2.height) + 10);
       } else if (child._graphics && (child._graphics._revision !== child._revision)) {
+        child._revision = child._graphics._revision;
         child._markAsDirty();
         // redraw entire stage till we calculate bounding boxes for dynamic graphics
         this.ctx.rect(0, 0, frameWidth, frameHeight);
@@ -212,8 +213,6 @@ function renderStage(stage, ctx) {
             ctx.stroke(path);
           }
         }
-
-        child._revision = graphics._revision;
       }
 
       if (child.draw)
