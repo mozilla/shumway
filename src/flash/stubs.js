@@ -106,6 +106,7 @@ var as3error = {};
    M("flash.display.LoaderInfo", "LoaderInfoClass", LoaderInfoDefinition),
    M("flash.display.Graphics", "GraphicsClass", GraphicsDefinition),
    M("flash.display.SimpleButton", "SimpleButtonClass", SimpleButtonDefinition),
+   M("flash.display.MorphShape", "MorphShapeClass", MorphShapeDefinition),
 
    M("flash.geom.Point", "PointClass", PointDefinition),
    M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
@@ -121,12 +122,14 @@ var as3error = {};
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
+   M("flash.ui.Mouse", "MouseClass", MouseDefinition),
 
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
    M("flash.media.Sound", "SoundClass", SoundDefinition),
    M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
+   M("flash.media.SoundTransform", "SoundTransformClass", SoundTransformDefinition),
    M("flash.media.Video", "VideoClass", VideoDefinition),
 
    M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),

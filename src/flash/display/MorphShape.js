@@ -1,7 +1,7 @@
-function MorphShape() {
-  DisplayObject.call(this);
-}
+var MorphShapeDefinition = (function () {
+  var def = {
+    __class__: 'flash.display.MorphShape',
+  };
 
-MorphShape.prototype = Object.create(DisplayObject.prototype, {
-  __class__: describeInternalProperty('flash.display.MorphShape')
-});
+  return def;
+}).call(this);

@@ -455,7 +455,7 @@ var LoaderDefinition = (function () {
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
           root.addFrameScript(frameNum - 1, function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, avm1Context.globals._root);
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
           }.bind(root, actionBlocks[i]));
         }
       }
@@ -678,6 +678,10 @@ var LoaderDefinition = (function () {
       var stage = loader._stage;
 
       if (loader._isAvm2Enabled) {
+        // HACK: bind the mouse through awful shenanigans.
+        var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
+        mouseClass.dynamicPrototype.$bind(stage);
+
         loader._vmPromise.resolve();
       } else {
         // avm1 initialization

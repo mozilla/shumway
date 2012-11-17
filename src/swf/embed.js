@@ -87,14 +87,45 @@ SWF.embed = function(file, container, options) {
       if (stage._clickTarget)
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
     });
+    canvas.addEventListener('mouseover', function () {
+      stage._mouseOver = true;
+    });
+    canvas.removeEventListener('mouseout', function () {
+      stage._mouseOver = false;
+      stage._mouseJustLeft = true;
+    });
 
     var bgcolor = loaderInfo._backgroundColor;
-    stage._color = bgcolor;
-    canvas.style.background = toStringRgba(bgcolor);
+    if (bgcolor) {
+      stage._color = bgcolor;
+      canvas.style.background = toStringRgba(bgcolor);
+    }
 
     var root = loader._content;
     stage._children[0] = root;
     stage._control.appendChild(root._control);
+
+    var cursorVisible = true;
+    function syncCursor() {
+      var newCursor;
+      if (cursorVisible) {
+        if (stage._clickTarget && stage._clickTarget.shouldHaveHandCursor)
+          newCursor = 'pointer';
+        else
+          newCursor = 'auto';
+      } else {
+        newCursor = 'none';
+      }
+
+      container.style.cursor = newCursor;
+    }
+
+    stage._setCursorVisible = function(val) {
+      cursorVisible = val;
+      syncCursor();
+    };
+    stage._syncCursor = syncCursor;
+    syncCursor();
 
     container.appendChild(canvasHolder || canvas);
     renderStage(stage, ctx);

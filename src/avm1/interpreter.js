@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var isAVM1TraceEnabled = false;
 
@@ -17,9 +17,17 @@ function AS2Context(swfVersion) {
   this.globals = new AS2Globals(this);
   var windowScope = new AS2ScopeListItem(window, null);
   this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
+  this.assets = {};
 }
 AS2Context.instance = null;
 AS2Context.prototype = {
+  addAssets: function(assets) {
+    for (var i = 0; i < assets.length; i++) {
+      if (assets[i].className) {
+        this.assets[assets[i].className] = assets[i];
+      }
+    }
+  },
   resolveTarget: function(target) {
     if (!target)
       target = this.defaultTarget;
@@ -35,7 +43,7 @@ AS2Context.prototype = {
   }
 };
 
-function executeActions(actionsData, context, scope) {
+function executeActions(actionsData, context, scope, assets) {
   var actionTracer = ActionTracerFactory.get();
 
   var scopeContainer = context.initialScope.create(scope);
@@ -44,6 +52,8 @@ function executeActions(actionsData, context, scope) {
     AS2Context.instance = context;
     context.defaultTarget = scope;
     context.globals['this'] = scope;
+    if (assets)
+      context.addAssets(assets);
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
@@ -676,13 +686,15 @@ function interpretActions(actionsData, scopeContainer,
         var args = [];
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
+        var method;
         var result = {};
         if (methodName) {
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
-          obj[methodName].apply(result, args);
-        } else
-          obj.apply(result, args);
+          method = obj[methodName];
+        } else {
+          method = obj;
+        }
         result.constructor = method;
         method.apply(result, args);
         stack.push(result);
@@ -711,7 +723,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x45: // ActionTargetPath
         var obj = stack.pop();
-        stack.push(isMovieClip(obj) ? obj.getTargetPath() : void(0));
+        stack.push(isMovieClip(obj) ? obj._target : void(0));
         break;
       case 0x94: // ActionWith
         var codeSize = stream.readUI16();

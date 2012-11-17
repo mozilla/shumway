@@ -195,8 +195,7 @@ AS2Globals.prototype = {
   },
   targetPath: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    // nativeTarget.getPath() ?
-    throw 'Not implemented: targetPath';
+    return nativeTarget._target;
   },
   toggleHighQuality: function() {
     // flash.display.Stage.quality
