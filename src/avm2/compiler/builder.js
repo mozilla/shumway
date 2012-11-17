@@ -230,7 +230,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return state.saved;
         }
 
-        var obj, value, multiname, type;
+        var object, value, multiname, type;
 
         function push(x) {
           stack.push(x);
@@ -270,8 +270,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return new FindProperty(state.scope.top(), name);
         }
 
-        function getProperty(obj, name) {
-          return new GetProperty(null, state.store, obj, name);
+        function getProperty(object, name) {
+          return new GetProperty(null, state.store, object, name);
         }
 
         function store(node) {
@@ -279,20 +279,20 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return node;
         }
 
-        function setProperty(obj, name, value) {
-          store(new SetProperty(null, state.store, obj, name, value));
+        function setProperty(object, name, value) {
+          store(new SetProperty(null, state.store, object, name, value));
         }
 
-        function getSlot(obj, index, ti) {
-          return new GetSlot(region, state.store, obj, index);
+        function getSlot(object, index, ti) {
+          return new GetSlot(region, state.store, object, index);
         }
 
-        function setSlot(obj, index, value, ti) {
-          store(new SetSlot(region, state.store, obj, index, value));
+        function setSlot(object, index, value, ti) {
+          store(new SetSlot(region, state.store, object, index, value));
         }
 
-        function call(obj, args) {
-          return store(new Call(region, state.store, obj, args));
+        function call(object, args) {
+          return store(new Call(region, state.store, object, args));
         }
 
         function constant(value) {
@@ -409,14 +409,14 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               break;
             case OP_getproperty:
               multiname = buildMultiname(bc.index);
-              obj = pop();
-              push(getProperty(obj, multiname));
+              object = pop();
+              push(getProperty(object, multiname));
               break;
             case OP_setproperty:
               value = pop();
               multiname = buildMultiname(bc.index);
-              obj = pop();
-              setProperty(obj, multiname, value);
+              object = pop();
+              setProperty(object, multiname, value);
               break;
             case OP_getslot:
               var obj = pop();
@@ -424,8 +424,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               break;
             case OP_setslot:
               value = pop();
-              obj = pop();
-              setSlot(obj, constant(bc.index), value, bc.ti);
+              object = pop();
+              setSlot(object, constant(bc.index), value, bc.ti);
               break;
             case OP_debugfile:
             case OP_debugline:
@@ -433,8 +433,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_callproperty:
               args = stack.popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
-              obj = pop();
-              push(call(getProperty(obj, multiname), args));
+              object = pop();
+              push(call(getProperty(object, multiname), args));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_returnvalue:
