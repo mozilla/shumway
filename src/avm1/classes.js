@@ -528,8 +528,8 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   useHandCursor: {
-    get: function get$useHandCursor() { throw 'Not implemented: get$useHandCursor'; },
-    set: function set$useHandCursor(value) { throw 'Not implemented: set$useHandCursor'; },
+    get: function get$useHandCursor() { return this.$nativeObject.useHandCursor; },
+    set: function set$useHandCursor(value) { this.$nativeObject.useHandCursor = value; },
     enumerable: true
   },
   _visible: { // @flash.display.DisplayObject

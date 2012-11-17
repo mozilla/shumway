@@ -264,6 +264,7 @@ function renderStage(stage, ctx) {
       }
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new PostVisitor());
+      stage._syncCursor();
     }
     requestAnimationFrame(draw);
   })();

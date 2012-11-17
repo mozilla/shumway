@@ -100,7 +100,10 @@ SWF.embed = function(file, container, options) {
     function syncCursor() {
       var newCursor;
       if (cursorVisible) {
-        newCursor = 'auto';
+        if (stage._clickTarget && stage._clickTarget.shouldHaveHandCursor)
+          newCursor = 'pointer';
+        else
+          newCursor = 'auto';
       } else {
         newCursor = 'none';
       }
@@ -112,6 +115,7 @@ SWF.embed = function(file, container, options) {
       cursorVisible = val;
       syncCursor();
     };
+    stage._syncCursor = syncCursor;
     syncCursor();
 
     container.appendChild(canvasHolder || canvas);
