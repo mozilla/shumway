@@ -33,8 +33,6 @@ var DisplayObjectDefinition = (function () {
       this._graphics = null;
       this._loaderInfo = null;
       this._mouseChildren = true;
-      this._mouseX = 0;
-      this._mouseY = 0;
       this._name = null;
       this._opaqueBackground = null;
       this._owned = false;
@@ -216,10 +214,12 @@ var DisplayObjectDefinition = (function () {
       this._name = val;
     },
     get mouseX() {
-      return this._mouseX;
+      var p = { x: this._stage._mouseX, y: this._stage._mouseY };
+      return this._applyCurrentInverseTransform(p).x;
     },
     get mouseY() {
-      return this._mouseY;
+      var p = { x: this._stage._mouseX, y: this._stage._mouseY };
+      return this._applyCurrentInverseTransform(p).y;
     },
     get opaqueBackground() {
       return this._opaqueBackground;

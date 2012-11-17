@@ -38,6 +38,8 @@ var StageDefinition = (function () {
       this._stageHeight = 0;
       this._stageWidth = 0;
       this._transform = { };
+      this._mouseX = 0;
+      this._mouseY = 0;
     },
 
     get allowsFullScreen() {
