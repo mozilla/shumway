@@ -40,6 +40,39 @@ var MovieClipDefinition = (function () {
       }
       return this.$as2Object;
     },
+    _insertChildAtDepth: function (instance, depth) {
+      var children = this._children;
+      var depthMap = this._depthMap;
+      var current = depthMap[depth];
+      var highestDepth = depthMap.length;
+      var replace = false;
+      var index;
+      if (current && current._owned) {
+        replace = true;
+        index = children.indexOf(current);
+      } else {
+        var top = null;
+        for (var i = +depth + 1; i < highestDepth; i++) {
+          var info = depthMap[i];
+          if (info && info._animated) {
+            top = info;
+            break;
+          }
+        }
+
+        index = top ? children.indexOf(top) : children.length;
+      }
+
+      children.splice(index, replace, instance);
+      depthMap[depth] = instance;
+
+      if (replace)
+        this._control.replaceChild(instance._control, current._control);
+      else
+        this._control.appendChild(instance._control);
+
+      instance.dispatchEvent(new flash.events.Event("added"));
+    },
     _gotoFrame: function (frameNum, scene) {
       if (frameNum > this._totalFrames)
         frameNum = 1;
@@ -91,7 +124,6 @@ var MovieClipDefinition = (function () {
             var target;
 
             if (cmd.symbolId) {
-              var index = 0;
               var symbolPromise = loader._dictionary[cmd.symbolId];
               var symbolInfo = symbolPromise.value;
               // HACK application domain may have the symbol class --
@@ -100,32 +132,6 @@ var MovieClipDefinition = (function () {
                 avm2.systemDomain.getClass(symbolInfo.className) :
                 avm2.applicationDomain.getClass(symbolInfo.className);
               var instance = symbolClass.createAsSymbol(symbolInfo.props);
-              var replace = 0;
-
-              if (current && current._owned) {
-                if (!clipDepth)
-                  clipDepth = current._clipDepth;
-                if (!cxform)
-                  cxform = current._cxform;
-                index = children.indexOf(current);
-                if (!matrix)
-                  matrix = current._currentTransform;
-                replace = 1;
-              } else {
-                var top = null;
-                for (var i = +depth + 1; i < highestDepth; i++) {
-                  var info = depthMap[i];
-                  if (info && info._animated) {
-                    top = info;
-                    break;
-                  }
-                }
-
-                index = top ? children.indexOf(top) : children.length;
-              }
-
-              children.splice(index, replace, instance);
-              depthMap[depth] = instance;
 
               target = instance;
 
@@ -154,12 +160,16 @@ var MovieClipDefinition = (function () {
               instance._parent = this;
               instance._name = cmd.name || null;
 
-              if (replace)
-                this._control.replaceChild(instance._control, current._control);
-              else
-                this._control.appendChild(instance._control);
+              this._insertChildAtDepth(instance, depth);
+              if (current && current._owned) {
+                if (!clipDepth)
+                  clipDepth = current._clipDepth;
+                if (!cxform)
+                  cxform = current._cxform;
+                if (!matrix)
+                  matrix = current._currentTransform;
+              }
 
-              instance.dispatchEvent(new flash.events.Event("added"));
               instance.dispatchEvent(new flash.events.Event("load"));
             } else if (current && current._animated) {
               target = current;

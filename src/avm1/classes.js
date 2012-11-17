@@ -174,7 +174,12 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   createEmptyMovieClip: {
     value: function createEmptyMovieClip(name, depth) {
-      throw 'Not implemented: createEmptyMovieClip';
+      var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+      var mc = MovieClipClass.createInstance();
+      mc.name = name;
+      this.$nativeObject._insertChildAtDepth(mc, depth);
+      var as2mc = mc._getAS2Object();
+      return as2mc;
     },
     enumerable: false
   },
