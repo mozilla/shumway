@@ -74,8 +74,10 @@ var MovieClipDefinition = (function () {
           if (cmd === null) {
             if (current && current._owned) {
               var index = children.indexOf(current);
-              children.splice(index, 1);
+              var removed = children.splice(index, 1);
               this._control.removeChild(current._control);
+
+              removed[0].dispatchEvent(new flash.events.Event("removed"));
 
               if (depth < highestDepth)
                 depthMap[depth] = undefined;
@@ -157,6 +159,7 @@ var MovieClipDefinition = (function () {
               else
                 this._control.appendChild(instance._control);
 
+              instance.dispatchEvent(new flash.events.Event("added"));
               instance.dispatchEvent(new flash.events.Event("load"));
             } else if (current && current._animated) {
               target = current;
@@ -234,6 +237,7 @@ var MovieClipDefinition = (function () {
       }
 
       if (cmd.hasEvents) {
+        var eventsBound = [];
         for (var i = 0; i < cmd.events.length; i++) {
           var event = cmd.events[i];
           if (event.eoe) {
@@ -247,7 +251,15 @@ var MovieClipDefinition = (function () {
               continue;
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
             this.addEventListener(avm2EventName, fn, false);
+            eventsBound.push({name: avm2EventName, fn: fn});
           }
+        }
+        if (eventsBound.length > 0) {
+          instance.addEventListener('removed', function (eventsBound) {
+            for (var i = 0; i < eventsBound.length; i++) {
+              this.removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
+            }
+          }.bind(this, eventsBound), false);
         }
       }
       if (cmd.name) {
