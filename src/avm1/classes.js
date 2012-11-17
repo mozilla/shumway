@@ -257,19 +257,19 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getDepth: {
     value: function getDepth() {
-      throw 'Not implemented: getDepth';
+      return this.$nativeObject._clipDepth;
     },
     enumerable: false
   },
   getInstanceAtDepth: {
     value: function getInstanceAtDepth(depth) {
-      throw 'Not implemented: getInstanceAtDepth';
+      return this.$nativeObject._depthMap[depth];
     },
     enumerable: false
   },
   getNextHighestDepth: {
     value: function getNextHighestDepth() {
-      throw 'Not implemented: getNextHighestDepth';
+      return this.$nativeObject._depthMap.length;
     },
     enumerable: false
   },
