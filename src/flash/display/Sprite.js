@@ -4,6 +4,7 @@ var SpriteDefinition = (function () {
 
     initialize: function () {
       this._buttonMode = false;
+      this._useHandCursor = true;
       var s = this.symbol;
       if (s) {
         this._graphics = s.graphics || new flash.display.Graphics;
@@ -23,6 +24,8 @@ var SpriteDefinition = (function () {
         var child = symbolClass.createAsSymbol(symbolInfo.props);
         symbolClass.instance.call(child);
         children[i] = child;
+        child._owned = false;
+        child._parent = this;
       }
     },
 
@@ -48,10 +51,14 @@ var SpriteDefinition = (function () {
       notImplemented();
     },
     get useHandCursor() {
-      return true;
+      return this._useHandCursor;
     },
     set useHandCursor(val) {
-      notImplemented();
+      this._useHandCursor = val;
+      this._stage._syncCursor();
+    },
+    get shouldHaveHandCursor() {
+      return this._buttonMode && this._useHandCursor;
     },
 
     startDrag: function (lockCenter, bounds) {

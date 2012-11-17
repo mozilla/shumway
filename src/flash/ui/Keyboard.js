@@ -1,11 +1,8 @@
 var ShumwayKeyboardListener = {
   handleEvent: function (domEvt) {
-    // XXX: Use strings directly if KEY_UP/KEY_DOWN and class lookup is too
-    // slow.
-    var KEClass = avm2.systemDomain.getClass("flash.events.KeyboardEvent");
     if (this.focus) {
       this.focus.dispatchEvent(new flash.events.KeyboardEvent(
-        domEvt.type === 'keyup' ? KEClass.KEY_UP : KEClass.KEY_DOWN,
+        domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,
         domEvt.charCode,

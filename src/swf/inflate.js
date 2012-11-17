@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
 

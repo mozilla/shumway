@@ -26,6 +26,12 @@ var SimpleButtonDefinition = (function () {
     set upState(val) {
       this._upState = val;
     },
+    get useHandCursor() {
+      return this._useHandCursor;
+    },
+    set useHandCursor(val) {
+      this._useHandCursor = val;
+    },
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
@@ -41,6 +47,7 @@ var SimpleButtonDefinition = (function () {
       this._mouseChildren = false;
       this._overState = null;
       this._upState = null;
+      this._useHandCursor = true;
 
       var s = this.symbol;
       if (s) {
@@ -84,6 +91,10 @@ var SimpleButtonDefinition = (function () {
       else if (this._isMouseOver && this._overState)
         state = this._overState;
       this._children = [state];
+    },
+
+    get shouldHaveHandCursor() {
+      return this._useHandCursor;
     }
   };
 
@@ -110,7 +121,8 @@ var SimpleButtonDefinition = (function () {
         hitTestState: desc(def, "hitTestState"),
         overState: desc(def, "overState"),
         upState: desc(def, "upState"),
-        _updateButton: def._updateButton
+        useHandCursor: desc(def, "useHandCursor"),
+        _updateButton: def._updateButton,
       }
     }
   };

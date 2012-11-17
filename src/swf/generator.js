@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var defaultTemplateSet = [
   readSi8, readSi16, readSi32, readUi8, readUi16, readUi32, readFixed,

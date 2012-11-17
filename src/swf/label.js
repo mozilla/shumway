@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 function defineLabel(tag, dictionary) {
   var records = tag.records;

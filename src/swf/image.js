@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var plte = createPngChunk('PLTE', (new Array(769)).join('\x00'));
 var alphaValues = [];

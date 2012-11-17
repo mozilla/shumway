@@ -1,13 +1,7 @@
-function SoundTransform(volume, pan) {
-  EventDispatcher.call(this);
+var SoundTransformDefinition = (function () {
+  var def = {
+    __class__: 'flash.media.SoundTransform',
+  };
 
-  this.volume = volume;
-  this.pan = pan || 0;
-}
-
-SoundTransform.prototype = Object.create(null, {
-  __class__: describeInternalProperty('flash.media.SoundTransform'),
-
-  _timerDispatch: describeMethod(function () {
-  })
-});
+  return def;
+}).call(this);
