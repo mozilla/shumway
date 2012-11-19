@@ -18,7 +18,7 @@ function defineImage(tag, dictionary) {
   if (tag.mimeType === 'image/jpeg') {
     var width = 0;
     var height = 0;
-    var i = 2;
+    var i = 0;
     var n = imgData.length;
     var code;
     do {
@@ -103,7 +103,7 @@ function defineImage(tag, dictionary) {
       var header = tables.data;
       data = header.substr(0, header.length - 2) + data;
     } else {
-      data = '\xff\xd8' + data;
+      data = data;
     }
   } else {
     var numChunks = imgData.length / 65536;
