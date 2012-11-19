@@ -12,12 +12,12 @@ var BitmapDataDefinition = (function () {
 
     _checkCanvas: function() {
       if (this._drawable === null)
-        avm2.throwErrorFromVM("ArgumentError");
+        throw ArgumentError();
     },
 
     ctor : function(width, height, transparent, backgroundColor) {
       if (isNaN(width + height) || width <= 0 || height <= 0)
-        avm2.throwErrorFromVM("ArgumentError");
+        throw ArgumentError();
 
       this._transparent = !!transparent;
       var canvas = document.createElement('canvas');
