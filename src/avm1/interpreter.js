@@ -208,6 +208,10 @@ function interpretActions(actionsData, scopeContainer,
     if (target)
       return target.obj[target.name];
 
+    var mc = defaultTarget.$lookupChild(variableName);
+    if (mc)
+      return mc;
+
     for (var p = scopeContainer; p; p = p.next) {
       if (variableName in p.scope) {
         return p.scope[variableName];
