@@ -167,6 +167,9 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   beginBitmapFill: {
     value: function beginBitmapFill(bmp, matrix, repeat, smoothing) {
+      if (!(bmp instanceof flash.display.BitmapData))
+        return;
+
       this.$nativeObject._graphics.beginBitmapFill(bmp, matrix, repeat, smoothing);
     },
     enumerable: false
