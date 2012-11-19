@@ -77,7 +77,7 @@ function renderStage(stage, ctx) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
-        if (InteractiveClass.isInstanceOf(child)) {
+        if (InteractiveClass.isInstanceOf(child) && child._mouseEnabled) {
           if (!interactiveParent || interactiveParent._mouseChildren)
             interactiveParent = child;
         }
