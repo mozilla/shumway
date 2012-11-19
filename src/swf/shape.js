@@ -37,7 +37,7 @@ function toMatrixInstance(matrix, matrixMorph) {
       'c:' + morph(matrix.c * 20, matrixMorph.c * 20) + ',' +
       'd:' + morph(matrix.d * 20, matrixMorph.d * 20) + ',' +
       'tx:' + morph(matrix.tx, matrixMorph.tx) + ',' +
-      'ty:' + morph(matrix.ty, matrixMorph.ty)
+      'ty:' + morph(matrix.ty, matrixMorph.ty) +
     '}';
   }
 
