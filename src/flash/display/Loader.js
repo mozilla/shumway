@@ -462,6 +462,7 @@ var LoaderDefinition = (function () {
     },
     _commitSymbol: function (symbol) {
       var dependencies = symbol.require;
+      var dependenciesResolved;
       var dictionary = this._dictionary;
       var promiseQueue = [];
       var symbolInfo = { };
@@ -535,7 +536,7 @@ var LoaderDefinition = (function () {
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
         promiseQueue.push(imgPromise);
         symbolInfo.className = 'flash.display.BitmapData';
-        symbolInfo.props = { img: describeProperty(img) };
+        symbolInfo.props = { img: img };
         break;
       case 'label':
         var drawFn = new Function('d,c,r', symbol.data);
@@ -560,15 +561,16 @@ var LoaderDefinition = (function () {
         };
         break;
       case 'shape':
-        var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
-        var graphics = new flash.display.Graphics;
-        graphics._scale = 0.05;
-        graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
-
-        symbolInfo.className = 'flash.display.Shape';
-        symbolInfo.props = {
-          bbox: symbol.bbox,
-          graphics: graphics
+        dependenciesResolved = function() {
+          var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+          var graphics = new flash.display.Graphics;
+          graphics._scale = 0.05;
+          graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+          symbolInfo.className = 'flash.display.Shape';
+          symbolInfo.props = {
+            bbox: symbol.bbox,
+            graphics: graphics
+          };
         };
         break;
       case 'sound':
@@ -629,6 +631,8 @@ var LoaderDefinition = (function () {
 
       dictionary[symbol.id] = symbolPromise;
       Promise.when.apply(Promise, promiseQueue).then(function () {
+        if (dependenciesResolved)
+          dependenciesResolved();
         symbolPromise.resolve(symbolInfo);
       });
     },
