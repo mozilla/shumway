@@ -691,7 +691,6 @@ function interpretActions(actionsData, scopeContainer,
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
         var method;
-        var result = {};
         if (methodName) {
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
@@ -699,8 +698,15 @@ function interpretActions(actionsData, scopeContainer,
         } else {
           method = obj;
         }
-        result.constructor = method;
-        method.apply(result, args);
+        // XXX: this is non-semantics-preserving, but it's
+        // necessary to make constructors for runtime objects
+        // work.
+        var result = new (method.bind.apply(method, [null].concat(args)))();
+        if (!result) {
+          result = {};
+          result.constructor = method;
+          method.apply(result, args);
+        }
         stack.push(result);
         break;
       case 0x40: // ActionNewObject
