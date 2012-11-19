@@ -164,13 +164,17 @@ var GraphicsDefinition = (function () {
       // NOTE firefox really sensitive to really small scale when painting gradients
       var scale = 819.2;
       this._fillTransform = matrix ?
-        {a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, tx: matrix.tx, ty: matrix.ty} :
-        {a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0};
+        { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, tx: matrix.tx, ty: matrix.ty } :
+        { a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0 };
     },
-
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      //notImplemented();
-      // stub this out
+      var repeatStyle = repeat ? 'repeat' : 'no-repeat';
+      this._fillStyle = fillContext.createPattern(bitmap._canvas, repeatStyle);
+
+      var scale = this._scale;
+      this._fillTransform = matrix ?
+        { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, tx: matrix.tx, ty: matrix.ty } :
+        { a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0 };
     },
     clear: function () {
       delete this._currentPath;

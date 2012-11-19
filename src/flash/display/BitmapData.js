@@ -2,29 +2,46 @@ var BitmapDataDefinition = (function () {
   var def = {
     __class__: 'flash.display.BitmapData',
 
+    initialize: function () {
+      var s = this.symbol;
+      if (s) {
+        this.ctor(s.width, s.height);
+        this._ctx.drawImage(s.canvas, 0, 0);
+      }
+    },
+
+    _checkCanvas: function() {
+      if (this._canvas === null)
+        avm2.throwErrorFromVM("ArgumentError");
+    },
+
     ctor : function(width, height, transparent, backgroundColor) {
       if (isNaN(width + height) || width <= 0 || height <= 0)
-      {
         avm2.throwErrorFromVM("ArgumentError");
-      }
+
       this._transparent = !!transparent;
       this._canvas = document.createElement('canvas');
       this._ctx = this._canvas.getContext('2d');
       this._canvas.width = width | 0;
       this._canvas.height = height | 0;
-      if (!transparent || backgroundColor | 0) {
+
+      if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
-      }
-    },
-    _checkCanvas: function() {
-      if (this._canvas === null)
-        avm2.throwErrorFromVM("ArgumentError");
     },
     dispose: function() {
       this._canvas.width = 0;
       this._canvas.height = 0;
       this._canvas = null;
       this._ctx = null;
+    },
+    draw : function(source, matrix, colorTransform, blendMode, clipRect) {
+      this._checkCanvas();
+      this._ctx.save();
+      this._ctx.beginPath();
+      this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+      this._ctx.clip();
+      renderDisplayObject(source, this._ctx, matrix, colorTransform);
+      this._ctx.restore();
     },
     fillRect : function(rect, color) {
       this._checkCanvas();
@@ -51,33 +68,24 @@ var BitmapDataDefinition = (function () {
     setPixel32 : function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
     },
-    draw : function(source, matrix, colorTransform, blendMode, clipRect) {
-      this._checkCanvas();
-      this._ctx.save();
-      this._ctx.beginPath();
-      this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
-      this._ctx.clip();
-      renderDisplayObject(source, this._ctx, matrix, colorTransform);
-      this._ctx.restore();
+  };
+
+  def.__glue__ = {
+    native: {
+      instance: {
+        ctor : def.ctor,
+        fillRect : def.fillRect,
+        dispose : def.dispose,
+        getPixel : def.getPixel,
+        getPixel32 : def.getPixel32,
+        setPixel : def.setPixel,
+        setPixel32 : def.setPixel32,
+        draw : def.draw
+      }
     }
   };
 
-def.__glue__ = {
-  native: {
-    instance: {
-      ctor : def.ctor,
-      fillRect : def.fillRect,
-      dispose : def.dispose,
-      getPixel : def.getPixel,
-      getPixel32 : def.getPixel32,
-      setPixel : def.setPixel,
-      setPixel32 : def.setPixel32,
-      draw : def.draw
-    }
-  }
-};
-
-return def;
+  return def;
 }).call(this);
 
 function dataToRGB(data) {

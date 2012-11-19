@@ -312,7 +312,10 @@ function defineShape(tag, dictionary) {
         commands.push('{' +
           '__class__:"flash.display.GraphicsBitmapFill",' +
           '__isIGraphicsFill__:true,' +
-          'bitmapData:d[' + bitmap.id + '],' +
+          'bitmapData: {' +
+            '__class__:"flash.display.BitmapData",' +
+            '_canvas:d[' + bitmap.id + '].value.props.canvas' +
+          '},' +
           'matrix:' + toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph),
           'repeat:' + !!fillStyle.repeat +
         '}');
