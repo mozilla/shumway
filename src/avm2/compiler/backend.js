@@ -41,6 +41,8 @@
   var Operator = IR.Operator;
   var If = IR.If;
   var Jump = IR.Jump;
+  var Projection = IR.Projection;
+  var Start = IR.Start;
   var Control = Looper.Control;
 
   Control.Break.prototype.compile = function (cx, state) {
@@ -84,10 +86,37 @@
   };
 
   var Constant = (function () {
+    const constantsName = new Identifier("$C");
+
+    function objectId(object) {
+      release || assert(object);
+      if (object.hasOwnProperty("objectID")) {
+        return object.objectId;
+      }
+      var id = $C.length;
+      Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
+      $C.push(object);
+      return id;
+    }
+
     function constant(value) {
       this.value = value;
       if (value === undefined) {
         Identifier.call(this, "undefined");
+      } else if (value !== null && typeof value === "object") {
+        release || assert(value instanceof Multiname ||
+          value instanceof Runtime ||
+          value instanceof Domain ||
+          value instanceof MethodInfo ||
+          value instanceof ClassInfo ||
+          value instanceof AbcFile ||
+          value instanceof Array ||
+          value instanceof CatchScopeObject ||
+          value instanceof Scope ||
+          value instanceof Global ||
+          value instanceof Interface,
+          "Should not make constants from ", value);
+        MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
       } else {
         if (typeof value === "number" && isNaN(value)) {
           Identifier.call(this, "NaN");
@@ -311,7 +340,7 @@
 
   IR.Phi.prototype.compile = function (cx) {
     assert (this.variable);
-    return id(value.variable.name);
+    return compileValue(this.variable, cx);
   };
 
   IR.Scope.prototype.compile = function (cx) {
@@ -374,6 +403,13 @@
     var index = compileValue(this.index, cx);
     return(call(id("getSlot"), [object, index]));
   };
+
+  IR.Projection.prototype.compile = function (cx) {
+    assert (this.type === Projection.Type.SCOPE);
+    assert (this.argument instanceof Start);
+    return compileValue(this.argument.scope, cx);
+  };
+
 
   function generateSource(node) {
     return escodegen.generate(node, {base: "", indent: "  ", comment: true});

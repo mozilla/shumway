@@ -91,7 +91,7 @@
     } else if (o instanceof Variable) {
       return o.name;
     } else if (o instanceof Phi) {
-      return result = "|" + o.id + "|", useColors ? PURPLE + result + ENDC : result;
+      return result = "|" + o.id + ":" + o.arguments.length + "|", useColors ? PURPLE + result + ENDC : result;
     } else if (o instanceof Control) {
       return result = "{" + o.id + "}", useColors ? RED + result + ENDC : result;
     } else if (o instanceof Projection) {
@@ -241,6 +241,7 @@
     }
     constructor.prototype = extend(Value, "Phi");
     constructor.prototype.pushValue = function pushValue(x) {
+      assert (isValue(x));
       this.arguments.push(x);
     }
     return constructor;
@@ -258,7 +259,7 @@
   var Move = (function () {
     function constructor(to, from) {
       assert (to instanceof Variable);
-      assert (from instanceof Variable || from instanceof Constant);
+      assert (from instanceof Variable || from instanceof Constant, from);
       this.to = to;
       this.from = from;
     }
@@ -559,8 +560,7 @@
     return constructor;
   })();
 
-  var Undefined = new Node();
-
+  var Undefined = new Constant(undefined);
   Undefined.toString = function () {
     return "_";
   };
@@ -622,7 +622,7 @@
     constructor.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
       assert (isValue(node), node);
-      assert (isNotPhi(node));
+      // assert (isNotPhi(node));
       assert (this.nodes.indexOf(node) < 0);
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
@@ -1085,6 +1085,24 @@
       return useEntries;
     };
 
+    constructor.prototype.verify = function verify() {
+      var writer = new IndentingWriter();
+      writer.enter("> Verify");
+
+      var order = this.computeReversePostOrder();
+
+      order.forEach(function (block) {
+        if (block.phis) {
+          block.phis.forEach(function (phi) {
+            assert (phi.control === block.region);
+            assert (phi.arguments.length === block.predecessors.length);
+          });
+        }
+      });
+
+      writer.leave("<");
+    };
+
     /**
      * Simplifies phis of the form:
      *
@@ -1317,8 +1335,8 @@
       writer.enter("> Schedule Early");
 
       function schedule(node) {
-        writer.enter("> Scheduling: " + node);
-        if (node.isScheduled) {
+        writer.enter("> Scheduling: " + node + " " + node.nodeName);
+        if (node.isScheduled || isConstant(node)) {
           writer.leave("< Already scheduled");
           return;
         }
@@ -1338,14 +1356,18 @@
           writer.leave("< Control node is already scheduled");
           return;
         }
+        /*
         if (isPhi(node)) {
           writer.leave("< Phi nodes should not be scheduled");
           return;
         }
+        */
         if (node.control && isValue(node)) {
           assert (!node.isScheduled);
           node.isScheduled = true;
-          node.control.block.append(node);
+          if (!isPhi(node)) {
+            node.control.block.append(node);
+          }
           writer.leave("< Scheduled: " + node + " in " + node.control);
           return;
         }
