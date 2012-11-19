@@ -55,7 +55,13 @@ var GraphicsDefinition = (function () {
           );
           break;
         case 'flash.display.GraphicsBitmapFill':
-          this.beginBitmapFill(fill.bitmapData, fill.matrix, fill.repeat, fill.smooth);
+          var symbol = fill.img.value;
+          this.beginImgFill(
+            symbol.props.img,
+            fill.matrix,
+            fill.repeat,
+            fill.smooth
+          );
           break;
         case 'flash.display.GraphicsShaderFill':
           this.beginShaderFill(fill.shader, fill.matrix);
@@ -168,9 +174,17 @@ var GraphicsDefinition = (function () {
         {a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0};
     },
 
-    beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      //notImplemented();
-      // stub this out
+    beginImgFill: function (img, matrix, repeat) {
+      var repeatStyle = repeat ? 'repeat' : 'no-repeat';
+      this._fillStyle = fillContext.createPattern(img, repeatStyle);
+
+      var scale = 0.05;
+      this._fillTransform = matrix ?
+        {a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, tx: matrix.tx, ty: matrix.ty} :
+        {a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0};
+    },
+    beginBitmapFill: function (bitmapData, matrix, repeat, smooth) {
+      this.beginImgFill(bitmapData._canvas, matrix, repeat);
     },
     clear: function () {
       delete this._currentPath;
