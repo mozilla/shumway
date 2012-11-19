@@ -94,19 +94,38 @@ var DisplayObjectDefinition = (function () {
 
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
-              var path = subpaths[i];
+              var pathTracker = subpaths[i], path = pathTracker.target;
               var hitCtx = path.__hitContext__;
 
               if (hitCtx.isPointInPath(pt.x, pt.y))
                 return true;
 
-              if (path.strokeStyle && hitCtx.mozIsPointInStroke) {
+              if (!path.strokeStyle)
+                continue;
+
+              var drawingStyles = pathTracker.drawingStyles;
+              if (hitCtx.mozIsPointInStroke) {
                 hitCtx.strokeStyle = path.strokeStyle;
-                var drawingStyles = path.drawingStyles;
                 for (var prop in drawingStyles)
                   hitCtx[prop] = drawingStyles[prop];
 
                 if (hitCtx.mozIsPointInStroke(pt.x, pt.y))
+                  return true;
+              } else {
+                var strokeHitCtx = path._strokeHitContext;
+                if (!strokeHitCtx) {
+                  var strokeHitCanvas = hitCtx.canvas.cloneNode();
+                  strokeHitCtx = strokeHitCanvas.getContext('2d');
+                  path._strokeHitContext = strokeHitCtx;
+                  pathTracker.strokeToPath(strokeHitCtx, {
+                    strokeWidth: drawingStyles.lineWidth,
+                    startCap: drawingStyles.lineCap,
+                    endCap: drawingStyles.lineCap,
+                    join: drawingStyles.lineJoin,
+                    miterLimit: drawingStyles.miterLimit
+                  });
+                }
+                if (strokeHitCtx.isPointInPath(pt.x, pt.y))
                   return true;
               }
             }
@@ -347,10 +366,7 @@ var DisplayObjectDefinition = (function () {
       if (!bbox) {
         var children = this._children;
         var numChildren = children.length;
-
-        if (!numChildren)
-          return new flash.geom.Rectangle;
-
+        var b;
         for (var i = 0; i < numChildren; i++) {
           var child = children[i];
           var b = child.getBounds(this);
@@ -365,18 +381,26 @@ var DisplayObjectDefinition = (function () {
           yMin = Math.min(yMin, y1, y2);
           yMax = Math.max(yMax, y1, y2);
         }
-
-        bbox = {
-          left: xMin,
-          top: yMin,
-          right: xMax,
-          bottom: yMax
-        };
       } else {
         xMin = bbox.left;
         xMax = bbox.right;
         yMin = bbox.top;
         yMax = bbox.bottom;
+      }
+
+      if (this._graphics) {
+        var b = this._graphics._getBounds(true);
+        if (b) {
+          var x1 = b.x;
+          var y1 = b.y;
+          var x2 = b.x + b.width;
+          var y2 = b.y + b.height;
+
+          xMin = Math.min(xMin, x1, x2);
+          xMax = Math.max(xMax, x1, x2);
+          yMin = Math.min(yMin, y1, y2);
+          yMax = Math.max(yMax, y1, y2);
+        }
       }
 
       var p1 = { x: xMin, y: yMin };
