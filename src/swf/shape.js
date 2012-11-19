@@ -386,6 +386,13 @@ function defineShape(tag, dictionary) {
       var colorProps = toColorProperties(lineStyle.color, lineStyle.colorMorph);
       var lineWidth =
         morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined);
+      // ignoring startCapStyle ?
+      var capsStyle = lineStyle.endCapStyle === 1 ? 'none' :
+                      lineStyle.endCapStyle === 2 ? 'square' : 'round';
+      var joinStyle = lineStyle.joinStyle === 1 ? 'bevel' :
+                       lineStyle.joinStyle === 2 ? 'miter' : 'round';
+      var miterLimitFactor = lineStyle.miterLimitFactor;
+
       var j = 0;
       var segment;
       while (segment = segments[j++]) {
@@ -400,9 +407,9 @@ function defineShape(tag, dictionary) {
           '__isIGraphicsStroke__:true,' +
           'thickness:' + lineWidth + ',' +
           'pixelHinting:false,' +
-          'caps:"round",' +
-          'joins:"round",' +
-          'miterLimit:3,' +
+          'caps:"' + capsStyle + '",' +
+          'joins:"' + joinStyle + '",' +
+          'miterLimit:' + (miterLimitFactor * 2) + ',' +
           'scaleMode:"normal",' +
           'fill:{' +
             '__class__:"flash.display.GraphicsSolidFill",' +

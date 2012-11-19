@@ -16,7 +16,7 @@ function renderDisplayObject(child, ctx, transform, cxform) {
 
     var subpaths = graphics._subpaths;
     for (var j = 0, o = subpaths.length; j < o; j++) {
-      var path = subpaths[j];
+      var pathTracker = subpaths[j], path = pathTracker.target;
       if (path.fillStyle) {
         ctx.fillStyle = path.fillStyle;
         if (path.fillTransform) {
@@ -33,7 +33,7 @@ function renderDisplayObject(child, ctx, transform, cxform) {
       }
       if (path.strokeStyle) {
         ctx.strokeStyle = path.strokeStyle;
-        var drawingStyles = path.drawingStyles;
+        var drawingStyles = pathTracker.drawingStyles;
         for (var prop in drawingStyles)
           ctx[prop] = drawingStyles[prop];
         ctx.stroke(path);
