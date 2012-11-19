@@ -527,15 +527,24 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'image':
+        var canvas = document.createElement('canvas');
+
         var img = new Image;
         var imgPromise = new Promise;
         img.onload = function () {
+          canvas.width = img.width;
+          canvas.height = img.height;
+
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+
           imgPromise.resolve();
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+
         promiseQueue.push(imgPromise);
         symbolInfo.className = 'flash.display.BitmapData';
-        symbolInfo.props = { img: describeProperty(img) };
+        symbolInfo.props = { canvas: canvas };
         break;
       case 'label':
         var drawFn = new Function('d,c,r', symbol.data);
@@ -563,13 +572,16 @@ var LoaderDefinition = (function () {
         var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         var graphics = new flash.display.Graphics;
         graphics._scale = 0.05;
-        graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
           bbox: symbol.bbox,
           graphics: graphics
         };
+
+        symbolPromise.then(function () {
+          graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+        });
         break;
       case 'sound':
         symbolInfo.className = 'flash.media.Sound';
