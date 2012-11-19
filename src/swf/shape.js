@@ -314,7 +314,7 @@ function defineShape(tag, dictionary) {
           '__isIGraphicsFill__:true,' +
           'bitmapData: {' +
             '__class__:"flash.display.BitmapData",' +
-            '_canvas:d[' + bitmap.id + '].value.props.canvas' +
+            '_drawable:d[' + bitmap.id + '].value.props.img' +
           '},' +
           'matrix:' + toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph),
           'repeat:' + !!fillStyle.repeat +

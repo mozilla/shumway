@@ -161,6 +161,8 @@ function defineBitmap(tag) {
   return {
     type: 'image',
     id: tag.id,
+    width: width,
+    height: height,
     mimeType: 'image/png',
     data: data
   };

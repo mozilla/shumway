@@ -527,24 +527,20 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'image':
-        var canvas = document.createElement('canvas');
-
         var img = new Image;
         var imgPromise = new Promise;
         img.onload = function () {
-          canvas.width = img.width;
-          canvas.height = img.height;
-
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-
           imgPromise.resolve();
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
 
         promiseQueue.push(imgPromise);
         symbolInfo.className = 'flash.display.BitmapData';
-        symbolInfo.props = { canvas: canvas };
+        symbolInfo.props = {
+          img: img,
+          width: symbol.width,
+          height: symbol.height
+        };
         break;
       case 'label':
         var drawFn = new Function('d,c,r', symbol.data);

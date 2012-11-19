@@ -6,12 +6,12 @@ var BitmapDataDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this.ctor(s.width, s.height);
-        this._ctx.drawImage(s.canvas, 0, 0);
+        this._ctx.drawImage(s.img, 0, 0);
       }
     },
 
     _checkCanvas: function() {
-      if (this._canvas === null)
+      if (this._drawable === null)
         avm2.throwErrorFromVM("ArgumentError");
     },
 
@@ -20,19 +20,20 @@ var BitmapDataDefinition = (function () {
         avm2.throwErrorFromVM("ArgumentError");
 
       this._transparent = !!transparent;
-      this._canvas = document.createElement('canvas');
-      this._ctx = this._canvas.getContext('2d');
-      this._canvas.width = width | 0;
-      this._canvas.height = height | 0;
+      var canvas = document.createElement('canvas');
+      this._ctx = canvas.getContext('2d');
+      canvas.width = width | 0;
+      canvas.height = height | 0;
+      this._drawable = canvas;
 
       if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
     },
     dispose: function() {
-      this._canvas.width = 0;
-      this._canvas.height = 0;
-      this._canvas = null;
       this._ctx = null;
+      this._drawable.width = 0;
+      this._drawable.height = 0;
+      this._drawable = null;
     },
     draw : function(source, matrix, colorTransform, blendMode, clipRect) {
       this._checkCanvas();

@@ -169,7 +169,7 @@ var GraphicsDefinition = (function () {
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
       var repeatStyle = repeat ? 'repeat' : 'no-repeat';
-      this._fillStyle = fillContext.createPattern(bitmap._canvas, repeatStyle);
+      this._fillStyle = fillContext.createPattern(bitmap._drawable, repeatStyle);
 
       var scale = this._scale;
       this._fillTransform = matrix ?
