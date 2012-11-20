@@ -25,6 +25,7 @@ var BitmapDataDefinition = (function () {
       canvas.width = width | 0;
       canvas.height = height | 0;
       this._drawable = canvas;
+      this._backgroundColor = backgroundColor;
 
       if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
@@ -75,6 +76,25 @@ var BitmapDataDefinition = (function () {
       bd._ctx.drawImage(this._drawable, 0, 0);
       return bd;
     },
+    scroll : function(x, y) {
+      this._checkCanvas();
+      this._ctx.draw(this._drawable, x, y);
+      this._ctx.save();
+      this._ctx.fillStyle = ARGBtoCSSColor(this._backgroundColor);
+      var w = this._drawable.width;
+      var h = this._drawable.height;
+      if (x > 0) {
+        this._ctx.fillRect(0, 0, x, h);
+      } else if (x < 0) {
+        this._ctx.fillRect(x, 0, w, h);
+      }
+      if (y > 0) {
+        this._ctx.fillRect(x, y, w, h);
+      } else if (y < 0) {
+        this._ctx.fillRect(0, y, w, h);
+      }
+      this._ctx.restore();
+    },
   };
 
   def.__glue__ = {
@@ -89,6 +109,7 @@ var BitmapDataDefinition = (function () {
         setPixel32 : def.setPixel32,
         draw : def.draw,
         clone : def.clone,
+        scroll : def.scroll,
       }
     }
   };
