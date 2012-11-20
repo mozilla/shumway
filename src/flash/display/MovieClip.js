@@ -70,6 +70,10 @@ var MovieClipDefinition = (function () {
       else
         this._control.appendChild(instance._control);
 
+      instance._animated = true;
+      instance._owned = true;
+      instance._parent = this;
+
       instance.dispatchEvent(new flash.events.Event("added"));
     },
 
@@ -99,10 +103,6 @@ var MovieClipDefinition = (function () {
       symbolClass.instance.call(instance);
 
       instance._markAsDirty();
-
-      instance._animated = true;
-      instance._owned = true;
-      instance._parent = this;
       instance._name = name || null;
 
       instance.dispatchEvent(new flash.events.Event("load"));
