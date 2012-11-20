@@ -16,7 +16,6 @@ var MovieClipDefinition = (function () {
       this._scenes = { };
       this._timeline = null;
       this._totalFrames = 1;
-      this._scenes = { };
 
       var s = this.symbol;
       if (s) {
