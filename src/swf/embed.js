@@ -96,10 +96,8 @@ SWF.embed = function(file, container, options) {
     });
 
     var bgcolor = loaderInfo._backgroundColor;
-    if (bgcolor) {
-      stage._color = bgcolor;
-      canvas.style.background = toStringRgba(bgcolor);
-    }
+    stage._color = bgcolor;
+    canvas.style.background = toStringRgba(bgcolor);
 
     var root = loader._content;
     stage._children[0] = root;
