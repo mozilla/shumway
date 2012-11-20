@@ -122,8 +122,7 @@ var LoaderDefinition = (function () {
               repeat++;
             }
             frameIndex += repeat;
-            if (repeat > 1)
-              frame.repeat = repeat;
+            frame.repeat = repeat;
             frame.depths = depths;
             frames.push(frame);
             depths = { };
@@ -229,8 +228,7 @@ var LoaderDefinition = (function () {
                 tagsProcessed++;
                 repeat++;
               }
-              if (repeat > 1)
-                frame.repeat = repeat;
+              frame.repeat = repeat;
               frame.depths = depths;
               commitData(frame);
               depths = { };
@@ -351,7 +349,7 @@ var LoaderDefinition = (function () {
       else
         loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
 
-      var i = frame.repeat || 1;
+      var i = frame.repeat;
       while (i--)
         timeline.push(framePromise);
 
@@ -407,7 +405,7 @@ var LoaderDefinition = (function () {
         }
 
         framePromise.resolve(displayList);
-        root._framesLoaded++;
+        root._framesLoaded += frame.repeat;
 
         if (labelName && root._frameLabels) {
           root._frameLabels[labelName] = {
@@ -619,7 +617,7 @@ var LoaderDefinition = (function () {
             };
           }
 
-          var j = frame.repeat || 1;
+          var j = frame.repeat;
           while (j--)
             timeline.push(framePromise);
 
