@@ -26,6 +26,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Scope = IR.Scope;
   var Operator = IR.Operator;
   var Parameter = IR.Parameter;
+  var NewArray = IR.NewArray;
+  var NewObject = IR.NewObject;
+  var KeyValuePair = IR.KeyValuePair;
+  var RuntimeMultiname = IR.RuntimeMultiname;
 
   var DFG = IR.DFG;
   var CFG = IR.CFG;
@@ -232,7 +236,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return state.saved;
         }
 
-        var object, value, multiname, type;
+        var object, value, multiname, type, arguments;
 
         function push(x) {
           stack.push(x);
@@ -259,9 +263,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               name = pop();
             }
             if (multiname.isRuntimeNamespace()) {
+              assert (false, "Is |namespaces| an array or not?");
               namespaces = pop();
             }
-            assert (false);
             return new RuntimeMultiname(new Constant(multiname), namespaces, name);
           } else {
             return new Constant(multiname);
@@ -293,8 +297,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           store(new SetSlot(region, state.store, object, index, value));
         }
 
-        function call(object, args) {
-          return store(new Call(region, state.store, object, args));
+        function call(callee, object, arguments) {
+          return store(new Call(region, state.store, callee, object, arguments));
         }
 
         function constant(value) {
@@ -433,10 +437,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_debugline:
               break;
             case OP_callproperty:
-              args = stack.popMany(bc.argCount);
+              arguments = stack.popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(call(getProperty(object, multiname), args));
+              push(call(getProperty(object, multiname), object, arguments));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_returnvalue:
@@ -508,7 +512,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               value = pop();
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname), multiname);
-              push(call("isInstance", [value, type]));
+              push(call("isInstance", null, [value, type]));
               break;
             case OP_convert_i:
               push(toInt32(pop()));
@@ -522,6 +526,19 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_kill:
               push(Undefined);
               popLocal(bc.index);
+              break;
+            case OP_newarray:
+              arguments = stack.popMany(bc.argCount);
+              push(new NewArray(arguments));
+              break;
+            case OP_newobject:
+              var properties = [];
+              for (var i = 0; i < bc.argCount; i++) {
+                var value = pop();
+                var key = pop();
+                properties.unshift(new KeyValuePair(key, value));
+              }
+              push(new NewObject(properties));
               break;
             default:
               unexpected("Not Implemented: " + bc);

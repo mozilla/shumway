@@ -2,16 +2,44 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
- (function (exports) {
+(function (exports) {
 
   /**
-   * Sea-of-Nodes IR based on Cliff Click's Work:
-   * A simple graph-based intermediate representation (http://doi.acm.org/10.1145/202530.202534)
+   * SSA-based Sea-of-Nodes IR based on Cliff Click's Work: A simple graph-based intermediate
+   * representation (http://doi.acm.org/10.1145/202530.202534)
+   *
+   * Node Hierarchy:
+   *
+   * Node
+   *  - Control
+   *    - Region
+   *      - Start
+   *    - End
+   *      - Stop
+   *      - If
+   *      - Jump
+   *  - Value
+   *    - Constant, Parameter, Phi, Binary, ...
+   *
+   * Control flow is modeled with control edges rather than with CFGs. Each basic block is represented
+   * as a region node which has control dependencies on predecessor regions. Nodes that are dependent
+   * on the execution of a region, have a |control| property assigned to the region they belong to.
+   *
+   * Memory (and the external world) is modeled as an SSA value called the Store. Nodes that mutate the
+   * Store produce a new Store.
+   *
+   * Nodes that produce multiple values, such as Ifs which produce two values (a True and False control
+   * value) can have their values projected (extracted) using Projection nodes.
+   *
+   * A node scheduler is responsible for serializing nodes back into a CFG such that all dependencies
+   * are satisfied.
+   *
+   * Compiler Pipeline:
+   *
+   * Graph Builder -> IR (DFG) -> Optimizations -> CFG -> Restructuring -> Backend
+   *
    */
 
-  /**
-   * Describes binary and unary operators.
-   */
   var Operator = (function () {
     var map = {};
 
@@ -91,7 +119,7 @@
     } else if (o instanceof Variable) {
       return o.name;
     } else if (o instanceof Phi) {
-      return result = "|" + o.id + ":" + o.arguments.length + "|", useColors ? PURPLE + result + ENDC : result;
+      return result = "|" + o.id + "|", useColors ? PURPLE + result + ENDC : result;
     } else if (o instanceof Control) {
       return result = "{" + o.id + "}", useColors ? RED + result + ENDC : result;
     } else if (o instanceof Projection) {
@@ -104,7 +132,7 @@
     } else if (o instanceof Node) {
       return o.id;
     }
-    unexpected(o);
+    unexpected(o + " " + typeof o);
   }
 
   function toID(node) {
@@ -138,6 +166,10 @@
       return str;
     };
     constructor.prototype.visitInputs = function (fn, visitConstants) {
+      if (isConstant(this)) {
+        // Don't visit properties of constants.
+        return;
+      }
       for (var k in this) {
         var v = this[k];
         if (v instanceof Constant && !visitConstants) {
@@ -196,6 +228,7 @@
       Node.apply(this);
     }
     constructor.prototype = extend(Node);
+    constructor.prototype.mustFloat = false;
     return constructor;
   })();
 
@@ -452,6 +485,10 @@
     return control instanceof Control;
   }
 
+  function isValueOrNull(value) {
+    return isValue(value) || value === null;
+  }
+
   function isValue(value) {
     return value instanceof Value;
   }
@@ -506,25 +543,25 @@
      return constructor;
    })();
 
-   var SetSlot = (function () {
-     function constructor(control, store, object, index, value) {
-       Node.call(this);
-       assert (isControlOrNull(control));
-       assert (isStore(store));
-       assert (object);
-       assert (isValue(index));
-       assert (value);
-       this.control = control;
-       this.store = store;
-       this.object = object;
-       this.index = index;
-       this.value = value;
+  var SetSlot = (function () {
+    function constructor(control, store, object, index, value) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (isValue(index));
+      assert (value);
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.index = index;
+      this.value = value;
      }
      constructor.prototype = extend(Value, "SetSlot");
      return constructor;
-   })();
+  })();
 
-   var FindProperty = (function () {
+  var FindProperty = (function () {
     function constructor(scope, name) {
       Node.call(this);
       assert (isScope(scope));
@@ -536,17 +573,66 @@
     return constructor;
   })();
 
+  var NewArray = (function () {
+    function constructor(elements) {
+      Node.call(this);
+      assert (isArray(elements));
+      this.elements = elements;
+    }
+    constructor.prototype = extend(Value, "NewArray");
+    return constructor;
+  })();
+
+  var KeyValuePair = (function () {
+    function constructor(key, value) {
+      Node.call(this);
+      assert (key);
+      assert (value);
+      this.key = key;
+      this.value = value;
+    }
+    constructor.prototype = extend(Value, "KeyValuePair");
+    constructor.prototype.mustFloat = true;
+    return constructor;
+  })();
+
+  var NewObject = (function () {
+    function constructor(properties) {
+      Node.call(this);
+      assert (isArray(properties));
+      this.properties = properties;
+    }
+    constructor.prototype = extend(Value, "NewObject");
+    return constructor;
+  })();
+
+  var RuntimeMultiname = (function () {
+    function constructor(multiname, namespaces, name) {
+      Node.call(this);
+      assert (multiname);
+      assert (namespaces);
+      assert (name);
+      this.multiname = multiname;
+      this.namespaces = namespaces;
+      this.name = name;
+    }
+    constructor.prototype = extend(Value, "RuntimeMultiname");
+    return constructor;
+  })();
+
   var Call = (function () {
-    function constructor(control, store, callee, args) {
+    function constructor(control, store, callee, object, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
+      assert (isValueOrNull(object));
       assert (isStore(store));
       assert (isArray(args));
       this.control = control;
       this.callee = callee;
+      this.object = object;
       this.store = store;
-      this.args = args;
+      this.arguments = args;
     }
     constructor.prototype = extend(Value, "Call");
     return constructor;
@@ -561,6 +647,7 @@
   })();
 
   var Undefined = new Constant(undefined);
+
   Undefined.toString = function () {
     return "_";
   };
@@ -624,6 +711,9 @@
       assert (isValue(node), node);
       // assert (isNotPhi(node));
       assert (this.nodes.indexOf(node) < 0);
+      if (node.mustFloat) {
+        return;
+      }
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
     constructor.prototype.toString = function () {
@@ -1537,6 +1627,10 @@
   exports.Variable = Variable;
   exports.Move = Move;
   exports.Parameter = Parameter;
+  exports.NewArray = NewArray;
+  exports.NewObject = NewObject;
+  exports.KeyValuePair = KeyValuePair;
+  exports.RuntimeMultiname = RuntimeMultiname;
 
   exports.DFG = DFG;
   exports.CFG= CFG;

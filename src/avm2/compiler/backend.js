@@ -21,6 +21,7 @@
   const ArrayExpression = T.ArrayExpression;
   const UnaryExpression = T.UnaryExpression;
   const NewExpression = T.NewExpression;
+  const Property = T.Property;
   const UpdateExpression = T.UpdateExpression;
   const ForStatement = T.ForStatement;
   const BlockStatement = T.BlockStatement;
@@ -177,21 +178,21 @@
     return obj;
   }
 
-  function call(callee, args) {
-    release || assert(args instanceof Array);
-    args.forEach(function (x) {
-      release || assert(!(x instanceof Array));
-      release || assert(x !== undefined);
+  function call(callee, arguments) {
+    assert(arguments instanceof Array);
+    arguments.forEach(function (x) {
+      assert(!(x instanceof Array));
+      assert(x !== undefined);
     });
-    return new CallExpression(callee, args);
+    return new CallExpression(callee, arguments);
   }
 
-  function callCall(callee, args) {
-    return call(property(callee, "call"), args);
+  function callCall(callee, object, arguments) {
+    return call(property(callee, "call"), [object].concat(arguments));
   }
 
   function assignment(left, right) {
-    release || assert(left && right);
+    assert(left && right);
     return new AssignmentExpression(left, "=", right);
   }
 
@@ -317,12 +318,23 @@
     assert (value);
     assert (value.compile, "Implement |compile| for " + value + " (" + value.nodeName + ")");
     assert (cx instanceof Context);
-
+    assert (!isArray(value));
     if (noVariable || !value.variable) {
       return value.compile(cx);
     }
     assert (value.variable, "Value has no variable: " + value);
     return id(value.variable.name);
+  }
+
+  function isArray(array) {
+    return array instanceof Array;
+  }
+
+  function compileValues(values, cx) {
+    assert (isArray(values));
+    return values.map(function (value) {
+      return compileValue(value, cx);
+    });
   }
 
   IR.Parameter.prototype.compile = function (cx) {
@@ -368,10 +380,15 @@
   };
 
   IR.Call.prototype.compile = function (cx) {
-    var args = this.args.map(function (arg) {
+    var arguments = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
-    return call(compileValue(this.callee, cx), args);
+    var callee = compileValue(this.callee, cx);
+    if (this.object) {
+      var object = compileValue(this.object, cx);
+      return callCall(callee, object, arguments);
+    }
+    return call(callee, arguments);
   };
 
   IR.This.prototype.compile = function (cx) {
@@ -391,7 +408,9 @@
   };
 
   IR.GetProperty.prototype.compile = function (cx) {
-    notImplemented();
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    return call(id("getProperty"), [object, name]);
   };
 
   IR.SetSlot.prototype.compile = function (cx) {
@@ -410,7 +429,25 @@
     return compileValue(this.argument.scope, cx);
   };
 
+  IR.NewArray.prototype.compile = function (cx) {
+    return new ArrayExpression(compileValues(this.elements, cx));
+  };
 
+  IR.NewObject.prototype.compile = function (cx) {
+    var properties = this.properties.map(function (property) {
+      var key = compileValue(property.key, cx);
+      var value = compileValue(property.value, cx);
+      return new Property(key, value, "init");
+    });
+    return new ObjectExpression(properties);
+  };
+
+  IR.RuntimeMultiname.prototype.compile = function (cx) {
+    // CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
+    var namespaces = compileValue(this.namespaces, cx);
+    var name = compileValue(this.name, cx);
+    return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
+  };
   function generateSource(node) {
     return escodegen.generate(node, {base: "", indent: "  ", comment: true});
   }
