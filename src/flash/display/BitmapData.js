@@ -95,7 +95,17 @@ var BitmapDataDefinition = (function () {
       }
       this._ctx.restore();
     },
+
+    get width() {
+      return this._drawable.width;
+    },
+
+    get height() {
+      return this._drawable.height;
+    },
   };
+
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {
@@ -110,6 +120,8 @@ var BitmapDataDefinition = (function () {
         draw : def.draw,
         clone : def.clone,
         scroll : def.scroll,
+        width : desc(def, "width"),
+        height : desc(def, "height"),
       }
     }
   };
