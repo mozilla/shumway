@@ -69,6 +69,12 @@ var BitmapDataDefinition = (function () {
     setPixel32 : function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
     },
+    clone : function() {
+      this._checkCanvas();
+      var bd = new flash.display.BitmapData(this._drawable.width, this._drawable.height, true, 0);
+      bd._ctx.drawImage(this._drawable, 0, 0);
+      return bd;
+    },
   };
 
   def.__glue__ = {
@@ -81,7 +87,8 @@ var BitmapDataDefinition = (function () {
         getPixel32 : def.getPixel32,
         setPixel : def.setPixel,
         setPixel32 : def.setPixel32,
-        draw : def.draw
+        draw : def.draw,
+        clone : def.clone,
       }
     }
   };
