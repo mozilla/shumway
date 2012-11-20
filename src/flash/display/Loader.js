@@ -348,6 +348,8 @@ var LoaderDefinition = (function () {
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
+      else
+        loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
 
       var i = frame.repeat || 1;
       while (i--)
