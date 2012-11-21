@@ -116,14 +116,24 @@ function renderStage(stage, ctx) {
         child._refreshAS2Variables();
       }
 
+      var mouseMoved = false;
+
+      var pt = { x: stage._mouseX, y: stage._mouseY };
+      child._applyCurrentInverseTransform(pt, child._parent);
+
+      if (pt.x !== child._mouseX || pt.y !== child._mouseY)
+        mouseMoved = true;
+
+      child._mouseX = pt.x;
+      child._mouseY = pt.y;
+
       if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
         var hitArea = child._hitArea || child;
-        var pt = new flash.geom.Point(stage._mouseX, stage._mouseY);
-        child._applyCurrentInverseTransform(pt, child._parent);
 
-        if (child._hitTest(true, pt.x, pt.y, true)) {
+        if (child._hitTest(true, pt.x, pt.y, true, true)) {
           if (interactiveParent._mouseOver) {
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+            if (mouseMoved)
+              interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
           } else {
             interactiveParent._mouseOver = true;
             interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));

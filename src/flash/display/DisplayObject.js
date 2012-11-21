@@ -33,6 +33,9 @@ var DisplayObjectDefinition = (function () {
       this._graphics = null;
       this._loaderInfo = null;
       this._mouseChildren = true;
+      this._mouseOver = false;
+      this._mouseX = 0;
+      this._mouseY = 0;
       this._name = null;
       this._opaqueBackground = null;
       this._owned = false;
@@ -79,7 +82,7 @@ var DisplayObjectDefinition = (function () {
       if (this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
-    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
       if (use_xy) {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
@@ -94,7 +97,8 @@ var DisplayObjectDefinition = (function () {
 
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
-              var pathTracker = subpaths[i], path = pathTracker.target;
+              var pathTracker = subpaths[i];
+              var path = pathTracker.target;
               var hitCtx = path.__hitContext__;
 
               if (hitCtx.isPointInPath(pt.x, pt.y))
@@ -131,11 +135,13 @@ var DisplayObjectDefinition = (function () {
             }
           }
 
-          var children = this._children;
-          for (var i = 0, n = children.length; i < n; i++) {
-            var child = children[i];
-            if (child._hitTest(true, x, y, true))
-              return true;
+          if (!ignoreChildren) {
+            var children = this._children;
+            for (var i = 0, n = children.length; i < n; i++) {
+              var child = children[i];
+              if (child._hitTest(true, x, y, true))
+                return true;
+            }
           }
 
           return false;
@@ -233,12 +239,10 @@ var DisplayObjectDefinition = (function () {
       this._name = val;
     },
     get mouseX() {
-      var p = { x: this._stage._mouseX, y: this._stage._mouseY };
-      return this._applyCurrentInverseTransform(p).x;
+      return this._mouseX;
     },
     get mouseY() {
-      var p = { x: this._stage._mouseX, y: this._stage._mouseY };
-      return this._applyCurrentInverseTransform(p).y;
+      return this._mouseY;
     },
     get opaqueBackground() {
       return this._opaqueBackground;

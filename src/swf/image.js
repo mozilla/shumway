@@ -118,6 +118,8 @@ function defineImage(tag, dictionary) {
   var img = {
     type: 'image',
     id: tag.id,
+    width: width,
+    height: height,
     mimeType: tag.mimeType,
     data: data
   };

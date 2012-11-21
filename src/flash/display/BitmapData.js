@@ -6,33 +6,35 @@ var BitmapDataDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this.ctor(s.width, s.height);
-        this._ctx.drawImage(s.canvas, 0, 0);
+        this._ctx.drawImage(s.img, 0, 0);
       }
     },
 
     _checkCanvas: function() {
-      if (this._canvas === null)
-        avm2.throwErrorFromVM("ArgumentError");
+      if (this._drawable === null)
+        throw ArgumentError();
     },
 
     ctor : function(width, height, transparent, backgroundColor) {
       if (isNaN(width + height) || width <= 0 || height <= 0)
-        avm2.throwErrorFromVM("ArgumentError");
+        throw ArgumentError();
 
       this._transparent = !!transparent;
-      this._canvas = document.createElement('canvas');
-      this._ctx = this._canvas.getContext('2d');
-      this._canvas.width = width | 0;
-      this._canvas.height = height | 0;
+      var canvas = document.createElement('canvas');
+      this._ctx = canvas.getContext('2d');
+      canvas.width = width | 0;
+      canvas.height = height | 0;
+      this._drawable = canvas;
+      this._backgroundColor = backgroundColor;
 
       if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
     },
     dispose: function() {
-      this._canvas.width = 0;
-      this._canvas.height = 0;
-      this._canvas = null;
       this._ctx = null;
+      this._drawable.width = 0;
+      this._drawable.height = 0;
+      this._drawable = null;
     },
     draw : function(source, matrix, colorTransform, blendMode, clipRect) {
       this._checkCanvas();
@@ -68,7 +70,42 @@ var BitmapDataDefinition = (function () {
     setPixel32 : function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
     },
+    clone : function() {
+      this._checkCanvas();
+      var bd = new flash.display.BitmapData(this._drawable.width, this._drawable.height, true, 0);
+      bd._ctx.drawImage(this._drawable, 0, 0);
+      return bd;
+    },
+    scroll : function(x, y) {
+      this._checkCanvas();
+      this._ctx.draw(this._drawable, x, y);
+      this._ctx.save();
+      this._ctx.fillStyle = ARGBtoCSSColor(this._backgroundColor);
+      var w = this._drawable.width;
+      var h = this._drawable.height;
+      if (x > 0) {
+        this._ctx.fillRect(0, 0, x, h);
+      } else if (x < 0) {
+        this._ctx.fillRect(x, 0, w, h);
+      }
+      if (y > 0) {
+        this._ctx.fillRect(x, y, w, h);
+      } else if (y < 0) {
+        this._ctx.fillRect(0, y, w, h);
+      }
+      this._ctx.restore();
+    },
+
+    get width() {
+      return this._drawable.width;
+    },
+
+    get height() {
+      return this._drawable.height;
+    },
   };
+
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {
@@ -80,7 +117,11 @@ var BitmapDataDefinition = (function () {
         getPixel32 : def.getPixel32,
         setPixel : def.setPixel,
         setPixel32 : def.setPixel32,
-        draw : def.draw
+        draw : def.draw,
+        clone : def.clone,
+        scroll : def.scroll,
+        width : desc(def, "width"),
+        height : desc(def, "height"),
       }
     }
   };

@@ -122,8 +122,7 @@ var LoaderDefinition = (function () {
               repeat++;
             }
             frameIndex += repeat;
-            if (repeat > 1)
-              frame.repeat = repeat;
+            frame.repeat = repeat;
             frame.depths = depths;
             frames.push(frame);
             depths = { };
@@ -229,8 +228,7 @@ var LoaderDefinition = (function () {
                 tagsProcessed++;
                 repeat++;
               }
-              if (repeat > 1)
-                frame.repeat = repeat;
+              frame.repeat = repeat;
               frame.depths = depths;
               commitData(frame);
               depths = { };
@@ -348,8 +346,10 @@ var LoaderDefinition = (function () {
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
+      else
+        loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
 
-      var i = frame.repeat || 1;
+      var i = frame.repeat;
       while (i--)
         timeline.push(framePromise);
 
@@ -405,7 +405,7 @@ var LoaderDefinition = (function () {
         }
 
         framePromise.resolve(displayList);
-        root._framesLoaded++;
+        root._framesLoaded += frame.repeat;
 
         if (labelName && root._frameLabels) {
           root._frameLabels[labelName] = {
@@ -527,24 +527,20 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'image':
-        var canvas = document.createElement('canvas');
-
         var img = new Image;
         var imgPromise = new Promise;
         img.onload = function () {
-          canvas.width = img.width;
-          canvas.height = img.height;
-
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-
           imgPromise.resolve();
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
 
         promiseQueue.push(imgPromise);
         symbolInfo.className = 'flash.display.BitmapData';
-        symbolInfo.props = { canvas: canvas };
+        symbolInfo.props = {
+          img: img,
+          width: symbol.width,
+          height: symbol.height
+        };
         break;
       case 'label':
         var drawFn = new Function('d,c,r', symbol.data);
@@ -621,7 +617,7 @@ var LoaderDefinition = (function () {
             };
           }
 
-          var j = frame.repeat || 1;
+          var j = frame.repeat;
           while (j--)
             timeline.push(framePromise);
 
