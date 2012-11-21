@@ -17,8 +17,8 @@ function proxyNativeReadonlyProperty(propertyName) {
 
 function proxyNativeMethod(methodName) {
   return {
-    value: function attachAudio(id) {
-      return this.$nativeObject[methodName].apply(this, arguments);
+    value: function proxyMethod(id) {
+      return this.$nativeObject[methodName].apply(this.$nativeObject, arguments);
     },
     enumerable: false
   };
@@ -64,46 +64,11 @@ function defineObjectProperties(obj, propeties) {
     Object.defineProperty(obj, i, propeties[i]);
 }
 
+function getAS2Object(nativeObject) {
+  return nativeObject ? nativeObject._getAS2Object() : null;
+}
+
 // AS2 Classes
-
-function nativeFunction(name) {
-  return {
-    value: function() {
-      return this.$nativeObject[name].apply(this.$nativeObject, arguments);
-    },
-    enumerable: false
-  };
-}
-
-function nativeGetter(name) {
-  return {
-    get: function() {
-      return this.$nativeObject[name];
-    },
-    enumerable: false
-  };
-}
-
-function nativeProperty(name) {
-  return {
-    get: function() {
-      return this.$nativeObject[name];
-    },
-    set: function(value) {
-      this.$nativeObject[name] = value;
-    },
-    enumerable: false
-  };
-}
-
-function getTargetPath(nativeObject) {
-  var path = [];
-  while (nativeObject) {
-    path.push(nativeObject.$name);
-    nativeObject = nativeObject.parent;
-  }
-  return '/' + path.join('/');
-}
 
 function AS2MovieClip() {
 }
@@ -125,15 +90,14 @@ AS2MovieClip.prototype = Object.create({}, {
       if (id == '.') {
         return this;
       } else if (id == '..') {
-        child = this.$nativeObject.parent;
+        return getAS2Object(this.$nativeObject.parent);
       } else {
-        child = this.$nativeObject.getChildByName(id);
+        return getAS2Object(this.$nativeObject.getChildByName(id));
       }
-      return child ? child._getAS2Object() : null;
     },
     enumerable: false
   },
-  _alpha: nativeProperty('alpha'),
+  _alpha: proxyNativeProperty('alpha'),
   attachAudio: {
     value: function attachAudio(id) {
       throw 'Not implemented: attachAudio';
@@ -180,8 +144,8 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  blendMode: nativeProperty('blendMode'),
-  cacheAsBitmap: nativeProperty('cacheAsBitmap'),
+  blendMode: proxyNativeProperty('blendMode'),
+  cacheAsBitmap: proxyNativeProperty('cacheAsBitmap'),
   clear: {
     value: function clear() {
       this.$nativeObject._graphics.clear();
@@ -205,14 +169,14 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  _currentframe: nativeGetter('currentFrame'),
+  _currentframe: proxyNativeReadonlyProperty('currentFrame'),
   curveTo: {
     value: function curveTo(controlX, controlY, anchorX, anchorY) {
       this.$nativeObject._graphics.curveTo(controlX, controlY, anchorX, anchorY);
     },
     enumerable: false
   },
-  _droptarget: nativeGetter('dropTarget'),
+  _droptarget: proxyNativeReadonlyProperty('dropTarget'),
   duplicateMovieClip: {
     value: function duplicateMovieClip(name, depth, initObject) {
       var newNativeObj = this.$nativeObject.duplicateMovieClip(name, depth, initObject);
@@ -222,7 +186,7 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  enabled: nativeProperty('enabled'),
+  enabled: proxyNativeProperty('enabled'),
   endFill: {
     value: function endFill() {
       this.$nativeObject._graphics.endFill();
@@ -249,7 +213,7 @@ AS2MovieClip.prototype = Object.create({}, {
     set: function set$forceSmoothing(value) { throw 'Not implemented: set$forceSmoothing'; },
     enumerable: true
   },
-  _framesloaded: nativeGetter('_framesLoaded'),
+  _framesloaded: proxyNativeReadonlyProperty('_framesLoaded'),
   getBounds: {
     value: function getBounds(bounds) {
       var obj = bounds.$nativeObject;
@@ -322,9 +286,9 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  gotoAndPlay: nativeFunction('gotoAndPlay'),
-  gotoAndStop: nativeFunction('gotoAndStop'),
-  _height: nativeProperty('height'),
+  gotoAndPlay: proxyNativeMethod('gotoAndPlay'),
+  gotoAndStop: proxyNativeMethod('gotoAndStop'),
+  _height: proxyNativeProperty('height'),
   _highquality: {
     get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
     set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
@@ -399,8 +363,8 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  _name: nativeProperty('name'),
-  nextFrame: nativeFunction('nextFrame'),
+  _name: proxyNativeProperty('name'),
+  nextFrame: proxyNativeMethod('nextFrame'),
   onData: proxyEventHandler('data'),
   onDragOut: proxyEventHandler('dragOut'),
   onDragOut: proxyEventHandler('dragOver'),
@@ -418,17 +382,14 @@ AS2MovieClip.prototype = Object.create({}, {
   onRollOver: proxyEventHandler('rollOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   onUnload: proxyEventHandler('unload'),
-  opaqueBackground: nativeProperty('opaqueBackground'),
+  opaqueBackground: proxyNativeProperty('opaqueBackground'),
   _parent: { // @flash.display.DisplayObject
-    get: function get$_parent() {
-      var parent = this.$nativeObject.parent;
-      return parent ? parent._getAS2Object() : null;
-    },
+    get: function get$_parent() { return getAS2Object(this.$nativeObject.parent); },
     set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
     enumerable: true
   },
-  play: nativeFunction('play'),
-  prevFrame: nativeFunction('prevFrame'),
+  play: proxyNativeMethod('play'),
+  prevFrame: proxyNativeMethod('prevFrame'),
   _quality: { // @flash.display.Stage
     get: function get$_quality() { throw 'Not implemented: get$_quality'; },
     set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
@@ -441,7 +402,7 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  _rotation: nativeProperty('rotation'),
+  _rotation: proxyNativeProperty('rotation'),
   scale9Grid: { // @flash.display.DisplayObject
     get: function get$scale9Grid() { throw 'Not implemented: get$scale9Grid'; },
     set: function set$scale9Grid(value) { throw 'Not implemented: set$scale9Grid'; },
@@ -470,22 +431,33 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
-  stop: nativeFunction('stop'),
-  stopDrag: nativeFunction('stopDrag'),
+  stop: proxyNativeMethod('stop'),
+  stopDrag: proxyNativeMethod('stopDrag'),
   swapDepths: {
     value: function swapDepths(target) {
       throw 'Not implemented: swapDepths';
     },
     enumerable: false
   },
-  tabChildren: nativeProperty('tabChildren'),
-  tabEnabled: nativeProperty('tabEnabled'),
-  tabIndex: nativeProperty('tabIndex'),
+  tabChildren: proxyNativeProperty('tabChildren'),
+  tabEnabled: proxyNativeProperty('tabEnabled'),
+  tabIndex: proxyNativeProperty('tabIndex'),
   _target: {
-    get: function get$_target() { return getTargetPath(this.$nativeObject) },
+    get: function get$_target() {
+      var nativeObject = this.$nativeObject;
+      if (nativeObject === nativeObject.root) {
+        return '/';
+      }
+      var path = '';
+      do {
+        path = '/' + nativeObject.name + path;
+        nativeObject = nativeObject.parent;
+      } while (nativeObject !== nativeObject.root);
+      return path;
+    },
     enumerable: true
   },
-  _totalframes: nativeGetter('totalFrames'),
+  _totalframes: proxyNativeReadonlyProperty('totalFrames'),
   trackAsMenu: {
     get: function get$trackAsMenu() { throw 'Not implemented: get$trackAsMenu'; },
     set: function set$trackAsMenu(value) { throw 'Not implemented: set$trackAsMenu'; },
@@ -506,15 +478,15 @@ AS2MovieClip.prototype = Object.create({}, {
     get: function get$_url() { throw 'Not implemented: get$_url'; },
     enumerable: true
   },
-  useHandCursor: nativeProperty('useHandCursor'),
-  _visible: nativeProperty('visible'),
-  _width: nativeProperty('width'),
-  _x: nativeProperty('x'),
-  _xmouse: nativeGetter('mouseX'),
-  _xscale: nativeProperty('scaleX'),
-  _y: nativeProperty('y'),
-  _ymouse: nativeGetter('mouseY'),
-  _yscale: nativeProperty('scaleY'),
+  useHandCursor: proxyNativeProperty('useHandCursor'),
+  _visible: proxyNativeProperty('visible'),
+  _width: proxyNativeProperty('width'),
+  _x: proxyNativeProperty('x'),
+  _xmouse: proxyNativeReadonlyProperty('mouseX'),
+  _xscale: proxyNativeProperty('scaleX'),
+  _y: proxyNativeProperty('y'),
+  _ymouse: proxyNativeReadonlyProperty('mouseY'),
+  _yscale: proxyNativeProperty('scaleY'),
 });
 
 function AS2Button() {
@@ -599,8 +571,8 @@ AS2Button.prototype = Object.create({}, {
   onRollOver: proxyEventHandler('rollOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   _parent: { // @flash.display.DisplayObject
-    get: function get$_parent() { return this.$nativeObject.parent; },
-    set: function set$_parent(value) { this.$nativeObject.parent = value; },
+    get: function get$_parent() { return getAS2Object(this.$nativeObject.parent); },
+    set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
     enumerable: true
   },
   _quality: {
@@ -818,8 +790,8 @@ AS2TextField.prototype = Object.create({}, {
   onRollOver: proxyEventHandler('rollOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   _parent: { // @flash.display.DisplayObject
-    get: function get$_parent() { return this.$nativeObject.parent; },
-    set: function set$_parent(value) { this.$nativeObject.parent = value; },
+    get: function get$_parent() { return getAS2Object(this.$nativeObject.parent); },
+    set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
     enumerable: true
   },
   password: {
