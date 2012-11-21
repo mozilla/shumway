@@ -359,9 +359,9 @@ var DisplayObjectDefinition = (function () {
       var bbox = this._bbox;
 
       var xMin = Number.MAX_VALUE;
-      var xMax = 0;
+      var xMax = Number.MIN_VALUE;
       var yMin = Number.MAX_VALUE;
-      var yMax = 0;
+      var yMax = Number.MIN_VALUE;
 
       if (!bbox) {
         var children = this._children;
@@ -401,6 +401,10 @@ var DisplayObjectDefinition = (function () {
           yMin = Math.min(yMin, y1, y2);
           yMax = Math.max(yMax, y1, y2);
         }
+      }
+
+      if (xMin === Number.MAX_VALUE) {
+        return new flash.geom.Rectangle();
       }
 
       var p1 = { x: xMin, y: yMin };
