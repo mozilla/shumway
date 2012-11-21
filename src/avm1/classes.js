@@ -100,7 +100,7 @@ function getTargetPath(nativeObject) {
   var path = [];
   while (nativeObject) {
     path.push(nativeObject.$name);
-    nativeObject = nativeObject.$parent;
+    nativeObject = nativeObject.parent;
   }
   return '/' + path.join('/');
 }
@@ -125,7 +125,7 @@ AS2MovieClip.prototype = Object.create({}, {
       if (id == '.') {
         return this;
       } else if (id == '..') {
-        child = this.$nativeObject.$parent;
+        child = this.$nativeObject.parent;
       } else {
         child = this.$nativeObject.getChildByName(id);
       }
@@ -419,7 +419,14 @@ AS2MovieClip.prototype = Object.create({}, {
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   onUnload: proxyEventHandler('unload'),
   opaqueBackground: nativeProperty('opaqueBackground'),
-  _parent: nativeProperty('parent'),
+  _parent: { // @flash.display.DisplayObject
+    get: function get$_parent() {
+      var parent = this.$nativeObject.parent;
+      return parent ? parent._getAS2Object() : null;
+    },
+    set: function set$_parent(value) { throw 'Not implemented: set$_parent'; },
+    enumerable: true
+  },
   play: nativeFunction('play'),
   prevFrame: nativeFunction('prevFrame'),
   _quality: { // @flash.display.Stage
