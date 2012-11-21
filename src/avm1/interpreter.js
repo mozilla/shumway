@@ -208,6 +208,10 @@ function interpretActions(actionsData, scopeContainer,
     if (target)
       return target.obj[target.name];
 
+    var mc = defaultTarget.$lookupChild(variableName);
+    if (mc)
+      return mc;
+
     for (var p = scopeContainer; p; p = p.next) {
       if (variableName in p.scope) {
         return p.scope[variableName];
@@ -270,11 +274,22 @@ function interpretActions(actionsData, scopeContainer,
   var scope = scopeContainer.scope;
   var isSwfVersion5 = currentContext.swfVersion >= 5;
   var actionTracer = ActionTracerFactory.get();
+  var nextPosition;
+
+  function skipActions(count) {
+    while (count > 0 && stream.position < stream.end) {
+      var actionCode = stream.readUI8();
+      var length = actionCode >= 0x80 ? stream.readUI16() : 0;
+      stream.position += length;
+      count--;
+    }
+    nextPosition = stream.position;
+  }
 
   while (stream.position < stream.end) {
     var actionCode = stream.readUI8();
     var length = actionCode >= 0x80 ? stream.readUI16() : 0;
-    var nextPosition = stream.position + length;
+    nextPosition = stream.position + length;
 
     actionTracer.print(stream.position, actionCode, stack);
     switch (actionCode) {
@@ -310,7 +325,7 @@ function interpretActions(actionsData, scopeContainer,
         var frame = stream.readUI16();
         var skipCount = stream.readUI8();
         if (!_global.ifFrameLoaded(frame))
-          nextPosition += skipCount; // actions or bytes ?
+          skipActions(skipCount);
         break;
       case 0x8B: // ActionSetTarget
         var targetName = stream.readString();
@@ -561,9 +576,7 @@ function interpretActions(actionsData, scopeContainer,
         var skipCount = stream.readUI8();
         var frame = stack.pop();
         if (!_global.ifFrameLoaded(frame))
-          nextPosition += skipCount; // actions or bytes ?
-        debugger;
-        //_global.waitForFrame(label, skipCount);
+          skipActions(skipCount);
         break;
       case 0x26: // ActionTrace
         var value = stack.pop();
@@ -687,7 +700,6 @@ function interpretActions(actionsData, scopeContainer,
         for (var i = 0; i < numArgs; i++)
           args.push(stack.pop());
         var method;
-        var result = {};
         if (methodName) {
           if (!(methodName in obj))
             throw 'Method ' + methodName + ' is not defined.';
@@ -695,8 +707,15 @@ function interpretActions(actionsData, scopeContainer,
         } else {
           method = obj;
         }
-        result.constructor = method;
-        method.apply(result, args);
+        // XXX: this is non-semantics-preserving, but it's
+        // necessary to make constructors for runtime objects
+        // work.
+        var result = new (method.bind.apply(method, [null].concat(args)))();
+        if (!result) {
+          result = {};
+          result.constructor = method;
+          method.apply(result, args);
+        }
         stack.push(result);
         break;
       case 0x40: // ActionNewObject

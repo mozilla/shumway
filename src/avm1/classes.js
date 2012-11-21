@@ -160,15 +160,23 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
+  beginFill: {
+    value: function beginFill(color, alpha) {
+      this.$nativeObject._graphics.beginFill(color, alpha);
+    },
+  },
   beginBitmapFill: {
     value: function beginBitmapFill(bmp, matrix, repeat, smoothing) {
-      throw 'Not implemented: beginBitmapFill';
+      if (!(bmp instanceof flash.display.BitmapData))
+        return;
+
+      this.$nativeObject._graphics.beginBitmapFill(bmp, matrix, repeat, smoothing);
     },
     enumerable: false
   },
   beginGradientFill: {
     value: function beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      throw 'Not implemented: beginGradientFill';
+      this.$nativeObject._graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     },
     enumerable: false
   },
@@ -176,7 +184,7 @@ AS2MovieClip.prototype = Object.create({}, {
   cacheAsBitmap: nativeProperty('cacheAsBitmap'),
   clear: {
     value: function clear() {
-      throw 'Not implemented: clear';
+      this.$nativeObject._graphics.clear();
     },
     enumerable: false
   },
@@ -200,7 +208,7 @@ AS2MovieClip.prototype = Object.create({}, {
   _currentframe: nativeGetter('currentFrame'),
   curveTo: {
     value: function curveTo(controlX, controlY, anchorX, anchorY) {
-      throw 'Not implemented: curveTo';
+      this.$nativeObject._graphics.curveTo(controlX, controlY, anchorX, anchorY);
     },
     enumerable: false
   },
@@ -217,7 +225,7 @@ AS2MovieClip.prototype = Object.create({}, {
   enabled: nativeProperty('enabled'),
   endFill: {
     value: function endFill() {
-      throw 'Not implemented: endFill';
+      this.$nativeObject._graphics.endFill();
     },
     enumerable: false
   },
@@ -339,19 +347,19 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   lineGradientStyle: {
     value: function lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
-      throw 'Not implemented: lineGradientStyle';
+      this.$nativeObject._graphics.lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     },
     enumerable: false
   },
   lineStyle: {
     value: function lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit) {
-      throw 'Not implemented: lineStyle';
+      this.$nativeObject._graphics.lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit);
     },
     enumerable: false
   },
   lineTo: {
     value: function lineTo(x, y) {
-      throw 'Not implemented: lineTo';
+      this.$nativeObject._graphics.lineTo(x, y);
     },
     enumerable: false
   },
@@ -387,7 +395,7 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   moveTo: {
     value: function moveTo(x, y) {
-      throw 'Not implemented: moveTo';
+      this.$nativeObject._graphics.moveTo(x, y);
     },
     enumerable: false
   },
