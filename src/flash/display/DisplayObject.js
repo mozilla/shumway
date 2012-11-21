@@ -82,7 +82,7 @@ var DisplayObjectDefinition = (function () {
       if (this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
-    _hitTest: function (use_xy, x, y, useShape, hitTestObject, deep) {
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
       if (use_xy) {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
@@ -135,7 +135,7 @@ var DisplayObjectDefinition = (function () {
             }
           }
 
-          if (deep) {
+          if (!ignoreChildren) {
             var children = this._children;
             for (var i = 0, n = children.length; i < n; i++) {
               var child = children[i];
@@ -437,10 +437,10 @@ var DisplayObjectDefinition = (function () {
       return result;
     },
     hitTestObject: function (obj) {
-      return this._hitTest(false, 0, 0, false, obj, true);
+      return this._hitTest(false, 0, 0, false, obj);
     },
     hitTestPoint: function (x, y, shapeFlag) {
-      return this._hitTest(true, x, y, shapeFlag, null, true);
+      return this._hitTest(true, x, y, shapeFlag, null);
     },
     localToGlobal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);

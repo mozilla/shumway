@@ -130,7 +130,7 @@ function renderStage(stage, ctx) {
       if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
         var hitArea = child._hitArea || child;
 
-        if (child._hitTest(true, pt.x, pt.y, true)) {
+        if (child._hitTest(true, pt.x, pt.y, true, true)) {
           if (interactiveParent._mouseOver) {
             if (mouseMoved)
               interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
