@@ -12,7 +12,7 @@ body {
 
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   body {
-    background: #1a2633;
+    background-color: #1a2633;
   }
 }
 
@@ -22,27 +22,33 @@ body {
 }
 
 .toolbarInfo {
-    font-family: Consolas, Lucida Grande, sans-serif;
+  font-family: Consolas, Lucida Grande, sans-serif;
 
-    padding: 4px 8px;
-    background: url(images/background-noise-toolbar.png),
-    -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
-    border-radius: 4px;
-    box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
-    0 0 0 1px hsla(0,0%,0%,.15),
-    0 10px 14px hsla(0,0%,0%,.4),
-    0 0 0 1px hsla(210,16%,76%,.15) inset,
-    0 1px 0 hsla(210,16%,76%,.15);
-    color: hsl(210,30%,85%);
-    font-size: 10px;
-    line-height: 22px;
-    text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
-    cursor: default;
-
-    line-height: 1.2em;
-    font-size: 11px;
-
-    overflow-x: auto;
+  padding: 4px 8px;
+  background-image: url(images/background-noise-toolbar.png),
+                    linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background-image: url(images/background-noise-toolbar.png),
+                    -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background-image: url(images/background-noise-toolbar.png),
+                    -webkit-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background-image: url(images/background-noise-toolbar.png),
+                    -o-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background-image: url(images/background-noise-toolbar.png),
+                    -ms-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  border-radius: 4px;
+  box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
+              0 0 0 1px hsla(0,0%,0%,.15),
+              0 10px 14px hsla(0,0%,0%,.4),
+              0 0 0 1px hsla(210,16%,76%,.15) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-size: 10px;
+  line-height: 22px;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  cursor: default;
+  line-height: 1.2em;
+  font-size: 11px;
+  overflow-x: auto;
 }
 
 .toolbarBox {
@@ -50,7 +56,16 @@ body {
   width: 600px;
   height: 24px;
   background: url(images/background-noise-toolbar.png),
+              linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
               -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -webkit-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -o-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -ms-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
+  background: url(images/background-noise-toolbar.png),
   border-radius: 4px;
   box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
               0 0 0 1px hsla(0,0%,0%,.15),
@@ -60,7 +75,15 @@ body {
 
 .toolbarBox.withEmphasis {
   background: url(images/background-noise-toolbar.png),
+              linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
               -moz-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -webkit-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -o-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
+  background: url(images/background-noise-toolbar.png),
+              -ms-linear-gradient(hsl(0,51%,36%), hsl(0,51%,18%));
   border-radius: 4px;
   box-shadow: 0 1px 0 hsla(0,56%,76%,.2) inset,
               0 0 0 1px hsla(0,0%,0%,.15),
@@ -85,19 +108,21 @@ body {
 }
 
 .toolbarLabel {
-    float: left;
-    width: 78px;
-    height: 22px;
-    margin-right: 10px;
-    0 0 0 1px hsla(210,16%,76%,.15) inset,
-    0 1px 0 hsla(210,16%,76%,.15);
-    color: hsl(210,30%,85%);
-    font-size: 12px;
-    line-height: 22px;
-    text-align: center;
-    text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
-    -moz-user-select: none;
-    cursor: default;
+  float: left;
+  width: 78px;
+  height: 22px;
+  margin-right: 10px;
+  color: hsl(210,30%,85%);
+  font-size: 12px;
+  line-height: 22px;
+  text-align: center;
+  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
+  cursor: default;
 }
 
 .toolbarButton {
@@ -107,7 +132,11 @@ body {
   margin-right: 10px;
   border: 1px solid hsla(210,8%,5%,.45);
   border-radius: 3px;
+  background: linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
   background: -moz-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -webkit-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -o-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
+  background: -ms-linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
   background-clip: padding-box;
   box-shadow: 0 1px 0 hsla(210,16%,76%,.15) inset,
               0 0 0 1px hsla(210,16%,76%,.15) inset,
@@ -117,13 +146,21 @@ body {
   line-height: 22px;
   text-align: center;
   text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
   -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
   cursor: default;
 }
 
 .toolbarButton:not(.pressedState):hover:active {
   border: 1px solid hsla(210,8%,5%,.6);
+  background: linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
   background: -moz-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -webkit-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -o-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
+  background: -ms-linear-gradient(hsla(220,6%,10%,.3), hsla(212,7%,57%,.15) 65%, hsla(212,7%,57%,.3));
   box-shadow: 0 0 3px hsla(210,8%,5%,.25) inset,
               0 1px 3px hsla(210,8%,5%,.25) inset,
               0 1px 0 hsla(210,16%,76%,.15);
@@ -131,7 +168,11 @@ body {
 
 .toolbarButton.pressedState {
   border: 1px solid hsla(210,8%,5%,.6);
+  background: linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
   background: -moz-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -webkit-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -o-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
+  background: -ms-linear-gradient(hsla(220,6%,10%,.6), hsla(210,11%,18%,.45) 75%, hsla(210,11%,30%,.4));
   box-shadow: 0 1px 3px hsla(210,8%,5%,.25) inset,
               0 1px 3px hsla(210,8%,5%,.25) inset,
               0 1px 0 hsla(210,16%,76%,.15);
@@ -152,7 +193,11 @@ body {
   line-height: 22px;
   text-align: center;
   text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
+  user-select: none;
   -moz-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  -ms-user-select: none;
   cursor: default;
 }
 
@@ -161,10 +206,18 @@ body {
   padding: 0 4px;
   height: 24px;
   border-width: 0 13px 0 8px;
+  border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
   -moz-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -o-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-start.png) 0 13 0 8 repeat;
 }
 .breadcrumbBarStart:hover:active {
+  border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
   -moz-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -o-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-start-pressed.png) 0 13 0 8 repeat;
 }
 
 .breadcrumbBarMiddle {
@@ -173,10 +226,18 @@ body {
   float: left;
   height: 24px;
   border-width: 0 13px;
+  border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -moz-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
   -moz-border-image: url(images/breadcrumb-mac-middle.png) 0 13 0 13 repeat;
 }
 .breadcrumbBarMiddle:hover:active {
+  border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
   -moz-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-middle-pressed.png) 0 13 0 13 repeat;
 }
 
 .breadcrumbBarEnd {
@@ -185,39 +246,61 @@ body {
   float: left;
   height: 24px;
   border-width: 0 8px 0 13px;
+  border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
   -moz-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-end-selected.png) 0 8 0 13 repeat;
   color: hsl(208,100%,60%);
 }
 .breadcrumbBarEnd:hover:active {
+  border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
   -moz-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -webkit-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -o-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
+  -ms-border-image: url(images/breadcrumb-mac-end-selected-pressed.png) 0 8 0 13 repeat;
 }
 
-
 .textInput {
-    float: left;
-    -moz-appearance: none;
-    margin: 0 3px;
-    background-color: transparent;
-    height: 22px;
-    border: 1px solid hsla(210,8%,5%,.6);
-    border-radius: 6px;
-    background-image: -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
-    background-repeat: no-repeat;
-    background-position: 4px center, top left, top left;
-    padding-top: 0;
-    padding-bottom: 0;
-    -moz-padding-start: 10px;
-    -moz-padding-end: 4px;
-    box-shadow: 0 1px 1px hsla(210,8%,5%,.3) inset,
-    0 0 0 1px hsla(210,16%,76%,.1) inset,
-    0 1px 0 hsla(210,16%,76%,.15);
-    color: hsl(210,30%,85%);
-    font-weight: bolder;
-
+  float: left;
+  appearance: none;
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  -o-appearance: none;
+  -ms-appearance: none;
+  margin: 0 3px;
+  background-color: transparent;
+  height: 22px;
+  border: 1px solid hsla(210,8%,5%,.6);
+  border-radius: 6px;
+  background-image: linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -moz-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -webkit-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -o-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-image: -ms-linear-gradient(hsla(210,16%,76%,.15), hsla(210,16%,76%,.35));
+  background-repeat: no-repeat;
+  background-position: 4px center, top left, top left;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-start: 10px;
+  -moz-padding-start: 10px;
+  -webkit-padding-start: 10px;
+  -o-padding-start: 10px;
+  -ms-padding-start: 10px;
+  padding-end: 4px;
+  -moz-padding-end: 4px;
+  -webkit-padding-end: 4px;
+  -o-padding-end: 4px;
+  -ms-padding-end: 4px;
+  box-shadow: 0 1px 1px hsla(210,8%,5%,.3) inset,
+              0 0 0 1px hsla(210,16%,76%,.1) inset,
+              0 1px 0 hsla(210,16%,76%,.15);
+  color: hsl(210,30%,85%);
+  font-weight: bolder;
 }
 
 .textInput:-moz-locale-dir(rtl) {
-    background-position: calc(100% - 4px) center, top left, top left;
+  background-position: calc(100% - 4px) center, top left, top left;
 }
 
 #stage {
