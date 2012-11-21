@@ -124,6 +124,7 @@ var as3error = {};
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
    M("flash.ui.Mouse", "MouseClass", MouseDefinition),
 
+   M("flash.text.Font", "FontClass", FontDefinition),
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
