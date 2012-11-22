@@ -19,7 +19,7 @@
    *      - If
    *      - Jump
    *  - Value
-   *    - Constant, Parameter, Phi, Binary, ...
+   *    - Constant, Parameter, Phi, Binary, GetProperty ...
    *
    * Control flow is modeled with control edges rather than with CFGs. Each basic block is represented
    * as a region node which has control dependencies on predecessor regions. Nodes that are dependent
@@ -420,7 +420,7 @@
   }
 
   function isScope(scope) {
-    return isPhi(scope) || scope instanceof Scope || isProjection(scope, Projection.Type.SCOPE);
+    return isPhi(scope) || scope instanceof AVM2Scope || isProjection(scope, Projection.Type.SCOPE);
   }
 
   function isStore(store) {
@@ -443,7 +443,7 @@
     return array instanceof Array;
   }
 
-  var Scope = (function () {
+  var AVM2Scope = (function () {
     function constructor(parent, object) {
       Node.call(this);
       assert (isScope(parent));
@@ -451,7 +451,7 @@
       this.parent = parent;
       this.object = object;
     }
-    constructor.prototype = extend(Value, "Scope");
+    constructor.prototype = extend(Value, "AVM2Scope");
     return constructor;
   })();
 
@@ -465,7 +465,7 @@
     return constructor;
   })();
 
-  var Global = (function () {
+  var AVM2Global = (function () {
     function constructor(control, scope) {
       Node.call(this);
       assert (isControlOrNull(control));
@@ -473,7 +473,7 @@
       this.control = control;
       this.scope = scope;
     }
-    constructor.prototype = extend(Value, "Global");
+    constructor.prototype = extend(Value, "AVM2Global");
     return constructor;
   })();
 
@@ -509,6 +509,14 @@
     return constructor;
   })();
 
+  var AVM2GetProperty = (function () {
+    function constructor(control, store, object, name) {
+      GetProperty.call(this, control, store, object, name);
+    }
+    constructor.prototype = extend(GetProperty, "AVM2GetProperty");
+    return constructor;
+  })();
+
   var SetProperty = (function () {
     function constructor(control, store, object, name, value) {
       Node.call(this);
@@ -527,23 +535,31 @@
     return constructor;
   })();
 
-   var GetSlot = (function () {
-     function constructor(control, store, object, index) {
-       Node.call(this);
-       assert (isControlOrNull(control));
-       assert (isStore(store));
-       assert (object);
-       assert (isValue(index));
-       this.control = control;
-       this.store = store;
-       this.object = object;
-       this.index = index;
-     }
-     constructor.prototype = extend(Value, "GetSlot");
-     return constructor;
+  var AVM2SetProperty = (function () {
+    function constructor(control, store, object, name, value) {
+      SetProperty.call(this, control, store, object, name, value);
+    }
+    constructor.prototype = extend(SetProperty, "AVM2SetProperty");
+    return constructor;
+  })();
+
+  var AVM2GetSlot = (function () {
+    function constructor(control, store, object, index) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (isValue(index));
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.index = index;
+    }
+    constructor.prototype = extend(Value, "AVM2GetSlot");
+    return constructor;
    })();
 
-  var SetSlot = (function () {
+  var AVM2SetSlot = (function () {
     function constructor(control, store, object, index, value) {
       Node.call(this);
       assert (isControlOrNull(control));
@@ -557,19 +573,21 @@
       this.index = index;
       this.value = value;
      }
-     constructor.prototype = extend(Value, "SetSlot");
+     constructor.prototype = extend(Value, "AVM2SetSlot");
      return constructor;
   })();
 
-  var FindProperty = (function () {
-    function constructor(scope, name) {
+  var AVM2FindProperty = (function () {
+    function constructor(scope, name, domain) {
       Node.call(this);
       assert (isScope(scope));
       assert (name);
+      assert (isConstant(domain));
       this.scope = scope;
       this.name = name;
+      this.domain = domain;
     }
-    constructor.prototype = extend(Value, "FindProperty");
+    constructor.prototype = extend(Value, "AVM2FindProperty");
     return constructor;
   })();
 
@@ -621,20 +639,44 @@
   })();
 
   var Call = (function () {
-    function constructor(control, store, callee, object, args) {
+    function constructor(control, store, callee, object, arguments) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
       assert (isValueOrNull(object));
       assert (isStore(store));
-      assert (isArray(args));
+      assert (isArray(arguments));
       this.control = control;
       this.callee = callee;
       this.object = object;
       this.store = store;
-      this.arguments = args;
+      this.arguments = arguments;
     }
     constructor.prototype = extend(Value, "Call");
+    return constructor;
+  })();
+
+  var New = (function () {
+    function constructor(control, store, callee, arguments) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (callee);
+      assert (isStore(store));
+      assert (isArray(arguments));
+      this.control = control;
+      this.callee = callee;
+      this.store = store;
+      this.arguments = arguments;
+    }
+    constructor.prototype = extend(Value, "New");
+    return constructor;
+  })();
+
+  var AVM2New = (function () {
+    function constructor(control, store, object, name) {
+      New.call(this, control, store, object, name);
+    }
+    constructor.prototype = extend(New, "AVM2New");
     return constructor;
   })();
 
@@ -1348,7 +1390,7 @@
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
               var argument = arguments[k];
-              if (isProjection(argument, Projection.Type.STORE)) {
+              if (argument.abstract || isProjection(argument, Projection.Type.STORE)) {
                 continue;
               }
               var moves = blockMoves[predecessor.id] || (blockMoves[predecessor.id] = []);
@@ -1430,14 +1472,20 @@
           writer.leave("< Already scheduled");
           return;
         }
+        if (node.isScheduling) {
+          return;
+        }
+        node.isScheduling = true;
         var inputs = [];
         node.visitInputs(function (input) {
           if (!(input instanceof Control)) {
             inputs.push(followProjection(input));
           }
         });
+
         for (var i = 0; i < inputs.length; i++) {
-          if (!inputs[i].control) {
+          writer.writeLn("Trying to Schedule input: " + i + " : " + inputs[i]);
+          if (!inputs[i].isScheduled) {
             writer.writeLn("Scheduling input: " + i + " : " + inputs[i]);
             schedule(inputs[i]);
           }
@@ -1446,12 +1494,6 @@
           writer.leave("< Control node is already scheduled");
           return;
         }
-        /*
-        if (isPhi(node)) {
-          writer.leave("< Phi nodes should not be scheduled");
-          return;
-        }
-        */
         if (node.control && isValue(node)) {
           assert (!node.isScheduled);
           node.isScheduled = true;
@@ -1605,24 +1647,27 @@
   exports.Start = Start;
   exports.Undefined = Undefined;
   exports.This = This;
-  exports.Global = Global;
+  exports.AVM2Global = AVM2Global;
   exports.Projection = Projection;
   exports.Region = Region;
   exports.Binary = Binary;
   exports.Unary = Unary;
   exports.Constant = Constant;
-  exports.FindProperty = FindProperty;
+  exports.AVM2FindProperty = AVM2FindProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
-  exports.GetSlot = GetSlot;
-  exports.SetSlot = SetSlot;
+  exports.AVM2GetProperty = AVM2GetProperty;
+  exports.AVM2SetProperty = AVM2SetProperty;
+  exports.AVM2GetSlot = AVM2GetSlot;
+  exports.AVM2SetSlot = AVM2SetSlot;
   exports.Call = Call;
+  exports.AVM2New = AVM2New;
   exports.Phi = Phi;
   exports.Stop = Stop;
   exports.If = If;
   exports.End = End;
   exports.Jump = Jump;
-  exports.Scope = Scope;
+  exports.AVM2Scope = AVM2Scope;
   exports.Operator = Operator;
   exports.Variable = Variable;
   exports.Move = Move;

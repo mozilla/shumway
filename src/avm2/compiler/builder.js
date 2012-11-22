@@ -1,4 +1,6 @@
-var c2Options = systemOptions.register(new OptionSet("Compiler 2 Options"));
+var c4Options = systemOptions.register(new OptionSet("C4 Options"));
+var enableC4 = compilerOptions.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
+
 var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTraceLevel", "number", 0, "Compiler Trace Level"));
 
 (function (exports) {
@@ -7,18 +9,13 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var Start = IR.Start;
   var Undefined = IR.Undefined;
   var This = IR.This;
-  var Global = IR.Global;
   var Projection = IR.Projection;
   var Region = IR.Region;
   var Binary = IR.Binary;
   var Unary = IR.Unary;
   var Constant = IR.Constant;
-  var FindProperty = IR.FindProperty;
-  var GetProperty = IR.GetProperty;
-  var SetProperty = IR.SetProperty;
-  var GetSlot = IR.GetSlot;
-  var SetSlot = IR.SetSlot;
   var Call = IR.Call;
+  var New = IR.New;
   var Phi = IR.Phi;
   var Stop = IR.Stop;
   var If = IR.If;
@@ -77,14 +74,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       return s;
     };
 
-    function pushPhis(a, b) {
-      assert (a.length === b.length);
-      for (var i = 0; i < a.length; i++) {
-        assert (a[i] instanceof Phi, a[i]);
-        a[i].pushValue(b[i]);
-      }
-    }
-
     function mergeValue(control, a, b) {
       var phi = a instanceof Phi && a.control === control ? a : new Phi(control, a);
       phi.pushValue(b);
@@ -104,6 +93,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
       this.store = mergeValue(control, this.store, other.store);
+      this.store.abstract = true;
     };
 
     constructor.prototype.trace = function trace(writer) {
@@ -127,11 +117,12 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   })();
 
   var Builder = (function () {
-    function constructor (abc, methodInfo, scope) {
+    function constructor (abc, methodInfo, scope, hasDynamicScope) {
       assert (abc && methodInfo && scope);
       this.abc = abc;
       this.scope = scope;
       this.methodInfo = methodInfo;
+      this.hasDynamicScope = hasDynamicScope;
       Node.resetNextID();
     }
 
@@ -143,9 +134,11 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       /* First local is the |this| reference. */
       state.local.push(new This(start));
 
+      var parameterIndexOffset = this.hasDynamicScope ? 1 : 0;
+
       /* Create the method's parameters. */
       for (var i = 0; i < mi.parameters.length; i++) {
-        state.local.push(new Parameter(start, i, ARGUMENT_PREFIX + mi.parameters[i].name));
+        state.local.push(new Parameter(start, parameterIndexOffset + i, ARGUMENT_PREFIX + mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
@@ -153,9 +146,15 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         state.local.push(Undefined);
       }
 
-      start.scope = new Constant(this.scope);
       state.store = new Projection(start, Projection.Type.STORE);
+      if (this.hasDynamicScope) {
+        start.scope = new Parameter(start, 0, SAVED_SCOPE_NAME);
+      } else {
+        start.scope = new Constant(this.scope);
+      }
       state.saved = new Projection(start, Projection.Type.SCOPE);
+      start.domain = new Constant(this.domain);
+
       return start;
     };
 
@@ -170,6 +169,8 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       const strings = this.abc.constantPool.strings;
       const methods = this.abc.methods;
       const multinames = this.abc.constantPool.multinames;
+      const domain = new Constant(this.abc.domain);
+      const runtime = new Constant(this.abc.runtime);
 
       var regions = [];
 
@@ -236,7 +237,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return state.saved;
         }
 
-        var object, value, multiname, type, arguments;
+        var object, callee, value, multiname, type, arguments;
 
         function push(x) {
           stack.push(x);
@@ -273,11 +274,15 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function findProperty(name) {
-          return new FindProperty(state.scope.top(), name);
+          return new IR.AVM2FindProperty(topScope(), name, domain);
+        }
+
+        function getJSProperty(object, name) {
+          return new IR.GetProperty(null, state.store, object, name);
         }
 
         function getProperty(object, name) {
-          return new GetProperty(null, state.store, object, name);
+          return new IR.AVM2GetProperty(null, state.store, object, name);
         }
 
         function store(node) {
@@ -286,15 +291,15 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function setProperty(object, name, value) {
-          store(new SetProperty(null, state.store, object, name, value));
+          store(new IR.AVM2SetProperty(null, state.store, object, name, value));
         }
 
         function getSlot(object, index, ti) {
-          return new GetSlot(region, state.store, object, index);
+          return new IR.AVM2GetSlot(region, state.store, object, index);
         }
 
         function setSlot(object, index, value, ti) {
-          store(new SetSlot(region, state.store, object, index, value));
+          store(new IR.AVM2SetSlot(region, state.store, object, index, value));
         }
 
         function call(callee, object, arguments) {
@@ -405,10 +410,13 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               popLocal(op - OP_setlocal0);
               break;
             case OP_pushscope:
-              scope.push(new Scope(topScope(), pop()));
+              scope.push(new IR.AVM2Scope(topScope(), pop()));
               break;
             case OP_getglobalscope:
-              push(new Global(null, topScope()));
+              push(new IR.AVM2Global(null, topScope()));
+              break;
+            case OP_getscopeobject:
+              push(state.scope[bc.index].object);
               break;
             case OP_findpropstrict:
               push(findProperty(buildMultiname(bc.index)));
@@ -436,18 +444,32 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_debugfile:
             case OP_debugline:
               break;
+            case OP_newfunction:
+              callee = getJSProperty(runtime, constant("createFunction"));
+              push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              break;
             case OP_callproperty:
               arguments = stack.popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               push(call(getProperty(object, multiname), object, arguments));
               break;
+            case OP_constructprop:
+              arguments = stack.popMany(bc.argCount);
+              multiname = buildMultiname(bc.index);
+              object = pop();
+              callee = getProperty(object, multiname);
+              // callee = getProperty(callee, constant("instance"));
+              push(store(new IR.AVM2New(region, state.store, callee, arguments)));
+              break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_returnvalue:
+            case OP_returnvoid:
+              value = op === OP_returnvalue ? pop() : Undefined;
               stopPoints.push({
                 region: region,
                 store: state.store,
-                value: pop()
+                value: value
               });
               buildReturnStop();
               break;
@@ -592,22 +614,21 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var count = 0;
 
   function build(abc, methodInfo, scope, hasDynamicScope) {
-
-    if (hasDynamicScope) {
-      return false;
-    }
-
-    if (count ++ !== 1) {
-      print("Skipping " + (count - 1));
+    if (!enableC4.value) {
       return;
     }
+
+    // if (count ++ !== 1) {
+      // print("Skipping " + (count - 1));
+      // return;
+    // }
 
     if (compilerTraceLevel.value > 0) {
       writer = new IndentingWriter();
     }
 
     Timer.start("IR Builder");
-    var dfg = new Builder(abc, methodInfo, scope).build();
+    var dfg = new Builder(abc, methodInfo, scope, hasDynamicScope).build();
     Timer.stop();
 
     writer && dfg.trace(writer);

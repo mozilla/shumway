@@ -169,10 +169,14 @@
   function property(obj) {
     var path = Array.prototype.slice.call(arguments, 1);
     path.forEach(function(x) {
-      if (isIdentifier(x)) {
-        obj = new MemberExpression(obj, new Identifier(x), false);
+      if (typeof x === "string") {
+        if (isIdentifier(x)) {
+          obj = new MemberExpression(obj, new Identifier(x), false);
+        } else {
+          obj = new MemberExpression(obj, new Literal(x), true);
+        }
       } else {
-        obj = new MemberExpression(obj, new Literal(x), true);
+        obj = new MemberExpression(obj, x, true);
       }
     });
     return obj;
@@ -355,17 +359,20 @@
     return compileValue(this.variable, cx);
   };
 
-  IR.Scope.prototype.compile = function (cx) {
+  IR.AVM2Scope.prototype.compile = function (cx) {
     var parent = compileValue(this.parent, cx);
-    return new NewExpression(id("Scope"), [parent]);
+    var object = compileValue(this.object, cx);
+    return new NewExpression(id("Scope"), [parent, object]);
   };
 
-  IR.FindProperty.prototype.compile = function (cx) {
+  IR.AVM2FindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
-    return call(property(scope, "findProperty"), []);
+    var name = compileValue(this.name, cx);
+    var domain = compileValue(this.domain, cx);
+    return call(property(scope, "findProperty"), [name, domain]);
   };
 
-  IR.GetProperty.prototype.compile = function (cx) {
+  IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return call(id("getProperty"), [object, name]);
@@ -391,16 +398,25 @@
     return call(callee, arguments);
   };
 
+  IR.AVM2New.prototype.compile = function (cx) {
+    var arguments = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    var callee = compileValue(this.callee, cx);
+    callee = property(callee, "instance");
+    return new NewExpression(callee, arguments);
+  };
+
   IR.This.prototype.compile = function (cx) {
     return new ThisExpression();
   };
 
-  IR.Global.prototype.compile = function (cx) {
+  IR.AVM2Global.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     return property(scope, "global", "object");
   };
 
-  IR.SetProperty.prototype.compile = function (cx) {
+  IR.AVM2SetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
@@ -410,14 +426,23 @@
   IR.GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
+    return property(object, name);
+  };
+
+  IR.AVM2GetProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
     return call(id("getProperty"), [object, name]);
   };
 
-  IR.SetSlot.prototype.compile = function (cx) {
-    notImplemented();
+  IR.AVM2SetSlot.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var index = compileValue(this.index, cx);
+    var value = compileValue(this.value, cx);
+    return(call(id("setSlot"), [object, index, value]));
   };
 
-  IR.GetSlot.prototype.compile = function (cx) {
+  IR.AVM2GetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var index = compileValue(this.index, cx);
     return(call(id("getSlot"), [object, index]));
@@ -448,6 +473,7 @@
     var name = compileValue(this.name, cx);
     return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
   };
+
   function generateSource(node) {
     return escodegen.generate(node, {base: "", indent: "  ", comment: true});
   }
@@ -468,9 +494,9 @@
     }
     var node = new FunctionDeclaration(id("fn"), parameters, body);
 
-    writer.writeLn("==================================");
-    writer.writeLn(generateSource(node));
-    writer.writeLn("==================================");
+    // writer.writeLn("==================================");
+    // writer.writeLn(generateSource(node));
+    // writer.writeLn("==================================");
 
     return generateSource(body);
   }
