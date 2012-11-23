@@ -72,6 +72,10 @@
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+      window.print = function(s) {
+        console.log(s);
+      };
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
