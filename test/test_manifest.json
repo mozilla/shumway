@@ -7,5 +7,13 @@
          "swfs/targetPath1.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "button",
+       "stas": "swfs/button.stas",
+       "filenames": [
+         "swfs/button1.swf",
+         "swfs/button3.swf"
+       ],
+       "type": "stas"
     }
 ]
