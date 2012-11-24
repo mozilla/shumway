@@ -106,17 +106,24 @@ var error = function (s) {
 function Native() {}
 Native.print = print;
 
-function execStas(path, filenames) {
-  function complete() {
-    TestContext._resultPromise.then(function (result) {
-      resultPromise.resolve(result);
-    });
+function execStas(path, filenames, onprogress) {
+  function complete(resultPromises) {
+    for (var i =0; i < resultPromises.length; i++) {
+      resultPromises[i].promise.then(function (i, result) {
+        onprogress(i, resultPromises.length, resultPromises[i].filename, result);
+      }.bind(null, i));
+    }
   }
   function exec(code) {
+    var resultPromises = [];
+    TestContext.onprogress = function (filename, promise) {
+      resultPromises.push({filename: filename, promise: promise});
+    };
     var jsCode = "var run_test, fail;\n" + code;
     var fn = new Function('filenames', jsCode);
     fn(filenames);
-    complete();
+    TestContext.onprogress = null;
+    complete(resultPromises);
   }
   function load() {
     var xhr = new XMLHttpRequest();
@@ -217,6 +224,7 @@ var TestContext = {
   compareImageResults: function (actual, expected) {
     throw 'not impl';
   },
+  onprogress: null,
   _id: Date.now,
   _driverWindow: null,
   _resultPromise: new Promise,
@@ -252,6 +260,10 @@ var TestContext = {
       movieFrame.src = 'harness/slave.html?n=' + id;
     });
     TestContext._resultPromise = resultPromise;
+
+    if (TestContext.onprogress) {
+      TestContext.onprogress(file, resultPromise);
+    }
   },
   log: function (s) {
     console.log('TEST: ' + s);

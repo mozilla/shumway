@@ -202,7 +202,9 @@ AS2Globals.prototype = {
     throw 'Not implemented: toggleHighQuality';
   },
   trace: function(expression) {
-    console.log(expression);
+    var trace = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('trace'), true, true);
+    trace(expression);
   },
   unloadMovie: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);

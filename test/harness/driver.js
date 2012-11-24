@@ -15,18 +15,20 @@ function execManifest(path) {
       var test = manifest[i++];
       switch (test.type) {
       case 'stas':
-        var resultPromise = execStas(test.stas, test.filenames);
-        resultPromise.then(function (result) {
-          postData('/result', JSON.stringify({
-            browser: browser,
-            id: test.id,
-            failure: result.failure,
-            page: 1,
-            numPages: 1,
-            snapshot: null
-          }));
-          next();
-        });
+        execStas(test.stas, test.filenames,
+          function (itemNumber, itemsCount, item, result) {
+            postData('/result', JSON.stringify({
+              browser: browser,
+              id: test.id,
+              failure: result.failure,
+              item: item,
+              numItems: itemsCount,
+              snapshot: null
+            }));
+            if (itemNumber + 1 == itemsCount) { // last item
+              next();
+            }
+          });
         break;
       default:
         throw 'unknown test type';

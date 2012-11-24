@@ -106,10 +106,10 @@ class State:
     lastPost = { }
 
 class Result:
-    def __init__(self, snapshot, failure, page):
+    def __init__(self, snapshot, failure, item):
         self.snapshot = snapshot
         self.failure = failure
-        self.page = page
+        self.item = item
 
 class TestServer(SocketServer.TCPServer):
     allow_reuse_address = True
@@ -211,21 +211,18 @@ class PDFTestHandler(TestHandlerBase):
             return
 
         result = json.loads(self.rfile.read(numBytes))
-        browser, id, failure, page, snapshot = result['browser'], result['id'], result['failure'], result['page'], result['snapshot']
+        browser, id, failure, item, snapshot = result['browser'], result['id'], result['failure'], result['item'], result['snapshot']
         State.lastPost[browser] = int(time.time())
         taskResults = State.taskResults[browser][id]
-        taskResults[0].append(Result(snapshot, failure, page))
+        taskResults.append(Result(snapshot, failure, item))
 
         def isTaskDone():
-            numPages = result["numPages"]
-            if len(taskResults[0]) < numPages:
+            numItems = result["numItems"]
+            if len(taskResults) < numItems:
                 return False
             return True
 
         if isTaskDone():
-            # sort the results since they sometimes come in out of order
-            for results in taskResults:
-                results.sort(key=lambda result: result.page)
             check(State.manifest[id], taskResults, browser,
                   self.server.masterMode)
             # Please oh please GC this ...
@@ -379,7 +376,6 @@ def setUp(options):
             id = item['id']
             State.manifest[id] = item
             taskResults = [ ]
-            taskResults.append([ ])
             State.taskResults[b.name][id] = taskResults
 
     return testBrowsers
@@ -415,16 +411,15 @@ def teardownBrowsers(browsers):
 
 def check(task, results, browser, masterMode):
     failed = False
-    pageResults = results[0]
-    for p in xrange(len(pageResults)):
-        pageResult = pageResults[p]
-        if pageResult is None:
+    for p in xrange(len(results)):
+        itemResult = results[p]
+        if itemResult is None:
             continue
-        failure = pageResult.failure
+        failure = itemResult.failure
         if failure:
             failed = True
             State.numErrors += 1
-            print 'TEST-UNEXPECTED-FAIL | test failed', task['id'], '| in', browser, '| page', p + 1, '|', failure
+            print 'TEST-UNEXPECTED-FAIL | test failed', task['id'], '| in', browser, '|', itemResult.item, '|', failure
 
     if failed:
         return
@@ -440,17 +435,16 @@ def check(task, results, browser, masterMode):
 
 def checkEq(task, results, browser, masterMode):
     pfx = os.path.join(REFDIR, sys.platform, browser, task['id'])
-    results = results[0]
     taskId = task['id']
     taskType = task['type']
 
     passed = True
-    for page in xrange(len(results)):
-        snapshot = results[page].snapshot
+    for p in xrange(len(results)):
+        snapshot = results[p].snapshot
         ref = None
         eq = True
 
-        path = os.path.join(pfx, str(page + 1))
+        path = os.path.join(pfx, str(p + 1))
         if not os.access(path, os.R_OK):
             State.numEqNoSnapshot += 1
             if not masterMode:
@@ -462,7 +456,7 @@ def checkEq(task, results, browser, masterMode):
 
             eq = (ref == snapshot)
             if not eq:
-                print 'TEST-UNEXPECTED-FAIL |', taskType, taskId, '| in', browser, '| rendering of page', page + 1, '!= reference rendering'
+                print 'TEST-UNEXPECTED-FAIL |', taskType, taskId, '| in', browser, '| rendering of snapshot', p + 1, '!= reference rendering'
 
                 if not State.eqLog:
                     State.eqLog = open(EQLOG_FILE, 'w')
@@ -471,7 +465,7 @@ def checkEq(task, results, browser, masterMode):
                 # NB: this follows the format of Mozilla reftest
                 # output so that we can reuse its reftest-analyzer
                 # script
-                eqLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-page'+ str(page + 1) + ' | image comparison (==)\n')
+                eqLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | image comparison (==)\n')
                 eqLog.write('REFTEST   IMAGE 1 (TEST): ' + snapshot + '\n')
                 eqLog.write('REFTEST   IMAGE 2 (REFERENCE): ' + ref + '\n')
 
@@ -486,7 +480,7 @@ def checkEq(task, results, browser, masterMode):
                 if e.errno != 17: # file exists
                     print >>sys.stderr, 'Creating', tmpTaskDir, 'failed!'
         
-            of = open(os.path.join(tmpTaskDir, str(page + 1)), 'w')
+            of = open(os.path.join(tmpTaskDir, str(p + 1)), 'w')
             of.write(snapshot)
             of.close()
 

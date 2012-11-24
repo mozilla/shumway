@@ -45,6 +45,11 @@ test:
 	make -C src/avm1/tests/ test
 	make -C src/avm2/bin/ test-regress
 
+BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
+
+reftest:
+	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST)
+
 hello-world:
 	make -C src/avm2/bin/ hello-world
 
