@@ -9,7 +9,7 @@ function execManifest(path) {
     var i = 0;
     function next() {
       if (i >= manifest.length) {
-        postData('/tellMeToQuit');
+        postData('/tellMeToQuit?path=' + escape(path));
         return;
       }
       var test = manifest[i++];
@@ -64,6 +64,7 @@ function getQueryVariable(variable) {
 
 var manifestFile = getQueryVariable("manifestFile");
 var browser = getQueryVariable("browser");
+var path = getQueryVariable("path");
 
 execManifest(manifestFile);
 
