@@ -1,0 +1,9 @@
+[
+    {  "id": "basic",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/local2global.swf"
+       ],
+       "type": "stas"
+    }
+]

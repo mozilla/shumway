@@ -1,0 +1,67 @@
+function postData(path, data) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", path, true);
+  xhr.send(data);
+}
+
+function execManifest(path) {
+  function exec(manifest) {
+    var i = 0;
+    function next() {
+      if (i >= manifest.length) {
+        postData('/tellMeToQuit');
+        return;
+      }
+      var test = manifest[i++];
+      switch (test.type) {
+      case 'stas':
+        var resultPromise = execStas(test.stas, test.filenames);
+        resultPromise.then(function (result) {
+          postData('/result', JSON.stringify({
+            browser: browser,
+            id: test.id,
+            failure: result.failure,
+            page: 1,
+            numPages: 1,
+            snapshot: null
+          }));
+          next();
+        });
+        break;
+      default:
+        throw 'unknown test type';
+      }
+    }
+    next();
+  }
+  function load() {
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", path, true);
+    xhr.onreadystatechange = function(event) {
+      if (xhr.readyState === 4) {
+        exec(JSON.parse(xhr.responseText));
+      }
+    }
+    xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+    xhr.send(null);
+  }
+  load();
+}
+
+function getQueryVariable(variable) {
+  var query = window.location.search.substring(1);
+  var vars = query.split("&");
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split("=");
+    if (pair[0] == variable) {
+      return unescape(pair[1]);
+    }
+  }
+  return undefined;
+}
+
+var manifestFile = getQueryVariable("manifestFile");
+var browser = getQueryVariable("browser");
+
+execManifest(manifestFile);
+
