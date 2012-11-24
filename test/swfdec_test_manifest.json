@@ -53,6 +53,7 @@
          "/utils/swfdec/test/trace/equality-old-5.swf",
          "/utils/swfdec/test/trace/equality-old-6.swf"
        ],
+       "defaultRate": 20,
        "type": "stas"
     }
 ]

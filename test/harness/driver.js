@@ -15,6 +15,10 @@ function execManifest(path) {
       var test = manifest[i++];
       switch (test.type) {
       case 'stas':
+        // using specified number (or 1) as frame rate by default
+        // some tests may fail
+        TestContext.defaultRate = test.defaultRate || 1;
+
         execStas(test.stas, test.filenames,
           function (itemNumber, itemsCount, item, result) {
             postData('/result', JSON.stringify({

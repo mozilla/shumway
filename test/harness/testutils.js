@@ -20,7 +20,7 @@ Test.prototype = {
   reset: function(file) {
     TestContext.reset(file);
   },
-  get rate() { return 1; }, // assume all rates 1 -- some of the tests might not works
+  get rate() { return TestContext.deafultRate; },
   get quit() { throw 'not impl'; },
   get trace() {
     var buffer = new Buffer();
@@ -225,6 +225,7 @@ var TestContext = {
     throw 'not impl';
   },
   onprogress: null,
+  defaultRate: 1,
   _id: Date.now,
   _driverWindow: null,
   _resultPromise: new Promise,
