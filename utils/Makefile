@@ -45,7 +45,8 @@ APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
 default:
 	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
-	@echo "           install-node-modules|build-tamarin-tests|build-playerglobal|clean]"
+	@echo "           install-swfdec|install-node-modules|"
+	@echo "           build-tamarin-tests|build-playerglobal|clean]"
 
 install-asc: $(ASC_JAR)
 
@@ -92,6 +93,9 @@ $(APPARAT_HOME)/apparat.tar.gz:
 install-node-modules:
 	npm install mocha expect.js temp jshint
 
+install-swfdec:
+	git clone git://anongit.freedesktop.org/swfdec/swfdec
+
 build-playerglobal:
 	make -C playerGlobal/ build
 	cp playerGlobal/bin/playerGlobal.min.abc ../src/flash
@@ -103,4 +107,7 @@ clean:
 	-rm -rf $(APPARAT_HOME)
 	make -C playerGlobal/ clean
 
-.PHONY: install-tamarin install-js install-apparat install-node-modules build-tamarin-tests build-playerglobal clean default
+.PHONY: install-tamarin install-js install-apparat install-swfdec \
+        install-node-modules build-tamarin-tests build-playerglobal \
+        clean default
+

@@ -50,6 +50,9 @@ BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
 reftest:
 	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST)
 
+reftest-swfdec:
+	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) --manifestFile=swfdec_test_manifest.json
+
 hello-world:
 	make -C src/avm2/bin/ hello-world
 
@@ -101,4 +104,6 @@ start-build-bot:
 	done
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
-        build-playerglobal build-extension build-web test default
+        build-playerglobal build-extension build-web test default \
+        reftest reftest-swfdec
+
