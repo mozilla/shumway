@@ -48,13 +48,16 @@ test:
 
 BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
 
-reftest:
+check-browser-manifest:
+	@ls test/$(BROWSER_MANIFEST) || { echo "ERROR: Browser manifest file is not found at test/$(BROWSER_MANIFEST). Create one using the examples at test/resources/browser_manifests/."; exit 1; }
+
+reftest: check-browser-manifest
 	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST)
 
-makeref:
-	cd test; python test.py -m --browserManifestFile=$(BROWSER_MANIFEST)
+makeref: check-browser-manifest
+	cd test; python test.py --masterMode --browserManifestFile=$(BROWSER_MANIFEST)
 
-reftest-swfdec:
+reftest-swfdec: check-browser-manifest
 	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) --manifestFile=swfdec_test_manifest.json
 
 hello-world:
@@ -109,5 +112,5 @@ start-build-bot:
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
         build-playerglobal build-extension build-web test default \
-        reftest reftest-swfdec
+        reftest reftest-swfdec makeref check-browser-manifest
 
