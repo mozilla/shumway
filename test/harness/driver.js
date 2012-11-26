@@ -34,6 +34,22 @@ function execManifest(path) {
             }
           });
         break;
+      case 'eq':
+        execEq(test.swf, test.frames,
+          function (itemNumber, itemsCount, item, result) {
+            postData('/result', JSON.stringify({
+              browser: browser,
+              id: test.id,
+              failure: result.failure,
+              item: item,
+              numItems: itemsCount,
+              snapshot: result.snapshot
+            }));
+            if (itemNumber + 1 == itemsCount) { // last item
+              next();
+            }
+        });
+        break;
       default:
         throw 'unknown test type';
       }

@@ -45,7 +45,7 @@ function renderDisplayObject(child, ctx, transform, cxform) {
     child.draw(ctx, child.ratio);
 }
 
-function renderStage(stage, ctx) {
+function renderStage(stage, ctx, onFrame) {
   var frameWidth = ctx.canvas.width;
   var frameHeight = ctx.canvas.height;
 
@@ -276,6 +276,10 @@ function renderStage(stage, ctx) {
       visitContainer(stage, new RenderVisitor(ctx));
       visitContainer(stage, new PostVisitor());
       stage._syncCursor();
+
+      if (onFrame) {
+        onFrame();
+      }
     }
     requestAnimationFrame(draw);
   })();

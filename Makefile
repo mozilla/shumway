@@ -51,6 +51,9 @@ BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
 reftest:
 	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST)
 
+makeref:
+	cd test; python test.py -m --browserManifestFile=$(BROWSER_MANIFEST)
+
 reftest-swfdec:
 	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) --manifestFile=swfdec_test_manifest.json
 

@@ -15,5 +15,20 @@
          "swfs/button3.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "button-ref",
+       "frames": [10],
+       "swf": "swfs/button1.swf",
+       "type": "eq"
+    },
+    {  "id": "pac-ref",
+       "frames": [10, 25, 50],
+       "swf": "/examples/pac/pac.swf",
+       "type": "eq"
+    },
+    {  "id": "race-ref",
+       "frames": [20, 30],
+       "swf": "/examples/racing/race.swf",
+       "type": "eq"
     }
 ]

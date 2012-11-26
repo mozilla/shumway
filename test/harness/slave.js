@@ -1,12 +1,31 @@
-function loadMovie(path) {
+function loadMovie(path, reportFrames) {
+  var movieReady = new Promise;
+  movieReady.then(function() { sendResponse(); });
+
+  var onFrameCallback = null;
+  if (reportFrames) {
+    var i = 0, frame = 0;
+    onFrameCallback = function () {
+      while (i < reportFrames.length && frame >= reportFrames[i]) {
+        movieReady.then(sendResponse.bind(null, {
+          index: i,
+          frame: frame,
+          snapshot: getCanvasData()
+        }));
+        i++;
+      }
+      frame++;
+    };
+  }
+
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-    function loaded() { sendResponse(); }
+    function loaded() { movieReady.resolve(); }
 
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
       }
-      SWF.embed(buffer, document.getElementById("stage"), { onComplete: loaded });
+      SWF.embed(buffer, document.getElementById("stage"), { onComplete: loaded, onFrame: onFrameCallback });
     });
   });
 }
@@ -27,7 +46,7 @@ function sendResponse(data) {
 
 function getCanvasData() {
   var canvas = document.getElementsByTagName('canvas')[0];
-  return canvas.getDataURL('image/png');
+  return canvas.toDataURL('image/png');
 }
 
 var mouseOutside = true;
@@ -49,7 +68,7 @@ window.addEventListener('message', function (e) {
     return;
   switch (data.topic) {
   case 'load':
-    loadMovie(data.path);
+    loadMovie(data.path, data.reportFrames);
     break;
   case 'advance':
     var delay = data.args[0];

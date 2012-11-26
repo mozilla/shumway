@@ -39,7 +39,7 @@ Buffer.load = function(path) {
   xhr.open("GET", path, true);
   xhr.onreadystatechange = function(event) {
     if (xhr.readyState === 4) {
-      buffer.s = xhr.responseText;
+      buffer.s = xhr.status == 200 || xhr.status == 0 ? xhr.responseText : null;
       buffer.loaded.resolve();
     }
   }
@@ -64,16 +64,26 @@ Buffer.prototype = {
 
 function Image(path) {
   this.loaded = new Promise;
+  this.failed = false;
   this.img = document.createElement('img');
   this.img.onload = function() {
     this.loaded.resolve();
-  };
+  }.bind(this);
+  this.img.onerror = function() {
+    this.failed = true;
+    this.loaded.resolve();
+  }.bind(this);
   if (path)
     this.img.src = path;
 }
 Image.prototype = {
   _message: function (data) {
-    this.img.src = data;
+    if (data) {
+      this.img.src = data;
+    } else {
+      this.failed = true;
+      this.loaded.resolve();
+    }
   },
   save: function() {},
   compare: function(image) {
@@ -283,3 +293,60 @@ window.addEventListener('message', function (e) {
     return;
   TestContext._responsePromise.resolve(data.result);
 });
+
+function execEq(file, frames, onprogress) {
+    var promise = new Promise;
+    TestContext._previousPromise.then(function () {
+      TestContext._currentPromise = promise;
+    });
+
+    var framesPromises = [];
+    var lastPromise = promise;
+    for (var i = 0; i < frames.length; i++) {
+      var framePromise = new Promise
+      framePromise.then(function (i, result) {
+        onprogress(i, frames.length, frames[i], result);
+      }.bind(null, i));
+      framesPromises.push(framePromise);
+      var responsePromise = new Promise;
+      lastPromise.then(function (responsePromise) {
+        TestContext._currentPromise = responsePromise;
+        TestContext._responsePromise = responsePromise;
+      }.bind(null, responsePromise));
+      lastPromise = responsePromise;
+
+      responsePromise.then(function (result) {
+        // redirecting to right promise (in case if snapshots send out-of-order)
+        var j = result.index;
+        var snapshot = result.snapshot;
+        framesPromises[j].resolve({
+          failure: false,
+          snapshot: snapshot
+        });
+      });
+    }
+    TestContext._previousPromise = lastPromise;
+
+    var resultPromise = Promise.when.apply(Promise, framesPromises);
+    TestContext._resultPromise.then(function () {
+      TestContext.log('Testing ' + file + '...');
+      TestContext._currentResultPromise = resultPromise;
+
+      var id = TestContext._id++;
+      var movieFrame = document.getElementById('movie')
+      movieFrame.addEventListener('load', function frameLoad() {
+        movieFrame.removeEventListener('load', frameLoad);
+        var movie = movieFrame.contentWindow;
+        TestContext._driverWindow = movie;
+        TestContext._responsePromise = promise;
+        movie.postMessage({
+          type: 'test-message',
+          topic: 'load',
+          path: file.indexOf(':') >= 0 || file[0] === '/' ? file : '../' + file,
+          reportFrames: frames
+        }, '*');
+      });
+      movieFrame.src = 'harness/slave.html?n=' + id;
+    });
+    TestContext._resultPromise = resultPromise;
+}
