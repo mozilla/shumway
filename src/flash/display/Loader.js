@@ -319,6 +319,7 @@ var LoaderDefinition = (function () {
     _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
       var actionBlocks = frame.actionBlocks;
+      var initActionBlocks = frame.initActionBlocks;
       var depths = frame.depths;
       var exports = frame.exports;
       var loader = this;
@@ -401,7 +402,7 @@ var LoaderDefinition = (function () {
 
         if (!loader._isAvm2Enabled) {
           loader._initAvm1Bindings(root, needRootObject, frameNum,
-                                   actionBlocks, exports);
+                                   actionBlocks, initActionBlocks, exports);
         }
 
         framePromise.resolve(displayList);
@@ -420,7 +421,7 @@ var LoaderDefinition = (function () {
       });
     },
     _initAvm1Bindings: function(root, initializeRoot, frameNum,
-                                actionBlocks, exports) {
+                                actionBlocks, initActionBlocks, exports) {
       var avm1Context = this._avm1Context;
       if (initializeRoot) {
         var as2Object = root._getAS2Object();
@@ -451,6 +452,15 @@ var LoaderDefinition = (function () {
         soundMock._exports = exports;
         soundMock.$as2Object = rootAS2Object.soundmc;
         root.addChild(soundMock);
+      }
+      if (initActionBlocks) {
+        // HACK using symbol init actions as regular action blocks, the spec has a note
+        // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+        for (var symbolId in initActionBlocks) {
+          root.addFrameScript(frameNum - 1, function(actionBlock) {
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
+          }.bind(root, initActionBlocks[symbolId]));
+        }
       }
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
