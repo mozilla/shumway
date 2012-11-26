@@ -20,7 +20,7 @@ Test.prototype = {
   reset: function(file) {
     TestContext.reset(file);
   },
-  get rate() { return TestContext.deafultRate; },
+  get rate() { return TestContext.defaultRate; },
   get quit() { throw 'not impl'; },
   get trace() {
     var buffer = new Buffer();

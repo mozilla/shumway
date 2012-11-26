@@ -40,6 +40,7 @@ update-flash-refs:
 	node utils/update-flash-refs.js extension/firefox/content/web/viewer.html src/flash
 	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
+	node utils/update-flash-refs.js test/harness/slave.html src/flash
 
 test:
 	make -C src/avm1/tests/ test
