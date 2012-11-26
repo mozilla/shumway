@@ -4,7 +4,8 @@
        "filenames": [
          "swfs/local2global.swf",
          "swfs/stroke1.swf",
-         "swfs/targetPath1.swf"
+         "swfs/targetPath1.swf",
+         "swfs/fscommand1.swf"
        ],
        "type": "stas"
     },

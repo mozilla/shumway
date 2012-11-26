@@ -136,6 +136,7 @@ var as3error = {};
    M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
    M("flash.net.NetStream", "NetStreamClass", NetStreamDefinition),
    M("flash.net.Responder", "ResponderClass", ResponderDefinition),
+   M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
 
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
@@ -166,5 +167,21 @@ natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, i
   var start = Date.now();
   return function getTimer() {
     return Date.now() - start;
+  };
+};
+
+natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
+  return function navigateToURL(request, window) {
+    if (!request || !request.url)
+      throw new Error('Invalid request object');
+    var url = request.url;
+    if (url.indexOf('fscommand:') === 0) {
+      var fscommand = avm2.applicationDomain.getProperty(
+        Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+      fscommand.call(null, url.substring(10), window);
+      return;
+    }
+    // TODO handle other methods than GET
+    window.open(url, window);
   };
 };
