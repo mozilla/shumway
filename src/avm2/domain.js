@@ -41,6 +41,9 @@ var Domain = (function () {
     } else {
       this.system = this;
 
+      var OWN_INITIALIZE   = 0x1;
+      var SUPER_INITIALIZE = 0x2;
+
       var Class = this.Class = function Class(name, instance, callable) {
         this.debugName = name;
 
@@ -48,7 +51,7 @@ var Domain = (function () {
           release || assert(instance.prototype);
           this.instance = instance;
           this.instanceNoInitialize = instance;
-          this.hasInitialize = false;
+          this.hasInitialize = 0;
         }
 
         if (!callable) {
@@ -76,12 +79,12 @@ var Domain = (function () {
           var c = this;
           var initializes = [];
           while (c) {
-            var s = c.instance.prototype.initialize;
-            if (s) {
-              initializes.push(s);
+            if (c.hasInitialize & OWN_INITIALIZE) {
+              initializes.push(c.instance.prototype.initialize);
             }
             c = c.baseClass;
           }
+          var s;
           while (s = initializes.pop()) {
             s.call(obj);
           }
@@ -135,7 +138,7 @@ var Domain = (function () {
               self.initializeInstance(this);
               instanceNoInitialize.apply(this, arguments);
             };
-            this.hasInitialize = true;
+            this.hasInitialize |= SUPER_INITIALIZE;
           }
           this.instance.prototype = Object.create(this.dynamicPrototype);
           defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
@@ -163,15 +166,17 @@ var Domain = (function () {
             }
           }
 
-          if (definition.initialize && !this.hasInitialize) {
-            var instanceNoInitialize = this.instance;
-            var self = this;
-            this.instance = function () {
-              self.initializeInstance(this);
-              instanceNoInitialize.apply(this, arguments);
-            };
-            this.instance.prototype = instanceNoInitialize.prototype;
-            this.hasInitialize = true;
+          if (definition.initialize) {
+            if (!this.hasInitialize) {
+              var instanceNoInitialize = this.instance;
+              var self = this;
+              this.instance = function () {
+                self.initializeInstance(this);
+                instanceNoInitialize.apply(this, arguments);
+              };
+              this.instance.prototype = instanceNoInitialize.prototype;
+            }
+            this.hasInitialize |= OWN_INITIALIZE;
           }
 
           var proto = this.dynamicPrototype;
