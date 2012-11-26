@@ -519,7 +519,8 @@ def maybeUpdateRefImages(options, browser):
             if options.noPrompts or prompt('Would you like to update the master copy in ref/?'):
                 sys.stdout.write('  Updating ref/ ... ')
 
-                subprocess.check_call('mkdir -p ref', shell = True)
+                if not os.path.exists('ref'):
+                    subprocess.check_call('mkdir ref', shell = True)
                 subprocess.check_call('cp -Rf tmp/* ref/', shell = True)
                 subprocess.check_call('rm -rf tmp', shell = True)
 

@@ -21,6 +21,11 @@
        "swf": "swfs/button1.swf",
        "type": "eq"
     },
+    {  "id": "tiger-ref",
+       "frames": [10],
+       "swf": "/examples/as3_tiger/tiger.swf",
+       "type": "eq"
+    },
     {  "id": "pac-ref",
        "frames": [10, 25, 50],
        "swf": "/examples/pac/pac.swf",
