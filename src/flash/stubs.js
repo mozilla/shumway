@@ -178,7 +178,7 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
     if (url.indexOf('fscommand:') === 0) {
       var fscommand = avm2.applicationDomain.getProperty(
         Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-      fscommand.call(null, url.substring(10), window);
+      fscommand.call(null, url.substring('fscommand:'.length), window);
       return;
     }
     // TODO handle other methods than GET
