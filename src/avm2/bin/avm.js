@@ -168,7 +168,7 @@ function processAbc(abc) {
         return;
       }
 
-      builder.build(abc, method);
+      builder.build(abc, method, new Scope());
     });
 
 

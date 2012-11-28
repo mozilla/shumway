@@ -699,6 +699,10 @@ function isInstance(value, type) {
   return type.isInstance(value);
 }
 
+function createActivation(methodInfo) {
+  return Object.create(methodInfo.activationPrototype);
+}
+
 /**
  * Scope object backing for catch blocks.
  */
@@ -761,10 +765,6 @@ var Runtime = (function () {
       unwind--;
     }
     stack.length = unwind;
-  };
-
-  runtime.prototype.createActivation = function createActivation(method) {
-    return Object.create(method.activationPrototype);
   };
 
   /**

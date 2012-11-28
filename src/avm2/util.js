@@ -154,6 +154,12 @@ function isNumeric(x) {
     return res;
   });
 
+  extendBuiltin(Ap, "pushMany", function (array) {
+    for (var i = 0; i < array.length; i++) {
+      this.push(array[i]);
+    }
+  });
+
   extendBuiltin(Ap, "clone", function () {
     return this.slice(0);
   });

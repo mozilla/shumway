@@ -92,7 +92,7 @@
     function objectId(object) {
       release || assert(object);
       if (object.hasOwnProperty("objectID")) {
-        return object.objectId;
+        return object.objectID;
       }
       var id = $C.length;
       Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
@@ -245,6 +245,11 @@
     return new BlockStatement(body);
   };
 
+  Context.prototype.compileContinue = function compileContinue(node) {
+    var body = [new ContinueStatement(null)];
+    return new BlockStatement(body);
+  };
+
   Context.prototype.compileIf = function compileIf(node) {
     var cr = node.cond.compile(this);
     var tr = null, er = null;
@@ -281,15 +286,14 @@
 
   Context.prototype.compileBlock = function compileBlock(block) {
     var body = [];
+    /*
     for (var i = 1; i < block.nodes.length - 1; i++) {
       print("Block[" + i + "]: " + block.nodes[i]);
     }
+    */
     for (var i = 1; i < block.nodes.length - 1; i++) {
       var node = block.nodes[i];
-      print("Generating: " + node);
-
       var statement;
-
       var to;
       var from;
 
@@ -305,7 +309,6 @@
         new VariableDeclarator(to, from)
       ]);
 
-      print(generateSource(statement));
       body.push(statement);
     }
     var end = block.nodes.last();
@@ -324,7 +327,8 @@
     assert (cx instanceof Context);
     assert (!isArray(value));
     if (noVariable || !value.variable) {
-      return value.compile(cx);
+      var node = value.compile(cx);
+      return node;
     }
     assert (value.variable, "Value has no variable: " + value);
     return id(value.variable.name);
@@ -423,6 +427,10 @@
     return call(id("setProperty"), [object, name, value]);
   };
 
+  IR.GlobalProperty.prototype.compile = function (cx) {
+    return id(this.name);
+  };
+
   IR.GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
@@ -467,7 +475,12 @@
     return new ObjectExpression(properties);
   };
 
-  IR.RuntimeMultiname.prototype.compile = function (cx) {
+  IR.AVM2NewActivation.prototype.compile = function (cx) {
+    var methodInfo = compileValue(this.methodInfo, cx);
+    return call(id("createActivation"), [methodInfo]);
+  };
+
+  IR.AVM2RuntimeMultiname.prototype.compile = function (cx) {
     // CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);

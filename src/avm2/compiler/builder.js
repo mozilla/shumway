@@ -1,5 +1,8 @@
 var c4Options = systemOptions.register(new OptionSet("C4 Options"));
-var enableC4 = compilerOptions.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
+var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
+var c4MaxMethods = c4Options.register(new Option("c4MM", "c4MM", "number", Number.MAX_VALUE, "Max number of methods to compile."));
+var c4Method = c4Options.register(new Option("c4M", "c4M", "number", -1, "Method to compile."));
+
 
 var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTraceLevel", "number", 0, "Compiler Trace Level"));
 
@@ -26,7 +29,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
   var NewArray = IR.NewArray;
   var NewObject = IR.NewObject;
   var KeyValuePair = IR.KeyValuePair;
-  var RuntimeMultiname = IR.RuntimeMultiname;
 
   var DFG = IR.DFG;
   var CFG = IR.CFG;
@@ -107,11 +109,11 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     }
     constructor.prototype.toString = function () {
       return "<" + String(this.id + " @ " + this.index).padRight(' ', 10) +
-        ("M: " + toBriefString(this.store)).padRight(' ', 14) +
-        ("X: " + toBriefString(this.saved)).padRight(' ', 14) +
-        ("$: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 20) +
-        ("L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 40) +
-        ("S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 60);
+        (" M: " + toBriefString(this.store)).padRight(' ', 14) +
+        (" X: " + toBriefString(this.saved)).padRight(' ', 14) +
+        (" $: " + this.scope.map(toBriefString).join(", ")).padRight(' ', 20) +
+        (" L: " + this.local.map(toBriefString).join(", ")).padRight(' ', 40) +
+        (" S: " + this.stack.map(toBriefString).join(", ")).padRight(' ', 60);
     };
     return constructor;
   })();
@@ -159,9 +161,11 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     };
 
     constructor.prototype.build = function build() {
+
       var analysis = this.methodInfo.analysis;
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
+      var methodInfo = this.methodInfo;
 
       const ints = this.abc.constantPool.ints;
       const uints = this.abc.constantPool.uints;
@@ -267,7 +271,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               assert (false, "Is |namespaces| an array or not?");
               namespaces = pop();
             }
-            return new RuntimeMultiname(new Constant(multiname), namespaces, name);
+            return new IR.AVM2RuntimeMultiname(new Constant(multiname), namespaces, name);
           } else {
             return new Constant(multiname);
           }
@@ -282,7 +286,21 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function getProperty(object, name) {
-          return new IR.AVM2GetProperty(null, state.store, object, name);
+          /*
+          if (name instanceof Constant && name.value instanceof Multiname) {
+            if (Multiname.isQName(name.value)) {
+              var qualifiedName = Multiname.getQualifiedName(name.value);
+              return new IR.GetProperty(region, state.store, object, constant(qualifiedName));
+            }
+          }
+          if (name instanceof Constant && bc.ti) {
+            var propertyQName = bc.ti.trait ? Multiname.getQualifiedName(bc.ti.trait.name) : bc.ti.propertyQName;
+            if (propertyQName) {
+              return new IR.GetProperty(region, state.store, object, constant(propertyQName));
+            }
+          }
+          */
+          return new IR.AVM2GetProperty(region, state.store, object, name);
         }
 
         function store(node) {
@@ -291,11 +309,11 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function setProperty(object, name, value) {
-          store(new IR.AVM2SetProperty(null, state.store, object, name, value));
+          store(new IR.AVM2SetProperty(region, state.store, object, name, value));
         }
 
         function getSlot(object, index, ti) {
-          return new IR.AVM2GetSlot(region, state.store, object, index);
+          return new IR.AVM2GetSlot(null, state.store, object, index);
         }
 
         function setSlot(object, index, value, ti) {
@@ -310,21 +328,36 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return new Constant(value);
         }
 
-        function condition(operator) {
+        function foldTruthy(node) {
+          if (node instanceof Unary) {
+            if (node.operator === Operator.TRUE) {
+              return foldTruthy(node.argument);
+            }
+            if (node.argument instanceof Unary) {
+              if (node.operator === Operator.FALSE && node.argument.operator === Operator.FALSE) {
+                return foldTruthy(node.argument.argument);
+              }
+            }
+          }
+          return node;
+        }
+
+        function trutyCondition(operator) {
           var right;
           if (operator.isBinary()) {
             right = pop();
           }
           var left = pop();
           if (right) {
-            return new Binary(operator, left, right);
+            return foldTruthy(new Binary(operator, left, right));
           } else {
-            return new Unary(operator, left);
+            return foldTruthy(new Unary(operator, left));
           }
         }
 
-        function negatedCondition(operator) {
-          return new Unary(Operator.FALSE, condition(operator));
+        function negatedTruthyCondition(operator) {
+          var condition = trutyCondition(operator);
+          return foldTruthy(new Unary(Operator.FALSE, condition));
         }
 
         function pushExpression(operator) {
@@ -374,8 +407,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function toDouble(value) {
-          // TODO: FIX THIS;
-          return new Binary(Operator.OR, value, constant(0));
+          return new Call(null, null, new IR.GlobalProperty("Number"), null, [value]);
         }
 
         if (writer) {
@@ -454,12 +486,16 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               object = pop();
               push(call(getProperty(object, multiname), object, arguments));
               break;
+            case OP_construct:
+              arguments = stack.popMany(bc.argCount);
+              object = pop();
+              push(store(new IR.AVM2New(region, state.store, object, arguments)));
+              break;
             case OP_constructprop:
               arguments = stack.popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname);
-              // callee = getProperty(callee, constant("instance"));
               push(store(new IR.AVM2New(region, state.store, callee, arguments)));
               break;
             case OP_coerce_a:       /* NOP */ break;
@@ -492,21 +528,21 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             case OP_debugline:
             case OP_debugfile:
               break;
-            case OP_ifnlt:          buildIfStops(negatedCondition(Operator.LT)); break;
-            case OP_ifge:           buildIfStops(condition(Operator.GE)); break;
-            case OP_ifnle:          buildIfStops(negatedCondition(Operator.LE)); break;
-            case OP_ifgt:           buildIfStops(condition(Operator.GT)); break;
-            case OP_ifngt:          buildIfStops(negatedCondition(Operator.GT)); break;
-            case OP_ifle:           buildIfStops(condition(Operator.LE)); break;
-            case OP_ifnge:          buildIfStops(negatedCondition(Operator.GE)); break;
-            case OP_iflt:           buildIfStops(condition(Operator.LT)); break;
+            case OP_ifnlt:          buildIfStops(negatedTruthyCondition(Operator.LT)); break;
+            case OP_ifge:           buildIfStops(trutyCondition(Operator.GE)); break;
+            case OP_ifnle:          buildIfStops(negatedTruthyCondition(Operator.LE)); break;
+            case OP_ifgt:           buildIfStops(trutyCondition(Operator.GT)); break;
+            case OP_ifngt:          buildIfStops(negatedTruthyCondition(Operator.GT)); break;
+            case OP_ifle:           buildIfStops(trutyCondition(Operator.LE)); break;
+            case OP_ifnge:          buildIfStops(negatedTruthyCondition(Operator.GE)); break;
+            case OP_iflt:           buildIfStops(trutyCondition(Operator.LT)); break;
             case OP_jump:           buildJumpStop(); break;
-            case OP_iftrue:         buildIfStops(condition(Operator.TRUE)); break;
-            case OP_iffalse:        buildIfStops(condition(Operator.FALSE)); break;
-            case OP_ifeq:           buildIfStops(condition(Operator.EQ)); break;
-            case OP_ifne:           buildIfStops(condition(Operator.NE)); break;
-            case OP_ifstricteq:     buildIfStops(condition(Operator.SEQ)); break;
-            case OP_ifstrictne:     buildIfStops(condition(Operator.SNE)); break;
+            case OP_iftrue:         buildIfStops(trutyCondition(Operator.TRUE)); break;
+            case OP_iffalse:        buildIfStops(trutyCondition(Operator.FALSE)); break;
+            case OP_ifeq:           buildIfStops(trutyCondition(Operator.EQ)); break;
+            case OP_ifne:           buildIfStops(trutyCondition(Operator.NE)); break;
+            case OP_ifstricteq:     buildIfStops(trutyCondition(Operator.SEQ)); break;
+            case OP_ifstrictne:     buildIfStops(trutyCondition(Operator.SNE)); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
             case OP_add:            pushExpression(Operator.ADD); break;
@@ -534,7 +570,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               value = pop();
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname), multiname);
-              push(call("isInstance", null, [value, type]));
+              push(call(constant("isInstance"), null, [value, type]));
+              break;
+            case OP_typeof:
+              push(call(constant("typeOf"), null, [pop()]));
               break;
             case OP_convert_i:
               push(toInt32(pop()));
@@ -561,6 +600,9 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
                 properties.unshift(new KeyValuePair(key, value));
               }
               push(new NewObject(properties));
+              break;
+            case OP_newactivation:
+              push(new IR.AVM2NewActivation(runtime, constant(methodInfo)));
               break;
             default:
               unexpected("Not Implemented: " + bc);
@@ -618,10 +660,21 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       return;
     }
 
-    // if (count ++ !== 1) {
-      // print("Skipping " + (count - 1));
-      // return;
-    // }
+    count ++;
+
+    if (c4Method.value >= 0) {
+      if ((count - 1) !== Number(c4Method.value)) {
+        print ("Ignoring: " + (count - 1));
+        return;
+      }
+    }
+
+    if (c4MaxMethods.value >= 0) {
+      if (count > c4MaxMethods.value | 0) {
+        print ("Too Many Ignoring: " + count);
+        return;
+      }
+    }
 
     if (compilerTraceLevel.value > 0) {
       writer = new IndentingWriter();
@@ -655,13 +708,17 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     cfg.allocateVariables();
     Timer.stop();
 
-    Timer.start("IR DOM");
-    cfg.computeDominators(true);
-    Timer.stop();
+    // Timer.start("IR DOM");
+    // cfg.computeDominators(true);
+    // Timer.stop();
 
     // writer && cfg.trace(writer);
 
-    return Backend.generate(cfg);
+    var src = Backend.generate(cfg);
+
+    writer && writer.writeLn(src);
+
+    return src;
   }
 
   exports.build = build;

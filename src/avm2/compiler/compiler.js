@@ -1512,7 +1512,7 @@ var Compiler = (function () {
           release || assert(this.methodInfo.needsActivation());
           emit(variableDeclaration([
             new VariableDeclarator(activationName,
-                                   call(runtimeProperty("createActivation"), [constant(this.methodInfo)]))
+                                   call(id("createActivation"), [constant(this.methodInfo)]))
           ]));
           push(activationName);
           break;

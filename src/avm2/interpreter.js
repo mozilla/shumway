@@ -373,7 +373,7 @@ var Interpreter = (function () {
             break;
           case OP_newactivation:
             release || assert(method.needsActivation());
-            stack.push(runtime.createActivation(method));
+            stack.push(createActivation(method));
             break;
           case OP_newclass:
             stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));

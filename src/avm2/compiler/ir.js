@@ -165,6 +165,7 @@
       }
       return str;
     };
+
     constructor.prototype.visitInputs = function (fn, visitConstants) {
       if (isConstant(this)) {
         // Don't visit properties of constants.
@@ -292,7 +293,8 @@
   var Move = (function () {
     function constructor(to, from) {
       assert (to instanceof Variable);
-      assert (from instanceof Variable || from instanceof Constant, from);
+      // assert (from instanceof Variable || from instanceof Constant, from);
+      assert (to !== from);
       this.to = to;
       this.from = from;
     }
@@ -304,8 +306,8 @@
   })();
 
   var End = (function () {
-    function constructor(control, predicate) {
-      Control.call(this);
+    function constructor(control) {
+      Control.call(this, control);
     }
     constructor.prototype = extend(Control, "End");
     return constructor;
@@ -451,7 +453,7 @@
       this.parent = parent;
       this.object = object;
     }
-    constructor.prototype = extend(Value, "AVM2Scope");
+    constructor.prototype = extend(Value, "AVM2_Scope");
     return constructor;
   })();
 
@@ -473,7 +475,7 @@
       this.control = control;
       this.scope = scope;
     }
-    constructor.prototype = extend(Value, "AVM2Global");
+    constructor.prototype = extend(Value, "AVM2_Global");
     return constructor;
   })();
 
@@ -493,12 +495,21 @@
     return value instanceof Value;
   }
 
+  var GlobalProperty = (function () {
+    function constructor(name) {
+      Node.call(this);
+      assert (isString(name));
+      this.name = name;
+    }
+    constructor.prototype = extend(Value, "GlobalProperty");
+    return constructor;
+  })();
+
   var GetProperty = (function () {
     function constructor(control, store, object, name) {
       Node.call(this);
       assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
+      assert (store === null || isStore(store));
       assert (name);
       this.control = control;
       this.store = store;
@@ -513,7 +524,7 @@
     function constructor(control, store, object, name) {
       GetProperty.call(this, control, store, object, name);
     }
-    constructor.prototype = extend(GetProperty, "AVM2GetProperty");
+    constructor.prototype = extend(GetProperty, "AVM2_GetProperty");
     return constructor;
   })();
 
@@ -539,7 +550,7 @@
     function constructor(control, store, object, name, value) {
       SetProperty.call(this, control, store, object, name, value);
     }
-    constructor.prototype = extend(SetProperty, "AVM2SetProperty");
+    constructor.prototype = extend(SetProperty, "AVM2_SetProperty");
     return constructor;
   })();
 
@@ -555,7 +566,7 @@
       this.object = object;
       this.index = index;
     }
-    constructor.prototype = extend(Value, "AVM2GetSlot");
+    constructor.prototype = extend(Value, "AVM2_GetSlot");
     return constructor;
    })();
 
@@ -573,7 +584,7 @@
       this.index = index;
       this.value = value;
      }
-     constructor.prototype = extend(Value, "AVM2SetSlot");
+     constructor.prototype = extend(Value, "AVM2_SetSlot");
      return constructor;
   })();
 
@@ -587,7 +598,7 @@
       this.name = name;
       this.domain = domain;
     }
-    constructor.prototype = extend(Value, "AVM2FindProperty");
+    constructor.prototype = extend(Value, "AVM2_FindProperty");
     return constructor;
   })();
 
@@ -624,7 +635,17 @@
     return constructor;
   })();
 
-  var RuntimeMultiname = (function () {
+  var AVM2NewActivation = (function () {
+    function constructor(methodInfo) {
+      Node.call(this);
+      assert (isConstant(methodInfo));
+      this.methodInfo = methodInfo;
+    }
+    constructor.prototype = extend(Value, "AVM2_NewActivation");
+    return constructor;
+  })();
+
+  var AVM2RuntimeMultiname = (function () {
     function constructor(multiname, namespaces, name) {
       Node.call(this);
       assert (multiname);
@@ -634,7 +655,7 @@
       this.namespaces = namespaces;
       this.name = name;
     }
-    constructor.prototype = extend(Value, "RuntimeMultiname");
+    constructor.prototype = extend(Value, "AVM2_Runtime_Multiname");
     return constructor;
   })();
 
@@ -644,7 +665,7 @@
       assert (isControlOrNull(control));
       assert (callee);
       assert (isValueOrNull(object));
-      assert (isStore(store));
+      assert (store === null || isStore(store));
       assert (isArray(arguments));
       this.control = control;
       this.callee = callee;
@@ -676,7 +697,7 @@
     function constructor(control, store, object, name) {
       New.call(this, control, store, object, name);
     }
-    constructor.prototype = extend(New, "AVM2New");
+    constructor.prototype = extend(New, "AVM2_New");
     return constructor;
   })();
 
@@ -751,7 +772,7 @@
     constructor.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
       assert (isValue(node), node);
-      // assert (isNotPhi(node));
+      assert (isNotPhi(node));
       assert (this.nodes.indexOf(node) < 0);
       if (node.mustFloat) {
         return;
@@ -791,8 +812,33 @@
       }
     }
 
-    constructor.prototype.forEach = function visitAll(visitor) {
-      preOrderDepthFirstSearch(this.exit, function (node, v) {
+    function postOrderDepthFirstSearch(root, visitChildren, post) {
+      var ONE_TIME = 1, MANY_TIMES = 2;
+      var visited = [];
+      var worklist = [root];
+      function visitChild(child) {
+        if (!visited[child.id]) {
+          worklist.push(child);
+        }
+      }
+      var node;
+      while ((node = worklist.top())) {
+        if (visited[node.id]) {
+          if (visited[node.id] === ONE_TIME) {
+            visited[node.id] = MANY_TIMES;
+            post(node);
+          }
+          worklist.pop();
+          continue;
+        }
+        visited[node.id] = ONE_TIME;
+        visitChildren(node, visitChild);
+      }
+    }
+
+    constructor.prototype.forEach = function visitAll(visitor, postOrder) {
+      var search = postOrder ? postOrderDepthFirstSearch : preOrderDepthFirstSearch;
+      search(this.exit, function (node, v) {
         node.visitInputs(v);
       }, visitor);
     };
@@ -933,6 +979,7 @@
       buildEnd(dfg.exit);
       cfg.splitCriticalEdges();
       cfg.exit = dfg.exit.control.block;
+      cfg.computeDominators(true);
       return cfg;
     };
 
@@ -1210,7 +1257,7 @@
 
       writer.enter("> Uses");
       useEntries.forEach(function (entry) {
-        writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "]");
+        writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "] " + entry.def);
       });
       writer.leave("<");
       writer.leave("<");
@@ -1254,6 +1301,8 @@
         }
       });
 
+      writer.writeLn("Trying to optimize " + phis.length + " phis.");
+
       /**
        * Updates all uses to a new definition. Returns true if anything was updated.
        */
@@ -1274,26 +1323,27 @@
       }
 
       function simplify(phi, args) {
-        // x = phi(y) -> y
+        var args = args.unique();
         if (args.length === 1) {
+          // x = phi(y) -> y
           return args[0];
-        }
-        // x = phi(y, x) -> y
-        else if (args.length === 2) {
-          if (args[0] === phi) {
-            return args[1];
-          } else if (args[1] === phi) {
-            return args[0];
+        } else {
+          if (args.length === 2) {
+            // x = phi(y, x) -> y
+            if (args[0] === phi) {
+              return args[1];
+            } else if (args[1] === phi) {
+              return args[0];
+            }
+            return phi;
           }
-          return phi;
-        }
-        // x = phi(y, y, x, y, x) -> y
-        else {
-          var unique = args.unique();
-          writer.writeLn("ARGS: " + unique);
-          if (unique.length <= 2) {
-            return simplify(phi, unique);
-          }
+          /*else {
+            // x = phi(y, y, x, y, x) -> y
+            writer.writeLn("ARGS: " + unique);
+            if (unique.length <= 2) {
+              return simplify(phi, unique);
+            }
+          }*/
         }
         return phi;
       }
@@ -1358,6 +1408,7 @@
         }
         if (node instanceof Value) {
           node.variable = new Variable("l" + node.id);
+          writer.writeLn("Allocated: " + node.variable + " to " + node);
         }
       }
 
@@ -1395,7 +1446,10 @@
               }
               var moves = blockMoves[predecessor.id] || (blockMoves[predecessor.id] = []);
               argument = argument.variable || argument;
-              moves.push(new Move(phi.variable, argument));
+
+              if (phi.variable !== argument) {
+                moves.push(new Move(phi.variable, argument));
+              }
             }
           }
         }
@@ -1414,8 +1468,9 @@
        */
       var blocks = this.blocks;
       blockMoves.forEach(function (moves, blockID) {
+        var block = blocks[blockID];
         var temporary = 0;
-        writer.writeLn(i + " Moves: " + moves);
+        writer.writeLn(block + " Moves: " + moves);
         while (moves.length) {
           // Find a move that is safe to emit, i.e. no other move depends on its destination.
           for (var i = 0; i < moves.length; i++) {
@@ -1432,7 +1487,7 @@
             }
             if (move) {
               moves.splice(i--, 1);
-              blocks[blockID].append(move);
+              block.append(move);
             }
           }
 
@@ -1461,75 +1516,29 @@
     constructor.prototype.scheduleEarly = function scheduleEarly() {
       var writer = new IndentingWriter();
 
+      writer.enter("> Schedule Early");
+
       var cfg = this;
       var dfg = this.dfg;
 
-      writer.enter("> Schedule Early");
+      var scheduled = [];
 
-      function schedule(node) {
-        writer.enter("> Scheduling: " + node + " " + node.nodeName);
-        if (node.isScheduled || isConstant(node)) {
-          writer.leave("< Already scheduled");
-          return;
-        }
-        if (node.isScheduling) {
-          return;
-        }
-        node.isScheduling = true;
-        var inputs = [];
-        node.visitInputs(function (input) {
-          if (!(input instanceof Control)) {
-            inputs.push(followProjection(input));
-          }
-        });
-
-        for (var i = 0; i < inputs.length; i++) {
-          writer.writeLn("Trying to Schedule input: " + i + " : " + inputs[i]);
-          if (!inputs[i].isScheduled) {
-            writer.writeLn("Scheduling input: " + i + " : " + inputs[i]);
-            schedule(inputs[i]);
-          }
-        }
-        if (isControl(node)) {
-          writer.leave("< Control node is already scheduled");
-          return;
-        }
-        if (node.control && isValue(node)) {
-          assert (!node.isScheduled);
-          node.isScheduled = true;
-          if (!isPhi(node)) {
-            node.control.block.append(node);
-          }
-          writer.leave("< Scheduled: " + node + " in " + node.control);
-          return;
-        }
-        if (inputs.length === 0) {
-          node.control = cfg.root.region;
-          cfg.root.append(node);
-          node.isScheduled = true;
-          writer.leave("< No inputs");
-          writer.writeLn("Scheduled: " + node + " in " + node.control);
-          return;
-        }
-
-        assert (inputs[0].control, inputs[0]);
-        var a = inputs[0].control.block;
-        for (var i = 1; i < inputs.length; i++) {
-          var b = inputs[i].control.block;
-          if (a.dominatorDepth < b.dominatorDepth) {
-            a = b;
-          }
-        }
-
-        node.control = a.region;
-        a.append(node);
-        node.isScheduled = true;
-        writer.writeLn("Scheduled: " + node + " in " + node.control);
-        assert (node.control, a.region);
-        writer.leave("<");
-      }
+      var roots = [];
 
       dfg.forEach(function (node) {
+        if (node instanceof Region || node instanceof Jump) {
+          return;
+        }
+        if (node.control) {
+          roots.push(node);
+        }
+      }, true);
+
+      roots.forEach(function (node) {
+        print("Root: " + node);
+      });
+
+      roots.forEach(function (node) {
         if (node instanceof Phi) {
           var block = node.control.block;
           (block.phis || (block.phis = [])).push(node);
@@ -1539,7 +1548,86 @@
         }
       });
 
+      function isScheduled(node) {
+        return scheduled[node.id];
+      }
+
+      function shouldFloat(node) {
+        return node instanceof Binary || node instanceof Unary;
+      }
+
+      function append(node) {
+        assert (!isScheduled(node), "Already scheduled " + node);
+        scheduled[node.id] = true;
+        assert (node.control, node);
+        if (shouldFloat(node)) {
+
+        } else {
+          node.control.block.append(node);
+        }
+      }
+
+      function scheduleIn(node, region) {
+        assert (!node.control, node);
+        assert (!isScheduled(node));
+        assert (region);
+        writer.writeLn("Scheduled: " + node + " in " + region);
+        node.control = region;
+        append(node);
+      }
+
+      function schedule(node) {
+        writer.enter("> Schedule: " + node);
+
+        var inputs = [];
+        node.visitInputs(function (input) {
+          if (isValue(input)) {
+            inputs.push(followProjection(input));
+          }
+        });
+
+        writer.writeLn("Inputs: [" + inputs.map(toID) + "], length: " + inputs.length);
+
+        for (var i = 0; i < inputs.length; i++) {
+          var input = inputs[i];
+          if (isNotPhi(input) && !isScheduled(input)) {
+            schedule(input);
+          }
+        }
+
+        if (node.control) {
+          if (node instanceof End || node instanceof Phi || node instanceof Start || isScheduled(node)) {
+
+          } else {
+            append(node);
+          }
+        } else {
+          if (inputs.length) {
+            var x = inputs[0].control;
+            for (var i = 1; i < inputs.length; i++) {
+              var y = inputs[i].control;
+              if (x.block.dominatorDepth < y.block.dominatorDepth) {
+                x = y;
+              }
+            }
+            scheduleIn(node, x);
+          } else {
+            scheduleIn(node, cfg.root.region);
+          }
+        }
+
+        writer.leave("<");
+      }
+
       writer.leave("<");
+
+      roots.forEach(function (node) {
+        var node = followProjection(node);
+        if (node === dfg.start || node instanceof Region) {
+          return;
+        }
+        assert (node.control, "Node is not scheduled: " + node);
+      });
     };
 
     constructor.prototype.trace = function (writer) {
@@ -1654,6 +1742,7 @@
   exports.Unary = Unary;
   exports.Constant = Constant;
   exports.AVM2FindProperty = AVM2FindProperty;
+  exports.GlobalProperty = GlobalProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
   exports.AVM2GetProperty = AVM2GetProperty;
@@ -1674,8 +1763,9 @@
   exports.Parameter = Parameter;
   exports.NewArray = NewArray;
   exports.NewObject = NewObject;
+  exports.AVM2NewActivation = AVM2NewActivation;
   exports.KeyValuePair = KeyValuePair;
-  exports.RuntimeMultiname = RuntimeMultiname;
+  exports.AVM2RuntimeMultiname = AVM2RuntimeMultiname;
 
   exports.DFG = DFG;
   exports.CFG= CFG;
