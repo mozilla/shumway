@@ -439,6 +439,10 @@
     return constant instanceof Constant;
   }
 
+  function isBoolean(boolean) {
+    return boolean === true || boolean === false;
+  }
+
   function isInteger(integer) {
     return integer | 0 === integer;
   }
@@ -591,14 +595,16 @@
   })();
 
   var AVM2FindProperty = (function () {
-    function constructor(scope, name, domain) {
+    function constructor(scope, name, domain, strict) {
       Node.call(this);
       assert (isScope(scope));
       assert (name);
       assert (isConstant(domain));
+      assert (isBoolean(strict));
       this.scope = scope;
       this.name = name;
       this.domain = domain;
+      this.strict = strict;
     }
     constructor.prototype = extend(Value, "AVM2_FindProperty");
     return constructor;

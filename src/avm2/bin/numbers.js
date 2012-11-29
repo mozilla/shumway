@@ -32,7 +32,7 @@ var release = numbersOptions.register(new Option("r", "release", "boolean", fals
 var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
 var noMetrics = numbersOptions.register(new Option("nm", "noMetrics", "boolean", false, "runs without -tm -tj"));
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
-var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "iclov", "(i)nterpreter, (c)ompiler, (o)ptimized, in(l)ineCaching, (v)erifier"));
+var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "iclovx", "(i)nterpreter, (c)ompiler, (o)ptimized, in(l)ineCaching, (v)erifier, (x) c4"));
 var output = numbersOptions.register(new Option("o", "output", "string", "", "output json file"));
 
 var summary = numbersOptions.register(new Option("s", "summary", "boolean", false, "trace summary"));
@@ -176,8 +176,8 @@ if (configurationSet.value.indexOf("l") >= 0) {
 if (configurationSet.value.indexOf("v") >= 0) {
   configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify" + commandSuffix});
 }
-if (configurationSet.value.indexOf("z") >= 0) {
-  configurations.push({name: "shu-z", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
+if (configurationSet.value.indexOf("x") >= 0) {
+  configurations.push({name: "shu-x", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
 }
 
 if (configurationSet.value.indexOf("u") >= 0) {

@@ -132,11 +132,11 @@ var Compiler = (function () {
 
   function objectId(obj) {
     release || assert(obj);
-    if (obj.hasOwnProperty("objectId")) {
-      return obj.objectId;
+    if (obj.hasOwnProperty("objectID")) {
+      return obj.objectID;
     }
     var id = $C.length;
-    Object.defineProperty(obj, "objectId", {value: id, writable: false, enumerable: false});
+    Object.defineProperty(obj, "objectID", {value: id, writable: false, enumerable: false});
     $C.push(obj);
     return id;
   }

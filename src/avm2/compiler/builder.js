@@ -273,6 +273,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         var object, callee, value, multiname, type, arguments;
 
         function push(x) {
+          assert (x);
           if (bc.ti) {
             if (x.ty) {
               assert (x.ty == bc.ti.type);
@@ -316,8 +317,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           }
         }
 
-        function findProperty(name) {
-          return new IR.AVM2FindProperty(topScope(), name, domain);
+        function findProperty(name, strict) {
+          return new IR.AVM2FindProperty(topScope(), name, domain, strict);
         }
 
         function getJSProperty(object, name) {
@@ -521,10 +522,13 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(new IR.AVM2Global(null, topScope()));
               break;
             case OP_getscopeobject:
-              push(state.scope[bc.index].object);
+              push(getJSProperty(state.scope[bc.index], constant("object")));
               break;
             case OP_findpropstrict:
-              push(findProperty(buildMultiname(bc.index)));
+              push(findProperty(buildMultiname(bc.index), true));
+              break;
+            case OP_findproperty:
+              push(findProperty(buildMultiname(bc.index), false));
               break;
             case OP_getproperty:
               multiname = buildMultiname(bc.index);
@@ -538,8 +542,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               setProperty(object, multiname, value);
               break;
             case OP_getslot:
-              var obj = pop();
-              push(getSlot(obj, constant(bc.index), bc.ti));
+              object = pop();
+              push(getSlot(object, constant(bc.index), bc.ti));
               break;
             case OP_setslot:
               value = pop();
@@ -552,6 +556,12 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_newfunction:
               callee = getJSProperty(runtime, constant("createFunction"));
               push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              break;
+            case OP_call:
+              arguments = stack.popMany(bc.argCount);
+              object = pop();
+              callee = pop();
+              push(call(callee, object, arguments));
               break;
             case OP_callproperty:
               arguments = stack.popMany(bc.argCount);
@@ -635,6 +645,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_lessequals:     pushExpression(Operator.LE); break;
             case OP_greaterthan:    pushExpression(Operator.GT); break;
             case OP_greaterequals:  pushExpression(Operator.GE); break;
+            case OP_negate:         pushExpression(Operator.NEG); break;
             case OP_increment:
               push(constant(1));
               pushExpression(Operator.ADD);
@@ -679,7 +690,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(new NewObject(properties));
               break;
             case OP_newactivation:
-              push(new IR.AVM2NewActivation(runtime, constant(methodInfo)));
+              push(new IR.AVM2NewActivation(constant(methodInfo)));
               break;
             default:
               unexpected("Not Implemented: " + bc);

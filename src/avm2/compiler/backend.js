@@ -45,6 +45,7 @@
   var Projection = IR.Projection;
   var Start = IR.Start;
   var Control = Looper.Control;
+  var Variable = IR.Variable;
 
   Control.Break.prototype.compile = function (cx, state) {
     return cx.compileBreak(this, state);
@@ -238,7 +239,9 @@
     return new UnaryExpression(Operator.FALSE.name, node);
   }
 
+
   function Context () {
+    this.label = new Variable("$L");
     this.variables = [];
     this.parameters = [];
   }
@@ -251,14 +254,29 @@
     return this.parameters[parameter.index] = parameter;
   };
 
+  Context.prototype.compileLabelBody = function compileLabelBody(node) {
+    var body = [];
+    if (node.label) {
+      this.useVariable(this.label);
+      body.push(new ExpressionStatement(assignment(id(this.label.name), new Literal(node.label))));
+    }
+    return body;
+  };
+
   Context.prototype.compileBreak = function compileBreak(node) {
-    var body = [new BreakStatement(null)];
+    var body = this.compileLabelBody(node);
+    body.push(new BreakStatement(null));
     return new BlockStatement(body);
   };
 
   Context.prototype.compileContinue = function compileContinue(node) {
-    var body = [new ContinueStatement(null)];
+    var body = this.compileLabelBody(node);
+    body.push(new ContinueStatement(null));
     return new BlockStatement(body);
+  };
+
+  Context.prototype.compileExit = function compileExit(node) {
+    return new BlockStatement(this.compileLabelBody(node));
   };
 
   Context.prototype.compileIf = function compileIf(node) {
@@ -274,6 +292,33 @@
     condition = node.negated ? negate(condition) : condition;
     cr.body.push(new IfStatement(condition, tr || new BlockStatement([]), er || null));
     return cr;
+  };
+
+  Context.prototype.compileLabelSwitch = function compileLabelSwitch(node) {
+    var statement = null;
+    var labelName = id(this.label.name);
+
+    function compileLabelTest(labelID) {
+      release || assert(typeof labelID === "number");
+      return new BinaryExpression("===", labelName, new Literal(labelID));
+    }
+
+    for (var i = node.cases.length - 1; i >= 0; i--) {
+      var c = node.cases[i];
+      var labels = c.labels;
+
+      var labelTest = compileLabelTest(labels[0]);
+
+      for (var j = 1; j < labels.length; j++) {
+        labelTest = new BinaryExpression("||", labelTest, compileLabelTest(labels[j]));
+      }
+
+      statement = new IfStatement(
+        labelTest,
+        c.body ? c.body.compile(this) : new BlockStatement(),
+        statement);
+    }
+    return statement;
   };
 
   Context.prototype.compileLoop = function compileLoop(node) {
@@ -382,7 +427,8 @@
     var scope = compileValue(this.scope, cx);
     var name = compileValue(this.name, cx);
     var domain = compileValue(this.domain, cx);
-    return call(property(scope, "findProperty"), [name, domain]);
+    var strict = new Literal(this.strict);
+    return call(property(scope, "findProperty"), [name, domain, strict]);
   };
 
   IR.AVM2GetProperty.prototype.compile = function (cx) {
