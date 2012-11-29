@@ -136,6 +136,10 @@
   })();
 
   function constant(value) {
+    // TODO: Fix this constant ugliness.
+    if (typeof value === "string") {
+      return new Literal(value);
+    }
     return new Constant(value);
   }
 
@@ -175,6 +179,8 @@
         } else {
           obj = new MemberExpression(obj, new Literal(x), true);
         }
+      } else if (x instanceof Literal) {
+        obj = new MemberExpression(obj, new Identifier(x.value), false);
       } else {
         obj = new MemberExpression(obj, x, true);
       }
@@ -207,7 +213,7 @@
   function negate(node) {
     if (node instanceof Constant) {
       if (node.value === true || node.value === false) {
-        return new Constant(!node.value);
+        return constant(!node.value);
       }
     } else if (node instanceof Identifier) {
       return new UnaryExpression(Operator.FALSE.name, node);

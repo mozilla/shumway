@@ -120,6 +120,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return node instanceof Constant && isNumeric(node.value);
   }
 
+  function isMultinameConstant(node) {
+    return node instanceof Constant && node.value instanceof Multiname;
+  }
+
   function hasNumericType(node) {
     if (isNumericConstant(node)) {
       return true;
@@ -269,6 +273,13 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         var object, callee, value, multiname, type, arguments;
 
         function push(x) {
+          if (bc.ti) {
+            if (x.ty) {
+              assert (x.ty == bc.ti.type);
+            } else {
+              x.ty = bc.ti.type;
+            }
+          }
           stack.push(x);
         }
 
@@ -313,21 +324,23 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return new IR.GetProperty(null, state.store, object, name);
         }
 
-        function getProperty(object, name) {
-          /*
-          if (name instanceof Constant && name.value instanceof Multiname) {
-            if (Multiname.isQName(name.value)) {
-              var qualifiedName = Multiname.getQualifiedName(name.value);
-              return new IR.GetProperty(region, state.store, object, constant(qualifiedName));
-            }
+        function getProperty(object, name, ti) {
+          if (hasNumericType(name)) {
+            return new IR.GetProperty(region, state.store, object, name);
           }
-          if (name instanceof Constant && bc.ti) {
-            var propertyQName = bc.ti.trait ? Multiname.getQualifiedName(bc.ti.trait.name) : bc.ti.propertyQName;
-            if (propertyQName) {
-              return new IR.GetProperty(region, state.store, object, constant(propertyQName));
-            }
+          var propertyQName;
+          if (ti) {
+            propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
+          } else if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
+            propertyQName = Multiname.getQualifiedName(name.value);
           }
-          */
+          if (propertyQName) {
+            if (propertyQName === "public$length") {
+              // HACK, is this safe?
+              propertyQName = "length";
+            }
+            return new IR.GetProperty(region, state.store, object, constant(propertyQName));
+          }
           return new IR.AVM2GetProperty(region, state.store, object, name);
         }
 
@@ -345,10 +358,28 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function getSlot(object, index, ti) {
+          if (ti) {
+            var trait = ti.trait;
+            if (trait) {
+              if (trait.isConst()) {
+                return constant(trait.value);
+              }
+              var slotQName = Multiname.getQualifiedName(trait.name);
+              return new IR.GetProperty(region, state.store, object, constant(slotQName));
+            }
+          }
           return new IR.AVM2GetSlot(null, state.store, object, index);
         }
 
         function setSlot(object, index, value, ti) {
+          if (ti) {
+            var trait = ti.trait;
+            if (trait) {
+              var slotQName = Multiname.getQualifiedName(trait.name);
+              store(new IR.SetProperty(region, state.store, object, constant(slotQName), value));
+              return;
+            }
+          }
           store(new IR.AVM2SetSlot(region, state.store, object, index, value));
         }
 
@@ -498,7 +529,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_getproperty:
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(getProperty(object, multiname));
+              push(getProperty(object, multiname, bc.ti));
               break;
             case OP_setproperty:
               value = pop();
@@ -607,6 +638,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_increment:
               push(constant(1));
               pushExpression(Operator.ADD);
+              break;
+            case OP_decrement:
+              push(constant(1));
+              pushExpression(Operator.SUB);
               break;
             case OP_istype:
               value = pop();

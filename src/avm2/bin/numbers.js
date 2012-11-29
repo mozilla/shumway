@@ -176,6 +176,9 @@ if (configurationSet.value.indexOf("l") >= 0) {
 if (configurationSet.value.indexOf("v") >= 0) {
   configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify" + commandSuffix});
 }
+if (configurationSet.value.indexOf("z") >= 0) {
+  configurations.push({name: "shu-z", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
+}
 
 if (configurationSet.value.indexOf("u") >= 0) {
   configurations.push({name: "shu-u", timeout: timeout.value, command: commandPrefix + " -x -opt -verify -unsafelookup" + commandSuffix});
