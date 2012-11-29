@@ -120,6 +120,13 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return node instanceof Constant && isNumeric(node.value);
   }
 
+  function hasNumericType(node) {
+    if (isNumericConstant(node)) {
+      return true;
+    }
+    return node.ty && node.ty.isNumeric();
+  }
+
   var Builder = (function () {
     function constructor (abc, methodInfo, scope, hasDynamicScope) {
       assert (abc && methodInfo && scope);
@@ -234,6 +241,20 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       function buildNodes(region, block, state) {
         assert (region && block && state);
 
+        var typeState = block.entryState;
+        if (typeState) {
+          writer && writer.writeLn("Type State: " + typeState);
+          for (var i = 0; i < typeState.local.length; i++) {
+            var type = typeState.local[i];
+            var local = state.local[i];
+            if (local.ty) {
+              assert (local.ty === type);
+            } else {
+              local.ty = type;
+            }
+          }
+        }
+
         var local = state.local;
         var stack = state.stack;
         var scope = state.scope;
@@ -270,7 +291,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             var name = new Constant(multiname.name);
             if (multiname.isRuntimeName()) {
               name = pop();
-              if (isNumericConstant(name)) {
+              if (hasNumericType(name)) {
                 return name;
               }
             }
@@ -316,6 +337,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function setProperty(object, name, value) {
+          if (hasNumericType(name)) {
+            store(new IR.SetProperty(region, state.store, object, name, value));
+            return;
+          }
           store(new IR.AVM2SetProperty(region, state.store, object, name, value));
         }
 

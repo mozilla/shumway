@@ -437,6 +437,13 @@
     return property(object, name);
   };
 
+  IR.SetProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var value = compileValue(this.value, cx);
+    return assignment(property(object, name), value);
+  };
+
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
