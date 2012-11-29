@@ -43,10 +43,10 @@
   var Operator = (function () {
     var map = {};
 
-    function operator(name, fn, binary) {
+    function operator(name, evaluate, binary) {
       this.name = name;
-      this.fn = fn;
       this.binary = binary;
+      this.evaluate = evaluate;
       map[name] = this;
     }
 
@@ -392,7 +392,7 @@
     function constructor(operator, argument) {
       Node.call(this);
       assert (operator instanceof Operator);
-      assert (argument)
+      assert (argument);
       this.operator = operator;
       this.argument = argument;
     }
@@ -1712,23 +1712,51 @@
     return constructor;
   })();
 
-  const selfTest = false;
+  /**
+   * Peephole optimizations:
+   */
+  var PeepholeOptimizer = (function () {
+    function constructor() {
 
-  if (selfTest) {
-    var writer = new IndentingWriter();
-    function build(str) {
-      var cfg = new CFG();
-      cfg.fromString(str);
-      return cfg;
     }
-
-    // var a = build("0->0, 0->1->2->4->5, 1->3->4");
-    var a = build("0->0");
-    a.computeDominators(true);
-    a.trace(writer);
-
-    writer.writeLn("DONE SELF TESTING");
-  }
+    function foldUnary(node, truthy) {
+      assert (node instanceof Unary);
+      if (isConstant(node.argument)) {
+        return new Constant(node.operator.evaluate(node.argument.value));
+      }
+      if (truthy) {
+        var argument = fold(node.argument, true);
+        if (node.operator === Operator.TRUE) {
+          return argument;
+        }
+        if (argument instanceof Unary) {
+          if (node.operator === Operator.FALSE && argument.operator === Operator.FALSE) {
+            return argument.argument;
+          }
+        } else {
+          return new Unary(node.operator, argument);
+        }
+      }
+      return node;
+    }
+    function foldBinary(node, truthy) {
+      assert (node instanceof Binary);
+      if (isConstant(node.left) && isConstant(node.right)) {
+        return new Constant(node.operator.evaluate(node.left.value, node.right.value));
+      }
+      return node;
+    }
+    function fold(node, truthy) {
+      if (node instanceof Unary) {
+        return foldUnary(node, truthy);
+      } else if (node instanceof Binary) {
+        return foldBinary(node, truthy);
+      }
+      return node;
+    }
+    constructor.prototype.tryFold = fold;
+    return constructor;
+  })();
 
   exports.Block = Block;
   exports.Node = Node;
@@ -1769,5 +1797,7 @@
 
   exports.DFG = DFG;
   exports.CFG= CFG;
+
+  exports.PeepholeOptimizer = PeepholeOptimizer;
 
 })(typeof exports === "undefined" ? (IR = {}) : exports);

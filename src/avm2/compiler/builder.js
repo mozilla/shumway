@@ -126,6 +126,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
       Node.resetNextID();
+      this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
     constructor.prototype.buildStart = function () {
@@ -166,6 +167,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
       var methodInfo = this.methodInfo;
+      var peepholeOptimizer = this.peepholeOptimizer;
 
       const ints = this.abc.constantPool.ints;
       const uints = this.abc.constantPool.uints;
@@ -328,16 +330,18 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           return new Constant(value);
         }
 
-        function foldTruthy(node) {
-          if (node instanceof Unary) {
-            if (node.operator === Operator.TRUE) {
-              return foldTruthy(node.argument);
-            }
-            if (node.argument instanceof Unary) {
-              if (node.operator === Operator.FALSE && node.argument.operator === Operator.FALSE) {
-                return foldTruthy(node.argument.argument);
-              }
-            }
+        function unary(operator, argument) {
+          var node = new Unary(operator, argument);
+          if (peepholeOptimizer) {
+            node = peepholeOptimizer.tryFold(node);
+          }
+          return node;
+        }
+
+        function binary(operator, left, right) {
+          var node = new Binary(operator, left, right);
+          if (peepholeOptimizer) {
+            node = peepholeOptimizer.tryFold(node);
           }
           return node;
         }
@@ -348,16 +352,24 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
             right = pop();
           }
           var left = pop();
+          var node;
           if (right) {
-            return foldTruthy(new Binary(operator, left, right));
+            node = binary(operator, left, right);
           } else {
-            return foldTruthy(new Unary(operator, left));
+            node = unary(operator, left);
           }
+          if (peepholeOptimizer) {
+            node = peepholeOptimizer.tryFold(node, true);
+          }
+          return node;
         }
 
         function negatedTruthyCondition(operator) {
-          var condition = trutyCondition(operator);
-          return foldTruthy(new Unary(Operator.FALSE, condition));
+          var node = unary(Operator.FALSE, trutyCondition(operator));
+          if (peepholeOptimizer) {
+            node = peepholeOptimizer.tryFold(node, true);
+          }
+          return node;
         }
 
         function pushExpression(operator) {
@@ -365,10 +377,10 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
           if (operator.isBinary()) {
             right = pop();
             left = pop();
-            push(new Binary(operator, left, right));
+            push(binary(operator, left, right));
           } else {
             left = pop();
-            push(new Unary(operator, left));
+            push(unary(operator, left));
           }
         }
 
@@ -403,7 +415,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
         }
 
         function toInt32(value) {
-          return new Binary(Operator.OR, value, constant(0));
+          return binary(Operator.OR, value, constant(0));
         }
 
         function toDouble(value) {
@@ -582,7 +594,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
               push(toDouble(pop()));
               break;
             case OP_convert_b:
-              push(new Unary(Operator.FALSE, new Unary(Operator.FALSE, pop())));
+              push(unary(Operator.FALSE, unary(Operator.FALSE, pop())));
               break;
             case OP_kill:
               push(Undefined);
