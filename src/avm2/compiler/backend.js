@@ -239,8 +239,13 @@
   }
 
   function Context () {
+    this.variables = [];
     this.parameters = [];
   }
+
+  Context.prototype.useVariable = function (variable) {
+    return this.variables.pushUnique(variable);
+  };
 
   Context.prototype.useParameter = function (parameter) {
     return this.parameters[parameter.index] = parameter;
@@ -305,16 +310,14 @@
 
       if (node instanceof IR.Move) {
         to = id(node.to.name);
+        this.useVariable(node.to);
         from = compileValue(node.from, this);
       } else {
         to = id(node.variable.name);
+        this.useVariable(node.variable);
         from = compileValue(node, this, true);
       }
-
-      statement = variableDeclaration([
-        new VariableDeclarator(to, from)
-      ]);
-
+      statement = new ExpressionStatement(assignment(to, from));
       body.push(statement);
     }
     var end = block.nodes.last();
@@ -511,20 +514,26 @@
     // root.trace(writer);
 
     var cx = new Context();
-    var body = root.compile(cx);
+    var code = root.compile(cx);
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
       var name = cx.parameters[i] ? cx.parameters[i].name : "_";
       parameters.push(id(name));
     }
-    var node = new FunctionDeclaration(id("fn"), parameters, body);
+    var node = new FunctionDeclaration(id("fn"), parameters, code);
+
+    var variables = variableDeclaration(cx.variables.map(function (variable) {
+      return new VariableDeclarator(id(variable.name));
+    }));
+
+    code.body.unshift(variables);
 
     // writer.writeLn("==================================");
     // writer.writeLn(generateSource(node));
     // writer.writeLn("==================================");
 
-    return generateSource(body);
+    return generateSource(code);
   }
 
   Backend.generate = generate;
