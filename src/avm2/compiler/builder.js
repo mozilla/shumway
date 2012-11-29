@@ -2,9 +2,7 @@ var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
 var c4MaxMethods = c4Options.register(new Option("c4MM", "c4MM", "number", Number.MAX_VALUE, "Max number of methods to compile."));
 var c4Method = c4Options.register(new Option("c4M", "c4M", "number", -1, "Method to compile."));
-
-
-var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTraceLevel", "number", 0, "Compiler Trace Level"));
+var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0, "Compiler Trace Level"));
 
 (function (exports) {
 
@@ -688,7 +686,7 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
       }
     }
 
-    if (compilerTraceLevel.value > 0) {
+    if (c4TraceLevel.value > 0) {
       writer = new IndentingWriter();
     }
 
@@ -719,12 +717,6 @@ var compilerTraceLevel = compilerOptions.register(new Option("tir", "compilerTra
     Timer.start("IR ALLOCATE VARIABLES");
     cfg.allocateVariables();
     Timer.stop();
-
-    // Timer.start("IR DOM");
-    // cfg.computeDominators(true);
-    // Timer.stop();
-
-    // writer && cfg.trace(writer);
 
     var src = Backend.generate(cfg);
 

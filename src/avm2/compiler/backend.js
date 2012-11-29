@@ -495,7 +495,7 @@
     var root = Looper.analyze(cfg);
 
     var writer = new IndentingWriter();
-    root.trace(writer);
+    // root.trace(writer);
 
     var cx = new Context();
     var body = root.compile(cx);

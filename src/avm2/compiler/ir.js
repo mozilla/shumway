@@ -4,6 +4,8 @@
 
 (function (exports) {
 
+  var debug = false;
+
   /**
    * SSA-based Sea-of-Nodes IR based on Cliff Click's Work: A simple graph-based intermediate
    * representation (http://doi.acm.org/10.1145/202530.202534)
@@ -1235,8 +1237,9 @@
      * () -> Map[id -> {def:Node, uses:Array[Node]}]
      */
     constructor.prototype.computeUses = function computeUses() {
-      var writer = new IndentingWriter();
-      writer.enter("> Compute Uses");
+      var writer = debug && new IndentingWriter();
+
+      debug && writer.enter("> Compute Uses");
       var dfg = this.dfg;
 
       var useEntries = [];
@@ -1255,18 +1258,20 @@
         });
       });
 
-      writer.enter("> Uses");
-      useEntries.forEach(function (entry) {
-        writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "] " + entry.def);
-      });
-      writer.leave("<");
-      writer.leave("<");
+      if (debug) {
+        writer.enter("> Uses");
+        useEntries.forEach(function (entry) {
+          writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "] " + entry.def);
+        });
+        writer.leave("<");
+        writer.leave("<");
+      }
       return useEntries;
     };
 
     constructor.prototype.verify = function verify() {
-      var writer = new IndentingWriter();
-      writer.enter("> Verify");
+      var writer = debug && new IndentingWriter();
+      debug && writer.enter("> Verify");
 
       var order = this.computeReversePostOrder();
 
@@ -1279,7 +1284,7 @@
         }
       });
 
-      writer.leave("<");
+      debug && writer.leave("<");
     };
 
     /**
@@ -1290,8 +1295,8 @@
      * replace |x = phi(y, y, x, y, x)| -> |phi(y, x)| -> y
      */
     constructor.prototype.optimizePhis = function optimizePhis() {
-      var writer = new IndentingWriter();
-      writer.enter("> Optimize Phis");
+      var writer = debug && new IndentingWriter();
+      debug && writer.enter("> Optimize Phis");
 
       var phis = [];
       var useEntries = this.computeUses();
@@ -1301,18 +1306,18 @@
         }
       });
 
-      writer.writeLn("Trying to optimize " + phis.length + " phis.");
+      debug && writer.writeLn("Trying to optimize " + phis.length + " phis.");
 
       /**
        * Updates all uses to a new definition. Returns true if anything was updated.
        */
       function updateUses(def, value) {
-        writer.writeLn("Update " + def + " with " + value);
+        debug && writer.writeLn("Update " + def + " with " + value);
         var entry = useEntries[def.id];
         if (entry.uses.length === 0) {
           return false;
         }
-        writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
+        debug && writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
         var count = 0;
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
@@ -1337,13 +1342,6 @@
             }
             return phi;
           }
-          /*else {
-            // x = phi(y, y, x, y, x) -> y
-            writer.writeLn("ARGS: " + unique);
-            if (unique.length <= 2) {
-              return simplify(phi, unique);
-            }
-          }*/
         }
         return phi;
       }
@@ -1365,8 +1363,10 @@
         });
       }
 
-      writer.writeLn("Simplified " + count + " phis, in " + iterations + " iterations.");
-      writer.leave("<");
+      if (debug) {
+        writer.writeLn("Simplified " + count + " phis, in " + iterations + " iterations.");
+        writer.leave("<");
+      }
     };
 
     /**
@@ -1375,10 +1375,10 @@
      * to insert computations on the edge without affecting any other edges." - Wikipedia
      */
     constructor.prototype.splitCriticalEdges = function splitCriticalEdges() {
-      var writer = new IndentingWriter();
+      var writer = debug && new IndentingWriter();
       var blocks = this.blocks;
       var criticalEdges = [];
-      writer.enter("> Splitting Critical Edges");
+      debug && writer.enter("> Splitting Critical Edges");
       for (var i = 0; i < blocks.length; i++) {
         var successors = blocks[i].successors;
         for (var j = 1; j < successors.length; j++) {
@@ -1390,16 +1390,16 @@
       if (criticalEdges.length) {
         notImplemented();
       }
-      writer.leave("<");
+      debug && writer.leave("<");
     };
 
     /**
      * Allocate virtual registers and break out of SSA.
      */
     constructor.prototype.allocateVariables = function allocateVariables() {
-      var writer = new IndentingWriter();
+      var writer = debug && new IndentingWriter();
 
-      writer.enter("> Allocating Virtual Registers");
+      debug && writer.enter("> Allocating Virtual Registers");
       var order = this.computeReversePostOrder();
 
       function allocate(node) {
@@ -1408,7 +1408,7 @@
         }
         if (node instanceof Value) {
           node.variable = new Variable("l" + node.id);
-          writer.writeLn("Allocated: " + node.variable + " to " + node);
+          debug && writer.writeLn("Allocated: " + node.variable + " to " + node);
         }
       }
 
@@ -1435,7 +1435,7 @@
         if (phis) {
           for (var j = 0; j < phis.length; j++) {
             var phi = phis[j];
-            writer.writeLn("Emitting moves for: " + phi);
+            debug && writer.writeLn("Emitting moves for: " + phi);
             var arguments = phi.arguments;
             assert (predecessors.length === arguments.length);
             for (var k = 0; k < predecessors.length; k++) {
@@ -1470,7 +1470,7 @@
       blockMoves.forEach(function (moves, blockID) {
         var block = blocks[blockID];
         var temporary = 0;
-        writer.writeLn(block + " Moves: " + moves);
+        debug && writer.writeLn(block + " Moves: " + moves);
         while (moves.length) {
           // Find a move that is safe to emit, i.e. no other move depends on its destination.
           for (var i = 0; i < moves.length; i++) {
@@ -1493,7 +1493,7 @@
 
           if (moves.length) {
             // We have a cycle, break it with a temporary.
-            writer.writeLn("Breaking Cycle");
+            debug && writer.writeLn("Breaking Cycle");
             // 1. Pick any move.
             var move = moves[0];
             // 2. Emit a move to save its destination in a temporary.
@@ -1510,13 +1510,13 @@
         }
       });
 
-      writer.leave("<");
+      debug && writer.leave("<");
     };
 
     constructor.prototype.scheduleEarly = function scheduleEarly() {
-      var writer = new IndentingWriter();
+      var writer = debug && new IndentingWriter();
 
-      writer.enter("> Schedule Early");
+      debug && writer.enter("> Schedule Early");
 
       var cfg = this;
       var dfg = this.dfg;
@@ -1534,9 +1534,11 @@
         }
       }, true);
 
-      roots.forEach(function (node) {
-        print("Root: " + node);
-      });
+      if (debug) {
+        roots.forEach(function (node) {
+          print("Root: " + node);
+        });
+      }
 
       roots.forEach(function (node) {
         if (node instanceof Phi) {
@@ -1571,13 +1573,13 @@
         assert (!node.control, node);
         assert (!isScheduled(node));
         assert (region);
-        writer.writeLn("Scheduled: " + node + " in " + region);
+        debug && writer.writeLn("Scheduled: " + node + " in " + region);
         node.control = region;
         append(node);
       }
 
       function schedule(node) {
-        writer.enter("> Schedule: " + node);
+        debug && writer.enter("> Schedule: " + node);
 
         var inputs = [];
         node.visitInputs(function (input) {
@@ -1586,7 +1588,7 @@
           }
         });
 
-        writer.writeLn("Inputs: [" + inputs.map(toID) + "], length: " + inputs.length);
+        debug && writer.writeLn("Inputs: [" + inputs.map(toID) + "], length: " + inputs.length);
 
         for (var i = 0; i < inputs.length; i++) {
           var input = inputs[i];
@@ -1616,10 +1618,10 @@
           }
         }
 
-        writer.leave("<");
+        debug && writer.leave("<");
       }
 
-      writer.leave("<");
+      debug && writer.leave("<");
 
       roots.forEach(function (node) {
         var node = followProjection(node);
