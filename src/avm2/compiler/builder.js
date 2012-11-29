@@ -116,6 +116,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return constructor;
   })();
 
+  function isNumericConstant(node) {
+    return node instanceof Constant && isNumeric(node.value);
+  }
+
   var Builder = (function () {
     function constructor (abc, methodInfo, scope, hasDynamicScope) {
       assert (abc && methodInfo && scope);
@@ -266,6 +270,9 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             var name = new Constant(multiname.name);
             if (multiname.isRuntimeName()) {
               name = pop();
+              if (isNumericConstant(name)) {
+                return name;
+              }
             }
             if (multiname.isRuntimeNamespace()) {
               assert (false, "Is |namespaces| an array or not?");
