@@ -991,27 +991,6 @@
       return cfg;
     };
 
-    constructor.prototype.fromAnalysis = function (analysis) {
-      var blocks = analysis.blocks;
-
-      var map = [];
-      for (var i = 0; i < blocks.length; i++) {
-        var block = new Block(this.nextBlockID++);
-        map[blocks[i].bid] = block;
-        this.blocks.push(block);
-      }
-
-      for (var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
-        var succs = block.succs;
-        for (var j = 0; j < succs.length; j++) {
-          map[block.bid].pushSuccessor(map[succs[j].bid], true);
-        }
-      }
-
-      this.buildRootAndExit();
-    };
-
     /**
      * Makes sure root node has no predecessors and that there is only one
      * exit node.
@@ -1389,14 +1368,48 @@
         var successors = blocks[i].successors;
         for (var j = 1; j < successors.length; j++) {
           if (successors[j].predecessors.length > 1) {
-            criticalEdges.push([blocks[i], successors[j]]);
+            criticalEdges.push({from: blocks[i], to: successors[j]});
           }
         }
       }
-      if (criticalEdges.length) {
-        notImplemented();
+
+      var criticalEdgeCount = criticalEdges.length;
+      if (criticalEdgeCount && debug) {
+        this.trace(writer);
       }
+
+      var edge;
+      while (edge = criticalEdges.pop()) {
+        var fromIndex = edge.from.successors.indexOf(edge.to);
+        var toIndex = edge.to.predecessors.indexOf(edge.from);
+        assert (fromIndex >= 0 && toIndex >= 0);
+        debug && writer.writeLn("Splitting critical edge: " + edge.from + " -> " + edge.to);
+        var toBlock = edge.to;
+        var toRegion = toBlock.region;
+        var control = toRegion.predecessors[toIndex];
+        var region = new Region(control);
+        var jump = new Jump(region);
+        var block = this.buildBlock(region, jump);
+        toRegion.predecessors[toIndex] = new Projection(jump, Projection.Type.TRUE);
+
+        var fromBlock = edge.from;
+        fromBlock.successors[fromIndex] = block;
+        block.pushPredecessor(fromBlock);
+        block.pushSuccessor(toBlock);
+        toBlock.predecessors[toIndex] = block;
+      }
+
+      if (criticalEdgeCount && debug) {
+        this.trace(writer);
+      }
+
+      if (criticalEdgeCount && !release) {
+        assert (this.splitCriticalEdges() === 0);
+      }
+
       debug && writer.leave("<");
+
+      return criticalEdgeCount;
     };
 
     /**
