@@ -595,12 +595,14 @@
   })();
 
   var AVM2FindProperty = (function () {
-    function constructor(scope, name, domain, strict) {
+    function constructor(store, scope, name, domain, strict) {
       Node.call(this);
+      assert (isStore(store));
       assert (isScope(scope));
       assert (name);
       assert (isConstant(domain));
       assert (isBoolean(strict));
+      this.store = store;
       this.scope = scope;
       this.name = name;
       this.domain = domain;

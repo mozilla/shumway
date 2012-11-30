@@ -318,7 +318,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function findProperty(name, strict) {
-          return new IR.AVM2FindProperty(topScope(), name, domain, strict);
+          return new IR.AVM2FindProperty(state.store, topScope(), name, domain, strict);
         }
 
         function getJSProperty(object, name) {
