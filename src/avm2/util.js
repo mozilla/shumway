@@ -520,6 +520,12 @@ function BitSetFunctor(length) {
     isEmpty: function isEmpty() {
       this.recount();
       return this.count === 0;
+    },
+
+    clone: function clone() {
+      var set = new BitSet();
+      set._union(this);
+      return set;
     }
   };
 
@@ -634,6 +640,12 @@ function BitSetFunctor(length) {
     isEmpty: function isEmpty() {
       this.recount();
       return this.count === 0;
+    },
+
+    clone: function clone() {
+      var set = new BitSetS();
+      set._union(this);
+      return set;
     },
 
     toBitString: BitSet.prototype.toBitString,
