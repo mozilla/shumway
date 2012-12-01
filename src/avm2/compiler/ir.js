@@ -1368,15 +1368,18 @@
       debug && writer.enter("> Splitting Critical Edges");
       for (var i = 0; i < blocks.length; i++) {
         var successors = blocks[i].successors;
-        for (var j = 1; j < successors.length; j++) {
-          if (successors[j].predecessors.length > 1) {
-            criticalEdges.push({from: blocks[i], to: successors[j]});
+        if (successors.length > 1) {
+          for (var j = 0; j < successors.length; j++) {
+            if (successors[j].predecessors.length > 1) {
+              criticalEdges.push({from: blocks[i], to: successors[j]});
+            }
           }
         }
       }
 
       var criticalEdgeCount = criticalEdges.length;
       if (criticalEdgeCount && debug) {
+        writer.writeLn("Splitting: " + criticalEdgeCount);
         this.trace(writer);
       }
 
