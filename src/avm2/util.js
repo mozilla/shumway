@@ -106,6 +106,10 @@ function isNumeric(x) {
   return typeof x === "number" || !isNaN(parseInt(x, 10));
 }
 
+function isString(string) {
+  return typeof string === "string";
+}
+
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {

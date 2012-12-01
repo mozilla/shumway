@@ -431,10 +431,6 @@
     return isPhi(store) || store instanceof Store || isProjection(store, Projection.Type.STORE);
   }
 
-  function isString(string) {
-    return typeof string === "string";
-  }
-
   function isConstant(constant) {
     return constant instanceof Constant;
   }

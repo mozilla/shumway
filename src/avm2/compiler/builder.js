@@ -187,6 +187,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       const doubles = this.abc.constantPool.doubles;
       const strings = this.abc.constantPool.strings;
       const methods = this.abc.methods;
+      const classes = this.abc.classes;
       const multinames = this.abc.constantPool.multinames;
       const domain = new Constant(this.abc.domain);
       const runtime = new Constant(this.abc.runtime);
@@ -263,14 +264,18 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         var stack = state.stack;
         var scope = state.scope;
 
+        function savedScope() {
+          return state.saved;
+        }
+
         function topScope() {
           if (scope.length > 0) {
             return scope.top();
           }
-          return state.saved;
+          return savedScope();
         }
 
-        var object, callee, value, multiname, type, arguments;
+        var object, index, callee, value, multiname, type, arguments;
 
         function push(x) {
           assert (x);
@@ -286,6 +291,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
         function pop() {
           return stack.pop();
+        }
+
+        function popMany(count) {
+          return stack.popMany(count);
         }
 
         function pushLocal(index) {
@@ -321,8 +330,14 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return new IR.AVM2FindProperty(state.store, topScope(), name, domain, strict);
         }
 
-        function getJSProperty(object, name) {
-          return new IR.GetProperty(null, state.store, object, name);
+        function getJSProperty(object, path) {
+          assert (isString(path));
+          var names = path.split(".");
+          var node = object;
+          for (var i = 0; i < names.length; i++) {
+            node = new IR.GetProperty(null, state.store, node, constant(names[i]));
+          }
+          return node;
         }
 
         function getProperty(object, name, ti) {
@@ -338,7 +353,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           if (propertyQName) {
             if (propertyQName === "public$length") {
               // HACK, is this safe?
-              propertyQName = "length";
+              // propertyQName = "length";
             }
             return new IR.GetProperty(region, state.store, object, constant(propertyQName));
           }
@@ -408,7 +423,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return node;
         }
 
-        function trutyCondition(operator) {
+        function truthyCondition(operator) {
           var right;
           if (operator.isBinary()) {
             right = pop();
@@ -427,7 +442,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function negatedTruthyCondition(operator) {
-          var node = unary(Operator.FALSE, trutyCondition(operator));
+          var node = unary(Operator.FALSE, truthyCondition(operator));
           if (peepholeOptimizer) {
             node = peepholeOptimizer.tryFold(node, true);
           }
@@ -480,8 +495,14 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return binary(Operator.OR, value, constant(0));
         }
 
+        function globalProperty(name) {
+          var node = new IR.GlobalProperty(name);
+          node.mustFloat = true;
+          return node;
+        }
+
         function toDouble(value) {
-          return new Call(null, null, new IR.GlobalProperty("Number"), null, [value]);
+          return new Call(null, null, globalProperty("Number"), null, [value]);
         }
 
         if (writer) {
@@ -492,10 +513,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         region.processed = true;
 
         var bc;
-        for (var index = block.position, end = block.end.position; index <= end; index++) {
-          bc = bytecodes[index];
+        for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
+          bc = bytecodes[bci];
           var op = bc.op;
-          state.index = index;
+          state.index = bci;
           switch (op) {
             case OP_getlocal:
               pushLocal(bc.index);
@@ -518,11 +539,14 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_pushscope:
               scope.push(new IR.AVM2Scope(topScope(), pop()));
               break;
+            case OP_popscope:
+              scope.pop();
+              break;
             case OP_getglobalscope:
               push(new IR.AVM2Global(null, topScope()));
               break;
             case OP_getscopeobject:
-              push(getJSProperty(state.scope[bc.index], constant("object")));
+              push(getJSProperty(state.scope[bc.index], "object"));
               break;
             case OP_findpropstrict:
               push(findProperty(buildMultiname(bc.index), true));
@@ -535,6 +559,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               object = pop();
               push(getProperty(object, multiname, bc.ti));
               break;
+            case OP_initproperty:
             case OP_setproperty:
               value = pop();
               multiname = buildMultiname(bc.index);
@@ -554,34 +579,49 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_debugline:
               break;
             case OP_newfunction:
-              callee = getJSProperty(runtime, constant("createFunction"));
+              callee = getJSProperty(runtime, "createFunction");
               push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
-              arguments = stack.popMany(bc.argCount);
+              arguments = popMany(bc.argCount);
               object = pop();
               callee = pop();
               push(call(callee, object, arguments));
               break;
             case OP_callproperty:
-              arguments = stack.popMany(bc.argCount);
+              arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               push(call(getProperty(object, multiname), object, arguments));
               break;
             case OP_construct:
-              arguments = stack.popMany(bc.argCount);
+              arguments = popMany(bc.argCount);
               object = pop();
               push(store(new IR.AVM2New(region, state.store, object, arguments)));
               break;
+            case OP_constructsuper:
+              arguments = popMany(bc.argCount);
+              object = pop();
+              callee = getJSProperty(savedScope(), "object.baseClass.instance");
+              push(call(callee, object, arguments));
+              break;
             case OP_constructprop:
-              arguments = stack.popMany(bc.argCount);
+              arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname);
               push(store(new IR.AVM2New(region, state.store, callee, arguments)));
               break;
+            case OP_coerce:
+              value = pop();
+              multiname = buildMultiname(bc.index);
+              type = getProperty(findProperty(multiname, true), multiname);
+              push(call(globalProperty("coerce"), null, [value, type]));
+              break;
             case OP_coerce_a:       /* NOP */ break;
+            case OP_coerce_s:
+              push(call(globalProperty("coerceString"), null, [pop()]));
+              break;
             case OP_returnvalue:
             case OP_returnvoid:
               value = op === OP_returnvalue ? pop() : Undefined;
@@ -591,6 +631,16 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
                 value: value
               });
               buildReturnStop();
+              break;
+            case OP_nextname:
+              index = pop();
+              object = pop();
+              push(call(globalProperty("nextName"), null, [object, index]));
+              break;
+            case OP_hasnext2:
+              var temp = call(globalProperty("hasNext2"), null, [local[bc.object], local[bc.index]]);
+              local[bc.object] = getJSProperty(temp, "object");
+              push(local[bc.index] = getJSProperty(temp, "index"));
               break;
             case OP_pushnull:       push(constant(null)); break;
             case OP_pushundefined:  push(Undefined); break;
@@ -604,7 +654,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_pushtrue:       push(constant(true)); break;
             case OP_pushfalse:      push(constant(false)); break;
             case OP_pushnan:        push(constant(NaN)); break;
-            case OP_pop:            stack.pop(); break;
+            case OP_pop:            pop(); break;
             case OP_dup:            value = pop(); push(value); push(value); break;
             case OP_swap:           state.stack.push(pop(), pop()); break;
             case OP_debug:
@@ -612,20 +662,20 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_debugfile:
               break;
             case OP_ifnlt:          buildIfStops(negatedTruthyCondition(Operator.LT)); break;
-            case OP_ifge:           buildIfStops(trutyCondition(Operator.GE)); break;
+            case OP_ifge:           buildIfStops(truthyCondition(Operator.GE)); break;
             case OP_ifnle:          buildIfStops(negatedTruthyCondition(Operator.LE)); break;
-            case OP_ifgt:           buildIfStops(trutyCondition(Operator.GT)); break;
+            case OP_ifgt:           buildIfStops(truthyCondition(Operator.GT)); break;
             case OP_ifngt:          buildIfStops(negatedTruthyCondition(Operator.GT)); break;
-            case OP_ifle:           buildIfStops(trutyCondition(Operator.LE)); break;
+            case OP_ifle:           buildIfStops(truthyCondition(Operator.LE)); break;
             case OP_ifnge:          buildIfStops(negatedTruthyCondition(Operator.GE)); break;
-            case OP_iflt:           buildIfStops(trutyCondition(Operator.LT)); break;
+            case OP_iflt:           buildIfStops(truthyCondition(Operator.LT)); break;
             case OP_jump:           buildJumpStop(); break;
-            case OP_iftrue:         buildIfStops(trutyCondition(Operator.TRUE)); break;
-            case OP_iffalse:        buildIfStops(trutyCondition(Operator.FALSE)); break;
-            case OP_ifeq:           buildIfStops(trutyCondition(Operator.EQ)); break;
-            case OP_ifne:           buildIfStops(trutyCondition(Operator.NE)); break;
-            case OP_ifstricteq:     buildIfStops(trutyCondition(Operator.SEQ)); break;
-            case OP_ifstrictne:     buildIfStops(trutyCondition(Operator.SNE)); break;
+            case OP_iftrue:         buildIfStops(truthyCondition(Operator.TRUE)); break;
+            case OP_iffalse:        buildIfStops(truthyCondition(Operator.FALSE)); break;
+            case OP_ifeq:           buildIfStops(truthyCondition(Operator.EQ)); break;
+            case OP_ifne:           buildIfStops(truthyCondition(Operator.NE)); break;
+            case OP_ifstricteq:     buildIfStops(truthyCondition(Operator.SEQ)); break;
+            case OP_ifstrictne:     buildIfStops(truthyCondition(Operator.SNE)); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
             case OP_add:            pushExpression(Operator.ADD); break;
@@ -654,14 +704,24 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(constant(1));
               pushExpression(Operator.SUB);
               break;
+            case OP_instanceof:
+              type = pop();
+              value = pop();
+              push(call(getJSProperty(type, "isInstanceOf"), null, [value]));
+              break;
             case OP_istype:
               value = pop();
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname), multiname);
-              push(call(constant("isInstance"), null, [value, type]));
+              push(call(globalProperty("isInstance"), null, [value, type]));
+              break;
+            case OP_istypelate:
+              type = pop();
+              value = pop();
+              push(call(globalProperty("isInstance"), null, [value, type]));
               break;
             case OP_typeof:
-              push(call(constant("typeOf"), null, [pop()]));
+              push(call(globalProperty("typeOf"), null, [pop()]));
               break;
             case OP_convert_i:
               push(toInt32(pop()));
@@ -677,7 +737,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               popLocal(bc.index);
               break;
             case OP_newarray:
-              arguments = stack.popMany(bc.argCount);
+              arguments = popMany(bc.argCount);
               push(new NewArray(arguments));
               break;
             case OP_newobject:
@@ -692,6 +752,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_newactivation:
               push(new IR.AVM2NewActivation(constant(methodInfo)));
               break;
+            case OP_newclass:
+              callee = getJSProperty(runtime, "createClass");
+              push(call(callee, runtime, [constant(classes[bc.index]), pop(), topScope()]));
+              break;
             default:
               unexpected("Not Implemented: " + bc);
           }
@@ -700,7 +764,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             continue;
           }
           if (writer) {
-            writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + index + ", " + bc.toString(this.abc));
+            writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(this.abc));
           }
         }
         if (writer) {
@@ -786,7 +850,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     cfg.scheduleEarly();
     Timer.stop();
 
-    writer && dfg.trace(writer);
+    // writer && dfg.trace(writer);
 
     writer && cfg.trace(writer);
 

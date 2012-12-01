@@ -247,6 +247,7 @@
   }
 
   Context.prototype.useVariable = function (variable) {
+    assert (variable);
     return this.variables.pushUnique(variable);
   };
 
@@ -372,6 +373,7 @@
     var result = new BlockStatement(body);
     result.end = block.nodes.last();
     assert (result.end instanceof IR.End);
+    // print("Block: " + block + " -> " + generateSource(result));
     return result;
   };
 
@@ -567,13 +569,15 @@
       var name = cx.parameters[i] ? cx.parameters[i].name : "_";
       parameters.push(id(name));
     }
-    var node = new FunctionDeclaration(id("fn"), parameters, code);
 
-    var variables = variableDeclaration(cx.variables.map(function (variable) {
-      return new VariableDeclarator(id(variable.name));
-    }));
+    if (cx.variables.length) {
+      var variables = variableDeclaration(cx.variables.map(function (variable) {
+        return new VariableDeclarator(id(variable.name));
+      }));
+      code.body.unshift(variables);
+    }
 
-    code.body.unshift(variables);
+    // var node = new FunctionDeclaration(id("fn"), parameters, code);
 
     // writer.writeLn("==================================");
     // writer.writeLn(generateSource(node));
