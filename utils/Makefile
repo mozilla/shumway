@@ -63,6 +63,7 @@ $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
 
 build-tamarin-tests:
 	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
