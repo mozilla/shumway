@@ -1780,6 +1780,8 @@
     return constructor;
   })();
 
+  exports.isConstant = isConstant;
+
   exports.Block = Block;
   exports.Node = Node;
   exports.Start = Start;

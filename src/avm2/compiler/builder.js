@@ -27,6 +27,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
   var NewArray = IR.NewArray;
   var NewObject = IR.NewObject;
   var KeyValuePair = IR.KeyValuePair;
+  var isConstant = IR.isConstant;
 
   var DFG = IR.DFG;
   var CFG = IR.CFG;
@@ -745,6 +746,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               for (var i = 0; i < bc.argCount; i++) {
                 var value = pop();
                 var key = pop();
+                assert (isConstant(key) && isString(key.value));
+                key = constant(Multiname.getPublicQualifiedName(key.value));
                 properties.unshift(new KeyValuePair(key, value));
               }
               push(new NewObject(properties));
