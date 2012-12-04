@@ -525,6 +525,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return binary(Operator.OR, value, constant(0));
         }
 
+        function toNumber(value) {
+          return toDouble(value);
+        }
+
         function toDouble(value) {
           return new Call(null, null, globalProperty("Number"), null, [value]);
         }
@@ -623,11 +627,16 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               callee = pop();
               push(call(callee, object, arguments));
               break;
-            case OP_callproperty:
+            case OP_callproperty: case OP_callproplex:
               arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(call(getProperty(object, multiname), object, arguments));
+              callee = getProperty(object, multiname);
+              if (op === OP_callproperty) {
+                push(call(callee, object, arguments));
+              } else {
+                push(call(callee, null, arguments));
+              }
               break;
             case OP_construct:
               arguments = popMany(bc.argCount);
@@ -652,6 +661,15 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname, true), multiname);
               push(call(globalProperty("coerce"), null, [value, type]));
+              break;
+            case OP_coerce_i: case OP_convert_i:
+              push(toInt32(pop()));
+              break;
+            case OP_coerce_d: case OP_convert_d:
+              push(toDouble(pop()));
+              break;
+            case OP_coerce_b: case OP_convert_b:
+              push(unary(Operator.FALSE, unary(Operator.FALSE, pop())));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:
@@ -714,8 +732,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
             case OP_add:            pushExpression(Operator.ADD); break;
+            case OP_add_i:          pushExpression(Operator.ADD, true); break;
             case OP_subtract:       pushExpression(Operator.SUB); break;
+            case OP_subtract_i:     pushExpression(Operator.SUB, true); break;
             case OP_multiply:       pushExpression(Operator.MUL); break;
+            case OP_multiply_i:     pushExpression(Operator.MUL, true); break;
             case OP_divide:         pushExpression(Operator.DIV); break;
             case OP_modulo:         pushExpression(Operator.MOD); break;
             case OP_lshift:         pushExpression(Operator.LSH); break;
@@ -731,13 +752,35 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_greaterthan:    pushExpression(Operator.GT); break;
             case OP_greaterequals:  pushExpression(Operator.GE); break;
             case OP_negate:         pushExpression(Operator.NEG); break;
-            case OP_increment:
+            case OP_negate_i:       pushExpression(Operator.NEG, true); break;
+            case OP_increment:  case OP_increment_i:
+            case OP_decrement:  case OP_decrement_i:
               push(constant(1));
-              pushExpression(Operator.ADD);
+              if (op === OP_increment || op === OP_decrement) {
+                push(toNumber(pop()));
+              } else {
+                push(toInt32(pop()));
+              }
+              if (op === OP_increment || op === OP_increment_i) {
+                pushExpression(Operator.ADD);
+              } else {
+                pushExpression(Operator.SUB);
+              }
               break;
-            case OP_decrement:
+            case OP_inclocal: case OP_inclocal_i:
+            case OP_declocal: case OP_declocal_i:
               push(constant(1));
-              pushExpression(Operator.SUB);
+              if (op === OP_inclocal || op === OP_declocal) {
+                push(toNumber(local[bc.index]));
+              } else {
+                push(toInt32(local[bc.index]));
+              }
+              if (op === OP_inclocal || op === OP_inclocal_i) {
+                pushExpression(Operator.ADD);
+              } else {
+                pushExpression(Operator.SUB);
+              }
+              popLocal(bc.index);
               break;
             case OP_instanceof:
               type = pop();
@@ -757,15 +800,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               break;
             case OP_typeof:
               push(call(globalProperty("typeOf"), null, [pop()]));
-              break;
-            case OP_convert_i:
-              push(toInt32(pop()));
-              break;
-            case OP_convert_d:
-              push(toDouble(pop()));
-              break;
-            case OP_convert_b:
-              push(unary(Operator.FALSE, unary(Operator.FALSE, pop())));
               break;
             case OP_kill:
               push(Undefined);
