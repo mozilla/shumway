@@ -471,6 +471,17 @@
     return constructor;
   })();
 
+  var Throw = (function () {
+    function constructor(control, argument) {
+      Node.call(this);
+      assert (control);
+      this.control = control;
+      this.argument = argument;
+    }
+    constructor.prototype = extend(Value, "Throw");
+    return constructor;
+  })();
+
   var Arguments = (function () {
     function constructor(control) {
       Node.call(this);
@@ -1802,6 +1813,7 @@
   exports.Start = Start;
   exports.Undefined = Undefined;
   exports.This = This;
+  exports.Throw = Throw;
   exports.Arguments = Arguments;
   exports.AVM2Global = AVM2Global;
   exports.Projection = Projection;

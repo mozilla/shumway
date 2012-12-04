@@ -472,14 +472,21 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return node;
         }
 
-        function pushExpression(operator) {
+        function pushExpression(operator, toInt) {
           var left, right;
           if (operator.isBinary()) {
             right = pop();
             left = pop();
+            if (toInt) {
+              right = toInt32(right);
+              left = toInt32(left);
+            }
             push(binary(operator, left, right));
           } else {
             left = pop();
+            if (toInt) {
+              left = toInt32(left);
+            }
             push(unary(operator, left));
           }
         }
@@ -535,6 +542,9 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           var op = bc.op;
           state.index = bci;
           switch (op) {
+            case OP_throw:
+              store(new IR.Throw(region, pop()));
+              break;
             case OP_getlocal:
               pushLocal(bc.index);
               break;

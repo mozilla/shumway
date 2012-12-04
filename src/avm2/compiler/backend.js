@@ -473,6 +473,11 @@
     return new ThisExpression();
   };
 
+  IR.Throw.prototype.compile = function (cx) {
+    var argument = compileValue(this.argument, cx);
+    return new ThrowStatement(argument);
+  };
+
   IR.Arguments.prototype.compile = function (cx) {
     return id("arguments");
   };
