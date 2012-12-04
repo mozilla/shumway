@@ -469,6 +469,16 @@
     return constructor;
   })();
 
+  var Arguments = (function () {
+    function constructor(control) {
+      Node.call(this);
+      assert (control);
+      this.control = control;
+    }
+    constructor.prototype = extend(Value, "Arguments");
+    return constructor;
+  })();
+
   var AVM2Global = (function () {
     function constructor(control, scope) {
       Node.call(this);
@@ -512,6 +522,7 @@
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
+      assert (object);
       assert (name);
       this.control = control;
       this.store = store;
@@ -1787,6 +1798,7 @@
   exports.Start = Start;
   exports.Undefined = Undefined;
   exports.This = This;
+  exports.Arguments = Arguments;
   exports.AVM2Global = AVM2Global;
   exports.Projection = Projection;
   exports.Region = Region;

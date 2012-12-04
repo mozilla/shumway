@@ -472,6 +472,10 @@
     return new ThisExpression();
   };
 
+  IR.Arguments.prototype.compile = function (cx) {
+    return id("arguments");
+  };
+
   IR.AVM2Global.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     return property(scope, "global", "object");

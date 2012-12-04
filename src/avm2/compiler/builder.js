@@ -132,6 +132,26 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return node.ty && node.ty.isNumeric();
   }
 
+  function constant(value) {
+    return new Constant(value);
+  }
+
+  function getJSPropertyWithStore(store, object, path) {
+    assert (isString(path));
+    var names = path.split(".");
+    var node = object;
+    for (var i = 0; i < names.length; i++) {
+      node = new IR.GetProperty(null, store, node, constant(names[i]));
+    }
+    return node;
+  }
+
+  function globalProperty(name) {
+    var node = new IR.GlobalProperty(name);
+    node.mustFloat = true;
+    return node;
+  }
+
   var Builder = (function () {
     function constructor (abc, methodInfo, scope, hasDynamicScope) {
       assert (abc && methodInfo && scope);
@@ -148,18 +168,23 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       var start = new Start();
       var state = start.entryState = new State(0);
 
+      /**
+       * [dynamicScope] this parameters ... [arguments|rest] locals
+       */
+
       /* First local is the |this| reference. */
       state.local.push(new This(start));
 
       var parameterIndexOffset = this.hasDynamicScope ? 1 : 0;
+      var parameterCount = mi.parameters.length;
 
       /* Create the method's parameters. */
-      for (var i = 0; i < mi.parameters.length; i++) {
+      for (var i = 0; i < parameterCount; i++) {
         state.local.push(new Parameter(start, parameterIndexOffset + i, ARGUMENT_PREFIX + mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
-      for (var i = mi.parameters.length; i < mi.localCount; i++) {
+      for (var i = parameterCount; i < mi.localCount; i++) {
         state.local.push(Undefined);
       }
 
@@ -171,6 +196,13 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       }
       state.saved = new Projection(start, Projection.Type.SCOPE);
       start.domain = new Constant(this.domain);
+
+      if (mi.needsRest() || mi.needsArguments()) {
+        var restOrArgumentsIndex = parameterIndexOffset + mi.parameters.length;
+        var offset = constant(mi.needsRest() ? parameterCount + 1 : 1);
+        state.local[restOrArgumentsIndex] =
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [new IR.Arguments(start), offset]);
+      }
 
       return start;
     };
@@ -254,7 +286,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             var type = typeState.local[i];
             var local = state.local[i];
             if (local.ty) {
-              assert (local.ty === type);
+              assert (local.ty === type, local + " " + local.ty + " !== " + type);
             } else {
               local.ty = type;
             }
@@ -332,13 +364,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function getJSProperty(object, path) {
-          assert (isString(path));
-          var names = path.split(".");
-          var node = object;
-          for (var i = 0; i < names.length; i++) {
-            node = new IR.GetProperty(null, state.store, node, constant(names[i]));
-          }
-          return node;
+          return getJSPropertyWithStore(state.store, object, path);
         }
 
         function getProperty(object, name, ti) {
@@ -402,10 +428,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
         function call(callee, object, arguments) {
           return store(new Call(region, state.store, callee, object, arguments));
-        }
-
-        function constant(value) {
-          return new Constant(value);
         }
 
         function unary(operator, argument) {
@@ -494,12 +516,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
         function toInt32(value) {
           return binary(Operator.OR, value, constant(0));
-        }
-
-        function globalProperty(name) {
-          var node = new IR.GlobalProperty(name);
-          node.mustFloat = true;
-          return node;
         }
 
         function toDouble(value) {
