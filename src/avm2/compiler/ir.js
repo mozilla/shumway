@@ -376,6 +376,17 @@
     return node instanceof Projection && (!type || node.type === type);
   }
 
+  var Latch = (function () {
+    function constructor(condition, left, right) {
+      Node.call(this);
+      this.condition = condition;
+      this.left = left;
+      this.right = right;
+    }
+    constructor.prototype = extend(Value, "Latch");
+    return constructor;
+  })();
+
   var Binary = (function () {
     function constructor(operator, left, right) {
       Node.call(this);
@@ -1837,6 +1848,7 @@
   exports.AVM2Global = AVM2Global;
   exports.Projection = Projection;
   exports.Region = Region;
+  exports.Latch = Latch;
   exports.Binary = Binary;
   exports.Unary = Unary;
   exports.Constant = Constant;

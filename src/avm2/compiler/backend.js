@@ -354,16 +354,20 @@
       var to;
       var from;
 
-      if (node instanceof IR.Move) {
-        to = id(node.to.name);
-        this.useVariable(node.to);
-        from = compileValue(node.from, this);
+      if (node instanceof IR.Throw) {
+        statement = compileValue(node, this, true);
       } else {
-        to = id(node.variable.name);
-        this.useVariable(node.variable);
-        from = compileValue(node, this, true);
+        if (node instanceof IR.Move) {
+          to = id(node.to.name);
+          this.useVariable(node.to);
+          from = compileValue(node.from, this);
+        } else {
+          to = id(node.variable.name);
+          this.useVariable(node.variable);
+          from = compileValue(node, this, true);
+        }
+        statement = new ExpressionStatement(assignment(to, from));
       }
-      statement = new ExpressionStatement(assignment(to, from));
       body.push(statement);
     }
     var end = block.nodes.last();
@@ -440,12 +444,27 @@
     return call(id("getProperty"), [object, name]);
   };
 
+  IR.Latch.prototype.compile = function (cx) {
+    return new ConditionalExpression (
+      compileValue(this.condition, cx),
+      compileValue(this.left, cx),
+      compileValue(this.right, cx)
+    );
+  };
+
   IR.Unary.prototype.compile = function (cx) {
-    return new UnaryExpression(this.operator.name, compileValue(this.argument, cx));
+    return new UnaryExpression (
+      this.operator.name,
+      compileValue(this.argument, cx)
+    );
   };
 
   IR.Binary.prototype.compile = function (cx) {
-    return new BinaryExpression(this.operator.name, compileValue(this.left, cx), compileValue(this.right, cx));
+    return new BinaryExpression (
+      this.operator.name,
+      compileValue(this.left, cx),
+      compileValue(this.right, cx)
+    );
   };
 
   IR.Call.prototype.compile = function (cx) {

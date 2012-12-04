@@ -197,11 +197,25 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       state.saved = new Projection(start, Projection.Type.SCOPE);
       start.domain = new Constant(this.domain);
 
+      var arguments = new IR.Arguments(start);
+
       if (mi.needsRest() || mi.needsArguments()) {
-        var restOrArgumentsIndex = parameterIndexOffset + mi.parameters.length;
+        var restOrArgumentsIndex = parameterIndexOffset + parameterCount;
         var offset = constant(mi.needsRest() ? parameterCount + 1 : 1);
         state.local[restOrArgumentsIndex] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [new IR.Arguments(start), offset]);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [arguments, offset]);
+      }
+
+      var argumentsLength = getJSPropertyWithStore(state.store, arguments, "length");
+
+      for (var i = 0; i < parameterCount; i++) {
+        var parameter = mi.parameters[i];
+        if (parameter.value !== undefined) {
+          var index = i + 1;
+          var local = state.local[index];
+          var condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          state.local[index] = new IR.Latch(condition, constant(parameter.value), local);
+        }
       }
 
       return start;
@@ -516,6 +530,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           }];
         }
 
+        function buildThrowStop() {
+          assert (!stops);
+          stops = [];
+        }
+
         function buildReturnStop() {
           assert (!stops);
           stops = [];
@@ -548,6 +567,12 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           switch (op) {
             case OP_throw:
               store(new IR.Throw(region, pop()));
+              stopPoints.push({
+                region: region,
+                store: state.store,
+                value: Undefined
+              });
+              buildThrowStop();
               break;
             case OP_getlocal:
               pushLocal(bc.index);
