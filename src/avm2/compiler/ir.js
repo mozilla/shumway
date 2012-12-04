@@ -295,7 +295,7 @@
   var Move = (function () {
     function constructor(to, from) {
       assert (to instanceof Variable);
-      // assert (from instanceof Variable || from instanceof Constant, from);
+      assert (from instanceof Variable || from instanceof Constant, from);
       assert (to !== from);
       this.to = to;
       this.from = from;
@@ -1578,6 +1578,19 @@
         if (node.control) {
           roots.push(node);
         }
+        if (isPhi(node)) {
+          /**
+           * When breaking out of SSA, move instructions need to have non-floating source nodes. Otherwise
+           * the topological sorting of moves gets more complicated, especially when cyclic dependencies
+           * are involved. Here we just mark all floating inputs of phi nodes as non-floating which forces
+           * them to get scheduled.
+           */
+          node.arguments.forEach(function (input) {
+            if (shouldFloat(input)) {
+              input.mustNotFloat = true;
+            }
+          });
+        }
       }, true);
 
       if (debug) {
@@ -1601,6 +1614,9 @@
       }
 
       function shouldFloat(node) {
+        if (node.mustNotFloat) {
+          return false;
+        }
         return node instanceof Binary || node instanceof Unary;
       }
 
