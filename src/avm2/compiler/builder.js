@@ -880,6 +880,12 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(Undefined);
               popLocal(bc.index);
               break;
+            case OP_applytype:
+              arguments = popMany(bc.argCount);
+              type = pop();
+              callee = getJSProperty(runtime, "applyType");
+              push(call(callee, runtime, [type, new NewArray(arguments)]));
+              break;
             case OP_newarray:
               arguments = popMany(bc.argCount);
               push(new NewArray(arguments));
