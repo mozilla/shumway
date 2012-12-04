@@ -675,6 +675,17 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               object = pop();
               setSlot(object, constant(bc.index), value, bc.ti);
               break;
+            case OP_getsuper:
+              multiname = buildMultiname(bc.index);
+              object = pop();
+              push(call(globalProperty("getSuper"), null, [object, multiname]));
+              break;
+            case OP_setsuper:
+              value = pop();
+              multiname = buildMultiname(bc.index);
+              object = pop();
+              store(call(globalProperty("setSuper"), null, [object, multiname, value]));
+              break;
             case OP_debugfile:
             case OP_debugline:
               break;
