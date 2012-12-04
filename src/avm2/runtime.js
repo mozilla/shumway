@@ -158,7 +158,7 @@ function coerce(value, type) {
     return type.coerce(value);
   }
 
-  if (isNullOrUndefiend(value)) {
+  if (isNullOrUndefined(value)) {
     return null;
   }
 
