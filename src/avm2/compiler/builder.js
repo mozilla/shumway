@@ -553,8 +553,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_setlocal3:
               popLocal(op - OP_setlocal0);
               break;
+            case OP_pushwith:
+              scope.push(new IR.AVM2Scope(topScope(), pop(), true));
+              break;
             case OP_pushscope:
-              scope.push(new IR.AVM2Scope(topScope(), pop()));
+              scope.push(new IR.AVM2Scope(topScope(), pop(), false));
               break;
             case OP_popscope:
               scope.pop();
@@ -582,6 +585,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               multiname = buildMultiname(bc.index);
               object = pop();
               setProperty(object, multiname, value);
+              break;
+            case OP_deleteproperty:
+              multiname = buildMultiname(bc.index);
+              object = pop();
+              push(call(globalProperty("deleteProperty"), null, [object, multiname]));
               break;
             case OP_getslot:
               object = pop();

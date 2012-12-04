@@ -448,12 +448,14 @@
   }
 
   var AVM2Scope = (function () {
-    function constructor(parent, object) {
+    function constructor(parent, object, isWith) {
       Node.call(this);
       assert (isScope(parent));
       assert (object);
+      assert (isBoolean(isWith));
       this.parent = parent;
       this.object = object;
+      this.isWith = isWith;
     }
     constructor.prototype = extend(Value, "AVM2_Scope");
     return constructor;

@@ -422,7 +422,8 @@
   IR.AVM2Scope.prototype.compile = function (cx) {
     var parent = compileValue(this.parent, cx);
     var object = compileValue(this.object, cx);
-    return new NewExpression(id("Scope"), [parent, object]);
+    var isWith = new Literal(this.isWith);
+    return new NewExpression(id("Scope"), [parent, object, isWith]);
   };
 
   IR.AVM2FindProperty.prototype.compile = function (cx) {
