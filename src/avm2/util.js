@@ -82,7 +82,7 @@ function defineNonEnumerableProperty(obj, name, value) {
                                      enumerable: false });
 }
 
-function isNullOrUndefiend(value) {
+function isNullOrUndefined(value) {
   return value === null || value === undefined;
 }
 
