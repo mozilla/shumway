@@ -1584,6 +1584,9 @@
            * the topological sorting of moves gets more complicated, especially when cyclic dependencies
            * are involved. Here we just mark all floating inputs of phi nodes as non-floating which forces
            * them to get scheduled.
+           *
+           * TODO: Find out if this requirement is too expensive. We can make the move insertion algorithm
+           * more intelligent so that it walks the inputs of floating nodes when looking for dependencies.
            */
           node.arguments.forEach(function (input) {
             if (shouldFloat(input)) {
