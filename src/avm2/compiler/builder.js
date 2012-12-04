@@ -210,12 +210,26 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
       for (var i = 0; i < parameterCount; i++) {
         var parameter = mi.parameters[i];
+        var index = i + 1;
+        var local = state.local[index];
         if (parameter.value !== undefined) {
-          var index = i + 1;
-          var local = state.local[index];
           var condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
-          state.local[index] = new IR.Latch(condition, constant(parameter.value), local);
+          local = new IR.Latch(condition, constant(parameter.value), local);
         }
+        if (parameter.type && !parameter.type.isAnyName()) {
+          var coercer = this.coercers[parameter.type.name];
+          if (coercer) {
+            local = coercer(local);
+          } else {
+            var type = this.abc.domain.getProperty(parameter.type, true, true);
+            if (type) {
+              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)]);
+            } else {
+              unexpected();
+            }
+          }
+        }
+        state.local[index] = local;
       }
 
       return start;
@@ -238,6 +252,56 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       const multinames = this.abc.constantPool.multinames;
       const domain = new Constant(this.abc.domain);
       const runtime = new Constant(this.abc.runtime);
+
+      function unary(operator, argument) {
+        var node = new Unary(operator, argument);
+        if (peepholeOptimizer) {
+          node = peepholeOptimizer.tryFold(node);
+        }
+        return node;
+      }
+
+      function binary(operator, left, right) {
+        var node = new Binary(operator, left, right);
+        if (peepholeOptimizer) {
+          node = peepholeOptimizer.tryFold(node);
+        }
+        return node;
+      }
+
+      function toInt32(value) {
+        return binary(Operator.OR, value, constant(0));
+      }
+
+      function toUInt32(value) {
+        return binary(Operator.URSH, value, constant(0));
+      }
+
+      function toNumber(value) {
+        return unary(Operator.PLUS, value);
+      }
+
+      function toDouble(value) {
+        return toNumber(value);
+      }
+
+      function toBoolean(value) {
+        return unary(Operator.FALSE, unary(Operator.FALSE, value));
+      }
+
+      function toString(value) {
+        return binary(Operator.ADD, constant(""), value);
+      }
+
+      assert(!this.coercers);
+
+      this.coercers = {
+        "int": toInt32,
+        "uint": toUInt32,
+        "Number": toNumber,
+        "Boolean": toBoolean,
+        "String": toString
+      };
 
       var regions = [];
 
@@ -444,22 +508,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return store(new Call(region, state.store, callee, object, arguments));
         }
 
-        function unary(operator, argument) {
-          var node = new Unary(operator, argument);
-          if (peepholeOptimizer) {
-            node = peepholeOptimizer.tryFold(node);
-          }
-          return node;
-        }
-
-        function binary(operator, left, right) {
-          var node = new Binary(operator, left, right);
-          if (peepholeOptimizer) {
-            node = peepholeOptimizer.tryFold(node);
-          }
-          return node;
-        }
-
         function truthyCondition(operator) {
           var right;
           if (operator.isBinary()) {
@@ -538,18 +586,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         function buildReturnStop() {
           assert (!stops);
           stops = [];
-        }
-
-        function toInt32(value) {
-          return binary(Operator.OR, value, constant(0));
-        }
-
-        function toNumber(value) {
-          return toDouble(value);
-        }
-
-        function toDouble(value) {
-          return new Call(null, null, globalProperty("Number"), null, [value]);
         }
 
         if (writer) {
@@ -690,15 +726,18 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_coerce_i: case OP_convert_i:
               push(toInt32(pop()));
               break;
+            case OP_coerce_u: case OP_convert_u:
+              push(toUInt32(pop()));
+              break;
             case OP_coerce_d: case OP_convert_d:
               push(toDouble(pop()));
               break;
             case OP_coerce_b: case OP_convert_b:
-              push(unary(Operator.FALSE, unary(Operator.FALSE, pop())));
+              push(toBoolean(pop()));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:
-              push(call(globalProperty("coerceString"), null, [pop()]));
+              push(toString(pop()));
               break;
             case OP_returnvalue:
             case OP_returnvoid:

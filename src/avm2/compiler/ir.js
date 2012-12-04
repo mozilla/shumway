@@ -72,6 +72,7 @@
     operator.LT = new operator("<", function (l, r) { return l < r; }, true);
     operator.GE = new operator(">=", function (l, r) { return l >= r; }, true);
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false);
+    operator.PLUS = new operator("+", function (a) { return +a; }, false);
     operator.NEG = new operator("-", function (a) { return -a; }, false);
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
@@ -1631,7 +1632,7 @@
         if (node.mustNotFloat) {
           return false;
         }
-        return node instanceof Binary || node instanceof Unary;
+        return node instanceof Binary || node instanceof Unary || node instanceof Parameter;
       }
 
       function append(node) {

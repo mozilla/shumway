@@ -106,7 +106,8 @@
       if (value === undefined) {
         Identifier.call(this, "undefined");
       } else if (value !== null && typeof value === "object") {
-        release || assert(value instanceof Multiname ||
+        /*
+        assert(value instanceof Multiname ||
           value instanceof Runtime ||
           value instanceof Domain ||
           value instanceof MethodInfo ||
@@ -118,6 +119,7 @@
           value instanceof Global ||
           value instanceof Interface,
           "Should not make constants from ", value);
+        */
         MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
       } else {
         if (typeof value === "number" && isNaN(value)) {
