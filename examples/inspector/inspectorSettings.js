@@ -11,6 +11,7 @@ var state = loadState();
 updateAVM2State();
 
 function updateAVM2State() {
+  enableC4.value = true;
   enableVerifier.value = state.verifier;
   enableOpt.value = state.optimizer;
   enableInlineCaching.value = state.inlineCaching;

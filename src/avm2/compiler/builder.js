@@ -159,7 +159,6 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
-      Node.resetNextID();
       this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
@@ -653,6 +652,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               object = pop();
               push(getProperty(object, multiname, bc.ti));
               break;
+            case OP_getlex:
+              multiname = buildMultiname(bc.index);
+              push(getProperty(findProperty(multiname, true), multiname));
+              break;
             case OP_initproperty:
             case OP_setproperty:
               value = pop();
@@ -698,15 +701,18 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               callee = pop();
               push(call(callee, object, arguments));
               break;
-            case OP_callproperty: case OP_callproplex:
+            case OP_callproperty: case OP_callproplex: case OP_callpropvoid:
               arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname);
-              if (op === OP_callproperty) {
-                push(call(callee, object, arguments));
+              if (op === OP_callproperty || op === OP_callpropvoid) {
+                value = call(callee, object, arguments);
               } else {
-                push(call(callee, null, arguments));
+                value = call(callee, null, arguments);
+              }
+              if (op !== OP_callpropvoid) {
+                push(value);
               }
               break;
             case OP_callsuper:
@@ -755,6 +761,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:
               push(toString(pop()));
+              break;
+            case OP_astypelate:
+              type = pop();
+              value = pop();
+              push(call(globalProperty("asInstance"), null, [value, type]));
               break;
             case OP_returnvalue:
             case OP_returnvoid:
@@ -967,11 +978,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
   var count = 0;
 
   function build(abc, methodInfo, scope, hasDynamicScope) {
-    if (!enableC4.value) {
-      return;
-    }
-
     count ++;
+    assert (!methodInfo.hasExceptions());
 
     if (c4Method.value >= 0) {
       if ((count - 1) !== Number(c4Method.value)) {
@@ -992,6 +1000,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     }
 
     Timer.start("IR Builder");
+    Node.startNumbering();
     var dfg = new Builder(abc, methodInfo, scope, hasDynamicScope).build();
     Timer.stop();
 
@@ -1020,22 +1029,22 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     Timer.stop();
 
     var src = Backend.generate(cfg);
-
     writer && writer.writeLn(src);
+    Node.stopNumbering();
 
     return src;
   }
 
-  var Compiler = (function () {
-    function constructor(abc) {
-      this.abc = abc;
-    }
-    constructor.prototype.compileMethod = function (methodInfo, hasDefaults, scope, hasDynamicScope) {
-      return build(this.abc, methodInfo, scope, hasDynamicScope);
-    };
-    return constructor;
-  })();
+  exports.build = build;
 
-  exports.Compiler = Compiler;
+})(typeof exports === "undefined" ? (Builder = {}) : exports);
 
-})(typeof exports === "undefined" ? (builder = {}) : exports);
+var C4Compiler = (function () {
+  function constructor(abc) {
+    this.abc = abc;
+  }
+  constructor.prototype.compileMethod = function (methodInfo, hasDefaults, scope, hasDynamicScope) {
+    return Builder.build(this.abc, methodInfo, scope, hasDynamicScope);
+  };
+  return constructor;
+})();

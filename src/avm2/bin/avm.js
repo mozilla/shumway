@@ -46,9 +46,9 @@ var estransform; load("../compiler/lljs/src/estransform.js");
 var escodegen; load("../compiler/lljs/src/escodegen.js");
 load("../compiler/inferrer.js");
 load("../compiler/compiler.js");
-load("../compiler/ir.js");
-load("../compiler/looper.js");
-load("../compiler/backend.js");
+load("../compiler/c4/ir.js");
+load("../compiler/c4/looper.js");
+load("../compiler/c4/backend.js");
 load("../compiler/builder.js");
 Timer.stop();
 

@@ -574,6 +574,7 @@ var Analysis = (function () {
           continue;
 
         case OP_lookupswitch:
+          this.method.hasLookupSwitches = true;
           code.targets = [];
           var offsets = code.offsets;
           for (var i = 0, j = offsets.length; i < j; i++) {
