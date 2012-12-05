@@ -200,9 +200,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
       var arguments = new IR.Arguments(start);
 
       if (mi.needsRest() || mi.needsArguments()) {
-        var restOrArgumentsIndex = parameterIndexOffset + parameterCount;
-        var offset = constant(mi.needsRest() ? parameterCount + 1 : 1);
-        state.local[restOrArgumentsIndex] =
+        var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
+        state.local[parameterCount + 1] =
           new Call(start, state.store, globalProperty("sliceArguments"), null, [arguments, offset]);
       }
 
@@ -710,6 +709,13 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
                 push(call(callee, null, arguments));
               }
               break;
+            case OP_callsuper:
+              multiname = buildMultiname(bc.index);
+              arguments = popMany(bc.argCount);
+              object = pop();
+              callee = call(globalProperty("getSuper"), null, [object, multiname]);
+              push(call(callee, object, arguments));
+              break;
             case OP_construct:
               arguments = popMany(bc.argCount);
               object = pop();
@@ -761,9 +767,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               buildReturnStop();
               break;
             case OP_nextname:
+            case OP_nextvalue:
               index = pop();
               object = pop();
-              push(call(globalProperty("nextName"), null, [object, index]));
+              push(call(globalProperty(op === OP_nextname ? "nextName" : "nextValue"), null, [object, index]));
               break;
             case OP_hasnext2:
               var temp = call(globalProperty("hasNext2"), null, [local[bc.object], local[bc.index]]);
