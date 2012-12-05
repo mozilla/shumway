@@ -1034,9 +1034,8 @@
             */
 
             if (successors.length === 2) {
-              var branch1 = successors[0];
-              var branch2 = successors[1];
-
+              var branch1 = h.hasFlippedSuccessors ? successors[1] : successors[0];
+              var branch2 = h.hasFlippedSuccessors ? successors[0] : successors[1];
               branch1.npredecessors -= 1;
               branch1.save = 1;
               var c1 = induce(branch1, exit2, save2, loop);

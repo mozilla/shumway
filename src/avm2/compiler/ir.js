@@ -1008,15 +1008,29 @@
         }
         for (var i = 0; i < start.predecessors.length; i++) {
           var c = start.predecessors[i];
-          var d = c instanceof Projection ? c.project() : c;
+          var d;
+          var trueProjection = false;
+          if (c instanceof Projection) {
+            d = c.project();
+            trueProjection = c.type === Projection.Type.TRUE;
+          } else {
+            d = c;
+          }
           if (d instanceof Region) {
             d = new Jump(c);
             d = new Projection(d, Projection.Type.TRUE);
             start.predecessors[i] = d;
             d = d.project();
+            trueProjection = true;
           }
           buildEnd(d);
-          d.control.block.pushSuccessor(block, true);
+          var controlBlock = d.control.block;
+          if (trueProjection && controlBlock.successors.length > 0) {
+            controlBlock.pushSuccessor(block, true);
+            controlBlock.hasFlippedSuccessors = true;
+          } else {
+            controlBlock.pushSuccessor(block, true);
+          }
         }
       }
 
