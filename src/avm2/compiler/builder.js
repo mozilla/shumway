@@ -1,7 +1,5 @@
 var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
-var c4MaxMethods = c4Options.register(new Option("c4MM", "c4MM", "number", Number.MAX_VALUE, "Max number of methods to compile."));
-var c4Method = c4Options.register(new Option("c4M", "c4M", "number", -1, "Method to compile."));
 var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0, "Compiler Trace Level"));
 
 (function (exports) {
@@ -119,6 +117,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
   function isNumericConstant(node) {
     return node instanceof Constant && isNumeric(node.value);
+  }
+
+  function isStringConstant(node) {
+    return node instanceof Constant && isString(node.value);
   }
 
   function isMultinameConstant(node) {
@@ -362,7 +364,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
             var type = typeState.local[i];
             var local = state.local[i];
             if (local.ty) {
-              assert (local.ty === type, local + " " + local.ty + " !== " + type);
+              // assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
             } else {
               local.ty = type;
             }
@@ -377,7 +379,16 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return state.saved;
         }
 
-        function topScope() {
+        function topScope(depth) {
+          if (depth !== undefined) {
+            if (depth < scope.length) {
+              return scope[scope.length - 1 - depth];
+            } else if (depth === scope.length) {
+              return savedScope();
+            } else {
+              unexpected();
+            }
+          }
           if (scope.length > 0) {
             return scope.top();
           }
@@ -390,7 +401,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           assert (x);
           if (bc.ti) {
             if (x.ty) {
-              assert (x.ty == bc.ti.type);
+              // assert (x.ty == bc.ti.type);
             } else {
               x.ty = bc.ti.type;
             }
@@ -435,7 +446,14 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           }
         }
 
-        function findProperty(name, strict) {
+        function findProperty(name, strict, ti) {
+          if (ti) {
+            if (ti.object) {
+              return constant(ti.object);
+            } else if (ti.scopeDepth !== undefined) {
+              return getJSProperty(topScope(ti.scopeDepth), "object");
+            }
+          }
           return new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
         }
 
@@ -444,7 +462,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function getProperty(object, name, ti) {
-          if (hasNumericType(name)) {
+          if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
+            name = constant(Multiname.getQualifiedName(multiname.value));
+          }
+          if (hasNumericType(name) || isStringConstant()) {
             return new IR.GetProperty(region, state.store, object, name);
           }
           var propertyQName;
@@ -469,7 +490,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
         }
 
         function setProperty(object, name, value) {
-          if (hasNumericType(name)) {
+          if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
+            name = constant(Multiname.getQualifiedName(multiname.value));
+          }
+          if (hasNumericType(name) || isStringConstant(name)) {
             store(new IR.SetProperty(region, state.store, object, name, value));
             return;
           }
@@ -642,10 +666,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(getJSProperty(state.scope[bc.index], "object"));
               break;
             case OP_findpropstrict:
-              push(findProperty(buildMultiname(bc.index), true));
+              push(findProperty(buildMultiname(bc.index), true, bc.ti));
               break;
             case OP_findproperty:
-              push(findProperty(buildMultiname(bc.index), false));
+              push(findProperty(buildMultiname(bc.index), false, bc.ti));
               break;
             case OP_getproperty:
               multiname = buildMultiname(bc.index);
@@ -705,7 +729,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname);
+              callee = getProperty(object, multiname, bc.ti);
               if (op === OP_callproperty || op === OP_callpropvoid) {
                 value = call(callee, object, arguments);
               } else {
@@ -975,24 +999,20 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return constructor;
   })();
 
-  var count = 0;
+  function build(abc, verifier, methodInfo, scope, hasDynamicScope) {
+    release || assert(scope);
+    release || assert(methodInfo.analysis);
+    release || assert (!methodInfo.hasExceptions());
 
-  function build(abc, methodInfo, scope, hasDynamicScope) {
-    count ++;
-    assert (!methodInfo.hasExceptions());
+    Counter.count("Compiler: Methods");
 
-    if (c4Method.value >= 0) {
-      if ((count - 1) !== Number(c4Method.value)) {
-        print ("Ignoring: " + (count - 1));
-        return;
-      }
-    }
+    Timer.start("Compiler");
 
-    if (c4MaxMethods.value >= 0) {
-      if (count > c4MaxMethods.value | 0) {
-        print ("Too Many Ignoring: " + count);
-        return;
-      }
+    if (enableVerifier.value && scope.object) {
+      // TODO: Can we verify even if |hadDynamicScope| is |true|?
+      Timer.start("ver");
+      verifier.verifyMethod(methodInfo, scope);
+      Timer.stop();
     }
 
     if (c4TraceLevel.value > 0) {
@@ -1031,6 +1051,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     var src = Backend.generate(cfg);
     writer && writer.writeLn(src);
     Node.stopNumbering();
+    Timer.stop();
 
     return src;
   }
@@ -1042,9 +1063,10 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 var C4Compiler = (function () {
   function constructor(abc) {
     this.abc = abc;
+    this.verifier = new Verifier(abc);
   }
   constructor.prototype.compileMethod = function (methodInfo, hasDefaults, scope, hasDynamicScope) {
-    return Builder.build(this.abc, methodInfo, scope, hasDynamicScope);
+    return Builder.build(this.abc, this.verifier, methodInfo, scope, hasDynamicScope);
   };
   return constructor;
 })();

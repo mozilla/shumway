@@ -165,23 +165,10 @@ if (configurationSet.value.indexOf("i") >= 0) {
   configurations.push({name: "shu-i", timeout: timeout.value, command: commandPrefix + " -x -i" + commandSuffix});
 }
 if (configurationSet.value.indexOf("c") >= 0) {
-  configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x" + commandSuffix});
-}
-if (configurationSet.value.indexOf("o") >= 0) {
-  configurations.push({name: "shu-o", timeout: timeout.value, command: commandPrefix + " -x -opt" + commandSuffix});
-}
-if (configurationSet.value.indexOf("l") >= 0) {
-  configurations.push({name: "shu-l", timeout: timeout.value, command: commandPrefix + " -x -opt -ic" + commandSuffix});
+  configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x -c4" + commandSuffix});
 }
 if (configurationSet.value.indexOf("v") >= 0) {
-  configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -opt -verify" + commandSuffix});
-}
-if (configurationSet.value.indexOf("x") >= 0) {
-  configurations.push({name: "shu-x", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
-}
-
-if (configurationSet.value.indexOf("u") >= 0) {
-  configurations.push({name: "shu-u", timeout: timeout.value, command: commandPrefix + " -x -opt -verify -unsafelookup" + commandSuffix});
+  configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
 }
 
 console.log(padRight("=== Configurations ", "=", 120));

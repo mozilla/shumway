@@ -5,6 +5,7 @@ var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", 
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 var maxCompilations = compilerOptions.register(new Option("mc", "maxCompilations", "number", Infinity, "Stops compiling after a while."));
+var compileOnly = compilerOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
@@ -740,7 +741,8 @@ var Global = (function () {
  * Execution context for an ABC.
  */
 var Runtime = (function () {
-  var functionCount = 0;
+  var totalFunctionCount = 0;
+  var compiledFunctionCount = 0;
 
   function runtime(abc) {
     this.abc = abc;
@@ -837,8 +839,17 @@ var Runtime = (function () {
       }
     }
 
-    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi) || functionCount + 1 > maxCompilations.value) {
+    totalFunctionCount ++;
+
+    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi) || compiledFunctionCount + 1 > maxCompilations.value) {
       return interpretedMethod(this.interpreter, mi, scope);
+    }
+
+    if (compileOnly.value >= 0) {
+      if (Number(compileOnly.value) !== totalFunctionCount) {
+        print("Skipping " + totalFunctionCount);
+        return interpretedMethod(this.interpreter, mi, scope);
+      }
     }
 
     function bindScope(fn, scope) {
@@ -870,8 +881,8 @@ var Runtime = (function () {
 
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
-    var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + functionCount;
-    if (functionCount == functionBreak.value) {
+    var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
+    if (compiledFunctionCount == functionBreak.value) {
       body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
@@ -886,7 +897,7 @@ var Runtime = (function () {
     } else {
       mi.compiledMethod = new Function(parameters, body);
     }
-    functionCount++;
+    compiledFunctionCount++;
 
     if (hasDynamicScope) {
       return bindScope(mi.compiledMethod, scope);
