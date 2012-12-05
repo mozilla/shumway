@@ -746,7 +746,11 @@ var Runtime = (function () {
     this.abc = abc;
     this.domain = abc.domain;
     if (this.domain.mode !== EXECUTION_MODE.INTERPRET) {
-      this.compiler = new Compiler(abc);
+      if (enableC4.value) {
+        this.compiler = new builder.Compiler(abc);
+      } else {
+        this.compiler = new Compiler(abc);
+      }
     }
     this.interpreter = new Interpreter(abc);
 

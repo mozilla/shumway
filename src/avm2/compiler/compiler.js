@@ -1774,10 +1774,6 @@ var Compiler = (function () {
     var code = generate(node);
     Timer.stop();
     Timer.stop();
-    var opto = builder.build(this.abc, methodInfo, scope, hasDynamicScope);
-    if (opto) {
-      return opto;
-    }
     return code;
   };
 

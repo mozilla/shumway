@@ -1026,6 +1026,16 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     return src;
   }
 
-  exports.build = build;
+  var Compiler = (function () {
+    function constructor(abc) {
+      this.abc = abc;
+    }
+    constructor.prototype.compileMethod = function (methodInfo, hasDefaults, scope, hasDynamicScope) {
+      return build(this.abc, methodInfo, scope, hasDynamicScope);
+    };
+    return constructor;
+  })();
+
+  exports.Compiler = Compiler;
 
 })(typeof exports === "undefined" ? (builder = {}) : exports);
