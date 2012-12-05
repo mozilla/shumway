@@ -182,7 +182,7 @@
         } else {
           obj = new MemberExpression(obj, new Literal(x), true);
         }
-      } else if (x instanceof Literal) {
+      } else if (x instanceof Literal && isIdentifier(x.value)) {
         obj = new MemberExpression(obj, new Identifier(x.value), false);
       } else {
         obj = new MemberExpression(obj, x, true);
