@@ -446,14 +446,22 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           }
         }
 
+        function simplifyName(name) {
+          if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
+            return constant(Multiname.getQualifiedName(name.value));
+          }
+          return name;
+        }
+
         function findProperty(name, strict, ti) {
           if (ti) {
             if (ti.object) {
               return constant(ti.object);
             } else if (ti.scopeDepth !== undefined) {
-              return getJSProperty(topScope(ti.scopeDepth), "object");
+              return getScopeObject(topScope(ti.scopeDepth));
             }
           }
+
           return new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
         }
 
@@ -461,25 +469,23 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return getJSPropertyWithStore(state.store, object, path);
         }
 
-        function getProperty(object, name, ti) {
-          if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
-            name = constant(Multiname.getQualifiedName(multiname.value));
+        function getScopeObject(scope) {
+          if (scope instanceof IR.AVM2Scope) {
+            return scope.object;
           }
-          if (hasNumericType(name) || isStringConstant()) {
+          return getJSProperty(scope, "object");
+        }
+
+        function getProperty(object, name, ti) {
+          name = simplifyName(name);
+          if (hasNumericType(name) || isStringConstant(name)) {
             return new IR.GetProperty(region, state.store, object, name);
           }
-          var propertyQName;
           if (ti) {
-            propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
-          } else if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
-            propertyQName = Multiname.getQualifiedName(name.value);
-          }
-          if (propertyQName) {
-            if (propertyQName === "public$length") {
-              // HACK, is this safe?
-              // propertyQName = "length";
+            var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
+            if (propertyQName) {
+              return new IR.GetProperty(region, state.store, object, constant(propertyQName));
             }
-            return new IR.GetProperty(region, state.store, object, constant(propertyQName));
           }
           return new IR.AVM2GetProperty(region, state.store, object, name);
         }
@@ -489,13 +495,18 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return node;
         }
 
-        function setProperty(object, name, value) {
-          if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
-            name = constant(Multiname.getQualifiedName(multiname.value));
-          }
+        function setProperty(object, name, value, ti) {
+          name = simplifyName(name);
           if (hasNumericType(name) || isStringConstant(name)) {
             store(new IR.SetProperty(region, state.store, object, name, value));
             return;
+          }
+          if (ti) {
+            var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
+            if (propertyQName) {
+              store(new IR.SetProperty(region, state.store, object, constant(propertyQName), value));
+              return;
+            }
           }
           store(new IR.AVM2SetProperty(region, state.store, object, name, value));
         }
@@ -663,7 +674,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(new IR.AVM2Global(null, topScope()));
               break;
             case OP_getscopeobject:
-              push(getJSProperty(state.scope[bc.index], "object"));
+              push(getScopeObject(state.scope[bc.index]));
               break;
             case OP_findpropstrict:
               push(findProperty(buildMultiname(bc.index), true, bc.ti));
@@ -685,7 +696,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              setProperty(object, multiname, value);
+              setProperty(object, multiname, value, bc.ti);
               break;
             case OP_deleteproperty:
               multiname = buildMultiname(bc.index);

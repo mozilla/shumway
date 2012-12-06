@@ -22,7 +22,8 @@ var Type = (function () {
     name: {},
     classInfo: [],
     instanceInfo: [],
-    scriptInfo: []
+    scriptInfo: [],
+    methodInfo: []
   };
 
   type.from = function from(x, domain) {
@@ -43,6 +44,8 @@ var Type = (function () {
       return new TraitsType(x.scriptInfo);
     } else if (x instanceof Interface) {
       return new TraitsType(x.classInfo, domain);
+    } else if (x instanceof MethodInfo) {
+      return new MethodType(x);
     } else if (domain && (x instanceof (domain.system.Class))) {
       return type.from(x.classInfo, domain);
     }
@@ -146,6 +149,17 @@ var AtomType = (function () {
     return Type.Any;
   };
   return atomType;
+})();
+
+var MethodType = (function () {
+  function methodType(methodInfo) {
+    this.methodInfo = methodInfo;
+  }
+  methodType.prototype = Object.create(Type.prototype);
+  methodType.prototype.toString = function () {
+    return "MT " + this.methodInfo;
+  };
+  return methodType;
 })();
 
 var TraitsType = (function () {
@@ -569,7 +583,7 @@ var Verifier = (function() {
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
 
-      var bc, obj, fn, mn, l, r, val, type;
+      var bc, obj, fn, mn, l, r, val, type, returnType;
 
       if (writer) {
         writer.enter("verifyBlock: " + block.bid +
@@ -687,6 +701,8 @@ var Verifier = (function() {
               return Type.fromName(trait.typeName, abc.domain).instance();
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, abc.domain);
+            } else if (trait.isMethod()) {
+              return Type.from(trait.methodInfo, abc.domain);
             }
           } else {
           //  ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
@@ -894,8 +910,13 @@ var Verifier = (function() {
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
-            getProperty(obj, mn);
-            push(Type.Any);
+            type = getProperty(obj, mn);
+            if (type instanceof MethodType) {
+              returnType = Type.fromName(type.methodInfo.returnType).instance();
+            } else {
+              returnType = Type.Any;
+            }
+            push(returnType);
             break;
           case OP_returnvoid:
             this.returnType.merge(Type.Undefined);
