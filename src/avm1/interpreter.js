@@ -43,6 +43,127 @@ AS2Context.prototype = {
   }
 };
 
+function as2GetType(v) {
+  if (v === null)
+    return 'null';
+  var type = typeof v;
+  if (type === 'function')
+    return 'object';
+  if (type === 'object' && v instanceof AS2MovieClip)
+    return 'movieclip';
+  return type;
+}
+
+function as2ToPrimitive(value) {
+  return as2GetType(value) !== 'object' ? value : value.valueOf();
+}
+
+function as2ToAddPrimitive(value) {
+  if (as2GetType(value) !== 'object')
+    return value;
+  if (value instanceof Date && AS2Context.instance.swfVersion >= 6) {
+    return value.toString();
+  } else {
+    return value.valueOf();
+  }
+}
+
+function as2ToBoolean(value) {
+  switch (as2GetType(value)) {
+  case 'undefined':
+  case 'null':
+  default:
+    return false;
+  case 'boolean':
+    return value;
+  case 'number':
+    return value != 0 && !isNaN(value);
+  case 'string':
+    return value.length !== 0;
+  case 'object':
+    return true;
+  }
+}
+
+function as2ToNumber(value) {
+  value = as2ToPrimitive(value);
+  switch (as2GetType(value)) {
+  case 'undefined':
+  case 'null':
+    return AS2Context.instance.swfVersion >= 7 ? NaN : 0;
+  default:
+    return AS2Context.instance.swfVersion >= 5 ? NaN : 0;
+  case 'null':
+    return NaN;
+  case 'boolean':
+    return value ? 1 : +0;
+  case 'number':
+    return value;
+  case 'string':
+    if (value === '' && AS2Context.instance.swfVersion < 5)
+      return 0;
+    return +value;
+  }
+}
+
+function as2ToInteger(value) {
+  var result = as2ToNumber(value);
+  if (isNaN(result))
+    return 0;
+  if (!isFinite(result) || result == 0)
+    return result;
+  return (result < 0 ? -1 : 1) * Math.floor(Math.abs(result));
+}
+
+function as2ToInt32(value) {
+  var result = as2ToNumber(value);
+  return (isNaN(result) || !isFinite(result) || result == 0) ? 0 :
+    (result | 0);
+}
+
+function as2ToString(value) {
+  switch (as2GetType(value)) {
+  case 'undefined':
+    return AS2Context.instance.swfVersion >= 7 ? 'undefined' : '';
+  case 'null':
+    return 'null';
+  case 'boolean':
+    return value ? 'true' : 'false';
+  case 'number':
+    return value.toString();
+  case 'string':
+    return value;
+  case 'undefined':
+    return 'undefined';
+  case 'movieclip':
+    return '_level0'; // TODO get movie clip path
+  case 'object':
+    var result = value.toString !== Function.prototype.toString ?
+      value.toString() : value;
+    if (typeof result === 'string')
+      return result;
+    return typeof value === 'function' ? '[type Function]'
+                                       : '[type Object]';
+  }
+}
+
+function as2Compare(x, y) {
+  var x2 = as2ToPrimitive(x);
+  var y2 = as2ToPrimitive(y);
+  if (typeof x2 === 'string' && typeof y2 === 'string') {
+    return x2 < y2;
+  } else {
+    return as2ToNumber(x2) < as2ToNumber(y2);
+  }
+}
+
+function as2InstanceOf(obj, constructor) {
+  if (obj instanceof constructor)
+    return true;
+  // TODO interface check
+  return false;
+}
+
 function executeActions(actionsData, context, scope, assets) {
   var actionTracer = ActionTracerFactory.get();
 
@@ -163,15 +284,6 @@ function interpretActions(actionsData, scopeContainer,
       }
     }
     return false;
-  }
-  function instanceOf(obj, constructor) {
-    if (obj instanceof constructor)
-      return true;
-    // TODO interface check
-    return false;
-  }
-  function isMovieClip(obj) {
-    return instanceOf(obj, _global.MovieClip);
   }
   function resolveVariableName(variableName) {
     var obj, name;
@@ -381,86 +493,85 @@ function interpretActions(actionsData, scopeContainer,
         stack.pop();
         break;
       case 0x0A: // ActionAdd
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         stack.push(a + b);
         break;
       case 0x0B: // ActionSubtract
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         stack.push(b - a);
         break;
       case 0x0C: // ActionMultiply
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         stack.push(a * b);
         break;
       case 0x0D: // ActionDivide
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         var c = b / a;
         stack.push(isSwfVersion5 ? c : isFinite(c) ? c : '#ERROR#');
         break;
       case 0x0E: // ActionEquals
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         var f = a == b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x0F: // ActionLess
-        var a = +stack.pop();
-        var b = +stack.pop();
+        var a = as2ToNumber(stack.pop());
+        var b = as2ToNumber(stack.pop());
         var f = b < a;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x10: // ActionAnd
-        var a = stack.pop();
-        var b = stack.pop();
+        var a = as2ToBoolean(stack.pop());
+        var b = as2ToBoolean(stack.pop());
         var f = a && b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x11: // ActionOr
-        var a = stack.pop();
-        var b = stack.pop();
+        var a = as2ToBoolean(stack.pop());
+        var b = as2ToBoolean(stack.pop());
         var f = a || b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x12: // ActionNot
-        var f = !stack.pop();
+        var f = !as2ToBoolean(stack.pop());
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x13: // ActionStringEquals
-        var sa = '' + stack.pop();
-        var sb = '' + stack.pop();
+        var sa = as2ToString(stack.pop());
+        var sb = as2ToString(stack.pop());
         var f = sa == sb;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x14: // ActionStringLength
       case 0x31: // ActionMBStringLength
-        stack.push(_global.length(stack.pop()));
-        var sa = '' + stack.pop();
-        stack.push(sa.length);
+        var sa = as2ToString(stack.pop());
+        stack.push(_global.length(sa));
         break;
       case 0x21: // ActionStringAdd
-        var sa = '' + stack.pop();
-        var sb = '' + stack.pop();
+        var sa = as2ToString(stack.pop());
+        var sb = as2ToString(stack.pop());
         stack.push(sb + sa);
         break;
       case 0x15: // ActionStringExtract
         var count = stack.pop();
         var index = stack.pop();
-        var value = stack.pop();
+        var value = as2ToString(stack.pop());
         stack.push(_global.substring(value, index, count));
         break;
       case 0x35: // ActionMBStringExtract
         var count = stack.pop();
         var index = stack.pop();
-        var value = stack.pop();
+        var value = as2ToString(stack.pop());
         stack.push(_global.mbsubstring(value, index, count));
         break;
       case 0x29: // ActionStringLess
-        var sa = '' + stack.pop();
-        var sb = '' + stack.pop();
+        var sa = as2ToString(stack.pop());
+        var sb = as2ToString(stack.pop());
         var f = sb < sa;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
@@ -742,7 +853,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x45: // ActionTargetPath
         var obj = stack.pop();
-        stack.push(isMovieClip(obj) ? obj._target : void(0));
+        stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
         break;
       case 0x94: // ActionWith
         var codeSize = stream.readUI16();
@@ -751,68 +862,73 @@ function interpretActions(actionsData, scopeContainer,
         processWith(obj, stream.readBytes(codeSize));
         break;
       case 0x4A: // ActionToNumber
-        stack.push(+stack.pop());
+        stack.push(as2ToNumber(stack.pop()));
         break;
       case 0x4B: // ActionToString
-        stack.push("" + stack.pop());
+        stack.push(as2ToString(stack.pop()));
         break;
       case 0x44: // ActionTypeOf
         var obj = stack.pop();
-        var result = isMovieClip(obj) ? 'movieclip' : typeof obj;
+        var result = as2GetType(obj);
         stack.push(result);
         break;
       case 0x47: // ActionAdd2
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg2 + arg1);
+        var sb = as2ToAddPrimitive(arg1);
+        var sa = as2ToAddPrimitive(arg2);
+        if (typeof sa === 'string' || typeof sb === 'string')
+          stack.push(as2ToString(sa) + as2ToString(sb));
+        else
+          stack.push(as2ToNumber(sa) + as2ToNumber(sb));
         break;
       case 0x48: // ActionLess2
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg2 < arg1);
+        stack.push(as2Compare(arg2, arg1));
         break;
       case 0x3F: // ActionModulo
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToNumber(stack.pop());
+        var arg2 = as2ToNumber(stack.pop());
         stack.push(arg2 % arg1);
         break;
       case 0x60: // ActionBitAnd
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 & arg1);
         break;
       case 0x63: // ActionBitLShift
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 << arg1);
         break;
       case 0x61: // ActionBitOr
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 | arg1);
         break;
       case 0x64: // ActionBitRShift
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 >> arg1);
         break;
       case 0x65: // ActionBitURShift
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 >>> arg1);
         break;
       case 0x62: // ActionBitXor
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
+        var arg1 = as2ToInt32(stack.pop());
+        var arg2 = as2ToInt32(stack.pop());
         stack.push(arg2 ^ arg1);
         break;
       case 0x51: // ActionDecrement
-        var arg1 = stack.pop();
+        var arg1 = as2ToNumber(stack.pop());
         arg1--;
         stack.push(arg1);
         break;
       case 0x50: // ActionIncrement
-        var arg1 = stack.pop();
+        var arg1 = as2ToNumber(stack.pop());
         arg1++;
         stack.push(arg1);
         break;
@@ -832,7 +948,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x54: // ActionInstanceOf
         var constr = stack.pop();
         var obj = stack.pop();
-        stack.push(instanceOf(Object(obj), constr));
+        stack.push(as2InstanceOf(Object(obj), constr));
         break;
       case 0x55: // ActionEnumerate2
         var obj = stack.pop();
@@ -848,11 +964,11 @@ function interpretActions(actionsData, scopeContainer,
       case 0x67: // ActionGreater
         var arg1 = stack.pop();
         var arg2 = stack.pop();
-        stack.push(arg2 > arg1);
+        stack.push(as2Compare(arg1, arg2));
         break;
       case 0x68: // ActionStringGreater
-        var sa = '' + stack.pop();
-        var sb = '' + stack.pop();
+        var sa = as2ToString(stack.pop());
+        var sb = as2ToString(stack.pop());
         var f = sb > sa;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
@@ -912,7 +1028,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x2B: // ActionCastOp
         var obj =  stack.pop();
         var constr = stack.pop();
-        stack.push(instanceOf(obj, constr) ? obj : null);
+        stack.push(as2InstanceOf(obj, constr) ? obj : null);
         break;
       case 0x2C: // ActionImplementsOp
         var constr = stack.pop();
