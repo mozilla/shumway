@@ -468,6 +468,7 @@ AS2MovieClip.prototype = Object.create({}, {
     set: function set$transform(value) { throw 'Not implemented: set$transform'; },
     enumerable: true
   },
+  toString: proxyNativeMethod('toString'),
   unloadMovie: {
     value: function unloadMovie() {
       throw 'Not implemented: unloadMovie';
