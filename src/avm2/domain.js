@@ -20,7 +20,10 @@ var Domain = (function () {
     this.loadedClasses = [];
 
     // Classes cache.
-    this.cache = {};
+    this.classCache = Object.create(null);
+
+    // Script cache.
+    this.scriptCache = Object.create(null);
 
     // Our parent.
     this.base = base;
@@ -293,7 +296,7 @@ var Domain = (function () {
     },
 
     getClass: function getClass(simpleName) {
-      var cache = this.cache;
+      var cache = this.classCache;
       var c = cache[simpleName];
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
@@ -303,7 +306,7 @@ var Domain = (function () {
     },
 
     findClass: function findClass(simpleName) {
-      if (simpleName in this.cache) {
+      if (simpleName in this.classCache) {
         return true;
       }
       return this.findProperty(Multiname.fromSimpleName(simpleName), false, true);
@@ -338,12 +341,20 @@ var Domain = (function () {
      * definition of conflicting name will never be resolved.
      */
     findDefiningScript: function findDefiningScript(mn, execute) {
+
+      var resolved = this.scriptCache[mn.id];
+      if (resolved && (resolved.script.executed || !execute)) {
+        return resolved;
+      }
+
       if (this.base) {
-        var resolved = this.base.findDefiningScript(mn, execute);
+        resolved = this.base.findDefiningScript(mn, execute);
         if (resolved) {
           return resolved;
         }
       }
+
+      Counter.count("Domain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0, j = abcs.length; i < j; i++) {
@@ -365,7 +376,7 @@ var Domain = (function () {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
               }
-              return { script: script, name: mn };
+              return (this.scriptCache[mn.id] = { script: script, name: mn });
             }
           } else {
             var resolved = resolveMultiname(global, mn);
@@ -373,7 +384,7 @@ var Domain = (function () {
               if (execute) {
                 ensureScriptIsExecuted(abc, script);
               }
-              return { script: script, name: resolved };
+              return (this.scriptCache[mn.id] = { script: script, name: resolved });
             }
           }
         }
