@@ -175,7 +175,7 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
     if (!request || !request.url)
       throw new Error('Invalid request object');
     var url = request.url;
-    if (url.indexOf('fscommand:') === 0) {
+    if (/^fscommand:/i.test(url)) {
       var fscommand = avm2.applicationDomain.getProperty(
         Multiname.fromSimpleName('flash.system.fscommand'), true, true);
       fscommand.call(null, url.substring('fscommand:'.length), window);

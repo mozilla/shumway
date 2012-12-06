@@ -90,7 +90,7 @@ AS2Globals.prototype = {
   loadMovie: function(url, target, method) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     // some swfs are using loadMovie to call fscommmand
-    if (url.indexOf('fscommand:') === 0)
+    if (/^fscommand:/i.test(url))
       return this.fscommand(url.substring('fscommand:'.length), target);
 
     // flash.display.Loader, flash.net.URLLoader
@@ -98,8 +98,8 @@ AS2Globals.prototype = {
   },
   loadMovieNum: function(url, level, method) {
     var nativeTarget = AS2Context.instance.resolveLevel(level);
-    // some swfs are using loadMovie to call fscommmand
-    if (url.indexOf('fscommand:') === 0)
+    // some swfs are using loadMovieNum to call fscommmand
+    if (/^fscommand:/i.test(url))
       return this.fscommand(url.substring('fscommand:'.length));
 
     // flash.display.Loader, flash.net.URLLoader
