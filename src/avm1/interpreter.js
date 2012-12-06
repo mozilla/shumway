@@ -136,7 +136,7 @@ function as2ToString(value) {
   case 'undefined':
     return 'undefined';
   case 'movieclip':
-    return '_level0'; // TODO get movie clip path
+    return value.$targetPath;
   case 'object':
     var result = value.toString !== Function.prototype.toString ?
       value.toString() : value;

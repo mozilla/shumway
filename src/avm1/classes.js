@@ -97,6 +97,14 @@ AS2MovieClip.prototype = Object.create({}, {
     },
     enumerable: false
   },
+  $targetPath: {
+    get: function targetPath$get() {
+      var target = this._target;
+      var prefix = '_level0'; // TODO use needed level number here
+      return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
+    },
+    enumerable: true
+  },
   _alpha: proxyNativeProperty('alpha'),
   attachAudio: {
     value: function attachAudio(id) {
