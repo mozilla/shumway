@@ -121,6 +121,8 @@ var as3error = {};
    M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
+   M("flash.external.ExternalInterface", "ExternalInterfaceClass", ExternalInterfaceDefinition),
+
    M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
    M("flash.ui.Mouse", "MouseClass", MouseDefinition),
 
