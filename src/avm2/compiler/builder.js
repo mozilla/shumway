@@ -776,9 +776,16 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               push(store(new IR.AVM2New(region, state.store, callee, arguments)));
               break;
             case OP_coerce:
+              if (bc.ti && bc.ti.noCoercionNeeded) {
+                Counter.count("Compiler: NoCoercionNeeded");
+                break;
+              } else {
+                Counter.count("Compiler: CoercionNeeded");
+              }
               value = pop();
               multiname = buildMultiname(bc.index);
-              type = getProperty(findProperty(multiname, true), multiname);
+              assert (isMultinameConstant(multiname));
+              type = constant(domain.value.getProperty(multiname.value, true, true));
               push(call(globalProperty("coerce"), null, [value, type]));
               break;
             case OP_coerce_i: case OP_convert_i:

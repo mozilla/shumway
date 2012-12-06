@@ -96,6 +96,13 @@ var Type = (function () {
     unexpected("Can't call super on " + this);
   };
 
+  type.prototype.isSubtypeOf = function (other) {
+    if (this === other || this.equals(other)) {
+      return true;
+    }
+    return this.merge(other) === this;
+  };
+
   var typesInitialized = false;
   type.initializeTypes = function (domain) {
     if (typesInitialized) {
@@ -1107,8 +1114,12 @@ var Verifier = (function() {
             break;
           case OP_coerce:
             // print("<<< " + multinames[bc.index] + " >>>");
-            pop();
-            push(Type.fromName(multinames[bc.index], this.domain).instance());
+            type = pop();
+            var coerceType = Type.fromName(multinames[bc.index], this.domain).instance();
+            if (coerceType.isSubtypeOf(type)) {
+              ti().noCoercionNeeded = true;
+            }
+            push(coerceType);
             break;
           case OP_coerce_a:
             // pop(); push(Type.Any);
