@@ -6,6 +6,7 @@ var BinaryFileReader = (function binaryFileReader() {
 
   constructor.prototype = {
     readAll: function(progress, complete) {
+      var url = this.url;
       var xhr = new XMLHttpRequest();
       var async = true;
       xhr.open("GET", this.url, async);
@@ -18,6 +19,7 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
+            unexpected("Path: " + url + " not found.");
             complete(null, xhr.statusText);
             return;
           }
