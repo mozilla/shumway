@@ -295,7 +295,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
       assert(!this.coercers);
 
-      this.coercers = {
+      var coercers = this.coercers = {
         "int": toInt32,
         "uint": toUInt32,
         "Number": toNumber,
@@ -467,6 +467,28 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
 
         function getJSProperty(object, path) {
           return getJSPropertyWithStore(state.store, object, path);
+        }
+
+        function getDomainProperty(name) {
+          if (isMultinameConstant(name)) {
+            var value = domain.value.getProperty(name.value, true, true);
+            if (value) {
+              return constant(value);
+            }
+          }
+          return getProperty(findProperty(name, true), name);
+        }
+
+        function coerceValue(value, type) {
+          if (isConstant(value) && isConstant(type)) {
+            return constant(coerce(value.value, type.value));
+          } else if (isConstant(type)) {
+            var coercer = coercers[type.name];
+            if (coercer) {
+              return coercer(value);
+            }
+          }
+          return call(globalProperty("coerce"), null, [value, type]);
         }
 
         function getScopeObject(scope) {
@@ -689,7 +711,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               break;
             case OP_getlex:
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true), multiname));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname));
               break;
             case OP_initproperty:
             case OP_setproperty:
@@ -785,8 +807,8 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               value = pop();
               multiname = buildMultiname(bc.index);
               assert (isMultinameConstant(multiname));
-              type = constant(domain.value.getProperty(multiname.value, true, true));
-              push(call(globalProperty("coerce"), null, [value, type]));
+              type = getDomainProperty(multiname);
+              push(coerceValue(value, type));
               break;
             case OP_coerce_i: case OP_convert_i:
               push(toInt32(pop()));
@@ -1022,11 +1044,11 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
     release || assert(methodInfo.analysis);
     release || assert (!methodInfo.hasExceptions());
 
-    Counter.count("Compiler: Methods");
+    Counter.count("Compiler: Compiled Methods");
 
     Timer.start("Compiler");
 
-    if (enableVerifier.value && scope.object) {
+    if (enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("ver");
       verifier.verifyMethod(methodInfo, scope);

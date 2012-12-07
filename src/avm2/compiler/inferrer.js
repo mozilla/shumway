@@ -643,7 +643,7 @@ var Verifier = (function() {
         }
 
         // Try the saved scope.
-        if (savedScope && mn instanceof Multiname) {
+        if (savedScope && savedScope.object && mn instanceof Multiname) {
           var obj = savedScope.findProperty(mn, abc.domain, strict, true);
           if (obj) {
             var savedScopeDepth = savedScope.findDepth(obj);
@@ -919,7 +919,7 @@ var Verifier = (function() {
             obj = pop();
             type = getProperty(obj, mn);
             if (type instanceof MethodType) {
-              returnType = Type.fromName(type.methodInfo.returnType).instance();
+              returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
             } else {
               returnType = Type.Any;
             }
@@ -1026,7 +1026,11 @@ var Verifier = (function() {
             local[bc.index] = pop();
             break;
           case OP_getglobalscope:
-            push(Type.from(savedScope.global.object));
+            if (savedScope.object) {
+              push(Type.from(savedScope.global.object));
+            } else {
+              push(Type.Any);
+            }
             break;
           case OP_getscopeobject:
             push(scope[bc.index]);
@@ -1284,9 +1288,10 @@ var Verifier = (function() {
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
-    release || assert(scope.object, "Verifier needs a scope object.");
+    // release || assert(scope.object, "Verifier needs a scope object.");
     try {
       new Verification(this, methodInfo, scope).verify();
+      methodInfo.verified = true;
       Counter.count("Verifier: Methods");
     } catch (e) {
       if (e instanceof VerifierError) {
