@@ -175,7 +175,7 @@
  * instantiation. It is called in the usual order for its super classes,
  * i.e. super first.
  *
- * Suppose c is an instance of C, is has access to the definitions:
+ * Suppose c is an instance of C, it has access to the definitions:
  *
  *   c.m(); // calls m
  *   print(c.x); // calls the getter
@@ -206,10 +206,10 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
 });
 */
 
-const natives = (function () {
+var natives = (function () {
 
-  const C = Domain.passthroughCallable;
-  const CC = Domain.constructingCallable;
+  var C = Domain.passthroughCallable;
+  var CC = Domain.constructingCallable;
 
   /**
    * Object.as
@@ -472,7 +472,7 @@ const natives = (function () {
    * Vector.as
    */
 
-  const VM_VECTOR_IS_FIXED = "vm vector is fixed";
+  var VM_VECTOR_IS_FIXED = "vm vector is fixed";
 
   /**
    * Creates a typed Vector class. It steals the Array object from a new global
@@ -485,7 +485,7 @@ const natives = (function () {
 
     // Breaks semantics with bounds checking for now.
     if (type) {
-      const coerce = type.coerce;
+      var coerce = type.coerce;
       TAp.indexGet = function (i) { return this[i]; };
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
@@ -699,11 +699,7 @@ const natives = (function () {
     };
 
     return function (runtime, scope, instance, baseClass) {
-      var instance2 = function () {
-        this.class.initializeInstance(this);
-        instance.apply(this, arguments);
-      };
-      var c = new runtime.domain.system.Class(name, instance2, CC(instance2));
+      var c = new runtime.domain.system.Class(name, instance);
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
@@ -930,11 +926,10 @@ const natives = (function () {
    */
   function ByteArrayClass(runtime, scope, instance, baseClass) {
     /* The initial size of the backing, in bytes. Doubled every OOM. */
-    const INITIAL_SIZE = 128;
+    var INITIAL_SIZE = 128;
 
     function ByteArray() {
-      var a = new ArrayBuffer(INITIAL_SIZE);
-      this.a = a;
+      this.a = new ArrayBuffer(INITIAL_SIZE);
       this.length = 0;
       this.position = 0;
       this.cacheViews();
@@ -1033,7 +1028,7 @@ const natives = (function () {
     BAp.writeBoolean = function writeBoolean(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
-      this.int8v[this.position++] = !!v ? 1 : 0;
+      this.int8v[this.position++] = v ? 1 : 0;
       if (len > this.length) {
         this.length = len;
       }

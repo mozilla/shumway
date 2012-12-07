@@ -241,7 +241,7 @@ function shortPath(str, length) {
 function extractData(str) {
   var lines = str.replace(/\r/g, "").split("\n");
   var data = {};
-  const jsonPrefix = "SHUMWAY$JSON";
+  var jsonPrefix = "SHUMWAY$JSON";
   var textLines = lines.filter(function (x) {
     if (x.indexOf(jsonPrefix) === 0) {
       var lineData = {};

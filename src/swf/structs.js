@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var RGB = {
   $$red: UI8,
@@ -24,10 +24,14 @@ var ARGB = {
 var RECT = {
   $$0: ALIGN,
   $$bits: UB(5),
-  xMin: SB('bits'),
-  xMax: SB('bits'),
-  yMin: SB('bits'),
-  yMax: SB('bits'),
+  $$xMin: SB('bits'),
+  $$xMax: SB('bits'),
+  $$yMin: SB('bits'),
+  $$yMax: SB('bits'),
+  left: 'xMin/20',
+  right: 'xMax/20',
+  top: 'yMin/20',
+  bottom: 'yMax/20',
   $$1: ALIGN
 };
 var MATRIX = {
@@ -57,8 +61,10 @@ var MATRIX = {
     }
   ]],
   $$bits: UB(5),
-  tx: SB('bits'),
-  ty: SB('bits'),
+  $$e: SB('bits'),
+  $$f: SB('bits'),
+  tx: 'e/20',
+  ty: 'f/20',
   $$1: ALIGN
 };
 var CXFORM = {
@@ -97,7 +103,7 @@ var CXFORM = {
   $$1: ALIGN
 };
 var MOVIE_HEADER = {
-  bounds: RECT,
+  bbox: RECT,
   $$reserved: UI8,
   frameRate: UI8,
   frameCount: UI16

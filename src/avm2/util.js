@@ -82,7 +82,7 @@ function defineNonEnumerableProperty(obj, name, value) {
                                      enumerable: false });
 }
 
-function isNullOrUndefiend(value) {
+function isNullOrUndefined(value) {
   return value === null || value === undefined;
 }
 
@@ -269,7 +269,7 @@ function utf8decode(str) {
 
 function utf8encode(bytes) {
   var str = "";
-  const fcc = String.fromCharCode;
+  var fcc = String.fromCharCode;
   for (var i = 0, j = bytes.length; i < j; i++)  {
     var b = bytes[i];
     str += b <= 0x7f ? b === 0x25 ? "%25" : fcc(b) : "%" + b.toString(16).toUpperCase();
@@ -304,10 +304,10 @@ function bitCount(i) {
  * If the set fits in a single word, a single int is used.
  */
 function BitSetFunctor(length) {
-  const ADDRESS_BITS_PER_WORD = 5;
-  const BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
-  const BIT_INDEX_MASK = BITS_PER_WORD - 1;
-  const SIZE = ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
+  var ADDRESS_BITS_PER_WORD = 5;
+  var BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+  var BIT_INDEX_MASK = BITS_PER_WORD - 1;
+  var SIZE = ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
 
   function BitSet() {
     /* How many bits are set. */

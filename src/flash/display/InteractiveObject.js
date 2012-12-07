@@ -1,7 +1,10 @@
-const InteractiveObjectDefinition = (function () {
+var InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
       this._control = document.createElement('div');
+      this._doubleClickEnabled = false;
+      this._hitArea = null;
+      this._mouseEnabled = true;
     },
 
     get accessibilityImplementation() {
@@ -17,10 +20,10 @@ const InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get doubleClickEnabled() {
-      return false;
+      return this._doubleClickEnabled;
     },
     set doubleClickEnabled(val) {
-      notImplemented();
+      this._doubleClickEnabled = val;
     },
     get focusRect() {
       return null;
@@ -29,18 +32,15 @@ const InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get mouseEnabled() {
-      return true;
+      return this._mouseEnabled;
     },
     set mouseEnabled(val) {
-      // notImplemented();
+      this._mouseEnabled = val;
     },
     get needsSoftKeyboard() {
       return false;
     },
     set needsSoftKeyboard(val) {
-      notImplemented();
-    },
-    requestSoftKeyboard: function () {
       notImplemented();
     },
     get softKeyboardInputAreaOfInterest() {
@@ -57,23 +57,29 @@ const InteractiveObjectDefinition = (function () {
     },
     get tabIndex() {
       return -1;
+    },
+
+    requestSoftKeyboard: function () {
+      notImplemented();
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
-    instance: {
-      tabEnabled: desc(def, "tabEnabled"),
-      tabIndex: desc(def, "tabIndex"),
-      focusRect: desc(def, "focusRect"),
-      mouseEnabled: desc(def, "mouseEnabled"),
-      doubleClickEnabled: desc(def, "doubleClickEnabled"),
-      accessibilityImplementation: desc(def, "accessibilityImplementation"),
-      softKeyboardInputAreaOfInterest: desc(def, "softKeyboardInputAreaOfInterest"),
-      needsSoftKeyboard: desc(def, "needsSoftKeyboard"),
-      contextMenu: desc(def, "contextMenu"),
-      requestSoftKeyboard: def.requestSoftKeyboard
+    native: {
+      instance: {
+        tabEnabled: desc(def, "tabEnabled"),
+        tabIndex: desc(def, "tabIndex"),
+        focusRect: desc(def, "focusRect"),
+        mouseEnabled: desc(def, "mouseEnabled"),
+        doubleClickEnabled: desc(def, "doubleClickEnabled"),
+        accessibilityImplementation: desc(def, "accessibilityImplementation"),
+        softKeyboardInputAreaOfInterest: desc(def, "softKeyboardInputAreaOfInterest"),
+        needsSoftKeyboard: desc(def, "needsSoftKeyboard"),
+        contextMenu: desc(def, "contextMenu"),
+        requestSoftKeyboard: def.requestSoftKeyboard
+      }
     }
   };
 

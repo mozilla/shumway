@@ -1,28 +1,3 @@
-function describePrototype() {
-  if (arguments.length === 1) {
-    return Object.create(Object.prototype, arguments[0]);
-  }
-  return Object.create(arguments[0], arguments[1]);
-}
-function describeAccessor(get, set) {
-  return { get: get, set: set, configurable: true, enumerable: true };
-}
-function describeConst(val) {
-  return { value: val, configurable: true, enumerable: true };
-}
-function describeInternalProperty(val) {
-  return { value: val, writable: true };
-}
-function describeLazyProperty(name, getter) {
-  return describeAccessor(function () {
-    var val = getter.call(this);
-    Object.defineProperty(this, name, describeProperty(val));
-    return val;
-  });
-}
-function describeMethod(fn) {
-  return describeProperty(fn);
-}
 function describeProperty(val) {
   return { value: val, writable: true, configurable: true, enumerable: true };
 }
@@ -45,7 +20,7 @@ Promise.when = function () {
     promise.resolve();
   } else {
     var values = [];
-    for (var i = 0; i < numPromises; i++) {
+    for (var i = 0, n = numPromises; i < n; i++) {
       var arg = arguments[i];
       arg.then(function (val) {
         values.push(val);

@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var plte = createPngChunk('PLTE', (new Array(769)).join('\x00'));
 var alphaValues = [];
@@ -18,7 +18,7 @@ function defineImage(tag, dictionary) {
   if (tag.mimeType === 'image/jpeg') {
     var width = 0;
     var height = 0;
-    var i = 2;
+    var i = 0;
     var n = imgData.length;
     var code;
     do {
@@ -103,7 +103,7 @@ function defineImage(tag, dictionary) {
       var header = tables.data;
       data = header.substr(0, header.length - 2) + data;
     } else {
-      data = '\xff\xd8' + data;
+      data = data;
     }
   } else {
     var numChunks = imgData.length / 65536;
@@ -118,6 +118,8 @@ function defineImage(tag, dictionary) {
   var img = {
     type: 'image',
     id: tag.id,
+    width: width,
+    height: height,
     mimeType: tag.mimeType,
     data: data
   };

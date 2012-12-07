@@ -1,11 +1,8 @@
 var ShumwayKeyboardListener = {
   handleEvent: function (domEvt) {
-    // XXX: Use strings directly if KEY_UP/KEY_DOWN and class lookup is too
-    // slow.
-    var KEClass = avm2.systemDomain.getClass("flash.events.KeyboardEvent");
     if (this.focus) {
       this.focus.dispatchEvent(new flash.events.KeyboardEvent(
-        domEvt.type === 'keyup' ? KEClass.KEY_UP : KEClass.KEY_DOWN,
+        domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,
         domEvt.charCode,
@@ -22,7 +19,7 @@ var ShumwayKeyboardListener = {
 window.addEventListener('keydown', ShumwayKeyboardListener);
 window.addEventListener('keyup', ShumwayKeyboardListener);
 
-const KeyboardDefinition = (function () {
+var KeyboardDefinition = (function () {
   var def = {
     get capsLock() {
       return false; // TODO Stage.instance.$keyboard.capsLock;
@@ -41,7 +38,7 @@ const KeyboardDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     script: {

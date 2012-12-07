@@ -1,14 +1,10 @@
-const DisplayObjectContainerDefinition = (function () {
+var DisplayObjectContainerDefinition = (function () {
   var def = {
-    initialize: function () {
-      this._children = [];
-    },
-
     get mouseChildren() {
-      return true;
+      return this._mouseChildren;
     },
     set mouseChildren(val) {
-      notImplemented();
+      this._mouseChildren = val;
     },
     get numChildren() {
       return this._children.length;
@@ -44,6 +40,10 @@ const DisplayObjectContainerDefinition = (function () {
       children.splice(index, 0, child);
       child._owned = false;
       child._parent = this;
+
+      this._control.appendChild(child._control);
+
+      this._markAsDirty();
 
       return child;
     },
@@ -100,6 +100,10 @@ const DisplayObjectContainerDefinition = (function () {
       children.splice(index, 1);
       child._parent = null;
 
+      this._control.removeChild(child._control);
+
+      this._markAsDirty();
+
       return child;
     },
     setChildIndex: function (child, index) {
@@ -116,6 +120,8 @@ const DisplayObjectContainerDefinition = (function () {
       children.splice(currentIndex, 1);
       children.splice(index, 0, child);
       child._owned = false;
+
+      this._markAsDirty();
 
       return child;
     },
@@ -152,50 +158,12 @@ const DisplayObjectContainerDefinition = (function () {
       children[index2] = child1;
       child1._owned = false;
       child2._owned = false;
-    },
-    get _bbox() {
-      var children = this._children;
-      var numChildren = children.length;
 
-      if (!numChildren) {
-        return {
-          left: 0,
-          top: 0,
-          right: 0,
-          bottom: 0
-        }
-      }
-
-      var xMin = Number.MAX_VALUE;
-      var xMax = 0;
-      var yMin = Number.MAX_VALUE;
-      var yMax = 0;
-
-      for (var i = 0; i < numChildren; i++) {
-        var child = children[i];
-        var b = child.getBounds();
-
-        var x1 = b.x;
-        var y1 = b.y;
-        var x2 = b.x + b.width;
-        var y2 = b.y + b.height;
-
-        xMin = Math.min(xMin, x1, x2);
-        xMax = Math.max(xMax, x1, x2);
-        yMin = Math.min(yMin, y1, y2);
-        yMax = Math.max(yMax, y1, y2);
-      }
-
-      return {
-        left: xMin,
-        top: yMin,
-        right: xMax,
-        bottom: yMax
-      };
+      this._markAsDirty();
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

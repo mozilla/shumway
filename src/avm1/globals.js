@@ -32,23 +32,29 @@ AS2Globals.prototype = {
     nativeTarget.duplicateMovieClip(newname, depth);
   },
   fscommand: function (command, parameters) {
-    flash.system.fscommand.apply(null, arguments);
+    var fscommand = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+    fscommand.apply(null, arguments);
   },
   getProperty: function(target, index) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     return nativeTarget[PropertiesIndexMap[index]];
   },
   getTimer: function() {
-    return flash.utils.getTimer();
+    var getTimer = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.getTimer'), true, true);
+    return getTimer();
   },
   getURL: function(url, target, method) {
-    var request = new AS2URLRequest(url);
+    var request = new flash.net.URLRequest(url);
     if (method)
       request.method = method;
-    flash.net.navigateToURL(request, target);
+    var navigateToURL = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.net.navigateToURL'), true, true);
+    navigateToURL(request, target);
   },
   getVersion: function() {
-    return flash.system.Capalilities.version;
+    return flash.system.Capabilities.version;
   },
   gotoAndPlay: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
@@ -83,11 +89,19 @@ AS2Globals.prototype = {
   },
   loadMovie: function(url, target, method) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
+    // some swfs are using loadMovie to call fscommmand
+    if (/^fscommand:/i.test(url))
+      return this.fscommand(url.substring('fscommand:'.length), target);
+
     // flash.display.Loader, flash.net.URLLoader
     throw 'Not implemented: loadMovie';
   },
   loadMovieNum: function(url, level, method) {
     var nativeTarget = AS2Context.instance.resolveLevel(level);
+    // some swfs are using loadMovieNum to call fscommmand
+    if (/^fscommand:/i.test(url))
+      return this.fscommand(url.substring('fscommand:'.length));
+
     // flash.display.Loader, flash.net.URLLoader
     throw 'Not implemented: loadMovieNum';
   },
@@ -179,7 +193,8 @@ AS2Globals.prototype = {
     nativeTarget.stop();
   },
   stopAllSounds: function() {
-    flash.media.SoundMixer.stopAll();
+    var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+    soundMixerClass.native.static.stopAll();
   },
   stopDrag: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
@@ -190,15 +205,16 @@ AS2Globals.prototype = {
   },
   targetPath: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    // nativeTarget.getPath() ?
-    throw 'Not implemented: targetPath';
+    return nativeTarget._target;
   },
   toggleHighQuality: function() {
     // flash.display.Stage.quality
     throw 'Not implemented: toggleHighQuality';
   },
   trace: function(expression) {
-    console.log(expression);
+    var trace = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('trace'), true, true);
+    trace(expression);
   },
   unloadMovie: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
@@ -234,6 +250,7 @@ AS2Globals.prototype = {
   AsBroadcaster: AS2Broadcaster,
   Stage: AS2Stage,
   Button: AS2Button,
+  TextField: AS2TextField,
   Rectangle: AS2Rectangle,
   Key: AS2Key,
   Mouse: AS2Mouse

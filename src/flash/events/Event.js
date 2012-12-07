@@ -1,4 +1,4 @@
-const EventDefinition = (function () {
+var EventDefinition = (function () {
   var EVENT_PHASE_CAPTURING_PHASE = 1;
   var EVENT_PHASE_AT_TARGET       = 2;
   var EVENT_PHASE_BUBBLING_PHASE  = 3;
@@ -13,16 +13,20 @@ const EventDefinition = (function () {
       this._target = null;
     },
 
-    ctor: function (type, bubbles, cancelable) {
-      this.type = type;
-      this.bubbles = !!bubbles;
-      this.cancelable = !!cancelable;
-    },
     get currentTarget() {
       return this._currentTarget;
     },
     get eventPhase() {
       return this._eventPhase;
+    },
+    get target() {
+      return this._target;
+    },
+
+    ctor: function (type, bubbles, cancelable) {
+      this.type = type;
+      this.bubbles = !!bubbles;
+      this.cancelable = !!cancelable;
     },
     isDefaultPrevented: function () {
       return this._isDefaultPrevented;
@@ -35,13 +39,10 @@ const EventDefinition = (function () {
     },
     stopPropagation: function () {
       notImplemented();
-    },
-    get target() {
-      return this._target;
-    },
+    }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     script: {

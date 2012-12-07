@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var nextFontId = 1;
 
@@ -17,6 +17,9 @@ function defineFont(tag, dictionary) {
   var codes = [];
   var glyphIndex = { };
   var ranges = [];
+
+  var glyphs = tag.glyphs;
+  var glyphCount = glyphs.length;
 
   if (tag.codes) {
     codes = codes.concat(tag.codes);
@@ -39,13 +42,15 @@ function defineFont(tag, dictionary) {
       ranges.push([start, end, indices]);
     }
   } else {
+    var indices = [];
+    var UAC_OFFSET = 0xe000;
     for (var i = 0; i < glyphCount; i++) {
-      var code = 0xe000 + i;
+      var code = UAC_OFFSET + i;
       codes.push(code);
       glyphIndex[code] = i;
       indices.push(i);
     }
-    ranges.push([0, glyphCount - 1, indices]);
+    ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
   var ascent = tag.ascent || 1024;
@@ -130,7 +135,6 @@ function defineFont(tag, dictionary) {
     format314
   ;
 
-  var glyphs = tag.glyphs;
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
   var resolution = tag.resolution || 1;
@@ -282,7 +286,6 @@ function defineFont(tag, dictionary) {
 
   var advance = tag.advance;
   var resolution = tag.resolution || 1;
-  var glyphCount = glyphs.length;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender

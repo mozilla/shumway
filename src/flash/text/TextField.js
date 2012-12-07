@@ -1,4 +1,4 @@
-const TextFieldDefinition = (function () {
+var TextFieldDefinition = (function () {
   var def = {
     __class__: 'flash.text.TextField',
 
@@ -10,15 +10,25 @@ const TextFieldDefinition = (function () {
       }
     },
 
+    _getAS2Object: function () {
+      if (!this.$as2Object) {
+        new AS2TextField().$attachNativeObject(this);
+      }
+      return this.$as2Object;
+    },
+
     get text() {
       return this._text;
     },
     set text(val) {
-      this._text = val;
+      if (this._text !== val) {
+        this._text = val;
+        this._markAsDirty();
+      }
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

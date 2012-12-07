@@ -1,4 +1,4 @@
-const TimerEventDefinition = (function () {
+var TimerEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.TimerEvent',
 

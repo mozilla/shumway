@@ -1,0 +1,41 @@
+[
+    {  "id": "basic",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/local2global.swf",
+         "swfs/stroke1.swf",
+         "swfs/targetPath1.swf",
+         "swfs/add.swf",
+         "swfs/fscommand1.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "button",
+       "stas": "swfs/button.stas",
+       "filenames": [
+         "swfs/button1.swf",
+         "swfs/button3.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "button-ref",
+       "frames": [10],
+       "swf": "swfs/button1.swf",
+       "type": "eq"
+    },
+    {  "id": "tiger-ref",
+       "frames": [10],
+       "swf": "/examples/as3_tiger/tiger.swf",
+       "type": "eq"
+    },
+    {  "id": "pac-ref",
+       "frames": [10, 25, 50],
+       "swf": "/examples/pac/pac.swf",
+       "type": "eq"
+    },
+    {  "id": "race-ref",
+       "frames": [20, 30],
+       "swf": "/examples/racing/race.swf",
+       "type": "eq"
+    }
+]

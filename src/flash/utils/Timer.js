@@ -1,4 +1,4 @@
-const TimerDefinition = (function () {
+var TimerDefinition = (function () {
   var def = {
     __class__: 'flash.utils.Timer',
     initialize: function () {

@@ -1,4 +1,4 @@
-const ColorTransformDefinition = (function () {
+var ColorTransformDefinition = (function () {
   var def = {
     __class__: 'flash.geom.ColorTransform',
 

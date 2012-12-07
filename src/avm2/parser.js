@@ -136,10 +136,10 @@ function parseTraits(abc, stream, holder) {
 
 var Trait = (function () {
   function trait(abc, stream, holder) {
-    const constantPool = abc.constantPool;
-    const methods = abc.methods;
-    const classes = abc.classes;
-    const metadata = abc.metadata;
+    var constantPool = abc.constantPool;
+    var methods = abc.methods;
+    var classes = abc.classes;
+    var metadata = abc.metadata;
 
     this.holder = holder;
     this.name = constantPool.multinames[stream.readU30()];
@@ -254,8 +254,8 @@ var Namespace = (function () {
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
    * wart".
    */
-  const MIN_API_MARK              = 0xe294;
-  const MAX_API_MARK              = 0xf8ff;
+  var MIN_API_MARK              = 0xe294;
+  var MAX_API_MARK              = 0xf8ff;
 
   function namespace(kind, uri) {
     if (kind !== undefined) {
@@ -435,9 +435,9 @@ var Namespace = (function () {
  */
 
 var Multiname = (function () {
-  const ATTRIBUTE         = 0x01;
-  const RUNTIME_NAMESPACE = 0x02;
-  const RUNTIME_NAME      = 0x04;
+  var ATTRIBUTE         = 0x01;
+  var RUNTIME_NAMESPACE = 0x02;
+  var RUNTIME_NAME      = 0x04;
   var nextID = 1;
   function multiname(namespaces, name, flags) {
     this.id = nextID ++;
@@ -871,7 +871,7 @@ var MethodInfo = (function () {
   }
 
   function methodInfo(abc, stream) {
-    const constantPool = abc.constantPool;
+    var constantPool = abc.constantPool;
 
     var parameterCount = stream.readU30();
     var returnType = constantPool.multinames[stream.readU30()];
@@ -932,7 +932,7 @@ var MethodInfo = (function () {
   };
 
   function parseException(abc, stream) {
-    const multinames = abc.constantPool.multinames;
+    var multinames = abc.constantPool.multinames;
 
     var ex = {
       start: stream.readU30(),
@@ -947,8 +947,8 @@ var MethodInfo = (function () {
   }
 
   methodInfo.parseBody = function parseBody(abc, stream) {
-    const constantPool = abc.constantPool;
-    const methods = abc.methods;
+    var constantPool = abc.constantPool;
+    var methods = abc.methods;
 
     var info = methods[stream.readU30()];
     release || assert(!info.isNative());
@@ -976,7 +976,7 @@ var MethodInfo = (function () {
 var MetaDataInfo = (function () {
 
   function metaDataInfo(abc, stream) {
-    const strings = abc.constantPool.strings;
+    var strings = abc.constantPool.strings;
     this.tagName = strings[stream.readU30()];
 
     var itemCount = stream.readU30();
@@ -1021,8 +1021,8 @@ var InstanceInfo = (function () {
   var nextID = 1;
   function instanceInfo(abc, stream) {
     this.id = nextID ++;
-    const constantPool = abc.constantPool;
-    const methods = abc.methods;
+    var constantPool = abc.constantPool;
+    var methods = abc.methods;
 
     this.name = constantPool.multinames[stream.readU30()];
     release || assert(Multiname.isQName(this.name));

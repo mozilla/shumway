@@ -1,4 +1,4 @@
-const VideoDefinition = (function () {
+var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
       this._element = document.createElement('video');
@@ -10,6 +10,9 @@ const VideoDefinition = (function () {
     attachNetStream: function (netStream) {
       this._netStream = netStream;
       this._element.src = netStream._url;
+    },
+    ctor: function(width, height) {
+      // notImplemented();
     },
     draw: function (ctx) {
       if (!this._added) {
@@ -23,7 +26,8 @@ const VideoDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        attachNetStream: def.attachNetStream
+        attachNetStream: def.attachNetStream,
+        ctor: def.ctor
       }
     }
   };

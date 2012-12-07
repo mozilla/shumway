@@ -1,4 +1,4 @@
-const Errors = {
+var Errors = {
   OutOfMemoryError                     : {code: 1000, message: "The system is out of memory."},
   NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
@@ -139,6 +139,7 @@ const Errors = {
   NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},
   InvalidEnumError                     : {code: 2008, message: "Parameter %1 must be one of the accepted values."},
   CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
+  ArgumentError                        : {code: 2015, message: "Invalid BitmapData."},
   EOFError                             : {code: 2030, message: "End of file was encountered."},
   CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
   EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},

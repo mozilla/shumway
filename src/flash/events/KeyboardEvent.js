@@ -1,9 +1,12 @@
-const KeyboardEventDefinition = (function () {
+var KeyboardEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.KeyboardEvent',
 
     updateAfterEvent: function () {
       notImplemented();
+    },
+    get keyCode() {
+      return this.private$flash$events$KeyboardEvent$m_keyCode;
     }
   };
 

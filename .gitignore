@@ -11,3 +11,6 @@ src/avm2/generated/avmplus/avmplus.cpp
 src/avm2/utils/asc.jar
 src/avm2/utils/avmshell
 src/avm2/utils/js
+
+src/flash/playerGlobal.min.abc
+

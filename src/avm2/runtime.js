@@ -8,31 +8,31 @@ var compileOnly = compilerOptions.register(new Option("co", "compileOnly", "numb
 var compileUntil = compilerOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
-const jsGlobal = (function() { return this || (1, eval)('this'); })();
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
-const VM_SLOTS = "vm slots";
-const VM_LENGTH = "vm length";
-const VM_BINDINGS = "vm bindings";
-const VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-const VM_ENUMERATION_KEYS = "vm enumeration keys";
-const VM_OPEN_METHODS = "vm open methods";
-const VM_NEXT_NAME = "vm next name";
-const VM_NEXT_NAME_INDEX = "vm next name index";
-const VM_UNSAFE_CLASSES = ["Shumway"];
+var VM_SLOTS = "vm slots";
+var VM_LENGTH = "vm length";
+var VM_BINDINGS = "vm bindings";
+var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
+var VM_ENUMERATION_KEYS = "vm enumeration keys";
+var VM_OPEN_METHODS = "vm open methods";
+var VM_NEXT_NAME = "vm next name";
+var VM_NEXT_NAME_INDEX = "vm next name index";
+var VM_UNSAFE_CLASSES = ["Shumway"];
 
-const VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
+var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
   { object: Object, methods: ["toString", "valueOf"] },
   { object: Function, methods: ["toString", "valueOf"] }
 ];
 
-const VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
+var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var $M = [];
 
 function initializeGlobalObject(global) {
-  const PUBLIC_MANGLED = /^public\$/;
+  var PUBLIC_MANGLED = /^public\$/;
 
   function getEnumerationKeys(obj) {
     var keys = [];
@@ -161,7 +161,7 @@ function coerce(value, type) {
     return type.coerce(value);
   }
 
-  if (isNullOrUndefiend(value)) {
+  if (isNullOrUndefined(value)) {
     return null;
   }
 
@@ -787,11 +787,11 @@ var Runtime = (function () {
    * compiler bakes it in as a constant which should be much more efficient.
    */
   runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope) {
-    const mi = methodInfo;
+    var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
     var hasDefaults = false;
-    const defaults = mi.parameters.map(function (p) {
+    var defaults = mi.parameters.map(function (p) {
       if (p.value !== undefined) {
         hasDefaults = true;
       }
@@ -814,7 +814,7 @@ var Runtime = (function () {
       return fn;
     }
 
-    const mode = this.domain.mode;
+    var mode = this.domain.mode;
 
     // We use not having an analysis to mean "not initialized".
     if (!mi.analysis) {
@@ -955,7 +955,7 @@ var Runtime = (function () {
       return this.createInterface(classInfo);
     }
 
-    const domain = this.domain;
+    var domain = this.domain;
 
     var className = Multiname.getName(ii.name);
     if (traceExecution.value) {
@@ -1011,7 +1011,7 @@ var Runtime = (function () {
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
-      this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, null, true);
+      this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, false);
     }
 
@@ -1136,8 +1136,8 @@ var Runtime = (function () {
   };
 
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, delayBinding) {
-    const runtime = this;
-    const domain = this.domain;
+    var runtime = this;
+    var domain = this.domain;
 
     function makeClosure(trait) {
       release || assert(scope);
@@ -1246,7 +1246,7 @@ var Runtime = (function () {
       } else if (trait.isMethod()) {
         // FIXME: Breaking compat with AS and using .bind here instead of the
         // MethodClosure class to work around a SpiderMonkey bug 771871.
-        const MethodClosureClass = domain.system.MethodClosureClass;
+        var MethodClosureClass = domain.system.MethodClosureClass;
 
         var closure;
 

@@ -37,7 +37,7 @@ function toMatrixInstance(matrix, matrixMorph) {
       'c:' + morph(matrix.c * 20, matrixMorph.c * 20) + ',' +
       'd:' + morph(matrix.d * 20, matrixMorph.d * 20) + ',' +
       'tx:' + morph(matrix.tx, matrixMorph.tx) + ',' +
-      'ty:' + morph(matrix.ty, matrixMorph.ty)
+      'ty:' + morph(matrix.ty, matrixMorph.ty) +
     '}';
   }
 
@@ -47,8 +47,8 @@ function toMatrixInstance(matrix, matrixMorph) {
     'b:' + (matrix.b * 20) + ',' +
     'c:' + (matrix.c * 20) + ',' +
     'd:' + (matrix.d * 20) + ',' +
-    'tx:' + matrix.tx + ',' +
-    'ty:' + matrix.ty +
+    'tx:' + (matrix.tx * 20) + ',' +
+    'ty:' + (matrix.ty * 20) +
   '}';
 }
 
@@ -312,7 +312,10 @@ function defineShape(tag, dictionary) {
         commands.push('{' +
           '__class__:"flash.display.GraphicsBitmapFill",' +
           '__isIGraphicsFill__:true,' +
-          'bitmapData:d[' + bitmap.id + '],' +
+          'bitmapData: {' +
+            '__class__:"flash.display.BitmapData",' +
+            '_drawable:d[' + bitmap.id + '].value.props.img' +
+          '},' +
           'matrix:' + toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph),
           'repeat:' + !!fillStyle.repeat +
         '}');
@@ -383,6 +386,13 @@ function defineShape(tag, dictionary) {
       var colorProps = toColorProperties(lineStyle.color, lineStyle.colorMorph);
       var lineWidth =
         morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined);
+      // ignoring startCapStyle ?
+      var capsStyle = lineStyle.endCapStyle === 1 ? 'none' :
+                      lineStyle.endCapStyle === 2 ? 'square' : 'round';
+      var joinStyle = lineStyle.joinStyle === 1 ? 'bevel' :
+                       lineStyle.joinStyle === 2 ? 'miter' : 'round';
+      var miterLimitFactor = lineStyle.miterLimitFactor;
+
       var j = 0;
       var segment;
       while (segment = segments[j++]) {
@@ -397,9 +407,9 @@ function defineShape(tag, dictionary) {
           '__isIGraphicsStroke__:true,' +
           'thickness:' + lineWidth + ',' +
           'pixelHinting:false,' +
-          'caps:"round",' +
-          'joins:"round",' +
-          'miterLimit:3,' +
+          'caps:"' + capsStyle + '",' +
+          'joins:"' + joinStyle + '",' +
+          'miterLimit:' + (miterLimitFactor * 2) + ',' +
           'scaleMode:"normal",' +
           'fill:{' +
             '__class__:"flash.display.GraphicsSolidFill",' +
@@ -430,6 +440,9 @@ function defineShape(tag, dictionary) {
           '__isIGraphicsPath__:true,' +
           'commands:[' + cmds.join(',') + '],' +
           'data:[' + data.join(',') + ']' +
+        '},{' +
+          '__isIGraphicsStroke__:true,' +
+          'fill:null' +
         '}');
 
         paths.push({ i: segment.i, commands: commands });
@@ -445,16 +458,10 @@ function defineShape(tag, dictionary) {
   var path;
   while (path = paths[i++])
     push.apply(commands, path.commands);
-  var bounds = tag.bounds;
   var shape = {
     type: 'shape',
     id: tag.id,
-    bbox: {
-      left: bounds.xMin,
-      right: bounds.xMax,
-      top: bounds.yMin,
-      bottom: bounds.yMax
-    },
+    bbox: tag.strokeBbox || tag.bbox,
     data: '[' + commands.join(',') + ']'
   };
   if (dependencies.length)

@@ -1,17 +1,17 @@
 var Control = (function () {
 
-  const SEQ = 1;
-  const LOOP = 2;
-  const IF = 3;
-  const CASE = 4;
-  const SWITCH = 5;
-  const LABEL_CASE = 6;
-  const LABEL_SWITCH = 7;
-  const EXIT = 8;
-  const BREAK = 9;
-  const CONTINUE = 10;
-  const TRY = 11;
-  const CATCH = 12;
+  var SEQ = 1;
+  var LOOP = 2;
+  var IF = 3;
+  var CASE = 4;
+  var SWITCH = 5;
+  var LABEL_CASE = 6;
+  var LABEL_SWITCH = 7;
+  var EXIT = 8;
+  var BREAK = 9;
+  var CONTINUE = 10;
+  var TRY = 11;
+  var CATCH = 12;
 
   function Seq(body) {
     this.kind = SEQ;
@@ -398,9 +398,9 @@ var Analysis = (function () {
   function blockSetClass(length, blockById) {
     var BlockSet = BitSetFunctor(length);
 
-    const ADDRESS_BITS_PER_WORD = BlockSet.ADDRESS_BITS_PER_WORD;
-    const BITS_PER_WORD = BlockSet.BITS_PER_WORD;
-    const BIT_INDEX_MASK = BlockSet.BIT_INDEX_MASK;
+    var ADDRESS_BITS_PER_WORD = BlockSet.ADDRESS_BITS_PER_WORD;
+    var BITS_PER_WORD = BlockSet.BITS_PER_WORD;
+    var BIT_INDEX_MASK = BlockSet.BIT_INDEX_MASK;
 
     BlockSet.singleton = function singleton(b) {
       var bs = new BlockSet();
@@ -867,9 +867,9 @@ var Analysis = (function () {
       // The root must not have preds!
       release || assert(root.preds.length === 0);
 
-      const ONCE = 1;
-      const BUNCH_OF_TIMES = 2;
-      const BlockSet = this.BlockSet;
+      var ONCE = 1;
+      var BUNCH_OF_TIMES = 2;
+      var BlockSet = this.BlockSet;
 
       var blocks = [];
       var visited = {};
@@ -1014,7 +1014,7 @@ var Analysis = (function () {
     },
 
     computeFrontiers: function computeFrontiers() {
-      const BlockSet = this.BlockSet;
+      var BlockSet = this.BlockSet;
       var blocks = this.blocks;
 
       for (var b = 0, n = blocks.length; b < n; b++) {
@@ -1055,7 +1055,7 @@ var Analysis = (function () {
         return false;
       }
 
-      const BlockSet = this.BlockSet;
+      var BlockSet = this.BlockSet;
 
       //
       // Find all SCCs at or below the level of some root that are not already
@@ -1206,8 +1206,8 @@ var Analysis = (function () {
     },
 
     induceControlTree: function induceControlTree() {
-      const hasExceptions = this.method.exceptions.length > 0;
-      const BlockSet = this.BlockSet;
+      var hasExceptions = this.method.exceptions.length > 0;
+      var BlockSet = this.BlockSet;
 
       function maybe(exit, save) {
         exit.recount();

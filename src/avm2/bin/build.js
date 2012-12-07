@@ -29,23 +29,23 @@ var escodegen = require(__dirname + "/../compiler/lljs/src/escodegen.js");
 var estransform = require(__dirname + "/../compiler/lljs/src/estransform.js");
 
 // Import nodes
-const T = estransform;
-const Node = T.Node;
-const Literal = T.Literal;
-const Identifier = T.Identifier;
-const CallExpression = T.CallExpression;
-const ExpressionStatement = T.ExpressionStatement;
-const FunctionExpression = T.FunctionExpression;
-const FunctionDeclaration = T.FunctionDeclaration;
-const MemberExpression = T.MemberExpression;
-const AssignmentExpression = T.AssignmentExpression;
-const BlockStatement = T.BlockStatement;
-const VariableDeclaration = T.VariableDeclaration;
-const VariableDeclarator = T.VariableDeclarator;
-const ArrayExpression = T.ArrayExpression;
-const BinaryExpression = T.BinaryExpression;
-const ObjectExpression = T.ObjectExpression;
-const Property = T.Property;
+var T = estransform;
+var Node = T.Node;
+var Literal = T.Literal;
+var Identifier = T.Identifier;
+var CallExpression = T.CallExpression;
+var ExpressionStatement = T.ExpressionStatement;
+var FunctionExpression = T.FunctionExpression;
+var FunctionDeclaration = T.FunctionDeclaration;
+var MemberExpression = T.MemberExpression;
+var AssignmentExpression = T.AssignmentExpression;
+var BlockStatement = T.BlockStatement;
+var VariableDeclaration = T.VariableDeclaration;
+var VariableDeclarator = T.VariableDeclarator;
+var ArrayExpression = T.ArrayExpression;
+var BinaryExpression = T.BinaryExpression;
+var ObjectExpression = T.ObjectExpression;
+var Property = T.Property;
 
 
 // Parse arguments

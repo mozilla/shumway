@@ -1,4 +1,4 @@
-/* -*- mode: javascript; tab-width: 4; insert-tabs-mode: nil; indent-tabs-mode: nil -*- */
+/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 /** @const */ var FORMAT_COLORMAPPED  = 3;
 /** @const */ var FORMAT_15BPP        = 4;
@@ -12,13 +12,13 @@ function rgbToString(bytes, pos) {
   return fromCharCode(red, green, blue);
 }
 function argbToString(bytes, pos) {
-  var alpha = bytes[pos];
+  var alpha = bytes[pos] / 0xff;
   if (!alpha)
     return '\x00\x00\x00\x00';
   // RGB values are alpha pre-multiplied (per SWF spec).
-  var red = 0 | ((bytes[pos + 1] * 255) / alpha);
-  var green = 0 | ((bytes[pos + 2] * 255) / alpha);
-  var blue = 0 | ((bytes[pos + 3] * 255) / alpha);
+  var red = 0 | (bytes[pos + 1] / alpha);
+  var green = 0 | (bytes[pos + 2] / alpha);
+  var blue = 0 | (bytes[pos + 3] / alpha);
   return fromCharCode(red, green, blue, alpha);
 }
 
@@ -161,6 +161,8 @@ function defineBitmap(tag) {
   return {
     type: 'image',
     id: tag.id,
+    width: width,
+    height: height,
     mimeType: 'image/png',
     data: data
   };

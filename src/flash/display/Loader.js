@@ -1,7 +1,7 @@
-const LoaderDefinition = (function () {
-  const WORKERS_ENABLED = true;
-  const LOADER_PATH = 'src/flash/display/Loader.js';
-  const WORKER_SCRIPTS = [
+var LoaderDefinition = (function () {
+  var WORKERS_ENABLED = true;
+  var LOADER_PATH = 'flash/display/Loader.js';
+  var WORKER_SCRIPTS = [
     '../../../lib/DataView.js/DataView.js',
 
     '../util.js',
@@ -33,7 +33,7 @@ const LoaderDefinition = (function () {
     var commitData;
     if (loader) {
       commitData = function (data) {
-        return loader.commitData(data);
+        return loader._commitData(data);
       };
     } else {
       commitData = function (data) {
@@ -77,21 +77,29 @@ const LoaderDefinition = (function () {
       case SWF_TAG_CODE_DEFINE_SHAPE4:
         symbol = defineShape(swfTag, symbols);
         break;
+      case SWF_TAG_CODE_DEFINE_SOUND:
+        symbol = {
+          type: 'sound',
+          id: swfTag.id
+        };
+        break;
       case SWF_TAG_CODE_DEFINE_SPRITE:
         var depths = { };
         var frame = { type: 'frame' };
         var frames = [];
         var tags = swfTag.tags;
+        var frameScripts = null;
+        var frameIndex = 0;
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
           switch (tag.code) {
-            //case SWF_TAG_CODE_DO_ACTION:
-            //  var actionBlocks = frame.actionBlocks;
-            //  if (!actionBlocks)
-            //    frame.actionBlocks = [tag.actionsData];
-            //  else
-            //    actionBlocks.push(tag.actionsData);
-            //  break;
+          case SWF_TAG_CODE_DO_ACTION:
+            if (!frameScripts)
+              frameScripts = [];
+            frameScripts.push(frameIndex);
+            frameScripts.push(tag.actionsData);
+            break;
+          // case SWF_TAG_CODE_DO_INIT_ACTION: ??
           case SWF_TAG_CODE_FRAME_LABEL:
             frame.labelName = tag.name;
             break;
@@ -113,8 +121,8 @@ const LoaderDefinition = (function () {
               i++;
               repeat++;
             }
-            if (repeat > 1)
-              frame.repeat = repeat;
+            frameIndex += repeat;
+            frame.repeat = repeat;
             frame.depths = depths;
             frames.push(frame);
             depths = { };
@@ -126,7 +134,8 @@ const LoaderDefinition = (function () {
           type: 'sprite',
           id: swfTag.id,
           frameCount: swfTag.frameCount,
-          frames: frames
+          frames: frames,
+          frameScripts: frameScripts
         };
         break;
       case SWF_TAG_CODE_DEFINE_TEXT:
@@ -146,7 +155,6 @@ const LoaderDefinition = (function () {
       symbols[swfTag.id] = symbol;
       commitData(symbol);
     }
-
     function parseBytes(bytes) {
       var depths = { };
       var frame = { type: 'frame' };
@@ -174,21 +182,20 @@ const LoaderDefinition = (function () {
               else
                 frame.abcBlocks = [tag.data];
               break;
-              //case SWF_TAG_CODE_DO_ACTION:
-              //  var actionBlocks = frame.actionBlocks;
-              //  if (actionBlocks)
-              //    actionBlocks.push(tag.actionData);
-              //  else
-              //    frame.actionBlocks = [tag.actionData];
-              //  break;
-              //case SWF_TAG_CODE_DO_INIT_ACTION:
-              //  var initActionBlocks = frame.initActionBlocks;
-              //  if (!initActionBlocks) {
-              //    initActionBlocks = { };
-              //    frame.initActionBlocks = initActionBlocks;
-              //  }
-              //  initActionBlocks[tag.spriteId] = tag.actionsData;
-              //  break;
+            case SWF_TAG_CODE_DO_ACTION:
+              var actionBlocks = frame.actionBlocks;
+              if (actionBlocks)
+                actionBlocks.push(tag.actionsData);
+              else
+                frame.actionBlocks = [tag.actionsData];
+              break;
+            case SWF_TAG_CODE_DO_INIT_ACTION:
+              var initActionBlocks = frame.initActionBlocks;
+              if (!initActionBlocks) {
+                frame.initActionBlocks = initActionBlocks = {};
+              }
+              initActionBlocks[tag.spriteId] = tag.actionsData;
+              break;
             case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:
               var exports = frame.exports;
@@ -221,8 +228,7 @@ const LoaderDefinition = (function () {
                 tagsProcessed++;
                 repeat++;
               }
-              if (repeat > 1)
-                frame.repeat = repeat;
+              frame.repeat = repeat;
               frame.depths = depths;
               commitData(frame);
               depths = { };
@@ -287,28 +293,14 @@ const LoaderDefinition = (function () {
       this._timeline = [];
     },
 
-    get contentLoaderInfo() {
-      // XXX: Why is this lazily initialized?
-      var loaderInfo = this._contentLoaderInfo;
-      if (!loaderInfo) {
-        loaderInfo = new flash.display.LoaderInfo;
-        loaderInfo._loader = this;
-        this._contentLoaderInfo = loaderInfo;
-      }
-      return loaderInfo;
-    },
-
-    close: function () {
-      notImplemented();
-    },
-    commitData: function (data) {
+    _commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
 
       loaderInfo.dispatchEvent(new flash.events.Event("progress"));
 
       switch (data.command) {
       case 'init':
-        this.init(data.result);
+        this._init(data.result);
         break;
       case 'complete':
         loaderInfo.dispatchEvent(new flash.events.Event("complete"));
@@ -318,14 +310,16 @@ const LoaderDefinition = (function () {
         break;
       default:
         if (data.id)
-          this.commitSymbol(data);
+          this._commitSymbol(data);
         else if (data.type === 'frame')
-          this.commitFrame(data);
+          this._commitFrame(data);
         break;
       }
     },
-    commitFrame: function (frame) {
+    _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
+      var actionBlocks = frame.actionBlocks;
+      var initActionBlocks = frame.initActionBlocks;
       var depths = frame.depths;
       var exports = frame.exports;
       var loader = this;
@@ -353,8 +347,10 @@ const LoaderDefinition = (function () {
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
+      else
+        loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
 
-      var i = frame.repeat || 1;
+      var i = frame.repeat;
       while (i--)
         timeline.push(framePromise);
 
@@ -367,7 +363,7 @@ const LoaderDefinition = (function () {
           }
         }
 
-        if (exports) {
+        if (exports && loader._isAvm2Enabled) {
           for (var i = 0, n = exports.length; i < n; i++) {
             var asset = exports[i];
             var symbolPromise = dictionary[asset.symbolId];
@@ -387,8 +383,8 @@ const LoaderDefinition = (function () {
         }
 
         var root = loader._content;
-
-        if (!root) {
+        var needRootObject = !root;
+        if (needRootObject) {
           var stage = loader._stage;
           var rootClass = avm2.applicationDomain.getClass(val.className);
 
@@ -404,10 +400,15 @@ const LoaderDefinition = (function () {
           loader._content = root;
         }
 
-        framePromise.resolve(displayList);
-        root._framesLoaded++;
+        if (!loader._isAvm2Enabled) {
+          loader._initAvm1Bindings(root, needRootObject, frameNum,
+                                   actionBlocks, initActionBlocks, exports);
+        }
 
-        if (labelName) {
+        framePromise.resolve(displayList);
+        root._framesLoaded += frame.repeat;
+
+        if (labelName && root._frameLabels) {
           root._frameLabels[labelName] = {
             __class__: 'flash.display.FrameLabel',
             frame: frameNum,
@@ -419,11 +420,61 @@ const LoaderDefinition = (function () {
           loaderInfo.dispatchEvent(new flash.events.Event('init'));
       });
     },
-    commitSymbol: function (symbol) {
+    _initAvm1Bindings: function(root, initializeRoot, frameNum,
+                                actionBlocks, initActionBlocks, exports) {
+      var avm1Context = this._avm1Context;
+      if (initializeRoot) {
+        var as2Object = root._getAS2Object();
+        avm1Context.globals._root = as2Object;
+        avm1Context.globals._level0 = as2Object;
+      }
+      if (exports) {
+        // HACK mocking the sound clips presence
+        var SoundMock = function(assets) {
+          var clip = {
+            start: function() {},
+            setVolume: function() {}
+          };
+          for (var i = 0; i < assets.length; i++) {
+            if (assets[i].className) {
+              this[assets[i].className] = clip;
+            }
+          }
+        };
+
+        var rootAS2Object = root._getAS2Object();
+        rootAS2Object.soundmc = new SoundMock(exports);
+        var soundClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+        var soundMock = soundClass.createInstance();
+        soundMock._name = 'soundmc';
+        soundMock._timeline = [new Promise];
+        soundMock._timeline[0].resolve([]);
+        soundMock._exports = exports;
+        soundMock.$as2Object = rootAS2Object.soundmc;
+        root.addChild(soundMock);
+      }
+      if (initActionBlocks) {
+        // HACK using symbol init actions as regular action blocks, the spec has a note
+        // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+        for (var symbolId in initActionBlocks) {
+          root.addFrameScript(frameNum - 1, function(actionBlock) {
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
+          }.bind(root, initActionBlocks[symbolId]));
+        }
+      }
+      if (actionBlocks) {
+        for (var i = 0; i < actionBlocks.length; i++) {
+          root.addFrameScript(frameNum - 1, function(actionBlock) {
+            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
+          }.bind(root, actionBlocks[i]));
+        }
+      }
+    },
+    _commitSymbol: function (symbol) {
       var dependencies = symbol.require;
       var dictionary = this._dictionary;
       var promiseQueue = [];
-      var symbolInfo = {};
+      var symbolInfo = { };
       var symbolPromise = new Promise;
 
       if (dependencies && dependencies.length) {
@@ -437,7 +488,37 @@ const LoaderDefinition = (function () {
 
       switch (symbol.type) {
       case 'button':
+        var states = { };
+        for (var stateName in symbol.states) {
+          var children = [];
+
+          var depths = symbol.states[stateName];
+          for (var depth in depths) {
+            var cmd = depths[depth];
+            if (cmd && cmd.symbolId) {
+              var childPromise = dictionary[cmd.symbolId];
+              if (childPromise && !childPromise.resolved)
+                promiseQueue.push(childPromise);
+            }
+            children.push(childPromise);
+          }
+
+          if (children.length === 1) {
+            states[stateName] = children[0];
+          } else {
+            var statePromise = new Promise;
+            stateInfo = { };
+            stateInfo.className = 'flash.display.Sprite';
+            stateInfo.props = { children: children };
+            statePromise.resolve(stateInfo);
+            states[stateName] = statePromise;
+          }
+        }
+
         symbolInfo.className = 'flash.display.SimpleButton';
+        symbolInfo.props = {
+          states: states
+        };
         break;
       case 'font':
         var charset = fromCharCode.apply(null, symbol.codes);
@@ -462,14 +543,20 @@ const LoaderDefinition = (function () {
           imgPromise.resolve();
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+
         promiseQueue.push(imgPromise);
         symbolInfo.className = 'flash.display.BitmapData';
-        symbolInfo.props = { img: describeProperty(img) };
+        symbolInfo.props = {
+          img: img,
+          width: symbol.width,
+          height: symbol.height
+        };
         break;
       case 'label':
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.StaticText';
         symbolInfo.props = {
+          bbox: symbol.bbox,
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
           }
@@ -479,29 +566,32 @@ const LoaderDefinition = (function () {
         var drawFn = new Function('d,c,r', symbol.data);
         symbolInfo.className = 'flash.text.TextField';
         symbolInfo.props = {
+          bbox: symbol.bbox,
           draw: function (c, r) {
             return drawFn.call(this, dictionary, c, r);
           },
-          text: symbol.value
+          text: symbol.value,
+          variableName: symbol.variableName
         };
         break;
       case 'shape':
-        var bbox = symbol.bbox;
         var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         var graphics = new flash.display.Graphics;
         graphics._scale = 0.05;
-        graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
 
         symbolInfo.className = 'flash.display.Shape';
         symbolInfo.props = {
-          bbox: {
-            left: bbox.left / 20,
-            top: bbox.top / 20,
-            right: bbox.right / 20,
-            bottom: bbox.bottom / 20
-          },
+          bbox: symbol.bbox,
           graphics: graphics
         };
+
+        symbolPromise.then(function () {
+          graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
+        });
+        break;
+      case 'sound':
+        symbolInfo.className = 'flash.media.Sound';
+        symbolInfo.props = { };
         break;
       case 'sprite':
         var frameCount = symbol.frameCount;
@@ -537,7 +627,7 @@ const LoaderDefinition = (function () {
             };
           }
 
-          var j = frame.repeat || 1;
+          var j = frame.repeat;
           while (j--)
             timeline.push(framePromise);
 
@@ -549,6 +639,7 @@ const LoaderDefinition = (function () {
           timeline: timeline,
           framesLoaded: frameCount,
           frameLabels: frameLabels,
+          frameScripts: symbol.frameScripts,
           totalFrames: frameCount
         };
         break;
@@ -559,30 +650,16 @@ const LoaderDefinition = (function () {
         symbolPromise.resolve(symbolInfo);
       });
     },
-    getSymbolInfoByName: function (className) {
-      var dictionary = this._dictionary;
-      for (var id in dictionary) {
-        var promise = dictionary[id];
-        var symbolInfo = promise.value;
-        if (symbolInfo && symbolInfo.className === className)
-          return symbolInfo;
-      }
-      return null;
-    },
-    getSymbolInfoById: function (id) {
-      var promise = this._dictionary[id];
-      return promise ? promise.value : null;
-    },
-    init: function (info) {
+    _init: function (info) {
       var loader = this;
 
       var loaderInfo = loader.contentLoaderInfo;
 
       loaderInfo._swfVersion = info.swfVersion;
 
-      var bounds = info.bounds;
-      loaderInfo._width = (bounds.xMax - bounds.xMin) / 20;
-      loaderInfo._height = (bounds.yMax - bounds.yMin) / 20;
+      var bbox = info.bbox;
+      loaderInfo._width = bbox.right - bbox.left;
+      loaderInfo._height = bbox.bottom - bbox.top;
 
       loaderInfo._frameRate = info.frameRate;
 
@@ -600,43 +677,66 @@ const LoaderDefinition = (function () {
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
-      this.setup();
+      this._setup();
     },
-    load: function (request, context) {
-      this.loadFrom(request.url);
-    },
-    loadBytes: function (bytes, context) {
-      if (!bytes.length)
-        throw ArgumentError();
-
-      this.loadFrom(bytes);
-    },
-    loadFrom: function (input, context) {
+    _loadFrom: function (input, context) {
       if (typeof window !== 'undefined' && WORKERS_ENABLED) {
         var loader = this;
         var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
         worker.onmessage = function (evt) {
-          loader.commitData(evt.data);
+          loader._commitData(evt.data);
         };
         worker.postMessage(input);
       } else {
         loadFromWorker(this, input, context);
       }
     },
-    setup: function () {
+    _setup: function () {
       var loader = this;
       var stage = loader._stage;
 
       if (loader._isAvm2Enabled) {
+        // HACK: bind the mouse through awful shenanigans.
+        var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
+        mouseClass.dynamicPrototype.$bind(stage);
+
         loader._vmPromise.resolve();
       } else {
-        // TODO avm1 initialization
+        // avm1 initialization
+        var loaderInfo = loader.contentLoaderInfo;
+        var avm1Context = new AS2Context(loaderInfo._swfVersion);
+        avm1Context.stage = stage;
+        loader._avm1Context = avm1Context;
 
         AS2Key.$bind(stage);
         AS2Mouse.$bind(stage);
 
         loader._vmPromise.resolve();
       }
+    },
+
+    get contentLoaderInfo() {
+      // XXX: Why is this lazily initialized?
+      var loaderInfo = this._contentLoaderInfo;
+      if (!loaderInfo) {
+        loaderInfo = new flash.display.LoaderInfo;
+        loaderInfo._loader = this;
+        this._contentLoaderInfo = loaderInfo;
+      }
+      return loaderInfo;
+    },
+
+    close: function () {
+      notImplemented();
+    },
+    load: function (request, context) {
+      this._loadFrom(request.url);
+    },
+    loadBytes: function (bytes, context) {
+      if (!bytes.length)
+        throw ArgumentError();
+
+      this._loadFrom(bytes);
     },
     unload: function () {
       notImplemented();

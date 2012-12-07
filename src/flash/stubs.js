@@ -99,10 +99,14 @@ var as3error = {};
    M("flash.display.Sprite", "SpriteClass", SpriteDefinition),
    M("flash.display.MovieClip", "MovieClipClass", MovieClipDefinition),
    M("flash.display.Shape", "ShapeClass", ShapeDefinition),
+   M("flash.display.Bitmap", "BitmapClass", BitmapDefinition),
+   M("flash.display.BitmapData", "BitmapDataClass", BitmapDataDefinition),
    M("flash.display.Stage", "StageClass", StageDefinition),
    M("flash.display.Loader", "LoaderClass", LoaderDefinition),
    M("flash.display.LoaderInfo", "LoaderInfoClass", LoaderInfoDefinition),
    M("flash.display.Graphics", "GraphicsClass", GraphicsDefinition),
+   M("flash.display.SimpleButton", "SimpleButtonClass", SimpleButtonDefinition),
+   M("flash.display.MorphShape", "MorphShapeClass", MorphShapeDefinition),
 
    M("flash.geom.Point", "PointClass", PointDefinition),
    M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
@@ -113,14 +117,31 @@ var as3error = {};
    M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
    M("flash.events.Event", "EventClass", EventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
+   M("flash.events.MouseEvent", "MouseEventClass", MouseEventDefinition),
+   M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
 
-   M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
+   M("flash.external.ExternalInterface", "ExternalInterfaceClass", ExternalInterfaceDefinition),
 
+   M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
+   M("flash.ui.Mouse", "MouseClass", MouseDefinition),
+
+   M("flash.text.Font", "FontClass", FontDefinition),
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
-   M("flash.text.Video", "VideoClass", VideoDefinition),
+   M("flash.media.Sound", "SoundClass", SoundDefinition),
+   M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
+   M("flash.media.SoundTransform", "SoundTransformClass", SoundTransformDefinition),
+   M("flash.media.Video", "VideoClass", VideoDefinition),
+
+   M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
+   M("flash.net.NetStream", "NetStreamClass", NetStreamDefinition),
+   M("flash.net.Responder", "ResponderClass", ResponderDefinition),
+   M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
+
+   M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
+   M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
 
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");
@@ -136,10 +157,7 @@ var as3error = {};
 
      // Hook up the native.
      natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
-       var c = new runtime.domain.system.Class(name, function () {
-         this.class.initializeInstance(this);
-         instance.apply(this, arguments);
-       });
+       var c = new runtime.domain.system.Class(name, instance);
        c.extend(baseClass);
        c.link(m.definition);
        return c;
@@ -151,5 +169,21 @@ natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, i
   var start = Date.now();
   return function getTimer() {
     return Date.now() - start;
+  };
+};
+
+natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
+  return function navigateToURL(request, window) {
+    if (!request || !request.url)
+      throw new Error('Invalid request object');
+    var url = request.url;
+    if (/^fscommand:/i.test(url)) {
+      var fscommand = avm2.applicationDomain.getProperty(
+        Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+      fscommand.call(null, url.substring('fscommand:'.length), window);
+      return;
+    }
+    // TODO handle other methods than GET
+    window.open(url, window);
   };
 };

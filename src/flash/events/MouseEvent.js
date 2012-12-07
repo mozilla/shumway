@@ -1,4 +1,4 @@
-const MouseEventDefinition = (function () {
+var MouseEventDefinition = (function () {
   var def = {
     __class__: 'flash.events.MouseEvent',
 
@@ -31,7 +31,7 @@ const MouseEventDefinition = (function () {
         ROLL_OUT:     'public ROLL_OUT',
         ROLL_OVER:    'public ROLL_OVER'
       },
-    }
+    },
 
     native: {
       instance: {

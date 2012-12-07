@@ -1,6 +1,7 @@
 default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
-	@echo "           build-playerglobal|build-extension|test|push-test|build-bot|start-build-bot]"
+	@echo "           build-playerglobal|build-extension|build-web|"
+	@echo "           test|push-test|build-bot|start-build-bot]"
 
 check-system:
 	echo "Checking the presence of mercurial..."
@@ -32,9 +33,32 @@ build-playerglobal:
 build-extension:
 	make -C extension/firefox/ build
 
+build-web:
+	make -C web/ build
+
+update-flash-refs:
+	node utils/update-flash-refs.js extension/firefox/content/web/viewer.html src/flash
+	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
+	node utils/update-flash-refs.js examples/racing/index.html src/flash
+	node utils/update-flash-refs.js test/harness/slave.html src/flash
+
 test:
 	make -C src/avm1/tests/ test
 	make -C src/avm2/bin/ test-regress
+
+BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
+
+check-browser-manifest:
+	@ls test/$(BROWSER_MANIFEST) || { echo "ERROR: Browser manifest file is not found at test/$(BROWSER_MANIFEST). Create one using the examples at test/resources/browser_manifests/."; exit 1; }
+
+reftest: check-browser-manifest
+	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST)
+
+makeref: check-browser-manifest
+	cd test; python test.py --masterMode --browserManifestFile=$(BROWSER_MANIFEST)
+
+reftest-swfdec: check-browser-manifest
+	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) --manifestFile=swfdec_test_manifest.json
 
 hello-world:
 	make -C src/avm2/bin/ hello-world
@@ -86,4 +110,7 @@ start-build-bot:
 		sleep 60 ; \
 	done
 
-.PHONY: check-system install-libs install-utils build-tamarin-tests build-playerglobal build-extension test
+.PHONY: check-system install-libs install-utils build-tamarin-tests \
+        build-playerglobal build-extension build-web test default \
+        reftest reftest-swfdec makeref check-browser-manifest
+

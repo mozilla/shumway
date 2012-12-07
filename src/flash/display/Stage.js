@@ -1,4 +1,4 @@
-const StageDefinition = (function () {
+var StageDefinition = (function () {
   var COLOR_CORRECTION_DEFAULT     = 'default';
   var COLOR_CORRECTION_OFF         = 'on';
   var COLOR_CORRECTION_ON          = 'off';
@@ -31,8 +31,14 @@ const StageDefinition = (function () {
 
     initialize: function () {
       this._color = 0xFFFFFFFF;
+      this._focus = null;
+      this._clickTarget = null;
+      this._showRedrawRegions = false;
       this._stage = this;
+      this._stageHeight = 0;
+      this._stageWidth = 0;
       this._transform = { };
+      this._mouseJustLeft = false;
     },
 
     get allowsFullScreen() {
@@ -116,6 +122,7 @@ const StageDefinition = (function () {
     get wmodeGPU() {
       return false;
     },
+
     invalidate: function () {
       notImplemented();
     },
@@ -124,7 +131,7 @@ const StageDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   // TODO
   def.__glue__  = {

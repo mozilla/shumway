@@ -1,4 +1,4 @@
-const StaticTextDefinition = (function () {
+var StaticTextDefinition = (function () {
   var def = {
     __class__: 'flash.text.StaticText',
 
@@ -17,7 +17,7 @@ const StaticTextDefinition = (function () {
     }
   };
 
-  const desc = Object.getOwnPropertyDescriptor;
+  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

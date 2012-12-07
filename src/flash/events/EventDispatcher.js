@@ -1,4 +1,4 @@
-const EventDispatcherDefinition = (function () {
+var EventDispatcherDefinition = (function () {
   var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
 
   var def = {
@@ -13,7 +13,6 @@ const EventDispatcherDefinition = (function () {
     ctor: function (target) {
       this._target = target;
     },
-
     addEventListener: function (type, listener, useCapture, prio, useWeakReference) {
       if (typeof listener !== 'function')
         throw ArgumentError();
@@ -89,12 +88,14 @@ const EventDispatcherDefinition = (function () {
       var handlers = useCapture ? this._captureHandlers : this._handlers;
       var handler = handlers[type];
       if (handler) {
-        var listeners = handler.listeners;
-        var i = listeners.indexOf(listener);
-        if (i > -1)
-          listeners.splice(i, 1);
-
-        if (!listeners.length) {
+        var queue = handler.queue;
+        for (var i = 0; i < queue.length; i++) {
+          if (queue[i].listener === listener) {
+            queue.splice(i, 1);
+            break;
+          }
+        }
+        if (!queue.length) {
           if (this._control)
             this._control.removeEventListener(CUSTOM_DOM_EVENT_PREFIX + type, handler, useCapture);
 

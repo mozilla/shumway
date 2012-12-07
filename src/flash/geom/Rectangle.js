@@ -1,4 +1,4 @@
-const RectangleDefinition = (function () {
+var RectangleDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Rectangle',
 
