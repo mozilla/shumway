@@ -4,8 +4,8 @@ var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
-var maxCompilations = compilerOptions.register(new Option("mc", "maxCompilations", "number", Infinity, "Stops compiling after a while."));
 var compileOnly = compilerOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
+var compileUntil = compilerOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 
 const jsGlobal = (function() { return this || (1, eval)('this'); })();
@@ -28,6 +28,8 @@ var VM_NATIVE_BUILTIN_SURROGATES = [
 ];
 
 const VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
+
+var $M = [];
 
 function initializeGlobalObject(global) {
   const PUBLIC_MANGLED = /^public\$/;
@@ -841,15 +843,26 @@ var Runtime = (function () {
 
     totalFunctionCount ++;
 
-    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi) || compiledFunctionCount + 1 > maxCompilations.value) {
+    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
     if (compileOnly.value >= 0) {
       if (Number(compileOnly.value) !== totalFunctionCount) {
-        print("Skipping " + totalFunctionCount);
+        print("Compile Only Skipping " + totalFunctionCount);
         return interpretedMethod(this.interpreter, mi, scope);
       }
+    }
+
+    if (compileUntil.value >= 0) {
+      if (totalFunctionCount > compileUntil.value) {
+        print("Compile Until Skipping " + totalFunctionCount);
+        return interpretedMethod(this.interpreter, mi, scope);
+      }
+    }
+
+    if (compileOnly.value >= 0 || compileUntil.value >= 0) {
+      print("Compiling " + totalFunctionCount);
     }
 
     function bindScope(fn, scope) {
@@ -879,9 +892,14 @@ var Runtime = (function () {
       parameters.unshift(SAVED_SCOPE_NAME);
     }
 
+    $M.push(mi);
+
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
+    if (mi.verified) {
+      fnName += "$V";
+    }
     if (compiledFunctionCount == functionBreak.value) {
       body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
     }
@@ -889,11 +907,16 @@ var Runtime = (function () {
     if (traceLevel.value > 1) {
       mi.trace(new IndentingWriter(), this.abc);
     }
+    mi.debugTrace = (function (abc) {
+      return function () {
+        mi.trace(new IndentingWriter(), abc);
+      }
+    })(this.abc);
     if (traceLevel.value > 0) {
       print (fnSource);
     }
     if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
-      mi.compiledMethod = eval('[' + fnSource + '][0]');
+      mi.compiledMethod = eval('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
     } else {
       mi.compiledMethod = new Function(parameters, body);
     }
