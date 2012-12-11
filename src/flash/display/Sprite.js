@@ -14,18 +14,25 @@ var SpriteDefinition = (function () {
     },
 
     _constructChildren: function () {
+      var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
+
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
         var symbolPromise = children[i];
-        var symbolInfo = symbolPromise.value;
-        var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-          avm2.systemDomain.getClass(symbolInfo.className) :
-          avm2.applicationDomain.getClass(symbolInfo.className);
-        var child = symbolClass.createAsSymbol(symbolInfo.props);
-        symbolClass.instance.call(child);
-        children[i] = child;
-        child._owned = false;
-        child._parent = this;
+
+        if (!DisplayObjectClass.isInstanceOf(symbolPromise)) {
+          var symbolInfo = symbolPromise.value;
+          var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+            avm2.systemDomain.getClass(symbolInfo.className) :
+            avm2.applicationDomain.getClass(symbolInfo.className);
+          var child = symbolClass.createAsSymbol(symbolInfo.props);
+
+          //child._owned = false;
+          child._parent = this;
+
+          symbolClass.instance.call(child);
+          children[i] = child;
+        }
       }
     },
 

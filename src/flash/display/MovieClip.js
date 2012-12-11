@@ -3,7 +3,7 @@ var MovieClipDefinition = (function () {
     __class__: 'flash.display.MovieClip',
 
     initialize: function () {
-      this._currentFrame = 0;
+      this._currentFrame = null;
       this._currentFrameLabel = null;
       this._currentLabel = false;
       this._currentScene = { };
@@ -21,9 +21,11 @@ var MovieClipDefinition = (function () {
       if (s) {
         this._timeline = s.timeline || null;
         this._framesLoaded = s.framesLoaded || 1;
-        this._frameLabels = s.frameLabels || {};
+        this._frameLabels = s.frameLabels || { };
         this._totalFrames = s.totalFrames || 1;
       }
+
+      this._gotoFrame(0);
     },
 
     _callFrame: function (frameNum) {
@@ -70,10 +72,6 @@ var MovieClipDefinition = (function () {
       else
         this._control.appendChild(instance._control);
 
-      instance._animated = true;
-      instance._owned = true;
-      instance._parent = this;
-
       instance.dispatchEvent(new flash.events.Event("added"));
     },
 
@@ -87,6 +85,10 @@ var MovieClipDefinition = (function () {
         avm2.systemDomain.getClass(symbolInfo.className) :
         avm2.applicationDomain.getClass(symbolInfo.className);
       var instance = symbolClass.createAsSymbol(symbolInfo.props);
+
+      instance._animated = true;
+      instance._owned = true;
+      instance._parent = this;
 
       // If we bound the instance to a name, set it.
       //
@@ -117,97 +119,95 @@ var MovieClipDefinition = (function () {
       if (frameNum > this.framesLoaded)
         frameNum = this.framesLoaded;
 
+      if (frameNum === this._currentFrame)
+        return;
+
       var currentFrame = this._currentFrame;
 
-      if (frameNum === currentFrame)
-        return;
+      if (currentFrame !== 0) {
+        while (currentFrame++ < (frameNum || 1)) {
+          var children = this._children;
+          var depthMap = this._depthMap;
+          var framePromise = this._timeline[currentFrame - 1];
+          var highestDepth = depthMap.length;
+          var displayList = framePromise.value;
+          var loader = this.loaderInfo._loader;
 
-      if (frameNum === 0) {
-        // HACK there is no data for this frame, but AS2 can jump to this frame index
-        this._currentFrame = 0;
-        return;
-      }
+          for (var depth in displayList) {
+            this._markAsDirty();
 
-      while (currentFrame++ < frameNum) {
-        var children = this._children;
-        var depthMap = this._depthMap;
-        var framePromise = this._timeline[currentFrame - 1];
-        var highestDepth = depthMap.length;
-        var displayList = framePromise.value;
-        var loader = this.loaderInfo._loader;
-
-        for (var depth in displayList) {
-          this._markAsDirty();
-
-          var cmd = displayList[depth];
-          var current = depthMap[depth];
-          if (cmd === null) {
-            if (current && current._owned) {
-              var index = children.indexOf(current);
-              var removed = children.splice(index, 1);
-              this._control.removeChild(current._control);
-
-              removed[0].dispatchEvent(new flash.events.Event("removed"));
-
-              if (depth < highestDepth)
-                depthMap[depth] = undefined;
-              else
-                depthMap.splice(-1);
-            }
-          } else {
-            var clipDepth = cmd.clipDepth;
-            var cxform = cmd.cxform;
-            var matrix = cmd.matrix;
-            var target;
-
-            if (cmd.symbolId) {
-              var name = cmd.name;
-              var events = cmd.hasEvents ? cmd.events : null;
-              var instance = this._constructSymbol(cmd.symbolId, name);
-              if (!loader._isAvm2Enabled) {
-                this._initAvm1Bindings(instance, name, events);
-              }
-              this._insertChildAtDepth(instance, depth);
+            var cmd = displayList[depth];
+            var current = depthMap[depth];
+            if (cmd === null) {
               if (current && current._owned) {
-                if (!clipDepth)
-                  clipDepth = current._clipDepth;
-                if (!cxform)
-                  cxform = current._cxform;
-                if (!matrix)
-                  matrix = current._currentTransform;
+                var index = children.indexOf(current);
+                var removed = children.splice(index, 1);
+                this._control.removeChild(current._control);
+
+                removed[0].dispatchEvent(new flash.events.Event("removed"));
+
+                if (depth < highestDepth)
+                  depthMap[depth] = undefined;
+                else
+                  depthMap.splice(-1);
               }
-              target = instance;
-            } else if (current && current._animated) {
-              target = current;
-            }
+            } else {
+              var clipDepth = cmd.clipDepth;
+              var cxform = cmd.cxform;
+              var matrix = cmd.matrix;
+              var target;
 
-            if (clipDepth)
-              target._clipDepth = clipDepth;
-            if (cxform)
-              target._cxform = cxform;
+              if (cmd.symbolId) {
+                var name = cmd.name;
+                var events = cmd.hasEvents ? cmd.events : null;
+                var instance = this._constructSymbol(cmd.symbolId, name);
+                if (!loader._isAvm2Enabled) {
+                  this._initAvm1Bindings(instance, name, events);
+                }
+                this._insertChildAtDepth(instance, depth);
+                if (current && current._owned) {
+                  if (!clipDepth)
+                    clipDepth = current._clipDepth;
+                  if (!cxform)
+                    cxform = current._cxform;
+                  if (!matrix)
+                    matrix = current._currentTransform;
+                }
+                target = instance;
+              } else if (current && current._animated) {
+                target = current;
+              }
 
-            if (matrix) {
-              var a = matrix.a;
-              var b = matrix.b;
-              var c = matrix.c;
-              var d = matrix.d;
+              if (clipDepth)
+                target._clipDepth = clipDepth;
+              if (cxform)
+                target._cxform = cxform;
 
-              target._rotation = Math.atan2(b, a) * 180 / Math.PI;
-              var sx = Math.sqrt(a * a + b * b);
-              target._scaleX = a > 0 ? sx : -sx;
-              var sy = Math.sqrt(d * d + c * c);
-              target._scaleY = d > 0 ? sy : -sy;
-              var x = target._x = matrix.tx;
-              var y = target._y = matrix.ty;
+              if (matrix) {
+                var a = matrix.a;
+                var b = matrix.b;
+                var c = matrix.c;
+                var d = matrix.d;
 
-              target._currentTransform = matrix;
+                target._rotation = Math.atan2(b, a) * 180 / Math.PI;
+                var sx = Math.sqrt(a * a + b * b);
+                target._scaleX = a > 0 ? sx : -sx;
+                var sy = Math.sqrt(d * d + c * c);
+                target._scaleY = d > 0 ? sy : -sy;
+                var x = target._x = matrix.tx;
+                var y = target._y = matrix.ty;
+
+                target._currentTransform = matrix;
+              }
             }
           }
         }
       }
 
       this._currentFrame = frameNum;
-      this._requestCallFrame();
+
+      if (frameNum)
+        this._requestCallFrame();
     },
     _requestCallFrame: function () {
        this._scriptExecutionPending = true;
@@ -286,7 +286,7 @@ var MovieClipDefinition = (function () {
     },
 
     get currentFrame() {
-      return this._currentFrame;
+      return this._currentFrame || 1;
     },
     get currentFrameLabel() {
       return this._currentFrameLabel;
