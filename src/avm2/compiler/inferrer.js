@@ -703,7 +703,11 @@ var Verifier = (function() {
           do {
             var trait = obj.getTrait(mn);
             if (!trait) {
-              obj = obj.super();
+              if (obj.isInstanceInfo()) {
+                obj = obj.super();
+              } else {
+                break;
+              }
             }
           } while (!trait && obj);
 
@@ -739,6 +743,10 @@ var Verifier = (function() {
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
         bc = bytecodes[bci];
         var op = bc.op;
+
+        if (writer) {
+          writer.writeLn(("stateBefore: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(abc));
+        }
 
         switch (op) {
           case OP_bkpt:
@@ -1272,7 +1280,6 @@ var Verifier = (function() {
         }
 
         if (writer) {
-          writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(abc));
           if (bc.ti) {
             writer.debugLn("> TI: " + bc.ti);
           }
