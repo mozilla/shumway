@@ -1,6 +1,6 @@
 var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
-var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0, "Compiler Trace Level"));
+var c4TraceLevel = compilerOptions.register(new Option("tc", "tc", "number", 0, "Compiler Trace Level"));
 
 (function (exports) {
 

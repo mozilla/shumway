@@ -1,8 +1,7 @@
 "use strict";
 
 var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
-
-// traceLevel.value = 2;
+var verifierTraceLevel = verifierOptions.register(new Option("tv", "tv", "number", 0, "Verifier Trace Level"));
 
 var Type = (function () {
   function type () {
@@ -457,7 +456,7 @@ var Verifier = (function() {
 
     verification.prototype.verify = function verify() {
       var mi = this.methodInfo;
-      var writer = traceLevel.value <= 1 ? null : this.writer;
+      var writer = verifierTraceLevel.value ? this.writer : null;
       var blocks = mi.analysis.blocks;
 
       blocks.forEach(function (x) {
@@ -584,7 +583,7 @@ var Verifier = (function() {
       var stack = state.stack;
       var scope = state.scope;
 
-      var writer = traceLevel.value <= 1 ? null : this.writer;
+      var writer = verifierTraceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
       var abc = this.verifier.abc;
@@ -744,7 +743,7 @@ var Verifier = (function() {
         bc = bytecodes[bci];
         var op = bc.op;
 
-        if (writer) {
+        if (writer && verifierTraceLevel.value > 1) {
           writer.writeLn(("stateBefore: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(abc));
         }
 
