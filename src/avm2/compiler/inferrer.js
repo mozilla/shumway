@@ -683,15 +683,16 @@ var Verifier = (function() {
       }
 
       function accessSlot(obj) {
-        release || assert(obj instanceof TraitsType);
-        var trait = obj.getTraitAt(bc.index);
-        writer && writer.debugLn("accessSlot() -> " + trait);
-        if (trait) {
-          ti().trait = trait;
-          if (trait.isSlot()) {
-            return Type.fromName(trait.typeName, abc.domain).instance();
-          } else if (trait.isClass()) {
-            return Type.from(trait.classInfo, abc.domain);
+        if (obj instanceof TraitsType) {
+          var trait = obj.getTraitAt(bc.index);
+          writer && writer.debugLn("accessSlot() -> " + trait);
+          if (trait) {
+            ti().trait = trait;
+            if (trait.isSlot()) {
+              return Type.fromName(trait.typeName, abc.domain).instance();
+            } else if (trait.isClass()) {
+              return Type.from(trait.classInfo, abc.domain);
+            }
           }
         }
         return Type.Any;
