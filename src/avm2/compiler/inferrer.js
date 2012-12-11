@@ -700,8 +700,14 @@ var Verifier = (function() {
 
       function getProperty(obj, mn) {
         if (obj instanceof TraitsType && mn instanceof Multiname) {
-          var trait = obj.getTrait(mn);
-          writer && writer.debugLn("getProperty() -> " + trait);
+          do {
+            var trait = obj.getTrait(mn);
+            if (!trait) {
+              obj = obj.super();
+            }
+          } while (!trait && obj);
+
+          writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot()) {
@@ -992,7 +998,9 @@ var Verifier = (function() {
             // the base class which might not always be available.
             // The functions initializing classes should not be performance
             // critical anyway.
-            throw new VerifierError("Not Supported");
+            // throw new VerifierError("Not Supported");
+            push(Type.Any);
+            break;
           case OP_getdescendants:
             notImplemented(bc); //TODO
             break;

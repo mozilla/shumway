@@ -498,16 +498,19 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
           return getJSProperty(scope, "object");
         }
 
-        function getProperty(object, name, ti) {
+        function getProperty(object, name, ti, getOpenMethod) {
           name = simplifyName(name);
-          if (hasNumericType(name) || isStringConstant(name)) {
-            return new IR.GetProperty(region, state.store, object, name);
-          }
           if (ti) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
+              if (getOpenMethod && ti.trait.isMethod()) {
+                propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
+              }
               return new IR.GetProperty(region, state.store, object, constant(propertyQName));
             }
+          }
+          if (hasNumericType(name) || isStringConstant(name)) {
+            return new IR.GetProperty(region, state.store, object, name);
           }
           return new IR.AVM2GetProperty(region, state.store, object, name);
         }
@@ -762,7 +765,7 @@ var c4TraceLevel = compilerOptions.register(new Option("c4T", "c4T", "number", 0
               arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname, bc.ti);
+              callee = getProperty(object, multiname, bc.ti, true);
               if (op === OP_callproperty || op === OP_callpropvoid) {
                 value = call(callee, object, arguments);
               } else {

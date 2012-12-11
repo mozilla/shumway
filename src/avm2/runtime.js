@@ -20,6 +20,8 @@ var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_UNSAFE_CLASSES = ["Shumway"];
 
+var VM_OPEN_METHOD_PREFIX = "open$";
+
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
@@ -867,6 +869,7 @@ var Runtime = (function () {
 
     function bindScope(fn, scope) {
       var closure = function () {
+        Counter.count("Binding Scope");
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
         return fn.apply(global, arguments);
@@ -1139,7 +1142,7 @@ var Runtime = (function () {
    * Memoizers and Trampolines:
    * ==========================
    *
-   * In ActionScript 3, the following code produces a method closure:
+   * In ActionScript 3 the following code creates a method closure for function |m|:
    *
    * class A {
    *   function m() { }
@@ -1148,11 +1151,11 @@ var Runtime = (function () {
    * var a = new A();
    * var x = a.m;
    *
-   * Here |x| is a method closure for |m| whose |this| pointer is always bound to |a|. We want method closures to be
+   * Here |x| is a method closure for |m| whose |this| pointer is bound to |a|. We want method closures to be
    * created transparently whenever the |m| property is read from |a|. To do this, we install a memoizing
    * getter in the instance prototype that sets the |m| property of the instance object to a bound method closure:
    *
-   * A.instance.prototype.m = function memoizer() {
+   * Ma = A.instance.prototype.m = function memoizer() {
    *   this.m = m.bind(this);
    * }
    *
@@ -1160,8 +1163,8 @@ var Runtime = (function () {
    * var x = a.m; // |a.m| calls the memoizer which in turn patches |a.m| to |m.bind(this)|
    * x = a.m; // |a.m| is already a method closure
    *
-   * This design causes problems for method calls. For instance, we don't want the call expression |a.m()| to
-   * be interpreted as |(a.m)()| which creates method closures every time a method is called on a new object.
+   * However, this design causes problems for method calls. For instance, we don't want the call expression |a.m()|
+   * to be interpreted as |(a.m)()| which creates method closures every time a method is called on a new object.
    * Luckily, method call expressions such as |a.m()| are usually compiled as |callProperty(a, m)| by ASC and
    * lets us determine at compile time whenever a method closure needs to be created. In order to prevent the
    * method closure from being created by the memoizer we install the original |m| in the instance prototype
@@ -1190,9 +1193,9 @@ var Runtime = (function () {
    *   }
    * }();
    *
-   * But this is not good enough, we want to prevent repeated executions as much as possible. The way to
-   * fix this is to patch the instance prototype to point to the compiled version instead, so that the trampoline
-   * doesn't get called again.
+   * This is not good enough, we want to prevent repeated executions as much as possible. The way to fix this is
+   * to patch the instance prototype to point to the compiled version instead, so that the trampoline doesn't get
+   * called again.
    *
    * Tm = function trampoilineContext() {
    *   var c;
@@ -1207,45 +1210,50 @@ var Runtime = (function () {
    * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
    * could have leaked somewhere.
    *
+   * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
+   * the memoizer so that the next time around it memoizes |Fa| instead of the trampoline. The trampoline also has
+   * to patch |m'| with |Fa|, as well as |m| on the instance with a bound |Fa|.
    */
 
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, delayBinding) {
     var runtime = this;
     var domain = this.domain;
 
-    function makeClosure(trait) {
+    function makeFunction(trait) {
       release || assert(scope);
+      release || assert(trait.isMethod() || trait.isGetter() || trait.isSetter());
 
       var mi = trait.methodInfo;
-      var closure;
+      var fn;
 
       if (mi.isNative() && domain.allowNatives) {
         var md = trait.metadata;
         if (md && md.native) {
           var nativeName = md.native.items[0].value;
-          var makeNativeClosure = getNative(nativeName);
-          if (!makeNativeClosure)
-            makeNativeClosure = domain.natives[nativeName];
-          closure = makeNativeClosure && makeNativeClosure(runtime, scope);
+          var makeNativeFunction = getNative(nativeName);
+          if (!makeNativeFunction) {
+            makeNativeFunction = domain.natives[nativeName];
+          }
+          fn = makeNativeFunction && makeNativeFunction(runtime, scope);
         } else if (md && md.unsafeJSNative) {
-          closure = getNative(md.unsafeJSNative.items[0].value);
+          fn = getNative(md.unsafeJSNative.items[0].value);
         } else if (classNatives) {
           // At this point the native class already had the scope, so we don't
           // need to close over the method again.
           var k = Multiname.getName(mi.name);
           if (trait.isGetter()) {
-            closure = classNatives[k] ? classNatives[k].get : undefined;
+            fn = classNatives[k] ? classNatives[k].get : undefined;
           } else if (trait.isSetter()) {
-            closure = classNatives[k] ? classNatives[k].set : undefined;
+            fn = classNatives[k] ? classNatives[k].set : undefined;
           } else {
-            closure = classNatives[k];
+            fn = classNatives[k];
           }
         }
       } else {
-        closure = runtime.createFunction(mi, scope);
+        fn = runtime.createFunction(mi, scope);
       }
 
-      if (!closure) {
+      if (!fn) {
         return (function (mi) {
           return function () {
             print("Calling undefined native method: " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
@@ -1253,7 +1261,11 @@ var Runtime = (function () {
         })(mi);
       }
 
-      return closure;
+      if (traceExecution.value) {
+        print("Made Function: " + Multiname.getQualifiedName(mi.name));
+      }
+
+      return fn;
     }
 
     // Copy over base trait bindings.
@@ -1261,11 +1273,12 @@ var Runtime = (function () {
       var bindings = base[VM_BINDINGS];
       var baseOpenMethods = base[VM_OPEN_METHODS];
       var openMethods = {};
-      for (var i = 0, j = bindings.length; i < j; i++) {
+      for (var i = 0; i < bindings.length; i++) {
         var qn = bindings[i];
         Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
-        if (baseOpenMethods[qn]) {
+        if (qn in baseOpenMethods) {
           openMethods[qn] = baseOpenMethods[qn];
+          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, baseOpenMethods[qn]);
         }
       }
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
@@ -1277,10 +1290,98 @@ var Runtime = (function () {
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
     }
 
+
+    function applyMethodTrait(trait) {
+      release || assert (trait.isMethod());
+      var qn = Multiname.getQualifiedName(trait.name);
+
+      function makeTrampoline(patch) {
+        release || assert (patch && typeof patch === "function");
+        var trampoline = (function trampolineContext() {
+          var target = null;
+          return function trampoline() {
+            if (traceExecution.value) {
+              print("Executing Trampoline: " + qn);
+            }
+            if (!target) {
+              target = makeFunction(trait);
+              patch(target);
+            }
+            return target.apply(this, arguments);
+          };
+        })();
+        // Make sure that the length property of the trampoline matches the trait's number of
+        // parameters. However, since we can't redefine the |length| property of a function,
+        // we define a new hidden |VM_LENGTH| property to store this value.
+        defineReadOnlyProperty(trampoline, VM_LENGTH, trait.methodInfo.parameters.length);
+        return trampoline;
+      }
+
+      function makeMemoizer(target) {
+        function memoizer() {
+          Counter.count("Runtime: Memoizing");
+          if (traceExecution.value) {
+            print("Memoizing: " + qn);
+          }
+          if (isNativePrototype(this)) {
+            Counter.count("Runtime: Method Closures");
+            return target.value.bind(this);
+          }
+          if (this.hasOwnProperty(qn)) {
+            Counter.count("Runtime: Unpatched Memoizer");
+            return this[qn];
+          }
+          var mc = target.value.bind(this);
+          defineReadOnlyProperty(mc, "public$prototype", null);
+          defineReadOnlyProperty(this, qn, mc);
+          return mc;
+        }
+        Counter.count("Runtime: Memoizers");
+        return memoizer;
+      }
+
+      if (delayBinding) {
+        release || assert(obj[VM_OPEN_METHODS]);
+        // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
+        // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
+        // target value for subsequent memoizations.
+        var target = { value: null };
+        var trampoline = makeTrampoline(function (fn) {
+          Counter.count("Runtime: Patching Memoizer");
+          if (traceExecution.value) {
+            print("Patching Memoizer: " + qn);
+          }
+          target.value = fn; // Patch the memoization target.
+          obj[VM_OPEN_METHODS][qn] = fn; // Patch the open methods table.
+          defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn); // Patch the open method name.
+        });
+
+        target.value = trampoline;
+
+        obj[VM_OPEN_METHODS][qn] = trampoline;
+        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
+
+        var memoizer = makeMemoizer(target);
+        // TODO: We make the |memoizeMethodClosure| configurable since it may be
+        // overridden by a derived class. Only do this non final classes.
+        defineNonEnumerableGetter(obj, qn, memoizer);
+      } else {
+        var trampoline = makeTrampoline(function (fn) {
+          defineReadOnlyProperty(obj, qn, fn);
+          defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
+        });
+        var closure = trampoline.bind(obj);
+        defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
+        defineReadOnlyProperty(closure, "public$prototype", null);
+        defineNonEnumerableProperty(obj, qn, closure);
+        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
+      }
+    }
+
     var baseSlotId = obj[VM_SLOTS].length;
     var nextSlotId = baseSlotId + 1;
 
-    for (var i = 0, j = traits.length; i < j; i++) {
+    for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
       var qn = Multiname.getQualifiedName(trait.name);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
@@ -1289,7 +1390,7 @@ var Runtime = (function () {
         }
 
         if (trait.slotId < baseSlotId) {
-          /* XXX: Hope we don't throw while doing builtins. */
+          // XXX: Hope we don't throw while doing builtins.
           release || assert(false);
           this.throwErrorFromVM("VerifyError", "Bad slot ID.");
         }
@@ -1297,9 +1398,9 @@ var Runtime = (function () {
         if (trait.isClass()) {
           // Builtins are special, so drop any attempts to define builtins
           // that aren't from 'builtin.abc'.
-          var res = domain.findDefiningScript(trait.name, false);
-          if (res) {
-            var abc = res.script.abc;
+          var pair = domain.findDefiningScript(trait.name, false);
+          if (pair) {
+            var abc = pair.script.abc;
             if (!abc.domain.base && abc.name === "builtin.abc") {
               continue;
             }
@@ -1318,88 +1419,11 @@ var Runtime = (function () {
           type: typeName ? domain.getProperty(typeName, false, false) : null
         };
       } else if (trait.isMethod()) {
-        // FIXME: Breaking compat with AS and using .bind here instead of the
-        // MethodClosure class to work around a SpiderMonkey bug 771871.
-        var MethodClosureClass = domain.system.MethodClosureClass;
-
-        var closure;
-
-        // FIXME: There are some regressions because of this, but leave it in
-        // place for now to help the work on the verifier progress.
-        // Here we're creating a trampoline that triggers compilation when the
-        // method is first executed and not when the trait is applied. This
-        // helps ensure that types are initialized by the time the verifier
-        // gets to work.
-        // TODO: It may be that the verifier can work with non-initialized types.
-        // It can probably find the class traits manually, so that may be worth
-        // looking into.
-
-        if (true ||
-            (obj instanceof Global ||
-             this.domain.Class && obj instanceof this.domain.Class
-            ) &&
-            this.domain.mode !== EXECUTION_MODE.INTERPRET) {
-          closure = (function (trait, obj, qn) {
-            return (function trampolineContext() {
-              var executed = false;
-              var fn = undefined;
-              return function trampoline() {
-                if (!executed) {
-                  fn = makeClosure(trait);
-                  defineNonEnumerableProperty(obj, qn, fn);
-                  executed = true;
-                }
-                return fn.apply(this, arguments);
-              };
-            })();
-          })(trait, obj, qn);
-          // Make sure that the length property of the trampoline matches the trait's number of
-          // parameters. However, since we can't redefine the |length| property of a function,
-          // we define a new hidden |VM_LENGTH| property to cache this value.
-          defineReadOnlyProperty(closure, VM_LENGTH, trait.methodInfo.parameters.length);
-        } else {
-          closure = makeClosure(trait);
-        }
-
-        var mc;
-        if (delayBinding) {
-          release || assert(obj[VM_OPEN_METHODS]);
-
-          var memoizeMethodClosure = (function (closure, qn) {
-            return function memoizer() {
-              if (traceExecution.value) {
-                print("Memoizing: " + qn);
-              }
-              if (isNativePrototype(this)) {
-                Counter.count("Runtime: Method Closures");
-                return closure.bind(this);
-              }
-              if (this.hasOwnProperty(qn)) {
-                Counter.count("Runtime: Unpatched Memoizer");
-                return this[qn];
-              }
-              var mc = closure.bind(this);
-              defineReadOnlyProperty(mc, "public$prototype", null);
-              defineReadOnlyProperty(this, qn, mc);
-              Counter.count("Runtime: Method Closures");
-              return mc;
-            };
-          })(closure, qn);
-          Counter.count("Runtime: Memoizers");
-          // TODO: We make the |memoizeMethodClosure| configurable since it may be
-          // overridden by a derived class. Only do this non final classes.
-          defineNonEnumerableGetter(obj, qn, memoizeMethodClosure);
-          obj[VM_OPEN_METHODS][qn] = closure;
-        } else {
-          mc = closure.bind(obj);
-          defineReadOnlyProperty(mc, VM_LENGTH, closure[VM_LENGTH]);
-          defineReadOnlyProperty(mc, "public$prototype", null);
-          defineNonEnumerableProperty(obj, qn, mc);
-        }
+        applyMethodTrait(trait);
       } else if (trait.isGetter()) {
-        defineNonEnumerableGetter(obj, qn, makeClosure(trait));
+        defineNonEnumerableGetter(obj, qn, makeFunction(trait));
       } else if (trait.isSetter()) {
-        defineNonEnumerableSetter(obj, qn, makeClosure(trait));
+        defineNonEnumerableSetter(obj, qn, makeFunction(trait));
       } else {
         release || assert(false);
       }
