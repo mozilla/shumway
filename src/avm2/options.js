@@ -45,7 +45,7 @@
           this.value = value;
         }
         if (this.parseFn) {
-          this.parseFn(value);
+          this.parseFn(this.value);
         }
       };
       return argument;
