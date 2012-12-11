@@ -414,6 +414,11 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           stack.push(x);
         }
 
+        function shouldNotFloat(node) {
+          node.shouldNotFloat = true;
+          return node;
+        }
+
         function pop() {
           return stack.pop();
         }
@@ -427,7 +432,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
         }
 
         function popLocal(index) {
-          local[index] = pop();
+          local[index] = shouldNotFloat(pop());
         }
 
         function buildMultiname(index) {
@@ -873,7 +878,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
             case OP_pushfalse:      push(constant(false)); break;
             case OP_pushnan:        push(constant(NaN)); break;
             case OP_pop:            pop(); break;
-            case OP_dup:            value = pop(); push(value); push(value); break;
+            case OP_dup:            value = shouldNotFloat(pop()); push(value); push(value); break;
             case OP_swap:           state.stack.push(pop(), pop()); break;
             case OP_debug:
             case OP_debugline:

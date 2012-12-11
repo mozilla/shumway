@@ -1646,7 +1646,7 @@
       }
 
       function shouldFloat(node) {
-        if (node.mustNotFloat) {
+        if (node.mustNotFloat || node.shouldNotFloat) {
           return false;
         }
         if (node.isPure) {
@@ -1655,8 +1655,8 @@
         if (node instanceof Parameter || node instanceof This) {
           return true;
         }
-        // return node instanceof Binary || node instanceof Unary || node instanceof Parameter;
-        return false;
+        return node instanceof Binary || node instanceof Unary || node instanceof Parameter;
+        // return false;
       }
 
       function append(node) {
