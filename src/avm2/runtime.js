@@ -1250,6 +1250,9 @@ var Runtime = (function () {
           }
         }
       } else {
+        if (traceExecution.value >= 2) {
+          print("Creating Function For Trait: " + trait);
+        }
         fn = runtime.createFunction(mi, scope);
       }
 
@@ -1261,7 +1264,7 @@ var Runtime = (function () {
         })(mi);
       }
 
-      if (traceExecution.value) {
+      if (traceExecution.value >= 3) {
         print("Made Function: " + Multiname.getQualifiedName(mi.name));
       }
 
@@ -1300,7 +1303,7 @@ var Runtime = (function () {
         var trampoline = (function trampolineContext() {
           var target = null;
           return function trampoline() {
-            if (traceExecution.value) {
+            if (traceExecution.value >= 3) {
               print("Executing Trampoline: " + qn);
             }
             if (!target) {
@@ -1320,7 +1323,7 @@ var Runtime = (function () {
       function makeMemoizer(target) {
         function memoizer() {
           Counter.count("Runtime: Memoizing");
-          if (traceExecution.value) {
+          if (traceExecution.value >= 3) {
             print("Memoizing: " + qn);
           }
           if (isNativePrototype(this)) {
@@ -1348,7 +1351,7 @@ var Runtime = (function () {
         var target = { value: null };
         var trampoline = makeTrampoline(function (fn) {
           Counter.count("Runtime: Patching Memoizer");
-          if (traceExecution.value) {
+          if (traceExecution.value >= 3) {
             print("Patching Memoizer: " + qn);
           }
           target.value = fn; // Patch the memoization target.
