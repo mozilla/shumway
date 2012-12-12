@@ -396,11 +396,14 @@ var LoaderDefinition = (function () {
           stage._stageWidth = loaderInfo._width;
 
           var rootClass = avm2.applicationDomain.getClass(val.className);
+          var root = rootClass.createAsSymbol({
+            framesLoaded: 1,
+            parent: stage,
+            timeline: timeline,
+            stage: stage
+          });
 
-          var root = rootClass.createAsSymbol();
-
-          root.symbol.framesLoaded = 1;
-          root.symbol.timeline = timeline;
+          stage._root = root;
 
           if (labelName) {
             var frameLabels = { };
@@ -411,10 +414,6 @@ var LoaderDefinition = (function () {
             };
             root.symbol.frameLabels = frameLabels;
           }
-
-          root._parent = stage;
-          root._root = root;
-          root._stage = stage;
 
           rootClass.instance.call(root);
 

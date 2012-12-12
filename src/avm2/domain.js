@@ -99,7 +99,13 @@ var Domain = (function () {
         createAsSymbol: function createAsSymbol(props) {
           var o = Object.create(this.instance.prototype);
           // Custom classes will have already have .symbol linked.
-          if (!o.symbol) {
+          if (o.symbol) {
+            var symbol = Object.create(o.symbol);
+            for (var prop in props) {
+              symbol[prop] = props[prop];
+            }
+            o.symbol = symbol;
+          } else {
             o.symbol = props;
           }
           return o;
@@ -108,7 +114,7 @@ var Domain = (function () {
         /**
          * Binds the specified |nativeObject| to a new instance of this class before calling the
          * constructor. The if the |bindScriptObject| parameter is |true| then it also binds the
-         * created scriptObject to the specified |nativeObject|. 
+         * created scriptObject to the specified |nativeObject|.
          */
         createInstanceWithBoundNative: function createInstanceWithBoundNative(nativeObject, bindScriptObject, args) {
           var o = Object.create(this.instance.prototype);

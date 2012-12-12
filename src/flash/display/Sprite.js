@@ -25,12 +25,13 @@ var SpriteDefinition = (function () {
           var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
             avm2.systemDomain.getClass(symbolInfo.className) :
             avm2.applicationDomain.getClass(symbolInfo.className);
-          var child = symbolClass.createAsSymbol(symbolInfo.props);
 
-          //child._owned = false;
-          child._parent = this;
+          var props = Object.create(symbolInfo.props);
+          props.parent = this;
 
+          var child = symbolClass.createAsSymbol(props);
           symbolClass.instance.call(child);
+
           children[i] = child;
         }
       }

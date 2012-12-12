@@ -84,11 +84,13 @@ var MovieClipDefinition = (function () {
       var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
         avm2.systemDomain.getClass(symbolInfo.className) :
         avm2.applicationDomain.getClass(symbolInfo.className);
-      var instance = symbolClass.createAsSymbol(symbolInfo.props);
 
-      instance._animated = true;
-      instance._owned = true;
-      instance._parent = this;
+      var props = Object.create(symbolInfo.props);
+      props.animated = true;
+      props.owned = true;
+      props.parent = this;
+
+      var instance = symbolClass.createAsSymbol(props);
 
       // If we bound the instance to a name, set it.
       //

@@ -20,7 +20,7 @@ var DisplayObjectDefinition = (function () {
 
     initialize: function () {
       this._alpha = 1;
-      //this._animated = false;
+      this._animated = false;
       this._bbox = null;
       this._bounds = null;
       this._cacheAsBitmap = false;
@@ -38,14 +38,14 @@ var DisplayObjectDefinition = (function () {
       this._mouseY = 0;
       this._name = null;
       this._opaqueBackground = null;
-      //this._owned = false;
-      //this._parent = null;
+      this._owned = false;
+      this._parent = null;
       this._revision = 0;
-      //this._root = null;
+      this._root = null;
       this._rotation = 0;
       this._scaleX = 1;
       this._scaleY = 1;
-      //this._stage = null;
+      this._stage = null;
       this._transform = null;
       this._visible = true;
       this._x = 0;
@@ -53,8 +53,13 @@ var DisplayObjectDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
+        this._animated = s.animated || false;
         this._bbox = s.bbox || null;
         this._children = s.children || [];
+        this._owned = s.owned || false;
+        this._parent = s.parent || null;
+        this._root = s.root || null;
+        this._stage = s.stage || null;
       }
 
       this._updateCurrentTransform();
