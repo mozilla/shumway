@@ -303,8 +303,11 @@ var Domain = (function () {
     script.executed = true;
   }
 
-  function ensureScriptIsExecuted(abc, script) {
+  function ensureScriptIsExecuted(abc, script, mn) {
     if (!script.executed && !script.executing) {
+      if (traceExecution.value >= 2) {
+        print("Executing Script For: " + Multiname.getQualifiedName(mn));
+      }
       executeScript(abc, script);
     }
   }
@@ -401,7 +404,7 @@ var Domain = (function () {
                 print("Value is: " + script.global[Multiname.getQualifiedName(mn)]);
               }
               if (execute) {
-                ensureScriptIsExecuted(abc, script);
+                ensureScriptIsExecuted(abc, script, mn);
               }
               return (this.scriptCache[mn.id] = { script: script, name: mn });
             }
@@ -409,7 +412,7 @@ var Domain = (function () {
             var resolved = resolveMultiname(global, mn);
             if (resolved) {
               if (execute) {
-                ensureScriptIsExecuted(abc, script);
+                ensureScriptIsExecuted(abc, script, resolved);
               }
               return (this.scriptCache[mn.id] = { script: script, name: resolved });
             }
