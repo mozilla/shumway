@@ -221,11 +221,11 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           if (coercer) {
             local = coercer(local);
           } else {
-            var type = this.abc.domain.getProperty(parameter.type, true, true);
+            var type = this.abc.domain.getProperty(parameter.type, true, false);
             if (type) {
               local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)]);
             } else {
-              unexpected();
+              // unexpected();
             }
           }
         }
@@ -466,6 +466,9 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
         function findProperty(name, strict, ti) {
           if (ti) {
             if (ti.object) {
+              if (ti.object instanceof Global) {
+                ti.object.ensureExecuted();
+              }
               return constant(ti.object);
             } else if (ti.scopeDepth !== undefined) {
               return getScopeObject(topScope(ti.scopeDepth));

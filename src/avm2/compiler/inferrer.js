@@ -64,8 +64,11 @@ var Type = (function () {
       if (ty) {
         return ty;
       }
+      if (qn === "public$void") {
+        return Type.Void;
+      }
       release || assert(domain, "Domain is needed.");
-      ty = domain.getProperty(mn, false, true);
+      ty = domain.findClassInfo(mn);
       ty = ty ? type.from(ty, domain) : Type.Any;
       return type.cache.name[qn] = ty;
     }
@@ -103,13 +106,15 @@ var Type = (function () {
   };
 
   var typesInitialized = false;
-  type.initializeTypes = function (domain) {
+  type.initializeTypes = function (abc) {
     if (typesInitialized) {
       return;
     }
+    var domain = abc.domain;
     type.Any = new AtomType("Any");
     type.Null = new AtomType("Null");
     type.Undefined = new AtomType("Undefined");
+    type.Void = new AtomType("Void");
     type.Int = Type.fromSimpleName("int", domain).instance();
     type.Uint = Type.fromSimpleName("uint", domain).instance();
     type.Array = Type.fromSimpleName("Array", domain).instance();
@@ -135,6 +140,8 @@ var AtomType = (function () {
       return "_";
     } else if (this === Type.Null) {
       return "X";
+    } else if (this === Type.Void) {
+      return "V";
     }
     unexpected();
   };
@@ -656,7 +663,7 @@ var Verifier = (function() {
         }
 
         // Is it in some other script?
-        obj = abc.domain.findProperty(mn, false, true);
+        obj = abc.domain.findProperty(mn, false, false);
         if (obj) {
           release || assert(obj instanceof Global);
           ti().object = obj;
@@ -1299,7 +1306,7 @@ var Verifier = (function() {
   function verifier(abc) {
     this.writer = new IndentingWriter();
     this.abc = abc;
-    Type.initializeTypes(abc.domain);
+    Type.initializeTypes(abc);
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {

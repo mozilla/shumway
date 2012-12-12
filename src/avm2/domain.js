@@ -7,6 +7,29 @@ var EXECUTION_MODE = {
   COMPILE: 0x2
 };
 
+function executeScript(abc, script) {
+  if (disassemble.value) {
+    abc.trace(new IndentingWriter());
+  }
+  if (traceExecution.value) {
+    print("Executing: " + abc.name + " " + script);
+  }
+  release || assert(!script.executing && !script.executed);
+  script.executing = true;
+  var scope = new Scope(null, script.global);
+  abc.runtime.createFunction(script.init, scope).call(script.global);
+  script.executed = true;
+}
+
+function ensureScriptIsExecuted(abc, script, reason) {
+  if (!script.executed && !script.executing) {
+    if (traceExecution.value >= 2) {
+      print("Executing Script For: " + reason);
+    }
+    executeScript(abc, script);
+  }
+}
+
 var Domain = (function () {
 
   function Domain(vm, base, mode, allowNatives) {
@@ -24,6 +47,9 @@ var Domain = (function () {
 
     // Script cache.
     this.scriptCache = Object.create(null);
+
+    // Class Info cache.
+    this.classInfoCache = Object.create(null);
 
     // Our parent.
     this.base = base;
@@ -289,29 +315,6 @@ var Domain = (function () {
     };
   };
 
-  function executeScript(abc, script) {
-    if (disassemble.value) {
-      abc.trace(new IndentingWriter());
-    }
-    if (traceExecution.value) {
-      print("Executing: " + abc.name + " " + script);
-    }
-    release || assert(!script.executing && !script.executed);
-    script.executing = true;
-    var scope = new Scope(null, script.global);
-    abc.runtime.createFunction(script.init, scope).call(script.global);
-    script.executed = true;
-  }
-
-  function ensureScriptIsExecuted(abc, script, mn) {
-    if (!script.executed && !script.executing) {
-      if (traceExecution.value >= 2) {
-        print("Executing Script For: " + Multiname.getQualifiedName(mn));
-      }
-      executeScript(abc, script);
-    }
-  }
-
   Domain.prototype = {
     getProperty: function getProperty(multiname, strict, execute) {
       var resolved = this.findDefiningScript(multiname, execute);
@@ -354,6 +357,38 @@ var Domain = (function () {
         return unexpected("Cannot find property " + multiname);
       } else {
         return undefined;
+      }
+      return undefined;
+    },
+
+    findClassInfo: function findClassInfo(mn) {
+      release || Multiname.isQName(mn);
+      var qn = Multiname.getQualifiedName(mn);
+
+      var ci = this.classInfoCache[qn];
+      if (ci) {
+        return ci;
+      }
+      if (this.base) {
+        ci = this.base.findClassInfo(mn);
+        if (ci) {
+          return ci;
+        }
+      }
+      var abcs = this.abcs;
+      for (var i = 0; i < abcs.length; i++) {
+        var abc = abcs[i];
+        var scripts = abc.scripts;
+        for (var j = 0; j < scripts.length; j++) {
+          var script = scripts[j];
+          var traits = script.traits;
+          for (var k = 0; k < traits.length; k++) {
+            var trait = traits[k];
+            if (trait.isClass() && Multiname.getQualifiedName(trait.name) == qn) {
+              return (this.classInfoCache[qn] = trait.classInfo);
+            }
+          }
+        }
       }
       return undefined;
     },
@@ -438,6 +473,7 @@ var Domain = (function () {
       }
 
       abc.domain = this;
+      this.abcs.push(abc);
       var runtime = new Runtime(abc);
       abc.runtime = runtime;
 
@@ -457,7 +493,6 @@ var Domain = (function () {
         }
       }
 
-      this.abcs.push(abc);
     },
 
     traceLoadedClasses: function () {
