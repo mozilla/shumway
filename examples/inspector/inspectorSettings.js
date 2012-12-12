@@ -19,8 +19,7 @@ updateAVM2State();
 function updateAVM2State() {
   enableC4.value = true;
   enableVerifier.value = state.verifier;
-  enableOpt.value = state.optimizer;
-  enableInlineCaching.value = state.inlineCaching;
+  traceExecution.value = state.trace ? 2 : 0;
   release = state.release;
 }
 
