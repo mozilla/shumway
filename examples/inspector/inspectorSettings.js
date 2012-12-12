@@ -1,9 +1,8 @@
 function loadState() {
   return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]) : {
-    compiler: true,
+    appCompiler: true,
+    sysCompiler: true,
     verifier: true,
-    optimizer: true,
-    inlineCaching: true,
     release: true
   };
 }
@@ -42,7 +41,7 @@ $(".avm2Option").each(function() {
     state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
     saveState(state);
   });
-  $(this).toggleClass("pressedState", state[$(this).attr('id')]);
+  $(this).toggleClass("pressedState", !!state[$(this).attr('id')]);
 });
 
 $(".avm2Option").click(function () {

@@ -33,7 +33,7 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var sysMode = EXECUTION_MODE.INTERPRET;
+// var sysMode = EXECUTION_MODE.INTERPRET;
 
 // avm2 must be global.
 var avm2;
@@ -79,7 +79,8 @@ function executeFile(file, buffer) {
   if (!state.compiler) {
     showMessage("Running in the Interpreter");
   }
-  var appMode = state.compiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {
     createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
       function runABC(file, buffer) {
