@@ -800,7 +800,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
             case OP_constructsuper:
               arguments = popMany(bc.argCount);
               object = pop();
-              callee = getJSProperty(savedScope(), "object.baseClass.instance");
+              callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
               push(call(callee, object, arguments));
               break;
             case OP_constructprop:
