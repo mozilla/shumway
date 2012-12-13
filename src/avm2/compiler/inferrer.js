@@ -478,9 +478,9 @@ var Verifier = (function() {
 
       release || assert(mi.localCount >= mi.parameters.length + 1);
 
-      var thisType = mi.holder ? Type.from(mi.holder, this.domain) : Type.Any;
+      this.thisType = mi.holder ? Type.from(mi.holder, this.domain) : Type.Any;
 
-      entryState.local.push(thisType);
+      entryState.local.push(this.thisType);
 
       // Initialize entry state with parameter types.
       for (var i = 0; i < mi.parameters.length; i++) {
@@ -955,6 +955,9 @@ var Verifier = (function() {
           case OP_constructsuper:
             stack.popMany(bc.argCount);
             stack.pop();
+            if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
+              ti().noCallSuperNeeded = true;
+            }
             break;
           case OP_construct:
             stack.popMany(bc.argCount);
