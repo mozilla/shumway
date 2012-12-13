@@ -140,6 +140,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
     var node = object;
     for (var i = 0; i < names.length; i++) {
       node = new IR.GetProperty(null, store, node, constant(names[i]));
+      node.shouldFloat = true;
     }
     return node;
   }
@@ -819,7 +820,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
               arguments = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname);
+              callee = getProperty(object, multiname, bc.ti);
               push(store(new IR.AVM2New(region, state.store, callee, arguments)));
               break;
             case OP_coerce:
