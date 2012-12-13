@@ -14,12 +14,8 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
   var Unary = IR.Unary;
   var Constant = IR.Constant;
   var Call = IR.Call;
-  var New = IR.New;
   var Phi = IR.Phi;
   var Stop = IR.Stop;
-  var If = IR.If;
-  var Jump = IR.Jump;
-  var Scope = IR.Scope;
   var Operator = IR.Operator;
   var Parameter = IR.Parameter;
   var NewArray = IR.NewArray;
@@ -87,7 +83,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
 
     constructor.prototype.merge = function merge(control, other) {
       assert (control);
-      assert (this.matches(other));
+      assert (this.matches(other), this + " !== " + other);
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
@@ -628,7 +624,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
 
         function buildIfStops(predicate) {
           assert (!stops);
-          var _if = new If(region, predicate);
+          var _if = new IR.If(region, predicate);
           stops = [{
             control: new Projection(_if, Projection.Type.FALSE),
             target: bytecodes[bc.position + 1],
@@ -657,6 +653,19 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
         function buildReturnStop() {
           assert (!stops);
           stops = [];
+        }
+
+        function buildSwitchStops(determinant) {
+          assert (!stops);
+          stops = [];
+          var _switch = new IR.Switch(region, determinant);
+          for (var i = 0; i < bc.targets.length; i++) {
+            stops.push({
+              control: new Projection(_switch, Projection.Type.CASE, constant(i)),
+              target: bc.targets[i],
+              state: state
+            });
+          }
         }
 
         if (writer) {
@@ -902,6 +911,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
             case OP_ifne:           buildIfStops(truthyCondition(Operator.NE)); break;
             case OP_ifstricteq:     buildIfStops(truthyCondition(Operator.SEQ)); break;
             case OP_ifstrictne:     buildIfStops(truthyCondition(Operator.SNE)); break;
+            case OP_lookupswitch:   buildSwitchStops(pop()); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
             case OP_add:            pushExpression(Operator.ADD); break;
@@ -963,7 +973,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
             case OP_istype:
               value = pop();
               multiname = buildMultiname(bc.index);
-              type = getProperty(findProperty(multiname), multiname);
+              type = getProperty(findProperty(multiname, false), multiname);
               push(call(globalProperty("isInstance"), null, [value, type]));
               break;
             case OP_istypelate:

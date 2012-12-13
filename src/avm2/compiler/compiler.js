@@ -15,8 +15,6 @@ function shouldCompile(mi) {
     return false;
   } else if (mi.code.length > compilerMaximumMethodSize.value) {
     return false;
-  } else if (mi.hasLookupSwitches) {
-    return false;
   }
   return true;
 }

@@ -1255,7 +1255,7 @@ var Runtime = (function () {
         }
       } else {
         if (traceExecution.value >= 2) {
-          print("Creating Function For Trait: " + trait);
+          print("Creating Function For Trait: " + trait.holder + " " + trait);
         }
         fn = runtime.createFunction(mi, scope);
       }

@@ -804,7 +804,7 @@
         // discharge edges as we recur on the tree, but in case we can't emit a
         // block (i.e. its |npredecessors| > 0), we need to restore its |npredecessors| before
         // we pop out. We do this via a |save| proeprty on each block that says
-        // how many predecessorecessors we should restore.
+        // how many predecessors we should restore.
         //
         // |exit| is the set of exits in the current context, i.e. the set of
         // vertices that we visited but have not yet discharged every incoming
@@ -1033,7 +1033,30 @@
             } else
             */
 
-            if (successors.length === 2) {
+            if (successors.length > 2) {
+              var cases = [];
+              var targets = successors;
+
+              for (var i = targets.length - 1; i >= 0; i--) {
+                var t = targets[i];
+                t.npredecessors -= 1;
+                t.save = 1;
+                c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
+                cases.unshift(new Control.Case(i, c));
+              }
+
+              // The last case is the default case.
+              cases.top().index = undefined;
+
+              if (hasExceptions && h.hasCatches) {
+                sv.nothingThrownLabel = exceptionId;
+                sv = new Control.Switch(sv, cases, exceptionId++);
+              } else {
+                sv = new Control.Switch(sv, cases);
+              }
+
+              head = maybe(exit2, save2);
+            } else if (successors.length === 2) {
               var branch1 = h.hasFlippedSuccessors ? successors[1] : successors[0];
               var branch2 = h.hasFlippedSuccessors ? successors[0] : successors[1];
               branch1.npredecessors -= 1;

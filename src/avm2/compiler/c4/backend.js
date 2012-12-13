@@ -297,6 +297,22 @@
     return cr;
   };
 
+  Context.prototype.compileSwitch = function compileSwitch(node) {
+    var dr = node.determinant.compile(this);
+    var cases = [];
+    node.cases.forEach(function (x) {
+      var br;
+      if (x.body) {
+        br = x.body.compile(this);
+      }
+      var test = typeof x.index === "number" ? new Literal(x.index) : undefined;
+      cases.push(new SwitchCase(test, br ? [br] : []));
+    }, this);
+    var determinant = compileValue(dr.end.determinant, this);
+    dr.body.push(new SwitchStatement(determinant, cases, false))
+    return dr;
+  };
+
   Context.prototype.compileLabelSwitch = function compileLabelSwitch(node) {
     var statement = null;
     var labelName = id(this.label.name);

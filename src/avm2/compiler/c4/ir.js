@@ -329,6 +329,16 @@
     return constructor;
   })();
 
+  var Switch = (function () {
+    function constructor(control, determinant) {
+      Control.call(this);
+      this.control = control;
+      this.determinant = determinant;
+    }
+    constructor.prototype = extend(End, "Switch");
+    return constructor;
+  })();
+
   var Jump = (function () {
     function constructor(control) {
       Control.call(this);
@@ -353,14 +363,18 @@
   })();
 
   var Projection = (function () {
-    function constructor(argument, type) {
+    function constructor(argument, type, selector) {
       Value.call(this);
       assert (type);
       assert (!(argument instanceof Projection));
       this.argument = argument;
       this.type = type;
+      if (selector) {
+        this.selector = selector;
+      }
     }
     constructor.Type = {
+      CASE: "case",
       TRUE: "true",
       FALSE: "false",
       STORE: "store",
@@ -787,6 +801,14 @@
       this.predecessors = [];
       this.nodes = [start, end];
     }
+    constructor.prototype.pushSuccessorAt = function pushSuccessor(successor, index, pushPredecessor) {
+      assert (successor);
+      assert (!this.successors[index]);
+      this.successors[index] = successor;
+      if (pushPredecessor) {
+        successor.pushPredecessor(this);
+      }
+    };
     constructor.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
       assert (successor);
       this.successors.push(successor);
@@ -806,15 +828,6 @@
     };
     constructor.prototype.visitPredecessors = function (fn) {
       this.predecessors.forEach(fn);
-      /*
-      this.region.predecessors.forEach(function (predecessor) {
-        if (predecessor instanceof Projection) {
-          predecessor = predecessor.project();
-        }
-        var region = predecessor.control;
-        fn(region.block);
-      });
-      */
     };
     constructor.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
@@ -995,8 +1008,7 @@
         if (end instanceof Projection) {
           end = end.project();
         }
-        assert (end instanceof End ||
-          end instanceof Start, end);
+        assert (end instanceof End || end instanceof Start, end);
         if (visited[end.id]) {
           return;
         }
@@ -1028,7 +1040,10 @@
           }
           buildEnd(d);
           var controlBlock = d.control.block;
-          if (trueProjection && controlBlock.successors.length > 0) {
+          if (d instanceof Switch) {
+            assert (isProjection(c, Projection.Type.CASE));
+            controlBlock.pushSuccessorAt(block, c.selector.value, true);
+          } else if (trueProjection && controlBlock.successors.length > 0) {
             controlBlock.pushSuccessor(block, true);
             controlBlock.hasFlippedSuccessors = true;
           } else {
@@ -1890,6 +1905,7 @@
   exports.Phi = Phi;
   exports.Stop = Stop;
   exports.If = If;
+  exports.Switch = Switch;
   exports.End = End;
   exports.Jump = Jump;
   exports.AVM2Scope = AVM2Scope;
