@@ -76,7 +76,7 @@ function showMessage(msg) {
 
 function executeFile(file, buffer) {
   // All execution paths must now load AVM2.
-  if (!state.compiler) {
+  if (!state.appCompiler) {
     showMessage("Running in the Interpreter");
   }
   var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
