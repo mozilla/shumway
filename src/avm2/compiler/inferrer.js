@@ -223,7 +223,7 @@ var TraitsType = (function () {
         if (mn.namespaces[i].isDynamic()) {
           dy = qn;
         } else {
-          if (trait = findTraitByName(traits, qn, isSetter)) {
+          if ((trait = findTraitByName(traits, qn, isSetter))) {
             return trait;
           }
         }

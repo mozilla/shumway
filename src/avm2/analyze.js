@@ -410,9 +410,9 @@ var Analysis = (function () {
       return bs;
     };
 
-    BlockSet.fromBlocks = function fromArray(bs) {
+    BlockSet.fromBlocks = function fromArray(other) {
       var bs = new BlockSet();
-      bs.setBlocks(bs);
+      bs.setBlocks(other);
       return bs;
     };
 
@@ -1004,7 +1004,7 @@ var Analysis = (function () {
       // Assign dominator tree levels.
       var worklist = [blocks[0]];
       blocks[0].level || (blocks[0].level = 0);
-      while (block = worklist.shift()) {
+      while ((block = worklist.shift())) {
         var dominatees = block.dominatees;
         for (var i = 0, j = dominatees.length; i < j; i++) {
           dominatees[i].level = block.level + 1;
@@ -1596,7 +1596,7 @@ var Analysis = (function () {
           var k = 0;
           for (var i = 0, j = cases.length; i < j; i++) {
             c = cases[i];
-            if (body = massage(c.body, exit, cont, br)) {
+            if ((body = massage(c.body, exit, cont, br))) {
               c.body = body;
               cases[k++] = c;
             } else {
@@ -1755,7 +1755,7 @@ var Analysis = (function () {
                             var n;
                             var level = root.level;
                             var currentLevel = [];
-                            while (n = worklist.shift()) {
+                            while ((n = worklist.shift())) {
                               if (level != n.level) {
                                 writer.writeLn("{rank=same; " +
                                                currentLevel.map(function (n) {

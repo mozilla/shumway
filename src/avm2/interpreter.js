@@ -86,7 +86,7 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      var args, obj, objsuper, type, index, multiname, ns, name, res, a, b;
+      var obj, objsuper, type, index, multiname, ns, name, res, a, b;
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 

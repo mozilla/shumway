@@ -114,7 +114,7 @@ var Domain = (function () {
             c = c.baseClass;
           }
           var s;
-          while (s = initializes.pop()) {
+          while ((s = initializes.pop())) {
             s.call(obj);
           }
         },
@@ -516,7 +516,7 @@ var Domain = (function () {
                 while (scope) {
                   release || assert(scope.object);
                   str += scope.object.debugName || "T";
-                  if (scope = scope.parent) {
+                  if ((scope = scope.parent)) {
                     str += " <: ";
                   };
                 }

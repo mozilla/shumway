@@ -319,7 +319,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
       worklist.push({region: start, block: blocks[0]});
 
       var next;
-      while (next = worklist.pop()) {
+      while ((next = worklist.pop())) {
         buildNodes(next.region, next.block, next.region.entryState.clone()).forEach(function (stop) {
           var target = stop.target;
           var region = target.region;

@@ -861,7 +861,7 @@
       var visited = [];
       var worklist = [root];
       var push = worklist.push.bind(worklist);
-      while (node = worklist.pop()) {
+      while ((node = worklist.pop())) {
         if (visited[node.id]) {
           continue;
         }
@@ -1381,7 +1381,7 @@
       }
 
       function simplify(phi, args) {
-        var args = args.unique();
+        args = args.unique();
         if (args.length === 1) {
           // x = phi(y) -> y
           return args[0];
@@ -1450,7 +1450,7 @@
       }
 
       var edge;
-      while (edge = criticalEdges.pop()) {
+      while ((edge = criticalEdges.pop())) {
         var fromIndex = edge.from.successors.indexOf(edge.to);
         var toIndex = edge.to.predecessors.indexOf(edge.from);
         assert (fromIndex >= 0 && toIndex >= 0);
@@ -1740,7 +1740,7 @@
       debugScheduler && writer.leave("<");
 
       roots.forEach(function (node) {
-        var node = followProjection(node);
+        node = followProjection(node);
         if (node === dfg.start || node instanceof Region) {
           return;
         }
