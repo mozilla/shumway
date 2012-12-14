@@ -98,6 +98,7 @@
       var id = $C.length;
       Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
       $C.push(object);
+      jsGlobal["$C_" + id] = object;
       return id;
     }
 
@@ -120,7 +121,8 @@
           value instanceof Interface,
           "Should not make constants from ", value);
         */
-        MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
+        // MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
+        Identifier.call(this, "$C_" + objectId(value));
       } else {
         if (typeof value === "number" && isNaN(value)) {
           Identifier.call(this, "NaN");
