@@ -155,13 +155,13 @@ var LoaderDefinition = (function () {
       symbols[swfTag.id] = symbol;
       commitData(symbol);
     }
-    function parseBytes(bytes) {
+    function createParsingContext() {
       var depths = { };
       var frame = { type: 'frame' };
       var symbols = this._symbols;
       var tagsProcessed = 0;
 
-      SWF.parse(bytes, {
+      return {
         onstart: function(result) {
           commitData({command: 'init', result: result});
         },
@@ -241,12 +241,18 @@ var LoaderDefinition = (function () {
           commitData(result);
           commitData({command: 'complete'});
         }
-      });
+      }
+    }
+    function parseBytes(bytes) {
+      SWF.parse(bytes, createParsingContext());
     }
 
     if (typeof input === 'object') {
       if (input instanceof ArrayBuffer) {
         parseBytes(input);
+      } else if ('subscribe' in input) {
+        var pipe = SWF.parseAsync(createParsingContext());
+        input.subscribe(pipe.push.bind(pipe));
       } else if (typeof FileReaderSync !== 'undefined') {
         var reader = new FileReaderSync;
         var buffer = reader.readAsArrayBuffer(input);
@@ -275,7 +281,20 @@ var LoaderDefinition = (function () {
     importScripts.apply(null, WORKER_SCRIPTS);
 
     self.onmessage = function (evt) {
-      loadFromWorker(null, evt.data);
+      if (evt.data !== 'pipe:') {
+        loadFromWorker(null, evt.data);
+      }
+      // progressive data loading is requested, replacing onmessage handler
+      // for the following messages
+      var subscription = {
+        subscribe: function (callback) {
+          this.callback = callback;
+        }
+      };
+      loadFromWorker(null, subscription);
+      self.onmessage = function (evt) {
+        subscription.callback(evt.data);
+      };
     };
 
     return;
@@ -686,7 +705,14 @@ var LoaderDefinition = (function () {
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };
-        worker.postMessage(input);
+        if (typeof input === 'object' && 'subscribe' in input) {
+          worker.postMessage('pipe:');
+          input.subscribe(function (data) {
+            worker.postMessage(data);
+          });
+        } else {
+          worker.postMessage(input);
+        }
       } else {
         loadFromWorker(this, input, context);
       }

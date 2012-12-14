@@ -292,6 +292,9 @@ SWF.parseAsync = function swf_parseAsync(options) {
   var buffer = new HeadTailBuffer();
   var pipe = {
     push: function (data) {
+      if ('target' in this)
+        return this.target.push(data);
+
       if (!buffer.push(data, 8))
         return;
       var bytes = buffer.getHead(8);
@@ -313,8 +316,8 @@ SWF.parseAsync = function swf_parseAsync(options) {
         target = new CompressedPipe(target, bodyLength);
       }
       target.push(buffer.getTail(8));
+      this.target = target;
 
-      pipe.push = target.push.bind(target);
       buffer = null; // cleanup
     }
   };
