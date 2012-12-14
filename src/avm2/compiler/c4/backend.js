@@ -90,18 +90,6 @@
   var Constant = (function () {
     const constantsName = new Identifier("$C");
 
-    function objectId(object) {
-      release || assert(object);
-      if (object.hasOwnProperty("objectID")) {
-        return object.objectID;
-      }
-      var id = $C.length;
-      Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
-      $C.push(object);
-      jsGlobal["$C_" + id] = object;
-      return id;
-    }
-
     function constant(value) {
       this.value = value;
       if (value === undefined) {
@@ -122,7 +110,7 @@
           "Should not make constants from ", value);
         */
         // MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
-        Identifier.call(this, "$C_" + objectId(value));
+        Identifier.call(this, objectConstantName(value));
       } else {
         if (typeof value === "number" && isNaN(value)) {
           Identifier.call(this, "NaN");

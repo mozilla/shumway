@@ -33,6 +33,29 @@ var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var $M = [];
 
+/**
+ * To embed object references in compiled code we index into globally accessible constant table [$C].
+ * This table maintains an unique set of object references, each of which holds its own position in
+ * the constant table, thus providing for fast lookup. We can also define constants in the JS global
+ * scope.
+ */
+
+var $C = [];
+
+function objectConstantName(object) {
+  release || assert(object);
+  if (object.hasOwnProperty("objectID")) {
+    return "$C_" + object.objectID;
+  }
+  var id = $C.length;
+  Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
+  $C.push(object);
+  var name = "$C_" + id;
+  jsGlobal[name] = object;
+  return name;
+}
+
+
 function initializeGlobalObject(global) {
   var PUBLIC_MANGLED = /^public\$/;
 

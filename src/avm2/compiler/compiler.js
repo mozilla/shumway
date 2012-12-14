@@ -106,15 +106,6 @@ var labelConditionName = new Identifier("$condition");
 var labelDeterminantName = new Identifier("$determinant");
 var activationName = new Identifier("$activation");
 
-/**
- * To embed object references in compiled code we index into globally accessible constant table [$C].
- * This table maintains an unique set of object references, each of which holds its own position in
- * the constant table, thus providing for fast lookup. To embed a reference to an object [k] we call
- * [constant(k)] which may generate the literal "$C[12]".
- */
-
-var $C = [];
-
 function generate(node) {
   return escodegen.generate(node, {base: "", indent: "  ", comment: true});
 }
@@ -129,17 +120,6 @@ var FlushStackReason = {
 };
 
 var Compiler = (function () {
-
-  function objectId(obj) {
-    release || assert(obj);
-    if (obj.hasOwnProperty("objectID")) {
-      return obj.objectID;
-    }
-    var id = $C.length;
-    Object.defineProperty(obj, "objectID", {value: id, writable: false, enumerable: false});
-    $C.push(obj);
-    return id;
-  }
 
   Control.Break.prototype.compile = function (cx, state) {
     return cx.compileBreak(this, state);
@@ -200,7 +180,8 @@ var Compiler = (function () {
                 value instanceof Interface ||
                 value.forceConstify === true,
                 "Should not make constants from ", value);
-        MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
+        // MemberExpression.call(this, constantsName, new Literal(objectConstantName(value)), true);
+        Identifier.call(this, objectConstantName(value));
       } else {
         if (typeof value === "number" && isNaN(value)) {
           Identifier.call(this, "NaN");
