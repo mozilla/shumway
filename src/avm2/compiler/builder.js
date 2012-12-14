@@ -178,7 +178,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
 
       /* Create the method's parameters. */
       for (var i = 0; i < parameterCount; i++) {
-        state.local.push(new Parameter(start, parameterIndexOffset + i, ARGUMENT_PREFIX + mi.parameters[i].name));
+        state.local.push(new Parameter(start, parameterIndexOffset + i, PARAMETER_PREFIX + mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */

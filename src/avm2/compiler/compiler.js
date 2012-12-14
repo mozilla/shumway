@@ -89,7 +89,7 @@ var CatchClause = T.CatchClause;
 var VAR_PREFIX = "v";
 var LOCAL_PREFIX = "l";
 var STACK_PREFIX = "s";
-var ARGUMENT_PREFIX = "a";
+var PARAMETER_PREFIX = "p";
 var INLINE_CACHE_GETTER_PREFIX = "get";
 var INLINE_CACHE_SETTER_PREFIX = "set";
 
@@ -570,7 +570,7 @@ var Compiler = (function () {
 
       /* Create variables for the method's parameters. */
       for (var i = 0; i < parameterCount; i++) {
-        var name = ARGUMENT_PREFIX + mi.parameters[i].name;
+        var name = PARAMETER_PREFIX + mi.parameters[i].name;
         this.local.push(new Variable(name));
       }
 

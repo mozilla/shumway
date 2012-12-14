@@ -892,7 +892,7 @@ var Runtime = (function () {
     }
 
     var parameters = mi.parameters.map(function (p) {
-      return ARGUMENT_PREFIX + p.name;
+      return PARAMETER_PREFIX + p.name;
     });
 
     if (hasDynamicScope) {
