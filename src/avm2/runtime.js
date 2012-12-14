@@ -1,7 +1,7 @@
 var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
-var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "boolean", false, "trace script execution"));
+var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 var compileOnly = compilerOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
@@ -1215,8 +1215,27 @@ var Runtime = (function () {
    * could have leaked somewhere.
    *
    * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
-   * the memoizer so that the next time around it memoizes |Fa| instead of the trampoline. The trampoline also has
-   * to patch |m'| with |Fa|, as well as |m| on the instance with a bound |Fa|.
+   * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
+   * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
+   *
+   * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
+   * instance of |B|.
+   *
+   * class B extends A { }
+   *
+   * var b = new B();
+   * b.m();
+   *
+   * At first class |A| has a memoizer for |m| and a trampoline for |m'|. If we never call |m| on an instance of |A|
+   * then the trampoline is not resolved to a function. When we create class |B| we copy over all the traits in the
+   * |A.instance.prototype| to |B.instance.prototype| including the memoizers and trampolines. If we call |m| on an
+   * instance of |B| then we're going through a memoizer which will be patched to |Fm| by the trampoline and will
+   * be reflected in the entire inheritance hierarchy. The problem is when calling |b.m'()| which currently holds
+   * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
+   *
+   * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
+   * locations in the trampoline function object themselves.
+   *
    */
 
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, delayBinding) {
@@ -1277,15 +1296,21 @@ var Runtime = (function () {
 
     // Copy over base trait bindings.
     if (base) {
-      var bindings = base[VM_BINDINGS];
-      var baseOpenMethods = base[VM_OPEN_METHODS];
       var openMethods = {};
-      for (var i = 0; i < bindings.length; i++) {
-        var qn = bindings[i];
-        Object.defineProperty(obj, qn, Object.getOwnPropertyDescriptor(base, qn));
-        if (qn in baseOpenMethods) {
-          openMethods[qn] = baseOpenMethods[qn];
-          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, baseOpenMethods[qn]);
+      var baseBindings = base[VM_BINDINGS];
+      var baseOpenMethods = base[VM_OPEN_METHODS];
+      for (var i = 0; i < baseBindings.length; i++) {
+        var qn = baseBindings[i];
+        var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
+        Object.defineProperty(obj, qn, baseBindingDescriptor);
+        if (baseOpenMethods.hasOwnProperty(qn)) {
+          var openMethod = baseOpenMethods[qn];
+          openMethods[qn] = openMethod;
+          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+          if (openMethod.patchTargets) {
+            openMethod.patchTargets.push({object: openMethods, name: qn});
+            openMethod.patchTargets.push({object: obj, name: VM_OPEN_METHOD_PREFIX + qn});
+          }
         }
       }
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
@@ -1307,12 +1332,13 @@ var Runtime = (function () {
         var trampoline = (function trampolineContext() {
           var target = null;
           return function trampoline() {
+            Counter.count("Executing Trampoline");
             if (traceExecution.value >= 3) {
               print("Executing Trampoline: " + qn);
             }
             if (!target) {
               target = makeFunction(trait);
-              patch(target);
+              patch(trampoline, target);
             }
             return target.apply(this, arguments);
           };
@@ -1352,28 +1378,36 @@ var Runtime = (function () {
         // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
         // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
         // target value for subsequent memoizations.
-        var target = { value: null };
-        var trampoline = makeTrampoline(function (fn) {
+        var memoizerTarget = { value: null };
+        var trampoline = makeTrampoline(function (self, fn) {
           Counter.count("Runtime: Patching Memoizer");
-          if (traceExecution.value >= 3) {
-            print("Patching Memoizer: " + qn);
+          var patchTargets = self.patchTargets;
+          for (var i = 0; i < patchTargets.length; i++) {
+            var patchTarget = patchTargets[i];
+            patchTarget.object[patchTarget.name] = fn;
+            if (traceExecution.value >= 3) {
+              print("Trampoline: Patching: " + patchTarget.name);
+            }
           }
-          target.value = fn; // Patch the memoization target.
-          obj[VM_OPEN_METHODS][qn] = fn; // Patch the open methods table.
-          defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn); // Patch the open method name.
         });
 
-        target.value = trampoline;
-
+        memoizerTarget.value = trampoline;
         obj[VM_OPEN_METHODS][qn] = trampoline;
         defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
 
-        var memoizer = makeMemoizer(target);
+        var memoizer = makeMemoizer(memoizerTarget);
         // TODO: We make the |memoizeMethodClosure| configurable since it may be
         // overridden by a derived class. Only do this non final classes.
         defineNonEnumerableGetter(obj, qn, memoizer);
+
+        trampoline.patchTargets = [
+          { object: memoizerTarget,       name: "value"},
+          { object: obj[VM_OPEN_METHODS], name: qn },
+          { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
+        ];
+
       } else {
-        var trampoline = makeTrampoline(function (fn) {
+        var trampoline = makeTrampoline(function (self, fn) {
           defineReadOnlyProperty(obj, qn, fn);
           defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
         });
