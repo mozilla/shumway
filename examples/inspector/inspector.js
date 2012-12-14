@@ -59,7 +59,7 @@ var BinaryFileReader = (function binaryFileReader() {
 })();
 
 var sysMode = EXECUTION_MODE.INTERPRET;
-var asyncLoading = true;
+var asyncLoading = getQueryVariable("async") === "true";
 
 // avm2 must be global.
 var avm2;
