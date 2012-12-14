@@ -161,7 +161,7 @@
       ((c >= '0') && (c <= '9'));
   }
 
-  function isIdentifier(s) {
+  function isIdentifierName(s) {
     if (!isIdentifierStart(s[0])) {
       return false;
     }
@@ -177,12 +177,12 @@
     var path = Array.prototype.slice.call(arguments, 1);
     path.forEach(function(x) {
       if (typeof x === "string") {
-        if (isIdentifier(x)) {
+        if (isIdentifierName(x)) {
           obj = new MemberExpression(obj, new Identifier(x), false);
         } else {
           obj = new MemberExpression(obj, new Literal(x), true);
         }
-      } else if (x instanceof Literal && isIdentifier(x.value)) {
+      } else if (x instanceof Literal && isIdentifierName(x.value)) {
         obj = new MemberExpression(obj, new Identifier(x.value), false);
       } else {
         obj = new MemberExpression(obj, x, true);
@@ -492,6 +492,9 @@
     var callee = compileValue(this.callee, cx);
     if (this.object) {
       var object = compileValue(this.object, cx);
+      if (!this.callee.variable && this.callee instanceof IR.GetProperty && this.callee.object === this.object) {
+        return call(callee, arguments);
+      }
       return callCall(callee, object, arguments);
     }
     return call(callee, arguments);
@@ -596,6 +599,7 @@
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
+    return name;
   };
 
   function generateSource(node) {

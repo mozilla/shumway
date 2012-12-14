@@ -26,7 +26,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
   var DFG = IR.DFG;
   var CFG = IR.CFG;
 
-  var writer;
+  var writer = new IndentingWriter();
 
   var State = (function() {
     var nextID = 0;
@@ -250,6 +250,8 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
       const domain = new Constant(this.abc.domain);
       const runtime = new Constant(this.abc.runtime);
 
+      var traceBuilder = c4TraceLevel.value > 2;
+
       function unary(operator, argument) {
         var node = new Unary(operator, argument);
         if (peepholeOptimizer) {
@@ -322,41 +324,41 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           var target = stop.target;
           var region = target.region;
           if (region) {
-            writer && writer.enter("Merging into region: " + region + " @ " + target.position + ", block " + target.bid + " {");
-            writer && writer.writeLn("  R " + region.entryState);
-            writer && writer.writeLn("+ I " + stop.state);
+            traceBuilder && writer.enter("Merging into region: " + region + " @ " + target.position + ", block " + target.bid + " {");
+            traceBuilder && writer.writeLn("  R " + region.entryState);
+            traceBuilder && writer.writeLn("+ I " + stop.state);
 
             region.entryState.merge(region, stop.state);
             region.predecessors.push(stop.control);
 
-            writer && writer.writeLn("  = " + region.entryState);
-            writer && writer.leave("}");
+            traceBuilder && writer.writeLn("  = " + region.entryState);
+            traceBuilder && writer.leave("}");
           } else {
             region = target.region = new Region(stop.control);
             if (target.loop) {
-              writer && writer.writeLn("Adding PHIs to loop region.");
+              traceBuilder && writer.writeLn("Adding PHIs to loop region.");
             }
             region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
-            writer && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
+            traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target});
           }
         });
 
-        writer && writer.enter("Worklist: {");
+        traceBuilder && writer.enter("Worklist: {");
         worklist.forEach(function (item) {
-          writer && writer.writeLn(item.region + " " + item.block.bdo + " " + item.region.entryState);
+          traceBuilder && writer.writeLn(item.region + " " + item.block.bdo + " " + item.region.entryState);
         });
-        writer && writer.leave("}");
+        traceBuilder && writer.leave("}");
       }
 
-      writer && writer.writeLn("Done");
+      traceBuilder && writer.writeLn("Done");
 
       function buildNodes(region, block, state) {
         assert (region && block && state);
 
         var typeState = block.entryState;
         if (typeState) {
-          writer && writer.writeLn("Type State: " + typeState);
+          traceBuilder && writer.writeLn("Type State: " + typeState);
           for (var i = 0; i < typeState.local.length; i++) {
             var type = typeState.local[i];
             var local = state.local[i];
@@ -413,6 +415,11 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
 
         function shouldNotFloat(node) {
           node.shouldNotFloat = true;
+          return node;
+        }
+
+        function shouldFloat(node) {
+          node.shouldFloat = true;
           return node;
         }
 
@@ -515,12 +522,13 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
             if (propertyQName) {
               if (getOpenMethod && ti.trait.isMethod()) {
                 propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
+                return shouldFloat(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
               }
               return new IR.GetProperty(region, state.store, object, constant(propertyQName));
             }
           }
           if (hasNumericType(name) || isStringConstant(name)) {
-            return new IR.GetProperty(region, state.store, object, name);
+            return shouldFloat(new IR.GetProperty(region, state.store, object, name));
           }
           return new IR.AVM2GetProperty(region, state.store, object, name);
         }
@@ -669,7 +677,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           }
         }
 
-        if (writer) {
+        if (traceBuilder) {
           writer.writeLn("Processing Region: " + region + ", Block: " + block.bid);
           writer.enter(("> state: " + region.entryState.toString()).padRight(' ', 100));
         }
@@ -1026,11 +1034,11 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           if (op === OP_debug || op === OP_debugfile || op === OP_debugline) {
             continue;
           }
-          if (writer) {
+          if (traceBuilder) {
             writer.writeLn(("state: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(this.abc));
           }
         }
-        if (writer) {
+        if (traceBuilder) {
           writer.leave(("< state: " + state.toString()).padRight(' ', 100));
         }
 
@@ -1084,16 +1092,15 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
       Timer.stop();
     }
 
-    if (c4TraceLevel.value > 0) {
-      writer = new IndentingWriter();
-    }
+    var traceSource = c4TraceLevel.value > 0;
+    var traceIR = c4TraceLevel.value > 1;
 
     Timer.start("IR Builder");
     Node.startNumbering();
     var dfg = new Builder(abc, methodInfo, scope, hasDynamicScope).build();
     Timer.stop();
 
-    writer && dfg.trace(writer);
+    traceIR && dfg.trace(writer);
 
     Timer.start("IR CFG");
     var cfg = dfg.buildCFG();
@@ -1107,9 +1114,9 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
     cfg.scheduleEarly();
     Timer.stop();
 
-    // writer && dfg.trace(writer);
+    // traceIR && dfg.trace(writer);
 
-    writer && cfg.trace(writer);
+    traceIR && cfg.trace(writer);
 
     cfg.verify();
 
@@ -1118,7 +1125,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
     Timer.stop();
 
     var src = Backend.generate(cfg);
-    writer && writer.writeLn(src);
+    traceSource && writer.writeLn(src);
     Node.stopNumbering();
     Timer.stop();
 
