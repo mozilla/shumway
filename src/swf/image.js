@@ -66,7 +66,7 @@ function defineImage(tag, dictionary) {
         '\x00' // interlace method
       ;
 
-      var stream = new Stream(alphaData, 0, width * height, 'C');
+      var stream = createInflatedStream(alphaData, width * height);
       var bytes = stream.bytes;
       var literals = '';
       for (var i = 0; i < height; ++i) {
