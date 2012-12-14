@@ -94,31 +94,38 @@ ChromeActions.prototype = {
 
     var win = this.window;
 
-    var oXHR = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+    var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                          .createInstance(Ci.nsIXMLHttpRequest);
-    oXHR.open("GET", data, true);
-    oXHR.responseType = "arraybuffer";
+    xhr.open("GET", url, true);
+    // arraybuffer is not provide onprogress, fetching as regular chars
+    if ('overrideMimeType' in xhr)
+      xhr.overrideMimeType('text/plain; charset=x-user-defined');
 
     if (this.referer) {
       // Setting the referer uri, some site doing checks if swf is embedded
       // on the original page.
-      oXHR.setRequestHeader("Referer", this.referer);
+      xhr.setRequestHeader("Referer", this.referer);
     }
 
-    oXHR.onreadystatechange = function (oEvent) {
-      if (oXHR.readyState === 4) {
-        if (oXHR.status === 200) {
-          var arrayBuffer = oXHR.response;
-          if (arrayBuffer) {
-            win.postMessage({callback:"loadFile", url: url, array: arrayBuffer}, "*");
-          }
-        } else {
-          win.postMessage({callback:"loadFile", url: url, error: oXHR.statusText}, "*");
+    var lastPosition = 0;
+    xhr.onprogress = function (e) {
+      var position = e.loaded;
+      var chunk = xhr.responseText.substring(lastPosition, position);
+      var data = new Uint8Array(chunk.length);
+      for (var i = 0; i < data.length; i++)
+        data[i] = chunk.charCodeAt(i) & 0xFF;
+      win.postMessage({callback:"loadFile", url: url, array: data}, "*");
+      lastPosition = position;
+    };
+    xhr.onreadystatechange = function(event) {
+      if (xhr.readyState === 4) {
+        if (xhr.status !== 200 && xhr.status !== 0) {
+          win.postMessage({callback:"loadFile", url: url, error: xhr.statusText}, "*");
+          return;
         }
       }
-    };
-
-    oXHR.send(null);
+    }
+    xhr.send(null);
   },
   fallback: function() {
     var obj = this.window.frameElement;
