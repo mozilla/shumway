@@ -166,6 +166,11 @@ var LoaderDefinition = (function () {
           commitData({command: 'init', result: result});
         },
         onprogress: function(result) {
+          commitData({command: 'progress', result: {
+            bytesLoaded: result.bytesLoaded,
+            bytesTotal: result.bytesTotal
+          }});
+
           var tags = result.tags;
           for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
             var tag = tags[tagsProcessed];
@@ -293,7 +298,7 @@ var LoaderDefinition = (function () {
       };
       loadFromWorker(null, subscription);
       self.onmessage = function (evt) {
-        subscription.callback(evt.data);
+        subscription.callback(evt.data.data, evt.data.progress);
       };
     };
 
@@ -315,11 +320,12 @@ var LoaderDefinition = (function () {
     _commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
 
-      loaderInfo.dispatchEvent(new flash.events.Event("progress"));
-
       switch (data.command) {
       case 'init':
         this._init(data.result);
+        break;
+      case 'progress':
+        this._updateProgress(data.result);
         break;
       case 'complete':
         loaderInfo.dispatchEvent(new flash.events.Event("complete"));
@@ -334,6 +340,12 @@ var LoaderDefinition = (function () {
           this._commitFrame(data);
         break;
       }
+    },
+    _updateProgress: function (state) {
+      var loaderInfo = this.contentLoaderInfo;
+      loaderInfo._bytesLoaded = state.bytesLoaded || 0;
+      loaderInfo._bytesTotal = state.bytesTotal || 0;
+      loaderInfo.dispatchEvent(new flash.events.Event("progress"));
     },
     _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
@@ -707,8 +719,8 @@ var LoaderDefinition = (function () {
         };
         if (typeof input === 'object' && 'subscribe' in input) {
           worker.postMessage('pipe:');
-          input.subscribe(function (data) {
-            worker.postMessage(data);
+          input.subscribe(function (data, progressInfo) {
+            worker.postMessage({data: data, progress: progressInfo});
           });
         } else {
           worker.postMessage(input);

@@ -233,13 +233,15 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getBytesLoaded: {
     value: function getBytesLoaded() {
-      throw 'Not implemented: getBytesLoaded';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.bytesLoaded;
     },
     enumerable: false
   },
   getBytesTotal: {
     value: function getBytesTotal() {
-      throw 'Not implemented: getBytesTotal';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.bytesTotal;
     },
     enumerable: false
   },
@@ -269,7 +271,8 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getSWFVersion: {
     value: function getSWFVersion() {
-      throw 'Not implemented: getSWFVersion';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.swfVersion;
     },
     enumerable: false
   },

@@ -114,7 +114,8 @@ ChromeActions.prototype = {
       var data = new Uint8Array(chunk.length);
       for (var i = 0; i < data.length; i++)
         data[i] = chunk.charCodeAt(i) & 0xFF;
-      win.postMessage({callback:"loadFile", url: url, array: data}, "*");
+      win.postMessage({callback:"loadFile", url: url,
+                       array: data, loaded: e.loaded, total: e.total}, "*");
       lastPosition = position;
     };
     xhr.onreadystatechange = function(event) {

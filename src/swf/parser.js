@@ -187,7 +187,7 @@ function CompressedPipe(target, length) {
   };
 }
 CompressedPipe.prototype = {
-  push: function (data) {
+  push: function (data, progressInfo) {
     var buffer = this.buffer;
     if (this.initialize) {
       if (!buffer.push(data, 2))
@@ -217,7 +217,8 @@ CompressedPipe.prototype = {
     buffer.removeHead(stream.pos);
 
     // push data downstream
-    this.target.push(output.data.subarray(lastAvailable, output.available));
+    this.target.push(output.data.subarray(lastAvailable, output.available),
+                     progressInfo);
   }
 };
 
@@ -230,7 +231,7 @@ function BodyParser(swfVersion, length, options) {
   this.options = options;
 }
 BodyParser.prototype = {
-  push: function (data) {
+  push: function (data, progressInfo) {
     if (data.length === 0)
       return;
 
@@ -275,6 +276,11 @@ BodyParser.prototype = {
       stream = buffer.createStream();
     }
 
+    if (progressInfo) {
+      swf.bytesLoaded = progressInfo.loaded;
+      swf.bytesTotal = progressInfo.total;
+    }
+
     var swfVersion = swf.swfVersion;
     readTags(swf, stream, swfVersion, options.onprogress);
 
@@ -291,9 +297,9 @@ BodyParser.prototype = {
 SWF.parseAsync = function swf_parseAsync(options) {
   var buffer = new HeadTailBuffer();
   var pipe = {
-    push: function (data) {
+    push: function (data, progressInfo) {
       if ('target' in this)
-        return this.target.push(data);
+        return this.target.push(data, progressInfo);
 
       if (!buffer.push(data, 8))
         return;
@@ -315,7 +321,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
       if (compressed) {
         target = new CompressedPipe(target, bodyLength);
       }
-      target.push(buffer.getTail(8));
+      target.push(buffer.getTail(8), progressInfo);
       this.target = target;
 
       buffer = null; // cleanup
@@ -332,11 +338,13 @@ SWF.parse = function(buffer, options) {
   var bytes = new Uint8Array(buffer);
   var MAX_BLOCK_SIZE = 32768;
   var position = 0;
+  var progressInfo = { total: bytes.length };
   var sendSwfPortion = function setSwfPortion() {
-    pipe.push(bytes.subarray(position,
-                             position + MAX_BLOCK_SIZE));
-    position += MAX_BLOCK_SIZE;
-    if (position < bytes.length) {
+    var loaded = Math.min(position + MAX_BLOCK_SIZE, bytes.length);
+    progressInfo.loaded = loaded;
+    pipe.push(bytes.subarray(position, loaded), progressInfo);
+    position = loaded;
+    if (loaded < bytes.length) {
       setTimeout(sendSwfPortion, 0);
     }
   };

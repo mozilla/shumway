@@ -40,7 +40,7 @@ var BinaryFileReader = (function binaryFileReader() {
         var data = new Uint8Array(chunk.length);
         for (var i = 0; i < data.length; i++)
           data[i] = chunk.charCodeAt(i) & 0xFF;
-        ondata(data);
+        ondata(data, { loaded: e.loaded, total: e.total });
         lastPosition = position;
       };
       xhr.onreadystatechange = function(event) {
@@ -133,8 +133,8 @@ function executeFile(file, buffer) {
         };
         runSWF(file, subscription);
         new BinaryFileReader(file).readAsync(
-          function onchunk(data) {
-            subscription.callback(data);
+          function onchunk(data, progressInfo) {
+            subscription.callback(data, progressInfo);
           },
           function onerror(error) {
             console.error("Unable to open the file " + file + ": " + error);

@@ -214,14 +214,16 @@
         subscribe: function (callback) {
           this.callback = callback;
           if (this.buffer) {
-            for (var i = 0; i < this.buffer.length; i++)
-              callback(this.buffer[i]);
+            for (var i = 0; i < this.buffer.length; i++) {
+              var data = this.buffer[i];
+              callback(data.array, {loaded: data.loaded, total: data.total});
+            }
             delete this.buffer;
           }
         },
         send: function (data) {
           if (this.callback) {
-            this.callback(data);
+            this.callback(data.array, {loaded: data.loaded, total: data.total});
             return;
           }
           if (!this.buffer)
@@ -240,8 +242,8 @@
               subscription = new Subscription();
               parseSwf(args.url, subscription);
             }
-            subscription.send(args.array);
-            console.log(args.url + ': loaded ' + args.array.length + ' bytes');
+            subscription.send(args);
+            console.log(args.url + ': loaded ' + args.loaded + '/' + args.total);
             break;
         }
       }, true);
