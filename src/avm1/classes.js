@@ -1170,7 +1170,21 @@ defineObjectProperties(Object.prototype, {
     enumerable: false
   },
   addProperty: {
-    value: function addProperty() { throw 'Not implemented: addProperty'; },
+    value: function addProperty(name, getter, setter) {
+      if (typeof name !== 'string' || name === '')
+        return false;
+      if (typeof getter !== 'function')
+        return false;
+      if (typeof setter !== 'function' && setter !== null)
+        return false;
+      Object.defineProperty(this, name, {
+        get: getter,
+        set: setter || void(0),
+        configurable: true,
+        enumerable: true
+      });
+      return true;
+    },
     enumerable: false
   },
   registerClass: {
