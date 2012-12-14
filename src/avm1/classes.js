@@ -301,8 +301,8 @@ AS2MovieClip.prototype = Object.create({}, {
   gotoAndStop: proxyNativeMethod('gotoAndStop'),
   _height: proxyNativeProperty('height'),
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) { },
     enumerable: true
   },
   hitArea: {
@@ -402,8 +402,8 @@ AS2MovieClip.prototype = Object.create({}, {
   play: proxyNativeMethod('play'),
   prevFrame: proxyNativeMethod('prevFrame'),
   _quality: { // @flash.display.Stage
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   removeMovieClip: {
@@ -557,8 +557,8 @@ AS2Button.prototype = Object.create({}, {
     enumerable: true
   },
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) { },
     enumerable: true
   },
   menu: {
@@ -588,8 +588,8 @@ AS2Button.prototype = Object.create({}, {
     enumerable: true
   },
   _quality: {
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   _rotation: { // @flash.display.DisplayObject
@@ -744,8 +744,8 @@ AS2TextField.prototype = Object.create({}, {
     enumerable: true
   },
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) {  },
     enumerable: true
   },
   hscroll: { // @flash.text.TextField
@@ -812,8 +812,8 @@ AS2TextField.prototype = Object.create({}, {
     enumerable: true
   },
   _quality: {
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   _rotation: { // @flash.display.DisplayObject

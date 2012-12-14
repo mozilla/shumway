@@ -34,7 +34,7 @@ function defineImage(tag, dictionary) {
         if (code === 0xd9) {
           i += 2;
           continue;
-        } else {
+        } else if (code < 0xd0 || code > 0xd8) {
           var length = getUint16(imgData, i);
           if (code >= 0xc0 && code <= 0xc3) {
             height = getUint16(imgData, i + 3);
