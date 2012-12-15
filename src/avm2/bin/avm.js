@@ -75,14 +75,17 @@ argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x)
   systemOptions.trace(stdout);
 }});
 
-var file = argumentParser.addArgument("file", "file", "string", {
-  positional: true
-});
-
-var argv;
+var argv = [];
+var files = [];
 
 try {
-  argv = argumentParser.parse(arguments);
+  argumentParser.parse(arguments).filter(function (x) {
+    if (x.endsWith(".abc") || x.endsWith(".swf")) {
+      files.push(x);
+    } else {
+      argv.push(x);
+    }
+  });
 } catch (x) {
   stdout.writeLn(x.message);
   quit();
@@ -111,32 +114,35 @@ if (execute.value) {
   Timer.stop();
 }
 
-if (file.value.endsWith(".swf")) {
-  SWF.parse(snarf(file.value, "binary"), {
-    oncomplete: function(result) {
-      var tags = result.tags;
-      for (var i = 0, n = tags.length; i < n; i++) {
-        var tag = tags[i];
-        if (tag.type === "abc") {
-          processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]"));
-        } else if (tag.type === "symbols") {
-          for (var j = tag.references.length - 1; j >= 0; j--) {
-            if (tag.references[j].id === 0) {
-              avm2.applicationDomain.getProperty(
-                Multiname.fromSimpleName(tag.references[j].name),
-                true, true
-              );
-              break;
+
+files.forEach(function (file) {
+  if (file.endsWith(".swf")) {
+    SWF.parse(snarf(file, "binary"), {
+      oncomplete: function(result) {
+        var tags = result.tags;
+        for (var i = 0, n = tags.length; i < n; i++) {
+          var tag = tags[i];
+          if (tag.type === "abc") {
+            processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]"));
+          } else if (tag.type === "symbols") {
+            for (var j = tag.references.length - 1; j >= 0; j--) {
+              if (tag.references[j].id === 0) {
+                avm2.applicationDomain.getProperty(
+                  Multiname.fromSimpleName(tag.references[j].name),
+                  true, true
+                );
+                break;
+              }
             }
           }
         }
       }
-    }
-  });
-} else {
-  release || assert(file.value.endsWith(".abc"));
-  processAbc(new AbcFile(snarf(file.value, "binary"), file.value));
-}
+    });
+  } else {
+    release || assert(file.endsWith(".abc"));
+    processAbc(new AbcFile(snarf(file, "binary"), file));
+  }
+});
 
 function processAbc(abc) {
   var methodBodies = abc.methodBodies;
