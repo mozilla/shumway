@@ -520,7 +520,7 @@ var c4TraceLevel = compilerOptions.register(new Option("tc4", "tc4", "number", 0
           if (ti) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
-              if (getOpenMethod && ti.trait.isMethod()) {
+              if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
                 propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
                 return shouldFloat(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
               }

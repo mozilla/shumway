@@ -1496,6 +1496,9 @@
         if (isProjection(node, Projection.Type.STORE)) {
           return;
         }
+        if (node instanceof SetProperty) {
+          return;
+        }
         if (node instanceof Value) {
           node.variable = new Variable("l" + node.id);
           debug && writer.writeLn("Allocated: " + node.variable + " to " + node);

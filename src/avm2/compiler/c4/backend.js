@@ -370,11 +370,19 @@
           this.useVariable(node.to);
           from = compileValue(node.from, this);
         } else {
-          to = id(node.variable.name);
-          this.useVariable(node.variable);
+          if (node.variable) {
+            to = id(node.variable.name);
+            this.useVariable(node.variable);
+          } else {
+            to = null;
+          }
           from = compileValue(node, this, true);
         }
-        statement = new ExpressionStatement(assignment(to, from));
+        if (to) {
+          statement = new ExpressionStatement(assignment(to, from));
+        } else {
+          statement = new ExpressionStatement(from);
+        }
       }
       body.push(statement);
     }
@@ -612,6 +620,7 @@
     }
 
     if (cx.variables.length) {
+      Counter.count("Backend: Locals", cx.variables.length);
       var variables = variableDeclaration(cx.variables.map(function (variable) {
         return new VariableDeclarator(id(variable.name));
       }));

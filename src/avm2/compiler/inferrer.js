@@ -245,8 +245,19 @@ var TraitsType = (function () {
     }
   }
 
-  traitsType.prototype.getTrait = function (mn) {
-    return findTraitByName(this.traits, mn);
+  traitsType.prototype.getTrait = function (mn, followSuperType) {
+    if (followSuperType && this.isInstanceInfo()) {
+      var that = this;
+      do {
+        var trait = that.getTrait(mn);
+        if (!trait) {
+          that = that.super();
+        }
+      } while (!trait && that);
+      return trait;
+    } else {
+      return findTraitByName(this.traits, mn);
+    }
   };
 
   traitsType.prototype.getTraitAt = function (i) {
@@ -707,17 +718,7 @@ var Verifier = (function() {
 
       function getProperty(obj, mn) {
         if (obj instanceof TraitsType && mn instanceof Multiname) {
-          do {
-            var trait = obj.getTrait(mn);
-            if (!trait) {
-              if (obj.isInstanceInfo()) {
-                obj = obj.super();
-              } else {
-                break;
-              }
-            }
-          } while (!trait && obj);
-
+          var trait = obj.getTrait(mn, true);
           writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
@@ -729,7 +730,7 @@ var Verifier = (function() {
               return Type.from(trait.methodInfo, abc.domain);
             }
           } else {
-          //  ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+            ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
         }
         return Type.Any;
@@ -737,12 +738,12 @@ var Verifier = (function() {
 
       function setProperty(obj, mn) {
         if (obj instanceof TraitsType && mn instanceof Multiname) {
-          var trait = obj.getTrait(mn);
-          writer && writer.debugLn("setProperty() -> " + trait);
+          var trait = obj.getTrait(mn, true);
+          writer && writer.debugLn("setProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
           } else {
-          //  ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+            ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
         }
       }
