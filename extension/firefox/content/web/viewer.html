@@ -231,10 +231,10 @@
       function runViewer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
         movieUrl = flashParams.url;
-        var movieArgs = flashParams.arguments;
+        var movieParams = flashParams.params;
         var isOverlay = flashParams.isOverlay;
         pauseExecution = flashParams.isPausedAtStart;
-        console.log("url=" + movieUrl + ";params=" + uneval(movieArgs));
+        console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
         FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0});
         if (isOverlay) {
           var fallbackDiv = document.getElementById('fallback');

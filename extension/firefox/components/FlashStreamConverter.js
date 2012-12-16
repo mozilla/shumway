@@ -78,7 +78,7 @@ ChromeActions.prototype = {
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
-      arguments: this.params,
+      params: this.params,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart
      });
