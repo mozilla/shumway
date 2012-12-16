@@ -231,7 +231,7 @@
       function runViewer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
         movieUrl = flashParams.url;
-        var movieParams = flashParams.params;
+        movieParams = flashParams.params;
         var isOverlay = flashParams.isOverlay;
         pauseExecution = flashParams.isPausedAtStart;
         console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
@@ -274,7 +274,7 @@
         }
       };
 
-      var subscription = null, movieUrl;
+      var subscription = null, movieUrl, movieParams;
 
       addEventListener("message", function handlerMessage(e) {
         var args = e.data;
@@ -289,7 +289,7 @@
           switch (args.topic) {
           case "open":
             subscription = new Subscription();
-            parseSwf(movieUrl, subscription);
+            parseSwf(movieUrl, movieParams, subscription);
             break;
           case "progress":
             subscription.send(args);
@@ -337,11 +337,11 @@
         }
       };
 
-      function parseSwf(url, file) {
+      function parseSwf(url, params, file) {
         console.log("Parsing " + url + "...");
         function terminate() {}
         createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, onBeforeFrame: frame });
+          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
         });
       }
 
