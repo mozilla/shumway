@@ -64,6 +64,24 @@ function combineUrl(baseUrl, url) {
   }
 }
 
+function parseQueryString(qs) {
+  if (!qs)
+    return {};
+
+  if (qs.charAt(0) == '?')
+    qs = qs.slice(1);
+
+  var values = qs.split('&');
+  var obj = {};
+  for (var i = 0; i < values.length; i++) {
+    var kv = values[i].split('=');
+    var key = kv[0], value = kv[1];
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
 // All the priviledged actions.
 function ChromeActions(url, params, referer, window) {
   this.url = url;
@@ -248,10 +266,8 @@ FlashStreamConverterBase.prototype = {
         tagName = element.nodeName;
       }
       if (tagName == 'EMBED') {
-        for (var i = 0; i < element.attributes.length; ++i) {
-          params[element.attributes[i].localName] = element.attributes[i].value;
-        }
-        url = params.src;
+        params = parseQueryString(element.getAttribute('flashvars'));
+        url = element.getAttribute('src');
       } else {
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
