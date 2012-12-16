@@ -17,6 +17,7 @@ var LoaderInfoDefinition = (function () {
       this._url = null;
       this._width = null;
     },
+
     __glue__: {
       native: {
         static: {
@@ -26,8 +27,7 @@ var LoaderInfoDefinition = (function () {
         },
         instance: {
           _getArgs: function _getArgs() { // (void) -> Object
-            somewhatImplemented("LoaderInfo._getArgs");
-            return [];
+            return this._getArgs();
           },
           _getUncaughtErrorEvents: function _getUncaughtErrorEvents() { // (void) -> UncaughtErrorEvents
             notImplemented("LoaderInfo._getUncaughtErrorEvents");
@@ -157,7 +157,97 @@ var LoaderInfoDefinition = (function () {
           "bytesTotal",
           "bytesLoaded"
         ])
+
+    get actionScriptVersion() {
+      return this._actionScriptVersion;
+    },
+    get applicationDomain() {
+      notImplemented();
+    },
+    get backgroundColor() {
+      return this._backgroundColor;
+    },
+    get bytes() {
+      return this._bytes;
+    },
+    get bytesLoaded() {
+      return this._bytesLoaded;
+    },
+    get bytesTotal() {
+      return this._bytesTotal;
+    },
+    get childAllowsParent() {
+      notImplemented();
+    },
+    get childSandboxBridge() {
+      notImplemented();
+    },
+    set childSandboxBridge(val) {
+      notImplemented();
+    },
+    get content() {
+      return this._content;
+    },
+    get contentType() {
+      return this._contentType;
+    },
+    get frameRate() {
+      return this._frameRate;
+    },
+    get height() {
+      return this._height;
+    },
+    get isURLInaccessible() {
+      notImplemented();
+    },
+    get loader() {
+      return this._loader;
+    },
+    get loaderURL() {
+      return this._loaderURL;
+    },
+    get parentAllowsChild() {
+      notImplemented();
+    },
+    get parentSandboxBridge() {
+      notImplemented();
+    },
+    set parentSandboxBridge(val) {
+      notImplemented();
+    },
+    get sameDomain() {
+      notImplemented();
+    },
+    get sharedEvents() {
+      notImplemented();
+    },
+    get swfVersion() {
+      if (!this._swfVersion)
+        throw Error();
+
+      return this._swfVersion;
+    },
+    get uncaughtErrorEvents() {
+      notImplemented();
+    },
+    get url() {
+      return this._url;
+    },
+    get width() {
+      return this._width;
+    },
+
+    getLoaderInfoByDefinition: function () {
+      notImplemented();
+    },
+
+    _getArgs: function() {
+      var params = this._parameters;
+      var mangled = {};
+      for (var k in params) {
+        mangled[Multiname.getPublicQualifiedName(k)] = params[k];
       }
+      return mangled;
     }
   };
 }).call(this);
