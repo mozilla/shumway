@@ -18,7 +18,7 @@ default:
 hello-world:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/hello-world.as
 	$(JSSHELL) avm.js -x ../tests/hello-world.abc
-	$(TEST_CMD) -i ../tests/hello-world.abc -c icov
+	$(TEST_CMD) -i ../tests/hello-world.abc -c icv
 
 test-pypy:
 	$(TEST_CMD) -i pypy.i.passed -c ic
@@ -33,10 +33,10 @@ test-interpreter-all:
 	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c i -nm
 
 test-all:
-	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icov -nm
+	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
 
 test-regress:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py reg
-	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icov
+	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icv
 
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all
