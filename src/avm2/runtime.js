@@ -3,10 +3,17 @@ var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
 var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
-var functionBreak = compilerOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
-var compileOnly = compilerOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
-var compileUntil = compilerOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
+var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
+var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
+var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
+var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+
+var enableInlineCaching = runtimeOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
+var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
+
+var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
+var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
 
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
@@ -30,6 +37,9 @@ var VM_NATIVE_BUILTIN_SURROGATES = [
 ];
 
 var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
+
+var SAVED_SCOPE_NAME = "$SS";
+var PARAMETER_PREFIX = "p";
 
 var $M = [];
 
@@ -775,15 +785,24 @@ var Runtime = (function () {
   var totalFunctionCount = 0;
   var compiledFunctionCount = 0;
 
+  /**
+   * Checks if the specified method should be compiled. For now we just ignore very large methods.
+   */
+  function shouldCompile(mi) {
+    if (mi.hasExceptions() && !compilerEnableExceptions.value) {
+      return false;
+    } else if (mi.code.length > compilerMaximumMethodSize.value) {
+      return false;
+    }
+    return true;
+  }
+
+
   function runtime(abc) {
     this.abc = abc;
     this.domain = abc.domain;
     if (this.domain.mode !== EXECUTION_MODE.INTERPRET) {
-      if (enableC4.value) {
-        this.compiler = new C4Compiler(abc);
-      } else {
-        this.compiler = new Compiler(abc);
-      }
+      this.compiler = new C4Compiler(abc);
     }
     this.interpreter = new Interpreter(abc);
 
@@ -1544,4 +1563,175 @@ var Runtime = (function () {
   };
 
   return runtime;
+})();
+
+/**
+ * Inline caching is used to optimize property access. In AS3, the property access expression |o.p| may be compiled as
+ * |o.{ns0,ns1,ns2}::p| where {ns0, ns1, ns2} is a set of currently open namespaces. Usually, if we can't determine
+ * the type of |o| then we can't resolve the multiname to a qname and we must emit a call to a slow |getProperty(o,
+ * {ns0,ns1,ns2}::p)| function which performs a linear search over all qnames in the multiname until one is found.
+ *
+ * However, if we can prove that the name |p| only ever appears in the |ns1| namespace in any of the "currently" defined
+ * traits, then we can resolve the multiname to |ns1$p| since it can't possibly resolve to any other namespace. Instead
+ * of the slow |getProperty| call, we could just emit |o.ns1$p|. Unfortunately, this is not sound because another .swf
+ * file may be loaded that defines a trait |p| in the namespace |ns0| which would invalidate our previous assumption. To
+ * fix this, we instead generate a getter stub |get = function (o) { return o.ns1$p; }| that returns the value of |o.ns1$p|.
+ * We then keep track of this stub and if at a later time our assumption is invalidated we patch it with another stub
+ * that also checks the |ns0| namespace |get = function (o) { return o.ns1$p ? o.ns1$p : (o.ns0$p ? o.ns0$p : undefined); }|.
+ *
+ * Because the JS engine inlines short functions, we can expect that the getters / setter functions are inlined and
+ * guarded with PICs, so in a sense we're implementing AS3 PICs on top of JS PICs.
+ *
+ */
+var InlineCacheManager = (function () {
+  var writer = new IndentingWriter();
+
+  var inlineCacheSets = new Map();
+
+  var InlineCacheSet = (function () {
+    var inlineCacheCounter = 0;
+    function inlineCacheSet(name) {
+      this.name = name;
+      this.namespaces = [];
+      this.dirty = true;
+      this.inlineCaches = [];
+    }
+    inlineCacheSet.prototype.update = function (namespace) {
+      release || assert(namespace instanceof Namespace);
+      var foundNewNamespace = true;
+      var namespaces = this.namespaces;
+      for (var i = 0; i < namespaces.length; i++) {
+        if (namespaces[i][0].isEqualTo(namespace)) {
+          namespaces[i][1] ++;
+          foundNewNamespace = false;
+          break;
+        }
+      }
+      if (foundNewNamespace) {
+        this.namespaces.push([namespace, 1]);
+        release || assert(this.dirty, "TODO: Invalidate inline caches.");
+      }
+    };
+    /**
+     * Gets the intersection of the specified multiname's qnames and the current qnames for this name.
+     */
+    inlineCacheSet.prototype.getIntersection = function (mn) {
+      var namespaces = this.namespaces.sort(function (a, b) {
+        return a[1] - b[1];
+      });
+      var names = [];
+      for (var i = 0; i < namespaces.length; i++) {
+        var ns = namespaces[i][0];
+        for (var j = 0; j < mn.namespaces.length; j++) {
+          if (mn.namespaces[j].isEqualTo(ns)) {
+            if (!ns.isDynamic()) {
+              names.push(new Multiname([ns], mn.name));
+            }
+            break;
+          }
+        }
+      }
+      // The public dynamic namespace needs to be last.
+      names.push(Multiname.getPublicQualifiedName(mn.name));
+      return names;
+    };
+    inlineCacheSet.prototype.create = function (mn, isSetter) {
+      this.dirty = false;
+      var qns = this.getIntersection(mn);
+      qns.reverse();
+      var src;
+      for (var i = 0; i < qns.length; i++) {
+        var qn = Multiname.getQualifiedName(qns[i]);
+        if (isSetter) {
+          src = i === 0 ? 'o.' + qn + ' = v' :
+            '(o.' + qn + ' !== undefined || ("' + qn + '" in o)) ? o.' + qn + ' = v : (' + src + ')';
+        } else {
+          src = i === 0 ? 'o.' + qn :
+            '((x = o.' + qn + ') !== undefined || ("' + qn + '" in o)) ? x : (' + src + ')';
+        }
+      }
+      release || assert(qns.length);
+      var icName = (isSetter ? INLINE_CACHE_SETTER_PREFIX : INLINE_CACHE_GETTER_PREFIX) + (inlineCacheCounter ++);
+      if (isSetter) {
+        src = 'function ' + icName + '(o, v) { ' + src + '; }';
+      } else {
+        src = 'function ' + icName + '(o) { ' + (qns.length > 1 ? 'var x; ' : '') + 'return ' + src + '; }';
+      }
+      if (traceInlineCaching.value) {
+        writer.writeLn("IC Stub: " + src);
+      }
+      jsGlobal[icName] = eval('[' + src + '][0]');
+      this.inlineCaches.push(icName);
+      return icName;
+    };
+    return inlineCacheSet;
+  })();
+
+  function updateTraits(traits) {
+    traits.forEach(function (trait) {
+      var name = trait.name.getName();
+      var namespace = trait.name.getNamespace();
+      if (!inlineCacheSets.has(name)) {
+        inlineCacheSets.set(name, new InlineCacheSet(name));
+      }
+      var inlineCacheSet = inlineCacheSets.get(name);
+      release || assert(inlineCacheSet, name);
+      inlineCacheSet.update(namespace);
+    });
+  }
+
+  return {
+    createInlineCache: function createInlineCache(mn, isSetter) {
+      release || assert(mn instanceof Multiname);
+      release || assert(!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
+      release || assert(mn.namespaces.length > 1);
+      var cache = mn.inlineCache || (mn.inlineCache = {});
+      var cacheName = isSetter ? "setter" : "getter";
+      if (cache[cacheName]) {
+        return cache[cacheName];
+      }
+      var name = mn.getName();
+      if (inlineCacheSets.has(name)) {
+        var inlineCacheSet = inlineCacheSets.get(name);
+        if (inlineCacheSet) {
+          Counter.count("Compiler: Inline Cache")
+          return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
+        }
+      }
+      return undefined;
+    },
+    /**
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     */
+    updateInlineCaches: function updateInlineCaches(abc) {
+      if (!enableInlineCaching.value) {
+        return;
+      }
+      /* Collect traits from script, classes, instances and method activations. */
+      abc.scripts.forEach(function (si) {
+        updateTraits(si.traits);
+      });
+      abc.classes.forEach(function (ci) {
+        updateTraits(ci.traits);
+        updateTraits(ci.instanceInfo.traits);
+      });
+      abc.methods.forEach(function (mi) {
+        if (mi.traits) {
+          updateTraits(mi.traits);
+        }
+      });
+      /* Trace stats. */
+      if (traceInlineCaching.value) {
+        for (var k in inlineCacheSets) {
+          if (inlineCacheSets.has(k)) {
+            var set = inlineCacheSets.get(k);
+            writer.writeLn("IC Set: " + k + " - " + set.namespaces.map(function (x) {
+              return x[0].qualifiedName + ": " + x[1];
+            }).join(", "));
+          }
+        }
+      }
+    }
+  };
+
 })();
