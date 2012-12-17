@@ -484,7 +484,7 @@ function interpretActions(actionsData, scopeContainer,
               value = constantPool[stream.readUI16()];
               break;
             default:
-              throw 'Uknown value type: ' + type;
+              throw 'Unknown value type: ' + type;
           }
           stack.push(value);
         }
