@@ -38,7 +38,7 @@ function defineBitmap(tag) {
     var colorTableSize = tag.colorTableSize + 1;
     var paletteSize = colorTableSize * (tag.hasAlpha ? 4 : 3);
     var datalen = paletteSize + (bytesPerLine * height);
-    var stream = new Stream(bmpData, 0, datalen, 'C');
+    var stream = createInflatedStream(bmpData, datalen);
     var bytes = stream.bytes;
     var pos = 0;
 
@@ -74,7 +74,7 @@ function defineBitmap(tag) {
   case FORMAT_15BPP:
     var colorType = '\x02';
     var bytesPerLine = ((width * 2) + 3) & ~3;
-    var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
+    var stream = createInflatedStream(bmpData, bytesPerLine * height);
     var pos = 0;
     for (var y = 0; y < height; ++y) {
       literals += '\x00';
@@ -103,7 +103,7 @@ function defineBitmap(tag) {
       var pxToString = rgbToString;
     }
     var bytesPerLine = width * 4;
-    var stream = new Stream(bmpData, 0, bytesPerLine * height, 'C');
+    var stream = createInflatedStream(bmpData, bytesPerLine * height);
     var bytes = stream.bytes;
     var pos = 0;
     for (var y = 0; y < height; ++y) {

@@ -233,13 +233,15 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getBytesLoaded: {
     value: function getBytesLoaded() {
-      throw 'Not implemented: getBytesLoaded';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.bytesLoaded;
     },
     enumerable: false
   },
   getBytesTotal: {
     value: function getBytesTotal() {
-      throw 'Not implemented: getBytesTotal';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.bytesTotal;
     },
     enumerable: false
   },
@@ -269,7 +271,8 @@ AS2MovieClip.prototype = Object.create({}, {
   },
   getSWFVersion: {
     value: function getSWFVersion() {
-      throw 'Not implemented: getSWFVersion';
+      var loaderInfo = this.$nativeObject.loaderInfo;
+      return loaderInfo.swfVersion;
     },
     enumerable: false
   },
@@ -298,8 +301,8 @@ AS2MovieClip.prototype = Object.create({}, {
   gotoAndStop: proxyNativeMethod('gotoAndStop'),
   _height: proxyNativeProperty('height'),
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) { },
     enumerable: true
   },
   hitArea: {
@@ -399,8 +402,8 @@ AS2MovieClip.prototype = Object.create({}, {
   play: proxyNativeMethod('play'),
   prevFrame: proxyNativeMethod('prevFrame'),
   _quality: { // @flash.display.Stage
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   removeMovieClip: {
@@ -554,8 +557,8 @@ AS2Button.prototype = Object.create({}, {
     enumerable: true
   },
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) { },
     enumerable: true
   },
   menu: {
@@ -585,8 +588,8 @@ AS2Button.prototype = Object.create({}, {
     enumerable: true
   },
   _quality: {
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   _rotation: { // @flash.display.DisplayObject
@@ -741,8 +744,8 @@ AS2TextField.prototype = Object.create({}, {
     enumerable: true
   },
   _highquality: {
-    get: function get$_highquality() { throw 'Not implemented: get$_highquality'; },
-    set: function set$_highquality(value) { throw 'Not implemented: set$_highquality'; },
+    get: function get$_highquality() { return 1; },
+    set: function set$_highquality(value) {  },
     enumerable: true
   },
   hscroll: { // @flash.text.TextField
@@ -809,8 +812,8 @@ AS2TextField.prototype = Object.create({}, {
     enumerable: true
   },
   _quality: {
-    get: function get$_quality() { throw 'Not implemented: get$_quality'; },
-    set: function set$_quality(value) { throw 'Not implemented: set$_quality'; },
+    get: function get$_quality() { return 'HIGH'; },
+    set: function set$_quality(value) { },
     enumerable: true
   },
   _rotation: { // @flash.display.DisplayObject
@@ -1167,7 +1170,21 @@ defineObjectProperties(Object.prototype, {
     enumerable: false
   },
   addProperty: {
-    value: function addProperty() { throw 'Not implemented: addProperty'; },
+    value: function addProperty(name, getter, setter) {
+      if (typeof name !== 'string' || name === '')
+        return false;
+      if (typeof getter !== 'function')
+        return false;
+      if (typeof setter !== 'function' && setter !== null)
+        return false;
+      Object.defineProperty(this, name, {
+        get: getter,
+        set: setter || void(0),
+        configurable: true,
+        enumerable: true
+      });
+      return true;
+    },
     enumerable: false
   },
   registerClass: {

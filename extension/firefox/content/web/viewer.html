@@ -209,11 +209,41 @@
         }
       }
 
+      function Subscription() {}
+      Subscription.prototype = {
+        subscribe: function (callback) {
+          this.callback = callback;
+          if (this.buffer) {
+            for (var i = 0; i < this.buffer.length; i++) {
+              var data = this.buffer[i];
+              callback(data.array, {loaded: data.loaded, total: data.total});
+            }
+            delete this.buffer;
+          }
+        },
+        send: function (data) {
+          if (this.callback) {
+            this.callback(data.array, {loaded: data.loaded, total: data.total});
+            return;
+          }
+          if (!this.buffer)
+            this.buffer = [];
+          this.buffer.push(data);
+        }
+      };
+
+      var subscription = null;
+
       addEventListener("message", function handlerMessage(e) {
         var args = e.data;
         switch (args.callback) {
           case "loadFile":
-            parseSwf(args.url, args.array);
+            if (!subscription) {
+              subscription = new Subscription();
+              parseSwf(args.url, subscription);
+            }
+            subscription.send(args);
+            console.log(args.url + ': loaded ' + args.loaded + '/' + args.total);
             break;
         }
       }, true);

@@ -18,6 +18,8 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js build/src/flash/display/
 	mkdir build/src/flash/events
 	cp $(SHUMWAY_ROOT)/src/flash/events/*.js build/src/flash/events/
+	mkdir build/src/flash/external
+	cp $(SHUMWAY_ROOT)/src/flash/external/*.js build/src/flash/external/
 	mkdir build/src/flash/geom
 	cp $(SHUMWAY_ROOT)/src/flash/geom/*.js build/src/flash/geom/
 	mkdir build/src/flash/media

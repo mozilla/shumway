@@ -34,7 +34,7 @@ function defineImage(tag, dictionary) {
         if (code === 0xd9) {
           i += 2;
           continue;
-        } else {
+        } else if (code < 0xd0 || code > 0xd8) {
           var length = getUint16(imgData, i);
           if (code >= 0xc0 && code <= 0xc3) {
             height = getUint16(imgData, i + 3);
@@ -66,7 +66,7 @@ function defineImage(tag, dictionary) {
         '\x00' // interlace method
       ;
 
-      var stream = new Stream(alphaData, 0, width * height, 'C');
+      var stream = createInflatedStream(alphaData, width * height);
       var bytes = stream.bytes;
       var literals = '';
       for (var i = 0; i < height; ++i) {
