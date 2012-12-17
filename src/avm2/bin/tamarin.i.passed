@@ -1121,11 +1121,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_6/Regress/regress-475469.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_6/Regress/regress-372565.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/versioning/bugcompat_support/bugcompat_leaf.abc
-../tests/tamarin/Assert.abc 
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc # Working After: 4345a8118649da174f3afee7fe92a0dccb010fde #
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Regress/regress-98901.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Regress/regress-275378.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Regress/regress-146596.abc
@@ -1176,11 +1171,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Vector/initializerLargeVector.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/abcasm/bug_554915b.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/abcasm/bug_554915a.abc
-../tests/tamarin/Assert.abc 
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc # Working After: 859ad926ccdf0fd878c6d8246f414a5c1613cea7 #
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/RegExp/eproperties_002.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/Date/e15_9_5_36_3.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/Date/e15_9_5_36_2.abc
@@ -1223,7 +1213,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/Array/e15_4_4_10.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Classes/Ext/PubExtDefaultClass.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Classes/Ext/FinExtDynamicClass.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Scope/scope-003.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Regress/regress-417893.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_5/Regress/regress-360969-03.abc
@@ -1277,11 +1266,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Expressions/deleteOperator/deleteFixedVar.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Expressions/deleteOperator/deleteFixedFunction.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Function/bug152222.abc
-../tests/tamarin/Assert.abc 
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc # Working After Output Patching                           #
-../tests/tamarin/Assert.abc ###########################################################
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/exp.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/random.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/cos.abc
@@ -1298,12 +1282,10 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/tan.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/sin.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Number/log.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_6/Regress/regress-351795.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/String/e15_5_4_7_3_rt.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/String/e15_5_4_8_2.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/String/e15_5_4_5_6_rt.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Vector/join.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Types/Conversions/ImplicitConversionsUndefined.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Statements/Exceptions/NestedTryWithMultipleCatchInsideTryWithoutMatchingCatch.abc

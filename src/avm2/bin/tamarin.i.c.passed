@@ -1043,7 +1043,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/AbcDecoder/impClass.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/AbcDecoder/extClass.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/AbcDecoder/accessSpecifiers.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Classes/Ext/FinExtDynamicClass.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Classes/Ext/PubExtDefaultClass.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/Array/e15_4_4_10.abc
@@ -1137,7 +1136,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Statements/Exceptions/UserDefinedErrorsPackage.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Statements/Exceptions/TryCatchBlockPackage.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Expressions/QualifiedReferences/AssignmentExp.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Vector/initializerLargeVector.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/FunctionAccessors/AccessorSpray.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/ErrorObject/errorobject.abc
@@ -1188,7 +1186,6 @@
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/Super/SuperProps.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/const/ConstVarInsideGlobalFunction5_rt.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/as3/Definitions/const/ConstVarInsideClassFunction2_rt.abc
-../tests/tamarin/Assert.abc 
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/String/e15_5_4_5_6_rt.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/ecma3/String/e15_5_4_8_2.abc
 ../tests/tamarin/Assert.abc ../tests/tamarin/spidermonkey/js1_6/Regress/regress-351795.abc
