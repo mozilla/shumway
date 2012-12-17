@@ -75,15 +75,21 @@ argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x)
   systemOptions.trace(stdout);
 }});
 
+
 var argv = [];
 var files = [];
+
+var rootPath = "";
+argumentParser.addArgument("r", "rootPath", "string", {parse: function (x) {
+  rootPath = x;
+}});
 
 try {
   argumentParser.parse(arguments).filter(function (x) {
     if (x.endsWith(".abc") || x.endsWith(".swf")) {
-      files.push(x);
+      files.push(rootPath + x);
     } else {
-      argv.push(x);
+      argv.push(rootPath + x);
     }
   });
 } catch (x) {
@@ -113,7 +119,6 @@ if (execute.value) {
   avm2.systemDomain.executeAbc(grabABC("avmplus"));
   Timer.stop();
 }
-
 
 files.forEach(function (file) {
   if (file.endsWith(".swf")) {

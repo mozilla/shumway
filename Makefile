@@ -27,6 +27,9 @@ install-utils: check-system
 build-tamarin-tests:
 	make -C utils/ build-tamarin-tests
 
+run-tamarin-tests:
+	make -C utils/ run-tamarin-tests
+
 build-playerglobal:
 	make -C utils/ build-playerglobal
 

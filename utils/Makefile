@@ -42,11 +42,12 @@ SCALA_URL = http://www.scala-lang.org/sites/default/files/linuxsoft_archives/dow
 SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
 APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
+AVM2_HOME = ../src/avm2
 
 default:
 	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
 	@echo "           install-swfdec|install-node-modules|"
-	@echo "           build-tamarin-tests|build-playerglobal|clean]"
+	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
 install-asc: $(ASC_JAR)
 
@@ -68,6 +69,10 @@ $(TAMARIN_HOME)/configure.py:
 build-tamarin-tests:
 	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
 	cp -R $(TAMARIN_HOME)/test/acceptance ../src/avm2/tests/tamarin
+
+run-tamarin-tests:
+	export TAMARIN_HOME_ABS=`cd "$(TAMARIN_HOME)"; pwd`
+	cd $(TAMARIN_HOME)/test/acceptance; python runtests.py --avm 'cd ../../../$(AVM2_HOME)/bin; js -W avm.js -x -r $(TAMARIN_HOME_ABS)/test/acceptance/'
 
 install-js:
 	-rm -rf $(JSSHELL_HOME)
