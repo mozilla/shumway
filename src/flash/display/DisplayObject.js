@@ -53,8 +53,14 @@ var DisplayObjectDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
+        this._animated = s.animated || false;
         this._bbox = s.bbox || null;
         this._children = s.children || [];
+        this._owned = s.owned || false;
+        this._name = s.name || null;
+        this._parent = s.parent || null;
+        this._root = s.root || null;
+        this._stage = s.stage || null;
       }
 
       this._updateCurrentTransform();

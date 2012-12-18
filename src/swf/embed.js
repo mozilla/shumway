@@ -34,11 +34,6 @@ SWF.embed = function(file, container, options) {
   }
 
   loaderInfo.addEventListener('init', function () {
-    stage._frameRate = loaderInfo._frameRate;
-    stage._loaderInfo = loaderInfo;
-    stage._stageHeight = loaderInfo._height;
-    stage._stageWidth = loaderInfo._width;
-
     if (container.clientHeight) {
       fitCanvas(container, canvas);
       window.addEventListener('resize', function () {

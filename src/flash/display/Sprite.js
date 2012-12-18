@@ -12,21 +12,66 @@ var SpriteDefinition = (function () {
         this._graphics = new flash.display.Graphics;
       }
     },
-
     _constructChildren: function () {
+      var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
+
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
         var symbolPromise = children[i];
-        var symbolInfo = symbolPromise.value;
-        var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-          avm2.systemDomain.getClass(symbolInfo.className) :
-          avm2.applicationDomain.getClass(symbolInfo.className);
-        var child = symbolClass.createAsSymbol(symbolInfo.props);
-        symbolClass.instance.call(child);
-        children[i] = child;
-        child._owned = false;
-        child._parent = this;
+
+        if (!DisplayObjectClass.isInstanceOf(symbolPromise)) {
+          var symbolInfo = symbolPromise.value;
+          var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+            avm2.systemDomain.getClass(symbolInfo.className) :
+            avm2.applicationDomain.getClass(symbolInfo.className);
+
+          var props = Object.create(symbolInfo.props);
+          props.parent = this;
+
+          var child = symbolClass.createAsSymbol(props);
+          symbolClass.instance.call(child);
+
+          children[i] = child;
+        }
       }
+    },
+    _constructSymbol: function(symbolId, name) {
+      var loader = this.loaderInfo._loader;
+      var symbolPromise = loader._dictionary[symbolId];
+      var symbolInfo = symbolPromise.value;
+      // HACK application domain may have the symbol class --
+      // checking which domain has a symbol class
+      var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+        avm2.systemDomain.getClass(symbolInfo.className) :
+        avm2.applicationDomain.getClass(symbolInfo.className);
+
+      var props = Object.create(symbolInfo.props);
+      props.animated = true;
+      props.owned = true;
+      props.parent = this;
+      props.name = name || null;
+
+      var instance = symbolClass.createAsSymbol(props);
+
+      // If we bound the instance to a name, set it.
+      //
+      // XXX: I think this always has to be a trait.
+      if (name)
+        this[Multiname.getPublicQualifiedName(name)] = instance;
+
+      // Call the constructor now that we've made the symbol instance,
+      // instantiated all its children, and set the display list-specific
+      // properties.
+      //
+      // XXX: I think we're supposed to throw if the symbol class
+      // constructor is not nullary.
+      symbolClass.instance.call(instance);
+
+      instance._markAsDirty();
+
+      instance.dispatchEvent(new flash.events.Event("load"));
+
+      return instance;
     },
 
     get buttonMode() {

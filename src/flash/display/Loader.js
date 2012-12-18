@@ -413,38 +413,57 @@ var LoaderDefinition = (function () {
           }
         }
 
+        framePromise.resolve(displayList);
+
         var root = loader._content;
         var needRootObject = !root;
+
         if (needRootObject) {
           var stage = loader._stage;
-          var rootClass = avm2.applicationDomain.getClass(val.className);
 
-          // FIXME constructor order
-          root = rootClass.createInstance();
-          root._framesLoaded = 0;
-          root._parent = stage;
-          root._root = root;
-          root._stage = stage;
-          root._timeline = timeline;
-          root._totalFrames = val.props.totalFrames;
+          stage._frameRate = loaderInfo._frameRate;
+          stage._loaderInfo = loaderInfo;
+          stage._stageHeight = loaderInfo._height;
+          stage._stageWidth = loaderInfo._width;
+
+          var rootClass = avm2.applicationDomain.getClass(val.className);
+          var root = rootClass.createAsSymbol({
+            framesLoaded: 1,
+            parent: stage,
+            timeline: timeline,
+            stage: stage
+          });
+
+          stage._root = root;
+
+          if (labelName) {
+            var frameLabels = { };
+            frameLabels[labelName] = {
+              __class__: 'flash.display.FrameLabel',
+              frame: frameNum,
+              name: labelName
+            };
+            root.symbol.frameLabels = frameLabels;
+          }
+
+          rootClass.instance.call(root);
 
           loader._content = root;
+        } else {
+          root._framesLoaded += frame.repeat;
+
+          if (labelName && root._frameLabels) {
+            root._frameLabels[labelName] = {
+              __class__: 'flash.display.FrameLabel',
+              frame: frameNum,
+              name: labelName
+            };
+          }
         }
 
         if (!loader._isAvm2Enabled) {
           loader._initAvm1Bindings(root, needRootObject, frameNum,
                                    actionBlocks, initActionBlocks, exports);
-        }
-
-        framePromise.resolve(displayList);
-        root._framesLoaded += frame.repeat;
-
-        if (labelName && root._frameLabels) {
-          root._frameLabels[labelName] = {
-            __class__: 'flash.display.FrameLabel',
-            frame: frameNum,
-            name: labelName
-          };
         }
 
         if (frameNum === 1)
