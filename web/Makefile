@@ -40,6 +40,8 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/src/avm2/*.js build/src/avm2/
 	mkdir build/src/avm2/compiler
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/*.js build/src/avm2/compiler/
+	mkdir build/src/avm2/compiler/c4
+	cp $(SHUMWAY_ROOT)/src/avm2/compiler/c4/*.js build/src/avm2/compiler/c4/
 	mkdir -p build/src/avm2/compiler/lljs/src
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/lljs/src/*.js build/src/avm2/compiler/lljs/src/
 	mkdir -p build/src/avm2/generated/builtin

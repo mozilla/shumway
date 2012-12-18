@@ -1,6 +1,5 @@
 enableVerifier.value = true;
-enableOpt.value = true;
-enableInlineCaching.value = true;
+enableC4.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";

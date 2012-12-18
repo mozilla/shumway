@@ -1,7 +1,7 @@
 # Just builds a ff extension
 
-VERSION_BASELINE=c9d3aa7c886ce53648082
-VERSION=0.3.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=93eb1de8817e554cb8076
+VERSION=0.4.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 
 build: clean
 	# Coping extension files
@@ -42,6 +42,8 @@ build: clean
 	cp ../../src/avm2/*.js build/content/avm2/
 	mkdir build/content/avm2/compiler
 	cp ../../src/avm2/compiler/*.js build/content/avm2/compiler/
+	mkdir build/content/avm2/compiler/c4
+	cp ../../src/avm2/compiler/c4/*.js build/content/avm2/compiler/c4/
 	mkdir -p build/content/avm2/compiler/lljs/src
 	cp ../../src/avm2/compiler/lljs/src/*.js build/content/avm2/compiler/lljs/src/
 	mkdir -p build/content/avm2/generated/builtin
