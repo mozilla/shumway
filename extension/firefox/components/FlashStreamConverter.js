@@ -81,14 +81,32 @@ ChromeActions.prototype = {
       isOverlay: this.overlay
      });
   },
-  loadFile: function loadFile(data) {
-    var url = data;
+  _canDownloadFile: function canDownloadFile(url, checkPolicyFile) {
+    // TODO flash cross-origin request
+    if (url === this.url)
+      return true; // allow downloading for the original file
 
-    if (url != this.url) {
-      // TODO flash cross-origin request
+    // let's allow downloading from http(s) and same origin
+    var basePrefix = /^(https?:\/\/[A-Za-z0-9\-_\.:\[\]]+\/)/i.exec(this.url);
+    if (basePrefix) {
+      var urlPrefix = /^(https?:\/\/[A-Za-z0-9\-_\.:\[\]]+\/)/i.exec(url);
+      if (urlPrefix && basePrefix[1] === urlPrefix[1])
+        return true;
+    }
+
+    return false;
+  },
+  loadFile: function loadFile(data) {
+    var url = data.url;
+    var checkPolicyFile = data.checkPolicyFile;
+    var sessionId = data.sessionId;
+    var method = data.method || "GET";
+    var postData = data.postData || null;
+
+    if (!this._canDownloadFile(url, checkPolicyFile)) {
       log("bad url " + url + " " + this.url);
-      win.postMessage({callback:"loadFile", url: url,
-        error: "only original swf file loading supported"}, "*");
+      win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "error",
+        error: "only original swf file or file from the same origin loading supported"}, "*");
       return;
     }
 
@@ -96,7 +114,7 @@ ChromeActions.prototype = {
 
     var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                          .createInstance(Ci.nsIXMLHttpRequest);
-    xhr.open("GET", url, true);
+    xhr.open(method, url, true);
     // arraybuffer is not provide onprogress, fetching as regular chars
     if ('overrideMimeType' in xhr)
       xhr.overrideMimeType('text/plain; charset=x-user-defined');
@@ -114,19 +132,22 @@ ChromeActions.prototype = {
       var data = new Uint8Array(chunk.length);
       for (var i = 0; i < data.length; i++)
         data[i] = chunk.charCodeAt(i) & 0xFF;
-      win.postMessage({callback:"loadFile", url: url,
+      win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "progress",
                        array: data, loaded: e.loaded, total: e.total}, "*");
       lastPosition = position;
     };
     xhr.onreadystatechange = function(event) {
       if (xhr.readyState === 4) {
         if (xhr.status !== 200 && xhr.status !== 0) {
-          win.postMessage({callback:"loadFile", url: url, error: xhr.statusText}, "*");
-          return;
+          win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "error",
+                           error: xhr.statusText}, "*");
         }
+        win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "close"}, "*");
+      } else if (xhr.readyState === 1) {
+        win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
       }
     }
-    xhr.send(null);
+    xhr.send(postData);
   },
   fallback: function() {
     var obj = this.window.frameElement;

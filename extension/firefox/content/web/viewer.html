@@ -199,11 +199,11 @@
 
       function runViewer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-        var movieUrl = flashParams.url;
+        movieUrl = flashParams.url;
         var movieArgs = flashParams.arguments;
         var isOverlay = flashParams.isOverlay;
         console.log("url=" + movieUrl + ";params=" + uneval(movieArgs));
-        FirefoxCom.requestSync('loadFile', movieUrl);
+        FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0});
         if (isOverlay) {
           var fallbackDiv = document.getElementById('fallback');
           fallbackDiv.className = 'enabled';
@@ -237,26 +237,73 @@
         }
       };
 
-      var subscription = null;
+      var subscription = null, movieUrl;
 
       addEventListener("message", function handlerMessage(e) {
         var args = e.data;
         switch (args.callback) {
-          case "loadFile":
-            if (!subscription) {
-              subscription = new Subscription();
-              parseSwf(args.url, subscription);
-            }
-            subscription.send(args);
-            console.log(args.url + ': loaded ' + args.loaded + '/' + args.total);
+        case "loadFile":
+          if (args.sessionId != 0) {
+            var session = FileLoadingService.sessions[args.sessionId];
+            if (session)
+              session.notify(args);
+            return;
+          }
+          switch (args.topic) {
+          case "open":
+            subscription = new Subscription();
+            parseSwf(movieUrl, subscription);
             break;
+          case "progress":
+            subscription.send(args);
+            console.log(movieUrl + ': loaded ' + args.loaded + '/' + args.total);
+            break;
+          case "error":
+            console.error('Unable to download ' + movieUrl + ': ' + args.error);
+            break;
+          }
+          break;
         }
       }, true);
+
+      var FileLoadingService = {
+        get baseUrl() { return movieUrl; },
+        nextSessionId: 1, // 0 - is reserved
+        sessions: [],
+        createSession: function () {
+          var sessionId = this.nextSessionId++;
+          return this.sessions[sessionId] = {
+            open: function (request) {
+              var self = this;
+              var base = FileLoadingService.baseUrl || '';
+              base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+              var path = base ? base + request.url : request.url;
+              console.log('Session #' + sessionId +': loading ' + path);
+              FirefoxCom.requestSync('loadFile', {url: path, sessionId: sessionId});
+            },
+            notify: function (args) {
+              switch (args.topic) {
+              case "open": this.onopen(); break;
+              case "close":
+                this.onclose();
+                delete FileLoadingService.sessions[sessionId];
+                console.log('Session #' + sessionId +': closed');
+                break;
+              case "error": this.onerror(args.error); break;
+              case "progress":
+                console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
+                this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
+                break;
+              }
+            }
+          };
+        }
+      };
 
       function parseSwf(url, file) {
         console.log("Parsing " + url + "...");
         function terminate() {}
-        createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+        createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.COMPILE, EXECUTION_MODE.COMPILE, function (avm2) {
           SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate });
         });
       }
