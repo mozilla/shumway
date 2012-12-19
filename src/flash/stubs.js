@@ -131,6 +131,7 @@ var as3error = {};
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
 
    M("flash.media.Sound", "SoundClass", SoundDefinition),
+   M("flash.media.SoundChannel", "SoundChannelClass", SoundChannelDefinition),
    M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
    M("flash.media.SoundTransform", "SoundTransformClass", SoundTransformDefinition),
    M("flash.media.Video", "VideoClass", VideoDefinition),

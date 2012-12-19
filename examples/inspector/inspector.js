@@ -82,7 +82,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
 }
 
 var avm2Root = "../../src/avm2/";
-var rfile = getQueryVariable("rfile");
+var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var libraryPath = avm2Root + "generated/shell/shell.abc";
 var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
@@ -91,9 +91,9 @@ var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
  * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
  * when the page loads.
  */
-if (rfile) {
+if (remoteFile) {
   $('#openFileToolbar')[0].setAttribute('hidden', true);
-  executeFile(rfile);
+  executeFile(remoteFile);
 }
 
 function showMessage(msg) {
