@@ -21,6 +21,7 @@ function loadMovie(path, reportFrames) {
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     function loaded() { movieReady.resolve(); }
 
+    FileLoadingService.baseUrl = path;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
@@ -29,6 +30,27 @@ function loadMovie(path, reportFrames) {
     });
   });
 }
+
+var FileLoadingService = {
+  createSession: function () {
+    return {
+      open: function (request) {
+        var self = this;
+        var base = FileLoadingService.baseUrl || '';
+        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+        var path = base ? base + request.url : request.url;
+        console.log('FileLoadingService: loading ' + path);
+        new BinaryFileReader(path).readAsync(
+          function (data, progress) {
+            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
+          },
+          function (e) { self.onerror(e); },
+          self.onopen,
+          self.onclose);
+      }
+    };
+  }
+};
 
 var traceMessages = '';
 natives.print = function() {

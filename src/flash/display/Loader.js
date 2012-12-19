@@ -328,7 +328,7 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        loaderInfo.dispatchEvent(new flash.events.Event("complete"));
+        loaderInfo.dispatchEvent(new flash.events.Event("complete", false, false));
         break;
       case 'error':
         console.log('ERROR: ' + data.message);
@@ -345,7 +345,9 @@ var LoaderDefinition = (function () {
       var loaderInfo = this.contentLoaderInfo;
       loaderInfo._bytesLoaded = state.bytesLoaded || 0;
       loaderInfo._bytesTotal = state.bytesTotal || 0;
-      loaderInfo.dispatchEvent(new flash.events.Event("progress"));
+      var ProgressEventClass = avm2.systemDomain.getClass("flash.events.ProgressEvent");
+      loaderInfo.dispatchEvent(ProgressEventClass.createInstance(["progress",
+        false, false, loaderInfo._bytesLoaded, loaderInfo._bytesTotal]));
     },
     _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
@@ -467,7 +469,7 @@ var LoaderDefinition = (function () {
         }
 
         if (frameNum === 1)
-          loaderInfo.dispatchEvent(new flash.events.Event('init'));
+          loaderInfo.dispatchEvent(new flash.events.Event('init', false, false));
       });
     },
     _initAvm1Bindings: function(root, initializeRoot, frameNum,

@@ -4,7 +4,16 @@ var URLRequestDefinition = (function () {
       this._url = null;
       this._method = 'GET';
       this._data = null;
+      this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
+      this._requestHeaders = null;
+    },
+
+    setMethod: function (val) {
+      this._method = val;
+    },
+    setRequestHeaders: function (val) {
+      this._requestHeaders = val;
     },
 
     get contentType() {
@@ -19,24 +28,24 @@ var URLRequestDefinition = (function () {
     set data(val) {
       this._data = val;
     },
+    get digest() {
+      return this._digest;
+    },
+    set digest(val) {
+      this._digest = val;
+    },
     get method() {
       return this._method;
     },
-    setMethod: function (val) {
-      this._method = val;
-    },
     get requestHeaders() {
       return this._requestHeaders;
-    },
-    setRequestHeaders: function (val) {
-      this._requestHeaders = val;
     },
     get url() {
       return this._url;
     },
     set url(val) {
       this._url= val;
-    },
+    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -44,12 +53,13 @@ var URLRequestDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        contentType: desc(def, 'contentType'),
-        data: desc(def, 'data'),
-        method: desc(def, 'method'),
-        requestHeaders: desc(def, 'requestHeaders'),
         setMethod: def.setMethod,
         setRequestHeaders: def.setRequestHeaders,
+        contentType: desc(def, 'contentType'),
+        data: desc(def, 'data'),
+        digest: desc(def, 'digest'),
+        method: desc(def, 'method'),
+        requestHeaders: desc(def, 'requestHeaders'),
         url: desc(def, 'url')
       }
     }
