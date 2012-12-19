@@ -423,6 +423,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return node;
         }
 
+        function mustFloat(node) {
+          node.mustFloat = true;
+          return node;
+        }
+
         function pop() {
           return stack.pop();
         }
@@ -528,7 +533,12 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             }
           }
           if (hasNumericType(name) || isStringConstant(name)) {
-            return shouldFloat(new IR.GetProperty(region, state.store, object, name));
+            var get = shouldFloat(new IR.GetProperty(region, state.store, object, name));
+            if (!hasNumericType(name)) {
+              return get;
+            }
+            var indexGet = shouldFloat(call(getJSProperty(object, "indexGet"), object, [name]));
+            return shouldFloat(new IR.Latch(getJSProperty(object, "indexGet"), indexGet, get));
           }
           return new IR.AVM2GetProperty(region, state.store, object, name);
         }
@@ -541,8 +551,12 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         function setProperty(object, name, value, ti) {
           name = simplifyName(name);
           if (hasNumericType(name) || isStringConstant(name)) {
-            store(new IR.SetProperty(region, state.store, object, name, value));
-            return;
+            var set = new IR.SetProperty(region, state.store, object, name, value);
+            if (!hasNumericType(name)) {
+              return store(set);
+            }
+            var indexSet = call(getJSProperty(object, "indexSet"), object, [name, value]);
+            return store(new IR.Latch(getJSProperty(object, "indexSet"), mustFloat(indexSet), mustFloat(set)));
           }
           if (ti) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;

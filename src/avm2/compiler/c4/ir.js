@@ -1667,7 +1667,7 @@
         if (node.mustNotFloat || node.shouldNotFloat) {
           return false;
         }
-        if (node.shouldFloat) {
+        if (node.mustFloat || node.shouldFloat) {
           return true;
         }
         if (node instanceof Parameter || node instanceof This) {
