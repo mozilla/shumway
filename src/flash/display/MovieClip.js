@@ -21,7 +21,8 @@ var MovieClipDefinition = (function () {
       if (s) {
         this._timeline = s.timeline || null;
         this._framesLoaded = s.framesLoaded || 1;
-        this._frameLabels = s.frameLabels || { };
+        this._frameLabels = Object.create(s.frameLabels || null);
+        this._frameScripts = Object.create(s.frameScripts || null);
         this._totalFrames = s.totalFrames || 1;
       }
 
@@ -129,6 +130,9 @@ var MovieClipDefinition = (function () {
                 if (!loader._isAvm2Enabled) {
                   this._initAvm1Bindings(instance, name, events);
                 }
+
+                instance.dispatchEvent(new flash.events.Event("load"));
+
                 this._insertChildAtDepth(instance, depth);
                 if (current && current._owned) {
                   if (!clipDepth)
@@ -182,16 +186,6 @@ var MovieClipDefinition = (function () {
       var loader = this.loaderInfo._loader;
       var avm1Context = loader._avm1Context;
       var symbolProps = instance.symbol;
-      if (symbolProps.frameScripts) {
-        var frameScripts = symbolProps.frameScripts;
-        for (var i = 0; i < frameScripts.length; i += 2) {
-            var frameIndex = frameScripts[i];
-            var actionBlock = frameScripts[i + 1];
-            instance.addFrameScript(frameIndex, function(actionBlock) {
-              return executeActions(actionBlock, avm1Context, this._getAS2Object());
-            }.bind(instance, actionBlock));
-        }
-      }
       if (symbolProps.variableName) {
         var variableName = symbolProps.variableName;
         var i = variableName.lastIndexOf('.');
@@ -218,7 +212,6 @@ var MovieClipDefinition = (function () {
           instance.text = clip[variableName];
         };
       }
-
       if (events) {
         var eventsBound = [];
         for (var i = 0; i < events.length; i++) {
@@ -242,7 +235,7 @@ var MovieClipDefinition = (function () {
             for (var i = 0; i < eventsBound.length; i++) {
               this.removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
-          }.bind(this, eventsBound), false);
+          }.bind(instance, eventsBound), false);
         }
       }
       if (name) {

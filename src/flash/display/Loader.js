@@ -433,6 +433,7 @@ var LoaderDefinition = (function () {
             framesLoaded: 1,
             parent: stage,
             timeline: timeline,
+            totalFrames: val.props.totalFrames,
             stage: stage
           });
 
@@ -448,6 +449,64 @@ var LoaderDefinition = (function () {
             root.symbol.frameLabels = frameLabels;
           }
 
+          if (!loader._isAvm2Enabled) {
+            var avm1Context = loader._avm1Context;
+
+            var as2Object = root._getAS2Object();
+            avm1Context.globals._root = as2Object;
+            avm1Context.globals._level0 = as2Object;
+
+            var frameScripts = { 1: [] };
+
+            //if (initActionBlocks) {
+            //  // HACK using symbol init actions as regular action blocks, the spec has a note
+            //  // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+            //  for (var symbolId in initActionBlocks) {
+            //    root.addFrameScript(frameNum - 1, function(actionBlock) {
+            //      return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
+            //    }.bind(root, initActionBlocks[symbolId]));
+            //  }
+            //}
+
+            if (actionBlocks) {
+              for (var i = 0; i < actionBlocks.length; i++) {
+                var block = actionBlocks[i];
+                frameScripts[1].push((function(block) {
+                  return function () {
+                    return executeActions(block, avm1Context, this._getAS2Object(), exports);
+                  };
+                })(block));
+              }
+            }
+
+            //if (exports) {
+            //  // HACK mocking the sound clips presence
+            //  var SoundMock = function(assets) {
+            //    var clip = {
+            //      start: function() {},
+            //      setVolume: function() {}
+            //    };
+            //    for (var i = 0; i < assets.length; i++) {
+            //      if (assets[i].className) {
+            //        this[assets[i].className] = clip;
+            //      }
+            //    }
+            //  };
+            //
+            //  as2Object.soundmc = new SoundMock(exports);
+            //  var soundClass = avm2.systemDomain.getClass("flash.display.MovieClip");
+            //  var soundMock = soundClass.createInstance();
+            //  soundMock._name = 'soundmc';
+            //  soundMock._timeline = [new Promise];
+            //  soundMock._timeline[0].resolve([]);
+            //  soundMock._exports = exports;
+            //  soundMock.$as2Object = as2Object.soundmc;
+            //  //root.addChild(soundMock);
+            //}
+
+            root.symbol.frameScripts = frameScripts;
+          }
+
           rootClass.instance.call(root);
 
           loader._content = root;
@@ -461,66 +520,26 @@ var LoaderDefinition = (function () {
               name: labelName
             };
           }
-        }
 
-        if (!loader._isAvm2Enabled) {
-          loader._initAvm1Bindings(root, needRootObject, frameNum,
-                                   actionBlocks, initActionBlocks, exports);
+          if (!loader._isAvm2Enabled) {
+            var avm1Context = loader._avm1Context;
+
+            if (actionBlocks) {
+              for (var i = 0; i < actionBlocks.length; i++) {
+                var block = actionBlocks[i];
+                root.addFrameScript(frameNum - 1, (function(block) {
+                  return function () {
+                    return executeActions(block, avm1Context, this._getAS2Object(), exports);
+                  };
+                })(block));
+              }
+            }
+          }
         }
 
         if (frameNum === 1)
           loaderInfo.dispatchEvent(new flash.events.Event('init', false, false));
       });
-    },
-    _initAvm1Bindings: function(root, initializeRoot, frameNum,
-                                actionBlocks, initActionBlocks, exports) {
-      var avm1Context = this._avm1Context;
-      if (initializeRoot) {
-        var as2Object = root._getAS2Object();
-        avm1Context.globals._root = as2Object;
-        avm1Context.globals._level0 = as2Object;
-      }
-      if (exports) {
-        // HACK mocking the sound clips presence
-        var SoundMock = function(assets) {
-          var clip = {
-            start: function() {},
-            setVolume: function() {}
-          };
-          for (var i = 0; i < assets.length; i++) {
-            if (assets[i].className) {
-              this[assets[i].className] = clip;
-            }
-          }
-        };
-
-        var rootAS2Object = root._getAS2Object();
-        rootAS2Object.soundmc = new SoundMock(exports);
-        var soundClass = avm2.systemDomain.getClass("flash.display.MovieClip");
-        var soundMock = soundClass.createInstance();
-        soundMock._name = 'soundmc';
-        soundMock._timeline = [new Promise];
-        soundMock._timeline[0].resolve([]);
-        soundMock._exports = exports;
-        soundMock.$as2Object = rootAS2Object.soundmc;
-        root.addChild(soundMock);
-      }
-      if (initActionBlocks) {
-        // HACK using symbol init actions as regular action blocks, the spec has a note
-        // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-        for (var symbolId in initActionBlocks) {
-          root.addFrameScript(frameNum - 1, function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
-          }.bind(root, initActionBlocks[symbolId]));
-        }
-      }
-      if (actionBlocks) {
-        for (var i = 0; i < actionBlocks.length; i++) {
-          root.addFrameScript(frameNum - 1, function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
-          }.bind(root, actionBlocks[i]));
-        }
-      }
     },
     _commitSymbol: function (symbol) {
       var dependencies = symbol.require;
@@ -686,12 +705,33 @@ var LoaderDefinition = (function () {
           framePromise.resolve(displayList);
         }
 
+        var frameScripts = { };
+        if (!this._isAvm2Enabled) {
+          if (symbol.frameScripts) {
+            var avm1Context = this._avm1Context;
+            var data = symbol.frameScripts;
+            for (var i = 0; i < data.length; i += 2) {
+                var frameNum = data[i] + 1;
+                var block = data[i + 1];
+                var script = (function(block) {
+                  return function () {
+                    return executeActions(block, avm1Context, this._getAS2Object());
+                  };
+                })(block);
+                if (!frameScripts[frameNum])
+                  frameScripts[frameNum] = [script];
+                else
+                  frameScripts[frameNum].push(script);
+            }
+          }
+        }
+
         symbolInfo.className = 'flash.display.MovieClip';
         symbolInfo.props = {
           timeline: timeline,
           framesLoaded: frameCount,
           frameLabels: frameLabels,
-          frameScripts: symbol.frameScripts,
+          frameScripts: frameScripts,
           totalFrames: frameCount
         };
         break;
