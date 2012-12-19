@@ -29,7 +29,7 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
       xhr.send(null);
     },
-    readAsync: function(ondata, onerror) {
+    readAsync: function(ondata, onerror, onopen, oncomplete) {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", this.url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
@@ -49,8 +49,11 @@ var BinaryFileReader = (function binaryFileReader() {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
-            return;
           }
+          if (oncomplete)
+            oncomplete();
+        } else if (xhr.readyState === 1 && onopen) {
+          onopen();
         }
       }
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
@@ -134,6 +137,7 @@ function executeFile(file, buffer) {
           }
         };
         runSWF(file, subscription);
+        FileLoadingService.baseUrl = file;
         new BinaryFileReader(file).readAsync(
           function onchunk(data, progressInfo) {
             subscription.callback(data, progressInfo);
@@ -142,6 +146,7 @@ function executeFile(file, buffer) {
             console.error("Unable to open the file " + file + ": " + error);
           });
       } else if (!buffer) {
+        FileLoadingService.baseUrl = file;
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
           if (!buffer) {
             throw "Unable to open the file " + file + ": " + error;
@@ -158,3 +163,24 @@ function executeFile(file, buffer) {
 function terminate() {
   console.info(Counter);
 }
+
+var FileLoadingService = {
+  createSession: function () {
+    return {
+      open: function (request) {
+        var self = this;
+        var base = FileLoadingService.baseUrl || '';
+        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+        var path = base ? base + request.url : request.url;
+        console.log('FileLoadingService: loading ' + path);
+        new BinaryFileReader(path).readAsync(
+          function (data, progress) {
+            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
+          },
+          function (e) { self.onerror(e); },
+          self.onopen,
+          self.onclose);
+      }
+    };
+  }
+};

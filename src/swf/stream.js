@@ -21,8 +21,17 @@ var Stream = (function StreamClosure() {
     stream.end = end;
     return stream;
   }
+  function Stream_push(data) {
+    var bytes = this.bytes;
+    var newBytesLength = this.end + data.length;
+    if (newBytesLength > bytes.length) {
+       throw 'stream buffer overfow';
+    }
+    bytes.set(data, this.end);
+    this.end = newBytesLength;
+  }
 
-  function Stream(buffer, offset, length) {
+  function Stream(buffer, offset, length, maxLength) {
     if (offset === undefined)
       offset = 0;
     if (buffer.buffer instanceof ArrayBuffer) {
@@ -31,9 +40,11 @@ var Stream = (function StreamClosure() {
     }
     if (length === undefined)
       length = buffer.byteLength - offset;
+    if (maxLength === undefined)
+      maxLength = length;
 
-    var bytes = new Uint8Array(buffer, offset, length);
-    var stream = new DataView(buffer, offset, length);
+    var bytes = new Uint8Array(buffer, offset, maxLength);
+    var stream = new DataView(buffer, offset, maxLength);
 
     stream.bytes = bytes;
     stream.pos = 0;
@@ -45,6 +56,7 @@ var Stream = (function StreamClosure() {
     stream.ensure = Stream_ensure;
     stream.remaining = Stream_remaining;
     stream.substream = Stream_substream;
+    stream.push = Stream_push;
     return stream;
   }
 

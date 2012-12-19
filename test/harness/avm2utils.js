@@ -15,6 +15,7 @@ var BinaryFileReader = (function binaryFileReader() {
 
   constructor.prototype = {
     readAll: function(progress, complete) {
+      var url = this.url;
       var xhr = new XMLHttpRequest();
       var async = true;
       xhr.open("GET", this.url, async);
@@ -27,10 +28,41 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
+            unexpected("Path: " + url + " not found.");
             complete(null, xhr.statusText);
             return;
           }
           complete(xhr.response);
+        }
+      }
+      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      xhr.send(null);
+    },
+    readAsync: function(ondata, onerror, onopen, oncomplete) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", this.url, true);
+      // arraybuffer is not provide onprogress, fetching as regular chars
+      if ('overrideMimeType' in xhr)
+        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+      var lastPosition = 0;
+      xhr.onprogress = function (e) {
+        var position = e.loaded;
+        var chunk = xhr.responseText.substring(lastPosition, position);
+        var data = new Uint8Array(chunk.length);
+        for (var i = 0; i < data.length; i++)
+          data[i] = chunk.charCodeAt(i) & 0xFF;
+        ondata(data, { loaded: e.loaded, total: e.total });
+        lastPosition = position;
+      };
+      xhr.onreadystatechange = function(event) {
+        if (xhr.readyState === 4) {
+          if (xhr.status !== 200 && xhr.status !== 0) {
+            onerror(xhr.statusText);
+          }
+          if (oncomplete)
+            oncomplete();
+        } else if (xhr.readyState === 1 && onopen) {
+          onopen();
         }
       }
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
@@ -58,4 +90,3 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     }
   });
 }
-
