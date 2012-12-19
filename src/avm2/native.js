@@ -961,8 +961,11 @@ var natives = (function () {
     }
 
     var c = new runtime.domain.system.Class("ByteArray", ByteArray, C(ByteArray));
+    c.extendBuiltin(baseClass);
 
     var BAp = ByteArray.prototype;
+    BAp.indexGet = function (i) { return this.uint8v[i]; };
+    BAp.indexSet = function (i, v) { this.uint8v[i] = v; };
 
     BAp.cacheViews = function cacheViews() {
       var a = this.a;
@@ -1063,7 +1066,7 @@ var natives = (function () {
     };
 
     BAp.writeBytes = function writeBytes(bytes, offset, length) {
-      if (offset && length) {
+      if (offset || length) {
         this.writeRawBytes(new Int8Array(bytes.a, offset, length));
       } else {
         this.writeRawBytes(bytes.int8v);

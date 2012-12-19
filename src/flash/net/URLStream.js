@@ -48,8 +48,16 @@ var URLStreamDefinition = (function () {
       return stream.bytes[stream.pos++];
     },
     readBytes: function readBytes(bytes, offset, length) {
-      //readBytes(bytes:ByteArray, offset:uint=0, length:uint=0):void
-      throw 'Not implemented: URLStream.readBytes';
+      if (length < 0)
+        throw 'Invalid length argument';
+      var stream = this._stream;
+      if (!length)
+        length = stream.remaining();
+      else
+        stream.ensure(length);
+      bytes.writeRawBytes(stream.bytes.subarray(stream.pos,
+                          stream.pos + length), offset, length);
+      stream.pos += length;
     },
     readDouble: function readDouble() {
       throw 'Not implemented: URLStream.readDouble';
