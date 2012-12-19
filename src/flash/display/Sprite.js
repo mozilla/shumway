@@ -69,8 +69,6 @@ var SpriteDefinition = (function () {
 
       instance._markAsDirty();
 
-      instance.dispatchEvent(new flash.events.Event("load"));
-
       return instance;
     },
 
