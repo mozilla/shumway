@@ -383,14 +383,14 @@ var SourceTracer = (function () {
 
       var ci = trait.classInfo;
       var ii = ci.instanceInfo;
-      var name = ii.name.getName();
+      var className = ii.name.getName();
       var native = trait.metadata ? trait.metadata.native : null;
 
       writer.writeLn("Cut and paste the following glue and edit accordingly.");
       writer.writeLn("Class " + ii);
       writer.writeLn("8< --------------------------------------------------------------");
 
-      writer.enter("const " + name + "Definition = (function () {");
+      writer.enter("const " + className + "Definition = (function () {");
       function maxTraitNameLength(traits) {
         var length = 0;
         traits.forEach(function (t) {
@@ -420,23 +420,37 @@ var SourceTracer = (function () {
 
       function writeTraits(traits, isNative, isStatic) {
         traits = filterTraits(traits, isNative);
-        var methods = traits.methods;
-        methods.forEach(function(trait, i) {
+        // var methods = traits.methods;
+
+        var methods = [];
+        var gettersAndSetters = {};
+
+        traits.methods.forEach(function (trait, i) {
+          var traitName = trait.name.getName();
+          if (trait.isGetter() || trait.isSetter()) {
+            if (!gettersAndSetters[traitName]) {
+              gettersAndSetters[traitName] = [];
+            }
+            gettersAndSetters[traitName].push(trait);
+          } else {
+            methods.push(trait);
+          }
+        });
+
+        function writeTrait(trait, writeComma) {
           var mi = trait.methodInfo;
           var traitName = trait.name.getName();
-          writer.writeLn("// (" +
+          var signature = "// (" +
             (mi.parameters.length ? getSignature(mi) : "void") + ") -> " +
-            (mi.returnType ? mi.returnType.getName() : "any"));
-          var prop;
+            (mi.returnType ? mi.returnType.getName() : "any");
+          var propertyName = traitName;
           if (trait.isGetter()) {
-            prop = "\"get " + traitName + "\"";
+            propertyName = "get";
           } else if (trait.isSetter()) {
-            prop = "\"set " + traitName + "\"";
-          } else {
-            prop = traitName;
+            propertyName = "set";
           }
-          writer.enter(prop + ": function " + traitName + "(" + getSignature(mi, true) + ") {");
-          writer.writeLn("notImplemented(\"" + name + "." + traitName + "\");");
+          writer.enter(propertyName + ": function " + traitName + "(" + getSignature(mi, true) + ") { " + signature);
+          writer.writeLn("notImplemented(\"" + className + "." + traitName + "\");");
           if (!isStatic) {
             if (trait.isGetter()) {
               writer.writeLn("return this._" + traitName + ";");
@@ -444,8 +458,22 @@ var SourceTracer = (function () {
               writer.writeLn("this._" + traitName + " = " + mi.parameters[0].name + ";");
             }
           }
-          writer.leave("}" + (i === traits.methods.length - 1 ? "" : ","));
-        });
+          writer.leave("}" + (writeComma ? "," : ""));
+        }
+
+        for (var i = 0; i < methods.length; i++) {
+          writeTrait(methods[i], i < methods.length - 1);
+        }
+
+        var keyValues = toKeyValueArray(gettersAndSetters)
+        for (var j = 0; j < keyValues.length; j++) {
+          writer.enter(keyValues[j][0] + ": {");
+          var list = keyValues[j][1];
+          for (var i = 0; i < list.length; i++) {
+            writeTrait(list[i], i < list.length - 1);
+          }
+          writer.leave("}" + (j < keyValues.length - 1 ? "," : ""));
+        }
 
         traits.properties.forEach(function(trait, i) {
           var traitName = trait.name.getName();
@@ -458,7 +486,7 @@ var SourceTracer = (function () {
       writer.enter("return {");
       writer.writeLn("// (" + getSignature(ii.init, false) + ")");
       writer.enter("initialize: function () {");
-      writer.leave("}");
+      writer.leave("},");
       writer.enter("__glue__: {");
       writer.enter("native: {");
         writer.enter("static: {");
@@ -467,14 +495,16 @@ var SourceTracer = (function () {
         writer.enter("instance: {");
         writeTraits(ii.traits, true);
         writer.leave("}");
-      writer.leave("}");
-      writer.enter("script: {");
-      writer.enter("static: {");
-      writeTraits(ci.traits, false, true);
       writer.leave("},");
-      writer.enter("instance: {");
-      writeTraits(ii.traits);
-      writer.leave("}");
+      writer.enter("script: {");
+        writer.enter("static: {");
+        writer.writeLn("// ...");
+        // writeTraits(ci.traits, false, true);
+        writer.leave("},");
+        writer.enter("instance: {");
+        // writeTraits(ii.traits, false);
+        writer.writeLn("// ...");
+        writer.leave("}");
       writer.leave("}");
       writer.leave("}");
       writer.leave("};");
