@@ -1031,9 +1031,16 @@ var Runtime = (function () {
       });
     }
 
+    var makeNativeClass;
+
     if (ci.native) {
-      // Some natives classes need this, like Error.
-      var makeNativeClass = getNative(ci.native.cls);
+      makeNativeClass = getNative(ci.native.cls);
+      if (!makeNativeClass) {
+        warning("No native for " + ci.native.cls);
+      }
+    }
+
+    if (ci.native && makeNativeClass) {
       release || assert(makeNativeClass, "No native for ", ci.native.cls);
 
       // Special case Object, which has no base class but needs the Class class on the scope.
