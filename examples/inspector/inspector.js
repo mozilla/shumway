@@ -52,12 +52,12 @@ var BinaryFileReader = (function binaryFileReader() {
           }
           if (oncomplete)
             oncomplete();
-        } else if (xhr.readyState === 1 && onopen) {
-          onopen();
         }
       }
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
       xhr.send(null);
+      if (onopen)
+        onopen();
     }
   };
   return constructor;

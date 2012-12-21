@@ -143,11 +143,10 @@ ChromeActions.prototype = {
                            error: xhr.statusText}, "*");
         }
         win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "close"}, "*");
-      } else if (xhr.readyState === 1) {
-        win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
       }
     }
     xhr.send(postData);
+    win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
   },
   fallback: function() {
     var obj = this.window.frameElement;
