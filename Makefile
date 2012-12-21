@@ -1,7 +1,7 @@
 default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
 	@echo "           build-playerglobal|build-extension|build-web|"
-	@echo "           test|push-test|build-bot|start-build-bot]"
+	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs]"
 
 check-system:
 	echo "Checking the presence of mercurial..."

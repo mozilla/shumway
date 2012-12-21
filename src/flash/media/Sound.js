@@ -1,48 +1,49 @@
-function readBinaryFile(path, complete) {
-  new BinaryFileReader(path).readAll(null, complete);
-}
-
-function getDirectory(path) {
-  var elements = path.split("/");
-  return elements.slice(0, elements.length - 1).join("/");
-}
-
 var SoundDefinition = (function () {
+
+  var audioElement = document.createElement('audio');
+
   var def = {
     initialize: function initialize() {
       this._playQueue = [];
       this._url = null;
       this._length = 0;
-      this._bytesLoaded = 0;
       this._bytesTotal = 0;
+      this._bytesLoaded = 0;
     },
 
     close: function close() {
       throw 'Not implemented: close';
     },
+
     extract: function extract(target, length, startPosition) {
       //extract(target:ByteArray, length:Number, startPosition:Number = -1):Number
       throw 'Not implemented: extract';
     },
+
     _load: function _load(request, checkPolicyFile, bufferTime) {
       if (!request) {
         return;
       }
-      // (stream:URLRequest, checkPolicyFile:Boolean, bufferTime:Number) -> void
-      var path = getDirectory(remoteFile) + "/" + request.url;
-      var _this = this;
-      readBinaryFile(path, function (buffer) {
-        _this.buffer = buffer;
-        _this.dispatchEvent(new flash.events.Event("complete"));
 
-        var element = document.createElement('audio');
-        element.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
-        element.load();
-        element.addEventListener("loadedmetadata", function () {
+      var _this = this;
+      var loader = this._loader = new flash.net.URLLoader(request);
+      loader.dataFormat = "binary";
+
+      loader.addEventListener("progress", function (event) {
+        console.info("PROGRESS");
+        _this.dispatchEvent(event);
+      });
+
+      loader.addEventListener("complete", function (event) {
+        _this.dispatchEvent(event);
+        var buffer = loader.data.a;
+        audioElement.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
+        audioElement.load();
+        audioElement.addEventListener("loadedmetadata", function () {
           _this._length = this.duration * 1000;
         });
-        _this._playQueue.forEach(function (queueItem) {
-          playChannel(buffer, queueItem.channel, queueItem.startTime, queueItem.soundTransform);
+        _this._playQueue.forEach(function (item) {
+          playChannel(buffer, item.channel, item.startTime, item.soundTransform);
         });
       });
     },
@@ -62,17 +63,17 @@ var SoundDefinition = (function () {
         startTime: startTime,
         soundTransform: soundTransform
       });
-      if (this.buffer) {
-        playChannel(this.buffer, channel, startTime, soundTransform);
+      if (this._loader.data) {
+        playChannel(this._loader.data.a, channel, startTime, soundTransform);
       }
       return channel;
     },
 
     get bytesLoaded() {
-      return this._bytesLoaded;
+      return this._loader.bytesLoaded;
     },
     get bytesTotal() {
-      return this._bytesTotal;
+      return this._loader.bytesTotal;
     },
     get id3() {
       throw 'Not implemented: id3';

@@ -141,6 +141,7 @@ var as3error = {};
    M("flash.net.Responder", "ResponderClass", ResponderDefinition),
    M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
    M("flash.net.URLStream", "URLStreamClass", URLStreamDefinition),
+   M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
 
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
