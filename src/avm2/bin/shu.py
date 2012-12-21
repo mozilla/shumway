@@ -119,6 +119,11 @@ class Base:
     else:
       print "Environment variable BUILTINABC is not defined, set it to builtin.abc"
 
+    if 'SHELLABC' in os.environ:
+      self.shell_abc = os.environ['SHELLABC'].strip();
+    else:
+      print "Environment variable SHELLABC is not defined, set it to shell.abc"
+
     # The builtin.abc cannot be combined with the playerglobal.abc file that comes with Alchemy, thus we need
     # this other global.abc library.
 
@@ -137,7 +142,7 @@ class Base:
     if not self.asc:
       sys.exit();
 
-  def runAsc(self, files, createSwf = False, builtin = False, _global = False, playerGlobal = False, sc = False):
+  def runAsc(self, files, createSwf = False, builtin = False, shell = False, _global = False, playerGlobal = False, sc = False):
 
     if sc:
       outf = os.path.splitext(files[-1])[0]
@@ -152,6 +157,9 @@ class Base:
 
     if builtin:
       args.extend(["-import", self.builtin_abc])
+
+    if shell:
+      args.extend(["-import", self.shell_abc])
 
     if _global:
       args.extend(["-import", self.global_abc])
@@ -204,13 +212,14 @@ class Asc(Command):
     parser = argparse.ArgumentParser(description='Compiles an ActionScript source file to .abc or .swf using the asc.jar compiler.')
     parser.add_argument('src', nargs='+', help="source .as file")
     parser.add_argument('-builtin', action='store_true', help='import builtin.abc')
+    parser.add_argument('-shell', action='store_true', help='import shell.abc')
     parser.add_argument('-globals', action='store_true', help='import global.abc')
     parser.add_argument('-playerGlobal', action='store_true', help='import playerGlobal.abc')
     parser.add_argument('-sc', action='store_true', help='use embedding.ScriptCompiler (needed to compile multiple scripts into one .abc file)')
     parser.add_argument('-swf', action='store_true', help='optionally package compiled file in a .swf file')
     args = parser.parse_args(args)
     print "Compiling %s" % args.src
-    self.runAsc(args.src, args.swf, builtin = args.builtin, _global = args.globals, playerGlobal = args.playerGlobal,  sc = args.sc)
+    self.runAsc(args.src, args.swf, builtin = args.builtin, shell = args.shell, _global = args.globals, playerGlobal = args.playerGlobal,  sc = args.sc)
 
 class Reg(Command):
   def __init__(self):
