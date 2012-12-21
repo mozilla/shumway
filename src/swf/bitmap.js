@@ -12,13 +12,14 @@ function rgbToString(bytes, pos) {
   return fromCharCode(red, green, blue);
 }
 function argbToString(bytes, pos) {
-  var alpha = bytes[pos] / 0xff;
+  var alpha = bytes[pos];
   if (!alpha)
     return '\x00\x00\x00\x00';
+  var opacity = alpha / 0xff;
   // RGB values are alpha pre-multiplied (per SWF spec).
-  var red = 0 | (bytes[pos + 1] / alpha);
-  var green = 0 | (bytes[pos + 2] / alpha);
-  var blue = 0 | (bytes[pos + 3] / alpha);
+  var red = 0 | (bytes[pos + 1] / opacity);
+  var green = 0 | (bytes[pos + 2] / opacity);
+  var blue = 0 | (bytes[pos + 3] / opacity);
   return fromCharCode(red, green, blue, alpha);
 }
 
