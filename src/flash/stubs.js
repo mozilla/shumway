@@ -135,6 +135,7 @@ var as3error = {};
    M("flash.media.SoundMixer", "SoundMixerClass", SoundMixerDefinition),
    M("flash.media.SoundTransform", "SoundTransformClass", SoundTransformDefinition),
    M("flash.media.Video", "VideoClass", VideoDefinition),
+   M("flash.media.ID3Info", "ID3InfoClass", ID3InfoDefinition),
 
    M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
    M("flash.net.NetStream", "NetStreamClass", NetStreamDefinition),

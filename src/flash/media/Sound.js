@@ -1,6 +1,17 @@
 var SoundDefinition = (function () {
 
-  var audioElement = document.createElement('audio');
+  var audioElement = null;
+
+  function getAudioDescription(buffer, onComplete) {
+    audioElement = audioElement || document.createElement('audio');
+    audioElement.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
+    audioElement.load();
+    audioElement.addEventListener("loadedmetadata", function () {
+      onComplete({
+        duration: this.duration * 1000
+      });
+    });
+  }
 
   var def = {
     initialize: function initialize() {
@@ -9,6 +20,7 @@ var SoundDefinition = (function () {
       this._length = 0;
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
+      this._id3 = new flash.media.ID3Info();
     },
 
     close: function close() {
@@ -37,10 +49,8 @@ var SoundDefinition = (function () {
       loader.addEventListener("complete", function (event) {
         _this.dispatchEvent(event);
         var buffer = loader.data.a;
-        audioElement.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
-        audioElement.load();
-        audioElement.addEventListener("loadedmetadata", function () {
-          _this._length = this.duration * 1000;
+        getAudioDescription(buffer, function (description) {
+          _this._length = description.duration;
         });
         _this._playQueue.forEach(function (item) {
           playChannel(buffer, item.channel, item.startTime, item.soundTransform);
@@ -76,7 +86,7 @@ var SoundDefinition = (function () {
       return this._loader.bytesTotal;
     },
     get id3() {
-      throw 'Not implemented: id3';
+      return this._id3;
     },
     get isBuffering() {
       throw 'Not implemented: isBuffering';
