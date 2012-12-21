@@ -72,8 +72,12 @@ function initializeGlobalObject(global) {
   function getEnumerationKeys(obj) {
     var keys = [];
     for (var key in obj) {
-      if (PUBLIC_MANGLED.test(key) &&
-          !(obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0)) {
+      if (isNumeric(key)) {
+        keys.push(key);
+      } else if (PUBLIC_MANGLED.test(key)) {
+        if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
+          continue;
+        }
         keys.push(key.substr(7));
       }
     }
@@ -711,7 +715,7 @@ function deleteProperty(obj, mn) {
      * skipped by the enumeration bytecodes.
      */
     if (obj[VM_ENUMERATION_KEYS]) {
-      var index = obj[VM_ENUMERATION_KEYS].indexOf(resolved.getName());
+      var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
       if (index >= 0) {
         obj[VM_ENUMERATION_KEYS][index] = undefined;
       }
