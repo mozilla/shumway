@@ -479,7 +479,9 @@ var SourceTracer = (function () {
           var traitName = trait.name.getName();
           var last = i === traits.properties.length - 1;
           // writer.writeLn("// " + (trait.typeName ? trait.typeName + " " : "") + traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
-          writer.writeLn(traitName + ": " + quote(Multiname.getQualifiedName(trait.name)) + (last ? "" : ","));
+          if (trait.name.getNamespace().isPublic()) {
+            writer.writeLn(traitName + ": " + quote("public " + trait.name.name) + (last ? "" : ","));
+          }
         });
       }
 
@@ -502,8 +504,8 @@ var SourceTracer = (function () {
         // writeTraits(ci.traits, false, true);
         writer.leave("},");
         writer.enter("instance: {");
-        // writeTraits(ii.traits, false);
-        writer.writeLn("// ...");
+        writeTraits(ii.traits, false);
+        // writer.writeLn("// ...");
         writer.leave("}");
       writer.leave("}");
       writer.leave("}");
