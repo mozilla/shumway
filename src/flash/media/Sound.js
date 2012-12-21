@@ -25,6 +25,9 @@ var SoundDefinition = (function () {
       throw 'Not implemented: extract';
     },
     _load: function _load(request, checkPolicyFile, bufferTime) {
+      if (!request) {
+        return;
+      }
       // (stream:URLRequest, checkPolicyFile:Boolean, bufferTime:Number) -> void
       var path = getDirectory(remoteFile) + "/" + request.url;
       var _this = this;
