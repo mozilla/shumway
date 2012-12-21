@@ -667,12 +667,12 @@ var LoaderDefinition = (function () {
       case 'sprite':
         var frameCount = symbol.frameCount;
         var frameLabels = { };
+        var frameNum = 1;
         var frames = symbol.frames;
         var timeline = [];
 
         for (var i = 0, n = frames.length; i < n; i++) {
           var frame = frames[i];
-          var frameNum = i + 1;
           var framePromise = new Promise;
           var depths = frame.depths;
 
@@ -699,8 +699,10 @@ var LoaderDefinition = (function () {
           }
 
           var j = frame.repeat;
-          while (j--)
+          while (j--) {
             timeline.push(framePromise);
+            frameNum++;
+          }
 
           framePromise.resolve(displayList);
         }
