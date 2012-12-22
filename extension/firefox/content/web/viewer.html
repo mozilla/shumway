@@ -322,6 +322,7 @@
         left:0;top:0;bottom:0;right:0;
         overflow: hidden;
         /* background-color:magenta; */
+        background-color: rgba(0, 0, 0, 0.78);
       }
 
 
@@ -331,18 +332,21 @@
       #fallback.enabled {
         display: block;
         position:fixed;
-        right: 10px; bottom: 10px; width: 70px; height: 16px;
+        right: 0px; bottom: 0px; width: 70px; height: 16px;
         color: white;
-        background-color: #0b3268;
+        padding: 4px;
+        padding-top: 8px;
+        background-color: rgba(0, 0, 0, 0.62);
         font: bold 10px sans-serif;
         text-align: center;
         text-decoration: none;
-        border-radius: 5px;
-        box-shadow: 0px 0px 2px 2px #888;
       }
       #fallback .icon {
         display: inline-block;
         color: white;
+      }
+      #fallback:hover {
+        background-color: rgb(0, 0, 0);
       }
     </style>
   </head>
