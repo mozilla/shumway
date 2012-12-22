@@ -224,7 +224,7 @@ function defineShape(tag, dictionary) {
     var map = { };
     var j = 0;
     var segment;
-    while (segment = segments[j++]) {
+    while ((segment = segments[j++])) {
       var list = map[segment.spt];
       if (!list)
         list = map[segment.spt] = [];
@@ -330,7 +330,7 @@ function defineShape(tag, dictionary) {
       var j = 0;
       var subpath;
       var prev = { };
-      while (subpath = path[j++]) {
+      while ((subpath = path[j++])) {
         if (subpath.spt !== prev.dpt) {
           cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
           data.push(subpath.spt);
@@ -339,7 +339,7 @@ function defineShape(tag, dictionary) {
         if (subpath.flip) {
           var k = edges.length;
           var edge;
-          while (edge = edges[--k]) {
+          while ((edge = edges[--k])) {
             if (edge.cpt) {
               cmds.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
               data.push(edge.cpt, edge.spt);
@@ -351,7 +351,7 @@ function defineShape(tag, dictionary) {
         } else {
           var k = 0;
           var edge;
-          while (edge = edges[k++]) {
+          while ((edge = edges[k++])) {
             if (edge.cpt) {
               cmds.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
               data.push(edge.cpt, edge.dpt);
@@ -380,7 +380,7 @@ function defineShape(tag, dictionary) {
 
   var i = 0;
   var lineStyle;
-  while (lineStyle = lineStyles[i++]) {
+  while ((lineStyle = lineStyles[i++])) {
     var segments = lineSegments[i];
     if (segments) {
       var colorProps = toColorProperties(lineStyle.color, lineStyle.colorMorph);
@@ -395,7 +395,7 @@ function defineShape(tag, dictionary) {
 
       var j = 0;
       var segment;
-      while (segment = segments[j++]) {
+      while ((segment = segments[j++])) {
         var edges = segment.edges;
         var commands = [];
         var k = 0;
@@ -420,7 +420,7 @@ function defineShape(tag, dictionary) {
 
         var cmds = [];
         var data = [];
-        while (edge = edges[k++]) {
+        while ((edge = edges[k++])) {
           if (edge.spt !== prev.dpt) {
             cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
             data.push(edge.spt);
@@ -456,7 +456,7 @@ function defineShape(tag, dictionary) {
   var commands = [];
   var i = 0;
   var path;
-  while (path = paths[i++])
+  while ((path = paths[i++]))
     push.apply(commands, path.commands);
   var shape = {
     type: 'shape',

@@ -153,7 +153,7 @@ function generateParser(struct) {
               segment.push('switch(' + expr + '){');
               var val;
               var i = 0;
-              while (val = values[i++]) {
+              while ((val = values[i++])) {
                 if (val !== 'unknown') {
                   segment.push('case ' + val + ':');
                   if (branches[val] != branches[values[i]]) {

@@ -9,7 +9,7 @@ function defineButton(tag, dictionary) {
     hitTest: {}
   };
   var i = 0;
-  while (character = characters[i++]) {
+  while ((character = characters[i++])) {
     if (character.eob)
       break;
     var characterItem = dictionary[character.characterId];

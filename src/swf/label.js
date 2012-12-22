@@ -13,7 +13,7 @@ function defineLabel(tag, dictionary) {
   var y = 0;
   var i = 0;
   var record;
-  while (record = records[i++]) {
+  while ((record = records[i++])) {
     if (record.eot)
       break;
     if (record.hasFont) {
@@ -32,7 +32,7 @@ function defineLabel(tag, dictionary) {
     var entries = record.entries;
     var j = 0;
     var entry;
-    while (entry = entries[j++]) {
+    while ((entry = entries[j++])) {
       var code = codes[entry.glyphIndex];
       assert(code, 'undefined glyph', 'label');
       var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :

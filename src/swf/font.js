@@ -30,7 +30,7 @@ function defineFont(tag, dictionary) {
     });
     var i = 0;
     var code;
-    while (code = codes[i++]) {
+    while ((code = codes[i++])) {
       var start = code;
       var end = start;
       var indices = [i - 1];
@@ -96,7 +96,7 @@ function defineFont(tag, dictionary) {
   var idRangeOffset = '';
   var i = 0;
   var range;
-  while (range = ranges[i++]) {
+  while ((range = ranges[i++])) {
     var start = range[0];
     var end = range[1];
     var code = range[2][0];
@@ -147,7 +147,7 @@ function defineFont(tag, dictionary) {
   var maxContours = 0;
   var i = 0;
   var code;
-  while (code = codes[i++]) {
+  while ((code = codes[i++])) {
     var glyph = glyphs[glyphIndex[code]];
     var records = glyph.records;
     var numberOfContours = 1;
@@ -328,7 +328,7 @@ function defineFont(tag, dictionary) {
     ;
     var i = 0;
     var record;
-    while (record = kerning[i++]) {
+    while ((record = kerning[i++])) {
       kern +=
         toString16(glyphIndex[record.code1]) + // left
         toString16(glyphIndex[record.code2]) + // right
@@ -381,7 +381,7 @@ function defineFont(tag, dictionary) {
   var offset = 0;
   var i = 0;
   var str;
-  while (str = strings[i++]) {
+  while ((str = strings[i++])) {
     name +=
       '\x00\x01' + // platformID
       '\x00\x00' + // encodingID
@@ -419,7 +419,7 @@ function defineFont(tag, dictionary) {
   var offset = (numTables * 16) + header.length;
   var i = 0;
   var name;
-  while (name = names[i++]) {
+  while ((name = names[i++])) {
     var table = tables[name];
     var length = table.length;
     header +=
