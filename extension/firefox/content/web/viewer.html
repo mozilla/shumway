@@ -305,7 +305,7 @@
       function parseSwf(url, file) {
         console.log("Parsing " + url + "...");
         function terminate() {}
-        createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.COMPILE, EXECUTION_MODE.COMPILE, function (avm2) {
+        createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
           SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate });
         });
       }
