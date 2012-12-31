@@ -22,6 +22,7 @@ var LoaderDefinition = (function () {
     '../../swf/image.js',
     '../../swf/label.js',
     '../../swf/shape.js',
+    '../../swf/sound.js',
     '../../swf/text.js'
   ];
 
@@ -78,10 +79,7 @@ var LoaderDefinition = (function () {
         symbol = defineShape(swfTag, symbols);
         break;
       case SWF_TAG_CODE_DEFINE_SOUND:
-        symbol = {
-          type: 'sound',
-          id: swfTag.id
-        };
+        symbol = defineSound(swfTag, symbols);
         break;
       case SWF_TAG_CODE_DEFINE_SPRITE:
         var depths = { };
@@ -160,6 +158,7 @@ var LoaderDefinition = (function () {
       var frame = { type: 'frame' };
       var symbols = this._symbols;
       var tagsProcessed = 0;
+      var soundStream = null;
 
       return {
         onstart: function(result) {
@@ -200,6 +199,19 @@ var LoaderDefinition = (function () {
                 frame.initActionBlocks = initActionBlocks = {};
               }
               initActionBlocks[tag.spriteId] = tag.actionsData;
+              break;
+            case SWF_TAG_CODE_START_SOUND:
+              var startSounds = frame.startSounds;
+              if (!startSounds)
+                frame.startSounds = startSounds = [];
+              startSounds.push(tag);
+              break;
+            case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+              soundStream = createSoundStream(tag);
+              frame.soundStream = soundStream.info;
+              break;
+            case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+              frame.soundStream = soundStream.decode(tag.data);
               break;
             case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:
@@ -661,8 +673,27 @@ var LoaderDefinition = (function () {
         });
         break;
       case 'sound':
+        var audio = new Audio;
+        if (symbol.packaged) {
+          var audioPromise = new Promise;
+          audio.onload = function () {
+            audioPromise.resolve();
+          };
+          var a = "";
+          for (var i = 0; i < symbol.packaged.data.length; i++)
+            a += String.fromCharCode(symbol.packaged.data[i]);
+          audio.src = 'data:' + symbol.packaged.mimeType + ';base64,' + btoa(a);
+
+          promiseQueue.push(audioPromise);
+        }
+
         symbolInfo.className = 'flash.media.Sound';
-        symbolInfo.props = { };
+        symbolInfo.props = {
+          audio: audio,
+          sampleRate: symbol.sampleRate,
+          channels: symbol.channels,
+          pcm: symbol.pcm
+        };
         break;
       case 'sprite':
         var frameCount = symbol.frameCount;
