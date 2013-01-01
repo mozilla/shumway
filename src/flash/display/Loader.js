@@ -547,6 +547,11 @@ var LoaderDefinition = (function () {
               }
             }
           }
+
+        }
+
+        if (frame.startSounds) {
+          root._registerStartSounds(frameNum, frame.startSounds);
         }
 
         if (frameNum === 1)
@@ -673,26 +678,12 @@ var LoaderDefinition = (function () {
         });
         break;
       case 'sound':
-        var audio = new Audio;
-        if (symbol.packaged) {
-          var audioPromise = new Promise;
-          audio.onload = function () {
-            audioPromise.resolve();
-          };
-          var a = "";
-          for (var i = 0; i < symbol.packaged.data.length; i++)
-            a += String.fromCharCode(symbol.packaged.data[i]);
-          audio.src = 'data:' + symbol.packaged.mimeType + ';base64,' + btoa(a);
-
-          promiseQueue.push(audioPromise);
-        }
-
         symbolInfo.className = 'flash.media.Sound';
         symbolInfo.props = {
-          audio: audio,
           sampleRate: symbol.sampleRate,
           channels: symbol.channels,
-          pcm: symbol.pcm
+          pcm: symbol.pcm,
+          packaged: symbol.packaged
         };
         break;
       case 'sprite':

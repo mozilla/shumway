@@ -16,6 +16,41 @@ var SOUND_FORMAT_SPEEX         = 11;
 
 var SOUND_RATES = [5512, 11250, 22500, 44100];
 
+var WaveHeader = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+  0x57, 0x41, 0x56, 0x45, 0x66, 0x6D, 0x74, 0x20, 0x10, 0x00, 0x00, 0x00,
+  0x01, 0x00, 0x02, 0x00, 0x44, 0xAC, 0x00, 0x00, 0x10, 0xB1, 0x02, 0x00,
+  0x04, 0x00, 0x10, 0x00, 0x64, 0x61, 0x74, 0x61, 0x00, 0x00, 0x00, 0x00]);
+
+function packageWave(data, sampleRate, channels, size, swapBytes) {
+  var sizeInBytes = size >> 3;
+  var sizePerSecond = channels * sampleRate * sizeInBytes;
+  var sizePerSample = channels * sizeInBytes;
+  var dataLength = data.length + (data.length & 1);
+  var buffer = new ArrayBuffer(WaveHeader.length + dataLength);
+  var bytes = new Uint8Array(buffer);
+  bytes.set(WaveHeader);
+  if (swapBytes) {
+    for (var i = 0, j = WaveHeader.length; i < data.length; i += 2, j += 2) {
+      bytes[j] = data[i + 1];
+      bytes[j + 1] = data[i];
+    }
+  } else {
+    bytes.set(data, WaveHeader.length);
+  }
+  var view = new DataView(buffer);
+  view.setUint32(4, dataLength + 36, true);
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sizePerSecond, true);
+  view.setUint16(32, sizePerSample, true);
+  view.setUint16(34, size, true);
+  view.setUint32(40, dataLength, true);
+  return {
+    data: bytes,
+    mimeType: 'audio/wav'
+  };
+}
+
 function defineSound(tag, dictionary) {
   var channels = tag.soundType == SOUND_TYPE_STEREO ? 2 : 1;
   var samplesCount = tag.samplesCount;
@@ -28,19 +63,23 @@ function defineSound(tag, dictionary) {
   case SOUND_FORMAT_PCM_BE:
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-        pcm[i] = ((data[j] << 8) | data[j + 1]) / 32768;
+        pcm[i] = ((data[i] << 24) | (data[i + 1] << 16)) / 2147483648;
+      packaged = packageWave(data, sampleRate, channels, 16, true);
     } else {
       for (var i = 0; i < pcm.length; i++)
         pcm[i] = (data[i] - 128) / 128;
+      packaged = packageWave(data, sampleRate, channels, 8, false);
     }
     break;
   case SOUND_FORMAT_PCM_LE:
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-        pcm[i] = ((data[j + 1] << 8) | data[j]) / 32768;
+        pcm[i] = ((data[i + 1] << 24) | (data[i] << 16)) / 2147483648;
+      packaged = packageWave(data, sampleRate, channels, 16, false);
     } else {
       for (var i = 0; i < pcm.length; i++)
         pcm[i] = (data[i] - 128) / 128;
+      packaged = packageWave(data, sampleRate, channels, 8, false);
     }
     break;
   case SOUND_FORMAT_MP3:
@@ -62,8 +101,6 @@ function defineSound(tag, dictionary) {
     }
   default:
     error('Unsupported audio format: ' + tag.soundFormat);
-    //for (var i = 0; i < pcm.length; i++)
-    //  pcm[i] = Math.sin(i / sampleRate * 220);
     break;
   }
 
@@ -116,7 +153,7 @@ function SwfSoundStream_decode_PCM(data) {
 function SwfSoundStream_decode_PCM_be(data) {
   var pcm = new Float32Array(data.length / 2);
   for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-    pcm[i] = ((data[i] << 8) | data[i + 1]) / 128;
+    pcm[i] = ((data[i] << 24) | (data[i + 1] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
     pcm: pcm,
@@ -127,7 +164,7 @@ function SwfSoundStream_decode_PCM_be(data) {
 function SwfSoundStream_decode_PCM_le(data) {
   var pcm = new Float32Array(data.length / 2);
   for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-    pcm[i] = ((data[j + 1] << 8) | data[j]) / 128;
+    pcm[i] = ((data[i + 1] << 24) | (data[i] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
     pcm: pcm,
@@ -160,7 +197,7 @@ function SwfSoundStream_decode_MP3_fake(data) {
   var pcm = new Float32Array(samplesCount * this.channels);
   var sampleRate = this.sampleRate;
   for (var i = 0; i < pcm.length; i++)
-    pcm[i] = Math.sin(i / sampleRate * 220);
+    pcm[i] = Math.sin(2 * Math.PI * i / sampleRate * 220);
   this.currentSample += samplesCount;
   return {
     pcm: pcm,
@@ -173,7 +210,6 @@ function createSoundStream(tag) {
   var channels = tag.streamType == SOUND_TYPE_STEREO ? 2 : 1;
   var samplesCount = tag.samplesCount;
   var sampleRate = SOUND_RATES[tag.streamRate];
-  debugger;
   var stream = new SwfSoundStream(samplesCount, sampleRate, channels);
 
   switch (tag.streamCompression) {
