@@ -16,6 +16,7 @@ var MovieClipDefinition = (function () {
       this._scenes = { };
       this._timeline = null;
       this._totalFrames = 1;
+      this._startSoundRegistrations = [];
 
       var s = this.symbol;
       if (s) {
@@ -175,8 +176,10 @@ var MovieClipDefinition = (function () {
 
       this._currentFrame = frameNum;
 
-      if (frameNum)
+      if (frameNum) {
         this._requestCallFrame();
+        this._startSounds(frameNum);
+      }
     },
     _requestCallFrame: function () {
        this._scriptExecutionPending = true;
@@ -242,7 +245,35 @@ var MovieClipDefinition = (function () {
         this._getAS2Object()[name] = instance._getAS2Object();
       }
     },
+    _registerStartSounds: function (frameNum, starts) {
+      this._startSoundRegistrations[frameNum] = starts;
+    },
+    _startSounds: function (frameNum) {
+      var starts = this._startSoundRegistrations[frameNum];
+      if (!starts)
+        return;
 
+      var sounds = this._sounds || (this._sounds = {});
+      var loader = this.loaderInfo._loader;
+      for (var i = 0; i < starts.length; i++) {
+        var start = starts[i];
+        var symbolId = start.soundId;
+        var sound = sounds[symbolId];
+        if (!sound) {
+          var symbolPromise = loader._dictionary[symbolId];
+          var symbolInfo = symbolPromise.value;
+
+          var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+            avm2.systemDomain.getClass(symbolInfo.className) :
+            avm2.applicationDomain.getClass(symbolInfo.className);
+
+          var sound = symbolClass.createAsSymbol(symbolInfo.props);
+          symbolClass.instance.call(sound);
+          sounds[symbolId] = sound;
+        }
+        sound.play();
+      }
+    },
     get currentFrame() {
       return this._currentFrame || 1;
     },

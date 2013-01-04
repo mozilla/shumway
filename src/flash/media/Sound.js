@@ -2,9 +2,9 @@ var SoundDefinition = (function () {
 
   var audioElement = null;
 
-  function getAudioDescription(buffer, onComplete) {
+  function getAudioDescription(soundData, onComplete) {
     audioElement = audioElement || document.createElement('audio');
-    audioElement.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
+    audioElement.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
     audioElement.load();
     audioElement.addEventListener("loadedmetadata", function () {
       onComplete({
@@ -21,6 +21,16 @@ var SoundDefinition = (function () {
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
       this._id3 = new flash.media.ID3Info();
+
+      var s = this.symbol;
+      if (s && s.packaged) {
+        var soundData = s.packaged;
+        var _this = this;
+        getAudioDescription(soundData, function (description) {
+          _this._length = description.duration;
+        });
+        this._soundData = soundData;
+      }
     },
 
     close: function close() {
@@ -48,12 +58,15 @@ var SoundDefinition = (function () {
 
       loader.addEventListener("complete", function (event) {
         _this.dispatchEvent(event);
-        var buffer = loader.data.a;
-        getAudioDescription(buffer, function (description) {
+        var soundData = _this._soundData = {
+          data: loader.data.a,
+          mimeType: 'audio/mpeg'
+        };
+        getAudioDescription(soundData, function (description) {
           _this._length = description.duration;
         });
         _this._playQueue.forEach(function (item) {
-          playChannel(buffer, item.channel, item.startTime, item.soundTransform);
+          playChannel(soundData, item.channel, item.startTime, item.soundTransform);
         });
       });
     },
@@ -66,6 +79,7 @@ var SoundDefinition = (function () {
     },
     play: function play(startTime, loops, soundTransform) {
       // (startTime:Number = 0, loops:int = 0, soundTransform:SoundTransform = null) -> SoundChannel
+      startTime = startTime || 0;
       var channel = new flash.media.SoundChannel();
       channel._sound = this;
       this._playQueue.push({
@@ -73,8 +87,8 @@ var SoundDefinition = (function () {
         startTime: startTime,
         soundTransform: soundTransform
       });
-      if (this._loader.data) {
-        playChannel(this._loader.data.a, channel, startTime, soundTransform);
+      if (this._soundData) {
+        playChannel(this._soundData, channel, startTime, soundTransform);
       }
       return channel;
     },
@@ -102,11 +116,12 @@ var SoundDefinition = (function () {
     }
   };
 
-  function playChannel(buffer, channel, startTime, soundTransform) {
-    channel._element.src = "data:audio/mpeg;base64," + base64ArrayBuffer(buffer);
-    channel._element.play();
-    channel._element.addEventListener("playing", function () {
-      channel._element.currentTime = startTime / 1000;
+  function playChannel(soundData, channel, startTime, soundTransform) {
+    var element = channel._element;
+    element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
+    element.addEventListener("loadeddata", function loaded() {
+      element.currentTime = startTime / 1000;
+      element.play();
     });
   }
 

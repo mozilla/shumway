@@ -440,13 +440,12 @@ var TEXT_RECORD = {
     }
   }]]
 };
-var ENVELOPE = {
-  pos: UI32,
+var SOUND_ENVELOPE = {
+  pos44: UI32,
   volumeLeft: UI16,
   volumeRight: UI16
 };
 var SOUND_INFO = {
-  soundId: UI16,
   $$reserved: UB(2),
   stop: UB(1),
   noMultiple: UB(1),
@@ -455,12 +454,12 @@ var SOUND_INFO = {
   $hasOutPoint: UB(1),
   $hasInPoint: UB(1),
   inPoint: ['hasInPoint', [UI32]],
-  outPoint: ['hasInPoint', [UI32]],
-  loopCount: ['hasLoopCount', [UI16]],
+  outPoint: ['hasOutPoint', [UI32]],
+  loopCount: ['hasLoops', [UI16]],
   $0: ['hasEnvelope', [{
     $envelopeCount: UI8,
     envelopes: {
-      $: ENVELOPE,
+      $: SOUND_ENVELOPE,
       count: 'envelopeCount'
     }
   }]]

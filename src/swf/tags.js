@@ -328,6 +328,31 @@ var FRAME_LABEL = {
 var DEFINE_SOUND = {
   id: UI16,
   $$soundFlags: UI8,
+  soundFormat: 'soundFlags>>4&15',
+  soundRate: 'soundFlags>>2&3',
+  soundSize: 'soundFlags>>1&1',
+  soundType: 'soundFlags&1',
   samplesCount: UI32,
   soundData: BINARY(0)
+};
+var START_SOUND = {
+  soundId: ['tagCode == 15', [UI16]],
+  soundClassName: ['tagCode == 89', [STRING(0)]],
+  soundInfo: SOUND_INFO
+};
+var SOUND_STREAM_HEAD = {
+  $$playbackFlags: UI8,
+  playbackRate: 'playbackFlags>>2&3',
+  playbackSize: 'playbackFlags>>1&1',
+  playbackType: 'playbackFlags&1',
+  $$streamFlags: UI8,
+  $streamCompression: 'streamFlags>>4&15',
+  streamRate: 'streamFlags>>2&3',
+  streamSize: 'streamFlags>>1&1',
+  streamType: 'streamFlags&1',
+  samplesCount: UI32,
+  latencySeek: ['streamCompression == 2', [SI16]]
+};
+var SOUND_STREAM_BLOCK = {
+  data: BINARY(0)
 };
