@@ -3,6 +3,7 @@ var LoaderDefinition = (function () {
   var LOADER_PATH = 'flash/display/Loader.js';
   var WORKER_SCRIPTS = [
     '../../../lib/DataView.js/DataView.js',
+    '../../../lib/mp3/mp3.js',
 
     '../util.js',
 

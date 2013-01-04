@@ -63,7 +63,7 @@ function defineSound(tag, dictionary) {
   case SOUND_FORMAT_PCM_BE:
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-        pcm[i] = ((data[i] << 24) | (data[i + 1] << 16)) / 2147483648;
+        pcm[i] = ((data[j] << 24) | (data[j + 1] << 16)) / 2147483648;
       packaged = packageWave(data, sampleRate, channels, 16, true);
     } else {
       for (var i = 0; i < pcm.length; i++)
@@ -74,7 +74,7 @@ function defineSound(tag, dictionary) {
   case SOUND_FORMAT_PCM_LE:
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-        pcm[i] = ((data[i + 1] << 24) | (data[i] << 16)) / 2147483648;
+        pcm[i] = ((data[j + 1] << 24) | (data[j] << 16)) / 2147483648;
       packaged = packageWave(data, sampleRate, channels, 16, false);
     } else {
       for (var i = 0; i < pcm.length; i++)
@@ -153,7 +153,7 @@ function SwfSoundStream_decode_PCM(data) {
 function SwfSoundStream_decode_PCM_be(data) {
   var pcm = new Float32Array(data.length / 2);
   for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-    pcm[i] = ((data[i] << 24) | (data[i + 1] << 16)) / 2147483648;
+    pcm[i] = ((data[j] << 24) | (data[j + 1] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
     pcm: pcm,
@@ -164,7 +164,7 @@ function SwfSoundStream_decode_PCM_be(data) {
 function SwfSoundStream_decode_PCM_le(data) {
   var pcm = new Float32Array(data.length / 2);
   for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
-    pcm[i] = ((data[i + 1] << 24) | (data[i] << 16)) / 2147483648;
+    pcm[i] = ((data[j + 1] << 24) | (data[j] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
     pcm: pcm,

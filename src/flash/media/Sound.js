@@ -1,9 +1,17 @@
+var PLAY_USING_AUDIO_TAG = true;
+
 var SoundDefinition = (function () {
 
   var audioElement = null;
 
   function getAudioDescription(soundData, onComplete) {
     audioElement = audioElement || document.createElement('audio');
+    if (!audioElement.canPlayType(soundData.mimeType)) {
+      onComplete({
+        duration: 0
+      });
+      return;
+    }
     audioElement.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
     audioElement.load();
     audioElement.addEventListener("loadedmetadata", function () {
@@ -23,8 +31,19 @@ var SoundDefinition = (function () {
       this._id3 = new flash.media.ID3Info();
 
       var s = this.symbol;
-      if (s && s.packaged) {
-        var soundData = s.packaged;
+      if (s) {
+        var soundData = {};
+        if (s.pcm) {
+          soundData.sampleRate = s.sampleRate;
+          soundData.channels = s.channels;
+          soundData.pcm = s.pcm;
+          soundData.end = s.pcm.length;
+        }
+        soundData.completed = true;
+        if (s.packaged) {
+          soundData.data = s.packaged.data.buffer;
+          soundData.mimeType = s.packaged.mimeType;
+        }
         var _this = this;
         getAudioDescription(soundData, function (description) {
           _this._length = description.duration;
@@ -48,27 +67,68 @@ var SoundDefinition = (function () {
       }
 
       var _this = this;
-      var loader = this._loader = new flash.net.URLLoader(request);
-      loader.dataFormat = "binary";
+      var stream = this._stream = new flash.net.URLStream();
+      var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
+      var data = ByteArrayClass.createInstance();
+      var dataPosition = 0;
+      var mp3DecodingSession = null;
+      var soundData = { completed: false };
 
-      loader.addEventListener("progress", function (event) {
+      stream.addEventListener("progress", function (event) {
         console.info("PROGRESS");
+        _this._bytesLoaded = event.public$bytesLoaded;
+        _this._bytesTotal = event.public$bytesTotal;
+
+        if (!PLAY_USING_AUDIO_TAG && !mp3DecodingSession) {
+          // initialize MP3 decoding
+          mp3DecodingSession = decodeMP3(soundData, function ondurationchanged(duration) {
+            if (_this._length === 0) {
+              // once we have some data, trying to play it
+              _this._soundData = soundData;
+
+              _this._playQueue.forEach(function (item) {
+                item.channel._playSoundDataViaChannel(soundData, item.startTime);
+              });
+            }
+            // TODO estimate duration based on bytesTotal
+            _this._length = duration * 1000;
+          });
+        }
+
+        var bytesAvailable = stream.bytesAvailable;
+        stream.readBytes(data, dataPosition, bytesAvailable);
+        if (mp3DecodingSession) {
+          mp3DecodingSession.pushData(data, dataPosition, bytesAvailable);
+        }
+        dataPosition += bytesAvailable;
+
         _this.dispatchEvent(event);
       });
 
-      loader.addEventListener("complete", function (event) {
+      stream.addEventListener("complete", function (event) {
         _this.dispatchEvent(event);
-        var soundData = _this._soundData = {
-          data: loader.data.a,
-          mimeType: 'audio/mpeg'
-        };
-        getAudioDescription(soundData, function (description) {
-          _this._length = description.duration;
-        });
-        _this._playQueue.forEach(function (item) {
-          playChannel(soundData, item.channel, item.startTime, item.soundTransform);
-        });
+        soundData.data = data.a;
+        soundData.mimeType = 'audio/mpeg';
+        soundData.completed = true;
+
+        if (PLAY_USING_AUDIO_TAG) {
+          _this._soundData = soundData;
+
+          getAudioDescription(soundData, function (description) {
+            _this._length = description.duration;
+          });
+
+          _this._playQueue.forEach(function (item) {
+            item.channel._playSoundDataViaAudio(soundData, item.startTime);
+          });
+        }
+
+        if (mp3DecodingSession) {
+          mp3DecodingSession.close();
+        }
       });
+
+      stream.load(request);
     },
     loadCompressedDataFromByteArray: function loadCompressedDataFromByteArray(bytes, bytesLength) {
       throw 'Not implemented: loadCompressedDataFromByteArray';
@@ -82,22 +142,25 @@ var SoundDefinition = (function () {
       startTime = startTime || 0;
       var channel = new flash.media.SoundChannel();
       channel._sound = this;
+      channel._soundTransform = soundTransform;
       this._playQueue.push({
         channel: channel,
-        startTime: startTime,
-        soundTransform: soundTransform
+        startTime: startTime
       });
       if (this._soundData) {
-        playChannel(this._soundData, channel, startTime, soundTransform);
+        if (PLAY_USING_AUDIO_TAG)
+          channel._playSoundDataViaAudio(this._soundData, startTime);
+        else
+          channel._playSoundDataViaChannel(this._soundData, startTime);
       }
       return channel;
     },
 
     get bytesLoaded() {
-      return this._loader.bytesLoaded;
+      return this._bytesLoaded;
     },
     get bytesTotal() {
-      return this._loader.bytesTotal;
+      return this._bytesTotal;
     },
     get id3() {
       return this._id3;
@@ -116,13 +179,59 @@ var SoundDefinition = (function () {
     }
   };
 
-  function playChannel(soundData, channel, startTime, soundTransform) {
-    var element = channel._element;
-    element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
-    element.addEventListener("loadeddata", function loaded() {
-      element.currentTime = startTime / 1000;
-      element.play();
-    });
+  // TODO send to MP3 decoding worker
+  function decodeMP3(soundData, ondurationchanged) {
+    var currentSize = 8000;
+    var pcm = new Float32Array(currentSize);
+    var position = 0;
+    var mp3Decoder = new MP3Decoder();
+    mp3Decoder.onframedata = function (frame, channels, sampleRate) {
+      if (frame.length === 0)
+        return;
+      if (!position) {
+        // first data: initializes pcm data fields
+        soundData.sampleRate = sampleRate,
+        soundData.channels = channels;
+        soundData.pcm = pcm;
+      }
+      if (position + frame.length >= currentSize) {
+        do {
+          currentSize *= 2;
+        } while (position + frame.length >= currentSize);
+        var newPcm = new Float32Array(currentSize);
+        newPcm.set(pcm);
+        pcm = soundData.pcm = newPcm;
+      }
+      pcm.set(frame, position);
+      soundData.end = position += frame.length;
+
+      var duration = position / soundData.sampleRate / soundData.channels;
+      ondurationchanged(duration);
+    };
+    return  {
+      chunks: [],
+      pushData: function (data, offset, length) {
+        function decodeNext() {
+          var chunk = chunks.shift();
+          mp3Decoder.push(chunk);
+          if (chunks.length > 0)
+            setTimeout(decodeNext);
+        }
+        var chunks = this.chunks;
+        var initPush = chunks.length === 0;
+        var maxChunkLength = 8000;
+        for (var i = 0; i < length; i += maxChunkLength) {
+          var chunkOffset = offset + i;
+          var chunkLength = Math.min(length - chunkOffset, maxChunkLength);
+          var chunk = new Uint8Array(data.a, chunkOffset, chunkLength);
+          chunks.push(chunk);
+        }
+        if (initPush)
+          decodeNext();
+      },
+      close: function () {
+      }
+    };
   }
 
   var desc = Object.getOwnPropertyDescriptor;
