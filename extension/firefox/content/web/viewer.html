@@ -229,6 +229,11 @@
         }
       }
 
+      function showURL() {
+        var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
+        window.prompt("Copy to clipboard", flashParams.url);
+      }
+
       function Subscription() {}
       Subscription.prototype = {
         subscribe: function (callback) {
@@ -338,15 +343,15 @@
         background-color: rgba(0, 0, 0, 0.78);
       }
 
-
       #fallback {
         display: none;
       }
+
       #fallback.enabled {
         display: block;
         position:fixed;
-        right: 0px; bottom: 0px; width: 70px; height: 16px;
         color: white;
+        right: 0px; bottom: 0px; width: 70px; height: 16px;
         padding: 4px;
         padding-top: 8px;
         background-color: rgba(0, 0, 0, 0.62);
@@ -354,6 +359,7 @@
         text-align: center;
         text-decoration: none;
       }
+
       #fallback .icon {
         display: inline-block;
         color: white;
@@ -365,7 +371,12 @@
   </head>
 
   <body onload="runViewer()">
-      <div id="viewer"></div>
+    <div id="viewer"></div>
+    <section contextmenu="shumwayMenu">
       <a id="fallback" href="#">Shumway <span class="icon">&times;</span></a>
+      <menu type="context" id="shumwayMenu">
+        <menuitem label="Show URL" onclick="showURL();"></menuitem>
+      </menu>
+    </section>
   </body>
 </html>
