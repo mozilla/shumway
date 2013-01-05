@@ -81,7 +81,7 @@ var SoundDefinition = (function () {
 
         if (!PLAY_USING_AUDIO_TAG && !mp3DecodingSession) {
           // initialize MP3 decoding
-          mp3DecodingSession = decodeMP3(soundData, function ondurationchanged(duration) {
+          mp3DecodingSession = decodeMP3(soundData, function (duration, final) {
             if (_this._length === 0) {
               // once we have some data, trying to play it
               _this._soundData = soundData;
@@ -90,8 +90,9 @@ var SoundDefinition = (function () {
                 item.channel._playSoundDataViaChannel(soundData, item.startTime);
               });
             }
-            // TODO estimate duration based on bytesTotal
-            _this._length = duration * 1000;
+            // estimate duration based on bytesTotal and current loaded data time
+            _this._length = final ? duration * 1000 : Math.max(duration,
+              mp3DecodingSession.estimateDuration(_this._bytesTotal)) * 1000;
           });
         }
 
@@ -184,6 +185,7 @@ var SoundDefinition = (function () {
     var currentSize = 8000;
     var pcm = new Float32Array(currentSize);
     var position = 0;
+    var lastTimeRatio = 0;
     var mp3Decoder = new MP3Decoder();
     mp3Decoder.onframedata = function (frame, channels, sampleRate) {
       if (frame.length === 0)
@@ -205,17 +207,21 @@ var SoundDefinition = (function () {
       pcm.set(frame, position);
       soundData.end = position += frame.length;
 
-      var duration = position / soundData.sampleRate / soundData.channels;
-      ondurationchanged(duration);
+      lastTimeRatio = 1 / soundData.sampleRate / soundData.channels;
+      ondurationchanged(position * lastTimeRatio, false);
     };
+    var completed = false;
     return  {
       chunks: [],
       pushData: function (data, offset, length) {
         function decodeNext() {
           var chunk = chunks.shift();
           mp3Decoder.push(chunk);
-          if (chunks.length > 0)
+          if (chunks.length > 0) {
             setTimeout(decodeNext);
+          } else if (completed) {
+            ondurationchanged(position * lastTimeRatio, true);
+          }
         }
         var chunks = this.chunks;
         var initPush = chunks.length === 0;
@@ -229,7 +235,11 @@ var SoundDefinition = (function () {
         if (initPush)
           decodeNext();
       },
+      estimateDuration: function (fileSize) {
+        return mp3Decoder.estimateDuration(fileSize);
+      },
       close: function () {
+        completed = true;
       }
     };
   }
