@@ -248,6 +248,24 @@ var MovieClipDefinition = (function () {
     _registerStartSounds: function (frameNum, starts) {
       this._startSoundRegistrations[frameNum] = starts;
     },
+    _initSoundStream: function (streamInfo) {
+      this._soundStream = {
+        data: {
+          pcm: new Float32Array(streamInfo.samplesCount * streamInfo.channels),
+          sampleRate: streamInfo.sampleRate,
+          channels: streamInfo.channels
+        },
+        seekIndex: [],
+        position: 0
+      };
+    },
+    _addSoundStreamBlock: function (frameNum, streamBlock) {
+      var streamPosition = this._soundStream.position;
+      this._soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
+      this._soundStream.seekIndex[frameNum] = streamPosition +
+        streamBlock.seek * this._soundStream.data.channels;
+      this._soundStream.position = streamPosition + streamBlock.pcm.length;
+    },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
       if (!starts)

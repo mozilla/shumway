@@ -182,7 +182,7 @@ function SwfSoundStream_decode_MP3(data) {
     for (var j = 0; j < frameData.length; j++)
       pcm[i++] = frameData[j];
   };
-  decoder.push(data.substring(4));
+  decoder.push(data.subarray(4));
   this.currentSample += samplesCount;
   return {
     pcm: pcm,

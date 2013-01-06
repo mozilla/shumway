@@ -212,7 +212,7 @@ var LoaderDefinition = (function () {
               frame.soundStream = soundStream.info;
               break;
             case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-              frame.soundStream = soundStream.decode(tag.data);
+              frame.soundStreamBlock = soundStream.decode(tag.data);
               break;
             case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:
@@ -553,6 +553,12 @@ var LoaderDefinition = (function () {
 
         if (frame.startSounds) {
           root._registerStartSounds(frameNum, frame.startSounds);
+        }
+        if (frame.soundStream) {
+          root._initSoundStream(frame.soundStream);
+        }
+        if (frame.soundStreamBlock) {
+          root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
         }
 
         if (frameNum === 1)
