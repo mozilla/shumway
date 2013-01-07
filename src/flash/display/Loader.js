@@ -208,11 +208,18 @@ var LoaderDefinition = (function () {
               startSounds.push(tag);
               break;
             case SWF_TAG_CODE_SOUND_STREAM_HEAD:
-              soundStream = createSoundStream(tag);
-              frame.soundStream = soundStream.info;
+              try {
+                soundStream = createSoundStream(tag);
+                frame.soundStream = soundStream.info;
+              } catch (e) {
+                // ignoring if sound stream codec is not supported
+                // console.log('ERROR: ' + e.message);
+              }
               break;
             case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-              frame.soundStreamBlock = soundStream.decode(tag.data);
+              if (soundStream) {
+                frame.soundStreamBlock = soundStream.decode(tag.data);
+              }
               break;
             case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:

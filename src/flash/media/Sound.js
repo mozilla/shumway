@@ -227,9 +227,8 @@ var SoundDefinition = (function () {
         var initPush = chunks.length === 0;
         var maxChunkLength = 8000;
         for (var i = 0; i < length; i += maxChunkLength) {
-          var chunkOffset = offset + i;
-          var chunkLength = Math.min(length - chunkOffset, maxChunkLength);
-          var chunk = new Uint8Array(data.a, chunkOffset, chunkLength);
+          var chunkLength = Math.min(length - i, maxChunkLength);
+          var chunk = new Uint8Array(data.a, offset + i, chunkLength);
           chunks.push(chunk);
         }
         if (initPush)

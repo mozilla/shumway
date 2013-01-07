@@ -191,21 +191,6 @@ function SwfSoundStream_decode_MP3(data) {
   };
 }
 
-function SwfSoundStream_decode_MP3_fake(data) {
-  var samplesCount = (data[1] << 8) | data[0];
-  var seek = (data[3] << 8) | data[2];
-  var pcm = new Float32Array(samplesCount * this.channels);
-  var sampleRate = this.sampleRate;
-  for (var i = 0; i < pcm.length; i++)
-    pcm[i] = Math.sin(2 * Math.PI * i / sampleRate * 220);
-  this.currentSample += samplesCount;
-  return {
-    pcm: pcm,
-    streamId: this.streamId,
-    seek: seek
-  };
-}
-
 function createSoundStream(tag) {
   var channels = tag.streamType == SOUND_TYPE_STEREO ? 2 : 1;
   var samplesCount = tag.samplesCount;
@@ -231,9 +216,6 @@ function createSoundStream(tag) {
     if (typeof MP3Decoder !== 'undefined') {
       stream.decode = SwfSoundStream_decode_MP3;
       stream.mp3Decoder = new MP3Decoder();
-      break;
-    } else {
-      stream.decode = SwfSoundStream_decode_MP3_fake;
       break;
     }
   default:

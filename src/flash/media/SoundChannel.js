@@ -38,6 +38,9 @@ const SoundChannelDefinition = (function () {
       this._audioChannel.start();
     },
     _playSoundDataViaAudio: function (soundData, startTime) {
+      if (!soundData.mimeType)
+        return;
+
       this._position = startTime;
       var self = this;
       var element = document.createElement('audio');

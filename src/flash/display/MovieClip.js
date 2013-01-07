@@ -268,28 +268,42 @@ var MovieClipDefinition = (function () {
     },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
-      if (!starts)
-        return;
+      if (starts) {
+        var sounds = this._sounds || (this._sounds = {});
+        var loader = this.loaderInfo._loader;
+        for (var i = 0; i < starts.length; i++) {
+          var start = starts[i];
+          var symbolId = start.soundId;
+          var sound = sounds[symbolId];
+          if (!sound) {
+            var symbolPromise = loader._dictionary[symbolId];
+            var symbolInfo = symbolPromise.value;
 
-      var sounds = this._sounds || (this._sounds = {});
-      var loader = this.loaderInfo._loader;
-      for (var i = 0; i < starts.length; i++) {
-        var start = starts[i];
-        var symbolId = start.soundId;
-        var sound = sounds[symbolId];
-        if (!sound) {
-          var symbolPromise = loader._dictionary[symbolId];
-          var symbolInfo = symbolPromise.value;
+            var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+              avm2.systemDomain.getClass(symbolInfo.className) :
+              avm2.applicationDomain.getClass(symbolInfo.className);
 
-          var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-            avm2.systemDomain.getClass(symbolInfo.className) :
-            avm2.applicationDomain.getClass(symbolInfo.className);
-
-          var sound = symbolClass.createAsSymbol(symbolInfo.props);
-          symbolClass.instance.call(sound);
-          sounds[symbolId] = sound;
+            var sound = symbolClass.createAsSymbol(symbolInfo.props);
+            symbolClass.instance.call(sound);
+            sounds[symbolId] = sound;
+          }
+          // TODO stopping
+          sound.play();
         }
-        sound.play();
+      }
+      if (this._soundStream) {
+        // Start from some seek offset, stopping
+        if (!this._soundStream.sound && this._soundStream.seekIndex[frameNum]) {
+          var className = 'flash.media.Sound';
+          var symbolClass = avm2.systemDomain.findClass(className) ?
+            avm2.systemDomain.getClass(className) :
+            avm2.applicationDomain.getClass(className);
+
+          var sound = symbolClass.createAsSymbol(this._soundStream.data);
+          symbolClass.instance.call(sound);
+          sound.play();
+          this._soundStream.sound = sound;
+        }
       }
     },
     get currentFrame() {
