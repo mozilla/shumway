@@ -56,11 +56,31 @@ var DisplayObjectDefinition = (function () {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
         this._children = s.children || [];
+        this._clipDepth = s.clipDepth || 0;
+        this._cxform = s.cxform || null;
         this._owned = s.owned || false;
         this._name = s.name || null;
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
+
+        var matrix = s.currentTransform;
+        if (matrix) {
+          var a = matrix.a;
+          var b = matrix.b;
+          var c = matrix.c;
+          var d = matrix.d;
+
+          this._rotation = Math.atan2(b, a) * 180 / Math.PI;
+          var sx = Math.sqrt(a * a + b * b);
+          this._scaleX = a > 0 ? sx : -sx;
+          var sy = Math.sqrt(d * d + c * c);
+          this._scaleY = d > 0 ? sy : -sy;
+          var x = this._x = matrix.tx;
+          var y = this._y = matrix.ty;
+
+          this._currentTransform = matrix;
+        }
       }
 
       this._updateCurrentTransform();

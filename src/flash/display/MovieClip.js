@@ -7,7 +7,6 @@ var MovieClipDefinition = (function () {
       this._currentFrameLabel = null;
       this._currentLabel = false;
       this._currentScene = { };
-      this._depthMap = [];
       this._enabled = null;
       this._frameScripts = { };
       this._frameLabels = { };
@@ -43,39 +42,6 @@ var MovieClipDefinition = (function () {
       }
       return this.$as2Object;
     },
-    _insertChildAtDepth: function (instance, depth) {
-      var children = this._children;
-      var depthMap = this._depthMap;
-      var current = depthMap[depth];
-      var highestDepth = depthMap.length;
-      var replace = false;
-      var index;
-      if (current && current._owned) {
-        replace = true;
-        index = children.indexOf(current);
-      } else {
-        var top = null;
-        for (var i = +depth + 1; i < highestDepth; i++) {
-          var info = depthMap[i];
-          if (info && info._animated) {
-            top = info;
-            break;
-          }
-        }
-
-        index = top ? children.indexOf(top) : children.length;
-      }
-
-      children.splice(index, replace, instance);
-      depthMap[depth] = instance;
-
-      if (replace)
-        this._control.replaceChild(instance._control, current._control);
-      else
-        this._control.appendChild(instance._control);
-
-      instance.dispatchEvent(new flash.events.Event("added"));
-    },
 
     _gotoFrame: function (frameNum, scene) {
       if (frameNum > this._totalFrames)
@@ -89,6 +55,8 @@ var MovieClipDefinition = (function () {
 
       var currentFrame = this._currentFrame;
 
+      this._markAsDirty();
+
       if (currentFrame !== 0) {
         while (currentFrame++ < (frameNum || 1)) {
           var children = this._children;
@@ -96,20 +64,17 @@ var MovieClipDefinition = (function () {
           var framePromise = this._timeline[currentFrame - 1];
           var highestDepth = depthMap.length;
           var displayList = framePromise.value;
-          var loader = this.loaderInfo._loader;
 
           for (var depth in displayList) {
-            this._markAsDirty();
-
             var cmd = displayList[depth];
             var current = depthMap[depth];
             if (cmd === null) {
               if (current && current._owned) {
                 var index = children.indexOf(current);
-                var removed = children.splice(index, 1);
-                this._control.removeChild(current._control);
+                children.splice(index, 1);
 
-                removed[0].dispatchEvent(new flash.events.Event("removed"));
+                this._control.removeChild(current._control);
+                current.dispatchEvent(new flash.events.Event("removed"));
 
                 if (depth < highestDepth)
                   depthMap[depth] = undefined;
@@ -122,19 +87,28 @@ var MovieClipDefinition = (function () {
               var matrix = cmd.matrix;
               var target;
 
-              if (cmd.symbolId) {
-                var name = cmd.name;
-                var events = cmd.hasEvents ? cmd.events : null;
+              if (cmd.promise) {
+                var replace = false;
+                var index;
+                if (current && current._owned) {
+                  replace = true;
+                  index = children.indexOf(current);
 
-                var instance = this._constructSymbol(cmd.symbolId, name);
+                  this._control.removeChild(current._control);
+                  current.dispatchEvent(new flash.events.Event("removed"));
 
-                if (!loader._isAvm2Enabled) {
-                  this._initAvm1Bindings(instance, name, events);
+                } else {
+                  var top = null;
+                  for (var i = +depth + 1; i < highestDepth; i++) {
+                    var info = depthMap[i];
+                    if (info && info._animated) {
+                      top = info;
+                      break;
+                    }
+                  }
+                  index = top ? children.indexOf(top) : children.length;
                 }
 
-                instance.dispatchEvent(new flash.events.Event("load"));
-
-                this._insertChildAtDepth(instance, depth);
                 if (current && current._owned) {
                   if (!clipDepth)
                     clipDepth = current._clipDepth;
@@ -143,36 +117,54 @@ var MovieClipDefinition = (function () {
                   if (!matrix)
                     matrix = current._currentTransform;
                 }
-                target = instance;
+
+                var symbolPromise = cmd.promise;
+                var symbolInfo = symbolPromise.value;
+                var props = Object.create(symbolInfo.props);
+
+                if (clipDepth)
+                  props.clipDepth = clipDepth;
+                if (cxform)
+                  props.cxform = cxform;
+                if (matrix)
+                  props.currentTransform = matrix;
+
+                children.splice(index, replace, {
+                  className: symbolInfo.className,
+                  events: cmd.events,
+                  depth: depth,
+                  name: cmd.name,
+                  props: props
+                });
               } else if (current && current._animated) {
-                target = current;
-              }
+                if (clipDepth)
+                  current._clipDepth = clipDepth;
+                if (cxform)
+                  current._cxform = cxform;
 
-              if (clipDepth)
-                target._clipDepth = clipDepth;
-              if (cxform)
-                target._cxform = cxform;
+                if (matrix) {
+                  var a = matrix.a;
+                  var b = matrix.b;
+                  var c = matrix.c;
+                  var d = matrix.d;
 
-              if (matrix) {
-                var a = matrix.a;
-                var b = matrix.b;
-                var c = matrix.c;
-                var d = matrix.d;
+                  current._rotation = Math.atan2(b, a) * 180 / Math.PI;
+                  var sx = Math.sqrt(a * a + b * b);
+                  current._scaleX = a > 0 ? sx : -sx;
+                  var sy = Math.sqrt(d * d + c * c);
+                  current._scaleY = d > 0 ? sy : -sy;
+                  var x = current._x = matrix.tx;
+                  var y = current._y = matrix.ty;
 
-                target._rotation = Math.atan2(b, a) * 180 / Math.PI;
-                var sx = Math.sqrt(a * a + b * b);
-                target._scaleX = a > 0 ? sx : -sx;
-                var sy = Math.sqrt(d * d + c * c);
-                target._scaleY = d > 0 ? sy : -sy;
-                var x = target._x = matrix.tx;
-                var y = target._y = matrix.ty;
-
-                target._currentTransform = matrix;
+                  current._currentTransform = matrix;
+                }
               }
             }
           }
         }
       }
+
+      this._constructChildren();
 
       this._currentFrame = frameNum;
 
@@ -181,72 +173,12 @@ var MovieClipDefinition = (function () {
         this._startSounds(frameNum);
       }
     },
+    _registerStartSounds: function (frameNum, starts) {
+      this._startSoundRegistrations[frameNum] = starts;
+    },
     _requestCallFrame: function () {
        this._scriptExecutionPending = true;
        this.stage._callFrameRequested = true;
-    },
-    _initAvm1Bindings: function (instance, name, events) {
-      var loader = this.loaderInfo._loader;
-      var avm1Context = loader._avm1Context;
-      var symbolProps = instance.symbol;
-      if (symbolProps.variableName) {
-        var variableName = symbolProps.variableName;
-        var i = variableName.lastIndexOf('.');
-        var clip;
-        if (i >= 0) {
-          var targetPath = variableName.substring(0, i).split('.');
-          if (targetPath[0] == '_root') {
-            clip = this.root._getAS2Object();
-            targetPath.shift();
-          } else {
-            clip = instance._getAS2Object();
-          }
-          while (targetPath.length > 0) {
-            if (!(targetPath[0] in clip))
-              throw 'Cannot find ' + variableName + ' variable';
-            clip = clip[targetPath.shift()];
-          }
-          variableName = variableName.substring(i + 1);
-        } else
-          clip = instance._getAS2Object();
-        if (!(variableName in clip))
-          clip[variableName] = instance.text;
-        instance._refreshAS2Variables = function() {
-          instance.text = clip[variableName];
-        };
-      }
-      if (events) {
-        var eventsBound = [];
-        for (var i = 0; i < events.length; i++) {
-          var event = events[i];
-          if (event.eoe) {
-            break;
-          }
-          var fn = function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, this._getAS2Object());
-          }.bind(instance, event.actionsData);
-          for (var eventName in event) {
-            if (eventName.indexOf("on") !== 0 || !event[eventName])
-              continue;
-            var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            this.addEventListener(avm2EventName, fn, false);
-            eventsBound.push({name: avm2EventName, fn: fn});
-          }
-        }
-        if (eventsBound.length > 0) {
-          instance.addEventListener('removed', function (eventsBound) {
-            for (var i = 0; i < eventsBound.length; i++) {
-              this.removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
-            }
-          }.bind(instance, eventsBound), false);
-        }
-      }
-      if (name) {
-        this._getAS2Object()[name] = instance._getAS2Object();
-      }
-    },
-    _registerStartSounds: function (frameNum, starts) {
-      this._startSoundRegistrations[frameNum] = starts;
     },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
@@ -274,6 +206,7 @@ var MovieClipDefinition = (function () {
         sound.play();
       }
     },
+
     get currentFrame() {
       return this._currentFrame || 1;
     },

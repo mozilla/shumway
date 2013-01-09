@@ -385,8 +385,13 @@ var LoaderDefinition = (function () {
             var symbolPromise = dictionary[cmd.symbolId];
             if (symbolPromise && !symbolPromise.resolved)
               promiseQueue.push(symbolPromise);
+
+            displayList[depth] = Object.create(cmd, {
+              promise: { value: symbolPromise }
+            });
+          } else {
+            displayList[depth] = cmd;
           }
-          displayList[depth] = cmd;
         }
       }
 
@@ -513,7 +518,7 @@ var LoaderDefinition = (function () {
             //  soundMock._timeline[0].resolve([]);
             //  soundMock._exports = exports;
             //  soundMock.$as2Object = as2Object.soundmc;
-            //  //root.addChild(soundMock);
+            //  root.addChild(soundMock);
             //}
 
             root.symbol.frameScripts = frameScripts;
@@ -707,8 +712,13 @@ var LoaderDefinition = (function () {
                 var itemPromise = dictionary[cmd.symbolId];
                 if (itemPromise && !itemPromise.resolved)
                   promiseQueue.push(itemPromise);
+
+                displayList[depth] = Object.create(cmd, {
+                  promise: { value: itemPromise }
+                });
+              } else {
+                displayList[depth] = cmd;
               }
-              displayList[depth] = cmd;
             }
           }
 
