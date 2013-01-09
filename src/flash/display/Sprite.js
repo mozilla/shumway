@@ -10,6 +10,35 @@ var SpriteDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this._graphics = s.graphics || new flash.display.Graphics;
+
+        if (s.timeline) {
+          var framePromise = s.timeline[0];
+          if (framePromise) {
+            var children = this._children;
+            var displayList = framePromise.value;
+            for (var depth in displayList) {
+              var cmd = displayList[depth];
+              var symbolPromise = cmd.promise;
+              var symbolInfo = symbolPromise.value;
+              var props = Object.create(symbolInfo.props);
+
+              if (cmd.clipDepth)
+                props.clipDepth = cmd.clipDepth;
+              if (cmd.cxform)
+                props.cxform = cmd.cxform;
+              if (cmd.matrix)
+                props.currentTransform = cmd.matrix;
+
+              children.push({
+                className: symbolInfo.className,
+                events: cmd.events,
+                depth: depth,
+                name: cmd.name,
+                props: props
+              });
+            }
+          }
+        }
       } else {
         this._graphics = new flash.display.Graphics;
       }
