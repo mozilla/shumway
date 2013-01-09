@@ -99,7 +99,7 @@ var SoundDefinition = (function () {
         var bytesAvailable = stream.bytesAvailable;
         stream.readBytes(data, dataPosition, bytesAvailable);
         if (mp3DecodingSession) {
-          mp3DecodingSession.pushData(data, dataPosition, bytesAvailable);
+          mp3DecodingSession.pushData(new Uint8Array(data.a, dataPosition, bytesAvailable));
         }
         dataPosition += bytesAvailable;
 
@@ -186,8 +186,28 @@ var SoundDefinition = (function () {
     var pcm = new Float32Array(currentSize);
     var position = 0;
     var lastTimeRatio = 0;
-    var mp3Decoder = new MP3Decoder();
-    mp3Decoder.onframedata = function (frame, channels, sampleRate) {
+    var durationEstimationData = {
+      estimateBitRate: true,
+      bitRateSum: 0,
+      bitRateCount: 0,
+      metadataSize: 0,
+      averageBitRate: 0
+    };
+
+    var mp3DecoderSession = new MP3DecoderSession();
+    mp3DecoderSession.onframedata = function (frame, channels, sampleRate, bitRate) {
+      if (durationEstimationData.estimateBitRate) {
+        var FramesToEstimate = 200;
+        if (durationEstimationData.bitRateCount < FramesToEstimate) {
+          durationEstimationData.bitRateSum += bitRate;
+          durationEstimationData.bitRateCount++;
+        } else {
+          durationEstimationData.estimateBitRate = false;
+        }
+        this.averageBitRate = durationEstimationData.bitRateSum /
+                              durationEstimationData.bitRateCount;
+      }
+
       if (frame.length === 0)
         return;
       if (!position) {
@@ -210,35 +230,23 @@ var SoundDefinition = (function () {
       lastTimeRatio = 1 / soundData.sampleRate / soundData.channels;
       ondurationchanged(position * lastTimeRatio, false);
     };
+    mp3DecoderSession.onid3tag = function (data) {
+      durationEstimationData.metadataSize += data.length;
+    },
+    mp3DecoderSession.onclosed = function () {
+      ondurationchanged(position * lastTimeRatio, true);
+    };
     var completed = false;
     return  {
-      chunks: [],
-      pushData: function (data, offset, length) {
-        function decodeNext() {
-          var chunk = chunks.shift();
-          mp3Decoder.push(chunk);
-          if (chunks.length > 0) {
-            setTimeout(decodeNext);
-          } else if (completed) {
-            ondurationchanged(position * lastTimeRatio, true);
-          }
-        }
-        var chunks = this.chunks;
-        var initPush = chunks.length === 0;
-        var maxChunkLength = 8000;
-        for (var i = 0; i < length; i += maxChunkLength) {
-          var chunkLength = Math.min(length - i, maxChunkLength);
-          var chunk = new Uint8Array(data.a, offset + i, chunkLength);
-          chunks.push(chunk);
-        }
-        if (initPush)
-          decodeNext();
+      pushData: function (data) {
+        mp3DecoderSession.pushAsync(data);
       },
       estimateDuration: function (fileSize) {
-        return mp3Decoder.estimateDuration(fileSize);
+        return Math.max(0, (fileSize - durationEstimationData.metadataSize) * 8 /
+                           durationEstimationData.averageBitRate);
       },
       close: function () {
-        completed = true;
+        mp3DecoderSession.close();
       }
     };
   }

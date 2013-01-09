@@ -249,7 +249,7 @@ var MovieClipDefinition = (function () {
       this._startSoundRegistrations[frameNum] = starts;
     },
     _initSoundStream: function (streamInfo) {
-      this._soundStream = {
+      var soundStream = this._soundStream = {
         data: {
           pcm: new Float32Array(streamInfo.samplesCount * streamInfo.channels),
           sampleRate: streamInfo.sampleRate,
@@ -258,13 +258,31 @@ var MovieClipDefinition = (function () {
         seekIndex: [],
         position: 0
       };
+      if (streamInfo.format === 'mp3') {
+        soundStream.decoderPosition = 0;
+        soundStream.decoderSession = new MP3DecoderSession();
+        soundStream.decoderSession.onframedata = function (frameData) {
+          var position = soundStream.decoderPosition;
+          soundStream.data.pcm.set(frameData, position);
+          soundStream.decoderPosition = position + frameData.length;
+        }.bind(this);
+        // TODO close the session somewhere
+      }
     },
     _addSoundStreamBlock: function (frameNum, streamBlock) {
-      var streamPosition = this._soundStream.position;
-      this._soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
-      this._soundStream.seekIndex[frameNum] = streamPosition +
-        streamBlock.seek * this._soundStream.data.channels;
-      this._soundStream.position = streamPosition + streamBlock.pcm.length;
+      var soundStream = this._soundStream;
+      var streamPosition = soundStream.position;
+      soundStream.seekIndex[frameNum] = streamPosition +
+        streamBlock.seek * soundStream.data.channels;
+      soundStream.position = streamPosition +
+        streamBlock.samplesCount * soundStream.data.channels;
+
+      var decoderSession = soundStream.decoderSession;
+      if (decoderSession) {
+        decoderSession.pushAsync(streamBlock.data);
+      } else {
+        soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
+      }
     },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];

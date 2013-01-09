@@ -3,7 +3,6 @@ var LoaderDefinition = (function () {
   var LOADER_PATH = 'flash/display/Loader.js';
   var WORKER_SCRIPTS = [
     '../../../lib/DataView.js/DataView.js',
-    '../../../lib/mp3/mp3.js',
 
     '../util.js',
 
@@ -692,6 +691,18 @@ var LoaderDefinition = (function () {
         });
         break;
       case 'sound':
+        if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
+          assert(symbol.packaged.mimeType === 'audio/mpeg');
+
+          var decodePromise = new Promise;
+          MP3DecoderSession.processAll(symbol.packaged.data,
+            function (symbolInfo, pcm) {
+              symbolInfo.props.pcm = pcm;
+              decodePromise.resolve();
+            }.bind(null, symbolInfo));
+          promiseQueue.push(decodePromise);
+        }
+
         symbolInfo.className = 'flash.media.Sound';
         symbolInfo.props = {
           sampleRate: symbol.sampleRate,

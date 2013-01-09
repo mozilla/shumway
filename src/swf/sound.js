@@ -56,11 +56,11 @@ function defineSound(tag, dictionary) {
   var samplesCount = tag.samplesCount;
   var sampleRate = SOUND_RATES[tag.soundRate];
 
-  var pcm = new Float32Array(samplesCount * channels);
   var data = tag.soundData;
-  var packaged;
+  var pcm, packaged;
   switch (tag.soundFormat) {
   case SOUND_FORMAT_PCM_BE:
+    pcm = new Float32Array(samplesCount * channels);
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
         pcm[i] = ((data[j] << 24) | (data[j + 1] << 16)) / 2147483648;
@@ -72,6 +72,7 @@ function defineSound(tag, dictionary) {
     }
     break;
   case SOUND_FORMAT_PCM_LE:
+    pcm = new Float32Array(samplesCount * channels);
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       for (var i = 0, j = 0; i < pcm.length; i++, j += 2)
         pcm[i] = ((data[j + 1] << 24) | (data[j] << 16)) / 2147483648;
@@ -83,22 +84,11 @@ function defineSound(tag, dictionary) {
     }
     break;
   case SOUND_FORMAT_MP3:
-    if (typeof MP3Decoder !== 'undefined') {
-      var decoder = new MP3Decoder();
-      var i = 0;
-      decoder.onframedata = function (frameData) {
-        for (var j = 0; j < frameData.length; j++)
-          pcm[i++] = frameData[j];
-      };
-      decoder.push(data);
-      break;
-    } else {
-      packaged = {
-        data: data.subarray(2),
-        mimeType: 'audio/mpeg'
-      };
-      break;
-    }
+    packaged = {
+      data: data.subarray(2),
+      mimeType: 'audio/mpeg'
+    };
+    break;
   default:
     error('Unsupported audio format: ' + tag.soundFormat);
     break;
@@ -123,6 +113,7 @@ function SwfSoundStream(samplesCount, sampleRate, channels) {
   this.samplesCount = samplesCount;
   this.sampleRate = sampleRate;
   this.channels = channels;
+  this.format = null;
   this.currentSample = 0;
 }
 SwfSoundStream.prototype = {
@@ -131,6 +122,7 @@ SwfSoundStream.prototype = {
       samplesCount: this.samplesCount,
       sampleRate: this.sampleRate,
       channels: this.channels,
+      format: this.format,
       streamId: this.streamId
     };
   },
@@ -145,8 +137,9 @@ function SwfSoundStream_decode_PCM(data) {
     pcm[i] = (data[i] - 128) / 128;
   this.currentSample += pcm.length / this.channels;
   return {
-    pcm: pcm,
-    streamId: this.streamId
+    streamId: this.streamId,
+    samplesCount: pcm.length / this.channels,
+    pcm: pcm
   };
 }
 
@@ -156,8 +149,9 @@ function SwfSoundStream_decode_PCM_be(data) {
     pcm[i] = ((data[j] << 24) | (data[j + 1] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
-    pcm: pcm,
-    streamId: this.streamId
+    streamId: this.streamId,
+    samplesCount: pcm.length / this.channels,
+    pcm: pcm
   };
 }
 
@@ -167,26 +161,20 @@ function SwfSoundStream_decode_PCM_le(data) {
     pcm[i] = ((data[j + 1] << 24) | (data[j] << 16)) / 2147483648;
   this.currentSample += pcm.length / this.channels;
   return {
-    pcm: pcm,
-    streamId: this.streamId
+    streamId: this.streamId,
+    samplesCount: pcm.length / this.channels,
+    pcm: pcm
   };
 }
 
 function SwfSoundStream_decode_MP3(data) {
   var samplesCount = (data[1] << 8) | data[0];
   var seek = (data[3] << 8) | data[2];
-  var pcm = new Float32Array(samplesCount * this.channels);
-  var i = 0;
-  var decoder = this.mp3Decoder;
-  decoder.onframedata = function (frameData) {
-    for (var j = 0; j < frameData.length; j++)
-      pcm[i++] = frameData[j];
-  };
-  decoder.push(data.subarray(4));
   this.currentSample += samplesCount;
   return {
-    pcm: pcm,
     streamId: this.streamId,
+    samplesCount: samplesCount,
+    data: data.subarray(4),
     seek: seek
   };
 }
@@ -199,6 +187,7 @@ function createSoundStream(tag) {
 
   switch (tag.streamCompression) {
   case SOUND_FORMAT_PCM_BE:
+    stream.format = 'wave';
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       stream.decode = SwfSoundStream_decode_PCM_be;
     } else {
@@ -206,6 +195,7 @@ function createSoundStream(tag) {
     }
     break;
   case SOUND_FORMAT_PCM_LE:
+    stream.format = 'wave';
     if (tag.soundSize == SOUND_SIZE_16_BIT) {
       stream.decode = SwfSoundStream_decode_PCM_le;
     } else {
@@ -213,11 +203,9 @@ function createSoundStream(tag) {
     }
     break;
   case SOUND_FORMAT_MP3:
-    if (typeof MP3Decoder !== 'undefined') {
-      stream.decode = SwfSoundStream_decode_MP3;
-      stream.mp3Decoder = new MP3Decoder();
-      break;
-    }
+    stream.format = 'mp3';
+    stream.decode = SwfSoundStream_decode_MP3;
+    break;
   default:
     error('Unsupported audio format: ' + tag.soundFormat);
     break;
