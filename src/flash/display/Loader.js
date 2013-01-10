@@ -585,26 +585,32 @@ var LoaderDefinition = (function () {
       case 'button':
         var states = { };
         for (var stateName in symbol.states) {
-          var children = [];
+          var characters = [];
+          var displayList = { };
 
           var depths = symbol.states[stateName];
           for (var depth in depths) {
             var cmd = depths[depth];
-            if (cmd && cmd.symbolId) {
-              var childPromise = dictionary[cmd.symbolId];
-              if (childPromise && !childPromise.resolved)
-                promiseQueue.push(childPromise);
-            }
-            children.push(childPromise);
+            var characterPromise = dictionary[cmd.symbolId];
+            if (characterPromise && !characterPromise.resolved)
+              promiseQueue.push(characterPromise);
+
+            characters.push(characterPromise);
+            displayList[depth] = Object.create(cmd, {
+              promise: { value: characterPromise }
+            });
           }
 
-          if (children.length === 1) {
-            states[stateName] = children[0];
+          if (characters.length === 1) {
+            states[stateName] = characters[0];
           } else {
+            var framePromise = new Promise;
+            framePromise.resolve(displayList);
+
             var statePromise = new Promise;
             stateInfo = { };
             stateInfo.className = 'flash.display.Sprite';
-            stateInfo.props = { children: children };
+            stateInfo.props = { timeline: [framePromise] };
             statePromise.resolve(stateInfo);
             states[stateName] = statePromise;
           }
