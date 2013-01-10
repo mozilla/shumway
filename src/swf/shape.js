@@ -277,8 +277,8 @@ function defineShape(tag, dictionary) {
         var colors = [];
         var alphas = [];
         var ratios = [];
-        for (var i = 0, n = records.length; i < n; i++) {
-          var record = records[i];
+        for (var j = 0, n = records.length; j < n; j++) {
+          var record = records[j];
           var color = record.color;
           if (record.colorMorph) {
             var colorMorph = record.colorMorph;
