@@ -98,6 +98,24 @@ var LoaderDefinition = (function () {
             frameScripts.push(tag.actionsData);
             break;
           // case SWF_TAG_CODE_DO_INIT_ACTION: ??
+          case SWF_TAG_CODE_START_SOUND:
+            var startSounds = frame.startSounds || (frame.startSounds = []);
+            startSounds.push(tag);
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+            try {
+              soundStream = createSoundStream(tag);
+              frame.soundStream = soundStream.info;
+            } catch (e) {
+              // ignoring if sound stream codec is not supported
+              // console.log('ERROR: ' + e.message);
+            }
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+            if (soundStream) {
+              frame.soundStreamBlock = soundStream.decode(tag.data);
+            }
+            break;
           case SWF_TAG_CODE_FRAME_LABEL:
             frame.labelName = tag.name;
             break;
@@ -717,7 +735,7 @@ var LoaderDefinition = (function () {
         var frameNum = 1;
         var frames = symbol.frames;
         var timeline = [];
-
+        var startSoundRegistrations = [];
         for (var i = 0, n = frames.length; i < n; i++) {
           var frame = frames[i];
           var framePromise = new Promise;
@@ -743,6 +761,15 @@ var LoaderDefinition = (function () {
               frame: frameNum,
               name: frame.labelName
             };
+          }
+
+          if (frame.startSounds) {
+            startSoundRegistrations[frameNum] = frame.startSounds;
+            for (var j = 0; j < frame.startSounds.length; j++) {
+              var itemPromise = dictionary[frame.startSounds[j].soundId];
+              if (itemPromise && !itemPromise.resolved)
+                promiseQueue.push(itemPromise);
+            }
           }
 
           var j = frame.repeat;
@@ -781,7 +808,8 @@ var LoaderDefinition = (function () {
           framesLoaded: frameCount,
           frameLabels: frameLabels,
           frameScripts: frameScripts,
-          totalFrames: frameCount
+          totalFrames: frameCount,
+          startSoundRegistrations: startSoundRegistrations
         };
         break;
       }

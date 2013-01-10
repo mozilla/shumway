@@ -25,6 +25,7 @@ var MovieClipDefinition = (function () {
         this._frameLabels = Object.create(s.frameLabels || null);
         this._frameScripts = Object.create(s.frameScripts || null);
         this._totalFrames = s.totalFrames || 1;
+        this._startSoundRegistrations = s.startSoundRegistrations || [];
       }
 
       this._gotoFrame(0);
