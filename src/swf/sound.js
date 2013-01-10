@@ -89,8 +89,17 @@ function defineSound(tag, dictionary) {
       mimeType: 'audio/mpeg'
     };
     break;
+  case SOUND_FORMAT_ADPCM:
+    var pcm16 = new Int16Array(samplesCount * channels);
+    decodeACPCMSoundData(data, pcm16, channels);
+    pcm = new Float32Array(samplesCount * channels);
+    for (var i = 0; i < pcm.length; i++)
+      pcm[i] = pcm16[i] / 32768;
+    packaged = packageWave(new Uint8Array(pcm16.buffer), sampleRate, channels,
+      16, !(new Uint8Array(new Uint16Array([1]).buffer))[0]);
+    break;
   default:
-    error('Unsupported audio format: ' + tag.soundFormat);
+    throw new Error('Unsupported audio format: ' + tag.soundFormat);
     break;
   }
 
@@ -104,6 +113,74 @@ function defineSound(tag, dictionary) {
   if (packaged)
     sound.packaged = packaged;
   return sound;
+}
+
+var ACPCMIndexTables = [
+  [-1, 2],
+  [-1, -1, 2, 4],
+  [-1, -1, -1, -1, 2, 4, 6, 8],
+  [-1, -1, -1, -1, -1, -1, -1, -1, 1, 2, 4, 6, 8, 10, 13, 16]
+];
+
+var ACPCMStepSizeTable = [
+  7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45,
+  50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230,
+  253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963,
+  1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327,
+  3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493, 10442, 11487,
+  12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
+];
+
+function decodeACPCMSoundData(data, pcm16, channels) {
+  function readBits(n, signed) {
+    while (dataBufferLength < n) {
+      dataBuffer = (dataBuffer << 8) | data[dataPosition++];
+      dataBufferLength += 8;
+    }
+    dataBufferLength -= n;
+    return (dataBuffer >>> dataBufferLength) & ((1 << n) - 1);
+  }
+  var dataPosition = 0;
+  var dataBuffer = 0;
+  var dataBufferLength = 0;
+
+  var pcmPosition = 0;
+  var codeSize = readBits(2);
+  var indexTable = ACPCMIndexTables[codeSize];
+  while (pcmPosition < pcm16.length) {
+    var x = pcm16[pcmPosition++] = (readBits(16) << 16) >> 16;
+    var stepIndex = readBits(6);
+    if (channels > 1) {
+      var x2 = pcm16[pcmPosition++] = (readBits(16) << 16) >> 16;
+      var stepIndex2 = readBits(6);
+    }
+    var signMask = 1 << (codeSize + 1);
+    for (var i = 0; i < 4095; i++) {
+      var nibble = readBits(codeSize + 2);
+      var step = ACPCMStepSizeTable[stepIndex];
+      var sum = 0;
+      for (var currentBit = signMask >> 1; currentBit; currentBit >>= 1, step >>= 1) {
+        if (nibble & currentBit) sum += step;
+      }
+      x += (nibble & signMask ? -1 : 1) * (sum + step);
+      pcm16[pcmPosition++] = (x = (x < -32768 ? -32768 : x > 32767 ? 32767 : x));
+      stepIndex += indexTable[nibble & ~signMask];
+      stepIndex = stepIndex < 0 ? 0 : stepIndex > 88 ? 88 : stepIndex;
+      if (channels > 1) {
+        nibble = readBits(codeSize + 2);
+        step = ACPCMStepSizeTable[stepIndex2];
+        sum = 0;
+        for (var currentBit = signMask >> 1; currentBit; currentBit >>= 1, step >>= 1) {
+          if (nibble & currentBit) sum += step;
+        }
+        x2 += (nibble & signMask ? -1 : 1) * (sum + step);
+        pcm16[pcmPosition++] = (x2 = (x2 < -32768 ? -32768 : x2 > 32767 ? 32767 : x2));
+        stepIndex2 += indexTable[nibble & ~signMask];
+        stepIndex2 = stepIndex2 < 0 ? 0 : stepIndex2 > 88 ? 88 : stepIndex2;
+      }
+
+    }
+  }
 }
 
 var nextSoundStreamId = 0;
@@ -127,7 +204,7 @@ SwfSoundStream.prototype = {
     };
   },
   decode: function (data) {
-    throw 'SwfSoundStream.decode: not implemented';
+    throw new Error('SwfSoundStream.decode: not implemented');
   }
 };
 
@@ -207,7 +284,8 @@ function createSoundStream(tag) {
     stream.decode = SwfSoundStream_decode_MP3;
     break;
   default:
-    error('Unsupported audio format: ' + tag.soundFormat);
+    debugger;
+    throw new Error('Unsupported audio format: ' + tag.soundFormat);
     break;
   }
 
