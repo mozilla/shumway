@@ -63,7 +63,7 @@ Promise.prototype.resolve = function (result) {
   var resolvedPromises = [];
   var queue = [];
   for (var i = 0; i < resolves.length; i++) {
-    if (!resolves[i].resolved)
+    if (!resolves[i].promise.resolved)
       queue.push(resolves[i], result);
   }
   while (queue.length > 0) {
@@ -83,8 +83,8 @@ Promise.prototype.resolve = function (result) {
       if (resolves) {
         // checking if more group promises can be resolved
         for (var i = 0; i < resolves.length; i++) {
-          if (!resolves[i].resolved)
-            queue.push(resolves[i], itemResult);
+          if (!resolves[i].promise.resolved)
+            queue.push(resolves[i], itemPromise.value);
         }
       }
     }

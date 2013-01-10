@@ -327,6 +327,7 @@ var LoaderDefinition = (function () {
       this._dictionary = { };
       this._symbols = { };
       this._timeline = [];
+      this._previousPromise = null;
     },
 
     _commitData: function (data) {
@@ -374,8 +375,10 @@ var LoaderDefinition = (function () {
       var timeline = loader._timeline;
       var frameNum = timeline.length + 1;
       var framePromise = new Promise;
+      var prevPromise = this._previousPromise;
+      var frameLoadedPromise = new Promise;
+      this._previousPromise = frameLoadedPromise;
       var labelName = frame.labelName;
-      var prevPromise = frameNum > 1 ? timeline[frameNum - 2] : dictionary[0];
       var promiseQueue = [prevPromise];
 
       if (depths) {
@@ -563,6 +566,8 @@ var LoaderDefinition = (function () {
 
         if (frameNum === 1)
           loaderInfo.dispatchEvent(new flash.events.Event('init', false, false));
+
+        frameLoadedPromise.resolve(frame);
       });
     },
     _commitSymbol: function (symbol) {
@@ -808,6 +813,7 @@ var LoaderDefinition = (function () {
       });
 
       loader._dictionary[0] = documentPromise;
+      loader._previousPromise = documentPromise;
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
