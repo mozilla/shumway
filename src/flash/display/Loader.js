@@ -404,7 +404,7 @@ var LoaderDefinition = (function () {
       while (i--)
         timeline.push(framePromise);
 
-      Promise.when.apply(Promise, promiseQueue).then(function (val) {
+      Promise.when.apply(Promise, promiseQueue).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
@@ -445,12 +445,14 @@ var LoaderDefinition = (function () {
           stage._stageHeight = loaderInfo._height;
           stage._stageWidth = loaderInfo._width;
 
-          var rootClass = avm2.applicationDomain.getClass(val.className);
+          assert(dictionary[0].resolved);
+          var rootInfo = dictionary[0].value;
+          var rootClass = avm2.applicationDomain.getClass(rootInfo.className);
           var root = rootClass.createAsSymbol({
             framesLoaded: 1,
             parent: stage,
             timeline: timeline,
-            totalFrames: val.props.totalFrames,
+            totalFrames: rootInfo.props.totalFrames,
             stage: stage
           });
 
