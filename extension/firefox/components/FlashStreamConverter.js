@@ -100,6 +100,7 @@ ChromeActions.prototype = {
     var url = data.url;
     var checkPolicyFile = data.checkPolicyFile;
     var sessionId = data.sessionId;
+    var limit = data.limit || 0;
     var method = data.method || "GET";
     var postData = data.postData || null;
 
@@ -125,6 +126,8 @@ ChromeActions.prototype = {
       xhr.setRequestHeader("Referer", this.referer);
     }
 
+    // TODO apply range request headers if limit is specified
+
     var lastPosition = 0;
     xhr.onprogress = function (e) {
       var position = e.loaded;
@@ -135,6 +138,9 @@ ChromeActions.prototype = {
       win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "progress",
                        array: data, loaded: e.loaded, total: e.total}, "*");
       lastPosition = position;
+      if (limit && e.total >= limit) {
+        xhr.abort();
+      }
     };
     xhr.onreadystatechange = function(event) {
       if (xhr.readyState === 4) {
@@ -289,9 +295,13 @@ FlashStreamConverterBase.prototype = {
 
     var originalURI = aRequest.URI;
 
+    // checking if the plug-in shall be run in simple mode
+    var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX;
+
     // Create a new channel that is viewer loaded as a resource.
     var ioService = Services.io;
-    var channel = ioService.newChannel(
+    var channel = ioService.newChannel(isSimpleMode ?
+                    'resource://shumway/web/simple.html' :
                     'resource://shumway/web/viewer.html', null, null);
 
     var converter = this;
@@ -359,7 +369,7 @@ FlashStreamConverter2.prototype.isValidRequest =
       var request = aCtxt;
       request.QueryInterface(Ci.nsIChannel);
       var spec = request.URI.spec;
-      return spec == EXPECTED_PLAYPREVIEW_URI_PREFIX;
+      return spec.indexOf(EXPECTED_PLAYPREVIEW_URI_PREFIX) === 0;
     } catch (e) {
       return false;
     }
