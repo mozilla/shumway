@@ -89,7 +89,6 @@
       function runSniffer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
         movieUrl = flashParams.url;
-        document.getElementById("url").href = movieUrl;
         console.log("url=" + movieUrl);
         FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0, limit: BYTES_TO_LOAD});
       }
