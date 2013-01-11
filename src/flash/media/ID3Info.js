@@ -1,4 +1,4 @@
-const ID3InfoDefinition = (function () {
+var ID3InfoDefinition = (function () {
   return {
     __glue__: {
       script: {
