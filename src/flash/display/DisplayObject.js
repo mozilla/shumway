@@ -31,7 +31,7 @@ var DisplayObjectDefinition = (function () {
       this._cxform = null;
       this._dirtyArea = null;
       this._graphics = null;
-      this._loaderInfo = null;
+      this._loader = null;
       this._mouseChildren = true;
       this._mouseOver = false;
       this._mouseX = 0;
@@ -58,8 +58,9 @@ var DisplayObjectDefinition = (function () {
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || 0;
         this._cxform = s.cxform || null;
-        this._owned = s.owned || false;
+        this._loader = s.loader || null;
         this._name = s.name || null;
+        this._owned = s.owned || false;
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
@@ -250,7 +251,7 @@ var DisplayObjectDefinition = (function () {
       notImplemented();
     },
     get loaderInfo() {
-      return this._loaderInfo || (this._parent ? this._parent.loaderInfo : null);
+      return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
     },
     get mask() {
       return null;

@@ -5,6 +5,8 @@ SWF.embed = function(file, container, options) {
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new flash.display.Stage;
 
+  stage._loader = loader;
+
   // HACK support of HiDPI displays
   var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
   var canvasHolder = null;

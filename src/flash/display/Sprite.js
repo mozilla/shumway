@@ -45,7 +45,7 @@ var SpriteDefinition = (function () {
     },
     _constructChildren: function () {
       var depthMap = this._depthMap;
-      var loader = this.loaderInfo._loader;
+      var loader = this._loader;
       var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
 
       var children = this._children;
@@ -99,7 +99,7 @@ var SpriteDefinition = (function () {
       }
     },
     _initAvm1Bindings: function (instance, name, events) {
-      var loader = this.loaderInfo._loader;
+      var loader = this._loader;
       var avm1Context = loader._avm1Context;
       var symbolProps = instance.symbol;
 
