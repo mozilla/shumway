@@ -215,8 +215,15 @@
         background-image: url(chrome://global/skin/media/clicktoplay-bgtexture.png);
         background-color: rgba(128, 128, 128, 0.5);
         font-family: sans-serif;
+      }
+      #toolbar {
         color: white;
-        font-size: x-small;
+        font-size: 12px;
+        text-shadow:
+            -1px -1px 0 black,
+            1px -1px 0 black,
+            -1px 1px 0 black,
+            1px 1px 0 black;
       }
       #container {
         position: fixed;
@@ -245,6 +252,15 @@
         width: 0px; height: 0px;
         display: inline-block;
       }
+
+      @media screen and (max-width: 160px) , screen and (max-height: 160px) {
+        #playbutton {
+          display: none;
+        }
+        #content {
+          margin-top: -6px;
+        }
+      }
     </style>
   </head>
 
@@ -253,6 +269,8 @@
       <div id='content'>
         <button id='playbutton' onclick='switchToFullMode()'><span>Play</span></button>
         <div id='toolbar'>
+          <a id="fallback" href="#" onclick='switchToFullMode()'>Play in Shumway</a>
+          <span class="delim"> | </span>
           <a id="fallback" href="#" onclick='fallback()'>Fallback to plug-in</a>
           <span class="delim"> | </span>
           <a id="url" href="#">Movie URL</a>
