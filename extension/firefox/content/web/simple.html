@@ -215,6 +215,10 @@
         background-color: rgba(128, 128, 128, 0.5);
         font-family: sans-serif;
       }
+      #screen {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+      }
       #container {
         position: fixed;
         top: 50%; left: 0; right: 0; bottom: 50%;
@@ -250,6 +254,15 @@
         }
       }
 
+      #screen {
+        transition:opacity 0.5s linear;
+        opacity: 0.1;
+      }
+
+      #screen:hover {
+        opacity: 1.0;
+      }
+
       .shumwayButton {
         background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
         background:-moz-linear-gradient( center top, #f9f9f9 5%, #e9e9e9 100% );
@@ -281,12 +294,14 @@
   </head>
 
   <body onload="runSniffer()">
-    <div id='container'>
-      <div id='content'>
-        <button id='playbutton' onclick='switchToFullMode()'><span>Play</span></button>
-        <div id='toolbar'>
-          <a class="shumwayButton" id="fallback" href="#" onclick='switchToFullMode()'>Shumway</a>
-          <a class="shumwayButton" id="fallback" href="#" onclick='fallback()'>Flash</a>
+    <div id='screen'>
+      <div id='container'>
+        <div id='content'>
+          <button id='playbutton' onclick='switchToFullMode()'><span>Play</span></button>
+          <div id='toolbar'>
+            <a class="shumwayButton" id="fallback" href="#" onclick='switchToFullMode()'>Shumway</a>
+            <a class="shumwayButton" id="fallback" href="#" onclick='fallback()'>Flash</a>
+          </div>
         </div>
       </div>
     </div>
