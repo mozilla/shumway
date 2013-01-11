@@ -212,18 +212,8 @@
       body {
         margin: 0;
         overflow: hidden;
-        background-image: url(chrome://global/skin/media/clicktoplay-bgtexture.png);
         background-color: rgba(128, 128, 128, 0.5);
         font-family: sans-serif;
-      }
-      #toolbar {
-        color: white;
-        font-size: 12px;
-        text-shadow:
-            -1px -1px 0 black,
-            1px -1px 0 black,
-            -1px 1px 0 black,
-            1px 1px 0 black;
       }
       #container {
         position: fixed;
@@ -233,19 +223,17 @@
         margin-top: -64px;
         text-align: center;
       }
-      #content a {
-        color: white;
-      }
       #playbutton {
         background-color: transparent;
         background-image: url(chrome://global/skin/media/videoClickToPlayButton.svg);
         border: none 0px;
-        width: 128px;
-        height: 128px;
+        width: 64px;
+        height: 64px;
         display: block;
         margin-left: auto;
         margin-right: auto;
         cursor: pointer;
+        margin-bottom: 10px;
       }
       #playbutton > span {
         overflow: hidden;
@@ -261,6 +249,34 @@
           margin-top: -6px;
         }
       }
+
+      .shumwayButton {
+        background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #f9f9f9), color-stop(1, #e9e9e9) );
+        background:-moz-linear-gradient( center top, #f9f9f9 5%, #e9e9e9 100% );
+        background-color:#f9f9f9;
+        -moz-border-radius:4px;
+        -webkit-border-radius:4px;
+        border-radius:4px;
+        border:1px solid #a0a0a0;
+        display:inline-block;
+        color:#666666;
+        font-family:arial;
+        font-size:11px;
+        font-weight:bold;
+        padding:6px 11px;
+        text-decoration:none;
+        text-shadow:1px 1px 0px #ffffff;
+        width: 70px;
+      }
+      .shumwayButton:hover {
+         background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #e9e9e9), color-stop(1, #f9f9f9) );
+         background:-moz-linear-gradient( center top, #e9e9e9 5%, #f9f9f9 100% );
+         background-color:#e9e9e9;
+       }
+      .shumwayButton:active {
+          position:relative;
+          top:1px;
+      }
     </style>
   </head>
 
@@ -269,11 +285,8 @@
       <div id='content'>
         <button id='playbutton' onclick='switchToFullMode()'><span>Play</span></button>
         <div id='toolbar'>
-          <a id="fallback" href="#" onclick='switchToFullMode()'>Play in Shumway</a>
-          <span class="delim"> | </span>
-          <a id="fallback" href="#" onclick='fallback()'>Fallback to plug-in</a>
-          <span class="delim"> | </span>
-          <a id="url" href="#">Movie URL</a>
+          <a class="shumwayButton" id="fallback" href="#" onclick='switchToFullMode()'>Shumway</a>
+          <a class="shumwayButton" id="fallback" href="#" onclick='fallback()'>Flash</a>
         </div>
       </div>
     </div>
