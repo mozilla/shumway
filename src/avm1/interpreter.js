@@ -1,6 +1,7 @@
 /* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var isAVM1TraceEnabled = false;
+var isAVM1ErrorsIgnored = true;
 
 function AS2ScopeListItem(scope, next) {
   this.scope = scope;
@@ -397,6 +398,10 @@ function interpretActions(actionsData, scopeContainer,
     }
     nextPosition = stream.position;
   }
+
+  var recoveringFromError = false;
+  while (stream.position < stream.end) { // will try again if we are skipping errors
+    try {
 
   while (stream.position < stream.end) {
     var actionCode = stream.readUI8();
@@ -1072,6 +1077,19 @@ function interpretActions(actionsData, scopeContainer,
         throw 'Unknown action code: ' + actionCode;
     }
     stream.position = nextPosition;
+    recoveringFromError = false;
+  }
+
+    // handling AVM1 errors
+    } catch (e) {
+      if (!isAVM1ErrorsIgnored)
+        throw e;
+      stream.position = nextPosition;
+      if (!recoveringFromError) {
+        console.error('AVM1 error: ' + e);
+        recoveringFromError = true;
+      }
+    }
   }
 }
 
