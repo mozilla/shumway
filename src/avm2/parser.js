@@ -239,7 +239,7 @@ var Trait = (function () {
   return trait;
 })();
 
-var Namespace = (function () {
+var ShumwayNamespace = (function () {
 
   var kinds = {};
   kinds[CONSTANT_Namespace] = "public";
@@ -645,7 +645,7 @@ var Multiname = (function () {
       name = simpleName;
       namespace = "";
     }
-    return simpleNameCache[simpleName] = new Multiname(Namespace.fromSimpleName(namespace), name);
+    return simpleNameCache[simpleName] = new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
   };
 
   multiname.prototype.getQName = function getQName(index) {
@@ -789,7 +789,7 @@ var ConstantPool = (function constantPool() {
     var namespaces = [undefined];
     n = stream.readU30();
     for (i = 1; i < n; ++i) {
-      var namespace = new Namespace();
+      var namespace = new ShumwayNamespace();
       namespace.parse(this, stream);
       namespaces.push(namespace);
     }
