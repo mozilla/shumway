@@ -343,12 +343,10 @@ var Namespace = (function () {
   var simpleNameCache = {};
 
   /**
-   * Creates a set of namespaces from one or more comma delimited simple names. For example:
-   *
+   * Creates a set of namespaces from one or more comma delimited simple names, for example:
    * flash.display
    * private flash.display
    * [flash.display, private flash.display]
-   *
    */
   namespace.fromSimpleName = function fromSimpleName(simpleName) {
     if (simpleName in simpleNameCache) {
