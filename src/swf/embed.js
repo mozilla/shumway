@@ -123,7 +123,7 @@ SWF.embed = function(file, container, options) {
     syncCursor();
 
     container.appendChild(canvasHolder || canvas);
-    renderStage(stage, ctx, options.onFrame);
+    renderStage(stage, ctx, options.onBeforeFrame, options.onFrame);
   });
 
   if (options.onComplete) {

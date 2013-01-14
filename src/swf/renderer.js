@@ -45,7 +45,7 @@ function renderDisplayObject(child, ctx, transform, cxform) {
     child.draw(ctx, child.ratio);
 }
 
-function renderStage(stage, ctx, onFrame) {
+function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var frameWidth = ctx.canvas.width;
   var frameHeight = ctx.canvas.height;
 
@@ -262,7 +262,14 @@ function renderStage(stage, ctx, onFrame) {
 
   (function draw() {
     var now = +new Date;
-    if (now - frameTime >= maxDelay) {
+    var renderFrame;
+    var renderFrame = now - frameTime >= maxDelay;
+    if (renderFrame && onBeforeFrame) {
+      var e = { cancel: false };
+      onBeforeFrame(e);
+      renderFrame = !e.cancel;
+    }
+    if (renderFrame) {
       frameTime = now;
 
       ctx.beginPath();
@@ -277,8 +284,8 @@ function renderStage(stage, ctx, onFrame) {
       visitContainer(stage, new PostVisitor());
       stage._syncCursor();
 
-      if (onFrame) {
-        onFrame();
+      if (onAfterFrame) {
+        onAfterFrame();
       }
     }
     requestAnimationFrame(draw);

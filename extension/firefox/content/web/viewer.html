@@ -218,6 +218,7 @@
         movieUrl = flashParams.url;
         var movieArgs = flashParams.arguments;
         var isOverlay = flashParams.isOverlay;
+        pauseExecution = flashParams.isPausedAtStart;
         console.log("url=" + movieUrl + ";params=" + uneval(movieArgs));
         FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0});
         if (isOverlay) {
@@ -325,10 +326,28 @@
         console.log("Parsing " + url + "...");
         function terminate() {}
         createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate });
+          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, onBeforeFrame: frame });
         });
       }
-        
+
+      var pauseExecution = false;
+      var initializeFrameControl = true;
+      function frame(e) {
+        if (initializeFrameControl) {
+          // skipping frame 0
+          initializeFrameControl = false;
+          return;
+        }
+        if (pauseExecution) {
+          e.cancel = true;
+        }
+      }
+
+      document.addEventListener('keydown', function (e) {
+        if (e.keyCode == 119 && e.ctrlKey) { // Ctrl+F8
+          pauseExecution = !pauseExecution;
+        }
+      }, false);
     </script>
     <style>
       body {

@@ -203,9 +203,15 @@
         }
       }
 
+      document.addEventListener('keydown', function (e) {
+        if (e.keyCode == 119 && e.ctrlKey) { // Ctrl+F8
+          window.location.replace("data:application/x-moz-playpreview;,application/x-shockwave-flash,full,paused=true");
+        }
+      }, false);
+
       function switchToFullMode() {
         window.location.replace("data:application/x-moz-playpreview;,application/x-shockwave-flash,full");
-      }        
+      }
     </script>
     <style>
       body {

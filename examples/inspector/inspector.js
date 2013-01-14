@@ -128,7 +128,7 @@ function executeFile(file, buffer) {
   } else if (file.endsWith(".swf")) {
     createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate });
+        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate, onBeforeFrame: frame });
       }
       if (!buffer && asyncLoading) {
         var subscription = {
@@ -162,6 +162,19 @@ function executeFile(file, buffer) {
 
 function terminate() {
   console.info(Counter);
+}
+
+var initializeFrameControl = true;
+var pauseExecution = getQueryVariable("paused") === "true";
+function frame(e) {
+  if (initializeFrameControl) {
+    // skipping frame 0
+    initializeFrameControl = false;
+    return;
+  }
+  if (pauseExecution) {
+    e.cancel = true;
+  }
 }
 
 var FileLoadingService = {

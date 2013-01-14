@@ -65,11 +65,12 @@ function combineUrl(baseUrl, url) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, referer, overlay, window) {
+function ChromeActions(url, params, referer, window) {
   this.url = url;
   this.params = params;
   this.referer = referer;
-  this.overlay = overlay;
+  this.isOverlay = false;
+  this.isPausedAtStart = false;
   this.window = window;
 }
 
@@ -78,7 +79,8 @@ ChromeActions.prototype = {
     return JSON.stringify({
       url: this.url,
       arguments: this.params,
-      isOverlay: this.overlay
+      isOverlay: this.isOverlay,
+      isPausedAtStart: this.isPausedAtStart
      });
   },
   _canDownloadFile: function canDownloadFile(url, checkPolicyFile) {
@@ -267,7 +269,10 @@ FlashStreamConverterBase.prototype = {
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
 
-    return new ChromeActions(url, params, baseUrl, isOverlay, window);
+    var actions = new ChromeActions(url, params, baseUrl, window);
+    actions.isOverlay = isOverlay;
+    actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    return actions;
   },
 
   // nsIStreamConverter::asyncConvertData
