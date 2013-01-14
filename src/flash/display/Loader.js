@@ -451,7 +451,7 @@ var LoaderDefinition = (function () {
           var rootInfo = dictionary[0].value;
           var rootClass = avm2.applicationDomain.getClass(rootInfo.className);
           var root = rootClass.createAsSymbol({
-            framesLoaded: 1,
+            framesLoaded: timeline.length,
             loader: loader,
             parent: stage,
             timeline: timeline,
