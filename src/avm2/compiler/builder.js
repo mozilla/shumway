@@ -240,15 +240,15 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       var methodInfo = this.methodInfo;
       var peepholeOptimizer = this.peepholeOptimizer;
 
-      const ints = this.abc.constantPool.ints;
-      const uints = this.abc.constantPool.uints;
-      const doubles = this.abc.constantPool.doubles;
-      const strings = this.abc.constantPool.strings;
-      const methods = this.abc.methods;
-      const classes = this.abc.classes;
-      const multinames = this.abc.constantPool.multinames;
-      const domain = new Constant(this.abc.domain);
-      const runtime = new Constant(this.abc.runtime);
+      var ints = this.abc.constantPool.ints;
+      var uints = this.abc.constantPool.uints;
+      var doubles = this.abc.constantPool.doubles;
+      var strings = this.abc.constantPool.strings;
+      var methods = this.abc.methods;
+      var classes = this.abc.classes;
+      var multinames = this.abc.constantPool.multinames;
+      var domain = new Constant(this.abc.domain);
+      var runtime = new Constant(this.abc.runtime);
 
       var traceBuilder = c4TraceLevel.value > 2;
 

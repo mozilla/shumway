@@ -1,4 +1,4 @@
-const SoundChannelDefinition = (function () {
+var SoundChannelDefinition = (function () {
   return {
     // ()
     initialize: function () {

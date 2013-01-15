@@ -482,7 +482,7 @@ var BUTTON = {
   stateOver: 'flags>>1&1',
   stateUp: 'flags&1',
   $1: ['!eob', [{
-    characterId: UI16,
+    symbolId: UI16,
     depth: UI16,
     matrix: MATRIX,
     cxform: ['tagCode===34', [CXFORM]],

@@ -1,42 +1,42 @@
 (function (exports) {
 
-  const T = estransform;
-  const Literal = T.Literal;
-  const Identifier = T.Identifier;
-  const VariableDeclaration = T.VariableDeclaration;
-  const VariableDeclarator = T.VariableDeclarator;
-  const MemberExpression = T.MemberExpression;
-  const BinaryExpression = T.BinaryExpression;
-  const SequenceExpression = T.SequenceExpression;
-  const CallExpression = T.CallExpression;
-  const AssignmentExpression = T.AssignmentExpression;
-  const ExpressionStatement = T.ExpressionStatement;
-  const ReturnStatement = T.ReturnStatement;
-  const Program = T.Program;
-  const Statement = T.Statement;
-  const FunctionDeclaration = T.FunctionDeclaration;
-  const FunctionExpression = T.FunctionExpression;
-  const ConditionalExpression = T.ConditionalExpression;
-  const ObjectExpression = T.ObjectExpression;
-  const ArrayExpression = T.ArrayExpression;
-  const UnaryExpression = T.UnaryExpression;
-  const NewExpression = T.NewExpression;
-  const Property = T.Property;
-  const UpdateExpression = T.UpdateExpression;
-  const ForStatement = T.ForStatement;
-  const BlockStatement = T.BlockStatement;
-  const ThisExpression = T.ThisExpression;
-  const TypeAliasDirective = T.TypeAliasDirective;
-  const CastExpression = T.CastExpression;
-  const ThrowStatement = T.ThrowStatement;
-  const IfStatement = T.IfStatement;
-  const WhileStatement = T.WhileStatement;
-  const BreakStatement = T.BreakStatement;
-  const ContinueStatement = T.ContinueStatement;
-  const SwitchStatement = T.SwitchStatement;
-  const SwitchCase = T.SwitchCase;
-  const TryStatement = T.TryStatement;
-  const CatchClause = T.CatchClause;
+  var T = estransform;
+  var Literal = T.Literal;
+  var Identifier = T.Identifier;
+  var VariableDeclaration = T.VariableDeclaration;
+  var VariableDeclarator = T.VariableDeclarator;
+  var MemberExpression = T.MemberExpression;
+  var BinaryExpression = T.BinaryExpression;
+  var SequenceExpression = T.SequenceExpression;
+  var CallExpression = T.CallExpression;
+  var AssignmentExpression = T.AssignmentExpression;
+  var ExpressionStatement = T.ExpressionStatement;
+  var ReturnStatement = T.ReturnStatement;
+  var Program = T.Program;
+  var Statement = T.Statement;
+  var FunctionDeclaration = T.FunctionDeclaration;
+  var FunctionExpression = T.FunctionExpression;
+  var ConditionalExpression = T.ConditionalExpression;
+  var ObjectExpression = T.ObjectExpression;
+  var ArrayExpression = T.ArrayExpression;
+  var UnaryExpression = T.UnaryExpression;
+  var NewExpression = T.NewExpression;
+  var Property = T.Property;
+  var UpdateExpression = T.UpdateExpression;
+  var ForStatement = T.ForStatement;
+  var BlockStatement = T.BlockStatement;
+  var ThisExpression = T.ThisExpression;
+  var TypeAliasDirective = T.TypeAliasDirective;
+  var CastExpression = T.CastExpression;
+  var ThrowStatement = T.ThrowStatement;
+  var IfStatement = T.IfStatement;
+  var WhileStatement = T.WhileStatement;
+  var BreakStatement = T.BreakStatement;
+  var ContinueStatement = T.ContinueStatement;
+  var SwitchStatement = T.SwitchStatement;
+  var SwitchCase = T.SwitchCase;
+  var TryStatement = T.TryStatement;
+  var CatchClause = T.CatchClause;
 
   var Block = IR.Block;
   var Operator = IR.Operator;
@@ -88,7 +88,7 @@
   };
 
   var Constant = (function () {
-    const constantsName = new Identifier("$C");
+    var constantsName = new Identifier("$C");
 
     function constant(value) {
       this.value = value;

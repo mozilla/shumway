@@ -139,6 +139,7 @@ var StageDefinition = (function () {
       instance: {
         stageHeight: desc(def, "stageHeight"),
         stageWidth: desc(def, "stageWidth"),
+        frameRate: desc(def, "frameRate"),
         requireOwnerPermissions: function () {
           // private undocumented
         }

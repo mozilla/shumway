@@ -37,3 +37,9 @@ $("#openFile").click(function () {
 $(".closeButton").click(function (event) {
   event.target.parentElement.setAttribute('hidden', true);
 });
+
+$(document).on("keydown", function (event) {
+  if (event.keyCode == 119 && event.ctrlKey) { // Ctrl+F8
+    pauseExecution = !pauseExecution;
+  }
+});

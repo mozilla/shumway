@@ -336,17 +336,6 @@ SWF.parse = function(buffer, options) {
 
   var pipe = SWF.parseAsync(options);
   var bytes = new Uint8Array(buffer);
-  var MAX_BLOCK_SIZE = 32768;
-  var position = 0;
-  var progressInfo = { total: bytes.length };
-  var sendSwfPortion = function setSwfPortion() {
-    var loaded = Math.min(position + MAX_BLOCK_SIZE, bytes.length);
-    progressInfo.loaded = loaded;
-    pipe.push(bytes.subarray(position, loaded), progressInfo);
-    position = loaded;
-    if (loaded < bytes.length) {
-      setTimeout(sendSwfPortion, 0);
-    }
-  };
-  sendSwfPortion();
+  var progressInfo = { loaded: bytes.length, total: bytes.length };
+  pipe.push(bytes, progressInfo);
 };

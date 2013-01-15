@@ -65,11 +65,12 @@ function combineUrl(baseUrl, url) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, referer, overlay, window) {
+function ChromeActions(url, params, referer, window) {
   this.url = url;
   this.params = params;
   this.referer = referer;
-  this.overlay = overlay;
+  this.isOverlay = false;
+  this.isPausedAtStart = false;
   this.window = window;
 }
 
@@ -78,7 +79,8 @@ ChromeActions.prototype = {
     return JSON.stringify({
       url: this.url,
       arguments: this.params,
-      isOverlay: this.overlay
+      isOverlay: this.isOverlay,
+      isPausedAtStart: this.isPausedAtStart
      });
   },
   _canDownloadFile: function canDownloadFile(url, checkPolicyFile) {
@@ -100,6 +102,7 @@ ChromeActions.prototype = {
     var url = data.url;
     var checkPolicyFile = data.checkPolicyFile;
     var sessionId = data.sessionId;
+    var limit = data.limit || 0;
     var method = data.method || "GET";
     var postData = data.postData || null;
 
@@ -125,6 +128,8 @@ ChromeActions.prototype = {
       xhr.setRequestHeader("Referer", this.referer);
     }
 
+    // TODO apply range request headers if limit is specified
+
     var lastPosition = 0;
     xhr.onprogress = function (e) {
       var position = e.loaded;
@@ -135,6 +140,9 @@ ChromeActions.prototype = {
       win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "progress",
                        array: data, loaded: e.loaded, total: e.total}, "*");
       lastPosition = position;
+      if (limit && e.total >= limit) {
+        xhr.abort();
+      }
     };
     xhr.onreadystatechange = function(event) {
       if (xhr.readyState === 4) {
@@ -261,7 +269,10 @@ FlashStreamConverterBase.prototype = {
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
 
-    return new ChromeActions(url, params, baseUrl, isOverlay, window);
+    var actions = new ChromeActions(url, params, baseUrl, window);
+    actions.isOverlay = isOverlay;
+    actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    return actions;
   },
 
   // nsIStreamConverter::asyncConvertData
@@ -289,9 +300,13 @@ FlashStreamConverterBase.prototype = {
 
     var originalURI = aRequest.URI;
 
+    // checking if the plug-in shall be run in simple mode
+    var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX;
+
     // Create a new channel that is viewer loaded as a resource.
     var ioService = Services.io;
-    var channel = ioService.newChannel(
+    var channel = ioService.newChannel(isSimpleMode ?
+                    'resource://shumway/web/simple.html' :
                     'resource://shumway/web/viewer.html', null, null);
 
     var converter = this;
@@ -359,7 +374,7 @@ FlashStreamConverter2.prototype.isValidRequest =
       var request = aCtxt;
       request.QueryInterface(Ci.nsIChannel);
       var spec = request.URI.spec;
-      return spec == EXPECTED_PLAYPREVIEW_URI_PREFIX;
+      return spec.indexOf(EXPECTED_PLAYPREVIEW_URI_PREFIX) === 0;
     } catch (e) {
       return false;
     }

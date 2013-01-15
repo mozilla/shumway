@@ -12,7 +12,7 @@ function defineButton(tag, dictionary) {
   while ((character = characters[i++])) {
     if (character.eob)
       break;
-    var characterItem = dictionary[character.characterId];
+    var characterItem = dictionary[character.symbolId];
     assert(characterItem, 'undefined character', 'button');
     var entry = {
       symbolId: characterItem.id,

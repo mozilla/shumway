@@ -105,10 +105,11 @@ var SimpleButtonDefinition = (function () {
     var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
       avm2.systemDomain.getClass(symbolInfo.className) :
       avm2.applicationDomain.getClass(symbolInfo.className);
-    var instance = symbolClass.createAsSymbol(symbolInfo.props);
+    var props = Object.create(symbolInfo.props);
+    props.animated = true;
+    props.parent = parent;
+    var instance = symbolClass.createAsSymbol(props);
     symbolClass.instance.call(instance);
-    instance._animated = true;
-    instance._parent = parent;
     return instance;
   }
 
