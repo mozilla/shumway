@@ -51,6 +51,8 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/lib/Kanvas/* build/lib/Kanvas/
 	mkdir build/lib/DataView.js
 	cp $(SHUMWAY_ROOT)/lib/DataView.js/* build/lib/DataView.js/
+	mkdir build/lib/mp3
+	cp $(SHUMWAY_ROOT)/lib/mp3/* build/lib/mp3/
 	mkdir build/lib/xstats
 	cp -R $(SHUMWAY_ROOT)/lib/xstats/* build/lib/xstats/
 	# Copy examples

@@ -53,23 +53,14 @@ build: clean
 	cp ../../lib/Kanvas/* build/content/lib/Kanvas/
 	mkdir build/content/lib/DataView.js
 	cp ../../lib/DataView.js/* build/content/lib/DataView.js/
+	mkdir build/content/lib/mp3
+	cp ../../lib/mp3/* build/content/lib/mp3/
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Packaging XPI file
 	cd build; zip -r shumway.xpi *
 
-clean: legacy-clean
+clean:
 	-rm -rf build
-
-legacy-clean:
-	# Cleaning old files
-	-rm -rf content/swf
-	-rm -rf content/flash
-	-rm -rf content/avm1
-	-rm -rf content/avm2
-	-rm -rf content/glue
-	-rm -rf content/lib
-	-rm LICENSE
-	-rm shumway.xpi
 
 PHONY: build clean legacy-clean
