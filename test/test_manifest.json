@@ -39,5 +39,12 @@
        "frames": [20, 30],
        "swf": "/examples/racing/race.swf",
        "type": "eq"
+    },
+    {  "id": "timeline",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/timeline/Timeline8.swf"
+       ],
+       "type": "stas"
     }
 ]
