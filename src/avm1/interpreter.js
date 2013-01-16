@@ -43,6 +43,9 @@ AS2Context.prototype = {
     return this.resolveTarget(this.globals['_level' + level]);
   }
 };
+function AS2Error(error) {
+  this.error = error;
+}
 
 function as2GetType(v) {
   if (v === null)
@@ -369,10 +372,12 @@ function interpretActions(actionsData, scopeContainer,
     } catch (e) {
       if (!catchBlockFlag)
         throw e;
+      if (!(e instanceof AS2Error))
+        throw e;
       if (typeof catchTarget === 'string')
-        scope[catchTarget] = e;
+        scope[catchTarget] = e.error;
       else
-        registers[catchTarget] = e;
+        registers[catchTarget] = e.error;
       interpretActions(catchBlock, scopeContainer, constantPool, registers);
     } finally {
       if (finallyBlockFlag)
@@ -1058,7 +1063,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x2A: // ActionThrow
         var obj = stack.pop();
-        throw obj;
+        throw new AS2Error(obj);
       // Not documented by the spec
       case 0x2D: // ActionFSCommand2
         var numArgs = stack.pop();
@@ -1083,6 +1088,8 @@ function interpretActions(actionsData, scopeContainer,
     // handling AVM1 errors
     } catch (e) {
       if (!isAVM1ErrorsIgnored)
+        throw e;
+      if (e instanceof AS2Error)
         throw e;
       stream.position = nextPosition;
       if (!recoveringFromError) {
