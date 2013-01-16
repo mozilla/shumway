@@ -387,25 +387,14 @@ var LoaderDefinition = (function () {
       loaderInfo.dispatchEvent(ProgressEventClass.createInstance(["progress",
         false, false, loaderInfo._bytesLoaded, loaderInfo._bytesTotal]));
     },
-    _commitFrame: function (frame) {
-      var abcBlocks = frame.abcBlocks;
-      var actionBlocks = frame.actionBlocks;
-      var initActionBlocks = frame.initActionBlocks;
-      var depths = frame.depths;
-      var exports = frame.exports;
+    _buildFrame: function (timeline, promiseQueue, frame, frameNum) {
       var loader = this;
       var dictionary = loader._dictionary;
-      var displayList = Object.create(null);
-      var loaderInfo = loader.contentLoaderInfo;
-      var timeline = loader._timeline;
-      var frameNum = timeline.length + 1;
       var framePromise = new Promise;
-      var prevPromise = this._previousPromise;
-      var frameLoadedPromise = new Promise;
-      this._previousPromise = frameLoadedPromise;
       var labelName = frame.labelName;
-      var promiseQueue = [prevPromise];
 
+      var displayList = Object.create(null);
+      var depths = frame.depths;
       if (depths) {
         for (var depth in depths) {
           var cmd = depths[depth];
@@ -423,14 +412,36 @@ var LoaderDefinition = (function () {
         }
       }
 
+      var i = frame.repeat;
+      while (i--)
+        timeline.push(framePromise);
+
+      framePromise.resolve(displayList);
+      return framePromise;
+    },
+
+    _commitFrame: function (frame) {
+      var abcBlocks = frame.abcBlocks;
+      var actionBlocks = frame.actionBlocks;
+      var initActionBlocks = frame.initActionBlocks;
+      var exports = frame.exports;
+      var loader = this;
+      var dictionary = loader._dictionary;
+      var loaderInfo = loader.contentLoaderInfo;
+      var timeline = loader._timeline;
+      var frameNum = timeline.length + 1;
+      var labelName = frame.labelName;
+      var prevPromise = this._previousPromise;
+      var frameLoadedPromise = new Promise;
+      this._previousPromise = frameLoadedPromise;
+      var promiseQueue = [prevPromise];
+
+      this._buildFrame(timeline, promiseQueue, frame, frameNum);
+
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
       else
         loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
-
-      var i = frame.repeat;
-      while (i--)
-        timeline.push(framePromise);
 
       Promise.when.apply(Promise, promiseQueue).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {
@@ -459,8 +470,6 @@ var LoaderDefinition = (function () {
             );
           }
         }
-
-        framePromise.resolve(displayList);
 
         var root = loader._content;
         var needRootObject = !root;
@@ -749,26 +758,7 @@ var LoaderDefinition = (function () {
         var startSoundRegistrations = [];
         for (var i = 0, n = frames.length; i < n; i++) {
           var frame = frames[i];
-          var framePromise = new Promise;
-          var depths = frame.depths;
-          var displayList = Object.create(null);
-
-          if (depths) {
-            for (var depth in depths) {
-              var cmd = depths[depth];
-              if (cmd && cmd.symbolId) {
-                var itemPromise = dictionary[cmd.symbolId];
-                if (itemPromise && !itemPromise.resolved)
-                  promiseQueue.push(itemPromise);
-
-                displayList[depth] = Object.create(cmd, {
-                  promise: { value: itemPromise }
-                });
-              } else {
-                displayList[depth] = cmd;
-              }
-            }
-          }
+          var frameNum = i + 1;
 
           if (frame.labelName) {
             frameLabels[frame.labelName] = {
@@ -787,13 +777,7 @@ var LoaderDefinition = (function () {
             }
           }
 
-          var j = frame.repeat;
-          while (j--) {
-            timeline.push(framePromise);
-            frameNum++;
-          }
-
-          framePromise.resolve(displayList);
+          this._buildFrame(timeline, promiseQueue, frame, frameNum);
         }
 
         var frameScripts = { };
