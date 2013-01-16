@@ -43,6 +43,7 @@
     {  "id": "timeline",
        "stas": "swfs/trace.stas",
        "filenames": [
+         "swfs/timeline/Timeline3.swf",
          "swfs/timeline/Timeline4.swf",
          "swfs/timeline/Timeline8.swf"
        ],
