@@ -27,6 +27,7 @@ DOC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 DEFAULT_MANIFEST_FILE = 'test_manifest.json'
 EQLOG_FILE = 'eq.log'
 BROWSERLOG_FILE = 'browser.log'
+TRACELOG_FILE = 'trace.log'
 REFDIR = 'ref'
 TMPDIR = 'tmp'
 VERBOSE = False
@@ -105,6 +106,7 @@ class State:
     numEqNoSnapshot = 0
     numStasFailures = 0
     eqLog = None
+    traceLog = None
     lastPost = { }
 
 class Result:
@@ -490,7 +492,33 @@ def checkEq(task, results, browser, masterMode):
         print 'TEST-PASS |', taskType, 'test', task['id'], '| in', browser
 
 def checkStas(task, results, browser):
-    print 'TEST-PASS | stas test', task['id'], '| in', browser
+    taskId = task['id']
+    taskType = task['type']
+
+    passed = True
+    for p in xrange(len(results)):
+        snapshot = results[p].snapshot
+        ref = None
+        eq = True
+
+        if snapshot['isDifferent']:
+          print 'TEST-UNEXPECTED-FAIL |', taskType, taskId, '| in', browser, '| trace of ', p + 1, '!= reference trace'
+
+          if not State.traceLog:
+              State.traceLog = open(TRACELOG_FILE, 'w')
+          traceLog = State.traceLog
+
+          traceLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | trace\n')
+          traceLog.write('<<<<\n')
+          traceLog.write(snapshot['data1'])
+          traceLog.write('====\n')
+          traceLog.write(snapshot['data2'])
+          traceLog.write('>>>>\n')
+
+          passed = False
+
+    if passed:
+        print 'TEST-PASS | stas test', task['id'], '| in', browser
 
 def processResults():
     print ''
@@ -562,6 +590,8 @@ def runTests(options, browsers):
     print "Runtime was", int(t2 - t1), "seconds"
     if State.eqLog:
         State.eqLog.close();
+    if State.traceLog:
+        State.traceLog.close();
     if options.masterMode:
         maybeUpdateRefImages(options, browsers[0])
     elif options.reftest and State.numEqFailures > 0:

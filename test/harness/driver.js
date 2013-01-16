@@ -24,10 +24,14 @@ function execManifest(path) {
             postData('/result', JSON.stringify({
               browser: browser,
               id: test.id,
-              failure: result.failure,
+              failure: false,
               item: item,
               numItems: itemsCount,
-              snapshot: null
+              snapshot: {
+                isDifferent: result.failure,
+                data1: result.data1,
+                data2: result.data2
+              }
             }));
             if (itemNumber + 1 == itemsCount) { // last item
               next();
