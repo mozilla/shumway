@@ -12,10 +12,9 @@ var SpriteDefinition = (function () {
         this._graphics = s.graphics || new flash.display.Graphics;
 
         if (s.timeline) {
-          var framePromise = s.timeline[0];
-          if (framePromise) {
+          var displayList = s.timeline[0];
+          if (displayList) {
             var children = this._children;
-            var displayList = framePromise.value;
             for (var depth in displayList) {
               var cmd = displayList[depth];
               var symbolPromise = cmd.promise;

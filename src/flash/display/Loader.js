@@ -350,6 +350,7 @@ var LoaderDefinition = (function () {
     initialize: function () {
       this._contentLoaderInfo = null;
       this._dictionary = { };
+      this._displayList = null;
       this._symbols = { };
       this._timeline = [];
       this._previousPromise = null;
@@ -387,39 +388,48 @@ var LoaderDefinition = (function () {
       loaderInfo.dispatchEvent(ProgressEventClass.createInstance(["progress",
         false, false, loaderInfo._bytesLoaded, loaderInfo._bytesTotal]));
     },
-    _buildFrame: function (timeline, promiseQueue, frame, frameNum) {
+    _buildFrame: function (displayList, timeline, promiseQueue, frame, frameNum) {
       var loader = this;
       var dictionary = loader._dictionary;
-      var framePromise = new Promise;
       var labelName = frame.labelName;
 
-      var displayList = Object.create(null);
+      displayList = Object.create(displayList);
+
       var depths = frame.depths;
       if (depths) {
         for (var depth in depths) {
           var cmd = depths[depth];
-          if (cmd && cmd.symbolId) {
-            var symbolPromise = dictionary[cmd.symbolId];
-            if (symbolPromise && !symbolPromise.resolved)
-              promiseQueue.push(symbolPromise);
+          if (cmd) {
+            if (displayList[depth] && cmd.move) {
+              var oldCmd = cmd;
+              cmd = Object.create(displayList[depth]);
+              for (var prop in oldCmd) {
+                var val = oldCmd[prop];
+                if (val)
+                  cmd[prop] = val;
+              }
+            }
 
-            displayList[depth] = Object.create(cmd, {
-              promise: { value: symbolPromise }
-            });
-          } else {
-            displayList[depth] = cmd;
+            if (cmd.symbolId) {
+              var itemPromise = dictionary[cmd.symbolId];
+              if (itemPromise && !itemPromise.resolved)
+                promiseQueue.push(itemPromise);
+
+              cmd = Object.create(cmd, {
+                promise: { value: itemPromise }
+              });
+            }
           }
+          displayList[depth] = cmd;
         }
       }
 
       var i = frame.repeat;
       while (i--)
-        timeline.push(framePromise);
+        timeline.push(displayList);
 
-      framePromise.resolve(displayList);
-      return framePromise;
+      return displayList;
     },
-
     _commitFrame: function (frame) {
       var abcBlocks = frame.abcBlocks;
       var actionBlocks = frame.actionBlocks;
@@ -430,13 +440,13 @@ var LoaderDefinition = (function () {
       var loaderInfo = loader.contentLoaderInfo;
       var timeline = loader._timeline;
       var frameNum = timeline.length + 1;
+      var framePromise = new Promise;
       var labelName = frame.labelName;
       var prevPromise = this._previousPromise;
-      var frameLoadedPromise = new Promise;
-      this._previousPromise = frameLoadedPromise;
+      this._previousPromise = framePromise;
       var promiseQueue = [prevPromise];
 
-      this._buildFrame(timeline, promiseQueue, frame, frameNum);
+      this._displayList = this._buildFrame(this._displayList, timeline, promiseQueue, frame, frameNum);
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
@@ -535,31 +545,6 @@ var LoaderDefinition = (function () {
               }
             }
 
-            //if (exports) {
-            //  // HACK mocking the sound clips presence
-            //  var SoundMock = function(assets) {
-            //    var clip = {
-            //      start: function() {},
-            //      setVolume: function() {}
-            //    };
-            //    for (var i = 0; i < assets.length; i++) {
-            //      if (assets[i].className) {
-            //        this[assets[i].className] = clip;
-            //      }
-            //    }
-            //  };
-            //
-            //  as2Object.soundmc = new SoundMock(exports);
-            //  var soundClass = avm2.systemDomain.getClass("flash.display.MovieClip");
-            //  var soundMock = soundClass.createInstance();
-            //  soundMock._name = 'soundmc';
-            //  soundMock._timeline = [new Promise];
-            //  soundMock._timeline[0].resolve([]);
-            //  soundMock._exports = exports;
-            //  soundMock.$as2Object = as2Object.soundmc;
-            //  root.addChild(soundMock);
-            //}
-
             root.symbol.frameScripts = frameScripts;
           }
 
@@ -607,7 +592,7 @@ var LoaderDefinition = (function () {
         if (frameNum === 1)
           loaderInfo.dispatchEvent(new flash.events.Event('init', false, false));
 
-        frameLoadedPromise.resolve(frame);
+        framePromise.resolve(frame);
       });
     },
     _commitSymbol: function (symbol) {
@@ -650,15 +635,12 @@ var LoaderDefinition = (function () {
           if (characters.length === 1) {
             states[stateName] = characters[0];
           } else {
-            var framePromise = new Promise;
-            framePromise.resolve(displayList);
-
             var statePromise = new Promise;
             statePromise.resolve({
               className: 'flash.display.Sprite',
               props: {
                 loader: this,
-                timeline: [framePromise]
+                timeline: [displayList]
               }
             });
 
@@ -750,6 +732,7 @@ var LoaderDefinition = (function () {
         props.packaged = symbol.packaged;
         break;
       case 'sprite':
+        var displayList = null;
         var frameCount = symbol.frameCount;
         var frameLabels = { };
         var frameNum = 1;
@@ -759,7 +742,6 @@ var LoaderDefinition = (function () {
         for (var i = 0, n = frames.length; i < n; i++) {
           var frame = frames[i];
           var frameNum = i + 1;
-
           if (frame.labelName) {
             frameLabels[frame.labelName] = {
               __class__: 'flash.display.FrameLabel',
@@ -777,7 +759,7 @@ var LoaderDefinition = (function () {
             }
           }
 
-          this._buildFrame(timeline, promiseQueue, frame, frameNum);
+          displayList = this._buildFrame(displayList, timeline, promiseQueue, frame, frameNum);
         }
 
         var frameScripts = { };

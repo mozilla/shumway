@@ -49,120 +49,118 @@ var MovieClipDefinition = (function () {
       if (frameNum > this.framesLoaded)
         frameNum = this.framesLoaded;
 
-      if (frameNum === this._currentFrame)
-        return;
-
       var currentFrame = this._currentFrame;
+
+      if (frameNum === currentFrame)
+        return;
 
       this._markAsDirty();
 
       if (currentFrame > 0) {
-        while (currentFrame++ < frameNum) {
-          var children = this._children;
-          var depthMap = this._depthMap;
-          var framePromise = this._timeline[currentFrame - 1];
-          var highestDepth = depthMap.length;
-          var displayList = framePromise.value;
+        var children = this._children;
+        var timeline = this._timeline;
+        var currentDisplayList = timeline[currentFrame - 1];
+        var depthMap = this._depthMap;
+        var displayList = timeline[frameNum - 1];
+        var highestDepth = depthMap.length;
 
-          for (var depth in displayList) {
+        if (displayList !== currentDisplayList) {
+          var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
+
+          for (var depth in walkList) {
             var cmd = displayList[depth];
-            var current = depthMap[depth];
-            if (cmd === null) {
-              if (current && current._owned) {
-                var index = children.indexOf(current);
-                children.splice(index, 1);
+            var current = currentDisplayList[depth];
 
-                this._control.removeChild(current._control);
-                current.dispatchEvent(new flash.events.Event("removed"));
+            if (!cmd) {
+              if (current) {
+                var child = depthMap[depth];
+                if (child._owned) {
+                  var index = children.indexOf(child);
+                  children.splice(index, 1);
+                  this._control.removeChild(child._control);
+                  child.dispatchEvent(new flash.events.Event("removed"));
 
-                if (depth < highestDepth)
-                  depthMap[depth] = undefined;
-                else
-                  depthMap.splice(-1);
+                  if (depth < highestDepth)
+                    depthMap[depth] = undefined;
+                  else
+                    depthMap.splice(-1);
+                }
               }
-            } else {
-              var clipDepth = cmd.clipDepth;
-              var cxform = cmd.cxform;
-              var matrix = cmd.matrix;
-              var target;
+            } else if (cmd !== current) {
+              if (current && cmd.symbolId === current.symbolId) {
+                var child = depthMap[depth];
+                if (child._animated) {
+                  if (cmd.clipDepth)
+                    child._clipDepth = cmd.clipDepth;
 
-              if (cmd.promise) {
-                var replace = false;
-                var index;
-                if (current && current._owned) {
-                  replace = true;
-                  index = children.indexOf(current);
+                  if (cmd.matrix) {
+                    var m = cmd.matrix;
+                    var a = m.a;
+                    var b = m.b;
+                    var c = m.c;
+                    var d = m.d;
 
-                  this._control.removeChild(current._control);
-                  current.dispatchEvent(new flash.events.Event("removed"));
+                    child._rotation = Math.atan2(b, a) * 180 / Math.PI;
+                    var sx = Math.sqrt(a * a + b * b);
+                    child._scaleX = a > 0 ? sx : -sx;
+                    var sy = Math.sqrt(d * d + c * c);
+                    child._scaleY = d > 0 ? sy : -sy;
+                    var x = child._x = m.tx;
+                    var y = child._y = m.ty;
 
+                    child._currentTransform = m;
+                  }
+
+                  if (cmd.cxform)
+                    child._cxform = cmd.cxform;
+                }
+              } else {
+                var index = -1;
+                var replace = 0;
+
+                if (current) {
+                  var child = depthMap[depth];
+                  index = children.indexOf(child);
+                  replace = 1;
+
+                  this._control.removeChild(child._control);
+                  child.dispatchEvent(new flash.events.Event("removed"));
                 } else {
-                  var top = null;
                   for (var i = +depth + 1; i < highestDepth; i++) {
-                    var info = depthMap[i];
-                    if (info && info._animated) {
-                      top = info;
+                    var child = depthMap[i];
+                    if (child && child._animated) {
+                      index = children.indexOf(next);
                       break;
                     }
                   }
-                  index = top ? children.indexOf(top) : children.length;
-                }
-
-                if (current && current._owned) {
-                  if (!clipDepth)
-                    clipDepth = current._clipDepth;
-                  if (!cxform)
-                    cxform = current._cxform;
-                  if (!matrix)
-                    matrix = current._currentTransform;
+                  if (index < 0)
+                    index = children.length;
                 }
 
                 var symbolPromise = cmd.promise;
                 var symbolInfo = symbolPromise.value;
                 var props = Object.create(symbolInfo.props);
 
-                if (clipDepth)
-                  props.clipDepth = clipDepth;
-                if (cxform)
-                  props.cxform = cxform;
-                if (matrix)
-                  props.currentTransform = matrix;
+                if (cmd.clipDepth)
+                  props.clipDepth = cmd.clipDepth;
+                if (cmd.cxform)
+                  props.cxform = cmd.cxform;
+                if (cmd.matrix)
+                  props.currentTransform = cmd.matrix;
 
                 children.splice(index, replace, {
                   className: symbolInfo.className,
-                  events: cmd.events,
                   depth: depth,
+                  events: cmd.events,
                   name: cmd.name,
                   props: props
                 });
-              } else if (current && current._animated) {
-                if (clipDepth)
-                  current._clipDepth = clipDepth;
-                if (cxform)
-                  current._cxform = cxform;
-
-                if (matrix) {
-                  var a = matrix.a;
-                  var b = matrix.b;
-                  var c = matrix.c;
-                  var d = matrix.d;
-
-                  current._rotation = Math.atan2(b, a) * 180 / Math.PI;
-                  var sx = Math.sqrt(a * a + b * b);
-                  current._scaleX = a > 0 ? sx : -sx;
-                  var sy = Math.sqrt(d * d + c * c);
-                  current._scaleY = d > 0 ? sy : -sy;
-                  var x = current._x = matrix.tx;
-                  var y = current._y = matrix.ty;
-
-                  current._currentTransform = matrix;
-                }
               }
             }
           }
-        }
 
-        this._constructChildren();
+          this._constructChildren();
+        }
       }
 
       this._currentFrame = frameNum;
