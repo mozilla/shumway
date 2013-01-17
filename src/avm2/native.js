@@ -856,16 +856,16 @@ var natives = (function () {
        * XXX: Not sure if this is right for whatever E4X bullshit this is used
        * for.
        */
-      var ns = Namespace.createNamespace(uriValue);
+      var ns = ShumwayNamespace.createNamespace(uriValue);
       ns.prefix = prefixValue;
 
       return ns;
     }
 
     var c = new runtime.domain.system.Class("Namespace", ASNamespace, C(ASNamespace));
-    c.extendNative(baseClass, Namespace);
+    c.extendNative(baseClass, ShumwayNamespace);
 
-    var Np = Namespace.prototype;
+    var Np = ShumwayNamespace.prototype;
     c.native = {
       instance: {
         prefix: {
