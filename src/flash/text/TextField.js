@@ -17,6 +17,11 @@ var TextFieldDefinition = (function () {
       return this.$as2Object;
     },
 
+    replaceText: function(begin, end, str) {
+      this._text = this._text.slice(0, begin) + str + this._text.slice(end, 0);
+      this._markAsDirty();
+    },
+
     get text() {
       return this._text;
     },
@@ -33,7 +38,8 @@ var TextFieldDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        text: desc(def, "text")
+        text: desc(def, "text"),
+        replaceText: def.replaceText,
       }
     }
   };
