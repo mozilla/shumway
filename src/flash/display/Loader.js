@@ -684,8 +684,8 @@ var LoaderDefinition = (function () {
             var maskImageDataBytes = maskImageData.data;
             var symbolMaskBytes = symbol.mask;
             var length = maskImageData.width * maskImageData.height;
-            for (var i = 0; i < length; i++) {
-              maskImageDataBytes[(i << 2) + 3] = symbolMaskBytes[i];
+            for (var i = 0, j = 3; i < length; i++, j += 4) {
+              maskImageDataBytes[j] = symbolMaskBytes[i];
             }
             maskContext.putImageData(maskImageData, 0, 0);
             img.onload = function () {
