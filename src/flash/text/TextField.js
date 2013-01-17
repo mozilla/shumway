@@ -18,7 +18,7 @@ var TextFieldDefinition = (function () {
     },
 
     replaceText: function(begin, end, str) {
-      this._text = this._text.slice(0, begin) + str + this._text.slice(end, 0);
+      this._text = this._text.substring(0, begin) + str + this._text.substring(end);
       this._markAsDirty();
     },
 
