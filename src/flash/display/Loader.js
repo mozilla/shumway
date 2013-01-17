@@ -672,9 +672,8 @@ var LoaderDefinition = (function () {
         var imgPromise = new Promise;
         img.onload = function () {
           if (symbol.mask) {
-            // Make a temporary canvas, write the symbol image into it and apply
-            // the symbol mask, then load back the image as a png so that its alpha
-            // channel is set.
+            // Write the symbol image into new canvas and apply
+            // the symbol mask.
             var maskCanvas = document.createElement('canvas');
             maskCanvas.width = symbol.width;
             maskCanvas.height = symbol.height;
@@ -688,13 +687,10 @@ var LoaderDefinition = (function () {
               maskImageDataBytes[j] = symbolMaskBytes[i];
             }
             maskContext.putImageData(maskImageData, 0, 0);
-            img.onload = function () {
-              imgPromise.resolve();
-            };
-            img.src = maskCanvas.toDataURL("image/png");
-          } else {
-            imgPromise.resolve();
+            // Use the result canvas as symbol image
+            props.img = maskCanvas;
           }
+          imgPromise.resolve();
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
         promiseQueue.push(imgPromise);
