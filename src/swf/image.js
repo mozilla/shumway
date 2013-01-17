@@ -55,47 +55,7 @@ function defineImage(tag, dictionary) {
     var alphaData = tag.alphaData;
     if (alphaData) {
       assert(width && height, 'bad image', 'jpeg');
-
-      var ihdr =
-        toString32(width) +
-        toString32(height) +
-        '\x08' + // bit depth
-        '\x03' + // color type
-        '\x00' + // compression method
-        '\x00' + // filter method
-        '\x00' // interlace method
-      ;
-
-      var stream = createInflatedStream(alphaData, width * height);
-      var bytes = stream.bytes;
-      var literals = '';
-      for (var i = 0; i < height; ++i) {
-        stream.ensure(width);
-        var begin = i * width;
-        var end = begin + width;
-        var scanline = slice.call(bytes, begin, end);
-        literals += '\x00' + fromCharCode.apply(null, scanline);
-      }
-      var len = literals.length;
-      var nlen = ~len & 0xffff;
-      var idat =
-        '\x78' + // compression method and flags
-        '\x9c' + // flags
-        '\x01' + // block header
-        toString16Le(len) +
-        toString16Le(nlen) +
-        literals +
-        toString32(adler32(literals)) // checksum
-      ;
-
-      mask =
-        '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a' + // signature
-        createPngChunk('IHDR', ihdr) +
-        plte +
-        trns +
-        createPngChunk('IDAT', idat) +
-        createPngChunk('IEND', '')
-      ;
+      mask = createInflatedStream(alphaData, width * height).bytes;
     }
     if (tag.incomplete) {
       var tables = dictionary[0];

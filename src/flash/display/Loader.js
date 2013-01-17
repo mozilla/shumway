@@ -671,10 +671,36 @@ var LoaderDefinition = (function () {
         var img = new Image;
         var imgPromise = new Promise;
         img.onload = function () {
-          imgPromise.resolve();
+          if (symbol.mask) {
+            // Make a temporary canvas, write the symbol image into it and apply
+            // the symbol mask, then load back the image as a png so that its alpha
+            // channel is set.
+            var maskCanvas = document.createElement('canvas');
+            maskCanvas.width = symbol.width;
+            maskCanvas.height = symbol.height;
+            var maskContext = maskCanvas.getContext('2d');
+            maskContext.drawImage(img, 0, 0);
+            var maskImageData = maskContext.getImageData(0, 0, symbol.width, symbol.height);
+            var maskImageDataBytes = maskImageData.data;
+            var symbolMaskBytes = symbol.mask;
+            var width = maskImageData.width;
+            var height = maskImageData.height;
+            for (var y = 0; y < height; y++) {
+              for (var x = 0; x < width; x++) {
+                var p = y * width + x;
+                maskImageDataBytes[(p << 2) + 3] = symbolMaskBytes[p];
+              }
+            }
+            maskContext.putImageData(maskImageData, 0, 0);
+            img.onload = function () {
+              imgPromise.resolve();
+            };
+            img.src = maskCanvas.toDataURL("image/png");
+          } else {
+            imgPromise.resolve();
+          }
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
-
         promiseQueue.push(imgPromise);
         className = 'flash.display.BitmapData';
         props.img = img;
