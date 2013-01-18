@@ -113,6 +113,7 @@ var DEFINE_IMAGE = {
   ]],
   mimeType: ['imgData[0]<<8|imgData[1]', {
     0xffd8: '"image/jpeg"',
+    0xffd9: '"image/jpeg"',
     0x8950: '"image/png"',
     0x4749: '"image/gif"',
     unknown: '"application/octet-stream"'
