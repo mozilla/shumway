@@ -129,7 +129,7 @@ var MovieClipDefinition = (function () {
                   for (var i = +depth + 1; i < highestDepth; i++) {
                     var child = depthMap[i];
                     if (child && child._animated) {
-                      index = children.indexOf(next);
+                      index = children.indexOf(child);
                       break;
                     }
                   }
