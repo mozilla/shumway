@@ -9,6 +9,7 @@ load("../../swf/inflate.js");
 load("../../swf/stream.js");
 load("../../swf/templates.js");
 load("../../swf/generator.js");
+load("../../swf/handlers.js");
 load("../../swf/parser.js");
 load("../../swf/bitmap.js");
 load("../../swf/button.js");

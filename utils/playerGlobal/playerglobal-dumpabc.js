@@ -11,6 +11,7 @@ load("../../src/swf/inflate.js");
 load("../../src/swf/stream.js");
 load("../../src/swf/templates.js");
 load("../../src/swf/generator.js");
+load("../../src/swf/handlers.js");
 load("../../src/swf/parser.js");
 load("../../src/swf/bitmap.js");
 load("../../src/swf/button.js");

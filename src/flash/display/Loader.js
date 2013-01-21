@@ -15,6 +15,7 @@ var LoaderDefinition = (function () {
     '../../swf/stream.js',
     '../../swf/templates.js',
     '../../swf/generator.js',
+    '../../swf/handlers.js',
     '../../swf/parser.js',
     '../../swf/bitmap.js',
     '../../swf/button.js',

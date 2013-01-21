@@ -55,6 +55,8 @@ build: clean
 	cp ../../lib/DataView.js/* build/content/lib/DataView.js/
 	mkdir build/content/lib/mp3
 	cp ../../lib/mp3/* build/content/lib/mp3/
+	# Pre-compile tag handlers
+	../../utils/jsshell/js generate-tag-handlers.js > build/content/swf/handlers.js
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Packaging XPI file
