@@ -118,8 +118,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
       var mouseMoved = false;
 
-      var pt = { x: stage._mouseX, y: stage._mouseY };
-      child._applyCurrentInverseTransform(pt, child._parent);
+      var parent = child._parent;
+      var pt = { x: parent._mouseX, y: parent._mouseY };
+      child._applyCurrentInverseTransform(pt, parent);
 
       if (pt.x !== child._mouseX || pt.y !== child._mouseY)
         mouseMoved = true;
@@ -130,7 +131,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
         var hitArea = child._hitArea || child;
 
-        if (child._hitTest(true, pt.x, pt.y, true, true)) {
+        if (child._hitTest(true, stage._mouseX, stage._mouseY, true, true)) {
           if (interactiveParent._mouseOver) {
             if (mouseMoved)
               interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
