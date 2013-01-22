@@ -514,6 +514,12 @@ var GraphicsDefinition = (function () {
           });
           lastX = x; lastY = y; lastType = type;
         }
+        if (forward.length === 0) {
+          // no segments are created, skipping the stroke
+          start = end;
+          continue;
+        }
+
         backward.reverse();
         if (!pathClosed) {
           buildCap(forward, options.endCap, forward[forward.length - 1], backward[0]);
