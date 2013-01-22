@@ -77,15 +77,16 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
+        var interactiveParentForChild = interactiveParent;
         if (InteractiveClass.isInstanceOf(child) && child._mouseEnabled) {
           if (!interactiveParent || interactiveParent._mouseChildren)
-            interactiveParent = child;
+            interactiveParentForChild = child;
         }
 
-        visitor.visit(child, isContainer, interactiveParent);
+        visitor.visit(child, isContainer, interactiveParentForChild);
 
         if (isContainer)
-          visitContainer(child, visitor, interactiveParent);
+          visitContainer(child, visitor, interactiveParentForChild);
 
         if (child._dirtyArea)
           dirty = true;
