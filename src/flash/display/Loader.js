@@ -760,7 +760,7 @@ var LoaderDefinition = (function () {
         var startSoundRegistrations = [];
         for (var i = 0, n = frames.length; i < n; i++) {
           var frame = frames[i];
-          var frameNum = i + 1;
+          var frameNum = timeline.length + 1;
           if (frame.labelName) {
             frameLabels[frame.labelName] = {
               __class__: 'flash.display.FrameLabel',
