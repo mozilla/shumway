@@ -393,33 +393,15 @@ function defineShape(tag, dictionary) {
                        lineStyle.joinStyle === 2 ? 'miter' : 'round';
       var miterLimitFactor = lineStyle.miterLimitFactor;
 
+      var cmds = [];
+      var data = [];
       var j = 0;
       var segment;
       while ((segment = segments[j++])) {
         var edges = segment.edges;
-        var commands = [];
         var k = 0;
         var edge;
         var prev = { };
-
-        commands.push('{' +
-          '__class__:"flash.display.GraphicsStroke",' +
-          '__isIGraphicsStroke__:true,' +
-          'thickness:' + lineWidth + ',' +
-          'pixelHinting:false,' +
-          'caps:"' + capsStyle + '",' +
-          'joins:"' + joinStyle + '",' +
-          'miterLimit:' + (miterLimitFactor * 2) + ',' +
-          'scaleMode:"normal",' +
-          'fill:{' +
-            '__class__:"flash.display.GraphicsSolidFill",' +
-            '__isIGraphicsFill__:true,' +
-            colorProps +
-          '}' +
-        '}');
-
-        var cmds = [];
-        var data = [];
         while ((edge = edges[k++])) {
           if (edge.spt !== prev.dpt) {
             cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
@@ -434,8 +416,24 @@ function defineShape(tag, dictionary) {
           }
           prev = edge;
         }
+      }
 
-        commands.push('{' +
+      paths.push({ i: 0, commands: [
+        '{' +
+          '__class__:"flash.display.GraphicsStroke",' +
+          '__isIGraphicsStroke__:true,' +
+          'thickness:' + lineWidth + ',' +
+          'pixelHinting:false,' +
+          'caps:"' + capsStyle + '",' +
+          'joins:"' + joinStyle + '",' +
+          'miterLimit:' + (miterLimitFactor * 2) + ',' +
+          'scaleMode:"normal",' +
+          'fill:{' +
+            '__class__:"flash.display.GraphicsSolidFill",' +
+            '__isIGraphicsFill__:true,' +
+            colorProps +
+          '}' +
+        '},{' +
           '__class__:"flash.display.GraphicsPath",' +
           '__isIGraphicsPath__:true,' +
           'commands:[' + cmds.join(',') + '],' +
@@ -443,10 +441,8 @@ function defineShape(tag, dictionary) {
         '},{' +
           '__isIGraphicsStroke__:true,' +
           'fill:null' +
-        '}');
-
-        paths.push({ i: segment.i, commands: commands });
-      }
+        '}'
+      ] });
     }
   }
 
