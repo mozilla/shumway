@@ -396,12 +396,11 @@ function defineShape(tag, dictionary) {
       var cmds = [];
       var data = [];
       var j = 0;
-      var segment;
+      var prev = { };
       while ((segment = segments[j++])) {
         var edges = segment.edges;
         var k = 0;
         var edge;
-        var prev = { };
         while ((edge = edges[k++])) {
           if (edge.spt !== prev.dpt) {
             cmds.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
@@ -418,31 +417,34 @@ function defineShape(tag, dictionary) {
         }
       }
 
-      paths.push({ i: 0, commands: [
-        '{' +
-          '__class__:"flash.display.GraphicsStroke",' +
-          '__isIGraphicsStroke__:true,' +
-          'thickness:' + lineWidth + ',' +
-          'pixelHinting:false,' +
-          'caps:"' + capsStyle + '",' +
-          'joins:"' + joinStyle + '",' +
-          'miterLimit:' + (miterLimitFactor * 2) + ',' +
-          'scaleMode:"normal",' +
-          'fill:{' +
-            '__class__:"flash.display.GraphicsSolidFill",' +
-            '__isIGraphicsFill__:true,' +
-            colorProps +
-          '}' +
-        '},{' +
-          '__class__:"flash.display.GraphicsPath",' +
-          '__isIGraphicsPath__:true,' +
-          'commands:[' + cmds.join(',') + '],' +
-          'data:[' + data.join(',') + ']' +
-        '},{' +
-          '__isIGraphicsStroke__:true,' +
-          'fill:null' +
-        '}'
-      ] });
+      paths.push({
+        i: Number.MAX_VALUE,
+        commands: [
+          '{' +
+            '__class__:"flash.display.GraphicsStroke",' +
+            '__isIGraphicsStroke__:true,' +
+            'thickness:' + lineWidth + ',' +
+            'pixelHinting:false,' +
+            'caps:"' + capsStyle + '",' +
+            'joins:"' + joinStyle + '",' +
+            'miterLimit:' + (miterLimitFactor * 2) + ',' +
+            'scaleMode:"normal",' +
+            'fill:{' +
+              '__class__:"flash.display.GraphicsSolidFill",' +
+              '__isIGraphicsFill__:true,' +
+              colorProps +
+            '}' +
+          '},{' +
+            '__class__:"flash.display.GraphicsPath",' +
+            '__isIGraphicsPath__:true,' +
+            'commands:[' + cmds.join(',') + '],' +
+            'data:[' + data.join(',') + ']' +
+          '},{' +
+            '__isIGraphicsStroke__:true,' +
+            'fill:null' +
+          '}'
+        ]
+      });
     }
   }
 
