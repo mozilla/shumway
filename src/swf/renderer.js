@@ -254,6 +254,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
+  var nextRenderAt = Date.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -263,9 +264,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
                               window.setTimeout;
 
   (function draw() {
-    var now = +new Date;
+    var now = Date.now();
     var renderFrame;
-    var renderFrame = now - frameTime >= maxDelay;
+    var renderFrame = now >= nextRenderAt;
     if (renderFrame && onBeforeFrame) {
       var e = { cancel: false };
       onBeforeFrame(e);
@@ -273,6 +274,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
     if (renderFrame) {
       frameTime = now;
+      nextRenderAt = frameTime + maxDelay;
 
       ctx.beginPath();
 
