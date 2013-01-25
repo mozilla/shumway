@@ -86,6 +86,20 @@ function isNullOrUndefined(value) {
   return value === null || value === undefined;
 }
 
+function isPowerOfTwo(x) {
+  return x && ((x & (x - 1)) === 0);
+}
+
+function time(fn, count) {
+  var start = new Date();
+  for (var i = 0; i < count; i++) {
+    fn();
+  }
+  var time = (new Date() - start) / count;
+  console.info("Took: " + time + "ms.");
+  return time;
+}
+
 /**
  * Converts an object to an array of key, value arrays.
  */
