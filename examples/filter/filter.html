@@ -3,7 +3,7 @@
 <head>
   <title></title>
 </head>
-<body style="background-color: #1a2633">
+<body style="background-color: black">
   <script src="../../src/avm2/util.js"></script>
   <script src="../../src/swf/filter.js"></script>
   <style TYPE="text/css">
@@ -31,7 +31,16 @@
         <canvas width="256" height="256" style="background-color: white;" id="blur-canvas-gl"></canvas>
       </td>
     </tr>
-    <tr><td>JS Color</td><td>WebGL Color</td></tr>
+    <tr><td>JS Glow</td><td>WebGL Glow</td></tr>
+    <tr>
+      <td>
+        <canvas width="256" height="256" style="background-color: white;" id="glow-canvas-js"></canvas>
+      </td>
+      <td>
+        <canvas width="256" height="256" style="background-color: white;" id="glow-canvas-gl"></canvas>
+      </td>
+    </tr>
+    <tr><td>JS Color Matrix</td><td>WebGL Color Matrix</td></tr>
     <tr>
       <td>
         <canvas width="256" height="256" style="background-color: white;" id="color-canvas-js"></canvas>
@@ -95,10 +104,10 @@
     precision mediump float;
     uniform sampler2D u_image;
     uniform mat4 u_matrix;
+    uniform vec4 u_vector;
     varying vec2 v_texCoord;
     void main() {
-      // vec2 one = vec2(1.0, 1.0) / u_textureSize;
-      gl_FragColor = u_matrix * texture2D(u_image, v_texCoord);
+      gl_FragColor = u_matrix * texture2D(u_image, v_texCoord) + u_vector;
     }
   </script>
 

@@ -1,3 +1,6 @@
+// Resources: http://www.m2osw.com/swf_struct_any_filter#swf_filter_colormatrix
+
+
 /**
  * Applies a blur box-filter, averaging pixel values in a box with radius (bw x bh).
  *
@@ -51,46 +54,54 @@
  */
 function blurFilter(buffer, w, h, bw, bh) {
   blurFilterH(buffer, w, h, bw);
-  blurFilterV(buffer, w, h, bh);
+  // blurFilterV(buffer, w, h, bh);
 }
 
-function blurFilterH(buffer, w, h, bw) {
-  // buffer = new Uint8Array(buffer.buffer);
-  var line = new Uint8Array(w * 4);
-  // slide window
-  var slide = (bw << 1) + 1;
-  var divTable = new Uint8Array(slide * 256);
-  for (var i = 0; i < divTable.length; i++) {
-    divTable[i] = i / slide;
-  }
+function blurFilterH(buffer, w, h, blurW) {
+  var lineBuffer = new Uint8ClampedArray(w * 4);
+  var lineSize = w * 4;
+  var windowLength = (blurW * 2) + 1;
+  var windowSize = windowLength * 4;
+
   for (var y = 0; y < h; y++) {
-    var r = 0, g = 0, b = 0, a = 0;
-    var pLine = y * (w << 2);
+    var pLineStart = y * lineSize;
 
-    // fill window
-    for (var p = pLine, e = p + ((1 + (bw << 1)) << 2); p < e; p += 4) {
-      r = (r + buffer[p + 0]) | 0;
-      g = (g + buffer[p + 1]) | 0;
-      b = (b + buffer[p + 2]) | 0;
-      a = (a + buffer[p + 3]) | 0;
+    var rs = 0, gs = 0, bs = 0, as = 0, alpha = 0;
+
+    // Fill window
+    for (var ptr = pLineStart, end = ptr + windowSize; ptr < end; ptr += 4) {
+      alpha = buffer[ptr + 3] / 255;
+      rs += buffer[ptr + 0] * alpha;
+      gs += buffer[ptr + 1] * alpha;
+      bs += buffer[ptr + 2] * alpha;
+      as += buffer[ptr + 3];
     }
 
-    for (var p = pLine + (bw << 2), e = p + ((w - bw) << 2), k = (bw << 2),
-             o = pLine, i = p + ((bw + 1) << 2);
-         p < e;
-         p += 4, k += 4, i += 4, o += 4) {
-      line[k + 0] = divTable[r | 0];
-      line[k + 1] = divTable[g | 0];
-      line[k + 2] = divTable[b | 0];
-      line[k + 3] = divTable[a | 0];
+    for (var ptr = pLineStart + blurW * 4,
+             end = ptr + (w - blurW * 2) * 4,
+             linePtr = blurW * 4,
+             lastPtr = pLineStart,
+             nextPtr = ptr + (blurW + 1) * 4;
+         ptr < end;
+         ptr += 4, linePtr += 4, nextPtr += 4, lastPtr += 4) {
 
-      r = (r + buffer[i + 0] - buffer[o + 0]) | 0;
-      g = (g + buffer[i + 1] - buffer[o + 1]) | 0;
-      b = (b + buffer[i + 2] - buffer[o + 2]) | 0;
-      a = (a + buffer[i + 3] - buffer[o + 3]) | 0;
+      var k = as / windowLength;
+
+      lineBuffer[linePtr + 0] = rs / windowLength;
+      lineBuffer[linePtr + 1] = gs / windowLength;
+      lineBuffer[linePtr + 2] = bs / windowLength;
+      lineBuffer[linePtr + 3] = as / windowLength;
+
+      var nextAlpha = buffer[nextPtr + 3] / 255;
+      var lastAlpha = buffer[lastPtr + 3] / 255;
+
+      rs += buffer[nextPtr + 0] * nextAlpha - buffer[lastPtr + 0] * lastAlpha;
+      gs += buffer[nextPtr + 1] * nextAlpha - buffer[lastPtr + 1] * lastAlpha;
+      bs += buffer[nextPtr + 2] * nextAlpha - buffer[lastPtr + 2] * lastAlpha;
+      as += buffer[nextPtr + 3] - buffer[lastPtr + 3];
     }
 
-    buffer.set(line, pLine);
+    buffer.set(lineBuffer, pLineStart);
   }
 }
 
@@ -143,9 +154,32 @@ function blurFilterV(buffer, w, h, bh) {
   }
 }
 
+function dropShadowFilter(buffer, w, h, bw, bh, color, angle, distance, strength, innderShadow, knockout) {
+  var temp = new Uint8ClampedArray(buffer);
+  for (var p = 0; p < buffer.length; p += 4) {
+    var a = temp[p + 3];
+    temp[p + 0] = a * color[0];
+    temp[p + 1] = a * color[1];
+    temp[p + 2] = a * color[2];
+  }
+  blurFilter(temp, w, h, bw, bh);
+  // composite(temp, buffer);
+  buffer.set(temp);
+}
+
+function composite(src, dst) {
+  assert (src.length === dst.length);
+  for (var p = 0; p < src.length; p += 4) {
+    dst[p + 0] += src[p + 0];
+    dst[p + 1] += src[p + 1];
+    dst[p + 2] += src[p + 2];
+    dst[p + 3] += src[p + 3];
+  }
+}
+
 /**
  * Applies a color transformation. The |matrix| is a 5x5 matrix whose
- * last row is always [0, 0, 0, 0, 1];
+ * last row is always [0, 0, 0, 0, 1]. The |matrix| is specified in row-major order;
  *
  * |R|   |r0, r1, r2, r3, r4|   |r|
  * |G|   |g0, g1, g2, g3, g4|   |g|
@@ -154,21 +188,25 @@ function blurFilterV(buffer, w, h, bh) {
  * |1|   | 0,  0,  0,  0,  1|   |1|
  *
  */
+
+function clamp(n) {
+  return (((255 - n) >> 31) | n) & 0xFF;
+}
+
 function colorFilter(buffer, w, h, matrix) {
-  var r0 =  matrix[0], r1 = matrix[1],  r2 = matrix[2],  r3 = matrix[3],  r4 = matrix[4];
-  var g0 =  matrix[5], g1 = matrix[6],  g2 = matrix[7],  g3 = matrix[8],  g4 = matrix[9];
+  var r0 = matrix[0],  r1 = matrix[1],  r2 = matrix[2],  r3 = matrix[3],  r4 = matrix[4];
+  var g0 = matrix[5],  g1 = matrix[6],  g2 = matrix[7],  g3 = matrix[8],  g4 = matrix[9];
   var b0 = matrix[10], b1 = matrix[11], b2 = matrix[12], b3 = matrix[13], b4 = matrix[14];
   var a0 = matrix[15], a1 = matrix[16], a2 = matrix[17], a3 = matrix[18], a4 = matrix[19];
-
   for (var p = 0, e = w * h * 4; p < e; p += 4) {
     var r = buffer[p + 0];
     var g = buffer[p + 1];
     var b = buffer[p + 2];
     var a = buffer[p + 3];
-    buffer[p + 0] = r0 * r + r1 * g + r2 * b + r3 * a; // + r4;
-    buffer[p + 1] = g0 * r + g1 * g + g2 * b + g3 * a; // + g4;
-    buffer[p + 2] = b0 * r + b1 * g + b2 * b + b3 * a; // + b4;
-    buffer[p + 3] = a0 * r + a1 * g + a2 * b + a3 * a; // + a4;
+    buffer[p + 0] = r0 * r + r1 * g + r2 * b + r3 * a + r4;
+    buffer[p + 1] = g0 * r + g1 * g + g2 * b + g3 * a + g4;
+    buffer[p + 2] = b0 * r + b1 * g + b2 * b + b3 * a + b4;
+    buffer[p + 3] = a0 * r + a1 * g + a2 * b + a3 * a + a4;
   }
 }
 
@@ -202,6 +240,12 @@ var WebGLCanvas = (function () {
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       gl.enableVertexAttribArray(location);
       gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+    },
+    setUniform4fv: function setUniform2f(program, name, vector) {
+      var gl = this.gl
+      var location = gl.getUniformLocation(program, name);
+      assert (location, "Uniform " + name + " not found.");
+      gl.uniform4fv(location, vector);
     },
     setUniform2f: function setUniform2f(program, name, x, y) {
       var gl = this.gl
