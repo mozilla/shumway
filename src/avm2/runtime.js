@@ -722,6 +722,7 @@ function deleteProperty(obj, mn) {
     }
     return delete obj[Multiname.getQualifiedName(resolved)];
   }
+  return false;
 }
 
 function isInstanceOf(value, type) {
