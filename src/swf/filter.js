@@ -1,8 +1,12 @@
-// Resources: http://www.m2osw.com/swf_struct_any_filter#swf_filter_colormatrix
-
+/**
+ * All filters need to run on pre-multiplied alpha images, otherwise you end up with
+ * ugly edge effects.
+ *
+ * Resources: http://www.m2osw.com/swf_struct_any_filter#swf_filter_colormatrix
+ */
 
 /**
- * Applies a blur box-filter, averaging pixel values in a box with radius (bw x bh).
+ * Applies a blur box-filter, averaging pixel values in a box with radius (blurX x blurY).
  *
  * For example:
  *
@@ -43,144 +47,197 @@
  *    = the original box filter.
  *
  * Each pass runs in O(w * h), independent of the box-filter size.
+ *
+ * For performance reasons the blur filter doesn't deal with edge conditions, so to blur
+ * an image correctly you must make sure there is an empty (blurX, blurY) border. If you
+ * want to blur something repeatedly you must have an n x (blurX, blurY) border.
  */
-
-/**
- * buffer Uint8Array
- * w      buffer width
- * h      buffer height
- * bw     blur width
- * bh     blur height
- */
-function blurFilter(buffer, w, h, bw, bh) {
-  blurFilterH(buffer, w, h, bw);
-  blurFilterV(buffer, w, h, bh);
+function blurFilter(buffer, w, h, blurX, blurY) {
+  blurFilterH(buffer, w, h, blurX);
+  blurFilterV(buffer, w, h, blurY);
 }
 
-function blurFilterH(buffer, w, h, blurW) {
+function blurFilterH(buffer, w, h, blurX) {
   var lineBuffer = new Uint8ClampedArray(w * 4);
   var lineSize = w * 4;
-  var windowLength = (blurW * 2) + 1;
+  var windowLength = (blurX * 2) + 1;
   var windowSize = windowLength * 4;
 
   for (var y = 0; y < h; y++) {
     var pLineStart = y * lineSize;
     var rs = 0, gs = 0, bs = 0, as = 0, alpha = 0;
 
-    // Fill window ...
+    // Fill window
     for (var ptr = pLineStart, end = ptr + windowSize; ptr < end; ptr += 4) {
-      // premultiply alpha
-      alpha = buffer[ptr + 3] / 255;
-      rs += buffer[ptr + 0] * alpha;
-      gs += buffer[ptr + 1] * alpha;
-      bs += buffer[ptr + 2] * alpha;
+      rs += buffer[ptr + 0];
+      gs += buffer[ptr + 1];
+      bs += buffer[ptr + 2];
       as += buffer[ptr + 3];
     }
 
-    // Slide window ...
-    for (var ptr = pLineStart + blurW * 4,
-             end = ptr + (w - blurW * 2) * 4,
-             linePtr = blurW * 4,
-             lastPtr = pLineStart,
-             nextPtr = ptr + (blurW + 1) * 4;
+    // Slide window
+    for (var ptr = pLineStart + blurX * 4,
+           end = ptr + (w - blurX * 2) * 4,
+           linePtr = blurX * 4,
+           lastPtr = pLineStart,
+           nextPtr = ptr + (blurX + 1) * 4;
          ptr < end;
          ptr += 4, linePtr += 4, nextPtr += 4, lastPtr += 4) {
 
-      alpha = as / 255;
-
-      // un-premultiply alpha
-      lineBuffer[linePtr + 0] = rs / alpha;
-      lineBuffer[linePtr + 1] = gs / alpha;
-      lineBuffer[linePtr + 2] = bs / alpha;
+      lineBuffer[linePtr + 0] = rs / windowLength;
+      lineBuffer[linePtr + 1] = gs / windowLength;
+      lineBuffer[linePtr + 2] = bs / windowLength;
       lineBuffer[linePtr + 3] = as / windowLength;
 
-      var nextAlpha = buffer[nextPtr + 3] / 255;
-      var lastAlpha = buffer[lastPtr + 3] / 255;
-
-      rs += buffer[nextPtr + 0] * nextAlpha - buffer[lastPtr + 0] * lastAlpha;
-      gs += buffer[nextPtr + 1] * nextAlpha - buffer[lastPtr + 1] * lastAlpha;
-      bs += buffer[nextPtr + 2] * nextAlpha - buffer[lastPtr + 2] * lastAlpha;
+      rs += buffer[nextPtr + 0] - buffer[lastPtr + 0];
+      gs += buffer[nextPtr + 1] - buffer[lastPtr + 1];
+      bs += buffer[nextPtr + 2] - buffer[lastPtr + 2];
       as += buffer[nextPtr + 3] - buffer[lastPtr + 3];
     }
 
+    // Copy line
     buffer.set(lineBuffer, pLineStart);
   }
 }
 
-function blurFilterV(buffer, w, h, blurH) {
+
+function blurFilterV(buffer, w, h, blurY) {
   var columnBuffer = new Uint8ClampedArray(h * 4);
   var stride = w * 4;
-  var windowLength = (blurH * 2) + 1;
-  var windowSize = windowLength * 4;
+  var windowLength = (blurY * 2) + 1;
 
   for (var x = 0; x < w; x++) {
     var pColumnStart = x * 4;
     var rs = 0, gs = 0, bs = 0, as = 0, alpha = 0;
 
-    // Fill window ...
+    // Fill window
     for (var ptr = pColumnStart, end = ptr + windowLength * stride; ptr < end; ptr += stride) {
-      alpha = buffer[ptr + 3] / 255;
-      rs += buffer[ptr + 0] * alpha;
-      gs += buffer[ptr + 1] * alpha;
-      bs += buffer[ptr + 2] * alpha;
+      rs += buffer[ptr + 0];
+      gs += buffer[ptr + 1];
+      bs += buffer[ptr + 2];
       as += buffer[ptr + 3];
     }
 
-    // Slide window ...
-    for (var ptr = pColumnStart + blurH * stride,
-             end = ptr + (h - blurH) * stride,
-             columnPtr = blurH * 4,
-             lastPtr = pColumnStart,
-             nextPtr = ptr + ((blurH + 1) * stride);
+    // Slide window
+    for (var ptr = pColumnStart + blurY * stride,
+           end = ptr + (h - blurY) * stride,
+           columnPtr = blurY * 4,
+           lastPtr = pColumnStart,
+           nextPtr = ptr + ((blurY + 1) * stride);
          ptr < end;
          ptr += stride, columnPtr += 4, nextPtr += stride, lastPtr += stride) {
 
-      alpha = as / 255;
-
-      columnBuffer[columnPtr + 0] = rs / alpha;
-      columnBuffer[columnPtr + 1] = gs / alpha;
-      columnBuffer[columnPtr + 2] = bs / alpha;
+      columnBuffer[columnPtr + 0] = rs / windowLength;
+      columnBuffer[columnPtr + 1] = gs / windowLength;
+      columnBuffer[columnPtr + 2] = bs / windowLength;
       columnBuffer[columnPtr + 3] = as / windowLength;
 
-      var nextAlpha = buffer[nextPtr + 3] / 255;
-      var lastAlpha = buffer[lastPtr + 3] / 255;
-
-      rs += buffer[nextPtr + 0] * nextAlpha - buffer[lastPtr + 0] * lastAlpha;
-      gs += buffer[nextPtr + 1] * nextAlpha - buffer[lastPtr + 1] * lastAlpha;
-      bs += buffer[nextPtr + 2] * nextAlpha - buffer[lastPtr + 2] * lastAlpha;
+      rs += buffer[nextPtr + 0] - buffer[lastPtr + 0];
+      gs += buffer[nextPtr + 1] - buffer[lastPtr + 1];
+      bs += buffer[nextPtr + 2] - buffer[lastPtr + 2];
       as += buffer[nextPtr + 3] - buffer[lastPtr + 3];
     }
 
     var wordBuffer = new Uint32Array(buffer.buffer);
     var wordColumn = new Uint32Array(columnBuffer.buffer);
 
-    for (var ptr = x, end = ptr + h * w, i = 0; ptr < end; ptr += w, i ++) {
-      wordBuffer[ptr] = wordColumn[i];
+    // Copy column
+    for (var i = x, end = i + h * w, j = 0; i < end; i += w, j++) {
+      wordBuffer[i] = wordColumn[j];
     }
   }
 }
 
-function dropShadowFilter(buffer, w, h, bw, bh, color, angle, distance, strength, innderShadow, knockout) {
-  var temp = new Uint8ClampedArray(buffer);
-  for (var p = 0; p < buffer.length; p += 4) {
-    var a = temp[p + 3];
-    temp[p + 0] = a * color[0];
-    temp[p + 1] = a * color[1];
-    temp[p + 2] = a * color[2];
+function getAlphaChannel(buffer, color) {
+  if (!color) {
+    color = [0, 0, 0, 0];
   }
-  blurFilter(temp, w, h, bw, bh);
-  // composite(temp, buffer);
-  buffer.set(temp);
+  var plane = new Uint8ClampedArray(buffer);
+  for (var ptr = 0, end = plane.length; ptr < end; ptr += 4) {
+    var alpha = plane[ptr + 3];
+    plane[ptr + 0] = color[0] * alpha;
+    plane[ptr + 1] = color[1] * alpha;
+    plane[ptr + 2] = color[2] * alpha;
+  }
+  return plane;
 }
 
-function composite(src, dst) {
-  assert (src.length === dst.length);
-  for (var p = 0; p < src.length; p += 4) {
-    dst[p + 0] += src[p + 0];
-    dst[p + 1] += src[p + 1];
-    dst[p + 2] += src[p + 2];
-    dst[p + 3] += src[p + 3];
+function scaleAlphaChannel(buffer, value) {
+  assert (isNumeric(value));
+  for (var ptr = 0, end = buffer.length; ptr < end; ptr += 4) {
+    buffer[ptr + 3] *= value;
   }
+}
+
+function preMultiplyAlpha(buffer) {
+  for (var ptr = 0, end = buffer.length; ptr < end; ptr += 4) {
+    var alpha = buffer[ptr + 3] / 255;
+    buffer[ptr + 0] *= alpha;
+    buffer[ptr + 1] *= alpha;
+    buffer[ptr + 2] *= alpha;
+  }
+}
+
+function unPreMultiplyAlpha(buffer) {
+  for (var ptr = 0, end = buffer.length; ptr < end; ptr += 4) {
+    var alpha = buffer[ptr + 3] / 255;
+    buffer[ptr + 0] /= alpha;
+    buffer[ptr + 1] /= alpha;
+    buffer[ptr + 2] /= alpha;
+  }
+}
+
+function compositeSourceOver(dst, src) {
+  for (var ptr = 0, end = dst.length; ptr < end; ptr += 4) {
+    var Dr = dst[ptr + 0];
+    var Dg = dst[ptr + 1];
+    var Db = dst[ptr + 2];
+    var Da = dst[ptr + 3] / 255;
+
+    var Sr = src[ptr + 0];
+    var Sg = src[ptr + 1];
+    var Sb = src[ptr + 2];
+    var Sa = src[ptr + 3] / 255;
+
+    dst[ptr + 0] = Sr + Dr * (1 - Sa);
+    dst[ptr + 1] = Sg + Dg * (1 - Sa);
+    dst[ptr + 2] = Sb + Db * (1 - Sa);
+    dst[ptr + 3] = (Sa + Da * (1 - Sa)) * 255;
+  }
+}
+
+function glowFilter(buffer, w, h, color, blurX, blurY, strength) {
+  dropShadowFilter(buffer, w, h, color, blurX, blurY, 0, 0, strength)
+}
+
+function panFilter(buffer, w, h, angle, distance) {
+  var dy = (Math.sin(angle) * distance) | 0;
+  var dx = (Math.cos(angle) * distance) | 0;
+  var oldBuffer = new Int32Array(buffer.buffer);
+  var newBuffer = new Int32Array(oldBuffer.length);
+  for (var oy = 0; oy < h; oy++) {
+    var ny = oy + dy;
+    if (ny < 0 || ny > h) {
+      continue;
+    }
+    for (var ox = 0; ox < w; ox++) {
+      var nx = ox + dx;
+      if (nx < 0 || nx > w) {
+        continue;
+      }
+      newBuffer[ny * w + nx] = oldBuffer[oy * w + ox];
+    }
+  }
+  oldBuffer.set(newBuffer);
+}
+
+function dropShadowFilter(buffer, w, h, color, blurX, blurY, angle, distance, strength) {
+  var tmp = getAlphaChannel(buffer, color);
+  panFilter(tmp, w, h, angle, distance);
+  blurFilter(tmp, w, h, blurX, blurY);
+  scaleAlphaChannel(tmp, strength);
+  compositeSourceOver(tmp, buffer);
+  buffer.set(tmp);
 }
 
 /**

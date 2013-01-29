@@ -48,6 +48,9 @@ var blurCanvasGL = document.getElementById("blur-canvas-gl");
 var glowCanvasJS = document.getElementById("glow-canvas-js");
 var glowCanvasGL = document.getElementById("glow-canvas-gl");
 
+var shadowCanvasJS = document.getElementById("shadow-canvas-js");
+var shadowCanvasGL = document.getElementById("shadow-canvas-gl");
+
 var colorCanvasJS = document.getElementById("color-canvas-js");
 var colorCanvasGL = document.getElementById("color-canvas-gl");
 
@@ -119,24 +122,41 @@ function colorGL(data, width, height) {
   gl.drawTriangles(0, 6);
 }
 
-function getImageData() {
-  return context.getImageData(0, 0, width, height);
+function getImageData(straightAlpha) {
+  var imageData = context.getImageData(0, 0, width, height);
+  if (!straightAlpha) {
+    preMultiplyAlpha(imageData.data);
+  }
+  return imageData;
+}
+
+function putImageData(imageData, context, straightAlpha) {
+  if (!straightAlpha) {
+    unPreMultiplyAlpha(imageData.data);
+  }
+  context.putImageData(imageData, 0, 0);
 }
 
 var run = {
   blur: {
-    js: true,
-    gl: true
+    js: false,
+    gl: false
   },
   glow: {
     js: false,
     gl: false
   },
-  color: {
+  shadow: {
     js: true,
-    gl: true
+    gl: false
+  },
+  color: {
+    js: false,
+    gl: false
   }
 };
+
+var k = 0;
 
 setInterval(function () {
 
@@ -144,8 +164,8 @@ setInterval(function () {
   context.fillStyle = "white";
   // context.fillRect(0, 0, 256, 256);
   context.clearRect(0, 0, 256, 256);
-  drawShape(context, 100, 100, 100);
-  context.drawImage(firefoxImage, 30, 30);
+  drawShape(context, 50, 120, 120);
+  context.drawImage(firefoxImage, 40, 40);
 
   var imageData;
 
@@ -153,27 +173,33 @@ setInterval(function () {
     // Run JS Blur Filter
     imageData = getImageData();
     blurFilter(imageData.data, width, height, 10, 10);
-    blurCanvasJS.getContext('2d').putImageData(imageData, 0, 0);
+    putImageData(imageData, blurCanvasJS.getContext('2d'));
   }
 
   if (run.blur.gl) {
     // Run WebGL Blur Filter
-    imageData = getImageData();
+    imageData = getImageData(true);
     blurGL(imageData.data, width, height);
     drawImage(glCanvas, blurCanvasGL);
   }
 
   if (run.glow.js) {
     imageData = getImageData();
-    dropShadowFilter(imageData.data, width, height, 10, 10, [0, 255, 0, 0]);
-    glowCanvasJS.getContext('2d').putImageData(imageData, 0, 0);
+    glowFilter(imageData.data, width, height, [0, 0, 255, 0], 20, 20, 1);
+    putImageData(imageData, glowCanvasJS.getContext('2d'));
+  }
+
+  if (run.shadow.js) {
+    imageData = getImageData();
+    dropShadowFilter(imageData.data, width, height, [0, 0, 0, 0], 5, 5, Math.PI / 4, 10, 0.5);
+    putImageData(imageData, shadowCanvasJS.getContext('2d'));
   }
 
   if (run.color.js) {
     // Run JS Color Filter
     imageData = getImageData();
     colorFilter(imageData.data, width, height, colorMatrix4x5);
-    colorCanvasJS.getContext('2d').putImageData(imageData, 0, 0);
+    putImageData(imageData, colorCanvasJS.getContext('2d'));
   }
 
   if (run.color.gl) {
