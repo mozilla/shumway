@@ -54,7 +54,7 @@
  */
 function blurFilter(buffer, w, h, bw, bh) {
   blurFilterH(buffer, w, h, bw);
-  // blurFilterV(buffer, w, h, bh);
+  blurFilterV(buffer, w, h, bh);
 }
 
 function blurFilterH(buffer, w, h, blurW) {
@@ -65,11 +65,11 @@ function blurFilterH(buffer, w, h, blurW) {
 
   for (var y = 0; y < h; y++) {
     var pLineStart = y * lineSize;
-
     var rs = 0, gs = 0, bs = 0, as = 0, alpha = 0;
 
-    // Fill window
+    // Fill window ...
     for (var ptr = pLineStart, end = ptr + windowSize; ptr < end; ptr += 4) {
+      // premultiply alpha
       alpha = buffer[ptr + 3] / 255;
       rs += buffer[ptr + 0] * alpha;
       gs += buffer[ptr + 1] * alpha;
@@ -77,6 +77,7 @@ function blurFilterH(buffer, w, h, blurW) {
       as += buffer[ptr + 3];
     }
 
+    // Slide window ...
     for (var ptr = pLineStart + blurW * 4,
              end = ptr + (w - blurW * 2) * 4,
              linePtr = blurW * 4,
@@ -85,11 +86,12 @@ function blurFilterH(buffer, w, h, blurW) {
          ptr < end;
          ptr += 4, linePtr += 4, nextPtr += 4, lastPtr += 4) {
 
-      var k = as / windowLength;
+      alpha = as / 255;
 
-      lineBuffer[linePtr + 0] = rs / windowLength;
-      lineBuffer[linePtr + 1] = gs / windowLength;
-      lineBuffer[linePtr + 2] = bs / windowLength;
+      // un-premultiply alpha
+      lineBuffer[linePtr + 0] = rs / alpha;
+      lineBuffer[linePtr + 1] = gs / alpha;
+      lineBuffer[linePtr + 2] = bs / alpha;
       lineBuffer[linePtr + 3] = as / windowLength;
 
       var nextAlpha = buffer[nextPtr + 3] / 255;
@@ -105,51 +107,55 @@ function blurFilterH(buffer, w, h, blurW) {
   }
 }
 
-function blurFilterV(buffer, w, h, bh) {
-  var column = new Uint8Array(h * 4);
-  var wordBuffer = new Uint32Array(buffer.buffer);
-  var wordColumn = new Uint32Array(column.buffer);
-  var stride = w << 2;
-
-  var slide = (bh << 1) + 1;
-  var divTable = new Uint8Array(slide * 256);
-  for (var i = 0; i < divTable.length; i++) {
-    divTable[i] = i / slide;
-  }
+function blurFilterV(buffer, w, h, blurH) {
+  var columnBuffer = new Uint8ClampedArray(h * 4);
+  var stride = w * 4;
+  var windowLength = (blurH * 2) + 1;
+  var windowSize = windowLength * 4;
 
   for (var x = 0; x < w; x++) {
-    var r = 0, g = 0, b = 0, a = 0;
-    var pColumn = x << 2;
+    var pColumnStart = x * 4;
+    var rs = 0, gs = 0, bs = 0, as = 0, alpha = 0;
 
-    // fill window
-    for (var p = pColumn, e = p + ((1 + (bh << 1)) * stride); p < e; p += stride) {
-      r = (r + buffer[p + 0]) | 0;
-      g = (g + buffer[p + 1]) | 0;
-      b = (b + buffer[p + 2]) | 0;
-      a = (a + buffer[p + 3]) | 0;
+    // Fill window ...
+    for (var ptr = pColumnStart, end = ptr + windowLength * stride; ptr < end; ptr += stride) {
+      alpha = buffer[ptr + 3] / 255;
+      rs += buffer[ptr + 0] * alpha;
+      gs += buffer[ptr + 1] * alpha;
+      bs += buffer[ptr + 2] * alpha;
+      as += buffer[ptr + 3];
     }
 
-    // slide window
-    for (var p = pColumn + (bh * stride),
-             e = p + ((h - bh) * stride), k = (bh << 2),
-             o = pColumn,
-             i = p + ((bh + 1) * stride);
-         p < e;
-         p += stride, k += 4, i += stride, o += stride) {
+    // Slide window ...
+    for (var ptr = pColumnStart + blurH * stride,
+             end = ptr + (h - blurH) * stride,
+             columnPtr = blurH * 4,
+             lastPtr = pColumnStart,
+             nextPtr = ptr + ((blurH + 1) * stride);
+         ptr < end;
+         ptr += stride, columnPtr += 4, nextPtr += stride, lastPtr += stride) {
 
-      column[k + 0] = divTable[r | 0];
-      column[k + 1] = divTable[g | 0];
-      column[k + 2] = divTable[b | 0];
-      column[k + 3] = divTable[a | 0];
+      alpha = as / 255;
 
-      r = (r + buffer[i + 0] - buffer[o + 0]) | 0;
-      g = (g + buffer[i + 1] - buffer[o + 1]) | 0;
-      b = (b + buffer[i + 2] - buffer[o + 2]) | 0;
-      a = (a + buffer[i + 3] - buffer[o + 3]) | 0;
+      columnBuffer[columnPtr + 0] = rs / alpha;
+      columnBuffer[columnPtr + 1] = gs / alpha;
+      columnBuffer[columnPtr + 2] = bs / alpha;
+      columnBuffer[columnPtr + 3] = as / windowLength;
+
+      var nextAlpha = buffer[nextPtr + 3] / 255;
+      var lastAlpha = buffer[lastPtr + 3] / 255;
+
+      rs += buffer[nextPtr + 0] * nextAlpha - buffer[lastPtr + 0] * lastAlpha;
+      gs += buffer[nextPtr + 1] * nextAlpha - buffer[lastPtr + 1] * lastAlpha;
+      bs += buffer[nextPtr + 2] * nextAlpha - buffer[lastPtr + 2] * lastAlpha;
+      as += buffer[nextPtr + 3] - buffer[lastPtr + 3];
     }
 
-    for (var p = x, e = p + h * w, i = 0; p < e; p += w, i ++) {
-      wordBuffer[p] = wordColumn[i];
+    var wordBuffer = new Uint32Array(buffer.buffer);
+    var wordColumn = new Uint32Array(columnBuffer.buffer);
+
+    for (var ptr = x, end = ptr + h * w, i = 0; ptr < end; ptr += w, i ++) {
+      wordBuffer[ptr] = wordColumn[i];
     }
   }
 }

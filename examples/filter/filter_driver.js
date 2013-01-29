@@ -125,8 +125,8 @@ function getImageData() {
 
 var run = {
   blur: {
-    js: false,
-    gl: false
+    js: true,
+    gl: true
   },
   glow: {
     js: false,
@@ -134,7 +134,7 @@ var run = {
   },
   color: {
     js: true,
-    gl: false
+    gl: true
   }
 };
 
@@ -145,7 +145,7 @@ setInterval(function () {
   // context.fillRect(0, 0, 256, 256);
   context.clearRect(0, 0, 256, 256);
   drawShape(context, 100, 100, 100);
-  // context.drawImage(firefoxImage, 0, 0);
+  context.drawImage(firefoxImage, 30, 30);
 
   var imageData;
 
