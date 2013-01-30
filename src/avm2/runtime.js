@@ -716,7 +716,8 @@ function deleteProperty(obj, mn) {
   }
 
   // Only dynamic properties can be deleted, so only look for those.
-  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic()) {
+  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic() ||
+      typeof obj !== "object" || obj === null) {      // if primitive, then return false
     return false;
   }
 

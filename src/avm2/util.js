@@ -25,6 +25,9 @@ function error(message) {
 }
 
 function assert(condition) {
+  if (condition === "") {     // avoid inadvertent false positive
+    condition = true;
+  }
   if (!condition) {
     var message = Array.prototype.slice.call(arguments);
     message.shift();
