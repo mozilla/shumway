@@ -719,17 +719,22 @@ var LoaderDefinition = (function () {
         props.variableName = symbol.variableName;
         break;
       case 'shape':
-        var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
-        var graphics = new flash.display.Graphics;
-        graphics._scale = 0.05;
+        var factory = new Function('d,r', 'return ' + symbol.data);
 
-        className = 'flash.display.Shape';
-        props.bbox = symbol.bbox;
-        props.graphics = graphics;
+        if (symbol.morph) {
+          className = 'flash.display.MorphShape';
+          props.factory = factory.bind(null, dictionary);
+        } else {
+          className = 'flash.display.Shape'
 
-        symbolPromise.then(function () {
-          graphics.drawGraphicsData(createGraphicsData(dictionary, 0));
-        });
+          var graphics = new flash.display.Graphics;
+          graphics._scale = 0.05;
+          props.graphics = graphics;
+
+          symbolPromise.then(function () {
+            graphics.drawGraphicsData(factory(dictionary, 0));
+          });
+        }
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
@@ -737,7 +742,7 @@ var LoaderDefinition = (function () {
 
           var decodePromise = new Promise;
           MP3DecoderSession.processAll(symbol.packaged.data,
-            function (props, pcm) {
+            function (props, pcm) {z
               props.pcm = pcm;
               decodePromise.resolve();
             }.bind(null, props));

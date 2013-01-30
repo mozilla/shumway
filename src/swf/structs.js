@@ -1,25 +1,22 @@
 /* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
 var RGB = {
-  $$red: UI8,
-  $$green: UI8,
-  $$blue: UI8,
-  color: 'red<<16|green<<8|blue',
+  red: UI8,
+  green: UI8,
+  blue: UI8,
   alpha: '255'
 };
 var RGBA = {
-  $$red: UI8,
-  $$green: UI8,
-  $$blue: UI8,
-  color: 'red<<16|green<<8|blue',
+  red: UI8,
+  green: UI8,
+  blue: UI8,
   alpha: UI8
 };
 var ARGB = {
   alpha: UI8,
-  $$red: UI8,
-  $$green: UI8,
-  $$blue: UI8,
-  color: 'red<<16|green<<8|blue'
+  red: UI8,
+  green: UI8,
+  blue: UI8
 };
 var RECT = {
   $$0: ALIGN,

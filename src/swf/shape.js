@@ -22,11 +22,15 @@ function morph(start, end) {
 }
 function toColorProperties(color, colorMorph) {
   if (colorMorph) {
-    return 'color:' + morph(color.color, colorMorph.color) + ','
+    return 'color:' +
+            morph(color.red, colorMorph.red) + '<<16|' +
+            morph(color.green, colorMorph.green) + '<<8|' +
+            morph(color.blue, colorMorph.blue) + ','
            'alpha:' + morph(color.alpha / 255, colorMorph.alpha / 255);
   }
 
-  return 'color:' + color.color + ',alpha:' + (color.alpha / 255);
+  return 'color:' + (color.red << 16 | color.green << 8 | color.blue) + ',' +
+         'alpha:' + (color.alpha / 255);
 }
 function toMatrixInstance(matrix, matrixMorph) {
   if (matrixMorph) {
@@ -459,6 +463,7 @@ function defineShape(tag, dictionary) {
   var shape = {
     type: 'shape',
     id: tag.id,
+    morph: isMorph,
     bbox: tag.strokeBbox || tag.bbox,
     data: '[' + commands.join(',') + ']'
   };

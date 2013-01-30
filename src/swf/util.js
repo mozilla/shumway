@@ -22,12 +22,12 @@ function assert(cond, msg, context) {
 }
 
 function toStringRgba(color) {
-  var val = color.color;
-  var red = val >> 16 & 0xff;
-  var green = val >> 8 & 0xff;
-  var blue = val & 0xff;
-  var alpha = color.alpha / 255;
-  return 'rgba(' + [red, green, blue, alpha].join(',') + ')';
+  return 'rgba(' + [
+    color.red,
+    color.green,
+    color.blue,
+    color.alpha / 255
+  ].join(',') + ')';
 }
 function toString16(val) {
   return fromCharCode((val >> 8) & 0xff, val & 0xff);

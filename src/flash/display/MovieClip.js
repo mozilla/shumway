@@ -41,7 +41,6 @@ var MovieClipDefinition = (function () {
       }
       return this.$as2Object;
     },
-
     _gotoFrame: function (frameNum, scene) {
       if (frameNum < 1 || frameNum > this._totalFrames)
         frameNum = 1;
@@ -87,13 +86,15 @@ var MovieClipDefinition = (function () {
                 }
               }
             } else if (cmd !== current) {
-              if (current && cmd.symbolId === current.symbolId) {
+              if (current &&
+                  cmd.symbolId === current.symbolId &&
+                  cmd.ratio === current.ratio) {
                 var child = depthMap[depth];
                 if (child._animated) {
-                  if (cmd.clipDepth)
+                  if (cmd.hasClipDepth)
                     child._clipDepth = cmd.clipDepth;
 
-                  if (cmd.matrix) {
+                  if (cmd.hasMatrix) {
                     var m = cmd.matrix;
                     var a = m.a;
                     var b = m.b;
@@ -111,7 +112,7 @@ var MovieClipDefinition = (function () {
                     child._currentTransform = m;
                   }
 
-                  if (cmd.cxform)
+                  if (cmd.hasCxform)
                     child._cxform = cmd.cxform;
                 }
               } else {
@@ -141,12 +142,14 @@ var MovieClipDefinition = (function () {
                 var symbolInfo = symbolPromise.value;
                 var props = Object.create(symbolInfo.props);
 
-                if (cmd.clipDepth)
+                if (cmd.hasClipDepth)
                   props.clipDepth = cmd.clipDepth;
-                if (cmd.cxform)
+                if (cmd.hasCxform)
                   props.cxform = cmd.cxform;
-                if (cmd.matrix)
+                if (cmd.hasMatrix)
                   props.currentTransform = cmd.matrix;
+                if (cmd.hasRatio)
+                  props.ratio = cmd.ratio / 0xffff;
 
                 children.splice(index, replace, {
                   className: symbolInfo.className,
