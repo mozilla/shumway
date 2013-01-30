@@ -322,19 +322,15 @@ function runNextTest () {
           } else {
             someFailed = true;
             var nPassed = 0, nFailed = 0, nPassedPercentage = 1;
-            if (result.output.text && baseline.output.text) {
-              var match = result.output.text.match(/PASSED/g);
-              nPassed = match ? match.length : 0;
-              match = baseline.output.text.match(/PASSED/g);
-              var nTotal = match ? match.length : 0;
-              nPassedPercentage = (nPassed / nTotal) * 100 | 0;
-            }
-            if (nPassedPercentage >= 50) {
-              process.stdout.write(WARN + " PASS " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
-            } else {
-              process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
-              failedTests.push(test);
-            }
+            var match = result.output.text.match(/PASSED/g);
+            nPassed = match ? match.length : 0;
+            match = baseline.output.text.match(/PASSED/g);
+            var nTotal = match ? match.length : 0;
+            nPassedPercentage = (nPassed / nTotal) * 100 | 0;
+            process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+            process.stdout.write("\nEXPECTED\n|"+baseline.output.text+"|")
+            process.stdout.write("\nACTUAL\n|"+result.output.text+"|")
+            failedTests.push(test);
             count(configuration.name + ":fail");
           }
           process.stdout.write(" " + (result.elapsed / 1000).toFixed(2));
