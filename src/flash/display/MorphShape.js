@@ -7,10 +7,12 @@ var MorphShapeDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
-        if (s.factory) {
-          this._graphics._scale = 0.05;
-          this._graphics.drawGraphicsData(s.factory(s.ratio || 0));
-        }
+        if (s.graphicsFactory)
+          this._graphics = s.graphicsFactory(s.ratio || 0);
+        else
+          this._graphics = new flash.display.Graphics;
+      } else {
+        this._graphics = new flash.display.Graphics;
       }
     }
   };

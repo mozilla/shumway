@@ -20,12 +20,14 @@ function morph(start, end) {
 
   return start;
 }
+function morphColor(color, colorMorph) {
+  return '(' + morph(color.red, colorMorph.red) + ')<<16|' +
+         '(' + morph(color.green, colorMorph.green) + ')<<8|' +
+         '(' + morph(color.blue, colorMorph.blue) + ')';
+}
 function toColorProperties(color, colorMorph) {
   if (colorMorph) {
-    return 'color:' +
-            morph(color.red, colorMorph.red) + '<<16|' +
-            morph(color.green, colorMorph.green) + '<<8|' +
-            morph(color.blue, colorMorph.blue) + ','
+    return 'color:' + morphColor(color, colorMorph) + ','
            'alpha:' + morph(color.alpha / 255, colorMorph.alpha / 255);
   }
 
@@ -286,11 +288,11 @@ function defineShape(tag, dictionary) {
           var color = record.color;
           if (record.colorMorph) {
             var colorMorph = record.colorMorph;
-            colors.push(morph(color.color, colorMorph.color));
+            colors.push(morphColor(color, colorMorph));
             alphas.push(morph(color.alpha / 255, colorMorph.alpha / 255));
             ratios.push(morph(record.ratio / 255, record.ratioMorph / 255));
           } else {
-            colors.push(color.color);
+            colors.push(color.red << 16 | color.green << 8 | color.blue);
             alphas.push(color.alpha / 255);
             ratios.push(record.ratio / 255);
           }

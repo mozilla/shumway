@@ -719,22 +719,20 @@ var LoaderDefinition = (function () {
         props.variableName = symbol.variableName;
         break;
       case 'shape':
-        var factory = new Function('d,r', 'return ' + symbol.data);
-
-        if (symbol.morph) {
-          className = 'flash.display.MorphShape';
-          props.factory = factory.bind(null, dictionary);
-        } else {
-          className = 'flash.display.Shape'
+        var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+        className = symbol.morph ? 'flash.display.MorphShape' : 'flash.display.Shape';
+        props.graphicsFactory = function graphicsFactory(ratio) {
+          if (graphicsFactory[ratio])
+            return graphicsFactory[ratio];
 
           var graphics = new flash.display.Graphics;
           graphics._scale = 0.05;
-          props.graphics = graphics;
+          graphics.drawGraphicsData(createGraphicsData(dictionary, ratio));
 
-          symbolPromise.then(function () {
-            graphics.drawGraphicsData(factory(dictionary, 0));
-          });
-        }
+          graphicsFactory[ratio] = graphics;
+
+          return graphics;
+        };
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
