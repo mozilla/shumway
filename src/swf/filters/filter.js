@@ -5,6 +5,17 @@
  * Resources: http://www.m2osw.com/swf_struct_any_filter#swf_filter_colormatrix
  */
 
+function transpose(r, c, m) {
+  assert (r * c === m.length);
+  var result = new Float32Array(m.length);
+  for (var i = 0; i < r; i++) {
+    for (var j = 0; j < c; j++) {
+      result[j * r + i] = m[i * c + j];
+    }
+  }
+  return result;
+}
+
 /**
  * Applies a blur box-filter, averaging pixel values in a box with radius (blurX x blurY).
  *
@@ -148,7 +159,7 @@ function blurFilterV(buffer, w, h, blurY) {
   }
 }
 
-function getAlphaChannel(buffer, color) {
+function alphaFilter(buffer, color) {
   if (!color) {
     color = [0, 0, 0, 0];
   }
@@ -232,12 +243,16 @@ function panFilter(buffer, w, h, angle, distance) {
 }
 
 function dropShadowFilter(buffer, w, h, color, blurX, blurY, angle, distance, strength) {
-  var tmp = getAlphaChannel(buffer, color);
+  var tmp = alphaFilter(buffer, color);
   panFilter(tmp, w, h, angle, distance);
   blurFilter(tmp, w, h, blurX, blurY);
   scaleAlphaChannel(tmp, strength);
   compositeSourceOver(tmp, buffer);
   buffer.set(tmp);
+}
+
+function clamp(n) {
+  return (((255 - n) >> 31) | n) & 0xFF;
 }
 
 /**
@@ -251,10 +266,6 @@ function dropShadowFilter(buffer, w, h, color, blurX, blurY, angle, distance, st
  * |1|   | 0,  0,  0,  0,  1|   |1|
  *
  */
-
-function clamp(n) {
-  return (((255 - n) >> 31) | n) & 0xFF;
-}
 
 function colorFilter(buffer, w, h, matrix) {
   var r0 = matrix[0],  r1 = matrix[1],  r2 = matrix[2],  r3 = matrix[3],  r4 = matrix[4];
@@ -273,157 +284,188 @@ function colorFilter(buffer, w, h, matrix) {
   }
 }
 
-/**
- * Yet another abstraction over WebGL APIs.
- */
-var WebGLCanvas = (function () {
+var WebGLFilters = (function () {
+  var shaderRoot = SHUMWAY_ROOT + "/swf/filters/shaders/";
+
+  function colorVector(color) {
+    return [color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255];
+  }
+
+  function makeTranslation(tx, ty) {
+    return transpose(3, 3, [
+      1, 0, tx,
+      0, 1, ty,
+      0, 0, 1
+    ]);
+  }
+
+  var counter = 0;
+
   function constructor(canvas) {
-    this.canvas = canvas;
-    var w = this.width = canvas.width;
-    var h = this.height = canvas.height;
-    assert (w && h && isPowerOfTwo(w) && isPowerOfTwo(h));
-    this.gl = this.canvas.getContext("experimental-webgl");
-    assert (this.gl);
+    assert (canvas);
+    var gl = this.gl = new WebGLCanvas(canvas);
+    var width = canvas.width;
+    var height = canvas.height;
+    function loadShader(name) {
+      return gl.createShaderFromFile(shaderRoot + name);
+    }
+    // Create shader programs.
+    var canvasVert = loadShader("canvas.vert");
+    this.blurHProgram = gl.createProgram([canvasVert, loadShader("blurh.frag")]);
+    this.blurVProgram = gl.createProgram([canvasVert, loadShader("blurv.frag")]);
+    this.colorProgram = gl.createProgram([canvasVert, loadShader("color.frag")]);
+    this.alphaProgram = gl.createProgram([canvasVert, loadShader("alpha.frag")]);
+    this.multiplyProgram = gl.createProgram([canvasVert, loadShader("multiply.frag")]);
+    this.identityProgram = gl.createProgram([canvasVert, loadShader("identity.frag")]);
+
+    this.programs = [
+      this.blurHProgram,
+      this.blurVProgram,
+      this.colorProgram,
+      this.alphaProgram,
+      this.multiplyProgram,
+      this.identityProgram
+    ];
+
+    this.texture = gl.createTexture();
+    this.framebufferA = gl.createFramebuffer();
+    this.framebufferB = gl.createFramebuffer();
+
+    var vertices = gl.createVertexBuffer(gl.rectangleVertices(width, height));
+    var textureCoordinates = gl.createVertexBuffer(gl.rectangleTextureCoordinates());
+    var matrix = makeTranslation(0, 0);
+
+    this.programs.forEach(setDefaultAttributesAndUniforms);
+
+    function setDefaultAttributesAndUniforms(program) {
+      gl.useProgram(program);
+      if (gl.hasUniform(program, "u_time")) {
+        gl.setUniform1f(program, "u_time", 0.0);
+      }
+      gl.setUniformMatrix3fv(program, "u_transformMatrix", matrix);
+      gl.setUniform2f(program, "u_resolution", width, height);
+      gl.setUniform1f(program, "u_flipY", 1);
+
+      gl.setVertexAttribute(program, "a_textureCoordinate", textureCoordinates);
+      gl.setVertexAttribute(program, "a_position", vertices);
+    }
+
+    gl.useProgram(this.blurHProgram);
+    gl.setUniform2f(this.blurHProgram, "u_textureSize", width, height);
+
+    gl.useProgram(this.blurVProgram);
+    gl.setUniform2f(this.blurVProgram, "u_textureSize", width, height);
+
+    this.startTime = new Date();
   }
 
   constructor.prototype = {
-    rectangleVertices: function rectangleVertices(w, h) {
-      return new Float32Array([0, 0, w, 0, 0, h, 0, h, w, 0, w, h]);
+    getElapsedTime: function getElapsedTime() {
+      return new Date() - this.startTime;
     },
-    rectangleTextureCoordinates: function rectangleTextureCoordinates() {
-      return new Float32Array([0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1]);
-    },
-    useProgram: function (program) {
-      this.gl.useProgram(program);
-    },
-    setVertexAttribute: function setVertexAttribute(program, name, buffer) {
+    blurFilter: function blurFilterGL(buffer, w, h, blurX, blurY) {
       var gl = this.gl;
-      var location = gl.getAttribLocation(program, name);
-      assert (location >= 0, "Attribute " + name + " not found.");
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.enableVertexAttribArray(location);
-      gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+
+      gl.bindFramebuffer(null);
+      gl.clear([0, 0, 0, 0]);
+
+      gl.initializeTexture(this.texture, w, h, new Uint8Array(buffer.buffer));
+      gl.bindTexture(this.texture);
+      gl.useProgram(this.blurHProgram);
+      gl.bindFramebuffer(this.framebufferA);
+      gl.clear([0, 0, 0, 0]);
+      gl.drawTriangles(0, 6);
+
+      gl.useProgram(this.blurVProgram);
+      gl.setUniform1f(this.blurVProgram, "u_flipY", -1);
+      gl.bindTexture(this.framebufferA.texture);
+      gl.bindFramebuffer(null);
+      gl.drawTriangles(0, 6);
+      gl.setUniform1f(this.blurVProgram, "u_flipY", 1);
     },
-    setUniform4fv: function setUniform2f(program, name, vector) {
-      var gl = this.gl
-      var location = gl.getUniformLocation(program, name);
-      assert (location, "Uniform " + name + " not found.");
-      gl.uniform4fv(location, vector);
+    colorFilter: function colorFilter(buffer, w, h, matrix) {
+      var colorMatrix5x4 = transpose(4, 5, matrix);
+      var colorMatrix4x4 = colorMatrix5x4.subarray(0, 16);
+      var colorMatrixVector = colorMatrix5x4.subarray(16, 20);
+      gl.initializeTexture(this.texture, w, h, new Uint8Array(buffer.buffer));
+      gl.useProgram(this.colorProgram);
+      gl.setUniformMatrix4fv(this.colorProgram, "u_colorMatrix", colorMatrix4x4);
+      gl.setUniform4fv(this.colorProgram, "u_vector", colorMatrixVector);
+      gl.setUniform1f(this.colorProgram, "u_flipY", -1);
+      gl.bindTexture(this.texture);
+      gl.bindFramebuffer(null);
+      gl.clear([0, 0, 0, 0]);
+      gl.drawTriangles(0, 6);
+      gl.setUniform1f(this.colorProgram, "u_flipY", 1);
     },
-    setUniform2f: function setUniform2f(program, name, x, y) {
-      var gl = this.gl
-      var location = gl.getUniformLocation(program, name);
-      assert (location, "Uniform " + name + " not found.");
-      gl.uniform2f(location, x, y);
+    alphaFilter: function alphaFilter(buffer, w, h, color) {
+      gl.initializeTexture(this.texture, w, h, new Uint8Array(buffer.buffer));
+      gl.useProgram(this.alphaProgram);
+      gl.setUniform4fv(this.alphaProgram, "u_color", colorVector(color));
+      gl.bindTexture(this.texture);
+      gl.bindFramebuffer(null);
+      gl.drawTriangles(0, 6);
     },
-    setUniform1f: function setUniform2f(program, name, x) {
-      var gl = this.gl
-      var location = gl.getUniformLocation(program, name);
-      assert (location, "Uniform " + name + " not found.");
-      gl.uniform1f(location, x);
+    glowFilter: function dropShadowFilter(buffer, w, h, color, blurX, blurY, strength) {
+      this.dropShadowFilter(buffer, w, h, color, blurX, blurY, 0, 0, strength);
     },
-    setUniformMatrix4fv: function setUniform(program, name, matrix) {
-      var gl = this.gl
-      var location = gl.getUniformLocation(program, name);
-      assert (location, "Uniform " + name + " not found.");
-      assert (matrix.length === 16, "Invalid matrix size.");
-      gl.uniformMatrix4fv(location, false, matrix);
-    },
-    createVertexBuffer: function createBuffer(vertices) {
-      var gl = this.gl;
-      var buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-      return buffer;
-    },
-    createFramebuffer: function createFramebuffer() {
-      var gl = this.gl;
-      var texture = this.createTexture();
-      this.initializeTexture(texture, this.width, this.height, null);
-      var framebuffer = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-      framebuffer.texture = texture;
-      return framebuffer;
-    },
-    createTexture: function createAndBindTexture() {
-      var gl = this.gl;
-      var texture = gl.createTexture();
-      this.bindTexture(texture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      return texture;
-    },
-    initializeTexture: function initializeTexture(texture, width, height, data) {
-      var gl = this.gl;
-      this.bindTexture(texture);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
-    },
-    bindTexture: function bindTexture(texture) {
-      var gl = this.gl;
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-    },
-    bindFramebuffer: function bindFramebuffer(framebuffer) {
-      var gl = this.gl;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    },
-    createShader: function createShader(gl, shaderType, shaderSource) {
-      var gl = this.gl;
-      var shader = gl.createShader(shaderType);
-      gl.shaderSource(shader, shaderSource);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var lastError = gl.getShaderInfoLog(shader);
-        unexpected("Cannot compile shader: " + lastError);
-        gl.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    },
-    createShaderFromElement: function createShaderFromElement(id) {
-      var gl = this.gl;
-      var shaderScript = document.getElementById(id);
-      if (!shaderScript) {
-        unexpected("Shader Script Element: " + id + " not found.");
-      }
-      var shaderType;
-      switch (shaderScript.type) {
-        case "x-shader/x-vertex":
-          shaderType = gl.VERTEX_SHADER;
-          break;
-        case "x-shader/x-fragment":
-          shaderType = gl.FRAGMENT_SHADER;
-          break;
-        default:
-          throw "Shader Type: " + shaderScript.type + " not supported.";
-          break;
-      }
-      return this.createShader(gl, shaderType, shaderScript.text);
-    },
-    createProgram: function createProgram(shaders) {
-      var gl = this.gl;
-      var program = gl.createProgram();
-      shaders.forEach(function (shader) {
-        gl.attachShader(program, shader);
-      });
-      gl.linkProgram(program);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        var lastError = gl.getProgramInfoLog(program);
-        unexpected("Cannot link program: " + lastError);
-        gl.deleteProgram(program);
-      }
-      return program;
-    },
-    drawTriangles: function drawArrays(first, count) {
-      var gl = this.gl;
-      gl.drawArrays(gl.TRIANGLES, first, count);
+    dropShadowFilter: function dropShadowFilter(buffer, w, h, color, blurX, blurY, angle, distance, strength) {
+
+      gl.bindFramebuffer(this.framebufferA);
+      gl.clear([0, 0, 0, 0]);
+      gl.bindFramebuffer(this.framebufferB);
+      gl.clear([0, 0, 0, 0]);
+      gl.bindFramebuffer(null);
+      gl.clear([0, 0, 0, 0]);
+
+      // Alpha
+      gl.initializeTexture(this.texture, w, h, new Uint8Array(buffer.buffer));
+      gl.useProgram(this.alphaProgram);
+      gl.setUniform4fv(this.alphaProgram, "u_color", colorVector(color));
+      gl.bindTexture(this.texture);
+      gl.bindFramebuffer(this.framebufferA);
+      gl.drawTriangles(0, 6);
+
+      // Blur H
+      gl.bindTexture(this.framebufferA.texture);
+      gl.useProgram(this.blurHProgram);
+      gl.bindFramebuffer(this.framebufferB);
+      gl.drawTriangles(0, 6);
+
+      // Blur V
+      gl.useProgram(this.blurVProgram);
+      gl.bindTexture(this.framebufferB.texture);
+      gl.bindFramebuffer(this.framebufferA);
+      gl.drawTriangles(0, 6);
+
+      // Multiply Alpha
+      gl.bindTexture(this.framebufferA.texture);
+      gl.useProgram(this.multiplyProgram);
+      var dy = (Math.sin(angle) * distance) | 0;
+      var dx = (Math.cos(angle) * distance) | 0;
+      gl.setUniformMatrix3fv(this.multiplyProgram, "u_transformMatrix", makeTranslation(dx, dy));
+      gl.setUniform4fv(this.multiplyProgram, "u_color", [strength, strength, strength, strength]);
+      gl.bindFramebuffer(this.framebufferB);
+      gl.drawTriangles(0, 6);
+
+      gl.bindTexture(this.texture);
+      gl.useProgram(this.identityProgram);
+      gl.enableBlend();
+      gl.gl.blendFunc(gl.gl.ONE, gl.gl.ONE_MINUS_SRC_ALPHA);
+      gl.bindFramebuffer(this.framebufferB);
+      gl.drawTriangles(0, 6);
+      gl.disableBlend();
+
+      gl.bindTexture(this.framebufferB.texture);
+      gl.useProgram(this.identityProgram);
+      gl.setUniform1f(this.identityProgram, "u_flipY", -1);
+      gl.bindFramebuffer(null);
+      gl.clear([0, 0, 0, 0]);
+      gl.drawTriangles(0, 6);
+      gl.setUniform1f(this.identityProgram, "u_flipY", 1);
+
+      return;
     }
   };
   return constructor;
 })();
-
-function trace(s) {
-  console.info(s);
-}

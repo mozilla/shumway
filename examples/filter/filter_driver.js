@@ -9,7 +9,7 @@ function drawShape(ctx, length, x, y) {
   ctx.fillStyle = '#ff0000';
   ctx.strokeStyle = 'green';
   ctx.translate(x, y);
-  ctx.rotate(r += 0.01);
+  ctx.rotate(r += 0.02);
   ctx.rotate((Math.PI * 1 / 10));
   ctx.beginPath();
   for (var i = 5; i--;) {
@@ -28,20 +28,6 @@ function drawShape(ctx, length, x, y) {
 
 var colorMatrix4x5 = new Float32Array([0.748939, 1.044984, -0.793923, 0.000000, 0.000000, -0.008795, 0.713845, 0.294950, 0.000000, 0.000000, 0.827417, -0.240804, 0.413387, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]);
 
-function transpose(r, c, m) {
-  var result = new Float32Array(16);
-  for (var i = 0; i < r; i++) {
-    for (var j = 0; j < c; j++) {
-      result[j * r + i] = m[i * c + j];
-    }
-  }
-  return result;
-}
-
-var colorMatrix5x4 = transpose(4, 5, colorMatrix4x5);
-var colorMatrix4x4 = colorMatrix5x4.subarray(0, 16);
-var colorMatrixVector = colorMatrix5x4.subarray(16, 20);
-
 var blurCanvasJS = document.getElementById("blur-canvas-js");
 var blurCanvasGL = document.getElementById("blur-canvas-gl");
 
@@ -55,72 +41,13 @@ var colorCanvasJS = document.getElementById("color-canvas-js");
 var colorCanvasGL = document.getElementById("color-canvas-gl");
 
 var glCanvas = document.getElementById("canvas-gl");
+
+var glFilters = new WebGLFilters(glCanvas);
+
 var gl = new WebGLCanvas(glCanvas);
-
-var vShader = gl.createShaderFromElement("2d-vertex-shader");
-var blurFragmentShaderH = gl.createShaderFromElement("2d-blur-fragment-shader-h");
-var blurFragmentShaderV = gl.createShaderFromElement("2d-blur-fragment-shader-v");
-var colorFragmentShader = gl.createShaderFromElement("2d-color-fragment-shader");
-
-var blurProgramH = gl.createProgram([vShader, blurFragmentShaderH]);
-var blurProgramV = gl.createProgram([vShader, blurFragmentShaderV]);
-var colorProgram = gl.createProgram([vShader, colorFragmentShader]);
-
-var texture = gl.createTexture();
-var vertices = gl.createVertexBuffer(gl.rectangleVertices(width, height));
-var textureCoordinates = gl.createVertexBuffer(gl.rectangleTextureCoordinates());
-
-gl.useProgram(blurProgramH);
-gl.setUniform2f(blurProgramH, "u_resolution", width, height);
-gl.setUniform2f(blurProgramH, "u_textureSize", width, height);
-gl.setUniform1f(blurProgramH, "u_flipY", 1);
-gl.setVertexAttribute(blurProgramH, "a_position", vertices);
-gl.setVertexAttribute(blurProgramH, "a_textureCoordinate", textureCoordinates);
-
-gl.useProgram(blurProgramV);
-gl.setUniform2f(blurProgramV, "u_resolution", width, height);
-gl.setUniform2f(blurProgramV, "u_textureSize", width, height);
-gl.setUniform1f(blurProgramV, "u_flipY", -1);
-gl.setVertexAttribute(blurProgramV, "a_textureCoordinate", textureCoordinates);
-gl.setVertexAttribute(blurProgramV, "a_position", vertices);
-
-
-
-gl.useProgram(colorProgram);
-gl.setUniform2f(colorProgram, "u_resolution", width, height);
-gl.setUniformMatrix4fv(colorProgram, "u_matrix", colorMatrix4x4);
-gl.setUniform4fv(colorProgram, "u_vector", colorMatrixVector);
-// gl.setUniform2f(colorProgram, "u_textureSize", canvas.width, canvas.height);
-
-gl.setUniform1f(colorProgram, "u_flipY", -1);
-gl.setVertexAttribute(colorProgram, "a_textureCoordinate", textureCoordinates);
-gl.setVertexAttribute(colorProgram, "a_position", vertices);
-
-var framebuffer = gl.createFramebuffer();
 
 var firefoxImage = document.getElementById("firefox");
 
-
-function blurGL(data, width, height) {
-  gl.initializeTexture(texture, width, height, new Uint8Array(data.buffer));
-  gl.useProgram(blurProgramH);
-  gl.bindTexture(texture);
-  gl.bindFramebuffer(framebuffer);
-  gl.drawTriangles(0, 6);
-
-  gl.useProgram(blurProgramV);
-  gl.bindTexture(framebuffer.texture);
-  gl.bindFramebuffer(null);
-  gl.drawTriangles(0, 6);
-}
-
-function colorGL(data, width, height) {
-  gl.initializeTexture(texture, width, height, new Uint8Array(data.buffer));
-  gl.useProgram(colorProgram);
-  gl.bindTexture(texture);
-  gl.bindFramebuffer(null);
-  gl.drawTriangles(0, 6);
-}
 
 function getImageData(straightAlpha) {
   var imageData = context.getImageData(0, 0, width, height);
@@ -137,26 +64,29 @@ function putImageData(imageData, context, straightAlpha) {
   context.putImageData(imageData, 0, 0);
 }
 
+var runJS = true;
+var runGL = true;
+
 var run = {
   blur: {
-    js: false,
-    gl: false
+    js: runJS && true,
+    gl: runGL && true
   },
   glow: {
-    js: false,
-    gl: false
+    js: runJS && true,
+    gl: runGL && true
   },
   shadow: {
-    js: true,
-    gl: false
+    js: runJS && true,
+    gl: runGL && true
   },
   color: {
-    js: false,
-    gl: false
+    js: runJS && true,
+    gl: runGL && true
   }
 };
 
-var k = 0;
+var frameCount = 0;
 
 setInterval(function () {
 
@@ -164,36 +94,53 @@ setInterval(function () {
   context.fillStyle = "white";
   // context.fillRect(0, 0, 256, 256);
   context.clearRect(0, 0, 256, 256);
-  drawShape(context, 50, 120, 120);
+  drawShape(context, 50, 140, 140);
   context.drawImage(firefoxImage, 40, 40);
 
   var imageData;
 
+  var blurX = 10, blurY = 10;
+
   if (run.blur.js) {
     // Run JS Blur Filter
     imageData = getImageData();
-    blurFilter(imageData.data, width, height, 10, 10);
+    blurFilter(imageData.data, width, height, blurX, blurY);
     putImageData(imageData, blurCanvasJS.getContext('2d'));
   }
 
   if (run.blur.gl) {
     // Run WebGL Blur Filter
     imageData = getImageData(true);
-    blurGL(imageData.data, width, height);
+    glFilters.blurFilter(imageData.data, width, height);
     drawImage(glCanvas, blurCanvasGL);
   }
 
   if (run.glow.js) {
     imageData = getImageData();
-    glowFilter(imageData.data, width, height, [0, 0, 255, 0], 20, 20, 1);
+    glowFilter(imageData.data, width, height, [0, 0, 255, 0], blurX, blurY, 1);
     putImageData(imageData, glowCanvasJS.getContext('2d'));
+  }
+
+  if (run.glow.gl) {
+    imageData = getImageData(true);
+    glFilters.glowFilter(imageData.data, width, height, [0, 0, 255, 255], blurX, blurY, 1);
+    drawImage(glCanvas, glowCanvasGL);
+
   }
 
   if (run.shadow.js) {
     imageData = getImageData();
-    dropShadowFilter(imageData.data, width, height, [0, 0, 0, 0], 5, 5, Math.PI / 4, 10, 0.5);
+    dropShadowFilter(imageData.data, width, height, [0, 0, 255, 0], blurX, blurY, Math.PI / 4, 20, 0.5);
     putImageData(imageData, shadowCanvasJS.getContext('2d'));
   }
+
+  if (run.shadow.gl) {
+    imageData = getImageData();
+    glFilters.dropShadowFilter(imageData.data, width, height, [0, 0, 255, 255], blurX, blurY, Math.PI / 4, 20, 0.5);
+    drawImage(glCanvas, shadowCanvasGL);
+  }
+
+  colorMatrix4x5[0] = Math.sin(frameCount / 100);
 
   if (run.color.js) {
     // Run JS Color Filter
@@ -205,9 +152,11 @@ setInterval(function () {
   if (run.color.gl) {
     // Run WebGL Color Filter
     imageData = getImageData();
-    colorGL(imageData.data, width, height);
+    glFilters.colorFilter(imageData.data, width, height, colorMatrix4x5);
     drawImage(glCanvas, colorCanvasGL);
   }
+
+  frameCount ++;
 
 }, 1000 / 60);
 

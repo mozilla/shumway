@@ -4,8 +4,12 @@
   <title></title>
 </head>
 <body style="background-color: #2c2c2c">
+  <script>
+    SHUMWAY_ROOT = "../../src/";
+  </script>
   <script src="../../src/avm2/util.js"></script>
-  <script src="../../src/swf/filter.js"></script>
+  <script src="../../src/swf/filters/gl.js"></script>
+  <script src="../../src/swf/filters/filter.js"></script>
   <style TYPE="text/css">
     body {
       color: white;
@@ -66,6 +70,9 @@
         GL Glow
       </td>
       <td>
+        GL Shadow
+      </td>
+      <td>
         GL Color
       </td>
     </tr>
@@ -80,71 +87,15 @@
         <canvas width="256" height="256" id="glow-canvas-gl"></canvas>
       </td>
       <td>
+        <canvas width="256" height="256" id="shadow-canvas-gl"></canvas>
+      </td>
+      <td>
         <canvas width="256" height="256" id="color-canvas-gl"></canvas>
       </td>
     </tr>
   </table>
 
   <img src="firefox.png" id="firefox" style="visibility: hidden;">
-  <script id="2d-vertex-shader" type="x-shader/x-vertex">
-    attribute vec2 a_position;
-    uniform vec2 u_resolution;
-    uniform float u_flipY;
-    attribute vec2 a_textureCoordinate;
-    varying vec2 v_texCoord;
-    void main() {
-      vec2 p = (a_position / u_resolution) * 2.0 - 1.0;
-      gl_Position = vec4(p * vec2(1, u_flipY), 0, 1);
-      v_texCoord = a_textureCoordinate;
-    }
-  </script>
-
-  <script id="2d-blur-fragment-shader-h" type="x-shader/x-fragment">
-    precision mediump float;
-    uniform sampler2D u_image;
-    uniform vec2 u_textureSize;
-    varying vec2 v_texCoord;
-    void main() {
-      const int sampleRadius = 9;
-      const int samples = sampleRadius * 2 + 1;
-      vec2 one = vec2(1.0, 1.0) / u_textureSize;
-      vec4 color = vec4(0, 0, 0, 0);
-      for (int i = -sampleRadius; i <= sampleRadius; i++) {
-        color += texture2D(u_image, v_texCoord + vec2(float(i) * one.x, 0));
-      }
-      color /= float(samples);
-      gl_FragColor = color;
-    }
-  </script>
-
-  <script id="2d-blur-fragment-shader-v" type="x-shader/x-fragment">
-    precision mediump float;
-    uniform sampler2D u_image;
-    uniform vec2 u_textureSize;
-    varying vec2 v_texCoord;
-    void main() {
-      const int sampleRadius = 9;
-      const int samples = sampleRadius * 2 + 1;
-      vec2 one = vec2(1.0, 1.0) / u_textureSize;
-      vec4 color = vec4(0, 0, 0, 0);
-      for (int i = -sampleRadius; i <= sampleRadius; i++) {
-        color += texture2D(u_image, v_texCoord + vec2(0, float(i) * one.y));
-      }
-      color /= float(samples);
-      gl_FragColor = color;
-    }
-  </script>
-
-  <script id="2d-color-fragment-shader" type="x-shader/x-fragment">
-    precision mediump float;
-    uniform sampler2D u_image;
-    uniform mat4 u_matrix;
-    uniform vec4 u_vector;
-    varying vec2 v_texCoord;
-    void main() {
-      gl_FragColor = u_matrix * texture2D(u_image, v_texCoord) + u_vector;
-    }
-  </script>
 
   <script src="filter_driver.js"></script>
 
