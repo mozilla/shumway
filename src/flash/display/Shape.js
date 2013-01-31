@@ -4,14 +4,10 @@ var ShapeDefinition = (function () {
 
     initialize: function () {
       var s = this.symbol;
-      if (s) {
-        if (s.graphicsFactory)
-          this._graphics = s.graphicsFactory(0);
-        else
-          this._graphics = new flash.display.Graphics;
-      } else {
+      if (s && s.graphicsFactory)
+        this._graphics = s.graphicsFactory(0);
+      else
         this._graphics = new flash.display.Graphics;
-      }
     }
   };
 

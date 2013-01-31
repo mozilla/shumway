@@ -21,12 +21,14 @@ var SpriteDefinition = (function () {
               var symbolInfo = symbolPromise.value;
               var props = Object.create(symbolInfo.props);
 
-              if (cmd.clipDepth)
+              if (cmd.hasClipDepth)
                 props.clipDepth = cmd.clipDepth;
-              if (cmd.cxform)
+              if (cmd.hasCxform)
                 props.cxform = cmd.cxform;
-              if (cmd.matrix)
+              if (cmd.hasMatrix)
                 props.currentTransform = cmd.matrix;
+              if (cmd.hasRatio)
+                props.ratio = cmd.ratio;
 
               children.push({
                 className: symbolInfo.className,

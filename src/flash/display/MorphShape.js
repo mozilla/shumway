@@ -6,14 +6,10 @@ var MorphShapeDefinition = (function () {
       this._graphics = new flash.display.Graphics;
 
       var s = this.symbol;
-      if (s) {
-        if (s.graphicsFactory)
-          this._graphics = s.graphicsFactory(s.ratio || 0);
-        else
-          this._graphics = new flash.display.Graphics;
-      } else {
+      if (s && s.graphicsFactory)
+        this._graphics = s.graphicsFactory(s.ratio || 0);
+      else
         this._graphics = new flash.display.Graphics;
-      }
     }
   };
 
