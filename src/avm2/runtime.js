@@ -229,6 +229,19 @@ function coerceString(x) {
 }
 
 function typeOf(x) {
+  // ABC doesn't box primitives, so typeof returns the primitive type even when
+  // the value is new'd
+  if (x) {
+    if (x.constructor==String) {
+      return "string"
+    }
+    else if (x.constructor==Number) {
+      return "number"
+    }
+    else if (x.constructor==Boolean) {
+      return "boolean"
+    }
+  }
   return typeof x;
 }
 
@@ -703,7 +716,8 @@ function deleteProperty(obj, mn) {
   }
 
   // Only dynamic properties can be deleted, so only look for those.
-  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic()) {
+  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic() ||
+      typeof obj !== "object" || obj === null) {      // if primitive, then return false
     return false;
   }
 
@@ -722,6 +736,7 @@ function deleteProperty(obj, mn) {
     }
     return delete obj[Multiname.getQualifiedName(resolved)];
   }
+  return false;
 }
 
 function isInstanceOf(value, type) {
