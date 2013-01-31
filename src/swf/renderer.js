@@ -73,7 +73,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
-      if (child) {
+      if (child && child._visible) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
