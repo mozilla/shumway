@@ -108,6 +108,18 @@ var as3error = {};
    M("flash.display.SimpleButton", "SimpleButtonClass", SimpleButtonDefinition),
    M("flash.display.MorphShape", "MorphShapeClass", MorphShapeDefinition),
 
+   M("flash.filters.BevelFilter", "BevelFilterClass", BevelFilterDefinition),
+   M("flash.filters.BitmapFilter", "BitmapFilterClass", BitmapFilterDefinition),
+   M("flash.filters.BlurFilter", "BlurFilterClass", BlurFilterDefinition),
+   M("flash.filters.ColorMatrixFilter", "ColorMatrixFilterClass", ColorMatrixFilterDefinition),
+   M("flash.filters.ConvolutionFilter", "ConvolutionFilterClass", ConvolutionFilterDefinition),
+   M("flash.filters.DisplacementMapFilter", "DisplacementMapFilterClass", DisplacementMapFilterDefinition),
+   M("flash.filters.DropShadowFilter", "DropShadowFilterClass", DropShadowFilterDefinition),
+   M("flash.filters.GlowFilter", "GlowFilterClass", GlowFilterDefinition),
+   M("flash.filters.GradientBevelFilter", "GradientBevelFilterClass", GradientBevelFilterDefinition),
+   M("flash.filters.GradientGlowFilter", "GradientGlowFilterClass", GradientGlowFilterDefinition),
+   M("flash.filters.ShaderFilter", "ShaderFilterClass", ShaderFilterDefinition),
+
    M("flash.geom.Point", "PointClass", PointDefinition),
    M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
    M("flash.geom.Matrix", "MatrixClass", MatrixDefinition),

@@ -31,6 +31,7 @@ var DisplayObjectDefinition = (function () {
       this._cxform = null;
       this._dirtyArea = null;
       this._graphics = null;
+      this._filters = [];
       this._loader = null;
       this._mouseChildren = true;
       this._mouseOver = false;
@@ -48,6 +49,7 @@ var DisplayObjectDefinition = (function () {
       this._stage = null;
       this._transform = null;
       this._visible = true;
+      this._wasCachedAsBitmap = false;
       this._x = 0;
       this._y = 0;
 
@@ -235,13 +237,22 @@ var DisplayObjectDefinition = (function () {
       return this._cacheAsBitmap;
     },
     set cacheAsBitmap(val) {
-      this._cacheAsBitmap = val;
+      this._cacheAsBitmap = this._filters.length ? true : val;
     },
     get filters() {
-      return [];
+      return this._filters;
     },
     set filters(val) {
-      notImplemented();
+      if (val.length) {
+        if (!this._filters.length)
+          this._wasCachedAsBitmap = this._cacheAsBitmap;
+
+        this._cacheAsBitmap = true;
+      } else {
+        this._cacheAsBitmap = this._wasCachedAsBitmap;
+      }
+
+      this._filters = val;
     },
     get height() {
       var bounds = this.getBounds();
