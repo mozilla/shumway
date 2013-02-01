@@ -390,7 +390,9 @@ var SourceTracer = (function () {
       writer.writeLn("Class " + ii);
       writer.writeLn("8< --------------------------------------------------------------");
 
-      writer.enter("const " + className + "Definition = (function () {");
+      var originalURI = ii.name.namespaces[0].originalURI;
+
+      writer.enter("var " + className + "Definition = (function () {");
       function maxTraitNameLength(traits) {
         var length = 0;
         traits.forEach(function (t) {
@@ -423,7 +425,7 @@ var SourceTracer = (function () {
         // var methods = traits.methods;
 
         var methods = [];
-        var gettersAndSetters = {};
+        var gettersAndSetters = Object.create(null);
 
         traits.methods.forEach(function (trait, i) {
           var traitName = trait.name.getName();
@@ -465,7 +467,7 @@ var SourceTracer = (function () {
           writeTrait(methods[i], i < methods.length - 1);
         }
 
-        var keyValues = toKeyValueArray(gettersAndSetters)
+        var keyValues = toKeyValueArray(gettersAndSetters);
         for (var j = 0; j < keyValues.length; j++) {
           writer.enter(keyValues[j][0] + ": {");
           var list = keyValues[j][1];
@@ -487,6 +489,7 @@ var SourceTracer = (function () {
 
       writer.enter("return {");
       writer.writeLn("// (" + getSignature(ii.init, false) + ")");
+      writer.writeLn("__class__: \"" + originalURI + "." + className + "\",");
       writer.enter("initialize: function () {");
       writer.leave("},");
       writer.enter("__glue__: {");

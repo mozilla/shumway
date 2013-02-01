@@ -107,9 +107,10 @@ function time(fn, count) {
  * Converts an object to an array of key, value arrays.
  */
 function toKeyValueArray(o) {
+  var hasOwnProperty = Object.prototype.hasOwnProperty;
   var a = [];
   for (var k in o) {
-    if (o.hasOwnProperty(k)) {
+    if (hasOwnProperty.call(o, k)) {
       a.push([k, o[k]]);
     }
   }
