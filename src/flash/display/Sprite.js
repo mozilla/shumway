@@ -4,7 +4,6 @@ var SpriteDefinition = (function () {
 
     initialize: function () {
       this._buttonMode = false;
-      this._depthMap = [];
       this._useHandCursor = true;
 
       var s = this.symbol;
@@ -17,26 +16,7 @@ var SpriteDefinition = (function () {
             var children = this._children;
             for (var depth in displayList) {
               var cmd = displayList[depth];
-              var symbolPromise = cmd.promise;
-              var symbolInfo = symbolPromise.value;
-              var props = Object.create(symbolInfo.props);
-
-              if (cmd.hasClipDepth)
-                props.clipDepth = cmd.clipDepth;
-              if (cmd.hasCxform)
-                props.cxform = cmd.cxform;
-              if (cmd.hasMatrix)
-                props.currentTransform = cmd.matrix;
-              if (cmd.hasRatio)
-                props.ratio = cmd.ratio;
-
-              children.push({
-                className: symbolInfo.className,
-                events: cmd.events,
-                depth: depth,
-                name: cmd.name,
-                props: props
-              });
+              this._addTimelineChild(cmd);
             }
           }
         }
@@ -44,8 +24,37 @@ var SpriteDefinition = (function () {
         this._graphics = new flash.display.Graphics;
       }
     },
+
+    _addTimelineChild: function(cmd, index, replace) {
+      var symbolPromise = cmd.promise;
+      var symbolInfo = symbolPromise.value;
+      var props = Object.create(symbolInfo.props);
+
+      props.depth = cmd.depth;
+
+      if (cmd.hasClipDepth)
+        props.clipDepth = cmd.clipDepth;
+      if (cmd.hasCxform)
+        props.cxform = cmd.cxform;
+      if (cmd.hasMatrix)
+        props.currentTransform = cmd.matrix;
+      if (cmd.hasName)
+        props.name = cmd.name;
+      if (cmd.hasRatio)
+        props.ratio = cmd.ratio / 0xffff;
+
+      var child = {
+        className: symbolInfo.className,
+        events: cmd.events,
+        props: props
+      };
+
+      if (index !== undefined)
+        this._children.splice(index, replace ? 1 : 0, child);
+      else
+        this._children.push(child);
+    },
     _constructChildren: function () {
-      var depthMap = this._depthMap;
       var loader = this._loader;
       var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
 
@@ -60,13 +69,12 @@ var SpriteDefinition = (function () {
             avm2.systemDomain.getClass(symbolInfo.className) :
             avm2.applicationDomain.getClass(symbolInfo.className);
 
-          var name = symbolInfo.name;
-
           var props = Object.create(symbolInfo.props);
+          var name = props.name;
+
           props.animated = true;
           props.owned = true;
           props.parent = this;
-          props.name = name || null;
 
           var instance = symbolClass.createAsSymbol(props);
 
@@ -95,7 +103,6 @@ var SpriteDefinition = (function () {
           instance.dispatchEvent(new flash.events.Event("added"));
 
           children[i] = instance;
-          depthMap[symbolInfo.depth] = instance;
         }
       }
     },
