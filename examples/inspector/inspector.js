@@ -160,9 +160,7 @@ function executeFile(file, buffer) {
   }
 }
 
-function terminate() {
-  console.info(Counter);
-}
+function terminate() {}
 
 var initializeFrameControl = true;
 var pauseExecution = getQueryVariable("paused") === "true";
