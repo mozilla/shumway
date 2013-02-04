@@ -2,7 +2,7 @@ var ColorMatrixFilterDefinition = (function () {
   return {
     __class__: "flash.filters.ColorMatrixFilter",
     initialize: function () {
-      this._matrix = null;
+
     },
     applyFilter: function (buffer, width, height) {
       if (this._matrix) {
@@ -11,19 +11,16 @@ var ColorMatrixFilterDefinition = (function () {
         colorFilter(buffer, width, height, this._matrix);
       }
     },
-    computeFilterBounds: function (bounds) {
+    updateFilterBounds: function (bounds) {
+      assert (bounds instanceof flash.geom.Rectangle);
       return bounds;
     },
     __glue__: {
       native: {
         instance: {
           matrix: {
-            get: function matrix() {
-              return this._matrix;
-            },
-            set: function matrix(value) {
-              this._matrix = value;
-            }
+            get: function matrix() { return this._matrix; },
+            set: function matrix(value) { this._matrix = value; }
           }
         }
       }
