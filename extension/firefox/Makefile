@@ -22,6 +22,8 @@ build: clean
 	cp ../../src/flash/events/*.js build/content/flash/events/
 	mkdir build/content/flash/external
 	cp ../../src/flash/external/*.js build/content/flash/external/
+	mkdir build/content/flash/filters
+	cp ../../src/flash/filters/*.js build/content/flash/filters/
 	mkdir build/content/flash/geom
 	cp ../../src/flash/geom/*.js build/content/flash/geom/
 	mkdir build/content/flash/media
