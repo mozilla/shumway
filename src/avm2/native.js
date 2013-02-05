@@ -1216,6 +1216,9 @@ var natives = (function () {
         },
 
         hasDefinition: function (name) {
+          if (!name) {
+            return false;
+          }
           return !!this.dom.findProperty(Multiname.fromSimpleName(name), false, false);
         }
       },
