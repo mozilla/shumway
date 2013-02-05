@@ -72,7 +72,9 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   assert (builtinPath);
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
     avm2 = new AVM2(sysMode, appMode);
+    console.time("Execute builtin.abc");
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+    console.timeEnd("Execute builtin.abc");
     if (libraryPath) {
       new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
