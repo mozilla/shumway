@@ -602,6 +602,15 @@ function getProperty(obj, mn) {
   return value;
 }
 
+function hasProperty(obj, mn) {
+  release || assert(obj !== undefined, "hasProperty(", mn, ") on undefined");
+  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  if (!resolved) {
+    return false;
+  }
+  return Multiname.getQualifiedName(resolved) in obj;
+}
+
 function getSuper(obj, mn) {
   release || assert(obj != undefined, "getSuper(" + mn + ") on undefined");
   release || assert(obj.class.baseClass);

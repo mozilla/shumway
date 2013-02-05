@@ -624,7 +624,11 @@ var Interpreter = (function () {
             value = stack.pop();
             stack.push(isInstance(value, type));
             break;
-          case OP_in:             notImplemented(); break;
+          case OP_in:
+            obj = stack.pop();
+            multiname = Multiname.getPublicQualifiedName(stack.pop());
+            stack.push(hasProperty(obj, multiname));
+            break;
           case OP_increment_i:
             stack.push(stack.pop() | 0);
             stack.push(1);

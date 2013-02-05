@@ -292,6 +292,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         return binary(Operator.ADD, constant(""), value);
       }
 
+      function getPublicQualifiedName(value) {
+        return binary(Operator.ADD, constant("public$"), value);
+      }
+
       assert(!this.coercers);
 
       var coercers = this.coercers = {
@@ -1005,6 +1009,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               type = pop();
               value = pop();
               push(call(globalProperty("isInstance"), null, [value, type]));
+              break;
+            case OP_in:
+              object = pop();
+              multiname = getPublicQualifiedName(stack.pop());
+              push(call(globalProperty("hasProperty"), null, [object, multiname]));
               break;
             case OP_typeof:
               push(call(globalProperty("typeOf"), null, [pop()]));
