@@ -1318,6 +1318,10 @@ var natives = (function () {
     RegExpClass: RegExpClass,
     DictionaryClass: DictionaryClass,
 
+    XMLClass: XMLClass,
+    XMLListClass: XMLListClass,
+    QNameClass: QNameClass,
+
     ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,
     ApplicationDomainClass: ApplicationDomainClass,

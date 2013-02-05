@@ -56,6 +56,7 @@ load("../domain.js");
 load("../runtime.js");
 load("../viz.js");
 load("../interpreter.js");
+load("../xml.js");
 load("../native.js");
 load("../vm.js");
 Timer.stop();
