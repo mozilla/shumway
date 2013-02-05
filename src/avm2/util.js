@@ -55,6 +55,10 @@ function notImplemented(message) {
   release || assert(false, "Not Implemented " + message);
 }
 
+function somewhatImplemented(message) {
+  warning(message);
+}
+
 function unexpected(message) {
   release || assert(false, message);
 }
