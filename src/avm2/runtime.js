@@ -341,13 +341,16 @@ var Interface = (function () {
       }
 
       var cls = value.class;
-      if (cls) {
+      while (cls) {
         var interfaces = cls.implementedInterfaces;
-        for (var i = 0, j = interfaces.length; i < j; i++) {
-          if (interfaces[i] === this) {
-            return true;
+        if (interfaces) {
+          for (var i = 0, j = interfaces.length; i < j; i++) {
+            if (interfaces[i] === this) {
+              return true;
+            }
           }
         }
+        cls = cls.baseClass;
       }
 
       return false;
