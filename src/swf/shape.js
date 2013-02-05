@@ -27,12 +27,16 @@ function morphColor(color, colorMorph) {
 }
 function toColorProperties(color, colorMorph) {
   if (colorMorph) {
-    return 'color:' + morphColor(color, colorMorph) + ','
+    return 'color:' + morphColor(color, colorMorph) + ',' +
            'alpha:' + morph(color.alpha / 255, colorMorph.alpha / 255);
   }
 
-  return 'color:' + (color.red << 16 | color.green << 8 | color.blue) + ',' +
-         'alpha:' + (color.alpha / 255);
+  if (color) {
+    return 'color:' + (color.red << 16 | color.green << 8 | color.blue) + ',' +
+           'alpha:' + (color.alpha / 255);
+  }
+
+  return 'color: 0, alpha: 1';
 }
 function toMatrixInstance(matrix, matrixMorph) {
   if (matrixMorph) {
