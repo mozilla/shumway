@@ -517,6 +517,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return call(globalProperty("coerce"), null, [value, type]);
         }
 
+        function coerceString(value) {
+          return call(globalProperty("coerceString"), null, [value]);
+        }
+
         function getScopeObject(scope) {
           if (scope instanceof IR.AVM2Scope) {
             return scope.object;
@@ -878,6 +882,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:
+              push(coerceString(pop()));
+              break;
+            case OP_convert_s:
               push(toString(pop()));
               break;
             case OP_astypelate:
