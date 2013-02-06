@@ -132,6 +132,14 @@ function isString(string) {
   return typeof string === "string";
 }
 
+function setBitFlags(flags, flag, value) {
+  return value ? flags | flag : flags & ~flag;
+}
+
+function getBitFlags(flags, flag) {
+  return !!(flags & flag);
+}
+
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {

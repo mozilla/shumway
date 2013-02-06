@@ -2,55 +2,67 @@
  * XML.as
  */
 function XMLClass(runtime, scope, instance, baseClass) {
-  function XML() {}
+  var FLAG_IGNORE_COMMENTS                = 0x01;
+  var FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02;
+  var FLAG_IGNORE_WHITESPACE              = 0x04;
+  var FLAG_PRETTY_PRINTING                = 0x08;
+
+  function XML(value) {
+    this._value = value;
+  }
+
   var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
+
+  c._flags = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING;
+  c._prettyIndent = 2;
+
   c.extend(baseClass);
   c.native = {
     static: {
       ignoreComments: {
-        get: function ignoreComments() { // (void) -> Boolean
-          notImplemented("XML.ignoreComments");
+        get: function ignoreComments() {
+          return getBitFlags(c._flags, FLAG_IGNORE_COMMENTS);
         },
-        set: function ignoreComments(newIgnore) { // (newIgnore:Boolean) -> any
-          notImplemented("XML.ignoreComments");
+        set: function ignoreComments(newIgnore) {
+          c._flags = setBitFlags(c._flags, FLAG_IGNORE_COMMENTS, newIgnore);
         }
       },
       ignoreProcessingInstructions: {
-        get: function ignoreProcessingInstructions() { // (void) -> Boolean
-          notImplemented("XML.ignoreProcessingInstructions");
+        get: function ignoreProcessingInstructions() {
+          return getBitFlags(c._flags, FLAG_IGNORE_PROCESSING_INSTRUCTIONS);
         },
-        set: function ignoreProcessingInstructions(newIgnore) { // (newIgnore:Boolean) -> any
-          notImplemented("XML.ignoreProcessingInstructions");
+        set: function ignoreProcessingInstructions(newIgnore) {
+          c._flags = setBitFlags(c._flags, FLAG_IGNORE_PROCESSING_INSTRUCTIONS, newIgnore);
         }
       },
       ignoreWhitespace: {
-        get: function ignoreWhitespace() { // (void) -> Boolean
-          notImplemented("XML.ignoreWhitespace");
+        get: function ignoreWhitespace() {
+          return getBitFlags(c._flags, FLAG_IGNORE_WHITESPACE);
         },
-        set: function ignoreWhitespace(newIgnore) { // (newIgnore:Boolean) -> any
-          notImplemented("XML.ignoreWhitespace");
+        set: function ignoreWhitespace(newIgnore) {
+          c._flags = setBitFlags(c._flags, FLAG_IGNORE_WHITESPACE, newIgnore);
         }
       },
       prettyPrinting: {
-        get: function prettyPrinting() { // (void) -> Boolean
-          notImplemented("XML.prettyPrinting");
+        get: function prettyPrinting() {
+          return getBitFlags(c._flags, FLAG_PRETTY_PRINTING);
         },
-        set: function prettyPrinting(newPretty) { // (newPretty:Boolean) -> any
-          notImplemented("XML.prettyPrinting");
+        set: function prettyPrinting(newPretty) {
+          c._flags = setBitFlags(c._flags, FLAG_PRETTY_PRINTING, newPretty);
         }
       },
       prettyIndent: {
-        get: function prettyIndent() { // (void) -> int
-          notImplemented("XML.prettyIndent");
+        get: function prettyIndent() {
+          return c._prettyIndent;
         },
-        set: function prettyIndent(newIndent) { // (newIndent:int) -> any
-          notImplemented("XML.prettyIndent");
+        set: function prettyIndent(newIndent) {
+          c._prettyIndent = newIndent;
         }
       }
     },
     instance: {
       toString: function toString() { // (void) -> String
-        notImplemented("XML.toString");
+        return this._value;
       },
       hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
         notImplemented("XML.hasOwnProperty");
