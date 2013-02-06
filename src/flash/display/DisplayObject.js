@@ -126,14 +126,15 @@ var DisplayObjectDefinition = (function () {
               pt.y /= scale;
             }
 
+            var hitCtx = this._graphics._hitCtx;
+
+            if (hitCtx.isPointInPath(pt.x, pt.y))
+              return true;
+
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
               var pathTracker = subpaths[i];
               var path = pathTracker.target;
-              var hitCtx = path.__hitContext__;
-
-              if (hitCtx.isPointInPath(pt.x, pt.y))
-                return true;
 
               if (!path.strokeStyle)
                 continue;

@@ -22,7 +22,7 @@ function renderDisplayObject(child, ctx, transform, cxform) {
         if (path.fillTransform) {
           var m = path.fillTransform;
           ctx.beginPath();
-          path.__draw__(ctx);
+          ctx.__draw__(path);
           ctx.save();
           ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
           ctx.fill();

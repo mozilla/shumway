@@ -29,6 +29,10 @@ var GraphicsDefinition = (function () {
       this._scale = 1;
       this._strokeStyle = null;
       this._subpaths = [];
+
+      var hitCanvas = document.createElement('canvas');
+      hitCanvas.width = hitCanvas.height = 1;
+      this._hitCtx = hitCanvas.getContext('2d');
     },
 
     _beginFillObject: function (fill) {
@@ -128,7 +132,7 @@ var GraphicsDefinition = (function () {
 
     get _currentPath() {
       var path = new Kanvas.Path;
-      var pathTracker = new PolygonTracker(path);
+      var pathTracker = new PolygonTracker(path, this._hitCtx);
       pathTracker.drawingStyles = this._drawingStyles;
       path.fillStyle = this._fillStyle;
       path.fillTransform = this._fillTransform;
@@ -185,6 +189,8 @@ var GraphicsDefinition = (function () {
       this._fillTransform = null;
       this._strokeStyle = null;
       this._subpaths.length = 0;
+
+      this._hitCtx.beginPath();
     },
     copyFrom: function (sourceGraphics) {
       notImplemented();
@@ -636,10 +642,11 @@ var GraphicsDefinition = (function () {
       closePath: function () {}
     };
 
-    function PolygonTracker(target) {
+    function PolygonTracker(target, hitCtx) {
       this.target = target || new PolygonTrackerNullOutput;
       this.segments = [0];
       this.points = [{x: 0, y: 0, type: 0}];
+      this.hitCtx = hitCtx;
     }
     PolygonTracker.prototype = {
       get lineWidth() {
@@ -676,10 +683,14 @@ var GraphicsDefinition = (function () {
           this.points.push({x: x, y: y, type: 0});
         }
         this.target.moveTo(x, y);
+        if (this.hitCtx)
+          this.hitCtx.moveTo(x, y);
       },
       lineTo: function (x, y) {
         this.points.push({x: x, y: y, type: 1});
         this.target.lineTo(x, y);
+        if (this.hitCtx)
+          this.hitCtx.lineTo(x, y);
       },
       closePath: function () {
         var segmentStartIndex = this.segments[this.segments.length - 1];
@@ -688,6 +699,8 @@ var GraphicsDefinition = (function () {
                           type: 2});
 
         this.target.closePath();
+        if (this.hitCtx)
+          this.hitCtx.closePath();
 
         this.segments.push(this.points.length);
         this.points.push({x: this.points[segmentStartIndex].x,
@@ -697,16 +710,22 @@ var GraphicsDefinition = (function () {
       quadraticCurveTo: function (cpx, cpy, x, y) {
         pushCurveApprox(this.points, cpx, cpy, x, y);
         this.target.quadraticCurveTo(cpx, cpy, x, y);
+        if (this.hitCtx)
+          this.hitCtx.quadraticCurveTo(cpx, cpy, x, y);
       },
       bezierCurveTo: function (cpx1, cpy1, cpx2, cpy2, x, y) {
         pushBezierCurveApprox(this.points, cpx1, cpy1, cpx2, cpy2, x, y);
         this.target.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, x, y);
+        if (this.hitCtx)
+          this.hitCtx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, x, y);
       },
       arcTo: function (x1, y1, x2, y2, radiusX, radiusY, rotation) {
         pushArcApprox(this.points, x1, y1, x2, y2, radiusX,
                       arguments.length < 6 ? radiusX : radiusY,
                       rotation);
         this.target.arcTo.apply(this.target, arguments);
+        if (this.hitCtx)
+          this.hitCtx.arcTo.apply(this.target, arguments);
       },
       rect: function (x, y, w, h) {
         var segmentStartIndex = this.segments[this.segments.length - 1];
@@ -723,6 +742,8 @@ var GraphicsDefinition = (function () {
         this.points.push({x: x, y: y, type: 2});
 
         this.target.rect(x, y, w, h);
+        if (this.hitCtx)
+          this.hitCtx.rect(x, y, w, h);
       },
       strokeToPath: function (output, options) {
         strokeToPath(this, options || {
