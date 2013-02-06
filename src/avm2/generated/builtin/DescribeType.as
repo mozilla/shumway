@@ -41,7 +41,6 @@ package avmplus
 {
     use namespace AS3;
 
-    /*
     // -------------- internal --------------
 
     [native("DescribeTypeClass::describeTypeJSON")]
@@ -72,7 +71,7 @@ package avmplus
             f.@type = p.type;
             f.@optional = p.optional;
 
-            c[c.length()] = f;
+            c[c.AS3::length()] = f;
         }
     }
 
@@ -91,7 +90,7 @@ package avmplus
 
                 m.AS3::appendChild(a);
             }
-            c[c.length()] = m;
+            c[c.AS3::length()] = m;
         }
     }
 
@@ -112,7 +111,7 @@ package avmplus
             var e:XML = extendsXml.copy();
             e.@type = base;
 
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
         for each (var i in traits.interfaces)
         {
@@ -121,13 +120,13 @@ package avmplus
             var e:XML = implementsXml.copy();
             e.@type = interf;
 
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
         if (traits.constructor !== null)
         {
             var e:XML = constructorXml.copy();
             describeParams(e, traits.constructor);
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
 
         for each (var i in traits.variables)
@@ -140,7 +139,7 @@ package avmplus
 
             finish(e, variable);
 
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
         for each (var i in traits.accessors)
         {
@@ -154,7 +153,7 @@ package avmplus
 
             finish(e, accessor);
 
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
         for each (var i in traits.methods)
         {
@@ -168,10 +167,11 @@ package avmplus
             describeParams(e, method.parameters);
             finish(e, method);
 
-            c[c.length()] = e;
+            c[c.AS3::length()] = e;
         }
         describeMetadata(x, traits.metadata);
     }
+
 
     // -------------- public --------------
 
@@ -229,7 +229,6 @@ package avmplus
         return x;
     }
 
-    */
     [native("getQualifiedClassName")]
     public native function getQualifiedClassName(value:*):String;
 
