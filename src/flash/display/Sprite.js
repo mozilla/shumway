@@ -32,7 +32,7 @@ var SpriteDefinition = (function () {
 
       props.depth = cmd.depth;
 
-      if (cmd.hasClipDepth)
+      if (cmd.clip)
         props.clipDepth = cmd.clipDepth;
       if (cmd.hasCxform)
         props.cxform = cmd.cxform;
