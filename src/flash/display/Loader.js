@@ -721,6 +721,7 @@ var LoaderDefinition = (function () {
       case 'shape':
         var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
         className = symbol.morph ? 'flash.display.MorphShape' : 'flash.display.Shape';
+        props.bbox = symbol.bbox;
         props.graphicsFactory = function graphicsFactory(ratio) {
           if (graphicsFactory[ratio])
             return graphicsFactory[ratio];
