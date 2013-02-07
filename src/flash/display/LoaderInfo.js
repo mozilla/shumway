@@ -150,6 +150,11 @@ var LoaderInfoDefinition = (function () {
             }
           }
         }
+      },
+      script: {
+        instance: scriptProperties("public", [
+          "swfVersion"
+        ])
       }
     }
   };
