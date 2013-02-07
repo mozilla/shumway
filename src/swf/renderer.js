@@ -1,4 +1,4 @@
-function renderDisplayObject(child, ctx, transform, cxform) {
+function renderDisplayObject(child, ctx, transform, cxform, clip) {
   var m = transform;
   ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
@@ -17,26 +17,31 @@ function renderDisplayObject(child, ctx, transform, cxform) {
     var subpaths = graphics._subpaths;
     for (var j = 0, o = subpaths.length; j < o; j++) {
       var pathTracker = subpaths[j], path = pathTracker.target;
-      if (path.fillStyle) {
-        ctx.fillStyle = path.fillStyle;
-        if (path.fillTransform) {
-          var m = path.fillTransform;
-          ctx.beginPath();
-          ctx.__draw__(path);
-          ctx.save();
-          ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-          ctx.fill();
-          ctx.restore();
-        } else {
-          ctx.fill(path);
+      if (clip) {
+        ctx.closePath();
+        ctx.__draw__(path);
+      } else {
+        if (path.fillStyle) {
+          ctx.fillStyle = path.fillStyle;
+          if (path.fillTransform) {
+            var m = path.fillTransform;
+            ctx.beginPath();
+            ctx.__draw__(path);
+            ctx.save();
+            ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+            ctx.fill();
+            ctx.restore();
+          } else {
+            ctx.fill(path);
+          }
         }
-      }
-      if (path.strokeStyle) {
-        ctx.strokeStyle = path.strokeStyle;
-        var drawingStyles = pathTracker.drawingStyles;
-        for (var prop in drawingStyles)
-          ctx[prop] = drawingStyles[prop];
-        ctx.stroke(path);
+        if (path.strokeStyle) {
+          ctx.strokeStyle = path.strokeStyle;
+          var drawingStyles = pathTracker.drawingStyles;
+          for (var prop in drawingStyles)
+            ctx[prop] = drawingStyles[prop];
+          ctx.stroke(path);
+        }
       }
     }
   }
@@ -196,6 +201,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   function RenderVisitor(ctx) {
     this.ctx = ctx;
     this.depth = 0;
+
+    this.clip = null;
+    this.clipDepth = null;
+    this.clipStack = [];
   }
   RenderVisitor.prototype = {
     childrenStart: function(parent) {
@@ -218,21 +227,43 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         };
       }
       this.depth++;
+
+      this.clipStack.push(this.clip, this.clipDepth);
+      this.clipDepth = null;
     },
     childrenEnd: function(parent) {
       this.depth--;
       this.ctx.restore();
+
+      if (this.clipDepth)
+        this.ctx.restore();
+
+      this.clipDepth = this.clipStack.pop();
+      this.clip = this.clipStack.pop();
     },
     visit: function (child, isContainer) {
-      if (child._clipDepth) {
-        // TODO handle masking
-        return;
+      var ctx = this.ctx;
+
+      if (this.clip) {
+        if (child._parent === this.clip._parent) {
+          ctx.save();
+          ctx.clip();
+          this.clipDepth = this.clip._clipDepth;
+          this.clip = null;
+        }
+      } else if (this.clipDepth && child._depth > this.clipDepth) {
+        ctx.restore();
+        this.clipDepth = null;
       }
 
-      var ctx = this.ctx;
+      if (child._clipDepth) {
+        this.clip = child;
+        this.clipDepth = null;
+      }
+
       ctx.save();
 
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform);
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, this.clip);
 
       if (!isContainer) {
         // letting the container to restore transforms after all children are painted
