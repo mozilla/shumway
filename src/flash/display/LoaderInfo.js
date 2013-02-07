@@ -153,7 +153,9 @@ var LoaderInfoDefinition = (function () {
       },
       script: {
         instance: scriptProperties("public", [
-          "swfVersion"
+          "swfVersion",
+          "bytesTotal",
+          "bytesLoaded"
         ])
       }
     }
