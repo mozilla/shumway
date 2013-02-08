@@ -1,14 +1,48 @@
 /**
  * XML.as
  */
+
+var XML;
+var XMLList;
+
 function XMLClass(runtime, scope, instance, baseClass) {
   var FLAG_IGNORE_COMMENTS                = 0x01;
   var FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02;
   var FLAG_IGNORE_WHITESPACE              = 0x04;
   var FLAG_PRETTY_PRINTING                = 0x08;
 
-  function XML(value) {
-    this._value = value;
+  XML = function (value) {
+    if (!value) {
+      toXML.call(this, "");
+    } else if (value instanceof XML || value instanceof XMLList) {
+      constructFromXML.call(this, xml);
+    } else {
+      toXML.call(this, value);
+    }
+  };
+
+  // E4X 10.3
+  function toXML(value) {
+    if (value === null) {
+      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
+    } else if (value === undefined) {
+      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+    } else if (value instanceof XML) {
+      return value;
+    } else if (value instanceof XMLList) {
+      // TODO: Return first XML element in the list.
+      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
+    } else {
+      return constructFromString.call(this, toString(value));
+    }
+  }
+
+  function constructFromString(string) {
+    warning("TODO: Parse: " + string);
+  }
+
+  function constructFromXML(xml) {
+    warning("TODO: Clone: " + xml);
   }
 
   var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
@@ -184,7 +218,7 @@ function XMLClass(runtime, scope, instance, baseClass) {
 }
 
 function XMLListClass(runtime, scope, instance, baseClass) {
-  function XMLList() {}
+  XMLList = function () {}
   var c = new runtime.domain.system.Class("XMLList", XMLList, Domain.passthroughCallable(XMLList));
   c.extend(baseClass);
   c.native = {
