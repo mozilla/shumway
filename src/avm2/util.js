@@ -5,7 +5,11 @@ var inBrowser = typeof console != "undefined";
 if (!inBrowser) {
   console = {
     info: print,
-    warn: print
+    warn: function (x) {
+      if (traceWarnings.value) {
+        print(x);
+      }
+    }
   };
 }
 
