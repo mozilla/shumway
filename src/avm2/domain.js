@@ -149,6 +149,7 @@ var Domain = (function () {
         },
 
         extend: function (baseClass) {
+          release || assert (baseClass);
           this.baseClass = baseClass;
           this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
           if (baseClass.hasInitialize) {
@@ -509,7 +510,7 @@ var Domain = (function () {
                   str += scope.object.debugName || "T";
                   if ((scope = scope.parent)) {
                     str += " <: ";
-                  };
+                  }
                 }
               } else if (value instanceof Function) {
                 str += ": " + (value.name ? value.name : "anonymous");
