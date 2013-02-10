@@ -110,14 +110,8 @@ package
     // FIXME: What are AS sort and sortOn?
     [compat]
     private static native function _sort(o, args:Array);
-    AS3 function sort(...args)
-    {
-      return _sort (this, args);
-    }
-    prototype.sort = function(...args)
-    {
-      return _sort (this, args);
-    };
+    AS3 native function sort(...args);
+    prototype.sort = unsafeJSNative("Array.prototype.sort");
 
     [compat]
     private static native function _sortOn(o, names, options);

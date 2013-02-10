@@ -1352,19 +1352,21 @@ var Runtime = (function () {
             fn = classNatives[k];
           }
         }
+
+        if (!fn) {
+          warning("No native method for: " + trait.kindName() + " " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+          return (function (mi) {
+            return function () {
+              warning("Calling undefined native method: " + trait.kindName() + " " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+            };
+          })(mi);
+        }
       } else {
         if (traceExecution.value >= 2) {
           print("Creating Function For Trait: " + trait.holder + " " + trait);
         }
         fn = runtime.createFunction(mi, scope);
-      }
-
-      if (!fn) {
-        return (function (mi) {
-          return function () {
-            print("Calling undefined native method: " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
-          };
-        })(mi);
+        assert (fn);
       }
 
       if (traceExecution.value >= 3) {
