@@ -488,14 +488,13 @@
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
+    var object;
     if (this.object) {
-      var object = compileValue(this.object, cx);
-      if (!this.callee.variable && this.callee instanceof IR.GetProperty && this.callee.object === this.object) {
-        return call(callee, arguments);
-      }
-      return callCall(callee, object, arguments);
+      object = compileValue(this.object, cx);
+    } else {
+      object = new Literal(null);
     }
-    return call(callee, arguments);
+    return callCall(callee, object, arguments);
   };
 
   IR.AVM2New.prototype.compile = function (cx) {
@@ -597,7 +596,6 @@
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
-    return name;
   };
 
   function generateSource(node) {
