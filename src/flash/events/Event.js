@@ -24,6 +24,7 @@ var EventDefinition = (function () {
     },
 
     ctor: function (type, bubbles, cancelable) {
+      Counter.count("Event: " + type);
       this.type = type;
       this.bubbles = !!bubbles;
       this.cancelable = !!cancelable;
