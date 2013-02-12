@@ -25,7 +25,6 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
           ctx.fillStyle = path.fillStyle;
           if (path.fillTransform) {
             var m = path.fillTransform;
-            ctx.beginPath();
             ctx.__draw__(path);
             ctx.save();
             ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
