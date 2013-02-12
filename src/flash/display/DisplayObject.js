@@ -474,8 +474,6 @@ var DisplayObjectDefinition = (function () {
         if (xMin === Number.MAX_VALUE)
           xMin = xMax = yMin = yMax = 0;
 
-        Counter.count("Calculate boundings");
-
         this._bounds = {
           xMin: xMin,
           xMax: xMax,
