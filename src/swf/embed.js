@@ -87,7 +87,7 @@ SWF.embed = function(file, container, options) {
     canvas.addEventListener('mouseover', function () {
       stage._mouseOver = true;
     });
-    canvas.removeEventListener('mouseout', function () {
+    canvas.addEventListener('mouseout', function () {
       stage._mouseOver = false;
       stage._mouseJustLeft = true;
     });
