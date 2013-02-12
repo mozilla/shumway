@@ -117,6 +117,7 @@ var Domain = (function () {
           while ((s = initializes.pop())) {
             s.call(obj);
           }
+          Counter.count("Initialize: " + this.classInfo.instanceInfo.name);
         },
 
         createInstance: function createInstance(args) {

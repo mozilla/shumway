@@ -23,25 +23,11 @@ body {
 
 .toolbarInfo {
   font-family: Consolas, Lucida Grande, sans-serif;
-
+  background-color: #1a2633;
   padding: 4px 8px;
-  background-image: url(images/background-noise-toolbar.png),
-                    linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
-  background-image: url(images/background-noise-toolbar.png),
-                    -moz-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
-  background-image: url(images/background-noise-toolbar.png),
-                    -webkit-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
-  background-image: url(images/background-noise-toolbar.png),
-                    -o-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
-  background-image: url(images/background-noise-toolbar.png),
-                    -ms-linear-gradient(hsl(210,11%,36%), hsl(210,11%,18%));
   border-radius: 4px;
-  box-shadow: 0 1px 0 hsla(210,16%,76%,.2) inset,
-              0 0 0 1px hsla(0,0%,0%,.15),
-              0 10px 14px hsla(0,0%,0%,.4),
-              0 0 0 1px hsla(210,16%,76%,.15) inset,
-              0 1px 0 hsla(210,16%,76%,.15);
   color: hsl(210,30%,85%);
+  opacity: 0.8;
   font-size: 10px;
   line-height: 22px;
   text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
