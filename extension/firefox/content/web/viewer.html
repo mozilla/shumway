@@ -25,10 +25,6 @@
     <script src="../swf/stream.js"></script>
     <script src="../swf/templates.js"></script>
     <script src="../swf/generator.js"></script>
-    <script> console.time("Load SWF Parser"); </script>
-    <script src="../swf/handlers.js"></script>
-    <script src="../swf/parser.js"></script>
-    <script> console.timeEnd("Load SWF Parser"); </script>
     <script src="../swf/bitmap.js"></script>
     <script src="../swf/button.js"></script>
     <script src="../swf/font.js"></script>
@@ -38,7 +34,14 @@
     <script src="../swf/sound.js"></script>
     <script src="../swf/text.js"></script>
     <script src="../swf/mp3worker.js"></script>
+    <script src="../swf/embed.js"></script>
+    <script src="../swf/renderer.js"></script>
     <script> console.timeEnd("Load SWF Dependencies"); </script>
+
+    <script> console.time("Load SWF Parser"); </script>
+    <script src="../swf/handlers.js"></script>
+    <script src="../swf/parser.js"></script>
+    <script> console.timeEnd("Load SWF Parser"); </script>
 
     <!-- Load AVM1 Dependencies -->
     <script> console.time("Load AVM1 Dependencies") </script>
@@ -46,8 +49,6 @@
     <script src="../avm1/globals.js"></script>
     <script src="../avm1/stream.js"></script>
     <script src="../avm1/interpreter.js"></script>
-    <script src="../swf/embed.js"></script>
-    <script src="../swf/renderer.js"></script>
     <script> console.timeEnd("Load AVM1 Dependencies"); </script>
 
     <!-- Load AVM2 Dependencies -->
