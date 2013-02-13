@@ -65,8 +65,11 @@ var SoundChannelDefinition = (function () {
       this._position = startTime;
       var self = this;
       var element = document.createElement('audio');
-      if (!element.canPlayType(soundData.mimeType))
-        error('\"' + soundData.mimeType + '\" type playback is not supported by the browser');
+      if (!element.canPlayType(soundData.mimeType)) {
+        console.error('ERROR: \"' + soundData.mimeType +'\" ' +
+                    'type playback is not supported by the browser');
+        return;
+      }
       element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
       element.addEventListener("loadeddata", function loaded() {
         element.currentTime = startTime / 1000;

@@ -176,7 +176,7 @@ var MovieClipDefinition = (function () {
           soundStream.decoderPosition = position + frameData.length;
         }.bind(this);
         soundStream.decoderSession.onerror = function (error) {
-          console.log('ERROR: MP3DecoderSession: ' + error);
+          console.error('ERROR: MP3DecoderSession: ' + error);
         };
         // TODO close the session somewhere
       }

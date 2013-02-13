@@ -75,7 +75,6 @@ var SoundDefinition = (function () {
       var soundData = { completed: false };
 
       stream.addEventListener("progress", function (event) {
-        console.info("PROGRESS");
         _this._bytesLoaded = event.public$bytesLoaded;
         _this._bytesTotal = event.public$bytesTotal;
 
