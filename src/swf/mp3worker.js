@@ -123,7 +123,8 @@ if (isWorker) {
           this.onid3tag(e.data.id3Data);
         break;
       case 'error':
-        error('MP3DecoderSession: ' + e.data.message);
+        if (this.onerror)
+          this.onerror(e.data.message);
         break;
       }
     }.bind(this);
@@ -153,6 +154,7 @@ if (isWorker) {
     var currentBuffer = new Float32Array(currentBufferSize);
     var bufferPosition = 0;
     var id3Tags = [];
+    var lastError = null;
 
     var session = new MP3DecoderSession();
     session.onframedata = function (frameData, channels, sampleRate, bitRate) {
@@ -172,7 +174,10 @@ if (isWorker) {
       id3Tags.push(tagData);
     };
     session.onclosed = function () {
-      onloaded(currentBuffer.subarray(0, bufferPosition), id3Tags);
+      onloaded(currentBuffer.subarray(0, bufferPosition), id3Tags, error);
+    };
+    session.onerror = function (error) {
+      lastError = error;
     };
     session.pushAsync(data);
     session.close();

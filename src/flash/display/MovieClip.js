@@ -175,6 +175,9 @@ var MovieClipDefinition = (function () {
           soundStream.data.pcm.set(frameData, position);
           soundStream.decoderPosition = position + frameData.length;
         }.bind(this);
+        soundStream.decoderSession.onerror = function (error) {
+          console.log('ERROR: MP3DecoderSession: ' + error);
+        };
         // TODO close the session somewhere
       }
     },
