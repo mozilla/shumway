@@ -742,7 +742,7 @@ var LoaderDefinition = (function () {
           var decodePromise = new Promise;
           MP3DecoderSession.processAll(symbol.packaged.data,
             function (props, pcm, id3tags, error) {
-              props.pcm = pcm;
+              props.pcm = pcm || new Uint8Array(0);
               decodePromise.resolve();
               if (error) {
                 console.log('ERROR: ' + error);

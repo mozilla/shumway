@@ -7,40 +7,58 @@ var SoundChannelDefinition = (function () {
       this._pcmData = null;
       this._soundTransform = null;
     },
-    _playSoundDataViaChannel: function (soundData, startTime) {
+    _registerWithSoundMixer: function () {
+      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+      soundMixerClass.native.static._registerChannel(this);
+    },
+    _unregisterWithSoundMixer: function () {
+      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+      soundMixerClass.native.static._unregisterChannel(this);
+    },
+    _playSoundDataViaChannel: function (soundData, startTime, loops) {
       assert(soundData.pcm, 'no pcm data found');
 
+      this._registerWithSoundMixer();
       var self = this;
-      var position = Math.round(startTime / 1000 * soundData.sampleRate) *
-                     soundData.channels;
+      var startPosition = Math.round(startTime / 1000 * soundData.sampleRate) *
+                          soundData.channels;
+      var position = startPosition;
       this._position = startTime;
       this._audioChannel = createAudioChannel(soundData.sampleRate, soundData.channels);
       this._audioChannel.ondatarequested = function (e) {
         var end = soundData.end;
         if (position >= end && soundData.completed) {
           // end of buffer
+          self._unregisterWithSoundMixer();
           self._audioChannel.stop();
           return;
         }
-        // TODO loop
 
-        var count = Math.min(end - position, e.count);
-        if (count === 0) return;
-
+        var left = e.count;
         var data = e.data;
         var source = soundData.pcm;
-        for (var j = 0; j < count; j++) {
-          data[j] = source[position++];
-        }
+        do {
+          var count = Math.min(end - position, left);
+          for (var j = 0; j < count; j++) {
+            data[j] = source[position++];
+          }
+          left -= count;
+          if (position >= end) {
+            if (!loops) break;
+            loops--;
+            position = startPosition;
+          }
+        } while (left > 0);
 
         self._position = position / soundData.sampleRate / soundData.channels * 1000;
       };
       this._audioChannel.start();
     },
-    _playSoundDataViaAudio: function (soundData, startTime) {
+    _playSoundDataViaAudio: function (soundData, startTime, loops) {
       if (!soundData.mimeType)
         return;
 
+      this._registerWithSoundMixer();
       this._position = startTime;
       var self = this;
       var element = document.createElement('audio');
@@ -54,6 +72,15 @@ var SoundChannelDefinition = (function () {
       element.addEventListener("timeupdate", function timeupdate() {
         self._position = element.currentTime * 1000;
       });
+      element.addEventListener("ended", function ended() {
+        if (!loops) {
+          this._unregisterWithSoundMixer();
+          return;
+        }
+        loops--;
+        element.currentTime = startTime / 1000;
+        element.play();
+      });
       this._element = element;
     },
     __glue__: {
@@ -64,9 +91,11 @@ var SoundChannelDefinition = (function () {
           // (void) -> void
           stop: function stop() {
             if (this._element) {
+              this._unregisterWithSoundMixer();
               this._element.pause();
             }
             if (this._audioChannel) {
+              this._unregisterWithSoundMixer();
               this._audioChannel.stop();
             }
           },
@@ -85,6 +114,11 @@ var SoundChannelDefinition = (function () {
             }
           }
         }
+      },
+      script: {
+        instance: scriptProperties("public", [
+          "stop"
+        ])
       }
     }
   };

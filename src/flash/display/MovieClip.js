@@ -204,6 +204,7 @@ var MovieClipDefinition = (function () {
         for (var i = 0; i < starts.length; i++) {
           var start = starts[i];
           var symbolId = start.soundId;
+          var info = start.soundInfo;
           var sound = sounds[symbolId];
           if (!sound) {
             var symbolPromise = loader._dictionary[symbolId];
@@ -215,12 +216,20 @@ var MovieClipDefinition = (function () {
               avm2.systemDomain.getClass(symbolInfo.className) :
               avm2.applicationDomain.getClass(symbolInfo.className);
 
-            var sound = symbolClass.createAsSymbol(symbolInfo.props);
-            symbolClass.instance.call(sound);
-            sounds[symbolId] = sound;
+            var soundObj = symbolClass.createAsSymbol(symbolInfo.props);
+            symbolClass.instance.call(soundObj);
+            sounds[symbolId] = sound = { object: soundObj };
           }
-          // TODO stopping
-          sound.play();
+
+          if (sound.channel) {
+            sound.channel.stop();
+            delete sound.channel;
+          }
+          if (!info.stop) {
+            // TODO envelope, in/out point
+            var loops = info.hasLoops ? info.loopCount : 0;
+            sound.channel = sound.object.play(0, loops);
+          }
         }
       }
       if (this._soundStream) {
@@ -233,8 +242,9 @@ var MovieClipDefinition = (function () {
 
           var sound = symbolClass.createAsSymbol(this._soundStream.data);
           symbolClass.instance.call(sound);
-          sound.play();
+          var channel = sound.play();
           this._soundStream.sound = sound;
+          this._soundStream.channel = channel;
         }
       }
     },

@@ -141,6 +141,7 @@ var SoundDefinition = (function () {
     play: function play(startTime, loops, soundTransform) {
       // (startTime:Number = 0, loops:int = 0, soundTransform:SoundTransform = null) -> SoundChannel
       startTime = startTime || 0;
+      loops = loops || 0;
       var channel = new flash.media.SoundChannel();
       channel._sound = this;
       channel._soundTransform = soundTransform;
@@ -150,9 +151,9 @@ var SoundDefinition = (function () {
       });
       if (this._soundData) {
         if (PLAY_USING_AUDIO_TAG)
-          channel._playSoundDataViaAudio(this._soundData, startTime);
+          channel._playSoundDataViaAudio(this._soundData, startTime, loops);
         else
-          channel._playSoundDataViaChannel(this._soundData, startTime);
+          channel._playSoundDataViaChannel(this._soundData, startTime, loops);
       }
       return channel;
     },
