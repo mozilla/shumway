@@ -26,8 +26,12 @@ var LoaderInfoDefinition = (function () {
         },
         instance: {
           _getArgs: function _getArgs() { // (void) -> Object
-            somewhatImplemented("LoaderInfo._getArgs");
-            return [];
+            var params = this._parameters;
+            var mangled = {};
+            for (var k in params) {
+              mangled[Multiname.getPublicQualifiedName(k)] = params[k];
+            }
+            return mangled;
           },
           _getUncaughtErrorEvents: function _getUncaughtErrorEvents() { // (void) -> UncaughtErrorEvents
             notImplemented("LoaderInfo._getUncaughtErrorEvents");
