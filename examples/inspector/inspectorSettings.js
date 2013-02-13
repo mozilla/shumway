@@ -1,7 +1,7 @@
 function loadState() {
   return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]) : {
     appCompiler: true,
-    sysCompiler: true,
+    sysCompiler: false,
     verifier: true,
     release: true
   };

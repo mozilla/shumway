@@ -215,6 +215,19 @@ var Trait = (function () {
     return this.kind === TRAIT_Setter;
   };
 
+  trait.prototype.kindName = function kindName() {
+    switch (this.kind) {
+      case TRAIT_Slot:      return "Slot";
+      case TRAIT_Const:     return "Const";
+      case TRAIT_Method:    return "Method";
+      case TRAIT_Setter:    return "Setter";
+      case TRAIT_Getter:    return "Getter";
+      case TRAIT_Class:     return "Class";
+      case TRAIT_Function:  return "Function";
+    }
+    unexpected();
+  };
+
   trait.prototype.toString = function toString() {
     var str = getFlags(this.attributes, "final|override|metadata".split("|"));
     if (str) {

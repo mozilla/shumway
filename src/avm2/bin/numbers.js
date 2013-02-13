@@ -328,8 +328,6 @@ function runNextTest () {
             var nTotal = match ? match.length : 0;
             nPassedPercentage = (nPassed / nTotal) * 100 | 0;
             process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
-            process.stdout.write("\nEXPECTED\n|"+baseline.output.text+"|")
-            process.stdout.write("\nACTUAL\n|"+result.output.text+"|")
             failedTests.push(test);
             count(configuration.name + ":fail");
           }
@@ -349,6 +347,16 @@ function runNextTest () {
         if (!someFailed) {
           delete baseline.output.text;
           count("all-passed");
+        } else {
+          var baseline = results[test][configurations[0].name];
+          process.stdout.write("\n=== EXPECTED ===\n" + baseline.output.text + "\n");
+          for (var i = 1; i < configurations.length; i++) {
+            var configuration = configurations[i];
+            var result = results[test][configuration.name];
+            if (baseline.output.text !== result.output.text) {
+              process.stdout.write("=== ACTUAL " + configuration.name + " ===\n" + result.output.text);
+            }
+          }
         }
         process.stdout.write("\n");
         runNextTest();

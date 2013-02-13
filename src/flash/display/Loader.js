@@ -109,7 +109,7 @@ var LoaderDefinition = (function () {
               frame.soundStream = soundStream.info;
             } catch (e) {
               // ignoring if sound stream codec is not supported
-              // console.log('ERROR: ' + e.message);
+              // console.error('ERROR: ' + e.message);
             }
             break;
           case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
@@ -231,7 +231,7 @@ var LoaderDefinition = (function () {
                 frame.soundStream = soundStream.info;
               } catch (e) {
                 // ignoring if sound stream codec is not supported
-                // console.log('ERROR: ' + e.message);
+                // console.error('ERROR: ' + e.message);
               }
               break;
             case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
@@ -372,7 +372,7 @@ var LoaderDefinition = (function () {
         loaderInfo.dispatchEvent(new flash.events.Event("complete", false, false));
         break;
       case 'error':
-        console.log('ERROR: ' + data.message);
+        console.error('ERROR: ' + data.message);
         break;
       default:
         if (data.id)
@@ -742,9 +742,12 @@ var LoaderDefinition = (function () {
 
           var decodePromise = new Promise;
           MP3DecoderSession.processAll(symbol.packaged.data,
-            function (props, pcm) {
-              props.pcm = pcm;
+            function (props, pcm, id3tags, error) {
+              props.pcm = pcm || new Uint8Array(0);
               decodePromise.resolve();
+              if (error) {
+                console.error('ERROR: ' + error);
+              }
             }.bind(null, props));
           promiseQueue.push(decodePromise);
         }

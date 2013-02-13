@@ -26,6 +26,8 @@ var compileSys = shellOptions.register(new Option("csys", "compileSystemDomain",
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
+var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
+
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 

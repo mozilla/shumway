@@ -85,7 +85,7 @@ function defineSound(tag, dictionary) {
     break;
   case SOUND_FORMAT_MP3:
     packaged = {
-      data: data.subarray(2),
+      data: new Uint8Array(data.subarray(2)),
       mimeType: 'audio/mpeg'
     };
     break;

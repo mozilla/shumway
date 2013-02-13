@@ -30,6 +30,14 @@ XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1',
                                    'nsIMIMEService');
 
+function getBoolPref(pref, def) {
+  try {
+    return Services.prefs.getBoolPref(pref);
+  } catch (ex) {
+    return def;
+  }
+}
+
 function log(aMsg) {
   let msg = 'FlashStreamConverter.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
   Services.console.logStringMessage(msg);
@@ -317,7 +325,8 @@ FlashStreamConverterBase.prototype = {
     var originalURI = aRequest.URI;
 
     // checking if the plug-in shall be run in simple mode
-    var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX;
+    var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
+      getBoolPref('shumway.simpleMode', false);
 
     // Create a new channel that is viewer loaded as a resource.
     var ioService = Services.io;

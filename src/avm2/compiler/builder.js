@@ -477,18 +477,20 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         }
 
         function findProperty(name, strict, ti) {
+          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
           if (ti) {
             if (ti.object) {
-              if (ti.object instanceof Global) {
-                ti.object.ensureExecuted();
+              if (ti.object instanceof Global && !ti.object.isExecuted()) {
+                // If we found the property in a global that hasn't been executed yet then
+                // we have to emit the slow path so it gets executed lazily.
+                return slowPath;
               }
               return constant(ti.object);
             } else if (ti.scopeDepth !== undefined) {
               return getScopeObject(topScope(ti.scopeDepth));
             }
           }
-
-          return new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
+          return slowPath;
         }
 
         function getJSProperty(object, path) {
@@ -604,6 +606,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
 
         function call(callee, object, arguments) {
           return store(new Call(region, state.store, callee, object, arguments));
+        }
+
+        function callCall(callee, object, arguments) {
+          // TODO: Mark Call IR nodes as non-pristine.
+          return call(callee, object, arguments);
         }
 
         function truthyCondition(operator) {
@@ -812,7 +819,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               arguments = popMany(bc.argCount);
               object = pop();
               callee = pop();
-              push(call(callee, object, arguments));
+              push(callCall(callee, object, arguments));
               break;
             case OP_callproperty: case OP_callproplex: case OP_callpropvoid:
               arguments = popMany(bc.argCount);
@@ -820,9 +827,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               object = pop();
               callee = getProperty(object, multiname, bc.ti, true);
               if (op === OP_callproperty || op === OP_callpropvoid) {
-                value = call(callee, object, arguments);
+                value = callCall(callee, object, arguments);
               } else {
-                value = call(callee, null, arguments);
+                value = callCall(callee, null, arguments);
               }
               if (op !== OP_callpropvoid) {
                 push(value);

@@ -17,6 +17,14 @@ Cu.import('resource://gre/modules/Services.jsm');
 let Ph = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
 let registerOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
 
+function getBoolPref(pref, def) {
+  try {
+    return Services.prefs.getBoolPref(pref);
+  } catch (ex) {
+    return def;
+  }
+}
+
 function log(str) {
   dump(str + '\n');
 }
@@ -81,8 +89,10 @@ function startup(aData, aReason) {
   factory1.register(FlashStreamConverter1);
   factory2.register(FlashStreamConverter2);
 
-  if (registerOverlayPreview)
-    Ph.registerPlayPreviewMimeType('application/x-shockwave-flash');
+  if (registerOverlayPreview) {
+    var ignoreCTP = getBoolPref('shumway.ignoreCTP', false);
+    Ph.registerPlayPreviewMimeType('application/x-shockwave-flash', ignoreCTP);
+  }
 }
 
 function shutdown(aData, aReason) {

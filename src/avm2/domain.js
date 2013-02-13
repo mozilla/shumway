@@ -117,6 +117,7 @@ var Domain = (function () {
           while ((s = initializes.pop())) {
             s.call(obj);
           }
+          Counter.count("Initialize: " + this.classInfo.instanceInfo.name);
         },
 
         createInstance: function createInstance(args) {
@@ -149,6 +150,7 @@ var Domain = (function () {
         },
 
         extend: function (baseClass) {
+          release || assert (baseClass);
           this.baseClass = baseClass;
           this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
           if (baseClass.hasInitialize) {
@@ -509,7 +511,7 @@ var Domain = (function () {
                   str += scope.object.debugName || "T";
                   if ((scope = scope.parent)) {
                     str += " <: ";
-                  };
+                  }
                 }
               } else if (value instanceof Function) {
                 str += ": " + (value.name ? value.name : "anonymous");

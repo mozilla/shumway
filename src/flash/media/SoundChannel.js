@@ -4,55 +4,93 @@ var SoundChannelDefinition = (function () {
     initialize: function () {
       this._element = null;
       this._position = 0;
+      this._leftPeak = 0;
+      this._rightPeak = 0;
       this._pcmData = null;
       this._soundTransform = null;
     },
-    _playSoundDataViaChannel: function (soundData, startTime) {
+    _registerWithSoundMixer: function () {
+      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+      soundMixerClass.native.static._registerChannel(this);
+    },
+    _unregisterWithSoundMixer: function () {
+      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
+      soundMixerClass.native.static._unregisterChannel(this);
+    },
+    _playSoundDataViaChannel: function (soundData, startTime, loops) {
       assert(soundData.pcm, 'no pcm data found');
 
+      this._registerWithSoundMixer();
       var self = this;
-      var position = Math.round(startTime / 1000 * soundData.sampleRate) *
-                     soundData.channels;
+      var startPosition = Math.round(startTime / 1000 * soundData.sampleRate) *
+                          soundData.channels;
+      var position = startPosition;
       this._position = startTime;
       this._audioChannel = createAudioChannel(soundData.sampleRate, soundData.channels);
       this._audioChannel.ondatarequested = function (e) {
         var end = soundData.end;
         if (position >= end && soundData.completed) {
           // end of buffer
+          self._unregisterWithSoundMixer();
           self._audioChannel.stop();
+          self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
           return;
         }
-        // TODO loop
 
-        var count = Math.min(end - position, e.count);
-        if (count === 0) return;
-
+        var left = e.count;
         var data = e.data;
         var source = soundData.pcm;
-        for (var j = 0; j < count; j++) {
-          data[j] = source[position++];
-        }
+        do {
+          var count = Math.min(end - position, left);
+          for (var j = 0; j < count; j++) {
+            data[j] = source[position++];
+          }
+          left -= count;
+          if (position >= end) {
+            if (!loops) break;
+            loops--;
+            position = startPosition;
+          }
+        } while (left > 0);
 
         self._position = position / soundData.sampleRate / soundData.channels * 1000;
       };
       this._audioChannel.start();
     },
-    _playSoundDataViaAudio: function (soundData, startTime) {
+    _playSoundDataViaAudio: function (soundData, startTime, loops) {
       if (!soundData.mimeType)
         return;
 
+      this._registerWithSoundMixer();
       this._position = startTime;
       var self = this;
+      var lastCurrentTime = 0;
       var element = document.createElement('audio');
-      if (!element.canPlayType(soundData.mimeType))
-        error('\"' + soundData.mimeType + '\" type playback is not supported by the browser');
+      if (!element.canPlayType(soundData.mimeType)) {
+        console.error('ERROR: \"' + soundData.mimeType +'\" ' +
+                    'type playback is not supported by the browser');
+        return;
+      }
+      element.loop = loops > 0; // starts loop played if at least one is specified
       element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
       element.addEventListener("loadeddata", function loaded() {
         element.currentTime = startTime / 1000;
         element.play();
       });
       element.addEventListener("timeupdate", function timeupdate() {
-        self._position = element.currentTime * 1000;
+        var currentTime = element.currentTime;
+        if (loops && lastCurrentTime > currentTime) {
+          --loops;
+          if (!loops) // checks if we need to stop looping
+            element.loop = false;
+          if (currentTime < startTime / 1000)
+            element.currentTime = startTime / 1000;
+        }
+        self._position = (lastCurrentTime = currentTime) * 1000;
+      });
+      element.addEventListener("ended", function ended() {
+        self._unregisterWithSoundMixer();
+        self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
       });
       this._element = element;
     },
@@ -64,9 +102,11 @@ var SoundChannelDefinition = (function () {
           // (void) -> void
           stop: function stop() {
             if (this._element) {
+              this._unregisterWithSoundMixer();
               this._element.pause();
             }
             if (this._audioChannel) {
+              this._unregisterWithSoundMixer();
               this._audioChannel.stop();
             }
           },
@@ -74,6 +114,18 @@ var SoundChannelDefinition = (function () {
             // (void) -> Number
             get: function position() {
               return this._position;
+            }
+          },
+          "leftPeak": {
+            // (void) -> Number
+            get: function leftPeak() {
+              return this._leftPeak;
+            }
+          },
+          "rightPeak": {
+            // (void) -> Number
+            get: function rightPeak() {
+              return this.rightPeak;
             }
           },
           "soundTransform": {
@@ -85,6 +137,11 @@ var SoundChannelDefinition = (function () {
             }
           }
         }
+      },
+      script: {
+        instance: scriptProperties("public", [
+          "stop"
+        ])
       }
     }
   };

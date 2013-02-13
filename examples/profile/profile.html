@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Shumway Profiler</title>
+</head>
+  <body style="font-family: arial; font-size: 12px;">
+    <pre id="results"></pre>
+
+    <script>
+      var BinaryFileReader = (function binaryFileReader() {
+        function constructor(url, responseType) {
+          this.url = url;
+          this.responseType = responseType || "arraybuffer";
+        }
+
+        constructor.prototype = {
+          readAll: function(progress, complete) {
+            var url = this.url;
+            var xhr = new XMLHttpRequest();
+            var async = true;
+            xhr.open("GET", this.url, async);
+            xhr.responseType = this.responseType;
+            if (progress) {
+              xhr.onprogress = function(event) {
+                progress(xhr.response, event.loaded, event.total);
+              };
+            }
+            xhr.onreadystatechange = function(event) {
+              if (xhr.readyState === 4) {
+                if (xhr.status !== 200 && xhr.status !== 0) {
+                  unexpected("Path: " + url + " not found.");
+                  complete(null, xhr.statusText);
+                  return;
+                }
+                complete(xhr.response);
+              }
+            }
+            xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+            xhr.send(null);
+          },
+          readAsync: function(ondata, onerror, onopen, oncomplete) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("GET", this.url, true);
+            // arraybuffer is not provide onprogress, fetching as regular chars
+            if ('overrideMimeType' in xhr)
+              xhr.overrideMimeType('text/plain; charset=x-user-defined');
+            var lastPosition = 0;
+            xhr.onprogress = function (e) {
+              var position = e.loaded;
+              var chunk = xhr.responseText.substring(lastPosition, position);
+              var data = new Uint8Array(chunk.length);
+              for (var i = 0; i < data.length; i++)
+                data[i] = chunk.charCodeAt(i) & 0xFF;
+              ondata(data, { loaded: e.loaded, total: e.total });
+              lastPosition = position;
+            };
+            xhr.onreadystatechange = function(event) {
+              if (xhr.readyState === 4) {
+                if (xhr.status !== 200 && xhr.status !== 0) {
+                  onerror(xhr.statusText);
+                }
+                if (oncomplete)
+                  oncomplete();
+              }
+            }
+            xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+            xhr.send(null);
+            if (onopen)
+              onopen();
+          }
+        };
+        return constructor;
+      })();
+
+
+      String.prototype.padLeft = function (c, n) {
+        var str = this;
+        var length = str.length;
+        if (!c || length >= n) {
+          return str;
+        }
+        var max = (n - length) / c.length;
+        for (var i = 0; i < max; i++) {
+          str = c + str;
+        }
+        return str;
+      };
+
+      var head = document.getElementsByTagName('head')[0];
+      var source = {
+        other: [
+          "../../lib/Kanvas/kanvas.js"
+        ],
+        swf: [
+          "../../src/swf/util.js",
+          "../../src/swf/swf.js",
+          "../../src/swf/types.js",
+          "../../src/swf/structs.js",
+          "../../src/swf/tags.js",
+          "../../src/swf/inflate.js",
+          "../../src/swf/stream.js",
+          "../../src/swf/templates.js",
+          "../../src/swf/generator.js",
+          "../../src/swf/handlers.js",
+          "../../src/swf/parser.js",
+          "../../src/swf/bitmap.js",
+          "../../src/swf/button.js",
+          "../../src/swf/font.js",
+          "../../src/swf/image.js",
+          "../../src/swf/label.js",
+          "../../src/swf/shape.js",
+          "../../src/swf/sound.js",
+          "../../src/swf/text.js",
+          "../../src/swf/mp3worker.js"
+        ],
+        avm1: [
+          "../../src/avm1/classes.js",
+          "../../src/avm1/globals.js",
+          "../../src/avm1/stream.js",
+          "../../src/avm1/interpreter.js",
+          "../../src/swf/embed.js",
+          "../../src/swf/renderer.js"
+        ],
+        avm2: [
+          "../../src/avm2/util.js",
+          "../../src/avm2/options.js",
+          "../../src/avm2/metrics.js",
+          "avm2Options.js",
+          "../../src/avm2/constants.js",
+          "../../src/avm2/errors.js",
+          "../../src/avm2/opcodes.js",
+          "../../src/avm2/parser.js",
+          "../../src/avm2/analyze.js",
+          "../../src/avm2/compiler/lljs/src/estransform.js",
+          "../../src/avm2/compiler/lljs/src/escodegen.js",
+          "../../src/avm2/compiler/inferrer.js",
+          "../../src/avm2/compiler/c4/ir.js",
+          "../../src/avm2/compiler/builder.js",
+          "../../src/avm2/compiler/c4/looper.js",
+          "../../src/avm2/compiler/c4/backend.js",
+          "../../src/avm2/domain.js",
+          "../../src/avm2/runtime.js",
+          "../../src/avm2/xml.js",
+          "../../src/avm2/native.js",
+          "../../src/avm2/disassembler.js",
+          "../../src/avm2/interpreter.js",
+          "../../src/avm2/vm.js"
+        ],
+        flash: [
+          "../../src/flash/util.js",
+          "../../src/flash/display/Bitmap.js",
+          "../../src/flash/display/BitmapData.js",
+          "../../src/flash/display/DisplayObject.js",
+          "../../src/flash/display/DisplayObjectContainer.js",
+          "../../src/flash/display/Graphics.js",
+          "../../src/flash/display/InteractiveObject.js",
+          "../../src/flash/display/Loader.js",
+          "../../src/flash/display/LoaderInfo.js",
+          "../../src/flash/display/MorphShape.js",
+          "../../src/flash/display/MovieClip.js",
+          "../../src/flash/display/Shape.js",
+          "../../src/flash/display/SimpleButton.js",
+          "../../src/flash/display/Sprite.js",
+          "../../src/flash/display/Stage.js",
+          "../../src/flash/filters/BevelFilter.js",
+          "../../src/flash/filters/BitmapFilter.js",
+          "../../src/flash/filters/BlurFilter.js",
+          "../../src/flash/filters/ColorMatrixFilter.js",
+          "../../src/flash/filters/ConvolutionFilter.js",
+          "../../src/flash/filters/DisplacementMapFilter.js",
+          "../../src/flash/filters/DropShadowFilter.js",
+          "../../src/flash/filters/GlowFilter.js",
+          "../../src/flash/filters/GradientBevelFilter.js",
+          "../../src/flash/filters/GradientGlowFilter.js",
+          "../../src/flash/filters/ShaderFilter.js",
+          "../../src/flash/events/Event.js",
+          "../../src/flash/events/EventDispatcher.js",
+          "../../src/flash/events/KeyboardEvent.js",
+          "../../src/flash/events/MouseEvent.js",
+          "../../src/flash/events/TextEvent.js",
+          "../../src/flash/events/TimerEvent.js",
+          "../../src/flash/external/ExternalInterface.js",
+          "../../src/flash/geom/ColorTransform.js",
+          "../../src/flash/geom/Matrix.js",
+          "../../src/flash/geom/Point.js",
+          "../../src/flash/geom/Rectangle.js",
+          "../../src/flash/geom/Transform.js",
+          "../../src/flash/media/ID3Info.js",
+          "../../src/flash/media/Sound.js",
+          "../../src/flash/media/SoundChannel.js",
+          "../../src/flash/media/SoundMixer.js",
+          "../../src/flash/media/SoundTransform.js",
+          "../../src/flash/media/Video.js",
+          "../../src/flash/net/NetConnection.js",
+          "../../src/flash/net/NetStream.js",
+          "../../src/flash/net/Responder.js",
+          "../../src/flash/net/URLLoader.js",
+          "../../src/flash/net/URLRequest.js",
+          "../../src/flash/net/URLStream.js",
+          "../../src/flash/system/Capabilities.js",
+          "../../src/flash/system/FSCommand.js",
+          "../../src/flash/text/Font.js",
+          "../../src/flash/text/StaticText.js",
+          "../../src/flash/text/TextField.js",
+          "../../src/flash/ui/Keyboard.js",
+          "../../src/flash/ui/Mouse.js",
+          "../../src/flash/utils/Timer.js",
+          "../../src/flash/stubs.js"
+        ]
+      };
+
+      var lines = [];
+
+      function writeLn(line) {
+        lines.push(line);
+      }
+
+      function writeTimeLn(time, line) {
+        writeLn(time.toFixed(2).padLeft(" ", 8) + ", " + line);
+      }
+
+      function loadScript(file, next) {
+        var script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        var start = performance.now();
+        script.onload = function () {
+          var elapsed = performance.now() - start;
+          writeTimeLn(elapsed, file);
+          next && next(elapsed);
+        };
+        script.src = file;
+        head.appendChild(script);
+      }
+
+      var files = [];
+      for (var k in source) {
+        files = files.concat(source[k]);
+      }
+
+      var avm2;
+      var avm2Root = "../../src/avm2/";
+      var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+      var libraryPath = avm2Root + "generated/shell/shell.abc";
+      var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
+
+      var start = performance.now(), totalStart = performance.now();
+      function loadNext() {
+        if (files.length) {
+          loadScript(files.shift(), loadNext);
+        } else {
+          writeTimeLn(performance.now() - start, "Parse Total");
+          loadAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, loadSWF)
+        }
+      }
+
+      loadNext();
+
+      function loadAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+        assert (builtinPath);
+        new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+          avm2 = new AVM2(sysMode, appMode);
+          var start = performance.now();
+          avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+          writeTimeLn(performance.now() - start, "Executed ABC: " + builtinPath);
+          console.timeEnd("Execute builtin.abc");
+          if (libraryPath) {
+            new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+              var start = performance.now();
+              var abc = new AbcFile(new Uint8Array(buffer), libraryPath);
+              writeTimeLn(performance.now() - start, "Parse ABC: " + libraryPath);
+              start = performance.now();
+              avm2.systemDomain.executeAbc(abc);
+              writeTimeLn(performance.now() - start, "Executed ABC: " + libraryPath);
+              next(avm2);
+            });
+          } else {
+            next(avm2);
+          }
+        });
+      }
+
+      function loadSWF() {
+        var totalTime = performance.now() - totalStart;
+        writeTimeLn(totalTime, "Total");
+        writeLn("");
+        if (totalTime > 500) {
+          writeLn("Are we fast yet? No Way!");
+        } else if (totalTime > 300) {
+          writeLn("Are we fast yet? Not Yet.");
+        } else if (totalTime > 100) {
+          writeLn("Are we fast yet? Almost");
+        } else {
+          writeLn("Are we fast yet? Yessssss!");
+        }
+
+        document.getElementById("results").innerHTML = lines.join("\n");
+        window.scrollTo(0, document.body.scrollHeight);
+      }
+
+    </script>
+
+  </body>
+</html>

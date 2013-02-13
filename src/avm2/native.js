@@ -449,7 +449,7 @@ var natives = (function () {
         slice: Ap.slice,
         unshift: Ap.unshift,
         splice: Ap.splice,
-        _sort: Ap.sort,
+        sort: Ap.sort,
         indexOf: Ap.indexOf,
         lastIndexOf: Ap.lastIndexOf,
         every: Ap.every,

@@ -106,17 +106,17 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
   function PreVisitor(ctx) {
     this.ctx = ctx;
+    this.enterFrameEvt = new flash.events.Event("enterFrame");
   }
   PreVisitor.prototype = {
     childrenStart: function() {},
     childrenEnd: function() {},
     visit: function (child, isContainer, interactiveParent) {
-      if (MovieClipClass.isInstanceOf(child)) {
-        if (child.isPlaying()) {
-          child.nextFrame();
-        }
-        child.dispatchEvent(new flash.events.Event("enterFrame"));
+      if (MovieClipClass.isInstanceOf(child) && child.isPlaying()) {
+        child.nextFrame();
       }
+
+      child.dispatchEvent(this.enterFrameEvt);
 
       if (child._refreshAS2Variables) {
         child._refreshAS2Variables();
@@ -174,13 +174,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   };
 
   function PostVisitor() {
+    this.exitFrameEvt = new flash.events.Event("exitFrame");
   }
   PostVisitor.prototype = {
     childrenStart: function() {},
     childrenEnd: function() {},
     visit: function (child) {
-      if (MovieClipClass.isInstanceOf(child))
-        child.dispatchEvent(new flash.events.Event("exitFrame"));
+      //if (MovieClipClass.isInstanceOf(child))
+        child.dispatchEvent(this.exitFrameEvt);
     }
   };
 
