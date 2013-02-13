@@ -64,29 +64,33 @@ var SoundChannelDefinition = (function () {
       this._registerWithSoundMixer();
       this._position = startTime;
       var self = this;
+      var lastCurrentTime = 0;
       var element = document.createElement('audio');
       if (!element.canPlayType(soundData.mimeType)) {
         console.error('ERROR: \"' + soundData.mimeType +'\" ' +
                     'type playback is not supported by the browser');
         return;
       }
+      element.loop = loops > 0; // starts loop played if at least one is specified
       element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
       element.addEventListener("loadeddata", function loaded() {
         element.currentTime = startTime / 1000;
         element.play();
       });
       element.addEventListener("timeupdate", function timeupdate() {
-        self._position = element.currentTime * 1000;
+        var currentTime = element.currentTime;
+        if (loops && lastCurrentTime > currentTime) {
+          --loops;
+          if (!loops) // checks if we need to stop looping
+            element.loop = false;
+          if (currentTime < startTime / 1000)
+            element.currentTime = startTime / 1000;
+        }
+        self._position = (lastCurrentTime = currentTime) * 1000;
       });
       element.addEventListener("ended", function ended() {
-        if (!loops) {
-          this._unregisterWithSoundMixer();
-          self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
-          return;
-        }
-        loops--;
-        element.currentTime = startTime / 1000;
-        element.play();
+        self._unregisterWithSoundMixer();
+        self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
       });
       this._element = element;
     },
