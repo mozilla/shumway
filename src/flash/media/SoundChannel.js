@@ -4,6 +4,8 @@ var SoundChannelDefinition = (function () {
     initialize: function () {
       this._element = null;
       this._position = 0;
+      this._leftPeak = 0;
+      this._rightPeak = 0;
       this._pcmData = null;
       this._soundTransform = null;
     },
@@ -31,6 +33,7 @@ var SoundChannelDefinition = (function () {
           // end of buffer
           self._unregisterWithSoundMixer();
           self._audioChannel.stop();
+          self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
           return;
         }
 
@@ -75,6 +78,7 @@ var SoundChannelDefinition = (function () {
       element.addEventListener("ended", function ended() {
         if (!loops) {
           this._unregisterWithSoundMixer();
+          self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
           return;
         }
         loops--;
@@ -103,6 +107,18 @@ var SoundChannelDefinition = (function () {
             // (void) -> Number
             get: function position() {
               return this._position;
+            }
+          },
+          "leftPeak": {
+            // (void) -> Number
+            get: function leftPeak() {
+              return this._leftPeak;
+            }
+          },
+          "rightPeak": {
+            // (void) -> Number
+            get: function rightPeak() {
+              return this.rightPeak;
             }
           },
           "soundTransform": {
