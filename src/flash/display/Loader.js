@@ -349,7 +349,8 @@ var LoaderDefinition = (function () {
 
   var def = {
     initialize: function () {
-      this._contentLoaderInfo = null;
+      this._contentLoaderInfo = new flash.display.LoaderInfo;
+      this._contentLoaderInfo._loader = this;
       this._dictionary = { };
       this._displayList = null;
       this._symbols = { };
@@ -899,14 +900,7 @@ var LoaderDefinition = (function () {
     },
 
     get contentLoaderInfo() {
-      // XXX: Why is this lazily initialized?
-      var loaderInfo = this._contentLoaderInfo;
-      if (!loaderInfo) {
-        loaderInfo = new flash.display.LoaderInfo;
-        loaderInfo._loader = this;
-        this._contentLoaderInfo = loaderInfo;
-      }
-      return loaderInfo;
+      return this._contentLoaderInfo;
     },
 
     close: function () {
