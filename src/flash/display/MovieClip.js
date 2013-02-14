@@ -66,6 +66,7 @@ var MovieClipDefinition = (function () {
 
           for (var depth in walkList) {
             var cmd = displayList[depth];
+            var currentListCmd = currentDisplayList[depth];
             var currentChild = null;
             var currentIndex = -1;
             var highestIndex = children.length;
@@ -90,10 +91,10 @@ var MovieClipDefinition = (function () {
                 this._control.removeChild(currentChild._control);
                 currentChild.dispatchEvent(new flash.events.Event("removed"));
               }
-            } else if (cmd !== currentDisplayList[depth]) {
+            } else if (cmd !== currentListCmd) {
               if (currentChild &&
-                  cmd.symbolId === currentChild.symbolId &&
-                  cmd.ratio === currentChild.ratio) {
+                  cmd.symbolId === currentListCmd.symbolId &&
+                  cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
                   if (cmd.hasClipDepth)
                     child._clipDepth = cmd.clipDepth;
