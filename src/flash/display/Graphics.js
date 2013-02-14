@@ -22,6 +22,7 @@ var GraphicsDefinition = (function () {
     __class__: 'flash.display.Graphics',
 
     initialize: function () {
+      this._bitmap = null;
       this._drawingStyles = null;
       this._fillStyle = null;
       this._fillTransform = null;
@@ -122,6 +123,44 @@ var GraphicsDefinition = (function () {
           break;
         }
       }
+    },
+    _cacheAsBitmap: function (bbox) {
+      var bounds = this._getBounds();
+      var canvas = document.createElement('canvas');
+      canvas.width = bounds.width;
+      canvas.height = bounds.height;
+      var ctx = canvas.getContext('kanvas-2d');
+      ctx.translate(-bbox.left, -bbox.top);
+      var scale = this._scale;
+      if (scale !== 1)
+        ctx.scale(scale, scale);
+      var subpaths = this._subpaths;
+      for (var i = 0; i < subpaths.length; i++) {
+        var pathTracker = subpaths[i];
+        var path = pathTracker.target;
+        if (path.fillStyle) {
+          ctx.fillStyle = path.fillStyle;
+          if (path.fillTransform) {
+            var m = path.fillTransform;
+            ctx.beginPath();
+            ctx.__draw__(path);
+            ctx.save();
+            ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+            ctx.fill();
+            ctx.restore();
+          } else {
+            ctx.fill(path);
+          }
+        }
+        if (path.strokeStyle) {
+          ctx.strokeStyle = path.strokeStyle;
+          var drawingStyles = pathTracker.drawingStyles;
+          for (var prop in drawingStyles)
+            ctx[prop] = drawingStyles[prop];
+          ctx.stroke(path);
+        }
+      }
+      this._bitmap = canvas;
     },
     _drawPathObject: function (path) {
       if (path.__class__ === 'flash.display.GraphicsPath')

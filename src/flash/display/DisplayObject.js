@@ -22,6 +22,7 @@ var DisplayObjectDefinition = (function () {
       this._alpha = 1;
       this._animated = false;
       this._bbox = null;
+      this._bitmap = null;
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];

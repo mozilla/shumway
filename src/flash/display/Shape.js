@@ -4,10 +4,14 @@ var ShapeDefinition = (function () {
 
     initialize: function () {
       var s = this.symbol;
-      if (s && s.graphicsFactory)
+      if (s && s.graphicsFactory) {
         this._graphics = s.graphicsFactory(0);
-      else
+
+        if (this._stage && this._stage._quality === 'low')
+          this._graphics._cacheAsBitmap(this._bbox);
+      } else {
         this._graphics = new flash.display.Graphics;
+      }
     }
   };
 
