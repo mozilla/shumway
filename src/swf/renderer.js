@@ -316,21 +316,13 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       ctx.beginPath();
 
       stage._callFrameRequested = false;
-      console.time('pre');
       visitContainer(stage, new PreVisitor(ctx));
-      console.timeEnd('pre');
       while (stage._callFrameRequested) {
         stage._callFrameRequested = false;
-        console.time('script');
         visitContainer(stage, new ScriptExecutionVisitor());
-        console.timeEnd('script');
       }
-      console.time('render');
       visitContainer(stage, new RenderVisitor(ctx));
-      console.timeEnd('render');
-      console.time('post');
       visitContainer(stage, new PostVisitor());
-      console.timeEnd('post');
       stage._syncCursor();
 
       if (onAfterFrame) {
