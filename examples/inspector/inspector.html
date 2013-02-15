@@ -99,6 +99,13 @@
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+      var nativeCreateElement = document.createElement;
+      document.createElement = function (x) {
+        Counter.count("createElement: " + x);
+        return nativeCreateElement.call(document, x);
+      }
+
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
