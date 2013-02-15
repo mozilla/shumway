@@ -1,6 +1,8 @@
+AVM2_HOME = ..
 UTILS_HOME = ../../../utils
 AVM ?= $(UTILS_HOME)/tamarin-redux/bin/shell/avmshell
-BUILTINABC ?= $(UTILS_HOME)/tamarin-redux/generated/builtin.abc
+SHELLABC ?= $(AVM2_HOME)/gnerated/shell/shell.abc
+BUILTINABC ?= $(AVM2_HOME)/generated/builtin/builtin.abc
 ASC ?= $(UTILS_HOME)/asc.jar
 JSSHELL ?= $(UTILS_HOME)/jsshell/js
 THREADS ?= 8
@@ -8,7 +10,7 @@ TIMEOUT ?= 30000
 
 NODE_MODULES = ../../../utils/node_modules
 
-TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS) -t $(TIMEOUT) -jo
+TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS) -t $(TIMEOUT) -jo
 
 TEST_PATH ?= $(error Specify TEST_PATH variable)
 
