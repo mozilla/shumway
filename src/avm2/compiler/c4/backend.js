@@ -87,60 +87,33 @@
     return cx.compileTry(this, state);
   };
 
-  var Constant = (function () {
-    var constantsName = new Identifier("$C");
-
-    function constant(value) {
-      this.value = value;
-      if (value === undefined) {
-        Identifier.call(this, "undefined");
-      } else if (value !== null && typeof value === "object") {
-        /*
-        assert(value instanceof Multiname ||
-          value instanceof Runtime ||
-          value instanceof Domain ||
-          value instanceof MethodInfo ||
-          value instanceof ClassInfo ||
-          value instanceof AbcFile ||
-          value instanceof Array ||
-          value instanceof CatchScopeObject ||
-          value instanceof Scope ||
-          value instanceof Global ||
-          value instanceof Interface,
-          "Should not make constants from ", value);
-        */
-        // MemberExpression.call(this, constantsName, new Literal(objectId(value)), true);
-        Identifier.call(this, objectConstantName(value));
-      } else {
-        if (typeof value === "number" && isNaN(value)) {
-          Identifier.call(this, "NaN");
-        } else if (value === Infinity) {
-          Identifier.call(this, "Infinity");
-        } else if (value === -Infinity) {
-          UnaryExpression.call(this, "-", new Identifier("Infinity"));
-        } else if (typeof value === "number" && (1 / value) < 0) {
-          UnaryExpression.call(this, "-", new Literal(Math.abs(value)));
-        } else {
-          Literal.call(this, value);
-        }
-      }
-    }
-    return constant;
-  })();
-
   function constant(value) {
-    // TODO: Fix this constant ugliness.
-    if (typeof value === "string") {
+    // TODO MEMORY: Cache AST nodes for constants.
+    if (typeof value === "string" || value === null || value === true || value === false) {
       return new Literal(value);
+    } else if (value === undefined) {
+      return new Identifier("undefined");
+    } else if (typeof value === "object" || typeof value === "function") {
+      return new Identifier(objectConstantName(value));
+    } else if (typeof value === "number" && isNaN(value)) {
+      return new Identifier("NaN");
+    } else if (value === Infinity) {
+      return new Identifier("Infinity");
+    } else if (value === -Infinity) {
+      return new UnaryExpression("-", new Identifier("Infinity"));
+    } else if (typeof value === "number" && (1 / value) < 0) {
+      return new UnaryExpression("-", new Literal(Math.abs(value)));
+    } else if (typeof value === "number") {
+      return new Literal(value);
+    } else {
+      unexpected("Cannot emit constant for value: " + value);
     }
-    return new Constant(value);
   }
 
   function id(name) {
     assert (typeof name === "string");
     return new Identifier(name);
   }
-
 
   function isIdentifierStart(c) {
     return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
