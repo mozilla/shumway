@@ -154,7 +154,7 @@ var configurations = [
   {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js --no-ion";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
   commandPrefix += " -m -n";
 }
@@ -347,7 +347,7 @@ function runNextTest () {
         if (!someFailed) {
           delete baseline.output.text;
           count("all-passed");
-        } else {
+        } else if (false) {
           var baseline = results[test][configurations[0].name];
           process.stdout.write("\n=== EXPECTED ===\n" + baseline.output.text + "\n");
           for (var i = 1; i < configurations.length; i++) {

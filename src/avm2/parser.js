@@ -87,23 +87,24 @@ var AbcStream = (function () {
       return result;
     },
     readUTFString: function(length) {
-      var result = "", end = this.pos + length;
-
+      var end = this.pos + length;
+      var i = 0;
+      var result = new Int32Array(length);
       while(this.pos < end) {
         var c = this.bytes[this.pos++];
         if (c <= 0x7f) {
-          result += String.fromCharCode(c);
+          result[i++] = c;
         }
         else if (c >= 0xc0) { // multibyte
           var code;
           if (c < 0xe0) { // 2 bytes
             code = ((c & 0x1f) << 6) |
-              (this.bytes[this.pos++] & 0x3f);
+                   (this.bytes[this.pos++] & 0x3f);
           }
           else if (c < 0xf0) { // 3 bytes
             code = ((c & 0x0f) << 12) |
-              ((this.bytes[this.pos++] & 0x3f) << 6) |
-              (this.bytes[this.pos++] & 0x3f);
+                   ((this.bytes[this.pos++] & 0x3f) << 6) |
+                   (this.bytes[this.pos++] & 0x3f);
           } else { // 4 bytes
             // turned into two characters in JS as surrogate pair
             code = (((c & 0x07) << 18) |
@@ -111,14 +112,14 @@ var AbcStream = (function () {
                     ((this.bytes[this.pos++] & 0x3f) << 6) |
                     (this.bytes[this.pos++] & 0x3f)) - 0x10000;
             // High surrogate
-            result += String.fromCharCode(((code & 0xffc00) >>> 10) + 0xd800);
+            result[i++] = ((code & 0xffc00) >>> 10) + 0xd800;
             // Low surrogate
             code = (code & 0x3ff) + 0xdc00;
           }
-          result += String.fromCharCode(code);
+          result[i++] = code;
         } // Otherwise it's an invalid UTF8, skipped.
       }
-      return result;
+      return String.fromCharCode.apply(null, result.subarray(0, i));
     }
   };
 
