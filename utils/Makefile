@@ -16,6 +16,8 @@ endif
 TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
+
+
 ASC_JAR = ./asc.jar
 ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
 
@@ -62,17 +64,27 @@ install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
+	hg revert -r f5191c18b0e4 --all   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
+
+patch-tamarin:
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
 
 build-tamarin-tests:
 	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
 	cp -R $(TAMARIN_HOME)/test/acceptance ../src/avm2/tests/tamarin
 
 run-tamarin-tests:
-	export TAMARIN_HOME_ABS=`cd "$(TAMARIN_HOME)"; pwd`
-	cd $(TAMARIN_HOME)/test/acceptance; python runtests.py --avm 'cd ../../../$(AVM2_HOME)/bin; js -W avm.js -x -r $(TAMARIN_HOME_ABS)/test/acceptance/'
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway ecma3 as3
+
+run-tamarin-performance:
+	cd $(TAMARIN_HOME)/test/performance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway
 
 install-js:
 	-rm -rf $(JSSHELL_HOME)
