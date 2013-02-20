@@ -1,12 +1,21 @@
-load("../../../lib/DataView.js/DataView.js");
+var homePath = "../../../"
+
+if(environment.SHUMWAY_HOME) {
+    homePath = environment.SHUMWAY_HOME.trim()
+    if (homePath.lastIndexOf("/") != homePath.length-1) {
+	homePath = homePath + "/"
+    }
+}
+
+load(homePath + "lib/DataView.js/DataView.js");
 
 /**
  * Load AVM2 Dependencies
  */
 
-load("../util.js");
+load(homePath + "src/avm2/util.js");
 
-var options; load("../options.js");
+var options; load(homePath + "src/avm2/options.js");
 var stdout = new IndentingWriter();
 
 var ArgumentParser = options.ArgumentParser;
@@ -31,36 +40,36 @@ var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boo
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 
-var metrics; load("../metrics.js");
+var metrics; load(homePath + "src/avm2/metrics.js");
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
 
 Timer.start("Loading VM");
-load("../constants.js");
-load("../errors.js");
-load("../opcodes.js");
-load("../parser.js");
-load("../disassembler.js");
-load("../analyze.js");
+load(homePath + "src/avm2/constants.js");
+load(homePath + "src/avm2/errors.js");
+load(homePath + "src/avm2/opcodes.js");
+load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/disassembler.js");
+load(homePath + "src/avm2/analyze.js");
 
 Timer.start("Loading Compiler");
-var estransform; load("../compiler/lljs/src/estransform.js");
-var escodegen; load("../compiler/lljs/src/escodegen.js");
-load("../compiler/inferrer.js");
-load("../compiler/c4/ir.js");
-load("../compiler/c4/looper.js");
-load("../compiler/c4/backend.js");
-load("../compiler/builder.js");
+var estransform; load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
+var escodegen; load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
+load(homePath + "src/avm2/compiler/inferrer.js");
+load(homePath + "src/avm2/compiler/c4/ir.js");
+load(homePath + "src/avm2/compiler/c4/looper.js");
+load(homePath + "src/avm2/compiler/c4/backend.js");
+load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
 
-load("../domain.js");
-load("../runtime.js");
-load("../viz.js");
-load("../interpreter.js");
-load("../xml.js");
-load("../native.js");
-load("../vm.js");
+load(homePath + "src/avm2/domain.js");
+load(homePath + "src/avm2/runtime.js");
+load(homePath + "src/avm2/viz.js");
+load(homePath + "src/avm2/interpreter.js");
+load(homePath + "src/avm2/xml.js");
+load(homePath + "src/avm2/native.js");
+load(homePath + "src/avm2/vm.js");
 Timer.stop();
 
 argumentParser.addBoundOptionSet(systemOptions);
@@ -103,7 +112,7 @@ Counter.setEnabled(traceMetrics.value);
 
 function grabABC(abcname) {
   var filename = abcname + ".abc";
-  var stream = snarf("../generated/" + abcname + "/" + filename, "binary");
+  var stream = snarf(homePath + "src/avm2/generated/" + abcname + "/" + filename, "binary");
   return new AbcFile(stream, filename);
 }
 

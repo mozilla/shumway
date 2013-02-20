@@ -16,6 +16,8 @@ endif
 TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
+
+
 ASC_JAR = ./asc.jar
 ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
 
@@ -43,6 +45,7 @@ SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
 APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
 AVM2_HOME = ../src/avm2
+AVMSHELL = avmshell
 
 default:
 	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
@@ -55,24 +58,42 @@ $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
-	-rm -rf $(TAMARIN_HOME)/bin
+	rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
+	cd $(TAMARIN_HOME) hg revert -r 9e56a8e5b17c --all   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
-
-build-tamarin-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
-	cp -R $(TAMARIN_HOME)/test/acceptance ../src/avm2/tests/tamarin
+	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
 
 run-tamarin-tests:
-	export TAMARIN_HOME_ABS=`cd "$(TAMARIN_HOME)"; pwd`
-	cd $(TAMARIN_HOME)/test/acceptance; python runtests.py --avm 'cd ../../../$(AVM2_HOME)/bin; js -W avm.js -x -r $(TAMARIN_HOME_ABS)/test/acceptance/'
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS)  ecma3 as3
+
+run-tamarin-as3-tests:
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) as3
+
+run-tamarin-ecma3-tests:
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --threads $(THREADS) --shumway ecma3
+
+run-tamarin-performance:
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/performance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:
 	-rm -rf $(JSSHELL_HOME)
