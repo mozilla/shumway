@@ -67,7 +67,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
 
   ctx.translate(offsetX, offsetY);
-  ctx.scale(scale, scale);
+  ctx.scale(scale, scale * 0.99);
 
   // All the visitors close over this class to do instance testing.
   var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
