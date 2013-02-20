@@ -61,9 +61,8 @@ function defineImage(tag, dictionary) {
       var tables = dictionary[0];
       assert(tables, 'missing tables', 'jpeg');
       var header = tables.data;
-      data = header.substr(0, header.length - 2) + data;
-    } else {
-      data = data;
+      if (header)
+        data = header.substr(0, header.length - 2) + data.substr(2);
     }
   } else {
     var numChunks = imgData.length / 65536;
