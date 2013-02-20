@@ -516,6 +516,7 @@ def checkStas(task, results, browser):
           traceLog.write('>>>>\n')
 
           passed = False
+          State.numStasFailures += 1
 
     if passed:
         print 'TEST-PASS | stas test', task['id'], '| in', browser
@@ -559,6 +560,9 @@ def maybeUpdateRefImages(options, browser):
                 print '  OK, not updating.'
 
 def startReftest(browser, options):
+    if options.noPrompts:
+        return
+
     url = "http://%s:%s" % (SERVER_HOST, options.port)
     url += "/test/resources/reftest-analyzer.xhtml"
     url += "#web=/test/eq.log"
