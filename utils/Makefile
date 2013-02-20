@@ -65,26 +65,34 @@ install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
-	cd $(TAMARIN_HOME) hg revert -r f5191c18b0e4 --all   # get a stable version
+	cd $(TAMARIN_HOME) hg revert -r 9e56a8e5b17c --all   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
 
-build-tamarin-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc AVM=../../bin/shell/avmshell python runtests.py --threads=$(THREADS) --rebuildtests
-	cp -R $(TAMARIN_HOME)/test/acceptance ../src/avm2/tests/tamarin
-
 run-tamarin-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway ecma3 as3
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS)  ecma3 as3
 
 run-tamarin-as3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway as3
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) as3
 
 run-tamarin-ecma3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway ecma3
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
+	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --threads $(THREADS) --shumway ecma3
 
 run-tamarin-performance:
+	if test "$(SHUMWAY_HOME)" = "" ; then \
+          echo "SHUMWAY_HOME needs to be set"; \
+        fi
 	cd $(TAMARIN_HOME)/test/performance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:

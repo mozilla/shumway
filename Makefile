@@ -24,9 +24,6 @@ install-libs:
 install-utils: check-system
 	make -C utils/ install-asc install-tamarin install-js install-apparat install-node-modules
 
-build-tamarin-tests:
-	make -C utils/ build-tamarin-tests
-
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 

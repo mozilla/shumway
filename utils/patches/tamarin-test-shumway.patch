@@ -1,6 +1,6 @@
 diff -r 5571cf86fc68 test/acceptance/runtests.py
 --- a/test/acceptance/runtests.py	Tue Jan 29 13:37:51 2013 -0800
-+++ b/test/acceptance/runtests.py	Wed Feb 20 11:05:08 2013 -0800
++++ b/test/acceptance/runtests.py	Wed Feb 20 14:16:45 2013 -0800
 @@ -26,6 +26,7 @@
  
  class AcceptanceRuntest(RuntestBase):
@@ -70,7 +70,7 @@ diff -r 5571cf86fc68 test/acceptance/runtests.py
              # make sure util file has been compiled
 diff -r 5571cf86fc68 test/performance/runtests.py
 --- a/test/performance/runtests.py	Tue Jan 29 13:37:51 2013 -0800
-+++ b/test/performance/runtests.py	Wed Feb 20 11:05:08 2013 -0800
++++ b/test/performance/runtests.py	Wed Feb 20 14:16:45 2013 -0800
 @@ -65,6 +65,7 @@
      serverHost = '10.60.48.47'
      serverPort = 1188
@@ -127,22 +127,11 @@ diff -r 5571cf86fc68 test/performance/runtests.py
          if isfile(abc) and getmtime(ast)>getmtime(abc):
 diff -r 5571cf86fc68 test/performance/testconfig.txt
 --- a/test/performance/testconfig.txt	Tue Jan 29 13:37:51 2013 -0800
-+++ b/test/performance/testconfig.txt	Wed Feb 20 11:05:08 2013 -0800
-@@ -9,76 +9,3 @@
- #    skip - the test/dir is not run, for example the configuration does not support a feature or the file is not a test and is a helper file to another test
- #    include - includes a specific testcase/dir even if the parent has been skipped
++++ b/test/performance/testconfig.txt	Wed Feb 20 14:16:45 2013 -0800
+@@ -20,65 +20,3 @@
+ canaries/.*           , canaries  ,, include , canaries testsuite
+ .*/canaries/.*        , canaries  ,, include , canaries testsuite
  
--sunspider.*/.*        , sunspider ,, include , sunspider testsuite
--jsbench/.*            , jsbench   ,, include , jsbench testsuite
--v8/.*                 , v8        ,, include , v8 testsuite 
--v8.5/.*               , v8        ,, include , v8 testsuite 
--scimark/.*            , scimark   ,, include , scimark testsuite
--language/.*           , language  ,, include , language micro-benchmarks testsuite
--mmgc/.*               , mmgc      ,, include  , mmgc testsuite
--
--canaries/.*           , canaries  ,, include , canaries testsuite
--.*/canaries/.*        , canaries  ,, include , canaries testsuite
--
 -canaries/simpleflexapp.*, misc,, skip, test is failing due to changes to builtin - dschaffe is investigating (10/13/10)
 -
 -sunspider.*/.*        , misc    ,, skip  , skip sunspider
@@ -207,7 +196,7 @@ diff -r 5571cf86fc68 test/performance/testconfig.txt
 -
 diff -r 5571cf86fc68 test/util/runtestBase.py
 --- a/test/util/runtestBase.py	Tue Jan 29 13:37:51 2013 -0800
-+++ b/test/util/runtestBase.py	Wed Feb 20 11:05:08 2013 -0800
++++ b/test/util/runtestBase.py	Wed Feb 20 14:16:45 2013 -0800
 @@ -112,7 +112,7 @@
      sourceExt = '.as'
      supportFolderExt = '_support'
@@ -249,6 +238,15 @@ diff -r 5571cf86fc68 test/util/runtestBase.py
              if match:
                  for k2 in self.settings[k].keys():
                      if k2 in settings:
+@@ -1249,7 +1251,7 @@
+                 self.compile_test(test)
+                 if self.ascOutputOnly:
+                     continue  # no .abc created
+-                if not exists(testdir+".abc"):
++                if not exists(testdir+".abc") and self.aotsdk:
+                     print("ERROR abc files %s.abc not created" % (testdir))
+                     self.ashErrors.append("abc files %s.abc not created" % (testdir))
+                     continue
 @@ -1667,6 +1669,7 @@
              self.lock.release()
  
