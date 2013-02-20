@@ -99,6 +99,13 @@
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+      var nativeCreateElement = document.createElement;
+      document.createElement = function (x) {
+        Counter.count("createElement: " + x);
+        return nativeCreateElement.call(document, x);
+      }
+
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
@@ -179,6 +186,7 @@
     <script src="../../src/flash/net/URLStream.js"></script>
     <script src="../../src/flash/system/Capabilities.js"></script>
     <script src="../../src/flash/system/FSCommand.js"></script>
+    <script src="../../src/flash/system/System.js"></script>
     <script src="../../src/flash/text/Font.js"></script>
     <script src="../../src/flash/text/StaticText.js"></script>
     <script src="../../src/flash/text/TextField.js"></script>
@@ -203,7 +211,7 @@
         <div class="closeButton"></div>
         <div class="toolbarLabel " style="width: 240px; text-align: left;" id="message">Test</div>
       </div>
-      <div class="toolbarInfo" style="position: fixed; bottom: 70px; left: auto; right: 0px; width: 500px; height: 300px;" id="info">
+      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; left: auto; right: 0px; width: 300px; font-size: 10px;" id="info">
       </div>
       <div class="toolbarBox" style="position: fixed; bottom: 35px; left: 0; right: 0; width: auto;" id="openFileToolbar">
         <div class="closeButton"></div>

@@ -92,13 +92,31 @@ var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var libraryPath = avm2Root + "generated/shell/shell.abc";
 var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
 
+function parseQueryString(qs) {
+  if (!qs)
+    return {};
+
+  if (qs.charAt(0) == '?')
+    qs = qs.slice(1);
+
+  var values = qs.split('&');
+  var obj = {};
+  for (var i = 0; i < values.length; i++) {
+    var kv = values[i].split('=');
+    var key = kv[0], value = kv[1];
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
 /**
  * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
  * when the page loads.
  */
 if (remoteFile) {
   $('#openFileToolbar')[0].setAttribute('hidden', true);
-  executeFile(remoteFile);
+  executeFile(remoteFile, null, parseQueryString(window.location.search));
 }
 
 function showMessage(msg) {
@@ -106,7 +124,7 @@ function showMessage(msg) {
   $('#message')[0].parentElement.removeAttribute('hidden');
 }
 
-function executeFile(file, buffer) {
+function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!state.appCompiler) {
     showMessage("Running in the Interpreter");
@@ -130,7 +148,7 @@ function executeFile(file, buffer) {
   } else if (file.endsWith(".swf")) {
     createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate, onBeforeFrame: frame });
+        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate, onBeforeFrame: frame, movieParams: movieParams || {} });
       }
       if (!buffer && asyncLoading) {
         var subscription = {

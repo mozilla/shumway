@@ -150,6 +150,7 @@
     <script src="../flash/net/URLStream.js"></script>
     <script src="../flash/system/Capabilities.js"></script>
     <script src="../flash/system/FSCommand.js"></script>
+    <script src="../flash/system/System.js"></script>
     <script src="../flash/text/Font.js"></script>
     <script src="../flash/text/StaticText.js"></script>
     <script src="../flash/text/TextField.js"></script>
@@ -233,10 +234,10 @@
       function runViewer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
         movieUrl = flashParams.url;
-        var movieArgs = flashParams.arguments;
+        movieParams = flashParams.params;
         var isOverlay = flashParams.isOverlay;
         pauseExecution = flashParams.isPausedAtStart;
-        console.log("url=" + movieUrl + ";params=" + uneval(movieArgs));
+        console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
         FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0});
         if (isOverlay) {
           var fallbackDiv = document.getElementById('fallback');
@@ -276,7 +277,7 @@
         }
       };
 
-      var subscription = null, movieUrl;
+      var subscription = null, movieUrl, movieParams;
 
       addEventListener("message", function handlerMessage(e) {
         var args = e.data;
@@ -291,7 +292,7 @@
           switch (args.topic) {
           case "open":
             subscription = new Subscription();
-            parseSwf(movieUrl, subscription);
+            parseSwf(movieUrl, movieParams, subscription);
             break;
           case "progress":
             subscription.send(args);
@@ -339,11 +340,11 @@
         }
       };
 
-      function parseSwf(url, file) {
+      function parseSwf(url, params, file) {
         console.log("Parsing " + url + "...");
         function terminate() {}
         createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, onBeforeFrame: frame });
+          SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
         });
       }
 

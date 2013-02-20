@@ -22,6 +22,7 @@ var DisplayObjectDefinition = (function () {
       this._alpha = 1;
       this._animated = false;
       this._bbox = null;
+      this._bitmap = null;
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
@@ -198,11 +199,33 @@ var DisplayObjectDefinition = (function () {
       this._bounds = null;
     },
     _updateCurrentTransform: function () {
-      var rotation = this._rotation / 180 * Math.PI;
       var scaleX = this._scaleX;
       var scaleY = this._scaleY;
-      var u = Math.cos(rotation);
-      var v = Math.sin(rotation);
+      var rotation, u, v;
+      // there is no need for cos/sin when the rotation is parallel to axes
+      switch (this._rotation) {
+      case 0:
+      case 360:
+        u = 1; v = 0;
+        break;
+      case 90:
+      case -270:
+        u = 0; v = 1;
+        break;
+      case 180:
+      case -180:
+        u = -1; v = 0;
+        break;
+      case 270:
+      case -90:
+        u = 0; v = -1;
+        break;
+      default:
+        rotation = this._rotation / 180 * Math.PI;
+        u = Math.cos(rotation);
+        v = Math.sin(rotation);
+        break;
+      }
 
       this._currentTransform = {
         a: u * scaleX,

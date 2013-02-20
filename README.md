@@ -1,7 +1,6 @@
 # Shumway
 
 
-
 ## Overview
 
 Shumway is an HTML5 technology experiment that explores building a faithful

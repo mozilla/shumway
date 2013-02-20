@@ -39,6 +39,7 @@ var StageDefinition = (function () {
       this._stageWidth = 0;
       this._transform = { };
       this._mouseJustLeft = false;
+      this._quality = STAGE_QUALITY_HIGH;
     },
 
     get allowsFullScreen() {
@@ -81,10 +82,10 @@ var StageDefinition = (function () {
       notImplemented();
     },
     get quality() {
-      return STAGE_QUALITY_HIGH;
+      return this._quality;
     },
     set quality(val) {
-      notImplemented();
+      this._quality = val;
     },
     get scaleMode() {
       return STAGE_SCALE_MODE_NO_SCALE;

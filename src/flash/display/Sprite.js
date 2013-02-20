@@ -75,6 +75,7 @@ var SpriteDefinition = (function () {
           props.animated = true;
           props.owned = true;
           props.parent = this;
+          props.stage = this.stage;
 
           var instance = symbolClass.createAsSymbol(props);
 
