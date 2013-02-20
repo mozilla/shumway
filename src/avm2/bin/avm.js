@@ -1,10 +1,10 @@
-var homePath = "../../../"
+var homePath = "../../../";
 
-if(environment.SHUMWAY_HOME) {
-    homePath = environment.SHUMWAY_HOME.trim()
-    if (homePath.lastIndexOf("/") != homePath.length-1) {
-	homePath = homePath + "/"
-    }
+if (environment.SHUMWAY_HOME) {
+  homePath = environment.SHUMWAY_HOME.trim();
+  if (homePath.lastIndexOf("/") != homePath.length - 1) {
+	  homePath = homePath + "/";
+  }
 }
 
 load(homePath + "lib/DataView.js/DataView.js");
