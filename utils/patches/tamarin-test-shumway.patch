@@ -1,6 +1,6 @@
-diff -r f5191c18b0e4 test/acceptance/runtests.py
---- a/test/acceptance/runtests.py	Tue Oct 09 07:27:59 2012 -0700
-+++ b/test/acceptance/runtests.py	Tue Feb 19 17:53:09 2013 -0800
+diff -r 5571cf86fc68 test/acceptance/runtests.py
+--- a/test/acceptance/runtests.py	Tue Jan 29 13:37:51 2013 -0800
++++ b/test/acceptance/runtests.py	Wed Feb 20 11:05:08 2013 -0800
 @@ -26,6 +26,7 @@
  
  class AcceptanceRuntest(RuntestBase):
@@ -45,8 +45,8 @@ diff -r f5191c18b0e4 test/acceptance/runtests.py
 +        self.parseOptions() 
          self.setTimestamp()
          self.checkPath()
-         if not self.config:
-@@ -169,6 +175,13 @@
+         (self.ascbuild,self.ascversion)=self.getAscVersion(self.asc)
+@@ -170,6 +176,13 @@
                  self.avm += ' %s%s.es.abc' % (self.escbin, f)
              self.avm += ' -- '
              self.avm += ' %s../test/spidermonkey-prefix.es' % self.escbin  #needed to run shell harness
@@ -60,7 +60,7 @@ diff -r f5191c18b0e4 test/acceptance/runtests.py
          if self.androidthreads:
              p=subprocess.Popen('adb devices',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
              (out,err)=p.communicate()
-@@ -444,7 +457,6 @@
+@@ -445,7 +458,6 @@
                  (f,err,exitcode) = self.run_pipe(cmd, outputCalls=outputCalls, envVars=passByEnv)
              else: # Execute on OSX
                  cmd = "%s %s %s" % (progpath, self.vmargs, extraVmArgs)
@@ -68,9 +68,9 @@ diff -r f5191c18b0e4 test/acceptance/runtests.py
                  (f,err,exitcode) = self.run_pipe(cmd, outputCalls=outputCalls)
          elif ast.endswith(self.abcasmExt):
              # make sure util file has been compiled
-diff -r f5191c18b0e4 test/performance/runtests.py
---- a/test/performance/runtests.py	Tue Oct 09 07:27:59 2012 -0700
-+++ b/test/performance/runtests.py	Tue Feb 19 17:53:09 2013 -0800
+diff -r 5571cf86fc68 test/performance/runtests.py
+--- a/test/performance/runtests.py	Tue Jan 29 13:37:51 2013 -0800
++++ b/test/performance/runtests.py	Wed Feb 20 11:05:08 2013 -0800
 @@ -65,6 +65,7 @@
      serverHost = '10.60.48.47'
      serverPort = 1188
@@ -79,15 +79,7 @@ diff -r f5191c18b0e4 test/performance/runtests.py
      
      # testData structure:
      # { testName : { metric : { results1/2 : [], best1/2 : num, avg1/2 : num, spdup : num }}}
-@@ -123,6 +124,7 @@
-         # Load the root testconfig file
-         self.settings, self.directives = self.parseTestConfig(self.testconfig)
-         self.tests = self.getTestsList(self.args)
-+#        print("run() tests="+str(self.tests))
-         if self.rebuildtests:
-             self.rebuildTests()
-             exit()
-@@ -198,6 +200,7 @@
+@@ -198,6 +199,7 @@
          print("    --fullpath      print out full path for each test")
          print("    --repo=         repository url (used when logging to performance db)")
          print("    --logConfigAppend= string to append to the config string that is logged to the database along with vmargs")
@@ -95,7 +87,7 @@ diff -r f5191c18b0e4 test/performance/runtests.py
          exit(c)
  
      def setOptions(self):
-@@ -207,13 +210,15 @@
+@@ -207,13 +209,15 @@
                                   'runtime=','memory','metrics=','larger','vmversion=', 'vm2version=',
                                   'vmargs2=','nooptimize', 'score', 'saveindex=', 'index=',
                                   'perfm','csv=', 'csvappend','prettyprint', 'detail', 'raw',
@@ -112,7 +104,7 @@ diff -r f5191c18b0e4 test/performance/runtests.py
              elif o in ('--avmname',):
                  self.avmname = v
              elif o in ('--avm2name',):
-@@ -356,6 +361,12 @@
+@@ -356,6 +360,12 @@
      def preProcessTests(self):
          'Code that must be executed before beginning a testrun'
  
@@ -120,15 +112,103 @@ diff -r f5191c18b0e4 test/performance/runtests.py
 +            shumwayHome = environ["SHUMWAY_HOME"]
 +            if not shumwayHome.endswith('/'):
 +                shumwayHome += '/'
-+            self.avm = 'js %ssrc/avm2/bin/avm.js -x -c4 ' % shumwayHome
++            self.avm = 'js %ssrc/avm2/bin/avm.js -x ' % shumwayHome
 +
          if self.logresults:
              # determine current config string for socketlog
              tmpvmargs = self.vmargs.replace("-AOTSIZE", "") # This is a fake vmarg that is used for reporting filesize, do not log to db
-diff -r f5191c18b0e4 test/util/runtestBase.py
---- a/test/util/runtestBase.py	Tue Oct 09 07:27:59 2012 -0700
-+++ b/test/util/runtestBase.py	Tue Feb 19 17:53:09 2013 -0800
-@@ -111,7 +111,7 @@
+@@ -713,6 +723,7 @@
+             self.allskips += 1
+             return
+ 
++
+         if self.forcerebuild and isfile(abc):
+             os.unlink(abc)
+         if isfile(abc) and getmtime(ast)>getmtime(abc):
+diff -r 5571cf86fc68 test/performance/testconfig.txt
+--- a/test/performance/testconfig.txt	Tue Jan 29 13:37:51 2013 -0800
++++ b/test/performance/testconfig.txt	Wed Feb 20 11:05:08 2013 -0800
+@@ -9,76 +9,3 @@
+ #    skip - the test/dir is not run, for example the configuration does not support a feature or the file is not a test and is a helper file to another test
+ #    include - includes a specific testcase/dir even if the parent has been skipped
+ 
+-sunspider.*/.*        , sunspider ,, include , sunspider testsuite
+-jsbench/.*            , jsbench   ,, include , jsbench testsuite
+-v8/.*                 , v8        ,, include , v8 testsuite 
+-v8.5/.*               , v8        ,, include , v8 testsuite 
+-scimark/.*            , scimark   ,, include , scimark testsuite
+-language/.*           , language  ,, include , language micro-benchmarks testsuite
+-mmgc/.*               , mmgc      ,, include  , mmgc testsuite
+-
+-canaries/.*           , canaries  ,, include , canaries testsuite
+-.*/canaries/.*        , canaries  ,, include , canaries testsuite
+-
+-canaries/simpleflexapp.*, misc,, skip, test is failing due to changes to builtin - dschaffe is investigating (10/13/10)
+-
+-sunspider.*/.*        , misc    ,, skip  , skip sunspider
+-jsbench/.*            , misc    ,, skip  , skip jsbench
+-v8.*/.*               , misc    ,, skip  , skip v8
+-jsmicro/.*            , misc    ,, skip  , skip jsmicro
+-
+-misc/.*               , miscdir ,, include  , misc testsuite
+-misc/driver           , .*      ,, skip  , included by test files
+-
+-## skip mmgc tests always, they are to be run manually for the time being
+-mmgc/.*               , misc    ,, skip , mmgc diagnostic tests
+-
+-## skip fc64, crashes -memstats on windows
+-.*fc64.*              , .*      ,, skip  , skip fc64 bug 488114
+-
+-## misc-mobile : required since the canaries tests require access to additional abc files which will not be on the device
+-sunspider.*/.*        , misc-mobile.*  ,, skip  , skip sunspider
+-jsbench/.*            , misc-mobile.*  ,, skip  , skip jsbench
+-v8.*/.*               , misc-mobile.*  ,, skip  , skip v8
+-jsmicro/.*            , misc-mobile    ,, skip  , skip jsmicro
+-canaries/.*           , misc-mobile.*  ,, skip  , skip canaries as they require additional files to run which will not be on the device
+-.*/canaries/.*        , misc-mobile.*  ,, skip  , skip canaries as they require additional files to run which will not be on the device
+-
+-## sunspider-mobile : required because controlflow-recursive overflows the stack https://bugzilla.mozilla.org/show_bug.cgi?id=458055
+-sunspider.*/.*              , sunspider-mobile.* ,, include , sunspider testsuite
+-.*/controlflow-recursive.*  , sunspider-mobile.* ,, skip , sunspider testsuite
+-
+-
+-## WONTFIX: Stack-overflow on winmo when running sunspider/s3d-cude with the interpreter
+-.*/s3d-cube  , sunspider-mobile-Dinterp ,, skip , https://bugzilla.mozilla.org/show_bug.cgi?id=496942
+-
+-jsbench/Search    , .*,,       skip    ,       skip test runs too long and times out buildbot
+-.*util.*             , .*,,       skip    ,       skip internal files
+-
+-sunspider/(as3/|)regexp-dna  ,.*       ,,skip, large string.match(regexp) verifier error:1068 https://bugzilla.mozilla.org/show_bug.cgi?id=409206
+-#sunspider/(as3/|)date-format-tofte  ,.*       ,,skip, contains eval
+-sunspider/(as3/|)date-format-xparb ,.*       ,,skip, contains eval
+-#sunspider/(as3/|)string-unpack-code,.*       ,,skip, too slow: javascript compressor code runs slowly https://bugzilla.mozilla.org/show_bug.cgi?id=409225
+-sunspider/(as3/|)string-base64 ,.*       ,,skip, string indexing throws ReferenceError "z"[0] https://bugzilla.mozilla.org/show_bug.cgi?id=409210
+-sunspider/(as3/|)string-tagcloud ,.*       ,,skip, contains eval
+-
+-sunspider-0.9.1/.*/date-format-tofte  ,.*       ,,skip, contains eval
+-sunspider-0.9.1/.*/date-format-xparb ,.*       ,,skip, contains eval
+-sunspider-0.9.1/.*/string-base64 ,.*       ,,skip, string indexing throws ReferenceError "z"[0] https://bugzilla.mozilla.org/show_bug.cgi?id=409210
+-sunspider-0.9.1/.*/string-tagcloud ,.*       ,,skip, contains eval
+-
+-# util file for language tests
+-language/string/timetest, .*,, skip, included in test files
+-
+-# util files for v8 tests
+-v8/base,         .*,, skip, included by test files
+-v8/run ,         .*,, skip, file used to run entire suite at once
+-v8.*/.*/base,    .*,, skip, included by test files
+-v8.*/.*/run ,    .*,, skip, file used to run entire suite at once
+-
+-# util files for jsmicro tests
+-jsmicro/generate-drivers , .* ,, skip , run manually to generate driver files during development
+-
+-asmicro/driver, .* ,, skip, included by test files
+-asmicro/float.*, .*,, skip, skip the float asmicro testcases until float is enabled by default
+-
+diff -r 5571cf86fc68 test/util/runtestBase.py
+--- a/test/util/runtestBase.py	Tue Jan 29 13:37:51 2013 -0800
++++ b/test/util/runtestBase.py	Wed Feb 20 11:05:08 2013 -0800
+@@ -112,7 +112,7 @@
      sourceExt = '.as'
      supportFolderExt = '_support'
      testconfig = 'testconfig.txt'
@@ -137,15 +217,7 @@ diff -r f5191c18b0e4 test/util/runtestBase.py
      vmargs = ''
      vmtype = ''
      aotsdk = None
-@@ -265,6 +265,7 @@
-         except:
-             self.usage(2)
- 
-+        print("parseOptions() args=" + str(self.args))
-         if not self.args:
-             self.args = ['.']
-         for o, v in opts:
-@@ -669,7 +670,7 @@
+@@ -671,7 +671,7 @@
                  newargs.append(convertFromCygwin(t).strip())
              self.args = newargs
  
@@ -154,7 +226,7 @@ diff -r f5191c18b0e4 test/util/runtestBase.py
              self.checkExecutable(self.avm, 'AVM environment variable or --avm must be set to avmplus')
  
      def createOutputFile(self):
-@@ -696,11 +697,13 @@
+@@ -698,11 +698,13 @@
              for a in startDir:
                  newstartDir.append(self.altsearchpath+a)
              startDir=startDir+newstartDir
@@ -168,15 +240,24 @@ diff -r f5191c18b0e4 test/util/runtestBase.py
          tests = [a for a in startDir if isfile(a) and self.istest(a, fileExtentions)]
          for a in [d for d in startDir if isdir(d) and not (basename(d) in self.exclude)]:
              for d, dirs, files in walk(a, followlinks=True):
-@@ -1632,6 +1635,7 @@
+@@ -791,7 +793,7 @@
+                 # Do a regex search if there are regex chars in the key
+                 if re.search('^'+k+'$', root):
+                     match = True
+-                
++
+             if match:
+                 for k2 in self.settings[k].keys():
+                     if k2 in settings:
+@@ -1667,6 +1669,7 @@
              self.lock.release()
  
      def run_pipe(self, cmd, outputCalls=None, envVars=None):
-+#        print("cmd="+cmd)
++        #print("cmd="+cmd)
          # run a command and return a tuple of (output, stdErr, exitCode)
          if outputCalls != None:
              outputCalls.append((self.verbose_print,(cmd,)))
-@@ -1925,6 +1929,9 @@
+@@ -1967,6 +1970,9 @@
  
      def getAvmVersion(self, vm=None, txt=None):
          '''Pull the avm version out of the vm info or description string if provided.'''

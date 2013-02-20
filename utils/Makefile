@@ -45,6 +45,7 @@ SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
 APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
 
 AVM2_HOME = ../src/avm2
+AVMSHELL = avmshell
 
 default:
 	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
@@ -57,20 +58,14 @@ $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
-	-rm -rf $(TAMARIN_HOME)/bin
+	rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
-	hg revert -r f5191c18b0e4 --all   # get a stable version
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
-	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
-
-patch-tamarin:
+	cd $(TAMARIN_HOME) hg revert -r f5191c18b0e4 --all   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
@@ -90,7 +85,7 @@ run-tamarin-ecma3-tests:
 	cd $(TAMARIN_HOME)/test/acceptance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway ecma3
 
 run-tamarin-performance:
-	cd $(TAMARIN_HOME)/test/performance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway
+	cd $(TAMARIN_HOME)/test/performance; ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:
 	-rm -rf $(JSSHELL_HOME)
