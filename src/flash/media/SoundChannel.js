@@ -71,6 +71,7 @@ var SoundChannelDefinition = (function () {
                     'type playback is not supported by the browser');
         return;
       }
+      element.preload = 'metadata'; // for mobile devices
       element.loop = loops > 0; // starts loop played if at least one is specified
       element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
       element.addEventListener("loadeddata", function loaded() {
