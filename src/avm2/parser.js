@@ -192,12 +192,21 @@ var Trait = (function () {
     }
 
     if (this.attributes & ATTR_Metadata) {
-      var traitMetadata = {};
+      var traitMetadata;
       for (var i = 0, j = stream.readU30(); i < j; i++) {
         var md = metadata[stream.readU30()];
+        if (md.tagName === "__go_to_definition_help" ||
+            md.tagName === "__go_to_ctor_definition_help") {
+          continue;
+        }
+        if (!traitMetadata) {
+          traitMetadata = {};
+        }
         traitMetadata[md.tagName] = md;
       }
-      this.metadata = traitMetadata;
+      if (traitMetadata) {
+        this.metadata = traitMetadata;
+      }
     }
   }
 
