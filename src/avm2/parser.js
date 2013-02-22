@@ -21,7 +21,8 @@ var AbcStream = (function () {
       return this.bytes[this.pos++];
     },
     readU8s: function(count) {
-      var b = this.bytes.subarray(this.pos, this.pos + count);
+      var b = new Uint8Array(count);
+      b.set(this.bytes.subarray(this.pos, this.pos + count), 0);
       this.pos += count;
       return b;
     },
