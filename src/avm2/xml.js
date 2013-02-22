@@ -368,3 +368,4 @@ function QNameClass(runtime, scope, instance, baseClass) {
   };
   return c;
 };
+

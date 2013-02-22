@@ -66,7 +66,7 @@ install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
-	cd $(TAMARIN_HOME) hg revert -r 9e56a8e5b17c --all   # get a stable version
+	cd $(TAMARIN_HOME) hg revert -r 2b38aa82c803 --all   # get a stable version
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-108-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
