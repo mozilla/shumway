@@ -1,11 +1,13 @@
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
   var m = transform;
   if (m.a * m.d == m.b * m.c) {
-    // object is invisible -- abort drawing (also workaround for bug 844184)
-    return;
+    // Workaround for bug 844184 -- the object is invisible
+    ctx.closePath();
+    ctx.rect(0, 0, 0, 0);
+    ctx.clip();
+  } else {
+    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
   }
-
-  ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
   if (cxform) {
     // We only support alpha channel transformation for now
