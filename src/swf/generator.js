@@ -184,7 +184,7 @@ function generateParser(struct) {
   var args = ['$bytes', '$stream', '$'];
   if (arguments.length > 1)
     push.apply(args, slice.call(arguments, 1));
-  return eval(
+  return (1, eval)(
     '(function(' + args.join(',') + '){\n' +
       '$||($={})\n' +
       productions.join('\n') + '\n' +
