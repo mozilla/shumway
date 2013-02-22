@@ -1,5 +1,10 @@
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
   var m = transform;
+  if (m.a * m.d == m.b * m.c) {
+    // object is invisible -- abort drawing (also workaround for bug 844184)
+    return;
+  }
+
   ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
 
   if (cxform) {
