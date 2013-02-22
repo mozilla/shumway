@@ -238,15 +238,6 @@ diff -r 5571cf86fc68 test/util/runtestBase.py
              if match:
                  for k2 in self.settings[k].keys():
                      if k2 in settings:
-@@ -1249,7 +1251,7 @@
-                 self.compile_test(test)
-                 if self.ascOutputOnly:
-                     continue  # no .abc created
--                if not exists(testdir+".abc"):
-+                if not exists(testdir+".abc") and self.aotsdk:
-                     print("ERROR abc files %s.abc not created" % (testdir))
-                     self.ashErrors.append("abc files %s.abc not created" % (testdir))
-                     continue
 @@ -1667,6 +1669,7 @@
              self.lock.release()
  
