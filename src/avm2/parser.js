@@ -5,6 +5,8 @@ var AbcStream = (function () {
     this.pos = 0;
   }
 
+  var resultBuffer = new Int32Array(256);
+
   abcStream.prototype = {
     get position() {
       return this.pos;
@@ -87,30 +89,35 @@ var AbcStream = (function () {
       return result;
     },
     readUTFString: function(length) {
-      var end = this.pos + length;
+      var pos = this.pos;
+      var end = pos + length;
+      var bytes = this.bytes;
       var i = 0;
-      var result = new Int32Array(length);
-      while(this.pos < end) {
-        var c = this.bytes[this.pos++];
+      if (!resultBuffer || resultBuffer.length < length) {
+        resultBuffer = new Int32Array(length * 2);
+      }
+      var result = resultBuffer;
+      while(pos < end) {
+        var c = bytes[pos++];
         if (c <= 0x7f) {
           result[i++] = c;
         }
         else if (c >= 0xc0) { // multibyte
-          var code;
+          var code = 0;
           if (c < 0xe0) { // 2 bytes
             code = ((c & 0x1f) << 6) |
-                   (this.bytes[this.pos++] & 0x3f);
+                   (bytes[pos++] & 0x3f);
           }
           else if (c < 0xf0) { // 3 bytes
             code = ((c & 0x0f) << 12) |
-                   ((this.bytes[this.pos++] & 0x3f) << 6) |
-                   (this.bytes[this.pos++] & 0x3f);
+                   ((bytes[pos++] & 0x3f) << 6) |
+                   (bytes[pos++] & 0x3f);
           } else { // 4 bytes
             // turned into two characters in JS as surrogate pair
             code = (((c & 0x07) << 18) |
-                    ((this.bytes[this.pos++] & 0x3f) << 12) |
-                    ((this.bytes[this.pos++] & 0x3f) << 6) |
-                    (this.bytes[this.pos++] & 0x3f)) - 0x10000;
+                    ((bytes[pos++] & 0x3f) << 12) |
+                    ((bytes[pos++] & 0x3f) << 6) |
+                    (bytes[pos++] & 0x3f)) - 0x10000;
             // High surrogate
             result[i++] = ((code & 0xffc00) >>> 10) + 0xd800;
             // Low surrogate
@@ -119,6 +126,7 @@ var AbcStream = (function () {
           result[i++] = code;
         } // Otherwise it's an invalid UTF8, skipped.
       }
+      this.pos = pos;
       return String.fromCharCode.apply(null, result.subarray(0, i));
     }
   };
