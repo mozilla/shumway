@@ -233,7 +233,6 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
     };
 
     constructor.prototype.build = function build() {
-
       var analysis = this.methodInfo.analysis;
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
@@ -1121,6 +1120,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
     Counter.count("Compiler: Compiled Methods");
 
     Timer.start("Compiler");
+
+    methodInfo.analysis.markLoops();
 
     if (enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?

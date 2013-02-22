@@ -962,10 +962,6 @@ var Runtime = (function () {
       return bindScope(mi.compiledMethod, scope);
     }
 
-    if (!mi.analysis.restructureControlFlow()) {
-      return interpretedMethod(this.interpreter, mi, scope);
-    }
-
     var parameters = mi.parameters.map(function (p) {
       return PARAMETER_PREFIX + p.name;
     });
