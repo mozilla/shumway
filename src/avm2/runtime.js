@@ -994,7 +994,7 @@ var Runtime = (function () {
       print (fnSource);
     }
     if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
-      mi.compiledMethod = eval('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+      mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
     } else {
       mi.compiledMethod = new Function(parameters, body);
     }
