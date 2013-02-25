@@ -85,7 +85,7 @@ CallExpression.prototype.transform = function (o) {
   if (this.callee instanceof Identifier) {
     // Remove assertions.
     if (this.callee.name === "assert") {
-      return null;
+      return new Literal(true);
     }
   }
   this.arguments = this.arguments.map(function (x) {
@@ -117,6 +117,9 @@ ExpressionStatement.prototype.transform = function (o) {
     node = T.lift(node);
     node = node.transform(o);
     return new BlockStatement(node.body);
+  } else if (this.expression instanceof Literal &&
+             this.expression.value === "use strict") {
+    return null;
   }
   return this;
 };
