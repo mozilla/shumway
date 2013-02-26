@@ -199,9 +199,9 @@ function RequestListener(actions) {
 RequestListener.prototype.receive = function(event) {
   var message = event.target;
   var doc = message.ownerDocument;
-  var action = message.getUserData('action');
-  var data = message.getUserData('data');
-  var sync = message.getUserData('sync');
+  var action = event.detail.action;
+  var data = event.detail.data;
+  var sync = event.detail.sync;
   var actions = this.actions;
   if (!(action in actions)) {
     log('Unknown action: ' + action);
@@ -209,20 +209,28 @@ RequestListener.prototype.receive = function(event) {
   }
   if (sync) {
     var response = actions[action].call(this.actions, data);
-    message.setUserData('response', response, null);
+    var detail = event.detail;
+    detail.__exposedProps__ = {response: 'r'};
+    detail.response = response;
   } else {
     var response;
-    if (!message.getUserData('callback')) {
+    if (!event.detail.callback) {
       doc.documentElement.removeChild(message);
       response = null;
     } else {
       response = function sendResponse(response) {
-        message.setUserData('response', response, null);
+        try {
+          var listener = doc.createEvent('CustomEvent');
+          listener.initCustomEvent('shumway.response', true, false,
+                                   {response: response,
+                                    __exposedProps__: {response: 'r'}});
 
-        var listener = doc.createEvent('HTMLEvents');
-        listener.initEvent('shumway.response', true, false);
-        return message.dispatchEvent(listener);
-      }
+          return message.dispatchEvent(listener);
+        } catch (e) {
+          // doc is no longer accessible because the requestor is already
+          // gone. unloaded content cannot receive the response anyway.
+        }
+      };
     }
     actions[action].call(this.actions, data, response);
   }
