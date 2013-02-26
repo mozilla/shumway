@@ -1,5 +1,5 @@
 /**
- * Shumway AVM Build Script
+ * Shumway Build Script
  *
  * This script performs several source level transformations:
  * - Expands "load(file);" expression statements.
@@ -18,15 +18,18 @@ var spawn = require('child_process').spawn;
 global.assert = function () { };
 global.release = false;
 
-var options = require(__dirname + "/../options.js");
+var shumwayRoot = __dirname + "/../../";
+var amv2Root = shumwayRoot + "src/avm2/";
+
+var options = require(amv2Root + "options.js");
 
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
 var OptionSet = options.OptionSet;
 
-var esprima = require(__dirname + "/../compiler/lljs/src/esprima.js");
-var escodegen = require(__dirname + "/../compiler/lljs/src/escodegen.js");
-var estransform = require(__dirname + "/../compiler/lljs/src/estransform.js");
+var esprima = require(amv2Root + "compiler/lljs/src/esprima.js");
+var escodegen = require(amv2Root + "compiler/lljs/src/escodegen.js");
+var estransform = require(amv2Root + "compiler/lljs/src/estransform.js");
 
 // Import nodes
 var T = estransform;
@@ -44,6 +47,7 @@ var VariableDeclaration = T.VariableDeclaration;
 var VariableDeclarator = T.VariableDeclarator;
 var ArrayExpression = T.ArrayExpression;
 var BinaryExpression = T.BinaryExpression;
+var LogicalExpression = T.LogicalExpression;
 var ObjectExpression = T.ObjectExpression;
 var Property = T.Property;
 
@@ -55,6 +59,8 @@ var buildOptions = new OptionSet("Build Options");
 
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
 var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
+
+var debug = buildOptions.register(new Option("d", "debug", "boolean", false, "debug mode"));
 
 argumentParser.addBoundOptionSet(buildOptions);
 
@@ -101,7 +107,12 @@ Identifier.prototype.transform = function(o) {
   return this;
 };
 
+
 ExpressionStatement.prototype.transform = function (o) {
+  if (this.expression instanceof CallExpression &&
+      this.expression.callee.name === "assert") {
+    return null;
+  }
   this.expression = this.expression.transform(o);
   if (this.expression === null) {
     return null;
@@ -111,7 +122,10 @@ ExpressionStatement.prototype.transform = function (o) {
       this.expression.callee.name === "load" &&
       this.expression.arguments.length === 1 &&
       this.expression.arguments[0] instanceof Literal) {
-    var path = __dirname + "/" + this.expression.arguments[0].value;
+    var path = this.expression.arguments[0].value;
+    if (path[0] !== "/") {
+      path = __dirname + "/" + path;
+    }
     // console.info("Processing: " + path);
     var node = esprima.parse(readFile(path));
     node = T.lift(node);
@@ -120,6 +134,30 @@ ExpressionStatement.prototype.transform = function (o) {
   } else if (this.expression instanceof Literal &&
              this.expression.value === "use strict") {
     return null;
+  }
+  return this;
+};
+
+BinaryExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(o);
+  this.right = this.right.transform(o);
+  if (this.operator === "+" && this.left instanceof Literal &&
+      this.right instanceof Literal) {
+    return new Literal(this.left.value + this.right.value);
+  } else if (this.operator === "||" &&
+             this.left instanceof Literal &&
+             this.left.value === true) {
+    return this.left;
+  }
+  return this;
+};
+
+LogicalExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(o);
+  this.right = this.right.transform(o);
+  if (this.operator === "||" && this.left instanceof Literal &&
+      this.left.value === true) {
+    return this.left;
   }
   return this;
 };
@@ -147,6 +185,16 @@ node = T.lift(node);
 var constants = {
   // "$X": new Literal(true)
 };
+
+process.env["SHUMWAY_ROOT"] = shumwayRoot;
+
+// Make environment variables available.
+for (var key in process.env) {
+  constants["$" + key] = new Literal(process.env[key]);
+}
+
+constants["$DEBUG"] = new Literal(debug.value);
+constants["$RELEASE"] = new Literal(!debug.value);
 
 node = node.transform({constants: constants, scopePath: [0]});
 
@@ -196,6 +244,11 @@ if (closure.value) {
   }
   var closureOptions = ["-jar", process.env["CLOSURE"]];
   closureOptions.push("--accept_const_keyword");
+
+  // There's some bug in Closure that gets triggered if we don't use pretty printing.
+  closureOptions.push("--formatting");
+  closureOptions.push("PRETTY_PRINT");
+
   closureOptions.push("--language_in");
   closureOptions.push("ECMASCRIPT5");
   closureOptions.push("--compilation_level");
