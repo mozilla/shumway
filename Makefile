@@ -22,7 +22,7 @@ install-libs:
 	git submodule update
 
 install-utils: check-system
-	make -C utils/ install-asc install-tamarin install-js install-apparat install-node-modules
+	make -C utils/ install-asc install-closure install-tamarin install-js install-apparat install-node-modules
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 

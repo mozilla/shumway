@@ -1,3 +1,6 @@
+UTILS_HOME = ../../utils
+CLOSURE ?= $(UTILS_HOME)/cc.jar
+
 # Just builds a ff extension
 
 VERSION_BASELINE=3a85f8698233b9567be5
