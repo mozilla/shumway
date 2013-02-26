@@ -101,7 +101,7 @@ CallExpression.prototype.transform = function (o) {
 };
 
 Identifier.prototype.transform = function(o) {
-  if (o.constants && o.constants.hasOwnProperty(this.name)) {
+  if (!o.inVariableDeclaration && o.constants && o.constants.hasOwnProperty(this.name)) {
     return o.constants[this.name];
   }
   return this;
@@ -158,6 +158,14 @@ LogicalExpression.prototype.transform = function (o) {
   if (this.operator === "||" && this.left instanceof Literal &&
       this.left.value === true) {
     return this.left;
+  }
+  return this;
+};
+
+VariableDeclarator.prototype.transform = function (o) {
+  this.id = this.id.transform(Object.create({inVariableDeclarator: true}, o));
+  if (this.init) {
+    this.init = this.init.transform(o);
   }
   return this;
 };
