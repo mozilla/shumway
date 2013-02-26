@@ -62,7 +62,9 @@ $(ASC_JAR):
 install-closure: $(CLOSURE_JAR)
 
 $(CLOSURE_JAR):
-	wget $(CLOSURE_URL) -O $(CLOSURE_JAR)
+	wget $(CLOSURE_URL) -O closure.zip
+	unzip -o closure.zip
+	mv compiler.jar cc.jar
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 	rm -rf $(TAMARIN_HOME)/bin

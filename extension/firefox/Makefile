@@ -63,10 +63,10 @@ build: clean
 	# Pre-compile tag handlers
 	../../utils/jsshell/js generate-tag-handlers.js > build/content/swf/handlers.js
 	# Build Loader.js, since it's loaded in a worker.
-	node build.js ../../src/flash/display/Loader.js -c s > build/content/flash/display/Loader.js
+	CLOSURE=$(CLOSURE) node build.js ../../src/flash/display/Loader.js -c s > build/content/flash/display/Loader.js
 	# Package all the source files into two files.
-	node build.js content/web/scripts.js -c s > build/content/shumway.js
-	node build.js content/web/scripts-worker.js > build/content/shumway-worker.js
+	CLOSURE=$(CLOSURE) node build.js content/web/scripts.js -c s > build/content/shumway.js
+	CLOSURE=$(CLOSURE) node build.js content/web/scripts-worker.js > build/content/shumway-worker.js
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Packaging XPI file
