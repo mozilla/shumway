@@ -1,5 +1,11 @@
 /**
- * Package file that includes all Shumway files.
+ * Package file that includes all Shumway files. This packaging system is a bit magical.
+ * We use esprima to parse the sources and then estransform to apply a series of AST
+ * level transformations. First we fold identifiers prefixed by "$". These are usually
+ * environment variables. Next, we fold simple binary expression like "+" which then let
+ * us evaluate the argument to the load call expressions below. For these we include the
+ * source file and recurse.
+ *
  */
 
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
@@ -71,67 +77,21 @@ load($SHUMWAY_ROOT + "src/avm2/vm.js");
 
 
 load($SHUMWAY_ROOT + "extension/firefox/content/web/avm2utils.js");
-
 load($SHUMWAY_ROOT + "src/flash/util.js");
 
+// Manually add directories here, this doesn't get automatically updated by
+// make update-flash-refs.
 
-load($SHUMWAY_ROOT + "src/flash/display/Bitmap.js");
-load($SHUMWAY_ROOT + "src/flash/display/BitmapData.js");
-load($SHUMWAY_ROOT + "src/flash/display/DisplayObject.js");
-load($SHUMWAY_ROOT + "src/flash/display/DisplayObjectContainer.js");
-load($SHUMWAY_ROOT + "src/flash/display/Graphics.js");
-load($SHUMWAY_ROOT + "src/flash/display/InteractiveObject.js");
-load($SHUMWAY_ROOT + "src/flash/display/Loader.js");
-load($SHUMWAY_ROOT + "src/flash/display/LoaderInfo.js");
-load($SHUMWAY_ROOT + "src/flash/display/MorphShape.js");
-load($SHUMWAY_ROOT + "src/flash/display/MovieClip.js");
-load($SHUMWAY_ROOT + "src/flash/display/Shape.js");
-load($SHUMWAY_ROOT + "src/flash/display/SimpleButton.js");
-load($SHUMWAY_ROOT + "src/flash/display/Sprite.js");
-load($SHUMWAY_ROOT + "src/flash/display/Stage.js");
-load($SHUMWAY_ROOT + "src/flash/events/Event.js");
-load($SHUMWAY_ROOT + "src/flash/events/EventDispatcher.js");
-load($SHUMWAY_ROOT + "src/flash/events/KeyboardEvent.js");
-load($SHUMWAY_ROOT + "src/flash/events/MouseEvent.js");
-load($SHUMWAY_ROOT + "src/flash/events/TextEvent.js");
-load($SHUMWAY_ROOT + "src/flash/events/TimerEvent.js");
-load($SHUMWAY_ROOT + "src/flash/external/ExternalInterface.js");
-load($SHUMWAY_ROOT + "src/flash/filters/BevelFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/BitmapFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/BlurFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/ColorMatrixFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/ConvolutionFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/DisplacementMapFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/DropShadowFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/GlowFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/GradientBevelFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/GradientGlowFilter.js");
-load($SHUMWAY_ROOT + "src/flash/filters/ShaderFilter.js");
-load($SHUMWAY_ROOT + "src/flash/geom/ColorTransform.js");
-load($SHUMWAY_ROOT + "src/flash/geom/Matrix.js");
-load($SHUMWAY_ROOT + "src/flash/geom/Point.js");
-load($SHUMWAY_ROOT + "src/flash/geom/Rectangle.js");
-load($SHUMWAY_ROOT + "src/flash/geom/Transform.js");
-load($SHUMWAY_ROOT + "src/flash/media/ID3Info.js");
-load($SHUMWAY_ROOT + "src/flash/media/Sound.js");
-load($SHUMWAY_ROOT + "src/flash/media/SoundChannel.js");
-load($SHUMWAY_ROOT + "src/flash/media/SoundMixer.js");
-load($SHUMWAY_ROOT + "src/flash/media/SoundTransform.js");
-load($SHUMWAY_ROOT + "src/flash/media/Video.js");
-load($SHUMWAY_ROOT + "src/flash/net/NetConnection.js");
-load($SHUMWAY_ROOT + "src/flash/net/NetStream.js");
-load($SHUMWAY_ROOT + "src/flash/net/Responder.js");
-load($SHUMWAY_ROOT + "src/flash/net/URLLoader.js");
-load($SHUMWAY_ROOT + "src/flash/net/URLRequest.js");
-load($SHUMWAY_ROOT + "src/flash/net/URLStream.js");
-load($SHUMWAY_ROOT + "src/flash/system/Capabilities.js");
-load($SHUMWAY_ROOT + "src/flash/system/FSCommand.js");
-load($SHUMWAY_ROOT + "src/flash/system/System.js");
-load($SHUMWAY_ROOT + "src/flash/text/Font.js");
-load($SHUMWAY_ROOT + "src/flash/text/StaticText.js");
-load($SHUMWAY_ROOT + "src/flash/text/TextField.js");
-load($SHUMWAY_ROOT + "src/flash/ui/Keyboard.js");
-load($SHUMWAY_ROOT + "src/flash/ui/Mouse.js");
-load($SHUMWAY_ROOT + "src/flash/utils/Timer.js");
+load($SHUMWAY_ROOT + "src/flash/display");
+load($SHUMWAY_ROOT + "src/flash/events");
+load($SHUMWAY_ROOT + "src/flash/external");
+load($SHUMWAY_ROOT + "src/flash/filters");
+load($SHUMWAY_ROOT + "src/flash/geom");
+load($SHUMWAY_ROOT + "src/flash/media");
+load($SHUMWAY_ROOT + "src/flash/net");
+load($SHUMWAY_ROOT + "src/flash/system");
+load($SHUMWAY_ROOT + "src/flash/text");
+load($SHUMWAY_ROOT + "src/flash/ui");
+load($SHUMWAY_ROOT + "src/flash/utils");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");

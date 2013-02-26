@@ -84,6 +84,19 @@ if (!file.value) {
   process.exit();
 }
 
+function listJSFiles(dir, prefix, output) {
+  var files = fs.readdirSync(dir);
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var s = fs.statSync(path.join(dir, file));
+    if (s.isDirectory()) {
+      listJSFiles(path.join(dir, file), prefix + file + '/', output);
+    } else if (s.isFile() && /\.js$/i.test(file)) {
+      output.push(prefix + file);
+    }
+  }
+}
+
 Node.prototype.transform = T.makePass("transform", "transformNode");
 
 CallExpression.prototype.transform = function (o) {
@@ -126,11 +139,23 @@ ExpressionStatement.prototype.transform = function (o) {
     if (path[0] !== "/") {
       path = __dirname + "/" + path;
     }
-    // console.info("Processing: " + path);
-    var node = esprima.parse(readFile(path));
-    node = T.lift(node);
-    node = node.transform(o);
-    return new BlockStatement(node.body);
+    if(fs.statSync(path).isDirectory()) {
+      var list = [];
+      listJSFiles(path, '', list);
+      list.sort();
+      return new BlockStatement(list.map(function (file) {
+        var node = esprima.parse(readFile(path + "/" + file));
+        node = T.lift(node);
+        node = node.transform(o);
+        return new BlockStatement(node.body);
+      }));
+    } else {
+      // console.info("Processing: " + path);
+      var node = esprima.parse(readFile(path));
+      node = T.lift(node);
+      node = node.transform(o);
+      return new BlockStatement(node.body);
+    }
   } else if (this.expression instanceof Literal &&
              this.expression.value === "use strict") {
     return null;
