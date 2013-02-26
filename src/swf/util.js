@@ -78,8 +78,7 @@ function adler32(data) {
 
 // Some browser feature testing
 (function functionNameSupport() {
-  function t() {}
-  if (t.name === 't') {
+  if (eval("function t() {} t.name === 't'")) {
     return; // function name feature is supported
   }
   Object.defineProperty(Function.prototype, 'name', {
