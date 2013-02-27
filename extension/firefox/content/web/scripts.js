@@ -55,6 +55,10 @@ var systemOptions = new OptionSet("System Options");
 var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 
+window.print = function(s) {
+  console.log(s);
+};
+
 load($SHUMWAY_ROOT + "src/avm2/constants.js");
 load($SHUMWAY_ROOT + "src/avm2/errors.js");
 load($SHUMWAY_ROOT + "src/avm2/opcodes.js");
