@@ -1,3 +1,4 @@
+/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 /**
  * Shumway ships with its own version of the AS3 builtin library, which
  * maintains interface compatibility with the stock builtin library, viz. the
@@ -377,6 +378,7 @@ var natives = (function () {
    * String.as
    */
   function StringClass(runtime, scope, instance, baseClass) {
+
     var c = new runtime.domain.system.Class("String", String, C(String));
     c.extendBuiltin(baseClass);
 
@@ -401,13 +403,18 @@ var natives = (function () {
         substring: Sp.substring,
         toLowerCase: Sp.toLowerCase,
         toLocaleLowerCase: Sp.toLocaleLowerCase,
-        toUpperCase: Sp.toUpperCase,
+        toUpperCase: function () {
+          print("native toUpperCase()")
+          this.toUpperCase = Sp.toUpperCase;
+          return this.toUpperCase()
+        },
         toLocaleUpperCase: Sp.toLocaleUpperCase,
         toString: Sp.toString,
         valueOf: Sp.valueOf
       },
       static: String
     };
+
     c.isInstance = function (value) {
       return value !== null && value !== undefined && typeof value.valueOf() === "string";
     };
@@ -1356,7 +1363,8 @@ function getNative(p) {
   for (var i = 0, j = chain.length; i < j; i++) {
     v = v && v[chain[i]];
   }
+
   // TODO: This assertion should always pass, find out why it doesn't.
-  // release || assert(v, "getNative(" + p + ") not found.");
+  release || assert(v, "getNative(" + p + ") not found.");
   return v;
 }
