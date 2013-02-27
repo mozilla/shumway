@@ -29,15 +29,13 @@
             */
           requestSync: function(action, data) {
             var request = document.createTextNode('');
-            request.setUserData('action', action, null);
-            request.setUserData('data', data, null);
-            request.setUserData('sync', true, null);
             document.documentElement.appendChild(request);
 
-            var sender = document.createEvent('Events');
-            sender.initEvent('shumway.message', true, false);
+            var sender = document.createEvent('CustomEvent');
+            sender.initCustomEvent('shumway.message', true, false,
+              {action: action, data: data, sync: true});
             request.dispatchEvent(sender);
-            var response = request.getUserData('response');
+            var response = sender.detail.response;
             document.documentElement.removeChild(request);
             return response;
           },
@@ -59,8 +57,7 @@
 
               document.addEventListener('shumway.response', function listener(event) {
                 var node = event.target,
-                    callback = node.getUserData('callback'),
-                    response = node.getUserData('response');
+                    response = event.detail.response;
 
                 document.documentElement.removeChild(node);
 
@@ -70,8 +67,9 @@
             }
             document.documentElement.appendChild(request);
 
-            var sender = document.createEvent('HTMLEvents');
-            sender.initEvent('shumway.message', true, false);
+            var sender = document.createEvent('CustomEvent');
+            sender.initCustomEvent('shumway.message', true, false,
+              {action: action, data: data, sync: false});
             return request.dispatchEvent(sender);
           }
         };
