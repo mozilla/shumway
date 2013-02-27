@@ -136,7 +136,7 @@ ExpressionStatement.prototype.transform = function (o) {
       this.expression.arguments.length === 1 &&
       this.expression.arguments[0] instanceof Literal) {
     var path = this.expression.arguments[0].value;
-    if (path[0] !== "/") {
+    if (path[0] !== "/" && path[1] !== ':') {
       path = __dirname + "/" + path;
     }
     if(fs.statSync(path).isDirectory()) {
