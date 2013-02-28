@@ -27,7 +27,7 @@ install-utils: check-system
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
 link-utils:
-	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/apparat $(BASE)/utils/node_modules utils/
+	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/apparat $(BASE)/utils/node_modules utils/
 
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
