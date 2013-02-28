@@ -9,6 +9,8 @@ if (environment.SHUMWAY_HOME) {
 
 load(homePath + "lib/DataView.js/DataView.js");
 
+var $DEBUG = true, $RELEASE = false;
+
 /**
  * Load AVM2 Dependencies
  */

@@ -565,8 +565,8 @@ function isPrimitiveType(x) {
   return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
 }
 
-function sliceArguments(arguments, offset) {
-  return Array.prototype.slice.call(arguments, offset);
+function sliceArguments(args, offset) {
+  return Array.prototype.slice.call(args, offset);
 }
 
 function getProperty(obj, mn) {

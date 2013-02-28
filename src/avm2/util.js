@@ -52,7 +52,7 @@ function assertNotImplemented(condition, message) {
 }
 
 function warning(message) {
-  console.warn(message);
+  release || console.warn(message);
 }
 
 function notImplemented(message) {

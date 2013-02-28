@@ -44,18 +44,33 @@ var BinaryFileReader = (function binaryFileReader() {
 var avm2;
 
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+  console.time("createAVM2");
   assert (builtinPath);
+  avm2 = new AVM2(sysMode, appMode);
+  var builtinAbc, libraryAbc;
+  // Batch I/O requests.
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    avm2 = new AVM2(sysMode, appMode);
-    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    if (libraryPath) {
-      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
-        next(avm2);
-      });
-    } else {
-      next(avm2);
-    }
+    builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
+    executeAbc();
   });
+  if (libraryPath) {
+    new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+      libraryAbc = new AbcFile(new Uint8Array(buffer), libraryPath);
+      executeAbc();
+    });
+  }
+  function executeAbc() {
+    if (libraryPath) {
+      if (!builtinAbc || !libraryAbc) {
+        return;
+      }
+    }
+    assert (builtinAbc);
+    avm2.systemDomain.executeAbc(builtinAbc);
+    if (libraryAbc) {
+      avm2.systemDomain.executeAbc(libraryAbc);
+    }
+    console.timeEnd("createAVM2");
+    next(avm2);
+  }
 }
-
