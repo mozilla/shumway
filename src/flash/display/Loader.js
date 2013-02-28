@@ -1,3 +1,5 @@
+var $RELEASE = false;
+
 var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
   var LOADER_PATH = 'flash/display/Loader.js';
@@ -26,6 +28,12 @@ var LoaderDefinition = (function () {
     '../../swf/sound.js',
     '../../swf/text.js'
   ];
+
+  if ($RELEASE) {
+    WORKER_SCRIPTS = [
+      '../../shumway-worker.js'
+    ];
+  }
 
   // Note that loader is null when calling from inside the worker, as AVM2 is
   // only initialized on the main thread.

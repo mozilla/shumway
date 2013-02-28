@@ -22,12 +22,12 @@ install-libs:
 	git submodule update
 
 install-utils: check-system
-	make -C utils/ install-asc install-tamarin install-js install-apparat install-node-modules
+	make -C utils/ install-asc install-closure install-tamarin install-js install-apparat install-node-modules
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
 link-utils:
-	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/apparat $(BASE)/utils/node_modules utils/
+	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/apparat $(BASE)/utils/node_modules utils/
 
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
@@ -42,7 +42,6 @@ build-web:
 	make -C web/ build
 
 update-flash-refs:
-	node utils/update-flash-refs.js extension/firefox/content/web/viewer.html src/flash
 	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
 	node utils/update-flash-refs.js test/harness/slave.html src/flash

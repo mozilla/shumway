@@ -16,7 +16,8 @@ endif
 TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
-
+CLOSURE_JAR = ./cc.jar
+CLOSURE_URL = http://closure-compiler.googlecode.com/files/compiler-latest.zip
 
 ASC_JAR = ./asc.jar
 ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
@@ -49,7 +50,7 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-asc|install-tamarin|install-js|install-apparat|"
+	@echo "run: make [install-asc|install-closure|install-tamarin|install-js|install-apparat|"
 	@echo "           install-swfdec|install-node-modules|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
@@ -57,6 +58,13 @@ install-asc: $(ASC_JAR)
 
 $(ASC_JAR):
 	wget $(ASC_URL) -O $(ASC_JAR)
+
+install-closure: $(CLOSURE_JAR)
+
+$(CLOSURE_JAR):
+	wget $(CLOSURE_URL) -O closure.zip
+	unzip -o closure.zip compiler.jar
+	mv compiler.jar cc.jar
 
 install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 	rm -rf $(TAMARIN_HOME)/bin

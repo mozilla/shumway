@@ -48,7 +48,7 @@ var BitmapDataDefinition = (function () {
     fillRect : function(rect, color) {
       this._checkCanvas();
       if (!this._transparent) {
-        color |= 0xff000000 >>> 0;
+        color |= 0xff000000;
       }
       var ctx = this._ctx;
       ctx.fillStyle = ARGBtoCSSColor(color);

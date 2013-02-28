@@ -721,34 +721,34 @@
   })();
 
   var Call = (function () {
-    function constructor(control, store, callee, object, arguments) {
+    function constructor(control, store, callee, object, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
       assert (isValueOrNull(object));
       assert (store === null || isStore(store));
-      assert (isArray(arguments));
+      assert (isArray(args));
       this.control = control;
       this.callee = callee;
       this.object = object;
       this.store = store;
-      this.arguments = arguments;
+      this.arguments = args;
     }
     constructor.prototype = extend(Value, "Call");
     return constructor;
   })();
 
   var New = (function () {
-    function constructor(control, store, callee, arguments) {
+    function constructor(control, store, callee, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
       assert (isStore(store));
-      assert (isArray(arguments));
+      assert (isArray(args));
       this.control = control;
       this.callee = callee;
       this.store = store;
-      this.arguments = arguments;
+      this.arguments = args;
     }
     constructor.prototype = extend(Value, "New");
     return constructor;

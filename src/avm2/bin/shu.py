@@ -233,7 +233,7 @@ class Reg(Command):
     parser.add_argument('src', nargs="?", default="../tests/regress", help="source .as file")
     parser.add_argument('-force', action='store_true', help="force recompilation of all regression tests")
     args = parser.parse_args(args)
-    print "Compiling Tests"
+    print "Compiling Regression Tests"
 
     tests = [];
     if os.path.isdir(args.src):
@@ -255,6 +255,45 @@ class Reg(Command):
     for test in tests:
       args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, "-in", "../tests/regress/harness.as", test]
       subprocess.call(args)
+
+class BuildTests(Command):
+  def __init__(self):
+    Command.__init__(self, "build-tests")
+
+  def __repr__(self):
+    return self.name
+
+  def execute(self, args):
+    
+    parser = argparse.ArgumentParser(description='Compiles all the source files in the test/ directory using the asc.jar compiler.')
+    parser.add_argument('-force', action='store_true', help="force recompilation of all tests")
+    args = parser.parse_args(args)
+    Reg().execute([])
+    print "Compiling Tests"
+
+    tests = [];
+    # Skip the regress and tamarin directories
+    testDirectories = set(os.walk('../tests').next()[1]) - set(["regress", "tamarin"])
+    for dir in testDirectories:
+      for root, subFolders, files in os.walk("../tests/" + dir):
+        for file in files:
+          if file.endswith(".as"):
+            asFile = os.path.join(root, file)
+            abcFile = os.path.splitext(asFile)[0] + ".abc"
+            compile = args.force
+            if not os.path.exists(abcFile):
+              compile = True
+            elif os.path.getmtime(abcFile) < os.path.getmtime(asFile):
+              compile = True
+            if compile:
+              tests.append(asFile)
+
+    for test in tests:
+      args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, test]
+      print "Compiling " + test
+      subprocess.call(args)
+
+    return
 
 class Avm(Command):
   def __init__(self):
@@ -345,7 +384,7 @@ class Compile(Command):
     self.runAvm(args.src, trace = args.trace, execute = True)
 
 commands = {}
-for command in [Asc(), Avm(), Dis(), Compile(), Reg(), Split()]:
+for command in [Asc(), Avm(), Dis(), Compile(), Reg(), BuildTests(), Split()]:
   commands[str(command)] = command;
 
 parser = argparse.ArgumentParser()
