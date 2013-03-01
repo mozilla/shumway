@@ -101,6 +101,9 @@ function ChromeActions(url, params, referer, window) {
 }
 
 ChromeActions.prototype = {
+  getBoolPref: function (data) {
+    return getBoolPref(data.pref, data.def);
+  },
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
