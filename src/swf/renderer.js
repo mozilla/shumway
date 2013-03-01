@@ -307,6 +307,42 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
                               window.msRequestAnimationFrame ||
                               window.setTimeout;
 
+
+  function renderDummyBall(ball) {
+    var radius = 10;
+    var position = ball.position;
+    var velocity = ball.velocity;
+
+    ctx.beginPath();
+    ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+    ctx.strokeStyle = "green";
+    ctx.stroke();
+
+    var x = position.x + velocity.x;
+    var y = position.y + velocity.y;
+    if (x < radius || x > ctx.canvas.width - radius) {
+      velocity.x *= -1;
+    }
+    if (y < radius || y > ctx.canvas.height - radius) {
+      velocity.y *= -1;
+    }
+    position.x += velocity.x;
+    position.y += velocity.y;
+  }
+
+  var dummyBalls;
+  if (typeof FirefoxCom !== 'undefined') {
+    if (FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
+      dummyBalls = [];
+      for (var i = 0; i < 10; i++) {
+        dummyBalls.push({
+          position: {x: ctx.canvas.width / 2, y: ctx.canvas.height / 2},
+          velocity: {x: 2 * (Math.random() - 0.5), y: 2 * (Math.random() - 0.5)}
+        });
+      }
+    }
+  }
+
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -320,20 +356,25 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       frameTime = now;
       nextRenderAt = frameTime + maxDelay;
 
-      ctx.beginPath();
-
-      stage._callFrameRequested = false;
-      visitContainer(stage, new PreVisitor(ctx));
-      while (stage._callFrameRequested) {
+      if (dummyBalls) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+        dummyBalls.forEach(renderDummyBall);
+      } else {
+        ctx.beginPath();
         stage._callFrameRequested = false;
-        visitContainer(stage, new ScriptExecutionVisitor());
-      }
-      visitContainer(stage, new RenderVisitor(ctx));
-      visitContainer(stage, new PostVisitor());
-      stage._syncCursor();
+        visitContainer(stage, new PreVisitor(ctx));
+        while (stage._callFrameRequested) {
+          stage._callFrameRequested = false;
+          visitContainer(stage, new ScriptExecutionVisitor());
+        }
+        visitContainer(stage, new RenderVisitor(ctx));
+        visitContainer(stage, new PostVisitor());
+        stage._syncCursor();
 
-      if (onAfterFrame) {
-        onAfterFrame();
+        if (onAfterFrame) {
+          onAfterFrame();
+        }
       }
     }
     requestAnimationFrame(draw);
