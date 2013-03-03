@@ -60,6 +60,7 @@ var buildOptions = new OptionSet("Build Options");
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
 var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
 var profileLoad = buildOptions.register(new Option("pl", "profileLoad", "boolean", false, "profile load statements"));
+var foldConstants = buildOptions.register(new Option("fc", "foldConstants", "boolean", false, "folds constants of the form XXX_..."));
 
 var debug = buildOptions.register(new Option("d", "debug", "boolean", false, "debug mode"));
 
@@ -115,7 +116,7 @@ CallExpression.prototype.transform = function (o) {
 };
 
 Identifier.prototype.transform = function(o) {
-  if (!o.inVariableDeclaration && o.constants && o.constants.hasOwnProperty(this.name)) {
+  if (!o.inVariableDeclaration && !o.inAssignment && o.constants && o.constants.hasOwnProperty(this.name)) {
     return o.constants[this.name];
   }
   return this;
@@ -204,13 +205,31 @@ LogicalExpression.prototype.transform = function (o) {
   return this;
 };
 
+function isUpperCase(s) {
+  return s === s.toUpperCase();
+}
+
+function isConstantIdentifier(name) {
+  var i = name.indexOf("_");
+  return i > 0 && isUpperCase(name.substr(0, i));
+}
+
 VariableDeclarator.prototype.transform = function (o) {
   this.id = this.id.transform(Object.create({inVariableDeclarator: true}, o));
   if (this.init) {
     this.init = this.init.transform(o);
+    if (foldConstants.value && isConstantIdentifier(this.id.name)) {
+      constants[this.id.name] = this.init;
+    }
   }
   return this;
 };
+
+AssignmentExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(Object.create({inAssignment: true}, o));
+  this.right = this.right.transform(o);
+  return this;
+}
 
 var functionCounterMap = {};
 
