@@ -312,28 +312,32 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var dummyBalls;
   if (typeof FirefoxCom !== 'undefined' &&
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
-    var radius = 5;
-    var speed = 10;
+    var radius = 10;
+    var speed = 1;
     dummyBalls = [];
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < 10; i++) {
       dummyBalls.push({
-        position: {x: Math.random() * (ctx.canvas.width / scale), y: Math.random() * (ctx.canvas.height / scale)},
+        position: {
+          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scale),
+          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scale)
+        },
         velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
       });
     }
     ctx.fillStyle = "black";
+    ctx.lineWidth = 2;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
     renderDummyBalls = function () {
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.fillStyle = "green";
+      ctx.strokeStyle = "green";
       dummyBalls.forEach(function (ball) {
         var position = ball.position;
         var velocity = ball.velocity;
         ctx.beginPath();
         ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
-        ctx.fill();
+        ctx.stroke();
         var x = (position.x + velocity.x);
         var y = (position.y + velocity.y);
         if (x < radius || x > ctx.canvas.width / scale - radius) {
