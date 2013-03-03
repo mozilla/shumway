@@ -1129,7 +1129,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    Timer.start("Parse");
+    console.time("Parse ABC: " + name);
     this.name = name;
 
     var n, i;
@@ -1179,7 +1179,7 @@ var AbcFile = (function () {
 
     InlineCacheManager.updateInlineCaches(this);
 
-    Timer.stop();
+    console.timeEnd("Parse ABC: " + name);
   }
 
   function checkMagic(stream) {

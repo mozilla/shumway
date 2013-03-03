@@ -59,6 +59,7 @@ var buildOptions = new OptionSet("Build Options");
 
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
 var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
+var profileLoad = buildOptions.register(new Option("pl", "profileLoad", "boolean", false, "profile load statements"));
 
 var debug = buildOptions.register(new Option("d", "debug", "boolean", false, "debug mode"));
 
@@ -120,6 +121,15 @@ Identifier.prototype.transform = function(o) {
   return this;
 };
 
+function wrapBlockWithProfilingStatements(name, block) {
+  name = path.normalize(name);
+  name = "..." + name.substring(name.length - 24);
+  var body = [];
+  body.push(esprima.parse("console.time(\"" + name + "\");"));
+  body.push(block);
+  body.push(esprima.parse("console.timeEnd(\"" + name + "\");"));
+  return new BlockStatement(body);
+}
 
 ExpressionStatement.prototype.transform = function (o) {
   if (this.expression instanceof CallExpression &&
@@ -143,18 +153,25 @@ ExpressionStatement.prototype.transform = function (o) {
       var list = [];
       listJSFiles(path, '', list);
       list.sort();
-      return new BlockStatement(list.map(function (file) {
+      var block =  new BlockStatement(list.map(function (file) {
         var node = esprima.parse(readFile(path + "/" + file));
         node = T.lift(node);
         node = node.transform(o);
         return new BlockStatement(node.body);
       }));
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
     } else {
-      // console.info("Processing: " + path);
       var node = esprima.parse(readFile(path));
       node = T.lift(node);
       node = node.transform(o);
-      return new BlockStatement(node.body);
+      var block = new BlockStatement(node.body);
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
     }
   } else if (this.expression instanceof Literal &&
              this.expression.value === "use strict") {
