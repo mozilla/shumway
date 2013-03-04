@@ -107,6 +107,12 @@ CallExpression.prototype.transform = function (o) {
     // Remove assertions.
     if (this.callee.name === "assert") {
       return new Literal(true);
+    } else if (this.callee.name === "loadJSON") {
+      var path = this.arguments[0].transform(o).value;
+      var node = esprima.parse("(" + readFile(path) + ")");
+      node = T.lift(node);
+      node = node.transform(o);
+      return node.body[0].expression;
     }
   }
   this.arguments = this.arguments.map(function (x) {

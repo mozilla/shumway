@@ -1,6 +1,6 @@
 var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
 
-var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNt", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics"));
+var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf"));
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {
@@ -40,6 +40,12 @@ AbcFile.prototype.trace = function trace(writer) {
   }
   if (filter.value.indexOf("t") >= 0) {
     traceStatistics(writer, this);
+  }
+  if (filter.value.indexOf("u") >= 0) {
+    print(JSON.stringify({
+      strings: this.constantPool.strings,
+      positionAfterUTFStrings: this.constantPool.positionAfterUTFStrings
+    }, null, 2));
   }
 };
 
