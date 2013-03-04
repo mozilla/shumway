@@ -235,7 +235,20 @@ AssignmentExpression.prototype.transform = function (o) {
   this.left = this.left.transform(Object.create({inAssignment: true}, o));
   this.right = this.right.transform(o);
   return this;
-}
+};
+
+Property.prototype.transform = function (o) {
+  // this.key = NOP
+  this.value = this.value.transform(o);
+  return this;
+};
+
+MemberExpression.prototype.transform = function (o) {
+  if (this.computed) {
+    this.property = this.property.transform(o);
+  }
+  return this;
+};
 
 var functionCounterMap = {};
 
