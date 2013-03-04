@@ -195,6 +195,15 @@ function frame(e) {
   }
 }
 
+(function setStageSize() {
+  var stageSize = getQueryVariable("size");
+  if (stageSize && /^\d+x\d+$/.test(stageSize)) {
+    var dims = stageSize.split('x');
+    $("#stage")[0].style.width = dims[0] + "px";
+    $("#stage")[0].style.height = dims[1] + "px";
+  }
+})();
+
 var FileLoadingService = {
   createSession: function () {
     return {
