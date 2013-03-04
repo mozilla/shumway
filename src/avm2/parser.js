@@ -781,7 +781,7 @@ function escapeString(str) {
 }
 
 var ConstantPool = (function constantPool() {
-  function constantPool(stream) {
+  function constantPool(stream, name) {
     var i, n;
 
     // ints
@@ -807,9 +807,21 @@ var ConstantPool = (function constantPool() {
 
     // strings
     var strings = [""];
-    n = stream.readU30();
-    for (i = 1; i < n; ++i) {
-      strings.push(stream.readUTFString(stream.readU30()));
+    if ($RELEASE && name in preLoadedUTFStrings) {
+      /**
+       * Parsing UTF Strings takes a long time, for instance playerGlobal.min.abc has about 16K UTF strings. We can cut down on this
+       * if we preload the UTF strings using the JavaScript parser instead. During the build process we extract the UTF strings from
+       * .abc files and save them in .json files. These are then included by the build script in |preLoadedUTFStrings| and are made
+       * available here.
+       */
+      strings = preLoadedUTFStrings[name].strings;
+      stream.pos = preLoadedUTFStrings[name].positionAfterUTFStrings;
+    } else {
+      n = stream.readU30();
+      for (i = 1; i < n; ++i) {
+        strings.push(stream.readUTFString(stream.readU30()));
+      }
+      this.positionAfterUTFStrings = stream.pos;
     }
 
     this.ints = ints;
@@ -1129,13 +1141,13 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    Timer.start("Parse");
+    console.time("Parse ABC: " + name);
     this.name = name;
 
     var n, i;
     var stream = new AbcStream(bytes);
     checkMagic(stream);
-    this.constantPool = new ConstantPool(stream);
+    this.constantPool = new ConstantPool(stream, name);
 
     // Method Infos
     this.methods = [];
@@ -1179,7 +1191,7 @@ var AbcFile = (function () {
 
     InlineCacheManager.updateInlineCaches(this);
 
-    Timer.stop();
+    console.timeEnd("Parse ABC: " + name);
   }
 
   function checkMagic(stream) {

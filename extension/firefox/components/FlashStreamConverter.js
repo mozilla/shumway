@@ -102,6 +102,9 @@ function ChromeActions(url, params, referer, window) {
 
 ChromeActions.prototype = {
   getBoolPref: function (data) {
+    if (!/^shumway\./.test(data.pref)) {
+      return null;
+    }
     return getBoolPref(data.pref, data.def);
   },
   getPluginParams: function getPluginParams() {

@@ -44,7 +44,7 @@ var BinaryFileReader = (function binaryFileReader() {
 var avm2;
 
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
-  console.time("createAVM2");
+  console.time("Load AVM2");
   assert (builtinPath);
   avm2 = new AVM2(sysMode, appMode);
   var builtinAbc, libraryAbc;
@@ -70,7 +70,8 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     if (libraryAbc) {
       avm2.systemDomain.executeAbc(libraryAbc);
     }
-    console.timeEnd("createAVM2");
+    console.info(Counter.toJSON());
+    console.timeEnd("Load AVM2");
     next(avm2);
   }
 }
