@@ -352,6 +352,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   }
 
+  console.timeEnd("Initialize Renderer");
+  console.timeEnd("Total");
+
   (function draw() {
     var now = Date.now();
     var renderFrame;
