@@ -122,7 +122,8 @@ CallExpression.prototype.transform = function (o) {
 };
 
 Identifier.prototype.transform = function(o) {
-  if (!o.inVariableDeclaration && !o.inAssignment && o.constants && o.constants.hasOwnProperty(this.name)) {
+  if (!o.inVariableDeclaration && !o.inAssignment &&
+      o.constants && o.constants.hasOwnProperty(this.name)) {
     return o.constants[this.name];
   }
   return this;
@@ -216,15 +217,24 @@ function isUpperCase(s) {
 }
 
 function isConstantIdentifier(name) {
+  if (name.length > 0 && name[0] === "$") {
+    return false;
+  }
   var i = name.indexOf("_");
-  return i > 0 && isUpperCase(name.substr(0, i));
+  if (i > 0) {
+    return isUpperCase(name.substr(0, i));
+  }
+  return isUpperCase(name);
 }
 
 VariableDeclarator.prototype.transform = function (o) {
   this.id = this.id.transform(Object.create({inVariableDeclarator: true}, o));
   if (this.init) {
     this.init = this.init.transform(o);
-    if (foldConstants.value && isConstantIdentifier(this.id.name)) {
+    if (foldConstants.value && isConstantIdentifier(this.id.name) && this.init instanceof Literal) {
+      if (this.id.name in constants && this.init.value !== constants[this.id.name].value) {
+        throw "Constant " + this.id.name + " already defined as " + constants[this.id.name].value + " now redefining as " + this.init.value;
+      }
       constants[this.id.name] = this.init;
     }
   }
