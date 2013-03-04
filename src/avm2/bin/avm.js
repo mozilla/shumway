@@ -46,6 +46,15 @@ var metrics; load(homePath + "src/avm2/metrics.js");
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
 
+var console = {
+  time: function (name) {
+    Timer.start(name)
+  },
+  timeEnd: function (name) {
+    Timer.stop(name)
+  }
+};
+
 Timer.start("Loading VM");
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");

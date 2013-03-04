@@ -59,6 +59,8 @@ var buildOptions = new OptionSet("Build Options");
 
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
 var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
+var profileLoad = buildOptions.register(new Option("pl", "profileLoad", "boolean", false, "profile load statements"));
+var foldConstants = buildOptions.register(new Option("fc", "foldConstants", "boolean", false, "folds constants of the form XXX_..."));
 
 var debug = buildOptions.register(new Option("d", "debug", "boolean", false, "debug mode"));
 
@@ -105,6 +107,12 @@ CallExpression.prototype.transform = function (o) {
     // Remove assertions.
     if (this.callee.name === "assert") {
       return new Literal(true);
+    } else if (this.callee.name === "loadJSON") {
+      var path = this.arguments[0].transform(o).value;
+      var node = esprima.parse("(" + readFile(path) + ")");
+      node = T.lift(node);
+      node = node.transform(o);
+      return node.body[0].expression;
     }
   }
   this.arguments = this.arguments.map(function (x) {
@@ -114,12 +122,22 @@ CallExpression.prototype.transform = function (o) {
 };
 
 Identifier.prototype.transform = function(o) {
-  if (!o.inVariableDeclaration && o.constants && o.constants.hasOwnProperty(this.name)) {
+  if (!o.inVariableDeclaration && !o.inAssignment &&
+      o.constants && o.constants.hasOwnProperty(this.name)) {
     return o.constants[this.name];
   }
   return this;
 };
 
+function wrapBlockWithProfilingStatements(name, block) {
+  name = path.normalize(name);
+  name = "..." + name.substring(name.length - 24);
+  var body = [];
+  body.push(esprima.parse("console.time(\"" + name + "\");"));
+  body.push(block);
+  body.push(esprima.parse("console.timeEnd(\"" + name + "\");"));
+  return new BlockStatement(body);
+}
 
 ExpressionStatement.prototype.transform = function (o) {
   if (this.expression instanceof CallExpression &&
@@ -143,18 +161,25 @@ ExpressionStatement.prototype.transform = function (o) {
       var list = [];
       listJSFiles(path, '', list);
       list.sort();
-      return new BlockStatement(list.map(function (file) {
+      var block =  new BlockStatement(list.map(function (file) {
         var node = esprima.parse(readFile(path + "/" + file));
         node = T.lift(node);
         node = node.transform(o);
         return new BlockStatement(node.body);
       }));
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
     } else {
-      // console.info("Processing: " + path);
       var node = esprima.parse(readFile(path));
       node = T.lift(node);
       node = node.transform(o);
-      return new BlockStatement(node.body);
+      var block = new BlockStatement(node.body);
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
     }
   } else if (this.expression instanceof Literal &&
              this.expression.value === "use strict") {
@@ -187,10 +212,50 @@ LogicalExpression.prototype.transform = function (o) {
   return this;
 };
 
+function isUpperCase(s) {
+  return s === s.toUpperCase();
+}
+
+function isConstantIdentifier(name) {
+  if (name.length > 0 && name[0] === "$") {
+    return false;
+  }
+  var i = name.indexOf("_");
+  if (i > 0) {
+    return isUpperCase(name.substr(0, i));
+  }
+  return isUpperCase(name);
+}
+
 VariableDeclarator.prototype.transform = function (o) {
   this.id = this.id.transform(Object.create({inVariableDeclarator: true}, o));
   if (this.init) {
     this.init = this.init.transform(o);
+    if (foldConstants.value && isConstantIdentifier(this.id.name) && this.init instanceof Literal) {
+      if (this.id.name in constants && this.init.value !== constants[this.id.name].value) {
+        throw "Constant " + this.id.name + " already defined as " + constants[this.id.name].value + " now redefining as " + this.init.value;
+      }
+      constants[this.id.name] = this.init;
+    }
+  }
+  return this;
+};
+
+AssignmentExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(Object.create({inAssignment: true}, o));
+  this.right = this.right.transform(o);
+  return this;
+};
+
+Property.prototype.transform = function (o) {
+  // this.key = NOP
+  this.value = this.value.transform(o);
+  return this;
+};
+
+MemberExpression.prototype.transform = function (o) {
+  if (this.computed) {
+    this.property = this.property.transform(o);
   }
   return this;
 };

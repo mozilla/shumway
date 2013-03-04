@@ -7,11 +7,12 @@
 
     <script>
       SHUMWAY_ROOT = "resource://shumway/";
-      console.time("Load");
+      console.time("Total");
+      console.time("Load Source Files");
     </script>
     <script src="../shumway.js"></script>
     <script>
-      console.timeEnd("Load");
+      console.timeEnd("Load Source Files");
     </script>
 
     <script>
@@ -192,6 +193,7 @@
         console.log("Parsing " + url + "...");
         function terminate() {}
         createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+          console.time("Initialize Renderer");
           SWF.embed(file, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
         });
       }
