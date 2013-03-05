@@ -498,12 +498,10 @@ var Scope = (function () {
  * Check if a qualified name is in an object's traits.
  */
 function nameInTraits(obj, qn) {
-  print("nameInTrait() qn="+qn)
   // If the object itself holds traits, try to resolve it. This is true for
   // things like global objects and activations, but also for classes, which
   // both have their own traits and the traits of the Class class.
   if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn)) {
-    print("found")
     return true;
   }
 
@@ -580,7 +578,6 @@ function resolveMultiname(obj, mn, traitsOnly) {
   // work around it here during name resolution.
 
   var isNative = isNativePrototype(obj);
-  print("resolveMultiname() mn="+mn+" isNative="+isNative)
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
@@ -642,7 +639,7 @@ function getProperty(obj, mn) {
     }
   }
 
-  if (true || tracePropertyAccess.value) {
+  if (tracePropertyAccess.value) {
     print("getProperty(" + obj.toString() + ", " + mn + " -> " + resolved + ") has value: " + !!value);
   }
 

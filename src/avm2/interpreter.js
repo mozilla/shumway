@@ -1,3 +1,4 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Options"));
 
 var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
@@ -14,6 +15,19 @@ var Interpreter = (function () {
   var Apslice = [].slice;
 
   function applyNew(constructor, args) {
+    if(constructor.classInfo) {
+      // return primitive values for new'd boxes
+      var qn = constructor.classInfo.instanceInfo.name.qualifiedName 
+      if(qn === "public$String") {
+        return String.apply(null, args);
+      }
+      if(qn === "public$Boolean") {
+        return Boolean.apply(null, args);
+      }
+      if(qn === "public$Number") {
+        return Number.apply(null, args);
+      }
+    }
     return new (Function.bind.apply(constructor.instance, [,].concat(args)));
   }
 
@@ -92,7 +106,6 @@ var Interpreter = (function () {
 
       if (traceInterpreter.value > 0) {
         var methodName = method.name ? Multiname.getQualifiedName(method.name) : "unknown";
-        print("methodName: " + methodName);
         method.trace(new IndentingWriter(), abc);
       }
 
