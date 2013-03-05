@@ -148,7 +148,12 @@ function executeFile(file, buffer, movieParams) {
   } else if (file.endsWith(".swf")) {
     createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate, onBeforeFrame: frame, movieParams: movieParams || {} });
+        SWF.embed(buffer, $("#stage")[0], {
+          onComplete: terminate,
+          onStageInitialized: stageInitialized,
+          onBeforeFrame: frame,
+          movieParams: movieParams || {},
+        });
       }
       if (!buffer && asyncLoading) {
         var subscription = {
@@ -177,6 +182,14 @@ function executeFile(file, buffer, movieParams) {
         runSWF(file, buffer);
       }
     });
+  }
+}
+
+function stageInitialized(stage) {
+  if (TRACE_SYMBOLS_INFO) {
+    var traceSymbolsInfo = $('#traceSymbolsInfo')[0];
+    traceSymbolsInfo.removeAttribute('hidden');
+    traceSymbolsInfo.appendChild(stage._control);
   }
 }
 

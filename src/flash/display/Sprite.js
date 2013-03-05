@@ -31,6 +31,7 @@ var SpriteDefinition = (function () {
       var props = Object.create(symbolInfo.props);
 
       props.depth = cmd.depth;
+      props.symbolId = cmd.symbolId;
 
       if (cmd.clip)
         props.clipDepth = cmd.clipDepth;

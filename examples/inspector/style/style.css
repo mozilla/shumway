@@ -299,3 +299,29 @@ body {
   top: 0;
   z-index: 1;
 }
+
+#traceSymbolsInfo {
+  overflow: auto;
+}
+
+#traceSymbolsInfo div {
+  width: 50px; min-height: 5px;
+  overflow: visible;
+  border: 1px solid black;
+  border-radius: 2px;
+  padding: 3px 0px 0px 7px;
+  background-color: blue;
+  margin-bottom: 1px;
+}
+
+#traceSymbolsInfo div.c_flash_display_Shape {
+  background-color: gray;
+}
+
+#traceSymbolsInfo div.c_flash_display_SimpleButton {
+  background-color: red;
+}
+
+#traceSymbolsInfo div.c_flash_display_MovieClip {
+  background-color: green;
+}

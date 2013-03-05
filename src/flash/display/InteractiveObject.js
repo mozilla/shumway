@@ -1,7 +1,6 @@
 var InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
-      this._control = document.createElement('div');
       this._doubleClickEnabled = false;
       this._hitArea = null;
       this._mouseEnabled = true;
