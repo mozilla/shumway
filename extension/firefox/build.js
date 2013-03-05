@@ -1,5 +1,5 @@
 /**
- * Shumway AVM Build Script
+ * Shumway Build Script
  *
  * This script performs several source level transformations:
  * - Expands "load(file);" expression statements.
@@ -18,15 +18,18 @@ var spawn = require('child_process').spawn;
 global.assert = function () { };
 global.release = false;
 
-var options = require(__dirname + "/../options.js");
+var shumwayRoot = __dirname + "/../../";
+var amv2Root = shumwayRoot + "src/avm2/";
+
+var options = require(amv2Root + "options.js");
 
 var ArgumentParser = options.ArgumentParser;
 var Option = options.Option;
 var OptionSet = options.OptionSet;
 
-var esprima = require(__dirname + "/../compiler/lljs/src/esprima.js");
-var escodegen = require(__dirname + "/../compiler/lljs/src/escodegen.js");
-var estransform = require(__dirname + "/../compiler/lljs/src/estransform.js");
+var esprima = require(amv2Root + "compiler/lljs/src/esprima.js");
+var escodegen = require(amv2Root + "compiler/lljs/src/escodegen.js");
+var estransform = require(amv2Root + "compiler/lljs/src/estransform.js");
 
 // Import nodes
 var T = estransform;
@@ -44,6 +47,7 @@ var VariableDeclaration = T.VariableDeclaration;
 var VariableDeclarator = T.VariableDeclarator;
 var ArrayExpression = T.ArrayExpression;
 var BinaryExpression = T.BinaryExpression;
+var LogicalExpression = T.LogicalExpression;
 var ObjectExpression = T.ObjectExpression;
 var Property = T.Property;
 
@@ -55,6 +59,10 @@ var buildOptions = new OptionSet("Build Options");
 
 var closure = buildOptions.register(new Option("c", "closure", "string", "", "runs the closure compiler"));
 var instrument = buildOptions.register(new Option("ic", "instrument", "boolean", false, "instruments functions"));
+var profileLoad = buildOptions.register(new Option("pl", "profileLoad", "boolean", false, "profile load statements"));
+var foldConstants = buildOptions.register(new Option("fc", "foldConstants", "boolean", false, "folds constants of the form XXX_..."));
+
+var debug = buildOptions.register(new Option("d", "debug", "boolean", false, "debug mode"));
 
 argumentParser.addBoundOptionSet(buildOptions);
 
@@ -78,6 +86,19 @@ if (!file.value) {
   process.exit();
 }
 
+function listJSFiles(dir, prefix, output) {
+  var files = fs.readdirSync(dir);
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var s = fs.statSync(path.join(dir, file));
+    if (s.isDirectory()) {
+      listJSFiles(path.join(dir, file), prefix + file + '/', output);
+    } else if (s.isFile() && /\.js$/i.test(file)) {
+      output.push(prefix + file);
+    }
+  }
+}
+
 Node.prototype.transform = T.makePass("transform", "transformNode");
 
 CallExpression.prototype.transform = function (o) {
@@ -85,7 +106,13 @@ CallExpression.prototype.transform = function (o) {
   if (this.callee instanceof Identifier) {
     // Remove assertions.
     if (this.callee.name === "assert") {
-      return null;
+      return new Literal(true);
+    } else if (this.callee.name === "loadJSON") {
+      var path = this.arguments[0].transform(o).value;
+      var node = esprima.parse("(" + readFile(path) + ")");
+      node = T.lift(node);
+      node = node.transform(o);
+      return node.body[0].expression;
     }
   }
   this.arguments = this.arguments.map(function (x) {
@@ -95,13 +122,28 @@ CallExpression.prototype.transform = function (o) {
 };
 
 Identifier.prototype.transform = function(o) {
-  if (o.constants && o.constants.hasOwnProperty(this.name)) {
+  if (!o.inVariableDeclaration && !o.inAssignment &&
+      o.constants && o.constants.hasOwnProperty(this.name)) {
     return o.constants[this.name];
   }
   return this;
 };
 
+function wrapBlockWithProfilingStatements(name, block) {
+  name = path.normalize(name);
+  name = "..." + name.substring(name.length - 24);
+  var body = [];
+  body.push(esprima.parse("console.time(\"" + name + "\");"));
+  body.push(block);
+  body.push(esprima.parse("console.timeEnd(\"" + name + "\");"));
+  return new BlockStatement(body);
+}
+
 ExpressionStatement.prototype.transform = function (o) {
+  if (this.expression instanceof CallExpression &&
+      this.expression.callee.name === "assert") {
+    return null;
+  }
   this.expression = this.expression.transform(o);
   if (this.expression === null) {
     return null;
@@ -111,12 +153,109 @@ ExpressionStatement.prototype.transform = function (o) {
       this.expression.callee.name === "load" &&
       this.expression.arguments.length === 1 &&
       this.expression.arguments[0] instanceof Literal) {
-    var path = __dirname + "/" + this.expression.arguments[0].value;
-    // console.info("Processing: " + path);
-    var node = esprima.parse(readFile(path));
-    node = T.lift(node);
-    node = node.transform(o);
-    return new BlockStatement(node.body);
+    var path = this.expression.arguments[0].value;
+    if (path[0] !== "/" && path[1] !== ':') {
+      path = __dirname + "/" + path;
+    }
+    if(fs.statSync(path).isDirectory()) {
+      var list = [];
+      listJSFiles(path, '', list);
+      list.sort();
+      var block =  new BlockStatement(list.map(function (file) {
+        var node = esprima.parse(readFile(path + "/" + file));
+        node = T.lift(node);
+        node = node.transform(o);
+        return new BlockStatement(node.body);
+      }));
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
+    } else {
+      var node = esprima.parse(readFile(path));
+      node = T.lift(node);
+      node = node.transform(o);
+      var block = new BlockStatement(node.body);
+      if (profileLoad.value) {
+        block = wrapBlockWithProfilingStatements(path, block);
+      }
+      return block;
+    }
+  } else if (this.expression instanceof Literal &&
+             this.expression.value === "use strict") {
+    return null;
+  }
+  return this;
+};
+
+BinaryExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(o);
+  this.right = this.right.transform(o);
+  if (this.operator === "+" && this.left instanceof Literal &&
+      this.right instanceof Literal) {
+    return new Literal(this.left.value + this.right.value);
+  } else if (this.operator === "||" &&
+             this.left instanceof Literal &&
+             this.left.value === true) {
+    return this.left;
+  }
+  return this;
+};
+
+LogicalExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(o);
+  this.right = this.right.transform(o);
+  if (this.operator === "||" && this.left instanceof Literal &&
+      this.left.value === true) {
+    return this.left;
+  }
+  return this;
+};
+
+function isUpperCase(s) {
+  return s === s.toUpperCase();
+}
+
+function isConstantIdentifier(name) {
+  if (name.length > 0 && name[0] === "$") {
+    return false;
+  }
+  var i = name.indexOf("_");
+  if (i > 0) {
+    return isUpperCase(name.substr(0, i));
+  }
+  return isUpperCase(name);
+}
+
+VariableDeclarator.prototype.transform = function (o) {
+  this.id = this.id.transform(Object.create({inVariableDeclarator: true}, o));
+  if (this.init) {
+    this.init = this.init.transform(o);
+    if (foldConstants.value && isConstantIdentifier(this.id.name) && this.init instanceof Literal) {
+      if (this.id.name in constants && this.init.value !== constants[this.id.name].value) {
+        throw "Constant " + this.id.name + " already defined as " + constants[this.id.name].value + " now redefining as " + this.init.value;
+      }
+      constants[this.id.name] = this.init;
+    }
+  }
+  return this;
+};
+
+AssignmentExpression.prototype.transform = function (o) {
+  this.left = this.left.transform(Object.create({inAssignment: true}, o));
+  this.right = this.right.transform(o);
+  return this;
+};
+
+Property.prototype.transform = function (o) {
+  // this.key = NOP
+  this.value = this.value.transform(o);
+  return this;
+};
+
+MemberExpression.prototype.transform = function (o) {
+  if (this.computed) {
+    this.property = this.property.transform(o);
   }
   return this;
 };
@@ -144,6 +283,16 @@ node = T.lift(node);
 var constants = {
   // "$X": new Literal(true)
 };
+
+process.env["SHUMWAY_ROOT"] = shumwayRoot;
+
+// Make environment variables available.
+for (var key in process.env) {
+  constants["$" + key] = new Literal(process.env[key]);
+}
+
+constants["$DEBUG"] = new Literal(debug.value);
+constants["$RELEASE"] = new Literal(!debug.value);
 
 node = node.transform({constants: constants, scopePath: [0]});
 
@@ -193,6 +342,11 @@ if (closure.value) {
   }
   var closureOptions = ["-jar", process.env["CLOSURE"]];
   closureOptions.push("--accept_const_keyword");
+
+  // There's some bug in Closure that gets triggered if we don't use pretty printing.
+  closureOptions.push("--formatting");
+  closureOptions.push("PRETTY_PRINT");
+
   closureOptions.push("--language_in");
   closureOptions.push("ECMASCRIPT5");
   closureOptions.push("--compilation_level");

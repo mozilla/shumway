@@ -1,3 +1,6 @@
+UTILS_HOME = ../../utils
+CLOSURE ?= $(UTILS_HOME)/cc.jar
+
 # Just builds a ff extension
 
 VERSION_BASELINE=3a85f8698233b9567be5
@@ -16,6 +19,8 @@ build: clean
 	mkdir build/content/flash
 	cp ../../src/flash/*.js build/content/flash/
 	cp ../../src/flash/playerGlobal.min.abc build/content/flash/
+	# Extract UTF Strings
+	cd ../../src/avm2/bin/; ../../../utils/jsshell/js avm.js -d -f "u" ../../flash/playerGlobal.min.abc > ../../../extension/firefox/build/content/flash/playerGlobal.min.abc.strings.json
 	mkdir build/content/flash/display
 	cp ../../src/flash/display/*.js build/content/flash/display/
 	mkdir build/content/flash/events
@@ -50,6 +55,8 @@ build: clean
 	cp ../../src/avm2/compiler/lljs/src/*.js build/content/avm2/compiler/lljs/src/
 	mkdir -p build/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc build/content/avm2/generated/builtin/
+	# Extract UTF Strings
+	cd ../../src/avm2/bin/; ../../../utils/jsshell/js avm.js -d -f "u" ../generated/builtin/builtin.abc > ../../../extension/firefox/build/content/avm2/generated/builtin/builtin.abc.strings.json
 	mkdir build/content/lib
 	mkdir build/content/lib/Kanvas
 	cp ../../lib/Kanvas/* build/content/lib/Kanvas/
@@ -59,6 +66,11 @@ build: clean
 	cp ../../lib/mp3/* build/content/lib/mp3/
 	# Pre-compile tag handlers
 	../../utils/jsshell/js generate-tag-handlers.js > build/content/swf/handlers.js
+	# Build Loader.js, since it's loaded in a worker.
+	CLOSURE=$(CLOSURE) node build.js ../../src/flash/display/Loader.js > build/content/flash/display/Loader.js
+	# Package all the source files into two files.
+	CLOSURE=$(CLOSURE) node build.js content/web/scripts.js -pl -fc -c s > build/content/shumway.js
+	CLOSURE=$(CLOSURE) node build.js content/web/scripts-worker.js > build/content/shumway-worker.js
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Packaging XPI file

@@ -1,3 +1,5 @@
+var TRACE_SYMBOLS_INFO = false;
+
 var DisplayObjectDefinition = (function () {
   var BLEND_MODE_ADD        = 'add';
   var BLEND_MODE_ALPHA      = 'alpha';
@@ -88,8 +90,24 @@ var DisplayObjectDefinition = (function () {
           this._currentTransform = matrix;
         }
       }
+      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
+    },
+
+    _updateTraceSymbolInfo: function () {
+      var s = this.symbol;
+      var info = {
+        className: this.__class__,
+        symbolId: s && s.symbolId,
+        name: this._name
+      };
+      this._control.dataset.symbolInfo = info;
+      this._control.title =
+        (info.symbolId ? 'symbolId: ' + info.symbolId + '\n' : '') +
+        (info.name ? 'name: ' + info.name + '\n' : '') +
+        'class: ' + this.__class__;
+      this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
     },
 
     _applyCurrentInverseTransform: function (point, targetCoordSpace) {
@@ -298,6 +316,7 @@ var DisplayObjectDefinition = (function () {
     },
     set name(val) {
       this._name = val;
+      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
     },
     get mouseX() {
       return this._mouseX;

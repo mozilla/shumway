@@ -3,7 +3,8 @@ function loadState() {
     appCompiler: true,
     sysCompiler: false,
     verifier: true,
-    release: true
+    release: true,
+    symbolsInfo: false
   };
 }
 
@@ -20,6 +21,7 @@ function updateAVM2State() {
   enableVerifier.value = state.verifier;
   traceExecution.value = state.trace ? 2 : 0;
   release = state.release;
+  TRACE_SYMBOLS_INFO = state.symbolsInfo;
 }
 
 setTimeout(function displayInfo() {

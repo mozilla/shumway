@@ -154,17 +154,17 @@
     return obj;
   }
 
-  function call(callee, arguments) {
-    assert(arguments instanceof Array);
-    arguments.forEach(function (x) {
+  function call(callee, args) {
+    assert(args instanceof Array);
+    args.forEach(function (x) {
       assert(!(x instanceof Array));
       assert(x !== undefined);
     });
-    return new CallExpression(callee, arguments);
+    return new CallExpression(callee, args);
   }
 
-  function callCall(callee, object, arguments) {
-    return call(property(callee, "call"), [object].concat(arguments));
+  function callCall(callee, object, args) {
+    return call(property(callee, "call"), [object].concat(args));
   }
 
   function assignment(left, right) {
@@ -457,7 +457,7 @@
   };
 
   IR.Call.prototype.compile = function (cx) {
-    var arguments = this.arguments.map(function (arg) {
+    var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
@@ -467,16 +467,16 @@
     } else {
       object = new Literal(null);
     }
-    return callCall(callee, object, arguments);
+    return callCall(callee, object, args);
   };
 
   IR.AVM2New.prototype.compile = function (cx) {
-    var arguments = this.arguments.map(function (arg) {
+    var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
     callee = property(callee, "instance");
-    return new NewExpression(callee, arguments);
+    return new NewExpression(callee, args);
   };
 
   IR.This.prototype.compile = function (cx) {

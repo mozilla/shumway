@@ -148,7 +148,12 @@ function executeFile(file, buffer, movieParams) {
   } else if (file.endsWith(".swf")) {
     createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, $("#stage")[0], { onComplete: terminate, onBeforeFrame: frame, movieParams: movieParams || {} });
+        SWF.embed(buffer, $("#stage")[0], {
+          onComplete: terminate,
+          onStageInitialized: stageInitialized,
+          onBeforeFrame: frame,
+          movieParams: movieParams || {},
+        });
       }
       if (!buffer && asyncLoading) {
         var subscription = {
@@ -180,6 +185,14 @@ function executeFile(file, buffer, movieParams) {
   }
 }
 
+function stageInitialized(stage) {
+  if (TRACE_SYMBOLS_INFO) {
+    var traceSymbolsInfo = $('#traceSymbolsInfo')[0];
+    traceSymbolsInfo.removeAttribute('hidden');
+    traceSymbolsInfo.appendChild(stage._control);
+  }
+}
+
 function terminate() {}
 
 var initializeFrameControl = true;
@@ -194,6 +207,15 @@ function frame(e) {
     e.cancel = true;
   }
 }
+
+(function setStageSize() {
+  var stageSize = getQueryVariable("size");
+  if (stageSize && /^\d+x\d+$/.test(stageSize)) {
+    var dims = stageSize.split('x');
+    $("#stage")[0].style.width = dims[0] + "px";
+    $("#stage")[0].style.height = dims[1] + "px";
+  }
+})();
 
 var FileLoadingService = {
   createSession: function () {

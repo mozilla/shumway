@@ -18,6 +18,8 @@
         if (!(requiredConsoleFunctions[i] in console))
           console[requiredConsoleFunctions[i]] = function () {};
       }
+
+      var $DEBUG = true, $RELEASE = false;
     </script>
     <script src="../../lib/xstats/xstats.js"></script>
 
@@ -213,6 +215,8 @@
       </div>
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; left: auto; right: 0px; width: 300px; font-size: 10px;" id="info">
       </div>
+      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; right: 320px; width: 200px;" id="traceSymbolsInfo" hidden>
+      </div>
       <div class="toolbarBox" style="position: fixed; bottom: 35px; left: 0; right: 0; width: auto;" id="openFileToolbar">
         <div class="closeButton"></div>
         <div class="toolbarLabel " style="width: 140px; text-align: left;">Shumway Inspector</div>
@@ -226,6 +230,7 @@
         <div class="avm2Option toolbarButton" style="width: 60px" id="verifier">Verifier</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="trace">Trace</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="release">Release</div>
+        <div class="avm2Option toolbarButton" style="width: 60px" id="symbolsInfo">Symbols</div>
       </div>
     </div>
 

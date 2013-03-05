@@ -12,7 +12,7 @@ SWF.embed = function(file, container, options) {
   var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
   var canvasHolder = null;
   if (pixelRatio > 1) {
-    var cssScale = 'scale(' + (1/pixelRatio) + ', ' + (1/pixelRatio) + ')';
+    var cssScale = 'scale(' + (1 / pixelRatio) + ', ' + (1 / pixelRatio) + ')';
     canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
                                  '-webkit-transform: ' + cssScale + ';' +
                                  'transform: ' + cssScale + ';' +
@@ -124,6 +124,11 @@ SWF.embed = function(file, container, options) {
     syncCursor();
 
     container.appendChild(canvasHolder || canvas);
+
+    if (options.onStageInitialized) {
+      options.onStageInitialized(stage);
+    }
+
     renderStage(stage, ctx, options.onBeforeFrame, options.onFrame);
   });
 
