@@ -1,12 +1,19 @@
 var ShumwayKeyboardListener = {
+  _lastKeyCode: 0,
+  focus: null,
   handleEvent: function (domEvt) {
+    if (domEvt.type === 'keydown') {
+      this._lastKeyCode = domEvt.keyCode;
+      return; // skipping keydown, waiting for keypress
+    }
+
     if (this.focus) {
       this.focus.dispatchEvent(new flash.events.KeyboardEvent(
         domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,
         domEvt.charCode,
-        domEvt.keyCode,
+        this._lastKeyCode,
         domEvt.keyLocation,
         domEvt.ctrlKey,
         domEvt.altKey,
@@ -17,6 +24,7 @@ var ShumwayKeyboardListener = {
 };
 
 window.addEventListener('keydown', ShumwayKeyboardListener);
+window.addEventListener('keypress', ShumwayKeyboardListener);
 window.addEventListener('keyup', ShumwayKeyboardListener);
 
 var KeyboardDefinition = (function () {
