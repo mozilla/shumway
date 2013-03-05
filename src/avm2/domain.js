@@ -1,3 +1,4 @@
+/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceDomain = domainOptions.register(new Option("tdpa", "traceDomain", "boolean", false, "trace domain property access"));
@@ -387,7 +388,7 @@ var Domain = (function () {
     },
 
     installNative: function(name, func) {
-      this.natives[name] = function() {
+      natives[name] = function() {
         return func;
       };
     },
