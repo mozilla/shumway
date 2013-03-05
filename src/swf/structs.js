@@ -501,6 +501,7 @@ var BUTTONCONDACTION = {
   overUpToOverDown: 'buttonConditions>>2&1',
   overUpToIdle: 'buttonConditions>>1&1',
   idleToOverUp: 'buttonConditions&1',
+  mouseEventFlags: 'buttonConditions&511',
   keyPress: 'buttonConditions>>9&127',
   overDownToIdle: 'buttonConditions>>8&1',
   actionsData: ['!buttonCondSize', [BINARY(0), BINARY('buttonCondSize - 4')]]
