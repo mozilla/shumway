@@ -82,6 +82,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var SimpleButtonClass = avm2.systemDomain.getClass("flash.display.SimpleButton");
   var InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
 
+  function roundForClipping(bounds) {
+    var x = (Math.floor(bounds.x * scale + offsetX) - offsetX) / scale;
+    var y = (Math.floor(bounds.y * scale + offsetY) - offsetY) / scale;
+    var x2 = (Math.ceil((bounds.x + bounds.width) * scale + offsetX) - offsetX) / scale;
+    var y2 = (Math.ceil((bounds.y + bounds.height) * scale + offsetY) - offsetY) / scale;
+    return { x: x, y: y, width: x2 - x, height: y2 - y };
+  }
+
   function visitContainer(container, visitor, interactiveParent) {
     var children = container._children;
     var dirty = false;
@@ -172,10 +180,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       }
 
       if (child._dirtyArea) {
-        var b1 = child._dirtyArea;
-        var b2 = child.getBounds();
-        this.ctx.rect((~~b1.x) - 5, (~~b1.y) - 5, (~~b1.width) + 10, (~~b1.height) + 10);
-        this.ctx.rect((~~b2.x) - 5, (~~b2.y) - 5, (~~b2.width) + 10, (~~b2.height) + 10);
+        var b1 = roundForClipping(child._dirtyArea);
+        var b2 = roundForClipping(child.getBounds());
+        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
+        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
       } else if (child._graphics && (child._graphics._revision !== child._revision)) {
         child._revision = child._graphics._revision;
         child._markAsDirty();
