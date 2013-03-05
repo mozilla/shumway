@@ -1,3 +1,4 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var Control = (function () {
 
   var SEQ = 1;

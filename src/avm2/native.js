@@ -1,4 +1,4 @@
-/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 /**
  * Shumway ships with its own version of the AS3 builtin library, which
  * maintains interface compatibility with the stock builtin library, viz. the
@@ -315,7 +315,7 @@ var natives = (function () {
     c.native = {
       instance: {
         toString: Boolean.prototype.toString,
-        valueOf: Boolean.prototype.valueOf
+        valueOf: Boolean.prototype.valueOf,
       }
     };
     c.coerce = Boolean;
@@ -377,8 +377,8 @@ var natives = (function () {
   /**
    * String.as
    */
-  function StringClass(runtime, scope, instance, baseClass) {
 
+  function StringClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("String", String, C(String));
     c.extendBuiltin(baseClass);
 
@@ -394,9 +394,23 @@ var natives = (function () {
         charCodeAt: Sp.charCodeAt,
         concat: Sp.concat,
         localeCompare: Sp.localeCompare,
-        match: Sp.match,
+        match: function (re) {
+          if (re === void 0) {
+            return null;
+          }
+          else {
+            return this.match(re);
+          }
+        },
         replace: Sp.replace,
-        search: Sp.search,
+        search: function (re) {
+          if (re === void 0) {
+            return -1;
+          }
+          else {
+            return this.search(re);
+          }
+        },
         slice: Sp.slice,
         split: Sp.split,
         substr: Sp.substr,
@@ -404,13 +418,19 @@ var natives = (function () {
         toLowerCase: Sp.toLowerCase,
         toLocaleLowerCase: Sp.toLocaleLowerCase,
         toUpperCase: function () {
-          print("native toUpperCase()")
-          this.toUpperCase = Sp.toUpperCase;
-          return this.toUpperCase()
+          // avmshell bug compatibility
+          var str = Sp.toUpperCase.apply(this);
+	      var str = str.replace(/\u039C/g, String.fromCharCode(181))
+          return str;
         },
-        toLocaleUpperCase: Sp.toLocaleUpperCase,
+        toLocaleUpperCase: function () {
+          // avmshell bug compatibility
+          var str = Sp.toLocaleUpperCase.apply(this);
+	      var str = str.replace(/\u039C/g, String.fromCharCode(181))
+          return str;
+        },
         toString: Sp.toString,
-        valueOf: Sp.valueOf
+        valueOf: Sp.valueOf,
       },
       static: String
     };
