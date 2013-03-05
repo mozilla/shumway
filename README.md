@@ -28,10 +28,32 @@ Also, note that the development extension is updated on every merge and by defau
 auto-update extensions on a daily basis (you can change this through the 
 `extensions.update.interval` option in `about:config`).
 
-### Getting the source
+## Contributing
 
-The source code for Shumway and its submodules can be cloned the following way:
+### Development
+[See the wiki](https://github.com/mozilla/shumway/wiki).
 
-    cd ~
-    git clone --recursive https://github.com/mozilla/shumway.git Shumway
+If you don't want to hack on the project or have little spare time, __you still
+can help!__ Just install the Firefox extension, test it on SWFs in the wild,
+and report any problems or unimplemented features.
 
+Our GitHub contributors so far:
+
++ https://github.com/mozilla/shumway/contributors
+
+You can add your name to it! :)
+
+# Additional resources
+
+Talk to us on IRC:
+
++ #shumway on irc.mozilla.org
+
+Join our mailing list:
+
++ dev-shumway@lists.mozilla.org
+
+Subscribe either using lists.mozilla.org or Google Groups: 
+  
++ https://lists.mozilla.org/listinfo/dev-shumway
++ http://groups.google.com/group/mozilla.dev.shumway
