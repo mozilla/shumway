@@ -64,7 +64,7 @@ var Interpreter = (function () {
       var multinames = abc.constantPool.multinames;
       var runtime = abc.runtime;
       var domain = abc.domain;
-      var rtstack = Runtime.stack;
+      var runtimeStack = Runtime.stack;
 
       var exceptions = method.exceptions;
 
@@ -76,7 +76,7 @@ var Interpreter = (function () {
       var parameterCount = method.parameters.length;
       var argCount = args.length;
 
-      rtstack.push(runtime);
+      runtimeStack.push(runtime);
 
       var value;
       for (var i = 0; i < parameterCount; i++) {
@@ -327,10 +327,10 @@ var Interpreter = (function () {
             stack.push(getProperty(obj, multiname).apply(obj, args));
             break;
           case OP_returnvoid:
-            rtstack.pop();
+            runtimeStack.pop();
             return;
           case OP_returnvalue:
-            rtstack.pop();
+            runtimeStack.pop();
             return stack.pop();
           case OP_constructsuper:
             args = stack.popMany(bc.argCount);

@@ -452,13 +452,13 @@ var Domain = (function () {
     },
 
     executeAbc: function executeAbc(abc) {
-      Timer.start("Execute: executeAbc" + abc.name);
+      console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
       executeScript(abc, abc.lastScript);
       if (traceClasses.value) {
         this.traceLoadedClasses();
       }
-      Timer.stop();
+      console.timeEnd("Execute ABC: " + abc.name);
     },
 
     loadAbc: function loadAbc(abc) {

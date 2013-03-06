@@ -6,6 +6,8 @@ var AbcStream = (function () {
     this.pos = 0;
   }
 
+  var resultBuffer = new Int32Array(256);
+
   abcStream.prototype = {
     get position() {
       return this.pos;
@@ -20,7 +22,8 @@ var AbcStream = (function () {
       return this.bytes[this.pos++];
     },
     readU8s: function(count) {
-      var b = this.bytes.subarray(this.pos, this.pos + count);
+      var b = new Uint8Array(count);
+      b.set(this.bytes.subarray(this.pos, this.pos + count), 0);
       this.pos += count;
       return b;
     },
@@ -88,30 +91,35 @@ var AbcStream = (function () {
       return result;
     },
     readUTFString: function(length) {
-      var end = this.pos + length;
+      var pos = this.pos;
+      var end = pos + length;
+      var bytes = this.bytes;
       var i = 0;
-      var result = new Int32Array(length);
-      while(this.pos < end) {
-        var c = this.bytes[this.pos++];
+      if (!resultBuffer || resultBuffer.length < length) {
+        resultBuffer = new Int32Array(length * 2);
+      }
+      var result = resultBuffer;
+      while(pos < end) {
+        var c = bytes[pos++];
         if (c <= 0x7f) {
           result[i++] = c;
         }
         else if (c >= 0xc0) { // multibyte
-          var code;
+          var code = 0;
           if (c < 0xe0) { // 2 bytes
             code = ((c & 0x1f) << 6) |
-                   (this.bytes[this.pos++] & 0x3f);
+                   (bytes[pos++] & 0x3f);
           }
           else if (c < 0xf0) { // 3 bytes
             code = ((c & 0x0f) << 12) |
-                   ((this.bytes[this.pos++] & 0x3f) << 6) |
-                   (this.bytes[this.pos++] & 0x3f);
+                   ((bytes[pos++] & 0x3f) << 6) |
+                   (bytes[pos++] & 0x3f);
           } else { // 4 bytes
             // turned into two characters in JS as surrogate pair
             code = (((c & 0x07) << 18) |
-                    ((this.bytes[this.pos++] & 0x3f) << 12) |
-                    ((this.bytes[this.pos++] & 0x3f) << 6) |
-                    (this.bytes[this.pos++] & 0x3f)) - 0x10000;
+                    ((bytes[pos++] & 0x3f) << 12) |
+                    ((bytes[pos++] & 0x3f) << 6) |
+                    (bytes[pos++] & 0x3f)) - 0x10000;
             // High surrogate
             result[i++] = ((code & 0xffc00) >>> 10) + 0xd800;
             // Low surrogate
@@ -120,6 +128,7 @@ var AbcStream = (function () {
           result[i++] = code;
         } // Otherwise it's an invalid UTF8, skipped.
       }
+      this.pos = pos;
       return String.fromCharCode.apply(null, result.subarray(0, i));
     }
   };
@@ -184,12 +193,21 @@ var Trait = (function () {
     }
 
     if (this.attributes & ATTR_Metadata) {
-      var traitMetadata = {};
+      var traitMetadata;
       for (var i = 0, j = stream.readU30(); i < j; i++) {
         var md = metadata[stream.readU30()];
+        if (md.tagName === "__go_to_definition_help" ||
+            md.tagName === "__go_to_ctor_definition_help") {
+          continue;
+        }
+        if (!traitMetadata) {
+          traitMetadata = {};
+        }
         traitMetadata[md.tagName] = md;
       }
-      this.metadata = traitMetadata;
+      if (traitMetadata) {
+        this.metadata = traitMetadata;
+      }
     }
   }
 
@@ -764,7 +782,7 @@ function escapeString(str) {
 }
 
 var ConstantPool = (function constantPool() {
-  function constantPool(stream) {
+  function constantPool(stream, name) {
     var i, n;
 
     // ints
@@ -790,9 +808,21 @@ var ConstantPool = (function constantPool() {
 
     // strings
     var strings = [""];
-    n = stream.readU30();
-    for (i = 1; i < n; ++i) {
-      strings.push(stream.readUTFString(stream.readU30()));
+    if ($RELEASE && name in preLoadedUTFStrings) {
+      /**
+       * Parsing UTF Strings takes a long time, for instance playerGlobal.min.abc has about 16K UTF strings. We can cut down on this
+       * if we preload the UTF strings using the JavaScript parser instead. During the build process we extract the UTF strings from
+       * .abc files and save them in .json files. These are then included by the build script in |preLoadedUTFStrings| and are made
+       * available here.
+       */
+      strings = preLoadedUTFStrings[name].strings;
+      stream.pos = preLoadedUTFStrings[name].positionAfterUTFStrings;
+    } else {
+      n = stream.readU30();
+      for (i = 1; i < n; ++i) {
+        strings.push(stream.readUTFString(stream.readU30()));
+      }
+      this.positionAfterUTFStrings = stream.pos;
     }
 
     this.ints = ints;
@@ -1112,13 +1142,13 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    Timer.start("Parse");
+    console.time("Parse ABC: " + name);
     this.name = name;
 
     var n, i;
     var stream = new AbcStream(bytes);
     checkMagic(stream);
-    this.constantPool = new ConstantPool(stream);
+    this.constantPool = new ConstantPool(stream, name);
 
     // Method Infos
     this.methods = [];
@@ -1162,7 +1192,7 @@ var AbcFile = (function () {
 
     InlineCacheManager.updateInlineCaches(this);
 
-    Timer.stop();
+    console.timeEnd("Parse ABC: " + name);
   }
 
   function checkMagic(stream) {

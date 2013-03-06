@@ -9,6 +9,8 @@ if (environment.SHUMWAY_HOME) {
 
 load(homePath + "lib/DataView.js/DataView.js");
 
+var $DEBUG = true, $RELEASE = false;
+
 /**
  * Load AVM2 Dependencies
  */
@@ -43,6 +45,17 @@ var test = shellOptions.register(new Option("test", "test", "boolean", false, "t
 var metrics; load(homePath + "src/avm2/metrics.js");
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
+
+var console = {
+  time: function (name) {
+    Timer.start(name)
+  },
+  timeEnd: function (name) {
+    Timer.stop(name)
+  },
+  warn: function () { },
+  info: function () { },
+};
 
 Timer.start("Loading VM");
 load(homePath + "src/avm2/constants.js");

@@ -9,21 +9,21 @@ var defaultTemplateSet = [
 var rtemplate = /^function\s*(.*)\s*\(([^)]*)\)\s*{\s*([\s\S]*.)\s*}$/;
 var rinlinable = /^return\s*([^;]*)$/;
 
-function generateParser(struct) {
+function generateParser(_struct) {
   var productions = [];
   var varCount = 0;
 
-  (function produce(struct, context) {
-    if (typeof struct !== 'object' || '$' in struct) {
-      struct = { $$: struct };
+  (function produce(_struct, context) {
+    if (typeof _struct !== 'object' || '$' in _struct) {
+      _struct = { $$: _struct };
       context = undefined;
     } else if (!context) {
       context = '$' + varCount++;
     }
 
     var production = [];
-    for (var field in struct) {
-      var type = struct[field];
+    for (var field in _struct) {
+      var type = _struct[field];
       if (typeof type === 'object' && type.$ != undefined) {
         assert(!isArray(type.$), 'invalid type', 'generate');
         var options = type;
@@ -120,8 +120,8 @@ function generateParser(struct) {
         case 'object':
           var shared = segment.splice(0).join('');
 
-          function branch(struct) {
-            var obj = produce(struct, merge ? context : refer && field);
+          function branch(_struct) {
+            var obj = produce(_struct, merge ? context : refer && field);
             var init = shared;
             if (!merge && obj) {
               if (!(refer || hide))
@@ -179,12 +179,12 @@ function generateParser(struct) {
     }
     productions.push(production.join('\n'));
     return context;
-  })(struct, '$');
+  })(_struct, '$');
   
   var args = ['$bytes', '$stream', '$'];
   if (arguments.length > 1)
     push.apply(args, slice.call(arguments, 1));
-  return eval(
+  return (1, eval)(
     '(function(' + args.join(',') + '){\n' +
       '$||($={})\n' +
       productions.join('\n') + '\n' +

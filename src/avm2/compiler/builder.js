@@ -195,15 +195,15 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       state.saved = new Projection(start, Projection.Type.SCOPE);
       start.domain = new Constant(this.domain);
 
-      var arguments = new IR.Arguments(start);
+      var args = new IR.Arguments(start);
 
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [arguments, offset]);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset]);
       }
 
-      var argumentsLength = getJSPropertyWithStore(state.store, arguments, "length");
+      var argumentsLength = getJSPropertyWithStore(state.store, args, "length");
 
       for (var i = 0; i < parameterCount; i++) {
         var parameter = mi.parameters[i];
@@ -233,7 +233,6 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
     };
 
     constructor.prototype.build = function build() {
-
       var analysis = this.methodInfo.analysis;
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
@@ -403,7 +402,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return savedScope();
         }
 
-        var object, index, callee, value, multiname, type, arguments;
+        var object, index, callee, value, multiname, type, args;
 
         function push(x) {
           assert (x);
@@ -604,13 +603,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           store(new IR.AVM2SetSlot(region, state.store, object, index, value));
         }
 
-        function call(callee, object, arguments) {
-          return store(new Call(region, state.store, callee, object, arguments));
+        function call(callee, object, args) {
+          return store(new Call(region, state.store, callee, object, args));
         }
 
-        function callCall(callee, object, arguments) {
+        function callCall(callee, object, args) {
           // TODO: Mark Call IR nodes as non-pristine.
-          return call(callee, object, arguments);
+          return call(callee, object, args);
         }
 
         function truthyCondition(operator) {
@@ -816,20 +815,20 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               object = pop();
               callee = pop();
-              push(callCall(callee, object, arguments));
+              push(callCall(callee, object, args));
               break;
             case OP_callproperty: case OP_callproplex: case OP_callpropvoid:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti, true);
               if (op === OP_callproperty || op === OP_callpropvoid) {
-                value = callCall(callee, object, arguments);
+                value = callCall(callee, object, args);
               } else {
-                value = callCall(callee, null, arguments);
+                value = callCall(callee, null, args);
               }
               if (op !== OP_callpropvoid) {
                 push(value);
@@ -837,30 +836,30 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               break;
             case OP_callsuper:
               multiname = buildMultiname(bc.index);
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               object = pop();
               callee = call(globalProperty("getSuper"), null, [object, multiname]);
-              push(call(callee, object, arguments));
+              push(call(callee, object, args));
               break;
             case OP_construct:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               object = pop();
-              push(store(new IR.AVM2New(region, state.store, object, arguments)));
+              push(store(new IR.AVM2New(region, state.store, object, args)));
               break;
             case OP_constructsuper:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
                 callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
-                push(call(callee, object, arguments));
+                push(call(callee, object, args));
               }
               break;
             case OP_constructprop:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti);
-              push(store(new IR.AVM2New(region, state.store, callee, arguments)));
+              push(store(new IR.AVM2New(region, state.store, callee, args)));
               break;
             case OP_coerce:
               if (bc.ti && bc.ti.noCoercionNeeded) {
@@ -1037,14 +1036,14 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               popLocal(bc.index);
               break;
             case OP_applytype:
-              arguments = popMany(bc.argCount);
+              args = popMany(bc.argCount);
               type = pop();
               callee = getJSProperty(runtime, "applyType");
-              push(call(callee, runtime, [type, new NewArray(arguments)]));
+              push(call(callee, runtime, [type, new NewArray(args)]));
               break;
             case OP_newarray:
-              arguments = popMany(bc.argCount);
-              push(new NewArray(arguments));
+              args = popMany(bc.argCount);
+              push(new NewArray(args));
               break;
             case OP_newobject:
               var properties = [];
@@ -1121,6 +1120,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
     Counter.count("Compiler: Compiled Methods");
 
     Timer.start("Compiler");
+
+    methodInfo.analysis.markLoops();
 
     if (enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?

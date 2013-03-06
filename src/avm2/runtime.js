@@ -609,8 +609,8 @@ function isPrimitiveType(x) {
   return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
 }
 
-function sliceArguments(arguments, offset) {
-  return Array.prototype.slice.call(arguments, offset);
+function sliceArguments(args, offset) {
+  return Array.prototype.slice.call(args, offset);
 }
 
 function getProperty(obj, mn) {
@@ -893,6 +893,12 @@ var Runtime = (function () {
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
   runtime.stack = [];
+  runtime.currentDomain = function () {
+    if (Runtime.stack.length) {
+      return Runtime.stack.top().domain;
+    }
+    return null;
+  };
 
   // This is called from catch blocks.
   runtime.unwindStackTo = function unwindStackTo(rt) {
@@ -1006,10 +1012,6 @@ var Runtime = (function () {
       return bindScope(mi.compiledMethod, scope);
     }
 
-    if (!mi.analysis.restructureControlFlow()) {
-      return interpretedMethod(this.interpreter, mi, scope);
-    }
-
     var parameters = mi.parameters.map(function (p) {
       return PARAMETER_PREFIX + p.name;
     });
@@ -1042,7 +1044,7 @@ var Runtime = (function () {
       print (fnSource);
     }
     if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
-      mi.compiledMethod = eval('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+      mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
     } else {
       mi.compiledMethod = new Function(parameters, body);
     }

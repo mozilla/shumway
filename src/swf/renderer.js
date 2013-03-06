@@ -1,6 +1,13 @@
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
   var m = transform;
-  ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+  if (m.a * m.d == m.b * m.c) {
+    // Workaround for bug 844184 -- the object is invisible
+    ctx.closePath();
+    ctx.rect(0, 0, 0, 0);
+    ctx.clip();
+  } else {
+    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+  }
 
   if (cxform) {
     // We only support alpha channel transformation for now
@@ -74,6 +81,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var ContainerClass = avm2.systemDomain.getClass("flash.display.DisplayObjectContainer");
   var SimpleButtonClass = avm2.systemDomain.getClass("flash.display.SimpleButton");
   var InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
+
+  function roundForClipping(bounds) {
+    var x = (Math.floor(bounds.x * scale + offsetX) - offsetX) / scale;
+    var y = (Math.floor(bounds.y * scale + offsetY) - offsetY) / scale;
+    var x2 = (Math.ceil((bounds.x + bounds.width) * scale + offsetX) - offsetX) / scale;
+    var y2 = (Math.ceil((bounds.y + bounds.height) * scale + offsetY) - offsetY) / scale;
+    return { x: x, y: y, width: x2 - x, height: y2 - y };
+  }
 
   function visitContainer(container, visitor, interactiveParent) {
     var children = container._children;
@@ -165,10 +180,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       }
 
       if (child._dirtyArea) {
-        var b1 = child._dirtyArea;
-        var b2 = child.getBounds();
-        this.ctx.rect((~~b1.x) - 5, (~~b1.y) - 5, (~~b1.width) + 10, (~~b1.height) + 10);
-        this.ctx.rect((~~b2.x) - 5, (~~b2.y) - 5, (~~b2.width) + 10, (~~b2.height) + 10);
+        var b1 = roundForClipping(child._dirtyArea);
+        var b2 = roundForClipping(child.getBounds());
+        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
+        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
       } else if (child._graphics && (child._graphics._revision !== child._revision)) {
         child._revision = child._graphics._revision;
         child._markAsDirty();
@@ -300,6 +315,54 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
                               window.msRequestAnimationFrame ||
                               window.setTimeout;
 
+  var renderDummyBalls;
+
+  var dummyBalls;
+  if (typeof FirefoxCom !== 'undefined' &&
+    FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
+    var radius = 10;
+    var speed = 1;
+    dummyBalls = [];
+    for (var i = 0; i < 10; i++) {
+      dummyBalls.push({
+        position: {
+          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scale),
+          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scale)
+        },
+        velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
+      });
+    }
+    ctx.fillStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    renderDummyBalls = function () {
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.strokeStyle = "green";
+      dummyBalls.forEach(function (ball) {
+        var position = ball.position;
+        var velocity = ball.velocity;
+        ctx.beginPath();
+        ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+        ctx.stroke();
+        var x = (position.x + velocity.x);
+        var y = (position.y + velocity.y);
+        if (x < radius || x > ctx.canvas.width / scale - radius) {
+          velocity.x *= -1;
+        }
+        if (y < radius || y > ctx.canvas.height / scale - radius) {
+          velocity.y *= -1;
+        }
+        position.x += velocity.x;
+        position.y += velocity.y;
+      });
+    }
+  }
+
+  console.timeEnd("Initialize Renderer");
+  console.timeEnd("Total");
+
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -313,20 +376,23 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       frameTime = now;
       nextRenderAt = frameTime + maxDelay;
 
-      ctx.beginPath();
-
-      stage._callFrameRequested = false;
-      visitContainer(stage, new PreVisitor(ctx));
-      while (stage._callFrameRequested) {
+      if (renderDummyBalls) {
+        renderDummyBalls();
+      } else {
+        ctx.beginPath();
         stage._callFrameRequested = false;
-        visitContainer(stage, new ScriptExecutionVisitor());
-      }
-      visitContainer(stage, new RenderVisitor(ctx));
-      visitContainer(stage, new PostVisitor());
-      stage._syncCursor();
+        visitContainer(stage, new PreVisitor(ctx));
+        while (stage._callFrameRequested) {
+          stage._callFrameRequested = false;
+          visitContainer(stage, new ScriptExecutionVisitor());
+        }
+        visitContainer(stage, new RenderVisitor(ctx));
+        visitContainer(stage, new PostVisitor());
+        stage._syncCursor();
 
-      if (onAfterFrame) {
-        onAfterFrame();
+        if (onAfterFrame) {
+          onAfterFrame();
+        }
       }
     }
     requestAnimationFrame(draw);

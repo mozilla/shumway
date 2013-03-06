@@ -229,6 +229,9 @@ package avmplus
         return x;
     }
 
+    [native("getDefinitionByName")]
+    public native function getDefinitionByName(value:*):Object;
+
     [native("getQualifiedClassName")]
     public native function getQualifiedClassName(value:*):String;
 
