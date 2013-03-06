@@ -397,8 +397,7 @@ var natives = (function () {
         match: function (re) {
           if (re === void 0) {
             return null;
-          }
-          else {
+          } else {
             return this.match(re);
           }
         },
@@ -406,8 +405,7 @@ var natives = (function () {
         search: function (re) {
           if (re === void 0) {
             return -1;
-          }
-          else {
+          } else {
             return this.search(re);
           }
         },
@@ -420,13 +418,13 @@ var natives = (function () {
         toUpperCase: function () {
           // avmshell bug compatibility
           var str = Sp.toUpperCase.apply(this);
-	      var str = str.replace(/\u039C/g, String.fromCharCode(181))
+          var str = str.replace(/\u039C/g, String.fromCharCode(181));
           return str;
         },
         toLocaleUpperCase: function () {
           // avmshell bug compatibility
           var str = Sp.toLocaleUpperCase.apply(this);
-	      var str = str.replace(/\u039C/g, String.fromCharCode(181))
+          var str = str.replace(/\u039C/g, String.fromCharCode(181));
           return str;
         },
         toString: Sp.toString,

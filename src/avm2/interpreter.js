@@ -18,13 +18,13 @@ var Interpreter = (function () {
     if(constructor.classInfo) {
       // return primitive values for new'd boxes
       var qn = constructor.classInfo.instanceInfo.name.qualifiedName 
-      if(qn === "public$String") {
+      if (qn === Multiname.getPublicQualifiedName("String")) {
         return String.apply(null, args);
       }
-      if(qn === "public$Boolean") {
+      if (qn === Multiname.getPublicQualifiedName("Boolean")) {
         return Boolean.apply(null, args);
       }
-      if(qn === "public$Number") {
+      if (qn === Multiname.getPublicQualifiedName("Number")) {
         return Number.apply(null, args);
       }
     }
