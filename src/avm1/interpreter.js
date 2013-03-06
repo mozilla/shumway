@@ -195,8 +195,8 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
     path.pop();
   }
   var obj = defaultTarget;
-  if (path[0] === '') {
-    defaultTarget = root;
+  if (path[0] === '' || path[0] === '_level0' || path[0] === '_root') {
+    obj = root;
     path.shift();
   }
   while (path.length > 0) {
@@ -215,7 +215,7 @@ function interpretActions(actionsData, scopeContainer,
 
   function setTarget(targetPath) {
     if (!targetPath)
-      defaultTarget = _global._root;
+      defaultTarget = scope;
     else
       defaultTarget = lookupAS2Children(targetPath, defaultTarget, _global._root);
     currentContext.defaultTarget = defaultTarget;

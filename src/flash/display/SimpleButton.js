@@ -48,6 +48,9 @@ var SimpleButtonDefinition = (function () {
       this._overState = null;
       this._upState = null;
       this._useHandCursor = true;
+      this._prevAvm1StateCode = 0;
+      this._avm1StateCode = 0;
+      this._avm1MouseEvents = null;
 
       var s = this.symbol;
       if (s) {
@@ -80,6 +83,10 @@ var SimpleButtonDefinition = (function () {
         this._isMouseDown = false;
         this._updateButton();
       }.bind(this), true);
+
+      if (!this._loader._isAvm2Enabled && s && s.buttonActions) {
+        this._initAvm1Events(s.buttonActions);
+      }
     },
 
     _updateButton: function () {
@@ -91,6 +98,69 @@ var SimpleButtonDefinition = (function () {
       else if (this._isMouseOver && this._overState)
         state = this._overState;
       this._children = [state];
+
+      if (this._avm1MouseEvents) {
+        this._processAvm1MouseEvents(this._avm1MouseEvents);
+      }
+    },
+
+    _processAvm1MouseEvents: function (mouseEvents) {
+      // state codes: 0 - idle, 1 - outDown, 2 - overUp, 3 - overDown
+      var prevAvm1StateCode = this._avm1StateCode;
+      var avm1StateCode = (this._isMouseDown ? 1 : 0) |
+                            (this._isMouseOver ? 2 : 0);
+      if (prevAvm1StateCode !== avm1StateCode) {
+        this._prevAvm1StateCode = prevAvm1StateCode;
+        this._avm1StateCode = avm1StateCode;
+        var flag = AVM1MouseTransitionEvents[(prevAvm1StateCode << 2) | avm1StateCode];
+        for (var i = 0; i < mouseEvents.length; i++) {
+          var mouseEvent = mouseEvents[i];
+          if ((mouseEvent.mouseEventFlags & flag) !== 0) {
+            mouseEvent.listener();
+          }
+        }
+      }
+    },
+
+    _initAvm1Events: function (buttonActions) {
+      var loader = this._loader;
+      var avm1Context = loader._avm1Context;
+      var keyEvents = null;
+      for (var i = 0; i < buttonActions.length; i++) {
+        var buttonAction = buttonActions[i];
+        var fn = function (actionBlock) {
+          return executeActions(actionBlock, avm1Context, this._getAS2Object());
+        }.bind(this.parent, buttonAction.actionsData);
+        var mouseEventFlags = buttonAction.mouseEventFlags;
+        if (mouseEventFlags) {
+          var mouseEvents = this._avm1MouseEvents || (this._avm1MouseEvents = []);
+          mouseEvents.push({flags: mouseEventFlags, listener: fn});
+        }
+        var keyPress = buttonAction.keyPress;
+        if (keyPress) {
+          keyEvents = keyEvents || (keyEvents = []);
+          keyEvents.push({keyCode: AVM1KeyCodeMap[keyPress] || 0,
+                          charCode: keyPress,
+                          listener: fn});
+        }
+      }
+      if (keyEvents) {
+        var keyListener = function (e) {
+          for (var i = 0; i < keyEvents.length; i++) {
+            var keyEvent = keyEvents[i];
+            if (keyEvent.keyCode ? keyEvent.keyCode === e.keyCode :
+                                   keyEvent.charCode === e.charCode) {
+              keyEvent.listener();
+            }
+          }
+        };
+        // XXX: attaching events to the stage for now
+        var KeyboardEventClass = avm2.systemDomain.getClass("flash.events.KeyboardEvent");
+        this.stage.addEventListener(KeyboardEventClass.KEY_DOWN, keyListener, false);
+        this.addEventListener('removed', function () {
+          this.stage.removeEventListener(KeyboardEventClass.KEY_DOWN, keyListener, false);
+        }.bind(this), false);
+      }
     },
 
     get shouldHaveHandCursor() {
@@ -112,6 +182,9 @@ var SimpleButtonDefinition = (function () {
     symbolClass.instance.call(instance);
     return instance;
   }
+
+  var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
+  var AVM1MouseTransitionEvents = [0, 0, 1, 128, 64, 0, 0, 32, 2, 0, 0, 4, 256, 16, 8, 0];
 
   var desc = Object.getOwnPropertyDescriptor;
 

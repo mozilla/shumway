@@ -660,6 +660,7 @@ var LoaderDefinition = (function () {
 
         className = 'flash.display.SimpleButton';
         props.states = states;
+        props.buttonActions = symbol.buttonActions;
         break;
       case 'font':
         var charset = fromCharCode.apply(null, symbol.codes);
