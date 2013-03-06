@@ -52,7 +52,9 @@ var console = {
   },
   timeEnd: function (name) {
     Timer.stop(name)
-  }
+  },
+  warn: function () { },
+  info: function () { },
 };
 
 Timer.start("Loading VM");
