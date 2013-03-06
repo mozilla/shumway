@@ -182,6 +182,8 @@ var as3error = {};
    });
 }).call(this);
 
+natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
+
 natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {
   var start = Date.now();
   return function getTimer() {

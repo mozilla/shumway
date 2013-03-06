@@ -1226,7 +1226,7 @@ var natives = (function () {
       static: {
         currentDomain: {
           get: function () {
-            var domain = Runtime.stack.top().domain;
+            var domain = Runtime.currentDomain();
 
             if (!domain.scriptObject) {
               domain.scriptObject = new instance();
@@ -1330,19 +1330,42 @@ var natives = (function () {
      * DescribeType.as
      */
     getQualifiedClassName: constant(function (value) {
-      if (typeof (value) === "number") {
-        if ((value | 0) === value) {
-          return "int";
-        } else {
+      switch (typeof value) {
+        case "number":
+          if ((value | 0) === value) {
+            return "int";
+          }
           return "Number";
-        }
-      } else {
-        if (typeof value === "object" && "nativeObject" in value) {
-          var name = value.class.classInfo.instanceInfo.name;
-          return name.namespaces[0].originalURI + "::" + name.name;
-        }
-        return notImplemented(value);
+        case "string":
+          return "String";
+        case "boolean":
+          return "Boolean";
+        case "object":
+          if (value instanceof Date) {
+            return "Date";
+          }
+          var cls;
+          if (value.class) {
+            cls = value.class
+          } else if (value.classInfo) {
+            cls = value;
+          }
+          if (cls) {
+            var name = cls.classInfo.instanceInfo.name;
+            var originalURI = name.namespaces[0].originalURI;
+            if (originalURI) {
+              return originalURI + "::" + name.name;
+            }
+            return name.name;
+          }
+          break;
       }
+      return notImplemented(value + " (" + typeof value + ")");
+    }),
+
+    getDefinitionByName: constant(function (name) {
+      var simpleName = name.replace("::", ".");
+      return Runtime.currentDomain().getClass(simpleName);
     }),
 
     original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
