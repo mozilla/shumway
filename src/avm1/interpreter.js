@@ -326,7 +326,9 @@ function interpretActions(actionsData, scopeContainer,
     if (target)
       return target.obj[target.name];
 
-    var mc = defaultTarget.$lookupChild(variableName);
+    // trying movie clip children (if object is a MovieClip)
+    var mc = defaultTarget instanceof AS2MovieClip &&
+             defaultTarget.$lookupChild(variableName);
     if (mc)
       return mc;
 
