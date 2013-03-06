@@ -849,6 +849,12 @@ var Runtime = (function () {
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
   runtime.stack = [];
+  runtime.currentDomain = function () {
+    if (Runtime.stack.length) {
+      return Runtime.stack.top().domain;
+    }
+    return null;
+  };
 
   // This is called from catch blocks.
   runtime.unwindStackTo = function unwindStackTo(rt) {
