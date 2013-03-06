@@ -1,7 +1,9 @@
 /* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
-var isAVM1TraceEnabled = false;
-var isAVM1ErrorsIgnored = true;
+var AVM1_TRACE_ENABLED = false;
+var AVM1_ERRORS_IGNORED = true;
+var MAX_AVM1_INSTRUCTIONS_LIMIT = 100000;
+var MAX_AVM1_ERRORS_LIMIT = 1000;
 
 function AS2ScopeListItem(scope, next) {
   this.scope = scope;
@@ -405,10 +407,19 @@ function interpretActions(actionsData, scopeContainer,
   }
 
   var recoveringFromError = false;
-  while (stream.position < stream.end) { // will try again if we are skipping errors
+  var instructionsExecuted = 0;
+  var errorsIgnored = 0;
+  var executionAborted = false;
+  // will try again if we are skipping errors
+  while (stream.position < stream.end && !executionAborted) {
     try {
 
   while (stream.position < stream.end) {
+    if (instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
+      executionAborted = true;
+      throw 'long running script -- AVM1 instruction limit is reached';
+    }
+
     var actionCode = stream.readUI8();
     var length = actionCode >= 0x80 ? stream.readUI16() : 0;
     nextPosition = stream.position + length;
@@ -1087,12 +1098,16 @@ function interpretActions(actionsData, scopeContainer,
 
     // handling AVM1 errors
     } catch (e) {
-      if (!isAVM1ErrorsIgnored)
+      if (!AVM1_ERRORS_IGNORED || executionAborted)
         throw e;
       if (e instanceof AS2Error)
         throw e;
       stream.position = nextPosition;
       if (!recoveringFromError) {
+        if (errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
+          executionAborted = true;
+          throw 'long running script -- AVM1 errors limit is reached';
+        }
         console.error('AVM1 error: ' + e);
         recoveringFromError = true;
       }
@@ -1136,7 +1151,7 @@ var ActionTracerFactory = (function() {
 
   function ActionTracerFactory() {}
   ActionTracerFactory.get = (function() {
-    return isAVM1TraceEnabled ? tracer : nullTracer;
+    return AVM1_TRACE_ENABLED ? tracer : nullTracer;
   });
   return ActionTracerFactory;
 })();
