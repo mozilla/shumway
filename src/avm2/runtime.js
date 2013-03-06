@@ -1,3 +1,4 @@
+/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
@@ -500,8 +501,9 @@ function nameInTraits(obj, qn) {
   // If the object itself holds traits, try to resolve it. This is true for
   // things like global objects and activations, but also for classes, which
   // both have their own traits and the traits of the Class class.
-  if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn))
+  if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn)) {
     return true;
+  }
 
   // Else look on the prototype.
   var proto = Object.getPrototypeOf(obj);
@@ -525,6 +527,7 @@ function resolveMultinameInTraits(obj, mn) {
 /**
  * Resolving a multiname on an object using linear search.
  */
+/*
 function resolveMultiname(obj, mn) {
   release || assert(!Multiname.isQName(mn), mn, " already resolved");
 
@@ -556,6 +559,47 @@ function resolveMultiname(obj, mn) {
     if (Multiname.getQualifiedName(qn) in obj) {
       return qn;
     }
+  }
+
+  return undefined;
+}
+*/
+
+function resolveMultiname(obj, mn, traitsOnly) {
+  assert(!Multiname.isQName(mn), mn, " already resolved");
+
+  obj = Object(obj);
+
+  var publicQn;
+
+  // Check if the object that we are resolving the multiname on is a JavaScript native prototype
+  // and if so only look for public (dynamic) properties. The reason for this is because we cannot
+  // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
+  // work around it here during name resolution.
+
+  var isNative = isNativePrototype(obj);
+  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
+    var qn = mn.getQName(i);
+    if (traitsOnly) {
+      if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+        return qn;
+      }
+      continue;
+    }
+
+    if (mn.namespaces[i].isDynamic()) {
+      publicQn = qn;
+      if (isNative) {
+        break;
+      }
+    } else if (!isNative) {
+      if (Multiname.getQualifiedName(qn) in obj) {
+        return qn;
+      }
+    }
+  }
+  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
+    return publicQn;
   }
 
   return undefined;

@@ -1,3 +1,4 @@
+/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
