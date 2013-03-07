@@ -133,7 +133,8 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     childrenEnd: function() {},
     visit: function (child, isContainer, interactiveParent) {
       if (MovieClipClass.isInstanceOf(child) && child.isPlaying()) {
-        child.nextFrame();
+        child._renderNextFrame();
+        flushPendingScripts();
       }
 
       child.dispatchEvent(this.enterFrameEvt);
@@ -202,20 +203,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     visit: function (child) {
       //if (MovieClipClass.isInstanceOf(child))
         child.dispatchEvent(this.exitFrameEvt);
-    }
-  };
-
-  function ScriptExecutionVisitor() {}
-  ScriptExecutionVisitor.prototype = {
-    childrenStart: function() {},
-    childrenEnd: function() {},
-    visit: function (obj) {
-      if (obj._scriptExecutionPending) {
-        obj._scriptExecutionPending = false;
-
-        var currentFrame = obj._currentFrame;
-        obj._callFrame(currentFrame);
-      }
     }
   };
 
@@ -360,6 +347,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   }
 
+  stage._pendingScripts = [];
+  function flushPendingScripts() {
+    while (stage._pendingScripts.length > 0) {
+      var fn = stage._pendingScripts.shift();
+      fn();
+    }
+  }
+
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
@@ -379,13 +374,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       if (renderDummyBalls) {
         renderDummyBalls();
       } else {
+        flushPendingScripts();
         ctx.beginPath();
-        stage._callFrameRequested = false;
         visitContainer(stage, new PreVisitor(ctx));
-        while (stage._callFrameRequested) {
-          stage._callFrameRequested = false;
-          visitContainer(stage, new ScriptExecutionVisitor());
-        }
         visitContainer(stage, new RenderVisitor(ctx));
         visitContainer(stage, new PostVisitor());
         stage._syncCursor();
