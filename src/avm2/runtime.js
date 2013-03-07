@@ -1193,8 +1193,8 @@ var Runtime = (function () {
 
         var bindings = instance.prototype;
         var interfaceTraits = ii.traits;
-        for (var i = 0, j = interfaceTraits.length; i < j; i++) {
-          var interfaceTrait = interfaceTraits[i];
+        for (var k = 0, l = interfaceTraits.length; k < l; k++) {
+          var interfaceTrait = interfaceTraits[k];
           var interfaceTraitQn = Multiname.getQualifiedName(interfaceTrait.name);
           var interfaceTraitBindingQn = Multiname.getPublicQualifiedName(Multiname.getName(interfaceTrait.name));
           // TODO: We should just copy over the property descriptor but we can't because it may be a
