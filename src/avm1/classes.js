@@ -1283,9 +1283,24 @@ function createBuiltinType(obj, args) {
     }
     return result;
   }
-  if (obj === Boolean || obj === Number || obj === Date ||
+  if (obj === Boolean || obj === Number ||
       obj === String || obj === Function)
     return obj.apply(null, args);
+  if (obj === Date) {
+    switch (args.length) {
+      case 0:
+        return new Date();
+      case 1:
+        return new Date(args[0]);
+      default:
+        return new Date(args[0], args[1],
+          args.length > 2 ? args[2] : 1,
+          args.length > 3 ? args[3] : 0,
+          args.length > 4 ? args[4] : 0,
+          args.length > 5 ? args[5] : 0,
+          args.length > 6 ? args[6] : 0);
+    }
+  }
   if (obj === Object)
     return {};
 }
