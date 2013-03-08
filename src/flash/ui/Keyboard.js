@@ -13,7 +13,7 @@ var ShumwayKeyboardListener = {
         true,
         false,
         domEvt.charCode,
-        this._lastKeyCode,
+        domEvt.type === 'keyup' ? domEvt.keyCode : this._lastKeyCode,
         domEvt.keyLocation,
         domEvt.ctrlKey,
         domEvt.altKey,
