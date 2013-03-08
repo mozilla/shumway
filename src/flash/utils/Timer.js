@@ -3,6 +3,7 @@ var TimerDefinition = (function () {
     __class__: 'flash.utils.Timer',
     initialize: function () {
       this.running = false;
+      this.private$flash$utils$Timer$m_iteration = 0;
     }
   };
 
@@ -18,7 +19,7 @@ var TimerDefinition = (function () {
           this.running = true;
           this.interval = setInterval(closure, delay);
         },
-        _stop: function () {
+        stop: function () {
           this.running = false;
           clearInterval(this.interval);
         },
