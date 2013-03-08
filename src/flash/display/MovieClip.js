@@ -144,16 +144,9 @@ var MovieClipDefinition = (function () {
       this._currentFrame = frameNum;
 
       if (frameNum) {
-        this._requestCallFrame();
+        this._callFrame(frameNum);
         this._startSounds(frameNum);
       }
-    },
-    _registerStartSounds: function (frameNum, starts) {
-      this._startSoundRegistrations[frameNum] = starts;
-    },
-    _requestCallFrame: function () {
-       this._scriptExecutionPending = true;
-       this.stage._callFrameRequested = true;
     },
     _registerStartSounds: function (frameNum, starts) {
       this._startSoundRegistrations[frameNum] = starts;
@@ -300,28 +293,40 @@ var MovieClipDefinition = (function () {
     },
     gotoAndPlay: function (frame, scene) {
       this.play();
-      if (isNaN(frame))
+      if (isNaN(frame)) {
         this.gotoLabel(frame);
-      else
-        this._gotoFrame(frame);
+      } else {
+        this._stage._pendingScripts.push(
+          this._gotoFrame.bind(this, frame));
+      }
     },
     gotoAndStop: function (frame, scene) {
       this.stop();
-      if (isNaN(frame))
+      if (isNaN(frame)) {
         this.gotoLabel(frame);
-      else
-        this._gotoFrame(frame);
+      } else {
+        this._stage._pendingScripts.push(
+          this._gotoFrame.bind(this, frame));
+      }
     },
     gotoLabel: function (labelName) {
       var frameLabel = this._frameLabels[labelName];
-      if (frameLabel)
-        this._gotoFrame(frameLabel.frame);
+      if (frameLabel) {
+        this._stage._pendingScripts.push(
+          this._gotoFrame.bind(this, frameLabel.frame));
+      }
     },
     isPlaying: function () {
       return this._isPlaying;
     },
     nextFrame: function () {
-      this.gotoAndPlay(this._currentFrame % this._totalFrames + 1);
+      this.stop();
+      this._stage._pendingScripts.push(function () {
+        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      }.bind(this));
+    },
+    _renderNextFrame: function () {
+      this._gotoFrame(this._currentFrame % this._totalFrames + 1);
     },
     nextScene: function () {
       notImplemented();
@@ -330,7 +335,10 @@ var MovieClipDefinition = (function () {
       this._isPlaying = true;
     },
     prevFrame: function () {
-      this.gotoAndStop(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
+      this.stop();
+      this._stage._pendingScripts.push(function () {
+        this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
+      }.bind(this));
     },
     prevScene: function () {
       notImplemented();
