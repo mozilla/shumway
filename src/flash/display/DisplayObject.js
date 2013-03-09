@@ -79,7 +79,8 @@ var DisplayObjectDefinition = (function () {
           var c = matrix.c;
           var d = matrix.d;
 
-          this._rotation = Math.atan2(b, a) * 180 / Math.PI;
+          this._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
+                                     (b > 0 ? 90 : -90);
           var sx = Math.sqrt(a * a + b * b);
           this._scaleX = a > 0 ? sx : -sx;
           var sy = Math.sqrt(d * d + c * c);
