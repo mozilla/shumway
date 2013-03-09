@@ -62,7 +62,8 @@ var TransformDefinition = (function () {
       var ty = val.ty;
 
       var target = this._target;
-      target._rotation = Math.atan2(b, a) * 180 / Math.PI;
+      target._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
+                                   (b > 0 ? 90 : -90);
       var sx = Math.sqrt(a * a + b * b);
       target._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
