@@ -91,10 +91,10 @@ function parseQueryString(qs) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, referer, window) {
+function ChromeActions(url, params, baseUrl, window) {
   this.url = url;
   this.params = params;
-  this.referer = referer;
+  this.baseUrl = baseUrl;
   this.isOverlay = false;
   this.isPausedAtStart = false;
   this.window = window;
@@ -110,6 +110,7 @@ ChromeActions.prototype = {
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
+      baseUrl : this.baseUrl,
       params: this.params,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart
@@ -154,10 +155,10 @@ ChromeActions.prototype = {
     if ('overrideMimeType' in xhr)
       xhr.overrideMimeType('text/plain; charset=x-user-defined');
 
-    if (this.referer) {
+    if (this.baseUrl) {
       // Setting the referer uri, some site doing checks if swf is embedded
       // on the original page.
-      xhr.setRequestHeader("Referer", this.referer);
+      xhr.setRequestHeader("Referer", this.baseUrl);
     }
 
     // TODO apply range request headers if limit is specified

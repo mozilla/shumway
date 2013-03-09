@@ -3,11 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <base href=""/>
 
     <script>
       SHUMWAY_ROOT = "resource://shumway/";
     </script>
-    <!-- <base href="resource://shumway/web/simple.html" /> -->
 
     <script src="../lib/DataView.js/DataView.js"></script>
 
@@ -86,6 +86,7 @@
 
       function runSniffer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
+        document.head.getElementsByTagName('base')[0].href = flashParams.baseUrl;
         movieUrl = flashParams.url;
         console.log("url=" + movieUrl);
         FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0, limit: BYTES_TO_LOAD});
