@@ -370,7 +370,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   }
 
-  stage._pendingScripts = [];
   function flushPendingScripts() {
     while (stage._pendingScripts.length > 0) {
       var fn = stage._pendingScripts.shift();
