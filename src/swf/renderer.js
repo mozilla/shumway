@@ -32,8 +32,9 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
       for (var j = 0, o = subpaths.length; j < o; j++) {
         var pathTracker = subpaths[j], path = pathTracker.target;
         if (clip) {
-          ctx.closePath();
+          ctx.beginPath();
           ctx.__draw__(path);
+          ctx.closePath();
         } else {
           if (path.fillStyle) {
             ctx.fillStyle = path.fillStyle;
@@ -213,9 +214,8 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     this.ctx = ctx;
     this.depth = 0;
 
-    this.clip = null;
     this.clipDepth = null;
-    this.clipStack = [];
+    this.clipStack = null;
   }
   RenderVisitor.prototype = {
     childrenStart: function(parent) {
@@ -239,46 +239,66 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       }
       this.depth++;
 
-      this.clipStack.push(this.clip, this.clipDepth);
-      this.clipDepth = null;
+      if (this.clipDepth && this.clipDepth.length > 0) {
+        // saving the parent clipping state
+        this.clipStack = {
+          depth: this.depth,
+          clip: this.clipDepth,
+          next: this.clipStack
+        };
+        this.clipDepth = null;
+      }
     },
     childrenEnd: function(parent) {
+      if (this.clipDepth) {
+        // removing existing clippings
+        while (this.clipDepth.length > 0) {
+          this.clipDepth.pop();
+          this.ctx.restore();
+        }
+        this.clipDepth = null;
+      }
+      // checking if we saved the parent clipping state
+      if (this.clipStack && this.clipStack.depth === this.depth) {
+        this.clipDepth = this.clipStack.clip;
+        this.clipStack = this.clipStack.next;
+      }
+
       this.depth--;
       this.ctx.restore();
-
-      if (this.clipDepth)
-        this.ctx.restore();
-
-      this.clipDepth = this.clipStack.pop();
-      this.clip = this.clipStack.pop();
     },
     visit: function (child, isContainer) {
       var ctx = this.ctx;
 
-      if (this.clip) {
-        if (child._parent === this.clip._parent) {
-          ctx.save();
-          ctx.clip();
-          this.clipDepth = this.clip._clipDepth;
-          this.clip = null;
-        }
-      } else if (this.clipDepth && child._depth > this.clipDepth) {
+      var clippingMask = false;
+      // removing clipping if the required character depth is achived
+      while (this.clipDepth && this.clipDepth.length > 0 &&
+          child._depth > this.clipDepth[0]) {
+        this.clipDepth.shift();
         ctx.restore();
-        this.clipDepth = null;
       }
-
-      if (child._clipDepth) {
-        this.clip = child;
-        this.clipDepth = null;
+      // TODO: handle container as a clipping mask
+      if (child._clipDepth && !isContainer) {
+        if (!this.clipDepth) {
+          this.clipDepth = [];
+        }
+        clippingMask = true;
+        // saving clipping until certain character depth
+        this.clipDepth.unshift(child._clipDepth);
+        ctx.save();
       }
 
       ctx.save();
 
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, this.clip);
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
 
       if (!isContainer) {
         // letting the container to restore transforms after all children are painted
         ctx.restore();
+      }
+
+      if (clippingMask) {
+        ctx.clip();
       }
 
       if (stage._showRedrawRegions && child._dirtyArea) {
