@@ -105,3 +105,12 @@ Promise.prototype.then = function (cb) {
   else
     this._callbacks.push(cb);
 };
+
+function resolveURI(uri) {
+  if (!inBrowser)
+    return uri;
+  var a = document.createElement('a');
+  a.href = uri;
+  console.info("resolved ", uri, " to ", a.href);
+  return a.href;
+}
