@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <base href=""/>
     <title>Shumway viewer</title>
 
     <script>
@@ -82,6 +83,7 @@
 
       function runViewer() {
         var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
+        document.head.getElementsByTagName('base')[0].href = flashParams.baseUrl;
         movieUrl = flashParams.url;
         movieParams = flashParams.params;
         var isOverlay = flashParams.isOverlay;
