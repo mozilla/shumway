@@ -13,6 +13,9 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     // We only support alpha channel transformation for now
     ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
   }
+  if (child._alpha !== 1) {
+    ctx.globalAlpha *= child._alpha;
+  }
 
   if (child._graphics) {
     var graphics = child._graphics;

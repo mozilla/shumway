@@ -267,6 +267,8 @@ var DisplayObjectDefinition = (function () {
     set alpha(val) {
       this._alpha = val;
       this._slave = false;
+
+      this._markAsDirty();
     },
     get blendMode() {
       return BLEND_MODE_NORMAL;
@@ -296,11 +298,17 @@ var DisplayObjectDefinition = (function () {
       this._filters = val;
     },
     get height() {
-      var bounds = this.getBounds();
+      var bounds = this.getBounds(this._parent);
       return bounds.height;
     },
     set height(val) {
-      notImplemented();
+      if (val < 0)
+        val = 0;
+      var scaleY = this.scaleY;
+      if (scaleY === 0 && val > 0) {
+        this.scaleY = scaleY = 1; // reset scale to have valid height
+      }
+      this.scaleY = scaleY * val / this.height;
     },
     get loaderInfo() {
       return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
@@ -423,11 +431,17 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get width() {
-      var bounds = this.getBounds();
+      var bounds = this.getBounds(this._parent);
       return bounds.width;
     },
     set width(val) {
-      notImplemented();
+      if (val < 0)
+        val = 0;
+      var scaleX = this.scaleX;
+      if (scaleX === 0 && val > 0) {
+        this.scaleX = scaleX = 1; // reset scale to have valid width
+      }
+      this.scaleX = scaleX * val / this.width;
     },
     get x() {
       return this._x;
@@ -575,6 +589,7 @@ var DisplayObjectDefinition = (function () {
         root: desc(def, "root"),
         stage: desc(def, "stage"),
         name: desc(def, "name"),
+        parent: desc(def, "parent"),
         mask: desc(def, "mask"),
         visible: desc(def, "visible"),
         x: desc(def, "x"),
