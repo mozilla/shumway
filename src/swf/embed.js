@@ -24,6 +24,7 @@ SWF.embed = function(file, container, options) {
     canvasHolder.appendChild(canvas);
   }
 
+  loader._parent = stage;
   loader._stage = stage;
   stage._loader = loader;
 

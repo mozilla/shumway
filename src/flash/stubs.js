@@ -159,6 +159,8 @@ var as3error = {};
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
    M("flash.system.System", "SystemClass", SystemDefinition),
+   M("flash.system.Security", "SecurityClass", SecurityDefinition),
+   M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
 
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");
