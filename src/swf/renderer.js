@@ -178,8 +178,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
             interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
           }
 
-          if (stage._clickTarget === interactiveParent)
-            stage._clickTarget = null;
+          if (stage._clickTarget === interactiveParent) {
+            stage._clickTarget = stage;
+          }
         }
         stage._mouseJustLeft = false;
       }

@@ -56,16 +56,15 @@ SWF.embed = function(file, container, options) {
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
 
-      if (stage._clickTarget)
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
+      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
     });
     canvas.addEventListener('dblclick', function () {
-      if (stage._clickTarget && stage._clickTarget._doubleClickEnabled)
+      if (stage._clickTarget._doubleClickEnabled) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('doubleClick'));
+      }
     });
     canvas.addEventListener('mousedown', function () {
-      if (stage._clickTarget)
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -82,11 +81,11 @@ SWF.embed = function(file, container, options) {
       stage._mouseY = domEvt.pageY - top;
     });
     canvas.addEventListener('mouseup', function () {
-      if (stage._clickTarget)
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseOver = true;
+      stage._mouseJustLeft = false;
     });
     canvas.addEventListener('mouseout', function () {
       stage._mouseOver = false;
@@ -105,7 +104,7 @@ SWF.embed = function(file, container, options) {
     function syncCursor() {
       var newCursor;
       if (cursorVisible) {
-        if (stage._clickTarget && stage._clickTarget.shouldHaveHandCursor)
+        if (stage._clickTarget.shouldHaveHandCursor)
           newCursor = 'pointer';
         else
           newCursor = 'auto';
