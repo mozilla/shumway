@@ -161,6 +161,8 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     this.mouseOverEvt = new flash.events.Event("mouseOver");
     this.mouseOutEvt = new flash.events.Event("mouseOut");
     this.mouseMoveEvt = new flash.events.Event("mouseMove");
+
+    stage._clickTarget = stage;
   }
   MouseVisitor.prototype = {
     childrenStart: function() {},
@@ -185,11 +187,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
       child._mouseX = pt.x;
       child._mouseY = pt.y;
-
       if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
         var hitArea = child._hitArea || child;
 
-        if (child._hitTest(true, stage._mouseX, stage._mouseY, true, true)) {
+        if (hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, true)) {
           if (interactiveParent._mouseOver) {
             if (mouseMoved) {
               interactiveParent.dispatchEvent(this.mouseMoveEvt);
@@ -200,14 +201,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
           }
 
           stage._clickTarget = interactiveParent;
-        } else {
+        } else if (stage._clickTarget !== interactiveParent) {
           if (interactiveParent._mouseOver) {
             interactiveParent._mouseOver = false;
             interactiveParent.dispatchEvent(this.mouseOutEvt);
-          }
-
-          if (stage._clickTarget === interactiveParent) {
-            stage._clickTarget = stage;
           }
         }
         stage._mouseJustLeft = false;
