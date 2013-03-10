@@ -78,8 +78,11 @@ SWF.embed = function(file, container, options) {
         } while (node = node.offsetParent);
       }
 
-      stage._mouseX = domEvt.pageX - left;
-      stage._mouseY = domEvt.pageY - top;
+      var canvasState = stage._canvasState;
+      stage._mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
+        canvasState.scale;
+      stage._mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
+        canvasState.scale;
     });
     canvas.addEventListener('mouseup', function () {
       stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
