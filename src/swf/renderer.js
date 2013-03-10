@@ -94,7 +94,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     return { x: x, y: y, width: x2 - x, height: y2 - y };
   }
 
-  function visitContainer(container, visitor, interactiveParent) {
+  function visitContainer(container, visitor) {
     var children = container._children;
     var dirty = false;
 
@@ -106,16 +106,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
-        var interactiveParentForChild = interactiveParent;
-        if (InteractiveClass.isInstanceOf(child) && child._mouseEnabled) {
-          if (!interactiveParent || interactiveParent._mouseChildren)
-            interactiveParentForChild = child;
-        }
-
-        visitor.visit(child, isContainer, interactiveParentForChild);
+        visitor.visit(child, isContainer);
 
         if (isContainer)
-          visitContainer(child, visitor, interactiveParentForChild);
+          visitContainer(child, visitor);
 
         if (child._dirtyArea)
           dirty = true;
@@ -135,7 +129,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   PreVisitor.prototype = {
     childrenStart: function() {},
     childrenEnd: function() {},
-    visit: function (child, isContainer, interactiveParent) {
+    visit: function (child, isContainer) {
       if (MovieClipClass.isInstanceOf(child) && child.isPlaying()) {
         child._renderNextFrame();
         flushPendingScripts();
@@ -145,6 +139,39 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
       if (child._refreshAS2Variables) {
         child._refreshAS2Variables();
+      }
+
+      if (child._dirtyArea) {
+        var b1 = roundForClipping(child._dirtyArea);
+        var b2 = roundForClipping(child.getBounds());
+        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
+        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
+      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
+        child._revision = child._graphics._revision;
+        child._markAsDirty();
+        // redraw entire stage till we calculate bounding boxes for dynamic graphics
+        this.ctx.rect(0, 0, frameWidth, frameHeight);
+      }
+    }
+  };
+
+  function MouseVisitor() {
+    this.interactiveParent = null;
+    this.parentsStack = [];
+    this.mouseOverEvt = new flash.events.Event("mouseOver");
+    this.mouseOutEvt = new flash.events.Event("mouseOut");
+    this.mouseMoveEvt = new flash.events.Event("mouseMove");
+  }
+  MouseVisitor.prototype = {
+    childrenStart: function() {},
+    childrenEnd: function() {
+      this.interactiveParent = this.parentsStack.pop();
+    },
+    visit: function (child, isContainer) {
+      var interactiveParent = this.interactiveParent;
+      if (InteractiveClass.isInstanceOf(child) && child._mouseEnabled) {
+        if (!interactiveParent || interactiveParent._mouseChildren)
+          interactiveParent = child;
       }
 
       var mouseMoved = false;
@@ -164,18 +191,19 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
         if (child._hitTest(true, stage._mouseX, stage._mouseY, true, true)) {
           if (interactiveParent._mouseOver) {
-            if (mouseMoved)
-              interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+            if (mouseMoved) {
+              interactiveParent.dispatchEvent(this.mouseMoveEvt);
+            }
           } else {
             interactiveParent._mouseOver = true;
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+            interactiveParent.dispatchEvent(this.mouseOverEvt);
           }
 
           stage._clickTarget = interactiveParent;
         } else {
           if (interactiveParent._mouseOver) {
             interactiveParent._mouseOver = false;
-            interactiveParent.dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+            interactiveParent.dispatchEvent(this.mouseOutEvt);
           }
 
           if (stage._clickTarget === interactiveParent) {
@@ -185,16 +213,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         stage._mouseJustLeft = false;
       }
 
-      if (child._dirtyArea) {
-        var b1 = roundForClipping(child._dirtyArea);
-        var b2 = roundForClipping(child.getBounds());
-        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
-        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
-      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
-        child._revision = child._graphics._revision;
-        child._markAsDirty();
-        // redraw entire stage till we calculate bounding boxes for dynamic graphics
-        this.ctx.rect(0, 0, frameWidth, frameHeight);
+      if (isContainer) {
+        this.parentsStack.push(this.interactiveParent);
+        this.interactiveParent = interactiveParent;
       }
     }
   };
@@ -400,6 +421,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         flushPendingScripts();
         ctx.beginPath();
         visitContainer(stage, new PreVisitor(ctx));
+        visitContainer(stage, new MouseVisitor());
         visitContainer(stage, new RenderVisitor(ctx));
         visitContainer(stage, new PostVisitor());
         stage._syncCursor();
