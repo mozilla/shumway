@@ -57,15 +57,19 @@ SWF.embed = function(file, container, options) {
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
 
-      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
+      if (stage._clickTarget) {
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
+      }
     });
     canvas.addEventListener('dblclick', function () {
-      if (stage._clickTarget._doubleClickEnabled) {
+      if (stage._clickTarget && stage._clickTarget._doubleClickEnabled) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('doubleClick'));
       }
     });
     canvas.addEventListener('mousedown', function () {
-      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+      if (stage._clickTarget) {
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+      }
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -85,7 +89,9 @@ SWF.embed = function(file, container, options) {
         canvasState.scale;
     });
     canvas.addEventListener('mouseup', function () {
-      stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+      if (stage._clickTarget) {
+        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+      }
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseOver = true;
@@ -107,13 +113,13 @@ SWF.embed = function(file, container, options) {
     var cursorVisible = true;
     function syncCursor() {
       var newCursor;
-      if (cursorVisible) {
-        if (stage._clickTarget.shouldHaveHandCursor)
-          newCursor = 'pointer';
-        else
-          newCursor = 'auto';
-      } else {
+      if (!cursorVisible) {
         newCursor = 'none';
+      } else if (stage._clickTarget &&
+                 stage._clickTarget.shouldHaveHandCursor) {
+        newCursor = 'pointer';
+      } else {
+        newCursor = 'auto';
       }
 
       container.style.cursor = newCursor;
