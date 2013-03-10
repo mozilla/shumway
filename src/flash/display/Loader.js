@@ -356,6 +356,8 @@ var LoaderDefinition = (function () {
   var style = document.styleSheets[0];
 
   var def = {
+	__class__: 'flash.display.Loader',
+	
     initialize: function () {
       this._contentLoaderInfo = new flash.display.LoaderInfo;
       this._contentLoaderInfo._loader = this;
@@ -495,11 +497,7 @@ var LoaderDefinition = (function () {
         var needRootObject = !root;
 
         if (needRootObject) {
-          var stage = loader._stage;
-
-          stage._frameRate = loaderInfo._frameRate;
-          stage._stageHeight = loaderInfo._height;
-          stage._stageWidth = loaderInfo._width;
+          var parent = loader._parent;
 
           assert(dictionary[0].resolved);
           var rootInfo = dictionary[0].value;
@@ -507,13 +505,20 @@ var LoaderDefinition = (function () {
           var root = rootClass.createAsSymbol({
             framesLoaded: timeline.length,
             loader: loader,
-            parent: stage,
+            parent: parent,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
-            stage: stage
+            stage: loader._stage
           });
 
-          stage._root = root;
+          if (parent && parent == loader._stage) {
+            parent._frameRate = loaderInfo._frameRate;
+            parent._stageHeight = loaderInfo._height;
+            parent._stageWidth = loaderInfo._width;
+            parent._root = root;
+          } else {
+            loader._children.push(root);
+          }
 
           if (labelName) {
             var frameLabels = { };
@@ -908,28 +913,63 @@ var LoaderDefinition = (function () {
       }
     },
 
-    get contentLoaderInfo() {
-      return this._contentLoaderInfo;
-    },
+      get contentLoaderInfo() {
+          return this._contentLoaderInfo;
+      },
 
-    close: function () {
-      notImplemented();
-    },
-    load: function (request, context) {
-      this._loadFrom(request.url);
-    },
-    loadBytes: function (bytes, context) {
-      if (!bytes.length)
-        throw ArgumentError();
+      close: function () {
+          notImplemented();
+      },
+      load: function (request, context) {
+          this._loadFrom(request.url);
+      },
+      loadBytes: function (bytes, context) {
+          if (!bytes.length)
+              throw ArgumentError();
 
-      this._loadFrom(bytes);
-    },
-    unload: function () {
-      notImplemented();
-    },
-    unloadAndStop: function (gc) {
-      notImplemented();
-    }
+          this._loadFrom(bytes);
+      },
+      unload: function () {
+          notImplemented();
+      },
+      unloadAndStop: function (gc) {
+          notImplemented();
+      }
+  };
+  
+  def.__glue__ = {
+	native: {
+      instance: {
+          contentLoaderInfo: {
+            get: function () { return this._contentLoaderInfo; }
+          },
+        close: function () {
+          notImplemented();
+        },
+        load: function (request, context /* = null */) {
+          this._loadFrom(request.url);
+        },
+        loadBytes: function (bytes, context) {
+          if (!bytes.length)
+            throw ArgumentError();
+
+          this._loadFrom(bytes);
+        },
+        unload: function () {
+          notImplemented();
+        },
+        unloadAndStop: function (gc) {
+          notImplemented();
+        },
+        _getJPEGLoaderContextdeblockingfilter: function(context) {
+          return 0; //TODO: implement
+        },
+        _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
+          this._loadFrom(resolveURI(request.url));
+          //TODO: implement
+        }
+      }
+	}
   };
 
   return def;
