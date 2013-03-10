@@ -162,11 +162,15 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     this.mouseOutEvt = new flash.events.Event("mouseOut");
     this.mouseMoveEvt = new flash.events.Event("mouseMove");
 
-    this.mouseOverTargets = [stage];
+    this.mouseOverTargets = [stage._mouseOver ? stage : null];
     this.oldMouseOverTargets = [];
+    if (stage._mouseJustLeft) {
+      this.oldMouseOverTargets.push(stage);
+      stage._mouseJustLeft = false;
+    }
   }
   MouseVisitor.prototype = {
-    childrenStart: function(container) {},
+    childrenStart: function() {},
     childrenEnd: function(container) {
       this.interactiveParent = this.parentsStack.pop();
 
@@ -175,21 +179,23 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         var oldMouseOverTargets = this.oldMouseOverTargets;
         var target = this.mouseOverTargets.pop();
         stage._clickTarget = target;
-        // removing duplicates from this.mouseOverTargets and removing symbols
-        // from this.oldMouseOverTargets if they are in "mouseOver" state
-        do {
-          var i = oldMouseOverTargets.indexOf(target);
-          if (i >= 0) {
-            oldMouseOverTargets[i] = null;
-          }
-          if (!target._mouseOver) {
-            newMouseOverTargets.push(target);
-          }
-          var prev = target;
+        if (target) {
+          // removing duplicates from this.mouseOverTargets and removing symbols
+          // from this.oldMouseOverTargets if they are in "mouseOver" state
           do {
-            target = this.mouseOverTargets.pop();
-          } while (prev === target);
-        } while(target);
+            var i = oldMouseOverTargets.indexOf(target);
+            if (i >= 0) {
+              oldMouseOverTargets[i] = null;
+            }
+            if (!target._mouseOver) {
+              newMouseOverTargets.push(target);
+            }
+            var prev = target;
+            do {
+              target = this.mouseOverTargets.pop();
+            } while (prev === target);
+          } while(target);
+        }
         // generating mouseOut events for non-processed oldMouseOverTargets
         while (oldMouseOverTargets.length > 0) {
           target = oldMouseOverTargets.pop();
@@ -205,7 +211,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
           target._mouseOver = true;
           target.dispatchEvent(this.mouseOverEvt);
         }
-        stage._mouseJustLeft = false;
       }
     },
     visit: function (child, isContainer) {
@@ -232,17 +237,16 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
       child._mouseX = pt.x;
       child._mouseY = pt.y;
-      if (interactiveParent && (stage._mouseOver || stage._mouseJustLeft)) {
-        var hitArea = child._hitArea || child;
 
-        if (hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
-          if (mouseMoved) {
-            interactiveParent.dispatchEvent(this.mouseMoveEvt);
-          }
-          // saving the current interactive symbol and whole stack of
-          // its parents (including duplicates)
-          this.mouseOverTargets = this.parentsStack.concat([interactiveParent]);
+      var hitArea = child._hitArea || child;
+      if (stage._mouseOver &&
+          hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
+        if (mouseMoved) {
+          interactiveParent.dispatchEvent(this.mouseMoveEvt);
         }
+        // saving the current interactive symbol and whole stack of
+        // its parents (including duplicates)
+        this.mouseOverTargets = this.parentsStack.concat([interactiveParent]);
       }
 
       if (isContainer) {
