@@ -66,7 +66,7 @@ var LoaderInfoDefinition = (function () {
           },
           applicationDomain: {
             get: function applicationDomain() { // (void) -> ApplicationDomain
-              return this._applicationDomain;
+              return avm2.applicationDomain._getScriptObject();
             }
           },
           swfVersion: {
