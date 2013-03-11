@@ -130,7 +130,7 @@ var Interpreter = (function () {
           case OP_setsuper:
             value = stack.pop();
             multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(setSuper(savedScope, stack.pop(), multiname, value));
+            setSuper(savedScope, stack.pop(), multiname, value);
             break;
           case OP_dxns:           notImplemented(); break;
           case OP_dxnslate:       notImplemented(); break;
