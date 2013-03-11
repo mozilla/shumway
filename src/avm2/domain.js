@@ -489,6 +489,15 @@ var Domain = (function () {
 
     },
 
+    _getScriptObject: function () {
+      if (!this.scriptObject) {
+        var ApplicationDomainClass = avm2.systemDomain.getClass("flash.system.ApplicationDomain");
+        var dom = ApplicationDomainClass.createInstance([this]); // wrapping native Domain
+        release || assert(dom === this.scriptObject);
+      }
+      return this.scriptObject;
+    },
+
     traceLoadedClasses: function () {
       var writer = new IndentingWriter();
       function traceProperties(obj) {

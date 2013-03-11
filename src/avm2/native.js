@@ -1203,11 +1203,19 @@ var natives = (function () {
    */
   function ApplicationDomainClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("ApplicationDomain", instance, C(instance));
-    c.extend(baseClass);
+    c.extendBuiltin(baseClass);
 
     c.native = {
       instance: {
         ctor: function (parentDomain) {
+          var nativeObject = null;
+          if (parentDomain instanceof Domain) {
+            // late binding with native Domain
+            nativeObject = parentDomain;
+            parentDomain = !parentDomain.base ? null :
+              parentDomain.base._getScriptObject();
+          }
+
           // If no parent domain is passed in, get the current system domain.
           var parent;
           if (!parentDomain) {
@@ -1216,7 +1224,7 @@ var natives = (function () {
             parent = parentDomain.dom;
           }
 
-          this.dom = new Domain(parent.vm, parent);
+          this.dom = nativeObject || new Domain(parent.vm, parent);
           this.dom.scriptObject = this;
         },
 
@@ -1237,14 +1245,16 @@ var natives = (function () {
         },
 
         getDefinition: function (name) {
-          return this.dom.getProperty(Multiname.fromSimpleName(name), false, true);
+          var simpleName = name.replace("::", ".");
+          return this.dom.getProperty(Multiname.fromSimpleName(simpleName), false, true);
         },
 
         hasDefinition: function (name) {
           if (!name) {
             return false;
           }
-          return !!this.dom.findProperty(Multiname.fromSimpleName(name), false, false);
+          var simpleName = name.replace("::", ".");
+          return !!this.dom.findProperty(Multiname.fromSimpleName(simpleName), false, false);
         }
       },
 
@@ -1386,6 +1396,35 @@ var natives = (function () {
           break;
       }
       return notImplemented(value + " (" + typeof value + ")");
+    }),
+
+    getQualifiedSuperclassName: constant(function (value) {
+      switch (typeof value) {
+        case "number":
+        case "string":
+        case "boolean":
+          return "Object";
+        case "object":
+          if (value instanceof Date) {
+            return "Object";
+          }
+          var cls;
+          if (value.class) {
+            cls = value.class
+          } else if (value.classInfo) {
+            cls = value;
+          }
+          if (cls && cls.baseClass) {
+            var name = cls.baseClass.classInfo.instanceInfo.name;
+            var originalURI = name.namespaces[0].originalURI;
+            if (originalURI) {
+              return originalURI + "::" + name.name;
+            }
+            return name.name;
+          }
+          return "Object";
+      }
+      return notImplemented(value + " (superOf " + typeof value + ")");
     }),
 
     getDefinitionByName: constant(function (name) {
