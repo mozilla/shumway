@@ -1,4 +1,4 @@
-/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceDomain = domainOptions.register(new Option("tdpa", "traceDomain", "boolean", false, "trace domain property access"));
@@ -39,6 +39,9 @@ var Domain = (function () {
 
     // ABCs that belong to this domain.
     this.abcs = [];
+
+    // ABCs that have been loaded
+    this.loadedAbcs = {};
 
     // Classes that have been loaded.
     this.loadedClasses = [];
@@ -400,7 +403,6 @@ var Domain = (function () {
      * definition of conflicting name will never be resolved.
      */
     findDefiningScript: function findDefiningScript(mn, execute) {
-
       var resolved = this.scriptCache[mn.id];
       if (resolved && (resolved.script.executed || !execute)) {
         return resolved;
@@ -448,6 +450,17 @@ var Domain = (function () {
           }
         }
       }
+
+      // Ask host to execute the defining ABC
+      if (!this.base && this.vm.findDefiningAbc) {
+        var abc = this.vm.findDefiningAbc(mn);
+        if (abc !== null && !this.loadedAbcs[abc.name]) {
+          this.loadedAbcs[abc.name] = true;
+          this.loadAbc(abc);
+          return this.findDefiningScript(mn, execute);
+        }
+      }
+
       return undefined;
     },
 
@@ -486,7 +499,6 @@ var Domain = (function () {
           global.public$unsafeJSNative = getNative;
         }
       }
-
     },
 
     traceLoadedClasses: function () {
