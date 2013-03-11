@@ -141,6 +141,7 @@ var as3error = {};
    M("flash.text.Font", "FontClass", FontDefinition),
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
+   M("flash.text.TextFormat", "TextFormatClass", TextFormatDefinition),
 
    M("flash.media.Sound", "SoundClass", SoundDefinition),
    M("flash.media.SoundChannel", "SoundChannelClass", SoundChannelDefinition),
