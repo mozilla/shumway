@@ -655,12 +655,13 @@ function hasProperty(obj, mn) {
   return Multiname.getQualifiedName(resolved) in obj;
 }
 
-function getSuper(obj, mn) {
-  release || assert(obj != undefined, "getSuper(" + mn + ") on undefined");
-  release || assert(obj.class.baseClass);
+function getSuper(scope, obj, mn) {
+  release || assert(scope instanceof Scope);
+  release || assert(obj !== undefined, "getSuper(" + mn + ") on undefined");
   release || assert(Multiname.isMultiname(mn));
-
-  var superTraits = obj.class.baseClass.instance.prototype;
+  var superClass = scope.object.baseClass;
+  release || assert(superClass);
+  var superTraits = superClass.instance.prototype;
 
   var resolved = mn.isQName() ? mn : resolveMultiname(superTraits, mn);
   var value = undefined;
@@ -672,7 +673,7 @@ function getSuper(obj, mn) {
       // Which class is it really on?
       var qn = Multiname.getQualifiedName(resolved);
       var openMethod = superTraits[VM_OPEN_METHODS][qn];
-      var superName = obj.class.baseClass.classInfo.instanceInfo.name;
+      var superName = superClass.classInfo.instanceInfo.name;
 
       // If we're getting a method closure on the super class, close the open
       // method now and save it to a mangled name. We can't go through the
@@ -726,16 +727,16 @@ function setProperty(obj, mn, value) {
   }
 }
 
-function setSuper(obj, mn, value) {
+function setSuper(scope, obj, mn, value) {
   release || assert(obj);
-  release || assert(obj.class.baseClass);
   release || assert(Multiname.isMultiname(mn));
-
+  var superClass = scope.object.baseClass;
+  release || assert(superClass);
   if (tracePropertyAccess.value) {
     print("setProperty(" + mn + ") trait: " + value);
   }
 
-  var superTraits = obj.class.baseClass.instance.prototype;
+  var superTraits = superClass.instance.prototype;
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraits, mn);
 
   if (resolved !== undefined) {
@@ -753,7 +754,7 @@ function setSuper(obj, mn, value) {
     }
   } else {
     throw new ReferenceError("Cannot create property " + mn.name +
-                             " on " + obj.class.baseClass.debugName);
+                             " on " + superClass.debugName);
   }
 }
 

@@ -469,7 +469,7 @@ var LoaderDefinition = (function () {
         if (abcBlocks && loader._isAvm2Enabled) {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
-            var abc = new AbcFile(abcBlocks[i]);
+            var abc = new AbcFile(abcBlocks[i], "abc_block_" + i);
             appDomain.executeAbc(abc);
           }
         }
