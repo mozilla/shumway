@@ -43,6 +43,8 @@ Our GitHub contributors so far:
 
 You can add your name to it! :)
 
+The easiest way to get started is to grep for TODOs and implement them.
+
 # Additional resources
 
 Talk to us on IRC:
