@@ -87,6 +87,8 @@ var Domain = (function () {
 
         if (!callable) {
           callable = Domain.passthroughCallable(instance);
+        } else if (callable === Domain.coerceCallable) {
+          callable = Domain.coerceCallable(this);
         }
         defineNonEnumerableProperty(this, "call", callable.call);
         defineNonEnumerableProperty(this, "apply", callable.apply);
@@ -298,6 +300,17 @@ var Domain = (function () {
       },
       apply: function ($this, args) {
         return f.apply($this, args);
+      }
+    };
+  };
+
+  Domain.coerceCallable = function coerceCallable(type) {
+    return {
+      call: function ($this, value) {
+        return coerce(value, type);
+      },
+      apply: function ($this, args) {
+        return coerce(args[0], type);
       }
     };
   };
