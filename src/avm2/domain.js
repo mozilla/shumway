@@ -82,6 +82,7 @@ var Domain = (function () {
           this.instance = instance;
           this.instanceNoInitialize = instance;
           this.hasInitialize = 0;
+          this.instance.class = this;
         }
 
         if (!callable) {
@@ -141,6 +142,7 @@ var Domain = (function () {
           }
           return o;
         },
+
         extendBuiltin: function(baseClass) {
           // Some natives handle their own prototypes/it's impossible to do the
           // traits/public prototype BS, e.g. Object, Array, etc.
@@ -161,6 +163,7 @@ var Domain = (function () {
               self.initializeInstance(this);
               instanceNoInitialize.apply(this, arguments);
             };
+            this.instance.class = instanceNoInitialize.class;
             this.hasInitialize |= SUPER_INITIALIZE;
           }
           this.instance.prototype = Object.create(this.dynamicPrototype);
@@ -197,6 +200,7 @@ var Domain = (function () {
                 self.initializeInstance(this);
                 instanceNoInitialize.apply(this, arguments);
               };
+              this.instance.class = instanceNoInitialize.class;
               this.instance.prototype = instanceNoInitialize.prototype;
             }
             this.hasInitialize |= OWN_INITIALIZE;
