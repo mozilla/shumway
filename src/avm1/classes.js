@@ -738,6 +738,13 @@ AS2TextField.prototype = Object.create({}, {
     set: function set$embedFonts(value) { this.$nativeObject.embedFonts = value; },
     enumerable: true
   },
+  getNewTextFormat: {
+    value: function getNewTextFormat() {
+      return this.$nativeObject.defaultTextFormat;
+    },
+    enumerable: true
+  },
+  getTextFormat: proxyNativeMethod('getTextFormat'),
   _height: { // @flash.display.DisplayObject
     get: function get$_height() { return this.$nativeObject.height; },
     set: function set$_height(value) { this.$nativeObject.height = value; },
@@ -831,6 +838,13 @@ AS2TextField.prototype = Object.create({}, {
     set: function set$selectable(value) { this.$nativeObject.selectable = value; },
     enumerable: true
   },
+  setNewTextFormat: {
+    value: function setNewTextFormat(tf) {
+      this.$nativeObject.defaultTextFormat = tf;
+    },
+    enumerable: true
+  },
+  setTextFormat: proxyNativeMethod('setTextFormat'),
   _soundbuftime: {
     get: function get$_soundbuftime() { throw 'Not implemented: get$_soundbuftime'; },
     set: function set$_soundbuftime(value) { throw 'Not implemented: set$_soundbuftime'; },

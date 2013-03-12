@@ -253,7 +253,9 @@ AS2Globals.prototype = {
   TextField: AS2TextField,
   Rectangle: AS2Rectangle,
   Key: AS2Key,
-  Mouse: AS2Mouse
+  Mouse: AS2Mouse,
+  // lazy initialized built-ins
+  get TextFormat() { return delete this.TextFormat, this.TextFormat = flash.text.TextFormat; }
 };
 
 // exports for testing
