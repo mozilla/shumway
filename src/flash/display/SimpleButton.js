@@ -119,7 +119,7 @@ var SimpleButtonDefinition = (function () {
         var flag = AVM1MouseTransitionEvents[(prevAvm1StateCode << 2) | avm1StateCode];
         for (var i = 0; i < mouseEvents.length; i++) {
           var mouseEvent = mouseEvents[i];
-          if ((mouseEvent.mouseEventFlags & flag) !== 0) {
+          if ((mouseEvent.flags & flag) !== 0) {
             mouseEvent.listener();
           }
         }

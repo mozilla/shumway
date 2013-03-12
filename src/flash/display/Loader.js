@@ -560,6 +560,13 @@ var LoaderDefinition = (function () {
               }
             }
 
+            // transfer parameters
+            var parameters = loader.loaderInfo._parameters;
+            for (var paramName in parameters) {
+              if (!(paramName in as2Object)) { // not present yet
+                as2Object[paramName] = parameters[paramName];
+              }
+            }
             root.symbol.frameScripts = frameScripts;
           }
 
