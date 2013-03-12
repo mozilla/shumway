@@ -4,6 +4,9 @@ var InteractiveObjectDefinition = (function () {
       this._doubleClickEnabled = false;
       this._hitArea = null;
       this._mouseEnabled = true;
+
+      this._tabEnabled = false;
+      this._focusRect = null;
     },
 
     get accessibilityImplementation() {
@@ -25,10 +28,10 @@ var InteractiveObjectDefinition = (function () {
       this._doubleClickEnabled = val;
     },
     get focusRect() {
-      return null;
+      return this._focusRect;
     },
     set focusRect(val) {
-      notImplemented();
+      this._focusRect = val;
     },
     get mouseEnabled() {
       return this._mouseEnabled;
@@ -49,10 +52,15 @@ var InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get tabEnabled() {
-      return false;
+      return this._tabEnabled;
     },
     set tabEnabled(val) {
-      notImplemented();
+      var old = this._tabEnabled;
+      this._tabEnabled = val;
+      if (old !== val) {
+        var Event = flash.events.Event;
+        this.dispatchEvent(new Event(Event.class.TAB_ENABLED_CHANGE, false, false));
+      }
     },
     get tabIndex() {
       return -1;
