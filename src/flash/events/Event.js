@@ -79,6 +79,7 @@ var EventDefinition = (function () {
                                           'SOUND_COMPLETE',
                                           'TAB_CHILDREN_CHANGE',
                                           'TAB_INDEX_CHANGE',
+                                          'TAB_ENABLED_CHANGE',
                                           'UNLOAD',
                                           'FULLSCREEN',
                                           'HTML_BOUNDS_CHANGE',

@@ -94,6 +94,7 @@ var SpriteDefinition = (function () {
           // constructor is not nullary.
           symbolClass.instance.call(instance);
 
+          assert(instance._control);
           this._control.appendChild(instance._control);
 
           if (!loader._isAvm2Enabled)
