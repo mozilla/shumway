@@ -72,9 +72,10 @@ function initializeGlobalObject(global) {
 
   function getEnumerationKeys(obj) {
     var keys = [];
+    // TODO: Implement fast path for Array objects.
     for (var key in obj) {
       if (isNumeric(key)) {
-        keys.push(key);
+        keys.push(Number(key));
       } else if (PUBLIC_MANGLED.test(key)) {
         if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
           continue;
