@@ -325,3 +325,7 @@ body {
 #traceSymbolsInfo div.c_flash_display_MovieClip {
   background-color: green;
 }
+
+#traceSymbolsInfo div[data-mouse-over] {
+  border-color: greenyellow;
+}

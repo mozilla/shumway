@@ -204,12 +204,20 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
           }
           target._mouseOver = false;
           target.dispatchEvent(this.mouseOutEvt);
+
+          if (TRACE_SYMBOLS_INFO && target._control) {
+            delete target._control.dataset.mouseOver;
+          }
         }
         // generating mouseOver events for new "mouseOver" symbols
         while (newMouseOverTargets.length > 0) {
           target = newMouseOverTargets.pop();
           target._mouseOver = true;
           target.dispatchEvent(this.mouseOverEvt);
+
+          if (TRACE_SYMBOLS_INFO && target._control) {
+            target._control.dataset.mouseOver = true;
+          }
         }
       }
     },
