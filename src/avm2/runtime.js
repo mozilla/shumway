@@ -1422,14 +1422,16 @@ var Runtime = (function () {
     return fn;
   };
 
-  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, cls) {
-    var runtime = this;
-    var domain = this.domain;
-
-    // Copy over base trait bindings. This is the primary inheritance mechanism, we clone the trait bindings then
-    // overwrite them for any overrides.
-
-    if (base) {
+  /**
+   * Inherit trait bindings. This is the primary inheritance mechanism, we clone the trait bindings then
+   * overwrite them for overrides.
+   */
+  function inheritBindings(obj, base) {
+    if (!base) {
+      defineNonEnumerableProperty(obj, VM_BINDINGS, []);
+      defineNonEnumerableProperty(obj, VM_SLOTS, []);
+      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
+    } else {
       var openMethods = {};
       var baseBindings = base[VM_BINDINGS];
       var baseOpenMethods = base[VM_OPEN_METHODS];
@@ -1450,114 +1452,130 @@ var Runtime = (function () {
       defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
       defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, openMethods);
-    } else {
-      defineNonEnumerableProperty(obj, VM_BINDINGS, []);
-      defineNonEnumerableProperty(obj, VM_SLOTS, []);
-      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
+    }
+  }
+
+  /**
+   * Creates a trampoline function stub which calls the result of a |forward| callback. The forward
+   * callback is only executed the first time the trampoline is executed and its result is cached in
+   * the trampoline closure.
+   */
+  function makeTrampoline(forward, parameterLength) {
+    release || assert (forward && typeof forward === "function");
+    var trampoline = (function trampolineContext() {
+      var target = null;
+      return function trampoline() {
+        Counter.count("Executing Trampoline");
+        if (!target) {
+          target = forward(trampoline);
+          assert (target);
+        }
+        return target.apply(this, arguments);
+      };
+    })();
+
+    // Make sure that the length property of the trampoline matches the trait's number of
+    // parameters. However, since we can't redefine the |length| property of a function,
+    // we define a new hidden |VM_LENGTH| property to store this value.
+    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+    return trampoline;
+  }
+
+  runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, cls, natives) {
+    var runtime = this;
+
+    release || assert (trait.isMethod());
+    var qn = Multiname.getQualifiedName(trait.name);
+
+
+
+    function makeMemoizer(target) {
+      function memoizer() {
+        Counter.count("Runtime: Memoizing");
+        if (traceExecution.value >= 3) {
+          print("Memoizing: " + qn);
+        }
+        if (isNativePrototype(this)) {
+          Counter.count("Runtime: Method Closures");
+          return target.value.bind(this);
+        }
+        if (this.hasOwnProperty(qn)) {
+          Counter.count("Runtime: Unpatched Memoizer");
+          return this[qn];
+        }
+        var mc = target.value.bind(this);
+        defineReadOnlyProperty(mc, "public$prototype", null);
+        defineReadOnlyProperty(this, qn, mc);
+        return mc;
+      }
+      Counter.count("Runtime: Memoizers");
+      return memoizer;
     }
 
-
-    function applyMethodTrait(trait) {
-      release || assert (trait.isMethod());
-      var qn = Multiname.getQualifiedName(trait.name);
-
-      function makeTrampoline(patch) {
-        release || assert (patch && typeof patch === "function");
-        var trampoline = (function trampolineContext() {
-          var target = null;
-          return function trampoline() {
-            Counter.count("Executing Trampoline");
-            if (traceExecution.value >= 3) {
-              print("Executing Trampoline: " + qn);
-            }
-            if (!target) {
-              target = runtime.getTraitFunction(trait, scope, classNatives);
-              patch(trampoline, target);
-            }
-            return target.apply(this, arguments);
-          };
-        })();
-        // Make sure that the length property of the trampoline matches the trait's number of
-        // parameters. However, since we can't redefine the |length| property of a function,
-        // we define a new hidden |VM_LENGTH| property to store this value.
-        defineReadOnlyProperty(trampoline, VM_LENGTH, trait.methodInfo.parameters.length);
-        return trampoline;
-      }
-
-      function makeMemoizer(target) {
-        function memoizer() {
-          Counter.count("Runtime: Memoizing");
+    if (cls) {
+      release || assert(obj[VM_OPEN_METHODS]);
+      // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
+      // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
+      // target value for subsequent memoizations.
+      var memoizerTarget = { value: null };
+      var trampoline = makeTrampoline(function (self) {
+        var fn = runtime.getTraitFunction(trait, scope, natives);
+        Counter.count("Runtime: Patching Memoizer");
+        var patchTargets = self.patchTargets;
+        for (var i = 0; i < patchTargets.length; i++) {
+          var patchTarget = patchTargets[i];
+          patchTarget.object[patchTarget.name] = fn;
           if (traceExecution.value >= 3) {
-            print("Memoizing: " + qn);
-          }
-          if (isNativePrototype(this)) {
-            Counter.count("Runtime: Method Closures");
-            return target.value.bind(this);
-          }
-          if (this.hasOwnProperty(qn)) {
-            Counter.count("Runtime: Unpatched Memoizer");
-            return this[qn];
-          }
-          var mc = target.value.bind(this);
-          defineReadOnlyProperty(mc, "public$prototype", null);
-          defineReadOnlyProperty(this, qn, mc);
-          return mc;
-        }
-        Counter.count("Runtime: Memoizers");
-        return memoizer;
-      }
-
-      if (cls) {
-        release || assert(obj[VM_OPEN_METHODS]);
-        // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
-        // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
-        // target value for subsequent memoizations.
-        var memoizerTarget = { value: null };
-        var trampoline = makeTrampoline(function (self, fn) {
-          Counter.count("Runtime: Patching Memoizer");
-          var patchTargets = self.patchTargets;
-          for (var i = 0; i < patchTargets.length; i++) {
-            var patchTarget = patchTargets[i];
-            patchTarget.object[patchTarget.name] = fn;
-            if (traceExecution.value >= 3) {
-              print("Trampoline: Patching: " + patchTarget.name);
-            }
-          }
-        });
-
-        memoizerTarget.value = trampoline;
-        obj[VM_OPEN_METHODS][qn] = trampoline;
-        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
-
-        // TODO: We make the |memoizeMethodClosure| configurable since it may be
-        // overridden by a derived class. Only do this non final classes.
-
-        if (trait.isOverride()) {
-          if (!trait.isProtected()) {
-            assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
+            print("Trampoline: Patching: " + patchTarget.name);
           }
         }
+        return fn;
+      }, trait.methodInfo.parameters.length);
 
-        defineNonEnumerableGetter(obj, qn, makeMemoizer(memoizerTarget));
+      memoizerTarget.value = trampoline;
+      obj[VM_OPEN_METHODS][qn] = trampoline;
+      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
 
-        trampoline.patchTargets = [
-          { object: memoizerTarget,       name: "value"},
-          { object: obj[VM_OPEN_METHODS], name: qn },
-          { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
-        ];
+      // TODO: We make the |memoizeMethodClosure| configurable since it may be
+      // overridden by a derived class. Only do this non final classes.
 
-      } else {
-        var trampoline = makeTrampoline(function (self, fn) {
-          defineReadOnlyProperty(obj, qn, fn);
-          defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
-        });
-        var closure = trampoline.bind(obj);
-        defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
-        defineReadOnlyProperty(closure, "public$prototype", null);
-        defineNonEnumerableProperty(obj, qn, closure);
-        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
+      if (trait.isOverride()) {
+        if (!trait.isProtected()) {
+          assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
+        }
       }
+
+      defineNonEnumerableGetter(obj, qn, makeMemoizer(memoizerTarget));
+
+      trampoline.patchTargets = [
+        { object: memoizerTarget,       name: "value"},
+        { object: obj[VM_OPEN_METHODS], name: qn },
+        { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
+      ];
+
+    } else {
+      var trampoline = makeTrampoline(function (self) {
+        var fn = runtime.getTraitFunction(trait, scope, natives);
+        defineReadOnlyProperty(obj, qn, fn);
+        defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
+        return fn;
+      }, function () {
+        return runtime.getTraitFunction(trait, scope, natives);
+      }, trait.methodInfo.parameters.length);
+      var closure = trampoline.bind(obj);
+      defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
+      defineReadOnlyProperty(closure, "public$prototype", null);
+      defineNonEnumerableProperty(obj, qn, closure);
+      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
     }
+  };
+
+  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, cls) {
+    var domain = this.domain;
+
+    inheritBindings(obj, base);
+
+    // Go through each trait and apply it to the |obj|.
 
     var baseSlotId = obj[VM_SLOTS].length;
     var nextSlotId = baseSlotId + 1;
@@ -1600,16 +1618,21 @@ var Runtime = (function () {
           type: typeName ? domain.getProperty(typeName, false, false) : null
         };
       } else if (trait.isMethod()) {
-        applyMethodTrait(trait);
+        this.applyMethodTrait(obj, trait, scope, cls, classNatives);
       } else if (trait.isGetter()) {
-        defineNonEnumerableGetter(obj, qn, runtime.getTraitFunction(trait, scope, classNatives));
+        defineNonEnumerableGetter(obj, qn, this.getTraitFunction(trait, scope, classNatives));
       } else if (trait.isSetter()) {
-        defineNonEnumerableSetter(obj, qn, runtime.getTraitFunction(trait, scope, classNatives));
+        defineNonEnumerableSetter(obj, qn, this.getTraitFunction(trait, scope, classNatives));
       } else {
         release || assert(false);
       }
 
+      // TODO: Remove duplicate entries.
       obj[VM_BINDINGS].push(qn);
+
+      if (traceExecution.value >= 3) {
+        print("Applied Trait: " + trait + " " + qn);
+      }
     }
 
     return obj;
