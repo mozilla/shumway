@@ -235,6 +235,11 @@ var Trait = (function () {
     return this.kind === TRAIT_Setter;
   };
 
+  trait.prototype.isProtected = function isProtected() {
+    assert (Multiname.isQName(this.name));
+    return this.name.namespaces[0].isProtected();
+  };
+
   trait.prototype.kindName = function kindName() {
     switch (this.kind) {
       case TRAIT_Slot:      return "Slot";
@@ -339,6 +344,10 @@ var ShumwayNamespace = (function () {
 
     isPublic: function isPublic() {
       return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
+    },
+
+    isProtected: function isPublic() {
+      return this.kind === CONSTANT_ProtectedNamespace;
     },
 
     isDynamic: function isDynamic() {
