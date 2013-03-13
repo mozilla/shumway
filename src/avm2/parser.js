@@ -253,6 +253,14 @@ var Trait = (function () {
     unexpected();
   };
 
+  trait.prototype.isOverride = function isOverride() {
+    return this.attributes & ATTR_Override;
+  };
+
+  trait.prototype.isFinal = function isFinal() {
+    return this.attributes & ATTR_Final;
+  };
+
   trait.prototype.toString = function toString() {
     var str = getFlags(this.attributes, "final|override|metadata".split("|"));
     if (str) {
@@ -380,7 +388,8 @@ var ShumwayNamespace = (function () {
     }
   });
 
-  namespace.PUBLIC = namespace.createNamespace();
+  namespace.PUBLIC = new namespace(CONSTANT_Namespace);
+  namespace.PROTECTED = new namespace(CONSTANT_ProtectedNamespace);
 
   var simpleNameCache = {};
 
