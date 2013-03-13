@@ -1089,7 +1089,7 @@ var InstanceInfo = (function () {
     release || assert(Multiname.isQName(this.name));
     this.superName = constantPool.multinames[stream.readU30()];
     this.flags = stream.readU8();
-    this.protectedNs = 0;
+    this.protectedNs = undefined;
     if (this.flags & 8) {
       this.protectedNs = constantPool.namespaces[stream.readU30()];
     }

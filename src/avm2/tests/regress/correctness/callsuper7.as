@@ -1,24 +1,61 @@
-class ClassA
-{
-  public function ClassA()
+package {
+
+  class ClassA
   {
-    trace('A');
+    public function ClassA()
+    {
+      trace('A');
+    }
+    protected function foo() : void
+    {
+      trace('a');
+    }
+    protected function bar() : void
+    {
+      trace('b');
+    }
   }
-  protected function a() : void
+
+  class ClassC extends ClassA
   {
-    trace('a');
+    public function ClassC()
+    {
+      trace('> C');
+      super();
+
+      foo();
+      bar();
+      trace('< C');
+    }
+
+    override protected function bar() : void {
+      super.bar();
+      trace('override b');
+    }
   }
+
+  class ClassE extends ClassC
+  {
+    public function ClassE()
+    {
+      trace('> E');
+      super();
+      foo();
+      bar();
+      trace('< E');
+    }
+
+    override protected function bar() : void {
+      super.bar();
+      trace('override b again');
+    }
+  }
+
+  // var c = new ClassC();
+  // var e = new ClassE();
+
+  class X {
+    protected var
+  }
+  trace("--");
 }
-
-class ClassC extends ClassA
-{
-  public function ClassC()
-  {
-    super();
-    trace('C');
-    a();
-  }
-}
-
-var c = new ClassC();
-

@@ -1133,13 +1133,14 @@ var Runtime = (function () {
       cls.classInfo = classInfo;
       cls.scope = scope;
       scope.object = cls;
+      var natives;
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
-        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits,
-                         cls.native ? cls.native.instance : undefined, cls);
+        natives = cls.native ? cls.native.instance : undefined;
+        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, natives, cls);
       }
-      this.applyTraits(cls, scope, null, ci.traits,
-                       cls.native ? cls.native.static : undefined, null);
+      natives = cls.native ? cls.native.static : undefined;
+      this.applyTraits(cls, scope, null, ci.traits, natives, null);
     } else {
       scope = new Scope(scope, null);
       instance = this.createFunction(ii.init, scope);
@@ -1152,6 +1153,76 @@ var Runtime = (function () {
       this.applyTraits(cls, scope, null, ci.traits, null, null);
     }
 
+    // Deal with the protected namespace bullshit. In AS3, if you have the following code:
+    //
+    // class A {
+    //   protected foo() { ... } // this is actually protected$A$foo
+    // }
+    //
+    // class B extends A {
+    //   function bar() {
+    //     foo(); // this looks for protected$B$foo, not protected$A$foo
+    //   }
+    // }
+    //
+    // You would expect the call to |foo| in the |bar| function to have the protected A
+    // namespace open, but it doesn't. So we must create a binding in B's instance
+    // prototype from protected$B$foo -> protected$A$foo.
+    //
+    // If we override foo:
+    //
+    // class C extends B {
+    //   protected override foo() { ... } this is protected$C$foo
+    // }
+    //
+    // Then we need a binding from protected$A$foo -> protected$C$foo, and
+    // protected$B$foo -> protected$C$foo.
+
+    function applyProtectedTraits(cls) {
+      var map = Object.create(null);
+
+      // Walks up the inheritance hierarchy and collects the last defining namespace for each
+      // protected member as well as all the protected namespaces from the first definition.
+      (function gather(cls) {
+        if (cls.baseClass) {
+          gather(cls.baseClass);
+        }
+        var ii = cls.classInfo.instanceInfo;
+        var iiTraits = ii.traits;
+        for (var i = 0; i < iiTraits.length; i++) {
+          if (iiTraits[i].isProtected()) {
+            var name = iiTraits[i].name.getName();
+            if (!map[name]) {
+              map[name] = {definingNamespace: ii.protectedNs, namespaces: []};
+            }
+            map[name].definingNamespace = ii.protectedNs;
+          }
+        }
+        for (var name in map) {
+          map[name].namespaces.push(ii.protectedNs);
+        }
+      })(cls);
+
+      var openMethods = instance.prototype[VM_OPEN_METHODS];
+      for (var name in map) {
+        var definingNamespace = map[name].definingNamespace;
+        var protectedQn = Multiname.getQualifiedName(new Multiname([definingNamespace], name));
+        var namespaces = map[name].namespaces;
+        for (var i = 0; i < namespaces.length; i++) {
+          var qn = Multiname.getQualifiedName(new Multiname([namespaces[i]], name));
+          if (qn !== protectedQn) {
+            Counter.count("Protected Aliases");
+            defineNonEnumerableGetter(instance.prototype, qn, makeForwardingGetter(protectedQn));
+            defineNonEnumerableSetter(instance.prototype, qn, makeForwardingSetter(protectedQn));
+            openMethods[qn] = openMethods[protectedQn];
+          }
+        }
+      }
+    }
+
+    if (instance) {
+      applyProtectedTraits(cls);
+    }
 
     if (ii.interfaces.length > 0) {
       cls.implementedInterfaces = [];
@@ -1209,6 +1280,7 @@ var Runtime = (function () {
               return this[target];
             }
           }(interfaceTraitBindingQn);
+          Counter.count("Interface Aliases");
           defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }
@@ -1542,6 +1614,8 @@ var Runtime = (function () {
       if (trait.isOverride()) {
         if (!trait.isProtected()) {
           assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
+        } else {
+          assert (!obj.hasOwnProperty(qn), "Binding should not exist for trait: " + trait);
         }
       }
 
@@ -1559,8 +1633,6 @@ var Runtime = (function () {
         defineReadOnlyProperty(obj, qn, fn);
         defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
         return fn;
-      }, function () {
-        return runtime.getTraitFunction(trait, scope, natives);
       }, trait.methodInfo.parameters.length);
       var closure = trampoline.bind(obj);
       defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
@@ -1570,7 +1642,7 @@ var Runtime = (function () {
     }
   };
 
-  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, classNatives, cls) {
+  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, natives, cls) {
     var domain = this.domain;
 
     inheritBindings(obj, base);
@@ -1618,11 +1690,11 @@ var Runtime = (function () {
           type: typeName ? domain.getProperty(typeName, false, false) : null
         };
       } else if (trait.isMethod()) {
-        this.applyMethodTrait(obj, trait, scope, cls, classNatives);
+        this.applyMethodTrait(obj, trait, scope, cls, natives);
       } else if (trait.isGetter()) {
-        defineNonEnumerableGetter(obj, qn, this.getTraitFunction(trait, scope, classNatives));
+        defineNonEnumerableGetter(obj, qn, this.getTraitFunction(trait, scope, natives));
       } else if (trait.isSetter()) {
-        defineNonEnumerableSetter(obj, qn, this.getTraitFunction(trait, scope, classNatives));
+        defineNonEnumerableSetter(obj, qn, this.getTraitFunction(trait, scope, natives));
       } else {
         release || assert(false);
       }
