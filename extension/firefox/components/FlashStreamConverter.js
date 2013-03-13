@@ -72,19 +72,22 @@ function combineUrl(baseUrl, url) {
   }
 }
 
-function parseQueryString(obj, qs) {
+function parseQueryString(qs) {
   if (!qs)
-    return;
+    return {};
 
   if (qs.charAt(0) == '?')
     qs = qs.slice(1);
 
   var values = qs.split('&');
+  var obj = {};
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
     obj[key] = value;
   }
+
+  return obj;
 }
 
 // All the priviledged actions.
@@ -255,7 +258,7 @@ FlashStreamConverterBase.prototype = {
    * This component works as such:
    * 1. asyncConvertData stores the listener
    * 2. onStartRequest creates a new channel, streams the viewer and cancels
-   *    the request so pdf.js can do the request
+   *    the request so Shumway can do the request
    * Since the request is cancelled onDataAvailable should not be called. The
    * onStopRequest does nothing. The convert function just returns the stream,
    * it's just the synchronous version of asyncConvertData.
@@ -272,6 +275,7 @@ FlashStreamConverterBase.prototype = {
 
   createChromeActions: function(window, urlHint) {
     var url;
+    var baseUrl; // XXX base url?
     var element = window.frameElement;
     var isOverlay = false;
     var params = {};
@@ -286,27 +290,21 @@ FlashStreamConverterBase.prototype = {
         tagName = element.nodeName;
       }
       if (tagName == 'EMBED') {
-        parseQueryString(params, element.getAttribute('flashvars'));
+        params = parseQueryString(element.getAttribute('flashvars'));
         url = element.getAttribute('src');
       } else {
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
           if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM' ||
-              paramElement.getAttribute('name').toLowerCase() != 'flashvars')
-            continue;
+              paramElement.nodeName != 'PARAM') continue;
 
-          parseQueryString(params, paramElement.getAttribute('value'));
+          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
         }
         var dataAttribute = element.getAttribute('data');
         url = dataAttribute || params.movie || params.src;
       }
-
-      var urlParts = url.split('?', 2);
-      parseQueryString(params, urlParts[1]);
+      baseUrl = element.ownerDocument.location.href;
     }
-    var element = window.frameElement;
-    var baseUrl = element ? element.ownerDocument.location.href : null; // XXX base url?
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
 
@@ -345,9 +343,8 @@ FlashStreamConverterBase.prototype = {
     var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
       getBoolPref('shumway.simpleMode', false);
 
-    // Create a new channel that is viewer loaded as a resource.
-    var ioService = Services.io;
-    var channel = ioService.newChannel(isSimpleMode ?
+    // Create a new channel that loads the viewer as a resource.
+    var channel = Services.io.newChannel(isSimpleMode ?
                     'resource://shumway/web/simple.html' :
                     'resource://shumway/web/viewer.html', null, null);
 
