@@ -258,7 +258,7 @@ FlashStreamConverterBase.prototype = {
    * This component works as such:
    * 1. asyncConvertData stores the listener
    * 2. onStartRequest creates a new channel, streams the viewer and cancels
-   *    the request so pdf.js can do the request
+   *    the request so Shumway can do the request
    * Since the request is cancelled onDataAvailable should not be called. The
    * onStopRequest does nothing. The convert function just returns the stream,
    * it's just the synchronous version of asyncConvertData.
@@ -275,6 +275,7 @@ FlashStreamConverterBase.prototype = {
 
   createChromeActions: function(window, urlHint) {
     var url;
+    var baseUrl; // XXX base url?
     var element = window.frameElement;
     var isOverlay = false;
     var params = {};
@@ -302,9 +303,8 @@ FlashStreamConverterBase.prototype = {
         var dataAttribute = element.getAttribute('data');
         url = dataAttribute || params.movie || params.src;
       }
+      baseUrl = element.ownerDocument.location.href;
     }
-    var element = window.frameElement;
-    var baseUrl = element ? element.ownerDocument.location.href : null; // XXX base url?
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
 
@@ -343,9 +343,8 @@ FlashStreamConverterBase.prototype = {
     var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
       getBoolPref('shumway.simpleMode', false);
 
-    // Create a new channel that is viewer loaded as a resource.
-    var ioService = Services.io;
-    var channel = ioService.newChannel(isSimpleMode ?
+    // Create a new channel that loads the viewer as a resource.
+    var channel = Services.io.newChannel(isSimpleMode ?
                     'resource://shumway/web/simple.html' :
                     'resource://shumway/web/viewer.html', null, null);
 
