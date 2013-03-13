@@ -67,6 +67,18 @@ function unexpected(message) {
   release || assert(false, message);
 }
 
+function makeForwardingGetter(target) {
+  return function () {
+    return this[target];
+  }
+}
+
+function makeForwardingSetter(target) {
+  return function (value) {
+    this[target] = value;
+  }
+}
+
 function defineReadOnlyProperty(obj, name, value) {
   Object.defineProperty(obj, name, { value: value,
                                      writable: false,

@@ -1,4 +1,4 @@
-const count = 1024;
+const count = 16;
 
 function foo() {
   var a = [];
