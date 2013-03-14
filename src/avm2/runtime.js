@@ -1151,6 +1151,7 @@ var Runtime = (function () {
       cls.extend(baseClass);
       this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, cls);
       this.applyTraits(cls, scope, null, ci.traits, null, null);
+      instance = cls.instance;
     }
 
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
@@ -1188,12 +1189,12 @@ var Runtime = (function () {
           gather(cls.baseClass);
         }
         var ii = cls.classInfo.instanceInfo;
-        var iiTraits = ii.traits;
-        for (var i = 0; i < iiTraits.length; i++) {
-          if (iiTraits[i].isProtected()) {
-            var name = iiTraits[i].name.getName();
+        for (var i = 0; i < ii.traits.length; i++) {
+          var trait = ii.traits[i];
+          if (trait.isProtected()) {
+            var name = trait.name.getName();
             if (!map[name]) {
-              map[name] = {definingNamespace: ii.protectedNs, namespaces: []};
+              map[name] = {definingNamespace: ii.protectedNs, namespaces: [], trait: trait};
             }
             map[name].definingNamespace = ii.protectedNs;
           }
@@ -1204,17 +1205,22 @@ var Runtime = (function () {
       })(cls);
 
       var openMethods = instance.prototype[VM_OPEN_METHODS];
+      var vmBindings = instance.prototype[VM_BINDINGS];
       for (var name in map) {
         var definingNamespace = map[name].definingNamespace;
         var protectedQn = Multiname.getQualifiedName(new Multiname([definingNamespace], name));
         var namespaces = map[name].namespaces;
+        var trait = map[name].trait;
         for (var i = 0; i < namespaces.length; i++) {
           var qn = Multiname.getQualifiedName(new Multiname([namespaces[i]], name));
           if (qn !== protectedQn) {
             Counter.count("Protected Aliases");
             defineNonEnumerableGetter(instance.prototype, qn, makeForwardingGetter(protectedQn));
             defineNonEnumerableSetter(instance.prototype, qn, makeForwardingSetter(protectedQn));
-            openMethods[qn] = openMethods[protectedQn];
+            vmBindings.push(qn);
+            if (trait.isMethod()) {
+              openMethods[qn] = openMethods[protectedQn];
+            }
           }
         }
       }
@@ -1556,10 +1562,8 @@ var Runtime = (function () {
   runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, cls, natives) {
     var runtime = this;
 
-    release || assert (trait.isMethod());
+    release || assert (trait.isMethod() || trait.isGetter() || trait.isSetter());
     var qn = Multiname.getQualifiedName(trait.name);
-
-
 
     function makeMemoizer(target) {
       function memoizer() {
@@ -1586,59 +1590,78 @@ var Runtime = (function () {
 
     if (cls) {
       release || assert(obj[VM_OPEN_METHODS]);
-      // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
-      // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
-      // target value for subsequent memoizations.
-      var memoizerTarget = { value: null };
-      var trampoline = makeTrampoline(function (self) {
-        var fn = runtime.getTraitFunction(trait, scope, natives);
-        Counter.count("Runtime: Patching Memoizer");
-        var patchTargets = self.patchTargets;
-        for (var i = 0; i < patchTargets.length; i++) {
-          var patchTarget = patchTargets[i];
-          patchTarget.object[patchTarget.name] = fn;
-          if (traceExecution.value >= 3) {
-            print("Trampoline: Patching: " + patchTarget.name);
+      if (trait.isMethod()) {
+        // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
+        // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
+        // target value for subsequent memoizations.
+        var memoizerTarget = { value: null };
+        var trampoline = makeTrampoline(function (self) {
+          var fn = runtime.getTraitFunction(trait, scope, natives);
+          Counter.count("Runtime: Patching Memoizer");
+          var patchTargets = self.patchTargets;
+          for (var i = 0; i < patchTargets.length; i++) {
+            var patchTarget = patchTargets[i];
+            patchTarget.object[patchTarget.name] = fn;
+            if (traceExecution.value >= 3) {
+              print("Trampoline: Patching: " + patchTarget.name);
+            }
+          }
+          return fn;
+        }, trait.methodInfo.parameters.length);
+
+        memoizerTarget.value = trampoline;
+        obj[VM_OPEN_METHODS][qn] = trampoline;
+        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
+
+        // TODO: We make the |memoizeMethodClosure| configurable since it may be
+        // overridden by a derived class. Only do this non final classes.
+
+        if (trait.isOverride()) {
+          if (!trait.isProtected()) {
+            assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
+          } else {
+            assert (!obj.hasOwnProperty(qn), "Binding should not exist for trait: " + trait);
           }
         }
-        return fn;
-      }, trait.methodInfo.parameters.length);
 
-      memoizerTarget.value = trampoline;
-      obj[VM_OPEN_METHODS][qn] = trampoline;
-      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
+        defineNonEnumerableGetter(obj, qn, makeMemoizer(memoizerTarget));
 
-      // TODO: We make the |memoizeMethodClosure| configurable since it may be
-      // overridden by a derived class. Only do this non final classes.
-
-      if (trait.isOverride()) {
-        if (!trait.isProtected()) {
-          assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
-        } else {
-          assert (!obj.hasOwnProperty(qn), "Binding should not exist for trait: " + trait);
-        }
+        trampoline.patchTargets = [
+          { object: memoizerTarget,       name: "value"},
+          { object: obj[VM_OPEN_METHODS], name: qn },
+          { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
+        ];
+      } else if (trait.isGetter() || trait.isSetter()) {
+        var trampoline = makeTrampoline(function (self) {
+          var fn = runtime.getTraitFunction(trait, scope, natives);
+          defineNonEnumerableGetterOrSetter(obj, qn, fn, trait.isGetter());
+          return fn;
+        });
+        defineNonEnumerableGetterOrSetter(obj, qn, trampoline, trait.isGetter());
+        // obj[VM_OPEN_METHODS][qn] = trampoline;
+        // defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
       }
-
-      defineNonEnumerableGetter(obj, qn, makeMemoizer(memoizerTarget));
-
-      trampoline.patchTargets = [
-        { object: memoizerTarget,       name: "value"},
-        { object: obj[VM_OPEN_METHODS], name: qn },
-        { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
-      ];
-
     } else {
-      var trampoline = makeTrampoline(function (self) {
-        var fn = runtime.getTraitFunction(trait, scope, natives);
-        defineReadOnlyProperty(obj, qn, fn);
-        defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
-        return fn;
-      }, trait.methodInfo.parameters.length);
-      var closure = trampoline.bind(obj);
-      defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
-      defineReadOnlyProperty(closure, "public$prototype", null);
-      defineNonEnumerableProperty(obj, qn, closure);
-      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
+      if (trait.isMethod()) {
+        var trampoline = makeTrampoline(function (self) {
+          var fn = runtime.getTraitFunction(trait, scope, natives);
+          defineReadOnlyProperty(obj, qn, fn);
+          defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
+          return fn;
+        }, trait.methodInfo.parameters.length);
+        var closure = trampoline.bind(obj);
+        defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
+        defineReadOnlyProperty(closure, "public$prototype", null);
+        defineNonEnumerableProperty(obj, qn, closure);
+        defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
+      } else if (trait.isGetter() || trait.isSetter()) {
+        var trampoline = makeTrampoline(function (self) {
+          var fn = runtime.getTraitFunction(trait, scope, natives);
+          defineNonEnumerableGetterOrSetter(obj, qn, fn, trait.isGetter());
+          return fn;
+        });
+        defineNonEnumerableGetterOrSetter(obj, qn, trampoline, trait.isGetter());
+      }
     }
   };
 
@@ -1689,12 +1712,8 @@ var Runtime = (function () {
           const: trait.isConst(),
           type: typeName ? domain.getProperty(typeName, false, false) : null
         };
-      } else if (trait.isMethod()) {
+      } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         this.applyMethodTrait(obj, trait, scope, cls, natives);
-      } else if (trait.isGetter()) {
-        defineNonEnumerableGetter(obj, qn, this.getTraitFunction(trait, scope, natives));
-      } else if (trait.isSetter()) {
-        defineNonEnumerableSetter(obj, qn, this.getTraitFunction(trait, scope, natives));
       } else {
         release || assert(false);
       }

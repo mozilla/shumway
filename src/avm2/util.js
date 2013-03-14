@@ -86,6 +86,14 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
+  if (isGetter) {
+    defineNonEnumerableGetter(obj, name, value);
+  } else {
+    defineNonEnumerableSetter(obj, name, value);
+  }
+}
+
 function defineNonEnumerableGetter(obj, name, getter) {
   Object.defineProperty(obj, name, { get: getter,
                                      configurable: true,
