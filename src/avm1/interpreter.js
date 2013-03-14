@@ -32,12 +32,15 @@ AS2Context.prototype = {
     }
   },
   resolveTarget: function(target) {
-    if (!target)
+    if (!target) {
       target = this.defaultTarget;
-    else if (typeof target === 'string')
-      target = this.defaultTarget.$lookupChild(target);
-    if (typeof target !== 'object' || !('$nativeObject' in target))
-      throw 'Invalid AS2 object';
+    } else if (typeof target === 'string') {
+      target = lookupAS2Children(target, this.defaultTarget, this.globals._root);
+    }
+    if (typeof target !== 'object' || target === null ||
+        !('$nativeObject' in target)) {
+      throw 'Invalid AS2 target object: ' + Object.prototype.toString.call(target);
+    }
 
     return target;
   },
@@ -216,11 +219,18 @@ function interpretActions(actionsData, scopeContainer,
   var currentContext = AS2Context.instance;
 
   function setTarget(targetPath) {
-    if (!targetPath)
-      defaultTarget = scope;
-    else
-      defaultTarget = lookupAS2Children(targetPath, defaultTarget, _global._root);
-    currentContext.defaultTarget = defaultTarget;
+    if (!targetPath) {
+      currentContext.defaultTarget = scope;
+      return;
+    }
+
+    try {
+      currentContext.defaultTarget =
+        lookupAS2Children(targetPath, defaultTarget, _global._root);
+    } catch (e) {
+      currentContext.defaultTarget = null;
+      throw e;
+    }
   }
 
   function defineFunction(functionName, parametersNames,
