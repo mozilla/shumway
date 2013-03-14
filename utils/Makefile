@@ -122,7 +122,6 @@ install-swfdec:
 
 build-playerglobal:
 	make -C playerGlobal/ build
-	cp playerGlobal/bin/playerGlobal.min.abc ../src/flash
 
 clean:
 	-rm -rf $(ASC_JAR)
