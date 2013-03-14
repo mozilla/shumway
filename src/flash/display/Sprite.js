@@ -199,7 +199,9 @@ var SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       this._useHandCursor = val;
-      this._stage._syncCursor();
+      if (this.stage) {
+        this.stage._syncCursor();
+      }
     },
     get shouldHaveHandCursor() {
       return this._buttonMode && this._useHandCursor;
