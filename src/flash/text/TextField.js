@@ -3,6 +3,8 @@ var TextFieldDefinition = (function () {
     __class__: 'flash.text.TextField',
 
     initialize: function () {
+      this._defaultTextFormat = null;
+
       var s = this.symbol;
       if (s) {
         this.draw = s.draw || null;
@@ -30,7 +32,21 @@ var TextFieldDefinition = (function () {
         this._text = val;
         this._markAsDirty();
       }
-    }
+    },
+
+    get defaultTextFormat() {
+      return this._defaultTextFormat;
+    },
+    set	defaultTextFormat(val) {
+      this._defaultTextFormat = val;
+    },
+
+    getTextFormat: function (beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
+      return null; // TODO
+    },
+    setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
+      // TODO
+    },
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -39,7 +55,10 @@ var TextFieldDefinition = (function () {
     native: {
       instance: {
         text: desc(def, "text"),
+        defaultTextFormat: desc(def, "defaultTextFormat"),
         replaceText: def.replaceText,
+        getTextFormat: def.getTextFormat,
+        setTextFormat: def.setTextFormat,
       }
     }
   };

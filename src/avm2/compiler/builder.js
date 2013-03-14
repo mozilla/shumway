@@ -799,13 +799,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             case OP_getsuper:
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(call(globalProperty("getSuper"), null, [object, multiname]));
+              push(call(globalProperty("getSuper"), null, [savedScope(), object, multiname]));
               break;
             case OP_setsuper:
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              store(call(globalProperty("setSuper"), null, [object, multiname, value]));
+              store(call(globalProperty("setSuper"), null, [savedScope(), object, multiname, value]));
               break;
             case OP_debugfile:
             case OP_debugline:
@@ -835,11 +835,15 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               }
               break;
             case OP_callsuper:
+            case OP_callsupervoid:
               multiname = buildMultiname(bc.index);
               args = popMany(bc.argCount);
               object = pop();
-              callee = call(globalProperty("getSuper"), null, [object, multiname]);
-              push(call(callee, object, args));
+              callee = call(globalProperty("getSuper"), null, [savedScope(), object, multiname]);
+              value = call(callee, object, args);
+              if (op !== OP_callsupervoid) {
+                push(value);
+              }
               break;
             case OP_construct:
               args = popMany(bc.argCount);

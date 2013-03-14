@@ -67,7 +67,7 @@ var EventDispatcherDefinition = (function () {
 
     },
     dispatchEvent: function (evt) {
-      evt.target = this;
+      evt._target = this;
 
       if (this._control) {
         var domEvent = document.createEvent('CustomEvent');

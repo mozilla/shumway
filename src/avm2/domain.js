@@ -85,10 +85,13 @@ var Domain = (function () {
           this.instance = instance;
           this.instanceNoInitialize = instance;
           this.hasInitialize = 0;
+          this.instance.class = this;
         }
 
         if (!callable) {
           callable = Domain.passthroughCallable(instance);
+        } else if (callable === Domain.coerceCallable) {
+          callable = Domain.coerceCallable(this);
         }
         defineNonEnumerableProperty(this, "call", callable.call);
         defineNonEnumerableProperty(this, "apply", callable.apply);
@@ -144,6 +147,7 @@ var Domain = (function () {
           }
           return o;
         },
+
         extendBuiltin: function(baseClass) {
           // Some natives handle their own prototypes/it's impossible to do the
           // traits/public prototype BS, e.g. Object, Array, etc.
@@ -164,6 +168,7 @@ var Domain = (function () {
               self.initializeInstance(this);
               instanceNoInitialize.apply(this, arguments);
             };
+            this.instance.class = instanceNoInitialize.class;
             this.hasInitialize |= SUPER_INITIALIZE;
           }
           this.instance.prototype = Object.create(this.dynamicPrototype);
@@ -200,6 +205,7 @@ var Domain = (function () {
                 self.initializeInstance(this);
                 instanceNoInitialize.apply(this, arguments);
               };
+              this.instance.class = instanceNoInitialize.class;
               this.instance.prototype = instanceNoInitialize.prototype;
             }
             this.hasInitialize |= OWN_INITIALIZE;
@@ -297,6 +303,17 @@ var Domain = (function () {
       },
       apply: function ($this, args) {
         return f.apply($this, args);
+      }
+    };
+  };
+
+  Domain.coerceCallable = function coerceCallable(type) {
+    return {
+      call: function ($this, value) {
+        return coerce(value, type);
+      },
+      apply: function ($this, args) {
+        return coerce(args[0], type);
       }
     };
   };
@@ -499,6 +516,15 @@ var Domain = (function () {
           global.public$unsafeJSNative = getNative;
         }
       }
+    },
+
+    _getScriptObject: function () {
+      if (!this.scriptObject) {
+        var ApplicationDomainClass = avm2.systemDomain.getClass("flash.system.ApplicationDomain");
+        var dom = ApplicationDomainClass.createInstance([this]); // wrapping native Domain
+        release || assert(dom === this.scriptObject);
+      }
+      return this.scriptObject;
     },
 
     traceLoadedClasses: function () {

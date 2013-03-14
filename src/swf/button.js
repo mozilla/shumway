@@ -16,6 +16,7 @@ function defineButton(tag, dictionary) {
     assert(characterItem, 'undefined character', 'button');
     var entry = {
       symbolId: characterItem.id,
+      hasMatrix: !!character.matrix,
       matrix: character.matrix
     };
     if (character.stateUp)

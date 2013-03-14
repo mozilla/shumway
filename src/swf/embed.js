@@ -24,6 +24,7 @@ SWF.embed = function(file, container, options) {
     canvasHolder.appendChild(canvas);
   }
 
+  loader._parent = stage;
   loader._stage = stage;
   stage._loader = loader;
 
@@ -56,16 +57,19 @@ SWF.embed = function(file, container, options) {
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
 
-      if (stage._clickTarget)
+      if (stage._clickTarget) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
+      }
     });
     canvas.addEventListener('dblclick', function () {
-      if (stage._clickTarget && stage._clickTarget._doubleClickEnabled)
+      if (stage._clickTarget && stage._clickTarget._doubleClickEnabled) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('doubleClick'));
+      }
     });
     canvas.addEventListener('mousedown', function () {
-      if (stage._clickTarget)
+      if (stage._clickTarget) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+      }
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -78,15 +82,20 @@ SWF.embed = function(file, container, options) {
         } while (node = node.offsetParent);
       }
 
-      stage._mouseX = domEvt.pageX - left;
-      stage._mouseY = domEvt.pageY - top;
+      var canvasState = stage._canvasState;
+      stage._mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
+        canvasState.scale;
+      stage._mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
+        canvasState.scale;
     });
     canvas.addEventListener('mouseup', function () {
-      if (stage._clickTarget)
+      if (stage._clickTarget) {
         stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+      }
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseOver = true;
+      stage._mouseJustLeft = false;
     });
     canvas.addEventListener('mouseout', function () {
       stage._mouseOver = false;
@@ -104,13 +113,13 @@ SWF.embed = function(file, container, options) {
     var cursorVisible = true;
     function syncCursor() {
       var newCursor;
-      if (cursorVisible) {
-        if (stage._clickTarget && stage._clickTarget.shouldHaveHandCursor)
-          newCursor = 'pointer';
-        else
-          newCursor = 'auto';
-      } else {
+      if (!cursorVisible) {
         newCursor = 'none';
+      } else if (stage._clickTarget &&
+                 stage._clickTarget.shouldHaveHandCursor) {
+        newCursor = 'pointer';
+      } else {
+        newCursor = 'auto';
       }
 
       container.style.cursor = newCursor;

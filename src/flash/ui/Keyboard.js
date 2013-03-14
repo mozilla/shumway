@@ -1,10 +1,24 @@
 var ShumwayKeyboardListener = {
   _lastKeyCode: 0,
+  _captureKeyPress: false,
   focus: null,
   handleEvent: function (domEvt) {
+    var keyCode = domEvt.keyCode;
     if (domEvt.type === 'keydown') {
-      this._lastKeyCode = domEvt.keyCode;
-      return; // skipping keydown, waiting for keypress
+      this._lastKeyCode = keyCode;
+      // trying to capture charCode for ASCII keys
+      this._captureKeyPress = keyCode === 8 || keyCode === 9 ||
+        keyCode === 13 || keyCode === 32 || (keyCode >= 48 && keyCode <= 90) ||
+        keyCode > 145;
+      if (this._captureKeyPress) {
+        return; // skipping keydown, waiting for keypress
+      }
+    } else if (domEvt.type === 'keypress') {
+      if (this._captureKeyPress) {
+        keyCode = this._lastKeyCode;
+      } else {
+        return;
+      }
     }
 
     if (this.focus) {
@@ -13,7 +27,7 @@ var ShumwayKeyboardListener = {
         true,
         false,
         domEvt.charCode,
-        this._lastKeyCode,
+        domEvt.type === 'keyup' ? domEvt.keyCode : this._lastKeyCode,
         domEvt.keyLocation,
         domEvt.ctrlKey,
         domEvt.altKey,

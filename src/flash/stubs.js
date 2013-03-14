@@ -141,6 +141,7 @@ var as3error = {};
    M("flash.text.Font", "FontClass", FontDefinition),
    M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
    M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
+   M("flash.text.TextFormat", "TextFormatClass", TextFormatDefinition),
 
    M("flash.media.Sound", "SoundClass", SoundDefinition),
    M("flash.media.SoundChannel", "SoundChannelClass", SoundChannelDefinition),
@@ -159,6 +160,8 @@ var as3error = {};
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
    M("flash.system.System", "SystemClass", SystemDefinition),
+   M("flash.system.Security", "SecurityClass", SecurityDefinition),
+   M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
 
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");
@@ -174,7 +177,7 @@ var as3error = {};
 
      // Hook up the native.
      natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
-       var c = new runtime.domain.system.Class(name, instance);
+       var c = new runtime.domain.system.Class(name, instance, Domain.coerceCallable);
        c.extend(baseClass);
        c.link(m.definition);
        return c;

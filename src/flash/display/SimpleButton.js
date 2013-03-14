@@ -97,7 +97,11 @@ var SimpleButtonDefinition = (function () {
         state = this._downState;
       else if (this._isMouseOver && this._overState)
         state = this._overState;
+      if (this._children.length > 0) {
+        this._control.removeChild(this._children[0]._control);
+      }
       this._children = [state];
+      this._control.appendChild(state._control);
 
       if (this._avm1MouseEvents) {
         this._processAvm1MouseEvents(this._avm1MouseEvents);
@@ -115,7 +119,7 @@ var SimpleButtonDefinition = (function () {
         var flag = AVM1MouseTransitionEvents[(prevAvm1StateCode << 2) | avm1StateCode];
         for (var i = 0; i < mouseEvents.length; i++) {
           var mouseEvent = mouseEvents[i];
-          if ((mouseEvent.mouseEventFlags & flag) !== 0) {
+          if ((mouseEvent.flags & flag) !== 0) {
             mouseEvent.listener();
           }
         }

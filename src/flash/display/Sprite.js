@@ -94,6 +94,7 @@ var SpriteDefinition = (function () {
           // constructor is not nullary.
           symbolClass.instance.call(instance);
 
+          assert(instance._control);
           this._control.appendChild(instance._control);
 
           if (!loader._isAvm2Enabled)
@@ -198,7 +199,9 @@ var SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       this._useHandCursor = val;
-      this._stage._syncCursor();
+      if (this.stage) {
+        this.stage._syncCursor();
+      }
     },
     get shouldHaveHandCursor() {
       return this._buttonMode && this._useHandCursor;

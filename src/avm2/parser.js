@@ -235,6 +235,11 @@ var Trait = (function () {
     return this.kind === TRAIT_Setter;
   };
 
+  trait.prototype.isProtected = function isProtected() {
+    assert (Multiname.isQName(this.name));
+    return this.name.namespaces[0].isProtected();
+  };
+
   trait.prototype.kindName = function kindName() {
     switch (this.kind) {
       case TRAIT_Slot:      return "Slot";
@@ -246,6 +251,14 @@ var Trait = (function () {
       case TRAIT_Function:  return "Function";
     }
     unexpected();
+  };
+
+  trait.prototype.isOverride = function isOverride() {
+    return this.attributes & ATTR_Override;
+  };
+
+  trait.prototype.isFinal = function isFinal() {
+    return this.attributes & ATTR_Final;
   };
 
   trait.prototype.toString = function toString() {
@@ -341,6 +354,10 @@ var ShumwayNamespace = (function () {
       return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
     },
 
+    isProtected: function isPublic() {
+      return this.kind === CONSTANT_ProtectedNamespace;
+    },
+
     isDynamic: function isDynamic() {
       return this.isPublic() && !this.uri;
     },
@@ -371,7 +388,8 @@ var ShumwayNamespace = (function () {
     }
   });
 
-  namespace.PUBLIC = namespace.createNamespace();
+  namespace.PUBLIC = new namespace(CONSTANT_Namespace);
+  namespace.PROTECTED = new namespace(CONSTANT_ProtectedNamespace);
 
   var simpleNameCache = {};
 
@@ -1060,7 +1078,7 @@ var InstanceInfo = (function () {
     release || assert(Multiname.isQName(this.name));
     this.superName = constantPool.multinames[stream.readU30()];
     this.flags = stream.readU8();
-    this.protectedNs = 0;
+    this.protectedNs = undefined;
     if (this.flags & 8) {
       this.protectedNs = constantPool.namespaces[stream.readU30()];
     }
@@ -1070,6 +1088,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
+    this.init.name = this.name;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
   }

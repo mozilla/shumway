@@ -40,6 +40,7 @@ var StageDefinition = (function () {
       this._transform = { };
       this._mouseJustLeft = false;
       this._quality = STAGE_QUALITY_HIGH;
+      this._pendingScripts = [];
     },
 
     get allowsFullScreen() {
