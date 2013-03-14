@@ -22,7 +22,7 @@ AS2Globals.prototype = {
   ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.gotoAndPlay(frame);
+    nativeTarget.$nativeObject._as2CallFrame(frame);
   },
   chr: function(number) {
     return String.fromCharCode(number);
