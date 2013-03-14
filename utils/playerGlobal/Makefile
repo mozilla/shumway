@@ -19,7 +19,7 @@ default:
 	@echo "run: make [build|clean]"
 
 build: $(BUILD_DIR)/library.swf
-	python catalog2json.py > $(BUILD_DIR)/catalog.json
+#	python catalog2json.py > catalog.json
 	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal.js
 	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abcs
 	mv playerglobal.js ../../src/flash

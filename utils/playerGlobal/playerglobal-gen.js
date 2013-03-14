@@ -25,7 +25,7 @@ load("../../src/swf/text.js");
 
 load("../../src/avm2/util.js");
 
-var str = snarf("bin/catalog.json");
+var str = snarf("catalog.json");
 var obj = JSON.parse(str);
 var abcs = obj.swc.libraries.library.script;
 var catalog = {};
