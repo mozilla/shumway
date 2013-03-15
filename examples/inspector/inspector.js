@@ -1,4 +1,4 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
     this.url = url;
@@ -102,7 +102,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
     console.time("Execute builtin.abc");
     avm2.loadedAbcs = {};
-    // Avoid loading more Abcs while the builtins are loaded    
+    // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
