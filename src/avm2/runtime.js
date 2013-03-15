@@ -849,7 +849,7 @@ var Global = (function () {
     return this.scriptInfo.executed;
   };
   Global.prototype.ensureExecuted = function () {
-    ensureScriptIsExecuted(this.scriptInfo.abc, this.scriptInfo);
+    ensureScriptIsExecuted(this.scriptInfo);
   };
   defineNonEnumerableProperty(Global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
     return this.toString();
@@ -1690,16 +1690,6 @@ var Runtime = (function () {
         }
 
         if (trait.isClass()) {
-          // Builtins are special, so drop any attempts to define builtins
-          // that aren't from 'builtin.abc'.
-          var pair = domain.findDefiningScript(trait.name, false);
-          if (pair) {
-            var abc = pair.script.abc;
-            if (!abc.domain.base && abc.name === "builtin.abc") {
-              continue;
-            }
-          }
-
           if (trait.metadata && trait.metadata.native && domain.allowNatives) {
             trait.classInfo.native = trait.metadata.native;
           }
@@ -1906,7 +1896,7 @@ var InlineCacheManager = (function () {
       if (inlineCacheSets.has(name)) {
         var inlineCacheSet = inlineCacheSets.get(name);
         if (inlineCacheSet) {
-          Counter.count("Compiler: Inline Cache")
+          Counter.count("Compiler: Inline Cache");
           return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
         }
       }

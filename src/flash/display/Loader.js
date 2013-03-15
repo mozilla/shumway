@@ -209,9 +209,9 @@ var LoaderDefinition = (function () {
             case SWF_TAG_CODE_DO_ABC:
               var abcBlocks = frame.abcBlocks;
               if (abcBlocks)
-                abcBlocks.push(tag.data);
+                abcBlocks.push({data: tag.data, flags: tag.flags});
               else
-                frame.abcBlocks = [tag.data];
+                frame.abcBlocks = [{data: tag.data, flags: tag.flags}];
               break;
             case SWF_TAG_CODE_DO_ACTION:
               var actionBlocks = frame.actionBlocks;
@@ -469,8 +469,14 @@ var LoaderDefinition = (function () {
         if (abcBlocks && loader._isAvm2Enabled) {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
-            var abc = new AbcFile(abcBlocks[i], "abc_block_" + i);
-            appDomain.executeAbc(abc);
+            var abc = new AbcFile(abcBlocks[i].data, "abc_block_" + i);
+            if (abcBlocks[i].flags) {
+              // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
+              // immediately.
+              appDomain.loadAbc(abc);
+            } else {
+              appDomain.executeAbc(abc);
+            }
           }
         }
 
