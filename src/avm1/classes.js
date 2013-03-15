@@ -72,7 +72,7 @@ function getAS2Object(nativeObject) {
 
 function AS2MovieClip() {
 }
-AS2MovieClip.prototype = Object.create({}, {
+AS2MovieClip.prototype = Object.create(Object.prototype, {
   $nativeObject: {
     value: null,
     writable: true
@@ -165,15 +165,19 @@ AS2MovieClip.prototype = Object.create({}, {
       var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
       var mc = MovieClipClass.createInstance();
       mc.name = name;
-      this.$nativeObject._insertChildAtDepth(mc, depth);
-      var as2mc = mc._getAS2Object();
-      return as2mc;
+      this.$nativeObject._insertChildAtDepth(mc, +depth);
+      return mc._getAS2Object();
     },
     enumerable: false
   },
   createTextField: {
-    value: function createTextField(instanceName, depth, x, y, width, height) {
-      throw 'Not implemented: createTextField';
+    value: function createTextField(name, depth, x, y, width, height) {
+      var TextFieldClass = avm2.systemDomain.getClass("flash.text.TextField");
+      var text = TextFieldClass.createInstance();
+      text.name = name;
+      text._bbox = {left: +x, top: +y, right: +x + width, bottom: +y + height};
+      this.$nativeObject._insertChildAtDepth(text, +depth);
+      return text._getAS2Object();
     },
     enumerable: false
   },
@@ -508,7 +512,7 @@ AS2MovieClip.prototype = Object.create({}, {
 
 function AS2Button() {
 }
-AS2Button.prototype = Object.create({}, {
+AS2Button.prototype = Object.create(Object.prototype, {
   $nativeObject: {
     value: null,
     writable: true
@@ -682,7 +686,7 @@ AS2Button.prototype = Object.create({}, {
 
 function AS2TextField() {
 }
-AS2TextField.prototype = Object.create({}, {
+AS2TextField.prototype = Object.create(Object.prototype, {
   $nativeObject: {
     value: null,
     writable: true
@@ -961,7 +965,7 @@ defineObjectProperties(AS2Broadcaster, {
     enumerable: false
   }
 });
-AS2Broadcaster.prototype = Object.create({}, {
+AS2Broadcaster.prototype = Object.create(Object.prototype, {
   broadcastMessage: {
     value: function broadcastMessage(eventName) {
       var args = Array.prototype.slice.call(arguments, 1);
@@ -1173,8 +1177,16 @@ function AS2Rectangle(x, y, width, height) {
   this.width = width;
   this.height = height;
 }
-AS2Rectangle.prototype = Object.create({}, {
+AS2Rectangle.prototype = Object.create(Object.prototype, {
   // TODO methods
+});
+
+var AS2System = Object.create(Object.prototype, {
+  capabilities: {
+    get: function get$capabilities() {
+      return avm2.systemDomain.getClass("flash.system.Capabilities");
+    }
+  }
 });
 
 // Built-in classes modifications
@@ -1334,5 +1346,6 @@ if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2Mouse = AS2Mouse;
   GLOBAL.AS2Stage = AS2Stage;
   GLOBAL.AS2Rectangle = AS2Rectangle;
+  GLOBAL.AS2System = AS2System;
   GLOBAL.createBuiltinType = createBuiltinType;
 }

@@ -266,6 +266,7 @@ AS2Globals.prototype = {
   undefined: void(0),
   MovieClip: AS2MovieClip,
   AsBroadcaster: AS2Broadcaster,
+  System: AS2System,
   Stage: AS2Stage,
   Button: AS2Button,
   TextField: AS2TextField,

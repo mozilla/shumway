@@ -25,9 +25,16 @@ var CapabilitiesDefinition = (function () {
         os: {
           get: function () {
             return os;
-          }
-        }
+          },
+          enumerable: true
+        },
       }
+    },
+    script: {
+      static: scriptProperties("public", [
+        "version",
+        "os",
+      ])
     }
   };
 

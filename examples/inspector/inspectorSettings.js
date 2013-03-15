@@ -22,6 +22,7 @@ function updateAVM2State() {
   traceExecution.value = state.trace ? 2 : 0;
   release = state.release;
   TRACE_SYMBOLS_INFO = state.symbolsInfo;
+  AVM1_TRACE_ENABLED = state.trace;
 }
 
 setTimeout(function displayInfo() {
