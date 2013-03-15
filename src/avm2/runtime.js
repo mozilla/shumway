@@ -1,4 +1,4 @@
-/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
@@ -1388,14 +1388,14 @@ var Runtime = (function () {
    * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
    * trampoline that compiles |m| before executing it.
    *
-   * Tm = function trampoiline() {
+   * Tm = function trampoline() {
    *   return compile(m).apply(this, arguments);
    * }
    *
    * Of course we don't want to recompile |m| every time it is called. We can optimize the trampoline a bit
    * so that it keeps track of repeated executions:
    *
-   * Tm = function trampoilineContext() {
+   * Tm = function trampolineContext() {
    *   var c;
    *   return function () {
    *     if (!c) {
@@ -1409,7 +1409,7 @@ var Runtime = (function () {
    * to patch the instance prototype to point to the compiled version instead, so that the trampoline doesn't get
    * called again.
    *
-   * Tm = function trampoilineContext() {
+   * Tm = function trampolineContext() {
    *   var c;
    *   return function () {
    *     if (!c) {
@@ -1576,6 +1576,11 @@ var Runtime = (function () {
           return target.value.bind(this);
         }
         if (this.hasOwnProperty(qn)) {
+          var pd = Object.getOwnPropertyDescriptor(this, qn);
+          if (pd.get) {
+            Counter.count("Runtime: Method Closures");
+            return target.value.bind(this);
+          }
           Counter.count("Runtime: Unpatched Memoizer");
           return this[qn];
         }
@@ -1749,7 +1754,7 @@ var Runtime = (function () {
       } else {
         typeClassName = "object";
       }
-      return this.domain.getClass("packageInternal __AS3__$vec.Vector$" + typeClassName);
+      return this.domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
     } else {
       return notImplemented(factoryClassName);
     }
