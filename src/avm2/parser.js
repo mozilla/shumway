@@ -1,4 +1,4 @@
-/* -*- Mode: js-mode; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
@@ -826,22 +826,11 @@ var ConstantPool = (function constantPool() {
 
     // strings
     var strings = [""];
-    if ($RELEASE && name in preLoadedUTFStrings) {
-      /**
-       * Parsing UTF Strings takes a long time, for instance playerGlobal.min.abc has about 16K UTF strings. We can cut down on this
-       * if we preload the UTF strings using the JavaScript parser instead. During the build process we extract the UTF strings from
-       * .abc files and save them in .json files. These are then included by the build script in |preLoadedUTFStrings| and are made
-       * available here.
-       */
-      strings = preLoadedUTFStrings[name].strings;
-      stream.pos = preLoadedUTFStrings[name].positionAfterUTFStrings;
-    } else {
-      n = stream.readU30();
-      for (i = 1; i < n; ++i) {
-        strings.push(stream.readUTFString(stream.readU30()));
-      }
-      this.positionAfterUTFStrings = stream.pos;
+    n = stream.readU30();
+    for (i = 1; i < n; ++i) {
+      strings.push(stream.readUTFString(stream.readU30()));
     }
+    this.positionAfterUTFStrings = stream.pos;
 
     this.ints = ints;
     this.uints = uints;

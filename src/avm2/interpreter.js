@@ -324,7 +324,11 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
-            stack.push(getProperty(obj, multiname).apply(obj, args));
+            var p = getProperty(obj, multiname);
+            if (!p) {
+              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+            }
+            stack.push(p.apply(obj, args));
             break;
           case OP_returnvoid:
             runtimeStack.pop();
@@ -341,14 +345,22 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
-            stack.push(applyNew(getProperty(obj, multiname), args));
+            var p = getProperty(obj, multiname);
+            if (!p) {
+              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+            }
+            stack.push(applyNew(p, args));
             break;
           case OP_callsuperid:    notImplemented(); break;
           case OP_callproplex:
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
-            stack.push(getProperty(obj, multiname).apply(null, args));
+            var p = getProperty(obj, multiname);
+            if (!p) {
+              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+            }
+            stack.push(p.apply(null, args));
             break;
           case OP_callinterface:  notImplemented(); break;
           case OP_callsupervoid:
@@ -361,7 +373,11 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
-            getProperty(obj, multiname).apply(obj, args);
+            var p = getProperty(obj, multiname);
+            if (!p) {
+              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+            }
+            p.apply(obj, args);
             break;
           case OP_sxi1:           notImplemented(); break;
           case OP_sxi8:           notImplemented(); break;

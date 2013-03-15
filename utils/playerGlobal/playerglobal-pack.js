@@ -43,8 +43,6 @@ SWF.parse(snarf("bin/library.swf", "binary"), {
       // print ("Name: " + file.name + ", Offset: " + file.offset + ", Length: " + file.length);
       delete file.data;
     }
-    print (JSON.stringify(files));
-    print ("");
     print (base64ArrayBuffer(data));
   }
 });

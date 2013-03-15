@@ -18,9 +18,8 @@ build: clean
 	cp ../../src/swf/*.js build/content/swf/
 	mkdir build/content/flash
 	cp ../../src/flash/*.js build/content/flash/
-	cp ../../src/flash/playerGlobal.min.abc build/content/flash/
+	cp ../../src/flash/playerglobal.abc build/content/flash/
 	# Extract UTF Strings
-	cd ../../src/avm2/bin/; ../../../utils/jsshell/js avm.js -d -f "u" ../../flash/playerGlobal.min.abc > ../../../extension/firefox/build/content/flash/playerGlobal.min.abc.strings.json
 	mkdir build/content/flash/display
 	cp ../../src/flash/display/*.js build/content/flash/display/
 	mkdir build/content/flash/events
@@ -56,7 +55,6 @@ build: clean
 	mkdir -p build/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc build/content/avm2/generated/builtin/
 	# Extract UTF Strings
-	cd ../../src/avm2/bin/; ../../../utils/jsshell/js avm.js -d -f "u" ../generated/builtin/builtin.abc > ../../../extension/firefox/build/content/avm2/generated/builtin/builtin.abc.strings.json
 	mkdir build/content/lib
 	mkdir build/content/lib/Kanvas
 	cp ../../lib/Kanvas/* build/content/lib/Kanvas/

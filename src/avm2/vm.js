@@ -1,9 +1,10 @@
 var AVM2 = (function () {
 
-  function AVM2(sysMode, appMode) {
+  function AVM2(sysMode, appMode, findDefiningAbc) {
     // TODO: this will change when we implement security domains.
     this.systemDomain = new Domain(this, null, sysMode, true);
     this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
+    this.findDefiningAbc = findDefiningAbc;
   }
 
   /**

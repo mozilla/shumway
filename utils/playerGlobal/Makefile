@@ -18,8 +18,12 @@ endif
 default:
 	@echo "run: make [build|clean]"
 
-build: $(BUILD_DIR)/library.min.swf
-	$(JSSHELL_HOME)/js playerglobal-dumpabc.js | $(BASE64DEC) $(BUILD_DIR)/playerGlobal.min.abc
+build: $(BUILD_DIR)/library.swf
+#	python catalog2json.py > catalog.json
+	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal.js
+	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abc
+	mv playerglobal.js ../../src/flash
+	mv playerglobal.abc ../../src/flash
 
 $(BUILD_DIR)/library.min.swf: $(BUILD_DIR)/library.swf
 ifeq ($(findstring MINGW32, $(UNAME)),)
@@ -29,7 +33,7 @@ else
 endif
 
 $(BUILD_DIR)/library.swf: $(BUILD_DIR)/playerglobal.swc
-	unzip -n $(BUILD_DIR)/playerglobal.swc library.swf -d $(BUILD_DIR)
+	unzip -n $(BUILD_DIR)/playerglobal.swc library.swf catalog.xml -d $(BUILD_DIR)
 
 $(BUILD_DIR)/playerglobal.swc:
 	mkdir -p $(BUILD_DIR)
