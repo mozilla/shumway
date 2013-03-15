@@ -711,6 +711,19 @@ var Multiname = (function () {
     return name;
   };
 
+  multiname.prototype.hasQName = function hasQName(qn) {
+    assert (qn instanceof Multiname);
+    if (this.name !== qn.name) {
+      return false;
+    }
+    for (var i = 0; i < this.namespaces.length; i++) {
+      if (this.namespaces[i].isEqualTo(qn.namespaces[0])) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   multiname.prototype.isAttribute = function isAttribute() {
     return this.flags & ATTRIBUTE;
   };
@@ -1131,6 +1144,7 @@ var ScriptInfo = (function scriptInfo() {
   var nextID = 1;
   function scriptInfo(abc, idx, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);
