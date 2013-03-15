@@ -21,9 +21,9 @@ default:
 build: $(BUILD_DIR)/library.swf
 #	python catalog2json.py > catalog.json
 	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal.js
-	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abcs
+	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abc
 	mv playerglobal.js ../../src/flash
-	mv playerglobal.abcs ../../src/flash
+	mv playerglobal.abc ../../src/flash
 
 $(BUILD_DIR)/library.min.swf: $(BUILD_DIR)/library.swf
 ifeq ($(findstring MINGW32, $(UNAME)),)

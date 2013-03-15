@@ -5,7 +5,7 @@ release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abcs";
+var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
     this.url = url;

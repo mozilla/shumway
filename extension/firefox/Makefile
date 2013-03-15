@@ -18,8 +18,7 @@ build: clean
 	cp ../../src/swf/*.js build/content/swf/
 	mkdir build/content/flash
 	cp ../../src/flash/*.js build/content/flash/
-	cp ../../src/flash/playerGlobal.min.abc build/content/flash/
-	cp ../../src/flash/playerglobal.abcs build/content/flash/
+	cp ../../src/flash/playerglobal.abc build/content/flash/
 	# Extract UTF Strings
 	mkdir build/content/flash/display
 	cp ../../src/flash/display/*.js build/content/flash/display/

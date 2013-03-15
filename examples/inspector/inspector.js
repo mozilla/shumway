@@ -124,7 +124,7 @@ var avm2Root = "../../src/avm2/";
 var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
-var playerGlobalAbcPath = "../../src/flash/playerglobal.abcs";
+var playerGlobalAbcPath = "../../src/flash/playerglobal.abc";
 
 function parseQueryString(qs) {
   if (!qs)
