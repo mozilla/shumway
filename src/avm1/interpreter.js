@@ -205,9 +205,10 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
     path.shift();
   }
   while (path.length > 0) {
+    var prevObj = obj;
     obj = obj.$lookupChild(path[0]);
     if (!obj) {
-      throw path[0] + ' is undefined in ' + targetPath;
+      throw path[0] + ' (expr ' + targetPath + ') is not found in ' + prevObj._target;
     }
     path.shift();
   }
