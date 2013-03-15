@@ -109,6 +109,43 @@ var SpriteDefinition = (function () {
         }
       }
     },
+    _duplicate: function (name, depth, initObject) {
+      // TODO proper child cloning, initObject and display list insertion
+      // for now just created symbol based on previous timeline information
+      // (code is borrowed from the _constructChildren)
+
+      var loader = this._loader;
+      var parent = this._parent;
+      var children = parent._children;
+      var symbolClass = this.class;
+      var symbolInfo = this.symbol;
+
+      var props = Object.create(symbolInfo);
+      props.name = name;
+      props.depth = depth;
+      props.parent = parent;
+
+      var instance = symbolClass.createAsSymbol(props);
+      if (name)
+        parent[Multiname.getPublicQualifiedName(name)] = instance;
+
+      symbolClass.instance.call(instance);
+
+      assert(instance._control);
+      parent._control.appendChild(instance._control);
+
+      if (!loader._isAvm2Enabled)
+        parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
+
+      instance._markAsDirty();
+
+      instance.dispatchEvent(new flash.events.Event("load"));
+      instance.dispatchEvent(new flash.events.Event("added"));
+
+      children.push(instance);
+
+      return instance;
+    },
     _initAvm1Bindings: function (instance, name, events) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;

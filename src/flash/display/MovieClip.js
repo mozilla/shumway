@@ -35,6 +35,17 @@ var MovieClipDefinition = (function () {
           scripts[i].call(this);
       }
     },
+    _as2CallFrame: function (frame) {
+      if (isNaN(frame)) {
+        var frameLabel = this._frameLabels[frame];
+        if (frameLabel) {
+          this._callFrame(frameLabel.frame);
+        }
+      } else {
+        this._callFrame(frame);
+      }
+    },
+
     _getAS2Object: function () {
       if (!this.$as2Object) {
         new AS2MovieClip().$attachNativeObject(this);
