@@ -3,7 +3,7 @@
 SHUMWAY_ROOT=..
 
 build: clean \
-       $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc \
+       $(SHUMWAY_ROOT)/src/flash/playerglobal.abc \
        build-extension
 	mkdir build
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html images build/
@@ -13,7 +13,7 @@ build: clean \
 	cp $(SHUMWAY_ROOT)/src/swf/*.js build/src/swf/
 	mkdir build/src/flash
 	cp $(SHUMWAY_ROOT)/src/flash/*.js build/src/flash/
-	cp $(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc build/src/flash/
+	cp $(SHUMWAY_ROOT)/src/flash/playerglobal.abc build/src/flash/
 	mkdir build/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js build/src/flash/display/
 	mkdir build/src/flash/events
@@ -74,7 +74,7 @@ build: clean \
 build-extension:
 	$(MAKE) -C $(SHUMWAY_ROOT)/extension/firefox build
 
-$(SHUMWAY_ROOT)/src/flash/playerGlobal.min.abc:
+$(SHUMWAY_ROOT)/src/flash/playerglobal.abc:
 	make -C $(SHUMWAY_ROOT) build-playerglobal
 
 clean:
