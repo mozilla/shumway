@@ -399,6 +399,20 @@ function interpretActions(actionsData, scopeContainer,
         interpretActions(finallyBlock, scopeContainer, constantPool, registers);
     }
   }
+  function validateArgsCount(numArgs, maxAmount) {
+    if (typeof numArgs !== 'number' || numArgs < 0 || numArgs > maxAmount ||
+        numArgs != (0|numArgs)) {
+      throw 'Invalid number of arguments: ' + numArgs;
+    }
+  }
+  function readArgs(stack) {
+    var numArgs = stack.pop();
+    validateArgsCount(numArgs, stack.length);
+    var args = [];
+    for (var i = 0; i < numArgs; i++)
+      args.push(stack.pop());
+    return args;
+  }
 
   var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
   var _global = currentContext.globals
@@ -736,10 +750,7 @@ function interpretActions(actionsData, scopeContainer,
       // SWF 5
       case 0x3D: // ActionCallFunction
         var functionName = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var fn = getFunction(functionName);
         var result = fn.apply(scope, args);
         stack.push(result);
@@ -747,10 +758,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x52: // ActionCallMethod
         var methodName = stack.pop();
         var obj = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var result;
         if (methodName) {
           obj = Object(obj);
@@ -821,14 +829,12 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(obj[name]);
         break;
       case 0x42: // ActionInitArray
-        var numArgs = stack.pop();
-        var arr = [];
-        for (var i = 0; i < numArgs; i++)
-          arr.push(stack.pop());
+        var arr = readArgs(stack);
         stack.push(arr);
         break;
       case 0x43: // ActionInitObject
         var numArgs = stack.pop();
+        validateArgsCount(numArgs, stack.length >> 1);
         var obj = {};
         for (var i = 0; i < numArgs; i++) {
           var value = stack.pop();
@@ -840,10 +846,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x53: // ActionNewMethod
         var methodName = stack.pop();
         var obj = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var method;
         if (methodName) {
           if (!(methodName in obj))
@@ -866,10 +869,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x40: // ActionNewObject
         var objectName = stack.pop();
         var obj = getObjectByName(objectName);
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
@@ -1067,6 +1067,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x2C: // ActionImplementsOp
         var constr = stack.pop();
         var interfacesCount = stack.pop();
+        validateArgsCount(interfacesCount, stack.length);
         var interfaces = [];
         for (var i = 0; i < interfacesCount; i++)
           interfaces.push(stack.pop());
@@ -1090,10 +1091,7 @@ function interpretActions(actionsData, scopeContainer,
         throw new AS2Error(obj);
       // Not documented by the spec
       case 0x2D: // ActionFSCommand2
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var result = _global.fscommand.apply(null, args);
         stack.push(result);
         break;
