@@ -18,8 +18,7 @@ AS2ScopeListItem.prototype = {
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
   this.globals = new AS2Globals(this);
-  var windowScope = new AS2ScopeListItem(window, null);
-  this.initialScope = new AS2ScopeListItem(this.globals, windowScope);
+  this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
 }
 AS2Context.instance = null;
@@ -399,6 +398,20 @@ function interpretActions(actionsData, scopeContainer,
         interpretActions(finallyBlock, scopeContainer, constantPool, registers);
     }
   }
+  function validateArgsCount(numArgs, maxAmount) {
+    if (typeof numArgs !== 'number' || numArgs < 0 || numArgs > maxAmount ||
+        numArgs != (0|numArgs)) {
+      throw 'Invalid number of arguments: ' + numArgs;
+    }
+  }
+  function readArgs(stack) {
+    var numArgs = stack.pop();
+    validateArgsCount(numArgs, stack.length);
+    var args = [];
+    for (var i = 0; i < numArgs; i++)
+      args.push(stack.pop());
+    return args;
+  }
 
   var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
   var _global = currentContext.globals
@@ -423,6 +436,7 @@ function interpretActions(actionsData, scopeContainer,
   var instructionsExecuted = 0;
   var errorsIgnored = 0;
   var executionAborted = false;
+  var stackItemsExpected;
   // will try again if we are skipping errors
   while (stream.position < stream.end && !executionAborted) {
     try {
@@ -436,6 +450,7 @@ function interpretActions(actionsData, scopeContainer,
     var actionCode = stream.readUI8();
     var length = actionCode >= 0x80 ? stream.readUI16() : 0;
     nextPosition = stream.position + length;
+    stackItemsExpected = 0;
 
     actionTracer.print(stream.position, actionCode, stack);
     switch (actionCode) {
@@ -640,6 +655,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x1C: // ActionGetVariable
         var variableName = '' + stack.pop();
+        stackItemsExpected++;
         stack.push(getVariable(variableName));
         break;
       case 0x1D: // ActionSetVariable
@@ -680,6 +696,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x22: // ActionGetProperty
         var index = stack.pop();
         var target = stack.pop();
+        stackItemsExpected++;
         stack.push(_global.getProperty(target, index));
         break;
       case 0x23: // ActionSetProperty
@@ -736,10 +753,8 @@ function interpretActions(actionsData, scopeContainer,
       // SWF 5
       case 0x3D: // ActionCallFunction
         var functionName = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
+        stackItemsExpected++;
         var fn = getFunction(functionName);
         var result = fn.apply(scope, args);
         stack.push(result);
@@ -747,11 +762,9 @@ function interpretActions(actionsData, scopeContainer,
       case 0x52: // ActionCallMethod
         var methodName = stack.pop();
         var obj = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
         var result;
+        stackItemsExpected++;
         if (methodName) {
           obj = Object(obj);
           if (!(methodName in obj))
@@ -821,14 +834,12 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(obj[name]);
         break;
       case 0x42: // ActionInitArray
-        var numArgs = stack.pop();
-        var arr = [];
-        for (var i = 0; i < numArgs; i++)
-          arr.push(stack.pop());
+        var arr = readArgs(stack);
         stack.push(arr);
         break;
       case 0x43: // ActionInitObject
         var numArgs = stack.pop();
+        validateArgsCount(numArgs, stack.length >> 1);
         var obj = {};
         for (var i = 0; i < numArgs; i++) {
           var value = stack.pop();
@@ -840,10 +851,8 @@ function interpretActions(actionsData, scopeContainer,
       case 0x53: // ActionNewMethod
         var methodName = stack.pop();
         var obj = stack.pop();
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
+        stackItemsExpected++;
         var method;
         if (methodName) {
           if (!(methodName in obj))
@@ -866,10 +875,8 @@ function interpretActions(actionsData, scopeContainer,
       case 0x40: // ActionNewObject
         var objectName = stack.pop();
         var obj = getObjectByName(objectName);
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
+        stackItemsExpected++;
         var result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
@@ -1067,6 +1074,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x2C: // ActionImplementsOp
         var constr = stack.pop();
         var interfacesCount = stack.pop();
+        validateArgsCount(interfacesCount, stack.length);
         var interfaces = [];
         for (var i = 0; i < interfacesCount; i++)
           interfaces.push(stack.pop());
@@ -1090,10 +1098,8 @@ function interpretActions(actionsData, scopeContainer,
         throw new AS2Error(obj);
       // Not documented by the spec
       case 0x2D: // ActionFSCommand2
-        var numArgs = stack.pop();
-        var args = [];
-        for (var i = 0; i < numArgs; i++)
-          args.push(stack.pop());
+        var args = readArgs(stack);
+        stackItemsExpected++;
         var result = _global.fscommand.apply(null, args);
         stack.push(result);
         break;
@@ -1116,6 +1122,9 @@ function interpretActions(actionsData, scopeContainer,
       if (e instanceof AS2Error)
         throw e;
       stream.position = nextPosition;
+      if (stackItemsExpected > 0) {
+        while (stackItemsExpected--) stack.push(undefined);
+      }
       if (!recoveringFromError) {
         if (errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
           executionAborted = true;

@@ -27,6 +27,16 @@ AS2Globals.prototype = {
   chr: function(number) {
     return String.fromCharCode(number);
   },
+  clearInterval: function () {
+    var clearTimeout = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.clearInterval'), true, true);
+    clearInterval.apply(null, arguments);
+  },
+  clearTimeout: function () {
+    var clearTimeout = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.clearTimeout'), true, true);
+    clearTimeout.apply(null, arguments);
+  },
   duplicateMovieClip: function(target, newname, depth) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     nativeTarget.duplicateMovieClip(newname, depth);
@@ -175,9 +185,19 @@ AS2Globals.prototype = {
     var nativeTarget2 = AS2Context.instance.resolveTarget(target);
     nativeTarget.removeChild(nativeTarget2);
   },
+  setInterval: function () {
+    var setInterval = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.setInterval'), true, true);
+    return setInterval.apply(null, arguments);
+  },
   setProperty: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     nativeTarget[PropertiesIndexMap[index]] = value;
+  },
+  setTimeout: function () {
+    var setTimeout = avm2.applicationDomain.getProperty(
+      Multiname.fromSimpleName('flash.utils.setTimeout'), true, true);
+    return setTimeout.apply(null, arguments);
   },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
