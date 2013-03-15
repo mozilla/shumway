@@ -187,9 +187,8 @@ AS2MovieClip.prototype = Object.create({}, {
   _droptarget: proxyNativeReadonlyProperty('dropTarget'),
   duplicateMovieClip: {
     value: function duplicateMovieClip(name, depth, initObject) {
-      var newNativeObj = this.$nativeObject.duplicateMovieClip(name, depth, initObject);
-      var newMovieClip = new AS2MovieClip();
-      newMovieClip.$attachNativeObject(newNativeObj);
+      var newMovieClip = this.$nativeObject.
+        _duplicate(name, +depth, initObject)._getAS2Object();
       return newMovieClip;
     },
     enumerable: false
@@ -482,7 +481,9 @@ AS2MovieClip.prototype = Object.create({}, {
   toString: proxyNativeMethod('toString'),
   unloadMovie: {
     value: function unloadMovie() {
-      throw 'Not implemented: unloadMovie';
+      var nativeObject = this.$nativeObject;
+      // TODO remove movie clip content
+      nativeObject.stop();
     },
     enumerable: false
   },
@@ -491,7 +492,11 @@ AS2MovieClip.prototype = Object.create({}, {
     enumerable: true
   },
   useHandCursor: proxyNativeProperty('useHandCursor'),
-  _visible: proxyNativeProperty('visible'),
+  _visible: {
+    get: function get$_visible() { return this.$nativeObject.visible; },
+    set: function set$_visible(value) { this.$nativeObject.visible = !!+value; },
+    enumerable: true
+  },
   _width: proxyNativeProperty('width'),
   _x: proxyNativeProperty('x'),
   _xmouse: proxyNativeReadonlyProperty('mouseX'),
@@ -637,7 +642,7 @@ AS2Button.prototype = Object.create({}, {
   },
   _visible: { // @flash.display.DisplayObject
     get: function get$_visible() { return this.$nativeObject.visible; },
-    set: function set$_visible(value) { this.$nativeObject.visible = value; },
+    set: function set$_visible(value) { this.$nativeObject.visible = !!+value; },
     enumerable: true
   },
   _width: { // @flash.display.DisplayObject
@@ -900,7 +905,7 @@ AS2TextField.prototype = Object.create({}, {
   },
   _visible: { // @flash.display.DisplayObject
     get: function get$_visible() { return this.$nativeObject.visible; },
-    set: function set$_visible(value) { this.$nativeObject.visible = value; },
+    set: function set$_visible(value) { this.$nativeObject.visible = !!+value; },
     enumerable: true
   },
   _width: { // @flash.display.DisplayObject

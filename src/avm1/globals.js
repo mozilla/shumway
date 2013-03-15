@@ -218,13 +218,11 @@ AS2Globals.prototype = {
   },
   unloadMovie: function(target) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    // nativeTarget.unload(); ?
-    throw 'Not implemented: unloadMovie';
+    nativeTarget.unloadMovie();
   },
   unloadMovieNum: function(level) {
     var nativeTarget = AS2Context.instance.resolveLevel(level);
-    // nativeTarget.unload(); ?
-    throw 'Not implemented: unloadMovieNum';
+    nativeTarget.unloadMovie();
   },
   updateAfterEvent: function() {
     // flash.events.TimerEvent.updateAfterEvent
