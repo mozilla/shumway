@@ -1,3 +1,4 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
     this.url = url;
@@ -64,33 +65,66 @@ var BinaryFileReader = (function binaryFileReader() {
 })();
 
 var asyncLoading = getQueryVariable("async") === "true";
+var libraryAbcs
+function grabAbc(abcName) {
+  var entry = libraryScripts[abcName];
+  if (entry) {
+    var begin = entry.offset;
+    var end = begin + entry.length;
+    return new AbcFile(new Uint8Array(libraryAbcs.slice(begin, end)), abcName);
+  }
+  return null
+}
+
+function findDefiningAbc(mn) {
+  if (!avm2.builtinsLoaded) {
+    return null;
+  }
+  var name;
+  for (var i = 0; i < mn.namespaces.length; i++) {
+    var name = mn.namespaces[i].originalURI + ":" + mn.name;
+    var abcName = playerGlobalNames[name];
+    if (abcName) {
+      break;
+    }
+  }
+  if (abcName) {
+    return grabAbc(abcName);
+  }
+  return null;
+}
 
 // avm2 must be global.
 var avm2;
-
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   assert (builtinPath);
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    avm2 = new AVM2(sysMode, appMode);
+    avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
     console.time("Execute builtin.abc");
+    avm2.loadedAbcs = {};
+    // Avoid loading more Abcs while the builtins are loaded    
+    avm2.builtinsLoaded = false;
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+    avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
-    if (libraryPath) {
-      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+    new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+      // If library is shell.abc, then just go ahead and run it now since
+      // its not worth doing it lazily given that it is so small.
+      if (libraryPath === shellAbcPath) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
-        next(avm2);
-      });
-    } else {
+      } else {
+        libraryAbcs = buffer;
+      }
       next(avm2);
-    }
+    });
   });
 }
 
 var avm2Root = "../../src/avm2/";
 var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var libraryPath = avm2Root + "generated/shell/shell.abc";
-var playerGlobalPath = "../../src/flash/playerGlobal.min.abc";
+var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var playerGlobalAbcPath = "../../src/flash/playerglobal.abc";
 
 function parseQueryString(qs) {
   if (!qs)
@@ -132,21 +166,23 @@ function executeFile(file, buffer, movieParams) {
   var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {
-    createAVM2(builtinPath, libraryPath, sysMode, appMode, function (avm2) {
-      function runABC(file, buffer) {
+    libraryScripts = {};
+    createAVM2(builtinPath, shellAbcPath, sysMode, appMode, function (avm2) {
+      function runAbc(file, buffer) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
         terminate();
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {
-          runABC(file, buffer);
+          runAbc(file, buffer);
         });
       } else {
-        runABC(file, buffer);
+        runAbc(file, buffer);
       }
     });
   } else if (file.endsWith(".swf")) {
-    createAVM2(builtinPath, playerGlobalPath, sysMode, appMode, function (avm2) {
+    libraryScripts = playerGlobalScripts;
+    createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
         SWF.embed(buffer, $("#stage")[0], {
           onComplete: terminate,

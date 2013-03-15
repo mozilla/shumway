@@ -59,11 +59,6 @@ window.print = function(s) {
   console.log(s);
 };
 
-var preLoadedUTFStrings = {
-  "builtin.abc": loadJSON($SHUMWAY_ROOT + "extension/firefox/build/content/avm2/generated/builtin/builtin.abc.strings.json"),
-  "resource://shumway/flash/playerGlobal.min.abc": loadJSON($SHUMWAY_ROOT + "extension/firefox/build/content/flash/playerGlobal.min.abc.strings.json")
-};
-
 load($SHUMWAY_ROOT + "src/avm2/constants.js");
 load($SHUMWAY_ROOT + "src/avm2/errors.js");
 load($SHUMWAY_ROOT + "src/avm2/opcodes.js");
@@ -84,7 +79,7 @@ load($SHUMWAY_ROOT + "src/avm2/disassembler.js");
 load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
 load($SHUMWAY_ROOT + "src/avm2/vm.js");
 
-
+load($SHUMWAY_ROOT + "src/flash/playerglobal.js");  // this needs to come before avm2utils.js
 load($SHUMWAY_ROOT + "extension/firefox/content/web/avm2utils.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
 
