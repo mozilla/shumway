@@ -23,6 +23,7 @@ var VM_LENGTH = "vm length";
 var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_ENUMERATION_KEYS = "vm enumeration keys";
+var VM_TOMBSTONE = {};
 var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
@@ -102,8 +103,7 @@ function initializeGlobalObject(global) {
     var keys = this[VM_ENUMERATION_KEYS];
 
     while (index < keys.length) {
-      //
-      if (keys[index]) {
+      if (keys[index] !== VM_TOMBSTONE) {
         return index + 1;
       }
       index ++;
@@ -356,6 +356,14 @@ var Interface = (function () {
       }
 
       return false;
+    },
+
+    call: function (v) {
+      return v;
+    },
+
+    apply: function ($this, args) {
+      return args[0];
     }
   };
 
@@ -789,7 +797,7 @@ function deleteProperty(obj, mn) {
     if (obj[VM_ENUMERATION_KEYS]) {
       var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
       if (index >= 0) {
-        obj[VM_ENUMERATION_KEYS][index] = undefined;
+        obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
       }
     }
     return delete obj[Multiname.getQualifiedName(resolved)];
