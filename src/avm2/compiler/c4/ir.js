@@ -144,17 +144,17 @@
 
   var Node = (function () {
     var nextID = [];
-    function constructor() {
+    function node() {
       this.id = nextID[nextID.length - 1] += 1;
     }
-    constructor.startNumbering = function () {
+    node.startNumbering = function () {
       nextID.push(0);
     };
-    constructor.stopNumbering = function () {
+    node.stopNumbering = function () {
       nextID.pop();
     };
-    constructor.prototype.nodeName = "Node";
-    constructor.prototype.toString = function (brief) {
+    node.prototype.nodeName = "Node";
+    node.prototype.toString = function (brief) {
       if (brief) {
         return nameOf(this);
       }
@@ -172,7 +172,7 @@
       return str;
     };
 
-    constructor.prototype.visitInputs = function (fn, visitConstants) {
+    node.prototype.visitInputs = function (fn, visitConstants) {
       if (isConstant(this)) {
         // Don't visit properties of constants.
         return;
@@ -196,7 +196,7 @@
       }
     };
 
-    constructor.prototype.replaceInput = function(oldInput, newInput) {
+    node.prototype.replaceInput = function(oldInput, newInput) {
       var count = 0;
       for (var k in this) {
         var v = this[k];
@@ -213,41 +213,41 @@
       return count;
     };
 
-    constructor.prototype.push = function (value) {
+    node.prototype.push = function (value) {
       if (this.length === undefined) {
         this.length = 0;
       }
       this[this.length ++] = value;
     };
-    return constructor;
+    return node;
   })();
 
   var Control = (function () {
-    function constructor() {
+    function control() {
       Node.apply(this);
     }
-    constructor.prototype = extend(Node);
-    return constructor;
+    control.prototype = extend(Node);
+    return control;
   })();
 
   var Value = (function () {
-    function constructor() {
+    function value() {
       Node.apply(this);
     }
-    constructor.prototype = extend(Node);
-    constructor.prototype.mustFloat = false;
-    return constructor;
+    value.prototype = extend(Node);
+    value.prototype.mustFloat = false;
+    return value;
   })();
 
   var Region = (function () {
-    function constructor(predecessor) {
+    function region(predecessor) {
       Control.call(this);
       this.predecessors = predecessor ? [predecessor] : [];
       this.phis = [];
     }
-    constructor.prototype = extend(Control, "Region");
+    region.prototype = extend(Control, "Region");
 
-    constructor.prototype.verify = function () {
+    region.prototype.verify = function () {
       var predecessors = this.predecessors;
       predecessors.forEach(function (x) {
         assert (x);
@@ -260,96 +260,97 @@
         });
       }
     };
-    return constructor;
+    return region;
   })();
 
   var Start = (function () {
-    function constructor() {
+    function start() {
       Region.call(this);
       this.control = this;
     }
-    constructor.prototype = extend(Region, "Start");
-    return constructor;
+    start.prototype = extend(Region, "Start");
+    return start;
   })();
 
   var Phi = (function () {
-    function constructor(control, value) {
+    function phi(control, value) {
       Node.call(this);
       assert (control instanceof Region);
       this.control = control;
       this.arguments = value ? [value] : [];
     }
-    constructor.prototype = extend(Value, "Phi");
-    constructor.prototype.pushValue = function pushValue(x) {
+    phi.prototype = extend(Value, "Phi");
+    phi.prototype.pushValue = function pushValue(x) {
       assert (isValue(x));
       this.arguments.push(x);
     }
-    return constructor;
+    return phi;
   })();
 
   var Variable = (function () {
-    function constructor(name) {
+    function variable(name) {
       assert (isString(name));
       this.name = name;
     }
-    constructor.prototype = extend(Value, "Variable");
-    return constructor;
+    variable.prototype = extend(Value, "Variable");
+    return variable;
   })();
 
   var Move = (function () {
-    function constructor(to, from) {
+    function move(to, from) {
       assert (to instanceof Variable);
       assert (from instanceof Variable || from instanceof Constant, from);
       assert (to !== from);
       this.to = to;
       this.from = from;
     }
-    constructor.prototype = extend(Value, "Move");
-    constructor.prototype.toString = function () {
+    move.prototype = extend(Value, "Move");
+    move.prototype.toString = function () {
       return this.to.name + " <= " + this.from;
     };
-    return constructor;
+    return move;
   })();
 
   var End = (function () {
-    function constructor(control) {
+    function end(control) {
       Control.call(this, control);
     }
-    constructor.prototype = extend(Control, "End");
-    return constructor;
+    end.prototype = extend(Control, "End");
+    return end;
   })();
 
   var If = (function () {
-    function constructor(control, predicate) {
+    function ifNode(control, predicate) {
       Control.call(this);
+      assert (predicate);
       this.control = control;
       this.predicate = predicate;
     }
-    constructor.prototype = extend(End, "If");
-    return constructor;
+    ifNode.prototype = extend(End, "If");
+    return ifNode;
   })();
 
   var Switch = (function () {
-    function constructor(control, determinant) {
+    function switchNode(control, determinant) {
       Control.call(this);
       this.control = control;
       this.determinant = determinant;
     }
-    constructor.prototype = extend(End, "Switch");
-    return constructor;
+    switchNode.prototype = extend(End, "Switch");
+    return switchNode;
   })();
 
   var Jump = (function () {
-    function constructor(control) {
+    function jump(control) {
       Control.call(this);
       this.control = control;
     }
-    constructor.prototype = extend(End, "Jump");
-    return constructor;
+    jump.prototype = extend(End, "Jump");
+    return jump;
   })();
 
   var Stop = (function () {
-    function constructor(control, store, argument) {
+    function stop(control, store, argument) {
       Control.call(this);
       assert (isControlOrNull(control));
       assert (isStore(store));
@@ -358,12 +359,12 @@
       this.store = store;
       this.argument = argument;
     }
-    constructor.prototype = extend(End, "Stop");
-    return constructor;
+    stop.prototype = extend(End, "Stop");
+    return stop;
   })();
 
   var Projection = (function () {
-    function constructor(argument, type, selector) {
+    function projection(argument, type, selector) {
       Value.call(this);
       assert (type);
       assert (!(argument instanceof Projection));
@@ -373,21 +374,21 @@
         this.selector = selector;
       }
     }
-    constructor.Type = {
+    projection.Type = {
       CASE: "case",
       TRUE: "true",
       FALSE: "false",
       STORE: "store",
       SCOPE: "scope"
     };
-    constructor.prototype = extend(Value, "Projection");
-    constructor.prototype.project = function () {
+    projection.prototype = extend(Value, "Projection");
+    projection.prototype.project = function () {
       return this.argument;
     };
-    constructor.prototype.toStringDetails = function () {
+    projection.prototype.toStringDetails = function () {
       return String(this.type).toUpperCase();
     };
-    return constructor;
+    return projection;
   })();
 
   function isProjection(node, type) {
@@ -395,52 +396,52 @@
   }
 
   var Latch = (function () {
-    function constructor(condition, left, right) {
+    function latch(condition, left, right) {
       Node.call(this);
       this.condition = condition;
       this.left = left;
       this.right = right;
     }
-    constructor.prototype = extend(Value, "Latch");
-    return constructor;
+    latch.prototype = extend(Value, "Latch");
+    return latch;
   })();
 
   var Binary = (function () {
-    function constructor(operator, left, right) {
+    function binary(operator, left, right) {
       Node.call(this);
       this.operator = operator;
       this.left = left;
       this.right = right;
     }
-    constructor.prototype = extend(Value, "Binary");
-    constructor.prototype.toStringDetails = function () {
+    binary.prototype = extend(Value, "Binary");
+    binary.prototype.toStringDetails = function () {
       return String(this.operator.name).toUpperCase();
     };
-    return constructor;
+    return binary;
   })();
 
   var Unary = (function () {
-    function constructor(operator, argument) {
+    function unary(operator, argument) {
       Node.call(this);
       assert (operator instanceof Operator);
       assert (argument);
       this.operator = operator;
       this.argument = argument;
     }
-    constructor.prototype = extend(Value, "Unary");
-    constructor.prototype.toStringDetails = function () {
+    unary.prototype = extend(Value, "Unary");
+    unary.prototype.toStringDetails = function () {
       return String(this.operator.name).toUpperCase();
     };
-    return constructor;
+    return unary;
   })();
 
   var Constant = (function () {
-    function constructor(value) {
+    function constant(value) {
       Node.call(this);
       this.value = value;
     }
-    constructor.prototype = extend(Value, "Constant");
-    return constructor;
+    constant.prototype = extend(Value, "Constant");
+    return constant;
   })();
 
 
@@ -491,34 +492,34 @@
   })();
 
   var This = (function () {
-    function constructor(control) {
+    function thisNode(control) {
       Node.call(this);
       assert (control);
       this.control = control;
     }
-    constructor.prototype = extend(Value, "This");
-    return constructor;
+    thisNode.prototype = extend(Value, "This");
+    return thisNode;
   })();
 
   var Throw = (function () {
-    function constructor(control, argument) {
+    function throwNode(control, argument) {
       Node.call(this);
       assert (control);
       this.control = control;
       this.argument = argument;
     }
-    constructor.prototype = extend(Value, "Throw");
-    return constructor;
+    throwNode.prototype = extend(Value, "Throw");
+    return throwNode;
   })();
 
   var Arguments = (function () {
-    function constructor(control) {
+    function argumentsNode(control) {
       Node.call(this);
       assert (control);
       this.control = control;
     }
-    constructor.prototype = extend(Value, "Arguments");
-    return constructor;
+    argumentsNode.prototype = extend(Value, "Arguments");
+    return argumentsNode;
   })();
 
   var AVM2Global = (function () {
@@ -550,17 +551,17 @@
   }
 
   var GlobalProperty = (function () {
-    function constructor(name) {
+    function globalProperty(name) {
       Node.call(this);
       assert (isString(name));
       this.name = name;
     }
-    constructor.prototype = extend(Value, "GlobalProperty");
-    return constructor;
+    globalProperty.prototype = extend(Value, "GlobalProperty");
+    return globalProperty;
   })();
 
   var GetProperty = (function () {
-    function constructor(control, store, object, name) {
+    function getProperty(control, store, object, name) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
@@ -571,20 +572,20 @@
       this.object = object;
       this.name = name;
     }
-    constructor.prototype = extend(Value, "GetProperty");
-    return constructor;
+    getProperty.prototype = extend(Value, "GetProperty");
+    return getProperty;
   })();
 
   var AVM2GetProperty = (function () {
-    function constructor(control, store, object, name) {
+    function avm2GetProperty(control, store, object, name) {
       GetProperty.call(this, control, store, object, name);
     }
-    constructor.prototype = extend(GetProperty, "AVM2_GetProperty");
-    return constructor;
+    avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
+    return avm2GetProperty;
   })();
 
   var SetProperty = (function () {
-    function constructor(control, store, object, name, value) {
+    function setProperty(control, store, object, name, value) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (isStore(store));
@@ -597,20 +598,20 @@
       this.name = name;
       this.value = value;
     }
-    constructor.prototype = extend(Value, "SetProperty");
-    return constructor;
+    setProperty.prototype = extend(Value, "SetProperty");
+    return setProperty;
   })();
 
   var AVM2SetProperty = (function () {
-    function constructor(control, store, object, name, value) {
+    function avm2SetProperty(control, store, object, name, value) {
       SetProperty.call(this, control, store, object, name, value);
     }
-    constructor.prototype = extend(SetProperty, "AVM2_SetProperty");
-    return constructor;
+    avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
+    return avm2SetProperty;
   })();
 
   var AVM2GetSlot = (function () {
-    function constructor(control, store, object, index) {
+    function avm2GetSlot(control, store, object, index) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (isStore(store));
@@ -621,12 +622,12 @@
       this.object = object;
       this.index = index;
     }
-    constructor.prototype = extend(Value, "AVM2_GetSlot");
-    return constructor;
+    avm2GetSlot.prototype = extend(Value, "AVM2_GetSlot");
+    return avm2GetSlot;
    })();
 
   var AVM2SetSlot = (function () {
-    function constructor(control, store, object, index, value) {
+    function avm2SetSlot(control, store, object, index, value) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (isStore(store));
@@ -639,12 +640,12 @@
       this.index = index;
       this.value = value;
      }
-     constructor.prototype = extend(Value, "AVM2_SetSlot");
-     return constructor;
+     avm2SetSlot.prototype = extend(Value, "AVM2_SetSlot");
+     return avm2SetSlot;
   })();
 
   var AVM2FindProperty = (function () {
-    function constructor(control, store, scope, name, domain, strict) {
+    function avm2FindProperty(control, store, scope, name, domain, strict) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (isStore(store));
@@ -659,55 +660,55 @@
       this.domain = domain;
       this.strict = strict;
     }
-    constructor.prototype = extend(Value, "AVM2_FindProperty");
-    return constructor;
+    avm2FindProperty.prototype = extend(Value, "AVM2_FindProperty");
+    return avm2FindProperty;
   })();
 
   var NewArray = (function () {
-    function constructor(elements) {
+    function newArray(elements) {
       Node.call(this);
       assert (isArray(elements));
       this.elements = elements;
     }
-    constructor.prototype = extend(Value, "NewArray");
-    return constructor;
+    newArray.prototype = extend(Value, "NewArray");
+    return newArray;
   })();
 
   var KeyValuePair = (function () {
-    function constructor(key, value) {
+    function keyValuePair(key, value) {
       Node.call(this);
       assert (key);
       assert (value);
       this.key = key;
       this.value = value;
     }
-    constructor.prototype = extend(Value, "KeyValuePair");
-    constructor.prototype.mustFloat = true;
-    return constructor;
+    keyValuePair.prototype = extend(Value, "KeyValuePair");
+    keyValuePair.prototype.mustFloat = true;
+    return keyValuePair;
   })();
 
   var NewObject = (function () {
-    function constructor(properties) {
+    function newObject(properties) {
       Node.call(this);
       assert (isArray(properties));
       this.properties = properties;
     }
-    constructor.prototype = extend(Value, "NewObject");
-    return constructor;
+    newObject.prototype = extend(Value, "NewObject");
+    return newObject;
   })();
 
   var AVM2NewActivation = (function () {
-    function constructor(methodInfo) {
+    function avm2NewActivation(methodInfo) {
       Node.call(this);
       assert (isConstant(methodInfo));
       this.methodInfo = methodInfo;
     }
-    constructor.prototype = extend(Value, "AVM2_NewActivation");
-    return constructor;
+    avm2NewActivation.prototype = extend(Value, "AVM2_NewActivation");
+    return avm2NewActivation;
   })();
 
   var AVM2RuntimeMultiname = (function () {
-    function constructor(multiname, namespaces, name) {
+    function avm2RuntimeMultiname(multiname, namespaces, name) {
       Node.call(this);
       assert (multiname);
       assert (namespaces);
@@ -716,12 +717,12 @@
       this.namespaces = namespaces;
       this.name = name;
     }
-    constructor.prototype = extend(Value, "AVM2_Runtime_Multiname");
-    return constructor;
+    avm2RuntimeMultiname.prototype = extend(Value, "AVM2_Runtime_Multiname");
+    return avm2RuntimeMultiname;
   })();
 
   var Call = (function () {
-    function constructor(control, store, callee, object, args) {
+    function call(control, store, callee, object, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
@@ -734,12 +735,12 @@
       this.store = store;
       this.arguments = args;
     }
-    constructor.prototype = extend(Value, "Call");
-    return constructor;
+    call.prototype = extend(Value, "Call");
+    return call;
   })();
 
   var New = (function () {
-    function constructor(control, store, callee, args) {
+    function newNode(control, store, callee, args) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
@@ -750,24 +751,24 @@
       this.store = store;
       this.arguments = args;
     }
-    constructor.prototype = extend(Value, "New");
-    return constructor;
+    newNode.prototype = extend(Value, "New");
+    return newNode;
   })();
 
   var AVM2New = (function () {
-    function constructor(control, store, object, name) {
+    function avm2New(control, store, object, name) {
       New.call(this, control, store, object, name);
     }
-    constructor.prototype = extend(New, "AVM2_New");
-    return constructor;
+    avm2New.prototype = extend(New, "AVM2_New");
+    return avm2New;
   })();
 
   var Store = (function () {
-    function constructor() {
+    function store() {
       Node.call(this);
     }
-    constructor.prototype = extend(Value, "Store");
-    return constructor;
+    store.prototype = extend(Value, "Store");
+    return store;
   })();
 
   var Undefined = new Constant(undefined);
@@ -777,7 +778,7 @@
   };
 
   var Parameter = (function () {
-    function constructor(control, index, name) {
+    function parameter(control, index, name) {
       Node.call(this);
       assert (control);
       assert (isInteger(index));
@@ -786,12 +787,12 @@
       this.index = index;
       this.name = name;
     }
-    constructor.prototype = extend(Value, "Parameter");
-    return constructor;
+    parameter.prototype = extend(Value, "Parameter");
+    return parameter;
   })();
 
   var Block = (function () {
-    function constructor(id, start, end) {
+    function block(id, start, end) {
       if (start) {
         assert (start instanceof Region);
       }
@@ -801,7 +802,7 @@
       this.predecessors = [];
       this.nodes = [start, end];
     }
-    constructor.prototype.pushSuccessorAt = function pushSuccessor(successor, index, pushPredecessor) {
+    block.prototype.pushSuccessorAt = function pushSuccessor(successor, index, pushPredecessor) {
       assert (successor);
       assert (!this.successors[index]);
       this.successors[index] = successor;
@@ -809,27 +810,27 @@
         successor.pushPredecessor(this);
       }
     };
-    constructor.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
+    block.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
       assert (successor);
       this.successors.push(successor);
       if (pushPredecessor) {
         successor.pushPredecessor(this);
       }
     };
-    constructor.prototype.pushPredecessor = function pushPredecessor(predecessor) {
+    block.prototype.pushPredecessor = function pushPredecessor(predecessor) {
       assert (predecessor);
       this.predecessors.push(predecessor);
     };
-    constructor.prototype.visitNodes = function (fn) {
+    block.prototype.visitNodes = function (fn) {
       this.nodes.forEach(fn);
     };
-    constructor.prototype.visitSuccessors = function (fn) {
+    block.prototype.visitSuccessors = function (fn) {
       this.successors.forEach(fn);
     };
-    constructor.prototype.visitPredecessors = function (fn) {
+    block.prototype.visitPredecessors = function (fn) {
       this.predecessors.forEach(fn);
     };
-    constructor.prototype.append = function (node) {
+    block.prototype.append = function (node) {
       assert (this.nodes.length >= 2);
       assert (isValue(node), node);
       assert (isNotPhi(node));
@@ -839,13 +840,13 @@
       }
       this.nodes.splice(this.nodes.length - 1, 0, node);
     };
-    constructor.prototype.toString = function () {
+    block.prototype.toString = function () {
       return "B" + this.id + (this.name ? " (" + this.name + ")" : "");
     };
-    constructor.prototype.trace = function (writer) {
+    block.prototype.trace = function (writer) {
       writer.writeLn(this);
     };
-    return constructor;
+    return block;
   })();
 
   var DFG = (function () {
