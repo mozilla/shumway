@@ -16,6 +16,10 @@ body {
   }
 }
 
+*[hidden] {
+  display: none;
+}
+
 .toolbarGroup {
   margin: 0 auto;
   width: 600px;

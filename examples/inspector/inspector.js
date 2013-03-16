@@ -69,9 +69,9 @@ var libraryAbcs
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
   if (entry) {
-    var begin = entry.offset;
-    var end = begin + entry.length;
-    return new AbcFile(new Uint8Array(libraryAbcs.slice(begin, end)), abcName);
+    var offset = entry.offset;
+    var length = entry.length;
+    return new AbcFile(new Uint8Array(libraryAbcs, offset, length), abcName);
   }
   return null
 }
