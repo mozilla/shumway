@@ -38,5 +38,5 @@ package {
   trace("-- as IClassB");
   var isNull = (a as IClassB) === null;
   trace(isNull);
-  trace("--");
+  trace("-- DONE --");
 }
