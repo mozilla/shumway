@@ -437,9 +437,16 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   }
 
   function flushPendingScripts() {
+    var MAX_PENDING_SCRIPTS_EXECUTED = 100;
+    var executed = 0;
     while (stage._pendingScripts.length > 0) {
       var fn = stage._pendingScripts.shift();
       fn();
+      if (++executed > MAX_PENDING_SCRIPTS_EXECUTED) {
+        console.error('ERROR: pending script limit was reached');
+        stage._pendingScripts = [];
+        return;
+      }
     }
   }
 
