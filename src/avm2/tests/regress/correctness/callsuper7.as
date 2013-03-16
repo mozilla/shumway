@@ -51,11 +51,5 @@ package {
     }
   }
 
-  // var c = new ClassC();
-  // var e = new ClassE();
-
-  class X {
-    protected var
-  }
   trace("--");
 }
