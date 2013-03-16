@@ -20,6 +20,8 @@ function AS2Context(swfVersion) {
   this.globals = new AS2Globals(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
+  this.instructionsExecuted = 0;
+  this.errorsIgnored = 0;
 }
 AS2Context.instance = null;
 AS2Context.prototype = {
@@ -187,6 +189,9 @@ function executeActions(actionsData, context, scope, assets) {
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
   } finally {
+    context.instructionsExecuted = 0;
+    context.errorsIgnored = 0;
+
     actionTracer.unindent();
     actionTracer.message('ActionScript Execution Stops');
     AS2Context.instance = savedContext;
@@ -274,15 +279,21 @@ function interpretActions(actionsData, scopeContainer,
       }
 
       var savedContext = AS2Context.instance;
+      var resetCounters;
       try
       {
         // switching contexts if called outside main thread
         AS2Context.instance = currentContext;
+        resetCounters = currentContext.instructionsExecuted === 0;
         currentContext.defaultTarget = scope;
         actionTracer.indent();
         return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
+        if (resetCounters) {
+          currentContext.instructionsExecuted = 0;
+          currentContext.errorsIgnored = 0;
+        }
         actionTracer.unindent();
         currentContext.defaultTarget = defaultTarget;
         AS2Context.instance = savedContext;
@@ -399,13 +410,13 @@ function interpretActions(actionsData, scopeContainer,
     }
   }
   function validateArgsCount(numArgs, maxAmount) {
-    if (typeof numArgs !== 'number' || numArgs < 0 || numArgs > maxAmount ||
+    if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
         numArgs != (0|numArgs)) {
       throw 'Invalid number of arguments: ' + numArgs;
     }
   }
   function readArgs(stack) {
-    var numArgs = stack.pop();
+    var numArgs = +stack.pop();
     validateArgsCount(numArgs, stack.length);
     var args = [];
     for (var i = 0; i < numArgs; i++)
@@ -433,8 +444,6 @@ function interpretActions(actionsData, scopeContainer,
   }
 
   var recoveringFromError = false;
-  var instructionsExecuted = 0;
-  var errorsIgnored = 0;
   var executionAborted = false;
   var stackItemsExpected;
   // will try again if we are skipping errors
@@ -442,7 +451,7 @@ function interpretActions(actionsData, scopeContainer,
     try {
 
   while (stream.position < stream.end) {
-    if (instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
+    if (currentContext.instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
       executionAborted = true;
       throw 'long running script -- AVM1 instruction limit is reached';
     }
@@ -838,7 +847,7 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(arr);
         break;
       case 0x43: // ActionInitObject
-        var numArgs = stack.pop();
+        var numArgs = +stack.pop();
         validateArgsCount(numArgs, stack.length >> 1);
         var obj = {};
         for (var i = 0; i < numArgs; i++) {
@@ -1073,7 +1082,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x2C: // ActionImplementsOp
         var constr = stack.pop();
-        var interfacesCount = stack.pop();
+        var interfacesCount = +stack.pop();
         validateArgsCount(interfacesCount, stack.length);
         var interfaces = [];
         for (var i = 0; i < interfacesCount; i++)
@@ -1126,7 +1135,7 @@ function interpretActions(actionsData, scopeContainer,
         while (stackItemsExpected--) stack.push(undefined);
       }
       if (!recoveringFromError) {
-        if (errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
+        if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
           executionAborted = true;
           throw 'long running script -- AVM1 errors limit is reached';
         }
