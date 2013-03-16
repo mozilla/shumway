@@ -694,14 +694,29 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
 
         function buildSwitchStops(determinant) {
           assert (!stops);
-          stops = [];
-          var _switch = new IR.Switch(region, determinant);
-          for (var i = 0; i < bc.targets.length; i++) {
-            stops.push({
-              control: new Projection(_switch, Projection.Type.CASE, constant(i)),
-              target: bc.targets[i],
+          if (bc.targets.length > 2) {
+            stops = [];
+            var _switch = new IR.Switch(region, determinant);
+            for (var i = 0; i < bc.targets.length; i++) {
+              stops.push({
+                control: new Projection(_switch, Projection.Type.CASE, constant(i)),
+                target: bc.targets[i],
+                state: state
+              });
+            }
+          } else {
+            assert (bc.targets.length === 2);
+            var predicate = binary(Operator.SEQ, determinant, constant(0));
+            var _if = new IR.If(region, predicate);
+            stops = [{
+              control: new Projection(_if, Projection.Type.FALSE),
+              target: bc.targets[1],
               state: state
-            });
+            }, {
+              control: new Projection(_if, Projection.Type.TRUE),
+              target: bc.targets[0],
+              state: state
+            }];
           }
         }
 
