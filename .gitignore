@@ -15,3 +15,4 @@ src/avm2/utils/js
 src/flash/playerglobal.js
 src/flash/playerglobal.abc
 
+build/
