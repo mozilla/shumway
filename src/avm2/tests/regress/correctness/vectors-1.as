@@ -44,12 +44,11 @@ package {
     try {
       v.push(3, 4, 5);
     } catch (e) {
-      trace(e.toString());
+      trace("ex");
     }
     trace(v.toString());
     trace(v.length);
   })();
-
 
   (function () {
     var v = new Vector.<*>();

@@ -626,6 +626,9 @@ var Multiname = (function () {
   };
 
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
+    if (isNumeric(name)) {
+      return Number(name);
+    }
     return "public$" + name;
   };
 
