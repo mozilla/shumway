@@ -292,7 +292,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
         ctx.clip();
 
-        ctx.clearRect(0, 0, frameWidth, frameHeight);
+        var bgcolor = stage._color;
+        if (bgcolor.alpha < 255) {
+          ctx.clearRect(0, 0, frameWidth, frameHeight);
+        }
+        if (bgcolor.alpha > 0) {
+          ctx.fillStyle = toStringRgba(bgcolor);
+          ctx.fill();
+        }
 
         ctx.mozFillRule = 'evenodd';
 
@@ -379,6 +386,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       child._dirtyArea = null;
     }
   };
+
+  ctx.fillStyle = toStringRgba(stage._color);
+  ctx.fillRect(0, 0, frameWidth, frameHeight);
 
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
