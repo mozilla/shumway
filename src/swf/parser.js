@@ -2,7 +2,7 @@
 
 // TODO: clean up. For now, we don't include the generator after pre-building
 // the handlers. This doesn't work during build-playerglobal, though.x
-if (generateParser) {
+if (this.generateParser) {
   for (var tag in tagHandler) {
     var handler = tagHandler[tag];
     if (typeof handler === 'object')

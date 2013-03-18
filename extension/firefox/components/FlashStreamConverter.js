@@ -18,17 +18,16 @@ const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
 const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
 const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
+
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
 
-let appInfo = Cc['@mozilla.org/xre/app-info;1']
-                  .getService(Ci.nsIXULAppInfo);
+let appInfo = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
-                                   '@mozilla.org/mime;1',
-                                   'nsIMIMEService');
+                                   '@mozilla.org/mime;1', 'nsIMIMEService');
 
 function getBoolPref(pref, def) {
   try {
@@ -139,6 +138,8 @@ ChromeActions.prototype = {
     var method = data.method || "GET";
     var postData = data.postData || null;
 
+    var win = this.window;
+
     if (!this._canDownloadFile(url, checkPolicyFile)) {
       log("bad url " + url + " " + this.url);
       win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "error",
@@ -146,10 +147,8 @@ ChromeActions.prototype = {
       return;
     }
 
-    var win = this.window;
-
     var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                         .createInstance(Ci.nsIXMLHttpRequest);
+                                .createInstance(Ci.nsIXMLHttpRequest);
     xhr.open(method, url, true);
     // arraybuffer is not provide onprogress, fetching as regular chars
     if ('overrideMimeType' in xhr)
@@ -223,7 +222,6 @@ RequestListener.prototype.receive = function(event) {
     var response;
     if (!event.detail.callback) {
       doc.documentElement.removeChild(message);
-      response = null;
     } else {
       response = function sendResponse(response) {
         try {
@@ -239,9 +237,34 @@ RequestListener.prototype.receive = function(event) {
         }
       };
     }
-    actions[action].call(this.actions, data, response);
+    actions[action](data, response);
   }
 };
+
+function createSandbox(window, preview) {
+  let sandbox = new Cu.Sandbox(window, {
+    sandboxName : 'Shumway Sandbox',
+    sandboxPrototype: window,
+    wantXrays : false,
+    wantXHRConstructor : true,
+    wantComponents : true});
+  sandbox.SHUMWAY_ROOT = "resource://shumway/";
+
+  sandbox.document.addEventListener('DOMContentLoaded', function() {
+    var scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+                         .getService(Ci.mozIJSSubScriptLoader);
+    if (preview) {
+      scriptLoader.loadSubScript('resource://shumway/web/preview.js', sandbox);
+      sandbox.runSniffer();
+    } else {
+      scriptLoader.loadSubScript('resource://shumway/shumway.js', sandbox);
+      scriptLoader.loadSubScript('resource://shumway/web/avm-sandbox.js',
+                                 sandbox);
+      sandbox.runViewer();
+    }
+  });
+  return sandbox;
+}
 
 function FlashStreamConverterBase() {
 }
@@ -298,7 +321,8 @@ FlashStreamConverterBase.prototype = {
           if (paramElement.nodeType != 1 ||
               paramElement.nodeName != 'PARAM') continue;
 
-          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+          params[paramElement.getAttribute('name')] = paramElement
+                                                      .getAttribute('value');
         }
         var dataAttribute = element.getAttribute('data');
         url = dataAttribute || params.movie || params.src;
@@ -307,7 +331,6 @@ FlashStreamConverterBase.prototype = {
     }
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
-
     var actions = new ChromeActions(url, params, baseUrl, window);
     actions.isOverlay = isOverlay;
     actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
@@ -331,7 +354,6 @@ FlashStreamConverterBase.prototype = {
 
   // nsIRequestObserver::onStartRequest
   onStartRequest: function(aRequest, aContext) {
-
     // Setup the request so we can use it below.
     aRequest.QueryInterface(Ci.nsIChannel);
     // Cancel the request so the viewer can handle it.
@@ -341,7 +363,7 @@ FlashStreamConverterBase.prototype = {
 
     // checking if the plug-in shall be run in simple mode
     var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
-      getBoolPref('shumway.simpleMode', false);
+                       getBoolPref('shumway.simpleMode', false);
 
     // Create a new channel that loads the viewer as a resource.
     var channel = Services.io.newChannel(isSimpleMode ?
@@ -361,10 +383,11 @@ FlashStreamConverterBase.prototype = {
       },
       onStopRequest: function() {
         var domWindow = getDOMWindow(channel);
-        // Double check the url is still the correct one.
         if (domWindow.document.documentURIObject.equals(channel.originalURI)) {
+          // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
                                                       originalURI.spec);
+          createSandbox(domWindow, isSimpleMode);
           let requestListener = new RequestListener(actions);
           domWindow.addEventListener('shumway.message', function(event) {
             requestListener.receive(event);
