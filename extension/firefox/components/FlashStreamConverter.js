@@ -23,12 +23,10 @@ Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
 
-let appInfo = Cc['@mozilla.org/xre/app-info;1']
-                  .getService(Ci.nsIXULAppInfo);
+let appInfo = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
-                                   '@mozilla.org/mime;1',
-                                   'nsIMIMEService');
+                                   '@mozilla.org/mime;1', 'nsIMIMEService');
 
 function getBoolPref(pref, def) {
   try {
@@ -223,7 +221,6 @@ RequestListener.prototype.receive = function(event) {
     var response;
     if (!event.detail.callback) {
       doc.documentElement.removeChild(message);
-      response = null;
     } else {
       response = function sendResponse(response) {
         try {
@@ -239,9 +236,28 @@ RequestListener.prototype.receive = function(event) {
         }
       };
     }
-    actions[action].call(this.actions, data, response);
+    actions[action](data, response);
   }
 };
+
+function createSandbox(window) {
+  let sandbox = new Cu.Sandbox(window, {
+    sandboxName : 'Shumway Sandbox',
+    sandboxPrototype: window,
+    wantXrays : false,
+    wantXHRConstructor : true,
+    wantComponents : true});
+  sandbox.SHUMWAY_ROOT = "resource://shumway/";
+
+  sandbox.document.addEventListener('DOMContentLoaded', function() {
+    var scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
+                       .getService(Ci.mozIJSSubScriptLoader);
+    scriptLoader.loadSubScript('resource://shumway/shumway.js', sandbox);
+    scriptLoader.loadSubScript('resource://shumway/web/avm-sandbox.js', sandbox);
+    sandbox.runViewer();
+  });
+  return sandbox;
+}
 
 function FlashStreamConverterBase() {
 }
@@ -298,7 +314,8 @@ FlashStreamConverterBase.prototype = {
           if (paramElement.nodeType != 1 ||
               paramElement.nodeName != 'PARAM') continue;
 
-          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+          params[paramElement.getAttribute('name')] = paramElement
+                                                      .getAttribute('value');
         }
         var dataAttribute = element.getAttribute('data');
         url = dataAttribute || params.movie || params.src;
@@ -307,7 +324,6 @@ FlashStreamConverterBase.prototype = {
     }
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
-
     var actions = new ChromeActions(url, params, baseUrl, window);
     actions.isOverlay = isOverlay;
     actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
@@ -361,10 +377,11 @@ FlashStreamConverterBase.prototype = {
       },
       onStopRequest: function() {
         var domWindow = getDOMWindow(channel);
-        // Double check the url is still the correct one.
         if (domWindow.document.documentURIObject.equals(channel.originalURI)) {
+          // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
                                                       originalURI.spec);
+          let sandbox = createSandbox(domWindow);
           let requestListener = new RequestListener(actions);
           domWindow.addEventListener('shumway.message', function(event) {
             requestListener.receive(event);
