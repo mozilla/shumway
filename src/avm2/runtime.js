@@ -1564,6 +1564,7 @@ var Runtime = (function () {
     // parameters. However, since we can't redefine the |length| property of a function,
     // we define a new hidden |VM_LENGTH| property to store this value.
     defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+    trampoline.isTrampoline = true;
     return trampoline;
   }
 
@@ -1589,7 +1590,13 @@ var Runtime = (function () {
         }
         var mc = target.value.bind(this);
         defineReadOnlyProperty(mc, "public$prototype", null);
-        defineReadOnlyProperty(this, qn, mc);
+        // If the memoizer target is a trampoline then don't cache the method closure.
+        // Doing so would cause the trampoline to be bound with |this| and would always
+        // execute. Usually he next time around, (after the method) is compiled
+        // the target will be patched, and it's safe to cache the method closure.
+        if (!target.value.isTrampoline) {
+          defineReadOnlyProperty(this, qn, mc);
+        }
         return mc;
       }
       Counter.count("Runtime: Memoizers");

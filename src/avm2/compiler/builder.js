@@ -535,8 +535,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
               if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
-                propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
-                return shouldFloat(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
+                if (!(ti.trait.holder instanceof InstanceInfo && ti.trait.holder.isInterface())) {
+                  propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
+                  return shouldFloat(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
+                }
               }
               return new IR.GetProperty(region, state.store, object, constant(propertyQName));
             }
