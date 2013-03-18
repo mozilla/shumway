@@ -26,23 +26,27 @@ function proxyNativeMethod(methodName) {
 
 function proxyEventHandler(eventName, argsConverter) {
   var currentHandler = null;
-  function handlerRunner() {
-    if (currentHandler) {
-      var args = argsConverter ? argsConverter(arguments) : null;
-      return currentHandler.apply(this, args);
-    }
-  }
+  var handlerRunner = null;
   return {
     get: function() {
-      return handlerRunner;
+      return currentHandler;
     },
     set: function(newHandler) {
+      if (currentHandler === newHandler) {
+        return;
+      }
       if (currentHandler) {
-        this.$nativeObject.removeEventListener(eventName, currentHandler);
+        this.$nativeObject.removeEventListener(eventName, handlerRunner);
       }
       currentHandler = newHandler;
-      if (newHandler) {
-        this.$nativeObject.addEventListener(eventName, newHandler);
+      if (currentHandler) {
+        handlerRunner = function handlerRunner() {
+          var args = argsConverter ? argsConverter(arguments) : null;
+          return currentHandler.apply(this, args);
+        }.bind(this);
+        this.$nativeObject.addEventListener(eventName, handlerRunner);
+      } else {
+        handlerRunner = null;
       }
     },
     configurable: false,
