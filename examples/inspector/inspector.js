@@ -184,7 +184,7 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, $("#stage")[0], {
+        SWF.embed(buffer, document, $("#stage")[0], {
           onComplete: terminate,
           onStageInitialized: stageInitialized,
           onBeforeFrame: frame,
