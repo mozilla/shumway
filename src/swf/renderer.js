@@ -387,9 +387,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   };
 
-  ctx.fillStyle = toStringRgba(stage._color);
-  ctx.fillRect(0, 0, frameWidth, frameHeight);
-
   var frameTime = 0;
   var maxDelay = 1000 / stage.frameRate;
   var nextRenderAt = Date.now();
