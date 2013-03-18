@@ -27,6 +27,9 @@ var TextFieldDefinition = (function () {
     draw: function (c) {
       // TODO
       var bbox = this._bbox;
+      if (!bbox) {
+        return;
+      }
       c.save();
       c.beginPath();
       c.rect(bbox.left, bbox.top, bbox.right - bbox.left, bbox.bottom - bbox.top);

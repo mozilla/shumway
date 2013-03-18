@@ -764,7 +764,7 @@ var GraphicsDefinition = (function () {
                       rotation);
         this.target.arcTo.apply(this.target, arguments);
         if (this.hitCtx)
-          this.hitCtx.arcTo.apply(this.target, arguments);
+          this.hitCtx.arcTo.apply(this.hitCtx, arguments);
       },
       rect: function (x, y, w, h) {
         var segmentStartIndex = this.segments[this.segments.length - 1];

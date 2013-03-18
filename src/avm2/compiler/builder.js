@@ -459,7 +459,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               }
             }
             if (multiname.isRuntimeNamespace()) {
-              assert (false, "Is |namespaces| an array or not?");
+              // assert (false, "Is |namespaces| an array or not?");
               namespaces = pop();
             }
             return new IR.AVM2RuntimeMultiname(new Constant(multiname), namespaces, name);
