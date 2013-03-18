@@ -14,7 +14,7 @@ load($SHUMWAY_ROOT + "src/swf/stream.js");
 load($SHUMWAY_ROOT + "src/swf/templates.js");
 load($SHUMWAY_ROOT + "src/swf/generator.js");
 // load($SHUMWAY_ROOT + "src/swf/handlers.js");
-load("build/content/swf/handlers.js");
+load($SHUMWAY_ROOT + "build/firefox/content/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/swf/bitmap.js");
 load($SHUMWAY_ROOT + "src/swf/button.js");

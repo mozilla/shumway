@@ -8,7 +8,8 @@ var EXECUTION_MODE = {
   COMPILE: 0x2
 };
 
-function executeScript(abc, script) {
+function executeScript(script) {
+  var abc = script.abc;
   if (disassemble.value) {
     abc.trace(new IndentingWriter());
   }
@@ -16,18 +17,22 @@ function executeScript(abc, script) {
     print("Executing: " + abc.name + " " + script);
   }
   release || assert(!script.executing && !script.executed);
+  var global = new Global(abc.runtime, script);
+  if (abc.domain.allowNatives) {
+    global.public$unsafeJSNative = getNative;
+  }
   script.executing = true;
   var scope = new Scope(null, script.global);
   abc.runtime.createFunction(script.init, scope).call(script.global);
   script.executed = true;
 }
 
-function ensureScriptIsExecuted(abc, script, reason) {
+function ensureScriptIsExecuted(script, reason) {
   if (!script.executed && !script.executing) {
     if (traceExecution.value >= 2) {
       print("Executing Script For: " + reason);
     }
-    executeScript(abc, script);
+    executeScript(script);
   }
 }
 
@@ -333,6 +338,10 @@ var Domain = (function () {
     getProperty: function getProperty(multiname, strict, execute) {
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
+        if (!resolved.script.executing) {
+          // console.info("Getting " + multiname + " but script is not executed");
+          return undefined;
+        }
         return resolved.script.global[Multiname.getQualifiedName(resolved.name)];
       }
       if (strict) {
@@ -435,35 +444,24 @@ var Domain = (function () {
       Counter.count("Domain: findDefiningScript");
 
       var abcs = this.abcs;
-      for (var i = 0, j = abcs.length; i < j; i++) {
+      for (var i = 0; i < abcs.length; i++) {
         var abc = abcs[i];
         var scripts = abc.scripts;
-        for (var k = 0, l = scripts.length; k < l; k++) {
-          var script = scripts[k];
-          if (!script.loaded) {
-            continue;
-          }
-          var global = script.global;
-          if (Multiname.isQName(mn)) {
-            if (Multiname.getQualifiedName(mn) in global) {
-              if (traceDomain.value) {
-                print("Domain.findDefiningScript(" + mn + ") in " + abc + ", script: " + k);
-                print("Script is executed ? " + script.executed + ", should we: " + execute + " is it in progress: " + script.executing);
-                print("Value is: " + script.global[Multiname.getQualifiedName(mn)]);
+        for (var j = 0; j < scripts.length; j++) {
+          var script = scripts[j];
+          var traits = script.traits;
+          if (mn instanceof Multiname) {
+            for (var k = 0; k < traits.length; k++) {
+              var trait = traits[k];
+              if (mn.hasQName(trait.name)) {
+                if (execute) {
+                  ensureScriptIsExecuted(script, trait.name);
+                }
+                return (this.scriptCache[mn.id] = { script: script, name: trait.name });
               }
-              if (execute) {
-                ensureScriptIsExecuted(abc, script, mn);
-              }
-              return (this.scriptCache[mn.id] = { script: script, name: mn });
             }
           } else {
-            var resolved = resolveMultiname(global, mn);
-            if (resolved) {
-              if (execute) {
-                ensureScriptIsExecuted(abc, script, resolved);
-              }
-              return (this.scriptCache[mn.id] = { script: script, name: resolved });
-            }
+            unexpected();
           }
         }
       }
@@ -484,7 +482,7 @@ var Domain = (function () {
     executeAbc: function executeAbc(abc) {
       console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
-      executeScript(abc, abc.lastScript);
+      executeScript(abc.lastScript);
       if (traceClasses.value) {
         this.traceLoadedClasses();
       }
@@ -495,27 +493,9 @@ var Domain = (function () {
       if (traceExecution.value) {
         print("Loading: " + abc.name);
       }
-
       abc.domain = this;
       this.abcs.push(abc);
-      var runtime = new Runtime(abc);
-      abc.runtime = runtime;
-
-      /**
-       * Initialize all the scripts inside the abc block and their globals in
-       * reverse order, since some content depends on the last script being
-       * initialized first or some shit.
-       */
-      var scripts = abc.scripts;
-      var allowNatives = this.allowNatives;
-      for (var i = scripts.length - 1; i >= 0; i--) {
-        var script = scripts[i];
-        var global = new Global(runtime, script);
-
-        if (allowNatives) {
-          global.public$unsafeJSNative = getNative;
-        }
-      }
+      abc.runtime = new Runtime(abc);
     },
 
     _getScriptObject: function () {

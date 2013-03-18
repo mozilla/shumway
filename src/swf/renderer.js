@@ -292,7 +292,14 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
         ctx.clip();
 
-        ctx.clearRect(0, 0, frameWidth, frameHeight);
+        var bgcolor = stage._color;
+        if (bgcolor.alpha < 255) {
+          ctx.clearRect(0, 0, frameWidth, frameHeight);
+        }
+        if (bgcolor.alpha > 0) {
+          ctx.fillStyle = toStringRgba(bgcolor);
+          ctx.fill();
+        }
 
         ctx.mozFillRule = 'evenodd';
 
@@ -437,9 +444,16 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   }
 
   function flushPendingScripts() {
+    var MAX_PENDING_SCRIPTS_EXECUTED = 100;
+    var executed = 0;
     while (stage._pendingScripts.length > 0) {
       var fn = stage._pendingScripts.shift();
       fn();
+      if (++executed > MAX_PENDING_SCRIPTS_EXECUTED) {
+        console.error('ERROR: pending script limit was reached');
+        stage._pendingScripts = [];
+        return;
+      }
     }
   }
 

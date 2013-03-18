@@ -23,6 +23,7 @@ var VM_LENGTH = "vm length";
 var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_ENUMERATION_KEYS = "vm enumeration keys";
+var VM_TOMBSTONE = {};
 var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
@@ -102,8 +103,7 @@ function initializeGlobalObject(global) {
     var keys = this[VM_ENUMERATION_KEYS];
 
     while (index < keys.length) {
-      //
-      if (keys[index]) {
+      if (keys[index] !== VM_TOMBSTONE) {
         return index + 1;
       }
       index ++;
@@ -356,6 +356,14 @@ var Interface = (function () {
       }
 
       return false;
+    },
+
+    call: function (v) {
+      return v;
+    },
+
+    apply: function ($this, args) {
+      return args[0];
     }
   };
 
@@ -789,7 +797,7 @@ function deleteProperty(obj, mn) {
     if (obj[VM_ENUMERATION_KEYS]) {
       var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
       if (index >= 0) {
-        obj[VM_ENUMERATION_KEYS][index] = undefined;
+        obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
       }
     }
     return delete obj[Multiname.getQualifiedName(resolved)];
@@ -849,7 +857,7 @@ var Global = (function () {
     return this.scriptInfo.executed;
   };
   Global.prototype.ensureExecuted = function () {
-    ensureScriptIsExecuted(this.scriptInfo.abc, this.scriptInfo);
+    ensureScriptIsExecuted(this.scriptInfo);
   };
   defineNonEnumerableProperty(Global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
     return this.toString();
@@ -1272,8 +1280,8 @@ var Runtime = (function () {
 
         var bindings = instance.prototype;
         var interfaceTraits = ii.traits;
-        for (var i = 0, j = interfaceTraits.length; i < j; i++) {
-          var interfaceTrait = interfaceTraits[i];
+        for (var k = 0, l = interfaceTraits.length; k < l; k++) {
+          var interfaceTrait = interfaceTraits[k];
           var interfaceTraitQn = Multiname.getQualifiedName(interfaceTrait.name);
           var interfaceTraitBindingQn = Multiname.getPublicQualifiedName(Multiname.getName(interfaceTrait.name));
           // TODO: We should just copy over the property descriptor but we can't because it may be a
@@ -1556,6 +1564,7 @@ var Runtime = (function () {
     // parameters. However, since we can't redefine the |length| property of a function,
     // we define a new hidden |VM_LENGTH| property to store this value.
     defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+    trampoline.isTrampoline = true;
     return trampoline;
   }
 
@@ -1586,7 +1595,13 @@ var Runtime = (function () {
         }
         var mc = target.value.bind(this);
         defineReadOnlyProperty(mc, "public$prototype", null);
-        defineReadOnlyProperty(this, qn, mc);
+        // If the memoizer target is a trampoline then don't cache the method closure.
+        // Doing so would cause the trampoline to be bound with |this| and would always
+        // execute. Usually he next time around, (after the method) is compiled
+        // the target will be patched, and it's safe to cache the method closure.
+        if (!target.value.isTrampoline) {
+          defineReadOnlyProperty(this, qn, mc);
+        }
         return mc;
       }
       Counter.count("Runtime: Memoizers");
@@ -1695,16 +1710,6 @@ var Runtime = (function () {
         }
 
         if (trait.isClass()) {
-          // Builtins are special, so drop any attempts to define builtins
-          // that aren't from 'builtin.abc'.
-          var pair = domain.findDefiningScript(trait.name, false);
-          if (pair) {
-            var abc = pair.script.abc;
-            if (!abc.domain.base && abc.name === "builtin.abc") {
-              continue;
-            }
-          }
-
           if (trait.metadata && trait.metadata.native && domain.allowNatives) {
             trait.classInfo.native = trait.metadata.native;
           }
@@ -1911,7 +1916,7 @@ var InlineCacheManager = (function () {
       if (inlineCacheSets.has(name)) {
         var inlineCacheSet = inlineCacheSets.get(name);
         if (inlineCacheSet) {
-          Counter.count("Compiler: Inline Cache")
+          Counter.count("Compiler: Inline Cache");
           return cache[cacheName] = inlineCacheSet.create(mn, isSetter);
         }
       }

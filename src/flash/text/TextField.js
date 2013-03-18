@@ -7,7 +7,7 @@ var TextFieldDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
-        this.draw = s.draw || null;
+        this.draw = s.draw || this.draw;
         this.text = s.text || '';
       }
     },
@@ -22,6 +22,20 @@ var TextFieldDefinition = (function () {
     replaceText: function(begin, end, str) {
       this._text = this._text.substring(0, begin) + str + this._text.substring(end);
       this._markAsDirty();
+    },
+
+    draw: function (c) {
+      // TODO
+      var bbox = this._bbox;
+      if (!bbox) {
+        return;
+      }
+      c.save();
+      c.beginPath();
+      c.rect(bbox.left, bbox.top, bbox.right - bbox.left, bbox.bottom - bbox.top);
+      c.clip();
+      c.fillText(this.text, bbox.left, bbox.bottom);
+      c.restore();
     },
 
     get text() {
@@ -56,6 +70,7 @@ var TextFieldDefinition = (function () {
       instance: {
         text: desc(def, "text"),
         defaultTextFormat: desc(def, "defaultTextFormat"),
+        draw: def.draw,
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,

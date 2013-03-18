@@ -71,15 +71,15 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var libraryAbcs
+var libraryAbcs;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
-  if (entry) {    
-    var begin = entry.offset;
-    var end = begin + entry.length;
-    return new AbcFile(new Uint8Array(libraryAbcs.slice(begin, end)), abcName);
+  if (entry) {
+    var offset = entry.offset;
+    var length = entry.length;
+    return new AbcFile(new Uint8Array(libraryAbcs, offset, length), abcName);
   }
-  return null
+  return null;
 }
 
 function findDefiningAbc(mn) {
@@ -118,7 +118,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
       executeAbc();
     });
   });
-  
+
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;

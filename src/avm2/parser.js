@@ -653,12 +653,10 @@ var Multiname = (function () {
   };
 
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
-    if (typeof name === "number") {
-      return name;
-    } else if (typeof name === "string") {
-      return "public$"+name;
+    if (isNumeric(name)) {
+      return Number(name);
     }
-    release || assert(false, "Invalid input to Multiname.getPublicQualifiedName()");    
+    return "public$" + name;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {
@@ -741,6 +739,19 @@ var Multiname = (function () {
       name = this.cache[index] = new Multiname([this.namespaces[index]], this.name);
     }
     return name;
+  };
+
+  multiname.prototype.hasQName = function hasQName(qn) {
+    assert (qn instanceof Multiname);
+    if (this.name !== qn.name) {
+      return false;
+    }
+    for (var i = 0; i < this.namespaces.length; i++) {
+      if (this.namespaces[i].isEqualTo(qn.namespaces[0])) {
+        return true;
+      }
+    }
+    return false;
   };
 
   multiname.prototype.isAttribute = function isAttribute() {
@@ -1154,6 +1165,7 @@ var ScriptInfo = (function scriptInfo() {
   var nextID = 1;
   function scriptInfo(abc, idx, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
     attachHolder(this.init, this);

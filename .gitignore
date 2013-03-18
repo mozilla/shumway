@@ -12,5 +12,7 @@ src/avm2/utils/asc.jar
 src/avm2/utils/avmshell
 src/avm2/utils/js
 
-src/flash/playerGlobal.min.abc
+src/flash/playerglobal.js
+src/flash/playerglobal.abc
 
+build/

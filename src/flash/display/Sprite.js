@@ -109,6 +109,14 @@ var SpriteDefinition = (function () {
         }
       }
     },
+    _insertChildAtDepth: function (child) {
+      // TODO
+      this.addChild(child);
+
+      var loader = this._loader;
+      if (!loader._isAvm2Enabled)
+        this._initAvm1Bindings(child, child.name);
+    },
     _duplicate: function (name, depth, initObject) {
       // TODO proper child cloning, initObject and display list insertion
       // for now just created symbol based on previous timeline information
@@ -151,7 +159,7 @@ var SpriteDefinition = (function () {
       var avm1Context = loader._avm1Context;
       var symbolProps = instance.symbol;
 
-      if (symbolProps.variableName) {
+      if (symbolProps && symbolProps.variableName) {
         var variableName = symbolProps.variableName;
         var i = variableName.lastIndexOf('.');
         var clip;
