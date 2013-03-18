@@ -13,13 +13,8 @@ load($SHUMWAY_ROOT + "lib/Kanvas/kanvas.js");
 
 load($SHUMWAY_ROOT + "src/swf/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
-load($SHUMWAY_ROOT + "src/swf/types.js");
-load($SHUMWAY_ROOT + "src/swf/structs.js");
-load($SHUMWAY_ROOT + "src/swf/tags.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
-load($SHUMWAY_ROOT + "src/swf/templates.js");
-load($SHUMWAY_ROOT + "src/swf/generator.js");
 
 load($SHUMWAY_ROOT + "src/swf/bitmap.js");
 load($SHUMWAY_ROOT + "src/swf/button.js");
@@ -33,10 +28,7 @@ load($SHUMWAY_ROOT + "src/swf/text.js");
 load($SHUMWAY_ROOT + "src/swf/mp3worker.js");
 load($SHUMWAY_ROOT + "src/swf/embed.js");
 load($SHUMWAY_ROOT + "src/swf/renderer.js");
-// Load the non-generated parser, we load the generated parser
-// in the worker scripts instead.
-load($SHUMWAY_ROOT + "src/swf/handlers.js");
-// load("build/content/swf/handlers.js");
+load($SHUMWAY_ROOT + "build/firefox/content/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/avm1/classes.js");
 load($SHUMWAY_ROOT + "src/avm1/globals.js");
