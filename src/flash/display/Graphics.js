@@ -302,7 +302,7 @@ var GraphicsDefinition = (function () {
       // at 'D', so we will too.
 
       this._currentPath.moveTo(x+w, y+h-radiusH);
-      this._currentPath.arcTo(x+w, y+h, x+w-radiusW, y+h-radiusH, radiusW, radiusH);
+      this._currentPath.arcTo(x+w, y+h, x+w-radiusW, y+h, radiusW, radiusH);
       this._currentPath.arcTo(x, y+h, x, y+h-radiusH, radiusW, radiusH);
       this._currentPath.arcTo(x, y, x+radiusW, y, radiusW, radiusH);
       this._currentPath.arcTo(x+w, y, x+w, y+radiusH, radiusW, radiusH);
@@ -312,7 +312,7 @@ var GraphicsDefinition = (function () {
         throw ArgumentError();
 
       this._currentPath.moveTo(x+w, y+h-radiusH);
-      this._currentPath.arcTo(x+w, y+h, x+w-bottomRightRadius, y+h-bottomRightRadius, bottomRightRadius);
+      this._currentPath.arcTo(x+w, y+h, x+w-bottomRightRadius, y+h, bottomRightRadius);
       this._currentPath.arcTo(x, y+h, x, y+h-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
       this._currentPath.arcTo(x+w, y, x+w, y+topRightRadius, topRightRadius);
