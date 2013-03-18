@@ -18,3 +18,5 @@ for (var tag in tagHandler) {
 print('var tagHandler={\n');
 print(members.join(',\n'));
 print('}\n');
+
+print('var readHeader = ' + generateParser(MOVIE_HEADER) + ';\n');
