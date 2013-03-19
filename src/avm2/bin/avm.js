@@ -9,8 +9,6 @@ if (environment.SHUMWAY_HOME) {
 
 load(homePath + "lib/DataView.js/DataView.js");
 
-var $DEBUG = true, $RELEASE = false;
-
 /**
  * Load AVM2 Dependencies
  */
@@ -84,6 +82,9 @@ load(homePath + "src/avm2/xml.js");
 load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/vm.js");
 Timer.stop();
+
+var $DEBUG = true, $RELEASE = false;
+var debug = true, release = false;
 
 argumentParser.addBoundOptionSet(systemOptions);
 

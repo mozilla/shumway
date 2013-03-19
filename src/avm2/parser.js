@@ -333,7 +333,17 @@ var ShumwayNamespace = (function () {
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   }
 
+  function escapeString(str) {
+    if (str !== undefined) {
+      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    }
+    return str;
+  }
+
   function mangleNamespaceString(strIn) {
+    if ($DEBUG) {
+      return escapeString(strIn);
+    }
     var buf = str2ab(strIn);
     var strOut = base64ArrayBuffer(buf).replace(/=/g, "");  // Erase padding
     return strOut;
