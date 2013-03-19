@@ -341,7 +341,7 @@ var ShumwayNamespace = (function () {
   }
 
   function mangleNamespaceString(strIn) {
-    if ($DEBUG) {
+    if (!release) {
       return escapeString(strIn);
     }
     var buf = str2ab(strIn);

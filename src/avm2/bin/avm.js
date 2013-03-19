@@ -83,7 +83,6 @@ load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/vm.js");
 Timer.stop();
 
-var $DEBUG = true, $RELEASE = false;
 var debug = true, release = false;
 
 argumentParser.addBoundOptionSet(systemOptions);
