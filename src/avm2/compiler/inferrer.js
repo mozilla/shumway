@@ -934,12 +934,16 @@ var Verifier = (function() {
             getProperty(obj, mn);
             push(Type.Any);
             break;
+          case OP_callpropvoid:
           case OP_callproperty:
           case OP_callproplex:
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
             type = getProperty(obj, mn);
+            if (op === OP_callpropvoid) {
+              break;
+            }
             if (type instanceof MethodType) {
               returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
             } else {
@@ -976,11 +980,6 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_callsupervoid:
-            stack.popMany(bc.argCount);
-            popMultiname();
-            pop();
-            break;
-          case OP_callpropvoid:
             stack.popMany(bc.argCount);
             popMultiname();
             pop();
