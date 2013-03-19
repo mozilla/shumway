@@ -312,12 +312,11 @@ var ShumwayNamespace = (function () {
       this.originalURI = this.uri = uri;
       buildNamespace.call(this);
     }
+    // Otherwise, we are creating an empty namespace to be build
+    // by the parse method.
   }
 
   function buildNamespace() {
-    //this.uri = this.uri.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
-    this.uri = escapeString(this.uri);
-
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
       var n = this.uri.length - 1;
@@ -325,9 +324,38 @@ var ShumwayNamespace = (function () {
       if (mark > MIN_API_MARK) {
         this.uri = this.uri.substring(0, n - 1);
       }
+    } else if (this.isUnique()) {
+      // Make a psuedo unique id by concatenating current milliseconds to original uri
+      this.uri = String(this.uri+Date.now());
     }
+    this.uri = mangleNamespaceString(this.uri);
     release || assert(kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
+  }
+
+  function escapeString(str) {
+    if (str !== undefined) {
+      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+    }
+    return str;
+  }
+
+  function mangleNamespaceString(strIn) {
+    if (!release) {
+      return escapeString(strIn);
+    }
+    var buf = str2ab(strIn);
+    var strOut = base64ArrayBuffer(buf).replace(/=/g, "");  // Erase padding
+    return strOut;
+    
+    function str2ab(str) {
+      var buf = new ArrayBuffer(str.length);
+      var bufView = new Uint8Array(buf);
+      for (var i=0, strLen=str.length; i<strLen; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return buf;
+    }
   }
 
   namespace.kindFromString = function kindFromString(str) {
@@ -354,8 +382,14 @@ var ShumwayNamespace = (function () {
       return this.kind === CONSTANT_Namespace || this.kind === CONSTANT_PackageNamespace;
     },
 
-    isProtected: function isPublic() {
+    isProtected: function isProtected() {
       return this.kind === CONSTANT_ProtectedNamespace;
+    },
+
+    isUnique: function isUnique() {
+      return this.kind === CONSTANT_PrivateNs ||
+             this.kind === CONSTANT_ProtectedNamespace ||
+             this.kind === CONSTANT_Namespace && this.uri === "";
     },
 
     isDynamic: function isDynamic() {
@@ -367,11 +401,11 @@ var ShumwayNamespace = (function () {
     },
 
     toString: function toString() {
-      return this.qualifiedName;
+      return kinds[this.kind] + (this.originalURI ? "$" + this.originalURI : "");
     },
 
     clone: function clone() {
-      var c = new Namespace();
+      var c = new namespace();
       c.kind = this.kind;
       c.uri = this.uri;
       c.originalURI = this.originalURI;
@@ -413,7 +447,6 @@ var ShumwayNamespace = (function () {
     return simpleNameCache[simpleName] = namespaceNames.map(function (name) {
       name = name.trim();
       var kindName, uri;
-
       if (name.indexOf(" ") > 0) {
         kindName = name.substring(0, name.indexOf(" ")).trim();
         uri = name.substring(name.indexOf(" ") + 1).trim();
@@ -561,7 +594,7 @@ var Multiname = (function () {
         flags |= ATTRIBUTE;
         break;
     }
-    var mn = new Multiname(namespaces, escapeString(name), flags);
+    var mn = new Multiname(namespaces, name, flags);
     if (typeParameter) {
       mn.typeParameter = typeParameter;
     }
@@ -621,7 +654,11 @@ var Multiname = (function () {
     if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
       return mn;
     } else {
-      return mn.qualifiedName || (mn.qualifiedName = mn.namespaces[0].qualifiedName + "$" + mn.name);
+      return mn.qualifiedName || (mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, mn.name));
+    }
+
+    function qualifyName(qualifier, name) {
+      return qualifier ? qualifier + "$" + name : name;
     }
   };
 
@@ -785,12 +822,12 @@ var Multiname = (function () {
     } else if (this.isRuntimeNamespace()) {
       str += "[]::" + this.nameToString();
     } else if (this.namespaces.length === 1 && this.isQName()) {
-      str += this.namespaces[0].qualifiedName + "::";
+      str += this.namespaces[0].toString() + "::";
       str += this.nameToString();
     } else {
       str += "{";
       for (var i = 0, count = this.namespaces.length; i < count; i++) {
-        str += this.namespaces[i].qualifiedName;
+        str += this.namespaces[i].toString();
         if (i + 1 < count) {
           str += ",";
         }
@@ -801,19 +838,10 @@ var Multiname = (function () {
     if (this.hasTypeParameter()) {
       str += "<" + this.typeParameter.toString() + ">";
     }
-
     return str;
   };
-
   return multiname;
 })();
-
-function escapeString(str) {
-  if (str !== undefined) {
-    str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
-  }
-  return str;
-}
 
 var ConstantPool = (function constantPool() {
   function constantPool(stream, name) {
