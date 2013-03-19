@@ -872,7 +872,7 @@ var natives = (function () {
 
         uriValue = String(uriValue);
       } else if (uriValue !== undefined) {
-        if (uriValue.constructor === Namespace) {
+        if (uriValue.constructor === ShumwayNamespace) {
           return uriValue.clone();
         }
       }
