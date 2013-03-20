@@ -1035,6 +1035,19 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
+
+    if (mi.holder) {
+      var fnNamePrefix = "";
+      if (mi.holder instanceof ClassInfo) {
+        fnNamePrefix = "static$" + mi.holder.instanceInfo.name.getName();
+      } else if (mi.holder instanceof InstanceInfo) {
+        fnNamePrefix = mi.holder.name.getName();
+      } else if (mi.holder instanceof ScriptInfo) {
+        fnNamePrefix = "script";
+      }
+      fnName = fnNamePrefix + "$" + fnName;
+    }
+
     if (mi.verified) {
       fnName += "$V";
     }
