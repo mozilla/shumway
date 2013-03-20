@@ -1286,8 +1286,57 @@
       return node instanceof Projection ? node.project() : node;
     }
 
+    var Uses = (function () {
+      function constructor() {
+        this.entries = [];
+      }
+      constructor.prototype.addUse = function addUse(def, use) {
+        var entry = this.entries[def.id];
+        if (!entry) {
+          entry = this.entries[def.id] = {def: def, uses:[]};
+        }
+        entry.uses.pushUnique(use);
+      };
+      constructor.prototype.trace = function (writer) {
+        writer.enter("> Uses");
+        this.entries.forEach(function (entry) {
+          writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "] " + entry.def);
+        });
+        writer.leave("<");
+      };
+      constructor.prototype.replace = function (def, value) {
+        var entry = this.entries[def.id];
+        if (entry.uses.length === 0) {
+          return false;
+        }
+        var count = 0;
+        entry.uses.forEach(function (use) {
+          count += use.replaceInput(def, value);
+        });
+        assert (count >= entry.uses.length);
+        entry.uses = [];
+        return true;
+      };
+      function updateUses(def, value) {
+        debug && writer.writeLn("Update " + def + " with " + value);
+        var entry = useEntries[def.id];
+        if (entry.uses.length === 0) {
+          return false;
+        }
+        debug && writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
+        var count = 0;
+        entry.uses.forEach(function (use) {
+          count += use.replaceInput(def, value);
+        });
+        assert (count >= entry.uses.length);
+        entry.uses = [];
+        return true;
+      }
+      return constructor;
+    })();
+
     /**
-     * Computes use-def chains.
+     * Computes def-use chains.
      *
      * () -> Map[id -> {def:Node, uses:Array[Node]}]
      */
@@ -1297,31 +1346,23 @@
       debug && writer.enter("> Compute Uses");
       var dfg = this.dfg;
 
-      var useEntries = [];
-
-      function addUse(def, use) {
-        var entry = useEntries[def.id];
-        if (!entry) {
-          entry = useEntries[def.id] = {def: def, uses:[]};
-        }
-        entry.uses.pushUnique(use);
-      }
+      var uses = new Uses();
 
       dfg.forEach(function (use) {
         use.visitInputs(function (def) {
-          addUse(def, use);
+          uses.addUse(def, use);
         });
       });
 
       if (debug) {
         writer.enter("> Uses");
-        useEntries.forEach(function (entry) {
+        uses.entries.forEach(function (entry) {
           writer.writeLn(entry.def.id + " -> [" + entry.uses.map(toID).join(", ") + "] " + entry.def);
         });
         writer.leave("<");
         writer.leave("<");
       }
-      return useEntries;
+      return uses;
     };
 
     constructor.prototype.verify = function verify() {
@@ -1354,7 +1395,7 @@
       debug && writer.enter("> Optimize Phis");
 
       var phis = [];
-      var useEntries = this.computeUses();
+      var useEntries = this.computeUses().entries;
       useEntries.forEach(function (entry) {
         if (isPhi(entry.def)) {
           phis.push(entry.def);
