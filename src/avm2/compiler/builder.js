@@ -161,9 +161,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
-    constructor.prototype.buildStart = function () {
+    constructor.prototype.buildStart = function (start) {
       var mi = this.methodInfo;
-      var start = new Start();
       var state = start.entryState = new State(0);
 
       /**
@@ -200,7 +199,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset]);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], true);
       }
 
       var argumentsLength = getJSPropertyWithStore(state.store, args, "length");
@@ -220,7 +219,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           } else {
             var type = this.abc.domain.getProperty(parameter.type, true, false);
             if (type) {
-              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)]);
+              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
             } else {
               // unexpected();
             }
@@ -295,6 +294,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         return binary(Operator.ADD, constant("public$"), value);
       }
 
+      function coerceString(value) {
+        return new Call(null, start.entryState.store, globalProperty("coerceString"), null, [value], true);
+      }
+
       assert(!this.coercers);
 
       var coercers = this.coercers = {
@@ -302,8 +305,23 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         "uint": toUInt32,
         "Number": toNumber,
         "Boolean": toBoolean,
-        "String": toString
+        "String": coerceString
       };
+
+      function getCoercerForType(type) {
+        switch (type) {
+          case Type.Int:
+            return toInt32;
+          case Type.Uint:
+            return toUInt32;
+          case Type.Number:
+            return toNumber;
+          case Type.Boolean:
+            return toBoolean;
+          case Type.String:
+            return coerceString;
+        }
+      }
 
       var regions = [];
 
@@ -317,7 +335,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
-      var start = this.buildStart();
+      var start = new Start();
+      this.buildStart(start);
 
       worklist.push({region: start, block: blocks[0]});
 
@@ -402,7 +421,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return savedScope();
         }
 
-        var object, index, callee, value, multiname, type, args;
+        var object, index, callee, value, multiname, type, args, pristine;
 
         function push(x) {
           assert (x);
@@ -476,7 +495,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         }
 
         function findProperty(name, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
+          var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), name, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuted()) {
@@ -518,10 +537,6 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return call(globalProperty("coerce"), null, [value, type]);
         }
 
-        function coerceString(value) {
-          return call(globalProperty("coerceString"), null, [value]);
-        }
-
         function getScopeObject(scope) {
           if (scope instanceof IR.AVM2Scope) {
             return scope.object;
@@ -548,6 +563,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             if (!hasNumericType(name)) {
               return get;
             }
+            if (object.ty && object.ty.isParameterizedType()) {
+              return get;
+            }
             var indexGet = shouldFloat(call(getJSProperty(object, "indexGet"), object, [name]));
             return shouldFloat(new IR.Latch(getJSProperty(object, "indexGet"), indexGet, get));
           }
@@ -565,6 +583,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var set = new IR.SetProperty(region, state.store, object, name, value);
             if (!hasNumericType(name)) {
               return store(set);
+            }
+            if (object.ty && object.ty.isParameterizedType()) {
+              var coercer = getCoercerForType(object.ty.parameter);
+              if (coercer) {
+                value = coercer(value);
+                return store(new IR.SetProperty(region, state.store, object, name, value));
+              }
             }
             var indexSet = call(getJSProperty(object, "indexSet"), object, [name, value]);
             return store(new IR.Latch(getJSProperty(object, "indexSet"), mustFloat(indexSet), mustFloat(set)));
@@ -606,12 +631,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         }
 
         function call(callee, object, args) {
-          return store(new Call(region, state.store, callee, object, args));
+          return callCall(callee, object, args, true);
         }
 
-        function callCall(callee, object, args) {
-          // TODO: Mark Call IR nodes as non-pristine.
-          return call(callee, object, args);
+        function callCall(callee, object, args, pristine) {
+          return store(new Call(region, state.store, callee, object, args, pristine));
         }
 
         function truthyCondition(operator) {
@@ -842,10 +866,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti, true);
+              pristine = bc.ti && bc.ti.trait && bc.ti.trait.isMethod();
               if (op === OP_callproperty || op === OP_callpropvoid) {
-                value = callCall(callee, object, args);
+                value = callCall(callee, object, args, pristine);
               } else {
-                value = callCall(callee, null, args);
+                value = callCall(callee, null, args, pristine);
               }
               if (op !== OP_callpropvoid) {
                 push(value);

@@ -1035,6 +1035,19 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
+
+    if (mi.holder) {
+      var fnNamePrefix = "";
+      if (mi.holder instanceof ClassInfo) {
+        fnNamePrefix = "static$" + mi.holder.instanceInfo.name.getName();
+      } else if (mi.holder instanceof InstanceInfo) {
+        fnNamePrefix = mi.holder.name.getName();
+      } else if (mi.holder instanceof ScriptInfo) {
+        fnNamePrefix = "script";
+      }
+      fnName = fnNamePrefix + "$" + fnName;
+    }
+
     if (mi.verified) {
       fnName += "$V";
     }
@@ -1508,30 +1521,41 @@ var Runtime = (function () {
     return fn;
   };
 
+  function makeQualifiedNameTraitMap(traits) {
+    var map = {};
+    for (var i = 0; i < traits.length; i++) {
+      map[Multiname.getQualifiedName(traits[i].name)] = traits[i];
+    }
+    return map;
+  }
+
   /**
    * Inherit trait bindings. This is the primary inheritance mechanism, we clone the trait bindings then
    * overwrite them for overrides.
    */
-  function inheritBindings(obj, base) {
+  function inheritBindings(obj, base, traits) {
     if (!base) {
       defineNonEnumerableProperty(obj, VM_BINDINGS, []);
       defineNonEnumerableProperty(obj, VM_SLOTS, []);
       defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
     } else {
+      var traitMap = makeQualifiedNameTraitMap(traits);
       var openMethods = {};
       var baseBindings = base[VM_BINDINGS];
       var baseOpenMethods = base[VM_OPEN_METHODS];
       for (var i = 0; i < baseBindings.length; i++) {
         var qn = baseBindings[i];
-        var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
-        Object.defineProperty(obj, qn, baseBindingDescriptor);
-        if (baseOpenMethods.hasOwnProperty(qn)) {
-          var openMethod = baseOpenMethods[qn];
-          openMethods[qn] = openMethod;
-          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
-          if (openMethod.patchTargets) {
-            openMethod.patchTargets.push({object: openMethods, name: qn});
-            openMethod.patchTargets.push({object: obj, name: VM_OPEN_METHOD_PREFIX + qn});
+        if (!traitMap[qn]) {
+          var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
+          Object.defineProperty(obj, qn, baseBindingDescriptor);
+          if (baseOpenMethods.hasOwnProperty(qn)) {
+            var openMethod = baseOpenMethods[qn];
+            openMethods[qn] = openMethod;
+            defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+            if (openMethod.patchTargets) {
+              openMethod.patchTargets.push({object: openMethods, name: qn});
+              openMethod.patchTargets.push({object: obj, name: VM_OPEN_METHOD_PREFIX + qn});
+            }
           }
         }
       }
@@ -1621,35 +1645,30 @@ var Runtime = (function () {
           var patchTargets = self.patchTargets;
           for (var i = 0; i < patchTargets.length; i++) {
             var patchTarget = patchTargets[i];
-            patchTarget.object[patchTarget.name] = fn;
             if (traceExecution.value >= 3) {
-              print("Trampoline: Patching: " + patchTarget.name);
+              var oldValue = patchTarget.object[patchTarget.name];
+              print("Trampoline: Patching: " + patchTarget.name + " oldValue: " + oldValue);
             }
+            patchTarget.object[patchTarget.name] = fn;
+
           }
           return fn;
         }, trait.methodInfo.parameters.length);
 
         memoizerTarget.value = trampoline;
-        obj[VM_OPEN_METHODS][qn] = trampoline;
+        var openMethods = obj[VM_OPEN_METHODS];
+        openMethods[qn] = trampoline;
         defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
 
         // TODO: We make the |memoizeMethodClosure| configurable since it may be
         // overridden by a derived class. Only do this non final classes.
 
-        if (trait.isOverride()) {
-          if (!trait.isProtected()) {
-            assert (obj.hasOwnProperty(qn), "Binding must already exist for trait: " + trait);
-          } else {
-            assert (!obj.hasOwnProperty(qn), "Binding should not exist for trait: " + trait);
-          }
-        }
-
         defineNonEnumerableGetter(obj, qn, makeMemoizer(memoizerTarget));
 
         trampoline.patchTargets = [
-          { object: memoizerTarget,       name: "value"},
-          { object: obj[VM_OPEN_METHODS], name: qn },
-          { object: obj,                  name: VM_OPEN_METHOD_PREFIX + qn }
+          { object: memoizerTarget, name: "value"},
+          { object: openMethods,    name: qn },
+          { object: obj,            name: VM_OPEN_METHOD_PREFIX + qn }
         ];
       } else if (trait.isGetter() || trait.isSetter()) {
         var trampoline = makeTrampoline(function (self) {
@@ -1688,7 +1707,7 @@ var Runtime = (function () {
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, natives, cls) {
     var domain = this.domain;
 
-    inheritBindings(obj, base);
+    inheritBindings(obj, base, traits);
 
     // Go through each trait and apply it to the |obj|.
 

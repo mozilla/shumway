@@ -467,7 +467,13 @@
     } else {
       object = new Literal(null);
     }
-    return callCall(callee, object, args);
+    if (this.pristine &&
+        (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
+        this.object === null) {
+      return call(callee, args);
+    } else {
+      return callCall(callee, object, args);
+    }
   };
 
   IR.AVM2New.prototype.compile = function (cx) {

@@ -788,7 +788,11 @@ var IndentingWriter = (function () {
 
   indentingWriter.prototype.debugLn = function writeLn(str) {
     if (!this.suppressOutput) {
-      this.out(this.padding + PURPLE + str + ENDC);
+      if (!inBrowser) {
+        this.out(this.padding + PURPLE + str + ENDC);
+      } else {
+        this.out(this.padding + str);
+      }
     }
   };
 
