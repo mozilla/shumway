@@ -308,6 +308,21 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         "String": coerceString
       };
 
+      function getCoercerForType(type) {
+        switch (type) {
+          case Type.Int:
+            return toInt32;
+          case Type.Uint:
+            return toUInt32;
+          case Type.Number:
+            return toNumber;
+          case Type.Boolean:
+            return toBoolean;
+          case Type.String:
+            return coerceString;
+        }
+      }
+
       var regions = [];
 
       var stopPoints = [];
@@ -522,10 +537,6 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return call(globalProperty("coerce"), null, [value, type]);
         }
 
-        function coerceString(value) {
-          return call(globalProperty("coerceString"), null, [value]);
-        }
-
         function getScopeObject(scope) {
           if (scope instanceof IR.AVM2Scope) {
             return scope.object;
@@ -552,6 +563,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             if (!hasNumericType(name)) {
               return get;
             }
+            if (object.ty && object.ty.isParameterizedType()) {
+              return get;
+            }
             var indexGet = shouldFloat(call(getJSProperty(object, "indexGet"), object, [name]));
             return shouldFloat(new IR.Latch(getJSProperty(object, "indexGet"), indexGet, get));
           }
@@ -569,6 +583,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var set = new IR.SetProperty(region, state.store, object, name, value);
             if (!hasNumericType(name)) {
               return store(set);
+            }
+            if (object.ty && object.ty.isParameterizedType()) {
+              var coercer = getCoercerForType(object.ty.parameter);
+              if (coercer) {
+                value = coercer(value);
+                return store(new IR.SetProperty(region, state.store, object, name, value));
+              }
             }
             var indexSet = call(getJSProperty(object, "indexSet"), object, [name, value]);
             return store(new IR.Latch(getJSProperty(object, "indexSet"), mustFloat(indexSet), mustFloat(set)));
