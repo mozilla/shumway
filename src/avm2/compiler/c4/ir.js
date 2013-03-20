@@ -722,7 +722,7 @@
   })();
 
   var Call = (function () {
-    function call(control, store, callee, object, args) {
+    function call(control, store, callee, object, args, pristine) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (callee);
@@ -734,6 +734,7 @@
       this.object = object;
       this.store = store;
       this.arguments = args;
+      this.pristine = pristine;
     }
     call.prototype = extend(Value, "Call");
     return call;
