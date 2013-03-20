@@ -219,7 +219,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           } else {
             var type = this.abc.domain.getProperty(parameter.type, true, false);
             if (type) {
-              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)]);
+              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
             } else {
               // unexpected();
             }
