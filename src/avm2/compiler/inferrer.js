@@ -59,7 +59,7 @@ var Type = (function () {
     if (mn === undefined) {
       return Type.Undefined;
     } else {
-      var qn = Multiname.getQualifiedName(mn);
+      var qn = Multiname.getFullQualifiedName(mn);
       var ty = type.cache.name[qn];
       if (ty) {
         return ty;
@@ -70,6 +70,9 @@ var Type = (function () {
       release || assert(domain, "Domain is needed.");
       ty = domain.findClassInfo(mn);
       ty = ty ? type.from(ty, domain) : Type.Any;
+      if (mn.hasTypeParameter()) {
+        ty = new ParameterizedType(ty, type.fromName(mn.typeParameter, domain));
+      }
       return type.cache.name[qn] = ty;
     }
   };
@@ -84,6 +87,10 @@ var Type = (function () {
 
   type.prototype.isNumeric = function () {
     return this === Type.Int || this === Type.Number;
+  };
+
+  type.prototype.isParameterizedType = function () {
+    return this instanceof ParameterizedType;
   };
 
   type.prototype.instance = function () {
@@ -359,6 +366,24 @@ var ParameterizedType = (function () {
   parameterizedType.prototype.toString = function () {
     return this.type + "<" + this.parameter + ">";
   };
+  parameterizedType.prototype.instance = function () {
+    release || assert(this.type instanceof TraitsType);
+    return new ParameterizedType(this.type.instance(), this.parameter.instance());
+  };
+  parameterizedType.prototype.equals = function (other) {
+    if (other instanceof ParameterizedType) {
+      return this.type.equals(other.type) && this.parameter.equals(other.parameter);
+    }
+    return false;
+  };
+  parameterizedType.prototype.merge = function (other) {
+    if (other instanceof TraitsType) {
+      if (this.equals(other)) {
+        return this;
+      }
+    }
+    return Type.Any;
+  };
   return parameterizedType;
 })();
 
@@ -616,11 +641,10 @@ var Verifier = (function() {
       }
 
       function construct(obj) {
-        if (obj instanceof TraitsType) {
+        if (obj instanceof TraitsType || obj instanceof ParameterizedType) {
           if (obj === Type.Function) {
             return Type.Object;
           }
-          release || assert(obj.isClassInfo());
           return obj.instance();
         } else {
           return Type.Any;
@@ -934,12 +958,16 @@ var Verifier = (function() {
             getProperty(obj, mn);
             push(Type.Any);
             break;
+          case OP_callpropvoid:
           case OP_callproperty:
           case OP_callproplex:
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
             type = getProperty(obj, mn);
+            if (op === OP_callpropvoid) {
+              break;
+            }
             if (type instanceof MethodType) {
               returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
             } else {
@@ -976,11 +1004,6 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_callsupervoid:
-            stack.popMany(bc.argCount);
-            popMultiname();
-            pop();
-            break;
-          case OP_callpropvoid:
             stack.popMany(bc.argCount);
             popMultiname();
             pop();

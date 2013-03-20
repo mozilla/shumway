@@ -662,6 +662,18 @@ var Multiname = (function () {
     }
   };
 
+  /**
+   * Same as |getQualifiedName| but it also includes the type parameter if
+   * it has one.
+   */
+  multiname.getFullQualifiedName = function getFullQualifiedName(mn) {
+    var qn = multiname.getQualifiedName(mn);
+    if (mn instanceof Multiname && mn.typeParameter) {
+      qn += "$" + multiname.getQualifiedName(mn.typeParameter);
+    }
+    return qn;
+  };
+
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
       return Number(name);
