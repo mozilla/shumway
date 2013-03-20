@@ -161,9 +161,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
-    constructor.prototype.buildStart = function () {
+    constructor.prototype.buildStart = function (start) {
       var mi = this.methodInfo;
-      var start = new Start();
       var state = start.entryState = new State(0);
 
       /**
@@ -295,6 +294,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         return binary(Operator.ADD, constant("public$"), value);
       }
 
+      function coerceString(value) {
+        return new Call(null, start.entryState.store, globalProperty("coerceString"), null, [value], true);
+      }
+
       assert(!this.coercers);
 
       var coercers = this.coercers = {
@@ -302,7 +305,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         "uint": toUInt32,
         "Number": toNumber,
         "Boolean": toBoolean,
-        "String": toString
+        "String": coerceString
       };
 
       var regions = [];
@@ -317,7 +320,8 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
-      var start = this.buildStart();
+      var start = new Start();
+      this.buildStart(start);
 
       worklist.push({region: start, block: blocks[0]});
 
