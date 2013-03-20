@@ -200,7 +200,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset]);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], true);
       }
 
       var argumentsLength = getJSPropertyWithStore(state.store, args, "length");
@@ -402,7 +402,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return savedScope();
         }
 
-        var object, index, callee, value, multiname, type, args;
+        var object, index, callee, value, multiname, type, args, pristine;
 
         function push(x) {
           assert (x);
@@ -606,12 +606,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         }
 
         function call(callee, object, args) {
-          return store(new Call(region, state.store, callee, object, args));
+          return callCall(callee, object, args, true);
         }
 
-        function callCall(callee, object, args) {
-          // TODO: Mark Call IR nodes as non-pristine.
-          return call(callee, object, args);
+        function callCall(callee, object, args, pristine) {
+          return store(new Call(region, state.store, callee, object, args, pristine));
         }
 
         function truthyCondition(operator) {
@@ -842,10 +841,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti, true);
+              pristine = bc.ti && bc.ti.trait && bc.ti.trait.isMethod();
               if (op === OP_callproperty || op === OP_callpropvoid) {
-                value = callCall(callee, object, args);
+                value = callCall(callee, object, args, pristine);
               } else {
-                value = callCall(callee, null, args);
+                value = callCall(callee, null, args, pristine);
               }
               if (op !== OP_callpropvoid) {
                 push(value);
