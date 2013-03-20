@@ -27,6 +27,12 @@ var Interpreter = (function () {
       if (qn === Multiname.getPublicQualifiedName("Number")) {
         return Number.apply(null, args);
       }
+      if (qn === Multiname.getPublicQualifiedName("int")) {
+        return Number.apply(null, args) << 0;
+      }
+      if (qn === Multiname.getPublicQualifiedName("uint")) {
+        return Number.apply(null, args) >>> 0;
+      }
     }
     return new (Function.bind.apply(constructor.instance, [,].concat(args)));
   }
