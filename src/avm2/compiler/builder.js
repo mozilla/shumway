@@ -480,7 +480,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
         }
 
         function findProperty(name, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), name, domain, strict);
+          var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), name, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuted()) {
