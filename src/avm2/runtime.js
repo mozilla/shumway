@@ -927,7 +927,7 @@ var Runtime = (function () {
    * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
    * compiler bakes it in as a constant which should be much more efficient.
    */
-  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope) {
+  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
@@ -1051,8 +1051,8 @@ var Runtime = (function () {
     if (mi.verified) {
       fnName += "$V";
     }
-    if (compiledFunctionCount == functionBreak.value) {
-      body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
+    if (compiledFunctionCount == functionBreak.value || breakpoint) {
+      body = "{ debugger; \n" + body + "}";
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
