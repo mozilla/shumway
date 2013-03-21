@@ -835,7 +835,7 @@ function createActivation(methodInfo) {
  */
 function CatchScopeObject(runtime, varTrait) {
   if (varTrait) {
-    runtime.applyTraits(this, new Scope(null, this), null, [varTrait], null, null);
+    runtime.applyTraits(this, new Scope(null, this), null, [varTrait], null, false);
   }
 }
 
@@ -847,7 +847,7 @@ var Global = (function () {
     this.scriptInfo = script;
     script.global = this;
     script.abc = runtime.abc;
-    runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, null);
+    runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, false);
     script.loaded = true;
   }
   Global.prototype.toString = function () {
@@ -927,7 +927,7 @@ var Runtime = (function () {
    * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
    * compiler bakes it in as a constant which should be much more efficient.
    */
-  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope) {
+  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
@@ -962,7 +962,7 @@ var Runtime = (function () {
       mi.analysis = new Analysis(mi, { massage: true });
 
       if (mi.traits) {
-        mi.activationPrototype = this.applyTraits(new Activation(mi), null, null, mi.traits, null, null);
+        mi.activationPrototype = this.applyTraits(new Activation(mi), null, null, mi.traits, null, false);
       }
 
       // If we have exceptions, make the catch scopes now.
@@ -1051,8 +1051,8 @@ var Runtime = (function () {
     if (mi.verified) {
       fnName += "$V";
     }
-    if (compiledFunctionCount == functionBreak.value) {
-      body = "{ debugBreak(\"" + fnName + "\");\n" + body + "}";
+    if (compiledFunctionCount == functionBreak.value || breakpoint) {
+      body = "{ debugger; \n" + body + "}";
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
@@ -1158,10 +1158,10 @@ var Runtime = (function () {
       if ((instance = cls.instance)) {
         // Instance traits live on instance.prototype.
         natives = cls.native ? cls.native.instance : undefined;
-        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, natives, cls);
+        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, natives, true);
       }
       natives = cls.native ? cls.native.static : undefined;
-      this.applyTraits(cls, scope, null, ci.traits, natives, null);
+      this.applyTraits(cls, scope, null, ci.traits, natives, true);
     } else {
       scope = new Scope(scope, null);
       instance = this.createFunction(ii.init, scope);
@@ -1170,8 +1170,8 @@ var Runtime = (function () {
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
-      this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, cls);
-      this.applyTraits(cls, scope, null, ci.traits, null, null);
+      this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
+      this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
     }
 
@@ -1592,7 +1592,7 @@ var Runtime = (function () {
     return trampoline;
   }
 
-  runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, cls, natives) {
+  runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
     var runtime = this;
 
     release || assert (trait.isMethod() || trait.isGetter() || trait.isSetter());
@@ -1632,7 +1632,7 @@ var Runtime = (function () {
       return memoizer;
     }
 
-    if (cls) {
+    if (needsMemoizer) {
       release || assert(obj[VM_OPEN_METHODS]);
       if (trait.isMethod()) {
         // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
@@ -1704,7 +1704,7 @@ var Runtime = (function () {
     }
   };
 
-  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, natives, cls) {
+  runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, natives, methodsNeedMemoizers) {
     var domain = this.domain;
 
     inheritBindings(obj, base, traits);
@@ -1742,7 +1742,7 @@ var Runtime = (function () {
           type: typeName ? domain.getProperty(typeName, false, false) : null
         };
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-        this.applyMethodTrait(obj, trait, scope, cls, natives);
+        this.applyMethodTrait(obj, trait, scope, methodsNeedMemoizers, natives);
       } else {
         release || assert(false);
       }

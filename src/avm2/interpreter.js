@@ -15,9 +15,9 @@ var Interpreter = (function () {
   var Apslice = [].slice;
 
   function applyNew(constructor, args) {
-    if(constructor.classInfo) {
+    if (constructor.classInfo) {
       // return primitive values for new'd boxes
-      var qn = constructor.classInfo.instanceInfo.name.qualifiedName 
+      var qn = constructor.classInfo.instanceInfo.name.qualifiedName;
       if (qn === Multiname.getPublicQualifiedName("String")) {
         return String.apply(null, args);
       }
