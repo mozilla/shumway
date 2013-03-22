@@ -6,7 +6,7 @@ diff -r 5571cf86fc68 test/acceptance/failconfig.txt
  #
  # include config & exclude config both are regexp to match the configuration
 -#   string with the format {CPU_ARCH}-{OS}-{VM}-{VERSION}-{VMSWITCH}
-+#   string with the format {CPU_ARCH}-{OS}-{VM}-{`VERSION}-{VMSWITCH}
++#   string with the format {CPU_ARCH}-{OS}-{VM}-{VERSION}-{VMSWITCH}
  #
  # all configs that match the include config and do not match the exclude 
  #   config will apply to the command.
