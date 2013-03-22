@@ -1,12 +1,7 @@
-diff --git a/test/util/runtestBase.py b/test/util/runtestBase.py
---- a/test/util/runtestBase.py
-+++ b/test/util/runtestBase.py
-@@ -1232,17 +1232,17 @@ class RuntestBase(object):
-                         self.compile_aot( test )
-                         continue
-                 if test.endswith(self.executableExtensions):
-                     continue
-                 self.js_print('%d\tcompiling %s' % (total,test))
+diff -r 2b38aa82c803 test/util/runtestBase.py
+--- a/test/util/runtestBase.py	Tue Jan 29 06:59:24 2013 -0800
++++ b/test/util/runtestBase.py	Thu Mar 21 17:23:08 2013 -0700
+@@ -1249,7 +1249,7 @@
                  self.compile_test(test)
                  if self.ascOutputOnly:
                      continue  # no .abc created
@@ -15,8 +10,3 @@ diff --git a/test/util/runtestBase.py b/test/util/runtestBase.py
                      print("ERROR abc files %s.abc not created" % (testdir))
                      self.ashErrors.append("abc files %s.abc not created" % (testdir))
                      continue
- 
-                 if self.aotsdk: # ABC compiled, so now AOT compile
-                     # Need to figure out how to deal with additional required abc files
-                     self.compile_aot(testdir+".abc")
- 
