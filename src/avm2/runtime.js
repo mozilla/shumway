@@ -536,44 +536,6 @@ function resolveMultinameInTraits(obj, mn) {
 /**
  * Resolving a multiname on an object using linear search.
  */
-/*
-function resolveMultiname(obj, mn) {
-  release || assert(!Multiname.isQName(mn), mn, " already resolved");
-
-  obj = Object(obj);
-
-  var publicQn;
-
-  // Check if the object that we are resolving the multiname on is a JavaScript native prototype
-  // and if so only look for public (dynamic) properties. The reason for this is because we cannot
-  // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
-  // work around it here during name resolution.
-
-  var isNative = isNativePrototype(obj);
-  if (isNative) {
-    for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-      if (mn.namespaces[i].isDynamic()) {
-        var publicQn = mn.getQName(i);
-        if (Multiname.getQualifiedName(publicQn) in obj) {
-          return publicQn;
-        }
-        break;
-      }
-    }
-    return undefined;
-  }
-
-  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-    var qn = mn.getQName(i);
-    if (Multiname.getQualifiedName(qn) in obj) {
-      return qn;
-    }
-  }
-
-  return undefined;
-}
-*/
-
 function resolveMultiname(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
 
