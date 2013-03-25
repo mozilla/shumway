@@ -72,22 +72,19 @@ function combineUrl(baseUrl, url) {
   }
 }
 
-function parseQueryString(qs) {
+function parseQueryString(obj, qs) {
   if (!qs)
-    return {};
+    return;
 
   if (qs.charAt(0) == '?')
     qs = qs.slice(1);
 
   var values = qs.split('&');
-  var obj = {};
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
     obj[key] = value;
   }
-
-  return obj;
 }
 
 // All the priviledged actions.
@@ -289,19 +286,24 @@ FlashStreamConverterBase.prototype = {
         tagName = element.nodeName;
       }
       if (tagName == 'EMBED') {
-        params = parseQueryString(element.getAttribute('flashvars'));
+        parseQueryString(params, element.getAttribute('flashvars'));
         url = element.getAttribute('src');
       } else {
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
           if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM') continue;
+              paramElement.nodeName != 'PARAM' ||
+              paramElement.getAttribute('name').toLowerCase() != 'flashvars')
+            continue;
 
-          params[paramElement.getAttribute('name')] = paramElement.getAttribute('value');
+          parseQueryString(params, paramElement.getAttribute('value'));
         }
         var dataAttribute = element.getAttribute('data');
         url = dataAttribute || params.movie || params.src;
       }
+
+      var urlParts = url.split('?', 2);
+      parseQueryString(params, urlParts[1]);
     }
     var element = window.frameElement;
     var baseUrl = element ? element.ownerDocument.location.href : null; // XXX base url?
