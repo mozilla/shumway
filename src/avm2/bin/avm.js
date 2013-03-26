@@ -36,7 +36,7 @@ var help = shellOptions.register(new Option("h", "help", "boolean", false, "prin
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
-
+var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 
@@ -83,8 +83,6 @@ load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/vm.js");
 Timer.stop();
 
-var debug = true, release = false;
-
 argumentParser.addBoundOptionSet(systemOptions);
 
 function printUsage() {
@@ -120,6 +118,8 @@ try {
   stdout.writeLn(x.message);
   quit();
 }
+
+var release = releaseMode.value, debug = !release;
 
 Counter.setEnabled(traceMetrics.value);
 
