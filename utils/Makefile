@@ -75,14 +75,13 @@ $(TAMARIN_HOME)/configure.py:
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
 
-run-tamarin-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) ecma3 as3
+run-tamarin-tests: run-tamarin-as3-tests run-tamarin-ecma3-tests
 
 run-tamarin-as3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) as3
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --vmargs "-rel -i" as3
 
 run-tamarin-ecma3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --threads $(THREADS) --shumway ecma3
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --threads $(THREADS) --shumway --vmargs "-rel -i" ecma3
 
 run-tamarin-performance:
 	cd $(TAMARIN_HOME)/test/performance;  SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
