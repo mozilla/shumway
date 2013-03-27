@@ -29,6 +29,9 @@ BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with insta
 link-utils:
 	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/node_modules utils/
 
+run-tamarin-sanity-tests:
+	make -C utils/ run-tamarin-sanity-tests
+
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 

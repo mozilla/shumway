@@ -1,5 +1,5 @@
 UNAME = $(shell uname)
-THREADS = 8
+THREADS = 4
 
 JSSHELL_HOME = ./jsshell
 JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2013/03/2013-03-01-03-09-09-mozilla-central
@@ -67,6 +67,8 @@ install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
 
+install-tamarin-tests: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
 	cd $(TAMARIN_HOME) hg update -C 2b38aa82c803   # get a stable version
@@ -75,15 +77,14 @@ $(TAMARIN_HOME)/configure.py:
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
 
-run-tamarin-tests: run-tamarin-as3-tests run-tamarin-ecma3-tests
+run-tamarin-tests: install-tamarin-tests
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log as3.log as3
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log ecma3.log ecma3
 
-run-tamarin-as3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --vmargs "-rel -i" as3
+run-tamarin-sanity-tests: install-tamarin-tests
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --vmargs "-rel -i" --log test.log ecma3/String ecma3/Functions ecma3/ExecutionContexts
 
-run-tamarin-ecma3-tests:
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --threads $(THREADS) --shumway --vmargs "-rel -i" ecma3
-
-run-tamarin-performance:
+run-tamarin-performance: install-tamarin-tests
 	cd $(TAMARIN_HOME)/test/performance;  SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:
