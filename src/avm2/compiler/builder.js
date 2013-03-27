@@ -1,3 +1,4 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
 var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
@@ -905,7 +906,15 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti);
-              push(store(new IR.AVM2New(region, state.store, callee, args)));
+              if (callee.name.value === Multiname.getPublicQualifiedName("Boolean") ||
+                  callee.name.value === Multiname.getPublicQualifiedName("Number") ||
+                  callee.name.value === Multiname.getPublicQualifiedName("String") ||
+                  callee.name.value === Multiname.getPublicQualifiedName("int") ||
+                  callee.name.value === Multiname.getPublicQualifiedName("uint")) {
+                push(store(callCall(callee, object, args, false)));
+              } else {
+                push(store(new IR.AVM2New(region, state.store, callee, args)));
+              }
               break;
             case OP_coerce:
               if (bc.ti && bc.ti.noCoercionNeeded) {
