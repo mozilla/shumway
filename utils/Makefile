@@ -39,18 +39,12 @@ TAMARIN_CONFIG_PARAMS = --target=i686-linux
 endif
 endif
 
-APPARAT_URL = http://apparat.googlecode.com/files/apparat-1.0-RC9-bin.tar.gz
-APPARAT_HOME = ./apparat
-SCALA_URL = http://www.scala-lang.org/sites/default/files/linuxsoft_archives/downloads/distrib/files/scala-2.8.0.final.tgz
-SCALA_BIN = $(APPARAT_HOME)/scala-2.8.0.final/bin
-APPARAT_BIN = $(APPARAT_HOME)/apparat-1.0-RC9
-
 SHUMWAY_HOME = $(realpath ..)
 AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-asc|install-closure|install-tamarin|install-js|install-apparat|"
+	@echo "run: make [install-asc|install-closure|install-tamarin|install-js|"
 	@echo "           install-swfdec|install-node-modules|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
@@ -106,15 +100,6 @@ ifeq ($(UNAME), Linux)
 	chmod +x $(JSSHELL_HOME)/js
 endif
 
-install-apparat: $(APPARAT_HOME)/apparat.tar.gz
-	tar -xkf $(APPARAT_HOME)/apparat.tar.gz -C $(APPARAT_HOME)/
-	tar -xkf $(APPARAT_HOME)/scala.tgz -C $(APPARAT_HOME)/
-
-$(APPARAT_HOME)/apparat.tar.gz:
-	mkdir -p $(APPARAT_HOME)
-	wget $(SCALA_URL) -O $(APPARAT_HOME)/scala.tgz
-	wget $(APPARAT_URL) -O $(APPARAT_HOME)/apparat.tar.gz
-
 install-node-modules:
 	npm install mocha expect.js temp jshint
 
@@ -128,10 +113,9 @@ clean:
 	-rm -rf $(ASC_JAR)
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	-rm -rf $(APPARAT_HOME)
 	make -C playerGlobal/ clean
 
-.PHONY: install-tamarin install-js install-apparat install-swfdec \
+.PHONY: install-tamarin install-js install-swfdec \
         install-node-modules build-tamarin-tests build-playerglobal \
         clean default
 
