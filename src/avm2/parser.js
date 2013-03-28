@@ -528,7 +528,7 @@ var Multiname = (function () {
     this.flags = flags || 0;
   }
 
-  multiname.parse = function parse(constantPool, stream, multinames) {
+  multiname.parse = function parse(constantPool, stream, multinames, patchFactoryTypes) {
     var index = 0;
     var kind = stream.readU8();
     var name, namespaces = [], flags = 0, typeParameter;
@@ -550,7 +550,7 @@ var Multiname = (function () {
         }
         flags |= RUNTIME_NAMESPACE;
         break;
-      case CONSTANT_RTQNameL:case CONSTANT_RTQNameLA:
+      case CONSTANT_RTQNameL: case CONSTANT_RTQNameLA:
         flags |= RUNTIME_NAMESPACE;
         flags |= RUNTIME_NAME;
         break;
@@ -573,13 +573,21 @@ var Multiname = (function () {
        * This is undocumented, looking at Tamarin source for this one.
        */
       case CONSTANT_TypeName:
-        index = stream.readU32();
-        namespaces = multinames[index].namespaces;
-        name = multinames[index].name;
-        index = stream.readU32();
-        release || assert(index === 1);
-        index = stream.readU32();
-        typeParameter = multinames[index];
+        var factoryTypeIndex = stream.readU32();
+        if (multinames[factoryTypeIndex]) {
+          namespaces = multinames[factoryTypeIndex].namespaces;
+          name = multinames[factoryTypeIndex].name;
+        }
+        var typeParameterCount = stream.readU32();
+        release || assert(typeParameterCount === 1); // This is probably the number of type parameters.
+        var typeParameterIndex = stream.readU32();
+        assert (multinames[typeParameterIndex]);
+        var mn = new Multiname(namespaces, name, flags);
+        mn.typeParameter = multinames[typeParameterIndex];
+        if (!multinames[factoryTypeIndex]) {
+          patchFactoryTypes.push({multiname: mn, index: factoryTypeIndex});
+        }
+        return mn;
         break;
       default:
         unexpected();
@@ -594,11 +602,7 @@ var Multiname = (function () {
         flags |= ATTRIBUTE;
         break;
     }
-    var mn = new Multiname(namespaces, name, flags);
-    if (typeParameter) {
-      mn.typeParameter = typeParameter;
-    }
-    return mn;
+    return new Multiname(namespaces, name, flags);
   };
 
   /**
@@ -920,10 +924,17 @@ var ConstantPool = (function constantPool() {
 
     // multinames
     var multinames = [undefined];
+    var patchFactoryTypes = [];
     n = stream.readU30();
     for (i = 1; i < n; ++i) {
-      multinames.push(Multiname.parse(this, stream, multinames));
+      multinames.push(Multiname.parse(this, stream, multinames, patchFactoryTypes));
     }
+    patchFactoryTypes.forEach(function (patch) {
+      var multiname = multinames[patch.index];
+      assert (multiname);
+      patch.multiname.name = multiname.name;
+      patch.multiname.namespaces = multiname.namespaces;
+    });
 
     this.multinames = multinames;
   }
