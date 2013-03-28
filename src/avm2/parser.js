@@ -387,9 +387,7 @@ var ShumwayNamespace = (function () {
     },
 
     isUnique: function isUnique() {
-      return this.kind === CONSTANT_PrivateNs ||
-             this.kind === CONSTANT_ProtectedNamespace ||
-             this.kind === CONSTANT_Namespace && this.uri === "";
+      return this.kind === CONSTANT_PrivateNs;
     },
 
     isDynamic: function isDynamic() {
