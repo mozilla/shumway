@@ -317,6 +317,7 @@ var ShumwayNamespace = (function () {
   }
 
   function buildNamespace() {
+    print(this.uri);
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
       var n = this.uri.length - 1;
@@ -325,6 +326,9 @@ var ShumwayNamespace = (function () {
         this.uri = this.uri.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
+      if(this.uri === "Code.Physics:RigidBody") {
+        print("buildNamespace found")
+      }
       // Make a psuedo unique id by concatenating current milliseconds to original uri
       this.uri = String(this.uri+Date.now());
     }
@@ -387,9 +391,7 @@ var ShumwayNamespace = (function () {
     },
 
     isUnique: function isUnique() {
-      return this.kind === CONSTANT_PrivateNs ||
-             this.kind === CONSTANT_ProtectedNamespace ||
-             this.kind === CONSTANT_Namespace && this.uri === "";
+      return this.kind === CONSTANT_PrivateNs;
     },
 
     isDynamic: function isDynamic() {
