@@ -2087,7 +2087,7 @@ diff -r 2b38aa82c803 test/acceptance/runtests.py
 +            shumwayHome = environ["SHUMWAY_HOME"]
 +            if not shumwayHome.endswith('/'):
 +                shumwayHome += '/'
-+            self.avm = 'js %ssrc/avm2/bin/avm.js -x ' % shumwayHome
++            self.avm = '%sutils/jsshell/js %ssrc/avm2/bin/avm.js -x ' % (shumwayHome, shumwayHome)
 +
 +
          if self.androidthreads:
@@ -2491,7 +2491,7 @@ diff -r 2b38aa82c803 test/performance/runtests.py
 +            shumwayHome = environ["SHUMWAY_HOME"]
 +            if not shumwayHome.endswith('/'):
 +                shumwayHome += '/'
-+            self.avm = 'js %ssrc/avm2/bin/avm.js -x ' % shumwayHome
++            self.avm = '%sutils/jsshell/js %ssrc/avm2/bin/avm.js -x ' % (shumwayHome, shumwayHome)
 +
          if self.logresults:
              # determine current config string for socketlog
@@ -2585,6 +2585,25 @@ diff -r 2b38aa82c803 test/util/runtestBase.py
      vmargs = ''
      vmtype = ''
      aotsdk = None
+@@ -459,17 +459,17 @@ class RuntestBase(object):
+         self.vmtype = 'release'
+         if self.osName=='winmobile-emulator':
+             # try to determine vmtype by filename
+             vm_name = splitext(split(self.avm)[1])[0]
+             if '_d' in vm_name:
+                 self.vmtype = 'debug'
+             else:
+                 self.vmtype = 'release'
+-        elif not self.runSource and not self.rebuildtests:
++        elif not self.runSource and not self.rebuildtests and len(self.avm) > 0:
+             (f,err,exitcode) = self.run_pipe('%s -Dversion' % self.avm)
+             try:
+                 self.avm_features = f[1]    # save feature list
+                 # determine avmshell type
+                 if re.search('debug-debugger',f[0]):
+                     self.vmtype = 'debugdebugger'
+                 elif re.search('release-debugger',f[0]):
+                     self.vmtype = 'releasedebugger'
 @@ -671,7 +671,7 @@
                  newargs.append(convertFromCygwin(t).strip())
              self.args = newargs
@@ -2608,7 +2627,12 @@ diff -r 2b38aa82c803 test/util/runtestBase.py
          tests = [a for a in startDir if isfile(a) and self.istest(a, fileExtentions)]
          for a in [d for d in startDir if isdir(d) and not (basename(d) in self.exclude)]:
              for d, dirs, files in walk(a, followlinks=True):
-@@ -789,9 +791,10 @@
+@@ -784,34 +786,35 @@ class RuntestBase(object):
+         # return settings for this test
+         settings = {}
+         for k in self.settings.keys():
+             match = False
+             if k == root:
                  match = True
              elif any(regex_char in k for regex_char in self.REGEX_CHARS):
                  # Do a regex search if there are regex chars in the key
@@ -2621,6 +2645,27 @@ diff -r 2b38aa82c803 test/util/runtestBase.py
              if match:
                  for k2 in self.settings[k].keys():
                      if k2 in settings:
+                         settings[k2].update(self.settings[k][k2])
+                     else:
+                         settings[k2] = self.settings[k][k2].copy()
+         return settings
+ 
+     def istest(self,f, fileExtentions):
+         return f.endswith(fileExtentions) and not f.endswith('Util'+self.sourceExt)
+ 
+     def parents(self, d):
+         '''return a generator of the current dir and all parent directories up
+             to the test dir root'''
+-        while d != abspath(self.args[0]) and d != '':
++        while abspath(d) != abspath(self.args[0]) and d != '':
+             yield d
+             d = dirname(d)
+         yield '.'   # yield the test dir root
+ 
+     def parseTestConfig(self, config_file):
+         '''read a configuration file and parse it into the settings dictionary'''
+         settings = {}
+         directives = {}
 @@ -1967,6 +1971,9 @@
  
      def getAvmVersion(self, vm=None, txt=None):
