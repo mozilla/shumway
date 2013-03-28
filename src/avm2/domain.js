@@ -413,6 +413,17 @@ var Domain = (function () {
           }
         }
       }
+
+      // Ask host to load the defining ABC
+      if (!this.base && this.vm.findDefiningAbc) {
+        var abc = this.vm.findDefiningAbc(mn);
+        if (abc !== null && !this.loadedAbcs[abc.name]) {
+          this.loadedAbcs[abc.name] = true;
+          this.loadAbc(abc);
+          return this.findClassInfo(mn);
+        }
+      }
+
       return undefined;
     },
 
