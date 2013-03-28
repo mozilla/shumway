@@ -124,6 +124,7 @@ var Type = (function () {
     type.Void = new AtomType("Void");
     type.Int = Type.fromSimpleName("int", domain).instance();
     type.Uint = Type.fromSimpleName("uint", domain).instance();
+    type.Class = Type.fromSimpleName("Class", domain).instance();
     type.Array = Type.fromSimpleName("Array", domain).instance();
     type.Object = Type.fromSimpleName("Object", domain).instance();
     type.String = Type.fromSimpleName("String", domain).instance();
@@ -642,7 +643,7 @@ var Verifier = (function() {
 
       function construct(obj) {
         if (obj instanceof TraitsType || obj instanceof ParameterizedType) {
-          if (obj === Type.Function) {
+          if (obj === Type.Function || obj === Type.Class) {
             return Type.Object;
           }
           return obj.instance();
