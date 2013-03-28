@@ -897,7 +897,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
                 callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
-                push(call(callee, object, args));
+                call(callee, object, args);
               }
               break;
             case OP_constructprop:
