@@ -43,7 +43,7 @@ package avmplus
 
     // -------------- internal --------------
 
-    [native("DescribeTypeClass::describeTypeJSON")]
+    [native("describeTypeJSON")]
     internal native function describeTypeJSON(o:*, flags:uint):Object;
 
     internal const extendsXml:XML = <extendsClass />;
