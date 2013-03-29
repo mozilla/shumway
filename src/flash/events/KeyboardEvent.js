@@ -6,7 +6,9 @@ var KeyboardEventDefinition = (function () {
       notImplemented();
     },
     get keyCode() {
-      return this.private$flash$events$KeyboardEvent$m_keyCode;
+      var keyCodePropertyName = new Multiname(ShumwayNamespace.fromSimpleName(
+        'private flash.events:KeyboardEvent'), 'm_keyCode');
+      return getProperty(this, keyCodePropertyName);
     }
   };
 
