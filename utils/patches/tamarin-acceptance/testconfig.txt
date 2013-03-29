@@ -1,0 +1,61 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+########################################################################################################################
+# DOCUMENTATION:
+#   acceptance/testconfig.txt controls when test files and test cases are
+#   marked as expected failure and skip for a specific configuration.
+#
+#   testconfig.txt should only be used for permanent entries not due to bugs.
+#   failconfig.txt should be used for all bugs.
+#
+#   the format for non-comment lines in this file is comma separated:
+#   test, include config, exclude config, command, comments
+#
+# field descriptions:   
+#
+# test: a regular expression consisting of path to file relative from test/acceptance
+#   The format is "filename:testcase name" where the : and testcase name are optional.
+#   If a testcase name is not specified, then the command will apply to the entire test.
+#
+# include config & exclude config both are regexp to match the configuration
+#   string with the format {CPU_ARCH}-{OS}-{VM}-{VERSION}-{VMSWITCH}
+#
+# all configs that match the include config and do not match the exclude 
+#   config will apply to the command.
+#
+# commands are one of:
+#   expectedfail - expects the test or testcase(s) to fail
+#
+#   The following commands only operate at a testfile level and not individual tests:
+#
+#   exclude - Do not compile and do not execute
+#   ats_skip - don't generate an ATS swf as these files are not ATS compatible
+#   deep - test should only run in deep phase for specified configs
+#   skip - the test is not run, for example the configuration does not support
+#          a feature or the file is not a test and is a helper file to another test
+#   verify_skip - skip test when doing a verify run
+#
+# comments: please include bug reference and reason for the entry
+#
+########################################################################################################################
+
+# Some operating systems do not adjust past dates for historical DST settings
+regress/bug_606478:.*(19\d\d|200[0-6]).*, (arm-lnx|mips-lnx|win), diff, expectedfail, Operating system does not adjust past dates for historical DST settings
+# These fail when run on panda boards. Turning them off for all android to avoid unexpected passes when run againnst actual phone devices.
+regress/bug_606478:.*(19\d\d|200[0-6]).*, (arm-android-ssh-), diff, skip, Skip on android because panda boards do not adjust past dates for historical DST settings
+
+as3/AMF/AMFSerializer*.*       , .* ,, exclude , Float not supported.
+as3/Types/Float/.*             , .* ,, exclude , Float not supported.
+as3/Types/Float4/.*            , .* ,, exclude , Float4 not supported.
+as3/Types/Number/e15_7_4_6_1.* , .* ,, exclude , swfversion not supported.
+as3/Types/Number/visibility.*  , .* ,, exclude , api versioning not supported.
+as3/GlobalObject/parseFloat*.* , .* ,, exclude , float not supported.
+
+as3/Array/regress_524122.*, .*,, exclude, -swfversion not supported.
+as3/sampling/.*                , .* ,, exclude , sampling API not supported.
+as3/asc/.*                     , .* ,, exclude , not testing ASC
+as3/Workers/.*                 , .* ,, exclude , workers not supported
+as3/Expressions/e11_2_2_1.* : new operator used to create objects , .*,, exclude, implementation dependent difference
+
