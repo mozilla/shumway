@@ -107,6 +107,12 @@ var as3error = {};
    M("flash.display.Graphics", "GraphicsClass", GraphicsDefinition),
    M("flash.display.SimpleButton", "SimpleButtonClass", SimpleButtonDefinition),
    M("flash.display.MorphShape", "MorphShapeClass", MorphShapeDefinition),
+   M("flash.display.NativeMenu", "MenuClass", NativeMenuDefinition),
+   M("flash.display.NativeMenuItem", "MenuItemClass", NativeMenuItemDefinition),
+   M("flash.display.ContextMenu", "ContextMenuClass", ContextMenuDefinition),
+   M("flash.display.ContextMenuItem", "ContextMenuItemClass", ContextMenuItemDefinition),
+
+
 
    M("flash.filters.BevelFilter", "BevelFilterClass", BevelFilterDefinition),
    M("flash.filters.BitmapFilter", "BitmapFilterClass", BitmapFilterDefinition),
@@ -156,6 +162,9 @@ var as3error = {};
    M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
    M("flash.net.URLStream", "URLStreamClass", URLStreamDefinition),
    M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
+   M("flash.net.ShardObject", "SharedObjectClass", SharedObjectDefinition),
+   M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
+
 
    M("flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
    M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),

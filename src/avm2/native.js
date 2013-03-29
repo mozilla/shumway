@@ -1440,6 +1440,10 @@ var natives = (function () {
       return Runtime.currentDomain().getClass(simpleName);
     }),
 
+    describeTypeJSON: constant(function (o, flags) {
+      notImplemented("describeTypeJSON");
+    }),
+
     original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
   };
 
