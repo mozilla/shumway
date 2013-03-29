@@ -564,7 +564,13 @@ var natives = (function () {
         _forEach: TAp.forEach,
         _map: TAp.map,
         _some: TAp.some,
-        _sort: TAp.sort
+        _sort: TAp.sort,
+        newThisType: function newThisType() {
+          return c.instance();
+        },
+        _spliceHelper: function _spliceHelper(insertPoint, insertCount, deleteCount, args, offset) {
+          somewhatImplemented("_spliceHelper");
+        }
       }
     };
     c.vectorType = type;
