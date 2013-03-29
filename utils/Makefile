@@ -76,6 +76,7 @@ $(TAMARIN_HOME)/configure.py:
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-npexp-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-gcc47-fix.patch
 	cd $(TAMARIN_HOME); patch -p 1 < ../patches/tamarin-test-shumway.patch
+	cp patches/tamarin-acceptance/* $(TAMARIN_HOME)/test/acceptance/
 
 run-tamarin-tests: install-tamarin-tests
 	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log as3.log as3
