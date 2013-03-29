@@ -300,7 +300,7 @@ diff -r 2b38aa82c803 test/util/runtestBase.py
          '''return a generator of the current dir and all parent directories up
              to the test dir root'''
 -        while d != abspath(self.args[0]) and d != '':
-+        while abspath(d) != abspath(self.args[0]) and d != '':
++        while abspath(d) != self.test_harness_dir and d != '':
              yield d
              d = dirname(d)
          yield '.'   # yield the test dir root
