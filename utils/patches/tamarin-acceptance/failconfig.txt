@@ -1499,6 +1499,7 @@ ecma3/String/e15_5_4_6_2_rt.* : var n \= new Number\(1e21\)\; n.indexOf \= Strin
 ecma3/String/e15_5_4_6_2_rt.* : var n \= new Number\(\-Infinity\)\; n.indexOf \= String.prototype.indexOf\; n.indexOf\('\-'\) , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1056 got: ReferenceError: Error #1069
 ecma3/String/e15_5_4_6_2_rt.* : var n \= new Number\(0xFF\)\; n.indexOf \= String.prototype.indexOf\; n.indexOf\('5'\) , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1056 got: ReferenceError: Error #1069
 ecma3/String/e15_5_4_6_2_rt.* : var m \= Math\; m.indexOf \= String.prototype.indexOf\; m.indexOf\( 'Math' \) , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1056 got: ReferenceError: Error #1069
+ecma3/String/e15_5_4_6_2_rt.* : var d \= new Date\(0\)\; d.indexOf \= String.prototype.indexOf\; d.getTimezoneOffset\(\)>0 \? d.indexOf\('31'\) : d.indexOf\('1'\) , .*,, expectedfail, FAILED! expected: 8 got: 9 for UTC timezone
 ecma3/String/e15_5_4_7_2.* : String.prototype.lastIndexOf.length , .*,, expectedfail, FAILED! expected: 2 got: 1
 ecma3/String/e15_5_4_7_2.* : delete String.prototype.lastIndexOf.length\; String.prototype.lastIndexOf.length , .*,, expectedfail, FAILED! expected: 2 got: 1
 ecma3/String/e15_5_4_8_2.* : var s = new String\( thisundefinedisundefinedaundefinedstringundefinedobject \); s.split\(void 0\).length , .*,, expectedfail, FAILED! expected: 5 got: 1
