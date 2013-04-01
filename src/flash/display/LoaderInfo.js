@@ -1,4 +1,8 @@
 var LoaderInfoDefinition = (function () {
+  function dispatchEvent(event) { // (event:Event) -> Boolean
+    notImplemented("LoaderInfo.dispatchEvent");
+  }
+
   return {
     __class__: "flash.display.LoaderInfo",
     initialize: function () {
@@ -159,8 +163,11 @@ var LoaderInfoDefinition = (function () {
         instance: scriptProperties("public", [
           "swfVersion",
           "bytesTotal",
-          "bytesLoaded"
-        ])
+          "bytesLoaded",
+//          "dispatchEvent",
+          "parameters",
+          "uncaughtErrorEvent",
+        ]),
       }
     }
   };
