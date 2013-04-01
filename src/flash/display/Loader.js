@@ -356,7 +356,7 @@ var LoaderDefinition = (function () {
   var style = document.styleSheets[0];
 
   var def = {
-	__class__: 'flash.display.Loader',
+    __class__: 'flash.display.Loader',
 	
     initialize: function () {
       this._contentLoaderInfo = new flash.display.LoaderInfo;
@@ -367,7 +367,6 @@ var LoaderDefinition = (function () {
       this._timeline = [];
       this._previousPromise = null;
     },
-
     _commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
 
@@ -925,41 +924,47 @@ var LoaderDefinition = (function () {
         loader._vmPromise.resolve();
       }
     },
-
-      get contentLoaderInfo() {
-          return this._contentLoaderInfo;
-      },
-
-      close: function () {
-          notImplemented();
-      },
-      load: function (request, context) {
-          this._loadFrom(request.url);
-      },
-      loadBytes: function (bytes, context) {
-          if (!bytes.length)
-              throw ArgumentError();
-
-          this._loadFrom(bytes);
-      },
-      unload: function () {
-          notImplemented();
-      },
-      unloadAndStop: function (gc) {
-          notImplemented();
+    get contentLoaderInfo() {
+        return this._contentLoaderInfo;
+    },
+    close: function () {
+      notImplemented();
+    },
+    load: function (request, context /* = null */) {
+      this._loadFrom(request.url);
+    },
+    loadBytes: function (bytes, context) {
+      if (!bytes.length) {
+        throw ArgumentError();
       }
+      this._loadFrom(bytes);
+    },
+    unload: function () {
+      notImplemented();
+    },
+    unloadAndStop: function (gc) {
+      notImplemented();
+    }
   };
   
   def.__glue__ = {
-	native: {
+    native: {
       instance: {
-          contentLoaderInfo: {
-            get: function () { return this._contentLoaderInfo; }
+        content: {
+          get: function content() { // (void) -> DisplayObject
+            notImplemented("Loader.content");
+            return this._content;
           },
+        },
+        contentLoaderInfo: {
+          get: function () {
+            return this._contentLoaderInfo;
+          }
+        },
         close: function () {
           notImplemented();
         },
-        load: function (request, context /* = null */) {
+        load: function (request, context) {
           this._loadFrom(request.url);
         },
         loadBytes: function (bytes, context) {
@@ -980,9 +985,24 @@ var LoaderDefinition = (function () {
         _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
           this._loadFrom(resolveURI(request.url));
           //TODO: implement
-        }
-      }
-	}
+        },
+        _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
+          notImplemented("Loader._loadBytes");
+        },
+        _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
+          notImplemented("Loader._unload");
+        },
+        _close: function _close() { // (void) -> void
+          notImplemented("Loader._close");
+        },
+        _getUncaughtErrorEvents: function _getUncaughtErrorEvents() { // (void) -> UncaughtErrorEvents
+          notImplemented("Loader._getUncaughtErrorEvents");
+        },
+        _setUncaughtErrorEvents: function _setUncaughtErrorEvents(value) { // (value:UncaughtErrorEvents) -> void
+          notImplemented("Loader._setUncaughtErrorEvents");
+        },
+      },
+    },
   };
 
   return def;

@@ -62,10 +62,6 @@ var InteractiveObjectDefinition = (function () {
         this.dispatchEvent(new Event(Event.class.TAB_ENABLED_CHANGE, false, false));
       }
     },
-    get tabIndex() {
-      return -1;
-    },
-
     requestSoftKeyboard: function () {
       notImplemented();
     }
@@ -77,7 +73,14 @@ var InteractiveObjectDefinition = (function () {
     native: {
       instance: {
         tabEnabled: desc(def, "tabEnabled"),
-        tabIndex: desc(def, "tabIndex"),
+        tabIndex: {
+          get: function tabIndex() { // (void) -> int
+            return this._tabIndex;
+          },
+          set: function tabIndex(index) { // (index:int) -> void
+            this._tabIndex = index;
+          }
+        },
         focusRect: desc(def, "focusRect"),
         mouseEnabled: desc(def, "mouseEnabled"),
         doubleClickEnabled: desc(def, "doubleClickEnabled"),
