@@ -142,6 +142,12 @@ var StageDefinition = (function () {
         stageHeight: desc(def, "stageHeight"),
         stageWidth: desc(def, "stageWidth"),
         frameRate: desc(def, "frameRate"),
+        contentsScaleFactor: {
+          get: function contentsScaleFactor() { // (void) -> Number
+            notImplemented("Stage.contentsScaleFactor");
+            return this._contentsScaleFactor;
+          }
+        },
         requireOwnerPermissions: function () {
           // private undocumented
         }
