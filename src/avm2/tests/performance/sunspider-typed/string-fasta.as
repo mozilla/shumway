@@ -130,13 +130,14 @@ package {
   function runStringFasta():int {
       
       var _sunSpiderStartDate:int = (new Date).getTime();
-  
-      var ret:String;
-  
-      var count:Number = 7;
-      ret = fastaRepeat(2*count*100000, ALU);
-      ret += fastaRandom(3*count*1000, IUB);
-      ret += fastaRandom(5*count*1000, HomoSap);
+
+      for (var i = 0; i < 2; i++) {
+        var ret:String = "";
+        var count:Number = 7;
+        ret = fastaRepeat(2*count*100000, ALU);
+        ret += fastaRandom(3*count*1000, IUB);
+        ret += fastaRandom(5*count*1000, HomoSap);
+      }
   
       var _sunSpiderInterval:int = (new Date).getTime() - _sunSpiderStartDate;
 
