@@ -37,8 +37,14 @@ var URLRequestDefinition = (function () {
     get method() {
       return this._method;
     },
+    set method(method) {
+      this._method = method;
+    },
     get requestHeaders() {
       return this._requestHeaders;
+    },
+    set requestHeaders(requestHeaders) {
+      this._requestHeaders = requestHeaders
     },
     get url() {
       return this._url;
