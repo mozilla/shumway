@@ -749,6 +749,8 @@ var Verifier = (function() {
             ti().trait = trait;
             if (trait.isSlot()) {
               return Type.fromName(trait.typeName, abc.domain).instance();
+            } else if (trait.isGetter()) {
+              return Type.fromName(trait.methodInfo.returnType, abc.domain).instance();
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, abc.domain);
             } else if (trait.isMethod()) {
