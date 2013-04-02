@@ -1,5 +1,6 @@
 var SecurityDomainDefinition = (function () {
   return {
+    // ()
     __class__: "flash.system.SecurityDomain",
     initialize: function () {
     },
@@ -12,8 +13,17 @@ var SecurityDomainDefinition = (function () {
           }
         },
         instance: {
+          ctor_impl: function ctor_impl() { // (void) -> void
+            notImplemented("SecurityDomain.ctor_impl");
+          },
+          domainID: {
+            get: function domainID() { // (void) -> String
+              notImplemented("SecurityDomain.domainID");
+              return this._domainID;
+            }
+          }
         }
-      }
+      },
     }
   };
 }).call(this);
