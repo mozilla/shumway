@@ -74,6 +74,42 @@ var TextFieldDefinition = (function () {
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,
+        textHeight: {
+          get: function textHeight() { // (void) -> Number
+            notImplemented("TextField.textHeight");
+            return this._textHeight;
+          }
+        },
+        autoSize: {
+          get: function autoSize() { // (void) -> String
+            notImplemented("TextField.autoSize");
+            return this._autoSize;
+          },
+          set: function autoSize(value) { // (value:String) -> void
+            notImplemented("TextField.autoSize");
+            this._autoSize = value;
+          }
+        },
+        multiline: {
+          get: function multiline() { // (void) -> Boolean
+            notImplemented("TextField.multiline");
+            return this._multiline;
+          },
+          set: function multiline(value) { // (value:Boolean) -> void
+            notImplemented("TextField.multiline");
+            this._multiline = value;
+          }
+        },
+        textColor: {
+          get: function textColor() { // (void) -> uint
+            notImplemented("TextField.textColor");
+            return this._textColor;
+          },
+          set: function textColor(value) { // (value:uint) -> void
+            notImplemented("TextField.textColor");
+            this._textColor = value;
+          }
+        },
       }
     }
   };
