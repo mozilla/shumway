@@ -26,7 +26,7 @@ function loadMovie(path, reportFrames) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
       }
-      SWF.embed(buffer, document.getElementById("stage"), { onComplete: loaded, onFrame: onFrameCallback });
+      SWF.embed(buffer, document, document.getElementById("stage"), { onComplete: loaded, onFrame: onFrameCallback });
     });
   });
 }

@@ -1,5 +1,5 @@
-SWF.embed = function(file, container, options) {
-  var canvas = document.createElement('canvas');
+SWF.embed = function(file, doc, container, options) {
+  var canvas = doc.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
   var loader = new flash.display.Loader;
   var loaderInfo = loader.contentLoaderInfo;
@@ -19,7 +19,7 @@ SWF.embed = function(file, container, options) {
                                  '-moz-transform-origin: 0% 0%;' +
                                  '-webkit-transform-origin: 0% 0%;' +
                                  'transform-origin: 0% 0%;');
-    canvasHolder = document.createElement('div');
+    canvasHolder = doc.createElement('div');
     canvasHolder.setAttribute('style', 'display: inline-block; overflow: hidden;');
     canvasHolder.appendChild(canvas);
   }
