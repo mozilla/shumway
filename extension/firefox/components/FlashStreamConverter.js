@@ -319,7 +319,11 @@ FlashStreamConverterBase.prototype = {
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
           if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM') continue;
+              paramElement.nodeName != 'PARAM' ||
+              paramElement.getAttribute('name').toLowerCase() != 'flashvars')
+          {
+            continue;
+          }
 
           params[paramElement.getAttribute('name')] = paramElement
                                                       .getAttribute('value');
