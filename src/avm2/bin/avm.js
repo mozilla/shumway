@@ -13,6 +13,7 @@ load(homePath + "lib/DataView.js/DataView.js");
  * Load AVM2 Dependencies
  */
 
+load(homePath + "src/avm2/config.js");
 load(homePath + "src/avm2/util.js");
 
 var options; load(homePath + "src/avm2/options.js");

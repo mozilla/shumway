@@ -1,5 +1,3 @@
-var release = false;
-var compatibility = false;
 
 var inBrowser = typeof console != "undefined";
 

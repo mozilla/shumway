@@ -89,6 +89,7 @@
     <!-- Load AVM2 Dependencies -->
     <script> console.time("Load AVM2 Dependencies"); </script>
 
+    <script src="../../src/avm2/config.js"></script>
     <script src="../../src/avm2/util.js"></script>
     <script src="../../src/avm2/options.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
@@ -231,7 +232,7 @@
         <div class="closeButton"></div>
         <div class="toolbarLabel " style="width: 240px; text-align: left;" id="message">Test</div>
       </div>
-      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; left: auto; right: 0px; width: 300px; font-size: 10px;" id="info">
+      <div class="toolbarInfo" style="visibility:hidden; position: fixed; top: 0px; bottom: 70px; left: auto; right: 0px; width: 300px; font-size: 10px;" id="info">
       </div>
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; right: 320px; width: 200px;" id="traceSymbolsInfo" hidden>
       </div>
