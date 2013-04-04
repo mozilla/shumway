@@ -247,7 +247,6 @@ var LoaderDefinition = (function () {
                 frame.soundStreamBlock = soundStream.decode(tag.data);
               }
               break;
-            case SWF_TAG_CODE_EXPORT_ASSETS:
             case SWF_TAG_CODE_SYMBOL_CLASS:
               var exports = frame.exports;
               if (exports)
