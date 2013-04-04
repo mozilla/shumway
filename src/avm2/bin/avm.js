@@ -38,6 +38,7 @@ var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boole
 var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
+var unsafeMode = shellOptions.register(new Option("u", "unsafe", "boolean", false, "run in unsafe mode"));
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 
@@ -120,7 +121,9 @@ try {
   quit();
 }
 
-var release = releaseMode.value, debug = !release;
+release = releaseMode.value;
+debug = !release;
+compatibility = !unsafeMode.value;
 
 Counter.setEnabled(traceMetrics.value);
 
