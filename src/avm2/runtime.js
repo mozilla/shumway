@@ -138,13 +138,15 @@ function initializeGlobalObject(global) {
       // Save the original method in case |getNative| needs it.
       originals[object.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-      // Patch the native builtin with a surrogate.
-      global[object.name].prototype[originalFunctionName] = function surrogate() {
-        if (this[overrideFunctionName]) {
-          return this[overrideFunctionName]();
-        }
-        return originalFunction.call(this);
-      };
+      if (compatibility) {
+        // Patch the native builtin with a surrogate.
+        global[object.name].prototype[originalFunctionName] = function surrogate() {
+          if (this[overrideFunctionName]) {
+            return this[overrideFunctionName]();
+          }
+          return originalFunction.call(this);
+        };
+      }
     });
   });
 
@@ -1279,7 +1281,7 @@ var Runtime = (function () {
     this.createFunction(classInfo.init, scope).call(cls);
 
     // Seal constant traits in the class object.
-    this.sealConstantTraits(cls, ci.traits);
+    compatibility && this.sealConstantTraits(cls, ci.traits);
 
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.

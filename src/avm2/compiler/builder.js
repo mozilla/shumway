@@ -218,7 +218,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             local = coercer(local);
           } else {
             var type = this.abc.domain.getProperty(parameter.type, true, false);
-            if (type) {
+            if (type && compatibility) {
               local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
             } else {
               // unexpected();
@@ -534,7 +534,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               return coercer(value);
             }
           }
-          return call(globalProperty("coerce"), null, [value, type]);
+          if (compatibility) {
+            return call(globalProperty("coerce"), null, [value, type]);
+          }
+          return value;
         }
 
         function getScopeObject(scope) {
