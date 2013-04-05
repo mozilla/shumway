@@ -300,35 +300,85 @@ function getBitFlags(flags, flag) {
   });
 })();
 
-/**
- * Encoding and decoding a UTF-8 string. Taken from [1].
- *
- * [1] http://stackoverflow.com/questions/1240408/reading-bytes-from-a-javascript-string
- */
 function utf8decode(str) {
-  var bytes = new Int8Array(str.length * 4);
+  var bytes = new Uint8Array(str.length * 4);
   var b = 0;
   for (var i = 0, j = str.length; i < j; i++) {
-    if (str.charCodeAt(i) <= 0x7f) {
-      bytes[b++] = str.charCodeAt(i);
-    } else {
-      var h = encodeURIComponent(str.charAt(i)).substr(1).split("%");
-      for (var k = 0, l = h.length; k < l; k++) {
-        bytes[b++] = parseInt(h[k], 16);
+    var code = str.charCodeAt(i);
+    if (code <= 0x7f) {
+      bytes[b++] = code;
+      continue;
+    }
+
+    if (0xD800 <= code && code <= 0xDBFF) {
+      var codeLow = str.charCodeAt(i + 1);
+      if (0xDC00 <= codeLow && codeLow <= 0xDFFF) {
+        // convert only when both high and low surrogates are present
+        code = ((code & 0x3FF) << 10) + (codeLow & 0x3FF) + 0x10000;
+        ++i;
       }
+    }
+
+    if ((code & 0xFFE00000) !== 0) {
+      bytes[b++] = 0xF8 | ((code >>> 24) & 0x03);
+      bytes[b++] = 0x80 | ((code >>> 18) & 0x3F);
+      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
+      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
+      bytes[b++] = 0x80 | (code & 0x3F);
+    } else if ((code & 0xFFFF0000) !== 0) {
+      bytes[b++] = 0xF0 | ((code >>> 18) & 0x07);
+      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
+      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
+      bytes[b++] = 0x80 | (code & 0x3F);
+    } else if ((code & 0xFFFFF800) !== 0) {
+      bytes[b++] = 0xE0 | ((code >>> 12) & 0x0F);
+      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
+      bytes[b++] = 0x80 | (code & 0x3F);
+    } else {
+      bytes[b++] = 0xC0 | ((code >>> 6) & 0x1F);
+      bytes[b++] = 0x80 | (code & 0x3F);
     }
   }
   return bytes.subarray(0, b);
 }
 
 function utf8encode(bytes) {
-  var str = "";
-  var fcc = String.fromCharCode;
-  for (var i = 0, j = bytes.length; i < j; i++)  {
-    var b = bytes[i];
-    str += b <= 0x7f ? b === 0x25 ? "%25" : fcc(b) : "%" + b.toString(16).toUpperCase();
+  var j = 0, str = "";
+  while (j < bytes.length) {
+    var b1 = bytes[j++] & 0xFF;
+    if (b1 <= 0x7F) {
+      str += String.fromCharCode(b1);
+    } else {
+      var currentPrefix = 0xC0;
+      var validBits = 5;
+      do {
+        var mask = (currentPrefix >> 1) | 0x80;
+        if((b1 & mask) === currentPrefix) break;
+        currentPrefix = (currentPrefix >> 1) | 0x80;
+        --validBits;
+      } while (validBits >= 0);
+
+      if (validBits <= 0) {
+        throw "Invalid UTF8 character";
+      }
+      var code = (b1 & ((1 << validBits) - 1));
+      for (var i = 5; i >= validBits; --i) {
+        var bi = bytes[j++];
+        if ((bi & 0xC0) != 0x80) {
+          throw "Invalid UTF8 character sequence";
+        }
+        code = (code << 6) | (bi & 0x3F);
+      }
+
+      if (code >= 0x10000) {
+        str += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
+          0xD800, (code & 0x3FF) | 0xDC00);
+      } else {
+        str += String.fromCharCode(code);
+      }
+    }
   }
-  return decodeURIComponent(str);
+  return str;
 }
 
 function getFlags(value, flags) {
