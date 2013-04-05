@@ -2,6 +2,12 @@ var SharedObjectDefinition = (function () {
 
   var _defaultObjectEncoding = 3;
 
+  var sharedObjects = Object.create(null);
+
+  function getAbsolutePath(path, name) {
+    return path + "/" + name;
+  }
+
   return {
     // ()
     __class__: "flash.net.SharedObject",
@@ -18,7 +24,8 @@ var SharedObjectDefinition = (function () {
             notImplemented("SharedObject.getDiskUsage");
           },
           getLocal: function getLocal(name, localPath, secure) { // (name:String, localPath:String = null, secure:Boolean = false) -> SharedObject
-            notImplemented("SharedObject.getLocal");
+            var path = getAbsolutePath(name, localPath);
+            return sharedObjects[path] || (sharedObjects[path] = new flash.net.SharedObject());
           },
           getRemote: function getRemote(name, remotePath, persistence, secure) { // (name:String, remotePath:String = null, persistence:Object = false, secure:Boolean = false) -> SharedObject
             notImplemented("SharedObject.getRemote");
