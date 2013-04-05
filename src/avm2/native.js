@@ -967,6 +967,8 @@ var natives = (function () {
     /* The initial size of the backing, in bytes. Doubled every OOM. */
     var INITIAL_SIZE = 128;
 
+    var defaultObjectEncoding = 3;
+
     function ByteArray() {
       this.a = new ArrayBuffer(INITIAL_SIZE);
       this.length = 0;
@@ -974,6 +976,7 @@ var natives = (function () {
       this.cacheViews();
       this.nativele = new Int8Array(new Int32Array([]).buffer)[0] === 1;
       this.le = this.nativele;
+      this.objectEncoding = defaultObjectEncoding;
     }
 
     function throwEOFError() {
@@ -1118,6 +1121,7 @@ var natives = (function () {
     BAp.readShort = function readShort() { return get(this, 'getInt16', 2); };
     BAp.readUnsignedInt = function readUnsignedInt() { return get(this, 'getUint32', 4); };
     BAp.readUnsignedShort = function readUnsignedShort() { return get(this, 'getUint16', 2); };
+    BAp.readObject = function readObject() { return AMFUtils[this.objectEncoding].read(this); };
 
     BAp.writeDouble = function writeDouble(v) { set(this, 'setFloat64', 8, v); };
     BAp.writeFloat = function writeFloat(v) { set(this, 'setFloat32', 4, v); };
@@ -1125,6 +1129,7 @@ var natives = (function () {
     BAp.writeShort = function writeShort(v) { set(this, 'setInt16', 2, v); };
     BAp.writeUnsignedInt = function writeUnsignedInt(v) { set(this, 'setUint32', 4, v); };
     BAp.writeUnsignedShort = function writeUnsignedShort(v) { set(this, 'setUint16', 2, v); };
+    BAp.writeObject = function readObject(v) { return AMFUtils[this.objectEncoding].write(this, v); };
 
     BAp.readUTF = function readUTF() {
       return this.readUTFBytes(this.readShort());
@@ -1182,6 +1187,11 @@ var natives = (function () {
           set: function (e) { this.le = e === "littleEndian"; }
         },
 
+        objectEncoding: {
+          get: function () { return this.objectEncoding; },
+          set: function (v) { this.objectEncoding = v; }
+        },
+
         readBytes: BAp.readBytes,
         writeBytes: BAp.writeBytes,
         writeBoolean: BAp.writeBoolean,
@@ -1193,6 +1203,7 @@ var natives = (function () {
         writeMultiByte: BAp.writeMultiByte,
         writeUTF: BAp.writeUTF,
         writeUTFBytes: BAp.writeUTFBytes,
+        writeObject: BAp.writeObject,
         readBoolean: BAp.readBoolean,
         readByte: BAp.readByte,
         readUnsignedByte: BAp.readUnsignedByte,
@@ -1205,7 +1216,14 @@ var natives = (function () {
         readMultiByte: BAp.readMultiByte,
         readUTF: BAp.readUTF,
         readUTFBytes: BAp.readUTFBytes,
+        readObject: BAp.readObject,
         toString: BAp.toString
+      },
+      static: {
+        defaultObjectEncoding: {
+          get: function () { return defaultObjectEncoding; },
+          set: function (e) { defaultObjectEncoding = e; }
+        }
       }
     };
 

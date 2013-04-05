@@ -66,6 +66,7 @@ load($SHUMWAY_ROOT + "src/avm2/compiler/c4/backend.js");
 load($SHUMWAY_ROOT + "src/avm2/domain.js");
 load($SHUMWAY_ROOT + "src/avm2/runtime.js");
 load($SHUMWAY_ROOT + "src/avm2/xml.js");
+load($SHUMWAY_ROOT + "src/avm2/amf.js");
 load($SHUMWAY_ROOT + "src/avm2/native.js");
 load($SHUMWAY_ROOT + "src/avm2/disassembler.js");
 load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
