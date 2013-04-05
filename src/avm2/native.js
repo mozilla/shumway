@@ -1231,6 +1231,18 @@ var natives = (function () {
   }
 
   /**
+   * Proxy.as
+   */
+  function ProxyClass(runtime, scope, instance, baseClass) {
+    function Proxy() {
+      somewhatImplemented("Proxy");
+    }
+    var c = new runtime.domain.system.Class("Proxy", Proxy, C(Proxy));
+    c.extendBuiltin(baseClass);
+    return c;
+  }
+
+    /**
    * ApplicationDomain.as
    */
   function ApplicationDomainClass(runtime, scope, instance, baseClass) {
@@ -1366,6 +1378,7 @@ var natives = (function () {
     UIntVectorClass: UIntVectorClass,
     DoubleVectorClass: DoubleVectorClass,
     ByteArrayClass: ByteArrayClass,
+    ProxyClass: ProxyClass,
 
     ErrorClass: makeErrorClass("Error"),
     DefinitionErrorClass: makeErrorClass("DefinitionError"),
