@@ -73,6 +73,14 @@ function initializeGlobalObject(global) {
 
   function getEnumerationKeys(obj) {
     var keys = [];
+
+    var boxedValue = obj.valueOf();
+
+    // TODO: This is probably broken if the object has overwritten |valueOf|.
+    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
+      return [];
+    }
+
     // TODO: Implement fast path for Array objects.
     for (var key in obj) {
       if (isNumeric(key)) {
@@ -300,7 +308,10 @@ function nextValue(obj, index) {
  * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
  */
 function hasNext2(obj, index) {
-  release || assert(obj);
+  if (obj === null || obj === undefined) {
+    return {index: 0, object: null};
+  }
+  obj = Object(obj);
   release || assert(index >= 0);
 
   /**
