@@ -54,11 +54,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
              this.scope.length === other.scope.length &&
              this.local.length === other.local.length;
     };
-    constructor.prototype.makePhis = function makePhis(control) {
+    constructor.prototype.makeLoopPhis = function makeLoopPhis(control) {
       var s = new State();
       assert (control);
       function makePhi(x) {
-        return new Phi(control, x);
+        var phi = new Phi(control, x);
+        phi.isLoop = true;
+        return phi;
       }
       s.index = this.index;
       s.local = this.local.map(makePhi);
@@ -67,6 +69,24 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       s.saved = this.saved;
       s.store = makePhi(this.store);
       return s;
+    };
+    constructor.prototype.optimize = function optimize() {
+      function optimize(x) {
+        if (x instanceof Phi && !x.isLoop) {
+          var args = x.arguments.unique();
+          if (args.length === 1) {
+            x.seal();
+            Counter.count("Builder: OptimizedPhi");
+            return args[0];
+          }
+        }
+        return x;
+      }
+      this.local = this.local.map(optimize);
+      this.stack = this.stack.map(optimize);
+      this.scope = this.scope.map(optimize);
+      this.saved = optimize(this.saved);
+      this.store = optimize(this.store);
     };
 
     function mergeValue(control, a, b) {
@@ -218,7 +238,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             local = coercer(local);
           } else {
             var type = this.abc.domain.getProperty(parameter.type, true, false);
-            if (type) {
+            if (type && compatibility) {
               local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
             } else {
               // unexpected();
@@ -360,7 +380,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             if (target.loop) {
               traceBuilder && writer.writeLn("Adding PHIs to loop region.");
             }
-            region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
+            region.entryState = target.loop ? stop.state.makeLoopPhis(region) : stop.state.clone(target.position);
             traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target});
           }
@@ -377,7 +397,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
 
       function buildNodes(region, block, state) {
         assert (region && block && state);
-
+        state.optimize();
         var typeState = block.entryState;
         if (typeState) {
           traceBuilder && writer.writeLn("Type State: " + typeState);
@@ -534,7 +554,10 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               return coercer(value);
             }
           }
-          return call(globalProperty("coerce"), null, [value, type]);
+          if (compatibility) {
+            return call(globalProperty("coerce"), null, [value, type]);
+          }
+          return value;
         }
 
         function getScopeObject(scope) {

@@ -1,4 +1,3 @@
-var release = false;
 
 var inBrowser = typeof console != "undefined";
 

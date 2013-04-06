@@ -60,7 +60,7 @@ package {
       a1 = a2 = a3 = a4 = a5 = a6 = a7 = a8 = a9 = 0.0;
       var twothirds:Number = 2.0/3.0;
       var alt:Number = -1.0;
-      var k2:Number = k3 = sk = ck= 0.0;
+      var k2:Number = 0.0, k3:Number = 0.0, sk:Number = 0.0, ck:Number = 0.0;
       
       for (var k:int = 1; k <= n; k++){
           k2 = k*k;
@@ -102,17 +102,21 @@ package {
   }
 
 
+  for (var i = 0; i < 5000; i++) {
+    verifyTest();
+  }
+
   if(verifyTest()) {
     print("PASSED");
   } else {
     print("FAILED");
   }
 
-/*
-  if(verifyTest()) {
-    print("metric time " + runMathPartialSums());
-  } else {
-    print("Test validation failed.");
-  }
-*/ 
+//
+//  if(verifyTest()) {
+//    print("metric time " + runMathPartialSums());
+//  } else {
+//    print("Test validation failed.");
+//  }
+
 }

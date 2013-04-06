@@ -1366,6 +1366,7 @@ var natives = (function () {
     UIntVectorClass: UIntVectorClass,
     DoubleVectorClass: DoubleVectorClass,
     ByteArrayClass: ByteArrayClass,
+    ProxyClass: ProxyClass,
 
     ErrorClass: makeErrorClass("Error"),
     DefinitionErrorClass: makeErrorClass("DefinitionError"),

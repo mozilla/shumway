@@ -13,6 +13,7 @@ load(homePath + "lib/DataView.js/DataView.js");
  * Load AVM2 Dependencies
  */
 
+load(homePath + "src/avm2/config.js");
 load(homePath + "src/avm2/util.js");
 
 var options; load(homePath + "src/avm2/options.js");
@@ -37,6 +38,7 @@ var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boole
 var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", false, "prints vm information in JSON format"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
+var unsafeMode = shellOptions.register(new Option("u", "unsafe", "boolean", false, "run in unsafe mode"));
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 
@@ -79,6 +81,7 @@ load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
+load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/vm.js");
 Timer.stop();
@@ -119,7 +122,9 @@ try {
   quit();
 }
 
-var release = releaseMode.value, debug = !release;
+release = releaseMode.value;
+debug = !release;
+compatibility = !unsafeMode.value;
 
 Counter.setEnabled(traceMetrics.value);
 

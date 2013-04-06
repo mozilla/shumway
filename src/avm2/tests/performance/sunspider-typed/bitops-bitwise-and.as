@@ -50,7 +50,7 @@
 package {
         function runBitopsBitwiseAnd():int {
           var bitwiseAndValue:int = 4294967296;
-          var maxI: int = 600000 * 1000;
+          var maxI: int = 60000 * 1000;
           for (var i:int = 0; i < maxI; i++)
             bitwiseAndValue = bitwiseAndValue & i;
           return bitwiseAndValue;
@@ -59,6 +59,10 @@ package {
             var start:Number = new Date();
             var res:int = runBitopsBitwiseAnd();
             var totaltime:Number = new Date() - start;
+
+        for (var i = 0; i < 2; i++) {
+          // runBitopsBitwiseAnd();
+        }
 
         if (res==0)
           print("PASSED res=" + res);

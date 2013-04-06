@@ -47,13 +47,18 @@ package {
     
     
         var start:Number = new Date();
-    
+
     for ( var i:int = 3; i <= 6 /*7*/; i++ ) {
         results['ack'+i]=ack(3,i);
         results['fib'+(17+i)]=fib(17.0+i);
         results['tak'+i]=tak(3*i+3,2*i+2,i+1);
     }
-    
+
+    for (var k = 0; k < 10; k++) {
+      ack(3,k);
+      fib(17.0+k);
+      tak(3*k+3,2*k+2,k+1);
+    }
         var totaltime:Number = new Date() - start;
     
 

@@ -61,6 +61,10 @@ var start=new Date();
 var res=sieve();
 var totaltime=new Date()-start;
 
+for (var i = 0; i < 100; i++) {
+  sieve();
+}
+
 if (res==2488465)
   print("PASSED res=" + res);
 else

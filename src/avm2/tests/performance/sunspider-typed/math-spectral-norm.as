@@ -90,7 +90,10 @@ package {
 
   
   function verifyTest():Boolean {
-    var result:Number = spectralnorm(10);
+    for (var i = 0; i < 10000; i++) {
+      var result:Number = spectralnorm(10);
+    }
+    print(result);
     var expectedResult:Number = 1.2718440192507248;
     if (result !== expectedResult) {
       print('Test verification failed. spectralnorm(10):  Expected: '+expectedResult+' Got: '+result);
@@ -99,7 +102,7 @@ package {
     return true;
   }
 
-  print("PASSED");
+  print("HERE");
   if (verifyTest()) {
     print("PASSED");
   } else {

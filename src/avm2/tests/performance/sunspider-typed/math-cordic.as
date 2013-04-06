@@ -128,6 +128,10 @@ package {
     return _sunSpiderInterval;
   }
 
+  for (var i = 0; i < 5000000; i++) {
+    cordicsincos();
+  }
+
   if (Math.abs(cordicsincos() - 1834995.3515519998) < 0.00001) {
     print("PASSED ");
   } else {

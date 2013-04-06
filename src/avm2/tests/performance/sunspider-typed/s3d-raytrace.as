@@ -489,7 +489,6 @@ package {
   }
 
   function run3dRaytrace():int {
-    
     var _sunSpiderStartDate:int = (new Date).getTime();
     var pixels:Array = raytraceScene();
     var testOutput:String = arrayToCanvasCommands(pixels);
@@ -514,6 +513,8 @@ package {
     */
   }
 
-  run3dRaytrace();
+  for (var i = 0; i < 30; i++) {
+    run3dRaytrace();
+  }
 
 }

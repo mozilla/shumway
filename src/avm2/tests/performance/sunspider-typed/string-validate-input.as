@@ -114,7 +114,9 @@ package {
   function runStringValidateInput():int {
     
         var _sunSpiderStartDate:int = (new Date).getTime();
-        doTest();
+        for (var i = 0; i < 50; i++) {
+          doTest();
+        }
         var _sunSpiderInterval:int = (new Date).getTime() - _sunSpiderStartDate;
 
     // verify test output - nothing concrete to verify, so make sure output length is correct.

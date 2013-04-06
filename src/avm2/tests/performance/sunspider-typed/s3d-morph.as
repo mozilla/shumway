@@ -75,6 +75,8 @@ package {
   */
   }
 
-run3dMorph();
+for (var i = 0; i < 30; i++) {
+  run3dMorph();
+}
 
 }

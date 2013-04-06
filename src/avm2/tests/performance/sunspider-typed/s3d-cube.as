@@ -436,5 +436,7 @@ package {
     */
   }
 
+for (var i = 0; i < 50; i++) {
 run3dCube();
+}
 

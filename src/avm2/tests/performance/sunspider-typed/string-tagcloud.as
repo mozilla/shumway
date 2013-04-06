@@ -266,10 +266,13 @@ package {
   var tagcloud = makeTagCloud(tagInfo);
   tagInfo = null;
 
+    runStringTagCloud();
 
   var _sunSpiderInterval = (new Date).getTime() - _sunSpiderStartDate;
   return _sunSpiderInterval;
   }
+
+  runStringTagCloud();
 
   print("PASSED");
 

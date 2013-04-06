@@ -299,6 +299,33 @@ var SourceTracer = (function () {
           str += " " + trait.name.getName();
           str += "(" + getSignature(mi) + ")";
           str += mi.returnType ? ":" + mi.returnType.getName() : "";
+
+          if (true) {
+            var className;
+            var prefix = "";
+            if (trait.holder instanceof ClassInfo) {
+              className = trait.holder.instanceInfo.name;
+              if (className.namespaces[0].originalURI) {
+                prefix += className.namespaces[0].originalURI + "::";
+              }
+              prefix += className.getName();
+              prefix += "$/";
+            } else if (trait.holder instanceof InstanceInfo) {
+              className = trait.holder.name;
+              if (className.namespaces[0].originalURI) {
+                prefix += className.namespaces[0].originalURI + "::";
+              }
+              prefix += className.getName();
+              prefix += "/";
+            } else {
+              prefix = "global/";
+            }
+            var getSet = trait.isGetter() ? "get " : (trait.isSetter() ? "set " : "");
+            if (!mi.isNative()) {
+              print("XXX: " + prefix + getSet + trait.name.getName() + " ()");
+            }
+          }
+
           if (mi.isNative()) {
             writer.writeLn(str + ";");
           } else {

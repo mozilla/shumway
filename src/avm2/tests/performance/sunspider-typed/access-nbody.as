@@ -170,7 +170,7 @@ package {
         function runAccessNbody():Number {
                 var res:Number;
 
-                for ( var n:int = 3; n <= 24 * 4; n *= 2 ) {
+                for ( var n:int = 3; n <= 24 * 4 * 128 * 2; n *= 2 ) {
                         var bodies:NBodySystem = new NBodySystem();
                         var max:Number = n * 100;
 

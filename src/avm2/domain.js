@@ -98,7 +98,7 @@ var Domain = (function () {
         }
 
         if (!callable) {
-          callable = Domain.passthroughCallable(instance);
+          callable = Domain.coerceCallable(this);
         } else if (callable === Domain.coerceCallable) {
           callable = Domain.coerceCallable(this);
         }
