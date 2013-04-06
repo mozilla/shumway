@@ -1182,6 +1182,45 @@ var Runtime = (function () {
       }
     }
 
+    if (instance) {
+      this.applyProtectedBindings(instance.prototype, cls);
+      this.applyInterfaceBindings(instance.prototype, cls);
+    }
+
+    // Run the static initializer.
+    this.createFunction(classInfo.init, scope).call(cls);
+
+    // Seal constant traits in the class object.
+    compatibility && this.sealConstantTraits(cls, ci.traits);
+
+    // TODO: Seal constant traits in the instance object. This should be done after
+    // the instance constructor has executed.
+
+    if (traceClasses.value) {
+      domain.loadedClasses.push(cls);
+      domain.traceLoadedClasses();
+    }
+
+    return cls;
+  };
+
+  runtime.prototype.createInterface = function createInterface(classInfo) {
+    var ii = classInfo.instanceInfo;
+    release || assert(ii.isInterface());
+    if (traceExecution.value) {
+      var str = "Creating interface " + ii.name;
+      if (ii.interfaces.length) {
+        str += " implements " + ii.interfaces.map(function (name) {
+          return name.getName();
+        }).join(", ");
+      }
+      print(str);
+    }
+    return new Interface(classInfo);
+  };
+
+  runtime.prototype.applyProtectedBindings = function applyProtectedBindings(obj, cls) {
+
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
     //
     // class A {
@@ -1207,56 +1246,54 @@ var Runtime = (function () {
     // Then we need a binding from protected$A$foo -> protected$C$foo, and
     // protected$B$foo -> protected$C$foo.
 
-    function applyProtectedTraits(cls) {
-      var map = Object.create(null);
+    var map = Object.create(null);
 
-      // Walks up the inheritance hierarchy and collects the last defining namespace for each
-      // protected member as well as all the protected namespaces from the first definition.
-      (function gather(cls) {
-        if (cls.baseClass) {
-          gather(cls.baseClass);
-        }
-        var ii = cls.classInfo.instanceInfo;
-        for (var i = 0; i < ii.traits.length; i++) {
-          var trait = ii.traits[i];
-          if (trait.isProtected()) {
-            var name = trait.name.getName();
-            if (!map[name]) {
-              map[name] = {definingNamespace: ii.protectedNs, namespaces: [], trait: trait};
-            }
-            map[name].definingNamespace = ii.protectedNs;
+    // Walks up the inheritance hierarchy and collects the last defining namespace for each
+    // protected member as well as all the protected namespaces from the first definition.
+    (function gather(cls) {
+      if (cls.baseClass) {
+        gather(cls.baseClass);
+      }
+      var ii = cls.classInfo.instanceInfo;
+      for (var i = 0; i < ii.traits.length; i++) {
+        var trait = ii.traits[i];
+        if (trait.isProtected()) {
+          var name = trait.name.getName();
+          if (!map[name]) {
+            map[name] = {definingNamespace: ii.protectedNs, namespaces: [], trait: trait};
           }
+          map[name].definingNamespace = ii.protectedNs;
         }
-        for (var name in map) {
-          map[name].namespaces.push(ii.protectedNs);
-        }
-      })(cls);
-
-      var openMethods = instance.prototype[VM_OPEN_METHODS];
-      var vmBindings = instance.prototype[VM_BINDINGS];
+      }
       for (var name in map) {
-        var definingNamespace = map[name].definingNamespace;
-        var protectedQn = Multiname.getQualifiedName(new Multiname([definingNamespace], name));
-        var namespaces = map[name].namespaces;
-        var trait = map[name].trait;
-        for (var i = 0; i < namespaces.length; i++) {
-          var qn = Multiname.getQualifiedName(new Multiname([namespaces[i]], name));
-          if (qn !== protectedQn) {
-            Counter.count("Protected Aliases");
-            defineNonEnumerableGetter(instance.prototype, qn, makeForwardingGetter(protectedQn));
-            defineNonEnumerableSetter(instance.prototype, qn, makeForwardingSetter(protectedQn));
-            vmBindings.push(qn);
-            if (trait.isMethod()) {
-              openMethods[qn] = openMethods[protectedQn];
-            }
+        map[name].namespaces.push(ii.protectedNs);
+      }
+    })(cls);
+
+    var openMethods = obj[VM_OPEN_METHODS];
+    var vmBindings = obj[VM_BINDINGS];
+    for (var name in map) {
+      var definingNamespace = map[name].definingNamespace;
+      var protectedQn = Multiname.getQualifiedName(new Multiname([definingNamespace], name));
+      var namespaces = map[name].namespaces;
+      var trait = map[name].trait;
+      for (var i = 0; i < namespaces.length; i++) {
+        var qn = Multiname.getQualifiedName(new Multiname([namespaces[i]], name));
+        if (qn !== protectedQn) {
+          Counter.count("Protected Aliases");
+          defineNonEnumerableGetter(obj, qn, makeForwardingGetter(protectedQn));
+          defineNonEnumerableSetter(obj, qn, makeForwardingSetter(protectedQn));
+          vmBindings.push(qn);
+          if (trait.isMethod()) {
+            openMethods[qn] = openMethods[protectedQn];
           }
         }
       }
     }
+  };
 
-    if (instance) {
-      applyProtectedTraits(cls);
-    }
+  runtime.prototype.applyInterfaceBindings = function applyInterfaceBindings(obj, cls) {
+    var domain = this.domain;
 
     cls.implementedInterfaces = [];
 
@@ -1296,7 +1333,6 @@ var Runtime = (function () {
         cls.implementedInterfaces.push(interface);
         applyInterfaceTraits(ii.interfaces);
 
-        var bindings = instance.prototype;
         var interfaceTraits = ii.traits;
         for (var k = 0, l = interfaceTraits.length; k < l; k++) {
           var interfaceTrait = interfaceTraits[k];
@@ -1313,47 +1349,15 @@ var Runtime = (function () {
             }
           }(interfaceTraitBindingQn);
           Counter.count("Interface Aliases");
-          defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
+          defineNonEnumerableGetter(obj, interfaceTraitQn, getter);
         }
       }
     }
     // Apply traits of all interfaces along the inheritance chain.
-    var tmp = cls;
-    while (tmp) {
-      applyInterfaceTraits(tmp.classInfo.instanceInfo.interfaces);
-      tmp = tmp.baseClass;
+    while (cls) {
+      applyInterfaceTraits(cls.classInfo.instanceInfo.interfaces);
+      cls = cls.baseClass;
     }
-
-    // Run the static initializer.
-    this.createFunction(classInfo.init, scope).call(cls);
-
-    // Seal constant traits in the class object.
-    compatibility && this.sealConstantTraits(cls, ci.traits);
-
-    // TODO: Seal constant traits in the instance object. This should be done after
-    // the instance constructor has executed.
-
-    if (traceClasses.value) {
-      domain.loadedClasses.push(cls);
-      domain.traceLoadedClasses();
-    }
-
-    return cls;
-  };
-
-  runtime.prototype.createInterface = function createInterface(classInfo) {
-    var ii = classInfo.instanceInfo;
-    release || assert(ii.isInterface());
-    if (traceExecution.value) {
-      var str = "Creating interface " + ii.name;
-      if (ii.interfaces.length) {
-        str += " implements " + ii.interfaces.map(function (name) {
-          return name.getName();
-        }).join(", ");
-      }
-      print(str);
-    }
-    return new Interface(classInfo);
   };
 
   /**
