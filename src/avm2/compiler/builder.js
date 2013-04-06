@@ -1121,7 +1121,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
                 var key = pop();
                 assert (isConstant(key) && isString(key.value));
                 key = constant(Multiname.getPublicQualifiedName(key.value));
-                properties.unshift(new KeyValuePair(key, value));
+                properties.push(new KeyValuePair(key, value));
               }
               push(new NewObject(properties));
               break;

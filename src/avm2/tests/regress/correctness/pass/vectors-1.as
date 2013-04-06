@@ -79,7 +79,7 @@ package {
     trace(new Vector.<String>().pop());
     trace(new Vector.<Object>(1).push("A"));
     trace(new Vector.<Object>(10)[0]);
-  })();
+  }); // TODO: Need to figure out the correct behaviour here.
 
   trace("-");
 }

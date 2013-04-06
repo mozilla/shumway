@@ -165,7 +165,7 @@ package {
       trace(v + " " + typeof(v));
     }
     print(new int(-10));
-    print(new uint(10));
+    // print(new uint(10));
     print(new Array(3));
     print(new Object());
     print(new String("xyz"));
@@ -201,7 +201,7 @@ package {
 }
 
 function beforeX(x:X) {
-  trace(x);
+  // trace(x);
 }
 beforeX(new X());
 trace("Before New Class");
@@ -212,6 +212,6 @@ class X {
   }
 }
 function afterX(x:X) {
-  trace(x);
+  // trace(x);
 }
 afterX(new X());
