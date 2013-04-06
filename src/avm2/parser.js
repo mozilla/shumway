@@ -327,7 +327,7 @@ var ShumwayNamespace = (function () {
       }
     } else if (this.isUnique()) {
       // Make a psuedo unique id by concatenating current milliseconds to original uri
-      this.uri = String(this.uri+Date.now());
+      this.uri = String(this.uri + Date.now());
     }
     this.uri = mangleNamespaceString(this.uri);
     release || assert(kinds[this.kind]);
@@ -341,22 +341,17 @@ var ShumwayNamespace = (function () {
     return str;
   }
 
-  function mangleNamespaceString(strIn) {
+  var perfectNamespaceHash = Object.create(null);
+  var perfectNamespaceHashCount = 0;
+
+  function mangleNamespaceString(str) {
     if (!release) {
-      return escapeString(strIn);
+      return escapeString(str);
     }
-    var buf = str2ab(strIn);
-    var strOut = base64ArrayBuffer(buf).replace(/=/g, "");  // Erase padding
-    return strOut;
-    
-    function str2ab(str) {
-      var buf = new ArrayBuffer(str.length);
-      var bufView = new Uint8Array(buf);
-      for (var i=0, strLen=str.length; i<strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-      }
-      return buf;
+    if (str === "") {
+      return "";
     }
+    return perfectNamespaceHash[str] || (perfectNamespaceHash[str] = "N" + perfectNamespaceHashCount++);
   }
 
   namespace.kindFromString = function kindFromString(str) {
