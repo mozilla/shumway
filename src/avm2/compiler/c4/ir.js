@@ -278,12 +278,17 @@
       assert (control instanceof Region);
       this.control = control;
       this.arguments = value ? [value] : [];
+      this.sealed = false;
     }
     phi.prototype = extend(Value, "Phi");
+    phi.prototype.seal = function seal() {
+      this.sealed = true;
+    };
     phi.prototype.pushValue = function pushValue(x) {
       assert (isValue(x));
+      assert (!this.sealed);
       this.arguments.push(x);
-    }
+    };
     return phi;
   })();
 

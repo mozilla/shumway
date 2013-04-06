@@ -31,7 +31,7 @@ package {
 
   function sieve():int {
       var res:int;
-      for (var i:int = 1; i <= 9; i++ ) {
+      for (var i:int = 1; i <= 12; i++ ) {
           var m:int = (1<<i)*10000;
           var flags:Array = new Array(m+1);
           res=nsieve(m, flags);
@@ -45,9 +45,9 @@ package {
   var totaltime:Number = new Date() - start;
 
   print("sieve()="+res);
-  if (res==356244) {
+  if (res==2488465) {
       print("PASSED res="+res);
   } else {
-      print("FAILED sieve() expecting 356244 got "+res);
+      print("FAILED sieve() expecting 2488465 got "+res);
   }
 }

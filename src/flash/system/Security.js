@@ -4,12 +4,14 @@ var SecurityDefinition = (function () {
     __class__: "flash.system.Security",
     initialize: function () {
     },
+
     __glue__: {
       native: {
         static: {
           allowDomain: function allowDomain() {
-            // (void) -> void
-            notImplemented("Security.allowDomain");
+            // (...) -> void
+            // notImplemented("Security.allowDomain");
+            somewhatImplemented("Security.allowDomain [\"" + Array.prototype.join.call(arguments, "\", \"") + "\"]");
           },
           allowInsecureDomain: function allowInsecureDomain() {
             // (void) -> void
@@ -47,7 +49,7 @@ var SecurityDefinition = (function () {
           },
           sandboxType: {
             get: function () {
-              notImplemented("Security.sandboxType");
+              somewhatImplemented("Security.sandboxType");
               return "remote";
             }
           },
@@ -57,10 +59,8 @@ var SecurityDefinition = (function () {
               notImplemented("Security.pageDomain");
             }
           }
-        },
-        instance: {
         }
-      },
+      }
     }
   };
 }).call(this);

@@ -46,6 +46,26 @@ var PARAMETER_PREFIX = "p";
 var $M = [];
 
 /**
+ * This is used to keep track if we're in a runtime context. Proxies need to know
+ * if a proxied operation is triggered by AS3 code or VM code.
+ */
+
+var RUNTIME_ENTER_LEAVE_STACK = [false];
+
+function enter(runtime) {
+  RUNTIME_ENTER_LEAVE_STACK.push(runtime);
+}
+
+function leave(runtime) {
+  var top = RUNTIME_ENTER_LEAVE_STACK.pop();
+  assert (top === runtime);
+}
+
+function inRuntime() {
+  return RUNTIME_ENTER_LEAVE_STACK.top();
+}
+
+/**
  * To embed object references in compiled code we index into globally accessible constant table [$C].
  * This table maintains an unique set of object references, each of which holds its own position in
  * the constant table, thus providing for fast lookup. We can also define constants in the JS global
@@ -73,6 +93,14 @@ function initializeGlobalObject(global) {
 
   function getEnumerationKeys(obj) {
     var keys = [];
+
+    var boxedValue = obj.valueOf();
+
+    // TODO: This is probably broken if the object has overwritten |valueOf|.
+    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
+      return [];
+    }
+
     // TODO: Implement fast path for Array objects.
     for (var key in obj) {
       if (isNumeric(key)) {
@@ -138,13 +166,15 @@ function initializeGlobalObject(global) {
       // Save the original method in case |getNative| needs it.
       originals[object.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-      // Patch the native builtin with a surrogate.
-      global[object.name].prototype[originalFunctionName] = function surrogate() {
-        if (this[overrideFunctionName]) {
-          return this[overrideFunctionName]();
-        }
-        return originalFunction.call(this);
-      };
+      if (compatibility) {
+        // Patch the native builtin with a surrogate.
+        global[object.name].prototype[originalFunctionName] = function surrogate() {
+          if (this[overrideFunctionName]) {
+            return this[overrideFunctionName]();
+          }
+          return originalFunction.call(this);
+        };
+      }
     });
   });
 
@@ -298,7 +328,10 @@ function nextValue(obj, index) {
  * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
  */
 function hasNext2(obj, index) {
-  release || assert(obj);
+  if (obj === null || obj === undefined) {
+    return {index: 0, object: null};
+  }
+  obj = Object(obj);
   release || assert(index >= 0);
 
   /**
@@ -533,14 +566,14 @@ function resolveMultinameInTraits(obj, mn) {
   return undefined;
 }
 
+
 /**
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultiname(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
-
   obj = Object(obj);
-
+  enter(true);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -553,6 +586,7 @@ function resolveMultiname(obj, mn, traitsOnly) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
       if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+        leave(true);
         return qn;
       }
       continue;
@@ -565,14 +599,17 @@ function resolveMultiname(obj, mn, traitsOnly) {
       }
     } else if (!isNative) {
       if (Multiname.getQualifiedName(qn) in obj) {
+        leave(true);
         return qn;
       }
     }
   }
   if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
+    leave(true);
     return publicQn;
   }
 
+  leave(true);
   return undefined;
 }
 
@@ -608,6 +645,8 @@ function getProperty(obj, mn) {
     } else {
       value = obj[Multiname.getQualifiedName(resolved)];
     }
+  } else {
+    value = obj[Multiname.getPublicQualifiedName(mn.name)];
   }
 
   if (tracePropertyAccess.value) {
@@ -621,6 +660,7 @@ function hasProperty(obj, mn) {
   release || assert(obj !== undefined, "hasProperty(", mn, ") on undefined");
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   if (!resolved) {
+    Multiname.getPublicQualifiedName(mn.name) in obj;
     return false;
   }
   return Multiname.getQualifiedName(resolved) in obj;
@@ -1135,6 +1175,11 @@ var Runtime = (function () {
       this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
+
+      if (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
+        // TODO: This is very hackish.
+        installProxyClass(cls);
+      }
     }
 
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
@@ -1213,9 +1258,7 @@ var Runtime = (function () {
       applyProtectedTraits(cls);
     }
 
-    if (ii.interfaces.length > 0) {
-      cls.implementedInterfaces = [];
-    }
+    cls.implementedInterfaces = [];
 
     // Apply interface traits recursively.
     //
@@ -1246,7 +1289,7 @@ var Runtime = (function () {
     // IB$bar -> public$bar
     //
     // Luckily, interface methods are always public.
-    (function applyInterfaceTraits(interfaces) {
+    function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var interface = domain.getProperty(interfaces[i], true, true);
         var ii = interface.classInfo.instanceInfo;
@@ -1273,13 +1316,19 @@ var Runtime = (function () {
           defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }
-    })(ii.interfaces);
+    }
+    // Apply traits of all interfaces along the inheritance chain.
+    var tmp = cls;
+    while (tmp) {
+      applyInterfaceTraits(tmp.classInfo.instanceInfo.interfaces);
+      tmp = tmp.baseClass;
+    }
 
     // Run the static initializer.
     this.createFunction(classInfo.init, scope).call(cls);
 
     // Seal constant traits in the class object.
-    this.sealConstantTraits(cls, ci.traits);
+    compatibility && this.sealConstantTraits(cls, ci.traits);
 
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.

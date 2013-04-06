@@ -59,7 +59,7 @@ package {
         }
 
         function runAccessBinaryTrees():int {
-                for ( var n:int = 4; n <= 10; n += 1 ) {
+                for ( var n:int = 4; n <= 14; n += 1 ) {
                     var minDepth:int = 4;
                     var maxDepth:int = Math.max(minDepth + 2, n);
                     var stretchDepth:int = maxDepth + 1;
@@ -84,10 +84,10 @@ package {
         var res:int = runAccessBinaryTrees();
         var totaltime:Number = new Date() - start;
 
-        if (res==-64) {
+        if (res==-32) {
            print("PASSED res="+res);
         } else {
-           print("FAILED binarytrees() expected -64 got "+res);
+           print("FAILED binarytrees() expected -32 got "+res);
         }
 
 /*

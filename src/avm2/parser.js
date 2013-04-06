@@ -179,6 +179,7 @@ var Trait = (function () {
       this.methodInfo.name = this.name;
       // make sure that the holder was not already set
       attachHolder(this.methodInfo, this.holder);
+      this.methodInfo.abc = abc;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
@@ -422,6 +423,7 @@ var ShumwayNamespace = (function () {
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
   namespace.PROTECTED = new namespace(CONSTANT_ProtectedNamespace);
+  namespace.PROXY = new namespace(CONSTANT_Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
 
   var simpleNameCache = {};
 
