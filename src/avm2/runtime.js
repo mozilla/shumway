@@ -1258,9 +1258,7 @@ var Runtime = (function () {
       applyProtectedTraits(cls);
     }
 
-    if (ii.interfaces.length > 0) {
-      cls.implementedInterfaces = [];
-    }
+    cls.implementedInterfaces = [];
 
     // Apply interface traits recursively.
     //
@@ -1291,7 +1289,7 @@ var Runtime = (function () {
     // IB$bar -> public$bar
     //
     // Luckily, interface methods are always public.
-    (function applyInterfaceTraits(interfaces) {
+    function applyInterfaceTraits(interfaces) {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var interface = domain.getProperty(interfaces[i], true, true);
         var ii = interface.classInfo.instanceInfo;
@@ -1318,7 +1316,13 @@ var Runtime = (function () {
           defineNonEnumerableGetter(bindings, interfaceTraitQn, getter);
         }
       }
-    })(ii.interfaces);
+    }
+    // Apply traits of all interfaces along the inheritance chain.
+    var tmp = cls;
+    while (tmp) {
+      applyInterfaceTraits(tmp.classInfo.instanceInfo.interfaces);
+      tmp = tmp.baseClass;
+    }
 
     // Run the static initializer.
     this.createFunction(classInfo.init, scope).call(cls);
