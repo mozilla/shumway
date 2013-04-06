@@ -422,6 +422,7 @@ var ShumwayNamespace = (function () {
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
   namespace.PROTECTED = new namespace(CONSTANT_ProtectedNamespace);
+  namespace.PROXY = new namespace(CONSTANT_Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
 
   var simpleNameCache = {};
 

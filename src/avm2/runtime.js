@@ -46,6 +46,26 @@ var PARAMETER_PREFIX = "p";
 var $M = [];
 
 /**
+ * This is used to keep track if we're in a runtime context. Proxies need to know
+ * if a proxied operation is triggered by AS3 code or VM code.
+ */
+
+var RUNTIME_ENTER_LEAVE_STACK = [false];
+
+function enter(runtime) {
+  RUNTIME_ENTER_LEAVE_STACK.push(runtime);
+}
+
+function leave(runtime) {
+  var top = RUNTIME_ENTER_LEAVE_STACK.pop();
+  assert (top === runtime);
+}
+
+function inRuntime() {
+  return RUNTIME_ENTER_LEAVE_STACK.top();
+}
+
+/**
  * To embed object references in compiled code we index into globally accessible constant table [$C].
  * This table maintains an unique set of object references, each of which holds its own position in
  * the constant table, thus providing for fast lookup. We can also define constants in the JS global
@@ -546,14 +566,14 @@ function resolveMultinameInTraits(obj, mn) {
   return undefined;
 }
 
+
 /**
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultiname(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
-
   obj = Object(obj);
-
+  enter(true);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -566,6 +586,7 @@ function resolveMultiname(obj, mn, traitsOnly) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
       if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+        leave(true);
         return qn;
       }
       continue;
@@ -578,14 +599,17 @@ function resolveMultiname(obj, mn, traitsOnly) {
       }
     } else if (!isNative) {
       if (Multiname.getQualifiedName(qn) in obj) {
+        leave(true);
         return qn;
       }
     }
   }
   if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
+    leave(true);
     return publicQn;
   }
 
+  leave(true);
   return undefined;
 }
 
@@ -621,6 +645,8 @@ function getProperty(obj, mn) {
     } else {
       value = obj[Multiname.getQualifiedName(resolved)];
     }
+  } else {
+    value = obj[Multiname.getPublicQualifiedName(mn.name)];
   }
 
   if (tracePropertyAccess.value) {
@@ -634,6 +660,7 @@ function hasProperty(obj, mn) {
   release || assert(obj !== undefined, "hasProperty(", mn, ") on undefined");
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   if (!resolved) {
+    Multiname.getPublicQualifiedName(mn.name) in obj;
     return false;
   }
   return Multiname.getQualifiedName(resolved) in obj;
@@ -1148,6 +1175,11 @@ var Runtime = (function () {
       this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
+
+      if (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
+        // TODO: This is very hackish.
+        installProxyClass(cls);
+      }
     }
 
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
