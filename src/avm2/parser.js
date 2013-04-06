@@ -179,6 +179,7 @@ var Trait = (function () {
       this.methodInfo.name = this.name;
       // make sure that the holder was not already set
       attachHolder(this.methodInfo, this.holder);
+      this.methodInfo.abc = abc;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
