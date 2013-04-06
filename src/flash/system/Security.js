@@ -49,7 +49,7 @@ var SecurityDefinition = (function () {
           },
           sandboxType: {
             get: function () {
-              notImplemented("Security.sandboxType");
+              somewhatImplemented("Security.sandboxType");
               return "remote";
             }
           },
