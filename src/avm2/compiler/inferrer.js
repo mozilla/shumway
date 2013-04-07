@@ -86,7 +86,7 @@ var Type = (function () {
   };
 
   type.prototype.isNumeric = function () {
-    return this === Type.Int || this === Type.Number;
+    return this === Type.Int || this === Type.Uint || this === Type.Number;
   };
 
   type.prototype.isParameterizedType = function () {
