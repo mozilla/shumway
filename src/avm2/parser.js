@@ -1177,6 +1177,7 @@ var ClassInfo = (function () {
   function classInfo(abc, instanceInfo, stream) {
     this.id = nextID ++;
     this.init = abc.methods[stream.readU30()];
+    this.init.isClassInitializer = true;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
@@ -1196,6 +1197,7 @@ var ScriptInfo = (function scriptInfo() {
     this.abc = abc;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
+    this.init.isScriptInitializer = true;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;

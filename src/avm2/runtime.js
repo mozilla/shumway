@@ -883,6 +883,10 @@ var Runtime = (function () {
     } else if (mi.code.length > compilerMaximumMethodSize.value) {
       return false;
     }
+    // Don't compile class and script initializers since they only run once.
+    if (mi.isClassInitializer || mi.isScriptInitializer) {
+      return false;
+    }
     return true;
   }
 
