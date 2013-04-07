@@ -25,7 +25,7 @@ The Firefox extension is availble at http://mozilla.github.com/shumway/extension
 This development extension should be quite stable but still might break from time to time.
 Also, note that the development extension is updated on every merge and by default Firefox will
 auto-update extensions on a daily basis (you can change this through the 
-`extensions.update.interval` option in `about:config`).
+`extensions.update.interval` option in `about:config`, time is in seconds).
 
 ## Contributing
 
@@ -50,7 +50,7 @@ Talk to us on IRC:
 
 + #shumway on irc.mozilla.org
 
-Join our mailing list:
+Post on our mailing list:
 
 + dev-shumway@lists.mozilla.org
 
