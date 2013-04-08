@@ -12,7 +12,7 @@ check-system:
 	java -version
 	echo "Checking the presence of node..."
 	node -v
-	if node -v | grep -e "v0.[0-7]." ; then \
+	if node -v | grep -e "v0\\.[0-7]\\." ; then \
 	  echo "node 0.8+"; exit 1; \
 	fi
 	echo "The environment is good"
