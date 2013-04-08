@@ -356,7 +356,7 @@ var LoaderDefinition = (function () {
 
   var def = {
     __class__: 'flash.display.Loader',
-	
+
     initialize: function () {
       this._contentLoaderInfo = new flash.display.LoaderInfo;
       this._contentLoaderInfo._loader = this;
@@ -489,11 +489,6 @@ var LoaderDefinition = (function () {
                 return function symbolPromiseResolved() {
                   var symbolInfo = symbolPromise.value;
                   symbolInfo.className = className;
-                  // Custom classes need to know they are symbols.
-                  if (className === "closeButtonOver" ||
-                      className === "closeButtonUp") {
-                    return;
-                  }
                   avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
                 };
               })(symbolPromise, asset.className)
@@ -949,7 +944,7 @@ var LoaderDefinition = (function () {
       notImplemented();
     }
   };
-  
+
   def.__glue__ = {
     native: {
       instance: {
