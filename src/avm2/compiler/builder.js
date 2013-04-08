@@ -566,7 +566,6 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           }
           return getJSProperty(scope, "object");
         }
-
         function getProperty(object, name, ti, getOpenMethod) {
           name = simplifyName(name);
           if (ti) {
@@ -592,7 +591,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var indexGet = shouldFloat(call(getJSProperty(object, "indexGet"), object, [name]));
             return shouldFloat(new IR.Latch(getJSProperty(object, "indexGet"), indexGet, get));
           }
-          return new IR.AVM2GetProperty(region, state.store, object, name);
+          return new IR.AVM2GetProperty(region, state.store, object, name, constant(getOpenMethod));
         }
 
         function store(node) {

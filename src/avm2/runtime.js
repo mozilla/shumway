@@ -92,6 +92,9 @@ function initializeGlobalObject(global) {
   var PUBLIC_MANGLED = /^public\$/;
 
   function getEnumerationKeys(obj) {
+    if (obj.node && obj.node.childNodes) {
+      obj = obj.node.childNodes;
+    }
     var keys = [];
 
     var boxedValue = obj.valueOf();
@@ -300,6 +303,9 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
+  if (obj.node && obj.node.childNodes) {
+    return obj.node.childNodes[obj[VM_NEXT_NAME](index)];
+  }
   return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
 }
 
@@ -332,6 +338,7 @@ function hasNext2(obj, index) {
     return {index: 0, object: null};
   }
   obj = Object(obj);
+  release || assert(obj);
   release || assert(index >= 0);
 
   /**
@@ -346,11 +353,14 @@ function hasNext2(obj, index) {
 }
 
 function getDescendants(multiname, obj) {
-  notImplemented("getDescendants");
+//  notImplemented("getDescendants");
+  return new XMLList();
 }
 
 function checkFilter(value) {
-  notImplemented("checkFilter");
+  var qn = value.class.classInfo.instanceInfo.name.qualifiedName;
+  return qn === Multiname.getPublicQualifiedName("XML") ||
+         qn === Multiname.getPublicQualifiedName("XMLList");
 }
 
 function Activation (methodInfo) {
@@ -613,6 +623,20 @@ function resolveMultiname(obj, mn, traitsOnly) {
   return undefined;
 }
 
+function isNameInObject(qn, obj) {
+  if (qn.isAttribute()) {
+    for (var i = 0; i < obj.attributes.length; i++) {
+      var attr = obj.attributes[i];
+      if (attr.name === qn.name) {
+        return true;
+      }
+    }
+    return false;
+  } else {
+    return Multiname.getQualifiedName(qn) in obj;
+  }
+}
+
 function isPrimitiveType(x) {
   return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
 }
@@ -621,10 +645,14 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function getProperty(obj, mn) {
+function getProperty(obj, mn, isMethod) {
   release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
+
+  if (!obj && mn.name === "toLowerCase") {
+    return function (str) { return this; }
+  }
   if (obj.canHandleProperties) {
-    return obj.get(mn.name);
+    return obj.get(mn, isMethod);
   }
 
   release || assert(Multiname.isMultiname(mn));
@@ -632,18 +660,20 @@ function getProperty(obj, mn) {
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
 
-  if (!resolved && (isPrimitiveType(obj))) {
-    throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
-  }
-
-  if (resolved !== undefined) {
-    if (Multiname.isAnyName(resolved)) {
-      return undefined;
+  if (!resolved) {
+    if (isPrimitiveType(obj)) {
+      throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
+    } else if (Multiname.isAnyName(mn)) {
+      if (obj.public$elements) {
+        value = obj.public$elements(mn);
+      }
     }
+  }
+  if (resolved !== undefined) {
     if (Multiname.isNumeric(resolved) && obj.indexGet) {
       value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = obj[Multiname.getQualifiedName(resolved)];
+      value = getPropertyInObject(obj, resolved);
     }
   } else {
     value = obj[Multiname.getPublicQualifiedName(mn.name)];
@@ -654,6 +684,22 @@ function getProperty(obj, mn) {
   }
 
   return value;
+}
+
+function getPropertyInObject(obj, qn) {
+  if (isNumeric(qn)) {
+    return obj[qn];
+  } else if (qn.isAttribute()) {
+    for (var i = 0; i < obj.attributes.length; i++) {
+      var attr = obj.attributes[i];
+      if (attr.name === qn.name) {
+        return obj.attributes[i];
+      }
+    }
+    return undefined;
+  } else {
+    return obj[Multiname.getQualifiedName(qn)];
+  }
 }
 
 function hasProperty(obj, mn) {
@@ -714,12 +760,20 @@ function getSuper(scope, obj, mn) {
 function setProperty(obj, mn, value) {
   release || assert(obj);
   if (obj.canHandleProperties) {
-    return obj.set(mn.name, value);
+    return obj.set(mn, value);
   }
 
   release || assert(Multiname.isMultiname(mn));
 
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  var resolved;
+  if (mn.isAttribute && mn.isAttribute()) {
+    console.log("setProperty() obj="+obj+" mn="+mn);
+    // in E4X, attributes are always in the unnamed public namespace (public "")
+    resolved = Multiname.getPublicQualifiedName(mn.name);
+    resolved.flags = mn.flags;
+  } else {
+    resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  }
 
   if (tracePropertyAccess.value) {
     print("setProperty(" + mn + ") trait: " + value);
@@ -731,12 +785,27 @@ function setProperty(obj, mn, value) {
     resolved = Multiname.getPublicQualifiedName(mn.name);
   }
 
-  if (Multiname.isNumeric(resolved) && obj.indexSet) {
+  var typeName = getTypeName(obj);
+  if (typeName === "XML" || typeName === "XMLList") {
+    obj._put(resolved, value);
+  } else if (Multiname.isNumeric(resolved) && obj.indexSet) {
     obj.indexSet(Multiname.getQualifiedName(resolved), value);
   } else {
     obj[Multiname.getQualifiedName(resolved)] = value;
   }
+
+  return;
+
+  function getTypeName(obj) {
+    if((a = Object.getPrototypeOf(obj)) && 
+       (b = a.class) && 
+       (c = b.classInfo.instanceInfo.name)) {
+      return c.name;
+    }
+    return null;
+  }
 }
+
 
 function setSuper(scope, obj, mn, value) {
   release || assert(obj);
@@ -772,7 +841,7 @@ function setSuper(scope, obj, mn, value) {
 function deleteProperty(obj, mn) {
   release || assert(obj);
   if (obj.canHandleProperties) {
-    return obj.delete(mn.name);
+    return obj.delete(mn);
   }
 
   release || assert(Multiname.isMultiname(mn), mn);

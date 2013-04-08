@@ -532,6 +532,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           namespaces = [constantPool.namespaces[index]];
+        } else {
+          flags &= ~RUNTIME_NAME;    // any name
         }
         index = stream.readU30();
         if (index) {
@@ -542,6 +544,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         flags |= RUNTIME_NAMESPACE;
         break;
@@ -553,6 +557,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         index = stream.readU30();
         release || assert(index != 0);
@@ -689,10 +695,6 @@ var Multiname = (function () {
     return mn.namespaces[0].getAccessModifier();
   };
 
-  multiname.isAnyName = function isAnyName(mn) {
-    return mn instanceof Multiname && mn.name === undefined;
-  };
-
   multiname.isNumeric = function (mn) {
     if (typeof mn === "number") {
       return true;
@@ -707,6 +709,10 @@ var Multiname = (function () {
     release || assert(mn instanceof Multiname);
     release || assert(!mn.isRuntimeName());
     return mn.getName();
+  };
+
+  multiname.isAnyName = function isAnyName(mn) {
+    return typeof mn === "object" && !mn.isRuntimeName() && !mn.isRuntimeName() && mn.name === undefined;
   };
 
   /**
@@ -757,7 +763,7 @@ var Multiname = (function () {
     }
     var name = this.cache[index];
     if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name);
+      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, this.flags);
     }
     return name;
   };
@@ -780,7 +786,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyName = function isAnyName() {
-    return !this.isRuntimeName() && this.name === undefined;
+    return Multiname.isAnyName(this);
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {
