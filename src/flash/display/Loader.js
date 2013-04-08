@@ -490,6 +490,10 @@ var LoaderDefinition = (function () {
                   var symbolInfo = symbolPromise.value;
                   symbolInfo.className = className;
                   // Custom classes need to know they are symbols.
+                  if (className === "closeButtonOver" ||
+                      className === "closeButtonUp") {
+                    return;
+                  }
                   avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
                 };
               })(symbolPromise, asset.className)
