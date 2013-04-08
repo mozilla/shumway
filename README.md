@@ -15,12 +15,12 @@ proves successful.
 
 For an online demo, visit:
 
-+ http://mozilla.github.com/shumway/examples/racing/
-+ Or see all the demos at http://mozilla.github.com/shumway/
++ http://mozilla.github.io/shumway/examples/racing/
++ Or see all the demos at http://mozilla.github.io/shumway/
 
 ### Extension
 
-The Firefox extension is availble at http://mozilla.github.com/shumway/extension/firefox/shumway.xpi
+The Firefox extension is availble at http://mozilla.github.io/shumway/extension/firefox/shumway.xpi
 
 This development extension should be quite stable but still might break from time to time.
 Also, note that the development extension is updated on every merge and by default Firefox will
