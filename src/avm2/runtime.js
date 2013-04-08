@@ -937,6 +937,14 @@ var Runtime = (function () {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
+    if (methodInfo.name &&
+        (methodInfo.name.name === "registerMessages" ||
+         methodInfo.name.name === "registerEvents")) {
+      return function (cls) {
+        warning("Stubbed out " + methodInfo.name.name);
+      };
+    }
+
     var hasDefaults = false;
     var defaults = mi.parameters.map(function (p) {
       if (p.value !== undefined) {
