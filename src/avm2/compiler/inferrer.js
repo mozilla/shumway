@@ -1161,7 +1161,7 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_checkfilter:
-            notImplemented(bc);
+            // nop.
             break;
           case OP_convert_f:
             pop();
