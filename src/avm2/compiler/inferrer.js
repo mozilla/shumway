@@ -86,7 +86,7 @@ var Type = (function () {
   };
 
   type.prototype.isNumeric = function () {
-    return this === Type.Int || this === Type.Number;
+    return this === Type.Int || this === Type.Uint || this === Type.Number;
   };
 
   type.prototype.isParameterizedType = function () {
@@ -253,18 +253,20 @@ var TraitsType = (function () {
     }
   }
 
-  traitsType.prototype.getTrait = function (mn, followSuperType) {
+  traitsType.prototype.getTrait = function (mn, isSetter, followSuperType) {
+    assert (arguments.length === 3);
+
     if (followSuperType && this.isInstanceInfo()) {
       var that = this;
       do {
-        var trait = that.getTrait(mn);
+        var trait = that.getTrait(mn, isSetter, false);
         if (!trait) {
           that = that.super();
         }
       } while (!trait && that);
       return trait;
     } else {
-      return findTraitByName(this.traits, mn);
+      return findTraitByName(this.traits, mn, isSetter);
     }
   };
 
@@ -674,7 +676,8 @@ var Verifier = (function() {
         // Try to find it in the scope stack.
         for (var i = scope.length - 1; i >= 0; i--) {
           if (scope[i] instanceof TraitsType) {
-            var trait = scope[i].getTrait(mn);
+            // TODO: Should we be looking for getter / setter traits?
+            var trait = scope[i].getTrait(mn, false, true);
             if (trait) {
               ti().scopeDepth = scope.length - i - 1;
               return scope[i];
@@ -699,7 +702,7 @@ var Verifier = (function() {
         }
 
         // Is it in some other script?
-        obj = abc.domain.findProperty(mn, false, false);
+        obj = abc.domain.findProperty(mn, false, !!abc.domain.base);
         if (obj) {
           release || assert(obj instanceof Global);
           ti().object = obj;
@@ -743,12 +746,14 @@ var Verifier = (function() {
 
       function getProperty(obj, mn) {
         if (obj instanceof TraitsType && mn instanceof Multiname) {
-          var trait = obj.getTrait(mn, true);
+          var trait = obj.getTrait(mn, false, true);
           writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot()) {
               return Type.fromName(trait.typeName, abc.domain).instance();
+            } else if (trait.isGetter()) {
+              return Type.fromName(trait.methodInfo.returnType, abc.domain).instance();
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, abc.domain);
             } else if (trait.isMethod()) {
@@ -763,7 +768,7 @@ var Verifier = (function() {
 
       function setProperty(obj, mn) {
         if (obj instanceof TraitsType && mn instanceof Multiname) {
-          var trait = obj.getTrait(mn, true);
+          var trait = obj.getTrait(mn, true, true);
           writer && writer.debugLn("setProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;

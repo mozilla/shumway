@@ -179,6 +179,7 @@ var Trait = (function () {
       this.methodInfo.name = this.name;
       // make sure that the holder was not already set
       attachHolder(this.methodInfo, this.holder);
+      this.methodInfo.abc = abc;
       break;
     case TRAIT_Class:
       this.slotId = stream.readU30();
@@ -326,7 +327,7 @@ var ShumwayNamespace = (function () {
       }
     } else if (this.isUnique()) {
       // Make a psuedo unique id by concatenating current milliseconds to original uri
-      this.uri = String(this.uri+Date.now());
+      this.uri = String(this.uri + Date.now());
     }
     this.uri = mangleNamespaceString(this.uri);
     release || assert(kinds[this.kind]);
@@ -340,22 +341,17 @@ var ShumwayNamespace = (function () {
     return str;
   }
 
-  function mangleNamespaceString(strIn) {
+  var perfectNamespaceHash = Object.create(null);
+  var perfectNamespaceHashCount = 0;
+
+  function mangleNamespaceString(str) {
     if (!release) {
-      return escapeString(strIn);
+      return escapeString(str);
     }
-    var buf = str2ab(strIn);
-    var strOut = base64ArrayBuffer(buf).replace(/=/g, "");  // Erase padding
-    return strOut;
-    
-    function str2ab(str) {
-      var buf = new ArrayBuffer(str.length);
-      var bufView = new Uint8Array(buf);
-      for (var i=0, strLen=str.length; i<strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-      }
-      return buf;
+    if (str === "") {
+      return "";
     }
+    return perfectNamespaceHash[str] || (perfectNamespaceHash[str] = "N" + perfectNamespaceHashCount++);
   }
 
   namespace.kindFromString = function kindFromString(str) {
@@ -422,6 +418,7 @@ var ShumwayNamespace = (function () {
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
   namespace.PROTECTED = new namespace(CONSTANT_ProtectedNamespace);
+  namespace.PROXY = new namespace(CONSTANT_Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
 
   var simpleNameCache = {};
 
@@ -1180,6 +1177,7 @@ var ClassInfo = (function () {
   function classInfo(abc, instanceInfo, stream) {
     this.id = nextID ++;
     this.init = abc.methods[stream.readU30()];
+    this.init.isClassInitializer = true;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
@@ -1199,6 +1197,7 @@ var ScriptInfo = (function scriptInfo() {
     this.abc = abc;
     this.name = abc.name + "$script" + idx;
     this.init = abc.methods[stream.readU30()];
+    this.init.isScriptInitializer = true;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;

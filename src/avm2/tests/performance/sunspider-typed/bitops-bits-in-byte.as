@@ -40,7 +40,7 @@ package {
 
         function TimeFunc(func:Function):int {
         var res:int, x:int, y:int, t:int;
-        var xMax: int = 500 * 4;
+        var xMax: int = 5000 * 4;
         var yMax: int = 256 * 4;
         for(x=0; x<xMax; x++)
           for(y=0; y<yMax; y++)

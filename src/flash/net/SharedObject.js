@@ -2,11 +2,13 @@ var SharedObjectDefinition = (function () {
 
   var _defaultObjectEncoding = 3;
 
+  var sharedObjects = Object.create(null);
+
   return {
     // ()
     __class__: "flash.net.SharedObject",
     initialize: function () {
-
+      
     },
     __glue__: {
       native: {
@@ -18,7 +20,8 @@ var SharedObjectDefinition = (function () {
             notImplemented("SharedObject.getDiskUsage");
           },
           getLocal: function getLocal(name, localPath, secure) { // (name:String, localPath:String = null, secure:Boolean = false) -> SharedObject
-            notImplemented("SharedObject.getLocal");
+            var path = localPath + "/" + name;
+            return sharedObjects[path] || (sharedObjects[path] = new flash.net.SharedObject());
           },
           getRemote: function getRemote(name, remotePath, persistence, secure) { // (name:String, remotePath:String = null, persistence:Object = false, secure:Boolean = false) -> SharedObject
             notImplemented("SharedObject.getRemote");
