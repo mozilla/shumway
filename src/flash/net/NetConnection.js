@@ -18,13 +18,13 @@ var NetConnectionDefinition = (function () {
         },
         instance: {
           connect: function connect(command) { // (command:String) -> void
-            notImplemented("NetConnection.connect");
+            somewhatImplemented("NetConnection.connect");
           },
           invoke: function invoke(index) { // (index:uint) -> any
             notImplemented("NetConnection.invoke");
           },
           invokeWithArgsArray: function invokeWithArgsArray(index, args) { // (index:uint, args:Array) -> any
-            notImplemented("NetConnection.invokeWithArgsArray");
+            somewhatImplemented("NetConnection.invokeWithArgsArray");
           },
           connected: {
             get: function connected() { // (void) -> Boolean
@@ -125,22 +125,6 @@ var NetConnectionDefinition = (function () {
               notImplemented("NetConnection.unconnectedPeerStreams");
               return this._unconnectedPeerStreams;
             }
-          }
-        }
-      },
-      script: {
-        static: {
-          // ...
-        },
-        instance: {
-          close: function close() { // (void) -> void
-            notImplemented("NetConnection.close");
-          },
-          addHeader: function addHeader(operation, mustUnderstand, param) { // (operation:String, mustUnderstand:Boolean = false, param:Object = null) -> void
-            notImplemented("NetConnection.addHeader");
-          },
-          call: function call(command, responder) { // (command:String, responder:Responder) -> void
-            notImplemented("NetConnection.call");
           }
         }
       }
