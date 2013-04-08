@@ -66,19 +66,6 @@ var ContextMenuDefinition = (function () {
             }
           }
         }
-      },
-      script: {
-        static: {
-          // ...
-        },
-        instance: {
-          hideBuiltInItems: function hideBuiltInItems() { // (void) -> void
-            notImplemented("ContextMenu.hideBuiltInItems");
-          },
-          clone: function clone() { // (void) -> ContextMenu
-            notImplemented("ContextMenu.clone");
-          }
-        }
       }
     }
   };
