@@ -954,6 +954,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             case OP_coerce_b: case OP_convert_b:
               push(toBoolean(pop()));
               break;
+            case OP_checkfilter:
+              push(call(globalProperty("checkFilter"), null, [pop()]));
+              break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:
               push(coerceString(pop()));
