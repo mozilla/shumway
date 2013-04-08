@@ -566,10 +566,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           }
           return getJSProperty(scope, "object");
         }
-
         function getProperty(object, name, ti, getOpenMethod) {
           name = simplifyName(name);
-          if (ti && ti.type && !(ti.type.name === "Any" || ti.type.name === "XML" || ti.type.name === "XMLList")) {
+          if (ti) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
               if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
@@ -617,7 +616,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var indexSet = call(getJSProperty(object, "indexSet"), object, [name, value]);
             return store(new IR.Latch(getJSProperty(object, "indexSet"), mustFloat(indexSet), mustFloat(set)));
           }
-          if (ti && ti.type && !(ti.type.name === "Any" || ti.type.name === "XML" || ti.type.name === "XMLList")) {
+          if (ti) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
               store(new IR.SetProperty(region, state.store, object, constant(propertyQName), value));
