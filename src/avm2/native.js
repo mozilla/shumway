@@ -841,15 +841,18 @@ var natives = (function () {
     var Dp = ASDictionary.prototype;
     defineReadOnlyProperty(Dp, "canHandleProperties", true);
     defineNonEnumerableProperty(Dp, "set", function (key, value) {
+      key = key.name;
       this.map.set(Object(key), value);
       if (!this.weakKeys && this.keys.indexOf(key) < 0) {
         this.keys.push(key);
       }
     });
     defineNonEnumerableProperty(Dp, "get", function (key) {
+      key = key.name;
       return this.map.get(Object(key));
     });
     defineNonEnumerableProperty(Dp, "delete", function (key) {
+      key = key.name;
       this.map.delete(Object(key), value);
       var i;
       if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
@@ -1465,12 +1468,99 @@ var natives = (function () {
       return Runtime.currentDomain().getClass(simpleName);
     }),
 
-    describeTypeJSON: constant(function (o, flags) {
-      notImplemented("describeTypeJSON");
-    }),
-
-    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
+    describeTypeJSON: constant(describeTypeJSON),
+    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS],
   };
+
+  // NOTE: Defining helper functions. Control flow does not reach here.
+
+  function describeTypeJSON(o, flags) {
+//    console.log("describeTypeJSON()");
+    var Flags = {
+      HIDE_NSURI_METHODS  : 0x0001,
+      INCLUDE_BASES       : 0x0002,
+      INCLUDE_INTERFACES  : 0x0004,
+      INCLUDE_VARIABLES   : 0x0008,
+      INCLUDE_ACCESSORS   : 0x0010,
+      INCLUDE_METHODS     : 0x0020,
+      INCLUDE_METADATA    : 0x0040,
+      INCLUDE_CONSTRUCTOR : 0x0080,
+      INCLUDE_TRAITS      : 0x0100,
+      USE_ITRAITS         : 0x0200,
+      HIDE_OBJECT         : 0x0400,
+    };
+    var info = o.classInfo ? o.classInfo : Object.getPrototypeOf(o).class.classInfo;
+    if (!info) {
+      return null;
+    }
+    var traits = chooseTraits(info, flags);
+    if (!traits || traits.length === 0) {
+      return null;
+    }
+    
+    var obj = {};
+    obj[publicName("name")] = info.instanceInfo.name.name;
+    obj[publicName("isDynamic")] = false;
+    obj[publicName("isStatic")] = false;
+    obj[publicName("isFinal")] = false;
+    obj[publicName("traits")] = describeTraits(traits);
+
+//    console.log("describeTypeJSON() obj="+JSON.stringify(obj, null, 2));
+    return obj;
+    
+    // privates
+      
+    function publicName(str) {
+      return Multiname.getPublicQualifiedName(str)
+    }
+    
+    function chooseTraits(info, flags) {
+      if (flags & Flags.USE_ITRAITS) {
+        info = info.instanceInfo;
+      }
+      return info.traits;        
+    }
+    
+    function describeTraits(traits) {
+      var obj = {};
+      var basesVal = obj[publicName("bases")] = [];
+      var methodsVal = obj[publicName("methods")] = [];
+      var acessorsVal = obj[publicName("accessors")] = null;
+      var interfacesVal = obj[publicName("interfaces")] = [];
+      var variablesVal = obj[publicName("variables")] = [];
+      var metadataVal = obj[publicName("metadata")] = [];
+      
+      for (var i = 0; i < traits.length; i++) {
+        var t = traits[i];
+        var val = {};
+        switch (t.kind) {
+        case TRAIT_Slot:
+          val[publicName("metadata")] = null;
+          val[publicName("uri")] = null;
+          val[publicName("name")] = t.name.name;
+          val[publicName("type")] = "*";
+          val[publicName("access")] = "readwrite";
+          variablesVal.push(val);
+          break;
+        case TRAIT_Method:
+        case TRAIT_Getter:
+        case TRAIT_Setter:
+          val[publicName("metadata")] = null;
+          val[publicName("uri")] = null;
+          val[publicName("name")] = t.name.name;
+          val[publicName("type")] = "*";
+          val[publicName("access")] = t.kind === TRAIT_Getter ? "read" :
+                                        t.kind === TRAIT_Setter ? "write" : 
+                                        "readwrite";
+          methodsVal.push(val);
+          break;
+        default:
+          break;
+        }
+      }
+      return obj;
+    }
+  }
 
 })();
 
@@ -1481,7 +1571,6 @@ function getNative(p) {
     v = v && v[chain[i]];
   }
 
-  // TODO: This assertion should always pass, find out why it doesn't.
   release || assert(v, "getNative(" + p + ") not found.");
   return v;
 }

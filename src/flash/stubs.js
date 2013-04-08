@@ -194,6 +194,14 @@ var as3error = {};
    });
 }).call(this);
 
+natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instance, baseClass) {
+//  notImplemented("FlashUtilScript::getAliasName");
+  return function getAliasName(value) {
+    // FIXME don't know what is expected here
+    return value.debugName;
+  }
+}
+
 natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 
 natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {

@@ -1,8 +1,16 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 // The XML parser is designed only for parsing of simple XML documents (for unit testing purpose).
 function DOMParser() {
   // parser
   function parseXml(s, sink) {
-    var i = 0, scopes = [{space:"default", xmlns:"", namespaces: {"xmlns":"http://www.w3.org/2000/xmlns/", "xml":"http://www.w3.org/XML/1998/namespace"}}];
+    var i = 0, scopes = [{
+      space:"default",
+      xmlns:"",
+      namespaces: {
+        "xmlns":"http://www.w3.org/2000/xmlns/",
+        "xml":"http://www.w3.org/XML/1998/namespace"
+      }
+    }];
 
     function trim(s) {
       return s.replace(/^\s+/, "").replace(/\s+$/, "");
@@ -66,7 +74,7 @@ function DOMParser() {
           ++pos;
         }
       }
-      while (pos < s.length && !isWhitespace(s, pos) && s.charAt(pos) !== ">") {
+      while (pos < s.length && !isWhitespace(s, pos) && s.charAt(pos) !== ">" && s.charAt(pos) !== "/") {
         ++pos;
       }
       name = s.substring(start, pos);
@@ -160,6 +168,8 @@ function DOMParser() {
                 scope[content.attributes[q].name.substring(4)] = trim(content.attributes[q].value);
               } else if (content.attributes[q].name.substring(0, 3) === "xml") {
                 throw "Invalid xml attribute";
+              } else {
+                throw "Unimplemented xml attribute";
               }
             }
             scopes.push(scope);
@@ -372,7 +382,9 @@ function DOMParser() {
     return this.childNodes.length > 0;
   };
   Node.prototype.cloneNode = function(deep) {
-    throw "Not implemented";
+    // FIXME more efficient copy
+    // FIXME deal with !deep
+    return JSON.parse(JSON.stringify(this));
   };
   Node.prototype.normalize = function() {
     var lastWasText = false;
@@ -491,7 +503,7 @@ function DOMParser() {
       element.setAttributeNodeNS = function(newAttr) {
         return this.attributes.setNamedItemNS(newAttr);
       };
-      element.setAttribute = function(namespaceURI, qualifiedName) {
+      element.setAttributeNS = function(namespaceURI, qualifiedName) {
         var attr = this.ownerDocument.createAttributeNS(namespaceURI, qualifiedName);
         attr.value = value || "";
         this.setAttributeNodeNS(attr);
@@ -585,7 +597,6 @@ function DOMParser() {
         }
       }
     };
-
     Object.defineProperty(node, "textContent", {
       get: function() {
         return this.documentElement.textContent;
@@ -594,6 +605,23 @@ function DOMParser() {
     });
     return node;
   }
+
+/*
+  name: {
+    namespace: string
+    name = {
+      prefix: string,
+      name: string
+    }
+  }
+
+  document: {
+    childNodes: NodeList,
+  }
+
+*/
+
+
 
   function buildQualifiedName(name) {
     return name.prefix ? name.prefix + ":" + name.name : name.name;
@@ -655,10 +683,11 @@ function XMLClass(runtime, scope, instance, baseClass) {
   var FLAG_PRETTY_PRINTING                = 0x08;
 
   XML = function (value) {
+    print("XML() value="+typeof value);
     if (!value) {
       toXML.call(this, "");
     } else if (value instanceof XML || value instanceof XMLList) {
-      constructFromXML.call(this, xml);
+      constructFromXML.call(this, value);
     } else {
       toXML.call(this, value);
     }
@@ -676,24 +705,131 @@ function XMLClass(runtime, scope, instance, baseClass) {
       // TODO: Return first XML element in the list.
       throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
     } else {
-      return constructFromString.call(this, toString(value));
+      constructFromString.call(this, toString(value));
     }
   }
 
   function constructFromString(string) {
     warning("TODO: Parse: " + string);
+    this.node = xmlParser.parseFromString(string);
   }
 
   function constructFromXML(xml) {
     warning("TODO: Clone: " + xml);
   }
 
+  function deepCopy(xml) {
+    // FIXME handle all cases
+    if (xml.node.nodeType === Node.DOCUMENT_NODE) {
+      return new XML(xml.node.xmlString); // poor man's copy, reparse original xml
+    } else {
+      throw "Unimplemented case in deepCopy";
+    }
+  }
+
   var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
 
   c._flags = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING;
   c._prettyIndent = 2;
-
   c.extend(baseClass);
+
+  var Xp = XML.prototype;
+  defineReadOnlyProperty(Xp, "canHandleProperties", true);
+  var ATTR_NAME = 1;
+  var ANY_ATTR_NAME = 2;
+  var ANY_NAME = 3;
+  var ELEM_NAME = 4;
+  function nameKind(mn) {
+    if (mn.isAnyName()) {
+      if (mn.isAttribute()) {
+        return ANY_ATTR_NAME;
+      } else {
+        return ANY_NAME;
+      }
+    } else if (mn.isAttribute()) {
+      return ATTR_NAME;
+    } else {
+      return ELEM_NAME;
+    }
+  }
+  function setAttribute(node, name, value) {
+    print("setAttribute() name="+name+" value="+value);
+    if (node.nodeType === Node.DOCUMENT_NODE) {
+      node.childNodes[0].setAttribute(name, value);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      node.setAttribute(name, value);
+    } else {
+      throw "error or unhandled case in setAttribute";
+    }
+  }
+  function getAttribute(node, name) {
+    print("getAttribute() name="+name);
+    if (node.nodeType === Node.DOCUMENT_NODE) {
+      return node.childNodes[0].getAttribute(name);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      return node.getAttribute(name);
+    } else {
+      throw "error or unhandled case in setAttribute";
+    }
+  }
+  defineNonEnumerableProperty(Xp, "set", function (mn, value, isMethod) {
+    if (isMethod) {
+      return;
+    }
+    print("XML.set() name="+mn.name+" value="+value);
+    // FIXME need to set XML attributes and elements here
+    switch (nameKind(mn)) {
+    case ATTR_NAME:
+      return setAttribute(this.node, mn.name, value);
+      break;
+    case ANY_ATTR_NAME:
+      break;
+    case ANY_NAME:
+      break;
+    default:
+      return this.node[mn.name];
+      break;
+    }
+  });
+  defineNonEnumerableProperty(Xp, "get", function (mn, isMethod) {
+    var val;
+    if (isMethod) {
+      var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+      val = this[Multiname.getQualifiedName(resolved)];
+    } else {
+      if (isNumeric(mn)) {
+        if (Number(0) === 0) {
+          return this;
+        }
+        return null;
+      }
+      return new XMLList();
+      // FIXME need to get XML attributes and elements here
+      switch (nameKind(mn)) {
+      case ATTR_NAME:
+        return getAttribute(this.node, mn.name);
+        break;
+      case ANY_ATTR_NAME:
+        break;
+      case ANY_NAME:
+        val = new XMLList(); // FIXME set targets, set children
+        setTargets(val, this._parent, mn);
+        break;
+      default:
+        val = this.node[mn.name];
+        break;
+      }
+    }
+    return val;
+  });
+  function setTargets(obj, target, prop) {
+    obj._target = target;
+    obj._targetProp = prop;
+  }
+  defineNonEnumerableProperty(Xp, "delete", function (key, isMethod) {
+    debugger;
+  });
+
   c.native = {
     static: {
       ignoreComments: {
@@ -751,7 +887,8 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.addNamespace");
       },
       appendChild: function appendChild(child) { // (child) -> XML
-        notImplemented("XML.appendChild");
+//        notImplemented("XML.appendChild");
+        return this;
       },
       attribute: function attribute(arg) { // (arg) -> XMLList
         notImplemented("XML.attribute");
@@ -775,13 +912,14 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.contains");
       },
       copy: function copy() { // (void) -> XML
-        notImplemented("XML.copy");
+        return deepCopy(this);
       },
       descendants: function descendants(name) { // (name = "*") -> XMLList
         notImplemented("XML.descendants");
       },
       elements: function elements(name) { // (name = "*") -> XMLList
-        notImplemented("XML.elements");
+        //notImplemented("XML.elements");
+        return new XMLList();
       },
       hasComplexContent: function hasComplexContent() { // (void) -> Boolean
         notImplemented("XML.hasComplexContent");
@@ -854,16 +992,150 @@ function XMLClass(runtime, scope, instance, baseClass) {
       },
       setNotification: function setNotification(f) { // (f:Function) -> any
         notImplemented("XML.setNotification");
-      }
+      },
     }
   };
   return c;
 }
 
 function XMLListClass(runtime, scope, instance, baseClass) {
-  XMLList = function () {}
+  XMLList = function (value) {
+    print("XMLList() value="+typeof value);
+    // FIXME treating XMLList as XML works for XMLList length === 0
+    if (!value) {
+      toXMLList.call(this, "");
+    } else if (value instanceof XML || value instanceof XMLList) {
+      constructFromXML.call(this, value);
+    } else {
+      toXMLList.call(this, value);
+    }
+  };
+
+  // E4X 10.3
+  function toXMLList(value) {
+    if (value === null) {
+      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
+    } else if (value === undefined) {
+      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+    } else if (value instanceof XML) {
+      return value;
+    } else if (value instanceof XMLList) {
+      // TODO: Return first XML element in the list.
+      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
+    } else {
+      constructFromString.call(this, toString(value));
+    }
+  }
+
+  function constructFromXML(xml) {
+    warning("TODO: Clone: " + xml);
+  }
+
+  function constructFromString(string) {
+    warning("TODO: Parse: " + string);
+    this.node = xmlParser.parseFromString(string);
+  }
+
   var c = new runtime.domain.system.Class("XMLList", XMLList, Domain.passthroughCallable(XMLList));
   c.extend(baseClass);
+  var XLp = XMLList.prototype;
+  defineNonEnumerableProperty(XLp, "set", function (mn, value, isMethod) {
+    if (isMethod) {
+      return;
+    }
+    print("XMLList.set() name="+mn.name+" value="+value);
+    // FIXME need to set XML attributes and elements here
+    switch (nameKind(mn)) {
+    case ATTR_NAME:
+      return setAttribute(this.node, mn.name, value);
+      break;
+    case ANY_ATTR_NAME:
+      break;
+    case ANY_NAME:
+      break;
+    default:
+      return this.node[mn.name];
+/*
+      if (isNumeric(mn.name)) {
+        if (this._target !== null) {
+          var r = this._target.resolve()
+          if (r === null) {
+            return;
+          }
+        } else {
+          var r = null;
+        }
+        if (r is XMLList) {
+          if (r.length !== 1) {
+            return;
+          } else {
+            var r = r[0];
+          }
+        }
+        if (!(r is Element)) {
+          return;
+        }
+        var y = new XML();
+        y._parent = r;
+        y._name = this._targetProp;
+      }
+*/
+      break;
+    }
+  });
+  defineNonEnumerableProperty(XLp, "get", function (mn, isMethod) {
+    var val;
+    if (isMethod) {
+      var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+      val = this[Multiname.getQualifiedName(resolved)];
+    } else {
+      return new XMLList();
+      // FIXME need to get XML attributes and elements here
+      switch (nameKind(mn)) {
+      case ATTR_NAME:
+        return getAttribute(this.node, mn.name);
+        break;
+      case ANY_ATTR_NAME:
+        break;
+      case ANY_NAME:
+        val = new XMLList(); // FIXME set targets, set children
+        setTargets(val, this._parent, mn);
+        break;
+      default:
+        val = this.node[mn.name];
+        break;
+      }
+    }
+    return val;
+  });
+  function setTargets(obj, target, prop) {
+    obj._target = target;
+    obj._targetProp = prop;
+  }
+  defineNonEnumerableProperty(XLp, "delete", function (key, isMethod) {
+    debugger;
+  });
+  defineNonEnumerableProperty(XLp, "length", function () {
+    debugger;
+    this.nodeList.nodes.length;
+  });
+  defineNonEnumerableProperty(XLp, "_resolve", function () {
+    debugger;
+    var base = this._target._resolve();
+    if (base === null) {
+      return null;
+    }
+    var target = this._target.get(_targetProp);
+    if (base.length === 0) {
+      debugger;
+//      if (target is XMLList  && base.length > 1) {
+//        return null;
+//      }
+      base.set(_targetProp, "");
+      target = base.get(_targetProp);
+      return target;
+    }
+  });
   c.native = {
     static: {
     },
@@ -911,7 +1183,8 @@ function XMLListClass(runtime, scope, instance, baseClass) {
         notImplemented("XMLList.hasSimpleContent");
       },
       length: function length() { // (void) -> int
-        notImplemented("XMLList.length");
+        //notImplemented("XMLList.length");
+        return 0;
       },
       name: function name() { // (void) -> Object
         notImplemented("XMLList.name");
