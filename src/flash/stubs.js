@@ -162,7 +162,7 @@ var as3error = {};
    M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
    M("flash.net.URLStream", "URLStreamClass", URLStreamDefinition),
    M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
-   M("flash.net.ShardObject", "SharedObjectClass", SharedObjectDefinition),
+   M("flash.net.SharedObject", "SharedObjectClass", SharedObjectDefinition),
    M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
 
 
