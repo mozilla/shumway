@@ -11,7 +11,7 @@ var NetStreamDefinition = (function () {
         instance: {
           ctor: function ctor(connection, peerID) {
             // (connection:NetConnection, peerID:String) -> void
-            notImplemented("NetStream.ctor");
+            somewhatImplemented("NetStream.ctor");
           },
           onResult: function onResult(streamId) {
             // (streamId:int) -> void
@@ -21,10 +21,10 @@ var NetStreamDefinition = (function () {
             // (void) -> void
             notImplemented("NetStream.dispose");
           },
-          play: function play() {
+          play: function play(url) {
             // (void) -> void
             this._url = url;
-            notImplemented("NetStream.play");
+            somewhatImplemented("NetStream.play");
           },
           play2: function play2(param) {
             // (param:NetStreamPlayOptions) -> void
