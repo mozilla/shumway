@@ -720,7 +720,7 @@ var LoaderDefinition = (function () {
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
         promiseQueue.push(imgPromise);
-        className = 'flash.display.BitmapData';
+        className = 'flash.display.Bitmap';
         props.img = img;
         props.width = symbol.width;
         props.height = symbol.height;

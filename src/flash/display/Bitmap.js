@@ -3,7 +3,7 @@ var BitmapDefinition = (function () {
     // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
     __class__: "flash.display.Bitmap",
     draw : function(ctx, ratio) {
-      ctx.drawImage(this._bitmapData._canvas, 0, 0);
+      ctx.drawImage(this._bitmapData._drawable, 0, 0);
     },
     initialize: function () {
     },

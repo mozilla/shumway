@@ -66,8 +66,6 @@ function defineBitmap(tag) {
       var begin = pos;
       var end = begin + width;
       var scanline = slice.call(bytes, begin, end);
-      if (scanline[0] == 5 && scanline[2] == 5)
-        debugger;
       literals += '\x00' + fromCharCode.apply(null, scanline);
       stream.pos = (pos += bytesPerLine);
     }

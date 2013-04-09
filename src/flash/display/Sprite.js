@@ -58,6 +58,8 @@ var SpriteDefinition = (function () {
     _constructChildren: function () {
       var loader = this._loader;
       var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
+      var BitmapClass = avm2.systemDomain.getClass("flash.display.Bitmap");
+      var BitmapDataClass = avm2.systemDomain.getClass("flash.display.BitmapData");
 
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
@@ -93,6 +95,12 @@ var SpriteDefinition = (function () {
           // XXX: I think we're supposed to throw if the symbol class
           // constructor is not nullary.
           symbolClass.instance.call(instance);
+
+          if (BitmapDataClass.isInstanceOf(instance)) {
+            var bitmapData = instance;
+            instance = BitmapClass.createAsSymbol(props);
+            BitmapClass.instance.call(instance, bitmapData);
+          }
 
           assert(instance._control);
           this._control.appendChild(instance._control);
