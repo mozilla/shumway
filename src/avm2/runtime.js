@@ -1627,7 +1627,7 @@ var Runtime = (function () {
   };
 
   function makeQualifiedNameTraitMap(traits) {
-    var map = {};
+    var map = Object.create(null);
     for (var i = 0; i < traits.length; i++) {
       map[Multiname.getQualifiedName(traits[i].name)] = traits[i];
     }
@@ -1650,7 +1650,9 @@ var Runtime = (function () {
       var baseOpenMethods = base[VM_OPEN_METHODS];
       for (var i = 0; i < baseBindings.length; i++) {
         var qn = baseBindings[i];
-        if (!traitMap[qn]) {
+        // TODO: Make sure we don't add overriden methods as patch targets. This may be
+        // broken for getters / setters.
+        if (!traitMap[qn] || traitMap[qn].isGetter() || traitMap[qn].isSetter()) {
           var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
           Object.defineProperty(obj, qn, baseBindingDescriptor);
           if (baseOpenMethods.hasOwnProperty(qn)) {

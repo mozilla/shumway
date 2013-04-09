@@ -85,12 +85,32 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
-function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-  if (isGetter) {
-    defineNonEnumerableGetter(obj, name, value);
-  } else {
-    defineNonEnumerableSetter(obj, name, value);
+function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
+  var descriptor = {};
+  while (obj) {
+    var tmp = Object.getOwnPropertyDescriptor(obj, name);
+    if (tmp) {
+      descriptor.get = descriptor.get || tmp.get;
+      descriptor.set = descriptor.set || tmp.set;
+    }
+    if (descriptor.get && descriptor.set) {
+      break;
+    }
+    obj = Object.getPrototypeOf(obj);
   }
+  return descriptor;
+}
+
+function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
+  var descriptor = getLatestGetterOrSetterPropertyDescriptor(obj, name);
+  descriptor.configurable = true;
+  descriptor.enumerable = false;
+  if (isGetter) {
+    descriptor.get = value;
+  } else {
+    descriptor.set = value;
+  }
+  Object.defineProperty(obj, name, descriptor);
 }
 
 function defineNonEnumerableGetter(obj, name, getter) {
