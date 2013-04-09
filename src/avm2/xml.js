@@ -683,7 +683,6 @@ function XMLClass(runtime, scope, instance, baseClass) {
   var FLAG_PRETTY_PRINTING                = 0x08;
 
   XML = function (value) {
-    print("XML() value="+typeof value);
     if (!value) {
       toXML.call(this, "");
     } else if (value instanceof XML || value instanceof XMLList) {
@@ -776,7 +775,6 @@ function XMLClass(runtime, scope, instance, baseClass) {
     if (isMethod) {
       return;
     }
-    print("XML.set() name="+mn.name+" value="+value);
     // FIXME need to set XML attributes and elements here
     switch (nameKind(mn)) {
     case ATTR_NAME:
