@@ -358,9 +358,10 @@ function getDescendants(multiname, obj) {
 }
 
 function checkFilter(value) {
-  var qn = value.class.classInfo.instanceInfo.name.qualifiedName;
-  return qn === Multiname.getPublicQualifiedName("XML") ||
-         qn === Multiname.getPublicQualifiedName("XMLList");
+  if (!value.class) {
+    return false;
+  }
+  return isXMLType(value.class);
 }
 
 function Activation (methodInfo) {
@@ -759,6 +760,8 @@ function getSuper(scope, obj, mn) {
 
 function setProperty(obj, mn, value) {
   release || assert(obj);
+
+  // Used by Dictionary and XML
   if (obj.canHandleProperties) {
     return obj.set(mn, value);
   }
@@ -785,27 +788,28 @@ function setProperty(obj, mn, value) {
     resolved = Multiname.getPublicQualifiedName(mn.name);
   }
 
-  var typeName = getTypeName(obj);
-  if (typeName === "XML" || typeName === "XMLList") {
-    obj._put(resolved, value);
-  } else if (Multiname.isNumeric(resolved) && obj.indexSet) {
+  if (Multiname.isNumeric(resolved) && obj.indexSet) {
     obj.indexSet(Multiname.getQualifiedName(resolved), value);
   } else {
     obj[Multiname.getQualifiedName(resolved)] = value;
   }
-
   return;
-
-  function getTypeName(obj) {
-    if((a = Object.getPrototypeOf(obj)) && 
-       (b = a.class) && 
-       (c = b.classInfo.instanceInfo.name)) {
-      return c.name;
-    }
-    return null;
-  }
 }
 
+function isType(obj, type) {
+  for (var i = 0; i < types.length; i++) {
+    var type = types[i];
+    if (type.object) {
+      return obj.classInfo.instanceInfo === type.object;
+    }
+  }
+  return false;
+}
+
+function isXMLType(obj) {
+  var ii = obj.instanceInfo;
+  return ii === Type.XML.object || ii === Type.XMLList.object;
+}
 
 function setSuper(scope, obj, mn, value) {
   release || assert(obj);

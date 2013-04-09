@@ -131,6 +131,8 @@ var Type = (function () {
     type.Number = Type.fromSimpleName("Number", domain).instance();
     type.Boolean = Type.fromSimpleName("Boolean", domain).instance();
     type.Function = Type.fromSimpleName("Function", domain).instance();
+    type.XML = Type.fromSimpleName("XML", domain).instance();
+    type.XMLList = Type.fromSimpleName("XMLList", domain).instance();
     typesInitialized = true;
   };
   return type;

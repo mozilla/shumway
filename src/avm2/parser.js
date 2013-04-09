@@ -712,7 +712,7 @@ var Multiname = (function () {
   };
 
   multiname.isAnyName = function isAnyName(mn) {
-    return typeof mn === "object" && !mn.isRuntimeName() && !mn.isRuntimeName() && mn.name === undefined;
+    return typeof mn === "object" && !mn.isRuntimeName() && mn.name === undefined;
   };
 
   /**
