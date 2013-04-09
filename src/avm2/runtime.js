@@ -46,6 +46,11 @@ var PARAMETER_PREFIX = "p";
 var $M = [];
 
 /**
+ * Overriden AS3 methods.
+ */
+var VM_METHOD_OVERRIDES = {};
+
+/**
  * This is used to keep track if we're in a runtime context. Proxies need to know
  * if a proxied operation is triggered by AS3 code or VM code.
  */
@@ -1010,12 +1015,12 @@ var Runtime = (function () {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
-    if (methodInfo.name &&
-        (methodInfo.name.name === "registerMessages" ||
-         methodInfo.name.name === "registerEvents")) {
-      return function (cls) {
-        warning("Stubbed out " + methodInfo.name.name);
-      };
+
+    if (methodInfo.name) {
+      var qn = Multiname.getQualifiedName(methodInfo.name);
+      if (qn in VM_METHOD_OVERRIDES) {
+        return VM_METHOD_OVERRIDES[qn];
+      }
     }
 
     var hasDefaults = false;
