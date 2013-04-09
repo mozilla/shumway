@@ -301,7 +301,7 @@ var natives = (function () {
       return true; // TODO: Fix me.
     };
     c.isInstance = function (value) {
-      return true; // TODO: Fix me.
+      return value instanceof c.instance;
     };
     return c;
   }

@@ -276,6 +276,10 @@ var Domain = (function () {
         }
       };
 
+      var callable = Domain.coerceCallable(Class);
+      defineNonEnumerableProperty(Class, "call", callable.call);
+      defineNonEnumerableProperty(Class, "apply", callable.apply);
+
       Class.instance = Class;
       Class.toString = Class.prototype.toString;
 
