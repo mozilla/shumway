@@ -94,6 +94,8 @@ var DisplayObjectDefinition = (function () {
       TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
+
+      this._accessibilityProperties = null;
     },
 
     _updateTraceSymbolInfo: function () {
@@ -257,10 +259,12 @@ var DisplayObjectDefinition = (function () {
     },
 
     get accessibilityProperties() {
-      return null;
+      somewhatImplemented("accessibilityProperties");
+      return this._accessibilityProperties;
     },
     set accessibilityProperties(val) {
-      notImplemented();
+      somewhatImplemented("accessibilityProperties");
+      this._accessibilityProperties = val;
     },
     get alpha() {
       return this._alpha;

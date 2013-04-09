@@ -15,6 +15,7 @@ var EventDispatcherDefinition = (function () {
     },
     addEventListener: function (type, listener, useCapture, prio, useWeakReference) {
       if (typeof listener !== 'function')
+      if (typeof listener !== 'function' || !type)
         throw ArgumentError();
 
       if (prio === undefined)
