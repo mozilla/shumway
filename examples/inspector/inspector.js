@@ -202,7 +202,7 @@ function executeFile(file, buffer, movieParams) {
           }
         };
         runSWF(file, subscription);
-        FileLoadingService.baseUrl = file;
+        FileLoadingService.setBaseUrl(file);
         new BinaryFileReader(file).readAsync(
           function onchunk(data, progressInfo) {
             subscription.callback(data, progressInfo);
@@ -211,7 +211,7 @@ function executeFile(file, buffer, movieParams) {
             console.error("Unable to open the file " + file + ": " + error);
           });
       } else if (!buffer) {
-        FileLoadingService.baseUrl = file;
+        FileLoadingService.setBaseUrl(file);
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
           if (!buffer) {
             throw "Unable to open the file " + file + ": " + error;
@@ -262,9 +262,7 @@ var FileLoadingService = {
     return {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
-        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-        var path = base ? base + request.url : request.url;
+        var path = FileLoadingService.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path);
         new BinaryFileReader(path).readAsync(
           function (data, progress) {
@@ -276,5 +274,24 @@ var FileLoadingService = {
           self.onhttpstatus);
       }
     };
+  },
+  setBaseUrl: function (url) {
+    var a = document.createElement('a');
+    a.href = url || '#';
+    a.setAttribute('style', 'display: none;');
+    document.body.appendChild(a);
+    FileLoadingService.baseUrl = a.href;
+    document.body.removeChild(a);
+  },
+  resolveUrl: function (url) {
+    if (url.indexOf('://') >= 0) return url;
+
+    var base = FileLoadingService.baseUrl;
+    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+    if (url.indexOf('/') === 0) {
+      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
+      if (m) base = m[0];
+    }
+    return base + url;
   }
 };
