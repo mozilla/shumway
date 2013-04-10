@@ -30,9 +30,10 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
       xhr.send(null);
     },
-    readAsync: function(ondata, onerror, onopen, oncomplete) {
+    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", this.url, true);
+      var url = this.url;
+      xhr.open("GET", url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
       if ('overrideMimeType' in xhr)
         xhr.overrideMimeType('text/plain; charset=x-user-defined');
@@ -47,6 +48,9 @@ var BinaryFileReader = (function binaryFileReader() {
         lastPosition = position;
       };
       xhr.onreadystatechange = function(event) {
+        if(xhr.readyState === 2 && onhttpstatus) {
+          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
+        }
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
@@ -268,7 +272,8 @@ var FileLoadingService = {
           },
           function (e) { self.onerror(e); },
           self.onopen,
-          self.onclose);
+          self.onclose,
+          self.onhttpstatus);
       }
     };
   }
