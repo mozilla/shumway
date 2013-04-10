@@ -686,6 +686,23 @@ var Multiname = (function () {
     return "public$" + name;
   };
 
+  multiname.fromQualifiedName = function fromQualifiedName(name) {
+    // TODO: change namespace mangling to always add a second '$', even if no
+    // URI is set on the namespace. Right now, this code will mis-parse
+    // qualified names without a namespace URI, but with a '$' in the name.
+    release || assert(typeof name === 'string');
+    release || assert(name.match(/\w+\$.*\$.+/), 'not a valid multiname:', name);
+    var nsStart = name.indexOf('$');
+    var kind = ShumwayNamespace.kindFromString(name.substr(nsStart++));
+    var nameStart = name.indexOf('$', nsStart);
+    var uri;
+    if (nameStart - nsStart > 0) {
+      uri = name.substring(nsStart, nameStart++);
+    }
+    var namespaces = [new ShumwayNamespace(kind, uri)];
+    return new Multiname(namespaces, name.substr(nameStart));
+  };
+
   multiname.getAccessModifier = function getAccessModifier(mn) {
     release || assert(Multiname.isQName(mn));
     if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
