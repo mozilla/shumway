@@ -26,6 +26,7 @@ var URLStreamDefinition = (function () {
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
+        console.error(error);
         throw 'Not implemented: session.onerror';        
       };
       session.onopen = function () {

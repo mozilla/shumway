@@ -981,7 +981,7 @@ var LoaderDefinition = (function () {
           return 0; //TODO: implement
         },
         _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
-          this._loadFrom(resolveURI(request.url));
+          this._loadFrom(request.url);
           //TODO: implement
         },
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
