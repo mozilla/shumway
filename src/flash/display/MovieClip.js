@@ -31,8 +31,17 @@ var MovieClipDefinition = (function () {
     _callFrame: function (frameNum) {
       if (frameNum in this._frameScripts) {
         var scripts = this._frameScripts[frameNum];
-        for (var i = 0, n = scripts.length; i < n; i++)
-          scripts[i].call(this);
+        for (var i = 0, n = scripts.length; i < n; i++) {
+          if ($DEBUG) {
+            try {
+              scripts[i].call(this);
+            } catch (e) {
+              log('error ' + e + ', stack: \n' + e.stack);
+            }
+          } else {
+            scripts[i].call(this);
+          }
+        }
       }
     },
     _as2CallFrame: function (frame) {
