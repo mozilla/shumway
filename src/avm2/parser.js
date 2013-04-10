@@ -335,10 +335,8 @@ var ShumwayNamespace = (function () {
   }
 
   function escapeString(str) {
-    if (str !== undefined) {
-      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
-    }
-    return str;
+    /* No dots, colons, dashes, '$' and /s */
+    return str ? str.replace(/\.|:|-|\$|\//gi, "_") : str;
   }
 
   var perfectNamespaceHash = Object.create(null);
