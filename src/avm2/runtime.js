@@ -366,7 +366,7 @@ function checkFilter(value) {
   if (!value.class) {
     return false;
   }
-  return isXMLType(value.class);
+  return isXMLType(value);
 }
 
 function Activation (methodInfo) {
@@ -654,9 +654,6 @@ function sliceArguments(args, offset) {
 function getProperty(obj, mn, isMethod) {
   release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
 
-  if (!obj && mn.name === "toLowerCase") {
-    return function (str) { return this; }
-  }
   if (obj.canHandleProperties) {
     return obj.get(mn, isMethod);
   }
@@ -799,21 +796,6 @@ function setProperty(obj, mn, value) {
     obj[Multiname.getQualifiedName(resolved)] = value;
   }
   return;
-}
-
-function isType(obj, type) {
-  for (var i = 0; i < types.length; i++) {
-    var type = types[i];
-    if (type.object) {
-      return obj.classInfo.instanceInfo === type.object;
-    }
-  }
-  return false;
-}
-
-function isXMLType(obj) {
-  var ii = obj.instanceInfo;
-  return ii === Type.XML.object || ii === Type.XMLList.object;
 }
 
 function setSuper(scope, obj, mn, value) {
