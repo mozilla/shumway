@@ -201,7 +201,7 @@ var GraphicsDefinition = (function () {
         throw ArgumentError();
 
       for (var i = 0, n = colors.length; i < n; i++)
-        gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
+        gradient.addColorStop(ratios[i], toRgba(colors[i], alphas[i]));
 
       this._fillStyle = gradient;
 
