@@ -290,7 +290,7 @@ var ShumwayNamespace = (function () {
 
   var kinds = {};
   kinds[CONSTANT_Namespace] = "public";
-  kinds[CONSTANT_PackageNamespace] ="public";
+  kinds[CONSTANT_PackageNamespace] = "public";
   kinds[CONSTANT_PackageInternalNs] = "packageInternal";
   kinds[CONSTANT_PrivateNs] = "private";
   kinds[CONSTANT_ProtectedNamespace] =  "protected";
@@ -329,29 +329,39 @@ var ShumwayNamespace = (function () {
       // Make a psuedo unique id by concatenating current milliseconds to original uri
       this.uri = String(this.uri + Date.now());
     }
-    this.uri = mangleNamespaceString(this.uri);
+    this.uri = mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   }
 
-  function escapeString(str) {
-    if (str !== undefined) {
-      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+  function escapeUri(uri) {
+    if (uri !== undefined) {
+      uri = uri.replace(/[^\w]/g, "_"); /* No fancy characters. */
     }
-    return str;
+    return uri;
   }
 
-  var perfectNamespaceHash = Object.create(null);
-  var perfectNamespaceHashCount = 0;
+  var uriToMangledNameMap = Object.create(null);
+  var mangledNameToURIMap = Object.create(null);
+  var mangledNameList = [];
 
-  function mangleNamespaceString(str) {
-    if (!release) {
-      return escapeString(str);
-    }
+  function mangleNamespaceURI(str) {
     if (str === "") {
       return "";
     }
-    return perfectNamespaceHash[str] || (perfectNamespaceHash[str] = "N" + perfectNamespaceHashCount++);
+    var name = uriToMangledNameMap[str];
+    if (name) {
+      return name;
+    }
+    if (!release) {
+      name = escapeUri(str);
+      mangledNameToURIMap[name] = str;
+    } else {
+      name = String(mangledNameList.length);
+      mangledNameList.push(name);
+    }
+    uriToMangledNameMap[str] = name;
+    return name;
   }
 
   namespace.kindFromString = function kindFromString(str) {
