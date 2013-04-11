@@ -36,7 +36,7 @@ var EventDispatcherDefinition = (function () {
               evt._eventPhase = domEvent.eventPhase;
             }
 
-            evt._currentTarget = this;
+            evt._currentTarget = evt._target;
 
             var queue = this.queue;
             for (var i = 0, n = queue.length; i < n; i++) {
