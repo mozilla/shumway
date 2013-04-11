@@ -419,6 +419,13 @@ function bitCount(i) {
   return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 }
 
+function escapeString(str) {
+  if (str !== undefined) {
+    str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
+  }
+  return str;
+}
+
 /**
  * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
  * assume that all indices are within bounds, and that set operations are applied to equal sized sets.

@@ -1127,7 +1127,6 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
-
     if (mi.holder) {
       var fnNamePrefix = "";
       if (mi.holder instanceof ClassInfo) {
@@ -1139,7 +1138,7 @@ var Runtime = (function () {
       }
       fnName = fnNamePrefix + "$" + fnName;
     }
-
+    fnName = escapeString(fnName);
     if (mi.verified) {
       fnName += "$V";
     }

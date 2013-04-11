@@ -334,11 +334,6 @@ var ShumwayNamespace = (function () {
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   }
 
-  function escapeString(str) {
-    /* No dots, colons, dashes, '$' and /s */
-    return str ? str.replace(/\.|:|-|\$|\//gi, "_") : str;
-  }
-
   var perfectNamespaceHash = Object.create(null);
   var perfectNamespaceHashCount = 0;
 
@@ -761,7 +756,7 @@ var Multiname = (function () {
       nameIndex = simpleName.lastIndexOf(" ");
     }
 
-    if (nameIndex > 0) {
+    if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
       name = simpleName.substring(nameIndex + 1).trim();
       namespace = simpleName.substring(0, nameIndex).trim();
     } else {
