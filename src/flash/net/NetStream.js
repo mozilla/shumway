@@ -1,4 +1,4 @@
-var USE_MEDIASOURCE_API = false;
+var USE_MEDIASOURCE_API = true;
 
 var NetStreamDefinition = (function () {
   return {
@@ -32,8 +32,13 @@ var NetStreamDefinition = (function () {
           },
           play: function play(url) {
             // (void) -> void
-            if (!USE_MEDIASOURCE_API) {
-              this._urlReady.resolve(url);
+            var isMediaSourceEnabled = USE_MEDIASOURCE_API;
+            if (isMediaSourceEnabled && typeof MediaSource === 'undefined') {
+              console.warn('MediaSource API is not enabled, falling back to regular playback');
+              isMediaSourceEnabled = false;
+            }
+            if (!isMediaSourceEnabled) {
+              this._urlReady.resolve(FileLoadingService.resolveUrl(url));
               somewhatImplemented("NetStream.play");
               return;
             }
