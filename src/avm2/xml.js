@@ -1,6 +1,7 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 // The XML parser is designed only for parsing of simple XML documents (for unit testing purpose).
-function DOMParser() {
+
+function XMLParser() {
   // parser
   function parseXml(s, sink) {
     var i = 0, scopes = [{
@@ -169,7 +170,7 @@ function DOMParser() {
               } else if (content.attributes[q].name.substring(0, 3) === "xml") {
                 throw "Invalid xml attribute";
               } else {
-                throw "Unimplemented xml attribute";
+                // handle ordinary attributes
               }
             }
             scopes.push(scope);
@@ -197,480 +198,203 @@ function DOMParser() {
   }
   // end of parser
 
-  var implementation = this;
-
-  function NodeList(init) {
-    var nodes = [];
-    if (init) {
-      nodes = nodes.concat(init);
-    }
-    nodes.item = function(index) { return nodes[index]; };
-    return nodes;
-  }
-  function NamedNodeMap(owner) {
-    var nodes = [];
-    nodes.item = function(index) { return nodes[index]; };
-    nodes.getNamedItem = function(name) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].name === name) return nodes[i];
-      }
-      return null;
-    };
-    nodes.setNamedItem = function(arg) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].name === arg.name) {
-          var old = nodes[i];
-          nodes[i] = arg;
-          old.ownerElement = null;
-          return old;
-        }
-      }
-      arg.ownerElement = owner;
-      nodes.push(arg);
-      return null;
-    };
-    nodes.removeNamedItem = function(name) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].name === name) {
-          var old = nodes[i];
-          nodes.splice(i, 1);
-          old.ownerElement = null;
-          return old;
-        }
-      }
-      return null;
-    };
-    nodes.getNamedItemNS = function(namespaceURI, localName) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].localName === localName &&
-          nodes[i].namespaceURI === namespaceURI) return nodes[i];
-      }
-      return null;
-    };
-    nodes.setNamedItemNS = function(arg) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].localName === arg.localName &&
-          nodes[i].namespaceURI === arg.namespaceURI) {
-          var old = nodes[i];
-          nodes[i] = arg;
-          old.ownerElement = null;
-          return old;
-        }
-      }
-      arg.ownerElement = owner;
-      nodes.push(arg);
-      return null;
-    };
-    nodes.removeNamedItemNS = function(namespaceURI, localName) {
-      for (var i = 0; i < nodes.length; ++i) {
-        if (nodes[i].localName === localName &&
-          nodes[i].namespaceURI === namespaceURI) {
-          var old = nodes[i];
-          nodes.splice(i, 1);
-          old.ownerElement = null;
-          return old;
-        }
-      }
-      return null;
-    };
-    return nodes;
-  }
-  function Node() {
-    this.childNodes = new NodeList();
-  }
-  Node.ELEMENT_NODE = 1;
-  Node.ATTRIBUTE_NODE = 2;
-  Node.TEXT_NODE = 3;
-  Node.CDATA_SECTION_NODE = 4;
-  Node.ENTITY_REFERENCE_NODE = 5;
-  Node.ENTITY_NODE = 6;
-  Node.PROCESSING_INSTRUCTION_NODE = 7;
-  Node.COMMENT_NODE = 8;
-  Node.DOCUMENT_NODE = 9;
-  Node.DOCUMENT_TYPE_NODE = 10;
-  Node.DOCUMENT_FRAGMENT_NODE = 11;
-  Node.NOTATION_NODE = 12;
-  Node.prototype.nodeName = null;
-  Node.prototype.nodeValue = null;
-  Node.prototype.nodeType = 0;
-  Node.prototype.parentNode = null;
-  //Node.prototype.childNodes = [];
-  Node.prototype.firstChild = null;
-  Node.prototype.lastChild = null;
-  Node.prototype.previousSibling = null;
-  Node.prototype.nextSibling = null;
-  Node.prototype.ownerDocument = null;
-  Node.prototype.attributes = null;
-  Node.prototype.onChildNodesChanged = function() {};
-  // XXX newChild in tree remove first
-  // XXX document fragment
-  Node.prototype.insertBefore = function(newChild, refChild) {
-    if (refChild == null) {
-      return this.appendChild(newChild);
-    }
-    var i = 0;
-    while (i < this.childNodes.length && this.childNodes[i] != refChild) {
-      ++i;
-    }
-    if (!this.childNodes[i]) throw "Ref child not found";
-    newChild.parentNode = this;
-    newChild.previousSibling = refChild.previousSibling;
-    if (newChild.previousSibling) newChild.previousSibling.nextSibling = newChild;
-    newChild.nextSibling = refChild;
-    refChild.previousSibling = newChild;
-    if (this.firstChild == refChild) this.firstChild = newChild;
-    this.childNodes.splice(i,0,newChild);
-    this.onChildNodesChanged();
-    return newChild;
-  };
-  Node.prototype.replaceChild = function(newChild, oldChild) {
-    var i = 0;
-    while (i < this.childNodes.length && this.childNodes[i] != oldChild) {
-      ++i;
-    }
-    if (!this.childNodes[i]) throw "Old child not found";
-    newChild.parentNode = this;
-    newChild.previousSibling = oldChild.previousSibling;
-    if (newChild.previousSibling) newChild.previousSibling.nextSibling = newChild;
-    newChild.nextSibling = oldChild.nextSibling;
-    if (newChild.nextSibling) newChild.nextSibling.previousSibling = newChild;
-    oldChild.parentNode = null;
-    oldChild.previousSibling = null;
-    oldChild.nextSibling = null;
-    if (this.lastChild == oldChild) this.lastChild = newChild;
-    if (this.firstChild == oldChild) this.firstChild = newChild;
-    this.childNodes[i] = newChild;
-    this.onChildNodesChanged();
-    return oldChild;
-  };
-  Node.prototype.removeChild = function(oldChild) {
-    var i = 0;
-    while (i < this.childNodes.length && this.childNodes[i] != oldChild) {
-      ++i;
-    }
-    if (!this.childNodes[i]) throw "Old child not found";
-    if (this.lastChild == oldChild) this.lastChild = oldChild.previousSibling;
-    if (this.firstChild == oldChild) this.firstChild = oldChild.nextSibling;
-    if (oldChild.nextSibling) oldChild.nextSibling.previousSibling = oldChild.previousSibling;
-    if (oldChild.previousSibling) oldChild.previousSibling.nextSibling = oldChild.nextSibling;
-    oldChild.parentNode = null;
-    oldChild.previousSibling = null;
-    oldChild.nextSibling = null;
-    this.childNodes.splice(i, 1);
-    this.onChildNodesChanged();
-    return oldChild;
-  };
-  Node.prototype.appendChild = function(newChild) {
-    newChild.parentNode = this;
-    var lastChild = this.lastChild;
-    if (lastChild) {
-      newChild.nextSibling = lastChild.nextSibling;
-      if (newChild.nextSibling) newChild.nextSibling.previousSibling = newChild;
-      newChild.previousSibling = lastChild;
-      lastChild.nextSibling = newChild;
-    } else {
-      this.firstChild = newChild;
-      newChild.previousSibling = null;
-      newChild.nextSibling = null;
-    }
-    this.lastChild = newChild;
-    this.childNodes.push(newChild);
-    this.onChildNodesChanged();
-    return newChild;
-  };
-  Node.prototype.hasChildNodes = function() {
-    return this.childNodes.length > 0;
-  };
-  Node.prototype.cloneNode = function(deep) {
-    // FIXME more efficient copy
-    // FIXME deal with !deep
-    return JSON.parse(JSON.stringify(this));
-  };
-  Node.prototype.normalize = function() {
-    var lastWasText = false;
-    for (var i = 0; i < this.childNodes.length; ++i) {
-      if (this.childNodes[i].nodeType == Node.ELEMENT_NODE) {
-        this.childNodes[i].normalize();
-      }
-      if (this.childNodes[i].nodeType == Node.TEXT_NODE) {
-        if (lastWasText) {
-          this.childNodes[i - 1].appendData(this.childNodes[i].data);
-          this.removeChild(this.childNodes[i]);
-          --i;
-        }
-        lastWasText = true;
-      } else {
-        lastWasText = false;
-      }
-    }
-  };
-  Node.prototype.isSupported = function(feature, version) {
-    return false;
-  };
-  Node.prototype.namespaceURI = null;
-  Node.prototype.prefix = null;
-  Node.prototype.localName = null;
-  Node.prototype.hasAttributes = function() {
-    return this.attributes.length > 0;
-  };
-
-  Node.prototype.textContent = "";
-
-  function Document() {
-    var node = new Node();
-    node.nodeType = Node.DOCUMENT_NODE;
-    node.doctype = null;
-    node.implementation = implementation;
-    node.documentElement = null;
-    node.createElement = function(tagName) {
-      return node.createElementNS("", tagName);
-    };
-    node.createTextNode = function(data, nodeTypeOverride) {
-      var text = new Node();
-      text.nodeType = (nodeTypeOverride ? nodeTypeOverride : Node.TEXT_NODE);
-      text.ownerDocument = node;
-      text.nodeValue = data;
-      Object.defineProperty(text, "data", {
-        get: function() { return this.nodeValue; },
-        set: function(value) { this.nodeValue = value; },
-        enumerable: true
-      });
-
-      text.data = data;
-      text.length = data.length;
-      text.appendData = function(arg) {
-        this.nodeValue += arg;
-      };
-
-      Object.defineProperty(text, "textContent", {
-        get: function() { return this.nodeValue; },
-        enumerable: true
-      });
-      // TODO appendData, substringData, etc.
-      return text;
-    };
-    node.createCDATASection = function(data) {
-      return this.createTextNode(data, Node.CDATA_SECTION_NODE);
-    };
-    node.createAttribute = function(name) {
-      return node.createAttributeNS("", name);
-    };
-    node.getElementsByTagName = function(tagName) {
-      return node.getElementsByTagNameNS("", tagName);
-    };
-    node.createElementNS = function(namespaceURI, qualifiedName) {
-      var element = new Node();
-      element.nodeType = Node.ELEMENT_NODE;
-      element.ownerDocument = node;
-      element.attributes = new NamedNodeMap(element);
-      element.tagName = qualifiedName;
-      element.nodeName = qualifiedName;
-      var i = qualifiedName.indexOf(":");
-      element.localName = i < 0 ? qualifiedName : qualifiedName.substring(i + 1);
-      element.prefix = i < 0 ? "" : qualifiedName.substring(0, i);
-      element.namespaceURI = namespaceURI;
-      element.getAttributeNode = function(name) {
-        return this.attributes.getNamedItem(name);
-      };
-      element.getAttribute = function(name) {
-        var attr = this.getAttributeNode(name);
-        return attr ? attr.value : "";
-      };
-      element.setAttributeNode = function(newAttr) {
-        return this.attributes.setNamedItem(newAttr);
-      };
-      element.setAttribute = function(name, value) {
-        var attr = this.ownerDocument.createAttribute(name);
-        attr.value = value || "";
-        this.setAttributeNode(attr);
-      };
-      element.removeAttribute = function(name) {
-        this.attributes.removeNamedItem(name);
-      }
-      element.removeAttributeNode = function(oldAttr) {
-        return this.attributes.removeNamedItem(oldAttr.name);
-      }
-      element.hasAttribute = function(name) {
-        return this.attributes.getNamedItem(name) != null;
-      }
-      element.getAttributeNodeNS = function(namespaceURI, localName) {
-        return this.attributes.getNamedItemNS(namespaceURI, localName);
-      };
-      element.getAttributeNS = function(namespaceURI, localName) {
-        var attr = this.getAttributeNodeNS(namespaceURI, localName);
-        return attr ? attr.value : "";
-      };
-      element.setAttributeNodeNS = function(newAttr) {
-        return this.attributes.setNamedItemNS(newAttr);
-      };
-      element.setAttributeNS = function(namespaceURI, qualifiedName) {
-        var attr = this.ownerDocument.createAttributeNS(namespaceURI, qualifiedName);
-        attr.value = value || "";
-        this.setAttributeNodeNS(attr);
-      };
-      element.removeAttributeNS = function(namespaceURI, localName) {
-        this.attributes.removeNamedItemNS(namespaceURI, localName);
-      }
-      element.removeAttributeNode = function(oldAttr) {
-        return this.attributes.removeNamedItemNS(oldAttr.namespaceNS, oldAttr.localName);
-      }
-      element.hasAttributeNS = function(namespaceURI, localName) {
-        return this.attributes.getNamedItemNS(namespaceURI, localName) != null;
-      }
-      element.getElementsByTagName = function(name) {
-        return this.getElementsByTagNameNS("", name);
-      };
-      element.getElementsByTagNameNS = function(namespaceURI, localName) {
-        var q = [this];
-        var result = [];
-        while (q.length > 0) {
-          var current = q.shift();
-          if (current.nodeType == Node.ELEMENT_NODE) {
-            if (current.namespaceURI == namespaceURI && current.localName == localName) {
-              result.push(current);
-            }
-
-            for (var i = 0; i < current.childNodes.length; ++i) {
-              q.push(current.childNodes[i]);
-            }
-          }
-        }
-        return new NodeList(result);
-      };
-
-      Object.defineProperty(element, "textContent", {
-        get: function() {
-          var result = "";
-          for (var i = 0; i < this.childNodes.length; ++i) {
-            result += this.childNodes[i].textContent;
-          }
-          return result;
-        },
-        enumerable: true
-      });
-
-      return element;
-    };
-    node.createAttributeNS = function(namespaceURI, qualifiedName) {
-      var attr = new Node();
-      attr.nodeType = Node.ATTRIBUTE_NODE;
-      attr.ownerDocument = node;
-      attr.name = qualifiedName;
-      attr.nodeName = qualifiedName;
-      var i = qualifiedName.indexOf(":");
-      attr.localName = i < 0 ? qualifiedName : qualifiedName.substring(i + 1);
-      attr.prefix = i < 0 ? "" : qualifiedName.substring(0, i);
-      attr.namespaceURI = namespaceURI;
-      attr.specified = true;
-      attr.nodeValue = null;
-      Object.defineProperty(attr, "value", {
-        get: function() { return this.nodeValue; },
-        set: function(value) { this.nodeValue = value; },
-        enumerable: true
-      });
-      return attr;
-    };
-    node.getElementsByTagNameNS = function(namespaceURI, localName) {
-      if (!this.documentElement) return null;
-      return this.documentElement.getElementsByTagNameNS(namespaceURI, localName);
-    };
-    node.getElementById = function(elementId) {
-      if (this.documentElement) return null;
-      var q = [this.documentElement];
-      while (q.length > 0) {
-        var current = q.shift();
-        if (current.nodeType == Node.ELEMENT_NODE) {
-          if (current.getAttribute("id") == elementId) return current;
-
-          for (var i = 0; i < current.childNodes.length; ++i) {
-            q.push(current.childNodes[i]);
-          }
-        }
-      }
-      return null;
-    };
-    node.onChildNodesChanged = function() {
-      this.documentElement = null;
-      for (var i = 0; i < this.childNodes.length; ++i) {
-        if (this.childNodes[i].nodeType == Node.ELEMENT_NODE) {
-          this.documentElement = this.childNodes[i];
-        }
-      }
-    };
-    Object.defineProperty(node, "textContent", {
-      get: function() {
-        return this.documentElement.textContent;
-      },
-      enumerable: true
-    });
-    return node;
-  }
-
-/*
-  name: {
-    namespace: string
-    name = {
-      prefix: string,
-      name: string
-    }
-  }
-
-  document: {
-    childNodes: NodeList,
-  }
-
-*/
-
-
-
-  function buildQualifiedName(name) {
-    return name.prefix ? name.prefix + ":" + name.name : name.name;
-  }
-
   this.parseFromString = function(s, mimeType) {
-    var document = new Document();
-    var elementsStack = [], currentElement = document;
+    // this is a raw XML object
+    var currentElement = this;
+    var elementsStack = [];
     parseXml(s, {
       beginElement: function(name, attrs, isEmpty) {
         var parent = currentElement;
         elementsStack.push(parent);
-        currentElement = document.createElementNS(name.namespace, buildQualifiedName(name));
+        currentElement = createNode("element", name.namespace, name.name);
         for (var i = 0; i < attrs.length; ++i) {
-          var attr = document.createAttributeNS(attrs[i].name.namespace,
-            buildQualifiedName(attrs[i].name));
-          attr.value = attrs[i].value;
-          currentElement.attributes.setNamedItem(attr);
+          var attr = createNode("attribute", attrs[i].name.namespace, attrs[i].name.name);
+          attr._value = attrs[i].value;
+          currentElement._attributes.push(attr);
         }
-        parent.appendChild(currentElement);
+        parent.insert(currentElement);
         if (isEmpty) {
           currentElement = elementsStack.pop();
         }
       },
       endElement: function(name) {
-        currentElement = elementsStack.pop();
+        if (elementsStack.length) {
+          currentElement = elementsStack.pop();
+        }
       },
       text: function(text, isWhitespace) {
-        var node = document.createTextNode(text);
-        currentElement.appendChild(node);
+        var node = createNode("text", "", "");
+        node._value = text;
+        // isWhitespace?
+        currentElement.insert(node);
       },
       cdata: function(text) {
-        var node = document.createCDATASection(text);
-        currentElement.appendChild(node);
+        var node = createNode("text", "", "");
+        node._value = text;
+        currentElement.insert(node);
       },
       comment: function(text) { },
       pi: function(name, attrs) { },
       doctype: function(text) { }
     });
-    document.normalize();
-    document.xmlString = s;
-    return document;
+    return currentElement;
   };
+
+  function createNode(kind, uri, name) {
+    return new XML().init(kind, uri, name);
+  }
 }
 
-var xmlParser = new DOMParser();
+// 10.1 ToString
+function toString(node) {
+  switch (node._kind) {
+  case "text":
+  case "attribute":
+    return node._value;
+  default:
+    if (node.hasSimpleContent()) {
+      var str = "";
+      node._.forEach(function (v, i) {
+        str += toString(v);
+      })
+      return str;
+    }
+    return toXMLString(node);
+  }
+}
+ 
+// 10.2 ToXMLString
+function toXMLString(node, ancestorNamespaces, indentLevel) {
+  if (node._IS_XMLLIST) {
+  }
+  else if (node._IS_XML) {
+    switch (node._kind) {
+    case "text":
+    case "attribute":
+    case "comment":
+    case "processing-instruction":
+    default:
+      throw "Not implemented";
+    }
+  }
+  // FIXME this is not done yet.
+  throw "toXMLString not implemented";
+  return "";
+}
+
+
+// 10.3 ToXML
+function toXML(value) {
+  if (value === null) {
+    throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
+  } else if (value === undefined) {
+    throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+  } else if (value instanceof XML) {
+    return value;
+  } else if (value instanceof XMLList) {
+    if (value.length() === 1) {
+      return value._[0];
+    }
+    throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
+  } else {
+    var x = xmlParser.parseFromString.call(this, String(value));
+    if (x._.length === 0) {
+      return x;
+    }
+    return x._[0];
+  }
+}
+
+var defaultNamespace = "";
+
+// 10.4 ToXMLList
+function toXMLList(value) {
+  if (value === null) {
+    throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
+  } else if (value === undefined) {
+    throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+  } else if (value instanceof XML) {
+    this._ = [value];
+  } else if (value instanceof XMLList) {
+    if (x._.length === 1) {
+      return x._[0];
+    }
+    throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
+  } else {
+    value = "<parent xmlns='" + defaultNamespace + "'>" + value + "</parent>";
+    var x = new XML(value);
+    for (var i = 0; i < x._.length; i++) {
+      var v = x._[i];
+      v._parent = null;
+      this.append(v);
+    }
+    this._targetObject = null;
+    return this;
+  }
+}
+
+// 10.5 ToAttributeName
+function toAttributeName() {
+  notImplemented("toAttributeName");
+}
+
+// 10.6 ToXMLName
+function toXMLName() {
+  notImplemented("toXMLName");
+}
+
+var xmlParser = new XMLParser();
+
+
+function isXMLType(val) {
+  return val._IS_XML || val._IS_XMLLIST;
+}
+
 
 /**
  * XML.as
+ *
+
+ XML Node object structure
+
+ Node {
+   _kind: ["element", "attribute", "text", "comment", "processing-instruction"]
+   _parent: [XML, null],
+   _inScopeNamespaces: [],
+ }
+
+ Element : Node {
+   _kind: "element",
+   _name: { localName: string, uri: string },
+   _: [],             // children
+   _attributes: [],   // attributes
+ }
+
+ Attribute : Node {
+   _kind: "attribute",
+   _name: { localName: string, uri: string },
+   _value: string,
+   _parent: XML,
+ }
+
+ Text : Node {
+   _kind: "text",
+   _value: string,
+ }
+
+ ProcessingInstruction : Node {
+   _kind: "processing-instruction",
+   _name: { localName: string, uri: string },
+   _value: string,
+ }
+
+ Comment : Node {
+   _kind: "comment",
+   _value: string,
+ }
+
+ *
+ *
  */
 
 var XML;
@@ -684,38 +408,15 @@ function XMLClass(runtime, scope, instance, baseClass) {
 
   XML = function (value) {
     if (!value) {
-      toXML.call(this, "");
-    } else if (value instanceof XML || value instanceof XMLList) {
-      constructFromXML.call(this, value);
-    } else {
-      toXML.call(this, value);
+      value = "";
     }
+    this.init("element", "", "");
+    var x = toXML.call(this, value);
+    if (isXMLType(value)) {
+      x = x.copy();
+    }
+    return x;
   };
-
-  // E4X 10.3
-  function toXML(value) {
-    if (value === null) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
-    } else if (value === undefined) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (value instanceof XML) {
-      return value;
-    } else if (value instanceof XMLList) {
-      // TODO: Return first XML element in the list.
-      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
-    } else {
-      constructFromString.call(this, toString(value));
-    }
-  }
-
-  function constructFromString(string) {
-    warning("TODO: Parse: " + string);
-    this.node = xmlParser.parseFromString(string);
-  }
-
-  function constructFromXML(xml) {
-    warning("TODO: Clone: " + xml);
-  }
 
   function deepCopy(xml) {
     // FIXME handle all cases
@@ -727,13 +428,53 @@ function XMLClass(runtime, scope, instance, baseClass) {
   }
 
   var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
+  c._flags = FLAG_IGNORE_COMMENTS |
+             FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
+             FLAG_IGNORE_WHITESPACE |
+             FLAG_PRETTY_PRINTING;
 
-  c._flags = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING;
   c._prettyIndent = 2;
   c.extend(baseClass);
 
   var Xp = XML.prototype;
-  defineReadOnlyProperty(Xp, "canHandleProperties", true);
+ 
+  // Initialize an XML node.
+  Xp.init = function init(kind, uri, name) {
+    this._name = name;
+    this._uri = uri;
+    this._kind = kind;    // E4X [[Class]]
+    this._parent = null;
+    this._inScopeNamespaces = [];
+    switch (kind) {
+    case "element":
+      this._attributes = [];
+      this._ = [];  // child nodes go here
+      break;
+    case "attribute":
+      this._value = "";
+      break;
+    default:
+      break;
+    }
+    return this;
+  }
+
+  Xp.canHandleProperties = true;
+
+  // 13.4.4.16 XML.prototype.hasSimpleContent()
+  Xp.hasSimpleContent = function hasSimpleContent() {
+    if (this._kind === "comment" || this._kind === "processing-instruction") {
+      return false;
+    }
+    var result = true;
+    this._.forEach(function (v) {
+      if (v._kind === "element") {
+        result = false;
+      }
+    });
+    return result;
+  }
+
   var ATTR_NAME = 1;
   var ANY_ATTR_NAME = 2;
   var ANY_NAME = 3;
@@ -751,8 +492,8 @@ function XMLClass(runtime, scope, instance, baseClass) {
       return ELEM_NAME;
     }
   }
+
   function setAttribute(node, name, value) {
-    print("setAttribute() name="+name+" value="+value);
     if (node.nodeType === Node.DOCUMENT_NODE) {
       node.childNodes[0].setAttribute(name, value);
     } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -761,24 +502,23 @@ function XMLClass(runtime, scope, instance, baseClass) {
       throw "error or unhandled case in setAttribute";
     }
   }
-  function getAttribute(node, name) {
-    print("getAttribute() name="+name);
-    if (node.nodeType === Node.DOCUMENT_NODE) {
-      return node.childNodes[0].getAttribute(name);
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      return node.getAttribute(name);
-    } else {
-      throw "error or unhandled case in setAttribute";
-    }
-  }
-  defineNonEnumerableProperty(Xp, "set", function (mn, value, isMethod) {
+
+  Xp.set = function (mn, value, isMethod) {
     if (isMethod) {
       return;
     }
     // FIXME need to set XML attributes and elements here
     switch (nameKind(mn)) {
     case ATTR_NAME:
-      return setAttribute(this.node, mn.name, value);
+      this._attributes.forEach(function (v, i) {
+        if (v._name === mn.name) {
+          delete this._attributes[i];
+        }
+      });
+      var a = new XML().init("attribute", "", mn.name);
+      a._value = value;
+      a._parent = this;
+      this._attributes.push(a);
       break;
     case ANY_ATTR_NAME:
       break;
@@ -788,45 +528,67 @@ function XMLClass(runtime, scope, instance, baseClass) {
       return this.node[mn.name];
       break;
     }
-  });
-  defineNonEnumerableProperty(Xp, "get", function (mn, isMethod) {
+  };
+
+  // 9.1.1.1 XML.[[Get]] (P)
+  Xp.get = function (mn, isMethod) {
     var val;
     if (isMethod) {
       var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
       val = this[Multiname.getQualifiedName(resolved)];
     } else {
       if (isNumeric(mn)) {
+        // this is a shortcut to the E4X logic that wants us to create a new
+        // XMLList with of size 1 and access it with the given index.
         if (Number(0) === 0) {
           return this;
         }
         return null;
       }
-      return new XMLList();
-      // FIXME need to get XML attributes and elements here
+      var val = new XMLList();
+      val._targetObject = this._parent;
+      val._targetProperty = mn;
+      var name = mn;  // E4X wants us to construct an XMLName here, but a
+      // multiname has all the same information, minus a 'prefix', which is
+      // optional.
+
       switch (nameKind(mn)) {
-      case ATTR_NAME:
-        return getAttribute(this.node, mn.name);
-        break;
       case ANY_ATTR_NAME:
+        var any = true;
+        // fall through
+      case ATTR_NAME:
+        this._attributes.forEach(function (v, i) {
+          if (any || v._name === mn.name) {
+            // implement xmllist
+            val._.push(v);
+          }
+        });
         break;
       case ANY_NAME:
-        val = new XMLList(); // FIXME set targets, set children
-        setTargets(val, this._parent, mn);
-        break;
+        var any = true;
+        // fall through
       default:
-        val = this.node[mn.name];
+        this._.forEach(function (v, i) {
+          if (any || v._name === mn.name) {
+            // implement xmllist
+            val._.push(v);
+          }
+        });
         break;
       }
     }
     return val;
-  });
-  function setTargets(obj, target, prop) {
-    obj._target = target;
-    obj._targetProp = prop;
-  }
-  defineNonEnumerableProperty(Xp, "delete", function (key, isMethod) {
+  };
+
+  Xp.delete = function (key, isMethod) {
     debugger;
-  });
+  };
+
+  Xp._IS_XML = true;
+
+  Xp.insert = function insert(node) {
+    this._.push(node);
+  };
 
   c.native = {
     static: {
@@ -872,8 +634,8 @@ function XMLClass(runtime, scope, instance, baseClass) {
       }
     },
     instance: {
-      toString: function toString() { // (void) -> String
-        return this._value;
+      toString: function () { // (void) -> String
+        return toString(this); //function () { return toString.bind(this); }
       },
       hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
         notImplemented("XML.hasOwnProperty");
@@ -885,7 +647,6 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.addNamespace");
       },
       appendChild: function appendChild(child) { // (child) -> XML
-//        notImplemented("XML.appendChild");
         return this;
       },
       attribute: function attribute(arg) { // (arg) -> XMLList
@@ -916,14 +677,13 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.descendants");
       },
       elements: function elements(name) { // (name = "*") -> XMLList
-        //notImplemented("XML.elements");
-        return new XMLList();
+        notImplemented("XML.elements");
       },
       hasComplexContent: function hasComplexContent() { // (void) -> Boolean
         notImplemented("XML.hasComplexContent");
       },
       hasSimpleContent: function hasSimpleContent() { // (void) -> Boolean
-        notImplemented("XML.hasSimpleContent");
+        return this.hasSimpleContent();
       },
       inScopeNamespaces: function inScopeNamespaces() { // (void) -> Array
         notImplemented("XML.inScopeNamespaces");
@@ -938,7 +698,7 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.localName");
       },
       name: function name() { // (void) -> Object
-        notImplemented("XML.name");
+        return this._name;
       },
       _namespace: function _namespace(prefix, argc) { // (prefix, argc:int) -> any
         notImplemented("XML._namespace");
@@ -983,7 +743,7 @@ function XMLClass(runtime, scope, instance, baseClass) {
         notImplemented("XML.text");
       },
       toXMLString: function toXMLString() { // (void) -> String
-        notImplemented("XML.toXMLString");
+        return toXMLString(this.node)
       },
       notification: function notification() { // (void) -> Function
         notImplemented("XML.notification");
@@ -998,7 +758,7 @@ function XMLClass(runtime, scope, instance, baseClass) {
 
 function XMLListClass(runtime, scope, instance, baseClass) {
   XMLList = function (value) {
-    print("XMLList() value="+typeof value);
+    this._ = [];
     // FIXME treating XMLList as XML works for XMLList length === 0
     if (!value) {
       toXMLList.call(this, "");
@@ -1009,39 +769,35 @@ function XMLListClass(runtime, scope, instance, baseClass) {
     }
   };
 
-  // E4X 10.3
-  function toXMLList(value) {
-    if (value === null) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
-    } else if (value === undefined) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (value instanceof XML) {
-      return value;
-    } else if (value instanceof XMLList) {
-      // TODO: Return first XML element in the list.
-      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
-    } else {
-      constructFromString.call(this, toString(value));
-    }
-  }
-
   function constructFromXML(xml) {
     warning("TODO: Clone: " + xml);
-  }
-
-  function constructFromString(string) {
-    warning("TODO: Parse: " + string);
-    this.node = xmlParser.parseFromString(string);
   }
 
   var c = new runtime.domain.system.Class("XMLList", XMLList, Domain.passthroughCallable(XMLList));
   c.extend(baseClass);
   var XLp = XMLList.prototype;
-  defineNonEnumerableProperty(XLp, "set", function (mn, value, isMethod) {
+  XLp.canHandleProperties = true;
+
+  // 13.5.4.14 XMLList.prototype.hasSimpleContent()
+  XLp.hasSimpleContent = function hasSimpleContent() {
+    if (this._.length === 0) {
+      return true;
+    } else if (this._.length === 1) {
+      return this._[0].hasSimpleContent()
+    }
+    var result = true;
+    this._.forEach(function (v) {
+      if (v._kind === "element") {
+        result = false;
+      }
+    });
+    return result;
+  }
+
+  XLp.set = function (mn, value, isMethod) {
     if (isMethod) {
       return;
     }
-    print("XMLList.set() name="+mn.name+" value="+value);
     // FIXME need to set XML attributes and elements here
     switch (nameKind(mn)) {
     case ATTR_NAME:
@@ -1080,66 +836,85 @@ function XMLListClass(runtime, scope, instance, baseClass) {
 */
       break;
     }
-  });
-  defineNonEnumerableProperty(XLp, "get", function (mn, isMethod) {
+  };
+
+  XLp.get = function (mn, isMethod) {
     var val;
     if (isMethod) {
       var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
-      val = this[Multiname.getQualifiedName(resolved)];
+      if (this._.length !== 1) {
+        throw "expecting XMLList of size 1";
+      }
+      val = this._[0][Multiname.getQualifiedName(resolved)];
     } else {
-      return new XMLList();
-      // FIXME need to get XML attributes and elements here
       switch (nameKind(mn)) {
       case ATTR_NAME:
-        return getAttribute(this.node, mn.name);
-        break;
+        val = this._[0].get(mn, false);
       case ANY_ATTR_NAME:
         break;
       case ANY_NAME:
         val = new XMLList(); // FIXME set targets, set children
-        setTargets(val, this._parent, mn);
+        val._targetObject = target;
+        val._targetProperty = prop;
         break;
       default:
-        val = this.node[mn.name];
+        val = this._[0].get(mn, false);
         break;
       }
     }
     return val;
-  });
-  function setTargets(obj, target, prop) {
-    obj._target = target;
-    obj._targetProp = prop;
-  }
-  defineNonEnumerableProperty(XLp, "delete", function (key, isMethod) {
+  };
+
+  XLp.delete = function (key, isMethod) {
     debugger;
-  });
-  defineNonEnumerableProperty(XLp, "length", function () {
+  };
+
+  XLp.append = function (val) {
+    if (val._IS_XMLLIST) {
+      this._targetObject = val._targetObject;
+      this._targetProperty = val._targetProperty;
+      if (val._.length) {
+        return;
+      }
+      val._.forEach(function (v, i) {
+        this._.push(v);
+      });
+    } else if (val._IS_XML) {
+      this._.push(val);
+    }
+    return;
+  };
+
+  XLp.length = function () {
     debugger;
     this.nodeList.nodes.length;
-  });
-  defineNonEnumerableProperty(XLp, "_resolve", function () {
-    debugger;
-    var base = this._target._resolve();
+  };
+
+  XLp.resolve = function () {
+    var base = this._targetObject._resolve();
     if (base === null) {
       return null;
     }
-    var target = this._target.get(_targetProp);
+    var target = this._targetObject.get(_targetProp);
     if (base.length === 0) {
       debugger;
 //      if (target is XMLList  && base.length > 1) {
 //        return null;
 //      }
-      base.set(_targetProp, "");
-      target = base.get(_targetProp);
+      base.set(_targetProperty, "");
+      target = base.get(_targetProperty);
       return target;
     }
-  });
+  };
+
+  XLp._IS_XMLLIST = true;
+
   c.native = {
     static: {
     },
     instance: {
-      toString: function toString() { // (void) -> String
-        notImplemented("XMLList.toString");
+      toString: function () { // (void) -> String
+        return toString.bind(null, this);
       },
       hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
         notImplemented("XMLList.hasOwnProperty");
@@ -1178,14 +953,14 @@ function XMLListClass(runtime, scope, instance, baseClass) {
         notImplemented("XMLList.hasComplexContent");
       },
       hasSimpleContent: function hasSimpleContent() { // (void) -> Boolean
-        notImplemented("XMLList.hasSimpleContent");
+        return this.hasSimpleContent();
       },
       length: function length() { // (void) -> int
         //notImplemented("XMLList.length");
         return 0;
       },
       name: function name() { // (void) -> Object
-        notImplemented("XMLList.name");
+        return this._[0]._name;
       },
       normalize: function normalize() { // (void) -> XMLList
         notImplemented("XMLList.normalize");
@@ -1200,7 +975,7 @@ function XMLListClass(runtime, scope, instance, baseClass) {
         notImplemented("XMLList.text");
       },
       toXMLString: function toXMLString() { // (void) -> String
-        notImplemented("XMLList.toXMLString");
+        return toXMLString(this.node)
       },
       addNamespace: function addNamespace(ns) { // (ns) -> XML
         notImplemented("XMLList.addNamespace");
