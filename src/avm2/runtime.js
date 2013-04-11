@@ -1146,6 +1146,10 @@ var Runtime = (function () {
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
     }
+    if ($DEBUG) {
+      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
+              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
+    }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
       mi.trace(new IndentingWriter(), this.abc);
