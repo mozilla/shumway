@@ -324,7 +324,7 @@ var Interpreter = (function () {
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
-            var p = getProperty(obj, multiname);
+            var p = getProperty(obj, multiname, true /*isMethod*/); 
             if (!p) {
               runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
             }
