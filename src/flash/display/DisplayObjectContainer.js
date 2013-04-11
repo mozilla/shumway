@@ -43,6 +43,10 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.appendChild(child._control);
 
+      child.dispatchEvent(new flash.events.Event("added"));
+      if (child.stage)
+        child._addedToStage();
+
       this._markAsDirty();
 
       return child;
@@ -97,6 +101,11 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
 
       var child = children[index];
+
+      child.dispatchEvent(new flash.events.Event("removed"));
+      if (child.stage)
+        child._removedFromStage();
+
       children.splice(index, 1);
       child._parent = null;
 

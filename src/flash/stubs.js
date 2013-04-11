@@ -162,7 +162,7 @@ var as3error = {};
    M("flash.net.URLRequest", "URLRequestClass", URLRequestDefinition),
    M("flash.net.URLStream", "URLStreamClass", URLStreamDefinition),
    M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
-   M("flash.net.ShardObject", "SharedObjectClass", SharedObjectDefinition),
+   M("flash.net.SharedObject", "SharedObjectClass", SharedObjectDefinition),
    M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
 
 
@@ -193,6 +193,14 @@ var as3error = {};
      };
    });
 }).call(this);
+
+natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instance, baseClass) {
+//  notImplemented("FlashUtilScript::getAliasName");
+  return function getAliasName(value) {
+    // FIXME don't know what is expected here
+    return value.debugName;
+  }
+}
 
 natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 

@@ -356,7 +356,7 @@ var LoaderDefinition = (function () {
 
   var def = {
     __class__: 'flash.display.Loader',
-	
+
     initialize: function () {
       this._contentLoaderInfo = new flash.display.LoaderInfo;
       this._contentLoaderInfo._loader = this;
@@ -489,7 +489,6 @@ var LoaderDefinition = (function () {
                 return function symbolPromiseResolved() {
                   var symbolInfo = symbolPromise.value;
                   symbolInfo.className = className;
-                  // Custom classes need to know they are symbols.
                   avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
                 };
               })(symbolPromise, asset.className)
@@ -721,7 +720,7 @@ var LoaderDefinition = (function () {
         };
         img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
         promiseQueue.push(imgPromise);
-        className = 'flash.display.BitmapData';
+        className = 'flash.display.Bitmap';
         props.img = img;
         props.width = symbol.width;
         props.height = symbol.height;
@@ -945,7 +944,7 @@ var LoaderDefinition = (function () {
       notImplemented();
     }
   };
-  
+
   def.__glue__ = {
     native: {
       instance: {
@@ -982,7 +981,7 @@ var LoaderDefinition = (function () {
           return 0; //TODO: implement
         },
         _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
-          this._loadFrom(resolveURI(request.url));
+          this._loadFrom(request.url);
           //TODO: implement
         },
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void

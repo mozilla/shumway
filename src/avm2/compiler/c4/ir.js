@@ -566,7 +566,7 @@
   })();
 
   var GetProperty = (function () {
-    function getProperty(control, store, object, name) {
+    function getProperty(control, store, object, name, isMethod) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
@@ -576,14 +576,15 @@
       this.store = store;
       this.object = object;
       this.name = name;
+      this.isMethod = isMethod;
     }
     getProperty.prototype = extend(Value, "GetProperty");
     return getProperty;
   })();
 
   var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name) {
-      GetProperty.call(this, control, store, object, name);
+    function avm2GetProperty(control, store, object, name, isMethod) {
+      GetProperty.call(this, control, store, object, name, isMethod);
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;

@@ -9,7 +9,9 @@ var VideoDefinition = (function () {
 
     attachNetStream: function (netStream) {
       this._netStream = netStream;
-      this._element.src = netStream._url;
+      netStream._urlReady.then(function (url) {
+        this._element.src = url;
+      }.bind(this));
     },
     ctor: function(width, height) {
       if (width === undefined) width = 320;

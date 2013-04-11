@@ -58,6 +58,8 @@ var SpriteDefinition = (function () {
     _constructChildren: function () {
       var loader = this._loader;
       var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
+      var BitmapClass = avm2.systemDomain.getClass("flash.display.Bitmap");
+      var BitmapDataClass = avm2.systemDomain.getClass("flash.display.BitmapData");
 
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
@@ -94,6 +96,12 @@ var SpriteDefinition = (function () {
           // constructor is not nullary.
           symbolClass.instance.call(instance);
 
+          if (BitmapDataClass.isInstanceOf(instance)) {
+            var bitmapData = instance;
+            instance = BitmapClass.createAsSymbol(props);
+            BitmapClass.instance.call(instance, bitmapData);
+          }
+
           assert(instance._control);
           this._control.appendChild(instance._control);
 
@@ -104,18 +112,12 @@ var SpriteDefinition = (function () {
 
           instance.dispatchEvent(new flash.events.Event("load"));
           instance.dispatchEvent(new flash.events.Event("added"));
+          if (this.stage)
+            instance.dispatchEvent(new flash.events.Event("addedToStage"));
 
           children[i] = instance;
         }
       }
-    },
-    _insertChildAtDepth: function (child) {
-      // TODO
-      this.addChild(child);
-
-      var loader = this._loader;
-      if (!loader._isAvm2Enabled)
-        this._initAvm1Bindings(child, child.name);
     },
     _duplicate: function (name, depth, initObject) {
       // TODO proper child cloning, initObject and display list insertion

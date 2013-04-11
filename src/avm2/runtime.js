@@ -46,6 +46,11 @@ var PARAMETER_PREFIX = "p";
 var $M = [];
 
 /**
+ * Overriden AS3 methods.
+ */
+var VM_METHOD_OVERRIDES = {};
+
+/**
  * This is used to keep track if we're in a runtime context. Proxies need to know
  * if a proxied operation is triggered by AS3 code or VM code.
  */
@@ -92,6 +97,9 @@ function initializeGlobalObject(global) {
   var PUBLIC_MANGLED = /^public\$/;
 
   function getEnumerationKeys(obj) {
+    if (obj.node && obj.node.childNodes) {
+      obj = obj.node.childNodes;
+    }
     var keys = [];
 
     var boxedValue = obj.valueOf();
@@ -300,6 +308,9 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
+  if (obj.node && obj.node.childNodes) {
+    return obj.node.childNodes[obj[VM_NEXT_NAME](index)];
+  }
   return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
 }
 
@@ -332,6 +343,7 @@ function hasNext2(obj, index) {
     return {index: 0, object: null};
   }
   obj = Object(obj);
+  release || assert(obj);
   release || assert(index >= 0);
 
   /**
@@ -346,11 +358,15 @@ function hasNext2(obj, index) {
 }
 
 function getDescendants(multiname, obj) {
-  notImplemented("getDescendants");
+//  notImplemented("getDescendants");
+  return new XMLList();
 }
 
 function checkFilter(value) {
-  notImplemented("checkFilter");
+  if (!value.class) {
+    return false;
+  }
+  return isXMLType(value);
 }
 
 function Activation (methodInfo) {
@@ -613,6 +629,20 @@ function resolveMultiname(obj, mn, traitsOnly) {
   return undefined;
 }
 
+function isNameInObject(qn, obj) {
+  if (qn.isAttribute()) {
+    for (var i = 0; i < obj.attributes.length; i++) {
+      var attr = obj.attributes[i];
+      if (attr.name === qn.name) {
+        return true;
+      }
+    }
+    return false;
+  } else {
+    return Multiname.getQualifiedName(qn) in obj;
+  }
+}
+
 function isPrimitiveType(x) {
   return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
 }
@@ -621,10 +651,11 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function getProperty(obj, mn) {
+function getProperty(obj, mn, isMethod) {
   release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
+
   if (obj.canHandleProperties) {
-    return obj.get(mn.name);
+    return obj.get(mn, isMethod);
   }
 
   release || assert(Multiname.isMultiname(mn));
@@ -632,18 +663,20 @@ function getProperty(obj, mn) {
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
 
-  if (!resolved && (isPrimitiveType(obj))) {
-    throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
-  }
-
-  if (resolved !== undefined) {
-    if (Multiname.isAnyName(resolved)) {
-      return undefined;
+  if (!resolved) {
+    if (isPrimitiveType(obj)) {
+      throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
+    } else if (Multiname.isAnyName(mn)) {
+      if (obj.public$elements) {
+        value = obj.public$elements(mn);
+      }
     }
+  }
+  if (resolved !== undefined) {
     if (Multiname.isNumeric(resolved) && obj.indexGet) {
       value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = obj[Multiname.getQualifiedName(resolved)];
+      value = getPropertyInObject(obj, resolved);
     }
   } else {
     value = obj[Multiname.getPublicQualifiedName(mn.name)];
@@ -654,6 +687,22 @@ function getProperty(obj, mn) {
   }
 
   return value;
+}
+
+function getPropertyInObject(obj, qn) {
+  if (isNumeric(qn)) {
+    return obj[qn];
+  } else if (qn.isAttribute()) {
+    for (var i = 0; i < obj.attributes.length; i++) {
+      var attr = obj.attributes[i];
+      if (attr.name === qn.name) {
+        return obj.attributes[i];
+      }
+    }
+    return undefined;
+  } else {
+    return obj[Multiname.getQualifiedName(qn)];
+  }
 }
 
 function hasProperty(obj, mn) {
@@ -713,13 +762,23 @@ function getSuper(scope, obj, mn) {
 
 function setProperty(obj, mn, value) {
   release || assert(obj);
+
+  // Used by Dictionary and XML
   if (obj.canHandleProperties) {
-    return obj.set(mn.name, value);
+    return obj.set(mn, value);
   }
 
   release || assert(Multiname.isMultiname(mn));
 
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  var resolved;
+  if (mn.isAttribute && mn.isAttribute()) {
+    console.log("setProperty() obj="+obj+" mn="+mn);
+    // in E4X, attributes are always in the unnamed public namespace (public "")
+    resolved = Multiname.getPublicQualifiedName(mn.name);
+    resolved.flags = mn.flags;
+  } else {
+    resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  }
 
   if (tracePropertyAccess.value) {
     print("setProperty(" + mn + ") trait: " + value);
@@ -736,6 +795,7 @@ function setProperty(obj, mn, value) {
   } else {
     obj[Multiname.getQualifiedName(resolved)] = value;
   }
+  return;
 }
 
 function setSuper(scope, obj, mn, value) {
@@ -772,7 +832,7 @@ function setSuper(scope, obj, mn, value) {
 function deleteProperty(obj, mn) {
   release || assert(obj);
   if (obj.canHandleProperties) {
-    return obj.delete(mn.name);
+    return obj.delete(mn);
   }
 
   release || assert(Multiname.isMultiname(mn), mn);
@@ -937,6 +997,14 @@ var Runtime = (function () {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
+
+    if (methodInfo.name) {
+      var qn = Multiname.getQualifiedName(methodInfo.name);
+      if (qn in VM_METHOD_OVERRIDES) {
+        return VM_METHOD_OVERRIDES[qn];
+      }
+    }
+
     var hasDefaults = false;
     var defaults = mi.parameters.map(function (p) {
       if (p.value !== undefined) {
@@ -1041,7 +1109,6 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
-
     if (mi.holder) {
       var fnNamePrefix = "";
       if (mi.holder instanceof ClassInfo) {
@@ -1053,12 +1120,16 @@ var Runtime = (function () {
       }
       fnName = fnNamePrefix + "$" + fnName;
     }
-
+    fnName = escapeString(fnName);
     if (mi.verified) {
       fnName += "$V";
     }
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
+    }
+    if ($DEBUG) {
+      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
+              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
@@ -1541,7 +1612,7 @@ var Runtime = (function () {
   };
 
   function makeQualifiedNameTraitMap(traits) {
-    var map = {};
+    var map = Object.create(null);
     for (var i = 0; i < traits.length; i++) {
       map[Multiname.getQualifiedName(traits[i].name)] = traits[i];
     }
@@ -1564,7 +1635,9 @@ var Runtime = (function () {
       var baseOpenMethods = base[VM_OPEN_METHODS];
       for (var i = 0; i < baseBindings.length; i++) {
         var qn = baseBindings[i];
-        if (!traitMap[qn]) {
+        // TODO: Make sure we don't add overriden methods as patch targets. This may be
+        // broken for getters / setters.
+        if (!traitMap[qn] || traitMap[qn].isGetter() || traitMap[qn].isSetter()) {
           var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
           Object.defineProperty(obj, qn, baseBindingDescriptor);
           if (baseOpenMethods.hasOwnProperty(qn)) {
