@@ -112,6 +112,8 @@ var SpriteDefinition = (function () {
 
           instance.dispatchEvent(new flash.events.Event("load"));
           instance.dispatchEvent(new flash.events.Event("added"));
+          if (this.stage)
+            instance.dispatchEvent(new flash.events.Event("addedToStage"));
 
           children[i] = instance;
         }
