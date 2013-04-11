@@ -33,7 +33,7 @@ var LoaderInfoDefinition = (function () {
             var params = this._parameters;
             var mangled = {};
             for (var k in params) {
-              mangled[Multiname.getPublicQualifiedName(k)] = params[k];
+              mangled[Multiname.getPublicQualifiedName(k)] = unescape(params[k]);
             }
             return mangled;
           },
@@ -167,7 +167,7 @@ var LoaderInfoDefinition = (function () {
 //          "dispatchEvent",
           "parameters",
           "uncaughtErrorEvent",
-        ]),
+        ])
       }
     }
   };

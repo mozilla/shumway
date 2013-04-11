@@ -64,7 +64,8 @@ var NetStreamDefinition = (function () {
                 return h.public$name === 'Content-Type';
               })[0];
               if (contentTypeHeader &&
-                  contentTypeHeader.public$value !== 'application/octet-stream') {
+                  contentTypeHeader.public$value !== 'application/octet-stream')
+              {
                 this._contentTypeHint = contentTypeHeader.public$value;
               }
             }.bind(this));
@@ -149,12 +150,12 @@ var NetStreamDefinition = (function () {
           client: {
             get: function client() {
               // (void) -> Object
-              notImplemented("NetStream.client");
+              somewhatImplemented("NetStream.client");
               return this._client;
             },
             set: function client(object) {
               // (object:Object) -> void
-              notImplemented("NetStream.client");
+              somewhatImplemented("NetStream.client");
               this._client = object;
             }
           },
