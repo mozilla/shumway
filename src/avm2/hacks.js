@@ -16,7 +16,6 @@ VM_METHOD_OVERRIDES[
   });
   warning("HACK: registerMessages(" + className + ")");
 };
-
 VM_METHOD_OVERRIDES[
   Multiname.getQualifiedName(Multiname.fromSimpleName("com.google.youtube.event.registerEvents"))
 ] = function (cls) {
