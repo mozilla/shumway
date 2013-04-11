@@ -317,6 +317,7 @@ var ShumwayNamespace = (function () {
     // by the parse method.
   }
 
+  var uniqueNamespaceCounter = 0;
   function buildNamespace() {
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
@@ -327,7 +328,7 @@ var ShumwayNamespace = (function () {
       }
     } else if (this.isUnique()) {
       // Make a psuedo unique id by concatenating current milliseconds to original uri
-      this.uri = String(this.uri + Date.now());
+      this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
     this.uri = mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
