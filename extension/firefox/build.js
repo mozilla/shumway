@@ -254,6 +254,7 @@ Property.prototype.transform = function (o) {
 };
 
 MemberExpression.prototype.transform = function (o) {
+  this.object = this.object.transform(o);
   if (this.computed) {
     this.property = this.property.transform(o);
   }
