@@ -13,6 +13,7 @@ var LoaderDefinition = (function () {
     workerScripts = [
       '../../../lib/DataView.js/DataView.js',
       '../util.js',
+      '../../swf/config.js',
       '../../swf/util.js',
       '../../swf/swf.js',
       '../../swf/types.js',
