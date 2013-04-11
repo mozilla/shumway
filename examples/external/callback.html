@@ -1,0 +1,16 @@
+<script>
+function testOut(s) {
+  console.log('testOut: ' + s);
+  return s.toLowerCase();
+}
+
+setTimeout(function () {
+  document.getElementById('swf1').testIn('JS');
+}, 2000);
+
+</script>
+
+<object id='swf1' type="application/x-shockwave-flash" data="callback.swf" width="600" height="400">
+  <param name="allowScriptAccess" value="always">
+</object>
+
