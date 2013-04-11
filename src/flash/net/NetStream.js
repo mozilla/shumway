@@ -52,9 +52,8 @@ var NetStreamDefinition = (function () {
             }
 
             var request = new flash.net.URLRequest(url);
-            var loader = new flash.net.URLLoader();
-            loader.dataFormat = 'binary'; // URLLoaderDataFormat.BINARY;
-            loader.addEventListener('httpStatus', function (e) {
+            var stream = new flash.net.URLStream();
+            stream.addEventListener('httpStatus', function (e) {
               var responseHeaders = e.public$responseHeaders;
               var contentTypeHeader = responseHeaders.filter(function (h) {
                 return h.public$name === 'Content-Type';
@@ -64,12 +63,17 @@ var NetStreamDefinition = (function () {
                 this._contentTypeHint = contentTypeHeader.public$value;
               }
             }.bind(this));
-            // TODO do it in chunks on progress
-            loader.addEventListener('complete', function (e) {
-              this.appendBytes(loader.data);
+            stream.addEventListener('progress', function (e) {
+              var available = stream.bytesAvailable;
+              var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
+              var data = ByteArrayClass.createInstance();
+              stream.readBytes(data, 0, available);
+              this.appendBytes(data);
+            }.bind(this));
+            stream.addEventListener('complete', function (e) {
               this.appendBytesAction('endSequence'); // NetStreamAppendBytesAction.END_SEQUENCE
             }.bind(this));
-            loader.load(request);
+            stream.load(request);
           },
           play2: function play2(param) {
             // (param:NetStreamPlayOptions) -> void
@@ -89,14 +93,15 @@ var NetStreamDefinition = (function () {
                 this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(this._contentTypeHint);
               }
               this._mediaSourceBuffer.appendBuffer(new Uint8Array(bytes.a, 0, bytes.length));
-            } else {
-              this._dataBuffer.push(bytes);
             }
             // (bytes:ByteArray) -> void
             somewhatImplemented("NetStream.appendBytes");
           },
           appendBytesAction: function appendBytesAction(netStreamAppendBytesAction) {
             // (netStreamAppendBytesAction:String) -> void
+            if (netStreamAppendBytesAction === 'endSequence' && this._mediaSource) {
+              this._mediaSource.endOfStream();
+            }
             somewhatImplemented("NetStream.appendBytesAction");
           },
           info: {
