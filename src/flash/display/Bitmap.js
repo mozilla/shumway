@@ -16,6 +16,14 @@ var BitmapDefinition = (function () {
             this._bitmapData = bitmapData;
             this._pixelSnapping = pixelSnapping;
             this._smoothing = smoothing;
+
+            var canvas = this._bitmapData._drawable;
+            this._bbox = {
+              left: 0,
+              top: 0,
+              right: canvas.width,
+              bottom: canvas.height
+            };
           },
           pixelSnapping: {
             get: function pixelSnapping() { // (void) -> String
