@@ -293,9 +293,9 @@ var ShumwayNamespace = (function () {
   kinds[CONSTANT_PackageNamespace] = "public";
   kinds[CONSTANT_PackageInternalNs] = "packageInternal";
   kinds[CONSTANT_PrivateNs] = "private";
-  kinds[CONSTANT_ProtectedNamespace] =  "protected";
-  kinds[CONSTANT_ExplicitNamespace] =  "explicit";
-  kinds[CONSTANT_StaticProtectedNs] =  "staticProtected";
+  kinds[CONSTANT_ProtectedNamespace] = "protected";
+  kinds[CONSTANT_ExplicitNamespace] = "explicit";
+  kinds[CONSTANT_StaticProtectedNs] = "staticProtected";
 
   /**
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
@@ -331,7 +331,7 @@ var ShumwayNamespace = (function () {
     }
     this.uri = mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
-    this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
+    this.qualifiedName = kinds[this.kind] + "$" + this.uri;
   }
 
   function escapeUri(uri) {
@@ -345,22 +345,27 @@ var ShumwayNamespace = (function () {
   var mangledNameToURIMap = Object.create(null);
   var mangledNameList = [];
 
-  function mangleNamespaceURI(str) {
-    if (str === "") {
+  /**
+   * Mangles a namespace uri to a more sensible name. The process can be reversed.
+   * In release mode we mangle the name a numeric string otherwise we mangle to an
+   * escaped string, which can cause collisions.
+   */
+  function mangleNamespaceURI(uri) {
+    if (uri === "") {
       return "";
     }
-    var name = uriToMangledNameMap[str];
+    var name = uriToMangledNameMap[uri];
     if (name) {
       return name;
     }
     if (!release) {
-      name = escapeUri(str);
-      mangledNameToURIMap[name] = str;
+      name = escapeUri(uri);
+      mangledNameToURIMap[name] = uri;
     } else {
       name = String(mangledNameList.length);
       mangledNameList.push(name);
     }
-    uriToMangledNameMap[str] = name;
+    uriToMangledNameMap[uri] = name;
     return name;
   }
 
@@ -405,7 +410,7 @@ var ShumwayNamespace = (function () {
     },
 
     toString: function toString() {
-      return kinds[this.kind] + (this.originalURI ? "$" + this.originalURI : "");
+      return kinds[this.kind] + (this.originalURI ? " " + this.originalURI : "");
     },
 
     clone: function clone() {
@@ -526,6 +531,7 @@ var Multiname = (function () {
   var RUNTIME_NAMESPACE = 0x02;
   var RUNTIME_NAME      = 0x04;
   var nextID = 1;
+  var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
     this.id = nextID ++;
     this.namespaces = namespaces;
@@ -689,11 +695,16 @@ var Multiname = (function () {
     return qn;
   };
 
+  multiname.PUBLIC_QUALIFIED_NAME_PREFIX = PUBLIC_QUALIFIED_NAME_PREFIX;
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
       return Number(name);
     }
-    return "public$" + name;
+    return PUBLIC_QUALIFIED_NAME_PREFIX + name;
+  };
+
+  multiname.isPublicQualifiedName = function isPublicQualifiedName(qn) {
+    return qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {

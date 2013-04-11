@@ -29,7 +29,7 @@ var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_UNSAFE_CLASSES = ["Shumway"];
 
-var VM_OPEN_METHOD_PREFIX = "open$";
+var VM_OPEN_METHOD_PREFIX = "open_";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -94,7 +94,7 @@ function objectConstantName(object) {
 
 
 function initializeGlobalObject(global) {
-  var PUBLIC_MANGLED = /^public\$/;
+  var PUBLIC_MANGLED = /^public\$\$/;
 
   function getEnumerationKeys(obj) {
     if (obj.node && obj.node.childNodes) {
@@ -117,7 +117,7 @@ function initializeGlobalObject(global) {
         if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
           continue;
         }
-        keys.push(key.substr(7));
+        keys.push(key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length));
       }
     }
     return keys;
@@ -670,8 +670,8 @@ function getProperty(obj, mn, isMethod) {
     if (isPrimitiveType(obj)) {
       throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
     } else if (Multiname.isAnyName(mn)) {
-      if (obj.public$elements) {
-        value = obj.public$elements(mn);
+      if (obj[Multiname.getPublicQualifiedName("elements")]) {
+        value = obj[Multiname.getPublicQualifiedName("elements")](mn);
       }
     }
   }
@@ -1725,7 +1725,7 @@ var Runtime = (function () {
           return this[qn];
         }
         var mc = target.value.bind(this);
-        defineReadOnlyProperty(mc, "public$prototype", null);
+        defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
         // If the memoizer target is a trampoline then don't cache the method closure.
         // Doing so would cause the trampoline to be bound with |this| and would always
         // execute. Usually he next time around, (after the method) is compiled
@@ -1797,7 +1797,7 @@ var Runtime = (function () {
         }, trait.methodInfo.parameters.length);
         var closure = trampoline.bind(obj);
         defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
-        defineReadOnlyProperty(closure, "public$prototype", null);
+        defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
         defineNonEnumerableProperty(obj, qn, closure);
         defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
       } else if (trait.isGetter() || trait.isSetter()) {

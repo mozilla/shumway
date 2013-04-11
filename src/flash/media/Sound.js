@@ -75,8 +75,8 @@ var SoundDefinition = (function () {
       var soundData = { completed: false };
 
       stream.addEventListener("progress", function (event) {
-        _this._bytesLoaded = event.public$bytesLoaded;
-        _this._bytesTotal = event.public$bytesTotal;
+        _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
+        _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
 
         if (!PLAY_USING_AUDIO_TAG && !mp3DecodingSession) {
           // initialize MP3 decoding

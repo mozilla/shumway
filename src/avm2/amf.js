@@ -66,8 +66,9 @@ var AMFUtils = (function AMFUtilsClosure() {
     for (var key in obj) {
       if (isNumeric(key)) {
         result[key] = obj[key];
-      } else if (key.indexOf('public$') === 0 &&
+      } else if (Multiname.isPublicQualifiedName(key) &&
                  obj[VM_BINDINGS].indexOf(key) < 0) {
+        notImplemented("Gotta parse the key correctly here");
         result[key.substring(7)] = obj[key];
       }
     }

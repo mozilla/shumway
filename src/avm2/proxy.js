@@ -23,6 +23,7 @@ for (var name in proxyTrapQns) {
 console.info(proxyTrapQns.getProperty);
 
 function extractActionScriptName(name) {
+  notImplemented("fix this.")
   if (name.indexOf("public$") === 0) {
     return name.substr(7);
   }
