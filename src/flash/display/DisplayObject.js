@@ -114,7 +114,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _applyCurrentInverseTransform: function (point, targetCoordSpace) {
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentInverseTransform(point);
 
       var m = this._currentTransform;
@@ -132,7 +132,7 @@ var DisplayObjectDefinition = (function () {
       point.x = m.a * x + m.c * y + m.tx;
       point.y = m.d * y + m.b * x + m.ty;
 
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
     _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
