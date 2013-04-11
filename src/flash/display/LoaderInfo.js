@@ -149,7 +149,7 @@ var LoaderInfoDefinition = (function () {
           },
           content: {
             get: function content() { // (void) -> DisplayObject
-              return this._content;
+              return this._loader._content;
             }
           },
           bytes: {
