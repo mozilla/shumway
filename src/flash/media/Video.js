@@ -27,8 +27,6 @@ var VideoDefinition = (function () {
       this._element.addEventListener('loadedmetadata', function () {
         this._videoScaleX = this._width / this._element.videoWidth;
         this._videoScaleY = this._height / this._element.videoHeight;
-        window.console.log(this._element.videoWidth, this._width);
-        window.console.log(this._videoScaleX, this._videoScaleY);
         this._element.width = this._element.videoWidth;
         this._element.height = this._element.videoHeight;
       }.bind(this));

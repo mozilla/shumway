@@ -18,7 +18,6 @@ public class YoutubeShim extends Sprite {
         const usableStreams : Array = [];
         var usedStream : Object;
         for (var i : int = 0; i < defs.length; i++) {
-//            trace(defs[i]);
             var format : Array =  formats[i].split('/');
             var stream : Object = merge(parseEncodedVars(defs[i]), {});
             streams[i] = stream;
@@ -43,8 +42,6 @@ public class YoutubeShim extends Sprite {
         if (!usedStream) {
             throw new Error('No usable stream found');
         }
-
-        trace('used type: ' + usedStream.type);
 
         const video : Video = new Video(stage.stageWidth, stage.stageHeight);
         video.width = stage.stageWidth;
