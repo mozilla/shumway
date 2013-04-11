@@ -119,14 +119,6 @@ var SpriteDefinition = (function () {
         }
       }
     },
-    _insertChildAtDepth: function (child) {
-      // TODO
-      this.addChild(child);
-
-      var loader = this._loader;
-      if (!loader._isAvm2Enabled)
-        this._initAvm1Bindings(child, child.name);
-    },
     _duplicate: function (name, depth, initObject) {
       // TODO proper child cloning, initObject and display list insertion
       // for now just created symbol based on previous timeline information
