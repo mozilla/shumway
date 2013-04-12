@@ -51,23 +51,31 @@ var $M = [];
 var VM_METHOD_OVERRIDES = {};
 
 /**
- * This is used to keep track if we're in a runtime context. Proxies need to know
- * if a proxied operation is triggered by AS3 code or VM code.
+ * This is used to keep track if we're in a runtime context. For instance, proxies need to
+ * know if a proxied operation is triggered by AS3 code or VM code.
  */
 
-var RUNTIME_ENTER_LEAVE_STACK = [false];
+var AS = 1, JS = 2;
 
-function enter(runtime) {
-  RUNTIME_ENTER_LEAVE_STACK.push(runtime);
+var RUNTIME_ENTER_LEAVE_STACK = [AS];
+
+function enter(mode) {
+  // print("enter " + RUNTIME_ENTER_LEAVE_STACK);
+  RUNTIME_ENTER_LEAVE_STACK.push(mode);
 }
 
-function leave(runtime) {
+function leave(mode) {
+  // print("leave " + RUNTIME_ENTER_LEAVE_STACK);
   var top = RUNTIME_ENTER_LEAVE_STACK.pop();
-  assert (top === runtime);
+  assert (top === mode);
 }
 
-function inRuntime() {
-  return RUNTIME_ENTER_LEAVE_STACK.top();
+function inJS() {
+  return RUNTIME_ENTER_LEAVE_STACK.top() === JS;
+}
+
+function inAS() {
+  return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
 }
 
 /**
@@ -195,7 +203,7 @@ function initializeGlobalObject(global) {
  * Checks if the specified |obj| is the prototype of a native JavaScript object.
  */
 function isNativePrototype(obj) {
-  return obj.hasOwnProperty(VM_NATIVE_PROTOTYPE_FLAG);
+  return Object.prototype.hasOwnProperty.call(obj, VM_NATIVE_PROTOTYPE_FLAG)
 }
 
 initializeGlobalObject(jsGlobal);
@@ -586,10 +594,9 @@ function resolveMultinameInTraits(obj, mn) {
 /**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, mn, traitsOnly) {
+function resolveMultinameUnguarded(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
   obj = Object(obj);
-  enter(true);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -602,7 +609,6 @@ function resolveMultiname(obj, mn, traitsOnly) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
       if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
-        leave(true);
         return qn;
       }
       continue;
@@ -615,18 +621,21 @@ function resolveMultiname(obj, mn, traitsOnly) {
       }
     } else if (!isNative) {
       if (Multiname.getQualifiedName(qn) in obj) {
-        leave(true);
         return qn;
       }
     }
   }
   if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
-    leave(true);
     return publicQn;
   }
-
-  leave(true);
   return undefined;
+}
+
+function resolveMultiname(obj, mn, traitsOnly) {
+  enter(JS);
+  var result = resolveMultinameUnguarded(obj, mn, traitsOnly);
+  leave(JS);
+  return result;
 }
 
 function isNameInObject(qn, obj) {
@@ -1265,11 +1274,6 @@ var Runtime = (function () {
       this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
-
-      if (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
-        // TODO: This is very hackish.
-        installProxyClass(cls);
-      }
     }
 
     if (instance) {
@@ -1289,6 +1293,12 @@ var Runtime = (function () {
     if (traceClasses.value) {
       domain.loadedClasses.push(cls);
       domain.traceLoadedClasses();
+    }
+
+    if (baseClass && Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
+      // TODO: This is very hackish.
+      debugger;
+      installProxyClassWrapper(cls);
     }
 
     return cls;

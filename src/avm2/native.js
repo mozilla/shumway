@@ -230,7 +230,7 @@ var natives = (function () {
             return false;
           }
           name = Multiname.getPublicQualifiedName(name);
-          if (this.hasOwnProperty(name)) {
+          if (Object.prototype.hasOwnProperty.call(this, name)) {
             return true;
           }
           // Object.getPrototypeOf(this) are traits, not the dynamic prototype.

@@ -296,6 +296,10 @@ var ShumwayNamespace = (function () {
   kinds[CONSTANT_ProtectedNamespace] = "protected";
   kinds[CONSTANT_ExplicitNamespace] = "explicit";
   kinds[CONSTANT_StaticProtectedNs] = "staticProtected";
+  var prefixes = {};
+  for (var k in kinds) {
+    prefixes[kinds[k]] = true;
+  }
 
   /**
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
@@ -316,6 +320,8 @@ var ShumwayNamespace = (function () {
     // Otherwise, we are creating an empty namespace to be build
     // by the parse method.
   }
+
+  namespace.PREFIXES = prefixes;
 
   var uniqueNamespaceCounter = 0;
   function buildNamespace() {
@@ -369,6 +375,17 @@ var ShumwayNamespace = (function () {
     uriToMangledNameMap[uri] = name;
     return name;
   }
+
+  namespace.fromQualifiedName = function fromQualifiedName(qn) {
+    var a = qn.indexOf("$");
+    var b = qn.indexOf("$", a + 1);
+    var str = qn.substring(0, a);
+    var kind = namespace.kindFromString(str);
+    str = qn.substring(a + 1, b);
+    var uri = str === "" ? str : (release ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
+    assert (uri || uri === "", "uri is " + uri);
+    return new namespace(kind, uri);
+  };
 
   namespace.kindFromString = function kindFromString(str) {
     for (var kind in kinds) {
@@ -682,6 +699,27 @@ var Multiname = (function () {
     function qualifyName(qualifier, name) {
       return qualifier ? qualifier + "$" + name : name;
     }
+  };
+
+  /**
+   * Creates a Multiname from a mangled qualified name. The format should be of
+   * the form kindName$mangledURI$name.
+   */
+  multiname.fromQualifiedName = function fromQualifiedName(qn) {
+    if (qn instanceof Multiname) {
+      return qn;
+    }
+    if (typeof qn === "number" || qn instanceof Number || isNumeric(qn)) {
+      return new Multiname(ShumwayNamespace.PUBLIC, qn);
+    }
+    assert (typeof qn === "string");
+    var a = qn.indexOf("$");
+    if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
+      return undefined;
+    }
+    var ns = ShumwayNamespace.fromQualifiedName(qn);
+    var b = qn.indexOf("$", a + 1);
+    return new Multiname([ns], qn.substring(b + 1));
   };
 
   /**

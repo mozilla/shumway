@@ -20,51 +20,74 @@ for (var name in proxyTrapQns) {
   proxyTrapQns[name] = Multiname.getQualifiedName(new Multiname([ShumwayNamespace.PROXY], name));
 }
 
-console.info(proxyTrapQns.getProperty);
+var VM_IS_PROXY = "vm is proxy";
 
-function extractActionScriptName(name) {
-  notImplemented("fix this.")
-  if (name.indexOf("public$") === 0) {
-    return name.substr(7);
-  }
-  return false;
-  // return name.indexOf("public$") >= 0 || name.indexOf("private$") >= 0;
+function isProxy(obj) {
+  return obj[VM_IS_PROXY];
 }
 
-function installProxyClass(cls) {
+function installProxyClassWrapper(cls) {
+  var TRACE_PROXY = false;
+  if (TRACE_PROXY) {
+    print("proxy wrapping, class: " + cls);
+  }
+
   var instance = cls.instance;
+
   function construct() {
+    if (TRACE_PROXY) {
+      print("proxy create, class: " + cls);
+    }
+
     var target = Object.create(instance.prototype);
     var proxy = Proxy.create({
-      get: function(o, name) {
-        if (inRuntime()) {
-          return target[name];
+      get: function(o, qn) {
+        if (qn === "isProxy") {
+          return true;
         }
-        var externalName = extractActionScriptName(name);
-        if (externalName) {
-          return target[proxyTrapQns.getProperty](externalName);
+        if (TRACE_PROXY) {
+          print("proxy get, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
-        return target[name];
+        if (inAS()) {
+          var mn = Multiname.fromQualifiedName(qn);
+          if (mn && !nameInTraits(target, qn)) {
+            return target[proxyTrapQns.getProperty](mn.name);
+          }
+        }
+        if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn]) {
+          return target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn].bind(o);
+        }
+        TRACE_PROXY && print("> proxy pass through " + qn);
+        return target[qn];
       },
-      set: function(o, name, value) {
-        target[name] = value;
-        // notImplemented("set");
+      set: function(o, qn, value) {
+        target[qn] = value;
+        notImplemented("set");
       },
-      has: function(name) {
-        if (inRuntime()) {
-          return name in target;
+      has: function(qn) {
+        if (TRACE_PROXY) {
+          print("proxy has, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
-        var externalName = extractActionScriptName(name);
-        if (externalName) {
-          return target[proxyTrapQns.hasProperty](externalName);
+        if (inAS()) {
+          var mn = Multiname.fromQualifiedName(qn);
+          if (mn) {
+            return target[proxyTrapQns.hasProperty](mn.name);
+          }
         }
-        return name in target;
+        return qn in target;
       },
-      hasOwn: function(name) {
-        if (extractActionScriptName(name)) {
-
+      hasOwn: function(qn) {
+        if (TRACE_PROXY) {
+          print("proxy hasOwn, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
-        return !!Object.getOwnPropertyDescriptor(target, name);
+        if (inAS()) {
+          var mn = Multiname.fromQualifiedName(qn);
+          if (mn && !nameInTraits(target, qn)) {
+            return target[proxyTrapQns.hasProperty](mn.name);
+          }
+        }
+        TRACE_PROXY && print("> proxy pass through " + qn);
+        return !!Object.getOwnPropertyDescriptor(target, qn);
       },
       enumerate: function() {
         notImplemented("enumerate");
