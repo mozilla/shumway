@@ -102,8 +102,6 @@ function objectConstantName(object) {
 
 
 function initializeGlobalObject(global) {
-  var PUBLIC_MANGLED = /^public\$\$/;
-
   function getEnumerationKeys(obj) {
     if (obj.node && obj.node.childNodes) {
       obj = obj.node.childNodes;
@@ -121,7 +119,7 @@ function initializeGlobalObject(global) {
     for (var key in obj) {
       if (isNumeric(key)) {
         keys.push(Number(key));
-      } else if (PUBLIC_MANGLED.test(key)) {
+      } else if (Multiname.isPublicQualifiedName(key)) {
         if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
           continue;
         }
@@ -380,7 +378,7 @@ function getDescendants(obj, mn) {
     if (mn.isAnyName() || mn.name === v.name) {
       xl._.push(v);
     }
-  })
+  });
   return xl;
 }
 
@@ -884,19 +882,20 @@ function deleteProperty(obj, mn) {
   return false;
 }
 
-function forEachPublicProperty(obj, f, self) {
+function forEachPublicProperty(obj, fn, self) {
   if (!obj[VM_BINDINGS]) {
-    for (var i in obj) {
-      f.call(self, i, obj[i]);
+    for (var key in obj) {
+      fn.call(self, key, obj[key]);
     }
+    return;
   }
 
   for (var key in obj) {
     if (isNumeric(key)) {
-      f.call(self, key, obj[key]);
-    } else if (key.indexOf('public$') === 0 &&
-               obj[VM_BINDINGS].indexOf(key) < 0) {
-      f.call(self, key.substring(7), obj[key]);
+      fn.call(self, key, obj[key]);
+    } else if (Multiname.isPublicQualifiedName(key) && obj[VM_BINDINGS].indexOf(key) < 0) {
+      var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      fn.call(self, name, obj[key]);
     }
   }
 }
