@@ -112,9 +112,16 @@ var DisplayObjectDefinition = (function () {
         'class: ' + this.__class__;
       this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
     },
-
+    _addedToStage: function () {
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        child.dispatchEvent(new flash.events.Event("addedToStage"));
+      }
+      this.dispatchEvent(new flash.events.Event("addedToStage"));
+    },
     _applyCurrentInverseTransform: function (point, targetCoordSpace) {
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentInverseTransform(point);
 
       var m = this._currentTransform;
@@ -132,7 +139,7 @@ var DisplayObjectDefinition = (function () {
       point.x = m.a * x + m.c * y + m.tx;
       point.y = m.d * y + m.b * x + m.ty;
 
-      if (this._parent !== this._stage && this._parent !== targetCoordSpace)
+      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
         this._parent._applyCurrentTransform(point, targetCoordSpace);
     },
     _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
@@ -218,6 +225,14 @@ var DisplayObjectDefinition = (function () {
       if (!this._dirtyArea)
         this._dirtyArea = this.getBounds();
       this._bounds = null;
+    },
+    _removedFromStage: function () {
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        child.dispatchEvent(new flash.events.Event("removedFromStage"));
+      }
+      this.dispatchEvent(new flash.events.Event("removedFromStage"));
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;

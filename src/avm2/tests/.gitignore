@@ -2,4 +2,5 @@ abc/
 tamarin/
 acceptance/
 regress/*/*.abc
+regress/*/*/*.abc
 hello-world.abc

@@ -3,35 +3,35 @@ var $RELEASE = false;
 var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
   var LOADER_PATH = 'flash/display/Loader.js';
-  var WORKER_SCRIPTS = [
-    '../../../lib/DataView.js/DataView.js',
 
-    '../util.js',
-
-    '../../swf/util.js',
-    '../../swf/swf.js',
-    '../../swf/types.js',
-    '../../swf/structs.js',
-    '../../swf/tags.js',
-    '../../swf/inflate.js',
-    '../../swf/stream.js',
-    '../../swf/templates.js',
-    '../../swf/generator.js',
-    '../../swf/handlers.js',
-    '../../swf/parser.js',
-    '../../swf/bitmap.js',
-    '../../swf/button.js',
-    '../../swf/font.js',
-    '../../swf/image.js',
-    '../../swf/label.js',
-    '../../swf/shape.js',
-    '../../swf/sound.js',
-    '../../swf/text.js'
-  ];
-
+  var workerScripts;
   if ($RELEASE) {
-    WORKER_SCRIPTS = [
+    workerScripts = [
       '../../shumway-worker.js'
+    ];
+  } else {
+    workerScripts = [
+      '../../../lib/DataView.js/DataView.js',
+      '../util.js',
+      '../../swf/util.js',
+      '../../swf/swf.js',
+      '../../swf/types.js',
+      '../../swf/structs.js',
+      '../../swf/tags.js',
+      '../../swf/inflate.js',
+      '../../swf/stream.js',
+      '../../swf/templates.js',
+      '../../swf/generator.js',
+      '../../swf/handlers.js',
+      '../../swf/parser.js',
+      '../../swf/bitmap.js',
+      '../../swf/button.js',
+      '../../swf/font.js',
+      '../../swf/image.js',
+      '../../swf/label.js',
+      '../../swf/shape.js',
+      '../../swf/sound.js',
+      '../../swf/text.js'
     ];
   }
 
@@ -328,7 +328,7 @@ var LoaderDefinition = (function () {
   // If we're inside a worker, do the parsing work and return undefined, since
   // communication is done by posting messages to the main thread.
   if (typeof window === 'undefined') {
-    importScripts.apply(null, WORKER_SCRIPTS);
+    importScripts.apply(null, workerScripts);
 
     self.onmessage = function (evt) {
       if (evt.data !== 'pipe:') {
@@ -981,7 +981,7 @@ var LoaderDefinition = (function () {
           return 0; //TODO: implement
         },
         _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
-          this._loadFrom(resolveURI(request.url));
+          this._loadFrom(request.url);
           //TODO: implement
         },
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void

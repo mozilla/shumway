@@ -807,7 +807,7 @@ var Multiname = (function () {
       nameIndex = simpleName.lastIndexOf(" ");
     }
 
-    if (nameIndex > 0) {
+    if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
       name = simpleName.substring(nameIndex + 1).trim();
       namespace = simpleName.substring(0, nameIndex).trim();
     } else {

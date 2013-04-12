@@ -105,7 +105,7 @@ CallExpression.prototype.transform = function (o) {
   this.callee = this.callee.transform(o);
   if (this.callee instanceof Identifier) {
     // Remove assertions.
-    if (this.callee.name === "assert") {
+    if (this.callee.name === "assert" && !debug.value) {
       return new Literal(true);
     } else if (this.callee.name === "loadJSON") {
       var path = this.arguments[0].transform(o).value;
@@ -254,6 +254,7 @@ Property.prototype.transform = function (o) {
 };
 
 MemberExpression.prototype.transform = function (o) {
+  this.object = this.object.transform(o);
   if (this.computed) {
     this.property = this.property.transform(o);
   }

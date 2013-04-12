@@ -1,37 +1,40 @@
 package {
 
 import flash.display.Sprite;
+    import flash.display.StageScaleMode;
     import flash.media.Video;
     import flash.net.NetConnection;
     import flash.net.NetStream;
-    import flash.net.URLVariables;
 
+[SWF(width=640,height=390)]
 public class YoutubeShim extends Sprite {
+
     public function YoutubeShim() {
+        stage.scaleMode = StageScaleMode.NO_SCALE;
         const formats : Array = loaderInfo.parameters.fmt_list.split(',');
         const defs : Array = loaderInfo.parameters.
                 url_encoded_fmt_stream_map.split(',');
         const streams : Array = [];
-        const mp4s : Array = [];
+        const usableStreams : Array = [];
         var usedStream : Object;
         for (var i : int = 0; i < defs.length; i++) {
-            var format : Array = formats[i].split('/');
-            var stream : Object = merge(new URLVariables(defs[i]), {});
+            var format : Array =  formats[i].split('/');
+            var stream : Object = merge(parseEncodedVars(defs[i]), {});
             streams[i] = stream;
             var urlParts : Array = stream.url.split('?');
-            merge(new URLVariables(urlParts[1]), stream);
+            merge(parseEncodedVars(urlParts[1]), stream);
             stream.url = urlParts[0];
             stream.signature = stream.sig;
 
             // Check for min player version for this format (9 == mp4)
-            if (format[2] == '9' && stream.type.indexOf('video/mp4') !== -1) {
+            if (stream.type.indexOf('video/webm') !== -1) {
                 var size : Array = format[1].split('x');
                 stream.width = size[0];
                 stream.height = size[1];
-                mp4s.push(stream);
+                usableStreams.push(stream);
                 // Choose the first stream that's less than fullHD
                 if (!usedStream) {
-                    usedStream = stream;
+                    usedStream = merge(stream, {});
                 }
             }
         }
@@ -40,7 +43,7 @@ public class YoutubeShim extends Sprite {
             throw new Error('No usable stream found');
         }
 
-        const video : Video = new Video(usedStream.width, usedStream.height);
+        const video : Video = new Video(stage.stageWidth, stage.stageHeight);
         video.width = stage.stageWidth;
         video.height = stage.stageHeight;
         addChild(video);
@@ -52,22 +55,22 @@ public class YoutubeShim extends Sprite {
         ns.client.onCuePoint = onCuePoint;
         video.attachNetStream(ns);
 
-        function arg(key : String, encode : Boolean = false) : String {
-            var content = usedStream[key];
-            if (encode)
-                content = escape(content);
-            return key + '=' + content;
-        }
+        const arg : Function = argGen(usedStream);
 
         var url : String = usedStream.url + '?'
-          + 'algorithm=throttle-factor&burst=40&factor=1.25&gcr=us&keepalive=yes&'
-          + [arg('cp'),
+          + [
+             'algorithm=throttle-factor',
+             'burst=40',
+             arg('cp'),
              arg('expire'),
+             'factor=1.25',
              arg('fexp', true),
+             'gcr=us',
              arg('id'),
              arg('ip'),
              arg('ipbits'),
              arg('itag'),
+             'keepalive=yes',
              arg('key'),
              arg('ms'),
              arg('mt'),
@@ -82,9 +85,29 @@ public class YoutubeShim extends Sprite {
         ns.play(url);
     }
 
+    private function argGen(stream : Object) : Function {
+        return function(key : String, encode : Boolean = false) : String {
+            var content : String = stream[key];
+            if (encode)
+                content = escape(content);
+            return key + '=' + content;
+        }
+    }
+
+    private function parseEncodedVars(str:String):Object {
+        const entries : Array = str.split('&');
+        const result : Object = {};
+        for (var i:int = 0; i < entries.length; i++) {
+            var keyValue : Array = entries[i].split('=');
+            result[keyValue[0]] = unescape(keyValue[1]);
+        }
+        return result;
+    }
+
     private function merge(obj : Object, into : Object) : Object {
-        for (var k : String in obj)
+        for (var k : String in obj) {
             into[k] = obj[k];
+        }
         return into;
     }
 

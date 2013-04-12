@@ -36,7 +36,7 @@ var EventDispatcherDefinition = (function () {
               evt._eventPhase = domEvent.eventPhase;
             }
 
-            evt._currentTarget = this;
+            evt._currentTarget = evt._target;
 
             var queue = this.queue;
             for (var i = 0, n = queue.length; i < n; i++) {
@@ -73,11 +73,28 @@ var EventDispatcherDefinition = (function () {
       if (this._control) {
         var domEvent = document.createEvent('CustomEvent');
         domEvent.initCustomEvent(CUSTOM_DOM_EVENT_PREFIX + evt.type, evt.bubbles, evt.cancelable, evt);
-        this._control.dispatchEvent(domEvent);
+        if ($DEBUG) {
+          try {
+            this._control.dispatchEvent(domEvent);
+          } catch (e) {
+            log('error ' + e + ', stack: \n' + e.stack);
+          }
+        } else {
+          this._control.dispatchEvent(domEvent);
+        }
       } else {
         var handler = this._handlers[evt.type];
-        if (handler)
-          handler.handleEvent(evt);
+        if (handler) {
+          if ($DEBUG) {
+            try {
+              handler.handleEvent(evt);
+            } catch (e) {
+              log('error ' + e + ', stack: \n' + e.stack);
+            }
+          } else {
+            handler.handleEvent(evt);
+          }
+        }
       }
 
       return !!evt.isDefaultPrevented;

@@ -365,16 +365,30 @@ function hasNext2(obj, index) {
   return {index: obj[VM_NEXT_NAME_INDEX](index), object: obj};
 }
 
-function getDescendants(multiname, obj) {
-//  notImplemented("getDescendants");
-  return new XMLList();
+function getDescendants(obj, mn) {
+  if (!isXMLType(obj)) {
+    throw "Not XML object in getDescendants";
+  }
+  if (obj._IS_XMLLIST) {
+    if (obj._.length !== 1 && obj._[0]._IS_XML) {
+      throw "Invalid XMLList in getDescendants";
+    }
+    obj = obj._[0];
+  }
+  var xl = new XMLList();
+  obj._.forEach(function (v, i) {
+    if (mn.isAnyName() || mn.name === v.name) {
+      xl._.push(v);
+    }
+  })
+  return xl;
 }
 
 function checkFilter(value) {
   if (!value.class) {
     return false;
   }
-  return isXMLType(value.class);
+  return isXMLType(value);
 }
 
 function Activation (methodInfo) {
@@ -669,11 +683,8 @@ function callProperty(obj, mn, receiver, args) {
 }
 
 function getProperty(obj, mn, isMethod) {
-  release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
+  release || assert(obj != undefined, "getProperty(", mn, ") on undefined");
 
-  if (!obj && mn.name === "toLowerCase") {
-    return function (str) { return this; }
-  }
   if (obj.canHandleProperties) {
     return obj.get(mn, isMethod);
   }
@@ -696,33 +707,19 @@ function getProperty(obj, mn, isMethod) {
     if (Multiname.isNumeric(resolved) && obj.indexGet) {
       value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = getPropertyInObject(obj, resolved);
+      if (isNumeric(resolved)) {
+        value = obj[resolved];
+      } else {
+        value = obj[Multiname.getQualifiedName(resolved)];
+      }
     }
   } else {
     value = obj[Multiname.getPublicQualifiedName(mn.name)];
   }
-
   if (tracePropertyAccess.value) {
     print("getProperty(" + obj.toString() + ", " + mn + " -> " + resolved + ") has value: " + !!value);
   }
-
   return value;
-}
-
-function getPropertyInObject(obj, qn) {
-  if (isNumeric(qn)) {
-    return obj[qn];
-  } else if (qn.isAttribute()) {
-    for (var i = 0; i < obj.attributes.length; i++) {
-      var attr = obj.attributes[i];
-      if (attr.name === qn.name) {
-        return obj.attributes[i];
-      }
-    }
-    return undefined;
-  } else {
-    return obj[Multiname.getQualifiedName(qn)];
-  }
 }
 
 function hasProperty(obj, mn) {
@@ -818,21 +815,6 @@ function setProperty(obj, mn, value) {
   return;
 }
 
-function isType(obj, type) {
-  for (var i = 0; i < types.length; i++) {
-    var type = types[i];
-    if (type.object) {
-      return obj.classInfo.instanceInfo === type.object;
-    }
-  }
-  return false;
-}
-
-function isXMLType(obj) {
-  var ii = obj.instanceInfo;
-  return ii === Type.XML.object || ii === Type.XMLList.object;
-}
-
 function setSuper(scope, obj, mn, value) {
   release || assert(obj);
   release || assert(Multiname.isMultiname(mn));
@@ -900,6 +882,23 @@ function deleteProperty(obj, mn) {
     return delete obj[Multiname.getQualifiedName(resolved)];
   }
   return false;
+}
+
+function forEachPublicProperty(obj, f, self) {
+  if (!obj[VM_BINDINGS]) {
+    for (var i in obj) {
+      f.call(self, i, obj[i]);
+    }
+  }
+
+  for (var key in obj) {
+    if (isNumeric(key)) {
+      f.call(self, key, obj[key]);
+    } else if (key.indexOf('public$') === 0 &&
+               obj[VM_BINDINGS].indexOf(key) < 0) {
+      f.call(self, key.substring(7), obj[key]);
+    }
+  }
 }
 
 function isInstanceOf(value, type) {
@@ -1149,7 +1148,6 @@ var Runtime = (function () {
     var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
-
     if (mi.holder) {
       var fnNamePrefix = "";
       if (mi.holder instanceof ClassInfo) {
@@ -1161,12 +1159,16 @@ var Runtime = (function () {
       }
       fnName = fnNamePrefix + "$" + fnName;
     }
-
+    fnName = escapeString(fnName);
     if (mi.verified) {
       fnName += "$V";
     }
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
+    }
+    if ($DEBUG) {
+      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
+              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
     }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
