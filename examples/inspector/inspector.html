@@ -18,8 +18,6 @@
         if (!(requiredConsoleFunctions[i] in console))
           console[requiredConsoleFunctions[i]] = function () {};
       }
-
-      var $DEBUG = true, $RELEASE = false;
     </script>
     <script src="../../lib/xstats/xstats.js"></script>
 
@@ -32,6 +30,7 @@
 
     <script> console.time("Load SWF Dependencies"); </script>
     <!-- Load SWF Dependencies -->
+    <script src="../../src/swf/config.js"></script>
     <script src="../../src/swf/util.js"></script>
     <script src="../../src/swf/swf.js"></script>
     <script src="../../src/swf/inflate.js"></script>
