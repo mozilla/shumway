@@ -863,6 +863,23 @@ function deleteProperty(obj, mn) {
   return false;
 }
 
+function forEachPublicProperty(obj, f, self) {
+  if (!obj[VM_BINDINGS]) {
+    for (var i in obj) {
+      f.call(self, i, obj[i]);
+    }
+  }
+
+  for (var key in obj) {
+    if (isNumeric(key)) {
+      f.call(self, key, obj[key]);
+    } else if (key.indexOf('public$') === 0 &&
+               obj[VM_BINDINGS].indexOf(key) < 0) {
+      f.call(self, key.substring(7), obj[key]);
+    }
+  }
+}
+
 function isInstanceOf(value, type) {
   /*
   if (type instanceof Class) {
