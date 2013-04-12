@@ -923,6 +923,26 @@ var natives = (function () {
   }
 
   /**
+   * JSON.as
+   */
+  function JSONClass(runtime, scope, instance, baseClass) {
+    function ASJSON() {}
+    var c = new runtime.domain.system.Class("JSON", ASJSON, C(ASJSON));
+    c.extend(baseClass);
+    c.native = {
+      static: {
+        parseCore: function parseCore(text) { // (text:String) -> Object
+          return JSON.parse(text);
+        },
+        stringifySpecializedToString: function stringifySpecializedToString(value, replacerArray, replacerFunction, gap) { // (value:Object, replacerArray:Array, replacerFunction:Function, gap:String) -> String
+          return JSON.stringify(value, replacerFunction, gap);
+        }
+      }
+    };
+    return c;
+  }
+
+  /**
    * Capabilities.as
    */
   function CapabilitiesClass(runtime, scope, instance, baseClass) {
@@ -1392,6 +1412,7 @@ var natives = (function () {
     XMLClass: XMLClass,
     XMLListClass: XMLListClass,
     QNameClass: QNameClass,
+    JSONClass: JSONClass,
 
     ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,

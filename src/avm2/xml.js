@@ -34,7 +34,6 @@ var XMLList;
     function encode(node, encoder) {
       return visit(node, {
         element: function (n) {
-          print("element: name=" + n._name + " length=" + n._.length);
           var s = "<" + n._name;
           for (var i = 0; i < node._attributes.length; i++) {
             a = node._attributes[i];
@@ -415,39 +414,39 @@ var XMLList;
    XML Node object structure
 
    Node {
-   _kind: ["element", "attribute", "text", "comment", "processing-instruction"]
-   _parent: [XML, null],
-   _inScopeNamespaces: [],
+     _kind: ["element", "attribute", "text", "comment", "processing-instruction"]
+     _parent: [XML, null],
+     _inScopeNamespaces: [],
    }
 
    Element : Node {
-   _kind: "element",
-   _name: { localName: string, uri: string },
-   _: [],             // children
-   _attributes: [],   // attributes
+     _kind: "element",
+     _name: { localName: string, uri: string },
+     _: [],             // children
+     _attributes: [],   // attributes
    }
 
    Attribute : Node {
-   _kind: "attribute",
-   _name: { localName: string, uri: string },
-   _value: string,
-   _parent: XML,
+     _kind: "attribute",
+     _name: { localName: string, uri: string },
+     _value: string,
+     _parent: XML,
    }
 
    Text : Node {
-   _kind: "text",
-   _value: string,
+     _kind: "text",
+     _value: string,
    }
 
    ProcessingInstruction : Node {
-   _kind: "processing-instruction",
-   _name: { localName: string, uri: string },
-   _value: string,
+     _kind: "processing-instruction",
+     _name: { localName: string, uri: string },
+     _value: string,
    }
 
    Comment : Node {
-   _kind: "comment",
-   _value: string,
+     _kind: "comment",
+     _value: string,
    }
 
    *
@@ -851,7 +850,6 @@ var XMLList;
     }
 
     XLp.set = function (mn, value, isMethod) {
-      print("Xp.set() mn="+mn+" value="+value);
       if (isMethod) {
         return;
       }
