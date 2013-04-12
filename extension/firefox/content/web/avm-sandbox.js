@@ -54,6 +54,12 @@ var FirefoxCom = (function FirefoxComClosure() {
       sender.initCustomEvent('shumway.message', true, false,
         {action: action, data: data, sync: false});
       return request.dispatchEvent(sender);
+    },
+    initJS: function (callback) {
+      FirefoxCom.requestSync('externalCom', {action: 'init'});
+      document.addEventListener('shumway.remote', function (e) {
+        e.detail.result = callback(e.detail.functionName, e.detail.args);
+      }, false);
     }
   };
 })();
