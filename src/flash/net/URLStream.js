@@ -26,11 +26,32 @@ var URLStreamDefinition = (function () {
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
+        console.error(error);
         throw 'Not implemented: session.onerror';        
       };
       session.onopen = function () {
         self._connected = true;
         self.dispatchEvent(new flash.events.Event("open", false, false))
+      };
+      session.onhttpstatus = function (location, httpStatus, httpHeaders) {
+        var HTTPStatusEventClass = avm2.systemDomain.getClass("flash.events.HTTPStatusEvent");
+        var URLRequestHeaderClass = avm2.systemDomain.getClass("flash.net.URLRequestHeader");
+        var httpStatusEvent = HTTPStatusEventClass.createInstance([
+          'httpStatus', false, false, httpStatus]);
+        var headers = [];
+        httpHeaders.split(/\r\n/g).forEach(function (h) {
+          var m = /^([^:]+): (.*)$/.exec(h);
+          if (m) {
+            headers.push(URLRequestHeaderClass.createInstance([m[1], m[2]]));
+            if (m[1] === 'Location') { // Headers have redirect location
+              location = m[2];
+            }
+          }
+        });
+
+        httpStatusEvent.public$responseHeaders = headers;
+        httpStatusEvent.public$responseURL = location;
+        self.dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {
         self._connected = false;

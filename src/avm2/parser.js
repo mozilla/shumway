@@ -334,13 +334,6 @@ var ShumwayNamespace = (function () {
     this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
   }
 
-  function escapeString(str) {
-    if (str !== undefined) {
-      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
-    }
-    return str;
-  }
-
   var perfectNamespaceHash = Object.create(null);
   var perfectNamespaceHashCount = 0;
 
@@ -532,6 +525,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           namespaces = [constantPool.namespaces[index]];
+        } else {
+          flags &= ~RUNTIME_NAME;    // any name
         }
         index = stream.readU30();
         if (index) {
@@ -542,6 +537,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         flags |= RUNTIME_NAMESPACE;
         break;
@@ -553,6 +550,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         index = stream.readU30();
         release || assert(index != 0);
@@ -680,6 +679,23 @@ var Multiname = (function () {
     return "public$" + name;
   };
 
+  multiname.fromQualifiedName = function fromQualifiedName(name) {
+    // TODO: change namespace mangling to always add a second '$', even if no
+    // URI is set on the namespace. Right now, this code will mis-parse
+    // qualified names without a namespace URI, but with a '$' in the name.
+    release || assert(typeof name === 'string');
+    release || assert(name.match(/\w+\$.*\$.+/), 'not a valid multiname:', name);
+    var nsStart = name.indexOf('$');
+    var kind = ShumwayNamespace.kindFromString(name.substr(nsStart++));
+    var nameStart = name.indexOf('$', nsStart);
+    var uri;
+    if (nameStart - nsStart > 0) {
+      uri = name.substring(nsStart, nameStart++);
+    }
+    var namespaces = [new ShumwayNamespace(kind, uri)];
+    return new Multiname(namespaces, name.substr(nameStart));
+  };
+
   multiname.getAccessModifier = function getAccessModifier(mn) {
     release || assert(Multiname.isQName(mn));
     if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
@@ -687,10 +703,6 @@ var Multiname = (function () {
     }
     release || assert(mn instanceof multiname);
     return mn.namespaces[0].getAccessModifier();
-  };
-
-  multiname.isAnyName = function isAnyName(mn) {
-    return mn instanceof Multiname && mn.name === undefined;
   };
 
   multiname.isNumeric = function (mn) {
@@ -707,6 +719,10 @@ var Multiname = (function () {
     release || assert(mn instanceof Multiname);
     release || assert(!mn.isRuntimeName());
     return mn.getName();
+  };
+
+  multiname.isAnyName = function isAnyName(mn) {
+    return typeof mn === "object" && !mn.isRuntimeName() && mn.name === undefined;
   };
 
   /**
@@ -740,7 +756,7 @@ var Multiname = (function () {
       nameIndex = simpleName.lastIndexOf(" ");
     }
 
-    if (nameIndex > 0) {
+    if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
       name = simpleName.substring(nameIndex + 1).trim();
       namespace = simpleName.substring(0, nameIndex).trim();
     } else {
@@ -757,7 +773,7 @@ var Multiname = (function () {
     }
     var name = this.cache[index];
     if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name);
+      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, this.flags);
     }
     return name;
   };
@@ -780,7 +796,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyName = function isAnyName() {
-    return !this.isRuntimeName() && this.name === undefined;
+    return Multiname.isAnyName(this);
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {

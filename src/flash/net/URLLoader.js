@@ -18,7 +18,8 @@ var URLLoaderDefinition = (function () {
           data: "public data",
           dataFormat: "public dataFormat",
           bytesTotal: "public bytesTotal",
-          bytesLoaded: "public bytesLoaded"
+          bytesLoaded: "public bytesLoaded",
+          load: "public load",
         }
       }
     }

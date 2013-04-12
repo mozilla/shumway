@@ -566,10 +566,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           }
           return getJSProperty(scope, "object");
         }
-
         function getProperty(object, name, ti, getOpenMethod) {
           name = simplifyName(name);
-          if (ti) {
+          if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
             var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
             if (propertyQName) {
               if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
@@ -592,7 +591,12 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
             var indexGet = shouldFloat(call(getJSProperty(object, "indexGet"), object, [name]));
             return shouldFloat(new IR.Latch(getJSProperty(object, "indexGet"), indexGet, get));
           }
-          return new IR.AVM2GetProperty(region, state.store, object, name);
+          return new IR.AVM2GetProperty(region, state.store, object, name, constant(getOpenMethod));
+        }
+
+        function getDescendants(object, name, ti) {
+          name = simplifyName(name);
+          return new IR.AVM2GetDescendants(region, state.store, object, name);
         }
 
         function store(node) {
@@ -835,6 +839,11 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               object = pop();
               push(getProperty(object, multiname, bc.ti));
               break;
+            case OP_getdescendants:
+              multiname = buildMultiname(bc.index);
+              object = pop();
+              push(getDescendants(object, multiname, bc.ti));
+              break;
             case OP_getlex:
               multiname = buildMultiname(bc.index);
               push(getProperty(findProperty(multiname, true, bc.ti), multiname));
@@ -954,6 +963,9 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               break;
             case OP_coerce_b: case OP_convert_b:
               push(toBoolean(pop()));
+              break;
+            case OP_checkfilter:
+              push(call(globalProperty("checkFilter"), null, [pop()]));
               break;
             case OP_coerce_a:       /* NOP */ break;
             case OP_coerce_s:

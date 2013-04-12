@@ -11,11 +11,11 @@ var NativeMenuItemDefinition = (function () {
         instance: {
           enabled: {
             get: function enabled() { // (void) -> Boolean
-              notImplemented("NativeMenuItem.enabled");
+              somewhatImplemented("NativeMenuItem.enabled");
               return this._enabled;
             },
             set: function enabled(isSeparator) { // (isSeparator:Boolean) -> void
-              notImplemented("NativeMenuItem.enabled");
+              somewhatImplemented("NativeMenuItem.enabled");
               this._enabled = isSeparator;
             }
           }

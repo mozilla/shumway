@@ -70,7 +70,8 @@ function fallback() {
 
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-  document.head.getElementsByTagName('base')[0].href = flashParams.baseUrl;
+  FileLoadingService.setBaseUrl(flashParams.baseUrl);
+
   movieUrl = flashParams.url;
   movieParams = flashParams.params;
   var isOverlay = flashParams.isOverlay;
@@ -153,9 +154,7 @@ var FileLoadingService = {
     return this.sessions[sessionId] = {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
-        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-        var path = base ? base + request.url : request.url;
+        var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
         FirefoxCom.requestSync('loadFile', {url: path, sessionId: sessionId});
       },
@@ -175,6 +174,25 @@ var FileLoadingService = {
         }
       }
     };
+  },
+  setBaseUrl: function (url) {
+    var a = document.createElement('a');
+    a.href = url || '#';
+    a.setAttribute('style', 'display: none;');
+    document.body.appendChild(a);
+    FileLoadingService.baseUrl = a.href;
+    document.body.removeChild(a);
+  },
+  resolveUrl: function (url) {
+    if (url.indexOf('://') >= 0) return url;
+
+    var base = FileLoadingService.baseUrl;
+    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+    if (url.indexOf('/') === 0) {
+      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
+      if (m) base = m[0];
+    }
+    return base + url;
   }
 };
 

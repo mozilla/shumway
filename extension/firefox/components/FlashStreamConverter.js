@@ -37,6 +37,14 @@ function getBoolPref(pref, def) {
   }
 }
 
+function getStringPref(pref, def) {
+  try {
+    return Services.prefs.getComplexValue(pref, Ci.nsISupportsString).data;
+  } catch (ex) {
+    return def;
+  }
+}
+
 function log(aMsg) {
   let msg = 'FlashStreamConverter.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
   Services.console.logStringMessage(msg);
@@ -122,10 +130,21 @@ ChromeActions.prototype = {
       return true; // allow downloading for the original file
 
     // let's allow downloading from http(s) and same origin
+    var urlPrefix = /^(https?:\/\/[A-Za-z0-9\-_\.:\[\]]+\/)/i.exec(url);
     var basePrefix = /^(https?:\/\/[A-Za-z0-9\-_\.:\[\]]+\/)/i.exec(this.url);
-    if (basePrefix) {
-      var urlPrefix = /^(https?:\/\/[A-Za-z0-9\-_\.:\[\]]+\/)/i.exec(url);
-      if (urlPrefix && basePrefix[1] === urlPrefix[1])
+    if (basePrefix && urlPrefix && basePrefix[1] === urlPrefix[1]) {
+        return true;
+    }
+
+    var whitelist = getStringPref('shumway.whitelist', '');
+    if (whitelist && urlPrefix) {
+      var whitelisted = whitelist.split(',').some(function (i) {
+        if (i.indexOf('://') < 0) {
+          i = '*://' + i;
+        }
+        return new RegExp('^' + i.replace(/\./g, '\\.').replace(/\*/g, '.*') + '/').test(urlPrefix);
+      });
+      if (whitelisted)
         return true;
     }
 

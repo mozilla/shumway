@@ -566,7 +566,7 @@
   })();
 
   var GetProperty = (function () {
-    function getProperty(control, store, object, name) {
+    function getProperty(control, store, object, name, isMethod) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
@@ -576,17 +576,27 @@
       this.store = store;
       this.object = object;
       this.name = name;
+      this.isMethod = isMethod;
     }
     getProperty.prototype = extend(Value, "GetProperty");
     return getProperty;
   })();
 
   var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name) {
-      GetProperty.call(this, control, store, object, name);
+    function avm2GetProperty(control, store, object, name, isMethod) {
+      GetProperty.call(this, control, store, object, name, isMethod);
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;
+  })();
+
+  // Override GetProperty to take advantage of its common structure
+  var AVM2GetDescendants = (function () {
+    function avm2GetDescendants(control, store, object, name) {
+      GetProperty.call(this, control, store, object, name, false);
+    }
+    avm2GetDescendants.prototype = extend(GetProperty, "AVM2_GetDescendants");
+    return avm2GetDescendants;
   })();
 
   var SetProperty = (function () {
@@ -1948,6 +1958,7 @@
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
   exports.AVM2GetProperty = AVM2GetProperty;
+  exports.AVM2GetDescendants = AVM2GetDescendants;
   exports.AVM2SetProperty = AVM2SetProperty;
   exports.AVM2GetSlot = AVM2GetSlot;
   exports.AVM2SetSlot = AVM2SetSlot;

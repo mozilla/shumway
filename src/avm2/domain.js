@@ -192,7 +192,9 @@ var Domain = (function () {
             var keys = Object.keys(props);
             for (var i = 0, j = keys.length; i < j; i++) {
               var p = keys[i];
-              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
+              var propName = props[p];
+              assert (typeof propName === "string", "Make sure it's not a function.");
+              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propName));
               release || assert(typeof qn === "string");
               var desc = Object.getOwnPropertyDescriptor(obj, qn);
               if (desc && desc.get) {
@@ -273,6 +275,10 @@ var Domain = (function () {
           return "[class " + this.debugName + "]";
         }
       };
+
+      var callable = Domain.coerceCallable(Class);
+      defineNonEnumerableProperty(Class, "call", callable.call);
+      defineNonEnumerableProperty(Class, "apply", callable.apply);
 
       Class.instance = Class;
       Class.toString = Class.prototype.toString;

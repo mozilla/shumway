@@ -131,6 +131,8 @@ var Type = (function () {
     type.Number = Type.fromSimpleName("Number", domain).instance();
     type.Boolean = Type.fromSimpleName("Boolean", domain).instance();
     type.Function = Type.fromSimpleName("Function", domain).instance();
+    type.XML = Type.fromSimpleName("XML", domain).instance();
+    type.XMLList = Type.fromSimpleName("XMLList", domain).instance();
     typesInitialized = true;
   };
   return type;
@@ -702,7 +704,8 @@ var Verifier = (function() {
         }
 
         // Is it in some other script?
-        obj = abc.domain.findProperty(mn, false, !!abc.domain.base);
+        // !!abc.domain.base
+        obj = abc.domain.findProperty(mn, false, false);
         if (obj) {
           release || assert(obj instanceof Global);
           ti().object = obj;
@@ -1050,7 +1053,7 @@ var Verifier = (function() {
             push(Type.Any);
             break;
           case OP_getdescendants:
-            notImplemented(bc); //TODO
+            push(Type.XMLList);
             break;
           case OP_newcatch:
             push(Type.Any);
@@ -1160,7 +1163,7 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_checkfilter:
-            notImplemented(bc);
+            // nop.
             break;
           case OP_convert_f:
             pop();
