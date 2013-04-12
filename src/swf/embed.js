@@ -112,6 +112,9 @@ SWF.embed = function(file, doc, container, options) {
     stage._children[0] = root;
     stage._control.appendChild(root._control);
 
+    root.dispatchEvent(new flash.events.Event("added"));
+    root.dispatchEvent(new flash.events.Event("addedToStage"));
+
     var cursorVisible = true;
     function syncCursor() {
       var newCursor;

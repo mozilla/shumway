@@ -19,7 +19,7 @@ function executeScript(script) {
   release || assert(!script.executing && !script.executed);
   var global = new Global(abc.runtime, script);
   if (abc.domain.allowNatives) {
-    global.public$unsafeJSNative = getNative;
+    global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
   }
   script.executing = true;
   var scope = new Scope(null, script.global);
@@ -163,7 +163,7 @@ var Domain = (function () {
           // FIXME: This is technically non-semantics preserving.
           this.baseClass = baseClass;
           this.dynamicPrototype = this.instance.prototype;
-          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
         },
 
         extend: function (baseClass) {
@@ -181,7 +181,7 @@ var Domain = (function () {
             this.hasInitialize |= SUPER_INITIALIZE;
           }
           this.instance.prototype = Object.create(this.dynamicPrototype);
-          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
@@ -192,7 +192,9 @@ var Domain = (function () {
             var keys = Object.keys(props);
             for (var i = 0, j = keys.length; i < j; i++) {
               var p = keys[i];
-              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(props[p]));
+              var propName = props[p];
+              assert (typeof propName === "string", "Make sure it's not a function.");
+              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propName));
               release || assert(typeof qn === "string");
               var desc = Object.getOwnPropertyDescriptor(obj, qn);
               if (desc && desc.get) {
@@ -249,7 +251,7 @@ var Domain = (function () {
           this.baseClass = baseClass;
           this.dynamicPrototype = Object.getPrototypeOf(native.prototype);
           this.instance.prototype = native.prototype;
-          defineNonEnumerableProperty(this.dynamicPrototype, "public$constructor", this);
+          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
           defineReadOnlyProperty(this.instance.prototype, "class", this);
         },
 
@@ -273,6 +275,10 @@ var Domain = (function () {
           return "[class " + this.debugName + "]";
         }
       };
+
+      var callable = Domain.coerceCallable(Class);
+      defineNonEnumerableProperty(Class, "call", callable.call);
+      defineNonEnumerableProperty(Class, "apply", callable.apply);
 
       Class.instance = Class;
       Class.toString = Class.prototype.toString;

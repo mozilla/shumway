@@ -5,8 +5,7 @@ var BitmapDataDefinition = (function () {
     initialize: function () {
       var s = this.symbol;
       if (s) {
-        this.ctor(s.width, s.height);
-        this._ctx.drawImage(s.img, 0, 0);
+        this._img = s.img;
       }
     },
 
@@ -19,7 +18,7 @@ var BitmapDataDefinition = (function () {
       if (isNaN(width + height) || width <= 0 || height <= 0)
         throw ArgumentError();
 
-      this._transparent = !!transparent;
+      this._transparent = transparent === undefined ? true : !!transparent;
       var canvas = document.createElement('canvas');
       this._ctx = canvas.getContext('2d');
       canvas.width = width | 0;
@@ -29,6 +28,8 @@ var BitmapDataDefinition = (function () {
 
       if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
+
+      this._ctx.drawImage(this._img, 0, 0);
     },
     dispose: function() {
       this._ctx = null;

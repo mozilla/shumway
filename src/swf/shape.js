@@ -293,12 +293,12 @@ function defineShape(tag, dictionary) {
           if (record.colorMorph) {
             var colorMorph = record.colorMorph;
             colors.push(morphColor(color, colorMorph));
-            alphas.push(morph(color.alpha / 255, colorMorph.alpha / 255));
-            ratios.push(morph(record.ratio / 255, record.ratioMorph / 255));
+            alphas.push(morph(color.alpha, colorMorph.alpha));
+            ratios.push(morph(record.ratio, record.ratioMorph));
           } else {
             colors.push(color.red << 16 | color.green << 8 | color.blue);
-            alphas.push(color.alpha / 255);
-            ratios.push(record.ratio / 255);
+            alphas.push(color.alpha);
+            ratios.push(record.ratio);
           }
         }
         commands.push('{' +

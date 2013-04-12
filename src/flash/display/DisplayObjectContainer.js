@@ -10,10 +10,10 @@ var DisplayObjectContainerDefinition = (function () {
       return this._children.length;
     },
     get tabChildren() {
-      return true;
+      return this._tabChildren;
     },
     set tabChildren(val) {
-      notImplemented();
+      this._tabChildren = val;
     },
     get textSnapshot() {
       notImplemented();
@@ -42,6 +42,10 @@ var DisplayObjectContainerDefinition = (function () {
       child._parent = this;
 
       this._control.appendChild(child._control);
+
+      child.dispatchEvent(new flash.events.Event("added"));
+      if (child.stage)
+        child._addedToStage();
 
       this._markAsDirty();
 
@@ -97,6 +101,11 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
 
       var child = children[index];
+
+      child.dispatchEvent(new flash.events.Event("removed"));
+      if (child.stage)
+        child._removedFromStage();
+
       children.splice(index, 1);
       child._parent = null;
 
@@ -164,6 +173,10 @@ var DisplayObjectContainerDefinition = (function () {
   };
 
   var desc = Object.getOwnPropertyDescriptor;
+
+  def.initialize = function () {
+    this._tabChildren = true;
+  };
 
   def.__glue__ = {
     native: {

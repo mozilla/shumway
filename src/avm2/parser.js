@@ -290,12 +290,16 @@ var ShumwayNamespace = (function () {
 
   var kinds = {};
   kinds[CONSTANT_Namespace] = "public";
-  kinds[CONSTANT_PackageNamespace] ="public";
+  kinds[CONSTANT_PackageNamespace] = "public";
   kinds[CONSTANT_PackageInternalNs] = "packageInternal";
   kinds[CONSTANT_PrivateNs] = "private";
-  kinds[CONSTANT_ProtectedNamespace] =  "protected";
-  kinds[CONSTANT_ExplicitNamespace] =  "explicit";
-  kinds[CONSTANT_StaticProtectedNs] =  "staticProtected";
+  kinds[CONSTANT_ProtectedNamespace] = "protected";
+  kinds[CONSTANT_ExplicitNamespace] = "explicit";
+  kinds[CONSTANT_StaticProtectedNs] = "staticProtected";
+  var prefixes = {};
+  for (var k in kinds) {
+    prefixes[kinds[k]] = true;
+  }
 
   /**
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
@@ -317,6 +321,9 @@ var ShumwayNamespace = (function () {
     // by the parse method.
   }
 
+  namespace.PREFIXES = prefixes;
+
+  var uniqueNamespaceCounter = 0;
   function buildNamespace() {
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
@@ -327,32 +334,59 @@ var ShumwayNamespace = (function () {
       }
     } else if (this.isUnique()) {
       // Make a psuedo unique id by concatenating current milliseconds to original uri
-      this.uri = String(this.uri + Date.now());
+      this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
-    this.uri = mangleNamespaceString(this.uri);
+    this.uri = mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
-    this.qualifiedName = kinds[this.kind] + (this.uri ? "$" + this.uri : "");
+    this.qualifiedName = kinds[this.kind] + "$" + this.uri;
   }
 
-  function escapeString(str) {
-    if (str !== undefined) {
-      str = str.replace(/\.|:|-|\//gi,"$"); /* No dots, colons, dashes and /s */
+  function escapeUri(uri) {
+    if (uri !== undefined) {
+      uri = uri.replace(/[^\w]/g, "_"); /* No fancy characters. */
     }
-    return str;
+    return uri;
   }
 
-  var perfectNamespaceHash = Object.create(null);
-  var perfectNamespaceHashCount = 0;
+  var uriToMangledNameMap = Object.create(null);
+  var mangledNameToURIMap = Object.create(null);
+  var mangledNameList = [];
+  var MANGLE_NAMESPACES = true;
 
-  function mangleNamespaceString(str) {
-    if (!release) {
-      return escapeString(str);
-    }
-    if (str === "") {
+  /**
+   * Mangles a namespace uri to a more sensible name. The process can be reversed.
+   * In release mode we mangle the name a numeric string otherwise we mangle to an
+   * escaped string, which can cause collisions.
+   */
+  function mangleNamespaceURI(uri) {
+    if (uri === "") {
       return "";
     }
-    return perfectNamespaceHash[str] || (perfectNamespaceHash[str] = "N" + perfectNamespaceHashCount++);
+    var name = uriToMangledNameMap[uri];
+    if (name) {
+      return name;
+    }
+    if (!MANGLE_NAMESPACES) {
+      name = escapeUri(uri);
+      mangledNameToURIMap[name] = uri;
+    } else {
+      name = String(mangledNameList.length);
+      mangledNameList.push(name);
+    }
+    uriToMangledNameMap[uri] = name;
+    return name;
   }
+
+  namespace.fromQualifiedName = function fromQualifiedName(qn) {
+    var a = qn.indexOf("$");
+    var b = qn.indexOf("$", a + 1);
+    var str = qn.substring(0, a);
+    var kind = namespace.kindFromString(str);
+    str = qn.substring(a + 1, b);
+    var uri = str === "" ? str : (MANGLE_NAMESPACES ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
+    assert (uri || uri === "", "uri is " + uri);
+    return new namespace(kind, uri);
+  };
 
   namespace.kindFromString = function kindFromString(str) {
     for (var kind in kinds) {
@@ -395,7 +429,7 @@ var ShumwayNamespace = (function () {
     },
 
     toString: function toString() {
-      return kinds[this.kind] + (this.originalURI ? "$" + this.originalURI : "");
+      return kinds[this.kind] + (this.originalURI ? " " + this.originalURI : "");
     },
 
     clone: function clone() {
@@ -516,6 +550,7 @@ var Multiname = (function () {
   var RUNTIME_NAMESPACE = 0x02;
   var RUNTIME_NAME      = 0x04;
   var nextID = 1;
+  var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
     this.id = nextID ++;
     this.namespaces = namespaces;
@@ -532,6 +567,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           namespaces = [constantPool.namespaces[index]];
+        } else {
+          flags &= ~RUNTIME_NAME;    // any name
         }
         index = stream.readU30();
         if (index) {
@@ -542,6 +579,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         flags |= RUNTIME_NAMESPACE;
         break;
@@ -553,6 +592,8 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
+        } else {
+          flags &= ~RUNTIME_NAME;
         }
         index = stream.readU30();
         release || assert(index != 0);
@@ -662,6 +703,27 @@ var Multiname = (function () {
   };
 
   /**
+   * Creates a Multiname from a mangled qualified name. The format should be of
+   * the form kindName$mangledURI$name.
+   */
+  multiname.fromQualifiedName = function fromQualifiedName(qn) {
+    if (qn instanceof Multiname) {
+      return qn;
+    }
+    if (typeof qn === "number" || qn instanceof Number || isNumeric(qn)) {
+      return new Multiname(ShumwayNamespace.PUBLIC, qn);
+    }
+    assert (typeof qn === "string");
+    var a = qn.indexOf("$");
+    if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
+      return undefined;
+    }
+    var ns = ShumwayNamespace.fromQualifiedName(qn);
+    var b = qn.indexOf("$", a + 1);
+    return new Multiname([ns], qn.substring(b + 1));
+  };
+
+  /**
    * Same as |getQualifiedName| but it also includes the type parameter if
    * it has one.
    */
@@ -673,11 +735,16 @@ var Multiname = (function () {
     return qn;
   };
 
+  multiname.PUBLIC_QUALIFIED_NAME_PREFIX = PUBLIC_QUALIFIED_NAME_PREFIX;
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
       return Number(name);
     }
-    return "public$" + name;
+    return PUBLIC_QUALIFIED_NAME_PREFIX + name;
+  };
+
+  multiname.isPublicQualifiedName = function isPublicQualifiedName(qn) {
+    return qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {
@@ -687,10 +754,6 @@ var Multiname = (function () {
     }
     release || assert(mn instanceof multiname);
     return mn.namespaces[0].getAccessModifier();
-  };
-
-  multiname.isAnyName = function isAnyName(mn) {
-    return mn instanceof Multiname && mn.name === undefined;
   };
 
   multiname.isNumeric = function (mn) {
@@ -707,6 +770,10 @@ var Multiname = (function () {
     release || assert(mn instanceof Multiname);
     release || assert(!mn.isRuntimeName());
     return mn.getName();
+  };
+
+  multiname.isAnyName = function isAnyName(mn) {
+    return typeof mn === "object" && !mn.isRuntimeName() && mn.name === undefined;
   };
 
   /**
@@ -740,7 +807,7 @@ var Multiname = (function () {
       nameIndex = simpleName.lastIndexOf(" ");
     }
 
-    if (nameIndex > 0) {
+    if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
       name = simpleName.substring(nameIndex + 1).trim();
       namespace = simpleName.substring(0, nameIndex).trim();
     } else {
@@ -757,7 +824,7 @@ var Multiname = (function () {
     }
     var name = this.cache[index];
     if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name);
+      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, this.flags);
     }
     return name;
   };
@@ -780,7 +847,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyName = function isAnyName() {
-    return !this.isRuntimeName() && this.name === undefined;
+    return Multiname.isAnyName(this);
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {

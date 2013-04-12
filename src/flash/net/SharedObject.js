@@ -8,7 +8,7 @@ var SharedObjectDefinition = (function () {
     // ()
     __class__: "flash.net.SharedObject",
     initialize: function () {
-      
+      this._data = {};
     },
     __glue__: {
       native: {
@@ -47,7 +47,6 @@ var SharedObjectDefinition = (function () {
           },
           data: {
             get: function data() { // (void) -> Object
-              notImplemented("SharedObject.data");
               return this._data;
             }
           },

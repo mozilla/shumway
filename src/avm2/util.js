@@ -85,12 +85,32 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
-function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-  if (isGetter) {
-    defineNonEnumerableGetter(obj, name, value);
-  } else {
-    defineNonEnumerableSetter(obj, name, value);
+function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
+  var descriptor = {};
+  while (obj) {
+    var tmp = Object.getOwnPropertyDescriptor(obj, name);
+    if (tmp) {
+      descriptor.get = descriptor.get || tmp.get;
+      descriptor.set = descriptor.set || tmp.set;
+    }
+    if (descriptor.get && descriptor.set) {
+      break;
+    }
+    obj = Object.getPrototypeOf(obj);
   }
+  return descriptor;
+}
+
+function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
+  var descriptor = getLatestGetterOrSetterPropertyDescriptor(obj, name);
+  descriptor.configurable = true;
+  descriptor.enumerable = false;
+  if (isGetter) {
+    descriptor.get = value;
+  } else {
+    descriptor.set = value;
+  }
+  Object.defineProperty(obj, name, descriptor);
 }
 
 function defineNonEnumerableGetter(obj, name, getter) {
@@ -397,6 +417,13 @@ function bitCount(i) {
   i = i - ((i >> 1) & 0x55555555);
   i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
   return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
+}
+
+function escapeString(str) {
+  if (str !== undefined) {
+    str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
+  }
+  return str;
 }
 
 /**

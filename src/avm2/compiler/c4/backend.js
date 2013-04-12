@@ -530,7 +530,14 @@
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
-    return call(id("getProperty"), [object, name]);
+    var isMethod = compileValue(this.isMethod, cx);
+    return call(id("getProperty"), [object, name, isMethod]);
+  };
+
+  IR.AVM2GetDescendants.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    return call(id("getDescendants"), [object, name]);
   };
 
   IR.AVM2SetSlot.prototype.compile = function (cx) {

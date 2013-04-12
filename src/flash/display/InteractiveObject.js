@@ -7,6 +7,7 @@ var InteractiveObjectDefinition = (function () {
 
       this._tabEnabled = false;
       this._focusRect = null;
+      this._contextMenu = null;
     },
 
     get accessibilityImplementation() {
@@ -16,10 +17,12 @@ var InteractiveObjectDefinition = (function () {
       notImplemented();
     },
     get contextMenu() {
-      return null;
+      somewhatImplemented("contextMenu");
+      return this._contextMenu;
     },
     set contextMenu(val) {
-      notImplemented();
+      somewhatImplemented("contextMenu");
+      this._contextMenu = val;
     },
     get doubleClickEnabled() {
       return this._doubleClickEnabled;

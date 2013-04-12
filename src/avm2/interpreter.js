@@ -100,7 +100,7 @@ var Interpreter = (function () {
         locals.push(Apslice.call(args, 0));
       }
 
-      var obj, objsuper, type, index, multiname, ns, name, res, a, b;
+      var obj, receiver, objsuper, type, index, multiname, ns, name, res, a, b;
       var bytecodes = method.analysis.bytecodes;
       var sourcePosition = {file: undefined, line: undefined};
 
@@ -320,16 +320,6 @@ var Interpreter = (function () {
             obj = stack.pop();
             stack.push(getSuper(savedScope, obj, multiname).apply(obj, args));
             break;
-          case OP_callproperty:
-            args = stack.popMany(bc.argCount);
-            multiname = createMultiname(stack, multinames[bc.index]);
-            obj = stack.pop();
-            var p = getProperty(obj, multiname);
-            if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
-            }
-            stack.push(p.apply(obj, args));
-            break;
           case OP_returnvoid:
             runtimeStack.pop();
             return;
@@ -353,14 +343,18 @@ var Interpreter = (function () {
             break;
           case OP_callsuperid:    notImplemented(); break;
           case OP_callproplex:
+          case OP_callproperty:
+          case OP_callpropvoid:
             args = stack.popMany(bc.argCount);
             multiname = createMultiname(stack, multinames[bc.index]);
-            obj = stack.pop();
-            var p = getProperty(obj, multiname);
-            if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+            receiver = obj = stack.pop();
+            if (op === OP_callproplex) {
+              receiver = null;
             }
-            stack.push(p.apply(null, args));
+            res = callProperty(obj, multiname, receiver, args);
+            if (op !== OP_callpropvoid) {
+              stack.push(res);
+            }
             break;
           case OP_callinterface:  notImplemented(); break;
           case OP_callsupervoid:
@@ -368,16 +362,6 @@ var Interpreter = (function () {
             multiname = createMultiname(stack, multinames[bc.index]);
             obj = stack.pop();
             getSuper(savedScope, obj, multiname).apply(obj, args);
-            break;
-          case OP_callpropvoid:
-            args = stack.popMany(bc.argCount);
-            multiname = createMultiname(stack, multinames[bc.index]);
-            obj = stack.pop();
-            var p = getProperty(obj, multiname);
-            if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
-            }
-            p.apply(obj, args);
             break;
           case OP_sxi1:           notImplemented(); break;
           case OP_sxi8:           notImplemented(); break;

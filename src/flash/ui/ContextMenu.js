@@ -17,21 +17,21 @@ var ContextMenuDefinition = (function () {
           },
           builtInItems: {
             get: function builtInItems() { // (void) -> ContextMenuBuiltInItems
-              notImplemented("ContextMenu.builtInItems");
+              somewhatImplemented("ContextMenu.builtInItems");
               return this._builtInItems;
             },
             set: function builtInItems(value) { // (value:ContextMenuBuiltInItems) -> void
-              notImplemented("ContextMenu.builtInItems");
+              somewhatImplemented("ContextMenu.builtInItems");
               this._builtInItems = value;
             }
           },
           customItems: {
             get: function customItems() { // (void) -> Array
-              notImplemented("ContextMenu.customItems");
+              somewhatImplemented("ContextMenu.customItems");
               return this._customItems;
             },
             set: function customItems(value) { // (value:Array) -> void
-              notImplemented("ContextMenu.customItems");
+              somewhatImplemented("ContextMenu.customItems");
               this._customItems = value;
             }
           },
@@ -64,19 +64,6 @@ var ContextMenuDefinition = (function () {
               notImplemented("ContextMenu.clipboardItems");
               this._clipboardItems = value;
             }
-          }
-        }
-      },
-      script: {
-        static: {
-          // ...
-        },
-        instance: {
-          hideBuiltInItems: function hideBuiltInItems() { // (void) -> void
-            notImplemented("ContextMenu.hideBuiltInItems");
-          },
-          clone: function clone() { // (void) -> ContextMenu
-            notImplemented("ContextMenu.clone");
           }
         }
       }

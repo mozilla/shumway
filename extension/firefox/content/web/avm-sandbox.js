@@ -11,16 +11,11 @@ var FirefoxCom = (function FirefoxComClosure() {
      * @return {*} The response.
      */
     requestSync: function(action, data) {
-      var request = document.createTextNode('');
-      document.documentElement.appendChild(request);
-
-      var sender = document.createEvent('CustomEvent');
-      sender.initCustomEvent('shumway.message', true, false,
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
         {action: action, data: data, sync: true});
-      request.dispatchEvent(sender);
-      var response = sender.detail.response;
-      document.documentElement.removeChild(request);
-      return response;
+      document.dispatchEvent(e);
+      return e.detail.response;
     },
     /**
      * Creates an event that the extension is listening for and will
@@ -31,29 +26,33 @@ var FirefoxCom = (function FirefoxComClosure() {
      * with one data argument.
      */
     request: function(action, data, callback) {
-      var request = document.createTextNode('');
-      request.setUserData('action', action, null);
-      request.setUserData('data', data, null);
-      request.setUserData('sync', false, null);
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
+        {action: action, data: data, sync: false});
       if (callback) {
-        request.setUserData('callback', callback, null);
+        if ('nextId' in FirefoxCom.request) {
+          FirefoxCom.request.nextId = 1;
+        }
+        var cookie = "requestId" + (FirefoxCom.request.nextId++);
+        e.detail.cookie = cookie;
 
         document.addEventListener('shumway.response', function listener(event) {
-          var node = event.target,
-              response = event.detail.response;
-
-          document.documentElement.removeChild(node);
+          if (cookie !== event.detail.cookie)
+            return;
 
           document.removeEventListener('shumway.response', listener, false);
+
+          var response = event.detail.response;
           return callback(response);
         }, false);
       }
-      document.documentElement.appendChild(request);
-
-      var sender = document.createEvent('CustomEvent');
-      sender.initCustomEvent('shumway.message', true, false,
-        {action: action, data: data, sync: false});
-      return request.dispatchEvent(sender);
+      return document.dispatchEvent(e);
+    },
+    initJS: function (callback) {
+      FirefoxCom.request('externalCom', {action: 'init'});
+      document.addEventListener('shumway.remote', function (e) {
+        e.detail.result = callback(e.detail.functionName, e.detail.args);
+      }, false);
     }
   };
 })();
@@ -64,7 +63,8 @@ function fallback() {
 
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-  document.head.getElementsByTagName('base')[0].href = flashParams.baseUrl;
+  FileLoadingService.setBaseUrl(flashParams.baseUrl);
+
   movieUrl = flashParams.url;
   movieParams = flashParams.params;
   var isOverlay = flashParams.isOverlay;
@@ -147,9 +147,7 @@ var FileLoadingService = {
     return this.sessions[sessionId] = {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
-        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-        var path = base ? base + request.url : request.url;
+        var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
         FirefoxCom.requestSync('loadFile', {url: path, sessionId: sessionId});
       },
@@ -169,6 +167,25 @@ var FileLoadingService = {
         }
       }
     };
+  },
+  setBaseUrl: function (url) {
+    var a = document.createElement('a');
+    a.href = url || '#';
+    a.setAttribute('style', 'display: none;');
+    document.body.appendChild(a);
+    FileLoadingService.baseUrl = a.href;
+    document.body.removeChild(a);
+  },
+  resolveUrl: function (url) {
+    if (url.indexOf('://') >= 0) return url;
+
+    var base = FileLoadingService.baseUrl;
+    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+    if (url.indexOf('/') === 0) {
+      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
+      if (m) base = m[0];
+    }
+    return base + url;
   }
 };
 
