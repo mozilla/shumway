@@ -221,6 +221,7 @@ ChromeActions.prototype = {
 
     // TODO check security ?
     var parentWindow = this.window.parent.wrappedJSObject;
+    var embedTag = this.embedTag.wrappedJSObject;
     switch (data.action) {
     case 'init':
       if (this.externalComInitialized)
@@ -228,18 +229,18 @@ ChromeActions.prototype = {
 
       this.externalComInitialized = true;
       var eventTarget = this.window.document;
-      initExternalCom(parentWindow, this.embedTag, eventTarget);
+      initExternalCom(parentWindow, embedTag, eventTarget);
       return;
     case 'getId':
-      return this.embedTag.id;
+      return embedTag.id;
     case 'eval':
       return parentWindow.__flash__eval(data.expression);
     case 'call':
       return parentWindow.__flash__call(data.request);
     case 'register':
-      return parentWindow.__flash__registerCallback(data.functionName);
+      return embedTag.__flash__registerCallback(data.functionName);
     case 'unregister':
-      return parentWindow.__flash__unregisterCallback(data.functionName);
+      return embedTag.__flash__unregisterCallback(data.functionName);
     }
   }
 };
@@ -313,52 +314,51 @@ function createSandbox(window, preview) {
   return sandbox;
 }
 
-function initExternalCom(wrappedWindow, object, targetDocument) {
-  if (wrappedWindow.__flash__initialized)
-    return;
-
-  wrappedWindow.__flash__initialized = true;
-  wrappedWindow.__flash__toXML = function __flash__toXML(obj) {
-    switch (typeof obj) {
-    case 'boolean':
-      return obj ? '<true/>' : '<false/>';
-    case 'number':
-      return '<number>' + obj + '</number>';
-    case 'object':
-      if (obj === null) {
-        return '<null/>';
-      }
-      if ('hasOwnProperty' in obj && obj.hasOwnProperty('length')) {
-        // array
-        var xml = '<array>';
-        for (var i = 0; i < obj.length; i++) {
+function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
+  if (!wrappedWindow.__flash__initialized) {
+    wrappedWindow.__flash__initialized = true;
+    wrappedWindow.__flash__toXML = function __flash__toXML(obj) {
+      switch (typeof obj) {
+      case 'boolean':
+        return obj ? '<true/>' : '<false/>';
+      case 'number':
+        return '<number>' + obj + '</number>';
+      case 'object':
+        if (obj === null) {
+          return '<null/>';
+        }
+        if ('hasOwnProperty' in obj && obj.hasOwnProperty('length')) {
+          // array
+          var xml = '<array>';
+          for (var i = 0; i < obj.length; i++) {
+            xml += '<property id="' + i + '">' + __flash__toXML(obj[i]) + '</property>';
+          }
+          return xml + '</array>';
+        }
+        var xml = '<object>';
+        for (var i in obj) {
           xml += '<property id="' + i + '">' + __flash__toXML(obj[i]) + '</property>';
         }
-        return xml + '</array>';
+        return xml + '</object>';
+      case 'string':
+        return '<string>' + obj.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</string>';
+      case 'undefined':
+        return '<undefined/>';
       }
-      var xml = '<object>';
-      for (var i in obj) {
-        xml += '<property id="' + i + '">' + __flash__toXML(obj[i]) + '</property>';
-      }
-      return xml + '</object>';
-    case 'string':
-      return '<string>' + obj.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</string>';
-    case 'undefined':
-      return '<undefined/>';
-    }
-  };
-  wrappedWindow.__flash__eval = function (expr) {
-    this.console.log('__flash__eval: ' + expr);
-    return this.eval(expr);
-  };
-  wrappedWindow.__flash__call = function (expr) {
-    this.console.log('__flash__call: ' + expr);
-  };
-  wrappedWindow.__flash__registerCallback = function (functionName) {
-    this.console.log('__flash__registerCallback: ' + functionName);
-    object.wrappedJSObject[functionName] = function () {
+    };
+    wrappedWindow.__flash__eval = function (expr) {
+      this.console.log('__flash__eval: ' + expr);
+      return this.eval(expr);
+    };
+    wrappedWindow.__flash__call = function (expr) {
+      this.console.log('__flash__call: ' + expr);
+    };
+  }
+  wrappedObject.__flash__registerCallback = function (functionName) {
+    wrappedWindow.console.log('__flash__registerCallback: ' + functionName);
+    this[functionName] = function () {
       var args = Array.prototype.slice.call(arguments, 0);
-      this.console.log('__flash__callIn: ' + functionName);
+      wrappedWindow.console.log('__flash__callIn: ' + functionName);
       var e = targetDocument.createEvent('CustomEvent');
       e.initCustomEvent('shumway.remote', true, false, {
         functionName: functionName,
@@ -367,11 +367,11 @@ function initExternalCom(wrappedWindow, object, targetDocument) {
       });
       targetDocument.dispatchEvent(e);
       return e.detail.result;
-    }.bind(this);
+    };
   };
-  wrappedWindow.__flash__unregisterCallback = function (functionName) {
-    console.log('__flash__unregisterCallback: ' + functionName);
-    delete object.wrappedJSObject[functionName];
+  wrappedObject.__flash__unregisterCallback = function (functionName) {
+    wrappedWindow.console.log('__flash__unregisterCallback: ' + functionName);
+    delete this[functionName];
   };
 }
 
