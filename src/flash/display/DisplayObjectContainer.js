@@ -10,10 +10,10 @@ var DisplayObjectContainerDefinition = (function () {
       return this._children.length;
     },
     get tabChildren() {
-      return true;
+      return this._tabChildren;
     },
     set tabChildren(val) {
-      notImplemented();
+      this._tabChildren = val;
     },
     get textSnapshot() {
       notImplemented();
@@ -164,6 +164,10 @@ var DisplayObjectContainerDefinition = (function () {
   };
 
   var desc = Object.getOwnPropertyDescriptor;
+
+  def.initialize = function () {
+    this._tabChildren = true;
+  };
 
   def.__glue__ = {
     native: {

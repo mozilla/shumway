@@ -319,10 +319,10 @@ var DisplayObjectDefinition = (function () {
       return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
     },
     get mask() {
-      return null;
+      return this._mask;
     },
     set mask(val) {
-      notImplemented();
+      this._mask = val;
     },
     get name() {
       return this._name;
