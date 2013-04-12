@@ -28,7 +28,7 @@ var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_UNSAFE_CLASSES = ["Shumway"];
-
+var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
@@ -919,6 +919,11 @@ function createActivation(methodInfo) {
   return Object.create(methodInfo.activationPrototype);
 }
 
+function isClassObject(obj) {
+  assert (obj);
+  return obj[VM_IS_CLASS];
+}
+
 /**
  * Scope object backing for catch blocks.
  */
@@ -1275,6 +1280,8 @@ var Runtime = (function () {
       this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
     }
+
+    cls[VM_IS_CLASS] = true;
 
     if (instance) {
       this.applyProtectedBindings(instance.prototype, cls);
@@ -1737,6 +1744,20 @@ var Runtime = (function () {
           Counter.count("Runtime: Method Closures");
           return target.value.bind(this);
         }
+        if (target.value.isTrampoline) {
+          // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
+          // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
+          // call it.
+          target.value.trigger();
+        }
+        assert (!target.value.isTrampoline, "We should avoid binding trampolines.");
+        var mc = null;
+        if (isClassObject(this)) {
+          Counter.count("Runtime: Static Method Closures");
+          mc = target.value.bind(this);
+          defineReadOnlyProperty(this, qn, mc);
+          return mc;
+        }
         if (this.hasOwnProperty(qn)) {
           var pd = Object.getOwnPropertyDescriptor(this, qn);
           if (pd.get) {
@@ -1746,14 +1767,8 @@ var Runtime = (function () {
           Counter.count("Runtime: Unpatched Memoizer");
           return this[qn];
         }
-        if (target.value.isTrampoline) {
-          // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
-          // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
-          // call it.
-          target.value.trigger();
-        }
-        assert (!target.value.isTrampoline);
-        var mc = target.value.bind(this);
+
+        mc = target.value.bind(this);
         defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
         defineReadOnlyProperty(this, qn, mc);
         return mc;
