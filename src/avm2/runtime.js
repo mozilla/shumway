@@ -1689,9 +1689,12 @@ var Runtime = (function () {
    */
   function makeTrampoline(forward, parameterLength) {
     release || assert (forward && typeof forward === "function");
-    var trampoline = (function trampolineContext() {
+    return (function trampolineContext() {
       var target = null;
-      return function trampoline() {
+      /**
+       * Triggers the trampoline and executes it.
+       */
+      var trampoline = function execute() {
         Counter.count("Executing Trampoline");
         if (!target) {
           target = forward(trampoline);
@@ -1699,14 +1702,23 @@ var Runtime = (function () {
         }
         return target.apply(this, arguments);
       };
+      /**
+       * Just triggers the trampoline without executing it.
+       */
+      trampoline.trigger = function trigger() {
+        Counter.count("Triggering Trampoline");
+        if (!target) {
+          target = forward(trampoline);
+          assert (target);
+        }
+      };
+      trampoline.isTrampoline = true;
+      // Make sure that the length property of the trampoline matches the trait's number of
+      // parameters. However, since we can't redefine the |length| property of a function,
+      // we define a new hidden |VM_LENGTH| property to store this value.
+      defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+      return trampoline;
     })();
-
-    // Make sure that the length property of the trampoline matches the trait's number of
-    // parameters. However, since we can't redefine the |length| property of a function,
-    // we define a new hidden |VM_LENGTH| property to store this value.
-    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
-    trampoline.isTrampoline = true;
-    return trampoline;
   }
 
   runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
@@ -1734,15 +1746,16 @@ var Runtime = (function () {
           Counter.count("Runtime: Unpatched Memoizer");
           return this[qn];
         }
+        if (target.value.isTrampoline) {
+          // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
+          // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
+          // call it.
+          target.value.trigger();
+        }
+        assert (!target.value.isTrampoline);
         var mc = target.value.bind(this);
         defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
-        // If the memoizer target is a trampoline then don't cache the method closure.
-        // Doing so would cause the trampoline to be bound with |this| and would always
-        // execute. Usually he next time around, (after the method) is compiled
-        // the target will be patched, and it's safe to cache the method closure.
-        if (!target.value.isTrampoline) {
-          defineReadOnlyProperty(this, qn, mc);
-        }
+        defineReadOnlyProperty(this, qn, mc);
         return mc;
       }
       Counter.count("Runtime: Memoizers");
