@@ -216,6 +216,9 @@ ChromeActions.prototype = {
     obj.dispatchEvent(e);
   },
   externalCom: function (data) {
+    if (!getBoolPref('shumway.external', false))
+      return;
+
     // TODO check security ?
     var parentWindow = this.window.parent.wrappedJSObject;
     switch (data.action) {
