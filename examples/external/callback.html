@@ -5,7 +5,8 @@ function testOut(s) {
 }
 
 setTimeout(function () {
-  document.getElementById('swf1').testIn('JS');
+  var result = document.getElementById('swf1').testIn('JS');
+  console.log('testIn: ' + result);
 }, 2000);
 
 </script>
