@@ -1530,7 +1530,7 @@ var natives = (function () {
       var variablesVal = obj[publicName("variables")] = [];
       var metadataVal = obj[publicName("metadata")] = [];
       
-      for (var i = 0; i < traits.length; i++) {
+      for (var i = 0; traits && i < traits.length; i++) {
         var t = traits[i];
         var val = {};
         switch (t.kind) {

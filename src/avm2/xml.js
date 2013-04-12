@@ -4,8 +4,75 @@
 var XMLClass;
 var XMLListClass;
 var QNameClass;
+var isXMLType;
+var XML;
+var XMLList;
 
 (function () {
+  function XMLEncoder(pretty) {
+    var indent = "\n  ";
+    function visit(node, encode) {
+      if (node._IS_XML) {
+        switch (node._kind) {
+        case "element":
+          return encode.element(node);
+        case "text":
+          return encode.text(node);
+        case "cdata":
+          return encode.cdata(node);
+        case "comment":
+          return encode.comment(node);
+        case "processing-instruction":
+          return encode.pi(node);
+        }
+      } else if (node._IS_XMLLIST) {
+        return encode.list(node);
+      } else {
+        throw "Not implemented";
+      }
+    }
+    function encode(node, encoder) {
+      return visit(node, {
+        element: function (n) {
+          print("element: name=" + n._name + " length=" + n._.length);
+          var s = "<" + n._name;
+          for (var i = 0; i < node._attributes.length; i++) {
+            a = node._attributes[i];
+            s += " " + a._name + "=" + a._value;
+          }
+          s += ">";
+          for (var i = 0; i < node._.length; i++) {
+            s += visit(node._[i], encode);
+          }
+          s += "</" + n._name + ">";
+          return s;
+        },
+        text: function(n) {
+          var node = createNode("text", "", "");
+          node._value = text;
+          // isWhitespace?
+          currentElement.insert(node);
+        },
+        cdata: function(n) {
+        },
+        comment: function(n) {
+        },
+        pi: function(n) {
+        },
+        doctype: function(n) {
+        },
+        list: function (n) {
+          var s = "<parent>";
+          for (var i = 0; i < node._.length; i++) {
+            s += visit(node._[i], encode);
+          }
+          s += "</parent>";
+        },
+      });
+    } 
+    this.encode = encode;
+  }
+
   function XMLParser() {
     // parser
     function parseXml(s, sink) {
@@ -270,21 +337,7 @@ var QNameClass;
 
   // 10.2 ToXMLString
   function toXMLString(node, ancestorNamespaces, indentLevel) {
-    if (node._IS_XMLLIST) {
-    }
-    else if (node._IS_XML) {
-      switch (node._kind) {
-      case "text":
-      case "attribute":
-      case "comment":
-      case "processing-instruction":
-      default:
-        throw "Not implemented";
-      }
-    }
-    // FIXME this is not done yet.
-    throw "toXMLString not implemented";
-    return "";
+    return new XMLEncoder(true).encode(node)
   }
 
 
@@ -350,8 +403,7 @@ var QNameClass;
 
   var xmlParser = new XMLParser();
 
-
-  function isXMLType(val) {
+  isXMLType = function isXMLType(val) {
     return val._IS_XML || val._IS_XMLLIST;
   }
 
@@ -402,9 +454,6 @@ var QNameClass;
    *
    */
 
-  var XML;
-  var XMLList;
-
   XMLClass = function XMLClass(runtime, scope, instance, baseClass) {
     var FLAG_IGNORE_COMMENTS                = 0x01;
     var FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02;
@@ -424,12 +473,8 @@ var QNameClass;
     };
 
     function deepCopy(xml) {
-      // FIXME handle all cases
-      if (xml.node.nodeType === Node.DOCUMENT_NODE) {
-        return new XML(xml.node.xmlString); // poor man's copy, reparse original xml
-      } else {
-        throw "Unimplemented case in deepCopy";
-      }
+      // WARNING lots of cases not handled by both toXMLString() and XML()
+      return new XML(toXMLString(xml));
     }
 
     var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
@@ -515,9 +560,12 @@ var QNameClass;
       // FIXME need to set XML attributes and elements here
       switch (nameKind(mn)) {
       case ATTR_NAME:
-        this._attributes.forEach(function (v, i) {
+        if (!this._attributes) {
+          return;
+        }
+        this._attributes.forEach(function (v, i, o) {
           if (v._name === mn.name) {
-            delete this._attributes[i];
+            delete o[i];
           }
         });
         var a = new XML().init("attribute", "", mn.name);
@@ -530,7 +578,10 @@ var QNameClass;
       case ANY_NAME:
         break;
       default:
-        return this.node[mn.name];
+        var x = new XML().init("element", "", mn.name);
+        x._value = value;
+        x._parent = this;
+        this._.push(x);
         break;
       }
     };
@@ -747,8 +798,8 @@ var QNameClass;
         text: function text() { // (void) -> XMLList
           notImplemented("XML.text");
         },
-        toXMLString: function toXMLString() { // (void) -> String
-          return toXMLString(this.node)
+        toXMLString: function () { // (void) -> String
+          return toXMLString(this)
         },
         notification: function notification() { // (void) -> Function
           notImplemented("XML.notification");
@@ -800,20 +851,13 @@ var QNameClass;
     }
 
     XLp.set = function (mn, value, isMethod) {
+      print("Xp.set() mn="+mn+" value="+value);
       if (isMethod) {
         return;
       }
-      // FIXME need to set XML attributes and elements here
-      switch (nameKind(mn)) {
-      case ATTR_NAME:
-        return setAttribute(this.node, mn.name, value);
-        break;
-      case ANY_ATTR_NAME:
-        break;
-      case ANY_NAME:
-        break;
-      default:
-        return this.node[mn.name];
+      if (!isNumeric(mn)) {
+        return;
+      }
         /*
           if (isNumeric(mn.name)) {
           if (this._target !== null) {
@@ -839,18 +883,13 @@ var QNameClass;
           y._name = this._targetProp;
           }
         */
-        break;
-      }
     };
 
     XLp.get = function (mn, isMethod) {
       var val;
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
-        if (this._.length !== 1) {
-          throw "expecting XMLList of size 1";
-        }
-        val = this._[0][Multiname.getQualifiedName(resolved)];
+        val = this[Multiname.getQualifiedName(resolved)];
       } else {
         switch (nameKind(mn)) {
         case ATTR_NAME:
@@ -916,7 +955,7 @@ var QNameClass;
       },
       instance: {
         toString: function () { // (void) -> String
-          return toString.bind(null, this);
+          return toString(this); //.bind(null, this);
         },
         hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
           notImplemented("XMLList.hasOwnProperty");
@@ -976,8 +1015,8 @@ var QNameClass;
         text: function text() { // (void) -> XMLList
           notImplemented("XMLList.text");
         },
-        toXMLString: function toXMLString() { // (void) -> String
-          return toXMLString(this.node)
+        toXMLString: function () { // (void) -> String
+          return toXMLString(this)
         },
         addNamespace: function addNamespace(ns) { // (ns) -> XML
           notImplemented("XMLList.addNamespace");

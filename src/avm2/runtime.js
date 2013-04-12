@@ -357,9 +357,23 @@ function hasNext2(obj, index) {
   return {index: obj[VM_NEXT_NAME_INDEX](index), object: obj};
 }
 
-function getDescendants(multiname, obj) {
-//  notImplemented("getDescendants");
-  return new XMLList();
+function getDescendants(obj, mn) {
+  if (!isXMLType(obj)) {
+    throw "Not XML object in getDescendants";
+  }
+  if (obj._IS_XMLLIST) {
+    if (obj._.length !== 1 && obj._[0]._IS_XML) {
+      throw "Invalid XMLList in getDescendants";
+    }
+    obj = obj._[0];
+  }
+  var xl = new XMLList();
+  obj._.forEach(function (v, i) {
+    if (mn.isAnyName() || mn.name === v.name) {
+      xl._.push(v);
+    }
+  })
+  return xl;
 }
 
 function checkFilter(value) {
@@ -652,7 +666,7 @@ function sliceArguments(args, offset) {
 }
 
 function getProperty(obj, mn, isMethod) {
-  release || assert(obj !== undefined, "getProperty(", mn, ") on undefined");
+  release || assert(obj != undefined, "getProperty(", mn, ") on undefined");
 
   if (obj.canHandleProperties) {
     return obj.get(mn, isMethod);
@@ -666,43 +680,25 @@ function getProperty(obj, mn, isMethod) {
   if (!resolved) {
     if (isPrimitiveType(obj)) {
       throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
-    } else if (Multiname.isAnyName(mn)) {
-      if (obj.public$elements) {
-        value = obj.public$elements(mn);
-      }
     }
   }
   if (resolved !== undefined) {
     if (Multiname.isNumeric(resolved) && obj.indexGet) {
       value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
     } else {
-      value = getPropertyInObject(obj, resolved);
+      if (isNumeric(resolved)) {
+        value = obj[resolved];
+      } else {
+        value = obj[Multiname.getQualifiedName(resolved)];
+      }
     }
   } else {
     value = obj[Multiname.getPublicQualifiedName(mn.name)];
   }
-
   if (tracePropertyAccess.value) {
     print("getProperty(" + obj.toString() + ", " + mn + " -> " + resolved + ") has value: " + !!value);
   }
-
   return value;
-}
-
-function getPropertyInObject(obj, qn) {
-  if (isNumeric(qn)) {
-    return obj[qn];
-  } else if (qn.isAttribute()) {
-    for (var i = 0; i < obj.attributes.length; i++) {
-      var attr = obj.attributes[i];
-      if (attr.name === qn.name) {
-        return obj.attributes[i];
-      }
-    }
-    return undefined;
-  } else {
-    return obj[Multiname.getQualifiedName(qn)];
-  }
 }
 
 function hasProperty(obj, mn) {

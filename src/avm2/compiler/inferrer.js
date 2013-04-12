@@ -1053,7 +1053,7 @@ var Verifier = (function() {
             push(Type.Any);
             break;
           case OP_getdescendants:
-            notImplemented(bc); //TODO
+            push(Type.XMLList);
             break;
           case OP_newcatch:
             push(Type.Any);
