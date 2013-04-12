@@ -264,15 +264,15 @@ RequestListener.prototype.receive = function(event) {
     detail.response = response;
   } else {
     var response;
-    if (!event.detail.callback) {
-      doc.documentElement.removeChild(message);
-    } else {
+    if (event.detail.callback) {
+      var cookie = event.detail.cookie;
       response = function sendResponse(response) {
         try {
           var listener = doc.createEvent('CustomEvent');
           listener.initCustomEvent('shumway.response', true, false,
                                    {response: response,
-                                    __exposedProps__: {response: 'r'}});
+                                    cookie: cookie,
+                                    __exposedProps__: {response: 'r', cookie: 'r'}});
 
           return message.dispatchEvent(listener);
         } catch (e) {
@@ -281,7 +281,7 @@ RequestListener.prototype.receive = function(event) {
         }
       };
     }
-    actions[action](data, response);
+    actions[action].call(this.actions, data, response);
   }
 };
 

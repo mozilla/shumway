@@ -11,16 +11,11 @@ var FirefoxCom = (function FirefoxComClosure() {
      * @return {*} The response.
      */
     requestSync: function(action, data) {
-      var request = document.createTextNode('');
-      document.documentElement.appendChild(request);
-
-      var sender = document.createEvent('CustomEvent');
-      sender.initCustomEvent('shumway.message', true, false,
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
         {action: action, data: data, sync: true});
-      request.dispatchEvent(sender);
-      var response = sender.detail.response;
-      document.documentElement.removeChild(request);
-      return response;
+      document.dispatchEvent(e);
+      return e.detail.response;
     },
     /**
      * Creates an event that the extension is listening for and will
@@ -31,32 +26,30 @@ var FirefoxCom = (function FirefoxComClosure() {
      * with one data argument.
      */
     request: function(action, data, callback) {
-      var request = document.createTextNode('');
-      request.setUserData('action', action, null);
-      request.setUserData('data', data, null);
-      request.setUserData('sync', false, null);
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
+        {action: action, data: data, sync: false});
       if (callback) {
-        request.setUserData('callback', callback, null);
+        if ('nextId' in FirefoxCom.request) {
+          FirefoxCom.request.nextId = 1;
+        }
+        var cookie = "requestId" + (FirefoxCom.request.nextId++);
+        e.detail.cookie = cookie;
 
         document.addEventListener('shumway.response', function listener(event) {
-          var node = event.target,
-              response = event.detail.response;
-
-          document.documentElement.removeChild(node);
+          if (cookie !== event.detail.cookie)
+            return;
 
           document.removeEventListener('shumway.response', listener, false);
+
+          var response = event.detail.response;
           return callback(response);
         }, false);
       }
-      document.documentElement.appendChild(request);
-
-      var sender = document.createEvent('CustomEvent');
-      sender.initCustomEvent('shumway.message', true, false,
-        {action: action, data: data, sync: false});
-      return request.dispatchEvent(sender);
+      return document.dispatchEvent(e);
     },
     initJS: function (callback) {
-      FirefoxCom.requestSync('externalCom', {action: 'init'});
+      FirefoxCom.request('externalCom', {action: 'init'});
       document.addEventListener('shumway.remote', function (e) {
         e.detail.result = callback(e.detail.functionName, e.detail.args);
       }, false);
