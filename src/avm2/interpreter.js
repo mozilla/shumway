@@ -409,7 +409,7 @@ var Interpreter = (function () {
             break;
           case OP_getdescendants:
             multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getDescendants(multiname, stack.pop()));
+            stack.push(getDescendants(stack.pop(), multiname));
             break;
           case OP_newcatch:
             release || assert(exceptions[bc.index].scopeObject);

@@ -31,26 +31,23 @@ var XMLList;
         throw "Not implemented";
       }
     }
-    function encode(node, encoder) {
+    function encode(node) {
       return visit(node, {
         element: function (n) {
           var s = "<" + n._name;
-          for (var i = 0; i < node._attributes.length; i++) {
-            a = node._attributes[i];
+          for (var i = 0; i < n._attributes.length; i++) {
+            a = n._attributes[i];
             s += " " + a._name + "=" + a._value;
           }
           s += ">";
-          for (var i = 0; i < node._.length; i++) {
-            s += visit(node._[i], encode);
+          for (var i = 0; i < n._.length; i++) {
+            s += visit(n._[i], this);
           }
           s += "</" + n._name + ">";
           return s;
         },
         text: function(n) {
-          var node = createNode("text", "", "");
-          node._value = text;
-          // isWhitespace?
-          currentElement.insert(node);
+          return n._value;
         },
         cdata: function(n) {
         },
@@ -62,10 +59,11 @@ var XMLList;
         },
         list: function (n) {
           var s = "<parent>";
-          for (var i = 0; i < node._.length; i++) {
-            s += visit(node._[i], encode);
+          for (var i = 0; i < n._.length; i++) {
+            s += visit(n._[i], this);
           }
           s += "</parent>";
+          return s;
         },
       });
     } 
@@ -542,16 +540,6 @@ var XMLList;
       }
     }
 
-    function setAttribute(node, name, value) {
-      if (node.nodeType === Node.DOCUMENT_NODE) {
-        node.childNodes[0].setAttribute(name, value);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        node.setAttribute(name, value);
-      } else {
-        throw "error or unhandled case in setAttribute";
-      }
-    }
-
     Xp.set = function (mn, value, isMethod) {
       if (isMethod) {
         return;
@@ -645,6 +633,17 @@ var XMLList;
       this._.push(node);
     };
 
+    Xp.descendants = function (mn) {
+      print("Xp.descendants() mn="+mn);
+      var xl = new XMLList();
+      this._.forEach(function (v, i) {
+        if (mn.isAnyName() || mn.name === v.name) {
+          xl._.push(v);
+        }
+      })
+      return xl;
+    };
+
     c.native = {
       static: {
         ignoreComments: {
@@ -728,8 +727,8 @@ var XMLList;
         copy: function copy() { // (void) -> XML
           return deepCopy(this);
         },
-        descendants: function descendants(name) { // (name = "*") -> XMLList
-          notImplemented("XML.descendants");
+        descendants: function descendants(mn) { // (name = "*") -> XMLList
+          return this.descendants(mn);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
           notImplemented("XML.elements");
@@ -982,8 +981,11 @@ var XMLList;
         copy: function copy() { // (void) -> XMLList
           notImplemented("XMLList.copy");
         },
-        descendants: function descendants(name) { // (name = "*") -> XMLList
-          notImplemented("XMLList.descendants");
+        descendants: function descendants(mn) { // (name = "*") -> XMLList
+          if (obj._.length !== 1 && obj._[0]._IS_XML) {
+            throw "Invalid XMLList in XMLList.descendants()";
+          }
+          return obj._[0].descendants(mn);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
           notImplemented("XMLList.elements");
