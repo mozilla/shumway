@@ -8,7 +8,7 @@ var ExternalInterfaceDefinition = (function () {
   function callIn(functionName, args) {
     if (!registeredCallbacks.hasOwnProperty(functionName))
       return;
-    return registeredCallbacks[functionName].apply(null, args);
+    return registeredCallbacks[functionName](functionName, args);
   }
 
   return {
@@ -27,11 +27,12 @@ var ExternalInterfaceDefinition = (function () {
             FirefoxCom.initJS(callIn);
           },
           _getPropNames: function _getPropNames(obj) { // (obj:Object) -> Array
-            somewhatImplemented("ExternalInterface._getPropNames");
-            return [];
+            var keys = [];
+            forEachPublicProperty(obj, function (key) { keys.push(key); });
+            return keys;
           },
           _addCallback: function _addCallback(functionName, closure, hasNullCallback) { // (functionName:String, closure:Function, hasNullCallback:Boolean) -> void
-            return FirefoxCom.requestSync('externalCom',
+            FirefoxCom.request('externalCom',
               {action: 'register', functionName: functionName, remove: hasNullCallback});
             if (hasNullCallback) {
               delete registeredCallbacks[functionName];
