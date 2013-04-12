@@ -1,3 +1,5 @@
+var USE_MEDIASOURCE_API = true;
+
 var NetStreamDefinition = (function () {
   return {
     // (connection:NetConnection, peerID:String = "connectToFMS")
@@ -5,6 +7,10 @@ var NetStreamDefinition = (function () {
     initialize: function () {
     },
     __glue__: {
+      script: {
+        instance: scriptProperties("public", ["appendBytes",
+                                              "appendBytesAction"])
+      },
       native: {
         static: {
         },
@@ -12,6 +18,9 @@ var NetStreamDefinition = (function () {
           ctor: function ctor(connection, peerID) {
             // (connection:NetConnection, peerID:String) -> void
             somewhatImplemented("NetStream.ctor");
+            this._contentTypeHint = null;
+            this._mediaSource = null;
+            this._urlReady = new Promise();
           },
           onResult: function onResult(streamId) {
             // (streamId:int) -> void
@@ -23,8 +32,54 @@ var NetStreamDefinition = (function () {
           },
           play: function play(url) {
             // (void) -> void
-            this._url = url;
-            somewhatImplemented("NetStream.play");
+            var isMediaSourceEnabled = USE_MEDIASOURCE_API;
+            if (isMediaSourceEnabled && typeof MediaSource === 'undefined') {
+              console.warn('MediaSource API is not enabled, falling back to regular playback');
+              isMediaSourceEnabled = false;
+            }
+            if (!isMediaSourceEnabled) {
+              this._urlReady.resolve(FileLoadingService.resolveUrl(url));
+              somewhatImplemented("NetStream.play");
+              return;
+            }
+
+            var mediaSource = new MediaSource();
+            mediaSource.addEventListener('sourceopen', function(e) {
+              this._mediaSource = mediaSource;
+            }.bind(this));
+            mediaSource.addEventListener('sourceend', function(e) {
+              this._mediaSource = null;
+            }.bind(this));
+            this._urlReady.resolve(window.URL.createObjectURL(mediaSource));
+
+            if (!url) {
+              return;
+            }
+
+            var request = new flash.net.URLRequest(url);
+            var stream = new flash.net.URLStream();
+            stream.addEventListener('httpStatus', function (e) {
+              var responseHeaders = e.public$responseHeaders;
+              var contentTypeHeader = responseHeaders.filter(function (h) {
+                return h.public$name === 'Content-Type';
+              })[0];
+              if (contentTypeHeader &&
+                  contentTypeHeader.public$value !== 'application/octet-stream')
+              {
+                this._contentTypeHint = contentTypeHeader.public$value;
+              }
+            }.bind(this));
+            stream.addEventListener('progress', function (e) {
+              var available = stream.bytesAvailable;
+              var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
+              var data = ByteArrayClass.createInstance();
+              stream.readBytes(data, 0, available);
+              this.appendBytes(data);
+            }.bind(this));
+            stream.addEventListener('complete', function (e) {
+              this.appendBytesAction('endSequence'); // NetStreamAppendBytesAction.END_SEQUENCE
+            }.bind(this));
+            stream.load(request);
           },
           play2: function play2(param) {
             // (param:NetStreamPlayOptions) -> void
@@ -39,12 +94,21 @@ var NetStreamDefinition = (function () {
             notImplemented("NetStream.invokeWithArgsArray");
           },
           appendBytes: function appendBytes(bytes) {
+            if (this._mediaSource) {
+              if (!this._mediaSourceBuffer) {
+                this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(this._contentTypeHint);
+              }
+              this._mediaSourceBuffer.appendBuffer(new Uint8Array(bytes.a, 0, bytes.length));
+            }
             // (bytes:ByteArray) -> void
-            notImplemented("NetStream.appendBytes");
+            somewhatImplemented("NetStream.appendBytes");
           },
           appendBytesAction: function appendBytesAction(netStreamAppendBytesAction) {
             // (netStreamAppendBytesAction:String) -> void
-            notImplemented("NetStream.appendBytesAction");
+            if (netStreamAppendBytesAction === 'endSequence' && this._mediaSource) {
+              this._mediaSource.endOfStream();
+            }
+            somewhatImplemented("NetStream.appendBytesAction");
           },
           info: {
             get: function info() {
@@ -86,12 +150,12 @@ var NetStreamDefinition = (function () {
           client: {
             get: function client() {
               // (void) -> Object
-              notImplemented("NetStream.client");
+              somewhatImplemented("NetStream.client");
               return this._client;
             },
             set: function client(object) {
               // (object:Object) -> void
-              notImplemented("NetStream.client");
+              somewhatImplemented("NetStream.client");
               this._client = object;
             }
           },
