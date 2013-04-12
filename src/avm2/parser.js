@@ -351,6 +351,7 @@ var ShumwayNamespace = (function () {
   var uriToMangledNameMap = Object.create(null);
   var mangledNameToURIMap = Object.create(null);
   var mangledNameList = [];
+  var MANGLE_NAMESPACES = true;
 
   /**
    * Mangles a namespace uri to a more sensible name. The process can be reversed.
@@ -365,7 +366,7 @@ var ShumwayNamespace = (function () {
     if (name) {
       return name;
     }
-    if (!release) {
+    if (!MANGLE_NAMESPACES) {
       name = escapeUri(uri);
       mangledNameToURIMap[name] = uri;
     } else {
@@ -382,7 +383,7 @@ var ShumwayNamespace = (function () {
     var str = qn.substring(0, a);
     var kind = namespace.kindFromString(str);
     str = qn.substring(a + 1, b);
-    var uri = str === "" ? str : (release ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
+    var uri = str === "" ? str : (MANGLE_NAMESPACES ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
     assert (uri || uri === "", "uri is " + uri);
     return new namespace(kind, uri);
   };
