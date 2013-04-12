@@ -46,8 +46,9 @@ var XMLList;
           s += "</" + n._name + ">";
           return s;
         },
-        text: function(n) {
-          return n._value;
+        text: function(text) {
+          return text._value.
+            replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
         cdata: function(n) {
         },
@@ -458,21 +459,23 @@ var XMLList;
     var FLAG_PRETTY_PRINTING                = 0x08;
 
     XML = function (value) {
-      if (!value) {
-        value = "";
+      var objectConstruction = this instanceof XML;
+      if (!objectConstruction) {
+        if (value instanceof XML) {
+          return value; // no cloning
+        }
+        return new XML(value);
       }
       this.init("element", "", "");
+      if (arguments.length === 0) {
+        return;
+      }
       var x = toXML.call(this, value);
       if (isXMLType(value)) {
         x = x.copy();
       }
       return x;
     };
-
-    function deepCopy(xml) {
-      // WARNING lots of cases not handled by both toXMLString() and XML()
-      return new XML(toXMLString(xml));
-    }
 
     var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
     c._flags = FLAG_IGNORE_COMMENTS |
@@ -507,6 +510,11 @@ var XMLList;
     }
 
     Xp.canHandleProperties = true;
+
+    Xp.copy = function () {
+      // WARNING lots of cases not handled by both toXMLString() and XML()
+      return new XML(toXMLString(this));
+    };
 
     // 13.4.4.16 XML.prototype.hasSimpleContent()
     Xp.hasSimpleContent = function hasSimpleContent() {
@@ -716,7 +724,9 @@ var XMLList;
           notImplemented("XML.childIndex");
         },
         children: function children() { // (void) -> XMLList
-          notImplemented("XML.children");
+          var list = new XMLList();
+          Array.prototype.push.apply(list._, this._);
+          return list;
         },
         comments: function comments() { // (void) -> XMLList
           notImplemented("XML.comments");
@@ -725,7 +735,7 @@ var XMLList;
           notImplemented("XML.contains");
         },
         copy: function copy() { // (void) -> XML
-          return deepCopy(this);
+          return this.copy();
         },
         descendants: function descendants(mn) { // (name = "*") -> XMLList
           return this.descendants(mn);
@@ -812,11 +822,19 @@ var XMLList;
 
   XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
     XMLList = function (value) {
+      var objectConstruction = this instanceof XMLList;
+      if (!objectConstruction) {
+        if (value instanceof XMLList) {
+          return value;
+        }
+        return new XMLList(value);
+      }
+
       this._ = [];
-      // FIXME treating XMLList as XML works for XMLList length === 0
-      if (!value) {
-        toXMLList.call(this, "");
-      } else if (value instanceof XML || value instanceof XMLList) {
+      if (arguments.length === 0) {
+        return;
+      }
+      if (value instanceof XML || value instanceof XMLList) {
         constructFromXML.call(this, value);
       } else {
         toXMLList.call(this, value);
@@ -927,8 +945,7 @@ var XMLList;
     };
 
     XLp.length = function () {
-      debugger;
-      this.nodeList.nodes.length;
+      return this._.length;
     };
 
     XLp.resolve = function () {
@@ -970,7 +987,9 @@ var XMLList;
           notImplemented("XMLList.child");
         },
         children: function children() { // (void) -> XMLList
-          notImplemented("XMLList.children");
+          var list = new XMLList();
+          Array.prototype.push.apply(list._, this._);
+          return list;
         },
         comments: function comments() { // (void) -> XMLList
           notImplemented("XMLList.comments");
@@ -997,8 +1016,7 @@ var XMLList;
           return this.hasSimpleContent();
         },
         length: function length() { // (void) -> int
-          //notImplemented("XMLList.length");
-          return 0;
+          return this.length();
         },
         name: function name() { // (void) -> Object
           return this._[0]._name;
