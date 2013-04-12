@@ -1314,7 +1314,6 @@ var Runtime = (function () {
 
     if (baseClass && Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
       // TODO: This is very hackish.
-      debugger;
       installProxyClassWrapper(cls);
     }
 
