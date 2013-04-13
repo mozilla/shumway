@@ -73,14 +73,16 @@ function defineImage(tag, dictionary) {
       data += fromCharCode.apply(null, chunk);
     }
   }
-
+  var bytes = new Uint8Array(data.length);
+  for (var i = 0; i < data.length; i++)
+    bytes[i] = data.charCodeAt(i);
   var img = {
     type: 'image',
     id: tag.id,
     width: width,
     height: height,
     mimeType: tag.mimeType,
-    data: data
+    data: new Blob([bytes], { type: tag.mimeType })
   };
   if (mask)
     img.mask = mask;

@@ -719,7 +719,7 @@ var LoaderDefinition = (function () {
           }
           imgPromise.resolve();
         };
-        img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+        img.src = URL.createObjectURL(symbol.data);
         promiseQueue.push(imgPromise);
         className = 'flash.display.Bitmap';
         props.img = img;
