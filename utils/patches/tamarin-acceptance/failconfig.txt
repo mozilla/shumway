@@ -1618,3 +1618,4 @@ ecma3/ObjectObjects/e15_2_4_3.* : mydate \= new Date\(\)\; mydate.valueOf \= Obj
 ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1065 got: no error
 ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfail, FAILED! expected: 2 got: NaN number
 ecma3/String/e15_5_4_3_3_rt.* , .*,, expectedfail, FAILED contained no testcase messages - reason: TypeError: obj is undefined||undefined|
+ecma3/String/e15_5_3_2_1.* : String\.fromCharCode\.length , .*,, expectedfail, FAILED! expected: 0 got: 1
