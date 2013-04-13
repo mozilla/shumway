@@ -94,8 +94,6 @@ var DisplayObjectDefinition = (function () {
       TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
-
-      this._accessibilityProperties = null;
     },
 
     _updateTraceSymbolInfo: function () {
@@ -154,43 +152,26 @@ var DisplayObjectDefinition = (function () {
               pt.x /= scale;
               pt.y /= scale;
             }
-
-            var hitCtx = this._graphics._hitCtx;
-
-            if (hitCtx.isPointInPath(pt.x, pt.y))
-              return true;
+            var bbox = this._bbox;
+            if (bbox) {
+              pt.x += bbox.left;
+              pt.y += bbox.top;
+            }
 
             var subpaths = this._graphics._subpaths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
-              var pathTracker = subpaths[i];
-              var path = pathTracker.target;
+              var path = subpaths[i];
 
-              if (!path.strokeStyle)
-                continue;
+              if (path.isPointInPath(pt.x, pt.y))
+                return true;
 
-              var drawingStyles = pathTracker.drawingStyles;
-              if (hitCtx.mozIsPointInStroke) {
-                hitCtx.strokeStyle = path.strokeStyle;
-                for (var prop in drawingStyles)
-                  hitCtx[prop] = drawingStyles[prop];
-
-                if (hitCtx.mozIsPointInStroke(pt.x, pt.y))
-                  return true;
-              } else {
-                var strokeHitCtx = path._strokeHitContext;
-                if (!strokeHitCtx) {
-                  var strokeHitCanvas = hitCtx.canvas.cloneNode();
-                  strokeHitCtx = strokeHitCanvas.getContext('2d');
-                  path._strokeHitContext = strokeHitCtx;
-                  pathTracker.strokeToPath(strokeHitCtx, {
-                    strokeWidth: drawingStyles.lineWidth,
-                    startCap: drawingStyles.lineCap,
-                    endCap: drawingStyles.lineCap,
-                    join: drawingStyles.lineJoin,
-                    miterLimit: drawingStyles.miterLimit
-                  });
+              if (path.strokeStyle) {
+                var strokePath = path._strokePath;
+                if (!strokePath) {
+                  strokePath = path.strokePath(path.drawingStyles);
+                  path._strokePath = strokePath;
                 }
-                if (strokeHitCtx.isPointInPath(pt.x, pt.y))
+                if (strokePath.isPointInPath(pt.x, pt.y))
                   return true;
               }
             }
@@ -274,12 +255,10 @@ var DisplayObjectDefinition = (function () {
     },
 
     get accessibilityProperties() {
-      somewhatImplemented("accessibilityProperties");
-      return this._accessibilityProperties;
+      return null;
     },
     set accessibilityProperties(val) {
-      somewhatImplemented("accessibilityProperties");
-      this._accessibilityProperties = val;
+      notImplemented();
     },
     get alpha() {
       return this._alpha;
