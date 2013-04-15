@@ -676,7 +676,7 @@ function callProperty(obj, mn, receiver, args) {
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
-  var property = getProperty(obj, mn);
+  var property = getProperty(obj, mn, true);
   return property.apply(receiver, args);
 }
 

@@ -39,13 +39,13 @@ var XMLListBlank;
       return visit(node, {
         element: function (n) {
           var s = "<" + n._name;
-          for (var i = 0; i < node._attributes.length; i++) {
-            a = node._attributes[i];
+          for (var i = 0; i < n._attributes.length; i++) {
+            a = n._attributes[i];
             s += " " + a._name + "=" + a._value;
           }
           s += ">";
-          for (var i = 0; i < node._.length; i++) {
-            s += visit(node._[i], this);
+          for (var i = 0; i < n._.length; i++) {
+            s += visit(n._[i], this);
           }
           s += "</" + n._name + ">";
           return s;
@@ -315,7 +315,7 @@ var XMLListBlank;
         pi: function(name, attrs) { },
         doctype: function(text) { }
       });
-      return currentElement._[0];
+      return currentElement;
     };
 
     function createNode(kind, uri, name) {
@@ -366,7 +366,8 @@ var XMLListBlank;
         var x = new XMLBlank("text");
         return x;
       }
-      return toXML(x);
+      x._[0]._parent = null;
+      return x._[0];
     }
   }
 
@@ -521,6 +522,7 @@ var XMLListBlank;
         this._ = [];  // child nodes go here
         break;
       case "attribute":
+      case "text":
         this._value = "";
         break;
       default:
@@ -969,27 +971,21 @@ var XMLListBlank;
     };
 
     XLp.get = function (mn, isMethod) {
-      var val;
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
-        val = this[Multiname.getQualifiedName(resolved)];
+        return this[Multiname.getQualifiedName(resolved)];
       } else {
-        switch (nameKind(mn)) {
-        case ATTR_NAME:
-          val = toXML(this).get(mn, false);
-        case ANY_ATTR_NAME:
-          break;
-        case ANY_NAME:
-          val = new XMLList(); // FIXME set targets, set children
-          val._targetObject = target;
-          val._targetProperty = prop;
-          break;
-        default:
-          val = toXML(this).get(mn, false);
-          break;
-        }
+        var xl = new XMLListBlank();
+        xl._targetObject = this;
+        xl._targetProperty = mn;
+        this._.forEach(function (v, i) {
+          var xl2 = v.get(mn);
+          if (xl2.length() > 0) {
+            xl.append(xl2);
+          }
+        });
+        return xl;
       }
-      return val;
     };
 
     XLp.delete = function (key, isMethod) {

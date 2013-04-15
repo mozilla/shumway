@@ -5,6 +5,7 @@
 /**
  * This sets the static string fields of the |cls| to be equal to cls.name + "." + field.name.
  */
+/*
 VM_METHOD_OVERRIDES[
   Multiname.getQualifiedName(Multiname.fromSimpleName("com.google.youtube.model.registerMessages"))
 ] = function (cls) {
@@ -16,6 +17,7 @@ VM_METHOD_OVERRIDES[
   });
   warning("HACK: registerMessages(" + className + ")");
 };
+*/
 VM_METHOD_OVERRIDES[
   Multiname.getQualifiedName(Multiname.fromSimpleName("com.google.youtube.event.registerEvents"))
 ] = function (cls) {
