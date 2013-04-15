@@ -650,6 +650,28 @@ function resolveMultiname(obj, mn, traitsOnly) {
   return result;
 }
 
+function createPublicKeyedClone(source) {
+  const visited = new WeakMap();
+  function visit(item) {
+    if (typeof item !== 'object') {
+      return item;
+    }
+    if (visited.has(item)) {
+      return visited.get(item);
+    }
+
+    var result = {};
+    visited.set(item, result);
+    var keys = Object.keys(item);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      result[Multiname.getPublicQualifiedName(key)] = visit(item[key]);
+    }
+    return result;
+  }
+  return visit(source);
+}
+
 function isNameInObject(qn, obj) {
   if (qn.isAttribute()) {
     for (var i = 0; i < obj.attributes.length; i++) {
@@ -1165,10 +1187,10 @@ var Runtime = (function () {
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
     }
-    if ($DEBUG) {
-      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
-              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
-    }
+//    if ($DEBUG) {
+//      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
+//              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
+//    }
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     if (traceLevel.value > 1) {
       mi.trace(new IndentingWriter(), this.abc);
@@ -1611,10 +1633,8 @@ var Runtime = (function () {
       var md = trait.metadata;
       if (md && md.native) {
         var nativeName = md.native.items[0].value;
-        var makeNativeFunction = getNative(nativeName);
-        if (!makeNativeFunction) {
-          makeNativeFunction = this.domain.natives[nativeName];
-        }
+        var makeNativeFunction = getNative(nativeName) ||
+                                 this.domain.natives[nativeName];
         fn = makeNativeFunction && makeNativeFunction(runtime, scope);
       } else if (md && md.unsafeJSNative) {
         fn = getNative(md.unsafeJSNative.items[0].value);
@@ -1631,10 +1651,13 @@ var Runtime = (function () {
         }
       }
       if (!fn) {
-        warning("No native method for: " + trait.kindName() + " " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+        warning("No native method for: " + trait.kindName() + " " +
+                mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
         return (function (mi) {
           return function () {
-            warning("Calling undefined native method: " + trait.kindName() + " " + mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+            warning("Calling undefined native method: " + trait.kindName() +
+                    " " + mi.holder.name + "::" +
+                    Multiname.getQualifiedName(mi.name));
           };
         })(mi);
       }
