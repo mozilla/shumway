@@ -411,20 +411,12 @@ var Interface = (function () {
         return false;
       }
 
-      var cls = value.class;
-      while (cls) {
-        var interfaces = cls.implementedInterfaces;
-        if (interfaces) {
-          for (var i = 0, j = interfaces.length; i < j; i++) {
-            if (interfaces[i] === this) {
-              return true;
-            }
-          }
-        }
-        cls = cls.baseClass;
-      }
+      release || assert(value.class.implementedInterfaces,
+                        "No 'implementedInterfaces' map found on class " +
+                            value.class);
 
-      return false;
+      var qualifiedName = Multiname.getQualifiedName(this.name);
+      return value.class.implementedInterfaces[qualifiedName] !== undefined;
     },
 
     call: function (v) {
@@ -1432,7 +1424,7 @@ var Runtime = (function () {
   runtime.prototype.applyInterfaceBindings = function applyInterfaceBindings(obj, cls) {
     var domain = this.domain;
 
-    cls.implementedInterfaces = [];
+    var implementedInterfaces = cls.implementedInterfaces = Object.create(null);
 
     // Apply interface traits recursively.
     //
@@ -1467,7 +1459,7 @@ var Runtime = (function () {
       for (var i = 0, j = interfaces.length; i < j; i++) {
         var interface = domain.getProperty(interfaces[i], true, true);
         var ii = interface.classInfo.instanceInfo;
-        cls.implementedInterfaces.push(interface);
+        implementedInterfaces[interface.name.qualifiedName] = interface;
         applyInterfaceTraits(ii.interfaces);
 
         var interfaceTraits = ii.traits;
