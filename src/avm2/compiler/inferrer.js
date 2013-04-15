@@ -64,7 +64,7 @@ var Type = (function () {
       if (ty) {
         return ty;
       }
-      if (qn === "public$void") {
+      if (qn === Multiname.getPublicQualifiedName("void")) {
         return Type.Void;
       }
       release || assert(domain, "Domain is needed.");

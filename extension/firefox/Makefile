@@ -4,8 +4,8 @@ BUILD_DIR = ../../build/firefox
 
 # Just builds a ff extension
 
-VERSION_BASELINE=3a85f8698233b9567be5
-VERSION=0.5.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=a92fa8b98949f76adfc2741e
+VERSION=0.6.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 
 build: ensureoutputdir ../src/flash/playerglobal.abc
 	# Coping extension files

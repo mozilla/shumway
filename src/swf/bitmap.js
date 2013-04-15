@@ -157,12 +157,15 @@ function defineBitmap(tag) {
     createPngChunk('IDAT', idat) +
     createPngChunk('IEND', '')
   ;
+  var bytes = new Uint8Array(data.length);
+  for (var i = 0; i < data.length; i++)
+    bytes[i] = data.charCodeAt(i);
   return {
     type: 'image',
     id: tag.id,
     width: width,
     height: height,
     mimeType: 'image/png',
-    data: data
+    data: new Blob([bytes], { type: 'image/png' })
   };
 }

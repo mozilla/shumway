@@ -28,8 +28,8 @@ var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_UNSAFE_CLASSES = ["Shumway"];
-
-var VM_OPEN_METHOD_PREFIX = "open$";
+var VM_IS_CLASS = "vm is class";
+var VM_OPEN_METHOD_PREFIX = "open_";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -51,23 +51,31 @@ var $M = [];
 var VM_METHOD_OVERRIDES = {};
 
 /**
- * This is used to keep track if we're in a runtime context. Proxies need to know
- * if a proxied operation is triggered by AS3 code or VM code.
+ * This is used to keep track if we're in a runtime context. For instance, proxies need to
+ * know if a proxied operation is triggered by AS3 code or VM code.
  */
 
-var RUNTIME_ENTER_LEAVE_STACK = [false];
+var AS = 1, JS = 2;
 
-function enter(runtime) {
-  RUNTIME_ENTER_LEAVE_STACK.push(runtime);
+var RUNTIME_ENTER_LEAVE_STACK = [AS];
+
+function enter(mode) {
+  // print("enter " + RUNTIME_ENTER_LEAVE_STACK);
+  RUNTIME_ENTER_LEAVE_STACK.push(mode);
 }
 
-function leave(runtime) {
+function leave(mode) {
+  // print("leave " + RUNTIME_ENTER_LEAVE_STACK);
   var top = RUNTIME_ENTER_LEAVE_STACK.pop();
-  assert (top === runtime);
+  assert (top === mode);
 }
 
-function inRuntime() {
-  return RUNTIME_ENTER_LEAVE_STACK.top();
+function inJS() {
+  return RUNTIME_ENTER_LEAVE_STACK.top() === JS;
+}
+
+function inAS() {
+  return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
 }
 
 /**
@@ -94,8 +102,6 @@ function objectConstantName(object) {
 
 
 function initializeGlobalObject(global) {
-  var PUBLIC_MANGLED = /^public\$/;
-
   function getEnumerationKeys(obj) {
     if (obj.node && obj.node.childNodes) {
       obj = obj.node.childNodes;
@@ -113,11 +119,11 @@ function initializeGlobalObject(global) {
     for (var key in obj) {
       if (isNumeric(key)) {
         keys.push(Number(key));
-      } else if (PUBLIC_MANGLED.test(key)) {
+      } else if (Multiname.isPublicQualifiedName(key)) {
         if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
           continue;
         }
-        keys.push(key.substr(7));
+        keys.push(key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length));
       }
     }
     return keys;
@@ -195,7 +201,7 @@ function initializeGlobalObject(global) {
  * Checks if the specified |obj| is the prototype of a native JavaScript object.
  */
 function isNativePrototype(obj) {
-  return obj.hasOwnProperty(VM_NATIVE_PROTOTYPE_FLAG);
+  return Object.prototype.hasOwnProperty.call(obj, VM_NATIVE_PROTOTYPE_FLAG)
 }
 
 initializeGlobalObject(jsGlobal);
@@ -588,10 +594,9 @@ function resolveMultinameInTraits(obj, mn) {
 /**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultiname(obj, mn, traitsOnly) {
+function resolveMultinameUnguarded(obj, mn, traitsOnly) {
   assert(!Multiname.isQName(mn), mn, " already resolved");
   obj = Object(obj);
-  enter(true);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -604,7 +609,6 @@ function resolveMultiname(obj, mn, traitsOnly) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
       if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
-        leave(true);
         return qn;
       }
       continue;
@@ -617,18 +621,21 @@ function resolveMultiname(obj, mn, traitsOnly) {
       }
     } else if (!isNative) {
       if (Multiname.getQualifiedName(qn) in obj) {
-        leave(true);
         return qn;
       }
     }
   }
   if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
-    leave(true);
     return publicQn;
   }
-
-  leave(true);
   return undefined;
+}
+
+function resolveMultiname(obj, mn, traitsOnly) {
+  enter(JS);
+  var result = resolveMultinameUnguarded(obj, mn, traitsOnly);
+  leave(JS);
+  return result;
 }
 
 function isNameInObject(qn, obj) {
@@ -653,6 +660,14 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
+function callProperty(obj, mn, receiver, args) {
+  if (isProxyObject(obj)) {
+    return obj[VM_CALL_PROXY](mn, receiver, args);
+  }
+  var property = getProperty(obj, mn);
+  return property.apply(receiver, args);
+}
+
 function getProperty(obj, mn, isMethod) {
   release || assert(obj != undefined, "getProperty(", mn, ") on undefined");
 
@@ -668,6 +683,10 @@ function getProperty(obj, mn, isMethod) {
   if (!resolved) {
     if (isPrimitiveType(obj)) {
       throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
+    } else if (Multiname.isAnyName(mn)) {
+      if (obj[Multiname.getPublicQualifiedName("elements")]) {
+        value = obj[Multiname.getPublicQualifiedName("elements")](mn);
+      }
     }
   }
   if (resolved !== undefined) {
@@ -851,6 +870,24 @@ function deleteProperty(obj, mn) {
   return false;
 }
 
+function forEachPublicProperty(obj, fn, self) {
+  if (!obj[VM_BINDINGS]) {
+    for (var key in obj) {
+      fn.call(self, key, obj[key]);
+    }
+    return;
+  }
+
+  for (var key in obj) {
+    if (isNumeric(key)) {
+      fn.call(self, key, obj[key]);
+    } else if (Multiname.isPublicQualifiedName(key) && obj[VM_BINDINGS].indexOf(key) < 0) {
+      var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      fn.call(self, name, obj[key]);
+    }
+  }
+}
+
 function isInstanceOf(value, type) {
   /*
   if (type instanceof Class) {
@@ -874,6 +911,11 @@ function isInstance(value, type) {
 
 function createActivation(methodInfo) {
   return Object.create(methodInfo.activationPrototype);
+}
+
+function isClassObject(obj) {
+  assert (obj);
+  return obj[VM_IS_CLASS];
 }
 
 /**
@@ -1234,12 +1276,9 @@ var Runtime = (function () {
       this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, true);
       instance = cls.instance;
-
-      if (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
-        // TODO: This is very hackish.
-        installProxyClass(cls);
-      }
     }
+
+    cls[VM_IS_CLASS] = true;
 
     if (instance) {
       this.applyProtectedBindings(instance.prototype, cls);
@@ -1258,6 +1297,11 @@ var Runtime = (function () {
     if (traceClasses.value) {
       domain.loadedClasses.push(cls);
       domain.traceLoadedClasses();
+    }
+
+    if (baseClass && Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
+      // TODO: This is very hackish.
+      installProxyClassWrapper(cls);
     }
 
     return cls;
@@ -1648,9 +1692,12 @@ var Runtime = (function () {
    */
   function makeTrampoline(forward, parameterLength) {
     release || assert (forward && typeof forward === "function");
-    var trampoline = (function trampolineContext() {
+    return (function trampolineContext() {
       var target = null;
-      return function trampoline() {
+      /**
+       * Triggers the trampoline and executes it.
+       */
+      var trampoline = function execute() {
         Counter.count("Executing Trampoline");
         if (!target) {
           target = forward(trampoline);
@@ -1658,14 +1705,23 @@ var Runtime = (function () {
         }
         return target.apply(this, arguments);
       };
+      /**
+       * Just triggers the trampoline without executing it.
+       */
+      trampoline.trigger = function trigger() {
+        Counter.count("Triggering Trampoline");
+        if (!target) {
+          target = forward(trampoline);
+          assert (target);
+        }
+      };
+      trampoline.isTrampoline = true;
+      // Make sure that the length property of the trampoline matches the trait's number of
+      // parameters. However, since we can't redefine the |length| property of a function,
+      // we define a new hidden |VM_LENGTH| property to store this value.
+      defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+      return trampoline;
     })();
-
-    // Make sure that the length property of the trampoline matches the trait's number of
-    // parameters. However, since we can't redefine the |length| property of a function,
-    // we define a new hidden |VM_LENGTH| property to store this value.
-    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
-    trampoline.isTrampoline = true;
-    return trampoline;
   }
 
   runtime.prototype.applyMethodTrait = function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
@@ -1684,6 +1740,20 @@ var Runtime = (function () {
           Counter.count("Runtime: Method Closures");
           return target.value.bind(this);
         }
+        if (target.value.isTrampoline) {
+          // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
+          // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
+          // call it.
+          target.value.trigger();
+        }
+        assert (!target.value.isTrampoline, "We should avoid binding trampolines.");
+        var mc = null;
+        if (isClassObject(this)) {
+          Counter.count("Runtime: Static Method Closures");
+          mc = target.value.bind(this);
+          defineReadOnlyProperty(this, qn, mc);
+          return mc;
+        }
         if (this.hasOwnProperty(qn)) {
           var pd = Object.getOwnPropertyDescriptor(this, qn);
           if (pd.get) {
@@ -1693,15 +1763,10 @@ var Runtime = (function () {
           Counter.count("Runtime: Unpatched Memoizer");
           return this[qn];
         }
-        var mc = target.value.bind(this);
-        defineReadOnlyProperty(mc, "public$prototype", null);
-        // If the memoizer target is a trampoline then don't cache the method closure.
-        // Doing so would cause the trampoline to be bound with |this| and would always
-        // execute. Usually he next time around, (after the method) is compiled
-        // the target will be patched, and it's safe to cache the method closure.
-        if (!target.value.isTrampoline) {
-          defineReadOnlyProperty(this, qn, mc);
-        }
+
+        mc = target.value.bind(this);
+        defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
+        defineReadOnlyProperty(this, qn, mc);
         return mc;
       }
       Counter.count("Runtime: Memoizers");
@@ -1766,7 +1831,7 @@ var Runtime = (function () {
         }, trait.methodInfo.parameters.length);
         var closure = trampoline.bind(obj);
         defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
-        defineReadOnlyProperty(closure, "public$prototype", null);
+        defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
         defineNonEnumerableProperty(obj, qn, closure);
         defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
       } else if (trait.isGetter() || trait.isSetter()) {

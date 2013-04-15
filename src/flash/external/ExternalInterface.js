@@ -1,7 +1,16 @@
 var ExternalInterfaceDefinition = (function () {
   function getAvailable() {
-    return false;
+    return $EXTENSION;
   }
+
+  var initialized = false;
+  var registeredCallbacks = {};
+  function callIn(functionName, args) {
+    if (!registeredCallbacks.hasOwnProperty(functionName))
+      return;
+    return registeredCallbacks[functionName](functionName, args);
+  }
+
   return {
     // ()
     __class__: "flash.external.ExternalInterface",
@@ -11,31 +20,43 @@ var ExternalInterfaceDefinition = (function () {
       native: {
         static: {
           _initJS: function _initJS() { // (void) -> void
-            notImplemented("ExternalInterface._initJS");
+            if (initialized)
+              return;
+
+            initialized = true;
+            FirefoxCom.initJS(callIn);
           },
           _getPropNames: function _getPropNames(obj) { // (obj:Object) -> Array
-            notImplemented("ExternalInterface._getPropNames");
+            var keys = [];
+            forEachPublicProperty(obj, function (key) { keys.push(key); });
+            return keys;
           },
           _addCallback: function _addCallback(functionName, closure, hasNullCallback) { // (functionName:String, closure:Function, hasNullCallback:Boolean) -> void
-            notImplemented("ExternalInterface._addCallback");
+            FirefoxCom.request('externalCom',
+              {action: 'register', functionName: functionName, remove: hasNullCallback});
+            if (hasNullCallback) {
+              delete registeredCallbacks[functionName];
+            } else {
+              registeredCallbacks[functionName] = closure;
+            }
           },
           _evalJS: function _evalJS(expression) { // (expression:String) -> String
-            notImplemented("ExternalInterface._evalJS");
+            return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
           },
           _callOut: function _callOut(request) { // (request:String) -> String
-            notImplemented("ExternalInterface._callOut");
+            return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
           },
           available: { 
-	    get: getAvailable,
+            get: getAvailable // (void) -> Boolean
           },
           objectID: {
             get: function objectID() { // (void) -> String
-              notImplemented("ExternalInterface.objectID");
+              return FirefoxCom.requestSync('externalCom', {action: 'getId'});
             }
           },
           activeX: {
             get: function activeX() { // (void) -> Boolean
-              notImplemented("ExternalInterface.activeX");
+              return false;
             }
           }
         },

@@ -160,7 +160,7 @@ if (jsOptimazations.value) {
 }
 commandPrefix += " " + (release.value ? "avm-release.js" : "avm.js");
 
-var commandSuffix = noMetrics.value ? "" : " -tm -tj";
+var commandSuffix = noMetrics.value ? "" : " -tm -tj -rel";
 if (configurationSet.value.indexOf("i") >= 0) {
   configurations.push({name: "shu-i", timeout: timeout.value, command: commandPrefix + " -x -i" + commandSuffix});
 }

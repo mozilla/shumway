@@ -13,6 +13,7 @@ var LoaderDefinition = (function () {
     workerScripts = [
       '../../../lib/DataView.js/DataView.js',
       '../util.js',
+      '../../swf/config.js',
       '../../swf/util.js',
       '../../swf/swf.js',
       '../../swf/types.js',
@@ -718,7 +719,7 @@ var LoaderDefinition = (function () {
           }
           imgPromise.resolve();
         };
-        img.src = 'data:' + symbol.mimeType + ';base64,' + btoa(symbol.data);
+        img.src = URL.createObjectURL(symbol.data);
         promiseQueue.push(imgPromise);
         className = 'flash.display.Bitmap';
         props.img = img;
@@ -744,7 +745,7 @@ var LoaderDefinition = (function () {
         props.variableName = symbol.variableName;
         break;
       case 'shape':
-        var createGraphicsData = new Function('d,r', 'return ' + symbol.data);
+        var createGraphicsSubPaths = new Function('c,d,r', 'return ' + symbol.data);
         className = symbol.morph ? 'flash.display.MorphShape' : 'flash.display.Shape';
         props.bbox = symbol.bbox;
         props.graphicsFactory = function graphicsFactory(ratio) {
@@ -753,7 +754,7 @@ var LoaderDefinition = (function () {
 
           var graphics = new flash.display.Graphics;
           graphics._scale = 0.05;
-          graphics.drawGraphicsData(createGraphicsData(dictionary, ratio));
+          graphics._subpaths = createGraphicsSubPaths(graphics, dictionary, ratio);
 
           graphicsFactory[ratio] = graphics;
 

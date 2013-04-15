@@ -223,6 +223,6 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
       return;
     }
     // TODO handle other methods than GET
-    window.open(url, target);
+    window.open(FileLoadingService.resolveUrl(url), target);
   };
 };

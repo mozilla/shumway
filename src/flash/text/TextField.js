@@ -61,6 +61,16 @@ var TextFieldDefinition = (function () {
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
       // TODO
     },
+
+    textHeight: function() {
+      var bbox = this._bbox;
+      if (!bbox) {
+        return 0;
+      }
+      somewhatImplemented("TextField.textHeight");
+      return bbox.bottom - bbox.top; // TODO: use canvas.measureText(txt).height
+    },
+
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -74,12 +84,7 @@ var TextFieldDefinition = (function () {
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,
-        textHeight: {
-          get: function textHeight() { // (void) -> Number
-            notImplemented("TextField.textHeight");
-            return this._textHeight;
-          }
-        },
+        textHeight: def.textHeight,
         autoSize: {
           get: function autoSize() { // (void) -> String
             notImplemented("TextField.autoSize");

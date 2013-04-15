@@ -282,6 +282,7 @@ var node = esprima.parse(source, { loc: true, comment: true, range: true, tokens
 node = T.lift(node);
 
 var constants = {
+  $EXTENSION: new Literal(true),
   // "$X": new Literal(true)
 };
 

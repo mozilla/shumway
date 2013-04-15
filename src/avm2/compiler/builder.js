@@ -311,7 +311,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       }
 
       function getPublicQualifiedName(value) {
-        return binary(Operator.ADD, constant("public$"), value);
+        return binary(Operator.ADD, constant(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX), value);
       }
 
       function coerceString(value) {
