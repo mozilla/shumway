@@ -7,6 +7,8 @@ var QNameClass;
 var isXMLType;
 var XML;
 var XMLList;
+var XMLBlank;
+var XMLListBlank;
 
 (function () {
   function XMLEncoder(pretty) {
@@ -16,6 +18,8 @@ var XMLList;
         switch (node._kind) {
         case "element":
           return encode.element(node);
+        case "attribute":
+          return encode.attribute(node);
         case "text":
           return encode.text(node);
         case "cdata":
@@ -31,17 +35,17 @@ var XMLList;
         throw "Not implemented";
       }
     }
-    function encode(node, encoder) {
+    function encode(node) {
       return visit(node, {
         element: function (n) {
           var s = "<" + n._name;
-          for (var i = 0; i < node._attributes.length; i++) {
-            a = node._attributes[i];
+          for (var i = 0; i < n._attributes.length; i++) {
+            a = n._attributes[i];
             s += " " + a._name + "=" + a._value;
           }
           s += ">";
-          for (var i = 0; i < node._.length; i++) {
-            s += visit(node._[i], this);
+          for (var i = 0; i < n._.length; i++) {
+            s += visit(n._[i], this);
           }
           s += "</" + n._name + ">";
           return s;
@@ -49,6 +53,9 @@ var XMLList;
         text: function(text) {
           return text._value.
             replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        },
+        attribute: function(n) {
+          return escapeAttributeValue(n._value);
         },
         cdata: function(n) {
         },
@@ -59,15 +66,19 @@ var XMLList;
         doctype: function(n) {
         },
         list: function (n) {
-          var s = "<parent>";
-          for (var i = 0; i < node._.length; i++) {
-            s += visit(node._[i], encode);
+          var s = "";
+          for (var i = 0; i < n._.length; i++) {
+            s += toXMLString(n._[i], []/*ancestor namespaces*/);
           }
-          s += "</parent>";
+          return s;
         },
       });
     } 
     this.encode = encode;
+  }
+
+  function escapeAttributeValue(v) {
+    return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function XMLParser() {
@@ -269,7 +280,7 @@ var XMLList;
 
     this.parseFromString = function(s, mimeType) {
       // this is a raw XML object
-      var currentElement = this;
+      var currentElement = new XMLBlank("element");  // placeholder
       var elementsStack = [];
       parseXml(s, {
         beginElement: function(name, attrs, isEmpty) {
@@ -287,9 +298,7 @@ var XMLList;
           }
         },
         endElement: function(name) {
-          if (elementsStack.length) {
-            currentElement = elementsStack.pop();
-          }
+          currentElement = elementsStack.pop();
         },
         text: function(text, isWhitespace) {
           var node = createNode("text", "", "");
@@ -306,11 +315,11 @@ var XMLList;
         pi: function(name, attrs) { },
         doctype: function(text) { }
       });
-      return currentElement;
+      return currentElement._[0];
     };
 
     function createNode(kind, uri, name) {
-      return new XML().init(kind, uri, name);
+      return new XMLBlank().init(kind, uri, name);
     }
   }
 
@@ -339,24 +348,25 @@ var XMLList;
 
 
   // 10.3 ToXML
-  function toXML(value) {
-    if (value === null) {
+  function toXML(v) {
+    if (v === null) {
       throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
-    } else if (value === undefined) {
+    } else if (v === undefined) {
       throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (value instanceof XML) {
-      return value;
-    } else if (value instanceof XMLList) {
-      if (value.length() === 1) {
-        return value._[0];
+    } else if (v._IS_XML) {
+      return v;
+    } else if (v._IS_XMLLIST) {
+      if (v.length() === 1) {
+        return v._[0];
       }
       throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
     } else {
-      var x = xmlParser.parseFromString.call(this, String(value));
-      if (x._.length === 0) {
+      var x = xmlParser.parseFromString(String(v));
+      if (x.length() === 0) {
+        var x = new XMLBlank("text");
         return x;
       }
-      return x._[0];
+      return toXML(x);
     }
   }
 
@@ -369,22 +379,24 @@ var XMLList;
     } else if (value === undefined) {
       throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
     } else if (value instanceof XML) {
-      this._ = [value];
+      var xl = new XMLListBlank();
+      xl.append(value);
+      xl._targetObject = value._parent;
+      xl._targetProperty = value._name;
+      return xl;
     } else if (value instanceof XMLList) {
-      if (x._.length === 1) {
-        return x._[0];
-      }
-      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
+      return value;
     } else {
-      value = "<parent xmlns='" + defaultNamespace + "'>" + value + "</parent>";
-      var x = new XML(value);
-      for (var i = 0; i < x._.length; i++) {
+      var s = "<parent xmlns='" + defaultNamespace + "'>" + String(value) + "</parent>";
+      var x = new XML(s);
+      var xl = new XMLListBlank();
+      for (var i = 0; i < x.length(); i++) {
         var v = x._[i];
         v._parent = null;
-        this.append(v);
+        xl.append(v);
       }
-      this._targetObject = null;
-      return this;
+      xl._targetObject = null;
+      return xl;
     }
   }
 
@@ -394,8 +406,8 @@ var XMLList;
   }
 
   // 10.6 ToXMLName
-  function toXMLName() {
-    notImplemented("toXMLName");
+  function toXMLName(mn) {
+    return mn; // FIXME for now let's just use the multiname
   }
 
   var xmlParser = new XMLParser();
@@ -465,11 +477,14 @@ var XMLList;
         }
         return new XML(value);
       }
-      this.init("element", "", "");
-      if (arguments.length === 0) {
-        return;
+//      this.init("element", "", "");
+//      if (arguments.length === 0) {
+//        return;
+//      }
+      if (value === null || value === undefined) {
+        value = "";
       }
-      var x = toXML.call(this, value);
+      var x = toXML(value);
       if (isXMLType(value)) {
         x = x.copy();
       }
@@ -486,6 +501,12 @@ var XMLList;
     c.extend(baseClass);
 
     var Xp = XML.prototype;
+
+    XMLBlank = function (kind) {
+      this.init(kind, "", "");
+    }
+
+    XMLBlank.prototype = Xp;
     
     // Initialize an XML node.
     Xp.init = function init(kind, uri, name) {
@@ -508,6 +529,14 @@ var XMLList;
       return this;
     }
 
+    // XML.[[Length]]
+    Xp.length = function () {
+      if (!this._) {
+        return 0;
+      }
+      return this._.length;
+    };
+
     Xp.canHandleProperties = true;
 
     Xp.copy = function () {
@@ -517,7 +546,7 @@ var XMLList;
 
     // 13.4.4.16 XML.prototype.hasSimpleContent()
     Xp.hasSimpleContent = function hasSimpleContent() {
-      if (this._kind === "comment" || this._kind === "processing-instruction") {
+      if (this._kind === "attribute" || this._kind === "comment" || this._kind === "processing-instruction") {
         return false;
       }
       var result = true;
@@ -547,16 +576,6 @@ var XMLList;
       }
     }
 
-    function setAttribute(node, name, value) {
-      if (node.nodeType === Node.DOCUMENT_NODE) {
-        node.childNodes[0].setAttribute(name, value);
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        node.setAttribute(name, value);
-      } else {
-        throw "error or unhandled case in setAttribute";
-      }
-    }
-
     Xp.set = function (mn, value, isMethod) {
       if (isMethod) {
         return;
@@ -572,7 +591,7 @@ var XMLList;
             delete o[i];
           }
         });
-        var a = new XML().init("attribute", "", mn.name);
+        var a = new XMLBlank().init("attribute", "", mn.name);
         a._value = value;
         a._parent = this;
         this._attributes.push(a);
@@ -582,7 +601,7 @@ var XMLList;
       case ANY_NAME:
         break;
       default:
-        var x = new XML().init("element", "", mn.name);
+        var x = new XMLBlank().init("element", "", mn.name);
         x._value = value;
         x._parent = this;
         this._.push(x);
@@ -605,7 +624,7 @@ var XMLList;
           }
           return null;
         }
-        var val = new XMLList();
+        val = new XMLListBlank();
         val._targetObject = this._parent;
         val._targetProperty = mn;
         var name = mn;  // E4X wants us to construct an XMLName here, but a
@@ -618,9 +637,8 @@ var XMLList;
           // fall through
         case ATTR_NAME:
           this._attributes.forEach(function (v, i) {
-            if (any || v._name === mn.name) {
-              // implement xmllist
-              val._.push(v);
+            if (any || (v._name === mn.name)) {
+              val.append(v);
             }
           });
           break;
@@ -631,7 +649,7 @@ var XMLList;
           this._.forEach(function (v, i) {
             if (any || v._name === mn.name) {
               // implement xmllist
-              val._.push(v);
+              val.append(v);
             }
           });
           break;
@@ -648,6 +666,36 @@ var XMLList;
 
     Xp.insert = function insert(node) {
       this._.push(node);
+    };
+
+    // 9.1.1.8 [[Descendants]] (P)
+    Xp.descendants = function (mn) {
+      var name = toXMLName(mn);
+      var xl = new XMLListBlank();
+      // SPEC BUG spec says nothing about what to do with non-element XML objects
+      if (this._kind !== "element") {
+        return xl;
+      }
+      if (mn.isAttribute()) {
+        // Get attributes
+        this._attributes.forEach(function (v, i) {
+          if (mn.isAnyName() || mn.name === v.name) {
+            xl.append(v);
+          }
+        });
+      } else {
+        // Get children
+        this._.forEach(function (v, i) {
+          if (mn.isAnyName() || mn.name === v._name) {
+            xl.append(v);
+          }
+        });
+      }
+      // Descend
+      this._.forEach(function (v, i) {
+        xl.append(v.descendants(mn));
+      });
+      return xl;
     };
 
     c.native = {
@@ -735,8 +783,8 @@ var XMLList;
         copy: function copy() { // (void) -> XML
           return this.copy();
         },
-        descendants: function descendants(name) { // (name = "*") -> XMLList
-          notImplemented("XML.descendants");
+        descendants: function descendants(mn) { // (name = "*") -> XMLList
+          return this.descendants(mn);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
           notImplemented("XML.elements");
@@ -820,32 +868,44 @@ var XMLList;
 
   XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
     XMLList = function (value) {
-      var objectConstruction = this instanceof XMLList;
-      if (!objectConstruction) {
-        if (value instanceof XMLList) {
-          return value;
-        }
-        return new XMLList(value);
+      if (this instanceof XMLList) {
+        return callXMLList(value);
       }
-
-      this._ = [];
-      if (arguments.length === 0) {
-        return;
-      }
-      if (value instanceof XML || value instanceof XMLList) {
-        constructFromXML.call(this, value);
-      } else {
-        toXMLList.call(this, value);
-      }
+      return contructXMLList(value);
     };
 
-    function constructFromXML(xml) {
-      warning("TODO: Clone: " + xml);
+    // 13.5.1 The XMLList Constructor Called as a Function
+    function callXMLList(v) {
+      if (v === null || v === undefined) {
+        v = "";
+      }
+      return toXMLList(v);
+    }
+
+    // 13.5.2 The XMLList Constructor
+    function constructXMLList(val) {
+      if (val === null || val === undefined) {
+        val = "";
+      }
+      if (val._IS_XMLLIST) {
+        var xl = new XMLListBlank();
+        xl.append(val);
+        return xl;
+      }
+      return toXMLList(val);
     }
 
     var c = new runtime.domain.system.Class("XMLList", XMLList, Domain.passthroughCallable(XMLList));
     c.extend(baseClass);
     var XLp = XMLList.prototype;
+
+    XMLListBlank = function (kind) {
+      this._targetObject = null;
+      this._ = [];
+    }
+
+    XMLListBlank.prototype = XLp;
+
     XLp.canHandleProperties = true;
 
     // 13.5.4.14 XMLList.prototype.hasSimpleContent()
@@ -853,7 +913,7 @@ var XMLList;
       if (this._.length === 0) {
         return true;
       } else if (this._.length === 1) {
-        return this._[0].hasSimpleContent()
+        return toXML(this).hasSimpleContent()
       }
       var result = true;
       this._.forEach(function (v) {
@@ -906,7 +966,7 @@ var XMLList;
       } else {
         switch (nameKind(mn)) {
         case ATTR_NAME:
-          val = this._[0].get(mn, false);
+          val = toXML(this).get(mn, false);
         case ANY_ATTR_NAME:
           break;
         case ANY_NAME:
@@ -915,7 +975,7 @@ var XMLList;
           val._targetProperty = prop;
           break;
         default:
-          val = this._[0].get(mn, false);
+          val = toXML(this).get(mn, false);
           break;
         }
       }
@@ -930,7 +990,7 @@ var XMLList;
       if (val._IS_XMLLIST) {
         this._targetObject = val._targetObject;
         this._targetProperty = val._targetProperty;
-        if (val._.length) {
+        if (val._.length === 0) {
           return;
         }
         val._.forEach(function (v, i) {
@@ -942,6 +1002,7 @@ var XMLList;
       return;
     };
 
+    // XMLList.[[Length]]
     XLp.length = function () {
       return this._.length;
     };
@@ -998,8 +1059,8 @@ var XMLList;
         copy: function copy() { // (void) -> XMLList
           notImplemented("XMLList.copy");
         },
-        descendants: function descendants(name) { // (name = "*") -> XMLList
-          notImplemented("XMLList.descendants");
+        descendants: function descendants(mn) { // (name = "*") -> XMLList
+          return toXML(obj).descendants(mn);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
           notImplemented("XMLList.elements");
@@ -1011,10 +1072,10 @@ var XMLList;
           return this.hasSimpleContent();
         },
         length: function length() { // (void) -> int
-          return this.length();
+          return 1;
         },
         name: function name() { // (void) -> Object
-          return this._[0]._name;
+          return toXML(this)._name;
         },
         normalize: function normalize() { // (void) -> XMLList
           notImplemented("XMLList.normalize");

@@ -918,7 +918,6 @@ var natives = (function () {
         }
       }
     };
-
     return c;
   }
 
