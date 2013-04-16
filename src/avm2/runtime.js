@@ -280,12 +280,12 @@ function typeOf(x) {
   if (x) {
     if (x.constructor==String) {
       return "string"
-    }
-    else if (x.constructor==Number) {
+    } else if (x.constructor==Number) {
       return "number"
-    }
-    else if (x.constructor==Boolean) {
+    } else if (x.constructor==Boolean) {
       return "boolean"
+    } else if (x instanceof XML || x instanceof XMLList) {
+      return "xml"
     }
   }
   return typeof x;

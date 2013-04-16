@@ -41,7 +41,7 @@ var XMLListBlank;
           var s = "<" + n._name;
           for (var i = 0; i < n._attributes.length; i++) {
             a = n._attributes[i];
-            s += " " + a._name + "=" + a._value;
+            s += " " + a._name + "='" + a._value + "'";
           }
           s += ">";
           for (var i = 0; i < n._.length; i++) {
@@ -55,7 +55,7 @@ var XMLListBlank;
             replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
         attribute: function(n) {
-          return escapeAttributeValue(n._value);
+          return "'" + escapeAttributeValue(n._value) + "'";
         },
         cdata: function(n) {
         },
@@ -92,7 +92,6 @@ var XMLListBlank;
           "xml":"http://www.w3.org/XML/1998/namespace"
         }
       }];
-
       function trim(s) {
         return s.replace(/^\s+/, "").replace(/\s+$/, "");
       }
@@ -137,11 +136,26 @@ var XMLListBlank;
       function getName(name, resolveDefaultNs) {
         var j = name.indexOf(":");
         if (j >= 0) {
-          return {name:name.substring(j + 1), prefix: name.substring(0,j), namespace: lookupNs(name.substring(0,j))};
+          return {
+            name: name,
+            localName: name.substring(j + 1),
+            prefix: name.substring(0,j),
+            namespace: lookupNs(name.substring(0,j))
+          };
         } else if(resolveDefaultNs) {
-          return {name:name, prefix: "", namespace: lookupDefaultNs()};
+          return {
+            name: name,
+            localName: name,
+            prefix: "",
+            namespace: lookupDefaultNs()
+          };
         } else {
-          return {name:name, prefix: "", namespace: ""};
+          return {
+            name:name,
+            localName: name,
+            prefix: "",
+            namespace: ""
+          };
         }
       }
       function isWhitespace(s, index) {
@@ -319,7 +333,7 @@ var XMLListBlank;
     };
 
     function createNode(kind, uri, name) {
-      return new XMLBlank().init(kind, uri, name);
+      return new XMLBlank(kind, uri, name);
     }
   }
 
@@ -391,12 +405,12 @@ var XMLListBlank;
       var s = "<parent xmlns='" + defaultNamespace + "'>" + String(value) + "</parent>";
       var x = new XML(s);
       var xl = new XMLListBlank();
+      xl._targetObject = null;
       for (var i = 0; i < x.length(); i++) {
         var v = x._[i];
         v._parent = null;
         xl.append(v);
       }
-      xl._targetObject = null;
       return xl;
     }
   }
@@ -471,17 +485,12 @@ var XMLListBlank;
     var FLAG_PRETTY_PRINTING                = 0x08;
 
     XML = function (value) {
-      var objectConstruction = this instanceof XML;
-      if (!objectConstruction) {
+      if (!(this instanceof XML)) {
         if (value instanceof XML) {
           return value; // no cloning
         }
         return new XML(value);
       }
-//      this.init("element", "", "");
-//      if (arguments.length === 0) {
-//        return;
-//      }
       if (value === null || value === undefined) {
         value = "";
       }
@@ -503,8 +512,17 @@ var XMLListBlank;
 
     var Xp = XML.prototype;
 
-    XMLBlank = function (kind) {
-      this.init(kind, "", "");
+    XMLBlank = function (kind, uri, name) {
+      if (kind === undefined) {
+        kind = "text";
+      }
+      if (uri === undefined) {
+        uri = "";
+      }
+      if (name === undefined) {
+        name = "";
+      }
+      this.init(kind, uri, name);
     }
 
     XMLBlank.prototype = Xp;
@@ -548,16 +566,18 @@ var XMLListBlank;
 
     // 13.4.4.16 XML.prototype.hasSimpleContent()
     Xp.hasSimpleContent = function hasSimpleContent() {
-      if (this._kind === "attribute" || this._kind === "comment" || this._kind === "processing-instruction") {
+      if (this._kind === "comment" || this._kind === "processing-instruction") {
         return false;
       }
       var result = true;
-      this._.forEach(function (v) {
-        if (v._kind === "element") {
-          result = false;
-        }
-      });
-      return result;
+      if (this._) {
+        this._.forEach(function (v) {
+          if (v._kind === "element") {
+            return false;
+          }
+        });
+      }
+      return true;
     }
 
     var ATTR_NAME = 1;
@@ -603,7 +623,7 @@ var XMLListBlank;
             delete o[i];
           }
         });
-        var a = new XMLBlank().init("attribute", "", mn.name);
+        var a = new XMLBlank("attribute", "", mn.name);
         a._value = value;
         a._parent = this;
         this._attributes.push(a);
@@ -613,7 +633,7 @@ var XMLListBlank;
       case ANY_NAME:
         break;
       default:
-        var x = new XMLBlank().init("element", "", mn.name);
+        var x = new XMLBlank("element", "", mn.name);
         x._value = value;
         x._parent = this;
         this._.push(x);
@@ -829,7 +849,7 @@ var XMLListBlank;
           notImplemented("XML.namespaceDeclarations");
         },
         nodeKind: function nodeKind() { // (void) -> String
-          notImplemented("XML.nodeKind");
+          return this._kind;
         },
         normalize: function normalize() { // (void) -> XML
           notImplemented("XML.normalize");
@@ -880,10 +900,10 @@ var XMLListBlank;
 
   XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
     XMLList = function (value) {
-      if (this instanceof XMLList) {
+      if (!(this instanceof XMLList)) {
         return callXMLList(value);
       }
-      return contructXMLList(value);
+      return constructXMLList(value);
     };
 
     // 13.5.1 The XMLList Constructor Called as a Function
@@ -924,7 +944,7 @@ var XMLListBlank;
     XLp.hasSimpleContent = function hasSimpleContent() {
       if (this._.length === 0) {
         return true;
-      } else if (this._.length === 1) {
+      } else if (this.length() === 1) {
         return toXML(this).hasSimpleContent()
       }
       var result = true;
@@ -999,9 +1019,9 @@ var XMLListBlank;
         if (val._.length === 0) {
           return;
         }
-        val._.forEach(function (v, i) {
-          this._.push(v);
-        });
+        for (var i = 0; i < val._.length; i++) {
+          this._.push(val._[i]);
+        }
       } else if (val._IS_XML) {
         this._.push(val);
       }
@@ -1060,7 +1080,12 @@ var XMLListBlank;
           notImplemented("XMLList.comments");
         },
         contains: function contains(value) { // (value) -> Boolean
-          notImplemented("XMLList.contains");
+          for (var i = 0; i < this._.length; i++) {
+            if (this._[i] === value) {
+              return true;
+            }
+          }
+          return false;
         },
         copy: function copy() { // (void) -> XMLList
           notImplemented("XMLList.copy");
@@ -1117,7 +1142,7 @@ var XMLListBlank;
           notImplemented("XMLList.insertChildBefore");
         },
         nodeKind: function nodeKind() { // (void) -> String
-          notImplemented("XMLList.nodeKind");
+          return toXML(this).nodeKind();
         },
         _namespace: function _namespace(prefix, argc) { // (prefix, argc:int) -> any
           notImplemented("XMLList._namespace");
