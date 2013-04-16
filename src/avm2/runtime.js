@@ -645,7 +645,7 @@ function resolveMultiname(obj, mn, traitsOnly) {
 function createPublicKeyedClone(source) {
   const visited = new WeakMap();
   function visit(item) {
-    if (typeof item !== 'object') {
+    if (!item || typeof item !== 'object') {
       return item;
     }
     if (visited.has(item)) {
@@ -1624,12 +1624,12 @@ var Runtime = (function () {
     if (mi.isNative() && this.domain.allowNatives) {
       var md = trait.metadata;
       if (md && md.native) {
-        var nativeName = md.native.items[0].value;
+        var nativeName = md.native.value[0].value;
         var makeNativeFunction = getNative(nativeName) ||
                                  this.domain.natives[nativeName];
         fn = makeNativeFunction && makeNativeFunction(runtime, scope);
       } else if (md && md.unsafeJSNative) {
-        fn = getNative(md.unsafeJSNative.items[0].value);
+        fn = getNative(md.unsafeJSNative.value[0].value);
       } else if (natives) {
         // At this point the native class already had the scope, so we don't
         // need to close over the method again.
