@@ -230,6 +230,9 @@ var TraitsType = (function () {
     var isGetter = !isSetter;
     var trait;
     if (!Multiname.isQName(mn)) {
+      if (mn instanceof MultinameType) {
+        return;
+      }
       release || assert(mn instanceof Multiname);
       var dy;
       for (var i = 0, j = mn.namespaces.length; i < j; i++) {
@@ -679,6 +682,10 @@ var Verifier = (function() {
       }
 
       function findProperty(mn, strict) {
+        if (mn instanceof MultinameType) {
+          return Type.Any;
+        }
+        
         // Try to find it in the scope stack.
         for (var i = scope.length - 1; i >= 0; i--) {
           if (scope[i] instanceof TraitsType) {
