@@ -6,8 +6,15 @@ var AMFUtils = (function AMFUtilsClosure() {
   var AMF0_OBJECT_MARKER = 0x03;
   var AMF0_NULL_MARKER = 0x05;
   var AMF0_UNDEFINED_MARKER = 0x06;
-  var AMF0_ARRAY_MARKER = 0x08;
-  var AMF0_END_MARKER = 0x09;
+  var AMF0_REFERENCE_MARKER = 0x07;
+  var AMF0_ECMA_ARRAY_MARKER = 0x08;
+  var AMF0_OBJECT_END_MARKER = 0x09;
+  var AMF0_STRICT_ARRAY_MARKER = 0x0A;
+  var AMF0_DATE_MARKER = 0x0B;
+  var AMF0_LONG_STRING_MARKER = 0x0C;
+  var AMF0_XML_MARKER = 0x0F;
+  var AMF0_TYPED_OBJECT_MARKER = 0x10;
+  var AMF0_AVMPLUS_MARKER = 0x11;
 
   function writeString(ba, s) {
     if (s.length > 0xFFFF) {
@@ -85,7 +92,7 @@ var AMFUtils = (function AMFUtilsClosure() {
         if (obj === null) {
           ba.writeByte(AMF0_NULL_MARKER);
         } else if (Array.isArray(obj)) {
-          ba.writeByte(AMF0_ARRAY_MARKER);
+          ba.writeByte(AMF0_ECMA_ARRAY_MARKER);
           ba.writeByte((obj.length >>> 24) & 255);
           ba.writeByte((obj.length >> 16) & 255);
           ba.writeByte((obj.length >> 8) & 255);
@@ -96,7 +103,7 @@ var AMFUtils = (function AMFUtilsClosure() {
           }, this);
           ba.writeByte(0x00);
           ba.writeByte(0x00);
-          ba.writeByte(AMF0_END_MARKER);
+          ba.writeByte(AMF0_OBJECT_END_MARKER);
         } else {
           ba.writeByte(AMF0_OBJECT_MARKER);
           forEachPublicProperty(obj, function (key, value) {
@@ -105,7 +112,7 @@ var AMFUtils = (function AMFUtilsClosure() {
           }, this);
           ba.writeByte(0x00);
           ba.writeByte(0x00);
-          ba.writeByte(AMF0_END_MARKER);
+          ba.writeByte(AMF0_OBJECT_END_MARKER);
         }
         return;
       }
@@ -126,7 +133,7 @@ var AMFUtils = (function AMFUtilsClosure() {
           if (!key.length) break;
           setAvmProperty(obj, key, this.read(ba));
         }
-        if (ba.readByte() !== AMF0_END_MARKER) {
+        if (ba.readByte() !== AMF0_OBJECT_END_MARKER) {
           throw 'AMF0 End marker is not found';
         }
         return obj;
@@ -134,7 +141,7 @@ var AMFUtils = (function AMFUtilsClosure() {
         return null;
       case AMF0_UNDEFINED_MARKER:
         return undefined;
-      case AMF0_ARRAY_MARKER: // ECMA Array
+      case AMF0_ECMA_ARRAY_MARKER:
         var obj = [];
         obj.length = (ba.readByte() << 24) | (ba.readByte() << 16) |
                      (ba.readByte() << 8) | ba.readByte();
@@ -143,10 +150,20 @@ var AMFUtils = (function AMFUtilsClosure() {
           if (!key.length) break;
           setAvmProperty(obj, key, this.read(ba));
         }
-        if (ba.readByte() !== AMF0_END_MARKER) {
+        if (ba.readByte() !== AMF0_OBJECT_END_MARKER) {
           throw 'AMF0 End marker is not found';
         }
         return obj;
+      case AMF0_STRICT_ARRAY_MARKER:
+        var obj = [];
+        obj.length = (ba.readByte() << 24) | (ba.readByte() << 16) |
+                     (ba.readByte() << 8) | ba.readByte();
+        for (var i = 0; i < obj.length; i++) {
+          obj[i] = this.read(ba);
+        }
+        return obj;
+      case AMF0_AVMPLUS_MARKER:
+        return readAmf3Data(ba, {});
       default:
         throw 'AMF0 Unknown marker ' + marker; 
       }
