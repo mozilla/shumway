@@ -197,14 +197,14 @@ var Trait = (function () {
       var traitMetadata;
       for (var i = 0, j = stream.readU30(); i < j; i++) {
         var md = metadata[stream.readU30()];
-        if (md.tagName === "__go_to_definition_help" ||
-            md.tagName === "__go_to_ctor_definition_help") {
+        if (md.name === "__go_to_definition_help" ||
+            md.name === "__go_to_ctor_definition_help") {
           continue;
         }
         if (!traitMetadata) {
           traitMetadata = {};
         }
-        traitMetadata[md.tagName] = md;
+        traitMetadata[md.name] = md;
       }
       if (traitMetadata) {
         this.metadata = traitMetadata;
@@ -1156,34 +1156,33 @@ var MetaDataInfo = (function () {
 
   function metaDataInfo(abc, stream) {
     var strings = abc.constantPool.strings;
-    this.tagName = strings[stream.readU30()];
+    var name = this.name = strings[stream.readU30()];
 
     var itemCount = stream.readU30();
-    var items = [];
-    var keys = [];
-    var values = [];
+    var keys = new Array(itemCount);
+    var items = new Array(itemCount);
 
     for (var i = 0; i < itemCount; i++) {
       keys[i] = strings[stream.readU30()];
     }
 
     for (var i = 0; i < itemCount; i++) {
-      values[i] = strings[stream.readU30()];
-    }
-
-    for (var i = 0; i < itemCount; i++) {
-      var item = items[i] = { key: keys[i], value: values[i] };
-      if (item.key) {
-        release || assert(!this.hasOwnProperty(item.key));
-        this[item.key] = item.value;
+      var key = keys[i];
+      items[i] = { key: key, value: strings[stream.readU30()] };
+      // for the 'native' tag, store all properties directly on the tag's
+      // object, too. There's not going to be any duplicates.
+      if (key && name === 'native') {
+        release || assert(!this.hasOwnProperty(key));
+        this[key] = items[i].value;
       }
     }
+
     this.items = items;
   }
 
   metaDataInfo.prototype = {
     toString: function toString() {
-      return "[" + this.tagName + "]";
+      return "[" + this.name + "]";
     }
   };
 

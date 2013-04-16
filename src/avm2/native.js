@@ -1495,7 +1495,6 @@ var natives = (function () {
   // NOTE: Defining helper functions. Control flow does not reach here.
 
   function describeTypeJSON(o, flags) {
-//    console.log("describeTypeJSON()");
     var Flags = {
       HIDE_NSURI_METHODS  : 0x0001,
       INCLUDE_BASES       : 0x0002,
@@ -1507,7 +1506,7 @@ var natives = (function () {
       INCLUDE_CONSTRUCTOR : 0x0080,
       INCLUDE_TRAITS      : 0x0100,
       USE_ITRAITS         : 0x0200,
-      HIDE_OBJECT         : 0x0400,
+      HIDE_OBJECT         : 0x0400
     };
     var info = o.classInfo ? o.classInfo : Object.getPrototypeOf(o).class.classInfo;
     if (!info) {
@@ -1517,7 +1516,7 @@ var natives = (function () {
     if (!traits || traits.length === 0) {
       return null;
     }
-    
+
     var obj = {};
     obj[publicName("name")] = info.instanceInfo.name.name;
     obj[publicName("isDynamic")] = false;
@@ -1527,13 +1526,13 @@ var natives = (function () {
 
 //    console.log("describeTypeJSON() obj="+JSON.stringify(obj, null, 2));
     return obj;
-    
+
     // privates
-      
+
     function publicName(str) {
       return Multiname.getPublicQualifiedName(str)
     }
-    
+
     function chooseTraits(info, flags) {
       if (flags & Flags.USE_ITRAITS) {
         info = info.instanceInfo;
@@ -1549,7 +1548,7 @@ var natives = (function () {
       var interfacesVal = obj[publicName("interfaces")] = [];
       var variablesVal = obj[publicName("variables")] = [];
       var metadataVal = obj[publicName("metadata")] = [];
-      
+
       for (var i = 0; traits && i < traits.length; i++) {
         var t = traits[i];
         var val = {};
@@ -1565,7 +1564,7 @@ var natives = (function () {
         case TRAIT_Method:
         case TRAIT_Getter:
         case TRAIT_Setter:
-          val[publicName("metadata")] = null;
+          val[publicName("metadata")] = createPublicKeyedClone(t.metadata);
           val[publicName("uri")] = null;
           val[publicName("name")] = t.name.name;
           val[publicName("type")] = "*";
