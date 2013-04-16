@@ -89,6 +89,10 @@ var Type = (function () {
     return this === Type.Int || this === Type.Uint || this === Type.Number;
   };
 
+  type.prototype.isDirectlyIndexable = function () {
+    return this === Type.Array;
+  };
+
   type.prototype.isParameterizedType = function () {
     return this instanceof ParameterizedType;
   };

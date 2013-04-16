@@ -401,8 +401,10 @@
   }
 
   var Latch = (function () {
-    function latch(condition, left, right) {
+    function latch(control, condition, left, right) {
       Node.call(this);
+      assert (isControlOrNull(control));
+      this.control = control;
       this.condition = condition;
       this.left = left;
       this.right = right;
@@ -566,7 +568,7 @@
   })();
 
   var GetProperty = (function () {
-    function getProperty(control, store, object, name, isMethod) {
+    function getProperty(control, store, object, name) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
@@ -576,15 +578,18 @@
       this.store = store;
       this.object = object;
       this.name = name;
-      this.isMethod = isMethod;
     }
     getProperty.prototype = extend(Value, "GetProperty");
     return getProperty;
   })();
 
   var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name, isMethod) {
-      GetProperty.call(this, control, store, object, name, isMethod);
+    function avm2GetProperty(control, store, object, name, isIndexed, isMethod) {
+      GetProperty.call(this, control, store, object, name);
+      assert (isBoolean(isIndexed));
+      assert (isBoolean(isMethod));
+      this.isIndexed = isIndexed;
+      this.isMethod = isMethod;
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;
@@ -618,8 +623,10 @@
   })();
 
   var AVM2SetProperty = (function () {
-    function avm2SetProperty(control, store, object, name, value) {
+    function avm2SetProperty(control, store, object, name, value, isIndexed) {
       SetProperty.call(this, control, store, object, name, value);
+      assert (isBoolean(isIndexed));
+      this.isIndexed = isIndexed;
     }
     avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
     return avm2SetProperty;

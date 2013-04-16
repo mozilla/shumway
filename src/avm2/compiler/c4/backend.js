@@ -430,7 +430,16 @@
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
-    return call(id("getProperty"), [object, name]);
+    if (this.isIndexed) {
+      assert (this.isMethod === false);
+      return new ConditionalExpression (
+        property(object, "indexGet"),
+        call(property(object, "indexGet"), [name]),
+        property(object, name)
+      );
+    }
+    var isMethod = new Literal(this.isMethod);
+    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -507,6 +516,13 @@
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
+    if (this.isIndexed) {
+      return new ConditionalExpression (
+        property(object, "indexSet"),
+        call(property(object, "indexSet"), [name, value]),
+        assignment(property(object, name), value)
+      );
+    }
     return call(id("setProperty"), [object, name, value]);
   };
 
@@ -525,13 +541,6 @@
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
     return assignment(property(object, name), value);
-  };
-
-  IR.AVM2GetProperty.prototype.compile = function (cx) {
-    var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
-    var isMethod = compileValue(this.isMethod, cx);
-    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.AVM2GetDescendants.prototype.compile = function (cx) {
