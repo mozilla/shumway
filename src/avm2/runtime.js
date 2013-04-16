@@ -1349,7 +1349,6 @@ var Runtime = (function () {
   };
 
   runtime.prototype.applyProtectedBindings = function applyProtectedBindings(obj, cls) {
-
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
     //
     // class A {
@@ -1414,7 +1413,10 @@ var Runtime = (function () {
           defineNonEnumerableSetter(obj, qn, makeForwardingSetter(protectedQn));
           vmBindings.push(qn);
           if (trait.isMethod()) {
-            openMethods[qn] = openMethods[protectedQn];
+            var openMethod = openMethods[protectedQn];
+            assert (openMethod);
+            defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+            openMethods[qn] = openMethod;
           }
         }
       }
