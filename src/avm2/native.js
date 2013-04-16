@@ -1489,7 +1489,7 @@ var natives = (function () {
     }),
 
     describeTypeJSON: constant(describeTypeJSON),
-    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS],
+    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
   };
 
   // NOTE: Defining helper functions. Control flow does not reach here.
@@ -1513,8 +1513,6 @@ var natives = (function () {
     release || assert(cls, "No class found for object " + o);
     var info = cls.classInfo;
 
-    window.console.log(info);
-
     var description = {};
     description[publicName("name")] =
         unmangledQualifiedName(info.instanceInfo.name);
@@ -1523,10 +1521,10 @@ var natives = (function () {
     description[publicName("isStatic")] = cls === o;
     description[publicName("isFinal")] = false;
     if (flags & Flags.INCLUDE_TRAITS) {
-      description[publicName("traits")] = describeTraits(cls, info, flags);
+      description[publicName("traits")] = addTraits(cls, flags);
     }
 
-//    console.log("describeTypeJSON() obj="+JSON.stringify(obj, null, 2));
+    console.dir(description);
     return description;
 
     // privates
@@ -1534,6 +1532,7 @@ var natives = (function () {
     function publicName(str) {
       return Multiname.getPublicQualifiedName(str)
     }
+
     function unmangledQualifiedName(mn) {
       var name = mn.name;
       var namespace = mn.namespaces[0];
@@ -1543,18 +1542,19 @@ var natives = (function () {
       return name;
     }
 
-    function chooseTraits(info, flags) {
-      if (flags & Flags.USE_ITRAITS) {
-        info = info.instanceInfo;
-      }
-      return info.traits;
+    function describeMetadata(metadata, nameKey, valueKey, keyKey) {
+      var result = {};
+      result[nameKey] = metadata.name;
+      result[valueKey] = metadata.value.map(function(value) {
+        var val = {};
+        val[keyKey] = value.key;
+        val[valueKey] = value.value;
+        return value;
+      });
+      return result;
     }
     
-    function describeTraits(cls, info, flags) {
-      var traits = chooseTraits(info, flags);
-      if (!traits || traits.length === 0) {
-        return null;
-      }
+    function addTraits(cls, flags) {
       const includedMembers = [flags & Flags.INCLUDE_VARIABLES,
                                flags & Flags.INCLUDE_METHODS,
                                flags & Flags.INCLUDE_ACCESSORS,
@@ -1562,20 +1562,28 @@ var natives = (function () {
       const includeBases = flags & Flags.INCLUDE_BASES;
       const includeMetadata = flags & Flags.INCLUDE_METADATA;
 
+      var declaredByKey = publicName("declaredBy");
       var metadataKey = publicName("metadata");
       var accessKey = publicName("access");
       var uriKey = publicName("uri");
       var nameKey = publicName("name");
       var typeKey = publicName("type");
+      var returnTypeKey = publicName("returnType");
+      var valueKey = publicName("value");
+      var keyKey = publicName("key");
+      var parametersKey = publicName("parameters");
+      var optionalKey = publicName("optional");
 
       var obj = {};
 
       var basesVal = obj[publicName("bases")] = includeBases ? [] : null;
       if (flags & Flags.INCLUDE_INTERFACES) {
         var interfacesVal = obj[publicName("interfaces")] = [];
-        for (var key in cls.implementedInterfaces) {
-          var ifaceName = cls.implementedInterfaces[key].name;
-          interfacesVal.push(unmangledQualifiedName(ifaceName));
+        if (flags & Flags.USE_ITRAITS) {
+          for (var key in cls.implementedInterfaces) {
+            var ifaceName = cls.implementedInterfaces[key].name;
+            interfacesVal.push(unmangledQualifiedName(ifaceName));
+          }
         }
       } else {
         obj[publicName("interfaces")] = null;
@@ -1596,45 +1604,92 @@ var natives = (function () {
       // Needed for accessor-merging
       var encounteredAccessors = {};
 
-      for (var i = 0; traits && i < traits.length; i++) {
-        var t = traits[i];
-        if (!includedMembers[t.kind]) {
-          continue;
+      var addBase = false;
+      while (cls) {
+        var className = unmangledQualifiedName(cls.classInfo.instanceInfo.name);
+        if (includeBases && addBase) {
+          basesVal.push(className);
+        } else {
+          addBase = true;
         }
-        var name = unmangledQualifiedName(t.name);
-        if (encounteredAccessors[name]) {
-          var val = encounteredAccessors[name];
-          val[accessKey] = 'readwrite';
-          if (t.kind === TRAIT_Getter) {
-            val[typeKey] = unmangledQualifiedName(t.methodInfo.returnType);
+        if (flags & Flags.USE_ITRAITS) {
+          describeTraits(cls.classInfo.instanceInfo.traits);
+        } else {
+          describeTraits(cls.classInfo.traits);
+        }
+        cls = cls.baseClass;
+      }
+
+      function describeTraits(traits) {
+        release || assert(traits, "No traits array found on class" +
+                                  cls.classInfo.instanceInfo.name);
+
+        for (var i = 0; traits && i < traits.length; i++) {
+          var t = traits[i];
+          if (!includedMembers[t.kind] ||
+              !t.name.getNamespace().isPublic() && !t.name.uri)
+          {
+            continue;
           }
-          continue;
-        }
-        var val = {};
-        val[metadataKey] = includeMetadata ? createPublicKeyedClone(t.metadata)
-                                           : null;
-        val[uriKey] = null;
-        val[nameKey] = name;
-        val[typeKey] = unmangledQualifiedName(t.kind === TRAIT_Slot
-                                                ? t.typeName
-                                                : t.methodInfo.returnType);
-        switch (t.kind) {
-          case TRAIT_Slot:
-            val[accessKey] = "readwrite";
-            variablesVal.push(val);
-            break;
-          case TRAIT_Method:
-            methodsVal.push(val);
-            break;
-          case TRAIT_Getter:
-          case TRAIT_Setter:
-            val[accessKey] = t.kind === TRAIT_Getter ? "read" : "write";
-            accessorsVal.push(val);
-            encounteredAccessors[name] = val;
-            break;
-          default:
-            assert(false, "Unknown trait type: " + t.kind);
-            break;
+          var name = unmangledQualifiedName(t.name);
+          if (encounteredAccessors[name]) {
+            var val = encounteredAccessors[name];
+            val[accessKey] = 'readwrite';
+            if (t.kind === TRAIT_Getter) {
+              val[typeKey] = unmangledQualifiedName(t.methodInfo.returnType);
+            }
+            continue;
+          }
+          var val = {};
+          if (includeMetadata && t.metadata) {
+            var metadataVal = val[metadataKey] = [];
+            for (var key in t.metadata) {
+              metadataVal.push(describeMetadata(t.metadata[key],
+                                                nameKey, valueKey, keyKey));
+            }
+          } else {
+            val[metadataKey] = null;
+          }
+          val[declaredByKey] = className;
+          val[uriKey] = t.name.uri;
+          val[nameKey] = name;
+          //TODO: check why we have public$$_init in `Object`
+          if (!t.typeName && !(t.methodInfo && t.methodInfo.returnType)) {
+            continue;
+          }
+          val[t.kind === TRAIT_Method ? returnTypeKey : typeKey] =
+              unmangledQualifiedName(t.kind === TRAIT_Slot
+                                       ? t.typeName
+                                       : t.methodInfo.returnType);
+          switch (t.kind) {
+            case TRAIT_Slot:
+              val[accessKey] = "readwrite";
+              variablesVal.push(val);
+              break;
+            case TRAIT_Method:
+              var parametersVal = val[parametersKey] = [];
+              var parameters = t.methodInfo.parameters;
+              for (var j = 0; j < parameters.length; j++) {
+                var param = parameters[j];
+                var paramVal = {};
+                paramVal[typeKey] = param.type
+                                      ? unmangledQualifiedName(param.type)
+                                      : '*';
+                paramVal[optionalKey] = 'value' in param;
+                parametersVal.push(paramVal);
+              }
+              methodsVal.push(val);
+              break;
+            case TRAIT_Getter:
+            case TRAIT_Setter:
+              val[accessKey] = t.kind === TRAIT_Getter ? "read" : "write";
+              accessorsVal.push(val);
+              encounteredAccessors[name] = val;
+              break;
+            default:
+              assert(false, "Unknown trait type: " + t.kind);
+              break;
+          }
         }
       }
       return obj;
