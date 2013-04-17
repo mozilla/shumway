@@ -207,6 +207,10 @@ var Trait = (function () {
         traitMetadata[md.name] = md;
       }
       if (traitMetadata) {
+        // FIXME: we should probably only set Class metadata on the classInfo.
+        if (this.isClass()) {
+          this.classInfo.metadata = traitMetadata;
+        }
         this.metadata = traitMetadata;
       }
     }

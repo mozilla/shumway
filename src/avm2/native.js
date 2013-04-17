@@ -1509,13 +1509,25 @@ var natives = (function () {
       HIDE_OBJECT         : 0x0400
     };
 
+    // public keys used multiple times while creating the description
+    var declaredByKey = publicName("declaredBy");
+    var metadataKey = publicName("metadata");
+    var accessKey = publicName("access");
+    var uriKey = publicName("uri");
+    var nameKey = publicName("name");
+    var typeKey = publicName("type");
+    var returnTypeKey = publicName("returnType");
+    var valueKey = publicName("value");
+    var keyKey = publicName("key");
+    var parametersKey = publicName("parameters");
+    var optionalKey = publicName("optional");
+
     var cls = o.classInfo ? o : Object.getPrototypeOf(o).class;
     release || assert(cls, "No class found for object " + o);
     var info = cls.classInfo;
 
     var description = {};
-    description[publicName("name")] =
-        unmangledQualifiedName(info.instanceInfo.name);
+    description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
     description[publicName("isDynamic")] = false;
     //TODO: verify that `isStatic` is false for all instances, true for classes
     description[publicName("isStatic")] = cls === o;
@@ -1523,8 +1535,13 @@ var natives = (function () {
     if (flags & Flags.INCLUDE_TRAITS) {
       description[publicName("traits")] = addTraits(cls, flags);
     }
-
-    console.dir(description);
+    var metadata = null;
+    if (info.metadata) {
+      metadata = Object.keys(info.metadata).map(function(key) {
+        return describeMetadata(info.metadata[key]);
+      });
+    }
+    description[metadataKey] = metadata;
     return description;
 
     // privates
@@ -1542,7 +1559,7 @@ var natives = (function () {
       return name;
     }
 
-    function describeMetadata(metadata, nameKey, valueKey, keyKey) {
+    function describeMetadata(metadata) {
       var result = {};
       result[nameKey] = metadata.name;
       result[valueKey] = metadata.value.map(function(value) {
@@ -1562,18 +1579,6 @@ var natives = (function () {
       const includeBases = flags & Flags.INCLUDE_BASES;
       const includeMetadata = flags & Flags.INCLUDE_METADATA;
 
-      var declaredByKey = publicName("declaredBy");
-      var metadataKey = publicName("metadata");
-      var accessKey = publicName("access");
-      var uriKey = publicName("uri");
-      var nameKey = publicName("name");
-      var typeKey = publicName("type");
-      var returnTypeKey = publicName("returnType");
-      var valueKey = publicName("value");
-      var keyKey = publicName("key");
-      var parametersKey = publicName("parameters");
-      var optionalKey = publicName("optional");
-
       var obj = {};
 
       var basesVal = obj[publicName("bases")] = includeBases ? [] : null;
@@ -1587,11 +1592,6 @@ var natives = (function () {
         }
       } else {
         obj[publicName("interfaces")] = null;
-      }
-      if (includeMetadata) {
-        var metadataVal = obj[metadataKey] = [];
-      } else {
-        obj[metadataKey] = null;
       }
 
       var variablesVal = obj[publicName("variables")] =
@@ -1644,8 +1644,7 @@ var natives = (function () {
           if (includeMetadata && t.metadata) {
             var metadataVal = val[metadataKey] = [];
             for (var key in t.metadata) {
-              metadataVal.push(describeMetadata(t.metadata[key],
-                                                nameKey, valueKey, keyKey));
+              metadataVal.push(describeMetadata(t.metadata[key]));
             }
           } else {
             val[metadataKey] = null;
