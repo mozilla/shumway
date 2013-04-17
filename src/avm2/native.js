@@ -666,7 +666,7 @@ var natives = (function () {
   }
 
   function boxedUint(x) {
-    return Object(Uint);
+    return Object(Uint(x));
   }
 
   function uintClass(runtime, scope, instance, baseClass) {
