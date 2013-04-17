@@ -762,6 +762,35 @@
     return call;
   })();
 
+  var CallProperty = (function () {
+    function callProperty(control, store, object, name, args, pristine) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isValueOrNull(object));
+      assert (name);
+      assert (store === null || isStore(store));
+      assert (isArray(args));
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.name = name;
+      this.arguments = args;
+      this.pristine = pristine;
+    }
+    callProperty.prototype = extend(Value, "CallProperty");
+    return callProperty;
+  })();
+
+  var AVM2CallProperty = (function () {
+    function avm2CallProperty(control, store, object, name, isLex, args, pristine) {
+      CallProperty.call(this, control, store, object, name, args, pristine);
+      assert (isBoolean(isLex));
+      this.isLex = isLex;
+    }
+    avm2CallProperty.prototype = extend(GetProperty, "AVM2_CallProperty");
+    return avm2CallProperty;
+  })();
+
   var New = (function () {
     function newNode(control, store, callee, args) {
       Node.call(this);
@@ -1964,6 +1993,8 @@
   exports.GlobalProperty = GlobalProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
+  exports.CallProperty = CallProperty;
+  exports.AVM2CallProperty = AVM2CallProperty;
   exports.AVM2GetProperty = AVM2GetProperty;
   exports.AVM2GetDescendants = AVM2GetDescendants;
   exports.AVM2SetProperty = AVM2SetProperty;

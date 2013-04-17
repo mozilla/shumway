@@ -441,7 +441,7 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           return savedScope();
         }
 
-        var object, index, callee, value, multiname, type, args, pristine;
+        var object, receiver, index, callee, value, multiname, type, args, pristine;
 
         function push(x) {
           assert (x);
@@ -567,6 +567,27 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
           }
           return getJSProperty(scope, "object");
         }
+
+        function callProperty(object, name, args, isLex, ti) {
+          name = simplifyName(name);
+          if (ti) {
+            if (ti.trait && ti.trait.isMethod()) {
+              var openQn;
+              if (ti.trait.holder instanceof InstanceInfo &&
+                  ti.trait.holder.isInterface()) {
+                openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name))
+              } else {
+                openQn = Multiname.getQualifiedName(ti.trait.name);
+              }
+              openQn = VM_OPEN_METHOD_PREFIX + openQn;
+              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
+            }
+          } else {
+            console.warn("Really nothing we can do " + name.value);
+          }
+          return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
+        }
+
         function getProperty(object, name, ti, getOpenMethod) {
           name = simplifyName(name);
           if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
@@ -899,17 +920,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               callee = pop();
               push(callCall(callee, object, args));
               break;
-            case OP_callproperty: case OP_callproplex: case OP_callpropvoid:
+            case OP_callproperty:
+            case OP_callpropvoid:
+            case OP_callproplex:
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname, bc.ti, true);
-              pristine = bc.ti && bc.ti.trait && bc.ti.trait.isMethod();
-              if (op === OP_callproperty || op === OP_callpropvoid) {
-                value = callCall(callee, object, args, pristine);
-              } else {
-                value = callCall(callee, null, args, pristine);
-              }
+              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti);
               if (op !== OP_callpropvoid) {
                 push(value);
               }

@@ -465,6 +465,29 @@
     );
   };
 
+  IR.CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var callee = property(object, name);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    if (this.pristine) {
+      return call(callee, args);
+    } else {
+      return callCall(callee, object, args);
+    }
+  };
+
+  IR.AVM2CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    return call(id("callProperty"), [object, name, new Literal(this.isLex), new ArrayExpression(args)]);
+  };
+
   IR.Call.prototype.compile = function (cx) {
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
@@ -476,7 +499,7 @@
     } else {
       object = new Literal(null);
     }
-    if (this.pristine &&
+    if (false && this.pristine &&
         (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
         this.object === null) {
       return call(callee, args);

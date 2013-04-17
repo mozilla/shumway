@@ -686,7 +686,8 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function callProperty(obj, mn, receiver, args) {
+function callProperty(obj, mn, isLex, args) {
+  var receiver = isLex ? null : obj;
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
