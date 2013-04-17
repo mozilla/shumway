@@ -367,19 +367,7 @@ function getDescendants(obj, mn) {
   if (!isXMLType(obj)) {
     throw "Not XML object in getDescendants";
   }
-  if (obj._IS_XMLLIST) {
-    if (obj._.length !== 1 && obj._[0]._IS_XML) {
-      throw "Invalid XMLList in getDescendants";
-    }
-    obj = obj._[0];
-  }
-  var xl = new XMLList();
-  obj._.forEach(function (v, i) {
-    if (mn.isAnyName() || mn.name === v.name) {
-      xl._.push(v);
-    }
-  });
-  return xl;
+  return obj.descendants(mn);
 }
 
 function checkFilter(value) {
@@ -673,6 +661,7 @@ function sliceArguments(args, offset) {
 }
 
 function callProperty(obj, mn, receiver, args) {
+//  print("callProperty() mn="+mn);
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }

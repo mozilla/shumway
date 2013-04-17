@@ -1,20 +1,13 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
 // The XML parser is designed only for parsing of simple XML documents (for unit testing purpose).
 
-var XMLClass;
-var XMLListClass;
-var QNameClass;
-var isXMLType;
-var XML;
-var XMLList;
-var XMLBlank;
-var XMLListBlank;
+var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLType, isXMLName;
 
 (function () {
-  function XMLEncoder(pretty) {
+  function XMLEncoder(ancestorNamespaces, indentLevel, prettyPrinting) {
     var indent = "\n  ";
     function visit(node, encode) {
-      if (node._IS_XML) {
+      if (node.IS_XML) {
         switch (node._kind) {
         case "element":
           return encode.element(node);
@@ -29,7 +22,7 @@ var XMLListBlank;
         case "processing-instruction":
           return encode.pi(node);
         }
-      } else if (node._IS_XMLLIST) {
+      } else if (node.IS_XMLLIST) {
         return encode.list(node);
       } else {
         throw "Not implemented";
@@ -38,16 +31,51 @@ var XMLListBlank;
     function encode(node, encoder) {
       return visit(node, {
         element: function (n) {
-          var s = "<" + n._name;
+          var s, a;
+          var ns = n._name.mn.namespaces[0];
+          var prefix = ns.prefix ? (ns.prefix + ":") : "";
+          s = "<" + prefix + n._name.localName;
+          // enumerate namespace declarations
+          var namespaceDeclarations = [];
+          if (ns.prefix || ns.originalURI) {
+            namespaceDeclarations.push(ns)
+          }
+          if (prefix) {
+            namespaceDeclarations[prefix] = true;
+          }
+          for (var i = 0; i < n._inScopeNamespaces.length; i++) {
+            if (true) { // FIXME add check for ancestor namespace with same prefix
+              ns = n._inScopeNamespaces[i];
+              if (!namespaceDeclarations[ns.prefix]) {
+                namespaceDeclarations.push(ns);
+                namespaceDeclarations[ns.prefix] = true;  // flag inclusion
+              }
+            }
+          }
+          for (var i = 0; i < namespaceDeclarations.length; i++) {
+            a = namespaceDeclarations[i];
+            if (a.prefix) {
+              s += " xmlns:" + a.prefix + "=\"" + a.originalURI + "\"";
+            } else {
+              s += " xmlns=\"" + a.originalURI + "\"";
+            }
+          }
           for (var i = 0; i < n._attributes.length; i++) {
             a = n._attributes[i];
-            s += " " + a._name + "='" + a._value + "'";
+            var ns = n._name.uri;
+            var prefix = n.prefix ? (ns.prefix + ":") : "";
+            var name = prefix + a._name.localName;
+            s += " " + name + "=\"" + a._value + "\"";
           }
-          s += ">";
-          for (var i = 0; i < n._.length; i++) {
-            s += visit(n._[i], this);
+          if (n._.length) {
+            s += ">";
+            for (var i = 0; i < n._.length; i++) {
+              s += visit(n._[i], this);
+            }
+            s += "</" + prefix + n._name.mn.name + ">";
+          } else {
+            s += "/>";
           }
-          s += "</" + n._name + ">";
           return s;
         },
         text: function(text) {
@@ -55,7 +83,7 @@ var XMLListBlank;
             replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         },
         attribute: function(n) {
-          return "'" + escapeAttributeValue(n._value) + "'";
+          return escapeAttributeValue(n._value);
         },
         cdata: function(n) {
         },
@@ -68,6 +96,9 @@ var XMLListBlank;
         list: function (n) {
           var s = "";
           for (var i = 0; i < n._.length; i++) {
+            if (i > 0) {
+              s += "\n";
+            }
             s += toXMLString(n._[i], []/*ancestor namespaces*/);
           }
           return s;
@@ -131,16 +162,19 @@ var XMLListBlank;
             return scopes[j].namespaces[prefix];
           }
         }
-        throw "Unknow namespace: " + prefix;
+        throw "Unknown namespace: " + prefix;
       }
       function getName(name, resolveDefaultNs) {
         var j = name.indexOf(":");
         if (j >= 0) {
+          var namespace = lookupNs(name.substring(0,j));
+          var prefix = name.substring(0,j);
+          var localName = name.substring(j + 1);
           return {
-            name: name,
-            localName: name.substring(j + 1),
-            prefix: name.substring(0,j),
-            namespace: lookupNs(name.substring(0,j))
+            name: namespace + "::" + localName,
+            localName: localName,
+            prefix: prefix,
+            namespace: namespace,
           };
         } else if(resolveDefaultNs) {
           return {
@@ -256,23 +290,33 @@ var XMLListBlank;
             var scope = {namespaces:[]};
             for (q = 0; q < content.attributes.length; ++q) {
               if (content.attributes[q].name.substring(0, 6) === "xmlns:") {
-                scope.namespaces[content.attributes[q].name.substring(6)] = trim(content.attributes[q].value);
+                var prefix = content.attributes[q].name.substring(6);
+                var uri = content.attributes[q].value;
+                scope.namespaces[prefix] = trim(uri);
+                scope.namespaces.push({uri: uri, prefix: prefix});
+                delete content.attributes[q];
               } else if (content.attributes[q].name === "xmlns") {
-                scope["xmlns"] = trim(content.attributes[q].value);
+                var prefix = "";
+                var uri = content.attributes[q].value;
+                scope.namespaces["xmlns"] = trim(uri);
+                scope.namespaces.push({uri: uri, prefix: prefix});
+                delete content.attributes[q];
               } else if (content.attributes[q].name.substring(0, 4) === "xml:") {
                 scope[content.attributes[q].name.substring(4)] = trim(content.attributes[q].value);
               } else if (content.attributes[q].name.substring(0, 3) === "xml") {
                 throw "Invalid xml attribute";
               } else {
-                // handle ordinary attributes
+                // skip ordinary attributes until all xmlns have been handled
               }
             }
             scopes.push(scope);
             var attributes = [];
             for (q = 0; q < content.attributes.length; ++q) {
-              attributes.push({name: getName(content.attributes[q].name, false), value: content.attributes[q].value});
+              if (content.attributes[q]) {
+                attributes.push({name: getName(content.attributes[q].name, false), value: content.attributes[q].value});
+              }
             }
-            sink.beginElement(getName(content.name, true), attributes, isClosed);
+            sink.beginElement(getName(content.name, true), attributes, scope, isClosed);
             j += content.parsed + (isClosed ? 2 : 1);
             if (isClosed) scopes.pop();
             break;
@@ -294,19 +338,24 @@ var XMLListBlank;
 
     this.parseFromString = function(s, mimeType) {
       // this is a raw XML object
-      var currentElement = new XMLBlank("element");  // placeholder
+      var currentElement = new XML("element");  // placeholder
       var elementsStack = [];
       parseXml(s, {
-        beginElement: function(name, attrs, isEmpty) {
+        beginElement: function(name, attrs, scope, isEmpty) {
           var parent = currentElement;
           elementsStack.push(parent);
-          currentElement = createNode("element", name.namespace, name.name);
+          currentElement = createNode("element", name.namespace, name.localName, name.prefix);
           for (var i = 0; i < attrs.length; ++i) {
-            var attr = createNode("attribute", attrs[i].name.namespace, attrs[i].name.name);
+            var attr = createNode("attribute", attrs[i].name.namespace, attrs[i].name.localName, attrs[i].name.prefix);
             attr._value = attrs[i].value;
             currentElement._attributes.push(attr);
           }
-          parent.insert(currentElement);
+          var namespaces = scope.namespaces;
+          for (var i = 0; i < namespaces.length; ++i) {
+            var ns = ShumwayNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
+            currentElement._inScopeNamespaces.push(ns);
+          }
+          parent.insert(parent.length(), currentElement);
           if (isEmpty) {
             currentElement = elementsStack.pop();
           }
@@ -318,12 +367,12 @@ var XMLListBlank;
           var node = createNode("text", "", "");
           node._value = text;
           // isWhitespace?
-          currentElement.insert(node);
+          currentElement.insert(currentElement.length(), node);
         },
         cdata: function(text) {
           var node = createNode("text", "", "");
           node._value = text;
-          currentElement.insert(node);
+          currentElement.insert(currentElement.length(), node);
         },
         comment: function(text) { },
         pi: function(name, attrs) { },
@@ -332,32 +381,42 @@ var XMLListBlank;
       return currentElement;
     };
 
-    function createNode(kind, uri, name) {
-      return new XMLBlank(kind, uri, name);
+    function createNode(kind, uri, name, prefix) {
+      return new XML(kind, uri, name, prefix);
     }
+  }
+
+  var xmlParser = new XMLParser();
+
+  isXMLType = function isXMLType(val) {
+    return val.IS_XML || val.IS_XMLLIST;
   }
 
   // 10.1 ToString
   function toString(node) {
-    switch (node._kind) {
-    case "text":
-    case "attribute":
-      return node._value;
-    default:
-      if (node.hasSimpleContent()) {
-        var str = "";
-        node._.forEach(function (v, i) {
-          str += toString(v);
-        })
-        return str;
+    if (typeof node === "object" && node !== null) {
+      switch (node._kind) {
+      case "text":
+      case "attribute":
+        return node._value;
+      default:
+        if (node.hasSimpleContent()) {
+          var str = "";
+          node._.forEach(function (v, i) {
+            str += toString(v);
+          })
+          return str;
+        }
+        return toXMLString(node);
       }
-      return toXMLString(node);
+    } else {
+      return String(node);
     }
   }
 
   // 10.2 ToXMLString
   function toXMLString(node, ancestorNamespaces, indentLevel) {
-    return new XMLEncoder(true).encode(node)
+    return new XMLEncoder(ancestorNamespaces, indentLevel, true).encode(node)
   }
 
 
@@ -367,9 +426,9 @@ var XMLListBlank;
       throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
     } else if (v === undefined) {
       throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (v._IS_XML) {
+    } else if (v.IS_XML) {
       return v;
-    } else if (v._IS_XMLLIST) {
+    } else if (v.IS_XMLLIST) {
       if (v.length() === 1) {
         return v._[0];
       }
@@ -377,7 +436,7 @@ var XMLListBlank;
     } else {
       var x = xmlParser.parseFromString(String(v));
       if (x.length() === 0) {
-        var x = new XMLBlank("text");
+        var x = new XML("text");
         return x;
       }
       x._[0]._parent = null;
@@ -394,18 +453,15 @@ var XMLListBlank;
     } else if (value === undefined) {
       throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
     } else if (value instanceof XML) {
-      var xl = new XMLListBlank();
+      var xl = new XMLList(value._parent, value._name);
       xl.append(value);
-      xl._targetObject = value._parent;
-      xl._targetProperty = value._name;
       return xl;
     } else if (value instanceof XMLList) {
       return value;
     } else {
       var s = "<parent xmlns='" + defaultNamespace + "'>" + String(value) + "</parent>";
-      var x = new XML(s);
-      var xl = new XMLListBlank();
-      xl._targetObject = null;
+      var x = new ASXML(s);
+      var xl = new XMLList();
       for (var i = 0; i < x.length(); i++) {
         var v = x._[i];
         v._parent = null;
@@ -416,20 +472,44 @@ var XMLListBlank;
   }
 
   // 10.5 ToAttributeName
-  function toAttributeName() {
+  function toAttributeName(v) {
     notImplemented("toAttributeName");
+    if (typeof v === "string") {
+      
+    }
   }
 
   // 10.6 ToXMLName
   function toXMLName(mn) {
-    return mn; // FIXME for now let's just use the multiname
+//    release || assert(mn instanceof Multiname && mn.namespaces.length === 1);
+    return new QName(mn);
   }
 
-  var xmlParser = new XMLParser();
-
-  isXMLType = function isXMLType(val) {
-    return val._IS_XML || val._IS_XMLLIST;
+  // 12.1 GetDefaultNamespace
+  function getDefaultNamespace(scope) {
+    while (scope) {
+      var obj = scope.object;
+      if (obj._defaultNamespace) {
+        return obj._defaultNamespace;
+      }
+      scope = scope.parent;
+    }
+    var ns = ShumwayNamespace.createNamespace("", "");
+    return ns;
   }
+
+  // 13.1.2.1 isXMLName ( value )
+  // define global binding
+  isXMLName = function isXMLName(v) {
+    try {
+      var qn = new QName(v);
+    } catch (e) {
+      return false;
+    }
+    // FIXME scan v to see if it is a valid lexeme and return false if not
+    return true;
+  }
+
 
 
   /**
@@ -444,16 +524,26 @@ var XMLListBlank;
      _inScopeNamespaces: [],
    }
 
+   Multiname {
+     name: string,
+     namespaces: [],
+     flags: int,
+   }
+
+   QName {
+     mn: Multiname,
+   },
+
    Element : Node {
      _kind: "element",
-     _name: { localName: string, uri: string },
+     _name: QName,
      _: [],             // children
      _attributes: [],   // attributes
    }
 
    Attribute : Node {
      _kind: "attribute",
-     _name: { localName: string, uri: string },
+     _name: QName,
      _value: string,
      _parent: XML,
    }
@@ -465,7 +555,7 @@ var XMLListBlank;
 
    ProcessingInstruction : Node {
      _kind: "processing-instruction",
-     _name: { localName: string, uri: string },
+     _name: QName,
      _value: string,
    }
 
@@ -484,35 +574,24 @@ var XMLListBlank;
     var FLAG_IGNORE_WHITESPACE              = 0x04;
     var FLAG_PRETTY_PRINTING                = 0x08;
 
-    XML = function (value) {
-      if (!(this instanceof XML)) {
-        if (value instanceof XML) {
+    ASXML = function (value) {
+      if (!(this instanceof ASXML)) {
+        if (value instanceof ASXML) {
           return value; // no cloning
         }
-        return new XML(value);
+        return new ASXML(value);
       }
       if (value === null || value === undefined) {
         value = "";
       }
       var x = toXML(value);
       if (isXMLType(value)) {
-        x = x.copy();
+        x = x.deepCopy();
       }
       return x;
     };
 
-    var c = new runtime.domain.system.Class("XML", XML, Domain.passthroughCallable(XML));
-    c._flags = FLAG_IGNORE_COMMENTS |
-      FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
-      FLAG_IGNORE_WHITESPACE |
-      FLAG_PRETTY_PRINTING;
-
-    c._prettyIndent = 2;
-    c.extend(baseClass);
-
-    var Xp = XML.prototype;
-
-    XMLBlank = function (kind, uri, name) {
+    XML = function (kind, uri, name, prefix) {
       if (kind === undefined) {
         kind = "text";
       }
@@ -522,15 +601,23 @@ var XMLListBlank;
       if (name === undefined) {
         name = "";
       }
-      this.init(kind, uri, name);
+      this.init(kind, uri, name, prefix);
     }
 
-    XMLBlank.prototype = Xp;
-    
+    var c = new runtime.domain.system.Class("XML", ASXML, Domain.passthroughCallable(ASXML));
+    c._flags = FLAG_IGNORE_COMMENTS |
+      FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
+      FLAG_IGNORE_WHITESPACE |
+      FLAG_PRETTY_PRINTING;
+
+    c._prettyIndent = 2;
+    c.extend(baseClass);
+
+    var Xp = XML.prototype = ASXML.prototype;
+
     // Initialize an XML node.
-    Xp.init = function init(kind, uri, name) {
-      this._name = name;
-      this._uri = uri;
+    Xp.init = function init(kind, uri, name, prefix) {
+      this._name = new QName(new Multiname([new ASNamespace(prefix, uri)], name));
       this._kind = kind;    // E4X [[Class]]
       this._parent = null;
       this._inScopeNamespaces = [];
@@ -559,9 +646,11 @@ var XMLListBlank;
 
     Xp.canHandleProperties = true;
 
-    Xp.copy = function () {
+
+    // 9.1.1.7 [[DeepCopy]] ( )
+    Xp.deepCopy = function () {
       // WARNING lots of cases not handled by both toXMLString() and XML()
-      return new XML(toXMLString(this));
+      return new ASXML(toXMLString(this));
     };
 
     // 13.4.4.16 XML.prototype.hasSimpleContent()
@@ -573,11 +662,11 @@ var XMLListBlank;
       if (this._) {
         this._.forEach(function (v) {
           if (v._kind === "element") {
-            return false;
+            result = false;
           }
         });
       }
-      return true;
+      return result;
     }
 
     var ATTR_NAME = 1;
@@ -608,37 +697,76 @@ var XMLListBlank;
       }
     }
 
-    Xp.set = function (mn, value, isMethod) {
+    Xp.set = function (p, v, isMethod) {
+      var x, i, c, n;
       if (isMethod) {
         return;
       }
-      // FIXME need to set XML attributes and elements here
-      switch (nameKind(mn)) {
-      case ATTR_NAME:
+      x = this;
+      if (p === p >>> 0) {
+        throw "TypeError in XML.prototype.set(): invalid property name " + p;
+      }
+      if (x._kind === "text" ||
+          x._kind === "comment" ||
+          x._kind === "processing-instruction" ||
+          x._kind === "attribute") {
+        return;
+      }
+      if (!v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
+        c = toString(v);
+      } else {
+        c = v.deepCopy();
+      }
+      n = toXMLName(p);
+      if (nameKind(n.mn) === ATTR_NAME) {
         if (!this._attributes) {
           return;
         }
         this._attributes.forEach(function (v, i, o) {
-          if (v._name === mn.name) {
+          if (v._name === n.localName) {
             delete o[i];
           }
         });
-        var a = new XMLBlank("attribute", "", mn.name);
-        a._value = value;
+        var a = new XML("attribute", n.uri, n.localName);
+        a._value = v;
         a._parent = this;
         this._attributes.push(a);
-        break;
-      case ANY_ATTR_NAME:
-        break;
-      case ANY_NAME:
-        break;
-      default:
-        var x = new XMLBlank("element", "", mn.name);
-        x._value = value;
-        x._parent = this;
-        this._.push(x);
-        break;
+        return;
       }
+      var isValidName = isXMLName(n)
+      if (!isValidName && n.localName !== "*") {
+          return; // We're done
+      }
+      var i = undefined;
+      var primitiveAssign = !isXMLType(c) && n.localName !== "*";
+      for (var k = x.length() - 1; k >= 0; k--) {
+        // FIXME remove all but the last matching child
+      }
+      if (i === undefined) {
+        i = x.length();
+        if (primitiveAssign) {
+          if (n.uri === null) {
+            var name = new QName(getDefaultNamespace(scope), n);
+          } else {
+            var name = new QName(n);
+          }
+          var y = new XML("element", name.uri, name.localName, name.prefix);
+          y._parent = x;
+          var ns = name.getNamespace();
+          x.replace(String(i), y);
+          y.addInScopeNamespace(ns);
+        }
+      }
+      if (primitiveAssign) {
+        x._[i]._ = [];   // blow away kids of x[i]
+        var s = toString(c);
+        if (s !== "") {
+          x._[i].replace("0", s);
+        } 
+      } else {
+        x.replace(String(i), c);
+      }
+      return;
     };
 
     // 9.1.1.1 XML.[[Get]] (P)
@@ -656,20 +784,16 @@ var XMLListBlank;
           }
           return null;
         }
-        val = new XMLListBlank();
-        val._targetObject = this._parent;
-        val._targetProperty = mn;
-        var name = mn;  // E4X wants us to construct an XMLName here, but a
-        // multiname has all the same information, minus a 'prefix', which is
-        // optional.
-
-        switch (nameKind(mn)) {
+        var name = toXMLName(mn);
+        val = new XMLList(this._parent, name);
+        switch (nameKind(name.mn)) {
         case ANY_ATTR_NAME:
           var any = true;
           // fall through
         case ATTR_NAME:
           this._attributes.forEach(function (v, i) {
-            if (any || (v._name === mn.name)) {
+            if ((any || (v._name.localName === name.localName)) &&
+                ((name.uri === null || v._name.uri === name.uri))) {
               val.append(v);
             }
           });
@@ -679,8 +803,8 @@ var XMLListBlank;
           // fall through
         default:
           this._.forEach(function (v, i) {
-            if (any || v._name === mn.name) {
-              // implement xmllist
+            if ((any || v._kind === "element" && v._name.localName === name.localName) &&
+                ((name.uri === null || v._kind === "element" && v._name.uri === name.uri))) {
               val.append(v);
             }
           });
@@ -694,38 +818,193 @@ var XMLListBlank;
       debugger;
     };
 
-    Xp._IS_XML = true;
+    Xp.IS_XML = true;
 
-    Xp.insert = function insert(node) {
-      this._.push(node);
+    // 9.1.1.11 [[Insert]] (P, V)
+    Xp.insert = function insert(p, v) {
+      var x, s, i, n;
+      x = this;
+      if (x._kind === "text" ||
+          x._kind === "comment" ||
+          x._kind === "processing-instruction" ||
+          x._kind === "attribute") {
+        return;
+      }
+      i = p >>> 0;
+      if (String(p) !== String(i)) {
+        throw "TypeError in XML.prototype.insert(): invalid property name " + p;
+      }
+      if (x._kind === "element") {
+        var a = v;
+        while (a) {
+          if (a === this) {
+            throw "Error in XML.prototype.insert()";
+          }
+          a = a._parent;
+        }
+      }
+      if (x.IS_XMLLIST) {
+        n = x.length();
+        if (n === 0) {
+          return;
+        }
+      } else {
+        n = 1;
+      }
+      for (var j = x.length() - 1; j >= i; j--) {
+        x[j+n] = x[j];
+      }
+      if (x.IS_XMLLIST) {
+        n = v.length();
+        for (var j = 0; j < n; j++) {
+          v._[j]._parent = x;
+          x[i+j] = v[j];
+        }
+      } else {
+        //x.replace(i, v);
+        v._parent = x;
+        x._[i] = v;
+      }
     };
 
+    // 9.1.1.12 [[Replace]] (P, V)
+    Xp.replace = function (p, v) {
+      var x, s;
+      x = this;
+      if (x._kind === "text" ||
+          x._kind === "comment" ||
+          x._kind === "processing-instruction" ||
+          x._kind === "attribute") {
+        return;
+      }
+      var i = p >>> 0;
+      if (String(p) !== String(i)) {
+        throw "TypeError in XML.prototype.replace(): invalid name " + p;
+      }
+      if (i >= x.length()) {
+        p = String(x.length());
+      }
+      if (v._kind === "element") {
+        var a = x;
+        while (a) {
+          if (a === v) {
+            throw "Error in XML.prototype.replace()";
+          }
+          a = a._parent;
+        }
+      }
+      if (v._kind === "element" ||
+          v._kind === "text" ||
+          v._kind === "comment" ||
+          v._kind === "processing-instruction") {
+        v._parent = x;
+        if (x[p]) {
+          x._[p]._parent = null;
+        }
+        x._[p] = v;
+      } else if (x.IS_XMLLIST) {
+        x.deleteByIndex(p);
+        x.insert(p, v);
+      } else {
+        s = toString(v);
+        t = new XML();
+        t._parent = x;
+        t._value = s;
+        if (x[p]) {
+          x._[p]._parent = null;
+        }
+        x._[p] = t;
+      }
+      return;
+    };
+
+    // 9.1.1.13 [[AddInScopeNamespace]] ( N )
+    Xp.addInScopeNamespace = function (ns) {
+      var x, s;
+      x = this;
+      if (x._kind === "text" ||
+          x._kind === "comment" ||
+          x._kind === "processing-instruction" ||
+          x._kind === "attribute") {
+        return;
+      }
+      if (ns.prefix !== undefined) {
+        if (ns.prefix === "" && x._name.uri === "") {
+          return;
+        }
+        var match = null;
+        x._inScopeNamespaces.forEach(function (v, i) {
+          if (v.prefix === ns.prefix) {
+            match = v;
+          }
+        });
+        if (match !== null && match.uri !== ns.uri) {
+          x._inScopeNamespaces.forEach(function (v, i) {
+            if (v.prefix === match.prefix) {
+              x._inScopeNamespaces[i] = ns;  // replace old with new
+            }
+          });
+        }
+        if (x._name.prefix === ns.prefix) {
+          x._name.prefix = undefined;
+        }
+        x._attributes.forEach(function (v, i) {
+          if (v._name.prefix === ns._name.prefix) {
+            v._name.prefix = undefined;
+          }
+        });       
+      }
+      return;
+    }
+
     // 9.1.1.8 [[Descendants]] (P)
-    Xp.descendants = function (mn) {
-      var name = toXMLName(mn);
-      var xl = new XMLListBlank();
-      // SPEC BUG spec says nothing about what to do with non-element XML objects
-      if (this._kind !== "element") {
+    Xp.descendants = function (name) {
+      name = toXMLName(name);
+      var x = this;
+      var xl = new XMLList();
+      if (x._kind !== "element") {
         return xl;
       }
-      if (mn.isAttribute()) {
+      if (name.IS_ATTR) {
         // Get attributes
         this._attributes.forEach(function (v, i) {
-          if (mn.isAnyName() || mn.name === v.name) {
+          if (name.IS_ANY || name.localName === v.name.localName) {
             xl.append(v);
           }
         });
       } else {
         // Get children
         this._.forEach(function (v, i) {
-          if (mn.isAnyName() || mn.name === v._name) {
+          if (name.IS_ANY || name.localName === v._name.localName) {
             xl.append(v);
           }
         });
       }
       // Descend
       this._.forEach(function (v, i) {
-        xl.append(v.descendants(mn));
+        xl.append(v.descendants(name));
+      });
+      return xl;
+    };
+
+    Xp.comments = function () {
+      var x = this;
+      var xl = new XMLList(x, null);
+      x._.forEach(function (v, i) {
+        if (v._kind === "comment") {
+          xl.append(v);
+        }
+      });
+      return xl;
+    };
+
+    Xp.text = function () {
+      var x = this;
+      var xl = new XMLList(x, null);
+      x._.forEach(function (v, i) {
+        if (v._kind === "text") {
+          xl.append(v);
+        }
       });
       return xl;
     };
@@ -793,7 +1072,7 @@ var XMLListBlank;
           notImplemented("XML.attribute");
         },
         attributes: function attributes() { // (void) -> XMLList
-          notImplemented("XML.attributes");
+          return this.get(new QName("@*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XML.child");
@@ -807,19 +1086,37 @@ var XMLListBlank;
           return list;
         },
         comments: function comments() { // (void) -> XMLList
-          notImplemented("XML.comments");
+          return this.comments();
         },
         contains: function contains(value) { // (value) -> Boolean
           notImplemented("XML.contains");
         },
         copy: function copy() { // (void) -> XML
-          return this.copy();
+          return this.deepCopy();
         },
         descendants: function descendants(name) { // (name = "*") -> XMLList
-          notImplemented("XML.descendants");
+          if (name === undefined) {
+            name = "*";
+          }
+          return this.descendants(name);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
-          notImplemented("XML.elements");
+          var x = this;
+          var any = false;
+          if (name === undefined) {
+            name = "*";
+            any = true;
+          }
+          var name = toXMLName(name);
+          var xl = new XMLList(this._parent, name);
+          x._.forEach(function (v, i) {
+            if (v._kind === "element" &&
+                (any || v._name.localName === name.localName) &&
+                (name.uri === null || v._kind === "element" && v._name.uri === name.uri)) {
+              xl.append(v);
+            }
+          });
+          return xl;
         },
         hasComplexContent: function hasComplexContent() { // (void) -> Boolean
           notImplemented("XML.hasComplexContent");
@@ -846,7 +1143,8 @@ var XMLListBlank;
           notImplemented("XML._namespace");
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
-          notImplemented("XML.namespaceDeclarations");
+          //notImplemented("XML.namespaceDeclarations");
+          return new XMLList();
         },
         nodeKind: function nodeKind() { // (void) -> String
           return this._kind;
@@ -882,7 +1180,7 @@ var XMLListBlank;
           notImplemented("XML.setNamespace");
         },
         text: function text() { // (void) -> XMLList
-          notImplemented("XML.text");
+          return this.comments();
         },
         toXMLString: function () { // (void) -> String
           return toXMLString(this)
@@ -899,8 +1197,10 @@ var XMLListBlank;
   }
 
   XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
-    XMLList = function (value) {
-      if (!(this instanceof XMLList)) {
+
+    // Constructor used by ActionScript
+    ASXMLList = function (value) {
+      if (!(this instanceof ASXMLList)) {
         return callXMLList(value);
       }
       return constructXMLList(value);
@@ -919,30 +1219,31 @@ var XMLListBlank;
       if (val === null || val === undefined) {
         val = "";
       }
-      if (val._IS_XMLLIST) {
-        var xl = new XMLListBlank();
+      if (val.IS_XMLLIST) {
+        var xl = new XMLList();
         xl.append(val);
         return xl;
       }
       return toXMLList(val);
     }
 
-    var c = new runtime.domain.system.Class("XMLList", XMLList, Domain.passthroughCallable(XMLList));
-    c.extend(baseClass);
-    var XLp = XMLList.prototype;
-
-    XMLListBlank = function (kind) {
-      this._targetObject = null;
+    // Internal constructor
+    XMLList = function (targetObject, targetProperty) {
+      this._targetObject = targetObject ? targetObject : null;
+      this._targetProperty = targetProperty ? targetProperty : null;
       this._ = [];
     }
 
-    XMLListBlank.prototype = XLp;
+    var c = new runtime.domain.system.Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
+    c.extend(baseClass);
+
+    var XLp = XMLList.prototype = ASXMLList.prototype;
 
     XLp.canHandleProperties = true;
 
     // 13.5.4.14 XMLList.prototype.hasSimpleContent()
     XLp.hasSimpleContent = function hasSimpleContent() {
-      if (this._.length === 0) {
+      if (this.length() === 0) {
         return true;
       } else if (this.length() === 1) {
         return toXML(this).hasSimpleContent()
@@ -956,38 +1257,75 @@ var XMLListBlank;
       return result;
     }
 
-    XLp.set = function (mn, value, isMethod) {
+    XLp.set = function (mn, v, isMethod) {
+      var x, i, r;
       if (isMethod) {
         return;
       }
-      if (!isNumeric(mn)) {
-        return;
-      }
-        /*
-          if (isNumeric(mn.name)) {
-          if (this._target !== null) {
-          var r = this._target.resolve()
+      return;   // until this function is properly implemented
+      x = this;
+      i = mn >>> 0;
+      if (String(mn) === String(i)) {
+        if (this._targetObject !== null) {
+          r = this._targetObject.resolveValue();
           if (r === null) {
-          return;
+            return;
           }
-          } else {
-          var r = null;
+        } else {
+          r = null;
+        }
+        if (i >= x.length()) {
+          if (r && r.IS_XMLLIST) {
+            if (r.length !== 1) {
+              return;
+            } else {
+              r = r[0];
+            }
           }
-          if (r is XMLList) {
-          if (r.length !== 1) {
-          return;
-          } else {
-          var r = r[0];
-          }
-          }
-          if (!(r is Element)) {
-          return;
+          if (r && r._kind !== "element") {
+            return;
           }
           var y = new XML();
           y._parent = r;
           y._name = this._targetProp;
+          if (x._targetProperty.IS_ATTR) {
+            // FIXME implement
+          } else if (x._targetProperty === null || x._targetProperty.localName === "*") {
+            y._name = null;
+            y._kind = "text";
+          } else {
+            y._kind = "element";
           }
-        */
+          i = x.length();
+          if (y._kind !== "attribute") {
+            // FIXME implement
+          }
+          x.append(y);
+        }
+        if (!v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
+          v = toString(v);
+        }
+        if (x._[i]._kind === "attribute") {
+          // FIXME implement
+        } else if (v.IS_XMLLIST) {
+          // FIXME implement
+        } else if (v.IS_XML || (k = x._[i]._kind) === "text" ||
+                   k === "comment" || k === "processing-instruction") {
+          // FIXME implement
+        } else {
+          x._[i].set("*", v);
+        }        
+      } else if (x.length() <= 1) {
+        if (x.length() === 0) {
+          r = x.resolveValue();
+          if (r === null || r.length() !== 1) {
+            return;
+          }
+          x.append(r)
+        }
+        x._[0].set(p, v);
+      }
+      return;
     };
 
     XLp.get = function (mn, isMethod) {
@@ -995,9 +1333,8 @@ var XMLListBlank;
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return this[Multiname.getQualifiedName(resolved)];
       } else {
-        var xl = new XMLListBlank();
-        xl._targetObject = this;
-        xl._targetProperty = mn;
+        var name = toXMLName(mn);
+        var xl = new XMLList(this, name);
         this._.forEach(function (v, i) {
           var xl2 = v.get(mn);
           if (xl2.length() > 0) {
@@ -1013,16 +1350,16 @@ var XMLListBlank;
     };
 
     XLp.append = function (val) {
-      if (val._IS_XMLLIST) {
+      if (val.IS_XMLLIST) {
         this._targetObject = val._targetObject;
         this._targetProperty = val._targetProperty;
-        if (val._.length === 0) {
+        if (val.length() === 0) {
           return;
         }
-        for (var i = 0; i < val._.length; i++) {
+        for (var i = 0; i < val.length(); i++) {
           this._.push(val._[i]);
         }
-      } else if (val._IS_XML) {
+      } else if (val.IS_XML) {
         this._.push(val);
       }
       return;
@@ -1047,7 +1384,27 @@ var XMLListBlank;
       }
     };
 
-    XLp._IS_XMLLIST = true;
+    // 9.2.1.7 [[DeepCopy]] ( )
+    XLp.deepCopy = function () {
+      var xl = new XMLList();
+      this._.forEach(function (v, i) {
+        xl._[i] = v.deepCopy();
+      });
+      return xl;
+    };
+
+    // 9.2.1.8 [[Descendants]] (P)
+    XLp.descendants = function (name) {
+      var xl = new XMLList(null);
+      this._.forEach(function (v, i) {
+        if (v._kind === "element") {
+          xl.append(v.descendants(name));
+        }
+      });
+      return xl;
+    };
+
+    XLp.IS_XMLLIST = true;
 
     c.native = {
       static: {
@@ -1066,7 +1423,7 @@ var XMLListBlank;
           notImplemented("XMLList.attribute");
         },
         attributes: function attributes() { // (void) -> XMLList
-          notImplemented("XMLList.attributes");
+          return this.get(new QName("@*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XMLList.child");
@@ -1077,7 +1434,14 @@ var XMLListBlank;
           return list;
         },
         comments: function comments() { // (void) -> XMLList
-          notImplemented("XMLList.comments");
+          var x = this;
+          var xl = new XMLList(x, null);
+          x._.forEach(function (v, i) {
+            if (v._kind === "element") {
+              xl.append(v.comments());
+            }
+          });
+          return xl;
         },
         contains: function contains(value) { // (value) -> Boolean
           for (var i = 0; i < this._.length; i++) {
@@ -1088,13 +1452,26 @@ var XMLListBlank;
           return false;
         },
         copy: function copy() { // (void) -> XMLList
-          notImplemented("XMLList.copy");
+          return this.deepCopy();
         },
-        descendants: function descendants(mn) { // (name = "*") -> XMLList
-          return toXML(obj).descendants(mn);
+        descendants: function descendants(name) { // (name = "*") -> XMLList
+          return this.descendants(name === undefined ? "*" : name);
         },
         elements: function elements(name) { // (name = "*") -> XMLList
-          notImplemented("XMLList.elements");
+          var x = this;
+          var any = false;
+          if (name === undefined) {
+            name = "*";
+            any = true;
+          }
+          var name = toXMLName(name);
+          var xl = new XMLList(x, name);
+          x._.forEach(function (v, i) {
+            if (v._kind === "element") {
+              xl.append(v.comments());
+            }
+          });
+          return xl;
         },
         hasComplexContent: function hasComplexContent() { // (void) -> Boolean
           notImplemented("XMLList.hasComplexContent");
@@ -1103,7 +1480,7 @@ var XMLListBlank;
           return this.hasSimpleContent();
         },
         length: function length() { // (void) -> int
-          return 1;
+          return this._.length;
         },
         name: function name() { // (void) -> Object
           return toXML(this)._name;
@@ -1118,7 +1495,14 @@ var XMLListBlank;
           notImplemented("XMLList.processingInstructions");
         },
         text: function text() { // (void) -> XMLList
-          notImplemented("XMLList.text");
+          var x = this;
+          var xl = new XMLList(x, null);
+          x._.forEach(function (v, i) {
+            if (v._kind === "element") {
+              xl.append(v.text());
+            }
+          });
+          return xl;
         },
         toXMLString: function () { // (void) -> String
           return toXMLString(this)
@@ -1142,7 +1526,7 @@ var XMLListBlank;
           notImplemented("XMLList.insertChildBefore");
         },
         nodeKind: function nodeKind() { // (void) -> String
-          return toXML(this).nodeKind();
+          return toXML(this)._kind;
         },
         _namespace: function _namespace(prefix, argc) { // (prefix, argc:int) -> any
           notImplemented("XMLList._namespace");
@@ -1151,7 +1535,8 @@ var XMLListBlank;
           notImplemented("XMLList.localName");
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
-          notImplemented("XMLList.namespaceDeclarations");
+          //notImplemented("XMLList.namespaceDeclarations");
+          return new XMLList();
         },
         prependChild: function prependChild(value) { // (value) -> XML
           notImplemented("XMLList.prependChild");
@@ -1180,23 +1565,123 @@ var XMLListBlank;
   }
 
   QNameClass = function QNameClass(runtime, scope, instance, baseClass) {
-    function QName() {}
+    // Construct a QName from a ns and name. If name is a multiname with
+    // multiple namespaces then it is an unqualified name and we need to
+    // construct a new multiname with the default namespace. if it is a
+    // multiname with one namespace, then it is a qualified name and we
+    // use it as is. in all other cases we construct a new multiname from
+    // the given namespace and name.
+    QName = function QName(ns, name) {
+      // handle coerce case
+      if (!(this instanceof QName)) {
+        if (name === undefined && ns.IS_QNAME) {
+          return ns;
+        } else {
+          return new QName(ns, name);
+        }
+      }
+      // if only one arg, then its the name
+      if (name === undefined) {
+        name = ns;
+        ns = undefined;
+      }
+      if (typeof ns === "string" || ns && ns.IS_QNAME) {
+        ns = new ASNamespace(ns);
+      }
+      // construct the multiname for this qname
+      var mn;
+      if (name && name.IS_QNAME) {
+        if (ns === undefined) {
+          // reuse the original multiname
+          mn = name.mn;
+        } else {
+          mn = new Multiname([ns], name.mn.getName());
+        }
+      } else if (name && name instanceof Multiname) {
+        if (ns === undefined) {
+          if (name.isQName() || name.isAnyName()) {
+            mn = name;
+          } else {
+            mn = new Multiname([getDefaultNamespace(scope)], name.getName(), name.flags);
+          }
+        } else {
+          mn = new Multiname([ns], name.getName(), name.flags);
+        }
+      } else if (name === "*") {
+        // Any name has a null name and is not a runtime name
+        mn = new Multiname([ns], null, 0);
+      } else if (name === "@*") {
+        // Any name has a null name and is not a runtime name
+        mn = new Multiname([ns], null, Multiname.ATTRIBUTE);
+      } else {
+        ns = ns === undefined ? getDefaultNamespace(scope) : ns;
+        if (name === undefined) {
+          mn = new Multiname([ns], "");
+        } else {
+          mn = new Multiname([ns], toString(name));
+        }
+      }
+      this.mn = mn;
+      this.IS_ANY = mn.isAnyName();
+      this.IS_ATTR = mn.isAttribute();
+    }
+
     var c = new runtime.domain.system.Class("QName", QName, Domain.passthroughCallable(QName));
     c.extend(baseClass);
+    QNp = QName.prototype;
+    defineNonEnumerableGetter(QNp, "localName", function () {
+      if (!this._localName) {
+        this._localName = this.mn.getName();
+      }
+      return this._localName;
+    });
+    defineNonEnumerableGetter(QNp, "uri", function () {
+      if (this._uri === undefined) {
+        var ns = this.mn.namespaces[0]
+        this._uri = ns ? ns.originalURI : null;
+      }
+      return this._uri;
+    });
+    defineNonEnumerableGetter(QNp, "prefix", function () {
+      return this.mn.namespaces[0].prefix;
+    });
+    defineNonEnumerableSetter(QNp, "prefix", function (prefix) {
+      this.mn.namespaces[0].prefix = prefix;
+    });
+    QNp.IS_QNAME = true;
+
+    // 13.3.5.4 [[GetNamespace]]([InScopeNamespaces])
+    QNp.getNamespace = function (isns) {
+      if (this.uri === null) {
+        throw "TypeError in QName.prototype.getNamespace()";
+      }
+      if (!isns) {
+        isns = [];
+      }
+      var ns;
+      for (var i = 0; i < isns.length; i++) {
+        if (this.uri === isns[i].uri) {
+          ns = isns[i];
+        }
+      }
+      if (!ns) {
+        ns = ShumwayNamespace.createNamespace(this.uri);  // FIXME what about the prefix
+      }
+      return ns;
+    };
+
     c.native = {
       static: {
       },
       instance: {
         localName: {
           get: function localName() { // (void) -> String
-            notImplemented("QName.localName");
-            return this._localName;
+            return this.localName;
           }
         },
         uri: {
           get: function uri() { // (void) -> any
-            notImplemented("QName.uri");
-            return this._uri;
+            return this.uri;
           }
         }
       }

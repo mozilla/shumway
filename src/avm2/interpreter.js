@@ -35,6 +35,7 @@ var Interpreter = (function () {
   function createMultiname(stack, mn) {
     if (Multiname.isRuntime(mn)) {
       var namespaces = mn.namespaces, name = mn.name;
+      var flags = mn.flags;
       if (Multiname.isRuntimeName(mn)) {
         name = stack.pop();
       }
@@ -45,9 +46,9 @@ var Interpreter = (function () {
       if (Multiname.isRuntimeNamespace(mn)) {
         namespaces = [stack.pop()];
       }
-      mn = new Multiname(namespaces, name);
+      mn = new Multiname(namespaces, name, flags);
     }
-    release || assert(!Multiname.isRuntime(mn));
+//    release || assert(!Multiname.isRuntime(mn));
     return mn;
   }
 
@@ -393,7 +394,7 @@ var Interpreter = (function () {
             break;
           case OP_getdescendants:
             multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getDescendants(multiname, stack.pop()));
+            stack.push(getDescendants(stack.pop(), multiname));
             break;
           case OP_newcatch:
             release || assert(exceptions[bc.index].scopeObject);
