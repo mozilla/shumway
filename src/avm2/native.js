@@ -755,42 +755,15 @@ var natives = (function () {
    *  /x (extended) - allows different formatting of regexp
    *
    * TODO: Should we support extended at all? Or even dotall?
+   *
+   * RegExp is implemented using XRegExp copyright 2007-present by Steven Levithan.
+   *
    */
   function RegExpClass(runtime, scope, instance, baseClass) {
-    function ASRegExp(pattern, flags) {
-      function stripFlag(flags, c) {
-        flags[flags.indexOf(c)] = flags[flags.length - 1];
-        return flags.substr(0, flags.length - 1);
-      }
-
-      if (flags) {
-        var re;
-        var extraProps = {};
-
-        if (flags.indexOf("s") >= 0) {
-          pattern = pattern.replace(/\./, "(.|\n)");
-          flags = stripFlags(flags, "s");
-          extraProps.push({ key: "dotall", value: true });
-        }
-
-        re = new RegExp(pattern, flags);
-
-        for (var i = 0, j = extraProps.length; i < j; i++) {
-          var prop = extraProps[i];
-          re[prop.key] = prop.value;
-        }
-
-        return re;
-      }
-
-      return new RegExp(pattern, flags);
-    }
-    ASRegExp.prototype = RegExp.prototype;
-
-    var c = new runtime.domain.system.Class("RegExp", ASRegExp, C(ASRegExp));
+    var c = new runtime.domain.system.Class("RegExp", XRegExp, C(XRegExp));
     c.extendBuiltin(baseClass);
 
-    var REp = RegExp.prototype;
+    var REp = XRegExp.prototype;
     c.native = {
       instance: {
         global: {
@@ -1365,7 +1338,7 @@ var natives = (function () {
     Boolean: Boolean,
     Math: Math,
     Date: Date,
-    RegExp: RegExp,
+    RegExp: XRegExp,
     Object: Object,
 
     /**
