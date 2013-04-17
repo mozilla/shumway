@@ -278,11 +278,11 @@ function typeOf(x) {
   // ABC doesn't box primitives, so typeof returns the primitive type even when
   // the value is new'd
   if (x) {
-    if (x.constructor==String) {
+    if (x.constructor === String) {
       return "string"
-    } else if (x.constructor==Number) {
+    } else if (x.constructor === Number) {
       return "number"
-    } else if (x.constructor==Boolean) {
+    } else if (x.constructor === Boolean) {
       return "boolean"
     } else if (x instanceof XML || x instanceof XMLList) {
       return "xml"
