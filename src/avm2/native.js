@@ -1527,7 +1527,7 @@ var natives = (function () {
     }),
 
     describeTypeJSON: constant(describeTypeJSON),
-    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS],
+    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
   };
 
   // NOTE: Defining helper functions. Control flow does not reach here.
@@ -1546,24 +1546,41 @@ var natives = (function () {
       USE_ITRAITS         : 0x0200,
       HIDE_OBJECT         : 0x0400
     };
-    var info = o.classInfo ? o.classInfo : Object.getPrototypeOf(o).class.classInfo;
-    if (!info) {
-      return null;
-    }
-    var traits = chooseTraits(info, flags);
-    if (!traits || traits.length === 0) {
-      return null;
-    }
 
-    var obj = {};
-    obj[publicName("name")] = info.instanceInfo.name.name;
-    obj[publicName("isDynamic")] = false;
-    obj[publicName("isStatic")] = false;
-    obj[publicName("isFinal")] = false;
-    obj[publicName("traits")] = describeTraits(traits);
+    // public keys used multiple times while creating the description
+    var declaredByKey = publicName("declaredBy");
+    var metadataKey = publicName("metadata");
+    var accessKey = publicName("access");
+    var uriKey = publicName("uri");
+    var nameKey = publicName("name");
+    var typeKey = publicName("type");
+    var returnTypeKey = publicName("returnType");
+    var valueKey = publicName("value");
+    var keyKey = publicName("key");
+    var parametersKey = publicName("parameters");
+    var optionalKey = publicName("optional");
 
-//    console.log("describeTypeJSON() obj="+JSON.stringify(obj, null, 2));
-    return obj;
+    var cls = o.classInfo ? o : Object.getPrototypeOf(o).class;
+    release || assert(cls, "No class found for object " + o);
+    var info = cls.classInfo;
+
+    var description = {};
+    description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
+    description[publicName("isDynamic")] = false;
+    //TODO: verify that `isStatic` is false for all instances, true for classes
+    description[publicName("isStatic")] = cls === o;
+    description[publicName("isFinal")] = false;
+    if (flags & Flags.INCLUDE_TRAITS) {
+      description[publicName("traits")] = addTraits(cls, flags);
+    }
+    var metadata = null;
+    if (info.metadata) {
+      metadata = Object.keys(info.metadata).map(function(key) {
+        return describeMetadata(info.metadata[key]);
+      });
+    }
+    description[metadataKey] = metadata;
+    return description;
 
     // privates
 
@@ -1571,48 +1588,145 @@ var natives = (function () {
       return Multiname.getPublicQualifiedName(str)
     }
 
-    function chooseTraits(info, flags) {
-      if (flags & Flags.USE_ITRAITS) {
-        info = info.instanceInfo;
+    function unmangledQualifiedName(mn) {
+      var name = mn.name;
+      var namespace = mn.namespaces[0];
+      if (namespace && namespace.originalURI) {
+        return namespace.originalURI + '::' + name;
       }
-      return info.traits;        
+      return name;
+    }
+
+    function describeMetadata(metadata) {
+      var result = {};
+      result[nameKey] = metadata.name;
+      result[valueKey] = metadata.value.map(function(value) {
+        var val = {};
+        val[keyKey] = value.key;
+        val[valueKey] = value.value;
+        return value;
+      });
+      return result;
     }
     
-    function describeTraits(traits) {
-      var obj = {};
-      var basesVal = obj[publicName("bases")] = [];
-      var methodsVal = obj[publicName("methods")] = [];
-      var acessorsVal = obj[publicName("accessors")] = null;
-      var interfacesVal = obj[publicName("interfaces")] = [];
-      var variablesVal = obj[publicName("variables")] = [];
-      var metadataVal = obj[publicName("metadata")] = [];
+    function addTraits(cls, flags) {
+      const includedMembers = [flags & Flags.INCLUDE_VARIABLES,
+                               flags & Flags.INCLUDE_METHODS,
+                               flags & Flags.INCLUDE_ACCESSORS,
+                               flags & Flags.INCLUDE_ACCESSORS];
+      const includeBases = flags & Flags.INCLUDE_BASES;
+      const includeMetadata = flags & Flags.INCLUDE_METADATA;
 
-      for (var i = 0; traits && i < traits.length; i++) {
-        var t = traits[i];
-        var val = {};
-        switch (t.kind) {
-        case TRAIT_Slot:
-          val[publicName("metadata")] = null;
-          val[publicName("uri")] = null;
-          val[publicName("name")] = t.name.name;
-          val[publicName("type")] = "*";
-          val[publicName("access")] = "readwrite";
-          variablesVal.push(val);
-          break;
-        case TRAIT_Method:
-        case TRAIT_Getter:
-        case TRAIT_Setter:
-          val[publicName("metadata")] = createPublicKeyedClone(t.metadata);
-          val[publicName("uri")] = null;
-          val[publicName("name")] = t.name.name;
-          val[publicName("type")] = "*";
-          val[publicName("access")] = t.kind === TRAIT_Getter ? "read" :
-                                        t.kind === TRAIT_Setter ? "write" : 
-                                        "readwrite";
-          methodsVal.push(val);
-          break;
-        default:
-          break;
+      var obj = {};
+
+      var basesVal = obj[publicName("bases")] = includeBases ? [] : null;
+      if (flags & Flags.INCLUDE_INTERFACES) {
+        var interfacesVal = obj[publicName("interfaces")] = [];
+        if (flags & Flags.USE_ITRAITS) {
+          for (var key in cls.implementedInterfaces) {
+            var ifaceName = cls.implementedInterfaces[key].name;
+            interfacesVal.push(unmangledQualifiedName(ifaceName));
+          }
+        }
+      } else {
+        obj[publicName("interfaces")] = null;
+      }
+
+      var variablesVal = obj[publicName("variables")] =
+          flags & Flags.INCLUDE_VARIABLES ? [] : null;
+      var accessorsVal = obj[publicName("accessors")] =
+          flags & Flags.INCLUDE_ACCESSORS ? [] : null;
+      var methodsVal = obj[publicName("methods")] =
+          flags & Flags.INCLUDE_METHODS ? [] : null;
+
+      // Needed for accessor-merging
+      var encounteredAccessors = {};
+
+      var addBase = false;
+      while (cls) {
+        var className = unmangledQualifiedName(cls.classInfo.instanceInfo.name);
+        if (includeBases && addBase) {
+          basesVal.push(className);
+        } else {
+          addBase = true;
+        }
+        if (flags & Flags.USE_ITRAITS) {
+          describeTraits(cls.classInfo.instanceInfo.traits);
+        } else {
+          describeTraits(cls.classInfo.traits);
+        }
+        cls = cls.baseClass;
+      }
+
+      function describeTraits(traits) {
+        release || assert(traits, "No traits array found on class" +
+                                  cls.classInfo.instanceInfo.name);
+
+        for (var i = 0; traits && i < traits.length; i++) {
+          var t = traits[i];
+          if (!includedMembers[t.kind] ||
+              !t.name.getNamespace().isPublic() && !t.name.uri)
+          {
+            continue;
+          }
+          var name = unmangledQualifiedName(t.name);
+          if (encounteredAccessors[name]) {
+            var val = encounteredAccessors[name];
+            val[accessKey] = 'readwrite';
+            if (t.kind === TRAIT_Getter) {
+              val[typeKey] = unmangledQualifiedName(t.methodInfo.returnType);
+            }
+            continue;
+          }
+          var val = {};
+          if (includeMetadata && t.metadata) {
+            var metadataVal = val[metadataKey] = [];
+            for (var key in t.metadata) {
+              metadataVal.push(describeMetadata(t.metadata[key]));
+            }
+          } else {
+            val[metadataKey] = null;
+          }
+          val[declaredByKey] = className;
+          val[uriKey] = t.name.uri;
+          val[nameKey] = name;
+          //TODO: check why we have public$$_init in `Object`
+          if (!t.typeName && !(t.methodInfo && t.methodInfo.returnType)) {
+            continue;
+          }
+          val[t.kind === TRAIT_Method ? returnTypeKey : typeKey] =
+              unmangledQualifiedName(t.kind === TRAIT_Slot
+                                       ? t.typeName
+                                       : t.methodInfo.returnType);
+          switch (t.kind) {
+            case TRAIT_Slot:
+              val[accessKey] = "readwrite";
+              variablesVal.push(val);
+              break;
+            case TRAIT_Method:
+              var parametersVal = val[parametersKey] = [];
+              var parameters = t.methodInfo.parameters;
+              for (var j = 0; j < parameters.length; j++) {
+                var param = parameters[j];
+                var paramVal = {};
+                paramVal[typeKey] = param.type
+                                      ? unmangledQualifiedName(param.type)
+                                      : '*';
+                paramVal[optionalKey] = 'value' in param;
+                parametersVal.push(paramVal);
+              }
+              methodsVal.push(val);
+              break;
+            case TRAIT_Getter:
+            case TRAIT_Setter:
+              val[accessKey] = t.kind === TRAIT_Getter ? "read" : "write";
+              accessorsVal.push(val);
+              encounteredAccessors[name] = val;
+              break;
+            default:
+              assert(false, "Unknown trait type: " + t.kind);
+              break;
+          }
         }
       }
       return obj;
