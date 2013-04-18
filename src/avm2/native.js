@@ -843,29 +843,57 @@ var natives = (function () {
       if (!weakKeys) {
         this.keys = [];
       }
+      this.primitiveMap = {};
     }
 
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
 
+    function tryMakePrimitiveKey(key) {
+      if (typeof key === "string" ||
+          typeof key === "number") {
+        return key;
+      }
+      assert (typeof key === "object");
+    }
+
     var Dp = ASDictionary.prototype;
     defineReadOnlyProperty(Dp, "canHandleProperties", true);
-    defineNonEnumerableProperty(Dp, "set", function (key, value) {
-      key = key.name;
-      this.map.set(Object(key), value);
-      if (!this.weakKeys && this.keys.indexOf(key) < 0) {
-        this.keys.push(key);
+    defineNonEnumerableProperty(Dp, "set", function (qn, value) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        this.primitiveMap[primitiveKey] = value;
+        return;
+      }
+      this.map.set(Object(qn), value);
+      if (!this.weakKeys && this.keys.indexOf(qn) < 0) {
+        this.keys.push(qn);
       }
     });
-    defineNonEnumerableProperty(Dp, "get", function (key) {
-      key = key.name;
-      return this.map.get(Object(key));
+    defineNonEnumerableProperty(Dp, "get", function (qn) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        return this.primitiveMap[primitiveKey];
+      }
+      return this.map.get(Object(qn));
     });
-    defineNonEnumerableProperty(Dp, "delete", function (key) {
-      key = key.name;
-      this.map.delete(Object(key), value);
+    defineNonEnumerableProperty(Dp, "delete", function (qn) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        delete this.primitiveMap[primitiveKey];
+      }
+      this.map.delete(Object(qn), value);
       var i;
-      if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+      if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
     });

@@ -124,6 +124,10 @@ function initializeGlobalObject(global) {
       return [];
     }
 
+    if (obj.canHandleProperties) {
+      notImplemented("Dictionary Keys");
+    }
+
     // TODO: Implement fast path for Array objects.
     for (var key in obj) {
       if (isNumeric(key)) {
