@@ -207,6 +207,10 @@ var Trait = (function () {
         traitMetadata[md.name] = md;
       }
       if (traitMetadata) {
+        // FIXME: we should probably only set Class metadata on the classInfo.
+        if (this.isClass()) {
+          this.classInfo.metadata = traitMetadata;
+        }
         this.metadata = traitMetadata;
       }
     }
@@ -814,7 +818,8 @@ var Multiname = (function () {
       name = simpleName;
       namespace = "";
     }
-    return simpleNameCache[simpleName] = new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
+    return simpleNameCache[simpleName] =
+        new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
   };
 
   multiname.prototype.getQName = function getQName(index) {
@@ -824,7 +829,8 @@ var Multiname = (function () {
     }
     var name = this.cache[index];
     if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, this.flags);
+      name = this.cache[index] =
+          new Multiname([this.namespaces[index]], this.name, this.flags);
     }
     return name;
   };
@@ -1159,8 +1165,8 @@ var MetaDataInfo = (function () {
     var name = this.name = strings[stream.readU30()];
 
     var itemCount = stream.readU30();
-    var keys = new Array(itemCount);
-    var items = new Array(itemCount);
+    var keys = [];
+    var items = [];
 
     for (var i = 0; i < itemCount; i++) {
       keys[i] = strings[stream.readU30()];
@@ -1177,7 +1183,7 @@ var MetaDataInfo = (function () {
       }
     }
 
-    this.items = items;
+    this.value = items;
   }
 
   metaDataInfo.prototype = {

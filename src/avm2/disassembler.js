@@ -81,7 +81,7 @@ ClassInfo.prototype.trace = function (writer) {
 
 MetaDataInfo.prototype.trace = function (writer) {
   writer.enter(this + " {");
-  this.items.forEach(function (item) {
+  this.value.forEach(function (item) {
     writer.writeLn((item.key ? item.key + ": " : "") + "\"" + item.value + "\"");
   });
   writer.leave("}");
@@ -596,7 +596,7 @@ var SourceTracer = (function () {
           if (key.indexOf("__") === 0) {
             continue;
           }
-          writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
+          writer.writeLn("[" + key + "(" + metadata[key].value.map(function (m) {
             var str = m.key ? m.key + "=" : "";
             return str + "\"" + m.value + "\"";
           }).join(", ") + ")]");
