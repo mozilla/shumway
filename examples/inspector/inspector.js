@@ -142,7 +142,7 @@ function parseQueryString(qs) {
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
-    obj[key] = value;
+    obj[key] = decodeUriComponent(value);
   }
 
   return obj;
