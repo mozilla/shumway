@@ -272,7 +272,7 @@ var Domain = (function () {
         },
 
         toString: function () {
-          return "[class " + this.debugName + "]";
+          return "[class " + this.classInfo.instanceInfo.name.name + "]";
         }
       };
 
