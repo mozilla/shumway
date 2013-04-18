@@ -88,4 +88,13 @@
   trace(email.test("gor - don.shumway@alf.com"));
 })();
 
+(function () {
+  trace("--- Test 7 ---");
+  var str = 'uid=31';
+  var re = /(uid=)(\d+)/;
+  var act  = str.replace (re, "$1" + 15);
+  var exp = 'uid=15';
+  trace(act + " " + exp);
+})();
+
 trace("--- DONE ---");
