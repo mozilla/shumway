@@ -300,6 +300,22 @@ function typeOf(x) {
   return typeof x;
 }
 
+/**
+ * Make an object's properties accessible from AS3. This prefixes all non-numeric
+ * properties with the public prefix.
+ */
+function publicizeProperties(obj) {
+  var keys = Object.keys(obj);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (!Multiname.isPublicQualifiedName(k)) {
+      var v = obj[k];
+      obj[Multiname.getPublicQualifiedName(k)] = v;
+      delete obj[k];
+    }
+  }
+}
+
 function getSlot(obj, index) {
   return obj[obj[VM_SLOTS][index].name];
 }
