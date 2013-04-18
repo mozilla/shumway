@@ -1,18 +1,12 @@
 /* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
 
-var plte = createPngChunk('PLTE', (new Array(769)).join('\x00'));
-var alphaValues = [];
-for (var i = 0; i < 256; ++i)
-  alphaValues.push(i);
-var trns = createPngChunk('tRNS', fromCharCode.apply(null, alphaValues));
-
 function getUint16(buff, pos) {
   return (buff[pos] << 8) | buff[pos + 1];
 }
 
 function defineImage(tag, dictionary) {
   var imgData = tag.imgData;
-  var data = '';
+  var chunks = [];
   var mask;
 
   if (tag.mimeType === 'image/jpeg') {
@@ -43,14 +37,7 @@ function defineImage(tag, dictionary) {
           i += length;
         }
       }
-      var codes = slice.call(imgData, begin, i);
-      var numChunks = codes.length / 65536;
-      for (var j = 0; j < numChunks; ++j) {
-        var begin = j * 65536;
-        var end = begin + 65536;
-        var chunk = codes.slice(begin, end);
-        data += fromCharCode.apply(null, chunk);
-      }
+      chunks.push(imgData.subarray(begin, i));
     } while (i < n);
     var alphaData = tag.alphaData;
     if (alphaData) {
@@ -61,28 +48,22 @@ function defineImage(tag, dictionary) {
       var tables = dictionary[0];
       assert(tables, 'missing tables', 'jpeg');
       var header = tables.data;
-      if (header)
-        data = header.substr(0, header.length - 2) + data.substr(2);
+      if (header) {
+        chunks[0] = chunks[0].subarray(2);
+        chunks.unshift(header.slice(0, header.size - 2));
+      }
     }
   } else {
-    var numChunks = imgData.length / 65536;
-    for (var i = 0; i < numChunks; ++i) {
-      var begin = i * 65536;
-      var end = begin + 65536;
-      var chunk = slice.call(imgData, begin, end);
-      data += fromCharCode.apply(null, chunk);
-    }
+    chunks.push(imgData);
   }
-  var bytes = new Uint8Array(data.length);
-  for (var i = 0; i < data.length; i++)
-    bytes[i] = data.charCodeAt(i);
+
   var img = {
     type: 'image',
     id: tag.id,
     width: width,
     height: height,
     mimeType: tag.mimeType,
-    data: new Blob([bytes], { type: tag.mimeType })
+    data: new Blob(chunks, { type: tag.mimeType })
   };
   if (mask)
     img.mask = mask;

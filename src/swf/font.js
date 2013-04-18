@@ -11,6 +11,12 @@ function maxPower2(num) {
   }
   return pow(2, maxPower);
 }
+function toString16(val) {
+  return fromCharCode((val >> 8) & 0xff, val & 0xff);
+}
+function toString32(val) {
+  return toString16(val >> 16) + toString16(val);
+}
 
 function defineFont(tag, dictionary) {
   var tables = { };

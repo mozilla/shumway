@@ -5,22 +5,65 @@
 /** @const */ var FORMAT_24BPP        = 5;
 /** @const */ var FACTOR_5BBP         = 255 / 31;
 
-function rgbToString(bytes, pos) {
-  var red = bytes[pos];
-  var green = bytes[pos + 1];
-  var blue = bytes[pos + 2];
-  return fromCharCode(red, green, blue);
+var crcTable = [];
+for (var i = 0; i < 256; i++) {
+  var c = i;
+  for (var h = 0; h < 8; h++) {
+    if (c & 1)
+      c = 0xedB88320 ^ ((c >> 1) & 0x7fffffff);
+    else
+      c = (c >> 1) & 0x7fffffff;
+  }
+  crcTable[i] = c;
 }
-function argbToString(bytes, pos) {
-  var alpha = bytes[pos];
-  if (!alpha)
-    return '\x00\x00\x00\x00';
-  var opacity = alpha / 0xff;
-  // RGB values are alpha pre-multiplied (per SWF spec).
-  var red = 0 | (bytes[pos + 1] / opacity);
-  var green = 0 | (bytes[pos + 2] / opacity);
-  var blue = 0 | (bytes[pos + 3] / opacity);
-  return fromCharCode(red, green, blue, alpha);
+
+function crc32(data, start, end){
+  var crc = -1;
+  for (var i = start; i < end; i++) {
+    var a = (crc ^ data[i]) & 0xff;
+    var b = crcTable[a];
+    crc = (crc >>> 8) ^ b;
+  }
+  return crc ^ -1;
+}
+
+function createPngChunk(type, data) {
+  var chunk = new Uint8Array(12 + data.length);
+  var p = 0;
+
+  var len = data.length;
+  chunk[p] = len >> 24 & 0xff;
+  chunk[p + 1] = len >> 16 & 0xff;
+  chunk[p + 2] = len >> 8 & 0xff;
+  chunk[p + 3] = len & 0xff;
+
+  chunk[p + 4] = type.charCodeAt(0) & 0xff;
+  chunk[p + 5] = type.charCodeAt(1) & 0xff;
+  chunk[p + 6] = type.charCodeAt(2) & 0xff;
+  chunk[p + 7] = type.charCodeAt(3) & 0xff;
+
+  if (data instanceof Uint8Array)
+    chunk.set(data, 8);
+
+  p = 8 + len;
+
+  var crc = crc32(chunk, 4, p);
+  chunk[p] = crc >> 24 & 0xff;
+  chunk[p + 1] = crc >> 16 & 0xff;
+  chunk[p + 2] = crc >> 8 & 0xff;
+  chunk[p + 3] = crc & 0xff;
+
+  return chunk;
+}
+
+function adler32(data, start, end) {
+  var a = 1;
+  var b = 0;
+  for (var i = start; i < end; ++i) {
+    a = (a + (data[i] & 0xff)) % 65521;
+    b = (b + a) % 65521;
+  }
+  return (b << 16) | a;
 }
 
 function defineBitmap(tag) {
@@ -29,12 +72,12 @@ function defineBitmap(tag) {
   var hasAlpha = tag.hasAlpha;
   var plte = '';
   var trns = '';
-  var literals = '';
+  var literals;
 
   var bmpData = tag.bmpData;
   switch (tag.format) {
   case FORMAT_COLORMAPPED:
-    var colorType = '\x03';
+    var colorType = 0x03;
     var bytesPerLine = (width + 3) & ~3;
     var colorTableSize = tag.colorTableSize + 1;
     var paletteSize = colorTableSize * (tag.hasAlpha ? 4 : 3);
@@ -43,74 +86,103 @@ function defineBitmap(tag) {
     var bytes = stream.bytes;
     var pos = 0;
 
-    var palette = '';
     stream.ensure(paletteSize);
     if (hasAlpha) {
-      var alphaValues = '';
+      var palette = new Uint8Array(paletteSize / 4 * 3);
+      var pp = 0;
+      var alphaValues = new Uint8Array(paletteSize / 4);
+      var pa = 0;
       while (pos < paletteSize) {
-        palette += rgbToString(bytes, pos);
-        pos += 3;
-        alphaValues += fromCharCode(bytes[pos++]);
+        palette[pp++] = bytes[pos];
+        palette[pp++] = bytes[pos + 1];
+        palette[pp++] = bytes[pos + 2];
+        alphaValues[pa++] = bytes[pos + 3];
+        pos += 4;
       }
+      plte = createPngChunk('PLTE', palette);
       trns = createPngChunk('tRNS', alphaValues);
     } else {
-      while (pos < paletteSize) {
-        palette += rgbToString(bytes, pos);
-        pos += 3;
-      }
+      plte = createPngChunk('PLTE', bytes.subarray(pos, paletteSize));
+      pos += paletteSize;
     }
-    plte = createPngChunk('PLTE', palette);
+
+    literals = new Uint8Array(width * height + height);
+    var pl = 0;
 
     while (pos < datalen) {
       stream.ensure(bytesPerLine);
       var begin = pos;
       var end = begin + width;
-      var scanline = slice.call(bytes, begin, end);
-      literals += '\x00' + fromCharCode.apply(null, scanline);
+      pl++;
+      literals.set(bytes.subarray(begin, end), pl);
+      pl += end - begin;
       stream.pos = (pos += bytesPerLine);
     }
     break;
   case FORMAT_15BPP:
-    var colorType = '\x02';
+    var colorType = 0x02;
     var bytesPerLine = ((width * 2) + 3) & ~3;
     var stream = createInflatedStream(bmpData, bytesPerLine * height);
     var pos = 0;
+
+    literals = new Uint8Array(width * height * 3 + height);
+    var pl = 0;
+
     for (var y = 0; y < height; ++y) {
-      literals += '\x00';
+      pl++;
       stream.ensure(bytesPerLine);
       for (var x = 0; x < width; ++x) {
         var word = stream.getUint16(pos);
         pos += 2;
         // Extracting RGB color components and changing values range
         // from 0..31 to 0..255.
-        var red = 0 | (FACTOR_5BBP * ((word >> 10) & 0x1f));
-        var green = 0 | (FACTOR_5BBP * ((word >> 5) & 0x1f));
-        var blue = 0 | (FACTOR_5BBP * (word & 0x1f));
-        literals += fromCharCode(red, green, blue);
+        literals[pl++] = 0 | (FACTOR_5BBP * ((word >> 10) & 0x1f));
+        literals[pl++] = 0 | (FACTOR_5BBP * ((word >> 5) & 0x1f));
+        literals[pl++] = 0 | (FACTOR_5BBP * (word & 0x1f));
       }
       stream.pos = (pos += bytesPerLine);
     }
     break;
   case FORMAT_24BPP:
     if (hasAlpha) {
-      var colorType = '\x06';
+      var colorType = 0x06;
       var padding = 0;
-      var pxToString = argbToString;
+      literals = new Uint8Array(width * height * 4 + height);
     } else {
-      var colorType = '\x02';
+      var colorType = 0x02;
       var padding = 1;
-      var pxToString = rgbToString;
+      literals = new Uint8Array(width * height * 3 + height);
     }
     var bytesPerLine = width * 4;
     var stream = createInflatedStream(bmpData, bytesPerLine * height);
     var bytes = stream.bytes;
     var pos = 0;
+    var pl = 0;
+
     for (var y = 0; y < height; ++y) {
       stream.ensure(bytesPerLine);
-      literals += '\x00';
+      pl++;
       for (var x = 0; x < width; ++x) {
         pos += padding;
-        literals += pxToString(bytes, pos);
+
+        if (hasAlpha) {
+          var alpha = bytes[pos];
+          if (alpha) {
+            var opacity = alpha / 0xff;
+            // RGB values are alpha pre-multiplied (per SWF spec).
+            literals[pl++] = 0 | (bytes[pos + 1] / opacity);
+            literals[pl++] = 0 | (bytes[pos + 2] / opacity);
+            literals[pl++] = 0 | (bytes[pos + 3] / opacity);
+            literals[pl++] = alpha;
+          } else {
+            pl += 4;
+          }
+        } else {
+          literals[pl++] = bytes[pos];
+          literals[pl++] = bytes[pos + 1];
+          literals[pl++] = bytes[pos + 2];
+        }
+
         pos += 4 - padding;
       }
       stream.pos = pos;
@@ -120,52 +192,73 @@ function defineBitmap(tag) {
     fail('invalid format', 'bitmap');
   }
 
-  var ihdr =
-    toString32(width) +
-    toString32(height) +
-    '\x08' + // bit depth
-    colorType + // color type
-    '\x00' + // compression method
-    '\x00' + // filter method
-    '\x00' // interlace method
-  ;
+  var ihdr = new Uint8Array([
+    width >> 24 & 0xff,
+    width >> 16 & 0xff,
+    width >> 8 & 0xff,
+    width & 0xff,
+    height >> 24 & 0xff,
+    height >> 16 & 0xff,
+    height >> 8 & 0xff,
+    height & 0xff,
+    0x08, // bit depth
+    colorType, // color type
+    0x00, // compression method
+    0x00, // filter method
+    0x00 // interlace method
+  ]);
 
-  var idat =
-    '\x78' + // compression method and flags
-    '\x9c';  // flags
-
-  var len = literals.length, pos = 0;
+  var len = literals.length;
   var maxBlockLength = 0xFFFF;
+
+  var idat = new Uint8Array(2 + len + Math.ceil(len / maxBlockLength) * 5 + 4);
+  var pi = 0;
+  idat[pi++] = 0x78; // compression method and flags
+  idat[pi++] = 0x9c;  // flags
+
+  var pos = 0;
   while (len > maxBlockLength) {
-    idat += '\x00\xFF\xFF\x00\x00' +
-      literals.substring(pos, pos + maxBlockLength);
+    idat[pi++] = 0x00;
+    idat[pi++] = 0xff;
+    idat[pi++] = 0xff;
+    idat[pi++] = 0x00;
+    idat[pi++] = 0x00;
+    idat.set(literals.subarray(pos, pos + maxBlockLength), pi);
+    pi += maxBlockLength;
     pos += maxBlockLength;
     len -= maxBlockLength;
   }
-  idat += '\x01' +
-    toString16Le(len) +
-    toString16Le(~len & 0xffff) +
-    literals.substring(pos);
 
-  idat += toString32(adler32(literals)); // checksum
+  idat[pi++] = 0x01;
+  idat[pi++] = len & 0xff;
+  idat[pi++] = len >> 8 & 0xff;
+  idat[pi++] = (~len & 0xffff) & 0xff;
+  idat[pi++] = (~len & 0xffff) >> 8 & 0xff;
 
-  var data =
-    '\x89\x50\x4e\x47\x0d\x0a\x1a\x0a' + // signature
-    createPngChunk('IHDR', ihdr) +
-    plte +
-    trns +
-    createPngChunk('IDAT', idat) +
+  idat.set(literals.subarray(pos), pi);
+  pi += len - pos;
+
+  var adler = adler32(literals); // checksum
+  idat[pi++] = adler >> 24 & 0xff;
+  idat[pi++] = adler >> 16 & 0xff;
+  idat[pi++] = adler >> 8 & 0xff;
+  idat[pi++] = adler & 0xff;
+
+  var chunks = [
+    new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    createPngChunk('IHDR', ihdr),
+    plte,
+    trns,
+    createPngChunk('IDAT', idat),
     createPngChunk('IEND', '')
-  ;
-  var bytes = new Uint8Array(data.length);
-  for (var i = 0; i < data.length; i++)
-    bytes[i] = data.charCodeAt(i);
+  ];
+
   return {
     type: 'image',
     id: tag.id,
     width: width,
     height: height,
     mimeType: 'image/png',
-    data: new Blob([bytes], { type: 'image/png' })
+    data: new Blob(chunks, { type: 'image/png' })
   };
 }
