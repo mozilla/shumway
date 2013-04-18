@@ -28,6 +28,15 @@ var CapabilitiesDefinition = (function () {
           },
           enumerable: true
         },
+        serverString: {
+          get: function () {
+            var str = toKeyValueArray({OS: os}).map(function (pair) {
+              return pair[0] + "=" + encodeURIComponent(pair[1])
+            }).join("&");
+            somewhatImplemented("Capabilities.serverString: " + str);
+            return str;
+          }
+        }
       }
     },
     script: {
