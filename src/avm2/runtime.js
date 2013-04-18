@@ -45,6 +45,15 @@ var PARAMETER_PREFIX = "p";
 
 var $M = [];
 
+
+/**
+ * ActionScript uses a slightly different syntax for regular expressions. Many of these features
+ * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
+ * those implemented by XRegExp. This also updates some methods on the String.prototype such as:
+ * match, replace and split.
+ */
+XRegExp.install({ natives: true });
+
 /**
  * Overriden AS3 methods.
  */
