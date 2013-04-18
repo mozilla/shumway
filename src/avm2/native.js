@@ -861,7 +861,11 @@ var natives = (function () {
     defineReadOnlyProperty(Dp, "canHandleProperties", true);
     defineNonEnumerableProperty(Dp, "set", function (qn, value) {
       if (qn instanceof Multiname) {
-        qn = Multiname.getPublicQualifiedName(qn.name);
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
       }
       var primitiveKey = tryMakePrimitiveKey(qn);
       if (primitiveKey !== undefined) {
@@ -875,7 +879,11 @@ var natives = (function () {
     });
     defineNonEnumerableProperty(Dp, "get", function (qn) {
       if (qn instanceof Multiname) {
-        qn = Multiname.getPublicQualifiedName(qn.name);
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
       }
       var primitiveKey = tryMakePrimitiveKey(qn);
       if (primitiveKey !== undefined) {
@@ -885,7 +893,11 @@ var natives = (function () {
     });
     defineNonEnumerableProperty(Dp, "delete", function (qn) {
       if (qn instanceof Multiname) {
-        qn = Multiname.getPublicQualifiedName(qn.name);
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
       }
       var primitiveKey = tryMakePrimitiveKey(qn);
       if (primitiveKey !== undefined) {
