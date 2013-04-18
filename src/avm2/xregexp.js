@@ -1324,10 +1324,6 @@ var XRegExp = (function(undefined) {
  * @returns {String} New string with one or all matches replaced.
  */
     fixed.replace = function(search, replacement) {
-        // Shumway Hack: AS3 doesn't like two digit group back references, so we
-        // replace replacement strings of the form "$12$32" to "${1}2${3}2";
-        replacement = nativ.replace.call(replacement, /\$(\d)/g, "$${$1}");
-
         var isRegex = self.isRegExp(search),
             origLastIndex,
             captureNames,
@@ -1370,6 +1366,10 @@ var XRegExp = (function(undefined) {
                 return replacement.apply(undefined, args);
             });
         } else {
+            // Shumway Hack: AS3 doesn't like two digit group back references, so we
+            // replace replacement strings of the form "$12$32" to "${1}2${3}2";
+            replacement = nativ.replace.call(replacement, /\$(\d)/g, "$${$1}");
+
             // Ensure that the last value of `args` will be a string when given nonstring `this`,
             // while still throwing on `null` or `undefined` context
             result = nativ.replace.call(this == null ? this : String(this), search, function() {

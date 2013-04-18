@@ -97,4 +97,17 @@
   trace(act + " " + exp);
 })();
 
+(function () {
+  var str1:String = "abc12 def34";
+  var pattern:RegExp = /([a-z]+)([0-9]+)/;
+  var str2:String = str1.replace(pattern, replFN);
+
+  function replFN():String {
+    return arguments[2] + arguments[1];
+  }
+  var actual  = str2;
+  var expect = '12abc def34';
+  trace(actual + " " + expect);
+})();
+
 trace("--- DONE ---");
