@@ -8,7 +8,7 @@ var BinaryFileReader = (function binaryFileReader() {
   constructor.prototype = {
     readAll: function(progress, complete) {
       var url = this.url;
-      var xhr = new XMLHttpRequest();
+      var xhr = new XMLHttpRequest({mozSystem:true});
       var async = true;
       xhr.open("GET", this.url, async);
       xhr.responseType = this.responseType;
@@ -155,6 +155,21 @@ function parseQueryString(qs) {
 if (remoteFile) {
   $('#openFileToolbar')[0].setAttribute('hidden', true);
   executeFile(remoteFile, null, parseQueryString(window.location.search));
+}
+
+var yt = getQueryVariable('yt');
+if (yt) {
+  var xhr = new XMLHttpRequest({mozSystem: true});
+  xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
+  xhr.onload = function (e) {
+    var config = JSON.parse(/ytplayer\.config\s*=\s*([^;]+)/.exec(xhr.responseText)[1]);
+    var swf = JSON.parse(/swf\s*=\s*("[^;]+)/.exec(xhr.responseText)[1]);
+    swf = /src="([^"]+)/.exec(swf)[1];
+
+    $('#openFileToolbar')[0].setAttribute('hidden', true);
+    executeFile(swf, null, config.args);
+  };
+  xhr.send(null);
 }
 
 function showMessage(msg) {
