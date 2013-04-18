@@ -67,8 +67,8 @@ function installProxyClassWrapper(cls) {
             if (TRACE_PROXY) {
               TRACE_PROXY && print("> proxy pass through " + resolved);
             }
-            if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn]) {
-              return target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn].apply(o, args);
+            if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
+              return target[VM_OPEN_METHODS][qn].apply(o, args);
             }
             // if (target[qn]) {
             //  return target[qn].apply(o, args);

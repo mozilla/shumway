@@ -107,11 +107,11 @@ var TextFieldDefinition = (function () {
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            notImplemented("TextField.textColor");
+            somewhatImplemented("TextField.textColor");
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
-            notImplemented("TextField.textColor");
+            somewhatImplemented("TextField.textColor");
             this._textColor = value;
           }
         },

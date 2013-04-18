@@ -351,7 +351,7 @@ var Interpreter = (function () {
             if (op === OP_callproplex) {
               receiver = null;
             }
-            res = callProperty(obj, multiname, receiver, args);
+            res = callProperty(obj, multiname, op === OP_callproplex, args);
             if (op !== OP_callpropvoid) {
               stack.push(res);
             }
