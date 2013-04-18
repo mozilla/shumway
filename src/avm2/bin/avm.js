@@ -76,14 +76,14 @@ load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
 
-load(homePath + "src/avm2/domain.js");
+load(homePath + "src/avm2/domain.js")
+load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
 load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/json2.js");
-load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/vm.js");
 Timer.stop();

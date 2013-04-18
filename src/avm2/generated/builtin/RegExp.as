@@ -72,10 +72,10 @@ package
     };
 
     AS3 native function exec(s:String="");
-    prototype.exec = unsafeJSNative("RegExp.prototype.exec");
+    prototype.exec = unsafeJSNative("RegExpClass.exec");
 
     AS3 native function test(s:String="");
-    prototype.test = unsafeJSNative("RegExp.prototype.test");
+    prototype.test = unsafeJSNative("RegExpClass.test");
 
     // Dummy constructor
     public function RegExp(pattern = void 0, options = void 0) {}

@@ -750,46 +750,83 @@ var natives = (function () {
   /**
    * RegExp.as
    *
-   * AS RegExp adds two new flags:
-   *  /s (dotall)   - makes . also match \n
-   *  /x (extended) - allows different formatting of regexp
-   *
-   * TODO: Should we support extended at all? Or even dotall?
-   *
    * RegExp is implemented using XRegExp copyright 2007-present by Steven Levithan.
-   *
    */
+
   function RegExpClass(runtime, scope, instance, baseClass) {
     var c = new runtime.domain.system.Class("RegExp", XRegExp, C(XRegExp));
     c.extendBuiltin(baseClass);
 
-    var REp = XRegExp.prototype;
+    // Make exec and test visible via RegExpClass since we need to link them in, in
+    // RegExp.as using unsafeJSNative().
+
+    RegExpClass.exec = function exec() {
+      var result = this.exec.apply(this, arguments);
+      if (!result) {
+        return result;
+      }
+      // For some reason named groups in AS3 are set to the empty string instead of
+      // undefined as is the case for indexed groups. Here we just emulate the AS3
+      // behaviour.
+      var keys = Object.keys(result);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (!isNumeric(k)) {
+          if (result[k] === undefined) {
+            result[k] = "";
+          }
+        }
+      }
+      publicizeProperties(result);
+      return result;
+    };
+
+    RegExpClass.test = function test() {
+      return this.exec.apply(this, arguments) !== null;
+    };
+
     c.native = {
       instance: {
         global: {
-          get: function () { return this.global; }
+          get: function () {
+            return this.global;
+          }
         },
         source: {
-          get:  function () { return this.source; }
+          get:  function () {
+            return this.source;
+          }
         },
         ignoreCase: {
-          get: function () { return this.ignoreCase; }
+          get: function () {
+            return this.ignoreCase;
+          }
         },
         multiline: {
-          get: function () { return this.multiline; }
+          get: function () {
+            return this.multiline;
+          }
         },
         lastIndex: {
-          get: function () { return this.lastIndex; },
-          set: function (i) { this.lastIndex = i; }
+          get: function () {
+            return this.lastIndex;
+          },
+          set: function (i) {
+            this.lastIndex = i;
+          }
         },
         dotall: {
-          get: function () { return this.dotall; }
+          get: function () {
+            return this.dotall;
+          }
         },
         extended: {
-          get: function () { return this.extended; }
+          get: function () {
+            return this.extended;
+          }
         },
-        exec: REp.exec,
-        test: REp.test
+        exec: RegExpClass.exec,
+        test: RegExpClass.test
       }
     };
 
@@ -806,29 +843,57 @@ var natives = (function () {
       if (!weakKeys) {
         this.keys = [];
       }
+      this.primitiveMap = {};
     }
 
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
 
+    function tryMakePrimitiveKey(key) {
+      if (typeof key === "string" ||
+          typeof key === "number") {
+        return key;
+      }
+      assert (typeof key === "object");
+    }
+
     var Dp = ASDictionary.prototype;
     defineReadOnlyProperty(Dp, "canHandleProperties", true);
-    defineNonEnumerableProperty(Dp, "set", function (key, value) {
-      key = key.name;
-      this.map.set(Object(key), value);
-      if (!this.weakKeys && this.keys.indexOf(key) < 0) {
-        this.keys.push(key);
+    defineNonEnumerableProperty(Dp, "set", function (qn, value) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        this.primitiveMap[primitiveKey] = value;
+        return;
+      }
+      this.map.set(Object(qn), value);
+      if (!this.weakKeys && this.keys.indexOf(qn) < 0) {
+        this.keys.push(qn);
       }
     });
-    defineNonEnumerableProperty(Dp, "get", function (key) {
-      key = key.name;
-      return this.map.get(Object(key));
+    defineNonEnumerableProperty(Dp, "get", function (qn) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        return this.primitiveMap[primitiveKey];
+      }
+      return this.map.get(Object(qn));
     });
-    defineNonEnumerableProperty(Dp, "delete", function (key) {
-      key = key.name;
-      this.map.delete(Object(key), value);
+    defineNonEnumerableProperty(Dp, "delete", function (qn) {
+      if (qn instanceof Multiname) {
+        qn = Multiname.getPublicQualifiedName(qn.name);
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        delete this.primitiveMap[primitiveKey];
+      }
+      this.map.delete(Object(qn), value);
       var i;
-      if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+      if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
     });
@@ -1338,7 +1403,7 @@ var natives = (function () {
     Boolean: Boolean,
     Math: Math,
     Date: Date,
-    RegExp: XRegExp,
+    RegExp: RegExp,
     Object: Object,
 
     /**

@@ -430,7 +430,16 @@
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
-    return call(id("getProperty"), [object, name]);
+    if (this.isIndexed) {
+      assert (this.isMethod === false);
+      return new ConditionalExpression (
+        property(object, "indexGet"),
+        call(property(object, "indexGet"), [name]),
+        property(object, name)
+      );
+    }
+    var isMethod = new Literal(this.isMethod);
+    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -456,6 +465,29 @@
     );
   };
 
+  IR.CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var callee = property(object, name);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    if (this.pristine) {
+      return call(callee, args);
+    } else {
+      return callCall(callee, object, args);
+    }
+  };
+
+  IR.AVM2CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    return call(id("callProperty"), [object, name, new Literal(this.isLex), new ArrayExpression(args)]);
+  };
+
   IR.Call.prototype.compile = function (cx) {
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
@@ -467,7 +499,7 @@
     } else {
       object = new Literal(null);
     }
-    if (this.pristine &&
+    if (false && this.pristine &&
         (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
         this.object === null) {
       return call(callee, args);
@@ -507,6 +539,13 @@
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
+    if (this.isIndexed) {
+      return new ConditionalExpression (
+        property(object, "indexSet"),
+        call(property(object, "indexSet"), [name, value]),
+        assignment(property(object, name), value)
+      );
+    }
     return call(id("setProperty"), [object, name, value]);
   };
 
@@ -525,13 +564,6 @@
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
     return assignment(property(object, name), value);
-  };
-
-  IR.AVM2GetProperty.prototype.compile = function (cx) {
-    var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
-    var isMethod = compileValue(this.isMethod, cx);
-    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.AVM2GetDescendants.prototype.compile = function (cx) {

@@ -16,12 +16,13 @@ package method_closures_0 {
   }
 
   public class M  {
-    public var foo:I;
+    public var x:I;
 
     public function M() {
-      foo = new A();
-      for (var i = 0; i < 30; i++) {
-        trace(foo.foo());
+      x = new A();
+      for (var i = 0; i < 10; i++) {
+        trace((x.foo)());
+        trace(x.foo());
       }
     }
   }

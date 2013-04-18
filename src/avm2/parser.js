@@ -744,7 +744,7 @@ var Multiname = (function () {
   };
 
   multiname.isPublicQualifiedName = function isPublicQualifiedName(qn) {
-    return qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
+    return typeof qn === "number" || isNumeric(qn) || qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {

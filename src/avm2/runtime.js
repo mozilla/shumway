@@ -45,6 +45,15 @@ var PARAMETER_PREFIX = "p";
 
 var $M = [];
 
+
+/**
+ * ActionScript uses a slightly different syntax for regular expressions. Many of these features
+ * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
+ * those implemented by XRegExp. This also updates some methods on the String.prototype such as:
+ * match, replace and split.
+ */
+XRegExp.install({ natives: true });
+
 /**
  * Overriden AS3 methods.
  */
@@ -113,6 +122,10 @@ function initializeGlobalObject(global) {
     // TODO: This is probably broken if the object has overwritten |valueOf|.
     if (typeof boxedValue === "string" || typeof boxedValue === "number") {
       return [];
+    }
+
+    if (obj.canHandleProperties) {
+      notImplemented("Dictionary Keys");
     }
 
     // TODO: Implement fast path for Array objects.
@@ -289,6 +302,22 @@ function typeOf(x) {
     }
   }
   return typeof x;
+}
+
+/**
+ * Make an object's properties accessible from AS3. This prefixes all non-numeric
+ * properties with the public prefix.
+ */
+function publicizeProperties(obj) {
+  var keys = Object.keys(obj);
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (!Multiname.isPublicQualifiedName(k)) {
+      var v = obj[k];
+      obj[Multiname.getPublicQualifiedName(k)] = v;
+      delete obj[k];
+    }
+  }
 }
 
 function getSlot(obj, index) {
@@ -686,7 +715,8 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function callProperty(obj, mn, receiver, args) {
+function callProperty(obj, mn, isLex, args) {
+  var receiver = isLex ? null : obj;
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
@@ -1349,7 +1379,6 @@ var Runtime = (function () {
   };
 
   runtime.prototype.applyProtectedBindings = function applyProtectedBindings(obj, cls) {
-
     // Deal with the protected namespace bullshit. In AS3, if you have the following code:
     //
     // class A {
@@ -1414,7 +1443,10 @@ var Runtime = (function () {
           defineNonEnumerableSetter(obj, qn, makeForwardingSetter(protectedQn));
           vmBindings.push(qn);
           if (trait.isMethod()) {
-            openMethods[qn] = openMethods[protectedQn];
+            var openMethod = openMethods[protectedQn];
+            assert (openMethod);
+            defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+            openMethods[qn] = openMethod;
           }
         }
       }
