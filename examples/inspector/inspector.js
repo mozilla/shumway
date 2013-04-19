@@ -1,8 +1,10 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, responseType) {
+  function constructor(url, method, mimeType, data) {
     this.url = url;
-    this.responseType = responseType || "arraybuffer";
+    this.method = method;
+    this.mimeType = mimeType;
+    this.data = data;
   }
 
   constructor.prototype = {
@@ -10,8 +12,8 @@ var BinaryFileReader = (function binaryFileReader() {
       var url = this.url;
       var xhr = new XMLHttpRequest({mozSystem:true});
       var async = true;
-      xhr.open("GET", this.url, async);
-      xhr.responseType = this.responseType;
+      xhr.open(this.method || "GET", this.url, async);
+      xhr.responseType = "arraybuffer";
       if (progress) {
         xhr.onprogress = function(event) {
           progress(xhr.response, event.loaded, event.total);
@@ -27,13 +29,15 @@ var BinaryFileReader = (function binaryFileReader() {
           complete(xhr.response);
         }
       }
+      if (this.mimeType)
+        xhr.setRequestHeader("Content-Type", this.mimeType);
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(null);
+      xhr.send(this.data || null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
       var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
-      xhr.open("GET", url, true);
+      xhr.open(this.method || "GET", url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
       if ('overrideMimeType' in xhr)
         xhr.overrideMimeType('text/plain; charset=x-user-defined');
@@ -59,8 +63,10 @@ var BinaryFileReader = (function binaryFileReader() {
             oncomplete();
         }
       }
+      if (this.mimeType)
+        xhr.setRequestHeader("Content-Type", this.mimeType);
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(null);
+      xhr.send(this.data || null);
       if (onopen)
         onopen();
     }
@@ -276,10 +282,17 @@ var FileLoadingService = {
   createSession: function () {
     return {
       open: function (request) {
+        if (request.url === "http://www.youtube.com/player_204") {
+          console.log('youtube error reported: ' + request.data);
+          debugger;
+          this.onopen && this.onopen();
+          this.onclose && this.onclose();
+          return; // not sending it ATM
+        }
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
