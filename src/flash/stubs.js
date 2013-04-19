@@ -111,6 +111,7 @@ var as3error = {};
    M("flash.display.NativeMenuItem", "MenuItemClass", NativeMenuItemDefinition),
    M("flash.display.ContextMenu", "ContextMenuClass", ContextMenuDefinition),
    M("flash.display.ContextMenuItem", "ContextMenuItemClass", ContextMenuItemDefinition),
+   M("flash.display.FrameLabel", "FrameLabelClass", FrameLabelDefinition),
 
 
 
