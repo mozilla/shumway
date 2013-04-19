@@ -168,6 +168,7 @@ var Trait = (function () {
       var valueIndex = stream.readU30();
       this.value = undefined;
       if (valueIndex !== 0) {
+        this.hasDefaultValue = true;
         this.value = constantPool.getValue(stream.readU8(), valueIndex);
       }
       break;
@@ -924,6 +925,19 @@ var Multiname = (function () {
     }
     return str;
   };
+
+  multiname.Int = multiname.getPublicQualifiedName("int");
+  multiname.Uint = multiname.getPublicQualifiedName("uint");
+  multiname.Class = multiname.getPublicQualifiedName("Class");
+  multiname.Array = multiname.getPublicQualifiedName("Array");
+  multiname.Object = multiname.getPublicQualifiedName("Object");
+  multiname.String = multiname.getPublicQualifiedName("String");
+  multiname.Number = multiname.getPublicQualifiedName("Number");
+  multiname.Boolean = multiname.getPublicQualifiedName("Boolean");
+  multiname.Function = multiname.getPublicQualifiedName("Function");
+  multiname.XML = multiname.getPublicQualifiedName("XML");
+  multiname.XMLList = multiname.getPublicQualifiedName("XMLList");
+
   return multiname;
 })();
 
@@ -1253,6 +1267,19 @@ var ClassInfo = (function () {
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
+    this.defaultValue = getDefaultValue(this.instanceInfo.name);
+  }
+
+  function getDefaultValue(qn) {
+    if (Multiname.getQualifiedName(qn) === Multiname.Int ||
+        Multiname.getQualifiedName(qn) === Multiname.Uint ||
+        Multiname.getQualifiedName(qn) === Multiname.Number) {
+      return 0;
+    } else if (Multiname.getQualifiedName(qn) === Multiname.Boolean) {
+      return false;
+    } else {
+      return null;
+    }
   }
 
   classInfo.prototype.toString = function() {
