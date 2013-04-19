@@ -315,12 +315,19 @@ var MovieClipDefinition = (function () {
           frameScripts[frameNum] = [fn];
       }
     },
+    _addToPendingScripts: function (fn) {
+      if (this._stage == null) {
+        // HACK called from the constructor, applying _gotoFrame frame at once?
+        return fn();
+      }
+      return this._stage._pendingScripts.push(fn);
+    },
     gotoAndPlay: function (frame, scene) {
       this.play();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._stage._pendingScripts.push(
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frame));
       }
     },
@@ -329,14 +336,14 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._stage._pendingScripts.push(
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frame));
       }
     },
     gotoLabel: function (labelName) {
       var frameLabel = this._frameLabels[labelName];
       if (frameLabel) {
-        this._stage._pendingScripts.push(
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frameLabel.frame));
       }
     },
@@ -345,7 +352,7 @@ var MovieClipDefinition = (function () {
     },
     nextFrame: function () {
       this.stop();
-      this._stage._pendingScripts.push(function () {
+      this._addToPendingScripts(function () {
         this._gotoFrame(this._currentFrame % this._totalFrames + 1);
       }.bind(this));
     },
@@ -360,7 +367,7 @@ var MovieClipDefinition = (function () {
     },
     prevFrame: function () {
       this.stop();
-      this._stage._pendingScripts.push(function () {
+      this._addToPendingScripts(function () {
         this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
       }.bind(this));
     },

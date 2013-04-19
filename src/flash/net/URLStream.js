@@ -10,9 +10,6 @@ var URLStreamDefinition = (function () {
       this._session.close();
     },
     load: function load(request) {
-      if (request._url === "http://www.youtube.com/player_204") {
-        debugger;
-      }
       var session = FileLoadingService.createSession();
       var self = this;
       var initStream = true;
@@ -57,9 +54,15 @@ var URLStreamDefinition = (function () {
       };
       session.onclose = function () {
         self._connected = false;
+        if (!self._stream) {
+          // We need to have something to return in data
+          var buffer = new ArrayBuffer(0);
+          self._stream = new Stream(buffer, 0, 0, 0);
+        }
+
         self.dispatchEvent(new flash.events.Event("complete", false, false))
       };
-      session.open(request);
+      session.open(request._toFileRequest());
       this._session = session;
     },
     readBoolean: function readBoolean() {
