@@ -213,18 +213,18 @@ natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, i
 };
 
 natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
-  return function navigateToURL(request, window) {
+  return function navigateToURL(request, window_) {
     if (!request || !request.url)
       throw new Error('Invalid request object');
     var url = request.url;
     if (/^fscommand:/i.test(url)) {
       var fscommand = avm2.applicationDomain.getProperty(
         Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-      fscommand.call(null, url.substring('fscommand:'.length), window);
+      fscommand.call(null, url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET
-    window.open(FileLoadingService.resolveUrl(url), window);
+    window.open(FileLoadingService.resolveUrl(url), window_);
   };
 };
 
