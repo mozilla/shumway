@@ -10,6 +10,9 @@ var URLStreamDefinition = (function () {
       this._session.close();
     },
     load: function load(request) {
+      if (request._url === "http://www.youtube.com/player_204") {
+        debugger;
+      }
       var session = FileLoadingService.createSession();
       var self = this;
       var initStream = true;
@@ -26,8 +29,7 @@ var URLStreamDefinition = (function () {
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
-        console.error(error);
-        throw 'Not implemented: session.onerror';        
+        notImplemented("session.onerror " + request);
       };
       session.onopen = function () {
         self._connected = true;

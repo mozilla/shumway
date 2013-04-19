@@ -69,7 +69,7 @@ var TextFieldDefinition = (function () {
       }
       somewhatImplemented("TextField.textHeight");
       return bbox.bottom - bbox.top; // TODO: use canvas.measureText(txt).height
-    },
+    }
 
   };
 
@@ -87,21 +87,21 @@ var TextFieldDefinition = (function () {
         textHeight: def.textHeight,
         autoSize: {
           get: function autoSize() { // (void) -> String
-            notImplemented("TextField.autoSize");
+            somewhatImplemented("TextField.autoSize");
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
-            notImplemented("TextField.autoSize");
+            somewhatImplemented("TextField.autoSize");
             this._autoSize = value;
           }
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            notImplemented("TextField.multiline");
+            somewhatImplemented("TextField.multiline");
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            notImplemented("TextField.multiline");
+            somewhatImplemented("TextField.multiline");
             this._multiline = value;
           }
         },
@@ -114,7 +114,7 @@ var TextFieldDefinition = (function () {
             somewhatImplemented("TextField.textColor");
             this._textColor = value;
           }
-        },
+        }
       }
     }
   };

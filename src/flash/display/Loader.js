@@ -366,6 +366,7 @@ var LoaderDefinition = (function () {
       this._symbols = { };
       this._timeline = [];
       this._previousPromise = null;
+      this._uncaughtErrorEvents = null;
     },
     _commitData: function (data) {
       var loaderInfo = this.contentLoaderInfo;
@@ -992,16 +993,18 @@ var LoaderDefinition = (function () {
           notImplemented("Loader._unload");
         },
         _close: function _close() { // (void) -> void
-          notImplemented("Loader._close");
+          somewhatImplemented("Loader._close");
         },
         _getUncaughtErrorEvents: function _getUncaughtErrorEvents() { // (void) -> UncaughtErrorEvents
-          notImplemented("Loader._getUncaughtErrorEvents");
+          somewhatImplemented("Loader._getUncaughtErrorEvents");
+          return this._uncaughtErrorEvents;
         },
         _setUncaughtErrorEvents: function _setUncaughtErrorEvents(value) { // (value:UncaughtErrorEvents) -> void
-          notImplemented("Loader._setUncaughtErrorEvents");
-        },
-      },
-    },
+          somewhatImplemented("Loader._setUncaughtErrorEvents");
+          this._uncaughtErrorEvents = value;
+        }
+      }
+    }
   };
 
   return def;

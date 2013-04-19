@@ -24,7 +24,7 @@ var FrameLabelDefinition = (function () {
             }
           }
         }
-      },
+      }
     }
   };
 }).call(this);
