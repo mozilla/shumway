@@ -102,7 +102,7 @@ function defineBitmap(tag) {
       plte = createPngChunk('PLTE', palette);
       trns = createPngChunk('tRNS', alphaValues);
     } else {
-      plte = createPngChunk('PLTE', bytes.subarray(pos, paletteSize));
+      plte = createPngChunk('PLTE', bytes.subarray(pos, pos + paletteSize));
       pos += paletteSize;
     }
 
@@ -238,7 +238,7 @@ function defineBitmap(tag) {
   idat.set(literals.subarray(pos), pi);
   pi += len - pos;
 
-  var adler = adler32(literals); // checksum
+  var adler = adler32(literals, 0, literals.length); // checksum
   idat[pi++] = adler >> 24 & 0xff;
   idat[pi++] = adler >> 16 & 0xff;
   idat[pi++] = adler >> 8 & 0xff;

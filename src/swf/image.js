@@ -48,7 +48,7 @@ function defineImage(tag, dictionary) {
       var tables = dictionary[0];
       assert(tables, 'missing tables', 'jpeg');
       var header = tables.data;
-      if (header) {
+      if (header && header.size) {
         chunks[0] = chunks[0].subarray(2);
         chunks.unshift(header.slice(0, header.size - 2));
       }
