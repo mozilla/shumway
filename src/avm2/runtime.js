@@ -1936,13 +1936,20 @@ var Runtime = (function () {
             trait.classInfo.native = trait.metadata.native;
           }
         }
-
-        var typeName = trait.typeName;
-        defineNonEnumerableProperty(obj, qn, trait.value);
+        
+        var defaultValue = undefined;
+        if (trait.isSlot() || trait.isConst()) {
+          if (trait.hasDefaultValue) {
+            defaultValue = trait.value;
+          } else if (trait.typeName) {
+            defaultValue = domain.findClassInfo(trait.typeName).defaultValue;
+          }
+        }
+        defineNonEnumerableProperty(obj, qn, defaultValue);
         obj[VM_SLOTS][trait.slotId] = {
           name: qn,
           const: trait.isConst(),
-          type: typeName ? domain.getProperty(typeName, false, false) : null
+          type: trait.typeName ? domain.getProperty(trait.typeName, false, false) : null
         };
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         this.applyMethodTrait(obj, trait, scope, methodsNeedMemoizers, natives);
