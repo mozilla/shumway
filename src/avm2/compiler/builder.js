@@ -2,6 +2,11 @@ var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
 var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
 
+/**
+ * Helper Functions
+ */
+var getPublicQualifiedName = Multiname.getPublicQualifiedName;
+
 (function (exports) {
 
   var Node = IR.Node;
@@ -311,7 +316,13 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
       }
 
       function getPublicQualifiedName(value) {
-        return binary(Operator.ADD, constant(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX), value);
+        assert (isConstant(value));
+        if (isNumericConstant(value)) {
+          return value;
+        } else if (isStringConstant(value)) {
+          return binary(Operator.ADD, constant(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX), value);
+        }
+        unexpected();
       }
 
       function coerceString(value) {
@@ -1129,7 +1140,12 @@ var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Com
               break;
             case OP_in:
               object = pop();
-              multiname = getPublicQualifiedName(stack.pop());
+              value = pop();
+              if (isConstant(value)) {
+                multiname = getPublicQualifiedName(value);
+              } else {
+                multiname = call(globalProperty("getPublicQualifiedName"), null, [value]);
+              }
               push(call(globalProperty("hasProperty"), null, [object, multiname]));
               break;
             case OP_typeof:

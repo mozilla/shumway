@@ -716,6 +716,9 @@ function sliceArguments(args, offset) {
 }
 
 function callProperty(obj, mn, isLex, args) {
+  if (typeof obj === "number") {
+    obj = Object(obj);
+  }
   var receiver = isLex ? null : obj;
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
@@ -736,7 +739,7 @@ function getProperty(obj, mn, isMethod) {
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
   var value = undefined;
 
-  if (!resolved) {
+  if (resolved === undefined) {
     if (isPrimitiveType(obj)) {
       throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
     } else if (Multiname.isAnyName(mn)) {
@@ -765,11 +768,11 @@ function getProperty(obj, mn, isMethod) {
 }
 
 function hasProperty(obj, mn) {
-  release || assert(obj !== undefined, "hasProperty(", mn, ") on undefined");
+  release || assert(!isNullOrUndefined(obj), "hasProperty(", mn, ") on null or undefined");
+  obj = Object(obj);
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
-  if (!resolved) {
-    Multiname.getPublicQualifiedName(mn.name) in obj;
-    return false;
+  if (resolved === undefined) {
+    return Multiname.getPublicQualifiedName(mn.name) in obj;
   }
   return Multiname.getQualifiedName(resolved) in obj;
 }
