@@ -1106,7 +1106,7 @@ var Runtime = (function () {
           args = Array.prototype.slice.call(arguments);
           args = args.concat(defaults.slice(arguments.length - defaults.length));
         } else {
-          args = arguments;
+          args = sliceArguments(arguments);
         }
         return interpreter.interpretMethod(global, methodInfo, scope, args);
       };

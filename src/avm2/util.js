@@ -183,6 +183,21 @@ function getBitFlags(flags, flag) {
   return !!(flags & flag);
 }
 
+/**
+ * Pops elements from a source array into a destination array. This avoids
+ * allocations and should be faster. The elements in the destination array
+ * are pushed in the same order as they appear in the source array:
+ *
+ * popManyInto([1, 2, 3], 2, dst) => dst = [2, 3]
+ */
+function popManyInto(src, count, dst) {
+  release || assert(src.length >= count);
+  for (var i = count - 1; i >= 0; i--) {
+    dst[i] = src.pop();
+  }
+  dst.length = count;
+}
+
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {
