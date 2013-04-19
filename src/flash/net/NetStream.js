@@ -59,14 +59,14 @@ var NetStreamDefinition = (function () {
             var request = new flash.net.URLRequest(url);
             var stream = new flash.net.URLStream();
             stream.addEventListener('httpStatus', function (e) {
-              var responseHeaders = e.public$responseHeaders;
+              var responseHeaders = e[Multiname.getPublicQualifiedName('responseHeaders')];
               var contentTypeHeader = responseHeaders.filter(function (h) {
-                return h.public$name === 'Content-Type';
+                return h[Multiname.getPublicQualifiedName('name')] === 'Content-Type';
               })[0];
               if (contentTypeHeader &&
-                  contentTypeHeader.public$value !== 'application/octet-stream')
-              {
-                this._contentTypeHint = contentTypeHeader.public$value;
+                  contentTypeHeader[Multiname.getPublicQualifiedName('value')] !==
+                    'application/octet-stream') {
+                this._contentTypeHint = contentTypeHeader[Multiname.getPublicQualifiedName('value')];
               }
             }.bind(this));
             stream.addEventListener('progress', function (e) {
