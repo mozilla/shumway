@@ -111,6 +111,7 @@ var as3error = {};
    M("flash.display.NativeMenuItem", "MenuItemClass", NativeMenuItemDefinition),
    M("flash.display.ContextMenu", "ContextMenuClass", ContextMenuDefinition),
    M("flash.display.ContextMenuItem", "ContextMenuItemClass", ContextMenuItemDefinition),
+   M("flash.display.FrameLabel", "FrameLabelClass", FrameLabelDefinition),
 
 
 
@@ -212,17 +213,27 @@ natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, i
 };
 
 natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
-  return function navigateToURL(request, target) {
+  return function navigateToURL(request, window) {
     if (!request || !request.url)
       throw new Error('Invalid request object');
     var url = request.url;
     if (/^fscommand:/i.test(url)) {
       var fscommand = avm2.applicationDomain.getProperty(
         Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-      fscommand.call(null, url.substring('fscommand:'.length), target);
+      fscommand.call(null, url.substring('fscommand:'.length), window);
       return;
     }
     // TODO handle other methods than GET
-    window.open(FileLoadingService.resolveUrl(url), target);
+    window.open(FileLoadingService.resolveUrl(url), window);
+  };
+};
+
+natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scope, instance, baseClass) {
+  return function sendToURL(request) {
+    if (!request || !request.url)
+      throw new Error('Invalid request object');
+    var session = FileLoadingService.createSession();
+    session.onprogress = function () {};
+    session.open(request);
   };
 };
