@@ -31,7 +31,7 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest();
+      var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
       xhr.open("GET", url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
