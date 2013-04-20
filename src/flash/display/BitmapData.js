@@ -29,7 +29,8 @@ var BitmapDataDefinition = (function () {
       if (!transparent || backgroundColor | 0)
         this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
 
-      this._ctx.drawImage(this._img, 0, 0);
+      if (this._img)
+        this._ctx.drawImage(this._img, 0, 0);
     },
     dispose: function() {
       this._ctx = null;
