@@ -305,11 +305,16 @@ var DisplayObjectDefinition = (function () {
     set height(val) {
       if (val < 0)
         val = 0;
+      var height = this.height;
+      if (height == 0) {
+        warning('scaleY cannot be adjusted when height = 0');
+        return;
+      }
       var scaleY = this.scaleY;
       if (scaleY === 0 && val > 0) {
         this.scaleY = scaleY = 1; // reset scale to have valid height
       }
-      this.scaleY = scaleY * val / this.height;
+      this.scaleY = scaleY * val / height;
     },
     get loaderInfo() {
       return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
@@ -438,11 +443,16 @@ var DisplayObjectDefinition = (function () {
     set width(val) {
       if (val < 0)
         val = 0;
+      var width = this.width;
+      if (width == 0) {
+        warning('scaleY cannot be adjusted when width = 0');
+        return;
+      }
       var scaleX = this.scaleX;
       if (scaleX === 0 && val > 0) {
         this.scaleX = scaleX = 1; // reset scale to have valid width
       }
-      this.scaleX = scaleX * val / this.width;
+      this.scaleX = scaleX * val / width;
     },
     get x() {
       return this._x;
