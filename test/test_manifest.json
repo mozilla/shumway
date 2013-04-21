@@ -31,6 +31,11 @@
        "swf": "/examples/as3_tiger/tiger.swf",
        "type": "eq"
     },
+    {  "id": "bitmap-ref",
+       "frames": [10],
+       "swf": "swfs/bitmapbuttons.swf",
+       "type": "eq"
+    },
     {  "id": "pac-ref",
        "frames": [10, 25, 50],
        "swf": "/examples/pac/pac.swf",
