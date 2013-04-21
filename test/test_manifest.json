@@ -41,6 +41,11 @@
        "swf": "/examples/racing/race.swf",
        "type": "eq"
     },
+    {  "id": "gradient-ref",
+       "frames": [10],
+       "swf": "swfs/gradient.swf",
+       "type": "eq"
+    },
     {  "id": "timeline",
        "stas": "swfs/trace.stas",
        "filenames": [
