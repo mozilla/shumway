@@ -57,28 +57,6 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
-// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
-// absolute URL, it will be returned as is.
-function combineUrl(baseUrl, url) {
-  if (url.indexOf(':') >= 0)
-    return url;
-  if (url.charAt(0) == '/') {
-    // absolute path
-    var i = baseUrl.indexOf('://');
-    i = baseUrl.indexOf('/', i + 3);
-    return baseUrl.substring(0, i) + url;
-  } else {
-    // relative path
-    var pathLength = baseUrl.length, i;
-    i = baseUrl.lastIndexOf('#');
-    pathLength = i >= 0 ? i : pathLength;
-    i = baseUrl.lastIndexOf('?', pathLength);
-    pathLength = i >= 0 ? i : pathLength;
-    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
-    return baseUrl.substring(0, prefixLength + 1) + url;
-  }
-}
-
 function parseQueryString(qs) {
   if (!qs)
     return {};
@@ -452,7 +430,9 @@ FlashStreamConverterBase.prototype = {
       baseUrl = element.ownerDocument.location.href;
     }
 
-    url = url ? combineUrl(baseUrl, url) : urlHint;
+    url = !url ? urlHint : Services.io.newURI(url, null,
+      baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
+
     var queryStringMatch = /\?([^#]+)/.exec(url);
     if (queryStringMatch) {
       var queryStringParams = parseQueryString(queryStringMatch[1]);
