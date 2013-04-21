@@ -91,7 +91,7 @@ function parseQueryString(qs) {
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
-    obj[key] = value;
+    obj[decodeURIComponent(key)] = decodeURIComponent(value);
   }
 
   return obj;
@@ -425,25 +425,40 @@ FlashStreamConverterBase.prototype = {
         params = parseQueryString(element.getAttribute('flashvars'));
         url = element.getAttribute('src');
       } else {
+        url = element.getAttribute('data');
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
           if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM' ||
-              paramElement.getAttribute('name').toLowerCase() != 'flashvars')
-          {
+              paramElement.nodeName != 'PARAM') {
             continue;
           }
-
-          params[paramElement.getAttribute('name')] = paramElement
-                                                      .getAttribute('value');
+          switch (paramElement.getAttribute('name').toLowerCase()) {
+          case 'flashvars':
+            params = parseQueryString(paramElement.getAttribute('value'));
+            break;
+          case 'movie':
+          case 'src':
+            if (url) {
+              break;
+            }
+            url = paramElement.getAttribute('value');
+            break;
+          }
         }
-        var dataAttribute = element.getAttribute('data');
-        url = dataAttribute || params.movie || params.src;
       }
       baseUrl = element.ownerDocument.location.href;
     }
 
     url = url ? combineUrl(baseUrl, url) : urlHint;
+    var queryStringMatch = /\?([^#]+)/.exec(url);
+    if (queryStringMatch) {
+      var queryStringParams = parseQueryString(queryStringMatch[1]);
+      for (var i in queryStringParams) {
+        if (!(i in params)) {
+          params[i] = queryStringParams[i];
+        }
+      }
+    }
     var actions = new ChromeActions(url, params, baseUrl, window);
     actions.isOverlay = isOverlay;
     actions.embedTag = element;
