@@ -156,6 +156,7 @@ ChromeActions.prototype = {
     var sessionId = data.sessionId;
     var limit = data.limit || 0;
     var method = data.method || "GET";
+    var mimeType = data.mimeType;
     var postData = data.postData || null;
 
     var win = this.window;
@@ -204,7 +205,9 @@ ChromeActions.prototype = {
         }
         win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "close"}, "*");
       }
-    }
+    };
+    if (mimeType)
+      xhr.setRequestHeader("Content-Type", mimeType);
     xhr.send(postData);
     win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
   },
