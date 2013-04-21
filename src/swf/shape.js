@@ -286,9 +286,10 @@ function defineShape(tag, dictionary) {
             ')');
           }
         }
+        var isLinear = fillStyle.type === GRAPHICS_FILL_LINEAR_GRADIENT;
         fill = '(' +
-          'f=c._create' + (GRAPHICS_FILL_LINEAR_GRADIENT ? 'Linear' : 'Radial') + 'Gradient(' +
-            (GRAPHICS_FILL_LINEAR_GRADIENT ?
+          'f=c._create' + (isLinear ? 'Linear' : 'Radial') + 'Gradient(' +
+            (isLinear ?
               '-1, 0, 1, 0' :
               '(' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) + ' || 0), 0, 0, 0, 0, 1'
             ) +
