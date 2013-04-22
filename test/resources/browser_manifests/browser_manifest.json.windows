@@ -1,10 +1,10 @@
 [
    {
     "name":"firefox",
-    "path":"C:/Program Files (x86)/Firefox/firefox.exe"
+    "path":"C:/Program Files (x86)/Mozilla Firefox/firefox.exe"
    },
    {
-    "name":"aurora",
-    "path":"C:/Program Files (x86)/Aurora/firefox.exe"
+    "name":"chrome",
+    "path":"C:/Users/Account-Name/AppData/Local/Google/Chrome SxS/Application/chrome.exe"
    }
 ]
