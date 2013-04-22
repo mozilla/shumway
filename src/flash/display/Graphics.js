@@ -243,6 +243,8 @@ var GraphicsDefinition = (function () {
       this._revision++;
     },
     moveTo: function (x, y) {
+      delete this._currentPath;
+
       this._mx = x;
       this._my = y;
     },
