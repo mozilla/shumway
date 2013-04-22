@@ -15,9 +15,10 @@
 import json, platform, os, shutil, sys, subprocess, tempfile, threading
 import time, urllib, urllib2, hashlib, re, base64, uuid, socket, errno
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
-import SocketServer
+from SocketServer import ThreadingMixIn
 from optparse import OptionParser
 from urlparse import urlparse, parse_qs
+from threading import Lock
 
 USAGE_EXAMPLE = "%prog"
 
@@ -34,6 +35,8 @@ VERBOSE = False
 BROWSER_TIMEOUT = 60
 
 SERVER_HOST = "localhost"
+
+lock = Lock()
 
 class TestOptions(OptionParser):
     def __init__(self, **kwargs):
@@ -115,8 +118,8 @@ class Result:
         self.failure = failure
         self.item = item
 
-class TestServer(SocketServer.TCPServer):
-    allow_reuse_address = True
+class TestServer(ThreadingMixIn, HTTPServer):
+    pass
 
 class TestHandlerBase(BaseHTTPRequestHandler):
     # Disable annoying noise by default
@@ -141,35 +144,36 @@ class TestHandlerBase(BaseHTTPRequestHandler):
             self.wfile.write(f.read())
 
     def do_GET(self):
-        url = urlparse(self.path)
+        with lock:
+          url = urlparse(self.path)
 
-        # Ignore query string
-        path, _ = urllib.unquote_plus(url.path), url.query
-        path = os.path.abspath(os.path.realpath(DOC_ROOT + os.sep + path))
-        prefix = os.path.commonprefix(( path, DOC_ROOT ))
-        _, ext = os.path.splitext(path.lower())
+          # Ignore query string
+          path, _ = urllib.unquote_plus(url.path), url.query
+          path = os.path.abspath(os.path.realpath(DOC_ROOT + os.sep + path))
+          prefix = os.path.commonprefix(( path, DOC_ROOT ))
+          _, ext = os.path.splitext(path.lower())
 
-        if url.path == "/favicon.ico":
-            self.sendFile(os.path.join(DOC_ROOT, "test", "resources", "favicon.ico"), ext)
-            return
+          if url.path == "/favicon.ico":
+              self.sendFile(os.path.join(DOC_ROOT, "test", "resources", "favicon.ico"), ext)
+              return
 
-        if os.path.isdir(path):
-            self.sendIndex(url.path, url.query)
-            return
+          if os.path.isdir(path):
+              self.sendIndex(url.path, url.query)
+              return
 
-        if not (prefix == DOC_ROOT
-                and os.path.isfile(path)
-                and ext in MIMEs):
-            print path
-            self.send_error(404)
-            return
+          if not (prefix == DOC_ROOT
+                  and os.path.isfile(path)
+                  and ext in MIMEs):
+              print path
+              self.send_error(404)
+              return
 
-        if 'Range' in self.headers:
-            # TODO for fetch-as-you-go
-            self.send_error(501)
-            return
+          if 'Range' in self.headers:
+              # TODO for fetch-as-you-go
+              self.send_error(501)
+              return
 
-        self.sendFile(path, ext)
+          self.sendFile(path, ext)
 
 class PDFTestHandler(TestHandlerBase):
 
@@ -203,37 +207,38 @@ class PDFTestHandler(TestHandlerBase):
 
 
     def do_POST(self):
-        numBytes = int(self.headers['Content-Length'])
+        with lock:
+          numBytes = int(self.headers['Content-Length'])
 
-        self.send_response(200)
-        self.send_header('Content-Type', 'text/plain')
-        self.end_headers()
+          self.send_response(200)
+          self.send_header('Content-Type', 'text/plain')
+          self.end_headers()
 
-        url = urlparse(self.path)
-        if url.path == "/tellMeToQuit":
-            tellAppToQuit(url.path, url.query)
-            return
+          url = urlparse(self.path)
+          if url.path == "/tellMeToQuit":
+              tellAppToQuit(url.path, url.query)
+              return
 
-        result = json.loads(self.rfile.read(numBytes))
-        browser, id, failure, item, snapshot = result['browser'], result['id'], result['failure'], result['item'], result['snapshot']
-        State.lastPost[browser] = int(time.time())
-        taskResults = State.taskResults[browser][id]
-        taskResults.append(Result(snapshot, failure, item))
+          result = json.loads(self.rfile.read(numBytes))
+          browser, id, failure, item, snapshot = result['browser'], result['id'], result['failure'], result['item'], result['snapshot']
+          State.lastPost[browser] = int(time.time())
+          taskResults = State.taskResults[browser][id]
+          taskResults.append(Result(snapshot, failure, item))
 
-        def isTaskDone():
-            numItems = result["numItems"]
-            if len(taskResults) < numItems:
-                return False
-            return True
+          def isTaskDone():
+              numItems = result["numItems"]
+              if len(taskResults) < numItems:
+                  return False
+              return True
 
-        if isTaskDone():
-            check(State.manifest[id], taskResults, browser,
-                  self.server.masterMode)
-            # Please oh please GC this ...
-            del State.taskResults[browser][id]
-            State.remaining[browser] -= 1
+          if isTaskDone():
+              check(State.manifest[id], taskResults, browser,
+                    self.server.masterMode)
+              # Please oh please GC this ...
+              del State.taskResults[browser][id]
+              State.remaining[browser] -= 1
 
-            checkIfDone()
+              checkIfDone()
 
 def checkIfDone():
     State.done = True
