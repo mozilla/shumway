@@ -42,6 +42,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
       this.stack = [];
       this.scope = [];
       this.store = Undefined;
+      this.loads = [];
       this.saved = Undefined;
     }
     constructor.prototype.clone = function clone(index) {
@@ -50,6 +51,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
       s.local = this.local.slice(0);
       s.stack = this.stack.slice(0);
       s.scope = this.scope.slice(0);
+      s.loads = this.loads.slice(0);
       s.saved = this.saved;
       s.store = this.store;
       return s;
@@ -71,6 +73,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
       s.local = this.local.map(makePhi);
       s.stack = this.stack.map(makePhi);
       s.scope = this.scope.map(makePhi);
+      s.loads = this.loads.slice(0);
       s.saved = this.saved;
       s.store = makePhi(this.store);
       return s;
@@ -159,13 +162,14 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
     return new Constant(value);
   }
 
-  function getJSPropertyWithStore(store, object, path) {
+  function getJSPropertyWithState(state, object, path) {
     assert (isString(path));
     var names = path.split(".");
     var node = object;
     for (var i = 0; i < names.length; i++) {
-      node = new IR.GetProperty(null, store, node, constant(names[i]));
+      node = new IR.GetProperty(null, state.store, node, constant(names[i]));
       node.shouldFloat = true;
+      state.loads.push(node);
     }
     return node;
   }
@@ -227,7 +231,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
           new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], true);
       }
 
-      var argumentsLength = getJSPropertyWithStore(state.store, args, "length");
+      var argumentsLength = getJSPropertyWithState(state, args, "length");
 
       for (var i = 0; i < parameterCount; i++) {
         var parameter = mi.parameters[i];
@@ -544,7 +548,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
         }
 
         function getJSProperty(object, path) {
-          return getJSPropertyWithStore(state.store, object, path);
+          return getJSPropertyWithState(state, object, path);
         }
 
         function getDomainProperty(name) {
@@ -607,14 +611,14 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
                 if (!(ti.trait.holder instanceof InstanceInfo && ti.trait.holder.isInterface())) {
                   propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
-                  return new IR.GetProperty(region, state.store, object, constant(propertyQName));
+                  return load(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
                 }
               }
-              return new IR.GetProperty(region, state.store, object, constant(propertyQName));
+              return load(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
             }
           }
           if (hasNumericType(name) || isStringConstant(name)) {
-            var get = new IR.GetProperty(region, state.store, object, name);
+            var get = load(new IR.GetProperty(region, state.store, object, name));
             if (!hasNumericType(name)) {
               return get;
             }
@@ -624,9 +628,9 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             if (object.ty && object.ty.isDirectlyIndexable()) {
               return get;
             }
-            return new IR.AVM2GetProperty(region, state.store, object, name, true, !!getOpenMethod);
+            return load(new IR.AVM2GetProperty(region, state.store, object, name, true, !!getOpenMethod));
           }
-          return new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod);
+          return load(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
         }
 
         function getDescendants(object, name, ti) {
@@ -634,8 +638,23 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
           return new IR.AVM2GetDescendants(region, state.store, object, name);
         }
 
+
+        /**
+         * Marks the |node| as the active store node, with dependencies on all loads appearing after the
+         * previous active store node.
+         */
         function store(node) {
           state.store = new Projection(node, Projection.Type.STORE);
+          node.loads = state.loads.slice(0);
+          state.loads.length = 0;
+          return node;
+        }
+
+        /**
+         * Keeps track of the current set of loads.
+         */
+        function load(node) {
+          state.loads.push(node);
           return node;
         }
 
@@ -677,10 +696,10 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
                 return constant(trait.value);
               }
               var slotQName = Multiname.getQualifiedName(trait.name);
-              return new IR.GetProperty(region, state.store, object, constant(slotQName));
+              return load(new IR.GetProperty(region, state.store, object, constant(slotQName)));
             }
           }
-          return new IR.AVM2GetSlot(null, state.store, object, index);
+          return load(new IR.AVM2GetSlot(null, state.store, object, index));
         }
 
         function setSlot(object, index, value, ti) {
