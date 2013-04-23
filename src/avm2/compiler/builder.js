@@ -180,6 +180,10 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
     return node;
   }
 
+  function warn(message) {
+    console.warn(message);
+  }
+
   var Builder = (function () {
     function constructor (abc, methodInfo, scope, hasDynamicScope) {
       assert (abc && methodInfo && scope);
@@ -537,6 +541,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               if (ti.object instanceof Global && !ti.object.isExecuted()) {
                 // If we found the property in a global that hasn't been executed yet then
                 // we have to emit the slow path so it gets executed lazily.
+                warn("Can't optimize findProperty " + name);
                 return slowPath;
               }
               return constant(ti.object);
@@ -544,6 +549,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               return getScopeObject(topScope(ti.scopeDepth));
             }
           }
+          warn("Can't optimize findProperty " + name);
           return slowPath;
         }
 
@@ -583,62 +589,6 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
           return getJSProperty(scope, "object");
         }
 
-        function callProperty(object, name, args, isLex, ti) {
-          name = simplifyName(name);
-          if (ti) {
-            if (ti.trait && ti.trait.isMethod()) {
-              var openQn;
-              if (ti.trait.holder instanceof InstanceInfo &&
-                  ti.trait.holder.isInterface()) {
-                openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name))
-              } else {
-                openQn = Multiname.getQualifiedName(ti.trait.name);
-              }
-              openQn = VM_OPEN_METHOD_PREFIX + openQn;
-              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
-            }
-          } else {
-            console.warn("Really nothing we can do " + name.value);
-          }
-          return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
-        }
-
-        function getProperty(object, name, ti, getOpenMethod) {
-          name = simplifyName(name);
-          if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
-            var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
-            if (propertyQName) {
-              if (getOpenMethod && ti.trait && ti.trait.isMethod()) {
-                if (!(ti.trait.holder instanceof InstanceInfo && ti.trait.holder.isInterface())) {
-                  propertyQName = VM_OPEN_METHOD_PREFIX + propertyQName;
-                  return load(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
-                }
-              }
-              return load(new IR.GetProperty(region, state.store, object, constant(propertyQName)));
-            }
-          }
-          if (hasNumericType(name) || isStringConstant(name)) {
-            var get = load(new IR.GetProperty(region, state.store, object, name));
-            if (!hasNumericType(name)) {
-              return get;
-            }
-            if (object.ty && object.ty.isParameterizedType()) {
-              return get;
-            }
-            if (object.ty && object.ty.isDirectlyIndexable()) {
-              return get;
-            }
-            return load(new IR.AVM2GetProperty(region, state.store, object, name, true, !!getOpenMethod));
-          }
-          return load(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
-        }
-
-        function getDescendants(object, name, ti) {
-          name = simplifyName(name);
-          return new IR.AVM2GetDescendants(region, state.store, object, name);
-        }
-
-
         /**
          * Marks the |node| as the active store node, with dependencies on all loads appearing after the
          * previous active store node.
@@ -656,6 +606,63 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
         function load(node) {
           state.loads.push(node);
           return node;
+        }
+
+        function callProperty(object, name, args, isLex, ti) {
+          name = simplifyName(name);
+          if (ti && ti.trait) {
+            if (ti.trait.isMethod()) {
+              var openQn;
+              if (ti.trait.holder instanceof InstanceInfo &&
+                  ti.trait.holder.isInterface()) {
+                openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name))
+              } else {
+                openQn = Multiname.getQualifiedName(ti.trait.name);
+              }
+              openQn = VM_OPEN_METHOD_PREFIX + openQn;
+              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
+            } else if (ti.trait.isClass()) {
+              var qn = Multiname.getQualifiedName(ti.trait.name);
+              if (qn === Multiname.Uint) {
+                return toUInt32(args[0]);
+              } else if (qn === Multiname.Int) {
+                return toInt32(args[0]);
+              }
+              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
+            }
+          }
+          warn("Can't optimize call to " + name.value);
+          return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
+        }
+
+        function getProperty(object, name, ti, getOpenMethod) {
+          var get;
+          name = simplifyName(name);
+          if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
+            if (ti.trait) {
+              get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
+              return ti.trait.isGetter() ? store(get) : load(get);
+            }
+          }
+          if (hasNumericType(name) || isStringConstant(name)) {
+            get = store(new IR.GetProperty(region, state.store, object, name));
+            if (!hasNumericType(name)) {
+              return get;
+            }
+            if (object.ty && object.ty.isParameterizedType()) {
+              return get;
+            }
+            if (object.ty && object.ty.isDirectlyIndexable()) {
+              return get;
+            }
+            return store(new IR.AVM2GetProperty(region, state.store, object, name, true, !!getOpenMethod));
+          }
+          return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
+        }
+
+        function getDescendants(object, name, ti) {
+          name = simplifyName(name);
+          return new IR.AVM2GetDescendants(region, state.store, object, name);
         }
 
         function setProperty(object, name, value, ti) {
@@ -678,12 +685,9 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             store(new IR.AVM2SetProperty(region, state.store, object, name, value, true));
             return;
           }
-          if (ti) {
-            var propertyQName = ti.trait ? Multiname.getQualifiedName(ti.trait.name) : ti.propertyQName;
-            if (propertyQName) {
-              store(new IR.SetProperty(region, state.store, object, constant(propertyQName), value));
-              return;
-            }
+          if (ti && ti.trait) {
+            store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)), value));
+            return;
           }
           store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
         }
@@ -695,19 +699,19 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               if (trait.isConst()) {
                 return constant(trait.value);
               }
-              var slotQName = Multiname.getQualifiedName(trait.name);
-              return load(new IR.GetProperty(region, state.store, object, constant(slotQName)));
+              var slotQn = Multiname.getQualifiedName(trait.name);
+              return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
-          return load(new IR.AVM2GetSlot(null, state.store, object, index));
+          return store(new IR.AVM2GetSlot(null, state.store, object, index));
         }
 
         function setSlot(object, index, value, ti) {
           if (ti) {
             var trait = ti.trait;
             if (trait) {
-              var slotQName = Multiname.getQualifiedName(trait.name);
-              store(new IR.SetProperty(region, state.store, object, constant(slotQName), value));
+              var slotQn = Multiname.getQualifiedName(trait.name);
+              store(new IR.SetProperty(region, state.store, object, constant(slotQn), value));
               return;
             }
           }

@@ -991,6 +991,8 @@ var Verifier = (function() {
             }
             if (type instanceof MethodType) {
               returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
+            } else if (type instanceof TraitsType && type.isClassInfo()) {
+              returnType = type.instance();
             } else {
               returnType = Type.Any;
             }
@@ -1207,9 +1209,13 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_astypelate:
+            type = pop();
             pop();
-            pop();
-            push(Type.Any);
+            if (type instanceof TraitsType) {
+              push(type.instance());
+            } else {
+              push(Type.Any);
+            }
             break;
           case OP_coerce_o:
             notImplemented(bc);
