@@ -59,5 +59,10 @@
          "swfs/timeline/Timeline8.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "box2d-ref",
+       "frames": [50, 150, 300],
+       "swf": "/examples/Box2DFlashAS3/demo.swf",
+       "type": "eq"
     }
 ]
