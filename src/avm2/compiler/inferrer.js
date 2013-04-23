@@ -714,15 +714,16 @@ var Verifier = (function() {
           }
         }
 
-        // Is it in some other script?
-        // !!abc.domain.base
-        obj = abc.domain.findProperty(mn, false, false);
-        if (obj) {
-          release || assert(obj instanceof Global);
-          ti().object = obj;
-          return Type.from(obj, abc.domain);
-        }
 
+        var resolved = abc.domain.findDefiningScript(mn, true);
+        if (resolved) {
+          var global = resolved.script.global;
+          if (global) {
+            release || assert(global instanceof Global);
+            ti().object = global;
+          }
+          return Type.from(resolved.script, abc.domain);
+        }
         return Type.Any;
       }
 

@@ -352,7 +352,7 @@ var Domain = (function () {
           // console.info("Getting " + multiname + " but script is not executed");
           return undefined;
         }
-        return resolved.script.global[Multiname.getQualifiedName(resolved.name)];
+        return resolved.script.global[Multiname.getQualifiedName(resolved.trait.name)];
       }
       if (strict) {
         return unexpected("Cannot find property " + multiname);
@@ -478,7 +478,7 @@ var Domain = (function () {
                 if (execute) {
                   ensureScriptIsExecuted(script, trait.name);
                 }
-                return (this.scriptCache[mn.id] = { script: script, name: trait.name });
+                return (this.scriptCache[mn.id] = { script: script, trait: trait });
               }
             }
           } else {
