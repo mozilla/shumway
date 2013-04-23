@@ -32,7 +32,7 @@ setTimeout(function displayInfo() {
     output += x + "<br>";
   });
 
-  Counter.trace(writer);
+  Counter.traceSorted(writer);
   // Timer.trace(writer);
 
   $("#info").html(output);
