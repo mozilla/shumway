@@ -59,13 +59,11 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
              this.scope.length === other.scope.length &&
              this.local.length === other.local.length;
     };
-    constructor.prototype.makeLoopPhis = function makeLoopPhis(control) {
+    constructor.prototype.makePhis = function makePhis(control) {
       var s = new State();
       assert (control);
       function makePhi(x) {
-        var phi = new Phi(control, x);
-        phi.isLoop = true;
-        return phi;
+        return new Phi(control, x);
       }
       s.index = this.index;
       s.local = this.local.map(makePhi);
@@ -74,24 +72,6 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
       s.saved = this.saved;
       s.store = makePhi(this.store);
       return s;
-    };
-    constructor.prototype.optimize = function optimize() {
-      function optimize(x) {
-        if (x instanceof Phi && !x.isLoop) {
-          var args = x.arguments.unique();
-          if (args.length === 1) {
-            x.seal();
-            Counter.count("Builder: OptimizedPhi");
-            return args[0];
-          }
-        }
-        return x;
-      }
-      this.local = this.local.map(optimize);
-      this.stack = this.stack.map(optimize);
-      this.scope = this.scope.map(optimize);
-      this.saved = optimize(this.saved);
-      this.store = optimize(this.store);
     };
 
     function mergeValue(control, a, b) {
@@ -391,7 +371,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             if (target.loop) {
               traceBuilder && writer.writeLn("Adding PHIs to loop region.");
             }
-            region.entryState = target.loop ? stop.state.makeLoopPhis(region) : stop.state.clone(target.position);
+            region.entryState = target.loop ? stop.state.makePhis(region) : stop.state.clone(target.position);
             traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target});
           }
@@ -408,7 +388,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
 
       function buildNodes(region, block, state) {
         assert (region && block && state);
-        state.optimize();
+
         var typeState = block.entryState;
         if (typeState) {
           traceBuilder && writer.writeLn("Type State: " + typeState);
