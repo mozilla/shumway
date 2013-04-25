@@ -246,7 +246,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
           local = new IR.Latch(null, condition, constant(parameter.value), local);
         }
         if (parameter.type && !parameter.type.isAnyName()) {
-          var coercer = this.coercers[parameter.type.name];
+          var coercer = this.coercers[Multiname.getQualifiedName(parameter.type)];
           if (coercer) {
             local = coercer(local);
           } else {
@@ -319,7 +319,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
         return unary(Operator.FALSE, unary(Operator.FALSE, value));
       }
 
-      function toString(value) {
+      function convertString(value) {
         return binary(Operator.ADD, constant(""), value);
       }
 
@@ -339,13 +339,13 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
 
       assert(!this.coercers);
 
-      var coercers = this.coercers = {
-        "int": toInt32,
-        "uint": toUInt32,
-        "Number": toNumber,
-        "Boolean": toBoolean,
-        "String": coerceString
-      };
+      var coercers = this.coercers = Object.create(null);
+
+      coercers[Multiname.Int] = toInt32;
+      coercers[Multiname.Uint] = toUInt32;
+      coercers[Multiname.Number] = toNumber;
+      coercers[Multiname.Boolean] = toBoolean;
+      coercers[Multiname.String] = coerceString;
 
       function getCoercerForType(type) {
         switch (type) {
@@ -567,11 +567,27 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
           return getProperty(findProperty(name, true), name);
         }
 
-        function coerceValue(value, type) {
+        function coerceValue(value, multiname) {
+          var type = domain.value.getProperty(multiname, true, true);
+          if (isConstant(value)) {
+            return constant(coerce(value.value, type));
+          } else {
+            var coercer = coercers[Multiname.getQualifiedName(multiname)];
+            if (coercer) {
+              return coercer(value);
+            }
+          }
+          if (compatibility) {
+            return call(globalProperty("coerce"), null, [value, constant(type)]);
+          }
+          return value;
+        }
+
+        function coerceValue2(value, type) {
           if (isConstant(value) && isConstant(type)) {
             return constant(coerce(value.value, type.value));
           } else if (isConstant(type)) {
-            var coercer = coercers[type.name];
+            var coercer = coercers[Multiname.getQualifiedName(type)];
             if (coercer) {
               return coercer(value);
             }
@@ -623,10 +639,17 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
             } else if (ti.trait.isClass()) {
               var qn = Multiname.getQualifiedName(ti.trait.name);
-              if (qn === Multiname.Uint) {
-                return toUInt32(args[0]);
-              } else if (qn === Multiname.Int) {
-                return toInt32(args[0]);
+              switch (qn) {
+                case Multiname.Int:
+                  return toInt32(args[0]);
+                case Multiname.Uint:
+                  return toUInt32(args[0]);
+                case Multiname.Boolean:
+                  return toBoolean(args[0]);
+                case Multiname.Number:
+                  return toNumber(args[0]);
+                case Multiname.String:
+                  return convertString(args[0]);
               }
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
@@ -1006,8 +1029,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               value = pop();
               multiname = buildMultiname(bc.index);
               assert (isMultinameConstant(multiname));
-              type = getDomainProperty(multiname);
-              push(coerceValue(value, type));
+              push(coerceValue(value, multiname.value));
               break;
             case OP_coerce_i: case OP_convert_i:
               push(toInt32(pop()));
@@ -1029,7 +1051,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
               push(coerceString(pop()));
               break;
             case OP_convert_s:
-              push(toString(pop()));
+              push(convertString(pop()));
               break;
             case OP_astypelate:
               type = pop();
