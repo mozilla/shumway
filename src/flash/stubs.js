@@ -176,6 +176,7 @@ var as3error = {};
    M("flash.system.Security", "SecurityClass", SecurityDefinition),
    M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
 
+   M("flash.accessibility.Accessibility", "AccessibilityClass", AccessibilityDefinition),
    M("flash.utils.Timer", "TimerClass", TimerDefinition)].forEach(function (m) {
      var path = m.className.split(".");
      var container = this;
