@@ -892,7 +892,7 @@ var natives = (function () {
       }
       return this.map.get(Object(qn));
     });
-    defineNonEnumerableProperty(Dp, "delete", function (qn) {
+    defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -909,6 +909,7 @@ var natives = (function () {
       if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
+      return true;
     });
     defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
       if (Object.keys(this.primitiveMap).length > 0 || this.keys.length > 0) {

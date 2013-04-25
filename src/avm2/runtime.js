@@ -784,6 +784,7 @@ function resolvePropertyName(obj, mn) {
       return Multiname.getQualifiedName(mn);
     }
   } else if (typeof mn === "object") {
+    // Call toString() on |mn| object.
     return Multiname.getPublicQualifiedName(String(mn));
   } else {
     return Multiname.getQualifiedName(mn);
@@ -841,41 +842,34 @@ function setSuper(scope, obj, mn, value) {
 }
 
 function deleteProperty(obj, mn) {
-  release || assert(obj);
-  if (obj.canHandleProperties) {
-    return obj.delete(mn);
+  if (obj.deleteProperty) {
+    return obj.deleteProperty(mn);
   }
-
-  release || assert(Multiname.isMultiname(mn), mn);
-
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
-
-  if (resolved === undefined) {
-    return true;
-  }
-
-  // Only dynamic properties can be deleted, so only look for those.
-  if (resolved instanceof Multiname && !resolved.namespaces[0].isPublic() ||
-      typeof obj !== "object" || obj === null) {      // if primitive, then return false
-    return false;
-  }
-
-  var qn = Multiname.getQualifiedName(resolved);
-  if (!(qn in Object.getPrototypeOf(obj))) {
-    /**
-     * If we're in the middle of an enumeration "delete" the property from the
-     * enumeration keys as well. Setting it to |undefined| will cause it to be
-     * skipped by the enumeration bytecodes.
-     */
-    if (obj[VM_ENUMERATION_KEYS]) {
-      var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
-      if (index >= 0) {
-        obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
-      }
+  if (mn instanceof Multiname) {
+    if (mn.namespaces.length > 1) {
+      mn = resolveMultiname(obj, mn);
     }
-    return delete obj[Multiname.getQualifiedName(resolved)];
+    if (mn === undefined) {
+      return true;
+    }
+    if (!mn.namespaces[0].isPublic()) {
+      return false;
+    }
   }
-  return false;
+  var resolved = resolvePropertyName(obj, mn);
+
+  /**
+   * If we're in the middle of an enumeration "delete" the property from the
+   * enumeration keys as well. Setting it to |undefined| will cause it to be
+   * skipped by the enumeration bytecodes.
+   */
+  if (obj[VM_ENUMERATION_KEYS]) {
+    var index = obj[VM_ENUMERATION_KEYS].indexOf(resolved);
+    if (index >= 0) {
+      obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
+    }
+  }
+  return delete obj[Multiname.getQualifiedName(resolved)];
 }
 
 function forEachPublicProperty(obj, fn, self) {
