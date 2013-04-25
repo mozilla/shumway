@@ -339,7 +339,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
 
       assert(!this.coercers);
 
-      var coercers = this.coercers = Object.create(null);
+      var coercers = this.coercers = createEmptyObject();
 
       coercers[Multiname.Int] = toInt32;
       coercers[Multiname.Uint] = toUInt32;

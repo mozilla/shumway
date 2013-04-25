@@ -56,13 +56,13 @@ var Domain = (function () {
     this.loadedClasses = [];
 
     // Classes cache.
-    this.classCache = Object.create(null);
+    this.classCache = createEmptyObject();
 
     // Script cache.
-    this.scriptCache = Object.create(null);
+    this.scriptCache = createEmptyObject();
 
     // Class Info cache.
-    this.classInfoCache = Object.create(null);
+    this.classInfoCache = createEmptyObject();
 
     // Our parent.
     this.base = base;

@@ -458,7 +458,7 @@ var SourceTracer = (function () {
         // var methods = traits.methods;
 
         var methods = [];
-        var gettersAndSetters = Object.create(null);
+        var gettersAndSetters = createEmptyObject();
 
         traits.methods.forEach(function (trait, i) {
           var traitName = trait.name.getName();

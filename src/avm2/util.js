@@ -85,6 +85,10 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+function createEmptyObject() {
+  return Object.create(null);
+}
+
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
   var descriptor = {};
   while (obj) {

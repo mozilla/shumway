@@ -22,7 +22,7 @@ var VM_LENGTH = "vm length";
 var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_ENUMERATION_KEYS = "vm enumeration keys";
-var VM_TOMBSTONE = {};
+var VM_TOMBSTONE = createEmptyObject();
 var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
@@ -56,7 +56,7 @@ XRegExp.install({ natives: true });
 /**
  * Overriden AS3 methods.
  */
-var VM_METHOD_OVERRIDES = Object.create(null);
+var VM_METHOD_OVERRIDES = createEmptyObject();
 
 /**
  * This is used to keep track if we're in a runtime context. For instance, proxies need to
@@ -184,10 +184,10 @@ function initializeGlobalObject(global) {
    * to call |public$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native
    * builtins to call the |public$valueOf| instead.
    */
-  var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = {};
+  var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = createEmptyObject();
   VM_NATIVE_BUILTIN_SURROGATES.forEach(function (surrogate) {
     var object = surrogate.object;
-    originals[object.name] = {};
+    originals[object.name] = createEmptyObject();
     surrogate.methods.forEach(function (originalFunctionName) {
       var originalFunction = object.prototype[originalFunctionName];
       // Save the original method in case |getNative| needs it.
@@ -503,7 +503,7 @@ var Scope = (function () {
     this.object = object;
     this.global = parent ? parent.global : this;
     this.isWith = isWith;
-    this.cache = Object.create(null);
+    this.cache = createEmptyObject();
   }
 
   scope.prototype.findDepth = function findDepth(obj) {
@@ -678,7 +678,7 @@ function createPublicKeyedClone(source) {
       return visited.get(item);
     }
 
-    var result = {};
+    var result = createEmptyObject();
     visited.set(item, result);
     var keys = Object.keys(item);
     for (var i = 0; i < keys.length; i++) {
@@ -1350,7 +1350,7 @@ var Runtime = (function () {
     // Then we need a binding from protected$A$foo -> protected$C$foo, and
     // protected$B$foo -> protected$C$foo.
 
-    var map = Object.create(null);
+    var map = createEmptyObject();
 
     // Walks up the inheritance hierarchy and collects the last defining namespace for each
     // protected member as well as all the protected namespaces from the first definition.
@@ -1402,7 +1402,7 @@ var Runtime = (function () {
   runtime.prototype.applyInterfaceBindings = function applyInterfaceBindings(obj, cls) {
     var domain = this.domain;
 
-    var implementedInterfaces = cls.implementedInterfaces = Object.create(null);
+    var implementedInterfaces = cls.implementedInterfaces = createEmptyObject();
 
     // Apply interface traits recursively.
     //
@@ -1645,7 +1645,7 @@ var Runtime = (function () {
   };
 
   function makeQualifiedNameTraitMap(traits) {
-    var map = Object.create(null);
+    var map = createEmptyObject();
     for (var i = 0; i < traits.length; i++) {
       map[Multiname.getQualifiedName(traits[i].name)] = traits[i];
     }
@@ -1660,10 +1660,10 @@ var Runtime = (function () {
     if (!base) {
       defineNonEnumerableProperty(obj, VM_BINDINGS, []);
       defineNonEnumerableProperty(obj, VM_SLOTS, []);
-      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, {});
+      defineNonEnumerableProperty(obj, VM_OPEN_METHODS, createEmptyObject());
     } else {
       var traitMap = makeQualifiedNameTraitMap(traits);
-      var openMethods = {};
+      var openMethods = createEmptyObject();
       var baseBindings = base[VM_BINDINGS];
       var baseOpenMethods = base[VM_OPEN_METHODS];
       for (var i = 0; i < baseBindings.length; i++) {
@@ -2080,7 +2080,7 @@ var InlineCacheManager = (function () {
       release || assert(mn instanceof Multiname);
       release || assert(!mn.isAnyName() && !mn.isRuntimeName() && !mn.isRuntimeNamespace());
       release || assert(mn.namespaces.length > 1);
-      var cache = mn.inlineCache || (mn.inlineCache = {});
+      var cache = mn.inlineCache || (mn.inlineCache = createEmptyObject());
       var cacheName = isSetter ? "setter" : "getter";
       if (cache[cacheName]) {
         return cache[cacheName];

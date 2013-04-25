@@ -353,8 +353,8 @@ var ShumwayNamespace = (function () {
     return uri;
   }
 
-  var uriToMangledNameMap = Object.create(null);
-  var mangledNameToURIMap = Object.create(null);
+  var uriToMangledNameMap = createEmptyObject();
+  var mangledNameToURIMap = createEmptyObject();
   var mangledNameList = [];
   var MANGLE_NAMESPACES = true;
 

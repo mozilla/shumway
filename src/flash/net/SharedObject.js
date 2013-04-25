@@ -2,7 +2,7 @@ var SharedObjectDefinition = (function () {
 
   var _defaultObjectEncoding = 3;
 
-  var sharedObjects = Object.create(null);
+  var sharedObjects = createEmptyObject();
 
   return {
     // ()
