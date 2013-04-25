@@ -57,7 +57,7 @@ XRegExp.install({ natives: true });
 /**
  * Overriden AS3 methods.
  */
-var VM_METHOD_OVERRIDES = {};
+var VM_METHOD_OVERRIDES = Object.create(null);
 
 /**
  * This is used to keep track if we're in a runtime context. For instance, proxies need to
@@ -1082,10 +1082,10 @@ var Runtime = (function () {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
-
     if (methodInfo.name) {
       var qn = Multiname.getQualifiedName(methodInfo.name);
       if (qn in VM_METHOD_OVERRIDES) {
+        warning("Overriding Method: " + qn);
         return VM_METHOD_OVERRIDES[qn];
       }
     }
