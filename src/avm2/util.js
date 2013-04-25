@@ -85,6 +85,16 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+/**
+ * Makes sure you never re-bind a method.
+ */
+function safeBind(fn, obj) {
+  assert (!fn.boundTo && obj);
+  var f = fn.bind(obj);
+  f.boundTo = obj;
+  return f;
+}
+
 function createEmptyObject() {
   return Object.create(null);
 }

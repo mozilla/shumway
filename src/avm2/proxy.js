@@ -83,7 +83,7 @@ function installProxyClassWrapper(cls) {
           }
         }
         if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn]) {
-          return target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn].bind(o);
+          return safeBind(target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];

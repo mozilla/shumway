@@ -297,7 +297,7 @@ var Domain = (function () {
       };
 
       var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
-        var bound = fn.bind($this);
+        var bound = safeBind(fn, $this);
         defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
         defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
       };

@@ -759,7 +759,7 @@ function getSuper(scope, obj, mn) {
       if (openMethod) {
         value = obj[superName + " " + qn];
         if (!value) {
-          value = obj[superName + " " + qn] = openMethod.bind(obj);
+          value = obj[superName + " " + qn] = safeBind(openMethod, obj);
         }
       } else {
         var descriptor = Object.getOwnPropertyDescriptor(superTraits, qn);
@@ -1673,7 +1673,7 @@ var Runtime = (function () {
         if (!traitMap[qn] || traitMap[qn].isGetter() || traitMap[qn].isSetter()) {
           var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
           Object.defineProperty(obj, qn, baseBindingDescriptor);
-          if (baseOpenMethods.hasOwnProperty(qn)) {
+          if (Object.prototype.hasOwnProperty.call(baseOpenMethods, qn)) {
             var openMethod = baseOpenMethods[qn];
             openMethods[qn] = openMethod;
             defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
@@ -1744,7 +1744,7 @@ var Runtime = (function () {
         }
         if (isNativePrototype(this)) {
           Counter.count("Runtime: Method Closures");
-          return target.value.bind(this);
+          return safeBind(target.value, this);
         }
         if (target.value.isTrampoline) {
           // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
@@ -1756,7 +1756,7 @@ var Runtime = (function () {
         var mc = null;
         if (isClassObject(this)) {
           Counter.count("Runtime: Static Method Closures");
-          mc = target.value.bind(this);
+          mc = safeBind(target.value, this);
           defineReadOnlyProperty(this, qn, mc);
           return mc;
         }
@@ -1764,13 +1764,12 @@ var Runtime = (function () {
           var pd = Object.getOwnPropertyDescriptor(this, qn);
           if (pd.get) {
             Counter.count("Runtime: Method Closures");
-            return target.value.bind(this);
+            return safeBind(target.value, this);
           }
           Counter.count("Runtime: Unpatched Memoizer");
           return this[qn];
         }
-
-        mc = target.value.bind(this);
+        mc = safeBind(target.value, this);
         defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
         defineReadOnlyProperty(this, qn, mc);
         return mc;
@@ -1835,7 +1834,7 @@ var Runtime = (function () {
           defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
           return fn;
         }, trait.methodInfo.parameters.length);
-        var closure = trampoline.bind(obj);
+        var closure = safeBind(trampoline, obj);
         defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
         defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
         defineNonEnumerableProperty(obj, qn, closure);
