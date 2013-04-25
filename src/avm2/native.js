@@ -860,8 +860,7 @@ var natives = (function () {
     }
 
     var Dp = ASDictionary.prototype;
-    defineReadOnlyProperty(Dp, "canHandleProperties", true);
-    defineNonEnumerableProperty(Dp, "set", function (qn, value) {
+    defineNonEnumerableProperty(Dp, "setProperty", function (qn, value) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -879,7 +878,7 @@ var natives = (function () {
         this.keys.push(qn);
       }
     });
-    defineNonEnumerableProperty(Dp, "get", function (qn) {
+    defineNonEnumerableProperty(Dp, "getProperty", function (qn) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -905,14 +904,17 @@ var natives = (function () {
       if (primitiveKey !== undefined) {
         delete this.primitiveMap[primitiveKey];
       }
-      this.map.delete(Object(qn), value);
+      this.map.delete(Object(qn));
       var i;
       if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
     });
-    defineNonEnumerableProperty(Dp, "enumProperties", function () {
-      return this.keys;
+    defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
+      if (Object.keys(this.primitiveMap).length > 0 || this.keys.length > 0) {
+        console.info(this.keys);
+      }
+      return Object.keys(this.primitiveMap).concat(this.keys);
     });
     c.native = {
       instance: {

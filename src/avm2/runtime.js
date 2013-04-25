@@ -3,7 +3,6 @@ var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
-var tracePropertyAccess = runtimeOptions.register(new Option("tpa", "tracePropertyAccess", "boolean", false, "trace property access"));
 var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
 var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
@@ -124,8 +123,9 @@ function initializeGlobalObject(global) {
       return [];
     }
 
-    if (obj.canHandleProperties) {
-      somewhatImplemented("Dictionary Keys");
+
+    if (obj.getEnumerationKeys) {
+      return obj.getEnumerationKeys();
     }
 
     // TODO: Implement fast path for Array objects.
@@ -522,7 +522,7 @@ var Scope = (function () {
   scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
-
+    Counter.count("findProperty " + mn.name);
     var obj;
     var cache = this.cache;
 
@@ -531,9 +531,6 @@ var Scope = (function () {
       return obj;
     }
 
-    if (traceScope.value || tracePropertyAccess.value) {
-      print("Scope.findProperty(" + mn + ")");
-    }
     obj = this.object;
     if (Multiname.isQName(mn)) {
       if (this.isWith) {
@@ -628,7 +625,7 @@ function resolveMultinameInTraits(obj, mn) {
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultinameUnguarded(obj, mn, traitsOnly) {
-  assert(!Multiname.isQName(mn), mn, " already resolved");
+  assert(Multiname.needsResolution(mn), mn, " already resolved");
   obj = Object(obj);
   var publicQn;
 
@@ -707,15 +704,12 @@ function isNameInObject(qn, obj) {
   }
 }
 
-function isPrimitiveType(x) {
-  return typeof x === "number" || typeof x === "string" || typeof x === "boolean";
-}
-
 function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
 function callProperty(obj, mn, isLex, args) {
+  // Counter.count("callProperty " + mn.name);
   if (typeof obj === "number") {
     obj = Object(obj);
   }
@@ -725,46 +719,6 @@ function callProperty(obj, mn, isLex, args) {
   }
   var property = getProperty(obj, mn, true);
   return property.apply(receiver, args);
-}
-
-function getProperty(obj, mn, isMethod) {
-  release || assert(obj != undefined, "getProperty(", mn, ") on undefined");
-
-  if (obj.canHandleProperties) {
-    return obj.get(mn, isMethod);
-  }
-
-  release || assert(Multiname.isMultiname(mn));
-
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
-  var value = undefined;
-
-  if (resolved === undefined) {
-    if (isPrimitiveType(obj)) {
-      throw new ReferenceError(formatErrorMessage(Errors.ReadSealedError, mn.name, typeof obj));
-    } else if (Multiname.isAnyName(mn)) {
-      if (obj[Multiname.getPublicQualifiedName("elements")]) {
-        value = obj[Multiname.getPublicQualifiedName("elements")](mn);
-      }
-    }
-  }
-  if (resolved !== undefined) {
-    if (Multiname.isNumeric(resolved) && obj.indexGet) {
-      value = obj.indexGet(Multiname.getQualifiedName(resolved), value);
-    } else {
-      if (isNumeric(resolved)) {
-        value = obj[resolved];
-      } else {
-        value = obj[Multiname.getQualifiedName(resolved)];
-      }
-    }
-  } else {
-    value = obj[Multiname.getPublicQualifiedName(mn.name)];
-  }
-  if (tracePropertyAccess.value) {
-    print("getProperty(" + obj.toString() + ", " + mn + " -> " + resolved + ") has value: " + !!value);
-  }
-  return value;
 }
 
 function hasProperty(obj, mn) {
@@ -814,50 +768,48 @@ function getSuper(scope, obj, mn) {
       }
     }
   }
-
-  if (tracePropertyAccess.value) {
-    print("getSuper(" + mn + ") has value: " + !!value);
-  }
-
   return value;
 }
 
+function resolvePropertyName(obj, mn) {
+  if (mn instanceof Multiname) {
+    if (mn.namespaces.length > 1) {
+      var resolved = resolveMultiname(obj, mn);
+      if (resolved !== undefined) {
+        return Multiname.getQualifiedName(resolved);
+      } else {
+        return Multiname.getPublicQualifiedName(mn.name);
+      }
+    } else {
+      return Multiname.getQualifiedName(mn);
+    }
+  } else if (typeof mn === "object") {
+    return Multiname.getPublicQualifiedName(String(mn));
+  } else {
+    return Multiname.getQualifiedName(mn);
+  }
+}
+
+function getProperty(obj, mn) {
+  if (obj.getProperty) {
+    return obj.getProperty(mn);
+  }
+  var resolved = resolvePropertyName(obj, mn);
+  if (obj.indexGet && Multiname.isNumeric(resolved)) {
+    return obj.indexGet(resolved);
+  }
+  return obj[resolved];
+}
+
 function setProperty(obj, mn, value) {
-  release || assert(obj);
-
-  // Used by Dictionary and XML
-  if (obj.canHandleProperties) {
-    return obj.set(mn, value);
+  if (obj.setProperty) {
+    return obj.setProperty(mn, value);
   }
-
-  release || assert(Multiname.isMultiname(mn));
-
-  var resolved;
-  if (mn.isAttribute && mn.isAttribute()) {
-    console.log("setProperty() obj="+obj+" mn="+mn);
-    // in E4X, attributes are always in the unnamed public namespace (public "")
-    resolved = Multiname.getPublicQualifiedName(mn.name);
-    resolved.flags = mn.flags;
-  } else {
-    resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
+  var resolved = resolvePropertyName(obj, mn);
+  if (obj.indexGet && Multiname.isNumeric(resolved)) {
+    return obj.indexSet(resolved, value);
   }
-
-  if (tracePropertyAccess.value) {
-    print("setProperty(" + mn + ") trait: " + value);
-  }
-
-  if (resolved === undefined) {
-    // If we couldn't find the property, create one dynamically.
-    // TODO: check sealed status
-    resolved = Multiname.getPublicQualifiedName(mn.name);
-  }
-
-  if (Multiname.isNumeric(resolved) && obj.indexSet) {
-    obj.indexSet(Multiname.getQualifiedName(resolved), value);
-  } else {
-    obj[Multiname.getQualifiedName(resolved)] = value;
-  }
-  return;
+  obj[resolved] = value;
 }
 
 function setSuper(scope, obj, mn, value) {
@@ -865,9 +817,6 @@ function setSuper(scope, obj, mn, value) {
   release || assert(Multiname.isMultiname(mn));
   var superClass = scope.object.baseClass;
   release || assert(superClass);
-  if (tracePropertyAccess.value) {
-    print("setProperty(" + mn + ") trait: " + value);
-  }
 
   var superTraits = superClass.instance.prototype;
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraits, mn);
@@ -1795,6 +1744,7 @@ var Runtime = (function () {
     function makeMemoizer(target) {
       function memoizer() {
         Counter.count("Runtime: Memoizing");
+        assert (!Object.prototype.hasOwnProperty.call(this, "class"));
         if (traceExecution.value >= 3) {
           print("Memoizing: " + qn);
         }
@@ -1816,7 +1766,7 @@ var Runtime = (function () {
           defineReadOnlyProperty(this, qn, mc);
           return mc;
         }
-        if (this.hasOwnProperty(qn)) {
+        if (Object.prototype.hasOwnProperty.call(this, qn)) {
           var pd = Object.getOwnPropertyDescriptor(this, qn);
           if (pd.get) {
             Counter.count("Runtime: Method Closures");

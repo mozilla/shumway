@@ -656,6 +656,10 @@ var Multiname = (function () {
            mn instanceof Number;
   };
 
+  multiname.needsResolution = function (mn) {
+    return mn instanceof multiname && mn.namespaces.length > 1;
+  };
+
   /**
    * Tests if the specified value is a valid qualified name.
    */

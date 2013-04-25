@@ -678,7 +678,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             if (object.ty && object.ty.isDirectlyIndexable()) {
               return get;
             }
-            return store(new IR.AVM2GetProperty(region, state.store, object, name, true, !!getOpenMethod));
+            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
           }
           return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
         }
@@ -705,7 +705,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             if (object.ty && object.ty.isDirectlyIndexable()) {
               return store(set);
             }
-            store(new IR.AVM2SetProperty(region, state.store, object, name, value, true));
+            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
             return;
           }
           if (ti && ti.trait) {
