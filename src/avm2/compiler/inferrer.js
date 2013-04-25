@@ -643,6 +643,7 @@ var Verifier = (function() {
 
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
+      var mi = this.methodInfo;
 
       var bc, obj, fn, mn, l, r, val, type, returnType;
 
@@ -714,13 +715,14 @@ var Verifier = (function() {
           }
         }
 
-
-        var resolved = abc.domain.findDefiningScript(mn, true);
+        var resolved = abc.domain.findDefiningScript(mn, !mi.isInstanceInitializer);
         if (resolved) {
           var global = resolved.script.global;
           if (global) {
             release || assert(global instanceof Global);
             ti().object = global;
+          } else if (resolved.script) {
+            ti().script = resolved.script;
           }
           return Type.from(resolved.script, abc.domain);
         }
