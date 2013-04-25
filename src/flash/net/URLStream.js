@@ -26,11 +26,12 @@ var URLStreamDefinition = (function () {
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
-        notImplemented("session.onerror " + request);
+        self._connected = false;
+        self.dispatchEvent(new flash.events.IOErrorEvent(flash.events.IOErrorEvent.IO_ERROR, false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new flash.events.Event("open", false, false))
+        self.dispatchEvent(new flash.events.Event("open", false, false));
       };
       session.onhttpstatus = function (location, httpStatus, httpHeaders) {
         var HTTPStatusEventClass = avm2.systemDomain.getClass("flash.events.HTTPStatusEvent");
