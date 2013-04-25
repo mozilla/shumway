@@ -300,7 +300,6 @@ SWF.parseAsync = function swf_parseAsync(options) {
     }
     var symbol = {
       type: 'image',
-      className: 'flash.display.Bitmap',
       props: props,
       data : new Blob(chunks, {type: type})
     }

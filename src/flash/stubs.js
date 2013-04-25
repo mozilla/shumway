@@ -54,7 +54,7 @@ function makeStub(container, className, shortName) {
     }
 
     var c = avm2.systemDomain.getClass(className);
-    assert(c.instance);
+    release || assert(c.instance);
     container[shortName] = c.instance;
     // XXX: Patch our own prototype just in case someone saved a reference to
     // the function before it was patched. We still don't get identity though.
@@ -135,10 +135,13 @@ var as3error = {};
 
    M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
    M("flash.events.Event", "EventClass", EventDefinition),
+   M("flash.events.IOErrorEvent", "IOErrorEventClass", IOErrorEventDefinition),
+   M("flash.events.NetStatusEvent", "NetStatusEventClass", NetStatusEventDefinition),
    M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
    M("flash.events.MouseEvent", "MouseEventClass", MouseEventDefinition),
    M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
    M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
+   M("flash.events.ProgressEvent", "ProgressEventClass", ProgressEventDefinition),
 
    M("flash.external.ExternalInterface", "ExternalInterfaceClass", ExternalInterfaceDefinition),
 
