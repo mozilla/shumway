@@ -1236,6 +1236,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
+    this.init.isInstanceInitializer = true;
     this.init.name = this.name;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
