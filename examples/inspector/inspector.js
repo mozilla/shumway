@@ -282,12 +282,6 @@ var FileLoadingService = {
   createSession: function () {
     return {
       open: function (request) {
-        if (request.url === "http://www.youtube.com/player_204") {
-          console.log('youtube error reported: ' + request.data);
-          this.onopen && this.onopen();
-          this.onclose && this.onclose();
-          return; // not sending it ATM
-        }
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path);
