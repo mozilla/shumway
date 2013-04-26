@@ -67,7 +67,7 @@ build: ensureoutputdir ../src/flash/playerglobal.abc
 	# Build Loader.js, since it's loaded in a worker.
 	CLOSURE=$(CLOSURE) node build.js ../../src/flash/display/Loader.js > $(BUILD_DIR)/content/flash/display/Loader.js
 	# Package all the source files into two files.
-	CLOSURE=$(CLOSURE) node build.js content/web/scripts.js -fc -c s > $(BUILD_DIR)/content/shumway.js
+	CLOSURE=$(CLOSURE) node build.js content/web/scripts.js -d > $(BUILD_DIR)/content/shumway.js
 	CLOSURE=$(CLOSURE) node build.js content/web/scripts-worker.js > $(BUILD_DIR)/content/shumway-worker.js
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;

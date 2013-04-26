@@ -153,5 +153,5 @@ SWF.embed = function(file, doc, container, options) {
     });
   }
 
-  loader._loadFrom(file);
+  loader._load({url:file});
 };

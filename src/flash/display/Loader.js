@@ -1,7 +1,7 @@
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
-  var WORKERS_ENABLED = true;
+  var WORKERS_ENABLED = false;
   var LOADER_PATH = 'flash/display/Loader.js';
 
   var workerScripts;
@@ -178,13 +178,13 @@ var LoaderDefinition = (function () {
         return;
       }
 
+      symbol.isSymbol = true;
       symbols[swfTag.id] = symbol;
       commitData(symbol);
     }
     function createParsingContext() {
       var depths = { };
       var frame = { type: 'frame' };
-      var symbols = this._symbols;
       var tagsProcessed = 0;
       var soundStream = null;
 
@@ -319,9 +319,21 @@ var LoaderDefinition = (function () {
       var xhr = new XMLHttpRequest;
       xhr.open('GET', input);
       xhr.responseType = 'arraybuffer';
-      xhr.onload = function () {
-        parseBytes(this.response);
+      xhr.onload = function onload(event) {
+        //TODO: check which way to handle status codes
+        if (xhr.status >= 300) {
+          loader._commitData({command: 'error', xhr: xhr});
+        } else {
+          parseBytes(this.response);
+        }
       };
+      xhr.onprogress = function onprogress(event) {
+        var data = {
+          command : 'progress',
+          result : {bytesLoaded : event.loaded, bytesTotal : event.total}
+        };
+        loader._commitData(data);
+      }
       xhr.send();
     }
   }
@@ -363,14 +375,11 @@ var LoaderDefinition = (function () {
       this._contentLoaderInfo._loader = this;
       this._dictionary = { };
       this._displayList = null;
-      this._symbols = { };
       this._timeline = [];
       this._previousPromise = null;
       this._uncaughtErrorEvents = null;
     },
     _commitData: function (data) {
-      var loaderInfo = this.contentLoaderInfo;
-
       switch (data.command) {
       case 'init':
         this._init(data.result);
@@ -379,16 +388,23 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        loaderInfo.dispatchEvent(new flash.events.Event("complete", false, false));
+        this.contentLoaderInfo.dispatchEvent(
+            new flash.events.Event("complete"));
         break;
       case 'error':
-        console.error('ERROR: ' + data.message);
+        this.contentLoaderInfo.dispatchEvent(
+            new flash.events.IOErrorEvent("ioError"));
         break;
       default:
-        if (data.id)
+        //TODO: fix special-casing. Might have to move document class out of dictionary[0]
+        if (data.id === 0)
+          break;
+        if (data.isSymbol)
           this._commitSymbol(data);
         else if (data.type === 'frame')
           this._commitFrame(data);
+        else if (data.type === 'image')
+          this._commitImage(data);
         break;
       }
     },
@@ -396,9 +412,10 @@ var LoaderDefinition = (function () {
       var loaderInfo = this.contentLoaderInfo;
       loaderInfo._bytesLoaded = state.bytesLoaded || 0;
       loaderInfo._bytesTotal = state.bytesTotal || 0;
-      var ProgressEventClass = avm2.systemDomain.getClass("flash.events.ProgressEvent");
-      loaderInfo.dispatchEvent(ProgressEventClass.createInstance(["progress",
-        false, false, loaderInfo._bytesLoaded, loaderInfo._bytesTotal]));
+      var event = new flash.events.ProgressEvent("progress", false, false,
+                                                 loaderInfo._bytesLoaded,
+                                                 loaderInfo._bytesTotal);
+      loaderInfo.dispatchEvent(event);
     },
     _buildFrame: function (displayList, timeline, promiseQueue, frame, frameNum) {
       var loader = this;
@@ -499,15 +516,14 @@ var LoaderDefinition = (function () {
         }
 
         var root = loader._content;
-        var needRootObject = !root;
 
-        if (needRootObject) {
+        if (!root) {
           var parent = loader._parent;
 
-          assert(dictionary[0].resolved);
+          release || assert(dictionary[0].resolved);
           var rootInfo = dictionary[0].value;
           var rootClass = avm2.applicationDomain.getClass(rootInfo.className);
-          var root = rootClass.createAsSymbol({
+          root = rootClass.createAsSymbol({
             framesLoaded: timeline.length,
             loader: loader,
             parent: parent,
@@ -621,6 +637,30 @@ var LoaderDefinition = (function () {
 
         framePromise.resolve(frame);
       });
+    },
+    _commitImage : function (imageInfo) {
+      var loader = this;
+      var imgPromise = new Promise;
+      var img = new Image;
+      imageInfo.props.img = img;
+      img.onload = function() {
+        var props = imageInfo.props;
+        props.parent = loader._parent;
+        props.stage = loader._stage;
+        props.skipCopyToCanvas = true;
+        var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
+        var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
+        var bitmapData = BitmapData.createAsSymbol(props);
+        BitmapData.instance.call(bitmapData, 0, 0, true, 0xffffff00);
+        var image = Bitmap.createAsSymbol(bitmapData);
+        loader._children.push(image);
+        Bitmap.instance.call(image, bitmapData);
+        image._parent = loader;
+        loader._content = image;
+        imgPromise.resolve(imageInfo);
+      }
+      img.src = URL.createObjectURL(imageInfo.data);
+      delete imageInfo.data;
     },
     _commitSymbol: function (symbol) {
       var className = 'flash.display.DisplayObject';
@@ -882,7 +922,10 @@ var LoaderDefinition = (function () {
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
       this._setup();
     },
-    _loadFrom: function (input, context) {
+    _load: function (request, checkPolicyFile, applicationDomain,
+                     securityDomain, deblockingFilter)
+    {
+      var input = request.url;
       if (typeof window !== 'undefined' && WORKERS_ENABLED) {
         var loader = this;
         var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
@@ -898,7 +941,7 @@ var LoaderDefinition = (function () {
           worker.postMessage(input);
         }
       } else {
-        loadFromWorker(this, input, context);
+        loadFromWorker(this, input);
       }
     },
     _setup: function () {
@@ -909,8 +952,6 @@ var LoaderDefinition = (function () {
         // HACK: bind the mouse through awful shenanigans.
         var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
         mouseClass._stage = stage;
-
-        loader._vmPromise.resolve();
       } else {
         // avm1 initialization
         var loaderInfo = loader.contentLoaderInfo;
@@ -920,72 +961,28 @@ var LoaderDefinition = (function () {
 
         AS2Key.$bind(stage);
         AS2Mouse.$bind(stage);
-
-        loader._vmPromise.resolve();
       }
+
+      loader._vmPromise.resolve();
     },
     get contentLoaderInfo() {
         return this._contentLoaderInfo;
     },
-    close: function () {
-      notImplemented();
-    },
-    load: function (request, context /* = null */) {
-      this._loadFrom(request.url);
-    },
-    loadBytes: function (bytes, context) {
-      if (!bytes.length) {
-        throw ArgumentError();
-      }
-      this._loadFrom(bytes);
-    },
-    unload: function () {
-      notImplemented();
-    },
-    unloadAndStop: function (gc) {
-      notImplemented();
+    get content() {
+      somewhatImplemented("Loader.content");
+      return this._content;
     }
   };
 
   def.__glue__ = {
     native: {
       instance: {
-        content: {
-          get: function content() { // (void) -> DisplayObject
-            notImplemented("Loader.content");
-            return this._content;
-          },
-        },
-        contentLoaderInfo: {
-          get: function () {
-            return this._contentLoaderInfo;
-          }
-        },
-        close: function () {
-          notImplemented();
-        },
-        load: function (request, context) {
-          this._loadFrom(request.url);
-        },
-        loadBytes: function (bytes, context) {
-          if (!bytes.length)
-            throw ArgumentError();
-
-          this._loadFrom(bytes);
-        },
-        unload: function () {
-          notImplemented();
-        },
-        unloadAndStop: function (gc) {
-          notImplemented();
-        },
+        content: Object.getOwnPropertyDescriptor(def, 'content'),
+        contentLoaderInfo: Object.getOwnPropertyDescriptor(def, 'contentLoaderInfo'),
         _getJPEGLoaderContextdeblockingfilter: function(context) {
           return 0; //TODO: implement
         },
-        _load: function(request, checkPolicyFile, applicationDomain, securityDomain, deblockingFilter) {
-          this._loadFrom(request.url);
-          //TODO: implement
-        },
+        _load: def._load,
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
           notImplemented("Loader._loadBytes");
         },

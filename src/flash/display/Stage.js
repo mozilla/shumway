@@ -144,8 +144,8 @@ var StageDefinition = (function () {
         frameRate: desc(def, "frameRate"),
         contentsScaleFactor: {
           get: function contentsScaleFactor() { // (void) -> Number
-            notImplemented("Stage.contentsScaleFactor");
-            return this._contentsScaleFactor;
+            somewhatImplemented("Stage.contentsScaleFactor");
+            return this._contentsScaleFactor || 1;
           }
         },
         requireOwnerPermissions: function () {

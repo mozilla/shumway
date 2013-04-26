@@ -335,14 +335,14 @@ var MovieClipDefinition = (function () {
       this.stop();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
-      } else {
+      } else if (this._stage) {
         this._addToPendingScripts(
           this._gotoFrame.bind(this, frame));
       }
     },
     gotoLabel: function (labelName) {
       var frameLabel = this._frameLabels[labelName];
-      if (frameLabel) {
+      if (frameLabel && this._stage) {
         this._addToPendingScripts(
           this._gotoFrame.bind(this, frameLabel.frame));
       }
