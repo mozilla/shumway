@@ -656,8 +656,11 @@ var LoaderDefinition = (function () {
         loader._children.push(image);
         Bitmap.instance.call(image, bitmapData);
         image._parent = loader;
+        loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
+        loader.contentLoaderInfo.dispatchEvent(
+            new flash.events.Event("init"));
       }
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
