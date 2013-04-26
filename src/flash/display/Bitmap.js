@@ -4,7 +4,6 @@ var BitmapDefinition = (function () {
     __class__: "flash.display.Bitmap",
     draw : function(ctx, ratio) {
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
-      this._dirtyArea = null;
     },
     initialize: function () {
     },
@@ -15,8 +14,7 @@ var BitmapDefinition = (function () {
         instance: {
           ctor : function(bitmapData, pixelSnapping, smoothing) {
             this._bitmapData = bitmapData;
-            this._dirtyArea = {x:0, y:0, width:this._bitmapData._drawable.width,
-                               height:this._bitmapData._drawable.height};
+            this._markAsDirty();
             this._pixelSnapping = pixelSnapping;
             this._smoothing = smoothing;
 
