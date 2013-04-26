@@ -125,7 +125,7 @@ function initializeGlobalObject(global) {
     }
 
     if (obj.canHandleProperties) {
-      notImplemented("Dictionary Keys");
+      somewhatImplemented("Dictionary Keys");
     }
 
     // TODO: Implement fast path for Array objects.

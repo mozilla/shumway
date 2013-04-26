@@ -75,8 +75,8 @@
  *     instance method - |CClass.native.instance.m|
  *     static method   - |CClass.native.static.m|
  *     getter          - |CClass.native.instance.m.get|
- *     setter          - |CClass.native.static.m.set|
- *     static getter   - |CClass.native.instance.m.set|
+ *     setter          - |CClass.native.instance.m.set|
+ *     static getter   - |CClass.native.static.m.get|
  *     static setter   - |CClass.native.static.m.set|
  *
  * Implementing native classes the hard way
@@ -726,7 +726,9 @@ var natives = (function () {
         native: {
           instance: {
             getStackTrace: function () {
-              return "TODO: getStackTrace";
+              var e = new Error();
+              somewhatImplemented("Error.getStackTrace()");
+              return e.stack;
             }
           },
 

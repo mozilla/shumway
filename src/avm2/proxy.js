@@ -44,9 +44,6 @@ function installProxyClassWrapper(cls) {
     var target = Object.create(instance.prototype);
     var proxy = Proxy.create({
       get: function(o, qn) {
-        if (qn === "public$$onPlayPause") {
-          debugger;
-        }
         if (qn === VM_IS_PROXY) {
           TRACE_PROXY &&  print("proxy check");
           return true;

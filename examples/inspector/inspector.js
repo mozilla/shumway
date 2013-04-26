@@ -284,7 +284,6 @@ var FileLoadingService = {
       open: function (request) {
         if (request.url === "http://www.youtube.com/player_204") {
           console.log('youtube error reported: ' + request.data);
-          debugger;
           this.onopen && this.onopen();
           this.onclose && this.onclose();
           return; // not sending it ATM

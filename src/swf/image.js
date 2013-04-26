@@ -4,45 +4,50 @@ function getUint16(buff, pos) {
   return (buff[pos] << 8) | buff[pos + 1];
 }
 
-function defineImage(tag, dictionary) {
-  var imgData = tag.imgData;
+function parseJpegChunks(imgDef, bytes) {
+  var i = 0;
+  var n = bytes.length;
   var chunks = [];
-  var mask;
+  var code;
+  do {
+    var begin = i;
+    while (i < n && bytes[i] !== 0xff)
+      ++i;
+    while (i < n && bytes[i] === 0xff)
+      ++i;
+    code = bytes[i++];
+    if (code === 0xda) {
+      i = n;
+    } else if (code === 0xd9) {
+      i += 2;
+      continue;
+    } else if (code < 0xd0 || code > 0xd8) {
+      var length = getUint16(bytes, i);
+      if (code >= 0xc0 && code <= 0xc3) {
+        imgDef.height = getUint16(bytes, i + 3);
+        imgDef.width = getUint16(bytes, i + 5);
+      }
+      i += length;
+    }
+    chunks.push(bytes.subarray(begin, i));
+  } while (i < n);
+  assert(imgDef.width && imgDef.height, 'bad image', 'jpeg');
+  return chunks;
+}
+function defineImage(tag, dictionary) {
+  var img = {
+    type: 'image',
+    id: tag.id,
+    mimeType: tag.mimeType
+  };
+  var imgData = tag.imgData;
+  var chunks;
 
   if (tag.mimeType === 'image/jpeg') {
-    var width = 0;
-    var height = 0;
-    var i = 0;
-    var n = imgData.length;
-    var code;
-    do {
-      var begin = i;
-      while (imgData[i] !== 0xff)
-        ++i;
-      while (imgData[i] === 0xff)
-        ++i;
-      var code = imgData[i++];
-      if (code === 0xda) {
-        i = n;
-      } else {
-        if (code === 0xd9) {
-          i += 2;
-          continue;
-        } else if (code < 0xd0 || code > 0xd8) {
-          var length = getUint16(imgData, i);
-          if (code >= 0xc0 && code <= 0xc3) {
-            height = getUint16(imgData, i + 3);
-            width = getUint16(imgData, i + 5);
-          }
-          i += length;
-        }
-      }
-      chunks.push(imgData.subarray(begin, i));
-    } while (i < n);
+    chunks = parseJpegChunks(img, imgData);
     var alphaData = tag.alphaData;
     if (alphaData) {
-      assert(width && height, 'bad image', 'jpeg');
-      mask = createInflatedStream(alphaData, width * height).bytes;
+      img.mask = createInflatedStream(alphaData, img.width * img.height).bytes;
     }
     if (tag.incomplete) {
       var tables = dictionary[0];
@@ -54,18 +59,8 @@ function defineImage(tag, dictionary) {
       }
     }
   } else {
-    chunks.push(imgData);
+    chunks = [imgData];
   }
-
-  var img = {
-    type: 'image',
-    id: tag.id,
-    width: width,
-    height: height,
-    mimeType: tag.mimeType,
-    data: new Blob(chunks, { type: tag.mimeType })
-  };
-  if (mask)
-    img.mask = mask;
+  img.data = new Blob(chunks, { type: tag.mimeType });
   return img;
 }
