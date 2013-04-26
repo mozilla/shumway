@@ -34,8 +34,14 @@ var DisplayObjectContainerDefinition = (function () {
       if (index < 0 || index > children.length)
         throw RangeError();
 
-      if (child._parent)
-        child._parent.removeChild(child);
+      if (child._parent) {
+        var LoaderClass = avm2.systemDomain.getClass('flash.display.Loader');
+        if (LoaderClass.isInstanceOf(child._parent)) {
+          def.removeChild.call(child._parent, child);
+        } else {
+          child._parent.removeChild(child);
+        }
+      }
 
       children.splice(index, 0, child);
       child._owned = false;
@@ -97,7 +103,7 @@ var DisplayObjectContainerDefinition = (function () {
     removeChildAt: function (index) {
       var children = this._children;
 
-      if (index < 0 || index > children.length)
+      if (index < 0 || index >= children.length)
         throw RangeError();
 
       var child = children[index];

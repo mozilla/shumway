@@ -1,5 +1,6 @@
 package {
 
+import flash.display.DisplayObject;
 import flash.display.Loader;
 import flash.display.Sprite;
 import flash.events.Event;
@@ -9,9 +10,21 @@ import flash.net.URLRequest;
 
 public class Imageloading extends Sprite {
   private var _loader:Loader;
+  private const IMAGES : Array = ['firefox.png', 'alf.jpg'];
 
   public function Imageloading() {
-    load('../image-loading/firefox.png');
+    loadNext(0);
+  }
+
+  private function loadNext(left : int):void {
+    trace("load next");
+    if (IMAGES.length) {
+      trace(IMAGES);
+      load('../image-loading/' + IMAGES.shift());
+      _loader.x = left;
+    } else {
+      trace('finished loading');
+    }
   }
 
   private function load(src:String):void {
@@ -39,7 +52,16 @@ public class Imageloading extends Sprite {
   }
 
   private function loader_init(event:Event):void {
-    trace('finished loading');
+    var image : DisplayObject = _loader.content;
+    image.addEventListener(Event.REMOVED, image_removed);
+    image.x = _loader.x;
+    trace("init");
+    addChild(image);
+    loadNext(image.x + image.width + 10);
+  }
+
+  private function image_removed(event:Event):void {
+    trace("removed");
   }
 }
 }
