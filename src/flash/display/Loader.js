@@ -178,6 +178,7 @@ var LoaderDefinition = (function () {
         return;
       }
 
+      symbol.isSymbol = true;
       symbols[swfTag.id] = symbol;
       commitData(symbol);
     }
@@ -395,7 +396,10 @@ var LoaderDefinition = (function () {
             new flash.events.IOErrorEvent("ioError"));
         break;
       default:
-        if (data.id)
+        //TODO: fix special-casing. Might have to move document class out of dictionary[0]
+        if (data.id === 0)
+          break;
+        if (data.isSymbol)
           this._commitSymbol(data);
         else if (data.type === 'frame')
           this._commitFrame(data);
