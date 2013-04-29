@@ -77,6 +77,13 @@
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
 
+    operator.AVM2ADD = new operator("+", function (l, r) {
+      if (typeof l === "string" || typeof r === "string") {
+        return String(l) + String(r);
+      }
+      return l + r;
+    }, true);
+
     function linkOpposites(a, b) {
       a.not = b;
       b.not = a;

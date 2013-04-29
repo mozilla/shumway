@@ -1116,7 +1116,7 @@ var getPublicQualifiedName = Multiname.getPublicQualifiedName;
             case OP_lookupswitch:   buildSwitchStops(pop()); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
-            case OP_add:            pushExpression(Operator.ADD); break;
+            case OP_add:            pushExpression(Operator.AVM2ADD); break;
             case OP_add_i:          pushExpression(Operator.ADD, true); break;
             case OP_subtract:       pushExpression(Operator.SUB); break;
             case OP_subtract_i:     pushExpression(Operator.SUB, true); break;

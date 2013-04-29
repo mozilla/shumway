@@ -490,7 +490,7 @@ var Interpreter = (function () {
           case 0xA0: // OP_add
             b = stack.pop();
             a = stack.pop();
-            stack.push(a + b);
+            stack.push(add(a, b));
             break;
           case 0xA1: // OP_subtract
             b = stack.pop();

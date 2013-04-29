@@ -254,6 +254,21 @@ function toString(x) {
   return String(x);
 }
 
+/**
+ * ActionScript 3 has different behaviour when deciding whether to call
+ * toString or valueOf when one operand is a string. Unlike JavaScript,
+ * it calls toString if one operand is a string and valueOf otherwise.
+ *
+ * This sux, but we have to emulate this behaviour because YouTube
+ * depends on it.
+ */
+function add(l, r) {
+  if (typeof l === "string" || typeof r === "string") {
+    return String(l) + String(r);
+  }
+  return l + r;
+}
+
 function coerce(value, type) {
   if (type.coerce) {
     return type.coerce(value);
