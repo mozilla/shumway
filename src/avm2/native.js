@@ -189,7 +189,7 @@
  */
 
 function debugBreak(message) {
-  // TODO: Set Breakpoint Here
+  debugger;
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
