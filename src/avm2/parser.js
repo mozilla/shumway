@@ -557,6 +557,10 @@ var Multiname = (function () {
   var nextID = 1;
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
+    if (name !== undefined) {
+      assert (isString(name), "Multiname name must be a string. " + name);
+      assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
+    }
     this.id = nextID ++;
     this.namespaces = namespaces;
     this.name = name;
@@ -664,13 +668,10 @@ var Multiname = (function () {
    * Tests if the specified value is a valid qualified name.
    */
   multiname.isQName = function (mn) {
-    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
-      return true;
-    }
     if (mn instanceof multiname) {
       return mn.namespaces && mn.namespaces.length === 1;
     }
-    return false;
+    return true;
   };
 
   /**
@@ -698,17 +699,26 @@ var Multiname = (function () {
    * Gets the qualified name for this multiname, this is either the identity or
    * a mangled Multiname object.
    */
-  multiname.getQualifiedName = function getQualifiedName(mn) {
-    release || assert(multiname.isQName(mn));
-    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
-      return mn;
-    } else {
-      return mn.qualifiedName || (mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, mn.name));
-    }
 
-    function qualifyName(qualifier, name) {
-      return qualifier ? qualifier + "$" + name : name;
+  function qualifyName(qualifier, name) {
+    release || assert (typeof name !== "object");
+    return qualifier ? qualifier + "$" + name : name;
+  }
+
+  multiname.getQualifiedName = function getQualifiedName(mn) {
+    release || assert (Multiname.isQName(mn));
+    if (mn instanceof Multiname) {
+      if (mn.qualifiedName !== undefined) {
+        return mn.qualifiedName;
+      }
+      var name = String(mn.name);
+      if (isNumeric(name)) {
+        release || assert (mn.namespaces[0].isPublic());
+        return mn.qualifiedName = name;
+      }
+      mn = mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, name);
     }
+    return mn;
   };
 
   /**
@@ -719,10 +729,7 @@ var Multiname = (function () {
     if (qn instanceof Multiname) {
       return qn;
     }
-    if (typeof qn === "number" || qn instanceof Number || isNumeric(qn)) {
-      return new Multiname(ShumwayNamespace.PUBLIC, qn);
-    }
-    assert (typeof qn === "string");
+    assert (typeof qn === "string" && !isNumeric(qn));
     var a = qn.indexOf("$");
     if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
       return undefined;
@@ -749,6 +756,7 @@ var Multiname = (function () {
     if (isNumeric(name)) {
       return Number(name);
     }
+    assert (isString(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 
@@ -783,17 +791,6 @@ var Multiname = (function () {
 
   multiname.isAnyName = function isAnyName(mn) {
     return typeof mn === "object" && !mn.isRuntimeName() && mn.name === undefined;
-  };
-
-  /**
-   * Helper function that creates multinames without allocating objects for numeric
-   * names.
-   */
-  multiname.getMultiname = function getMultiname(namespaces, name) {
-    if (isNumeric(name)) {
-      return name;
-    }
-    return new Multiname(namespaces, name);
   };
 
   var simpleNameCache = {};
@@ -886,7 +883,6 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getName = function getName() {
-    release || assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
   };
 
@@ -900,8 +896,13 @@ var Multiname = (function () {
     if (this.isAnyName()) {
       return "*";
     } else {
-      return this.isRuntimeName() ? "[]" : this.getName();
+      var name = this.getName();
+      return this.isRuntimeName() ? "[]" : name;
     }
+  };
+
+  multiname.prototype.hasObjectName = function hasObjectName() {
+    return typeof this.name === "object";
   };
 
   multiname.prototype.toString = function toString() {

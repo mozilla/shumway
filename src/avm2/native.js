@@ -912,9 +912,6 @@ var natives = (function () {
       return true;
     });
     defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
-      if (Object.keys(this.primitiveMap).length > 0 || this.keys.length > 0) {
-        console.info(this.keys);
-      }
       return Object.keys(this.primitiveMap).concat(this.keys);
     });
     c.native = {

@@ -182,11 +182,24 @@ function toKeyValueArray(o) {
  * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
  */
 function isNumeric(x) {
-  return typeof x === "number" || !isNaN(parseInt(x, 10));
+  if (typeof x === "number") {
+    return true;
+  } else if (typeof x === "string") {
+    return !isNaN(parseInt(x, 10));
+  }
+  return false;
 }
 
-function isString(string) {
-  return typeof string === "string";
+function boxValue(value) {
+  return Object(value);
+}
+
+function isObject(value) {
+  return typeof value === "object";
+}
+
+function isString(value) {
+  return typeof value === "string";
 }
 
 function setBitFlags(flags, flag, value) {

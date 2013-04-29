@@ -3,9 +3,15 @@ var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enab
 var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
 
 /**
- * Helper Functions
+ * Helper functions used by the compiler.
  */
 var getPublicQualifiedName = Multiname.getPublicQualifiedName;
+var createName = function createName(namespaces, name) {
+  if (isNumeric(name) || isObject(name)) {
+    return name;
+  }
+  return new Multiname(namespaces, name);
+};
 
 (function (exports) {
 

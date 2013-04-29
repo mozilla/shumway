@@ -392,7 +392,7 @@ function hasNext2(obj, index) {
   if (obj === null || obj === undefined) {
     return {index: 0, object: null};
   }
-  obj = Object(obj);
+  obj = boxValue(obj);
   release || assert(obj);
   release || assert(index >= 0);
 
@@ -624,7 +624,7 @@ function nameInTraits(obj, qn) {
 function resolveMultinameInTraits(obj, mn) {
   release || assert(!Multiname.isQName(mn), mn, " already resolved");
 
-  obj = Object(obj);
+  obj = boxValue(obj);
 
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
@@ -640,8 +640,9 @@ function resolveMultinameInTraits(obj, mn) {
  * Resolving a multiname on an object using linear search.
  */
 function resolveMultinameUnguarded(obj, mn, traitsOnly) {
-  assert(Multiname.needsResolution(mn), mn, " already resolved");
-  obj = Object(obj);
+  release || assert(Multiname.needsResolution(mn), "Multiname " + mn + " is already resolved.");
+  release || assert(!Multiname.isNumeric(mn), "Should not resolve numeric multinames.");
+  obj = boxValue(obj);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -726,7 +727,7 @@ function sliceArguments(args, offset) {
 function callProperty(obj, mn, isLex, args) {
   // Counter.count("callProperty " + mn.name);
   if (typeof obj === "number") {
-    obj = Object(obj);
+    obj = boxValue(obj);
   }
   var receiver = isLex ? null : obj;
   if (isProxyObject(obj)) {
@@ -736,14 +737,12 @@ function callProperty(obj, mn, isLex, args) {
   return property.apply(receiver, args);
 }
 
-function hasProperty(obj, mn) {
-  release || assert(!isNullOrUndefined(obj), "hasProperty(", mn, ") on null or undefined");
-  obj = Object(obj);
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(obj, mn);
-  if (resolved === undefined) {
-    return Multiname.getPublicQualifiedName(mn.name) in obj;
+function hasProperty(obj, name) {
+  obj = boxValue(obj);
+  if (obj.hasProperty) {
+    return obj.hasProperty(name);
   }
-  return Multiname.getQualifiedName(resolved) in obj;
+  return resolveName(obj, name) in obj;
 }
 
 function getSuper(scope, obj, mn) {
@@ -786,46 +785,68 @@ function getSuper(scope, obj, mn) {
   return value;
 }
 
-function resolvePropertyName(obj, mn) {
-  if (mn instanceof Multiname) {
-    if (mn.namespaces.length > 1) {
-      var resolved = resolveMultiname(obj, mn);
+function resolveName(obj, name) {
+  if (name instanceof Multiname) {
+    if (name.namespaces.length > 1) {
+      var resolved = resolveMultiname(obj, name);
       if (resolved !== undefined) {
         return Multiname.getQualifiedName(resolved);
       } else {
-        return Multiname.getPublicQualifiedName(mn.name);
+        return Multiname.getPublicQualifiedName(name.name);
       }
     } else {
-      return Multiname.getQualifiedName(mn);
+      return Multiname.getQualifiedName(name);
     }
-  } else if (typeof mn === "object") {
+  } else if (typeof name === "object") {
     // Call toString() on |mn| object.
-    return Multiname.getPublicQualifiedName(String(mn));
+    return Multiname.getPublicQualifiedName(String(name));
   } else {
-    return Multiname.getQualifiedName(mn);
+    return name;
   }
 }
 
-function getProperty(obj, mn) {
+function getProperty(obj, name) {
   if (obj.getProperty) {
-    return obj.getProperty(mn);
+    return obj.getProperty(name);
   }
-  var resolved = resolvePropertyName(obj, mn);
-  if (obj.indexGet && Multiname.isNumeric(resolved)) {
-    return obj.indexGet(resolved);
+  var qn = resolveName(obj, name);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexGet(qn);
   }
-  return obj[resolved];
+  return obj[qn];
 }
 
-function setProperty(obj, mn, value) {
+function setProperty(obj, name, value) {
   if (obj.setProperty) {
-    return obj.setProperty(mn, value);
+    return obj.setProperty(name, value);
   }
-  var resolved = resolvePropertyName(obj, mn);
-  if (obj.indexGet && Multiname.isNumeric(resolved)) {
-    return obj.indexSet(resolved, value);
+  var qn = resolveName(obj, name);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexSet(qn, value);
   }
-  obj[resolved] = value;
+  obj[qn] = value;
+}
+
+function deleteProperty(obj, name) {
+  if (obj.deleteProperty) {
+    return obj.deleteProperty(name);
+  }
+  var qn = resolveName(obj, name);
+  if (obj.indexDelete && Multiname.isNumeric(qn)) {
+    return obj.indexDelete(qn);
+  }
+  /**
+   * If we're in the middle of an enumeration, we need to remove the property name
+   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
+   * to be skipped by the enumeration code.
+   */
+  if (obj[VM_ENUMERATION_KEYS]) {
+    var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
+    if (index >= 0) {
+      obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
+    }
+  }
+  return delete obj[qn];
 }
 
 function setSuper(scope, obj, mn, value) {
@@ -854,37 +875,6 @@ function setSuper(scope, obj, mn, value) {
     throw new ReferenceError("Cannot create property " + mn.name +
                              " on " + superClass.debugName);
   }
-}
-
-function deleteProperty(obj, mn) {
-  if (obj.deleteProperty) {
-    return obj.deleteProperty(mn);
-  }
-  if (mn instanceof Multiname) {
-    if (mn.namespaces.length > 1) {
-      mn = resolveMultiname(obj, mn);
-    }
-    if (mn === undefined) {
-      return true;
-    }
-    if (!mn.namespaces[0].isPublic()) {
-      return false;
-    }
-  }
-  var resolved = resolvePropertyName(obj, mn);
-
-  /**
-   * If we're in the middle of an enumeration "delete" the property from the
-   * enumeration keys as well. Setting it to |undefined| will cause it to be
-   * skipped by the enumeration bytecodes.
-   */
-  if (obj[VM_ENUMERATION_KEYS]) {
-    var index = obj[VM_ENUMERATION_KEYS].indexOf(resolved);
-    if (index >= 0) {
-      obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
-    }
-  }
-  return delete obj[Multiname.getQualifiedName(resolved)];
 }
 
 function forEachPublicProperty(obj, fn, self) {

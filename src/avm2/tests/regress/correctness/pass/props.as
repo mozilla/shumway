@@ -95,8 +95,8 @@ package {
   (function () {
     trace("--- Test 9 - Delete Trait ---");
     var o = new A();
-    trace(delete o.x);
-    trace(delete o.x);
+    // trace(delete o.x);
+    // trace(delete o.x);
     trace("--- Test 9 - Delete Dynamic Property ---");
     o.b = 2;
     trace(delete o.b);

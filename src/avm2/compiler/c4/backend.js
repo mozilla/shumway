@@ -611,10 +611,9 @@
   };
 
   IR.AVM2RuntimeMultiname.prototype.compile = function (cx) {
-    // CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
-    return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
+    return call(id("createName"), [namespaces, name]);
   };
 
   function generateSource(node) {
