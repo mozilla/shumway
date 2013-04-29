@@ -17,6 +17,7 @@ var createName = function createName(namespaces, name) {
 
   var Node = IR.Node;
   var Start = IR.Start;
+  var Null = IR.Null;
   var Undefined = IR.Undefined;
   var This = IR.This;
   var Projection = IR.Projection;
@@ -333,7 +334,7 @@ var createName = function createName(namespaces, name) {
         assert (isConstant(value));
         if (isNumericConstant(value)) {
           return value;
-        } else if (isStringConstant(value)) {
+        } else if (isStringConstant(value) || value === Null || value === Undefined) {
           return binary(Operator.ADD, constant(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX), value);
         }
         unexpected();
@@ -1085,7 +1086,7 @@ var createName = function createName(namespaces, name) {
               local[bc.object] = getJSProperty(temp, "object");
               push(local[bc.index] = getJSProperty(temp, "index"));
               break;
-            case OP_pushnull:       push(constant(null)); break;
+            case OP_pushnull:       push(Null); break;
             case OP_pushundefined:  push(Undefined); break;
             case OP_pushfloat:      notImplemented(); break;
             case OP_pushbyte:       push(constant(bc.value)); break;

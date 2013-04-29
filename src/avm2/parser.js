@@ -756,7 +756,7 @@ var Multiname = (function () {
     if (isNumeric(name)) {
       return Number(name);
     }
-    assert (isString(name));
+    assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 

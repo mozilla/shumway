@@ -830,6 +830,7 @@
     return store;
   })();
 
+  var Null = new Constant(null);
   var Undefined = new Constant(undefined);
 
   Undefined.toString = function () {
@@ -1985,6 +1986,7 @@
   exports.Block = Block;
   exports.Node = Node;
   exports.Start = Start;
+  exports.Null = Null;
   exports.Undefined = Undefined;
   exports.This = This;
   exports.Throw = Throw;
