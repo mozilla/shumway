@@ -20,6 +20,7 @@ function updateAVM2State() {
   enableC4.value = true;
   enableVerifier.value = state.verifier;
   traceExecution.value = state.trace ? 2 : 0;
+  debuggerMode.value = true;
   release = state.release;
   TRACE_SYMBOLS_INFO = state.symbolsInfo;
   AVM1_TRACE_ENABLED = state.trace;
