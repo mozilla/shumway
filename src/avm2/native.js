@@ -726,9 +726,8 @@ var natives = (function () {
         native: {
           instance: {
             getStackTrace: function () {
-              var e = new Error();
               somewhatImplemented("Error.getStackTrace()");
-              return e.stack;
+              return Runtime.getStackTrace();
             }
           },
 

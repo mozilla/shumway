@@ -63,8 +63,6 @@ var Interpreter = (function () {
       var multinames = abc.constantPool.multinames;
       var runtime = abc.runtime;
       var domain = abc.domain;
-      var runtimeStack = Runtime.stack;
-
       var exceptions = method.exceptions;
 
       var locals = [$this];
@@ -75,7 +73,9 @@ var Interpreter = (function () {
       var parameterCount = method.parameters.length;
       var argCount = methodArgs.length;
 
-      runtimeStack.push(runtime);
+      Runtime.stack.push(runtime);
+      var frame = { method: method, bc: null };
+      Runtime.callStack.push(frame);
 
       var value;
       for (var i = 0; i < parameterCount; i++) {
@@ -104,7 +104,7 @@ var Interpreter = (function () {
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         interpretedBytecode ++;
         try {
-          var bc = bytecodes[pc];
+          var bc = frame.bc = bytecodes[pc];
           var op = bc.op;
           switch (op | 0) {
           case 0x03: // OP_throw
@@ -286,10 +286,12 @@ var Interpreter = (function () {
             stack.push(getSuper(savedScope, obj, name).apply(obj, args));
             break;
           case 0x47: // OP_returnvoid
-            runtimeStack.pop();
+            Runtime.stack.pop();
+            Runtime.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            runtimeStack.pop();
+            Runtime.stack.pop();
+            Runtime.callStack.pop();
             return stack.pop();
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);

@@ -1009,6 +1009,24 @@ var Runtime = (function () {
     return null;
   };
 
+  runtime.callStack = [];
+
+  /**
+   * This only works for interpreter frames.
+   */
+  runtime.getStackTrace = function getStackTrace () {
+    return Runtime.callStack.clone().reverse().map(function (frame) {
+      var str = "";
+      if (frame.method) {
+        if (frame.method.holder) {
+          str += frame.method.holder + " ";
+        }
+        str += frame.method + ":";
+      }
+      return str + frame.bc.originalPosition;
+    }).join("\n");
+  };
+
   // This is called from catch blocks.
   runtime.unwindStackTo = function unwindStackTo(rt) {
     var stack = runtime.stack;
