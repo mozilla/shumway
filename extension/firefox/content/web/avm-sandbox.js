@@ -193,7 +193,7 @@ var FileLoadingService = {
 function parseSwf(url, params, file) {
   console.log("Parsing " + url + "...");
   function terminate() {}
-  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
     SWF.embed(file, document, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
   });
