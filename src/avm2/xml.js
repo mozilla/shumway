@@ -130,7 +130,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
   }
 
   function XMLParser() {
-    // parser
     function parseXml(s, sink) {
       var i = 0, scopes = [{
         space:"default",
@@ -354,7 +353,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     // end of parser
 
     this.parseFromString = function(s, mimeType) {
-      // this is a raw XML object
       var currentElement = new XML("element");  // placeholder
       var elementsStack = [];
       parseXml(s, {
@@ -490,15 +488,27 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
 
   // 10.5 ToAttributeName
   function toAttributeName(v) {
-    notImplemented("toAttributeName");
-    if (typeof v === "string") {
-      
+    if (v === undefined || v === null || typeof v === "boolean" || typeof v === "number") {
+      throw "TypeError: invalid operand to ToAttributeName()";
+    } else if (isXMLType(v)) {
+      v = toString(v);
+    } else if (v instanceof Object && v !== null) {
+      if (v.IS_QNAME) {
+        return new QName(v.uri, v.localName, true);
+      }
+      v = toString(v);
     }
+    if (typeof v === "string") {
+      var ns = new ASNamespace();
+      var qn = new QName(ns, v, true);
+    } else {
+      // FIXME implement
+    }
+    return qn;
   }
 
   // 10.6 ToXMLName
   function toXMLName(mn) {
-//    release || assert(mn instanceof Multiname && mn.namespaces.length === 1);
     return new QName(mn);
   }
 
@@ -1071,7 +1081,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       },
       instance: {
         toString: function () { // (void) -> String
-          return toString(this); //function () { return toString.bind(this); }
+          return toString(this);
         },
         hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
           notImplemented("XML.hasOwnProperty");
@@ -1085,11 +1095,11 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         appendChild: function appendChild(child) { // (child) -> XML
           return this;
         },
-        attribute: function attribute(arg) { // (arg) -> XMLList
-          notImplemented("XML.attribute");
+        attribute: function attribute(name) { // (arg) -> XMLList
+          return this.getProperty(toAttributeName(name));
         },
         attributes: function attributes() { // (void) -> XMLList
-          return this.getProperty(new QName("@*"));
+          return this.getProperty(toAttributeName("*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XML.child");
@@ -1160,8 +1170,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XML._namespace");
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
-          //notImplemented("XML.namespaceDeclarations");
-          return new XMLList();
+          return new XMLList();  // FIXME needs implementation
         },
         nodeKind: function nodeKind() { // (void) -> String
           return this._kind;
@@ -1349,17 +1358,21 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return this[Multiname.getQualifiedName(resolved)];
-      } else {
-        var name = toXMLName(mn);
-        var xl = new XMLList(this, name);
-        this._.forEach(function (v, i) {
-          var xl2 = v.getProperty(mn);
-          if (xl2.length() > 0) {
-            xl.append(xl2);
-          }
-        });
-        return xl;
       }
+      var x = this;
+      var i = mn >>> 0;
+      if (String(mn) === String(i)) {
+        return x._[mn];
+      }
+      var name = toXMLName(mn);
+      var xl = new XMLList(this, name);
+      this._.forEach(function (v, i) {
+        var xl2 = v.getProperty(mn);
+        if (xl2.length() > 0) {
+          xl.append(xl2);
+        }
+      });
+      return xl;
     };
 
     XLp.delete = function (key, isMethod) {
@@ -1436,11 +1449,11 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         propertyIsEnumerable: function propertyIsEnumerable(P) { // (P) -> Boolean
           notImplemented("XMLList.propertyIsEnumerable");
         },
-        attribute: function attribute(arg) { // (arg) -> XMLList
-          notImplemented("XMLList.attribute");
+        attribute: function attribute(name) { // (arg) -> XMLList
+          return this.getProperty(toAttributeName(name));
         },
         attributes: function attributes() { // (void) -> XMLList
-          return this.getProperty(new QName("@*"));
+          return this.getProperty(toAttributeName("*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XMLList.child");
@@ -1552,8 +1565,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XMLList.localName");
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
-          //notImplemented("XMLList.namespaceDeclarations");
-          return new XMLList();
+          return new XMLList();  // FIXME implement
         },
         prependChild: function prependChild(value) { // (value) -> XML
           notImplemented("XMLList.prependChild");
@@ -1588,7 +1600,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     // multiname with one namespace, then it is a qualified name and we
     // use it as is. in all other cases we construct a new multiname from
     // the given namespace and name.
-    QName = function QName(ns, name) {
+    QName = function QName(ns, name, isAttr) {
       // handle coerce case
       if (!(this instanceof QName)) {
         if (name === undefined && ns.IS_QNAME) {
@@ -1626,7 +1638,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         }
       } else if (name === "*") {
         // Any name has a null name and is not a runtime name
-        mn = new Multiname([ns], null, 0);
+        mn = new Multiname([ns], null, isAttr ? Multiname.ATTRIBUTE : 0);
       } else if (name === "@*") {
         // Any name has a null name and is not a runtime name
         mn = new Multiname([ns], null, Multiname.ATTRIBUTE);
@@ -1635,7 +1647,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         if (name === undefined) {
           mn = new Multiname([ns], "");
         } else {
-          mn = new Multiname([ns], toString(name));
+          mn = new Multiname([ns], toString(name), isAttr ? Multiname.ATTRIBUTE : 0);
         }
       }
       this.mn = mn;

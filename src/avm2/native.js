@@ -995,21 +995,6 @@ var natives = (function () {
         }
       }
       var ns = ShumwayNamespace.createNamespace(uri, prefix);
-/*
-      // TODO: when uriValue is a QName
-      if (prefixValue !== undefined) {
-        if (typeof isXMLName === "function") {
-          prefixValue = String(prefixValue);
-        }
-        uriValue = String(uriValue);
-      } else if (uriValue !== undefined) {
-        if (uriValue.constructor === ShumwayNamespace) {
-          return uriValue.clone();
-        }
-      }
-      var ns = ShumwayNamespace.createNamespace(uriValue);
-      ns.prefix = prefixValue;
-*/
       return ns;
     }
 

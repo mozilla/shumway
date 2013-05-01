@@ -580,7 +580,7 @@ var Multiname = (function () {
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
-      assert (isString(name), "Multiname name must be a string. " + name);
+      assert (name === null || isString(name), "Multiname name must be a string. " + name);
       assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
     }
     this.id = nextID ++;
