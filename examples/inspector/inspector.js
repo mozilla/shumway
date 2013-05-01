@@ -179,6 +179,15 @@ if (yt) {
   xhr.send(null);
 }
 
+if (getQueryVariable('sanity')) {
+  libraryScripts = playerGlobalScripts;
+  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+    runInspectorSanityTests(avm2);
+  });
+}
+
 function showMessage(msg) {
   $('#message').text(msg);
   $('#message')[0].parentElement.removeAttribute('hidden');
@@ -285,7 +294,7 @@ var FileLoadingService = {
       open: function (request) {
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path);
+        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
         new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
