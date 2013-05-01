@@ -31,6 +31,11 @@
        "swf": "/examples/as3_tiger/tiger.swf",
        "type": "eq"
     },
+    {  "id": "bitmap-ref",
+       "frames": [10],
+       "swf": "swfs/bitmapbuttons.swf",
+       "type": "eq"
+    },
     {  "id": "pac-ref",
        "frames": [10, 25, 50],
        "swf": "/examples/pac/pac.swf",
@@ -41,6 +46,11 @@
        "swf": "/examples/racing/race.swf",
        "type": "eq"
     },
+    {  "id": "gradient-ref",
+       "frames": [10],
+       "swf": "swfs/gradient.swf",
+       "type": "eq"
+    },
     {  "id": "timeline",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -49,5 +59,10 @@
          "swfs/timeline/Timeline8.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "box2d-ref",
+       "frames": [50, 150, 300],
+       "swf": "/examples/Box2DFlashAS3/demo.swf",
+       "type": "eq"
     }
 ]

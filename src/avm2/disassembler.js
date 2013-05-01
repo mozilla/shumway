@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
 
 var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf"));
@@ -81,7 +99,7 @@ ClassInfo.prototype.trace = function (writer) {
 
 MetaDataInfo.prototype.trace = function (writer) {
   writer.enter(this + " {");
-  this.items.forEach(function (item) {
+  this.value.forEach(function (item) {
     writer.writeLn((item.key ? item.key + ": " : "") + "\"" + item.value + "\"");
   });
   writer.leave("}");
@@ -458,7 +476,7 @@ var SourceTracer = (function () {
         // var methods = traits.methods;
 
         var methods = [];
-        var gettersAndSetters = Object.create(null);
+        var gettersAndSetters = createEmptyObject();
 
         traits.methods.forEach(function (trait, i) {
           var traitName = trait.name.getName();
@@ -596,7 +614,7 @@ var SourceTracer = (function () {
           if (key.indexOf("__") === 0) {
             continue;
           }
-          writer.writeLn("[" + key + "(" + metadata[key].items.map(function (m) {
+          writer.writeLn("[" + key + "(" + metadata[key].value.map(function (m) {
             var str = m.key ? m.key + "=" : "";
             return str + "\"" + m.value + "\"";
           }).join(", ") + ")]");

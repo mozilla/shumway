@@ -1,10 +1,27 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
       this._element = document.createElement('video');
       this._element.setAttribute("style",
           "position: absolute; top:0; left:0; z-index: 100; background: black;");
-      this._element.controls = true;
       this._added = false;
     },
 
@@ -43,22 +60,20 @@ var VideoDefinition = (function () {
       ctx.clip();
       ctx.clearRect(0, 0, this._width, this._height);
 
-      var scaleX = this._videoScaleX;
-      var scaleY = this._videoScaleY;
-      var cssTransform = 'transform: scale(' + scaleX + ', ' + scaleY + '); ';
+      var matrix = ctx.currentTransform;
+      var sx = this._videoScaleX, sy = this._videoScaleY;
+      var cssTransform = "transform: matrix(" + sx * matrix.a + ", " +
+         sx * matrix.b + ", " + sy * matrix.c + ", " + sy * matrix.d + ", " +
+         matrix.e + ", " + matrix.f + ");";
       if (this._currentCssTransform !== cssTransform) {
         this._currentCssTransform = cssTransform;
         this._element.setAttribute("style", "position: absolute; top:0; left:0; z-index: -100;" +
-                                   prefix("transform-origin: 0px 0px 0;") +
-                                   prefix(cssTransform));
+                                   "transform-origin: 0px 0px 0;" + cssTransform +
+                                   "-webkit-transform-origin: 0px 0px 0; -webkit-" + cssTransform);
         this._markAsDirty();
       }
     }
   };
-
-  function prefix(prop) {
-    return prop + ' -webkit-' + prop + '-ms-' + '-o-' + prop;
-  }
 
   def.__glue__ = {
     native: {

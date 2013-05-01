@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var TextFieldDefinition = (function () {
   var def = {
     __class__: 'flash.text.TextField',
@@ -69,7 +87,7 @@ var TextFieldDefinition = (function () {
       }
       somewhatImplemented("TextField.textHeight");
       return bbox.bottom - bbox.top; // TODO: use canvas.measureText(txt).height
-    },
+    }
 
   };
 
@@ -87,34 +105,34 @@ var TextFieldDefinition = (function () {
         textHeight: def.textHeight,
         autoSize: {
           get: function autoSize() { // (void) -> String
-            notImplemented("TextField.autoSize");
+            somewhatImplemented("TextField.autoSize");
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
-            notImplemented("TextField.autoSize");
+            somewhatImplemented("TextField.autoSize");
             this._autoSize = value;
           }
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            notImplemented("TextField.multiline");
+            somewhatImplemented("TextField.multiline");
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            notImplemented("TextField.multiline");
+            somewhatImplemented("TextField.multiline");
             this._multiline = value;
           }
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            notImplemented("TextField.textColor");
+            somewhatImplemented("TextField.textColor");
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
-            notImplemented("TextField.textColor");
+            somewhatImplemented("TextField.textColor");
             this._textColor = value;
           }
-        },
+        }
       }
     }
   };

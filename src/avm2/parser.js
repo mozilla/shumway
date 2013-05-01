@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
@@ -168,6 +185,7 @@ var Trait = (function () {
       var valueIndex = stream.readU30();
       this.value = undefined;
       if (valueIndex !== 0) {
+        this.hasDefaultValue = true;
         this.value = constantPool.getValue(stream.readU8(), valueIndex);
       }
       break;
@@ -197,16 +215,20 @@ var Trait = (function () {
       var traitMetadata;
       for (var i = 0, j = stream.readU30(); i < j; i++) {
         var md = metadata[stream.readU30()];
-        if (md.tagName === "__go_to_definition_help" ||
-            md.tagName === "__go_to_ctor_definition_help") {
+        if (md.name === "__go_to_definition_help" ||
+            md.name === "__go_to_ctor_definition_help") {
           continue;
         }
         if (!traitMetadata) {
           traitMetadata = {};
         }
-        traitMetadata[md.tagName] = md;
+        traitMetadata[md.name] = md;
       }
       if (traitMetadata) {
+        // FIXME: we should probably only set Class metadata on the classInfo.
+        if (this.isClass()) {
+          this.classInfo.metadata = traitMetadata;
+        }
         this.metadata = traitMetadata;
       }
     }
@@ -351,8 +373,8 @@ var ShumwayNamespace = (function () {
     return uri;
   }
 
-  var uriToMangledNameMap = Object.create(null);
-  var mangledNameToURIMap = Object.create(null);
+  var uriToMangledNameMap = createEmptyObject();
+  var mangledNameToURIMap = createEmptyObject();
   var mangledNameList = [];
   var MANGLE_NAMESPACES = true;
 
@@ -557,6 +579,10 @@ var Multiname = (function () {
   var nextID = 1;
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
+    if (name !== undefined) {
+      assert (isString(name), "Multiname name must be a string. " + name);
+      assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
+    }
     this.id = nextID ++;
     this.namespaces = namespaces;
     this.name = name;
@@ -658,17 +684,18 @@ var Multiname = (function () {
            mn instanceof Number;
   };
 
+  multiname.needsResolution = function (mn) {
+    return mn instanceof multiname && mn.namespaces.length > 1;
+  };
+
   /**
    * Tests if the specified value is a valid qualified name.
    */
   multiname.isQName = function (mn) {
-    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
-      return true;
-    }
     if (mn instanceof multiname) {
       return mn.namespaces && mn.namespaces.length === 1;
     }
-    return false;
+    return true;
   };
 
   /**
@@ -696,17 +723,26 @@ var Multiname = (function () {
    * Gets the qualified name for this multiname, this is either the identity or
    * a mangled Multiname object.
    */
-  multiname.getQualifiedName = function getQualifiedName(mn) {
-    release || assert(multiname.isQName(mn));
-    if (typeof mn === "number" || typeof mn === "string" || mn instanceof Number) {
-      return mn;
-    } else {
-      return mn.qualifiedName || (mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, mn.name));
-    }
 
-    function qualifyName(qualifier, name) {
-      return qualifier ? qualifier + "$" + name : name;
+  function qualifyName(qualifier, name) {
+    release || assert (typeof name !== "object");
+    return qualifier ? qualifier + "$" + name : name;
+  }
+
+  multiname.getQualifiedName = function getQualifiedName(mn) {
+    release || assert (Multiname.isQName(mn));
+    if (mn instanceof Multiname) {
+      if (mn.qualifiedName !== undefined) {
+        return mn.qualifiedName;
+      }
+      var name = String(mn.name);
+      if (isNumeric(name)) {
+        release || assert (mn.namespaces[0].isPublic());
+        return mn.qualifiedName = name;
+      }
+      mn = mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, name);
     }
+    return mn;
   };
 
   /**
@@ -717,10 +753,7 @@ var Multiname = (function () {
     if (qn instanceof Multiname) {
       return qn;
     }
-    if (typeof qn === "number" || qn instanceof Number || isNumeric(qn)) {
-      return new Multiname(ShumwayNamespace.PUBLIC, qn);
-    }
-    assert (typeof qn === "string");
+    assert (typeof qn === "string" && !isNumeric(qn));
     var a = qn.indexOf("$");
     if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
       return undefined;
@@ -747,11 +780,12 @@ var Multiname = (function () {
     if (isNumeric(name)) {
       return Number(name);
     }
+    assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 
   multiname.isPublicQualifiedName = function isPublicQualifiedName(qn) {
-    return qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
+    return typeof qn === "number" || isNumeric(qn) || qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {
@@ -783,17 +817,6 @@ var Multiname = (function () {
     return typeof mn === "object" && !mn.isRuntimeName() && !mn.name;
   };
 
-  /**
-   * Helper function that creates multinames without allocating objects for numeric
-   * names.
-   */
-  multiname.getMultiname = function getMultiname(namespaces, name) {
-    if (isNumeric(name)) {
-      return name;
-    }
-    return new Multiname(namespaces, name);
-  };
-
   var simpleNameCache = {};
 
   /**
@@ -821,7 +844,8 @@ var Multiname = (function () {
       name = simpleName;
       namespace = "";
     }
-    return simpleNameCache[simpleName] = new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
+    return simpleNameCache[simpleName] =
+        new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
   };
 
   multiname.prototype.getQName = function getQName(index) {
@@ -831,7 +855,8 @@ var Multiname = (function () {
     }
     var name = this.cache[index];
     if (!name) {
-      name = this.cache[index] = new Multiname([this.namespaces[index]], this.name, this.flags);
+      name = this.cache[index] =
+          new Multiname([this.namespaces[index]], this.name, this.flags);
     }
     return name;
   };
@@ -882,8 +907,16 @@ var Multiname = (function () {
   };
 
   multiname.prototype.getName = function getName() {
-//    release || assert(!this.isAnyName() && !this.isRuntimeName());
     return this.name;
+  };
+
+  multiname.prototype.getOriginalName = function getOriginalName() {
+    release || assert(this.isQName());
+    var name = this.namespaces[0].originalURI;
+    if (name) {
+      name += ".";
+    }
+    return name + this.name;
   };
 
   multiname.prototype.getNamespace = function getNamespace() {
@@ -896,8 +929,13 @@ var Multiname = (function () {
     if (this.isAnyName()) {
       return "*";
     } else {
-      return this.isRuntimeName() ? "[]" : this.getName();
+      var name = this.getName();
+      return this.isRuntimeName() ? "[]" : name;
     }
+  };
+
+  multiname.prototype.hasObjectName = function hasObjectName() {
+    return typeof this.name === "object";
   };
 
   multiname.prototype.toString = function toString() {
@@ -925,6 +963,19 @@ var Multiname = (function () {
     }
     return str;
   };
+
+  multiname.Int = multiname.getPublicQualifiedName("int");
+  multiname.Uint = multiname.getPublicQualifiedName("uint");
+  multiname.Class = multiname.getPublicQualifiedName("Class");
+  multiname.Array = multiname.getPublicQualifiedName("Array");
+  multiname.Object = multiname.getPublicQualifiedName("Object");
+  multiname.String = multiname.getPublicQualifiedName("String");
+  multiname.Number = multiname.getPublicQualifiedName("Number");
+  multiname.Boolean = multiname.getPublicQualifiedName("Boolean");
+  multiname.Function = multiname.getPublicQualifiedName("Function");
+  multiname.XML = multiname.getPublicQualifiedName("XML");
+  multiname.XMLList = multiname.getPublicQualifiedName("XMLList");
+
   return multiname;
 })();
 
@@ -1163,34 +1214,33 @@ var MetaDataInfo = (function () {
 
   function metaDataInfo(abc, stream) {
     var strings = abc.constantPool.strings;
-    this.tagName = strings[stream.readU30()];
+    var name = this.name = strings[stream.readU30()];
 
     var itemCount = stream.readU30();
-    var items = [];
     var keys = [];
-    var values = [];
+    var items = [];
 
     for (var i = 0; i < itemCount; i++) {
       keys[i] = strings[stream.readU30()];
     }
 
     for (var i = 0; i < itemCount; i++) {
-      values[i] = strings[stream.readU30()];
-    }
-
-    for (var i = 0; i < itemCount; i++) {
-      var item = items[i] = { key: keys[i], value: values[i] };
-      if (item.key) {
-        release || assert(!this.hasOwnProperty(item.key));
-        this[item.key] = item.value;
+      var key = keys[i];
+      items[i] = { key: key, value: strings[stream.readU30()] };
+      // for the 'native' tag, store all properties directly on the tag's
+      // object, too. There's not going to be any duplicates.
+      if (key && name === 'native') {
+        release || assert(!this.hasOwnProperty(key));
+        this[key] = items[i].value;
       }
     }
-    this.items = items;
+
+    this.value = items;
   }
 
   metaDataInfo.prototype = {
     toString: function toString() {
-      return "[" + this.tagName + "]";
+      return "[" + this.name + "]";
     }
   };
 
@@ -1224,6 +1274,7 @@ var InstanceInfo = (function () {
       this.interfaces[i] = constantPool.multinames[stream.readU30()];
     }
     this.init = methods[stream.readU30()];
+    this.init.isInstanceInitializer = true;
     this.init.name = this.name;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
@@ -1255,6 +1306,19 @@ var ClassInfo = (function () {
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
+    this.defaultValue = getDefaultValue(this.instanceInfo.name);
+  }
+
+  function getDefaultValue(qn) {
+    if (Multiname.getQualifiedName(qn) === Multiname.Int ||
+        Multiname.getQualifiedName(qn) === Multiname.Uint ||
+        Multiname.getQualifiedName(qn) === Multiname.Number) {
+      return 0;
+    } else if (Multiname.getQualifiedName(qn) === Multiname.Boolean) {
+      return false;
+    } else {
+      return null;
+    }
   }
 
   classInfo.prototype.toString = function() {

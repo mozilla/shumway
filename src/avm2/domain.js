@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceDomain = domainOptions.register(new Option("tdpa", "traceDomain", "boolean", false, "trace domain property access"));
@@ -40,6 +57,11 @@ function ensureScriptIsExecuted(script, reason) {
   }
 }
 
+var Glue = createEmptyObject();
+Glue.PUBLIC_PROPERTIES = 0x1;
+Glue.PUBLIC_METHODS    = 0x2;
+Glue.ALL               = Glue.PUBLIC_PROPERTIES | Glue.PUBLIC_METHODS;
+
 var Domain = (function () {
 
   function Domain(vm, base, mode, allowNatives) {
@@ -56,13 +78,13 @@ var Domain = (function () {
     this.loadedClasses = [];
 
     // Classes cache.
-    this.classCache = Object.create(null);
+    this.classCache = createEmptyObject();
 
     // Script cache.
-    this.scriptCache = Object.create(null);
+    this.scriptCache = createEmptyObject();
 
     // Class Info cache.
-    this.classInfoCache = Object.create(null);
+    this.classInfoCache = createEmptyObject();
 
     // Our parent.
     this.base = base;
@@ -75,6 +97,8 @@ var Domain = (function () {
 
     // Storage for custom natives
     this.natives = {};
+
+    this.onClassCreated = new Callback();
 
     // If we are the system domain (the root), we should initialize the Class
     // and MethodClosure classes.
@@ -106,9 +130,13 @@ var Domain = (function () {
         defineNonEnumerableProperty(this, "apply", callable.apply);
       };
 
-      Class.prototype = {
-        forceConstify: true,
+      function setDefaultProperties(cls) {
+        defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);
+        defineReadOnlyProperty(cls.traitsPrototype, "class", cls);
+        defineReadOnlyProperty(cls.instance, "class", cls);
+      }
 
+      Class.prototype = {
         setSymbol: function setSymbol(props) {
           this.instance.prototype.symbol = props;
         },
@@ -157,13 +185,21 @@ var Domain = (function () {
           return o;
         },
 
+        extendNative: function (baseClass, native) {
+          this.baseClass = baseClass;
+          this.dynamicPrototype = Object.getPrototypeOf(native.prototype);
+          this.instance.prototype = this.traitsPrototype = native.prototype;
+          setDefaultProperties(this);
+        },
+
         extendBuiltin: function(baseClass) {
+          release || assert (baseClass);
           // Some natives handle their own prototypes/it's impossible to do the
           // traits/public prototype BS, e.g. Object, Array, etc.
           // FIXME: This is technically non-semantics preserving.
           this.baseClass = baseClass;
-          this.dynamicPrototype = this.instance.prototype;
-          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
+          this.dynamicPrototype = this.traitsPrototype = this.instance.prototype;
+          setDefaultProperties(this);
         },
 
         extend: function (baseClass) {
@@ -177,36 +213,20 @@ var Domain = (function () {
               self.initializeInstance(this);
               instanceNoInitialize.apply(this, arguments);
             };
-            this.instance.class = instanceNoInitialize.class;
+            defineReadOnlyProperty(this.instance, "class", instanceNoInitialize.class);
             this.hasInitialize |= SUPER_INITIALIZE;
           }
-          this.instance.prototype = Object.create(this.dynamicPrototype);
-          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
-          defineReadOnlyProperty(this.instance.prototype, "class", this);
+          this.instance.prototype = this.traitsPrototype = Object.create(this.dynamicPrototype);
+          setDefaultProperties(this);
+        },
+
+        setDefaultProperties: function () {
+          setDefaultProperties(this);
         },
 
         link: function (definition) {
+          release || assert(definition);
           release || assert(this.dynamicPrototype);
-
-          function glueProperties(obj, props) {
-            var keys = Object.keys(props);
-            for (var i = 0, j = keys.length; i < j; i++) {
-              var p = keys[i];
-              var propName = props[p];
-              assert (typeof propName === "string", "Make sure it's not a function.");
-              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propName));
-              release || assert(typeof qn === "string");
-              var desc = Object.getOwnPropertyDescriptor(obj, qn);
-              if (desc && desc.get) {
-                Object.defineProperty(obj, p, desc);
-              } else {
-                Object.defineProperty(obj, p, {
-                  get: new Function("", "return this." + qn),
-                  set: new Function("v", "this." + qn + " = v")
-                });
-              }
-            }
-          }
 
           if (definition.initialize) {
             if (!this.hasInitialize) {
@@ -216,43 +236,94 @@ var Domain = (function () {
                 self.initializeInstance(this);
                 instanceNoInitialize.apply(this, arguments);
               };
-              this.instance.class = instanceNoInitialize.class;
+              defineReadOnlyProperty(this.instance, "class", instanceNoInitialize.class);
               this.instance.prototype = instanceNoInitialize.prototype;
             }
             this.hasInitialize |= OWN_INITIALIZE;
           }
 
-          var proto = this.dynamicPrototype;
+          var dynamicPrototype = this.dynamicPrototype;
           var keys = Object.keys(definition);
-          for (var i = 0, j = keys.length; i < j; i++) {
-            var p = keys[i];
-            Object.defineProperty(proto, p, Object.getOwnPropertyDescriptor(definition, p));
+          for (var i = 0; i < keys.length; i++) {
+            var propertyName = keys[i];
+            Object.defineProperty(dynamicPrototype, propertyName, Object.getOwnPropertyDescriptor(definition, propertyName));
+          }
+
+          function glueProperties(obj, properties) {
+            var keys = Object.keys(properties);
+            for (var i = 0; i < keys.length; i++) {
+              var propertyName = keys[i];
+              var propertySimpleName = properties[propertyName];
+              assert (isString(propertySimpleName), "Make sure it's not a function.");
+              var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propertySimpleName));
+              release || assert(isString(qn));
+              var descriptor = Object.getOwnPropertyDescriptor(obj, qn);
+              if (descriptor && descriptor.get) {
+                Object.defineProperty(obj, propertyName, descriptor);
+              } else {
+                Object.defineProperty(obj, propertyName, {
+                  get: new Function("", "return this." + qn),
+                  set: new Function("v", "this." + qn + " = v")
+                });
+              }
+            }
+          }
+
+          function generatePropertiesFromTraits(traits) {
+            var properties = createEmptyObject();
+            traits.forEach(function (trait) {
+              var ns = trait.name.getNamespace();
+              if (!ns.isPublic()) {
+                return;
+              }
+              properties[trait.name.getName()] = "public " + trait.name.getName();
+            });
+            return properties;
           }
 
           var glue = definition.__glue__;
-          if (!glue)
+          if (!glue) {
             return;
+          }
 
           // Accessors for script properties from within AVM2.
           if (glue.script) {
             if (glue.script.instance) {
-              glueProperties(proto, glue.script.instance);
+              if (isNumber(glue.script.instance)) {
+                assert (glue.script.instance === Glue.ALL);
+                glueProperties(dynamicPrototype, generatePropertiesFromTraits(this.classInfo.instanceInfo.traits));
+              } else {
+                glueProperties(dynamicPrototype, glue.script.instance);
+              }
             }
             if (glue.script.static) {
-              glueProperties(this, glue.script.static);
+              if (isNumber(glue.script.static)) {
+                assert (glue.script.static === Glue.ALL);
+                glueProperties(this, generatePropertiesFromTraits(this.classInfo.traits));
+              } else {
+                glueProperties(this, glue.script.static);
+              }
             }
           }
+        },
 
+        linkNatives: function (definition) {
+          var glue = definition.__glue__;
+          // assert (glue && glue.native);
           // Binding to member methods marked as [native].
           this.native = glue.native;
         },
 
-        extendNative: function (baseClass, native) {
-          this.baseClass = baseClass;
-          this.dynamicPrototype = Object.getPrototypeOf(native.prototype);
-          this.instance.prototype = native.prototype;
-          defineNonEnumerableProperty(this.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), this);
-          defineReadOnlyProperty(this.instance.prototype, "class", this);
+        verify: function () {
+          var instance = this.instance;
+          var tP = this.traitsPrototype;
+          var dP = this.dynamicPrototype;
+          assert (instance && tP && dP);
+          assert (tP === instance.prototype);
+          assert (dP === instance.prototype || dP === Object.getPrototypeOf(instance.prototype));
+          assert (isClassObject(this));
+          assert (Object.hasOwnProperty.call(tP, "class"));
+          assert (instance.class === this);
         },
 
         coerce: function (value) {
@@ -272,7 +343,7 @@ var Domain = (function () {
         },
 
         toString: function () {
-          return "[class " + this.debugName + "]";
+          return "[class " + this.classInfo.instanceInfo.name.name + "]";
         }
       };
 
@@ -297,7 +368,7 @@ var Domain = (function () {
       };
 
       var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
-        var bound = fn.bind($this);
+        var bound = safeBind(fn, $this);
         defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
         defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
       };
@@ -352,7 +423,7 @@ var Domain = (function () {
           // console.info("Getting " + multiname + " but script is not executed");
           return undefined;
         }
-        return resolved.script.global[Multiname.getQualifiedName(resolved.name)];
+        return resolved.script.global[Multiname.getQualifiedName(resolved.trait.name)];
       }
       if (strict) {
         return unexpected("Cannot find property " + multiname);
@@ -478,7 +549,7 @@ var Domain = (function () {
                 if (execute) {
                   ensureScriptIsExecuted(script, trait.name);
                 }
-                return (this.scriptCache[mn.id] = { script: script, name: trait.name });
+                return (this.scriptCache[mn.id] = { script: script, trait: trait });
               }
             }
           } else {

@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * Package file that includes all Shumway files. This packaging system is a bit magical.
  * We use esprima to parse the sources and then estransform to apply a series of AST
@@ -65,8 +83,11 @@ load($SHUMWAY_ROOT + "src/avm2/compiler/builder.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/looper.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/backend.js");
 load($SHUMWAY_ROOT + "src/avm2/domain.js");
+load($SHUMWAY_ROOT + "src/avm2/xregexp.js");
 load($SHUMWAY_ROOT + "src/avm2/runtime.js");
+load($SHUMWAY_ROOT + "src/avm2/hacks.js");
 load($SHUMWAY_ROOT + "src/avm2/xml.js");
+load($SHUMWAY_ROOT + "src/avm2/json2.js");
 load($SHUMWAY_ROOT + "src/avm2/amf.js");
 load($SHUMWAY_ROOT + "src/avm2/proxy.js");
 load($SHUMWAY_ROOT + "src/avm2/native.js");
@@ -92,5 +113,6 @@ load($SHUMWAY_ROOT + "src/flash/system");
 load($SHUMWAY_ROOT + "src/flash/text");
 load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
+load($SHUMWAY_ROOT + "src/flash/accessibility");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");

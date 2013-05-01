@@ -1,10 +1,10 @@
 [
    {
-    "name":"firefox7",
-    "path":"/home/sayrer/firefoxen/nightly/firefox"
+    "name":"firefox",
+    "path":"/usr/bin/firefox"
    },
    {
-    "name":"chrome14",
-    "path":"/opt/google/chrome/chrome"
+    "name":"chrome-ish",
+    "path":"/usr/bin/chromium-browser"
    }
 ]

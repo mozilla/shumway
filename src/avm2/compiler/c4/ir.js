@@ -77,6 +77,13 @@
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
 
+    operator.AVM2ADD = new operator("+", function (l, r) {
+      if (typeof l === "string" || typeof r === "string") {
+        return String(l) + String(r);
+      }
+      return l + r;
+    }, true);
+
     function linkOpposites(a, b) {
       a.not = b;
       b.not = a;
@@ -401,8 +408,10 @@
   }
 
   var Latch = (function () {
-    function latch(condition, left, right) {
+    function latch(control, condition, left, right) {
       Node.call(this);
+      assert (isControlOrNull(control));
+      this.control = control;
       this.condition = condition;
       this.left = left;
       this.right = right;
@@ -566,7 +575,7 @@
   })();
 
   var GetProperty = (function () {
-    function getProperty(control, store, object, name, isMethod) {
+    function getProperty(control, store, object, name) {
       Node.call(this);
       assert (isControlOrNull(control));
       assert (store === null || isStore(store));
@@ -576,15 +585,18 @@
       this.store = store;
       this.object = object;
       this.name = name;
-      this.isMethod = isMethod;
     }
     getProperty.prototype = extend(Value, "GetProperty");
     return getProperty;
   })();
 
   var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name, isMethod) {
-      GetProperty.call(this, control, store, object, name, isMethod);
+    function avm2GetProperty(control, store, object, name, isIndexed, isMethod) {
+      GetProperty.call(this, control, store, object, name);
+      assert (isBoolean(isIndexed));
+      assert (isBoolean(isMethod));
+      this.isIndexed = isIndexed;
+      this.isMethod = isMethod;
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;
@@ -618,8 +630,10 @@
   })();
 
   var AVM2SetProperty = (function () {
-    function avm2SetProperty(control, store, object, name, value) {
+    function avm2SetProperty(control, store, object, name, value, isIndexed) {
       SetProperty.call(this, control, store, object, name, value);
+      assert (isBoolean(isIndexed));
+      this.isIndexed = isIndexed;
     }
     avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
     return avm2SetProperty;
@@ -755,6 +769,35 @@
     return call;
   })();
 
+  var CallProperty = (function () {
+    function callProperty(control, store, object, name, args, pristine) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isValueOrNull(object));
+      assert (name);
+      assert (store === null || isStore(store));
+      assert (isArray(args));
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.name = name;
+      this.arguments = args;
+      this.pristine = pristine;
+    }
+    callProperty.prototype = extend(Value, "CallProperty");
+    return callProperty;
+  })();
+
+  var AVM2CallProperty = (function () {
+    function avm2CallProperty(control, store, object, name, isLex, args, pristine) {
+      CallProperty.call(this, control, store, object, name, args, pristine);
+      assert (isBoolean(isLex));
+      this.isLex = isLex;
+    }
+    avm2CallProperty.prototype = extend(GetProperty, "AVM2_CallProperty");
+    return avm2CallProperty;
+  })();
+
   var New = (function () {
     function newNode(control, store, callee, args) {
       Node.call(this);
@@ -787,6 +830,7 @@
     return store;
   })();
 
+  var Null = new Constant(null);
   var Undefined = new Constant(undefined);
 
   Undefined.toString = function () {
@@ -1942,6 +1986,7 @@
   exports.Block = Block;
   exports.Node = Node;
   exports.Start = Start;
+  exports.Null = Null;
   exports.Undefined = Undefined;
   exports.This = This;
   exports.Throw = Throw;
@@ -1957,6 +2002,8 @@
   exports.GlobalProperty = GlobalProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
+  exports.CallProperty = CallProperty;
+  exports.AVM2CallProperty = AVM2CallProperty;
   exports.AVM2GetProperty = AVM2GetProperty;
   exports.AVM2GetDescendants = AVM2GetDescendants;
   exports.AVM2SetProperty = AVM2SetProperty;

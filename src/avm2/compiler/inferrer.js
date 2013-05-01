@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 "use strict";
 
 var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
@@ -87,6 +105,10 @@ var Type = (function () {
 
   type.prototype.isNumeric = function () {
     return this === Type.Int || this === Type.Uint || this === Type.Number;
+  };
+
+  type.prototype.isDirectlyIndexable = function () {
+    return this === Type.Array;
   };
 
   type.prototype.isParameterizedType = function () {
@@ -226,6 +248,9 @@ var TraitsType = (function () {
     var isGetter = !isSetter;
     var trait;
     if (!Multiname.isQName(mn)) {
+      if (mn instanceof MultinameType) {
+        return;
+      }
       release || assert(mn instanceof Multiname);
       var dy;
       for (var i = 0, j = mn.namespaces.length; i < j; i++) {
@@ -636,6 +661,7 @@ var Verifier = (function() {
 
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
+      var mi = this.methodInfo;
 
       var bc, obj, fn, mn, l, r, val, type, returnType;
 
@@ -675,6 +701,10 @@ var Verifier = (function() {
       }
 
       function findProperty(mn, strict) {
+        if (mn instanceof MultinameType) {
+          return Type.Any;
+        }
+        
         // Try to find it in the scope stack.
         for (var i = scope.length - 1; i >= 0; i--) {
           if (scope[i] instanceof TraitsType) {
@@ -703,15 +733,17 @@ var Verifier = (function() {
           }
         }
 
-        // Is it in some other script?
-        // !!abc.domain.base
-        obj = abc.domain.findProperty(mn, false, false);
-        if (obj) {
-          release || assert(obj instanceof Global);
-          ti().object = obj;
-          return Type.from(obj, abc.domain);
+        var resolved = abc.domain.findDefiningScript(mn, !mi.isInstanceInitializer);
+        if (resolved) {
+          var global = resolved.script.global;
+          if (global) {
+            release || assert(global instanceof Global);
+            ti().object = global;
+          } else if (resolved.script) {
+            ti().script = resolved.script;
+          }
+          return Type.from(resolved.script, abc.domain);
         }
-
         return Type.Any;
       }
 
@@ -979,6 +1011,8 @@ var Verifier = (function() {
             }
             if (type instanceof MethodType) {
               returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
+            } else if (type instanceof TraitsType && type.isClassInfo()) {
+              returnType = type.instance();
             } else {
               returnType = Type.Any;
             }
@@ -1195,9 +1229,13 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_astypelate:
+            type = pop();
             pop();
-            pop();
-            push(Type.Any);
+            if (type instanceof TraitsType) {
+              push(type.instance());
+            } else {
+              push(Type.Any);
+            }
             break;
           case OP_coerce_o:
             notImplemented(bc);

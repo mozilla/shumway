@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var NetConnectionDefinition = (function () {
   return {
     // ()
@@ -17,34 +35,39 @@ var NetConnectionDefinition = (function () {
           }
         },
         instance: {
-          connect: function connect(command) { // (command:String) -> void
+          connect: function connect(command) { // (command:String, ...arguments) -> void
             somewhatImplemented("NetConnection.connect");
+            this._uri = command;
+            if (command == null) {
+              this._connected = true;
+              var info = {
+                level : 'status',
+                code : 'NetConnection.Connect.Success'
+              };
+              this.dispatchEvent(new flash.events.NetStatusEvent('netStatus',
+                                                                 false,
+                                                                 false,
+                                                                 info));
+            }
           },
-          invoke: function invoke(index) { // (index:uint) -> any
-            notImplemented("NetConnection.invoke");
-          },
-          invokeWithArgsArray: function invokeWithArgsArray(index, args) { // (index:uint, args:Array) -> any
-            somewhatImplemented("NetConnection.invokeWithArgsArray");
+          call: function call(command, responder) { // (command:String, responder:Responder, ...arguments) -> any
+            notImplemented("NetConnection.call");
           },
           connected: {
             get: function connected() { // (void) -> Boolean
-              notImplemented("NetConnection.connected");
               return this._connected;
             }
           },
           uri: {
             get: function uri() { // (void) -> String
-              notImplemented("NetConnection.uri");
               return this._uri;
             }
           },
           client: {
             get: function client() { // (void) -> Object
-              notImplemented("NetConnection.client");
               return this._client;
             },
             set: function client(object) { // (object:Object) -> void
-              notImplemented("NetConnection.client");
               this._client = object;
             }
           },
@@ -76,8 +99,8 @@ var NetConnectionDefinition = (function () {
           },
           usingTLS: {
             get: function usingTLS() { // (void) -> Boolean
-              notImplemented("NetConnection.usingTLS");
-              return this._usingTLS;
+              somewhatImplemented("NetConnection.usingTLS");
+              return false;
             }
           },
           protocol: {

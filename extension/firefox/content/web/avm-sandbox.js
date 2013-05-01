@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Extension communication object... as it used in pdf.js
 var FirefoxCom = (function FirefoxComClosure() {
   return {
@@ -149,7 +167,8 @@ var FileLoadingService = {
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
-        FirefoxCom.requestSync('loadFile', {url: path, sessionId: sessionId});
+        FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
+          mimeType: request.mimeType, postData: request.data, sessionId: sessionId});
       },
       notify: function (args) {
         switch (args.topic) {
@@ -192,7 +211,7 @@ var FileLoadingService = {
 function parseSwf(url, params, file) {
   console.log("Parsing " + url + "...");
   function terminate() {}
-  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
     SWF.embed(file, document, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
   });

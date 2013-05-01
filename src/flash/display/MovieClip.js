@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var MovieClipDefinition = (function () {
   var def = {
     __class__: 'flash.display.MovieClip',
@@ -315,12 +333,19 @@ var MovieClipDefinition = (function () {
           frameScripts[frameNum] = [fn];
       }
     },
+    _addToPendingScripts: function (fn) {
+      if (this._stage == null) {
+        // HACK called from the constructor, applying _gotoFrame frame at once?
+        return fn();
+      }
+      return this._stage._pendingScripts.push(fn);
+    },
     gotoAndPlay: function (frame, scene) {
       this.play();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._stage._pendingScripts.push(
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frame));
       }
     },
@@ -328,15 +353,15 @@ var MovieClipDefinition = (function () {
       this.stop();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
-      } else {
-        this._stage._pendingScripts.push(
+      } else if (this._stage) {
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frame));
       }
     },
     gotoLabel: function (labelName) {
       var frameLabel = this._frameLabels[labelName];
-      if (frameLabel) {
-        this._stage._pendingScripts.push(
+      if (frameLabel && this._stage) {
+        this._addToPendingScripts(
           this._gotoFrame.bind(this, frameLabel.frame));
       }
     },
@@ -345,7 +370,7 @@ var MovieClipDefinition = (function () {
     },
     nextFrame: function () {
       this.stop();
-      this._stage._pendingScripts.push(function () {
+      this._addToPendingScripts(function () {
         this._gotoFrame(this._currentFrame % this._totalFrames + 1);
       }.bind(this));
     },
@@ -360,7 +385,7 @@ var MovieClipDefinition = (function () {
     },
     prevFrame: function () {
       this.stop();
-      this._stage._pendingScripts.push(function () {
+      this._addToPendingScripts(function () {
         this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
       }.bind(this));
     },

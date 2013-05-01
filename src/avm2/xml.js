@@ -1,5 +1,22 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
-// The XML parser is designed only for parsing of simple XML documents (for unit testing purpose).
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The XML parser is designed only for parsing of simple XML documents
 
 var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLType, isXMLName;
 
@@ -697,14 +714,14 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       }
     }
 
-    Xp.set = function (p, v, isMethod) {
+    Xp.setProperty = function (p, v, isMethod) {
       var x, i, c, n;
       if (isMethod) {
         return;
       }
       x = this;
       if (p === p >>> 0) {
-        throw "TypeError in XML.prototype.set(): invalid property name " + p;
+        throw "TypeError in XML.prototype.setProperty(): invalid property name " + p;
       }
       if (x._kind === "text" ||
           x._kind === "comment" ||
@@ -770,7 +787,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     };
 
     // 9.1.1.1 XML.[[Get]] (P)
-    Xp.get = function (mn, isMethod) {
+    Xp.getProperty = function (mn, isMethod) {
       var val;
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
@@ -1072,7 +1089,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XML.attribute");
         },
         attributes: function attributes() { // (void) -> XMLList
-          return this.get(new QName("@*"));
+          return this.getProperty(new QName("@*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XML.child");
@@ -1257,7 +1274,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       return result;
     }
 
-    XLp.set = function (mn, v, isMethod) {
+    XLp.setProperty = function (mn, v, isMethod) {
       var x, i, r;
       if (isMethod) {
         return;
@@ -1313,7 +1330,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
                    k === "comment" || k === "processing-instruction") {
           // FIXME implement
         } else {
-          x._[i].set("*", v);
+          x._[i].setProperty("*", v);
         }        
       } else if (x.length() <= 1) {
         if (x.length() === 0) {
@@ -1323,12 +1340,12 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           }
           x.append(r)
         }
-        x._[0].set(p, v);
+        x._[0].setProperty(p, v);
       }
       return;
     };
 
-    XLp.get = function (mn, isMethod) {
+    XLp.getProperty = function (mn, isMethod) {
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return this[Multiname.getQualifiedName(resolved)];
@@ -1336,7 +1353,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         var name = toXMLName(mn);
         var xl = new XMLList(this, name);
         this._.forEach(function (v, i) {
-          var xl2 = v.get(mn);
+          var xl2 = v.getProperty(mn);
           if (xl2.length() > 0) {
             xl.append(xl2);
           }
@@ -1375,11 +1392,11 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (base === null) {
         return null;
       }
-      var target = this._targetObject.get(_targetProp);
+      var target = this._targetObject.getProperty(_targetProp);
       if (base.length === 0) {
         notImplemented("XMLList.resolve");
-        base.set(_targetProperty, "");
-        target = base.get(_targetProperty);
+        base.setProperty(_targetProperty, "");
+        target = base.getProperty(_targetProperty);
         return target;
       }
     };
@@ -1423,7 +1440,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XMLList.attribute");
         },
         attributes: function attributes() { // (void) -> XMLList
-          return this.get(new QName("@*"));
+          return this.getProperty(new QName("@*"));
         },
         child: function child(propertyName) { // (propertyName) -> XMLList
           notImplemented("XMLList.child");

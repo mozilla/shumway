@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 (function (exports) {
 
   var T = estransform;
@@ -430,7 +448,16 @@
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
-    return call(id("getProperty"), [object, name]);
+    if (this.isIndexed) {
+      assert (this.isMethod === false);
+      return new ConditionalExpression (
+        property(object, "indexGet"),
+        call(property(object, "indexGet"), [name]),
+        property(object, name)
+      );
+    }
+    var isMethod = new Literal(this.isMethod);
+    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -449,11 +476,35 @@
   };
 
   IR.Binary.prototype.compile = function (cx) {
-    return new BinaryExpression (
-      this.operator.name,
-      compileValue(this.left, cx),
-      compileValue(this.right, cx)
-    );
+    var left = compileValue(this.left, cx);
+    var right = compileValue(this.right, cx);
+    if (this.operator === Operator.AVM2ADD) {
+      return call(id("add"), [left, right]);
+    }
+    return new BinaryExpression (this.operator.name, left, right);
+  };
+
+  IR.CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var callee = property(object, name);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    if (this.pristine) {
+      return call(callee, args);
+    } else {
+      return callCall(callee, object, args);
+    }
+  };
+
+  IR.AVM2CallProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileValue(this.name, cx);
+    var args = this.arguments.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    return call(id("callProperty"), [object, name, new Literal(this.isLex), new ArrayExpression(args)]);
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -467,7 +518,7 @@
     } else {
       object = new Literal(null);
     }
-    if (this.pristine &&
+    if (false && this.pristine &&
         (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
         this.object === null) {
       return call(callee, args);
@@ -507,6 +558,13 @@
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
+    if (this.isIndexed) {
+      return new ConditionalExpression (
+        property(object, "indexSet"),
+        call(property(object, "indexSet"), [name, value]),
+        assignment(property(object, name), value)
+      );
+    }
     return call(id("setProperty"), [object, name, value]);
   };
 
@@ -525,13 +583,6 @@
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
     return assignment(property(object, name), value);
-  };
-
-  IR.AVM2GetProperty.prototype.compile = function (cx) {
-    var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
-    var isMethod = compileValue(this.isMethod, cx);
-    return call(id("getProperty"), [object, name, isMethod]);
   };
 
   IR.AVM2GetDescendants.prototype.compile = function (cx) {
@@ -578,10 +629,9 @@
   };
 
   IR.AVM2RuntimeMultiname.prototype.compile = function (cx) {
-    // CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
-    return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
+    return call(id("createName"), [namespaces, name]);
   };
 
   function generateSource(node) {

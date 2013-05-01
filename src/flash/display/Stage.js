@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var StageDefinition = (function () {
   var COLOR_CORRECTION_DEFAULT     = 'default';
   var COLOR_CORRECTION_OFF         = 'on';
@@ -41,6 +59,8 @@ var StageDefinition = (function () {
       this._mouseJustLeft = false;
       this._quality = STAGE_QUALITY_HIGH;
       this._pendingScripts = [];
+      this._align = "";
+      this._scaleMode = STAGE_SCALE_MODE_NO_SCALE;
     },
 
     get allowsFullScreen() {
@@ -57,12 +77,6 @@ var StageDefinition = (function () {
     },
     get displayState() {
       return null;
-    },
-    get focus() {
-      return Keyboard._focus;
-    },
-    set focus(val) {
-      Keyboard._focus = val;
     },
     get frameRate() {
       return this._frameRate;
@@ -89,10 +103,10 @@ var StageDefinition = (function () {
       this._quality = val;
     },
     get scaleMode() {
-      return STAGE_SCALE_MODE_NO_SCALE;
+      return this._scaleMode;
     },
     set scaleMode(val) {
-      notImplemented();
+      this._scaleMode = val;
     },
     get showDefaultContextMenu() {
       return true;
@@ -142,10 +156,31 @@ var StageDefinition = (function () {
         stageHeight: desc(def, "stageHeight"),
         stageWidth: desc(def, "stageWidth"),
         frameRate: desc(def, "frameRate"),
+        scaleMode: desc(def, "scaleMode"),
         contentsScaleFactor: {
           get: function contentsScaleFactor() { // (void) -> Number
-            notImplemented("Stage.contentsScaleFactor");
-            return this._contentsScaleFactor;
+            somewhatImplemented("Stage.contentsScaleFactor");
+            return this._contentsScaleFactor || 1;
+          }
+        },
+        align: {
+          get: function align() { // (void) -> String
+            somewhatImplemented("Stage.align");
+            return this._align;
+          },
+          set: function align(value) { // (value:String) -> void
+            somewhatImplemented("Stage.align");
+            this._align = value;
+          }
+        },
+        focus: {
+          get: function focus() { // (void) -> InteractiveObject
+            somewhatImplemented("Stage.focus");
+            return this._focus;
+          },
+          set: function focus(newFocus) { // (newFocus:InteractiveObject) -> void
+            somewhatImplemented("Stage.focus");
+            this._focus = newFocus;
           }
         },
         requireOwnerPermissions: function () {

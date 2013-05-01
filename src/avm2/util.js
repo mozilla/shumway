@@ -1,3 +1,20 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 var inBrowser = typeof console != "undefined";
 
@@ -85,6 +102,20 @@ function defineReadOnlyProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+/**
+ * Makes sure you never re-bind a method.
+ */
+function safeBind(fn, obj) {
+  assert (!fn.boundTo && obj);
+  var f = fn.bind(obj);
+  f.boundTo = obj;
+  return f;
+}
+
+function createEmptyObject() {
+  return Object.create(null);
+}
+
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
   var descriptor = {};
   while (obj) {
@@ -168,11 +199,28 @@ function toKeyValueArray(o) {
  * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
  */
 function isNumeric(x) {
-  return typeof x === "number" || !isNaN(parseInt(x, 10));
+  if (typeof x === "number") {
+    return true;
+  } else if (typeof x === "string") {
+    return !isNaN(parseInt(x, 10));
+  }
+  return false;
 }
 
-function isString(string) {
-  return typeof string === "string";
+function boxValue(value) {
+  return Object(value);
+}
+
+function isObject(value) {
+  return typeof value === "object";
+}
+
+function isString(value) {
+  return typeof value === "string";
+}
+
+function isNumber(value) {
+  return typeof value === "number";
 }
 
 function setBitFlags(flags, flag, value) {
@@ -181,6 +229,21 @@ function setBitFlags(flags, flag, value) {
 
 function getBitFlags(flags, flag) {
   return !!(flags & flag);
+}
+
+/**
+ * Pops elements from a source array into a destination array. This avoids
+ * allocations and should be faster. The elements in the destination array
+ * are pushed in the same order as they appear in the source array:
+ *
+ * popManyInto([1, 2, 3], 2, dst) => dst = [2, 3]
+ */
+function popManyInto(src, count, dst) {
+  release || assert(src.length >= count);
+  for (var i = count - 1; i >= 0; i--) {
+    dst[i] = src.pop();
+  }
+  dst.length = count;
 }
 
 (function () {
@@ -1068,4 +1131,21 @@ var SortedList = (function() {
     }
   };
   this.WeakMap = WeakMap;
+})();
+
+var Callback = (function () {
+  function callback() {
+    this.queue = [];
+  }
+  callback.prototype.register = function register(callback) {
+    assert (callback);
+    this.queue.push(callback);
+  };
+  callback.prototype.notify = function notify() {
+    var args = sliceArguments(arguments, 0);
+    this.queue.forEach(function (callback) {
+      callback.apply(null, args);
+    });
+  };
+  return callback;
 })();

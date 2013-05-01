@@ -1,17 +1,36 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, responseType) {
+  function constructor(url, method, mimeType, data) {
     this.url = url;
-    this.responseType = responseType || "arraybuffer";
+    this.method = method;
+    this.mimeType = mimeType;
+    this.data = data;
   }
 
   constructor.prototype = {
     readAll: function(progress, complete) {
       var url = this.url;
-      var xhr = new XMLHttpRequest();
+      var xhr = new XMLHttpRequest({mozSystem:true});
       var async = true;
-      xhr.open("GET", this.url, async);
-      xhr.responseType = this.responseType;
+      xhr.open(this.method || "GET", this.url, async);
+      xhr.responseType = "arraybuffer";
       if (progress) {
         xhr.onprogress = function(event) {
           progress(xhr.response, event.loaded, event.total);
@@ -27,13 +46,15 @@ var BinaryFileReader = (function binaryFileReader() {
           complete(xhr.response);
         }
       }
+      if (this.mimeType)
+        xhr.setRequestHeader("Content-Type", this.mimeType);
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(null);
+      xhr.send(this.data || null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest();
+      var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
-      xhr.open("GET", url, true);
+      xhr.open(this.method || "GET", url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
       if ('overrideMimeType' in xhr)
         xhr.overrideMimeType('text/plain; charset=x-user-defined');
@@ -59,8 +80,10 @@ var BinaryFileReader = (function binaryFileReader() {
             oncomplete();
         }
       }
+      if (this.mimeType)
+        xhr.setRequestHeader("Content-Type", this.mimeType);
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(null);
+      xhr.send(this.data || null);
       if (onopen)
         onopen();
     }
@@ -108,12 +131,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
+    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
     new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
       // If library is shell.abc, then just go ahead and run it now since
-      // its not worth doing it lazily given that it is so small.
+      // it's not worth doing it lazily given that it is so small.
       if (libraryPath === shellAbcPath) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
       } else {
@@ -142,7 +166,7 @@ function parseQueryString(qs) {
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
-    obj[key] = value;
+    obj[decodeURIComponent(key)] = decodeURIComponent(value);
   }
 
   return obj;
@@ -155,6 +179,30 @@ function parseQueryString(qs) {
 if (remoteFile) {
   $('#openFileToolbar')[0].setAttribute('hidden', true);
   executeFile(remoteFile, null, parseQueryString(window.location.search));
+}
+
+var yt = getQueryVariable('yt');
+if (yt) {
+  var xhr = new XMLHttpRequest({mozSystem: true});
+  xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
+  xhr.onload = function (e) {
+    var config = JSON.parse(/ytplayer\.config\s*=\s*([^;]+)/.exec(xhr.responseText)[1]);
+    var swf = JSON.parse(/swf\s*=\s*("[^;]+)/.exec(xhr.responseText)[1]);
+    swf = /src="([^"]+)/.exec(swf)[1];
+
+    $('#openFileToolbar')[0].setAttribute('hidden', true);
+    executeFile(swf, null, config.args);
+  };
+  xhr.send(null);
+}
+
+if (getQueryVariable('sanity')) {
+  libraryScripts = playerGlobalScripts;
+  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+    runInspectorSanityTests(avm2);
+  });
 }
 
 function showMessage(msg) {
@@ -263,8 +311,8 @@ var FileLoadingService = {
       open: function (request) {
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
+        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },

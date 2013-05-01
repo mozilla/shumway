@@ -1,11 +1,29 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var BitmapDataDefinition = (function () {
   var def = {
     __class__: 'flash.display.BitmapData',
 
     initialize: function () {
-      var s = this.symbol;
-      if (s) {
-        this._img = s.img;
+      if (this.symbol) {
+        this._img = this.symbol.img;
+        this._skipCopyToCanvas = this.symbol.skipCopyToCanvas;
       }
     },
 
@@ -15,21 +33,29 @@ var BitmapDataDefinition = (function () {
     },
 
     ctor : function(width, height, transparent, backgroundColor) {
-      if (isNaN(width + height) || width <= 0 || height <= 0)
+      if (this._img) {
+        width = this._img.naturalWidth;
+        height = this._img.naturalHeight;
+      } else if (isNaN(width + height) || width <= 0 || height <= 0) {
         throw ArgumentError();
+      }
 
       this._transparent = transparent === undefined ? true : !!transparent;
-      var canvas = document.createElement('canvas');
-      this._ctx = canvas.getContext('2d');
-      canvas.width = width | 0;
-      canvas.height = height | 0;
-      this._drawable = canvas;
-      this._backgroundColor = backgroundColor;
+      this._backgroundColor = backgroundColor | 0;
 
-      if (!transparent || backgroundColor | 0)
-        this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
-
-      this._ctx.drawImage(this._img, 0, 0);
+      if (this._skipCopyToCanvas) {
+        this._drawable = this._img;
+      } else {
+        var canvas = document.createElement('canvas');
+        this._ctx = canvas.getContext('2d');
+        canvas.width = width | 0;
+        canvas.height = height | 0;
+        this._drawable = canvas;
+        if (!transparent || this._backgroundColor)
+          this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
+        if (this._img)
+          this._ctx.drawImage(this._img, 0, 0);
+      }
     },
     dispose: function() {
       this._ctx = null;

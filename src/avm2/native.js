@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * Shumway ships with its own version of the AS3 builtin library, which
  * maintains interface compatibility with the stock builtin library, viz. the
@@ -75,8 +92,8 @@
  *     instance method - |CClass.native.instance.m|
  *     static method   - |CClass.native.static.m|
  *     getter          - |CClass.native.instance.m.get|
- *     setter          - |CClass.native.static.m.set|
- *     static getter   - |CClass.native.instance.m.set|
+ *     setter          - |CClass.native.instance.m.set|
+ *     static getter   - |CClass.native.static.m.get|
  *     static setter   - |CClass.native.static.m.set|
  *
  * Implementing native classes the hard way
@@ -189,7 +206,7 @@
  */
 
 function debugBreak(message) {
-  // TODO: Set Breakpoint Here
+  debugger;
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
@@ -257,7 +274,8 @@ var natives = (function () {
       }
     };
 
-    c.dynamicPrototype = Object.prototype;
+    c.dynamicPrototype = c.traitsPrototype = Object.prototype;
+    c.setDefaultProperties();
     c.defaultValue = null;
 
     c.coerce = function (value) {
@@ -430,7 +448,7 @@ var natives = (function () {
           return str;
         },
         toString: Sp.toString,
-        valueOf: Sp.valueOf,
+        valueOf: Sp.valueOf
       },
       static: String
     };
@@ -728,7 +746,8 @@ var natives = (function () {
         native: {
           instance: {
             getStackTrace: function () {
-              return "TODO: getStackTrace";
+              somewhatImplemented("Error.getStackTrace()");
+              return Runtime.getStackTrace();
             }
           },
 
@@ -744,6 +763,7 @@ var natives = (function () {
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
+        c.linkNatives(ErrorDefinition);
       }
       return c;
     };
@@ -752,73 +772,83 @@ var natives = (function () {
   /**
    * RegExp.as
    *
-   * AS RegExp adds two new flags:
-   *  /s (dotall)   - makes . also match \n
-   *  /x (extended) - allows different formatting of regexp
-   *
-   * TODO: Should we support extended at all? Or even dotall?
+   * RegExp is implemented using XRegExp copyright 2007-present by Steven Levithan.
    */
+
   function RegExpClass(runtime, scope, instance, baseClass) {
-    function ASRegExp(pattern, flags) {
-      function stripFlag(flags, c) {
-        flags[flags.indexOf(c)] = flags[flags.length - 1];
-        return flags.substr(0, flags.length - 1);
-      }
-
-      if (flags) {
-        var re;
-        var extraProps = {};
-
-        if (flags.indexOf("s") >= 0) {
-          pattern = pattern.replace(/\./, "(.|\n)");
-          flags = stripFlags(flags, "s");
-          extraProps.push({ key: "dotall", value: true });
-        }
-
-        re = new RegExp(pattern, flags);
-
-        for (var i = 0, j = extraProps.length; i < j; i++) {
-          var prop = extraProps[i];
-          re[prop.key] = prop.value;
-        }
-
-        return re;
-      }
-
-      return new RegExp(pattern, flags);
-    }
-    ASRegExp.prototype = RegExp.prototype;
-
-    var c = new runtime.domain.system.Class("RegExp", ASRegExp, C(ASRegExp));
+    var c = new runtime.domain.system.Class("RegExp", XRegExp, C(XRegExp));
     c.extendBuiltin(baseClass);
 
-    var REp = RegExp.prototype;
+    // Make exec and test visible via RegExpClass since we need to link them in, in
+    // RegExp.as using unsafeJSNative().
+
+    RegExpClass.exec = function exec() {
+      var result = this.exec.apply(this, arguments);
+      if (!result) {
+        return result;
+      }
+      // For some reason named groups in AS3 are set to the empty string instead of
+      // undefined as is the case for indexed groups. Here we just emulate the AS3
+      // behaviour.
+      var keys = Object.keys(result);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (!isNumeric(k)) {
+          if (result[k] === undefined) {
+            result[k] = "";
+          }
+        }
+      }
+      publicizeProperties(result);
+      return result;
+    };
+
+    RegExpClass.test = function test() {
+      return this.exec.apply(this, arguments) !== null;
+    };
+
     c.native = {
       instance: {
         global: {
-          get: function () { return this.global; }
+          get: function () {
+            return this.global;
+          }
         },
         source: {
-          get:  function () { return this.source; }
+          get:  function () {
+            return this.source;
+          }
         },
         ignoreCase: {
-          get: function () { return this.ignoreCase; }
+          get: function () {
+            return this.ignoreCase;
+          }
         },
         multiline: {
-          get: function () { return this.multiline; }
+          get: function () {
+            return this.multiline;
+          }
         },
         lastIndex: {
-          get: function () { return this.lastIndex; },
-          set: function (i) { this.lastIndex = i; }
+          get: function () {
+            return this.lastIndex;
+          },
+          set: function (i) {
+            this.lastIndex = i;
+          }
         },
         dotall: {
-          get: function () { return this.dotall; }
+          get: function () {
+            return this.dotall;
+          }
         },
         extended: {
-          get: function () { return this.extended; }
+          get: function () {
+            return this.extended;
+          }
         },
-        exec: REp.exec,
-        test: REp.test
+        exec: RegExpClass.exec,
+        test: RegExpClass.test
       }
     };
 
@@ -835,34 +865,74 @@ var natives = (function () {
       if (!weakKeys) {
         this.keys = [];
       }
+      this.primitiveMap = {};
     }
 
     var c = new runtime.domain.system.Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
 
+    function tryMakePrimitiveKey(key) {
+      if (typeof key === "string" ||
+          typeof key === "number") {
+        return key;
+      }
+      assert (typeof key === "object");
+    }
+
     var Dp = ASDictionary.prototype;
-    defineReadOnlyProperty(Dp, "canHandleProperties", true);
-    defineNonEnumerableProperty(Dp, "set", function (key, value) {
-      key = key.name;
-      this.map.set(Object(key), value);
-      if (!this.weakKeys && this.keys.indexOf(key) < 0) {
-        this.keys.push(key);
+    defineNonEnumerableProperty(Dp, "setProperty", function (qn, value) {
+      if (qn instanceof Multiname) {
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        this.primitiveMap[primitiveKey] = value;
+        return;
+      }
+      this.map.set(Object(qn), value);
+      if (!this.weakKeys && this.keys.indexOf(qn) < 0) {
+        this.keys.push(qn);
       }
     });
-    defineNonEnumerableProperty(Dp, "get", function (key) {
-      key = key.name;
-      return this.map.get(Object(key));
+    defineNonEnumerableProperty(Dp, "getProperty", function (qn) {
+      if (qn instanceof Multiname) {
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        return this.primitiveMap[primitiveKey];
+      }
+      return this.map.get(Object(qn));
     });
-    defineNonEnumerableProperty(Dp, "delete", function (key) {
-      key = key.name;
-      this.map.delete(Object(key), value);
+    defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
+      if (qn instanceof Multiname) {
+        if (typeof qn.name !== "object") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        delete this.primitiveMap[primitiveKey];
+      }
+      this.map.delete(Object(qn));
       var i;
-      if (!this.weakKeys && (i = this.keys.indexOf(key)) >= 0) {
+      if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
+      return true;
     });
-    defineNonEnumerableProperty(Dp, "enumProperties", function () {
-      return this.keys;
+    defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
+      return Object.keys(this.primitiveMap).concat(this.keys);
     });
     c.native = {
       instance: {
@@ -953,7 +1023,7 @@ var natives = (function () {
           get: Np.getPrefix
         },
         uri: {
-          get: Np.getURI,
+          get: Np.getURI
         }
       }
     };
@@ -1528,13 +1598,12 @@ var natives = (function () {
     }),
 
     describeTypeJSON: constant(describeTypeJSON),
-    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS],
+    original: jsGlobal[VM_NATIVE_BUILTIN_ORIGINALS]
   };
 
   // NOTE: Defining helper functions. Control flow does not reach here.
 
   function describeTypeJSON(o, flags) {
-//    console.log("describeTypeJSON()");
     var Flags = {
       HIDE_NSURI_METHODS  : 0x0001,
       INCLUDE_BASES       : 0x0002,
@@ -1546,75 +1615,189 @@ var natives = (function () {
       INCLUDE_CONSTRUCTOR : 0x0080,
       INCLUDE_TRAITS      : 0x0100,
       USE_ITRAITS         : 0x0200,
-      HIDE_OBJECT         : 0x0400,
+      HIDE_OBJECT         : 0x0400
     };
-    var info = o.classInfo ? o.classInfo : Object.getPrototypeOf(o).class.classInfo;
-    if (!info) {
-      return null;
-    }
-    var traits = chooseTraits(info, flags);
-    if (!traits || traits.length === 0) {
-      return null;
-    }
-    
-    var obj = {};
-    obj[publicName("name")] = info.instanceInfo.name.name;
-    obj[publicName("isDynamic")] = false;
-    obj[publicName("isStatic")] = false;
-    obj[publicName("isFinal")] = false;
-    obj[publicName("traits")] = describeTraits(traits);
 
-//    console.log("describeTypeJSON() obj="+JSON.stringify(obj, null, 2));
-    return obj;
-    
+    // public keys used multiple times while creating the description
+    var declaredByKey = publicName("declaredBy");
+    var metadataKey = publicName("metadata");
+    var accessKey = publicName("access");
+    var uriKey = publicName("uri");
+    var nameKey = publicName("name");
+    var typeKey = publicName("type");
+    var returnTypeKey = publicName("returnType");
+    var valueKey = publicName("value");
+    var keyKey = publicName("key");
+    var parametersKey = publicName("parameters");
+    var optionalKey = publicName("optional");
+
+    var cls = o.classInfo ? o : Object.getPrototypeOf(o).class;
+    release || assert(cls, "No class found for object " + o);
+    var info = cls.classInfo;
+
+    var description = {};
+    description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
+    description[publicName("isDynamic")] = false;
+    //TODO: verify that `isStatic` is false for all instances, true for classes
+    description[publicName("isStatic")] = cls === o;
+    description[publicName("isFinal")] = false;
+    if (flags & Flags.INCLUDE_TRAITS) {
+      description[publicName("traits")] = addTraits(cls, flags);
+    }
+    var metadata = null;
+    if (info.metadata) {
+      metadata = Object.keys(info.metadata).map(function(key) {
+        return describeMetadata(info.metadata[key]);
+      });
+    }
+    description[metadataKey] = metadata;
+    return description;
+
     // privates
-      
+
     function publicName(str) {
       return Multiname.getPublicQualifiedName(str)
     }
-    
-    function chooseTraits(info, flags) {
-      if (flags & Flags.USE_ITRAITS) {
-        info = info.instanceInfo;
+
+    function unmangledQualifiedName(mn) {
+      var name = mn.name;
+      var namespace = mn.namespaces[0];
+      if (namespace && namespace.originalURI) {
+        return namespace.originalURI + '::' + name;
       }
-      return info.traits;        
+      return name;
+    }
+
+    function describeMetadata(metadata) {
+      var result = {};
+      result[nameKey] = metadata.name;
+      result[valueKey] = metadata.value.map(function(value) {
+        var val = {};
+        val[keyKey] = value.key;
+        val[valueKey] = value.value;
+        return value;
+      });
+      return result;
     }
     
-    function describeTraits(traits) {
+    function addTraits(cls, flags) {
+      const includedMembers = [flags & Flags.INCLUDE_VARIABLES,
+                               flags & Flags.INCLUDE_METHODS,
+                               flags & Flags.INCLUDE_ACCESSORS,
+                               flags & Flags.INCLUDE_ACCESSORS];
+      const includeBases = flags & Flags.INCLUDE_BASES;
+      const includeMetadata = flags & Flags.INCLUDE_METADATA;
+
       var obj = {};
-      var basesVal = obj[publicName("bases")] = [];
-      var methodsVal = obj[publicName("methods")] = [];
-      var acessorsVal = obj[publicName("accessors")] = null;
-      var interfacesVal = obj[publicName("interfaces")] = [];
-      var variablesVal = obj[publicName("variables")] = [];
-      var metadataVal = obj[publicName("metadata")] = [];
-      
-      for (var i = 0; traits && i < traits.length; i++) {
-        var t = traits[i];
-        var val = {};
-        switch (t.kind) {
-        case TRAIT_Slot:
-          val[publicName("metadata")] = null;
-          val[publicName("uri")] = null;
-          val[publicName("name")] = t.name.name;
-          val[publicName("type")] = "*";
-          val[publicName("access")] = "readwrite";
-          variablesVal.push(val);
-          break;
-        case TRAIT_Method:
-        case TRAIT_Getter:
-        case TRAIT_Setter:
-          val[publicName("metadata")] = null;
-          val[publicName("uri")] = null;
-          val[publicName("name")] = t.name.name;
-          val[publicName("type")] = "*";
-          val[publicName("access")] = t.kind === TRAIT_Getter ? "read" :
-                                        t.kind === TRAIT_Setter ? "write" : 
-                                        "readwrite";
-          methodsVal.push(val);
-          break;
-        default:
-          break;
+
+      var basesVal = obj[publicName("bases")] = includeBases ? [] : null;
+      if (flags & Flags.INCLUDE_INTERFACES) {
+        var interfacesVal = obj[publicName("interfaces")] = [];
+        if (flags & Flags.USE_ITRAITS) {
+          for (var key in cls.implementedInterfaces) {
+            var ifaceName = cls.implementedInterfaces[key].name;
+            interfacesVal.push(unmangledQualifiedName(ifaceName));
+          }
+        }
+      } else {
+        obj[publicName("interfaces")] = null;
+      }
+
+      var variablesVal = obj[publicName("variables")] =
+          flags & Flags.INCLUDE_VARIABLES ? [] : null;
+      var accessorsVal = obj[publicName("accessors")] =
+          flags & Flags.INCLUDE_ACCESSORS ? [] : null;
+      var methodsVal = obj[publicName("methods")] =
+          flags & Flags.INCLUDE_METHODS ? [] : null;
+
+      // Needed for accessor-merging
+      var encounteredAccessors = {};
+
+      var addBase = false;
+      while (cls) {
+        var className = unmangledQualifiedName(cls.classInfo.instanceInfo.name);
+        if (includeBases && addBase) {
+          basesVal.push(className);
+        } else {
+          addBase = true;
+        }
+        if (flags & Flags.USE_ITRAITS) {
+          describeTraits(cls.classInfo.instanceInfo.traits);
+        } else {
+          describeTraits(cls.classInfo.traits);
+        }
+        cls = cls.baseClass;
+      }
+
+      function describeTraits(traits) {
+        release || assert(traits, "No traits array found on class" +
+                                  cls.classInfo.instanceInfo.name);
+
+        for (var i = 0; traits && i < traits.length; i++) {
+          var t = traits[i];
+          if (!includedMembers[t.kind] ||
+              !t.name.getNamespace().isPublic() && !t.name.uri)
+          {
+            continue;
+          }
+          var name = unmangledQualifiedName(t.name);
+          if (encounteredAccessors[name]) {
+            var val = encounteredAccessors[name];
+            val[accessKey] = 'readwrite';
+            if (t.kind === TRAIT_Getter) {
+              val[typeKey] = unmangledQualifiedName(t.methodInfo.returnType);
+            }
+            continue;
+          }
+          var val = {};
+          if (includeMetadata && t.metadata) {
+            var metadataVal = val[metadataKey] = [];
+            for (var key in t.metadata) {
+              metadataVal.push(describeMetadata(t.metadata[key]));
+            }
+          } else {
+            val[metadataKey] = null;
+          }
+          val[declaredByKey] = className;
+          val[uriKey] = t.name.uri;
+          val[nameKey] = name;
+          //TODO: check why we have public$$_init in `Object`
+          if (!t.typeName && !(t.methodInfo && t.methodInfo.returnType)) {
+            continue;
+          }
+          val[t.kind === TRAIT_Method ? returnTypeKey : typeKey] =
+              unmangledQualifiedName(t.kind === TRAIT_Slot
+                                       ? t.typeName
+                                       : t.methodInfo.returnType);
+          switch (t.kind) {
+            case TRAIT_Slot:
+              val[accessKey] = "readwrite";
+              variablesVal.push(val);
+              break;
+            case TRAIT_Method:
+              var parametersVal = val[parametersKey] = [];
+              var parameters = t.methodInfo.parameters;
+              for (var j = 0; j < parameters.length; j++) {
+                var param = parameters[j];
+                var paramVal = {};
+                paramVal[typeKey] = param.type
+                                      ? unmangledQualifiedName(param.type)
+                                      : '*';
+                paramVal[optionalKey] = 'value' in param;
+                parametersVal.push(paramVal);
+              }
+              methodsVal.push(val);
+              break;
+            case TRAIT_Getter:
+            case TRAIT_Setter:
+              val[accessKey] = t.kind === TRAIT_Getter ? "read" : "write";
+              accessorsVal.push(val);
+              encounteredAccessors[name] = val;
+              break;
+            default:
+              assert(false, "Unknown trait type: " + t.kind);
+              break;
+          }
         }
       }
       return obj;

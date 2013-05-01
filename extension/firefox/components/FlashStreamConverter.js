@@ -1,5 +1,20 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 'use strict';
 
@@ -57,28 +72,6 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
-// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
-// absolute URL, it will be returned as is.
-function combineUrl(baseUrl, url) {
-  if (url.indexOf(':') >= 0)
-    return url;
-  if (url.charAt(0) == '/') {
-    // absolute path
-    var i = baseUrl.indexOf('://');
-    i = baseUrl.indexOf('/', i + 3);
-    return baseUrl.substring(0, i) + url;
-  } else {
-    // relative path
-    var pathLength = baseUrl.length, i;
-    i = baseUrl.lastIndexOf('#');
-    pathLength = i >= 0 ? i : pathLength;
-    i = baseUrl.lastIndexOf('?', pathLength);
-    pathLength = i >= 0 ? i : pathLength;
-    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
-    return baseUrl.substring(0, prefixLength + 1) + url;
-  }
-}
-
 function parseQueryString(qs) {
   if (!qs)
     return {};
@@ -91,7 +84,7 @@ function parseQueryString(qs) {
   for (var i = 0; i < values.length; i++) {
     var kv = values[i].split('=');
     var key = kv[0], value = kv[1];
-    obj[key] = value;
+    obj[decodeURIComponent(key)] = decodeURIComponent(value);
   }
 
   return obj;
@@ -156,6 +149,7 @@ ChromeActions.prototype = {
     var sessionId = data.sessionId;
     var limit = data.limit || 0;
     var method = data.method || "GET";
+    var mimeType = data.mimeType;
     var postData = data.postData || null;
 
     var win = this.window;
@@ -204,7 +198,9 @@ ChromeActions.prototype = {
         }
         win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "close"}, "*");
       }
-    }
+    };
+    if (mimeType)
+      xhr.setRequestHeader("Content-Type", mimeType);
     xhr.send(postData);
     win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
   },
@@ -425,25 +421,42 @@ FlashStreamConverterBase.prototype = {
         params = parseQueryString(element.getAttribute('flashvars'));
         url = element.getAttribute('src');
       } else {
+        url = element.getAttribute('data');
         for (var i = 0; i < element.childNodes.length; ++i) {
           var paramElement = element.childNodes[i];
           if (paramElement.nodeType != 1 ||
-              paramElement.nodeName != 'PARAM' ||
-              paramElement.getAttribute('name').toLowerCase() != 'flashvars')
-          {
+              paramElement.nodeName != 'PARAM') {
             continue;
           }
-
-          params[paramElement.getAttribute('name')] = paramElement
-                                                      .getAttribute('value');
+          switch (paramElement.getAttribute('name').toLowerCase()) {
+          case 'flashvars':
+            params = parseQueryString(paramElement.getAttribute('value'));
+            break;
+          case 'movie':
+          case 'src':
+            if (url) {
+              break;
+            }
+            url = paramElement.getAttribute('value');
+            break;
+          }
         }
-        var dataAttribute = element.getAttribute('data');
-        url = dataAttribute || params.movie || params.src;
       }
       baseUrl = element.ownerDocument.location.href;
     }
 
-    url = url ? combineUrl(baseUrl, url) : urlHint;
+    url = !url ? urlHint : Services.io.newURI(url, null,
+      baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
+
+    var queryStringMatch = /\?([^#]+)/.exec(url);
+    if (queryStringMatch) {
+      var queryStringParams = parseQueryString(queryStringMatch[1]);
+      for (var i in queryStringParams) {
+        if (!(i in params)) {
+          params[i] = queryStringParams[i];
+        }
+      }
+    }
     var actions = new ChromeActions(url, params, baseUrl, window);
     actions.isOverlay = isOverlay;
     actions.embedTag = element;

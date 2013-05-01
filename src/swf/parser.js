@@ -1,4 +1,20 @@
-/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 // TODO: clean up. For now, we don't include the generator after pre-building
 // the handlers. This doesn't work during build-playerglobal, though.x
@@ -47,7 +63,9 @@ function readTags(context, stream, swfVersion, onprogress) {
       tags.push(tag);
 
       if (tagCode === 1) {
-        while (stream.pos + 2 <= stream.end && stream.getUint16(stream.pos, true) >> 6 === 1) {
+        while (stream.pos + 2 <= stream.end &&
+               stream.getUint16(stream.pos, true) >> 6 === 1)
+        {
           tags.push(tag);
           stream.pos += 2;
         }
@@ -173,6 +191,7 @@ BodyParser.prototype = {
       return;
 
     var swf = this.swf;
+    var swfVersion = swf.swfVersion;
     var buffer = this.buffer;
     var options = this.options;
     var stream;
@@ -218,7 +237,6 @@ BodyParser.prototype = {
       swf.bytesTotal = progressInfo.total;
     }
 
-    var swfVersion = swf.swfVersion;
     readTags(swf, stream, swfVersion, options.onprogress);
 
     var read = stream.pos;
@@ -235,35 +253,75 @@ SWF.parseAsync = function swf_parseAsync(options) {
   var buffer = new HeadTailBuffer();
   var pipe = {
     push: function (data, progressInfo) {
-      if ('target' in this)
+      if ('target' in this) {
         return this.target.push(data, progressInfo);
-
-      if (!buffer.push(data, 8))
-        return;
+      }
+      if (!buffer.push(data, 8)) {
+        return null;
+      }
       var bytes = buffer.getHead(8);
       var magic1 = bytes[0];
       var magic2 = bytes[1];
       var magic3 = bytes[2];
-      var compressed = magic1 === 67;
-      assert((magic1 === 70 || compressed) && magic2 === 87 && magic3 === 83,
-             'unsupported file format', 'parse');
 
-      var swfVersion = bytes[3];
-      var stream = buffer.createStream();
-      stream.pos += 4;
-      var fileLength = readUi32(bytes, stream);
-      var bodyLength = fileLength - 8;
-
-      var target = new BodyParser(swfVersion, bodyLength, options);
-      if (compressed) {
-        target = new CompressedPipe(target, bodyLength);
+      // check for SWF
+      if ((magic1 === 70 || magic1 === 67) && magic2 === 87 && magic3 === 83) {
+        var swfVersion = bytes[3];
+        var compressed = magic1 === 67;
+        parseSWF(compressed, swfVersion, progressInfo);
+        buffer = null;
+        return;
       }
-      target.push(buffer.getTail(8), progressInfo);
-      this.target = target;
 
-      buffer = null; // cleanup
+      var isImage = false;
+      var imageType;
+
+      // check for JPG
+      if (magic1 === 0xff && magic2 === 0xd8 && magic3 === 0xff) {
+        isImage = true;
+        imageType = 'image/jpeg';
+      } else if (magic1 === 0x89 && magic2 === 0x50 && magic3 === 0x4e) {
+        isImage = true;
+        imageType = 'image/png';
+      }
+
+      if (isImage) {
+        parseImage(data, imageType);
+      }
+      buffer = null;
     }
   };
+
+  function parseSWF(compressed, swfVersion, progressInfo) {
+    var stream = buffer.createStream();
+    stream.pos += 4;
+    var fileLength = readUi32(null, stream);
+    var bodyLength = fileLength - 8;
+
+    var target = new BodyParser(swfVersion, bodyLength, options);
+    if (compressed) {
+      target = new CompressedPipe(target, bodyLength);
+    }
+    target.push(buffer.getTail(8), progressInfo);
+    pipe.target = target;
+  }
+
+  function parseImage(data, type) {
+    var props = {};
+    var chunks;
+    if (type == 'image/jpeg') {
+      chunks = parseJpegChunks(props, data);
+    } else {
+      chunks = [data];
+    }
+    var symbol = {
+      type: 'image',
+      props: props,
+      data : new Blob(chunks, {type: type})
+    }
+    options.oncomplete && options.oncomplete(symbol);
+  }
+
   return pipe;
 };
 

@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var TRACE_SYMBOLS_INFO = false;
 
 var DisplayObjectDefinition = (function () {
@@ -94,6 +112,8 @@ var DisplayObjectDefinition = (function () {
       TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
+
+      this._accessibilityProperties = null;
     },
 
     _updateTraceSymbolInfo: function () {
@@ -255,10 +275,10 @@ var DisplayObjectDefinition = (function () {
     },
 
     get accessibilityProperties() {
-      return null;
+      return this._accessibilityProperties;
     },
     set accessibilityProperties(val) {
-      notImplemented();
+      this._accessibilityProperties = val;
     },
     get alpha() {
       return this._alpha;
@@ -303,11 +323,16 @@ var DisplayObjectDefinition = (function () {
     set height(val) {
       if (val < 0)
         val = 0;
+      var height = this.height;
+      if (height == 0) {
+        warning('scaleY cannot be adjusted when height = 0');
+        return;
+      }
       var scaleY = this.scaleY;
       if (scaleY === 0 && val > 0) {
         this.scaleY = scaleY = 1; // reset scale to have valid height
       }
-      this.scaleY = scaleY * val / this.height;
+      this.scaleY = scaleY * val / height;
     },
     get loaderInfo() {
       return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
@@ -436,11 +461,16 @@ var DisplayObjectDefinition = (function () {
     set width(val) {
       if (val < 0)
         val = 0;
+      var width = this.width;
+      if (width == 0) {
+        warning('scaleY cannot be adjusted when width = 0');
+        return;
+      }
       var scaleX = this.scaleX;
       if (scaleX === 0 && val > 0) {
         this.scaleX = scaleX = 1; // reset scale to have valid width
       }
-      this.scaleX = scaleX * val / this.width;
+      this.scaleX = scaleX * val / width;
     },
     get x() {
       return this._x;
