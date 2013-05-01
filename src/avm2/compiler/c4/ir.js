@@ -694,9 +694,11 @@
   })();
 
   var NewArray = (function () {
-    function newArray(elements) {
+    function newArray(control, elements) {
       Node.call(this);
+      assert (isControlOrNull(control));
       assert (isArray(elements));
+      this.control = control;
       this.elements = elements;
     }
     newArray.prototype = extend(Value, "NewArray");
@@ -717,9 +719,11 @@
   })();
 
   var NewObject = (function () {
-    function newObject(properties) {
+    function newObject(control, properties) {
       Node.call(this);
+      assert (isControlOrNull(control));
       assert (isArray(properties));
+      this.control = control;
       this.properties = properties;
     }
     newObject.prototype = extend(Value, "NewObject");

@@ -1211,11 +1211,11 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               type = pop();
               callee = getJSProperty(runtime, "applyType");
-              push(call(callee, runtime, [type, new NewArray(args)]));
+              push(call(callee, runtime, [type, new NewArray(region, args)]));
               break;
             case OP_newarray:
               args = popMany(bc.argCount);
-              push(new NewArray(args));
+              push(new NewArray(region, args));
               break;
             case OP_newobject:
               var properties = [];
@@ -1226,7 +1226,7 @@ var createName = function createName(namespaces, name) {
                 key = constant(Multiname.getPublicQualifiedName(key.value));
                 properties.push(new KeyValuePair(key, value));
               }
-              push(new NewObject(properties));
+              push(new NewObject(region, properties));
               break;
             case OP_newactivation:
               push(new IR.AVM2NewActivation(constant(methodInfo)));
