@@ -1349,17 +1349,21 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return this[Multiname.getQualifiedName(resolved)];
-      } else {
-        var name = toXMLName(mn);
-        var xl = new XMLList(this, name);
-        this._.forEach(function (v, i) {
-          var xl2 = v.getProperty(mn);
-          if (xl2.length() > 0) {
-            xl.append(xl2);
-          }
-        });
-        return xl;
       }
+      var x = this;
+      var i = mn >>> 0;
+      if (String(mn) === String(i)) {
+        return x._[mn];
+      }
+      var name = toXMLName(mn);
+      var xl = new XMLList(this, name);
+      this._.forEach(function (v, i) {
+        var xl2 = v.getProperty(mn);
+        if (xl2.length() > 0) {
+          xl.append(xl2);
+        }
+      });
+      return xl;
     };
 
     XLp.delete = function (key, isMethod) {
