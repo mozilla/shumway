@@ -77,6 +77,13 @@
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
 
+    operator.AVM2ADD = new operator("+", function (l, r) {
+      if (typeof l === "string" || typeof r === "string") {
+        return String(l) + String(r);
+      }
+      return l + r;
+    }, true);
+
     function linkOpposites(a, b) {
       a.not = b;
       b.not = a;
@@ -823,6 +830,7 @@
     return store;
   })();
 
+  var Null = new Constant(null);
   var Undefined = new Constant(undefined);
 
   Undefined.toString = function () {
@@ -1978,6 +1986,7 @@
   exports.Block = Block;
   exports.Node = Node;
   exports.Start = Start;
+  exports.Null = Null;
   exports.Undefined = Undefined;
   exports.This = This;
   exports.Throw = Throw;

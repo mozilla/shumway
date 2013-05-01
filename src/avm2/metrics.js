@@ -107,6 +107,18 @@
         writer.writeLn(name + ": " + this.counts[name]);
       }
     };
+    counter.prototype.traceSorted = function (writer) {
+      var pairs = [];
+      for (var name in this.counts) {
+        pairs.push([name, this.counts[name]]);
+      }
+      pairs.sort(function (a, b) {
+        return b[1] - a[1];
+      })
+      pairs.forEach(function (pair) {
+        writer.writeLn(pair[0] + ": " + pair[1]);
+      });
+    };
     return counter;
   })();
 

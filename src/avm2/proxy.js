@@ -47,6 +47,17 @@ function isProxyObject(obj) {
   return obj[VM_IS_PROXY];
 }
 
+function nameFromQualifiedName(qn) {
+  if (isNumeric(qn)) {
+    return qn;
+  }
+  var mn = Multiname.fromQualifiedName(qn);
+  if (mn === undefined) {
+    return undefined;
+  }
+  return mn.name;
+}
+
 function installProxyClassWrapper(cls) {
   var TRACE_PROXY = false;
   if (TRACE_PROXY) {
@@ -95,13 +106,13 @@ function installProxyClassWrapper(cls) {
           print("proxy get, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
         if (inAS()) {
-          var mn = Multiname.fromQualifiedName(qn);
-          if (mn && !nameInTraits(target, qn)) {
-            return target[proxyTrapQns.getProperty](mn.name);
+          var name = nameFromQualifiedName(qn);
+          if (name !== undefined && !nameInTraits(target, qn)) {
+            return target[proxyTrapQns.getProperty](name);
           }
         }
         if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn]) {
-          return target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn].bind(o);
+          return safeBind(target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];
@@ -111,9 +122,9 @@ function installProxyClassWrapper(cls) {
           print("proxy set, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
         if (inAS()) {
-          var mn = Multiname.fromQualifiedName(qn);
-          if (mn && !nameInTraits(target, qn)) {
-            target[proxyTrapQns.setProperty](mn.name, value);
+          var name = nameFromQualifiedName(qn);
+          if (name !== undefined && !nameInTraits(target, qn)) {
+            target[proxyTrapQns.setProperty](name, value);
             return;
           }
         }
@@ -125,9 +136,9 @@ function installProxyClassWrapper(cls) {
           print("proxy has, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
         if (inAS()) {
-          var mn = Multiname.fromQualifiedName(qn);
-          if (mn) {
-            return target[proxyTrapQns.hasProperty](mn.name);
+          var name = nameFromQualifiedName(qn);
+          if (name !== undefined && !nameInTraits(target, qn)) {
+            return target[proxyTrapQns.hasProperty](name);
           }
         }
         return qn in target;
@@ -137,9 +148,9 @@ function installProxyClassWrapper(cls) {
           print("proxy hasOwn, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
         }
         if (inAS()) {
-          var mn = Multiname.fromQualifiedName(qn);
-          if (mn && !nameInTraits(target, qn)) {
-            return target[proxyTrapQns.hasProperty](mn.name);
+          var name = nameFromQualifiedName(qn);
+          if (name !== undefined && !nameInTraits(target, qn)) {
+            return target[proxyTrapQns.hasProperty](name);
           }
         }
         TRACE_PROXY && print("> proxy pass through " + qn);

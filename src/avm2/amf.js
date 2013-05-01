@@ -315,7 +315,7 @@ var AMFUtils = (function AMFUtilsClosure() {
       if ((u29o & 2) === 0) {
         traits = caches.traitsCache[u29o >> 2];
       } else {
-        traits = Object.create(null);
+        traits = createEmptyObject();
         traits.className = readUTF8vr(ba, caches);
         traits.members = [];
         for (var i = 0, j = u29o >> 4; i < j; i++) {

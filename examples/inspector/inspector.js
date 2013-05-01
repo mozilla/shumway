@@ -131,12 +131,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
+    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
     new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
       // If library is shell.abc, then just go ahead and run it now since
-      // its not worth doing it lazily given that it is so small.
+      // it's not worth doing it lazily given that it is so small.
       if (libraryPath === shellAbcPath) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
       } else {
@@ -193,6 +194,15 @@ if (yt) {
     executeFile(swf, null, config.args);
   };
   xhr.send(null);
+}
+
+if (getQueryVariable('sanity')) {
+  libraryScripts = playerGlobalScripts;
+  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+    runInspectorSanityTests(avm2);
+  });
 }
 
 function showMessage(msg) {
@@ -301,7 +311,7 @@ var FileLoadingService = {
       open: function (request) {
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path);
+        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
         new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});

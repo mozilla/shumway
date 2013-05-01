@@ -476,11 +476,12 @@
   };
 
   IR.Binary.prototype.compile = function (cx) {
-    return new BinaryExpression (
-      this.operator.name,
-      compileValue(this.left, cx),
-      compileValue(this.right, cx)
-    );
+    var left = compileValue(this.left, cx);
+    var right = compileValue(this.right, cx);
+    if (this.operator === Operator.AVM2ADD) {
+      return call(id("add"), [left, right]);
+    }
+    return new BinaryExpression (this.operator.name, left, right);
   };
 
   IR.CallProperty.prototype.compile = function (cx) {
@@ -628,10 +629,9 @@
   };
 
   IR.AVM2RuntimeMultiname.prototype.compile = function (cx) {
-    // CallExpression.call(this, property(id("Multiname"), "getMultiname"), [namespaces, name]);
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
-    return call(property(id("Multiname"), "getMultiname"), [namespaces, name]);
+    return call(id("createName"), [namespaces, name]);
   };
 
   function generateSource(node) {

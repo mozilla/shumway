@@ -42,9 +42,8 @@ package {
   trace("-- START --");
   a.traitProperty;
   a.dynamicProperty;
-  // a.hasOwnProperty("traitProperty");
   Object.prototype.hasOwnProperty.call(a, "traitProperty");
-  "traitProperty" in a;
+  "traitPropertyIn" in a;
   "dynamicProperty" in a;
   trace("-- DONE --");
 }

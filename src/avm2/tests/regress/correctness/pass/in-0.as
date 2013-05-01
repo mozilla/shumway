@@ -37,5 +37,19 @@ package {
     }
   })();
 
+  (function () {
+    trace("--- Test 6 ---");
+    var o = [5, 6, 7];
+    trace(null in o);
+    trace(undefined in o);
+  })();
+
+  (function () {
+    trace("--- Test 7 ---");
+    var o = {"null": 1, "undefined": 3};
+    trace(null in o);
+    trace(undefined in o);
+  })();
+
   trace("-- DONE --");
 }
