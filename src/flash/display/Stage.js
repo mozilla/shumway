@@ -59,6 +59,8 @@ var StageDefinition = (function () {
       this._mouseJustLeft = false;
       this._quality = STAGE_QUALITY_HIGH;
       this._pendingScripts = [];
+      this._align = "";
+      this._scaleMode = STAGE_SCALE_MODE_NO_SCALE;
     },
 
     get allowsFullScreen() {
@@ -75,12 +77,6 @@ var StageDefinition = (function () {
     },
     get displayState() {
       return null;
-    },
-    get focus() {
-      return Keyboard._focus;
-    },
-    set focus(val) {
-      Keyboard._focus = val;
     },
     get frameRate() {
       return this._frameRate;
@@ -107,10 +103,10 @@ var StageDefinition = (function () {
       this._quality = val;
     },
     get scaleMode() {
-      return STAGE_SCALE_MODE_NO_SCALE;
+      return this._scaleMode;
     },
     set scaleMode(val) {
-      notImplemented();
+      this._scaleMode = val;
     },
     get showDefaultContextMenu() {
       return true;
@@ -160,10 +156,31 @@ var StageDefinition = (function () {
         stageHeight: desc(def, "stageHeight"),
         stageWidth: desc(def, "stageWidth"),
         frameRate: desc(def, "frameRate"),
+        scaleMode: desc(def, "scaleMode"),
         contentsScaleFactor: {
           get: function contentsScaleFactor() { // (void) -> Number
             somewhatImplemented("Stage.contentsScaleFactor");
             return this._contentsScaleFactor || 1;
+          }
+        },
+        align: {
+          get: function align() { // (void) -> String
+            somewhatImplemented("Stage.align");
+            return this._align;
+          },
+          set: function align(value) { // (value:String) -> void
+            somewhatImplemented("Stage.align");
+            this._align = value;
+          }
+        },
+        focus: {
+          get: function focus() { // (void) -> InteractiveObject
+            somewhatImplemented("Stage.focus");
+            return this._focus;
+          },
+          set: function focus(newFocus) { // (newFocus:InteractiveObject) -> void
+            somewhatImplemented("Stage.focus");
+            this._focus = newFocus;
           }
         },
         requireOwnerPermissions: function () {

@@ -36,4 +36,26 @@ package {
     trace(r8);
 
   })();
+
+  (function () {
+    trace("--- Test 2 ---");
+    var o : A = new A();
+    trace(o.x);
+    o.x = 2;
+    trace(o.x + o.x);
+    o.x = 3;
+    trace(o.x + o.x + o.x);
+    o.x = 4;
+    trace(o.x + o.x + o.x + o.x);
+    o.x = 5;
+    trace(o.x + o.x + o.x + o.x + o.x);
+    o.x = 6;
+    trace(o.x + o.x + o.x + o.x + o.x + o.x);
+    o.x = 7;
+    trace(o.x + o.x + o.x + o.x + o.x + o.x + o.x);
+    o.x = 8;
+    trace(o.x + o.x + o.x + o.x + o.x + o.x + o.x + o.x);
+    o.x = 9;
+    trace(o.x + o.x + o.x + o.x + o.x + o.x + o.x + o.x + o.x);
+  })();
 }

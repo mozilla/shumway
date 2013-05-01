@@ -206,7 +206,7 @@
  */
 
 function debugBreak(message) {
-  // TODO: Set Breakpoint Here
+  debugger;
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
@@ -272,7 +272,8 @@ var natives = (function () {
       }
     };
 
-    c.dynamicPrototype = Object.prototype;
+    c.dynamicPrototype = c.traitsPrototype = Object.prototype;
+    c.setDefaultProperties();
     c.defaultValue = null;
 
     c.coerce = function (value) {
@@ -445,7 +446,7 @@ var natives = (function () {
           return str;
         },
         toString: Sp.toString,
-        valueOf: Sp.valueOf,
+        valueOf: Sp.valueOf
       },
       static: String
     };
@@ -743,9 +744,8 @@ var natives = (function () {
         native: {
           instance: {
             getStackTrace: function () {
-              var e = new Error();
               somewhatImplemented("Error.getStackTrace()");
-              return e.stack;
+              return Runtime.getStackTrace();
             }
           },
 
@@ -761,6 +761,7 @@ var natives = (function () {
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
+        c.linkNatives(ErrorDefinition);
       }
       return c;
     };
@@ -877,8 +878,7 @@ var natives = (function () {
     }
 
     var Dp = ASDictionary.prototype;
-    defineReadOnlyProperty(Dp, "canHandleProperties", true);
-    defineNonEnumerableProperty(Dp, "set", function (qn, value) {
+    defineNonEnumerableProperty(Dp, "setProperty", function (qn, value) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -896,7 +896,7 @@ var natives = (function () {
         this.keys.push(qn);
       }
     });
-    defineNonEnumerableProperty(Dp, "get", function (qn) {
+    defineNonEnumerableProperty(Dp, "getProperty", function (qn) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -910,7 +910,7 @@ var natives = (function () {
       }
       return this.map.get(Object(qn));
     });
-    defineNonEnumerableProperty(Dp, "delete", function (qn) {
+    defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object") {
           qn = Multiname.getPublicQualifiedName(qn.name);
@@ -922,14 +922,15 @@ var natives = (function () {
       if (primitiveKey !== undefined) {
         delete this.primitiveMap[primitiveKey];
       }
-      this.map.delete(Object(qn), value);
+      this.map.delete(Object(qn));
       var i;
       if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
         this.keys.splice(i, 1);
       }
+      return true;
     });
-    defineNonEnumerableProperty(Dp, "enumProperties", function () {
-      return this.keys;
+    defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
+      return Object.keys(this.primitiveMap).concat(this.keys);
     });
     c.native = {
       instance: {
@@ -983,7 +984,7 @@ var natives = (function () {
           get: Np.getPrefix
         },
         uri: {
-          get: Np.getURI,
+          get: Np.getURI
         }
       }
     };

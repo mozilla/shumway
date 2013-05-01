@@ -48,14 +48,13 @@ var Interpreter = (function () {
     return new (Function.bind.apply(constructor.instance, [,].concat(args)));
   }
 
-
-  function createMultiname(stack, mn) {
+  function popName(stack, mn) {
     if (Multiname.isRuntime(mn)) {
       var namespaces = mn.namespaces, name = mn.name;
       if (Multiname.isRuntimeName(mn)) {
         name = stack.pop();
       }
-      if (isNumeric(name)) {
+      if (isNumeric(name) || isObject(name)) {
         release || assert(!Multiname.isRuntimeNamespace(mn));
         return name;
       }
@@ -81,8 +80,6 @@ var Interpreter = (function () {
       var multinames = abc.constantPool.multinames;
       var runtime = abc.runtime;
       var domain = abc.domain;
-      var runtimeStack = Runtime.stack;
-
       var exceptions = method.exceptions;
 
       var locals = [$this];
@@ -93,7 +90,9 @@ var Interpreter = (function () {
       var parameterCount = method.parameters.length;
       var argCount = methodArgs.length;
 
-      runtimeStack.push(runtime);
+      Runtime.stack.push(runtime);
+      var frame = { method: method, bc: null };
+      Runtime.callStack.push(frame);
 
       var value;
       for (var i = 0; i < parameterCount; i++) {
@@ -115,26 +114,26 @@ var Interpreter = (function () {
         locals.push(Apslice.call(methodArgs, 0));
       }
 
-      var obj, receiver, type, index, multiname, res, a, b, args = [];
+      var obj, receiver, type, index, multiname, res, a, b, args = [], name;
       var bytecodes = method.analysis.bytecodes;
 
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         interpretedBytecode ++;
         try {
-          var bc = bytecodes[pc];
+          var bc = frame.bc = bytecodes[pc];
           var op = bc.op;
           switch (op | 0) {
           case 0x03: // OP_throw
             throw stack.pop();
           case 0x04: // OP_getsuper
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getSuper(savedScope, stack.pop(), multiname));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(getSuper(savedScope, stack.pop(), name));
             break;
           case 0x05: // OP_setsuper
             value = stack.pop();
-            multiname = createMultiname(stack, multinames[bc.index]);
-            setSuper(savedScope, stack.pop(), multiname, value);
+            name = popName(stack, multinames[bc.index]);
+            setSuper(savedScope, stack.pop(), name, value);
             break;
           case 0x08: // OP_kill
             locals[bc.index] = undefined;
@@ -299,15 +298,17 @@ var Interpreter = (function () {
             break;
           case 0x45: // OP_callsuper
             popManyInto(stack, bc.argCount, args);
-            multiname = createMultiname(stack, multinames[bc.index]);
+            name = popName(stack, multinames[bc.index]);
             obj = stack.pop();
-            stack.push(getSuper(savedScope, obj, multiname).apply(obj, args));
+            stack.push(getSuper(savedScope, obj, name).apply(obj, args));
             break;
           case 0x47: // OP_returnvoid
-            runtimeStack.pop();
+            Runtime.stack.pop();
+            Runtime.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            runtimeStack.pop();
+            Runtime.stack.pop();
+            Runtime.callStack.pop();
             return stack.pop();
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);
@@ -316,11 +317,11 @@ var Interpreter = (function () {
             break;
           case 0x4A: // OP_constructprop
             popManyInto(stack, bc.argCount, args);
-            multiname = createMultiname(stack, multinames[bc.index]);
+            name = popName(stack, multinames[bc.index]);
             obj = stack.pop();
-            var p = getProperty(obj, multiname);
+            var p = getProperty(obj, name);
             if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", multiname + " not found.");
+              runtime.throwErrorFromVM("ReferenceError", name + " not found.");
             }
             stack.push(applyNew(p, args));
             break;
@@ -331,21 +332,21 @@ var Interpreter = (function () {
           case 0x46: // OP_callproperty
           case 0x4F: // OP_callpropvoid
             popManyInto(stack, bc.argCount, args);
-            multiname = createMultiname(stack, multinames[bc.index]);
+            name = popName(stack, multinames[bc.index]);
             receiver = obj = stack.pop();
             if (op === OP_callproplex) {
               receiver = null;
             }
-            res = callProperty(obj, multiname, op === OP_callproplex, args.slice(0));
+            res = callProperty(obj, name, op === OP_callproplex, args);
             if (op !== OP_callpropvoid) {
               stack.push(res);
             }
             break;
           case 0x4E: // OP_callsupervoid
             popManyInto(stack, bc.argCount, args);
-            multiname = createMultiname(stack, multinames[bc.index]);
+            name = popName(stack, multinames[bc.index]);
             obj = stack.pop();
-            getSuper(savedScope, obj, multiname).apply(obj, args);
+            getSuper(savedScope, obj, name).apply(obj, args);
             break;
           case 0x53: // OP_applytype
             popManyInto(stack, bc.argCount, args);
@@ -373,32 +374,32 @@ var Interpreter = (function () {
             stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));
             break;
           case 0x59: // OP_getdescendants
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getDescendants(multiname, stack.pop()));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(getDescendants(name, stack.pop()));
             break;
           case 0x5A: // OP_newcatch
             release || assert(exceptions[bc.index].scopeObject);
             stack.push(exceptions[bc.index].scopeObject);
             break;
           case 0x5D: // OP_findpropstrict
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(scope.findProperty(multiname, domain, true));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(scope.findProperty(name, domain, true));
             break;
           case 0x5E: // OP_findproperty
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(scope.findProperty(multiname, domain, false));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(scope.findProperty(name, domain, false));
             break;
           case 0x60: // OP_getlex
             // TODO: Cache the resolved multiname so it doesn't have to be
             // resolved again in getProperty
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getProperty(scope.findProperty(multiname, domain, true), multiname));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(getProperty(scope.findProperty(name, domain, true), name));
             break;
           case 0x68: // OP_initproperty
           case 0x61: // OP_setproperty
             value = stack.pop();
-            multiname = createMultiname(stack, multinames[bc.index]);
-            setProperty(stack.pop(), multiname, value);
+            name = popName(stack, multinames[bc.index]);
+            setProperty(stack.pop(), name, value);
             break;
           case 0x62: // OP_getlocal
             stack.push(locals[bc.index]);
@@ -419,13 +420,13 @@ var Interpreter = (function () {
             stack.push(obj.object);
             break;
           case 0x66: // OP_getproperty
-            multiname = createMultiname(stack, multinames[bc.index]);
-            stack.push(getProperty(stack.pop(), multiname));
+            name = popName(stack, multinames[bc.index]);
+            stack.push(getProperty(stack.pop(), name));
             break;
           case 0x6A: // OP_deleteproperty
-            multiname = createMultiname(stack, multinames[bc.index]);
+            name = popName(stack, multinames[bc.index]);
             obj = stack.pop();
-            stack.push(deleteProperty(obj, multiname));
+            stack.push(deleteProperty(obj, name));
             break;
           case 0x6C: // OP_getslot
             stack.push(getSlot(stack.pop(), bc.index));
@@ -507,7 +508,7 @@ var Interpreter = (function () {
           case 0xA0: // OP_add
             b = stack.pop();
             a = stack.pop();
-            stack.push(a + b);
+            stack.push(add(a, b));
             break;
           case 0xA1: // OP_subtract
             b = stack.pop();

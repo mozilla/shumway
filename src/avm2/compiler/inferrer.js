@@ -661,6 +661,7 @@ var Verifier = (function() {
 
       var abc = this.verifier.abc;
       var multinames = abc.constantPool.multinames;
+      var mi = this.methodInfo;
 
       var bc, obj, fn, mn, l, r, val, type, returnType;
 
@@ -732,15 +733,17 @@ var Verifier = (function() {
           }
         }
 
-        // Is it in some other script?
-        // !!abc.domain.base
-        obj = abc.domain.findProperty(mn, false, false);
-        if (obj) {
-          release || assert(obj instanceof Global);
-          ti().object = obj;
-          return Type.from(obj, abc.domain);
+        var resolved = abc.domain.findDefiningScript(mn, !mi.isInstanceInitializer);
+        if (resolved) {
+          var global = resolved.script.global;
+          if (global) {
+            release || assert(global instanceof Global);
+            ti().object = global;
+          } else if (resolved.script) {
+            ti().script = resolved.script;
+          }
+          return Type.from(resolved.script, abc.domain);
         }
-
         return Type.Any;
       }
 
@@ -1008,6 +1011,8 @@ var Verifier = (function() {
             }
             if (type instanceof MethodType) {
               returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
+            } else if (type instanceof TraitsType && type.isClassInfo()) {
+              returnType = type.instance();
             } else {
               returnType = Type.Any;
             }
@@ -1224,9 +1229,13 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case OP_astypelate:
+            type = pop();
             pop();
-            pop();
-            push(Type.Any);
+            if (type instanceof TraitsType) {
+              push(type.instance());
+            } else {
+              push(Type.Any);
+            }
             break;
           case OP_coerce_o:
             notImplemented(bc);

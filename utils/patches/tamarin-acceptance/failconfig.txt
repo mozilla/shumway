@@ -1619,3 +1619,24 @@ ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfai
 ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfail, FAILED! expected: 2 got: NaN number
 ecma3/String/e15_5_4_3_3_rt.* , .*,, expectedfail, FAILED contained no testcase messages - reason: TypeError: obj is undefined||undefined|
 ecma3/String/e15_5_3_2_1.* : String\.fromCharCode\.length , .*,, expectedfail, FAILED! expected: 0 got: 1
+ecma3/String/e15_5_3_1_3.*, .*,, expectedfail, .*
+ecma3/String/e15_5_3_1_3.*, .*,, expectedfail, .*
+ecma3/String/e15_5_3_2_1.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_10_1_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_11_1.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_11_5.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_12_1.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_13.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_4_4_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_5_6_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_8_1_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_4_9_1_rt.*, .*,, expectedfail, .*
+ecma3/String/substr.*, .*,, expectedfail, .*
+ecma3/String/toLocaleLowerCase.*, .*,, expectedfail, .*
+ecma3/String/toLocaleLowerCase5.*, .*,, expectedfail, .*
+ecma3/String/toLocaleUpperCase5.*, .*,, expectedfail, .*

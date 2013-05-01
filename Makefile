@@ -13,7 +13,7 @@
 # limitations under the License.
 
 default:
-	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
+	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|run-tamarin-tests|run-tamarin-sanity-tests"
 	@echo "           build-playerglobal|build-extension|build-web|"
 	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs]"
 
