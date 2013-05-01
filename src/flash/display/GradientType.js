@@ -10,7 +10,7 @@ var GradientTypeDefinition = (function () {
         },
         instance: {
         }
-      },
+      }
     }
   };
 }).call(this);

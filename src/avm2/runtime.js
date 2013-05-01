@@ -26,7 +26,6 @@ var VM_TOMBSTONE = createEmptyObject();
 var VM_OPEN_METHODS = "vm open methods";
 var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
-var VM_UNSAFE_CLASSES = ["Shumway"];
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
 
@@ -922,7 +921,7 @@ function createActivation(methodInfo) {
 
 function isClassObject(obj) {
   assert (obj);
-  return obj[VM_IS_CLASS];
+  return Object.hasOwnProperty.call(obj, VM_IS_CLASS);
 }
 
 /**
@@ -1248,66 +1247,58 @@ var Runtime = (function () {
     var cls, instance;
     var baseBindings = baseClass ? baseClass.instance.prototype : null;
 
-    /**
-     * Check if the class is in the list of approved VM unsafe classes and mark its method traits
-     * as native.
-     */
-    if (VM_UNSAFE_CLASSES.indexOf(className) >= 0) {
-      ci.native = {cls: className + "Class"};
-      ii.traits.concat(ci.traits).forEach(function (t) {
-        if (t.isMethod()) {
-          t.methodInfo.flags |= METHOD_Native;
-        }
-      });
-    }
-
-    var makeNativeClass;
+    var nativeClassBuilder;
 
     if (ci.native) {
-      makeNativeClass = getNative(ci.native.cls);
-      if (!makeNativeClass) {
+      nativeClassBuilder = getNative(ci.native.cls);
+      if (!nativeClassBuilder) {
         warning("No native for " + ci.native.cls);
       }
     }
 
-    if (ci.native && makeNativeClass) {
-      release || assert(makeNativeClass, "No native for ", ci.native.cls);
+    if (ci.native && nativeClassBuilder) {
+      release || assert(nativeClassBuilder, "No native for ", ci.native.cls);
 
       // Special case Object, which has no base class but needs the Class class on the scope.
       if (!baseClass) {
         scope = new Scope(scope, domain.system.Class);
       }
       scope = new Scope(scope, null);
-      cls = makeNativeClass(this, scope, this.createFunction(ii.init, scope), baseClass);
+      cls = nativeClassBuilder(this, scope, this.createFunction(ii.init, scope), baseClass);
       cls.classInfo = classInfo;
       cls.scope = scope;
       scope.object = cls;
       var natives;
-      if ((instance = cls.instance)) {
+      if (cls.instance) {
         // Instance traits live on instance.prototype.
         natives = cls.native ? cls.native.instance : undefined;
-        this.applyTraits(instance.prototype, scope, baseBindings, ii.traits, natives, true);
+        this.applyTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, natives, true);
       }
       natives = cls.native ? cls.native.static : undefined;
       this.applyTraits(cls, scope, null, ci.traits, natives, true);
     } else {
       scope = new Scope(scope, null);
-      instance = this.createFunction(ii.init, scope);
-      cls = new domain.system.Class(className, instance);
+      cls = new domain.system.Class(className, this.createFunction(ii.init, scope));
       cls.classInfo = classInfo;
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
-      this.applyTraits(cls.instance.prototype, scope, baseBindings, ii.traits, null, true);
+      this.applyTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, null, true);
       this.applyTraits(cls, scope, null, ci.traits, null, true);
-      instance = cls.instance;
     }
 
-    cls[VM_IS_CLASS] = true;
+    defineReadOnlyProperty(cls, VM_IS_CLASS, true);
 
-    if (instance) {
-      this.applyProtectedBindings(instance.prototype, cls);
-      this.applyInterfaceBindings(instance.prototype, cls);
+    if (cls.instance) {
+      this.applyProtectedBindings(cls.traitsPrototype, cls);
+      this.applyInterfaceBindings(cls.traitsPrototype, cls);
+    }
+
+    // Notify domain of class creation.
+    domain.onClassCreated.notify(cls);
+
+    if (cls.instance && cls !== domain.system.Class) {
+      cls.verify();
     }
 
     // Run the static initializer.

@@ -114,12 +114,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
+    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
     new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
       // If library is shell.abc, then just go ahead and run it now since
-      // its not worth doing it lazily given that it is so small.
+      // it's not worth doing it lazily given that it is so small.
       if (libraryPath === shellAbcPath) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
       } else {

@@ -202,6 +202,10 @@ function isString(value) {
   return typeof value === "string";
 }
 
+function isNumber(value) {
+  return typeof value === "number";
+}
+
 function setBitFlags(flags, flag, value) {
   return value ? flags | flag : flags & ~flag;
 }
@@ -1110,4 +1114,21 @@ var SortedList = (function() {
     }
   };
   this.WeakMap = WeakMap;
+})();
+
+var Callback = (function () {
+  function callback() {
+    this.queue = [];
+  }
+  callback.prototype.register = function register(callback) {
+    assert (callback);
+    this.queue.push(callback);
+  };
+  callback.prototype.notify = function notify() {
+    var args = sliceArguments(arguments, 0);
+    this.queue.forEach(function (callback) {
+      callback.apply(null, args);
+    });
+  };
+  return callback;
 })();

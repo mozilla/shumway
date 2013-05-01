@@ -255,7 +255,8 @@ var natives = (function () {
       }
     };
 
-    c.dynamicPrototype = Object.prototype;
+    c.dynamicPrototype = c.traitsPrototype = Object.prototype;
+    c.setDefaultProperties();
     c.defaultValue = null;
 
     c.coerce = function (value) {
@@ -428,7 +429,7 @@ var natives = (function () {
           return str;
         },
         toString: Sp.toString,
-        valueOf: Sp.valueOf,
+        valueOf: Sp.valueOf
       },
       static: String
     };
@@ -743,6 +744,7 @@ var natives = (function () {
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
+        c.linkNatives(ErrorDefinition);
       }
       return c;
     };
@@ -965,7 +967,7 @@ var natives = (function () {
           get: Np.getPrefix
         },
         uri: {
-          get: Np.getURI,
+          get: Np.getURI
         }
       }
     };

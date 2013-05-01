@@ -886,6 +886,15 @@ var Multiname = (function () {
     return this.name;
   };
 
+  multiname.prototype.getOriginalName = function getOriginalName() {
+    release || assert(this.isQName());
+    var name = this.namespaces[0].originalURI;
+    if (name) {
+      name += ".";
+    }
+    return name + this.name;
+  };
+
   multiname.prototype.getNamespace = function getNamespace() {
     release || assert(!this.isRuntimeNamespace());
     release || assert(this.namespaces.length === 1);

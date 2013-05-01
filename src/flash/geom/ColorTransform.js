@@ -1,22 +1,8 @@
 var ColorTransformDefinition = (function () {
-  var def = {
+  return {
     __class__: 'flash.geom.ColorTransform',
-
     __glue__: {
-      script: {
-        instance: scriptProperties("public", ["redMultiplier",
-                                              "greenMultiplier",
-                                              "blueMultiplier",
-                                              "alphaMultiplier",
-                                              "redOffset",
-                                              "greenOffset",
-                                              "blueOffset",
-                                              "alphaOffset",
-                                              "color",
-                                              "concat"])
-      }
+      script: { instance: Glue.ALL }
     }
   };
-
-  return def;
 }).call(this);
