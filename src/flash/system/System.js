@@ -25,7 +25,7 @@ var SystemDefinition = (function () {
       native: {
         static: {
           setClipboard: function setClipboard(string) { // (string:String) -> void
-            notImplemented("System.setClipboard");
+            FirefoxCom.request('setClipboard', string);
           },
           pause: function pause() { // (void) -> void
             notImplemented("System.pause");

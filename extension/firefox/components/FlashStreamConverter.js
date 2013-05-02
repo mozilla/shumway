@@ -33,6 +33,7 @@ const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
 const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
 const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
+const MAX_CLIPBOARD_DATA_SIZE = 8000;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
@@ -91,7 +92,7 @@ function parseQueryString(qs) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, window) {
+function ChromeActions(url, window, document) {
   this.url = url;
   this.objectParams = null;
   this.movieParams = null;
@@ -99,6 +100,7 @@ function ChromeActions(url, window) {
   this.isOverlay = false;
   this.isPausedAtStart = false;
   this.window = window;
+  this.document = document;
   this.externalComInitialized = false;
 }
 
@@ -212,6 +214,18 @@ ChromeActions.prototype = {
     var e = doc.createEvent("CustomEvent");
     e.initCustomEvent("MozPlayPlugin", true, true, null);
     obj.dispatchEvent(e);
+  },
+  setClipboard: function (data) {
+    if (typeof data !== 'string' ||
+        data.length > MAX_CLIPBOARD_DATA_SIZE ||
+        !this.document.hasFocus()) {
+      return;
+    }
+    // TODO other security checks?
+
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
+                      .getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(data);
   },
   externalCom: function (data) {
     if (!getBoolPref('shumway.external', false))
@@ -403,7 +417,7 @@ FlashStreamConverterBase.prototype = {
     return true;
   },
 
-  createChromeActions: function(window, urlHint) {
+  createChromeActions: function(window, document, urlHint) {
     var url;
     var baseUrl;
     var element = window.frameElement;
@@ -461,7 +475,7 @@ FlashStreamConverterBase.prototype = {
     url = !url ? urlHint : Services.io.newURI(url, null,
       baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
 
-    var actions = new ChromeActions(url, window);
+    var actions = new ChromeActions(url, window, document);
     actions.objectParams = objectParams;
     actions.movieParams = movieParams;
     actions.baseUrl = baseUrl || url;
@@ -520,6 +534,7 @@ FlashStreamConverterBase.prototype = {
         if (domWindow.document.documentURIObject.equals(channel.originalURI)) {
           // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
+                                                      domWindow.document,
                                                       originalURI.spec);
           createSandbox(domWindow, isSimpleMode);
           let requestListener = new RequestListener(actions);
