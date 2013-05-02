@@ -97,7 +97,12 @@ function runViewer() {
       fallback();
       e.preventDefault();
     });
+    var fallbackMenu = document.getElementById('fallbackMenu');
+    fallbackMenu.removeAttribute('hidden');
+    fallbackMenu.addEventListener('click', fallback);
   }
+  var showURLMenu = document.getElementById('showURLMenu');
+  showURLMenu.addEventListener('click', showURL);
 }
 
 function showURL() {
