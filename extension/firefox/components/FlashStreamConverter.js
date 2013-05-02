@@ -91,10 +91,11 @@ function parseQueryString(qs) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, baseUrl, window) {
+function ChromeActions(url, window) {
   this.url = url;
-  this.params = params;
-  this.baseUrl = baseUrl;
+  this.objectParams = null;
+  this.movieParams = null;
+  this.baseUrl = url;
   this.isOverlay = false;
   this.isPausedAtStart = false;
   this.window = window;
@@ -112,7 +113,8 @@ ChromeActions.prototype = {
     return JSON.stringify({
       url: this.url,
       baseUrl : this.baseUrl,
-      params: this.params,
+      movieParams: this.movieParams,
+      objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart
      });
@@ -403,10 +405,10 @@ FlashStreamConverterBase.prototype = {
 
   createChromeActions: function(window, urlHint) {
     var url;
-    var baseUrl; // XXX base url?
+    var baseUrl;
     var element = window.frameElement;
     var isOverlay = false;
-    var params = {};
+    var objectParams = {};
     if (element) {
       var tagName = element.nodeName;
       while (tagName != 'EMBED' && tagName != 'OBJECT') {
@@ -417,9 +419,14 @@ FlashStreamConverterBase.prototype = {
           throw 'Plugin element is not found';
         tagName = element.nodeName;
       }
+
+      baseUrl = element.ownerDocument.location.href; // proper default base url?
+
       if (tagName == 'EMBED') {
-        params = parseQueryString(element.getAttribute('flashvars'));
-        url = element.getAttribute('src');
+        for (var i = 0; i < element.attributes.length; ++i) {
+          var paramName = element.attributes[i].localName.toLowerCase();
+          objectParams[paramName] = element.attributes[i].value;
+        }
       } else {
         url = element.getAttribute('data');
         for (var i = 0; i < element.childNodes.length; ++i) {
@@ -428,36 +435,36 @@ FlashStreamConverterBase.prototype = {
               paramElement.nodeName != 'PARAM') {
             continue;
           }
-          switch (paramElement.getAttribute('name').toLowerCase()) {
-          case 'flashvars':
-            params = parseQueryString(paramElement.getAttribute('value'));
-            break;
-          case 'movie':
-          case 'src':
-            if (url) {
-              break;
-            }
-            url = paramElement.getAttribute('value');
-            break;
-          }
+          var paramName = paramElement.getAttribute('name').toLowerCase();
+          objectParams[paramName] = paramElement.getAttribute('value');
         }
       }
-      baseUrl = element.ownerDocument.location.href;
+    }
+
+    url = url || objectParams.src || objectParams.movie;
+    baseUrl = objectParams.base || baseUrl;
+
+    var movieParams = {};
+    if (objectParams.flashvars) {
+      movieParams = parseQueryString(objectParams.flashvars);
+    }
+    var queryStringMatch = /\?([^#]+)/.exec(url);
+    if (queryStringMatch) {
+      var queryStringParams = parseQueryString(queryStringMatch[1]);
+      for (var i in queryStringParams) {
+        if (!(i in movieParams)) {
+          movieParams[i] = queryStringParams[i];
+        }
+      }
     }
 
     url = !url ? urlHint : Services.io.newURI(url, null,
       baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
 
-    var queryStringMatch = /\?([^#]+)/.exec(url);
-    if (queryStringMatch) {
-      var queryStringParams = parseQueryString(queryStringMatch[1]);
-      for (var i in queryStringParams) {
-        if (!(i in params)) {
-          params[i] = queryStringParams[i];
-        }
-      }
-    }
-    var actions = new ChromeActions(url, params, baseUrl, window);
+    var actions = new ChromeActions(url, window);
+    actions.objectParams = objectParams;
+    actions.movieParams = movieParams;
+    actions.baseUrl = baseUrl || url;
     actions.isOverlay = isOverlay;
     actions.embedTag = element;
     actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
