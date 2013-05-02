@@ -29,6 +29,8 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/src/flash
 	cp $(SHUMWAY_ROOT)/src/flash/*.js $(BUILD_DIR)/src/flash/
 	cp $(SHUMWAY_ROOT)/src/flash/playerglobal.abc $(BUILD_DIR)/src/flash/
+	mkdir $(BUILD_DIR)/src/flash/accessibility
+	cp $(SHUMWAY_ROOT)/src/flash/accessibility/*.js $(BUILD_DIR)/src/flash/accessibility/
 	mkdir $(BUILD_DIR)/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js $(BUILD_DIR)/src/flash/display/
 	mkdir $(BUILD_DIR)/src/flash/events
