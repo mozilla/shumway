@@ -142,6 +142,22 @@ SWF.embed = function(file, doc, container, options) {
     });
 
     var bgcolor = loaderInfo._backgroundColor;
+    if (options.objectParams) {
+      var m;
+      if (options.objectParams.bgcolor &&
+          (m = /#([0-9A-F]{6})/i.exec(options.objectParams.bgcolor))) {
+        var hexColor = parseInt(m[1], 16);
+        bgcolor = {
+          red: (hexColor >> 16) & 255,
+          green: (hexColor >> 8) & 255,
+          blue: hexColor & 255,
+          alpha: 255
+        };
+      }
+      if (options.objectParams.wmode === 'transparent') {
+        bgcolor = {red: 0, green: 0, blue: 0, alpha: 0};
+      }
+    }
     stage._color = bgcolor;
 
     ctx.fillStyle = toStringRgba(bgcolor);

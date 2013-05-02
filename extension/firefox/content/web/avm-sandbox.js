@@ -143,7 +143,7 @@ window.addEventListener("message", function handlerMessage(e) {
       switch (args.topic) {
         case "open":
           subscription = new Subscription();
-          parseSwf(movieUrl, movieParams, subscription);
+          parseSwf(movieUrl, subscription, movieParams, objectParams);
           break;
         case "progress":
           subscription.send(args);
@@ -209,12 +209,17 @@ var FileLoadingService = {
   }
 };
 
-function parseSwf(url, params, file) {
+function parseSwf(url, file, movieParams, objectParams) {
   console.log("Parsing " + url + "...");
-  function terminate() {}
+  function loaded() {}
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
-    SWF.embed(file, document, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
+    SWF.embed(file, document, document.getElementById("viewer"), {
+       movieParams: movieParams,
+       objectParams: objectParams,
+       onComplete: loaded,
+       onBeforeFrame: frame
+    });
   });
 }
 
