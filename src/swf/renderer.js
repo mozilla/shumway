@@ -176,9 +176,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   function MouseVisitor() {
     this.interactiveParent = stage;
     this.parentsStack = [stage];
-    this.mouseOverEvt = new flash.events.Event("mouseOver");
-    this.mouseOutEvt = new flash.events.Event("mouseOut");
-    this.mouseMoveEvt = new flash.events.Event("mouseMove");
+    this.mouseOverEvt = new flash.events.MouseEvent("mouseOver");
+    this.mouseOutEvt = new flash.events.MouseEvent("mouseOut");
+    this.mouseMoveEvt = new flash.events.MouseEvent("mouseMove");
 
     this.mouseOverTargets = [stage._mouseOver ? stage : null];
     this.oldMouseOverTargets = [];
