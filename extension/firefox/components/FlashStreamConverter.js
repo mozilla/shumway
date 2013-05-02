@@ -102,6 +102,7 @@ function ChromeActions(url, window, document) {
   this.window = window;
   this.document = document;
   this.externalComInitialized = false;
+  this.allowScriptAccess = false;
 }
 
 ChromeActions.prototype = {
@@ -228,7 +229,7 @@ ChromeActions.prototype = {
     clipboard.copyString(data);
   },
   externalCom: function (data) {
-    if (!getBoolPref('shumway.external', false))
+    if (!this.allowScriptAccess)
       return;
 
     // TODO check security ?
@@ -420,6 +421,7 @@ FlashStreamConverterBase.prototype = {
   createChromeActions: function(window, document, urlHint) {
     var url;
     var baseUrl;
+    var pageUrl;
     var element = window.frameElement;
     var isOverlay = false;
     var objectParams = {};
@@ -434,7 +436,7 @@ FlashStreamConverterBase.prototype = {
         tagName = element.nodeName;
       }
 
-      baseUrl = element.ownerDocument.location.href; // proper default base url?
+      pageUrl = element.ownerDocument.location.href; // proper page url?
 
       if (tagName == 'EMBED') {
         for (var i = 0; i < element.attributes.length; ++i) {
@@ -456,7 +458,7 @@ FlashStreamConverterBase.prototype = {
     }
 
     url = url || objectParams.src || objectParams.movie;
-    baseUrl = objectParams.base || baseUrl;
+    baseUrl = objectParams.base || pageUrl;
 
     var movieParams = {};
     if (objectParams.flashvars) {
@@ -475,6 +477,26 @@ FlashStreamConverterBase.prototype = {
     url = !url ? urlHint : Services.io.newURI(url, null,
       baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
 
+    var allowScriptAccess = false;
+    switch (objectParams.allowscriptaccess || 'sameDomain') {
+    case 'always':
+      allowScriptAccess = true;
+      break;
+    case 'never':
+      allowScriptAccess = false;
+      break;
+    default:
+      if (!pageUrl)
+        break;
+      try {
+        // checking if page is in same domain (? same protocol and port)
+        allowScriptAccess =
+          Services.io.newURI('/', null, Services.io.newURI(pageUrl, null, null)).spec ==
+          Services.io.newURI('/', null, Services.io.newURI(url, null, null)).spec;
+      } catch (ex) {}
+      break;
+    }
+
     var actions = new ChromeActions(url, window, document);
     actions.objectParams = objectParams;
     actions.movieParams = movieParams;
@@ -482,6 +504,7 @@ FlashStreamConverterBase.prototype = {
     actions.isOverlay = isOverlay;
     actions.embedTag = element;
     actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    actions.allowScriptAccess = allowScriptAccess;
     return actions;
   },
 
