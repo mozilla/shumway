@@ -739,7 +739,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           x._kind === "attribute") {
         return;
       }
-      if (!v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
+      if (!v || !v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
         c = toString(v);
       } else {
         c = v.deepCopy();
