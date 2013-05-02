@@ -1,0 +1,1 @@
+﻿package  {		import flash.display.MovieClip;			public class Timeline10 extends MovieClip {						public function Timeline10() {			this.addEventListener('enterFrame', function () {				trace('Enters timeline frame.');			});		}	}	}
