@@ -75,7 +75,7 @@ var tagHandler = {
   /* DoABC */                         82: DO_ABC,
   /* DefineShape4 */                  83: DEFINE_SHAPE,
   /* DefineMorphShape2 */             84: DEFINE_SHAPE,
-  /* DefineSceneAndFrameLabelData */  86: undefined,
+  /* DefineSceneAndFrameLabelData */  86: DEFINE_SCENE,
   /* DefineBinaryData */              87: undefined,
   /* DefineFontName */                88: undefined,
   /* StartSound2 */                   89: START_SOUND,

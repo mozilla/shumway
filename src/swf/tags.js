@@ -373,3 +373,21 @@ var SOUND_STREAM_HEAD = {
 var SOUND_STREAM_BLOCK = {
   data: BINARY(0)
 };
+var DEFINE_SCENE = {
+  $$sceneCount: EncodedU32,
+  scenes: {
+    $: {
+      offset: EncodedU32,
+      name: STRING(0)
+    },
+    count: 'sceneCount'
+  },
+  $$labelCount: EncodedU32,
+  labels: {
+    $: {
+      frame: EncodedU32,
+      name: STRING(0)
+    },
+    count: 'labelCount'
+  }
+};
