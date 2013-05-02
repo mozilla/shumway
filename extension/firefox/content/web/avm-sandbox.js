@@ -84,7 +84,8 @@ function runViewer() {
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
-  movieParams = flashParams.params;
+  movieParams = flashParams.movieParams;
+  objectParams = flashParams.objectParams;
   var isOverlay = flashParams.isOverlay;
   pauseExecution = flashParams.isPausedAtStart;
   console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
@@ -127,7 +128,7 @@ Subscription.prototype = {
   }
 };
 
-var subscription = null, movieUrl, movieParams;
+var subscription = null, movieUrl, movieParams, objectParams;
 
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
