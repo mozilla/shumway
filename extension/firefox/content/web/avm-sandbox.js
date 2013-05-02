@@ -221,6 +221,9 @@ var pauseExecution = false;
 var initializeFrameControl = true;
 function frame(e) {
   if (initializeFrameControl) {
+    // marking that movie is started
+    document.body.classList.add("started");
+
     // skipping frame 0
     initializeFrameControl = false;
     return;
