@@ -961,7 +961,7 @@ var natives = (function () {
           prefix = uriValue.prefix;
           if (uriValue instanceof ShumwayNamespace) {
             uri = uriValue.originalURI;
-          } else if (uriValue._IS_QNAME) {
+          } else if (uriValue instanceof QName) {
             uri = uriValue.uri;
           }
         } else {
@@ -974,7 +974,7 @@ var natives = (function () {
         }
       } else {
         if (typeof uriValue === "object" &&
-            uriValue._IS_QNAME &&
+            (uriValue instanceof QName) &&
             uriValue.uri !== null) {
           uri = uriValue.uri;
         } else {
@@ -1600,7 +1600,7 @@ var natives = (function () {
       INCLUDE_CONSTRUCTOR : 0x0080,
       INCLUDE_TRAITS      : 0x0100,
       USE_ITRAITS         : 0x0200,
-      HIDE_OBJECT         : 0x0400
+      HIDE_OBJECT         : 0x0400,
     };
 
     // public keys used multiple times while creating the description
@@ -1622,10 +1622,10 @@ var natives = (function () {
 
     var description = {};
     description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
-    description[publicName("isDynamic")] = false;
+    description[publicName("isDynamic")] = cls === o ? true : !(info.instanceInfo.flags & CONSTANT_ClassSealed);
     //TODO: verify that `isStatic` is false for all instances, true for classes
     description[publicName("isStatic")] = cls === o;
-    description[publicName("isFinal")] = false;
+    description[publicName("isFinal")] = cls === o ? true : !(info.instanceInfo.flags & CONSTANT_ClassFinal);
     if (flags & Flags.INCLUDE_TRAITS) {
       description[publicName("traits")] = addTraits(cls, flags);
     }
@@ -1744,7 +1744,7 @@ var natives = (function () {
             val[metadataKey] = null;
           }
           val[declaredByKey] = className;
-          val[uriKey] = t.name.uri;
+          val[uriKey] = t.name.uri === undefined ? null : t.name.uri;
           val[nameKey] = name;
           //TODO: check why we have public$$_init in `Object`
           if (!t.typeName && !(t.methodInfo && t.methodInfo.returnType)) {

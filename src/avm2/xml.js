@@ -90,6 +90,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           if (n.children.length) {
             s += ">";
             for (var i = 0; i < n.children.length; i++) {
+              s += "\n";
               s += visit(n.children[i], this);
             }
             s += "</" + prefix + n.name.mn.name + ">";
@@ -456,9 +457,11 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (x.length() === 0) {
         var x = new XML("text");
         return x;
+      } else if (x.length() === 1) {
+        x.children[0].parent = null;
+        return x.children[0];
       }
-      x.children[0].parent = null;
-      return x.children[0];
+      throw "SyntaxError in ToXML";
     }
   }
 
@@ -496,7 +499,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     } else if (isXMLType(v)) {
       v = toString(v);
     } else if (v instanceof Object && v !== null) {
-      if (v.IS_QNAME) {
+      if (v instanceof QName) {
         return new QName(v.uri, v.localName, true);
       }
       v = toString(v);
@@ -519,7 +522,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
   function getDefaultNamespace(scope) {
     while (scope) {
       var obj = scope.object;
-      if (obj.defaultNamespace) {
+      if (obj.defaultNamepsace !== undefined) {
         return obj.defaultNamespace;
       }
       scope = scope.parent;
@@ -740,11 +743,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       }
     }
 
-    Xp.setProperty = function (p, v, isMethod) {
+    Xp.setProperty = function (p, v) {
       var x, i, c, n;
-      if (isMethod) {
-        return;
-      }
       x = this;
       if (p === p >>> 0) {
         throw "TypeError in XML.prototype.setProperty(): invalid property name " + p;
@@ -755,13 +755,16 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           x.kind === "attribute") {
         return;
       }
-      if (!v || !v.isXML && !v.isXMLList || v.kind === "text" || v.kind === "attribute") {
+      if (!v ||
+          !v.isXML && !v.isXMLList ||
+          v.kind === "text" ||
+          v.kind === "attribute") {
         c = toString(v);
       } else {
         c = v.deepCopy();
       }
       n = toXMLName(p);
-      if (nameKind(n.mn) === ATTR_NAME) {
+      if (n.isAttr) {
         if (!this.attributes) {
           return;
         }
@@ -783,7 +786,22 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       var i = undefined;
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
       for (var k = x.length() - 1; k >= 0; k--) {
-        // FIXME remove all but the last matching child
+        // FIXME not ready from prime-time yet
+        /*
+        print("Xp.setProperty() x[k].localName="+x.children[k].name.localName+" localName="+n.localName);
+        if ((n.localName === "*" ||
+             x.children[k].kind === "element" &&
+             x.children[k].localName === n.localName) &&
+            (n.uri === null ||
+             x.children[k].kind === "element" &&
+             x.children[k].uri === n.uri)) {
+          if (i !== undefined) {
+            print("Xp.setProperty() mn="+mn);
+            x.deleteByIndex(String(i));
+          }
+        }
+        i = k;
+        */
       }
       if (i === undefined) {
         i = x.length();
@@ -805,7 +823,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         var s = toString(c);
         if (s !== "") {
           x.children[i].replace("0", s);
-        } 
+        }
       } else {
         x.replace(String(i), c);
       }
@@ -817,27 +835,71 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       var val;
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
-        val = this[Multiname.getQualifiedName(resolved)];
+        return this[Multiname.getQualifiedName(resolved)];
+      }
+      if (isNumeric(mn)) {
+        // this is a shortcut to the E4X logic that wants us to create a new
+        // XMLList with of size 1 and access it with the given index.
+        if (Number(0) === 0) {
+          return this;
+        }
+        return null;
+      }
+      var x = this;
+      var name = toXMLName(mn);
+      val = new XMLList(x, name);
+      switch (nameKind(name.mn)) {
+      case ANY_ATTR_NAME:
+        var any = true;
+        // fall through
+      case ATTR_NAME:
+        if (x.attributes) {
+          x.attributes.forEach(function (v, i) {
+            if ((any || (v.name.localName === name.localName)) &&
+                ((name.uri === null || v.name.uri === name.uri))) {
+              val.append(v);
+            }
+          });
+        }
+        break;
+      case ANY_NAME:
+        var any = true;
+        // fall through
+      default:
+        x.children.forEach(function (v, i) {
+          if ((any || v.kind === "element" && v.name.localName === name.localName) &&
+              ((name.uri === null || v.kind === "element" && v.name.uri === name.uri))) {
+            val.append(v);
+          }
+        });
+        break;
+      }
+      return val;
+    };
+
+    Xp.hasProperty = function (mn, isMethod) {
+      if (isMethod) {
+        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        return !!this[Multiname.getQualifiedName(resolved)];
       } else {
         if (isNumeric(mn)) {
           // this is a shortcut to the E4X logic that wants us to create a new
           // XMLList with of size 1 and access it with the given index.
           if (Number(0) === 0) {
-            return this;
+            return true;
           }
-          return null;
+          return false;
         }
         var name = toXMLName(mn);
-        val = new XMLList(this.parent, name);
         switch (nameKind(name.mn)) {
         case ANY_ATTR_NAME:
           var any = true;
           // fall through
         case ATTR_NAME:
-          this.attributes.forEach(function (v, i) {
+          return this.attributes.some(function (v, i) {
             if ((any || (v.name.localName === name.localName)) &&
                 ((name.uri === null || v.name.uri === name.uri))) {
-              val.append(v);
+              return true;
             }
           });
           break;
@@ -845,16 +907,16 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           var any = true;
           // fall through
         default:
-          this.children.forEach(function (v, i) {
+          return this.children.some(function (v, i) {
             if ((any || v.kind === "element" && v.name.localName === name.localName) &&
                 ((name.uri === null || v.kind === "element" && v.name.uri === name.uri))) {
-              val.append(v);
+              return true;
             }
           });
           break;
         }
       }
-      return val;
+      return false;
     };
 
     Xp.hasProperty = function (mn, isMethod) {
@@ -920,9 +982,9 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         throw "TypeError in XML.prototype.insert(): invalid property name " + p;
       }
       if (x.kind === "element") {
-        var a = v;
+        var a = x;
         while (a) {
-          if (a === this) {
+          if (a === v) {
             throw "Error in XML.prototype.insert()";
           }
           a = a.parent;
@@ -1050,17 +1112,17 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (x.kind !== "element") {
         return xl;
       }
-      if (name.IS_ATTR) {
+      if (name.isAttr) {
         // Get attributes
         this.attributes.forEach(function (v, i) {
-          if (name.IS_ANY || name.localName === v.name.localName) {
+          if (name.isAny || name.localName === v.name.localName) {
             xl.append(v);
           }
         });
       } else {
         // Get children
         this.children.forEach(function (v, i) {
-          if (name.IS_ANY || name.localName === v.name.localName) {
+          if (name.isAny || name.localName === v.name.localName) {
             xl.append(v);
           }
         });
@@ -1151,6 +1213,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XML.addNamespace");
         },
         appendChild: function appendChild(child) { // (child) -> XML
+          var children = this.getProperty("*");
+          children.setProperty(children.length(), child);
           return this;
         },
         attribute: function attribute(name) { // (arg) -> XMLList
@@ -1225,7 +1289,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           return this.name;
         },
         _namespace: function _namespace(prefix, argc) { // (prefix, argc:int) -> any
-          notImplemented("XML._namespace");
+          somewhatImplemented("XML._namespace()");
+          return this.name.uri;
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
           return new XMLList();  // FIXME needs implementation
@@ -1343,17 +1408,13 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
 
     XLp.setProperty = function (mn, v, isMethod) {
       var x, i, r;
-      if (isMethod) {
-        return;
-      }
-      somewhatImplemented("XMLList.prototype.setProperty()");
       x = this;
       i = mn >>> 0;
       if (String(mn) === String(i)) {
-        this.children[i] = v;
-        return;   // until this function is properly implemented
-        if (this.targetObject !== null) {
-          r = this.targetObject.resolveValue();
+        var targetObject = this.targetObject;
+        var targetProperty = this.targetProperty;
+        if (targetObject !== null) {
+          r = targetObject.resolveValue();
           if (r === null) {
             return;
           }
@@ -1365,7 +1426,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
             if (r.length !== 1) {
               return;
             } else {
-              r = r[0];
+              r = r.children[0];
             }
           }
           if (r && r.kind !== "element") {
@@ -1373,18 +1434,38 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           }
           var y = new XML();
           y.parent = r;
-          y.name = this.targetProperty;
-          if (x.targetProperty.IS_ATTR) {
-            // FIXME implement
-          } else if (x.targetProperty === null || x.targetProperty.localName === "*") {
+          y.name = x.targetProperty;
+          if (targetProperty === null || targetProperty.localName === "*") {
             y.name = null;
             y.kind = "text";
+          } else if (targetProperty.isAttr) {
+            var attributeExists = r.getProperty(y.name);
+            if (attributeExists.length() > 0) {
+              return;
+            }
+            r.kind = "attribute";
           } else {
             y.kind = "element";
           }
           i = x.length();
           if (y.kind !== "attribute") {
-            // FIXME implement
+            if (r !== null) {
+              if (i > 0) {
+                var j = 0;
+                while (j < r.length() - 1 &&
+                      r.children[j] !== x.children[i - 1]) {
+                  j++;
+                }
+              } else {
+                var j = r.length() - 1;
+              }
+              r.insert(String(j+1), y);
+            }
+            if (v.isXML) {
+              y.name = v.name;
+            } else if (v.isXMLList) {
+              y.name = v.targetProperty;
+            }
           }
           x.append(y);
         }
@@ -1392,15 +1473,66 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           v = toString(v);
         }
         if (x.children[i].kind === "attribute") {
-          // FIXME implement
+          var z = toAttributeName(x.children[i].name);
+          x.children[i].parent.setProperty(z, v);
+          var attr = x.children[i].parent.getProperty(z);
+          x.children[i] = attr.children[0];
         } else if (v.isXMLList) {
-          // FIXME implement
-        } else if (v.isXML || (k = x.children[i].kind) === "text" ||
-                   k === "comment" || k === "processing-instruction") {
-          // FIXME implement
+          var c = v.deepCopy();  // FIXME shallow copy
+          var parent = x.children[i].parent;
+          if (parent !== null) {
+            var q;
+            parent.children.some(function (v, p) {
+              if (v == x.children[i]) {
+                q = p;
+                return true;
+              }
+            });
+            parent.replace(q, c);
+            c.children.forEach(function (v, j) {
+              c.children[j] = parent.children[q >>> 0 + j]; 
+            });
+          }
+          if (c.length() === 0) {
+            for (var j = x + 1; j < x.length() - 1; j++) {
+              x.children[String(j - 1)] = x.children[j];
+            }
+          } else {
+            for (var j = x.length() - 1; j >= i + 1; j--) {
+              x.children[String(j + c.length() - 1)] = x.children[j];
+            }
+          }
+          // For j = 0 to c.[[Length]]-1, let x[i + j] = c[j]
+          for (var j = 0; j < c.length(); j++) {
+            x.children[i + j] = c.children[j];
+          }
+        } else if (v.isXML ||
+                   (k = x.children[i].kind) === "text" ||
+                   k === "comment" ||
+                   k === "processing-instruction") {
+          var parent = x.children[i].parent;
+          if (parent !== null) {
+            var q;
+            parent.children.some(function (v, p) {
+              if (v == x.children[i]) {
+                q = p;
+                return true;
+              }
+            });
+            parent.replace(q, v);
+            var v = parent.children[q];
+          }
+          if (typeof v === "string") {
+            var t = new XML("text");
+            t.parent = x;
+            t.value = v;
+            x.children[i] = t;
+          } else {
+            x.children[i] = v;
+          }
         } else {
           x.children[i].setProperty("*", v);
-        }        
+        }
       } else if (x.length() <= 1) {
         if (x.length() === 0) {
           r = x.resolveValue();
@@ -1516,7 +1648,32 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
 
     // 9.2.1.10 [[ResolveValue]] ( )
     XLp.resolveValue = function resolveValue () {
-      notImplemented("XMLList.prototype.resolveValue");
+      if (this.length() > 0) {
+        return this;
+      }
+      var x = this
+      var name = x.name;
+      var targetObject = x.targetObject
+      var targetProperty = x.targetProperty;
+      if (targetObject === null ||
+          targetProperty === null ||
+          name.isAttr ||
+          name.isAny) {
+        return null;
+      }
+      var base = targetObject.resolveValue();
+      if (base === null) {
+        return null;
+      }
+      var target = base.getProperty(targetProperty);
+      if (target.length() === 0) {
+        if (base.isXMLList && base.length() > 1) {
+          return null;
+        }
+        base.setProperty(targetProperty, "");
+        target = base.getProperty(targetProperty);
+      }
+      return target;
     }
 
     XLp.getEnumerationKeys = function getEnumerationKeys() {
@@ -1642,7 +1799,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XMLList.addNamespace");
         },
         appendChild: function appendChild(child) { // (child) -> XML
-          notImplemented("XMLList.appendChild");
+          toXML(this).appendChild(child);
+          return this;
         },
         childIndex: function childIndex() { // (void) -> int
           notImplemented("XMLList.childIndex");
@@ -1705,7 +1863,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     QName = function QName(ns, name, isAttr) {
       // handle coerce case
       if (!(this instanceof QName)) {
-        if (name === undefined && ns.IS_QNAME) {
+        if (name === undefined && (ns instanceof QName)) {
           return ns;
         } else {
           return new QName(ns, name);
@@ -1716,19 +1874,19 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         name = ns;
         ns = undefined;
       }
-      if (typeof ns === "string" || ns && ns.IS_QNAME) {
+      if (typeof ns === "string" || (ns instanceof QName)) {
         ns = new ASNamespace(ns);
       }
       // construct the multiname for this qname
       var mn;
-      if (name && name.IS_QNAME) {
+      if (name instanceof QName) {
         if (ns === undefined) {
           // reuse the original multiname
           mn = name.mn;
         } else {
           mn = new Multiname([ns], name.mn.getName());
         }
-      } else if (name && name instanceof Multiname) {
+      } else if (name instanceof Multiname) {
         if (ns === undefined) {
           if (name.isQName() || name.isAnyName()) {
             mn = name;
@@ -1753,8 +1911,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         }
       }
       this.mn = mn;
-      this.IS_ANY = mn.isAnyName();
-      this.IS_ATTR = mn.isAttribute();
+      this.isAny = mn.isAnyName();
+      this.isAttr = mn.isAttribute();
     }
 
     var c = new runtime.domain.system.Class("QName", QName, Domain.passthroughCallable(QName));
@@ -1762,14 +1920,14 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     QNp = QName.prototype;
     defineNonEnumerableGetter(QNp, "localName", function () {
       if (!this._localName) {
-        this._localName = this.mn.getName();
+        this._localName = this.isAny ? "*" : this.mn.getName();
       }
       return this._localName;
     });
     defineNonEnumerableGetter(QNp, "uri", function () {
       if (this._uri === undefined) {
         var ns = this.mn.namespaces[0]
-        this._uri = ns ? ns.originalURI : null;
+        this._uri = ns && ns.originalURI ? ns.originalURI : "";
       }
       return this._uri;
     });
@@ -1779,7 +1937,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     defineNonEnumerableSetter(QNp, "prefix", function (prefix) {
       this.mn.namespaces[0].prefix = prefix;
     });
-    QNp.IS_QNAME = true;
 
     // 13.3.5.4 [[GetNamespace]]([InScopeNamespaces])
     QNp.getNamespace = function (isns) {
