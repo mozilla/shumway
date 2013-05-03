@@ -959,7 +959,7 @@ var natives = (function () {
           uri = "";
         } else if (typeof uriValue === "object") {
           prefix = uriValue.prefix;
-          if (uriValue._IS_NAMESPACE) {
+          if (uriValue instanceof ShumwayNamespace) {
             uri = uriValue.originalURI;
           } else if (uriValue._IS_QNAME) {
             uri = uriValue.uri;

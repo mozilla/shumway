@@ -474,7 +474,6 @@ var ShumwayNamespace = (function () {
       return kinds[this.kind];
     },
 
-    _IS_NAMESPACE: true,
   });
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);

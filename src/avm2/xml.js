@@ -24,7 +24,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
   function XMLEncoder(ancestorNamespaces, indentLevel, prettyPrinting) {
     var indent = "\n  ";
     function visit(node, encode) {
-      if (node.IS_XML) {
+      if (node.isXML) {
         switch (node._kind) {
         case "element":
           return encode.element(node);
@@ -39,7 +39,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         case "processing-instruction":
           return encode.pi(node);
         }
-      } else if (node.IS_XMLLIST) {
+      } else if (node.isXMLList) {
         return encode.list(node);
       } else {
         throw "Not implemented";
@@ -52,16 +52,19 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           var ns = n._name.mn.namespaces[0];
           var prefix = ns.prefix ? (ns.prefix + ":") : "";
           s = "<" + prefix + n._name.localName;
-          // enumerate namespace declarations
+          // Enumerate namespace declarations
           var namespaceDeclarations = [];
           if (ns.prefix || ns.originalURI) {
+            // If either is a non-empty string then create a namespace
+            // declaration for it
             namespaceDeclarations.push(ns)
           }
           if (prefix) {
             namespaceDeclarations[prefix] = true;
           }
           for (var i = 0; i < n._inScopeNamespaces.length; i++) {
-            if (true) { // FIXME add check for ancestor namespace with same prefix
+            if (true) { // FIXME add check for ancestor
+              somewhatImplemented("xml.js Encoder.encode() inscope namespaces");
               ns = n._inScopeNamespaces[i];
               if (!namespaceDeclarations[ns.prefix]) {
                 namespaceDeclarations.push(ns);
@@ -404,7 +407,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
   var xmlParser = new XMLParser();
 
   isXMLType = function isXMLType(val) {
-    return val.IS_XML || val.IS_XMLLIST;
+    return val.isXML || val.isXMLList;
   }
 
   // 10.1 ToString
@@ -441,9 +444,9 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
     } else if (v === undefined) {
       throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (v.IS_XML) {
+    } else if (v.isXML) {
       return v;
-    } else if (v.IS_XMLLIST) {
+    } else if (v.isXMLList) {
       if (v.length() === 1) {
         return v._[0];
       }
@@ -739,7 +742,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           x._kind === "attribute") {
         return;
       }
-      if (!v || !v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
+      if (!v || !v.isXML && !v.isXMLList || v._kind === "text" || v._kind === "attribute") {
         c = toString(v);
       } else {
         c = v.deepCopy();
@@ -845,7 +848,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       debugger;
     };
 
-    Xp.IS_XML = true;
+    Xp.isXML = true;
 
     // 9.1.1.11 [[Insert]] (P, V)
     Xp.insert = function insert(p, v) {
@@ -870,7 +873,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           a = a._parent;
         }
       }
-      if (x.IS_XMLLIST) {
+      if (x.isXMLList) {
         n = x.length();
         if (n === 0) {
           return;
@@ -879,13 +882,13 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         n = 1;
       }
       for (var j = x.length() - 1; j >= i; j--) {
-        x[j+n] = x[j];
+        x[j + n] = x[j];
       }
-      if (x.IS_XMLLIST) {
+      if (x.isXMLList) {
         n = v.length();
         for (var j = 0; j < n; j++) {
           v._[j]._parent = x;
-          x[i+j] = v[j];
+          x[i + j] = v[j];
         }
       } else {
         //x.replace(i, v);
@@ -929,7 +932,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           x._[p]._parent = null;
         }
         x._[p] = v;
-      } else if (x.IS_XMLLIST) {
+      } else if (x.isXMLList) {
         x.deleteByIndex(p);
         x.insert(p, v);
       } else {
@@ -1245,7 +1248,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (val === null || val === undefined) {
         val = "";
       }
-      if (val.IS_XMLLIST) {
+      if (val.isXMLList) {
         var xl = new XMLList();
         xl.append(val);
         return xl;
@@ -1301,7 +1304,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           r = null;
         }
         if (i >= x.length()) {
-          if (r && r.IS_XMLLIST) {
+          if (r && r.isXMLList) {
             if (r.length !== 1) {
               return;
             } else {
@@ -1328,14 +1331,14 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           }
           x.append(y);
         }
-        if (!v.IS_XML && !v.IS_XMLLIST || v._kind === "text" || v._kind === "attribute") {
+        if (!v.isXML && !v.isXMLList || v._kind === "text" || v._kind === "attribute") {
           v = toString(v);
         }
         if (x._[i]._kind === "attribute") {
           // FIXME implement
-        } else if (v.IS_XMLLIST) {
+        } else if (v.isXMLList) {
           // FIXME implement
-        } else if (v.IS_XML || (k = x._[i]._kind) === "text" ||
+        } else if (v.isXML || (k = x._[i]._kind) === "text" ||
                    k === "comment" || k === "processing-instruction") {
           // FIXME implement
         } else {
@@ -1380,7 +1383,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     };
 
     XLp.append = function (val) {
-      if (val.IS_XMLLIST) {
+      if (val.isXMLList) {
         this._targetObject = val._targetObject;
         this._targetProperty = val._targetProperty;
         if (val.length() === 0) {
@@ -1389,7 +1392,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         for (var i = 0; i < val.length(); i++) {
           this._.push(val._[i]);
         }
-      } else if (val.IS_XML) {
+      } else if (val.isXML) {
         this._.push(val);
       }
       return;
@@ -1434,7 +1437,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       return xl;
     };
 
-    XLp.IS_XMLLIST = true;
+    XLp.isXMLList = true;
 
     c.native = {
       static: {
@@ -1565,7 +1568,8 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           notImplemented("XMLList.localName");
         },
         namespaceDeclarations: function namespaceDeclarations() { // (void) -> Array
-          return new XMLList();  // FIXME implement
+          somewhatImplemented("XMLList.prototype.namespaceDeclarations()");
+          return new XMLList();
         },
         prependChild: function prependChild(value) { // (value) -> XML
           notImplemented("XMLList.prependChild");

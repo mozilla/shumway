@@ -7,7 +7,7 @@ print("Testing Basic XML");
   var tests = [
     [x.name() == "foo", x.name()],
     [x.bar.name() == "bar", x.bar.name()],
-//    [x.@name == "x", x.@name],
+    [x.@a == "aaa", x.@a],
     [x.@type == "T", x.@type],
     [x..bar == "e=mc^2", x..bar],
   ];

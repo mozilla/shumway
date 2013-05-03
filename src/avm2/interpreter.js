@@ -51,7 +51,7 @@ var Interpreter = (function () {
   function popName(stack, mn) {
     if (Multiname.isRuntime(mn)) {
       var namespaces = mn.namespaces, name = mn.name;
-      var flags = mn.flags;
+      var flags = mn.flags & Multiname.ATTRIBUTE;
       if (Multiname.isRuntimeName(mn)) {
         name = stack.pop();
       }
@@ -64,7 +64,7 @@ var Interpreter = (function () {
       }
       mn = new Multiname(namespaces, name, flags);
     }
-//    release || assert(!Multiname.isRuntime(mn));
+    release || assert(!Multiname.isRuntime(mn));
     return mn;
   }
 
