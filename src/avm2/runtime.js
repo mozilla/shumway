@@ -427,19 +427,7 @@ function getDescendants(obj, mn) {
   if (!isXMLType(obj)) {
     throw "Not XML object in getDescendants";
   }
-  if (obj._IS_XMLLIST) {
-    if (obj._.length !== 1 && obj._[0]._IS_XML) {
-      throw "Invalid XMLList in getDescendants";
-    }
-    obj = obj._[0];
-  }
-  var xl = new XMLList();
-  obj._.forEach(function (v, i) {
-    if (mn.isAnyName() || mn.name === v.name) {
-      xl._.push(v);
-    }
-  });
-  return xl;
+  return obj.descendants(mn);
 }
 
 function checkFilter(value) {
@@ -821,9 +809,9 @@ function resolveName(obj, name) {
   }
 }
 
-function getProperty(obj, name) {
+function getProperty(obj, name, isMethod) {
   if (obj.getProperty) {
-    return obj.getProperty(name);
+    return obj.getProperty(name, isMethod);
   }
   var qn = resolveName(obj, name);
   if (obj.indexGet && Multiname.isNumeric(qn)) {

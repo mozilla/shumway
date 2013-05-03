@@ -51,6 +51,7 @@ var Interpreter = (function () {
   function popName(stack, mn) {
     if (Multiname.isRuntime(mn)) {
       var namespaces = mn.namespaces, name = mn.name;
+      var flags = mn.flags & Multiname.ATTRIBUTE;
       if (Multiname.isRuntimeName(mn)) {
         name = stack.pop();
       }
@@ -61,7 +62,7 @@ var Interpreter = (function () {
       if (Multiname.isRuntimeNamespace(mn)) {
         namespaces = [stack.pop()];
       }
-      mn = new Multiname(namespaces, name);
+      mn = new Multiname(namespaces, name, flags);
     }
     release || assert(!Multiname.isRuntime(mn));
     return mn;
@@ -375,7 +376,7 @@ var Interpreter = (function () {
             break;
           case 0x59: // OP_getdescendants
             name = popName(stack, multinames[bc.index]);
-            stack.push(getDescendants(name, stack.pop()));
+            stack.push(getDescendants(stack.pop(), name));
             break;
           case 0x5A: // OP_newcatch
             release || assert(exceptions[bc.index].scopeObject);
