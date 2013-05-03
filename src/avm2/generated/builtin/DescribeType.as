@@ -225,7 +225,6 @@ package avmplus
             describeTraits(e, oi.traits);
             x.AS3::appendChild(e);
         }
-
         return x;
     }
 

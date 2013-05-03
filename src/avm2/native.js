@@ -224,6 +224,8 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
 });
 */
 
+var ASNamespace;
+
 var natives = (function () {
 
   var C = Domain.passthroughCallable;
@@ -945,32 +947,54 @@ var natives = (function () {
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instance, baseClass) {
-    function ASNamespace(prefixValue, uriValue) {
+    ASNamespace = function ASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
         prefixValue = undefined;
       }
-
-      // TODO: when uriValue is a QName
-      if (prefixValue !== undefined) {
-        if (typeof isXMLName === "function") {
-          prefixValue = String(prefixValue);
+      var prefix, uri;
+      if (prefixValue === undefined) {
+        if (uriValue === undefined) {
+          prefix = "";
+          uri = "";
+        } else if (typeof uriValue === "object") {
+          prefix = uriValue.prefix;
+          if (uriValue instanceof ShumwayNamespace) {
+            uri = uriValue.originalURI;
+          } else if (uriValue._IS_QNAME) {
+            uri = uriValue.uri;
+          }
+        } else {
+          uri = toString(uriValue);
+          if (uri === "") {
+            prefix = "";
+          } else {
+            prefix = undefined;
+          }
         }
-
-        uriValue = String(uriValue);
-      } else if (uriValue !== undefined) {
-        if (uriValue.constructor === ShumwayNamespace) {
-          return uriValue.clone();
+      } else {
+        if (typeof uriValue === "object" &&
+            uriValue._IS_QNAME &&
+            uriValue.uri !== null) {
+          uri = uriValue.uri;
+        } else {
+          uri = toString(uriValue);
+        }
+        if (uri === "") {
+          if (prefixValue === undefined || toString(prefixValue) === "") {
+            prefix = "";
+          } else {
+            throw "type error";
+          }
+        } else if (prefixValue === undefined || prefixValue === "") {
+          prefix = undefined;
+        } else if (false && !isXMLName(prefixValue)) { // FIXME need impl
+          prefix = undefined;
+        } else {
+          prefix = toString(prefixValue);
         }
       }
-
-      /**
-       * XXX: Not sure if this is right for whatever E4X bullshit this is used
-       * for.
-       */
-      var ns = ShumwayNamespace.createNamespace(uriValue);
-      ns.prefix = prefixValue;
-
+      var ns = ShumwayNamespace.createNamespace(uri, prefix);
       return ns;
     }
 
