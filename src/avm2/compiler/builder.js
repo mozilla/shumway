@@ -695,6 +695,9 @@ var createName = function createName(namespaces, name) {
           name = simplifyName(name);
           if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
             if (ti.trait) {
+              if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
+                return constant(ti.trait.value);
+              }
               get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
               return ti.trait.isGetter() ? store(get) : load(get);
             }
