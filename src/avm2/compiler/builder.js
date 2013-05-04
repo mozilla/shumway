@@ -409,6 +409,8 @@ var createName = function createName(namespaces, name) {
       var start = new Start();
       this.buildStart(start);
 
+      var createFunctionCallee = getJSPropertyWithState(start.entryState, runtime, "createFunction");
+
       worklist.push({region: start, block: blocks[0]});
 
       var next;
@@ -492,7 +494,7 @@ var createName = function createName(namespaces, name) {
           return savedScope();
         }
 
-        var object, receiver, index, callee, value, multiname, type, args, pristine;
+        var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
           assert (x);
@@ -619,21 +621,6 @@ var createName = function createName(namespaces, name) {
           return value;
         }
 
-        function coerceValue2(value, type) {
-          if (isConstant(value) && isConstant(type)) {
-            return constant(coerce(value.value, type.value));
-          } else if (isConstant(type)) {
-            var coercer = coercers[Multiname.getQualifiedName(type)];
-            if (coercer) {
-              return coercer(value);
-            }
-          }
-          if (compatibility) {
-            return call(globalProperty("coerce"), null, [value, type]);
-          }
-          return value;
-        }
-
         function getScopeObject(scope) {
           if (scope instanceof IR.AVM2Scope) {
             return scope.object;
@@ -719,6 +706,7 @@ var createName = function createName(namespaces, name) {
             }
             return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
           }
+          warn("Can't optimize getProperty to " + name);
           return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
         }
 
@@ -781,7 +769,11 @@ var createName = function createName(namespaces, name) {
         }
 
         function call(callee, object, args) {
-          return callCall(callee, object, args, true);
+          return store(new Call(region, state.store, callee, object, args, true));
+        }
+
+        function callPure(callee, object, args) {
+          return new Call(null, null, callee, object, args, true);
         }
 
         function callCall(callee, object, args, pristine) {
@@ -1007,8 +999,7 @@ var createName = function createName(namespaces, name) {
             case OP_debugline:
               break;
             case OP_newfunction:
-              callee = getJSProperty(runtime, "createFunction");
-              push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              push(callPure(createFunctionCallee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
               args = popMany(bc.argCount);
