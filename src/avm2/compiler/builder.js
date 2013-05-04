@@ -570,10 +570,10 @@ var createName = function createName(namespaces, name) {
           var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), name, domain, strict);
           if (ti) {
             if (ti.object) {
-              if (ti.object instanceof Global && !ti.object.isExecuted()) {
-                // If we found the property in a global that hasn't been executed yet then
-                // we have to emit the slow path so it gets executed lazily.
-                warn("Can't optimize findProperty " + name);
+              if (ti.object instanceof Global && !ti.object.isExecuting()) {
+                // If we find the property in a global whose script hasn't been executed yet
+                // we have to emit the slow path so it gets executed.
+                warn("Can't optimize findProperty " + name + ", global object is not yet executed or executing.");
                 return slowPath;
               }
               return constant(ti.object);
