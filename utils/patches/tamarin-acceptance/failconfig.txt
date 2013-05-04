@@ -945,7 +945,6 @@ ecma3/Exceptions/number_004_rt.* : Assigning Number.prototype.toString as the to
 ecma3/Exceptions/regress_95101.* : Section 1 of test , .*,, expectedfail, FAILED! expected: true got: false
 ecma3/Exceptions/regress_95101.* : Section 2 of test , .*,, expectedfail, FAILED! expected: true got: false
 
-ecma3/ExecutionContexts/e10_1_6.* : , .*,, expectedfail, FAILED contained no testcase messages - reason: Error: getProperty({public,private$e10_1_6.as$1,public$http://adobe.com/AS3/2006/builtin}::prototype) on undefined||error@/Work/artcompiler/shumway/src/avm2/util.js:28|assert@/Work/artcompiler/shumway/src/avm2/util.js:38|getProperty@/Work/artcompiler/shumway/src/avm2/runtime.js:626|interpretMethod@/Work/artcompiler/shumway/src/avm2/interpreter.js:459|createFunction/interpretedMethod/fn@/Work/artcompiler/shumway/src/avm2/runtime.js:952|applyNew@/Work/artcompiler/shumway/src/avm2/interpreter.js:31|interpretMethod@/Work/artcompiler/shumway/src/avm2/interpreter.js:313|createFunction/interpretedMethod/fn@/Work/artcompiler/shumway/src/avm2/runtime.js:952|interpretMethod@/Work/artcompiler/shumway/src/avm2/interpreter.js:331|createFunction/interpretedMethod/fn@/Work/artcompiler/shumway/src/avm2/runtime.js:952|executeScript@/Work/artcompiler/shumway/src/avm2/domain.js:26|executeAbc@/Work/artcompiler/shumway/src/avm2/domain.js:485|processAbc@/Work/artcompiler/shumway/src/avm2/bin/avm.js:234|@/Work/artcompiler/shumway/src/avm2/bin/avm.js:172|@/Work/artcompiler/shumway/src/avm2/bin/avm.js:147||
 ecma3/ExecutionContexts/e10_1_8_2.* : GetCallee() , .*,, expectedfail, FAILED! expected: function Function() {} got: undefined
 ecma3/ExecutionContexts/e10_1_8_1.* : GetCallee() , .*,, expectedfail, FAILED! expected: function Function() {} got: undefined
 
@@ -1617,26 +1616,24 @@ ecma3/ObjectObjects/e15_2_4_3.* : mystring \= new String\(\)\; mystring.valueOf 
 ecma3/ObjectObjects/e15_2_4_3.* : mydate \= new Date\(\)\; mydate.valueOf \= Object.prototype.valueOf\; mydate.valueOf\(\) , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1037 got: no error
 ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfail, FAILED! expected: ReferenceError: Error #1065 got: no error
 ecma3/Statements/block.* : Block in which exception is thrown , .*,, expectedfail, FAILED! expected: 2 got: NaN number
-ecma3/String/e15_5_4_3_3_rt.* , .*,, expectedfail, FAILED contained no testcase messages - reason: TypeError: obj is undefined||undefined|
+ecma3/String/e15_5_4_3_3_rt.*, .*,, expectedfail, FAILED contained no testcase messages - reason: TypeError: obj is undefined||undefined|
+ecma3/String/e15_5_3_2_1.* : var x = new String\(\). typeof x\.fromCharCode , .*,, expectedfail, ReferenceError: Error #1069 got: no error
 ecma3/String/e15_5_3_2_1.* : String\.fromCharCode\.length , .*,, expectedfail, FAILED! expected: 0 got: 1
-ecma3/String/e15_5_3_1_3.*, .*,, expectedfail, .*
-ecma3/String/e15_5_3_1_3.*, .*,, expectedfail, .*
-ecma3/String/e15_5_3_2_1.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_10_1_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_11_1.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_11_5.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_12_1.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_13.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_4_4_rt.*, .*,, expectedfail, .*
+ecma3/String/e15_5_3_1_3.* : delete String\.prototype\.toUpperCase\.length , .*,, expectedfail, .*
+ecma3/String/e15_5_3_1_3.* : delete\( String\.prototype \) , .*,, expectedfail, .*
+ecma3/String/e15_5_4_10_1_rt.* : delete String\.prototype\.substring\.length FAILED, .*,, expectedfail, .*
+ecma3/String/e15_5_4_11_1.* : delete String\.prototype\.toLowerCase\.length FAILED, .*,, expectedfail, .*
+ecma3/String/e15_5_4_11_5.* : delete String\.prototype\.toLowerCase\.length FAILED, .*,, expectedfail, .*
+ecma3/String/e15_5_4_12_1.* : delete String\.prototype\.toUpperCase\.length , .*,, expectedfail, .*
+ecma3/String/e15_5_4_13.* : delete String\.prototype\.slice\.length FAILED, .*,, expectedfail, .*
+ecma3/String/e15_5_4_4_4_rt.* : x\.__proto\.charAt \= String\.prototype\.charAt\; x\.charAt\(4\) , .*,, expectedfail, .*
+ecma3/String/e15_5_4_7_3_rt.* : var b = true\; b\.__proto__\.lastIndexOf = String\.prototype\.lastIndexOf , .*,, expectedfail, .*
+ecma3/String/e15_5_4_8_1_rt.* : delete String\.prototype\.split\.length FAILED, .*,, expectedfail, .*
+ecma3/String/e15_5_4_9_1_rt.* : delete String\.prototype\.substring\.length FAILED, .*,, expectedfail, .*
+ecma3/String/substr.* : delete String\.prototype\.substr\.length FAILED , .*,, expectedfail, .*
+ecma3/String/toLocaleLowerCase.* : delete String\.prototype\.toLowerCase\.length FAILED , .*,, expectedfail, .*
+ecma3/String/toLocaleLowerCase5.* : delete String\.prototype\.toLowerCase\.length FAILED , .*,, expectedfail, .*
+ecma3/String/toLocaleUpperCase5.* : delete String\.prototype\.toUpperCase\.length FAILED , .*,, expectedfail, .*
 ecma3/String/e15_5_4_5_6_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_7_3_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_8_1_rt.*, .*,, expectedfail, .*
-ecma3/String/e15_5_4_9_1_rt.*, .*,, expectedfail, .*
-ecma3/String/substr.*, .*,, expectedfail, .*
-ecma3/String/toLocaleLowerCase.*, .*,, expectedfail, .*
-ecma3/String/toLocaleLowerCase5.*, .*,, expectedfail, .*
-ecma3/String/toLocaleUpperCase5.*, .*,, expectedfail, .*
+ecma3/Function/e15_3_4_3_1.*, .*, , expectedfail, FAILED contained no testcase messages
+ecma3/Function/e15_3_4_4_1.*, .*, , expectedfail, FAILED contained no testcase messages
