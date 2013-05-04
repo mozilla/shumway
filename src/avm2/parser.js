@@ -338,7 +338,6 @@ var ShumwayNamespace = (function () {
         this.uri = this.uri.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
-      // Make a psuedo unique id by concatenating current milliseconds to original uri
       this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
     this.uri = mangleNamespaceURI(this.uri);
