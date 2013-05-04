@@ -12,8 +12,6 @@ var Interpreter = (function () {
     this.abc = abc;
   }
 
-  var Apslice = [].slice;
-
   function applyNew(constructor, args) {
     if (constructor.classInfo) {
       // return primitive values for new'd boxes
@@ -92,9 +90,9 @@ var Interpreter = (function () {
       }
 
       if (method.needsRest()) {
-        locals.push(Apslice.call(methodArgs, parameterCount));
+        locals.push(sliceArguments(methodArgs, parameterCount));
       } else if (method.needsArguments()) {
-        locals.push(Apslice.call(methodArgs, 0));
+        locals.push(sliceArguments(methodArgs, 0));
       }
 
       var obj, receiver, type, index, multiname, res, a, b, args = [], name;
