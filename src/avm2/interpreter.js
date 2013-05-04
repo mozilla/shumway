@@ -373,9 +373,7 @@ var Interpreter = (function () {
             stack.push(scope.findProperty(name, domain, false));
             break;
           case 0x60: // OP_getlex
-            // TODO: Cache the resolved multiname so it doesn't have to be
-            // resolved again in getProperty
-            name = popName(stack, multinames[bc.index]);
+            name = multinames[bc.index];
             stack.push(getProperty(scope.findProperty(name, domain, true), name));
             break;
           case 0x68: // OP_initproperty
