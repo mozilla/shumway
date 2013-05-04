@@ -139,7 +139,6 @@ function initializeGlobalObject(global) {
       return [];
     }
 
-
     if (obj.getEnumerationKeys) {
       return obj.getEnumerationKeys();
     }
@@ -374,8 +373,8 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
-  if (obj.node && obj.node.childNodes) {
-    return obj.node.childNodes[obj[VM_NEXT_NAME](index)];
+  if (obj.getProperty) {
+    return obj.getProperty(obj[VM_NEXT_NAME](index), false);
   }
   return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
 }
@@ -553,7 +552,8 @@ var Scope = (function () {
     obj = this.object;
     if (Multiname.isQName(mn)) {
       if (this.isWith) {
-        if (Multiname.getQualifiedName(mn) in obj) {
+        if (obj.hasProperty && obj.hasProperty(mn) ||
+            Multiname.getQualifiedName(mn) in obj) {
           return obj;
         }
       } else {
@@ -564,7 +564,8 @@ var Scope = (function () {
       }
     } else {
       if (this.isWith) {
-        if (resolveMultiname(obj, mn)) {
+        if (obj.hasProperty && obj.hasProperty(mn) ||
+            resolveMultiname(obj, mn)) {
           return obj;
         }
       } else {

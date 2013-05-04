@@ -45,3 +45,64 @@ print("Testing attribute() and attributes() methods");
   }
 })();
 
+print("Testing enumeration");
+(function () {
+  var x = <><foo a="aaa"/><bar b="bbb"/><cat c="ccc"/></>;
+  x.foo;
+  var a = []
+  for each (var v in x) {
+    a.push(v.@*);
+  }
+  var tests = [
+    [a]
+  ];
+  for (var i = 0; i < tests.length; i++) {
+    print(i + ": " + tests[i]);
+  }
+})();
+
+print("Testing YouTube use of E4X");
+class A {}
+(function () {
+  var variable:*;
+  var type:XML;
+  var eventClass:Class;
+
+  var loc1:*;
+  variable = undefined;
+  eventClass = A;
+  type =
+    <type name="avmplus::A" base="Class" isDynamic="true" isFinal="true" isStatic="true">
+      <extendsClass type="Class"/>
+      <extendsClass type="Object"/>
+      <variable name="c" type="String"/>
+      <variable name="b" type="String"/>
+      <variable name="a" type="String"/>
+      <factory type="avmplus::A">
+        <extendsClass type="Object"/>
+        <variable name="x" type="*"/>
+        <variable name="z" type="*"/>
+        <variable name="y" type="*"/>
+      </factory>
+    </type>;
+
+  var loc2:*=0;
+  var loc5:*=0;
+  var loc6:*=type;
+  var loc4:*=new XMLList("");
+  for each (var loc7:* in loc6.*) {
+    var loc8:*;
+    with (loc8 = loc7) {
+      if (@type == "String") {
+        loc4[loc5++] = loc7;
+      }
+    }
+  }
+  var loc3:*=loc4;
+  for each (variable in loc3) {
+      eventClass[variable.@name] = type.@name + "." + variable.@name;
+  }
+  for (var p in eventClass) {
+    print("eventClass[p]="+eventClass[p]);
+  }
+})();
