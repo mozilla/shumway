@@ -601,6 +601,10 @@ var createName = function createName(namespaces, name) {
 
         function coerceValue(value, multiname) {
           var type = domain.value.getProperty(multiname, true, true);
+          if (!type) {
+            warn("This is because the type is not available yet, we need to fix this by using ClassInfo's for types.");
+            return value;
+          }
           if (isConstant(value)) {
             return constant(coerce(value.value, type));
           } else {
