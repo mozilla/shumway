@@ -965,7 +965,7 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_getlex:
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true, bc.ti), multiname));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti));
               break;
             case OP_initproperty:
             case OP_setproperty:
