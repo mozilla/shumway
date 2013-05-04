@@ -771,7 +771,7 @@ var Verifier = (function() {
           writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
-            if (trait.isSlot()) {
+            if (trait.isSlot() || trait.isConst()) {
               return Type.fromName(trait.typeName, abc.domain).instance();
             } else if (trait.isGetter()) {
               return Type.fromName(trait.methodInfo.returnType, abc.domain).instance();
