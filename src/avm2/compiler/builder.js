@@ -165,6 +165,21 @@ var createName = function createName(namespaces, name) {
     return node.ty && node.ty.isNumeric();
   }
 
+  function typesAreEqual(a, b) {
+    if (hasNumericType(a) && hasNumericType(b) ||
+        hasStringType(a) && hasStringType(b)) {
+      return true;
+    }
+    return false;
+  }
+
+  function hasStringType(node) {
+    if (isStringConstant(node)) {
+      return true;
+    }
+    return node.ty && node.ty.isString();
+  }
+
   function constant(value) {
     return new Constant(value);
   }
@@ -300,6 +315,13 @@ var createName = function createName(namespaces, name) {
 
       function binary(operator, left, right) {
         var node = new Binary(operator, left, right);
+        if (left.ty && left.ty === right.ty) {
+          if (operator === Operator.EQ) {
+            node.operator = Operator.SEQ;
+          } else if (operator === Operator.NE) {
+            node.operator = Operator.SNE;
+          }
+        }
         if (peepholeOptimizer) {
           node = peepholeOptimizer.tryFold(node);
         }
@@ -319,6 +341,9 @@ var createName = function createName(namespaces, name) {
       }
 
       function toDouble(value) {
+        if (hasNumericType(value)) {
+          return value;
+        }
         return toNumber(value);
       }
 
@@ -1123,7 +1148,17 @@ var createName = function createName(namespaces, name) {
             case OP_lookupswitch:   buildSwitchStops(pop()); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
-            case OP_add:            pushExpression(Operator.AVM2ADD); break;
+            case OP_add:
+              right = pop();
+              left = pop();
+              operator = Operator.AVM2ADD;
+              if (typesAreEqual(left, right)) {
+                operator = Operator.ADD;
+              } else {
+                operator = Operator.AVM2ADD;
+              }
+              push(binary(operator, left, right));
+              break;
             case OP_add_i:          pushExpression(Operator.ADD, true); break;
             case OP_subtract:       pushExpression(Operator.SUB); break;
             case OP_subtract_i:     pushExpression(Operator.SUB, true); break;

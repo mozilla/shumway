@@ -89,6 +89,10 @@ var Type = (function () {
     return this === Type.Int || this === Type.Uint || this === Type.Number;
   };
 
+  type.prototype.isString = function () {
+    return this === Type.String;
+  };
+
   type.prototype.isDirectlyIndexable = function () {
     return this === Type.Array;
   };
