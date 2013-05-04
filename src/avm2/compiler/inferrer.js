@@ -779,6 +779,8 @@ var Verifier = (function() {
           } else {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
+        } else if (obj instanceof ParameterizedType) {
+          return obj.parameter;
         }
         return Type.Any;
       }

@@ -746,7 +746,7 @@ var Multiname = (function () {
   multiname.getFullQualifiedName = function getFullQualifiedName(mn) {
     var qn = multiname.getQualifiedName(mn);
     if (mn instanceof Multiname && mn.typeParameter) {
-      qn += "$" + multiname.getQualifiedName(mn.typeParameter);
+      qn += "$" + multiname.getFullQualifiedName(mn.typeParameter);
     }
     return qn;
   };
