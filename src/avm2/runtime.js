@@ -1037,6 +1037,58 @@ var Runtime = (function () {
   };
 
   /**
+   * Wraps the compiled method in a closure that passes the dynamic scope object as the
+   * first argument and also makes sure that the |asGlobal| object gets passed in as
+   * |this| when the method is called with |fn.call(null)|.
+   */
+  function bindScope(methodInfo, scope) {
+    var fn = methodInfo.compiledMethod;
+    assert (fn, "There should already be a compiled method.");
+    var closure;
+    var asGlobal = scope.global.object;
+    // if (!methodInfo.needsArguments() ) {
+    if (!methodInfo.hasOptional() &&
+        !methodInfo.needsArguments()) {
+      // Special case the common path.
+      switch (methodInfo.parameters.length) {
+        case 0:
+          closure = function () {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope);
+          };
+          break;
+        case 1:
+          closure = function (x) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x);
+          };
+          break;
+        case 2:
+          closure = function (x, y) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y);
+          };
+          break;
+        case 3:
+          closure = function (x, y, z) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y, z);
+          };
+          break;
+        default:
+          // TODO: We can special case more ...
+          break;
+      }
+    }
+    if (!closure) {
+      Counter.count("Bind Scope - Slow Path");
+      closure = function () {
+        Array.prototype.unshift.call(arguments, scope);
+        var global = (this === jsGlobal ? scope.global.object : this);
+        return fn.apply(global, arguments);
+      };
+    }
+    closure.instance = closure;
+    return closure;
+  }
+
+  /**
    * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the
    * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
    * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
@@ -1046,6 +1098,11 @@ var Runtime = (function () {
   runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
+
+    if (mi.compiledMethod) {
+      release || assert(hasDynamicScope);
+      return bindScope(mi, scope);
+    }
 
     if (methodInfo.name) {
       var qn = Multiname.getQualifiedName(methodInfo.name);
@@ -1130,22 +1187,6 @@ var Runtime = (function () {
       print("Compiling " + totalFunctionCount);
     }
 
-    function bindScope(fn, scope) {
-      var closure = function () {
-        Counter.count("Binding Scope");
-        Array.prototype.unshift.call(arguments, scope);
-        var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
-      };
-      closure.instance = closure;
-      return closure;
-    }
-
-    if (mi.compiledMethod) {
-      release || assert(hasDynamicScope);
-      return bindScope(mi.compiledMethod, scope);
-    }
-
     var parameters = mi.parameters.map(function (p) {
       return PARAMETER_PREFIX + p.name;
     });
@@ -1201,7 +1242,7 @@ var Runtime = (function () {
     compiledFunctionCount++;
 
     if (hasDynamicScope) {
-      return bindScope(mi.compiledMethod, scope);
+      return bindScope(mi, scope);
     } else {
       return mi.compiledMethod;
     }
