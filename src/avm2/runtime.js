@@ -1305,11 +1305,9 @@ var Runtime = (function () {
     if (traceLevel.value > 0) {
       print (fnSource);
     }
-    if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
-      mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
-    } else {
-      mi.compiledMethod = new Function(parameters, body);
-    }
+    // mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+    // mi.compiledMethod = new Function(parameters, body);
+    mi.compiledMethod = new Function("return " + fnSource)();
     compiledFunctionCount++;
 
     if (hasDynamicScope) {
