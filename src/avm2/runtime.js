@@ -58,6 +58,34 @@ XRegExp.install({ natives: true });
 var VM_METHOD_OVERRIDES = createEmptyObject();
 
 /**
+ * We use inline caching to optimize name resolution on objects when we have no type information
+ * available. We attach |InlineCache| (IC) objects on bytecode objects. The IC object is a (key,
+ * value) tuple where the key usually holds the "shape" of the dynamic object and the value holds
+ * the cached resolved qualified name. This is all predicated on assigning sensible "shape" IDs
+ * to objects.
+ */
+var VM_NEXT_SHAPE_ID = 1;
+
+function defineObjectShape(obj) {
+  // TODO: This assertion seems to fail for proxies, investigate.
+  // assert (!obj.shape, "Shouldn't already have a shape ID. " + obj.shape);
+  defineReadOnlyProperty(obj, "shape", VM_NEXT_SHAPE_ID ++);
+}
+
+var InlineCache = (function () {
+  function inlineCache () {
+    this.key = undefined;
+    this.value = undefined;
+  }
+  inlineCache.prototype.update = function (key, value) {
+    this.key = key;
+    this.value = value;
+    return value;
+  };
+  return inlineCache;
+})();
+
+/**
  * This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
  */
@@ -432,8 +460,9 @@ function checkFilter(value) {
   return isXMLType(value);
 }
 
-function Activation (methodInfo) {
+function Activation(methodInfo) {
   this.methodInfo = methodInfo;
+  defineObjectShape(this);
 }
 
 var Interface = (function () {
@@ -732,7 +761,7 @@ function callProperty(obj, mn, isLex, args) {
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
-  var property = getProperty(obj, mn, true);
+  var property = getProperty(obj, mn);
   return property.apply(receiver, args);
 }
 
@@ -804,6 +833,34 @@ function resolveName(obj, name) {
   }
 }
 
+function resolveNameWithIC(obj, name, ic) {
+  var qn;
+  if (obj.shape) {
+    if (ic.key === obj.shape) {
+      qn = ic.value;
+    } else {
+      if (!ic.key) {
+        Counter.count("resolveName: IC Miss");
+      }
+      ic.key = obj.shape;
+      qn = ic.value = resolveName(obj, name);
+    }
+  } else {
+    qn = resolveName(obj, name);
+  }
+  return qn;
+}
+function getPropertyWithIC(obj, name, ic) {
+  if (obj.getProperty) {
+    return obj.getProperty(name);
+  }
+  var qn = resolveNameWithIC(obj, name, ic);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexGet(qn);
+  }
+  return obj[qn];
+}
+
 function getProperty(obj, name) {
   if (obj.getProperty) {
     return obj.getProperty(name);
@@ -813,6 +870,17 @@ function getProperty(obj, name) {
     return obj.indexGet(qn);
   }
   return obj[qn];
+}
+
+function setPropertyWithIC(obj, name, value, ic) {
+  if (obj.setProperty) {
+    return obj.setProperty(name, value);
+  }
+  var qn = resolveNameWithIC(obj, name, ic);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexSet(qn, value);
+  }
+  obj[qn] = value;
 }
 
 function setProperty(obj, name, value) {
@@ -943,6 +1011,7 @@ var Global = (function () {
     script.abc = runtime.abc;
     runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, false);
     script.loaded = true;
+    defineObjectShape(this);
   }
   Global.prototype.toString = function () {
     return "[object global]";

@@ -48,6 +48,10 @@ var Interpreter = (function () {
     return mn;
   }
 
+  function ic(bc) {
+    return bc.ic || (bc.ic = new InlineCache());
+  }
+
   Interpreter.prototype = {
     interpretMethod: function interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
@@ -377,8 +381,13 @@ var Interpreter = (function () {
           case 0x68: // OP_initproperty
           case 0x61: // OP_setproperty
             value = stack.pop();
-            name = popName(stack, multinames[bc.index]);
-            setProperty(stack.pop(), name, value);
+            multiname = multinames[bc.index];
+            if (!multiname.isRuntime()) {
+              setPropertyWithIC(stack.pop(), multiname, value, ic(bc));
+            } else {
+              name = popName(stack, multiname);
+              setProperty(stack.pop(), name, value);
+            }
             break;
           case 0x62: // OP_getlocal
             stack.push(locals[bc.index]);
@@ -399,8 +408,13 @@ var Interpreter = (function () {
             stack.push(obj.object);
             break;
           case 0x66: // OP_getproperty
-            name = popName(stack, multinames[bc.index]);
-            stack.push(getProperty(stack.pop(), name));
+            multiname = multinames[bc.index];
+            if (!multiname.isRuntime()) {
+              stack.push(getPropertyWithIC(stack.pop(), multiname, ic(bc)));
+            } else {
+              name = popName(stack, multiname);
+              stack.push(getProperty(stack.pop(), name));
+            }
             break;
           case 0x6A: // OP_deleteproperty
             name = popName(stack, multinames[bc.index]);
