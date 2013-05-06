@@ -107,6 +107,7 @@ var StageDefinition = (function () {
     },
     set scaleMode(val) {
       this._scaleMode = val;
+      this._invalidate = true;
     },
     get showDefaultContextMenu() {
       return true;
@@ -165,12 +166,11 @@ var StageDefinition = (function () {
         },
         align: {
           get: function align() { // (void) -> String
-            somewhatImplemented("Stage.align");
             return this._align;
           },
           set: function align(value) { // (value:String) -> void
-            somewhatImplemented("Stage.align");
             this._align = value;
+            this._invalidate = true;
           }
         },
         focus: {

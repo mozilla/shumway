@@ -85,18 +85,70 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
 }
 
 function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
-  var frameWidth = ctx.canvas.width;
-  var frameHeight = ctx.canvas.height;
+  var frameWidth, frameHeight;
+  var refreshStage;
 
-  var scaleX = frameWidth / stage._stageWidth;
-  var scaleY = frameHeight / stage._stageHeight;
+  function updateRenderTransform() {
+    refreshStage = true;
+    frameWidth = ctx.canvas.width;
+    frameHeight = ctx.canvas.height;
 
-  var scale = Math.min(scaleX, scaleY);
-  var offsetX = (frameWidth - scale * stage.stageWidth) / 2;
-  var offsetY = (frameHeight - scale * stage.stageHeight) / 2;
+    var scaleX = frameWidth / stage._stageWidth;
+    var scaleY = frameHeight / stage._stageHeight;
 
-  ctx.translate(offsetX, offsetY);
-  ctx.scale(scale, scale);
+    switch (stage._scaleMode) {
+    case 'exactFit':
+      break;
+    case 'noBorder':
+      if (scaleX > scaleY) {
+        scaleY = scaleX;
+      } else {
+        scaleX = scaleY;
+      }
+      break;
+    case 'noScale':
+      scaleX = 1;
+      scaleY = 1;
+      break;
+    case 'showAll':
+      if (scaleX < scaleY) {
+        scaleY = scaleX;
+      } else {
+        scaleX = scaleY;
+      }
+      break;
+    }
+
+    var align = stage._align;
+    var offsetX, offsetY;
+    if (align.indexOf('L') >= 0) {
+      offsetX = 0;
+    } else if (align.indexOf('R') >= 0) {
+      offsetX = frameWidth - scaleX * stage._stageWidth;
+    } else {
+      offsetX = (frameWidth - scaleX * stage._stageWidth) / 2;
+    }
+    if (align.indexOf('T') >= 0) {
+      offsetY = 0;
+    } else if (align.indexOf('B') >= 0) {
+      offsetY = frameHeight - scaleY * stage._stageHeight;
+    } else {
+      offsetY = (frameHeight - scaleY * stage._stageHeight) / 2;
+    }
+
+    ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
+
+    stage._canvasState = {
+      canvas: ctx.canvas,
+      scaleX: scaleX,
+      scaleY: scaleY,
+      offsetX: offsetX,
+      offsetY: offsetY
+    };
+    stage._invalidate = false;
+  }
+
+  updateRenderTransform();
 
   // All the visitors close over this class to do instance testing.
   var MovieClipClass = avm2.systemDomain.getClass("flash.display.MovieClip");
@@ -105,10 +157,15 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
   var InteractiveClass = avm2.systemDomain.getClass("flash.display.InteractiveObject");
 
   function roundForClipping(bounds) {
-    var x = (Math.floor(bounds.x * scale + offsetX) - offsetX) / scale;
-    var y = (Math.floor(bounds.y * scale + offsetY) - offsetY) / scale;
-    var x2 = (Math.ceil((bounds.x + bounds.width) * scale + offsetX) - offsetX) / scale;
-    var y2 = (Math.ceil((bounds.y + bounds.height) * scale + offsetY) - offsetY) / scale;
+    var scaleX = stage._canvasState.scaleX;
+    var scaleY = stage._canvasState.scaleY;
+    var offsetX = stage._canvasState.offsetX;
+    var offsetY = stage._canvasState.offsetY;
+
+    var x = (Math.floor(bounds.x * scaleX + offsetX) - offsetX) / scaleX;
+    var y = (Math.floor(bounds.y * scaleY + offsetY) - offsetY) / scaleY;
+    var x2 = (Math.ceil((bounds.x + bounds.width) * scaleX + offsetX) - offsetX) / scaleX;
+    var y2 = (Math.ceil((bounds.y + bounds.height) * scaleY + offsetY) - offsetY) / scaleY;
     return { x: x, y: y, width: x2 - x, height: y2 - y };
   }
 
@@ -308,7 +365,11 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
         ctx.save();
 
-        ctx.clip();
+        if (refreshStage) {
+          refreshStage = false;
+        } else {
+          ctx.clip();
+        }
 
         var bgcolor = stage._color;
         if (bgcolor.alpha < 255) {
@@ -320,13 +381,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         }
 
         ctx.mozFillRule = 'evenodd';
-
-        stage._canvasState = {
-          canvas: ctx.canvas,
-          scale: scale,
-          offsetX: offsetX,
-          offsetY: offsetY
-        };
       }
       this.depth++;
 
@@ -488,6 +542,10 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       renderFrame = !e.cancel;
     }
     if (renderFrame) {
+      if (stage._invalidate) {
+        updateRenderTransform();
+      }
+
       frameTime = now;
       nextRenderAt = frameTime + maxDelay;
 
