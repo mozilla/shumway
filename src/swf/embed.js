@@ -44,7 +44,6 @@ SWF.embed = function(file, doc, container, options) {
 
   loader._parent = stage;
   loader._stage = stage;
-  stage._loader = loader;
 
   var cursorVisible = true;
   function syncCursor() {
@@ -67,6 +66,8 @@ SWF.embed = function(file, doc, container, options) {
   };
   stage._syncCursor = syncCursor;
 
+  stage._scaleMode = 'showAll';
+
   function fitCanvas(container, canvas) {
     if (canvasHolder) {
       canvasHolder.style.width = container.clientWidth + 'px';
@@ -74,13 +75,14 @@ SWF.embed = function(file, doc, container, options) {
     }
     canvas.width = container.clientWidth * pixelRatio;
     canvas.height = container.clientHeight * pixelRatio;
+    stage._invalidate = true;
   }
 
   loaderInfo.addEventListener('init', function () {
     if (container.clientHeight) {
       fitCanvas(container, canvas);
       window.addEventListener('resize', function () {
-        fitCanvas.bind(container, canvas);
+        fitCanvas(container, canvas);
       });
     } else {
       if (canvasHolder) {
@@ -123,9 +125,9 @@ SWF.embed = function(file, doc, container, options) {
 
       var canvasState = stage._canvasState;
       stage._mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
-        canvasState.scale;
+        canvasState.scaleX;
       stage._mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
-        canvasState.scale;
+        canvasState.scaleY;
     });
     canvas.addEventListener('mouseup', function () {
       if (stage._clickTarget) {
