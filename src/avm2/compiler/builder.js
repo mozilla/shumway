@@ -1151,11 +1151,12 @@ var createName = function createName(namespaces, name) {
             case OP_add:
               right = pop();
               left = pop();
-              operator = Operator.AVM2ADD;
               if (typesAreEqual(left, right)) {
                 operator = Operator.ADD;
-              } else {
+              } else if (compatibility) {
                 operator = Operator.AVM2ADD;
+              } else {
+                operator = Operator.ADD;
               }
               push(binary(operator, left, right));
               break;
