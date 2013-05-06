@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
@@ -149,7 +166,6 @@ function initializeGlobalObject(global) {
     if (typeof boxedValue === "string" || typeof boxedValue === "number") {
       return [];
     }
-
 
     if (obj.getEnumerationKeys) {
       return obj.getEnumerationKeys();
@@ -385,8 +401,8 @@ function nextName(obj, index) {
 }
 
 function nextValue(obj, index) {
-  if (obj.node && obj.node.childNodes) {
-    return obj.node.childNodes[obj[VM_NEXT_NAME](index)];
+  if (obj.getProperty) {
+    return obj.getProperty(obj[VM_NEXT_NAME](index), false);
   }
   return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
 }
@@ -438,19 +454,7 @@ function getDescendants(obj, mn) {
   if (!isXMLType(obj)) {
     throw "Not XML object in getDescendants";
   }
-  if (obj._IS_XMLLIST) {
-    if (obj._.length !== 1 && obj._[0]._IS_XML) {
-      throw "Invalid XMLList in getDescendants";
-    }
-    obj = obj._[0];
-  }
-  var xl = new XMLList();
-  obj._.forEach(function (v, i) {
-    if (mn.isAnyName() || mn.name === v.name) {
-      xl._.push(v);
-    }
-  });
-  return xl;
+  return obj.descendants(mn);
 }
 
 function checkFilter(value) {
@@ -576,7 +580,8 @@ var Scope = (function () {
     obj = this.object;
     if (Multiname.isQName(mn)) {
       if (this.isWith) {
-        if (Multiname.getQualifiedName(mn) in obj) {
+        if (obj.hasProperty && obj.hasProperty(mn) ||
+            Multiname.getQualifiedName(mn) in obj) {
           return obj;
         }
       } else {
@@ -587,7 +592,8 @@ var Scope = (function () {
       }
     } else {
       if (this.isWith) {
-        if (resolveMultiname(obj, mn)) {
+        if (obj.hasProperty && obj.hasProperty(mn) ||
+            resolveMultiname(obj, mn)) {
           return obj;
         }
       } else {
@@ -760,7 +766,7 @@ function callProperty(obj, mn, isLex, args) {
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
-  var property = getProperty(obj, mn);
+  var property = getProperty(obj, mn, true);
   return property.apply(receiver, args);
 }
 
@@ -860,9 +866,9 @@ function getPropertyWithIC(obj, name, ic) {
   return obj[qn];
 }
 
-function getProperty(obj, name) {
+function getProperty(obj, name, isMethod) {
   if (obj.getProperty) {
-    return obj.getProperty(name);
+    return obj.getProperty(name, isMethod);
   }
   var qn = resolveName(obj, name);
   if (obj.indexGet && Multiname.isNumeric(qn)) {

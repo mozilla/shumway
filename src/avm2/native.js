@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * Shumway ships with its own version of the AS3 builtin library, which
  * maintains interface compatibility with the stock builtin library, viz. the
@@ -206,6 +223,8 @@ defineReadOnlyProperty(Object.prototype, "isInstance", function () {
   release || assert(false, "isInstance() is not implemented on type " + this);
 });
 */
+
+var ASNamespace;
 
 var natives = (function () {
 
@@ -928,32 +947,54 @@ var natives = (function () {
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instance, baseClass) {
-    function ASNamespace(prefixValue, uriValue) {
+    ASNamespace = function ASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
         prefixValue = undefined;
       }
-
-      // TODO: when uriValue is a QName
-      if (prefixValue !== undefined) {
-        if (typeof isXMLName === "function") {
-          prefixValue = String(prefixValue);
+      var prefix, uri;
+      if (prefixValue === undefined) {
+        if (uriValue === undefined) {
+          prefix = "";
+          uri = "";
+        } else if (typeof uriValue === "object") {
+          prefix = uriValue.prefix;
+          if (uriValue instanceof ShumwayNamespace) {
+            uri = uriValue.originalURI;
+          } else if (uriValue._IS_QNAME) {
+            uri = uriValue.uri;
+          }
+        } else {
+          uri = toString(uriValue);
+          if (uri === "") {
+            prefix = "";
+          } else {
+            prefix = undefined;
+          }
         }
-
-        uriValue = String(uriValue);
-      } else if (uriValue !== undefined) {
-        if (uriValue.constructor === ShumwayNamespace) {
-          return uriValue.clone();
+      } else {
+        if (typeof uriValue === "object" &&
+            uriValue._IS_QNAME &&
+            uriValue.uri !== null) {
+          uri = uriValue.uri;
+        } else {
+          uri = toString(uriValue);
+        }
+        if (uri === "") {
+          if (prefixValue === undefined || toString(prefixValue) === "") {
+            prefix = "";
+          } else {
+            throw "type error";
+          }
+        } else if (prefixValue === undefined || prefixValue === "") {
+          prefix = undefined;
+        } else if (false && !isXMLName(prefixValue)) { // FIXME need impl
+          prefix = undefined;
+        } else {
+          prefix = toString(prefixValue);
         }
       }
-
-      /**
-       * XXX: Not sure if this is right for whatever E4X bullshit this is used
-       * for.
-       */
-      var ns = ShumwayNamespace.createNamespace(uriValue);
-      ns.prefix = prefixValue;
-
+      var ns = ShumwayNamespace.createNamespace(uri, prefix);
       return ns;
     }
 

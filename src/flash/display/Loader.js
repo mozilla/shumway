@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
@@ -207,6 +225,9 @@ var LoaderDefinition = (function () {
             }
 
             switch (tag.code) {
+            case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
+              frame.sceneData = tag.data;
+              break;
             case SWF_TAG_CODE_DO_ABC:
               var abcBlocks = frame.abcBlocks;
               if (abcBlocks)
@@ -464,6 +485,7 @@ var LoaderDefinition = (function () {
       var actionBlocks = frame.actionBlocks;
       var initActionBlocks = frame.initActionBlocks;
       var exports = frame.exports;
+      var sceneData = frame.sceneData;
       var loader = this;
       var dictionary = loader._dictionary;
       var loaderInfo = loader.contentLoaderInfo;
@@ -542,13 +564,9 @@ var LoaderDefinition = (function () {
           }
 
           if (labelName) {
-            var frameLabels = { };
-            frameLabels[labelName] = {
-              __class__: 'flash.display.FrameLabel',
-              frame: frameNum,
-              name: labelName
-            };
-            root.symbol.frameLabels = frameLabels;
+            var labelMap = { };
+            labelMap[labelName] = frameNum;
+            root.symbol.labelMap = labelMap;
           }
 
           if (!loader._isAvm2Enabled) {
@@ -591,18 +609,32 @@ var LoaderDefinition = (function () {
             root.symbol.frameScripts = frameScripts;
           }
 
+          if (sceneData) {
+            var sd = sceneData.scenes;
+            var ld = sceneData.labels;
+            var scenes = [];
+            var i = sd.length;
+            while (i--) {
+              var s = sd[i];
+              var labels = [];
+              for (var j = 0; j < ld.length; j++) {
+                var lbl = ld[j];
+                labels.push(new flash.display.FrameLabel(lbl.name, lbl.frame + 1));
+              }
+              var scene = new flash.display.Scene(s.name, labels, o - s.offset);
+              scenes.push(scene);
+            }
+            root.symbol.scenes = scenes;
+          }
+
           rootClass.instance.call(root);
 
           loader._content = root;
         } else {
           root._framesLoaded += frame.repeat;
 
-          if (labelName && root._frameLabels) {
-            root._frameLabels[labelName] = {
-              __class__: 'flash.display.FrameLabel',
-              frame: frameNum,
-              name: labelName
-            };
+          if (labelName && root._labelMap) {
+            root._labelMap[labelName] = frameNum;
           }
 
           if (!loader._isAvm2Enabled) {
@@ -830,7 +862,7 @@ var LoaderDefinition = (function () {
       case 'sprite':
         var displayList = null;
         var frameCount = symbol.frameCount;
-        var frameLabels = { };
+        var labelMap = { };
         var frameNum = 1;
         var frames = symbol.frames;
         var timeline = [];
@@ -839,11 +871,7 @@ var LoaderDefinition = (function () {
           var frame = frames[i];
           var frameNum = timeline.length + 1;
           if (frame.labelName) {
-            frameLabels[frame.labelName] = {
-              __class__: 'flash.display.FrameLabel',
-              frame: frameNum,
-              name: frame.labelName
-            };
+            labelMap[frame.labelName] = frameNum;
           }
 
           if (frame.startSounds) {
@@ -882,7 +910,7 @@ var LoaderDefinition = (function () {
         className = 'flash.display.MovieClip';
         props.timeline = timeline;
         props.framesLoaded = frameCount;
-        props.frameLabels = frameLabels;
+        props.labelMap = labelMap;
         props.frameScripts = frameScripts;
         props.totalFrames = frameCount;
         props.startSoundRegistrations = startSoundRegistrations;

@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Extension communication object... as it used in pdf.js
 var FirefoxCom = (function FirefoxComClosure() {
   return {
@@ -66,7 +84,8 @@ function runViewer() {
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
-  movieParams = flashParams.params;
+  movieParams = flashParams.movieParams;
+  objectParams = flashParams.objectParams;
   var isOverlay = flashParams.isOverlay;
   pauseExecution = flashParams.isPausedAtStart;
   console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
@@ -78,7 +97,12 @@ function runViewer() {
       fallback();
       e.preventDefault();
     });
+    var fallbackMenu = document.getElementById('fallbackMenu');
+    fallbackMenu.removeAttribute('hidden');
+    fallbackMenu.addEventListener('click', fallback);
   }
+  var showURLMenu = document.getElementById('showURLMenu');
+  showURLMenu.addEventListener('click', showURL);
 }
 
 function showURL() {
@@ -109,7 +133,7 @@ Subscription.prototype = {
   }
 };
 
-var subscription = null, movieUrl, movieParams;
+var subscription = null, movieUrl, movieParams, objectParams;
 
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
@@ -124,7 +148,7 @@ window.addEventListener("message", function handlerMessage(e) {
       switch (args.topic) {
         case "open":
           subscription = new Subscription();
-          parseSwf(movieUrl, movieParams, subscription);
+          parseSwf(movieUrl, subscription, movieParams, objectParams);
           break;
         case "progress":
           subscription.send(args);
@@ -190,12 +214,17 @@ var FileLoadingService = {
   }
 };
 
-function parseSwf(url, params, file) {
+function parseSwf(url, file, movieParams, objectParams) {
   console.log("Parsing " + url + "...");
-  function terminate() {}
+  function loaded() {}
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
-    SWF.embed(file, document, document.getElementById("viewer"), { onComplete: terminate, movieParams: params, onBeforeFrame: frame });
+    SWF.embed(file, document, document.getElementById("viewer"), {
+       movieParams: movieParams,
+       objectParams: objectParams,
+       onComplete: loaded,
+       onBeforeFrame: frame
+    });
   });
 }
 
@@ -203,6 +232,9 @@ var pauseExecution = false;
 var initializeFrameControl = true;
 function frame(e) {
   if (initializeFrameControl) {
+    // marking that movie is started
+    document.body.classList.add("started");
+
     // skipping frame 0
     initializeFrameControl = false;
     return;

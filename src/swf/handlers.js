@@ -1,3 +1,21 @@
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var tagHandler = {
   /* End */                            0: undefined,
   /* ShowFrame */                      1: undefined,
@@ -57,7 +75,7 @@ var tagHandler = {
   /* DoABC */                         82: DO_ABC,
   /* DefineShape4 */                  83: DEFINE_SHAPE,
   /* DefineMorphShape2 */             84: DEFINE_SHAPE,
-  /* DefineSceneAndFrameLabelData */  86: undefined,
+  /* DefineSceneAndFrameLabelData */  86: DEFINE_SCENE,
   /* DefineBinaryData */              87: undefined,
   /* DefineFontName */                88: undefined,
   /* StartSound2 */                   89: START_SOUND,

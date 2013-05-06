@@ -1,5 +1,20 @@
-/* -*- Mode: Java; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 'use strict';
 
@@ -18,6 +33,7 @@ const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
 const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
 const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
+const MAX_CLIPBOARD_DATA_SIZE = 8000;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
@@ -76,14 +92,17 @@ function parseQueryString(qs) {
 }
 
 // All the priviledged actions.
-function ChromeActions(url, params, baseUrl, window) {
+function ChromeActions(url, window, document) {
   this.url = url;
-  this.params = params;
-  this.baseUrl = baseUrl;
+  this.objectParams = null;
+  this.movieParams = null;
+  this.baseUrl = url;
   this.isOverlay = false;
   this.isPausedAtStart = false;
   this.window = window;
+  this.document = document;
   this.externalComInitialized = false;
+  this.allowScriptAccess = false;
 }
 
 ChromeActions.prototype = {
@@ -97,7 +116,8 @@ ChromeActions.prototype = {
     return JSON.stringify({
       url: this.url,
       baseUrl : this.baseUrl,
-      params: this.params,
+      movieParams: this.movieParams,
+      objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart
      });
@@ -196,8 +216,20 @@ ChromeActions.prototype = {
     e.initCustomEvent("MozPlayPlugin", true, true, null);
     obj.dispatchEvent(e);
   },
+  setClipboard: function (data) {
+    if (typeof data !== 'string' ||
+        data.length > MAX_CLIPBOARD_DATA_SIZE ||
+        !this.document.hasFocus()) {
+      return;
+    }
+    // TODO other security checks?
+
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
+                      .getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(data);
+  },
   externalCom: function (data) {
-    if (!getBoolPref('shumway.external', false))
+    if (!this.allowScriptAccess)
       return;
 
     // TODO check security ?
@@ -386,12 +418,13 @@ FlashStreamConverterBase.prototype = {
     return true;
   },
 
-  createChromeActions: function(window, urlHint) {
+  createChromeActions: function(window, document, urlHint) {
     var url;
-    var baseUrl; // XXX base url?
+    var baseUrl;
+    var pageUrl;
     var element = window.frameElement;
     var isOverlay = false;
-    var params = {};
+    var objectParams = {};
     if (element) {
       var tagName = element.nodeName;
       while (tagName != 'EMBED' && tagName != 'OBJECT') {
@@ -402,9 +435,14 @@ FlashStreamConverterBase.prototype = {
           throw 'Plugin element is not found';
         tagName = element.nodeName;
       }
+
+      pageUrl = element.ownerDocument.location.href; // proper page url?
+
       if (tagName == 'EMBED') {
-        params = parseQueryString(element.getAttribute('flashvars'));
-        url = element.getAttribute('src');
+        for (var i = 0; i < element.attributes.length; ++i) {
+          var paramName = element.attributes[i].localName.toLowerCase();
+          objectParams[paramName] = element.attributes[i].value;
+        }
       } else {
         url = element.getAttribute('data');
         for (var i = 0; i < element.childNodes.length; ++i) {
@@ -413,39 +451,60 @@ FlashStreamConverterBase.prototype = {
               paramElement.nodeName != 'PARAM') {
             continue;
           }
-          switch (paramElement.getAttribute('name').toLowerCase()) {
-          case 'flashvars':
-            params = parseQueryString(paramElement.getAttribute('value'));
-            break;
-          case 'movie':
-          case 'src':
-            if (url) {
-              break;
-            }
-            url = paramElement.getAttribute('value');
-            break;
-          }
+          var paramName = paramElement.getAttribute('name').toLowerCase();
+          objectParams[paramName] = paramElement.getAttribute('value');
         }
       }
-      baseUrl = element.ownerDocument.location.href;
+    }
+
+    url = url || objectParams.src || objectParams.movie;
+    baseUrl = objectParams.base || pageUrl;
+
+    var movieParams = {};
+    if (objectParams.flashvars) {
+      movieParams = parseQueryString(objectParams.flashvars);
+    }
+    var queryStringMatch = /\?([^#]+)/.exec(url);
+    if (queryStringMatch) {
+      var queryStringParams = parseQueryString(queryStringMatch[1]);
+      for (var i in queryStringParams) {
+        if (!(i in movieParams)) {
+          movieParams[i] = queryStringParams[i];
+        }
+      }
     }
 
     url = !url ? urlHint : Services.io.newURI(url, null,
       baseUrl ? Services.io.newURI(baseUrl, null, null) : null).spec;
 
-    var queryStringMatch = /\?([^#]+)/.exec(url);
-    if (queryStringMatch) {
-      var queryStringParams = parseQueryString(queryStringMatch[1]);
-      for (var i in queryStringParams) {
-        if (!(i in params)) {
-          params[i] = queryStringParams[i];
-        }
-      }
+    var allowScriptAccess = false;
+    switch (objectParams.allowscriptaccess || 'sameDomain') {
+    case 'always':
+      allowScriptAccess = true;
+      break;
+    case 'never':
+      allowScriptAccess = false;
+      break;
+    default:
+      if (!pageUrl)
+        break;
+      try {
+        // checking if page is in same domain (? same protocol and port)
+        allowScriptAccess =
+          Services.io.newURI('/', null, Services.io.newURI(pageUrl, null, null)).spec ==
+          Services.io.newURI('/', null, Services.io.newURI(url, null, null)).spec;
+      } catch (ex) {}
+      break;
     }
-    var actions = new ChromeActions(url, params, baseUrl, window);
+
+    var actions = new ChromeActions(url, window, document);
+    actions.objectParams = objectParams;
+    actions.movieParams = movieParams;
+    actions.baseUrl = baseUrl || url;
     actions.isOverlay = isOverlay;
     actions.embedTag = element;
     actions.isPausedAtStart = /\bpaused=true$/.test(urlHint);
+    actions.allowScriptAccess = allowScriptAccess;
     return actions;
   },
 
@@ -498,6 +557,7 @@ FlashStreamConverterBase.prototype = {
         if (domWindow.document.documentURIObject.equals(channel.originalURI)) {
           // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
+                                                      domWindow.document,
                                                       originalURI.spec);
           createSandbox(domWindow, isSimpleMode);
           let requestListener = new RequestListener(actions);

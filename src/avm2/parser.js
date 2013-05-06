@@ -1,4 +1,21 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 4 -*- */
+/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
+/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
@@ -313,10 +330,13 @@ var ShumwayNamespace = (function () {
   var MIN_API_MARK              = 0xe294;
   var MAX_API_MARK              = 0xf8ff;
 
-  function namespace(kind, uri) {
+  function namespace(kind, uri, prefix) {
     if (kind !== undefined) {
       if (uri === undefined) {
         uri = "";
+      }
+      if (prefix !== undefined) {
+        this.prefix = prefix;
       }
       this.kind = kind;
       this.originalURI = this.uri = uri;
@@ -401,8 +421,8 @@ var ShumwayNamespace = (function () {
     return release || assert(false, "Cannot find kind " + str);
   };
 
-  namespace.createNamespace = function createNamespace(uri) {
-    return new namespace(CONSTANT_Namespace, uri);
+  namespace.createNamespace = function createNamespace(uri, prefix) {
+    return new namespace(CONSTANT_Namespace, uri, prefix);
   };
 
   namespace.prototype = Object.create({
@@ -451,7 +471,8 @@ var ShumwayNamespace = (function () {
 
     getAccessModifier: function getAccessModifier() {
       return kinds[this.kind];
-    }
+    },
+
   });
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
@@ -557,7 +578,7 @@ var Multiname = (function () {
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
-      assert (isString(name), "Multiname name must be a string. " + name);
+      assert (name === null || isString(name), "Multiname name must be a string. " + name);
       assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
     }
     this.id = nextID ++;
@@ -566,6 +587,8 @@ var Multiname = (function () {
     this.flags = flags || 0;
   }
 
+  multiname.RUNTIME_NAME = RUNTIME_NAME;
+  multiname.ATTRIBUTE = ATTRIBUTE;
   multiname.parse = function parse(constantPool, stream, multinames, patchFactoryTypes) {
     var index = 0;
     var kind = stream.readU8();
@@ -789,7 +812,7 @@ var Multiname = (function () {
   };
 
   multiname.isAnyName = function isAnyName(mn) {
-    return typeof mn === "object" && !mn.isRuntimeName() && mn.name === undefined;
+    return typeof mn === "object" && !mn.isRuntimeName() && !mn.name;
   };
 
   var simpleNameCache = {};
