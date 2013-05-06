@@ -43,7 +43,6 @@ var PARAMETER_PREFIX = "p";
 
 var $M = [];
 
-
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
  * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
@@ -53,7 +52,8 @@ var $M = [];
 XRegExp.install({ natives: true });
 
 /**
- * Overriden AS3 methods.
+ * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
+ * for AS3 methods.
  */
 var VM_METHOD_OVERRIDES = createEmptyObject();
 
@@ -565,7 +565,6 @@ var Scope = (function () {
   scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
-    Counter.count("findProperty " + mn.name);
     var obj;
     var cache = this.cache;
 
@@ -1018,6 +1017,9 @@ var Global = (function () {
   };
   Global.prototype.isExecuted = function () {
     return this.scriptInfo.executed;
+  };
+  Global.prototype.isExecuting = function () {
+    return this.scriptInfo.executing;
   };
   Global.prototype.ensureExecuted = function () {
     ensureScriptIsExecuted(this.scriptInfo);
@@ -1596,7 +1598,7 @@ var Runtime = (function () {
    * initializer throws a |ReferenceError| exception. To emulate this behaviour in JavaScript,
    * we "seal" constant traits properties by replacing them with setters that throw exceptions.
    */
-  runtime.prototype.sealConstantTraits = function sealConstTraits(obj, traits) {
+  runtime.prototype.sealConstantTraits = function sealConstantTraits(obj, traits) {
     var rt = this;
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
@@ -2100,6 +2102,7 @@ var Runtime = (function () {
  * Because the JS engine inlines short functions, we can expect that the getters / setter functions are inlined and
  * guarded with PICs, so in a sense we're implementing AS3 PICs on top of JS PICs.
  *
+ * TODO: This code is bit rotten.
  */
 var InlineCacheManager = (function () {
   var writer = new IndentingWriter();

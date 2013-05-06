@@ -676,6 +676,8 @@ var createName = function createName(namespaces, name) {
               }
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
+          } else if (ti && ti.propertyQName) {
+            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
           }
           warn("Can't optimize call to " + name.value);
           return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
