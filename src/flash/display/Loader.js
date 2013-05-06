@@ -443,7 +443,7 @@ var LoaderDefinition = (function () {
       var dictionary = loader._dictionary;
       var labelName = frame.labelName;
 
-      displayList = Object.create(displayList);
+      displayList = cloneObject(displayList);
 
       var depths = frame.depths;
       if (depths) {
@@ -452,7 +452,7 @@ var LoaderDefinition = (function () {
           if (cmd) {
             if (displayList[depth] && cmd.move) {
               var oldCmd = cmd;
-              cmd = Object.create(displayList[depth]);
+              cmd = cloneObject(displayList[depth]);
               for (var prop in oldCmd) {
                 var val = oldCmd[prop];
                 if (val)
@@ -465,9 +465,8 @@ var LoaderDefinition = (function () {
               if (itemPromise && !itemPromise.resolved)
                 promiseQueue.push(itemPromise);
 
-              cmd = Object.create(cmd, {
-                promise: { value: itemPromise }
-              });
+              cmd = cloneObject(cmd);
+              cmd.promise = itemPromise;
             }
           }
           displayList[depth] = cmd;
