@@ -183,6 +183,21 @@ var createName = function createName(namespaces, name) {
     return node.ty && node.ty.isNumeric();
   }
 
+  function typesAreEqual(a, b) {
+    if (hasNumericType(a) && hasNumericType(b) ||
+        hasStringType(a) && hasStringType(b)) {
+      return true;
+    }
+    return false;
+  }
+
+  function hasStringType(node) {
+    if (isStringConstant(node)) {
+      return true;
+    }
+    return node.ty && node.ty.isString();
+  }
+
   function constant(value) {
     return new Constant(value);
   }
@@ -318,6 +333,13 @@ var createName = function createName(namespaces, name) {
 
       function binary(operator, left, right) {
         var node = new Binary(operator, left, right);
+        if (left.ty && left.ty === right.ty) {
+          if (operator === Operator.EQ) {
+            node.operator = Operator.SEQ;
+          } else if (operator === Operator.NE) {
+            node.operator = Operator.SNE;
+          }
+        }
         if (peepholeOptimizer) {
           node = peepholeOptimizer.tryFold(node);
         }
@@ -337,6 +359,9 @@ var createName = function createName(namespaces, name) {
       }
 
       function toDouble(value) {
+        if (hasNumericType(value)) {
+          return value;
+        }
         return toNumber(value);
       }
 
@@ -401,6 +426,8 @@ var createName = function createName(namespaces, name) {
 
       var start = new Start();
       this.buildStart(start);
+
+      var createFunctionCallee = getJSPropertyWithState(start.entryState, runtime, "createFunction");
 
       worklist.push({region: start, block: blocks[0]});
 
@@ -485,7 +512,7 @@ var createName = function createName(namespaces, name) {
           return savedScope();
         }
 
-        var object, receiver, index, callee, value, multiname, type, args, pristine;
+        var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
           assert (x);
@@ -563,10 +590,10 @@ var createName = function createName(namespaces, name) {
           var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), name, domain, strict);
           if (ti) {
             if (ti.object) {
-              if (ti.object instanceof Global && !ti.object.isExecuted()) {
-                // If we found the property in a global that hasn't been executed yet then
-                // we have to emit the slow path so it gets executed lazily.
-                warn("Can't optimize findProperty " + name);
+              if (ti.object instanceof Global && !ti.object.isExecuting()) {
+                // If we find the property in a global whose script hasn't been executed yet
+                // we have to emit the slow path so it gets executed.
+                warn("Can't optimize findProperty " + name + ", global object is not yet executed or executing.");
                 return slowPath;
               }
               return constant(ti.object);
@@ -594,6 +621,10 @@ var createName = function createName(namespaces, name) {
 
         function coerceValue(value, multiname) {
           var type = domain.value.getProperty(multiname, true, true);
+          if (!type) {
+            warn("This is because the type is not available yet, we need to fix this by using ClassInfo's for types.");
+            return value;
+          }
           if (isConstant(value)) {
             return constant(coerce(value.value, type));
           } else {
@@ -604,21 +635,6 @@ var createName = function createName(namespaces, name) {
           }
           if (compatibility) {
             return call(globalProperty("coerce"), null, [value, constant(type)]);
-          }
-          return value;
-        }
-
-        function coerceValue2(value, type) {
-          if (isConstant(value) && isConstant(type)) {
-            return constant(coerce(value.value, type.value));
-          } else if (isConstant(type)) {
-            var coercer = coercers[Multiname.getQualifiedName(type)];
-            if (coercer) {
-              return coercer(value);
-            }
-          }
-          if (compatibility) {
-            return call(globalProperty("coerce"), null, [value, type]);
           }
           return value;
         }
@@ -678,6 +694,8 @@ var createName = function createName(namespaces, name) {
               }
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
+          } else if (ti && ti.propertyQName) {
+            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
           }
           warn("Can't optimize call to " + name.value);
           return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
@@ -688,6 +706,9 @@ var createName = function createName(namespaces, name) {
           name = simplifyName(name);
           if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
             if (ti.trait) {
+              if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
+                return constant(ti.trait.value);
+              }
               get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
               return ti.trait.isGetter() ? store(get) : load(get);
             }
@@ -705,6 +726,7 @@ var createName = function createName(namespaces, name) {
             }
             return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
           }
+          warn("Can't optimize getProperty to " + name);
           return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
         }
 
@@ -767,7 +789,11 @@ var createName = function createName(namespaces, name) {
         }
 
         function call(callee, object, args) {
-          return callCall(callee, object, args, true);
+          return store(new Call(region, state.store, callee, object, args, true));
+        }
+
+        function callPure(callee, object, args) {
+          return new Call(null, null, callee, object, args, true);
         }
 
         function callCall(callee, object, args, pristine) {
@@ -955,7 +981,7 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_getlex:
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true, bc.ti), multiname));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti));
               break;
             case OP_initproperty:
             case OP_setproperty:
@@ -993,8 +1019,7 @@ var createName = function createName(namespaces, name) {
             case OP_debugline:
               break;
             case OP_newfunction:
-              callee = getJSProperty(runtime, "createFunction");
-              push(call(callee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              push(callPure(createFunctionCallee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
               args = popMany(bc.argCount);
@@ -1141,7 +1166,18 @@ var createName = function createName(namespaces, name) {
             case OP_lookupswitch:   buildSwitchStops(pop()); break;
             case OP_not:            pushExpression(Operator.FALSE); break;
             case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
-            case OP_add:            pushExpression(Operator.AVM2ADD); break;
+            case OP_add:
+              right = pop();
+              left = pop();
+              if (typesAreEqual(left, right)) {
+                operator = Operator.ADD;
+              } else if (compatibility) {
+                operator = Operator.AVM2ADD;
+              } else {
+                operator = Operator.ADD;
+              }
+              push(binary(operator, left, right));
+              break;
             case OP_add_i:          pushExpression(Operator.ADD, true); break;
             case OP_subtract:       pushExpression(Operator.SUB); break;
             case OP_subtract_i:     pushExpression(Operator.SUB, true); break;
@@ -1229,11 +1265,11 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               type = pop();
               callee = getJSProperty(runtime, "applyType");
-              push(call(callee, runtime, [type, new NewArray(args)]));
+              push(call(callee, runtime, [type, new NewArray(region, args)]));
               break;
             case OP_newarray:
               args = popMany(bc.argCount);
-              push(new NewArray(args));
+              push(new NewArray(region, args));
               break;
             case OP_newobject:
               var properties = [];
@@ -1244,7 +1280,7 @@ var createName = function createName(namespaces, name) {
                 key = constant(Multiname.getPublicQualifiedName(key.value));
                 properties.push(new KeyValuePair(key, value));
               }
-              push(new NewObject(properties));
+              push(new NewObject(region, properties));
               break;
             case OP_newactivation:
               push(new IR.AVM2NewActivation(constant(methodInfo)));

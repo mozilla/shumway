@@ -98,6 +98,7 @@
 })();
 
 (function () {
+  trace("--- Test 8 ---");
   var str1:String = "abc12 def34";
   var pattern:RegExp = /([a-z]+)([0-9]+)/;
   var str2:String = str1.replace(pattern, replFN);

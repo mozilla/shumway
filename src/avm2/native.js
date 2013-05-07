@@ -275,7 +275,7 @@ var natives = (function () {
     };
 
     c.dynamicPrototype = c.traitsPrototype = Object.prototype;
-    c.setDefaultProperties();
+    // c.setDefaultProperties();
     c.defaultValue = null;
 
     c.coerce = function (value) {

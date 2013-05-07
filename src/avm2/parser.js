@@ -358,7 +358,6 @@ var ShumwayNamespace = (function () {
         this.uri = this.uri.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
-      // Make a psuedo unique id by concatenating current milliseconds to original uri
       this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
     this.uri = mangleNamespaceURI(this.uri);
@@ -769,7 +768,7 @@ var Multiname = (function () {
   multiname.getFullQualifiedName = function getFullQualifiedName(mn) {
     var qn = multiname.getQualifiedName(mn);
     if (mn instanceof Multiname && mn.typeParameter) {
-      qn += "$" + multiname.getQualifiedName(mn.typeParameter);
+      qn += "$" + multiname.getFullQualifiedName(mn.typeParameter);
     }
     return qn;
   };
@@ -1152,6 +1151,9 @@ var MethodInfo = (function () {
     toString: function toString() {
       var flags = getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL|||SET_DXN|HAS_PARAM_NAMES".split("|"));
       return (flags ? flags + " " : "") + this.name;
+    },
+    hasOptional: function hasOptional() {
+      return !!(this.flags & METHOD_HasOptional);
     },
     needsActivation: function needsActivation() {
       return !!(this.flags & METHOD_Activation);

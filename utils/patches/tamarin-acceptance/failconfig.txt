@@ -1637,3 +1637,4 @@ ecma3/String/toLocaleUpperCase5.* : delete String\.prototype\.toUpperCase\.lengt
 ecma3/String/e15_5_4_5_6_rt.*, .*,, expectedfail, .*
 ecma3/Function/e15_3_4_3_1.*, .*, , expectedfail, FAILED contained no testcase messages
 ecma3/Function/e15_3_4_4_1.*, .*, , expectedfail, FAILED contained no testcase messages
+ecma3/ExecutionContexts/e10_1_6.*, .*, , expectedfail, FAILED contained no testcase messages

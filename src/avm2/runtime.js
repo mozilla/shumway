@@ -60,7 +60,6 @@ var PARAMETER_PREFIX = "p";
 
 var $M = [];
 
-
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
  * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
@@ -70,9 +69,38 @@ var $M = [];
 XRegExp.install({ natives: true });
 
 /**
- * Overriden AS3 methods.
+ * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
+ * for AS3 methods.
  */
 var VM_METHOD_OVERRIDES = createEmptyObject();
+
+/**
+ * We use inline caching to optimize name resolution on objects when we have no type information
+ * available. We attach |InlineCache| (IC) objects on bytecode objects. The IC object is a (key,
+ * value) tuple where the key usually holds the "shape" of the dynamic object and the value holds
+ * the cached resolved qualified name. This is all predicated on assigning sensible "shape" IDs
+ * to objects.
+ */
+var VM_NEXT_SHAPE_ID = 1;
+
+function defineObjectShape(obj) {
+  // TODO: This assertion seems to fail for proxies, investigate.
+  // assert (!obj.shape, "Shouldn't already have a shape ID. " + obj.shape);
+  defineReadOnlyProperty(obj, "shape", VM_NEXT_SHAPE_ID ++);
+}
+
+var InlineCache = (function () {
+  function inlineCache () {
+    this.key = undefined;
+    this.value = undefined;
+  }
+  inlineCache.prototype.update = function (key, value) {
+    this.key = key;
+    this.value = value;
+    return value;
+  };
+  return inlineCache;
+})();
 
 /**
  * This is used to keep track if we're in a runtime context. For instance, proxies need to
@@ -436,8 +464,9 @@ function checkFilter(value) {
   return isXMLType(value);
 }
 
-function Activation (methodInfo) {
+function Activation(methodInfo) {
   this.methodInfo = methodInfo;
+  defineObjectShape(this);
 }
 
 var Interface = (function () {
@@ -540,7 +569,6 @@ var Scope = (function () {
   scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
-    Counter.count("findProperty " + mn.name);
     var obj;
     var cache = this.cache;
 
@@ -810,6 +838,34 @@ function resolveName(obj, name) {
   }
 }
 
+function resolveNameWithIC(obj, name, ic) {
+  var qn;
+  if (obj.shape) {
+    if (ic.key === obj.shape) {
+      qn = ic.value;
+    } else {
+      if (!ic.key) {
+        Counter.count("resolveName: IC Miss");
+      }
+      ic.key = obj.shape;
+      qn = ic.value = resolveName(obj, name);
+    }
+  } else {
+    qn = resolveName(obj, name);
+  }
+  return qn;
+}
+function getPropertyWithIC(obj, name, ic) {
+  if (obj.getProperty) {
+    return obj.getProperty(name);
+  }
+  var qn = resolveNameWithIC(obj, name, ic);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexGet(qn);
+  }
+  return obj[qn];
+}
+
 function getProperty(obj, name, isMethod) {
   if (obj.getProperty) {
     return obj.getProperty(name, isMethod);
@@ -819,6 +875,17 @@ function getProperty(obj, name, isMethod) {
     return obj.indexGet(qn);
   }
   return obj[qn];
+}
+
+function setPropertyWithIC(obj, name, value, ic) {
+  if (obj.setProperty) {
+    return obj.setProperty(name, value);
+  }
+  var qn = resolveNameWithIC(obj, name, ic);
+  if (obj.indexGet && Multiname.isNumeric(qn)) {
+    return obj.indexSet(qn, value);
+  }
+  obj[qn] = value;
 }
 
 function setProperty(obj, name, value) {
@@ -949,12 +1016,16 @@ var Global = (function () {
     script.abc = runtime.abc;
     runtime.applyTraits(this, new Scope(null, this), null, script.traits, null, false);
     script.loaded = true;
+    defineObjectShape(this);
   }
   Global.prototype.toString = function () {
     return "[object global]";
   };
   Global.prototype.isExecuted = function () {
     return this.scriptInfo.executed;
+  };
+  Global.prototype.isExecuting = function () {
+    return this.scriptInfo.executing;
   };
   Global.prototype.ensureExecuted = function () {
     ensureScriptIsExecuted(this.scriptInfo);
@@ -1043,6 +1114,58 @@ var Runtime = (function () {
   };
 
   /**
+   * Wraps the compiled method in a closure that passes the dynamic scope object as the
+   * first argument and also makes sure that the |asGlobal| object gets passed in as
+   * |this| when the method is called with |fn.call(null)|.
+   */
+  function bindScope(methodInfo, scope) {
+    var fn = methodInfo.compiledMethod;
+    assert (fn, "There should already be a compiled method.");
+    var closure;
+    var asGlobal = scope.global.object;
+    // if (!methodInfo.needsArguments() ) {
+    if (!methodInfo.hasOptional() &&
+        !methodInfo.needsArguments()) {
+      // Special case the common path.
+      switch (methodInfo.parameters.length) {
+        case 0:
+          closure = function () {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope);
+          };
+          break;
+        case 1:
+          closure = function (x) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x);
+          };
+          break;
+        case 2:
+          closure = function (x, y) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y);
+          };
+          break;
+        case 3:
+          closure = function (x, y, z) {
+            return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y, z);
+          };
+          break;
+        default:
+          // TODO: We can special case more ...
+          break;
+      }
+    }
+    if (!closure) {
+      Counter.count("Bind Scope - Slow Path");
+      closure = function () {
+        Array.prototype.unshift.call(arguments, scope);
+        var global = (this === jsGlobal ? scope.global.object : this);
+        return fn.apply(global, arguments);
+      };
+    }
+    closure.instance = closure;
+    return closure;
+  }
+
+  /**
    * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the
    * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
    * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
@@ -1052,6 +1175,11 @@ var Runtime = (function () {
   runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
     var mi = methodInfo;
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
+
+    if (mi.compiledMethod) {
+      release || assert(hasDynamicScope);
+      return bindScope(mi, scope);
+    }
 
     if (methodInfo.name) {
       var qn = Multiname.getQualifiedName(methodInfo.name);
@@ -1136,22 +1264,6 @@ var Runtime = (function () {
       print("Compiling " + totalFunctionCount);
     }
 
-    function bindScope(fn, scope) {
-      var closure = function () {
-        Counter.count("Binding Scope");
-        Array.prototype.unshift.call(arguments, scope);
-        var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
-      };
-      closure.instance = closure;
-      return closure;
-    }
-
-    if (mi.compiledMethod) {
-      release || assert(hasDynamicScope);
-      return bindScope(mi.compiledMethod, scope);
-    }
-
     var parameters = mi.parameters.map(function (p) {
       return PARAMETER_PREFIX + p.name;
     });
@@ -1199,15 +1311,13 @@ var Runtime = (function () {
     if (traceLevel.value > 0) {
       print (fnSource);
     }
-    if (true) { // Use |false| to avoid eval(), which is only useful for stack traces.
-      mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
-    } else {
-      mi.compiledMethod = new Function(parameters, body);
-    }
+    // mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+    // mi.compiledMethod = new Function(parameters, body);
+    mi.compiledMethod = new Function("return " + fnSource)();
     compiledFunctionCount++;
 
     if (hasDynamicScope) {
-      return bindScope(mi.compiledMethod, scope);
+      return bindScope(mi, scope);
     } else {
       return mi.compiledMethod;
     }
@@ -1492,7 +1602,7 @@ var Runtime = (function () {
    * initializer throws a |ReferenceError| exception. To emulate this behaviour in JavaScript,
    * we "seal" constant traits properties by replacing them with setters that throw exceptions.
    */
-  runtime.prototype.sealConstantTraits = function sealConstTraits(obj, traits) {
+  runtime.prototype.sealConstantTraits = function sealConstantTraits(obj, traits) {
     var rt = this;
     for (var i = 0, j = traits.length; i < j; i++) {
       var trait = traits[i];
@@ -1996,6 +2106,7 @@ var Runtime = (function () {
  * Because the JS engine inlines short functions, we can expect that the getters / setter functions are inlined and
  * guarded with PICs, so in a sense we're implementing AS3 PICs on top of JS PICs.
  *
+ * TODO: This code is bit rotten.
  */
 var InlineCacheManager = (function () {
   var writer = new IndentingWriter();
