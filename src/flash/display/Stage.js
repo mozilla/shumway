@@ -63,6 +63,20 @@ var StageDefinition = (function () {
       this._scaleMode = STAGE_SCALE_MODE_NO_SCALE;
     },
 
+    _flushPendingScripts: function () {
+      var MAX_PENDING_SCRIPTS_EXECUTED = 100;
+      var executed = 0;
+      while (this._pendingScripts.length > 0) {
+        var fn = this._pendingScripts.shift();
+        fn();
+        if (++executed > MAX_PENDING_SCRIPTS_EXECUTED) {
+          console.error('ERROR: pending script limit was reached');
+          this._pendingScripts = [];
+          return;
+        }
+      }
+    },
+
     get allowsFullScreen() {
       return false;
     },

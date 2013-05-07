@@ -114,6 +114,17 @@ var DisplayObjectDefinition = (function () {
       this._updateCurrentTransform();
 
       this._accessibilityProperties = null;
+
+      var that = this;
+      avm2.systemDomain.onMessage.register(function (e) {
+        var type = e.data.type;
+        if (type === 'enterFrame' ||
+            type === 'exitFrame' ||
+            type === 'frameConstructed' ||
+            type === 'render') {
+          that.dispatchEvent(e.data);
+        }
+      });
     },
 
     _updateTraceSymbolInfo: function () {
