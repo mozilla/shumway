@@ -27,6 +27,13 @@ function scriptProperties(namespace, props) {
   }, {});
 }
 
+function cloneObject(obj) {
+  var clone = Object.create(null);
+  for (var prop in obj)
+    clone[prop] = obj[prop];
+  return clone;
+}
+
 function Promise() {
   this.resolved = false;
   this._callbacks = [];
