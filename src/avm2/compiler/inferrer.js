@@ -107,6 +107,10 @@ var Type = (function () {
     return this === Type.Int || this === Type.Uint || this === Type.Number;
   };
 
+  type.prototype.isString = function () {
+    return this === Type.String;
+  };
+
   type.prototype.isDirectlyIndexable = function () {
     return this === Type.Array;
   };
@@ -785,7 +789,7 @@ var Verifier = (function() {
           writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
-            if (trait.isSlot()) {
+            if (trait.isSlot() || trait.isConst()) {
               return Type.fromName(trait.typeName, abc.domain).instance();
             } else if (trait.isGetter()) {
               return Type.fromName(trait.methodInfo.returnType, abc.domain).instance();
@@ -797,6 +801,8 @@ var Verifier = (function() {
           } else {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
+        } else if (obj instanceof ParameterizedType) {
+          return obj.parameter;
         }
         return Type.Any;
       }

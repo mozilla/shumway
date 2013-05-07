@@ -134,6 +134,7 @@ var Domain = (function () {
         defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);
         defineReadOnlyProperty(cls.traitsPrototype, "class", cls);
         defineReadOnlyProperty(cls.instance, "class", cls);
+        defineObjectShape(cls.traitsPrototype);
       }
 
       Class.prototype = {
@@ -322,7 +323,11 @@ var Domain = (function () {
           assert (tP === instance.prototype);
           assert (dP === instance.prototype || dP === Object.getPrototypeOf(instance.prototype));
           assert (isClassObject(this));
-          assert (Object.hasOwnProperty.call(tP, "class"));
+          if (tP !== Object.prototype) {
+            // We don't want to put "class" and "shape" on the Object.prototype.
+            assert (Object.hasOwnProperty.call(tP, "class"));
+            assert (Object.hasOwnProperty.call(tP, "shape"), "Classes should have a shape ID.");
+          }
           assert (instance.class === this);
         },
 
