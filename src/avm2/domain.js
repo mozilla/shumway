@@ -100,6 +100,8 @@ var Domain = (function () {
 
     this.onClassCreated = new Callback();
 
+    this.onMessage = new Callback();
+
     // If we are the system domain (the root), we should initialize the Class
     // and MethodClosure classes.
     if (base) {
@@ -593,6 +595,14 @@ var Domain = (function () {
       abc.domain = this;
       this.abcs.push(abc);
       abc.runtime = new Runtime(abc);
+    },
+
+    broadcastMessage: function (message, origin) {
+      this.onMessage.notify({
+        data: message,
+        origin: origin,
+        source: this
+      });
     },
 
     _getScriptObject: function () {
