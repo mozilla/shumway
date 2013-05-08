@@ -704,14 +704,13 @@ var createName = function createName(namespaces, name) {
         function getProperty(object, name, ti, getOpenMethod) {
           var get;
           name = simplifyName(name);
-          if (ti && ti.type && !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
-            if (ti.trait) {
-              if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
-                return constant(ti.trait.value);
-              }
-              get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
-              return ti.trait.isGetter() ? store(get) : load(get);
+          if (ti && ti.trait && ti.type &&
+              !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
+            if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
+              return constant(ti.trait.value);
             }
+            get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
+            return ti.trait.isGetter() ? store(get) : load(get);
           }
           if (hasNumericType(name) || isStringConstant(name)) {
             get = store(new IR.GetProperty(region, state.store, object, name));
@@ -755,10 +754,12 @@ var createName = function createName(namespaces, name) {
             store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
             return;
           }
-          if (ti && ti.trait) {
+          if (ti && ti.trait && ti.type &&
+              !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
             store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)), value));
             return;
           }
+          warn("Can't optimize setProperty to " + name);
           store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
         }
 

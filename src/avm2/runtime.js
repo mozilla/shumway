@@ -458,10 +458,10 @@ function getDescendants(obj, mn) {
 }
 
 function checkFilter(value) {
-  if (!value.class) {
-    return false;
+  if (!value.class || !isXMLType(value)) {
+    throw "TypeError operand of childFilter not of XML type";
   }
-  return isXMLType(value);
+  return value;
 }
 
 function Activation(methodInfo) {
