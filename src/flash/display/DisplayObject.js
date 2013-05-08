@@ -118,6 +118,10 @@ var DisplayObjectDefinition = (function () {
       var that = this;
       avm2.systemDomain.onMessage.register(function (e) {
         var type = e.data.type;
+        if (type === 'constructFrame' && that._refreshAS2Variables) {
+          that._refreshAS2Variables();
+          return;
+        }
         if (type === 'enterFrame' ||
             type === 'exitFrame' ||
             type === 'frameConstructed' ||
