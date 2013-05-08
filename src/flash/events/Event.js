@@ -41,6 +41,9 @@ var EventDefinition = (function () {
       return this._target;
     },
 
+    clone: function () {
+      return new flash.events.Event(this.type, this.bubbles, this.cancelable);
+    },
     ctor: function (type, bubbles, cancelable) {
       Counter.count("Event: " + type);
       this.type = type;

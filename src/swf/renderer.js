@@ -199,23 +199,11 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
   function PreVisitor(ctx) {
     this.ctx = ctx;
-    this.enterFrameEvt = new flash.events.Event("enterFrame");
   }
   PreVisitor.prototype = {
     childrenStart: function() {},
     childrenEnd: function() {},
     visit: function (child, isContainer) {
-      if (MovieClipClass.isInstanceOf(child) && child.isPlaying()) {
-        child._renderNextFrame();
-        flushPendingScripts();
-      }
-
-      child.dispatchEvent(this.enterFrameEvt);
-
-      if (child._refreshAS2Variables) {
-        child._refreshAS2Variables();
-      }
-
       if (child._dirtyArea) {
         var b1 = roundForClipping(child._dirtyArea);
         var b2 = roundForClipping(child.getBounds());
@@ -336,18 +324,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         this.parentsStack.push(this.interactiveParent);
         this.interactiveParent = interactiveParent;
       }
-    }
-  };
-
-  function PostVisitor() {
-    this.exitFrameEvt = new flash.events.Event("exitFrame");
-  }
-  PostVisitor.prototype = {
-    childrenStart: function() {},
-    childrenEnd: function() {},
-    visit: function (child) {
-      //if (MovieClipClass.isInstanceOf(child))
-        child.dispatchEvent(this.exitFrameEvt);
     }
   };
 
@@ -515,20 +491,6 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   }
 
-  function flushPendingScripts() {
-    var MAX_PENDING_SCRIPTS_EXECUTED = 100;
-    var executed = 0;
-    while (stage._pendingScripts.length > 0) {
-      var fn = stage._pendingScripts.shift();
-      fn();
-      if (++executed > MAX_PENDING_SCRIPTS_EXECUTED) {
-        console.error('ERROR: pending script limit was reached');
-        stage._pendingScripts = [];
-        return;
-      }
-    }
-  }
-
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
@@ -552,11 +514,21 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       if (renderDummyBalls) {
         renderDummyBalls();
       } else {
-        flushPendingScripts();
+        stage._flushPendingScripts();
+
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
+
+        stage._flushPendingScripts();
+
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
+
         ctx.beginPath();
         visitContainer(stage, new PreVisitor(ctx));
         visitContainer(stage, new RenderVisitor(ctx));
-        visitContainer(stage, new PostVisitor());
+
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("exitFrame"));
+
         stage._syncCursor();
 
         if (onAfterFrame) {

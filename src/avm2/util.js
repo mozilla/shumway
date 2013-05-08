@@ -1141,11 +1141,20 @@ var Callback = (function () {
     assert (callback);
     this.queue.push(callback);
   };
+  callback.prototype.unregister = function unregister(callback) {
+    assert (callback);
+    var i = this.queue.indexOf(callback);
+    if (i !== -1) {
+      this.queue.splice(i, 1);
+    }
+  };
   callback.prototype.notify = function notify() {
     var args = sliceArguments(arguments, 0);
-    this.queue.forEach(function (callback) {
+    var queue = this.queue;
+    for (var i = 0; i < queue.length; i++) {
+      var callback = queue[i];
       callback.apply(null, args);
-    });
+    }
   };
   return callback;
 })();
