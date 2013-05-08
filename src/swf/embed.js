@@ -29,6 +29,7 @@ SWF.embed = function(file, doc, container, options) {
   // HACK support of HiDPI displays
   var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
   var canvasHolder = null;
+  canvas._pixelRatio = pixelRatio;
   if (pixelRatio > 1) {
     var cssScale = 'scale(' + (1 / pixelRatio) + ', ' + (1 / pixelRatio) + ')';
     canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
@@ -65,8 +66,6 @@ SWF.embed = function(file, doc, container, options) {
     syncCursor();
   };
   stage._syncCursor = syncCursor;
-
-  stage._scaleMode = 'showAll';
 
   function fitCanvas(container, canvas) {
     if (canvasHolder) {

@@ -107,8 +107,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       }
       break;
     case 'noScale':
-      scaleX = 1;
-      scaleY = 1;
+      var pixelRatio = ctx.canvas._pixelRatio || 1;
+      scaleX = pixelRatio;
+      scaleY = pixelRatio;
       break;
     case 'showAll':
       if (scaleX < scaleY) {
