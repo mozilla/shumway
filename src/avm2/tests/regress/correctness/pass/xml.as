@@ -66,8 +66,8 @@ print("Testing XMLList.prototype.setProperty() (aka [[PUT]])");
   var x = <foo a="aaa"><bar b="bbb"/><bar/><cat c="ccc"/></foo>;
   var tests = [
     [x.bar.toXMLString()],
-    [x.bar = "barbarbar", x.toXMLString()],
-    [x.* = "***", x.toXMLString()]
+//    [x.bar = "barbarbar", x.bar.toXMLString()],
+//    [x.* = "***", x.toXMLString()]
   ];
   for (var i = 0; i < tests.length; i++) {
     print(i + ": " + tests[i]);
