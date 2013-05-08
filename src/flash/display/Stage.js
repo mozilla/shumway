@@ -60,7 +60,7 @@ var StageDefinition = (function () {
       this._quality = STAGE_QUALITY_HIGH;
       this._pendingScripts = [];
       this._align = "";
-      this._scaleMode = STAGE_SCALE_MODE_NO_SCALE;
+      this._scaleMode = STAGE_SCALE_MODE_SHOW_ALL;
     },
 
     _flushPendingScripts: function () {
