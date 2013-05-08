@@ -64,12 +64,12 @@ var VM_METHOD_OVERRIDES = createEmptyObject();
  * the cached resolved qualified name. This is all predicated on assigning sensible "shape" IDs
  * to objects.
  */
-var VM_NEXT_SHAPE_ID = 1;
+var vmNextShapeId = 1;
 
 function defineObjectShape(obj) {
   // TODO: This assertion seems to fail for proxies, investigate.
   // assert (!obj.shape, "Shouldn't already have a shape ID. " + obj.shape);
-  defineReadOnlyProperty(obj, "shape", VM_NEXT_SHAPE_ID ++);
+  defineReadOnlyProperty(obj, "shape", vmNextShapeId ++);
 }
 
 var InlineCache = (function () {
