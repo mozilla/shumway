@@ -359,12 +359,13 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
         return '<undefined/>';
       }
     };
-    wrappedWindow.__flash__eval = function (expr) {
+    var sandbox = new Cu.Sandbox(wrappedWindow, {sandboxPrototype: wrappedWindow});
+    wrappedWindow.__flash__eval = function (evalInSandbox, sandbox, expr) {
       this.console.log('__flash__eval: ' + expr);
-      return this.eval(expr);
-    };
+      return evalInSandbox(expr, sandbox);
+    }.bind(wrappedWindow, Cu.evalInSandbox, sandbox);
     wrappedWindow.__flash__call = function (expr) {
-      this.console.log('__flash__call: ' + expr);
+      this.console.log('__flash__call (ignored): ' + expr);
     };
   }
   wrappedObject.__flash__registerCallback = function (functionName) {
