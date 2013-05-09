@@ -13,8 +13,9 @@
 # limitations under the License.
 
 default:
-	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|run-tamarin-tests|run-tamarin-sanity-tests"
+	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
 	@echo "           build-playerglobal|build-extension|build-web|"
+	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
 	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs]"
 
 check-system:
@@ -54,6 +55,11 @@ build-playerglobal:
 
 build-extension:
 	make -C extension/firefox/ build
+
+FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
+
+check-extension: build-extension
+	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
 
 build-web:
 	make -C web/ build

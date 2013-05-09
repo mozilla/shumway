@@ -146,7 +146,7 @@ def main():
     path = options.browser
     if path == None:
         print "Specify browser (see -b option)"
-        system.exit(1)
+        exit(1)
     if platform.system() == "Darwin" and (path.endswith(".app") or path.endswith(".app/")):
         path = os.path.join(path, "Contents", "MacOS", "firefox-bin")
 
@@ -199,6 +199,7 @@ def main():
 
     if not stopped:
         print "FAILED: flash movie is not responding"
+        exit(1)
     else:
         print "SUCCESS: flash movie responded"
 
