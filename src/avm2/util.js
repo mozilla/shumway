@@ -63,7 +63,7 @@ function assertFalse(condition, message) {
 
 function assertNotImplemented(condition, message) {
   if (!condition) {
-    error(message);
+    error("NotImplemented: " + message);
   }
 }
 
@@ -76,7 +76,7 @@ function notImplemented(message) {
 }
 
 function somewhatImplemented(message) {
-  warning(message);
+  warning("somewhatImplemented: " + message);
 }
 
 function unexpected(message) {
