@@ -107,13 +107,16 @@ package
     AS3 native function splice(...args);
     prototype.splice = unsafeJSNative("Array.prototype.splice");
 
-    // FIXME: What are AS sort and sortOn?
-    [compat]
     private static native function _sort(o, args:Array);
-    AS3 native function sort(...args);
-    prototype.sort = unsafeJSNative("Array.prototype.sort");
+    AS3 function sort(...args)
+    {
+      return _sort(this, args);
+    }
+    prototype.sort = function (...args)
+    {
+      return _sort(this, args);
+    };
 
-    [compat]
     private static native function _sortOn(o, names, options);
     AS3 function sortOn(names, options=0, ...ignored)
     {

@@ -478,6 +478,37 @@ var natives = (function () {
     var c = new runtime.domain.system.Class("Array", Array, C(Array));
     c.extendBuiltin(baseClass);
 
+    var CASEINSENSITIVE = 1;
+    var DESCENDING = 2;
+    var UNIQUESORT = 4;
+    var RETURNINDEXEDARRAY = 8;
+    var NUMERIC = 16;
+
+    function defaultCompareFunction(a, b) {
+      return String(a).localeCompare(String(b));
+    }
+
+    function compare(a, b, options, compareFunction) {
+      assertNotImplemented (!(options & CASEINSENSITIVE), "CASEINSENSITIVE");
+      assertNotImplemented (!(options & UNIQUESORT), "UNIQUESORT");
+      assertNotImplemented (!(options & RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+      var result = 0;
+      if (!compareFunction) {
+        compareFunction = defaultCompareFunction;
+      }
+      if (options & NUMERIC) {
+        a = Number(a);
+        b = Number(b);
+        result = a < b ? -1 : (a > b ? 1 : 0);
+      } else {
+        result = compareFunction(a, b);
+      }
+      if (options & DESCENDING) {
+        result *= -1;
+      }
+      return result;
+    }
+
     var Ap = Array.prototype;
     c.native = {
       instance: {
@@ -494,7 +525,6 @@ var natives = (function () {
         slice: Ap.slice,
         unshift: Ap.unshift,
         splice: Ap.splice,
-        sort: Ap.sort,
         indexOf: Ap.indexOf,
         lastIndexOf: Ap.lastIndexOf,
         every: Ap.every,
@@ -502,6 +532,47 @@ var natives = (function () {
         forEach: Ap.forEach,
         map: Ap.map,
         some: Ap.some
+      },
+      static: {
+        /**
+         * Sorts an array of objects on one (or more) properties.
+         */
+        _sortOn: function (o, names, options) {
+          if (isString(names)) {
+            names = [names];
+          }
+          if (isNumber(options)) {
+            options = [options];
+          }
+          for (var i = names.length - 1; i >= 0; i--) {
+            var key = Multiname.getPublicQualifiedName(names[i]);
+            o.sort(function (a, b) {
+              return compare(a[key], b[key], options[i] | 0);
+            });
+          }
+          return o;
+        },
+        /**
+         * Format: args: [compareFunction], [sortOptions]
+         */
+        _sort: function (o, args) {
+          if (args.length === 0) {
+            return o.sort();
+          }
+          var compareFunction, options = 0;
+          if (args[0] instanceof Function) {
+            compareFunction = args[0];
+          } else if (isNumber(args[0])) {
+            options = parseInt(args[0]);
+          }
+          if (isNumber(args[1])) {
+            options = parseInt(args[1]);
+          }
+          o.sort(function (a, b) {
+            return compare(a, b, options, compareFunction);
+          });
+          return o;
+        }
       }
     };
     c.coerce = function (value) {
