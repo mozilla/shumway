@@ -515,6 +515,8 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       if (renderDummyBalls) {
         renderDummyBalls();
       } else {
+        visitContainer(stage, new MouseVisitor());
+
         stage._flushPendingScripts();
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
@@ -536,9 +538,8 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
           onAfterFrame();
         }
       }
-    } else {
-      visitContainer(stage, new MouseVisitor());
     }
+
     requestAnimationFrame(draw);
   })();
 }
