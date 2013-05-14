@@ -169,9 +169,7 @@ ChromeActions.prototype = {
     var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                                 .createInstance(Ci.nsIXMLHttpRequest);
     xhr.open(method, url, true);
-    // arraybuffer is not provide onprogress, fetching as regular chars
-    if ('overrideMimeType' in xhr)
-      xhr.overrideMimeType('text/plain; charset=x-user-defined');
+    xhr.responseType = "moz-chunked-arraybuffer";
 
     if (this.baseUrl) {
       // Setting the referer uri, some site doing checks if swf is embedded
@@ -184,10 +182,7 @@ ChromeActions.prototype = {
     var lastPosition = 0;
     xhr.onprogress = function (e) {
       var position = e.loaded;
-      var chunk = xhr.responseText.substring(lastPosition, position);
-      var data = new Uint8Array(chunk.length);
-      for (var i = 0; i < data.length; i++)
-        data[i] = chunk.charCodeAt(i) & 0xFF;
+      var data = new Uint8Array(xhr.response);
       win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "progress",
                        array: data, loaded: e.loaded, total: e.total}, "*");
       lastPosition = position;
