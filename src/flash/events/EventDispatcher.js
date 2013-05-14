@@ -87,7 +87,7 @@ var EventDispatcherDefinition = (function () {
     },
     dispatchEvent: function (evt) {
       if (evt._target)
-        evt = evt.clone();
+        evt = evt.public$$clone();
       else
         evt._target = this;
 
