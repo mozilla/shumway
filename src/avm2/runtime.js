@@ -1063,9 +1063,6 @@ var Runtime = (function () {
   function runtime(abc) {
     this.abc = abc;
     this.domain = abc.domain;
-    if (this.domain.mode !== EXECUTION_MODE.INTERPRET) {
-      this.compiler = new C4Compiler(abc);
-    }
     this.interpreter = new Interpreter(abc);
 
     /**
@@ -1274,7 +1271,7 @@ var Runtime = (function () {
 
     $M.push(mi);
 
-    var body = this.compiler.compileMethod(mi, hasDefaults, scope, hasDynamicScope);
+    var body = Compiler.compileMethod(mi, scope, hasDynamicScope);
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
     if (mi.holder) {

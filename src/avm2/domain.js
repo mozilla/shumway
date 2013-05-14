@@ -595,6 +595,9 @@ var Domain = (function () {
       abc.domain = this;
       this.abcs.push(abc);
       abc.runtime = new Runtime(abc);
+      if (!this.base) {
+        Type.initializeTypes(this);
+      }
     },
 
     broadcastMessage: function (message, origin) {

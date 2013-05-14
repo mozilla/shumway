@@ -225,9 +225,9 @@ var createName = function createName(namespaces, name) {
   }
 
   var Builder = (function () {
-    function constructor (abc, methodInfo, scope, hasDynamicScope) {
-      assert (abc && methodInfo && scope);
-      this.abc = abc;
+    function builder(methodInfo, scope, hasDynamicScope) {
+      assert (methodInfo && methodInfo.abc && scope);
+      this.abc = methodInfo.abc;
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
@@ -304,7 +304,7 @@ var createName = function createName(namespaces, name) {
       return start;
     };
 
-    constructor.prototype.build = function build() {
+    builder.prototype.buildGraph = function buildGraph(callerRegion, callerState, inlineArguments) {
       var analysis = this.methodInfo.analysis;
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
@@ -433,7 +433,7 @@ var createName = function createName(namespaces, name) {
 
       var next;
       while ((next = worklist.pop())) {
-        buildNodes(next.region, next.block, next.region.entryState.clone()).forEach(function (stop) {
+        buildBlock(next.region, next.block, next.region.entryState.clone()).forEach(function (stop) {
           var target = stop.target;
           var region = target.region;
           if (region) {
@@ -466,7 +466,7 @@ var createName = function createName(namespaces, name) {
 
       traceBuilder && writer.writeLn("Done");
 
-      function buildNodes(region, block, state) {
+      function buildBlock(region, block, state) {
         assert (region && block && state);
         state.optimize();
         var typeState = block.entryState;
@@ -1336,12 +1336,12 @@ var createName = function createName(namespaces, name) {
 
       return new DFG(stop);
     }
-    return constructor;
+    return builder;
   })();
 
-  function build(abc, verifier, methodInfo, scope, hasDynamicScope) {
-    release || assert(scope);
-    release || assert(methodInfo.analysis);
+  function buildMethod(verifier, methodInfo, scope, hasDynamicScope) {
+    release || assert (scope);
+    release || assert (methodInfo.analysis);
     release || assert (!methodInfo.hasExceptions());
 
     Counter.count("Compiler: Compiled Methods");
@@ -1362,7 +1362,7 @@ var createName = function createName(namespaces, name) {
 
     Timer.start("IR Builder");
     Node.startNumbering();
-    var dfg = new Builder(abc, methodInfo, scope, hasDynamicScope).build();
+    var dfg = new Builder(methodInfo, scope, hasDynamicScope).buildGraph();
     Timer.stop();
 
     traceIR && dfg.trace(writer);
@@ -1397,17 +1397,19 @@ var createName = function createName(namespaces, name) {
     return src;
   }
 
-  exports.build = build;
+  exports.buildMethod = buildMethod;
 
 })(typeof exports === "undefined" ? (Builder = {}) : exports);
 
-var C4Compiler = (function () {
-  function constructor(abc) {
-    this.abc = abc;
-    this.verifier = new Verifier(abc);
+/**
+ * The compiler is a singleton.
+ */
+var Compiler = new ((function () {
+  function constructor() {
+    this.verifier = new Verifier();
   }
-  constructor.prototype.compileMethod = function (methodInfo, hasDefaults, scope, hasDynamicScope) {
-    return Builder.build(this.abc, this.verifier, methodInfo, scope, hasDynamicScope);
+  constructor.prototype.compileMethod = function (methodInfo, scope, hasDynamicScope) {
+    return Builder.buildMethod(this.verifier, methodInfo, scope, hasDynamicScope);
   };
   return constructor;
-})();
+})());
