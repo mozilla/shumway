@@ -281,12 +281,11 @@ var Analysis = (function () {
     return BlockSet;
   }
 
-  function Analysis(method, options) {
+  function Analysis(method) {
     Counter.count("Analysis");
     // Normalize the code stream. The other analyses are run by the user
     // on demand.
     this.method = method;
-    this.options = options || {};
     if (this.method.code) {
       Timer.start("Normalize");
       this.normalizeBytecode();

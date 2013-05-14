@@ -137,17 +137,24 @@ function inAS() {
  * scope.
  */
 
-var $C = [];
-
+var OBJECT_NAME = "Object Name";
+var objectIDs = 0;
 function objectConstantName(object) {
   release || assert(object);
-  if (object.hasOwnProperty("objectID")) {
-    return "$C_" + object.objectID;
+  if (object.hasOwnProperty(OBJECT_NAME)) {
+    return object[OBJECT_NAME];
   }
-  var id = $C.length;
-  Object.defineProperty(object, "objectID", {value: id, writable: false, enumerable: false});
-  $C.push(object);
-  var name = "$C_" + id;
+  var name, id = objectIDs++;
+  if (object instanceof Global) {
+    name = "$G" + id;
+  } else if (object instanceof Multiname) {
+    name = "$M" + id;
+  } else if (isClass(object)) {
+    name = "$C" + id;
+  } else {
+    name = "$O" + id;
+  }
+  Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
   jsGlobal[name] = object;
   return name;
 }
@@ -992,7 +999,7 @@ function createActivation(methodInfo) {
   return Object.create(methodInfo.activationPrototype);
 }
 
-function isClassObject(obj) {
+function isClass(obj) {
   assert (obj);
   return Object.hasOwnProperty.call(obj, VM_IS_CLASS);
 }
@@ -1037,28 +1044,30 @@ var Global = (function () {
 })();
 
 /**
+ * Checks if the specified method should be compiled. For now we just ignore very large methods.
+ */
+function shouldCompile(mi) {
+  if (!mi.hasBody) {
+    return false;
+  }
+  if (mi.hasExceptions() && !compilerEnableExceptions.value) {
+    return false;
+  } else if (mi.code.length > compilerMaximumMethodSize.value) {
+    return false;
+  }
+  // Don't compile class and script initializers since they only run once.
+  if (mi.isClassInitializer || mi.isScriptInitializer) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Execution context for an ABC.
  */
 var Runtime = (function () {
   var totalFunctionCount = 0;
   var compiledFunctionCount = 0;
-
-  /**
-   * Checks if the specified method should be compiled. For now we just ignore very large methods.
-   */
-  function shouldCompile(mi) {
-    if (mi.hasExceptions() && !compilerEnableExceptions.value) {
-      return false;
-    } else if (mi.code.length > compilerMaximumMethodSize.value) {
-      return false;
-    }
-    // Don't compile class and script initializers since they only run once.
-    if (mi.isClassInitializer || mi.isScriptInitializer) {
-      return false;
-    }
-    return true;
-  }
-
 
   function runtime(abc) {
     this.abc = abc;
@@ -1881,7 +1890,7 @@ var Runtime = (function () {
         }
         assert (!target.value.isTrampoline, "We should avoid binding trampolines.");
         var mc = null;
-        if (isClassObject(this)) {
+        if (isClass(this)) {
           Counter.count("Runtime: Static Method Closures");
           mc = safeBind(target.value, this);
           defineReadOnlyProperty(this, qn, mc);
