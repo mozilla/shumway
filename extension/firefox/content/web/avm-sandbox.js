@@ -174,7 +174,8 @@ var FileLoadingService = {
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
         FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
-          mimeType: request.mimeType, postData: request.data, sessionId: sessionId});
+          mimeType: request.mimeType, postData: request.data,
+          checkPolicyFile: request.checkPolicyFile, sessionId: sessionId});
       },
       notify: function (args) {
         switch (args.topic) {
