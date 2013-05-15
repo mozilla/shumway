@@ -38,6 +38,7 @@ var NetStreamDefinition = (function () {
             somewhatImplemented("NetStream.ctor");
             this._contentTypeHint = null;
             this._mediaSource = null;
+            this._checkPolicyFile = true;
             this._urlReady = new Promise();
           },
           onResult: function onResult(streamId) {
@@ -75,6 +76,7 @@ var NetStreamDefinition = (function () {
             }
 
             var request = new flash.net.URLRequest(url);
+            request._checkPolicyFile = this._checkPolicyFile;
             var stream = new flash.net.URLStream();
             stream.addEventListener('httpStatus', function (e) {
               var responseHeaders = e[Multiname.getPublicQualifiedName('responseHeaders')];
@@ -156,12 +158,10 @@ var NetStreamDefinition = (function () {
           checkPolicyFile: {
             get: function checkPolicyFile() {
               // (void) -> Boolean
-              notImplemented("NetStream.checkPolicyFile");
               return this._checkPolicyFile;
             },
             set: function checkPolicyFile(state) {
               // (state:Boolean) -> void
-              notImplemented("NetStream.checkPolicyFile");
               this._checkPolicyFile = state;
             }
           },

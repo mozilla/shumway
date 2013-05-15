@@ -21,6 +21,7 @@ var URLRequestDefinition = (function () {
     var obj = {};
     obj.url = this._url;
     obj.method = this._method;
+    obj.checkPolicyFile = this._checkPolicyFile;
     if (this._data) {
       obj.mimeType = this._contentType;
       var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
@@ -49,6 +50,7 @@ var URLRequestDefinition = (function () {
       this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
       this._requestHeaders = null;
+      this._checkPolicyFile = true;
       this._toFileRequest = toFileLoadingServiceRequest;
     },
 
