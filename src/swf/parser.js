@@ -45,6 +45,10 @@ function readTags(context, stream, swfVersion, onprogress) {
       }
       stream.ensure(length);
 
+      if (tagCode === 0) {
+        break;
+      }
+
       var substream = stream.substream(stream.pos, stream.pos += length);
       var subbytes = substream.bytes;
       var tag = { code: tagCode };
@@ -74,7 +78,7 @@ function readTags(context, stream, swfVersion, onprogress) {
       } else if (onprogress && 'id' in tag) {
         onprogress(context);
       }
-    } while (tagCode && stream.pos < stream.end);
+    } while (stream.pos < stream.end);
   } catch (e) {
     if (e !== StreamNoDataError) throw e;
     stream.pos = lastSuccessfulPosition;
