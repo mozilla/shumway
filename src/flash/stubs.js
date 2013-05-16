@@ -178,13 +178,13 @@ var Stubs = new (function () {
 
     M("flash.events.EventDispatcher", "EventDispatcherClass", EventDispatcherDefinition),
     M("flash.events.Event", "EventClass", EventDefinition),
-    M("flash.events.IOErrorEvent", "IOErrorEventClass", IOErrorEventDefinition),
-    M("flash.events.NetStatusEvent", "NetStatusEventClass", NetStatusEventDefinition),
+    M("flash.events.IOErrorEvent"),
+    M("flash.events.NetStatusEvent"),
     M("flash.events.KeyboardEvent", "KeyboardEventClass", KeyboardEventDefinition),
     M("flash.events.MouseEvent", "MouseEventClass", MouseEventDefinition),
     M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
     M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
-    M("flash.events.ProgressEvent", "ProgressEventClass", ProgressEventDefinition),
+    M("flash.events.ProgressEvent"),
 
     M("flash.external.ExternalInterface", "ExternalInterfaceClass", ExternalInterfaceDefinition),
 

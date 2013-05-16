@@ -165,6 +165,9 @@ var DisplayObjectDefinition = (function () {
       point.y = (m.a * y - m.b * x) * d;
     },
     _applyCurrentTransform: function (point, targetCoordSpace) {
+      if (targetCoordSpace === this)
+        return;
+
       var m = this._currentTransform;
       var x = point.x;
       var y = point.y;
@@ -332,7 +335,7 @@ var DisplayObjectDefinition = (function () {
       this._filters = val;
     },
     get height() {
-      var bounds = this.getBounds(this._parent);
+      var bounds = this.getBounds(this);
       return bounds.height;
     },
     set height(val) {
@@ -470,7 +473,7 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get width() {
-      var bounds = this.getBounds(this._parent);
+      var bounds = this.getBounds(this);
       return bounds.width;
     },
     set width(val) {
