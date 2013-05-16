@@ -158,7 +158,7 @@ var LoaderDefinition = (function () {
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
             var repeat = 1;
-            while (i < n) {
+            while (i < n - 1) {
               var nextTag = tags[i + 1];
               if (nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
                 break;
@@ -229,6 +229,7 @@ var LoaderDefinition = (function () {
               frame.sceneData = tag.data;
               break;
             case SWF_TAG_CODE_DO_ABC:
+            case SWF_TAG_CODE_DO_ABC_:
               var abcBlocks = frame.abcBlocks;
               if (abcBlocks)
                 abcBlocks.push({data: tag.data, flags: tag.flags});
