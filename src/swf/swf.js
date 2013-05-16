@@ -51,6 +51,7 @@ var SWF_TAG_CODE_DEFINE_TEXT                       = 11;
 var SWF_TAG_CODE_DEFINE_TEXT2                      = 33;
 var SWF_TAG_CODE_DEFINE_VIDEO_STREAM               = 60;
 var SWF_TAG_CODE_DO_ABC                            = 82;
+var SWF_TAG_CODE_DO_ABC_                           = 72;
 var SWF_TAG_CODE_DO_ACTION                         = 12;
 var SWF_TAG_CODE_DO_INIT_ACTION                    = 59;
 var SWF_TAG_CODE_ENABLE_DEBUGGER                   = 58;

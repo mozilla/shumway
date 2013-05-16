@@ -234,8 +234,8 @@ var DEFINE_BUTTON = {
   }]]
 };
 var DO_ABC = {
-  flags: UI32,
-  name: STRING(0),
+  flags: ['tagCode===82', [UI32, '0']],
+  name: ['tagCode===82', [STRING(0), '""']],
   data: BINARY(0)
 };
 var DO_ACTION = {

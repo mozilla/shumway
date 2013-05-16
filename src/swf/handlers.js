@@ -66,6 +66,7 @@ var tagHandler = {
   /* FileAttributes */                69: FILE_ATTRIBUTES,
   /* PlaceObject3 */                  70: PLACE_OBJECT,
   /* ImportAssets2 */                 71: undefined,
+  /* DoABC (undoc) */                 72: DO_ABC,
   /* DefineFontAlignZones */          73: undefined,
   /* CSMTextSettings */               74: undefined,
   /* DefineFont3 */                   75: DEFINE_FONT2,
