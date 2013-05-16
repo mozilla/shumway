@@ -947,13 +947,13 @@ var natives = (function () {
           typeof key === "number") {
         return key;
       }
-      assert (typeof key === "object");
+      assert (typeof key === "object" || typeof key === "function");
     }
 
     var Dp = ASDictionary.prototype;
     defineNonEnumerableProperty(Dp, "setProperty", function (qn, value) {
       if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object") {
+        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
           qn = Multiname.getPublicQualifiedName(qn.name);
         } else {
           qn = qn.name;
@@ -971,7 +971,7 @@ var natives = (function () {
     });
     defineNonEnumerableProperty(Dp, "getProperty", function (qn) {
       if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object") {
+        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
           qn = Multiname.getPublicQualifiedName(qn.name);
         } else {
           qn = qn.name;
@@ -985,7 +985,7 @@ var natives = (function () {
     });
     defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
       if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object") {
+        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
           qn = Multiname.getPublicQualifiedName(qn.name);
         } else {
           qn = qn.name;

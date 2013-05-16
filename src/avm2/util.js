@@ -212,7 +212,7 @@ function boxValue(value) {
 }
 
 function isObject(value) {
-  return typeof value === "object";
+  return typeof value === "object" || typeof value === 'function';
 }
 
 function isString(value) {
