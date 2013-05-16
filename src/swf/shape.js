@@ -33,9 +33,9 @@ function morph(start, end) {
 }
 function morphColor(color, colorMorph) {
   return '"rgba(" + (' +
-    morph(color.red, colorMorph.red) + ') + "," + (' +
-    morph(color.green, colorMorph.green) + ') + "," + (' +
-    morph(color.blue, colorMorph.blue) + ') + "," + (' +
+    morph(color.red, colorMorph.red) + '|0) + "," + (' +
+    morph(color.green, colorMorph.green) + '|0) + "," + (' +
+    morph(color.blue, colorMorph.blue) + '|0) + "," + (' +
     morph(color.alpha / 255, colorMorph.alpha / 255) +
   ') + ")"';
 }
