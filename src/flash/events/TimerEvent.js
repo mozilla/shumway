@@ -17,28 +17,17 @@
  */
 
 var TimerEventDefinition = (function () {
-  var def = {
-    __class__: 'flash.events.TimerEvent',
-
-    updateAfterEvent: function () {
-      notImplemented();
-    }
-  };
-
-  def.__glue__ = {
-    script: {
-      static: {
-        TIMER: "public TIMER",
-        TIMER_COMPLETE: "public TIMER_COMPLETE"
-      }
-    },
-
-    native: {
-      instance: {
-        updateAfterEvent: def.updateAfterEvent
+  return {
+    // (type:String, bubbles:Boolean = false, cancelable:Boolean = false)
+    __class__: "flash.events.TimerEvent",
+    __glue__: {
+      native: {
+        instance: {
+          updateAfterEvent: function updateAfterEvent() { // (void) -> void
+            notImplemented("TimerEvent.updateAfterEvent");
+          }
+        }
       }
     }
   };
-
-  return def;
 }).call(this);

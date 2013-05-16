@@ -120,11 +120,11 @@ var SoundDefinition = (function () {
         }
         dataPosition += bytesAvailable;
 
-        _this.dispatchEvent(event);
+        _this.sendEvent(event);
       });
 
       stream.addEventListener("complete", function (event) {
-        _this.dispatchEvent(event);
+        _this.sendEvent(event);
         soundData.data = data.a;
         soundData.mimeType = 'audio/mpeg';
         soundData.completed = true;
