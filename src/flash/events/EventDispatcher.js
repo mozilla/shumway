@@ -56,7 +56,7 @@ var EventDispatcherDefinition = (function () {
 
             evt._currentTarget = evt._target;
 
-            var queue = this.queue;
+            var queue = this.queue.slice(0); // can be modified
             for (var i = 0, n = queue.length; i < n; i++) {
               var entry = queue[i];
               entry.listener(evt);

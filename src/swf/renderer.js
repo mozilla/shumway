@@ -178,7 +178,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
-      if (child && child._visible) {
+      if (child && (child._visible || visitor.ignoreVisibleAttribute)) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
@@ -202,6 +202,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     this.ctx = ctx;
   }
   PreVisitor.prototype = {
+    ignoreVisibleAttribute: true,
     childrenStart: function() {},
     childrenEnd: function() {},
     visit: function (child, isContainer) {
@@ -234,6 +235,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     }
   }
   MouseVisitor.prototype = {
+    ignoreVisibleAttribute: false,
     childrenStart: function() {},
     childrenEnd: function(container) {
       this.interactiveParent = this.parentsStack.pop();
@@ -336,6 +338,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     this.clipStack = null;
   }
   RenderVisitor.prototype = {
+    ignoreVisibleAttribute: false,
     childrenStart: function(parent) {
       if (this.depth == 0) {
         var ctx = this.ctx;
