@@ -405,7 +405,7 @@ var LoaderDefinition = (function () {
       this._dictionary = { };
       this._displayList = null;
       this._timeline = [];
-      this._previousPromise = null;
+      this._lastPromise = null;
       this._uncaughtErrorEvents = null;
     },
     _commitData: function (data) {
@@ -417,8 +417,10 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        this.contentLoaderInfo.dispatchEvent(
-            new flash.events.Event("complete"));
+        this._lastPromise.then(function () {
+          this.contentLoaderInfo.dispatchEvent(
+              new flash.events.Event("complete"));
+        }.bind(this));
         break;
       case 'error':
         this.contentLoaderInfo.dispatchEvent(
@@ -500,8 +502,8 @@ var LoaderDefinition = (function () {
       var frameNum = timeline.length + 1;
       var framePromise = new Promise;
       var labelName = frame.labelName;
-      var prevPromise = this._previousPromise;
-      this._previousPromise = framePromise;
+      var prevPromise = this._lastPromise;
+      this._lastPromise = framePromise;
       var promiseQueue = [prevPromise];
 
       this._displayList = this._buildFrame(this._displayList, timeline, promiseQueue, frame, frameNum);
@@ -679,7 +681,7 @@ var LoaderDefinition = (function () {
     },
     _commitImage : function (imageInfo) {
       var loader = this;
-      var imgPromise = new Promise;
+      var imgPromise = this._lastPromise = new Promise;
       var img = new Image;
       imageInfo.props.img = img;
       img.onload = function() {
@@ -687,6 +689,7 @@ var LoaderDefinition = (function () {
         props.parent = loader._parent;
         props.stage = loader._stage;
         props.skipCopyToCanvas = true;
+
         var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
         var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
         var bitmapData = BitmapData.createAsSymbol(props);
@@ -954,7 +957,7 @@ var LoaderDefinition = (function () {
       });
 
       loader._dictionary[0] = documentPromise;
-      loader._previousPromise = documentPromise;
+      loader._lastPromise = documentPromise;
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
