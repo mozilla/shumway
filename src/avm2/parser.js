@@ -1140,6 +1140,7 @@ var MethodInfo = (function () {
       }
     }
 
+    this.abc = abc;
     this.flags = flags;
     this.optionals = optionals;
     this.debugName = debugName;
@@ -1189,6 +1190,7 @@ var MethodInfo = (function () {
     var methods = abc.methods;
 
     var info = methods[stream.readU30()];
+    info.hasBody = true;
     release || assert(!info.isNative());
     info.maxStack = stream.readU30();
     info.localCount = stream.readU30();
