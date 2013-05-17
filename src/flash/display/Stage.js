@@ -199,6 +199,16 @@ var StageDefinition = (function () {
         },
         requireOwnerPermissions: function () {
           // private undocumented
+        },
+        displayState: {
+          get: function displayState() { // (void) -> String
+            somewhatImplemented("Stage.displayState");
+            return this._displayState;
+          },
+          set: function displayState(value) { // (value:String) -> void
+            somewhatImplemented("Stage.displayState");
+            this._displayState = value;
+          }
         }
       }
     }
