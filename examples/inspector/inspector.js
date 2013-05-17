@@ -236,7 +236,7 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer, document, $("#stage")[0], {
+        SWF.embed(buffer || file, document, $("#stage")[0], {
           onComplete: terminate,
           onStageInitialized: stageInitialized,
           onBeforeFrame: frame,
@@ -244,20 +244,8 @@ function executeFile(file, buffer, movieParams) {
         });
       }
       if (!buffer && asyncLoading) {
-        var subscription = {
-          subscribe: function (callback) {
-            this.callback = callback;
-          }
-        };
-        runSWF(file, subscription);
         FileLoadingService.setBaseUrl(file);
-        new BinaryFileReader(file).readAsync(
-          function onchunk(data, progressInfo) {
-            subscription.callback(data, progressInfo);
-          },
-          function onerror(error) {
-            console.error("Unable to open the file " + file + ": " + error);
-          });
+        runSWF(file);
       } else if (!buffer) {
         FileLoadingService.setBaseUrl(file);
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
