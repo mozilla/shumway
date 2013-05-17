@@ -1003,7 +1003,11 @@ var natives = (function () {
       return true;
     });
     defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
-      return Object.keys(this.primitiveMap).concat(this.keys);
+      var primitiveMapKeys = [];
+      forEachPublicProperty(this.primitiveMap, function (i) {
+        primitiveMapKeys.push(i);
+      });
+      return primitiveMapKeys.concat(this.keys);
     });
     c.native = {
       instance: {
