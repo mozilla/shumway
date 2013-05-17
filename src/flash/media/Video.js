@@ -79,7 +79,23 @@ var VideoDefinition = (function () {
     native: {
       instance: {
         attachNetStream: def.attachNetStream,
-        ctor: def.ctor
+        ctor: def.ctor,
+        smoothing: {
+          get: function smoothing() { // (void) -> Boolean
+            somewhatImplemented("Video.smoothing");
+            return this._smoothing;
+          },
+          set: function smoothing(value) { // (value:Boolean) -> void
+            somewhatImplemented("Video.smoothing");
+            this._smoothing = value;
+          }
+        },
+        videoWidth: {
+          get: function videoWidth() { // (void) -> int
+            somewhatImplemented("Video.videoWidth");
+            return this._videoWidth;
+          }
+        }
       }
     }
   };
