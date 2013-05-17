@@ -72,9 +72,9 @@ setTimeout(function displayInfo() {
     output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + "</div>";
     totalCount += pair[1];
   });
-  if (totalCount > 100000) {
+  if (totalCount > 3000000) {
     // Don't delete me, this is meant to be annoying.
-    alert("The Counters Are Too Damn High (> 100,000).");
+    throw "The Counters Are Too Damn High (> 3,000,000).";
   }
   document.getElementById("info").innerHTML = output;
   setTimeout(displayInfo, 500);
