@@ -30,11 +30,10 @@ body {
   background-color: #1a2633;
   padding: 4px 8px;
   border-radius: 4px;
-  color: hsl(210,30%,85%);
-  opacity: 0.8;
+  color: white;
+  opacity: 1;
   font-size: 10px;
   line-height: 22px;
-  text-shadow: 0 -1px 0 hsla(210,8%,5%,.45);
   cursor: default;
   line-height: 1.2em;
   font-size: 11px;
