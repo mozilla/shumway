@@ -298,6 +298,15 @@ var FileLoadingService = {
   createSession: function () {
     return {
       open: function (request) {
+        if (request.url === 'http://s.youtube.com/stream_204') {
+          // No reason to send error report yet, let's keep it this way for now.
+          // 204 means no response, so no data will be expected.
+          console.error('YT_ERROR_REPORT: ' + request.data);
+          this.onopen && this.onopen();
+          this.onclose && this.onclose();
+          return;
+        }
+
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
