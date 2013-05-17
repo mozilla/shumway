@@ -25,13 +25,12 @@ var URLRequestDefinition = (function () {
     if (this._data) {
       obj.mimeType = this._contentType;
       var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
-      var URLVariablesClass = avm2.systemDomain.getClass("flash.net.URLVariables");
       if (ByteArrayClass.isInstanceOf(this._data)) {
         obj.data = new Uint8Array(this._data.a, 0, this._data.length);
       } else {
         var data = getProperty(this._data, Multiname.getPublicQualifiedName('toString'))
           .call(this._data);
-        if (URLVariablesClass.isInstanceOf(this._data) && this._method === 'GET') {
+        if (this._method === 'GET') {
           var i = obj.url.lastIndexOf('?');
           obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + data;
         } else {
