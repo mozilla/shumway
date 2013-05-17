@@ -325,7 +325,13 @@ var LoaderDefinition = (function () {
         parseBytes(input);
       } else if ('subscribe' in input) {
         var pipe = SWF.parseAsync(createParsingContext());
-        input.subscribe(pipe.push.bind(pipe));
+        input.subscribe(function (data, progress) {
+          if (data) {
+            pipe.push(data, progress);
+          } else {
+            pipe.close();
+          }
+        });
       } else if (typeof FileReaderSync !== 'undefined') {
         var reader = new FileReaderSync;
         var buffer = reader.readAsArrayBuffer(input);
@@ -355,6 +361,7 @@ var LoaderDefinition = (function () {
       session.onopen = function () {
       };
       session.onclose = function () {
+        pipe.close();
       };
       session.open(new flash.net.URLRequest(input));
     }
@@ -975,6 +982,7 @@ var LoaderDefinition = (function () {
             worker.postMessage('pipe:');
           };
           session.onclose = function () {
+            worker.postMessage({data: null});
           };
           session.open(new flash.net.URLRequest(input));
         } else {
