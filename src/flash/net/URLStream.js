@@ -37,11 +37,11 @@ var URLStreamDefinition = (function () {
           var length = Math.max(progressState.bytesTotal, data.length);
           var buffer = new ArrayBuffer(length);
           self._stream = new Stream(buffer, 0, 0, length);
-        } else if (self._stream.pos + data.length > self._stream.end) {
-          var length = self._stream.pos + data.length;
+        } else if (self._stream.end + data.length > self._stream.bytes.length) {
+          var length = self._stream.end + data.length;
           var buffer = new ArrayBuffer(length);
           newStream = new Stream(buffer, 0, 0, length);
-          newStream.push(self._stream.bytes.subarray(0, self._stream.pos));
+          newStream.push(self._stream.bytes.subarray(0, self._stream.end));
           self._stream = newStream;
         }
         self._stream.push(data);
