@@ -2,14 +2,14 @@
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/local2global.swf",
-         "swfs/stroke1.swf",
-         "swfs/targetPath1.swf",
          "swfs/add.swf",
-         "swfs/stream1.swf",
-         "swfs/movieinfo1.swf",
          "swfs/encoding1.swf",
-         "swfs/fscommand1.swf"
+         "swfs/fscommand1.swf",
+         "swfs/local2global.swf",
+         "swfs/movieinfo1.swf",
+         "swfs/stream1.swf",
+         "swfs/stroke1.swf",
+         "swfs/targetPath1.swf"
        ],
        "type": "stas"
     },
