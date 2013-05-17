@@ -54,6 +54,12 @@ var CapabilitiesDefinition = (function () {
             somewhatImplemented("Capabilities.serverString: " + str);
             return str;
           }
+        },
+        hasAccessibility: {
+          get: function hasAccessibility() { // (void) -> Boolean
+            somewhatImplemented("Capabilities.hasAccessibility");
+            return false;
+          }
         }
       }
     },

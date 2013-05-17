@@ -132,6 +132,78 @@ var TextFieldDefinition = (function () {
             somewhatImplemented("TextField.textColor");
             this._textColor = value;
           }
+        },
+        selectable: {
+          get: function selectable() { // (void) -> Boolean
+            somewhatImplemented("TextField.selectable");
+            return this._selectable;
+          },
+          set: function selectable(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.selectable");
+            this._selectable = value;
+          }
+        },
+        wordWrap: {
+          get: function wordWrap() { // (void) -> Boolean
+            somewhatImplemented("TextField.wordWrap");
+            return this._wordWrap;
+          },
+          set: function wordWrap(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.wordWrap");
+            this._wordWrap = value;
+          }
+        },
+        textHeight: {
+          get: function textHeight() { // (void) -> Number
+            somewhatImplemented("TextField.textHeight");
+            return this._textHeight;
+          }
+        },
+        textWidth: {
+          get: function textWidth() { // (void) -> Number
+            somewhatImplemented("TextField.textWidth");
+            return this._textWidth;
+          }
+        },
+        background: {
+          get: function background() { // (void) -> Boolean
+            somewhatImplemented("TextField.background");
+            return this._background;
+          },
+          set: function background(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.background");
+            this._background = value;
+          }
+        },
+        backgroundColor: {
+          get: function backgroundColor() { // (void) -> uint
+            somewhatImplemented("TextField.backgroundColor");
+            return this._backgroundColor;
+          },
+          set: function backgroundColor(value) { // (value:uint) -> void
+            somewhatImplemented("TextField.backgroundColor");
+            this._backgroundColor = value;
+          }
+        },
+        border: {
+          get: function border() { // (void) -> Boolean
+            somewhatImplemented("TextField.border");
+            return this._border;
+          },
+          set: function border(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.border");
+            this._border = value;
+          }
+        },
+        borderColor: {
+          get: function borderColor() { // (void) -> uint
+            somewhatImplemented("TextField.borderColor");
+            return this._borderColor;
+          },
+          set: function borderColor(value) { // (value:uint) -> void
+            somewhatImplemented("TextField.borderColor");
+            this._borderColor = value;
+          }
         }
       }
     }
