@@ -234,7 +234,7 @@ var createName = function createName(namespaces, name) {
       this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
-    constructor.prototype.buildStart = function (start) {
+    builder.prototype.buildStart = function (start) {
       var mi = this.methodInfo;
       var state = start.entryState = new State(0);
 
