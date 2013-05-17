@@ -17,10 +17,30 @@
  */
 
 var BitmapDefinition = (function () {
+  function setBitmapData(value) {
+    this._bitmapData = value;
+
+    if (value) {
+      var canvas = value._drawable;
+      this._bbox = {
+        left: 0,
+        top: 0,
+        right: canvas.width,
+        bottom: canvas.height
+      };
+    } else {
+      this._bbox = { left: 0, top: 0, right: 0, bottom: 0 };
+    }
+    this._markAsDirty();
+  }
+
   return {
     // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
     __class__: "flash.display.Bitmap",
     draw : function(ctx, ratio) {
+      if (!this._bitmapData) {
+        return;
+      }
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
     },
     initialize: function () {
@@ -31,18 +51,10 @@ var BitmapDefinition = (function () {
         },
         instance: {
           ctor : function(bitmapData, pixelSnapping, smoothing) {
-            this._bitmapData = bitmapData;
-            this._markAsDirty();
             this._pixelSnapping = pixelSnapping;
             this._smoothing = smoothing;
 
-            var canvas = this._bitmapData._drawable;
-            this._bbox = {
-              left: 0,
-              top: 0,
-              right: canvas.width,
-              bottom: canvas.height
-            };
+            setBitmapData.call(this, bitmapData || null);
           },
           pixelSnapping: {
             get: function pixelSnapping() { // (void) -> String
@@ -64,9 +76,7 @@ var BitmapDefinition = (function () {
             get: function bitmapData() { // (void) -> BitmapData
               return this._bitmapData;
             },
-            set: function bitmapData(value) { // (value:BitmapData) -> void
-              this._bitmapData = value;
-            }
+            set: setBitmapData // (value:BitmapData) -> void
           }
         }
       },
