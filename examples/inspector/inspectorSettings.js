@@ -54,22 +54,25 @@ setTimeout(function displayInfo() {
   Counter.traceSorted(writer);
   // Timer.trace(writer);
 
-  $("#info").html(output);
+  document.getElementById("info").innerHTML = output;
   setTimeout(displayInfo, 1000);
 }, 1000);
 
-$(".avm2Option").each(function() {
-  $(this).change(function () {
-    state[$(this).attr("id")] = $(this).attr('checked') ? true : false;
+Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(element) {
+  function setElementState(pressed) {
+    if (pressed)
+      element.classList.add("pressedState");
+    else
+      element.classList.remove("pressedState");
+  }
+
+  var id = element.getAttribute("id");
+  element.addEventListener("click", function () {
+    setElementState(state[id] = !state[id]);
+    updateAVM2State();
     saveState(state);
   });
-  $(this).toggleClass("pressedState", !!state[$(this).attr('id')]);
+  setElementState(state[id]);
 });
 
-$(".avm2Option").click(function () {
-  $(this).toggleClass("pressedState");
-  var name = $(this).attr('id');
-  state[name] = $(this).hasClass("pressedState");
-  saveState(state);
-  updateAVM2State();
-});
+

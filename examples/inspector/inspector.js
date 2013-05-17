@@ -177,7 +177,7 @@ function parseQueryString(qs) {
  * when the page loads.
  */
 if (remoteFile) {
-  $('#openFileToolbar')[0].setAttribute('hidden', true);
+  document.getElementById('openFileToolbar').setAttribute('hidden', true);
   executeFile(remoteFile, null, parseQueryString(window.location.search));
 }
 
@@ -190,7 +190,7 @@ if (yt) {
     var swf = JSON.parse(/swf\s*=\s*("[^;]+)/.exec(xhr.responseText)[1]);
     swf = /src="([^"]+)/.exec(swf)[1];
 
-    $('#openFileToolbar')[0].setAttribute('hidden', true);
+    document.getElementById('openFileToolbar').setAttribute('hidden', true);
     executeFile(swf, null, config.args);
   };
   xhr.send(null);
@@ -206,8 +206,8 @@ if (getQueryVariable('sanity')) {
 }
 
 function showMessage(msg) {
-  $('#message').text(msg);
-  $('#message')[0].parentElement.removeAttribute('hidden');
+  document.getElementById('message').textContent = msg;
+  document.getElementById('message').parentElement.removeAttribute('hidden');
 }
 
 function executeFile(file, buffer, movieParams) {
@@ -236,7 +236,7 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        SWF.embed(buffer || file, document, $("#stage")[0], {
+        SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
           onStageInitialized: stageInitialized,
           onBeforeFrame: frame,
@@ -263,7 +263,7 @@ function executeFile(file, buffer, movieParams) {
 
 function stageInitialized(stage) {
   if (TRACE_SYMBOLS_INFO) {
-    var traceSymbolsInfo = $('#traceSymbolsInfo')[0];
+    var traceSymbolsInfo = document.getElementById('traceSymbolsInfo');
     traceSymbolsInfo.removeAttribute('hidden');
     traceSymbolsInfo.appendChild(stage._control);
   }
@@ -288,8 +288,9 @@ function frame(e) {
   var stageSize = getQueryVariable("size");
   if (stageSize && /^\d+x\d+$/.test(stageSize)) {
     var dims = stageSize.split('x');
-    $("#stage")[0].style.width = dims[0] + "px";
-    $("#stage")[0].style.height = dims[1] + "px";
+    var stage = document.getElementById('stage');
+    stage.style.width = dims[0] + "px";
+    stage.style.height = dims[1] + "px";
   }
 })();
 
