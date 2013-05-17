@@ -290,9 +290,14 @@ SWF.parseAsync = function swf_parseAsync(options) {
       }
 
       if (isImage) {
-        parseImage(data, imageType);
+        parseImage(data, progressInfo.bytesTotal, imageType);
       }
       buffer = null;
+    },
+    close: function () {
+      if ('target' in this && this.target.close) {
+        this.target.close();
+      }
     }
   };
 
@@ -310,20 +315,32 @@ SWF.parseAsync = function swf_parseAsync(options) {
     pipe.target = target;
   }
 
-  function parseImage(data, type) {
-    var props = {};
-    var chunks;
-    if (type == 'image/jpeg') {
-      chunks = parseJpegChunks(props, data);
-    } else {
-      chunks = [data];
-    }
-    var symbol = {
-      type: 'image',
-      props: props,
-      data : new Blob(chunks, {type: type})
-    }
-    options.oncomplete && options.oncomplete(symbol);
+  function parseImage(data, bytesTotal, type) {
+    var buffer = new Uint8Array(bytesTotal);
+    buffer.set(data);
+    var bufferPos = data.length;
+
+    pipe.target = {
+      push: function (data) {
+        buffer.set(data, bufferPos);
+        bufferPos += data.length;
+      },
+      close: function () {
+        var props = {};
+        var chunks;
+        if (type == 'image/jpeg') {
+          chunks = parseJpegChunks(props, buffer);
+        } else {
+          chunks = [buffer];
+        }
+        var symbol = {
+          type: 'image',
+          props: props,
+          data : new Blob(chunks, {type: type})
+        }
+        options.oncomplete && options.oncomplete(symbol);
+      }
+    };
   }
 
   return pipe;

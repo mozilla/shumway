@@ -88,8 +88,10 @@ function runViewer() {
   objectParams = flashParams.objectParams;
   var isOverlay = flashParams.isOverlay;
   pauseExecution = flashParams.isPausedAtStart;
+
   console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
-  FirefoxCom.requestSync('loadFile', {url: movieUrl, sessionId: 0});
+  parseSwf(movieUrl, movieParams, objectParams);
+
   if (isOverlay) {
     var fallbackDiv = document.getElementById('fallback');
     fallbackDiv.className = 'enabled';
@@ -110,53 +112,15 @@ function showURL() {
   window.prompt("Copy to clipboard", flashParams.url);
 }
 
-function Subscription() {}
-Subscription.prototype = {
-  subscribe: function (callback) {
-    this.callback = callback;
-    if (this.buffer) {
-      for (var i = 0; i < this.buffer.length; i++) {
-        var data = this.buffer[i];
-        callback(data.array, {loaded: data.loaded, total: data.total});
-      }
-      delete this.buffer;
-    }
-  },
-  send: function (data) {
-    if (this.callback) {
-      this.callback(data.array, {loaded: data.loaded, total: data.total});
-      return;
-    }
-    if (!this.buffer)
-      this.buffer = [];
-    this.buffer.push(data);
-  }
-};
-
-var subscription = null, movieUrl, movieParams, objectParams;
+var movieUrl, movieParams, objectParams;
 
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
   switch (args.callback) {
     case "loadFile":
-      if (args.sessionId != 0) {
-        var session = FileLoadingService.sessions[args.sessionId];
-        if (session)
-          session.notify(args);
-        return;
-      }
-      switch (args.topic) {
-        case "open":
-          subscription = new Subscription();
-          parseSwf(movieUrl, subscription, movieParams, objectParams);
-          break;
-        case "progress":
-          subscription.send(args);
-          console.log(movieUrl + ': loaded ' + args.loaded + '/' + args.total);
-          break;
-        case "error":
-          console.error('Unable to download ' + movieUrl + ': ' + args.error);
-          break;
+      var session = FileLoadingService.sessions[args.sessionId];
+      if (session) {
+        session.notify(args);
       }
       break;
   }
@@ -215,12 +179,12 @@ var FileLoadingService = {
   }
 };
 
-function parseSwf(url, file, movieParams, objectParams) {
+function parseSwf(url, movieParams, objectParams) {
   console.log("Parsing " + url + "...");
   function loaded() {}
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
-    SWF.embed(file, document, document.getElementById("viewer"), {
+    SWF.embed(url, document, document.getElementById("viewer"), {
        movieParams: movieParams,
        objectParams: objectParams,
        onComplete: loaded,
