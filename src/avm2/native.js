@@ -563,10 +563,10 @@ var natives = (function () {
           if (args[0] instanceof Function) {
             compareFunction = args[0];
           } else if (isNumber(args[0])) {
-            options = parseInt(args[0]);
+            options = args[0];
           }
           if (isNumber(args[1])) {
-            options = parseInt(args[1]);
+            options = args[1];
           }
           o.sort(function (a, b) {
             return compare(a, b, options, compareFunction);

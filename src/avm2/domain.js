@@ -324,7 +324,7 @@ var Domain = (function () {
           assert (instance && tP && dP);
           assert (tP === instance.prototype);
           assert (dP === instance.prototype || dP === Object.getPrototypeOf(instance.prototype));
-          assert (isClassObject(this));
+          assert (isClass(this));
           if (tP !== Object.prototype) {
             // We don't want to put "class" and "shape" on the Object.prototype.
             assert (Object.hasOwnProperty.call(tP, "class"));
@@ -595,6 +595,9 @@ var Domain = (function () {
       abc.domain = this;
       this.abcs.push(abc);
       abc.runtime = new Runtime(abc);
+      if (!this.base) {
+        Type.initializeTypes(this);
+      }
     },
 
     broadcastMessage: function (message, origin) {

@@ -179,7 +179,8 @@ function traceOperands(opcode, abc, code, rewind) {
   return str;
 }
 
-MethodInfo.prototype.trace = function trace(writer, abc) {
+MethodInfo.prototype.trace = function trace(writer) {
+  var abc = this.abc;
   writer.enter("method" + (this.name ? " " + this.name : "") + " {");
   writer.writeLn("flags: " + getFlags(this.flags, "NEED_ARGUMENTS|NEED_ACTIVATION|NEED_REST|HAS_OPTIONAL||NATIVE|SET_DXN|HAS_PARAM_NAMES".split("|")));
   writer.writeLn("parameters: " + this.parameters.map(function (x) {

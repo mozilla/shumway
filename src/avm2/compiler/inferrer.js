@@ -139,11 +139,10 @@ var Type = (function () {
   };
 
   var typesInitialized = false;
-  type.initializeTypes = function (abc) {
+  type.initializeTypes = function (domain) {
     if (typesInitialized) {
       return;
     }
-    var domain = abc.domain;
     type.Any = new AtomType("Any");
     type.Null = new AtomType("Null");
     type.Undefined = new AtomType("Undefined");
@@ -521,12 +520,10 @@ var Verifier = (function() {
   })();
 
   var Verification = (function() {
-    function verification(verifier, methodInfo, scope) {
+    function verification(methodInfo, scope) {
       this.scope = scope;
-      this.abc = verifier.abc;
-      this.domain = this.abc.domain;
-      this.verifier = verifier;
       this.methodInfo = methodInfo;
+      this.domain = methodInfo.abc.domain;
       this.writer = new IndentingWriter();
       this.returnType = Type.Undefined;
     }
@@ -541,7 +538,7 @@ var Verifier = (function() {
       });
 
       if (writer) {
-        this.methodInfo.trace(writer, this.verifier.abc);
+        this.methodInfo.trace(writer);
       }
 
       var entryState = new State();
@@ -663,8 +660,8 @@ var Verifier = (function() {
       var writer = verifierTraceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
-      var abc = this.verifier.abc;
-      var multinames = abc.constantPool.multinames;
+      var domain = this.methodInfo.abc.domain;
+      var multinames = this.methodInfo.abc.constantPool.multinames;
       var mi = this.methodInfo;
 
       var bc, obj, fn, mn, l, r, val, type, returnType;
@@ -725,19 +722,20 @@ var Verifier = (function() {
 
         // Try the saved scope.
         if (savedScope && savedScope.object && mn instanceof Multiname) {
-          var obj = savedScope.findProperty(mn, abc.domain, strict, true);
+          var obj = savedScope.findProperty(mn, domain, strict, true);
           if (obj) {
             var savedScopeDepth = savedScope.findDepth(obj);
             release || assert(savedScopeDepth >= 0);
             ti().scopeDepth = savedScopeDepth + scope.length;
-            if (obj instanceof Global) {
+            if (obj instanceof Global || isClass(obj)) {
               ti().object = obj;
             }
-            return Type.from(obj, abc.domain);
+            return Type.from(obj, domain);
           }
         }
 
-        var resolved = abc.domain.findDefiningScript(mn, !mi.isInstanceInitializer);
+        // var resolved = domain.findDefiningScript(mn, !mi.isInstanceInitializer);
+        var resolved = domain.findDefiningScript(mn, true);
         if (resolved) {
           var global = resolved.script.global;
           if (global) {
@@ -746,7 +744,7 @@ var Verifier = (function() {
           } else if (resolved.script) {
             ti().script = resolved.script;
           }
-          return Type.from(resolved.script, abc.domain);
+          return Type.from(resolved.script, domain);
         }
         return Type.Any;
       }
@@ -774,9 +772,9 @@ var Verifier = (function() {
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot()) {
-              return Type.fromName(trait.typeName, abc.domain).instance();
+              return Type.fromName(trait.typeName, domain).instance();
             } else if (trait.isClass()) {
-              return Type.from(trait.classInfo, abc.domain);
+              return Type.from(trait.classInfo, domain);
             }
           }
         }
@@ -790,13 +788,13 @@ var Verifier = (function() {
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot() || trait.isConst()) {
-              return Type.fromName(trait.typeName, abc.domain).instance();
+              return Type.fromName(trait.typeName, domain).instance();
             } else if (trait.isGetter()) {
-              return Type.fromName(trait.methodInfo.returnType, abc.domain).instance();
+              return Type.fromName(trait.methodInfo.returnType, domain).instance();
             } else if (trait.isClass()) {
-              return Type.from(trait.classInfo, abc.domain);
+              return Type.from(trait.classInfo, domain);
             } else if (trait.isMethod()) {
-              return Type.from(trait.methodInfo, abc.domain);
+              return Type.from(trait.methodInfo, domain);
             }
           } else {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
@@ -824,7 +822,7 @@ var Verifier = (function() {
         var op = bc.op;
 
         if (writer && verifierTraceLevel.value > 1) {
-          writer.writeLn(("stateBefore: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(abc));
+          writer.writeLn(("stateBefore: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(mi.abc));
         }
 
         switch (op) {
@@ -1016,7 +1014,7 @@ var Verifier = (function() {
               break;
             }
             if (type instanceof MethodType) {
-              returnType = Type.fromName(type.methodInfo.returnType, abc.domain).instance();
+              returnType = Type.fromName(type.methodInfo.returnType, domain).instance();
             } else if (type instanceof TraitsType && type.isClassInfo()) {
               returnType = type.instance();
             } else {
@@ -1383,16 +1381,14 @@ var Verifier = (function() {
     return verification;
   })();
 
-  function verifier(abc) {
+  function verifier() {
     this.writer = new IndentingWriter();
-    this.abc = abc;
-    Type.initializeTypes(abc);
   }
 
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
     // release || assert(scope.object, "Verifier needs a scope object.");
     try {
-      new Verification(this, methodInfo, scope).verify();
+      new Verification(methodInfo, scope).verify();
       methodInfo.verified = true;
       Counter.count("Verifier: Methods");
     } catch (e) {

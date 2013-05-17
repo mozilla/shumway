@@ -111,8 +111,8 @@ function installProxyClassWrapper(cls) {
             return target[proxyTrapQns.getProperty](name);
           }
         }
-        if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn]) {
-          return safeBind(target[VM_OPEN_METHODS][VM_OPEN_METHOD_PREFIX + qn], o);
+        if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
+          return safeBind(target[VM_OPEN_METHODS][qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];
