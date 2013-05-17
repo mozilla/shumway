@@ -17,154 +17,157 @@
  */
 
 var EventDispatcherDefinition = (function () {
-  var CUSTOM_DOM_EVENT_PREFIX = 'shumway.';
+  function dispatchEventFunction(event) {
+    if (event._target)
+      event = event.clone();
 
-  var def = {
-    __class__: 'flash.events.EventDispatcher',
+    var type = event._type;
+    var target = this._target;
 
-    initialize: function () {
-      this._captureHandlers = { };
-      this._control = null;
-      this._handlers = { };
-    },
-
-    ctor: function (target) {
-      this._target = target;
-    },
-    addEventListener: function (type, listener, useCapture, prio, useWeakReference) {
-      if (typeof listener !== 'function')
-      if (typeof listener !== 'function' || !type)
-        throw ArgumentError();
-
-      if (prio === undefined)
-        prio = 0;
-
-      var handlers = useCapture ? this._captureHandlers : this._handlers;
-      var handler = handlers[type];
-
-      if (!handler) {
-        var target = this;
-        handler = {
-          queue: [],
-
-          handleEvent: function (evt) {
-            if (evt instanceof CustomEvent) {
-              var domEvent = evt;
-              evt = domEvent.detail;
-              evt._eventPhase = domEvent.eventPhase;
-            }
-
-            evt._currentTarget = evt._target;
-
-            var queue = this.queue.slice(0); // can be modified
-            for (var i = 0, n = queue.length; i < n; i++) {
-              var entry = queue[i];
-              entry.listener(evt);
-            }
-          }
-        };
-
-        if (this._control)
-          this._control.addEventListener(CUSTOM_DOM_EVENT_PREFIX + type, handler, useCapture);
-
-        handlers[type] = handler;
+    if (event._bubbles) {
+      var ancestors = [];
+      var node = this._parent;
+      while (node) {
+        if (node.hasEventListener(type))
+          ancestors.push(node);
+        node = node._parent;
       }
 
-      var queue = handler.queue;
-      var index = queue.length;
-      while (index > 0) {
-        var entry = queue[index - 1];
+      var propagating = true;
 
-        if (prio < entry.prio)
+      var i = ancestors.length;
+      while (i-- && propagating) {
+        var node = ancestors[i];
+        var queue = node._captureListeners[type];
+        propagating = processListeners(queue, event, target, node, 1);
+      }
+
+      if (propagating) {
+        propagating =
+          processListeners(this._listeners[type], event, target);
+      }
+
+      if (propagating) {
+        for (var i = 0; i < ancestors.length && propagating; i++) {
+          var node = ancestors[i];
+          var queue = node._listeners[type];
+          propagating = processListeners(queue, event, target, node, 3);
+        }
+      }
+    } else {
+      processListeners(this._listeners[type], event, target);
+    }
+
+    return !event._isDefaultPrevented;
+  }
+  function processListeners(queue, event, target, currentTarget, eventPhase) {
+    if (queue) {
+      queue = queue.slice();
+
+      event._target = target;
+      event._currentTarget = currentTarget || target;
+      event._eventPhase = eventPhase || 2;
+
+      for (var i = 0; i < queue.length; i++) {
+        var item = queue[i];
+        item.handleEvent(event);
+        if (event._stopImmediatePropagation)
           break;
-
-        index--;
       }
-      queue.splice(index, 0, { listener: listener, prio: prio });
-    },
-    ctor: function (target) {
+    }
 
-    },
-    dispatchEvent: function (evt) {
-      if (evt._target)
-        evt = evt.public$$clone();
-      else
-        evt._target = this;
+    return !event._stopPropagation;
+  }
 
-      if (this._control) {
-        var domEvent = document.createEvent('CustomEvent');
-        domEvent.initCustomEvent(CUSTOM_DOM_EVENT_PREFIX + evt.type, evt.bubbles, evt.cancelable, evt);
-        if ($DEBUG) {
-          try {
-            this._control.dispatchEvent(domEvent);
-          } catch (e) {
-            log('error ' + e + ', stack: \n' + e.stack);
-          }
-        } else {
-          this._control.dispatchEvent(domEvent);
-        }
-      } else {
-        var handler = this._handlers[evt.type];
-        if (handler) {
-          if ($DEBUG) {
-            try {
-              handler.handleEvent(evt);
-            } catch (e) {
-              log('error ' + e + ', stack: \n' + e.stack);
+  return {
+    // (target:IEventDispatcher = null)
+    __class__: "flash.events.EventDispatcher",
+    initialize: function () {
+      this._target = this;
+      this._listeners = { }
+      this._captureListeners = { };
+    },
+    sendEvent: dispatchEventFunction,
+    __glue__: {
+      native: {
+        instance: {
+          ctor: function ctor(target) { // (target:IEventDispatcher) -> void
+            if (target)
+              this._target = target;
+          },
+          addEventListener: function addEventListener(type, listener, useCapture, priority, useWeakReference) { // (type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false) -> void
+            if (typeof listener !== 'function')
+              throw new ArgumentError();
+
+            var listeners = useCapture ? this._captureListeners :
+                                         this._listeners;
+            var queue = listeners[type];
+            var handler = {
+              handleEvent: listener,
+              prio: priority
+            };
+            if (queue) {
+              var pos = queue.length;
+
+              var i = pos;
+              while (i--) {
+                var item = queue[i];
+
+                if (item.handleEvent === listener)
+                  return;
+
+                if (priority > item.prio)
+                  pos = i;
+              }
+
+              queue.splice(pos, 0, handler);
+            } else {
+              listeners[type] = [handler];
             }
-          } else {
-            handler.handleEvent(evt);
-          }
+          },
+          removeEventListener: function removeEventListener(type, listener, useCapture) { // (type:String, listener:Function, useCapture:Boolean = false) -> void
+            if (typeof listener !== 'function')
+              return;
+
+            var listeners = useCapture ? this._captureListeners :
+                                         this._listeners;
+            var queue = listeners[type];
+            if (queue) {
+              for (var i = 0; i < queue.length; i++) {
+                var item = queue[i];
+                if (item.handleEvent === listener) {
+                  queue.splice(i, 1);
+                  if (!queue.length)
+                    delete listeners[type];
+                  return;
+                }
+              }
+            }
+          },
+          hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
+            return type in this._listeners || type in this._captureListeners;
+          },
+          willTrigger: function willTrigger(type) { // (type:String) -> Boolean
+            var node = this;
+            do {
+              if (node.hasEventListener(type))
+                return true;
+            } while (node = node._parent);
+
+            return false;
+          },
+          dispatchEventFunction: dispatchEventFunction
         }
-      }
-
-      return !!evt.isDefaultPrevented;
-    },
-    hasEventListener: function (type) {
-      return type in this._captureHandlers || type in this._handlers;
-    },
-    removeEventListener: function (type, listener, useCapture) {
-      var handlers = useCapture ? this._captureHandlers : this._handlers;
-      var handler = handlers[type];
-      if (handler) {
-        var queue = handler.queue;
-        for (var i = 0; i < queue.length; i++) {
-          if (queue[i].listener === listener) {
-            queue.splice(i, 1);
-            break;
-          }
+      },
+      script: {
+        instance: {
+          addEventListener: 'public addEventListener',
+          removeEventListener: 'public removeEventListener',
+          hasEventListener: 'public hasEventListener',
+          willTrigger: 'public willTrigger',
+          dispatchEvent: 'public dispatchEvent'
         }
-        if (!queue.length) {
-          if (this._control)
-            this._control.removeEventListener(CUSTOM_DOM_EVENT_PREFIX + type, handler, useCapture);
-
-          delete handlers[type];
-        }
-      }
-    },
-    willTrigger: function (type) {
-      var dispatcher = this;
-      do {
-        if (dispatcher.hasEventListener(type))
-          return true;
-      } while (dispatcher = dispatcher.parent);
-
-      return false;
-    }
-  };
-
-  def.__glue__ = {
-    native: {
-      instance: {
-        ctor: def.ctor,
-        addEventListener: def.addEventListener,
-        removeEventListener: def.removeEventListener,
-        hasEventListener: def.hasEventListener,
-        willTrigger: def.willTrigger,
-        dispatchEventFunction: def.dispatchEvent
       }
     }
   };
-
-  return def;
 }).call(this);

@@ -42,7 +42,7 @@ var TimerDefinition = (function () {
           clearInterval(this.interval);
         },
         _timerDispatch: function () {
-          this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
+          this.sendEvent(new flash.events.TimerEvent("timer", true, false));
         }
       }
     }

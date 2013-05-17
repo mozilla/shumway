@@ -128,10 +128,10 @@ var SpriteDefinition = (function () {
 
           instance._markAsDirty();
 
-          instance.dispatchEvent(new flash.events.Event("load"));
-          instance.dispatchEvent(new flash.events.Event("added"));
+          instance.sendEvent(new flash.events.Event("load"));
+          instance.sendEvent(new flash.events.Event("added"));
           if (this.stage)
-            instance.dispatchEvent(new flash.events.Event("addedToStage"));
+            instance.sendEvent(new flash.events.Event("addedToStage"));
 
           children[i] = instance;
         }
@@ -167,8 +167,8 @@ var SpriteDefinition = (function () {
 
       instance._markAsDirty();
 
-      instance.dispatchEvent(new flash.events.Event("load"));
-      instance.dispatchEvent(new flash.events.Event("added"));
+      instance.sendEvent(new flash.events.Event("load"));
+      instance.sendEvent(new flash.events.Event("added"));
 
       children.push(instance);
 

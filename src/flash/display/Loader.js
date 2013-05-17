@@ -417,12 +417,10 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        this.contentLoaderInfo.dispatchEvent(
-            new flash.events.Event("complete"));
+        this.contentLoaderInfo.sendEvent(new flash.events.Event("complete"));
         break;
       case 'error':
-        this.contentLoaderInfo.dispatchEvent(
-            new flash.events.IOErrorEvent("ioError"));
+        this.contentLoaderInfo.sendEvent(new flash.events.IOErrorEvent("ioError"));
         break;
       default:
         //TODO: fix special-casing. Might have to move document class out of dictionary[0]
@@ -444,7 +442,7 @@ var LoaderDefinition = (function () {
       var event = new flash.events.ProgressEvent("progress", false, false,
                                                  loaderInfo._bytesLoaded,
                                                  loaderInfo._bytesTotal);
-      loaderInfo.dispatchEvent(event);
+      loaderInfo.sendEvent(event);
     },
     _buildFrame: function (displayList, timeline, promiseQueue, frame, frameNum) {
       var loader = this;
@@ -672,7 +670,7 @@ var LoaderDefinition = (function () {
         }
 
         if (frameNum === 1)
-          loaderInfo.dispatchEvent(new flash.events.Event('init', false, false));
+          loaderInfo.sendEvent(new flash.events.Event('init', false, false));
 
         framePromise.resolve(frame);
       });
@@ -698,8 +696,7 @@ var LoaderDefinition = (function () {
         loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
-        loader.contentLoaderInfo.dispatchEvent(
-            new flash.events.Event("init"));
+        loader.contentLoaderInfo.sendEvent(new flash.events.Event("init"));
       }
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
