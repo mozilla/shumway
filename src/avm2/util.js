@@ -1152,6 +1152,7 @@ var Callback = (function () {
     var args = sliceArguments(arguments, 0);
     var queue = this.queue;
     for (var i = 0; i < queue.length; i++) {
+      Counter.count("callback.notify");
       var callback = queue[i];
       callback.apply(null, args);
     }

@@ -46,17 +46,39 @@ function updateAVM2State() {
 
 setTimeout(function displayInfo() {
   var output = "";
-  var writer = new IndentingWriter(false, function (x) {
-    x = x.replace(" ", "&nbsp;");
-    output += x + "<br>";
+  var counts = Counter.counts;
+  var pairs = [];
+  for (var name in counts) {
+    pairs.push([name, counts[name]]);
+  }
+  pairs.sort(function (a, b) {
+    return b[1] - a[1];
   });
 
-  Counter.traceSorted(writer);
-  // Timer.trace(writer);
-
+  var totalCount = 0;
+  pairs.forEach(function (pair) {
+    var color;
+    if (pair[1] > 100000) {
+      color = "magenta";
+    } else if (pair[1] > 10000) {
+      color = "purple";
+    } else if (pair[1] > 1000) {
+      color = "red";
+    } else if (pair[1] > 100) {
+      color = "orange";
+    } else {
+      color = "green";
+    }
+    output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + "</div>";
+    totalCount += pair[1];
+  });
+  if (totalCount > 100000) {
+    // Don't delete me, this is meant to be annoying.
+    alert("The Counters Are Too Damn High (> 100,000).");
+  }
   document.getElementById("info").innerHTML = output;
-  setTimeout(displayInfo, 1000);
-}, 1000);
+  setTimeout(displayInfo, 500);
+}, 500);
 
 Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(element) {
   function setElementState(pressed) {
