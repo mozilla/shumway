@@ -338,25 +338,25 @@ var LoaderDefinition = (function () {
         reader.readAsArrayBuffer(input);
       }
     } else {
-      var xhr = new XMLHttpRequest;
-      xhr.open('GET', input);
-      xhr.responseType = 'arraybuffer';
-      xhr.onload = function onload(event) {
-        //TODO: check which way to handle status codes
-        if (xhr.status >= 300) {
-          loader._commitData({command: 'error', xhr: xhr});
-        } else {
-          parseBytes(this.response);
-        }
-      };
-      xhr.onprogress = function onprogress(event) {
+      var session = FileLoadingService.createSession();
+      var pipe = SWF.parseAsync(createParsingContext());
+      session.onprogress = function (data, progressState) {
+        pipe.push(data);
+
         var data = {
           command : 'progress',
           result : {bytesLoaded : event.loaded, bytesTotal : event.total}
         };
         loader._commitData(data);
-      }
-      xhr.send();
+      };
+      session.onerror = function (error) {
+        loader._commitData({command: 'error', error: error});
+      };
+      session.onopen = function () {
+      };
+      session.onclose = function () {
+      };
+      session.open(new flash.net.URLRequest(input));
     }
   }
 
@@ -963,11 +963,20 @@ var LoaderDefinition = (function () {
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };
-        if (typeof input === 'object' && 'subscribe' in input) {
-          worker.postMessage('pipe:');
-          input.subscribe(function (data, progressInfo) {
-            worker.postMessage({data: data, progress: progressInfo});
-          });
+        if (typeof input === 'string') {
+          var session = FileLoadingService.createSession();
+          session.onprogress = function (data, progress) {
+            worker.postMessage({data: data, progress: progress});
+          };
+          session.onerror = function (error) {
+            loader._commitData({command: 'error', error: error});
+          };
+          session.onopen = function () {
+            worker.postMessage('pipe:');
+          };
+          session.onclose = function () {
+          };
+          session.open(new flash.net.URLRequest(input));
         } else {
           worker.postMessage(input);
         }
