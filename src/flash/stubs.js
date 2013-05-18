@@ -213,6 +213,7 @@ var Stubs = new (function () {
     M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
     M("flash.net.SharedObject", "SharedObjectClass", SharedObjectDefinition),
     M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
+    M("flash.net.URLVariables"),
 
     M("packageInternal flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
     M("flash.system.Capabilities", "CapabilitiesClass", CapabilitiesDefinition),
@@ -261,6 +262,14 @@ natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, i
   return function getTimer() {
     return Date.now() - start;
   };
+};
+
+natives['FlashUtilScript::escapeMultiByte'] = function EscapeMultiByteMethod(runtime, scope, instance, baseClass) {
+  return escape;
+};
+
+natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod(runtime, scope, instance, baseClass) {
+  return unescape;
 };
 
 natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
