@@ -148,7 +148,11 @@ var NetConnectionDefinition = (function () {
               notImplemented("NetConnection.unconnectedPeerStreams");
               return this._unconnectedPeerStreams;
             }
-          }
+          },
+          invokeWithArgsArray: function invokeWithArgsArray(index, p_arguments) {
+            // (index:uint, p_arguments:Array) -> any
+            notImplemented("NetConnection.invokeWithArgsArray");
+          },
         }
       }
     }

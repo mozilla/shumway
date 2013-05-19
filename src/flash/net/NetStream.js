@@ -107,7 +107,7 @@ var NetStreamDefinition = (function () {
           },
           invoke: function invoke(index) {
             // (index:uint) -> any
-            notImplemented("NetStream.invoke");
+            notImplemented("NetStream.invoke (" + index + ")");
           },
           invokeWithArgsArray: function invokeWithArgsArray(index, p_arguments) {
             // (index:uint, p_arguments:Array) -> any
@@ -146,12 +146,11 @@ var NetStreamDefinition = (function () {
           soundTransform: {
             get: function soundTransform() {
               // (void) -> SoundTransform
-              notImplemented("NetStream.soundTransform");
               return this._soundTransform;
             },
             set: function soundTransform(sndTransform) {
               // (sndTransform:SoundTransform) -> void
-              notImplemented("NetStream.soundTransform");
+              somewhatImplemented("NetStream.soundTransform");
               this._soundTransform = sndTransform;
             }
           },
