@@ -391,3 +391,7 @@ var DEFINE_SCENE = {
     count: 'labelCount'
   }
 };
+var DEFINE_SCALING_GRID = {
+  symbolId: UI16,
+  splitter: RECT
+};

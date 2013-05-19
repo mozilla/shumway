@@ -228,6 +228,16 @@ var LoaderDefinition = (function () {
             case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
               frame.sceneData = tag.data;
               break;
+            case SWF_TAG_CODE_DEFINE_SCALING_GRID:
+              var symbolUpdate = {
+                isSymbol: true,
+                id: tag.symbolId,
+                updates: {
+                  scale9Grid: tag.splitter
+                }
+              };
+              commitData(symbolUpdate);
+              break;
             case SWF_TAG_CODE_DO_ABC:
             case SWF_TAG_CODE_DO_ABC_:
               var abcBlocks = frame.abcBlocks;
@@ -351,7 +361,7 @@ var LoaderDefinition = (function () {
 
         var data = {
           command : 'progress',
-          result : {bytesLoaded : event.loaded, bytesTotal : event.total}
+          result : {bytesLoaded : event.bytesLoaded, bytesTotal : event.bytesTotal}
         };
         loader._commitData(data);
       };
@@ -708,9 +718,18 @@ var LoaderDefinition = (function () {
       delete imageInfo.data;
     },
     _commitSymbol: function (symbol) {
+      var dictionary = this._dictionary;
+      if ('updates' in symbol) {
+        dictionary[symbol.id].then(function (s) {
+          for (var i in symbol.updates) {
+            s.props[i] = symbol.updates[i];
+          }
+        });
+        return;
+      }
+
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
-      var dictionary = this._dictionary;
       var promiseQueue = [];
       var props = { loader: this };
       var symbolPromise = new Promise;
