@@ -361,7 +361,7 @@ var LoaderDefinition = (function () {
 
         var data = {
           command : 'progress',
-          result : {bytesLoaded : event.bytesLoaded, bytesTotal : event.bytesTotal}
+          result : {bytesLoaded : progressState.bytesLoaded, bytesTotal : progressState.bytesTotal}
         };
         loader._commitData(data);
       };
@@ -427,7 +427,14 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        this._lastPromise.then(function () {
+        var frameConstructed = new Promise;
+        avm2.systemDomain.onMessage.register(function waitForFrame(e) {
+          if (e.data.type === 'frameConstructed') {
+            frameConstructed.resolve();
+            avm2.systemDomain.onMessage.unregister(waitForFrame);
+          }
+        });
+        Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo.dispatchEvent(
               new flash.events.Event("complete"));
         }.bind(this));
