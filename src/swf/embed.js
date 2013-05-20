@@ -42,6 +42,7 @@ SWF.embed = function(file, doc, container, options) {
     canvasHolder.setAttribute('style', 'display: inline-block; overflow: hidden;');
     canvasHolder.appendChild(canvas);
   }
+  stage._contentsScaleFactor = pixelRatio;
 
   loader._parent = stage;
   loader._stage = stage;

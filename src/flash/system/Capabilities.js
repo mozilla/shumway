@@ -60,7 +60,17 @@ var CapabilitiesDefinition = (function () {
             somewhatImplemented("Capabilities.hasAccessibility");
             return false;
           }
-        }
+        },
+        screenResolutionX: {
+          get: function screenResolutionX() { // (void) -> Number
+            return window.screen.width;
+          }
+        },
+        screenResolutionY: {
+          get: function screenResolutionY() { // (void) -> Number
+            return window.screen.height;
+          }
+        },
       }
     },
     script: {
