@@ -777,6 +777,8 @@ var Multiname = (function () {
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
       return Number(name);
+    } else if (name !== null && isObject(name)) {
+      return name;
     }
     assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;

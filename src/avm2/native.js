@@ -983,6 +983,20 @@ var natives = (function () {
       }
       return this.map.get(Object(qn));
     });
+    defineNonEnumerableProperty(Dp, "hasProperty", function (qn) {
+      if (qn instanceof Multiname) {
+        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
+          qn = Multiname.getPublicQualifiedName(qn.name);
+        } else {
+          qn = qn.name;
+        }
+      }
+      var primitiveKey = tryMakePrimitiveKey(qn);
+      if (primitiveKey !== undefined) {
+        return primitiveKey in this.primitiveMap;
+      }
+      return this.map.has(Object(qn));
+    });
     defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
       if (qn instanceof Multiname) {
         if (typeof qn.name !== "object" && typeof qn.name !== "function") {
