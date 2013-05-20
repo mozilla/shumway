@@ -54,9 +54,11 @@ var LoaderDefinition = (function () {
     ];
   }
 
+  var isWorker = typeof window === 'undefined';
+
   // Note that loader is null when calling from inside the worker, as AVM2 is
   // only initialized on the main thread.
-  function loadFromWorker(loader, input, context) {
+  function loadFromWorker(loader, request, context) {
     var symbols = { };
 
     var commitData;
@@ -330,7 +332,8 @@ var LoaderDefinition = (function () {
       SWF.parse(bytes, createParsingContext());
     }
 
-    if (typeof input === 'object') {
+    if (isWorker || !flash.net.URLRequest.class.isInstanceOf(request)) {
+      var input = request;
       if (input instanceof ArrayBuffer) {
         parseBytes(input);
       } else if ('subscribe' in input) {
@@ -357,7 +360,7 @@ var LoaderDefinition = (function () {
       var session = FileLoadingService.createSession();
       var pipe = SWF.parseAsync(createParsingContext());
       session.onprogress = function (data, progressState) {
-        pipe.push(data);
+        pipe.push(data, progressState);
 
         var data = {
           command : 'progress',
@@ -373,13 +376,13 @@ var LoaderDefinition = (function () {
       session.onclose = function () {
         pipe.close();
       };
-      session.open(new flash.net.URLRequest(input));
+      session.open(request._toFileRequest());
     }
   }
 
   // If we're inside a worker, do the parsing work and return undefined, since
   // communication is done by posting messages to the main thread.
-  if (typeof window === 'undefined') {
+  if (isWorker) {
     importScripts.apply(null, workerScripts);
 
     self.onmessage = function (evt) {
@@ -438,6 +441,10 @@ var LoaderDefinition = (function () {
           this.contentLoaderInfo.dispatchEvent(
               new flash.events.Event("complete"));
         }.bind(this));
+        break;
+      case 'empty':
+        this._lastPromise = new Promise();
+        this._lastPromise.resolve();
         break;
       case 'error':
         this.contentLoaderInfo.dispatchEvent(
@@ -992,14 +999,13 @@ var LoaderDefinition = (function () {
     _load: function (request, checkPolicyFile, applicationDomain,
                      securityDomain, deblockingFilter)
     {
-      var input = request.url;
-      if (typeof window !== 'undefined' && WORKERS_ENABLED) {
+      if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
         var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };
-        if (typeof input === 'string') {
+        if (flash.net.URLRequest.class.isInstanceOf(request)) {
           var session = FileLoadingService.createSession();
           session.onprogress = function (data, progress) {
             worker.postMessage({data: data, progress: progress});
@@ -1013,12 +1019,12 @@ var LoaderDefinition = (function () {
           session.onclose = function () {
             worker.postMessage({data: null});
           };
-          session.open(new flash.net.URLRequest(input));
+          session.open(request._toFileRequest());
         } else {
-          worker.postMessage(input);
+          worker.postMessage(request);
         }
       } else {
-        loadFromWorker(this, input);
+        loadFromWorker(this, request);
       }
     },
     _setup: function () {
