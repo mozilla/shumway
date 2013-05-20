@@ -22,6 +22,17 @@ var NetConnectionDefinition = (function () {
     __class__: "flash.net.NetConnection",
     initialize: function () {
     },
+    _invoke: function (index, args) {
+      var simulated = false, result;
+      switch (index) {
+      case 2: // call, e.g. with ('createStream', <Responder>)
+        simulated = true;
+        break;
+      }
+      (simulated ? somewhatImplemented : notImplemented)(
+        "NetConnection._invoke (" + index + ")");
+      return result;
+    },
     __glue__: {
       native: {
         static: {
@@ -148,7 +159,15 @@ var NetConnectionDefinition = (function () {
               notImplemented("NetConnection.unconnectedPeerStreams");
               return this._unconnectedPeerStreams;
             }
-          }
+          },
+          invoke: function invokeWithArgsArray(index) {
+            // (index:uint, arg1:Array, ...) -> any
+            return this._invoke(index, Array.prototype.slice.call(arguments, 1));
+          },
+          invokeWithArgsArray: function invokeWithArgsArray(index, p_arguments) {
+            // (index:uint, p_arguments:Array) -> any
+            return this._invoke.call(this, index, p_arguments);
+          },
         }
       }
     }

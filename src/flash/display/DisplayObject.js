@@ -66,6 +66,7 @@ var DisplayObjectDefinition = (function () {
       this._revision = 0;
       this._root = null;
       this._rotation = 0;
+      this._scale9Grid = null;
       this._scaleX = 1;
       this._scaleY = 1;
       this._stage = null;
@@ -89,6 +90,16 @@ var DisplayObjectDefinition = (function () {
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
+
+        var scale9Grid = s.scale9Grid;
+        if (scale9Grid) {
+          this._scale9Grid = new flash.geom.Rectangle(
+            scale9Grid.left,
+            scale9Grid.top,
+            (scale9Grid.right - scale9Grid.left),
+            (scale9Grid.bottom - scale9Grid.top)
+          );
+        }
 
         var matrix = s.currentTransform;
         if (matrix) {
@@ -435,10 +446,11 @@ var DisplayObjectDefinition = (function () {
       this._updateCurrentTransform();
     },
     get scale9Grid() {
-      return null;
+      return this._scale9Grid;
     },
     set scale9Grid(val) {
-      notImplemented();
+      somewhatImplemented('DisplayObject.scale9Grid');
+      this._scale9Grid = val;
     },
     get scrollRect() {
       return null;
