@@ -295,6 +295,14 @@ SWF.parseAsync = function swf_parseAsync(options) {
       buffer = null;
     },
     close: function () {
+      if (buffer) {
+        // buffer was closed: none or few bytes were received
+        var symbol = {
+          command: 'empty',
+          data : buffer.buffer.subarray(0, buffer.pos)
+        };
+        options.oncomplete && options.oncomplete(symbol);
+      }
       if ('target' in this && this.target.close) {
         this.target.close();
       }

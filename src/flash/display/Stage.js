@@ -61,6 +61,8 @@ var StageDefinition = (function () {
       this._pendingScripts = [];
       this._align = "";
       this._scaleMode = STAGE_SCALE_MODE_SHOW_ALL;
+      this._contentsScaleFactor = 1;
+      this._displayState = "normal";
     },
 
     _flushPendingScripts: function () {
@@ -174,8 +176,7 @@ var StageDefinition = (function () {
         scaleMode: desc(def, "scaleMode"),
         contentsScaleFactor: {
           get: function contentsScaleFactor() { // (void) -> Number
-            somewhatImplemented("Stage.contentsScaleFactor");
-            return this._contentsScaleFactor || 1;
+            return this._contentsScaleFactor;
           }
         },
         align: {
@@ -202,7 +203,6 @@ var StageDefinition = (function () {
         },
         displayState: {
           get: function displayState() { // (void) -> String
-            somewhatImplemented("Stage.displayState");
             return this._displayState;
           },
           set: function displayState(value) { // (value:String) -> void
