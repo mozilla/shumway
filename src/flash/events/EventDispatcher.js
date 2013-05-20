@@ -86,10 +86,10 @@ var EventDispatcherDefinition = (function () {
 
     },
     dispatchEvent: function (evt) {
-      if (evt._target)
+      if (evt._target) {
         evt = evt.public$$clone();
-      else
-        evt._target = this;
+      }
+      evt._target = this;
 
       if (this._control) {
         var domEvent = document.createEvent('CustomEvent');
