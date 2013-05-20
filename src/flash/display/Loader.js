@@ -228,6 +228,16 @@ var LoaderDefinition = (function () {
             case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
               frame.sceneData = tag.data;
               break;
+            case SWF_TAG_CODE_DEFINE_SCALING_GRID:
+              var symbolUpdate = {
+                isSymbol: true,
+                id: tag.symbolId,
+                updates: {
+                  scale9Grid: tag.splitter
+                }
+              };
+              commitData(symbolUpdate);
+              break;
             case SWF_TAG_CODE_DO_ABC:
             case SWF_TAG_CODE_DO_ABC_:
               var abcBlocks = frame.abcBlocks;
@@ -351,7 +361,7 @@ var LoaderDefinition = (function () {
 
         var data = {
           command : 'progress',
-          result : {bytesLoaded : event.loaded, bytesTotal : event.total}
+          result : {bytesLoaded : progressState.bytesLoaded, bytesTotal : progressState.bytesTotal}
         };
         loader._commitData(data);
       };
@@ -417,7 +427,14 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        this._lastPromise.then(function () {
+        var frameConstructed = new Promise;
+        avm2.systemDomain.onMessage.register(function waitForFrame(e) {
+          if (e.data.type === 'frameConstructed') {
+            frameConstructed.resolve();
+            avm2.systemDomain.onMessage.unregister(waitForFrame);
+          }
+        });
+        Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo.dispatchEvent(
               new flash.events.Event("complete"));
         }.bind(this));
@@ -708,9 +725,18 @@ var LoaderDefinition = (function () {
       delete imageInfo.data;
     },
     _commitSymbol: function (symbol) {
+      var dictionary = this._dictionary;
+      if ('updates' in symbol) {
+        dictionary[symbol.id].then(function (s) {
+          for (var i in symbol.updates) {
+            s.props[i] = symbol.updates[i];
+          }
+        });
+        return;
+      }
+
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
-      var dictionary = this._dictionary;
       var promiseQueue = [];
       var props = { loader: this };
       var symbolPromise = new Promise;

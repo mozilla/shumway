@@ -24,6 +24,30 @@ var NetStreamDefinition = (function () {
     __class__: "flash.net.NetStream",
     initialize: function () {
     },
+    _invoke: function (index, args) {
+      var simulated = false, result;
+      switch (index) {
+      case 4: // set bufferTime
+        simulated = true;
+        break;
+      case 300: // time
+        // result = videoElement.currentTime;
+        simulated = true;
+        return 0;
+      case 305: // get bytesLoaded
+        result = 1000000;
+        simulated = true;
+        return 0;
+      case 306: // get bytesTotal
+        result = 1000005;
+        simulated = true;
+        return 0;
+      }
+      // (index:uint) -> any
+      (simulated ? somewhatImplemented : notImplemented)(
+        "NetStream._invoke (" + index + ")");
+      return result;
+    },
     __glue__: {
       script: {
         instance: scriptProperties("public", ["appendBytes",
@@ -106,12 +130,12 @@ var NetStreamDefinition = (function () {
             notImplemented("NetStream.play2");
           },
           invoke: function invoke(index) {
-            // (index:uint) -> any
-            notImplemented("NetStream.invoke");
+            // (index:uint, arg1:Array, ...) -> any
+            return this._invoke(index, Array.prototype.slice.call(arguments, 1));
           },
           invokeWithArgsArray: function invokeWithArgsArray(index, p_arguments) {
             // (index:uint, p_arguments:Array) -> any
-            notImplemented("NetStream.invokeWithArgsArray");
+            return this._invoke.call(this, index, p_arguments);
           },
           appendBytes: function appendBytes(bytes) {
             if (this._mediaSource) {
@@ -146,12 +170,11 @@ var NetStreamDefinition = (function () {
           soundTransform: {
             get: function soundTransform() {
               // (void) -> SoundTransform
-              notImplemented("NetStream.soundTransform");
               return this._soundTransform;
             },
             set: function soundTransform(sndTransform) {
               // (sndTransform:SoundTransform) -> void
-              notImplemented("NetStream.soundTransform");
+              somewhatImplemented("NetStream.soundTransform");
               this._soundTransform = sndTransform;
             }
           },

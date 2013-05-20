@@ -32,7 +32,7 @@ var InteractiveObjectDefinition = (function () {
       return null;
     },
     set accessibilityImplementation(val) {
-      notImplemented();
+      somewhatImplemented("accessibilityImplementation");
     },
     get contextMenu() {
       somewhatImplemented("contextMenu");

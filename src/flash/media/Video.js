@@ -95,6 +95,12 @@ var VideoDefinition = (function () {
             somewhatImplemented("Video.videoWidth");
             return this._videoWidth;
           }
+        },
+        videoHeight: {
+          get: function videoHeight() { // (void) -> int
+            somewhatImplemented("Video.videoHeight");
+            return this._videoHeight;
+          }
         }
       }
     }

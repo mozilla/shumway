@@ -72,7 +72,7 @@ var tagHandler = {
   /* DefineFont3 */                   75: DEFINE_FONT2,
   /* SymbolClass */                   76: SYMBOL_CLASS,
   /* Metadata */                      77: undefined,
-  /* DefineScalingGrid */             78: undefined,
+  /* DefineScalingGrid */             78: DEFINE_SCALING_GRID,
   /* DoABC */                         82: DO_ABC,
   /* DefineShape4 */                  83: DEFINE_SHAPE,
   /* DefineMorphShape2 */             84: DEFINE_SHAPE,
