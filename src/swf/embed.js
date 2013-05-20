@@ -188,5 +188,5 @@ SWF.embed = function(file, doc, container, options) {
     });
   }
 
-  loader._load({url:file});
+  loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
 };
