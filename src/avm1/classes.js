@@ -60,7 +60,7 @@ function proxyEventHandler(eventName, argsConverter) {
           var args = argsConverter ? argsConverter(arguments) : null;
           return currentHandler.apply(this, args);
         }.bind(this);
-        this.$nativeObject.addEventListener(eventName, handlerRunner);
+        this.$nativeObject._addEventListener(eventName, handlerRunner);
       } else {
         handlerRunner = null;
       }
@@ -1037,12 +1037,12 @@ defineObjectProperties(AS2Key, {
   },
   $bind: {
     value: function $bind(stage) {
-      stage.addEventListener('keyDown', function(e) {
+      stage._addEventListener('keyDown', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         AS2Key.$keyStates[e.keyCode] = 1;
         AS2Key.broadcastMessage('onKeyDown');
       }, false);
-      stage.addEventListener('keyUp', function(e) {
+      stage._addEventListener('keyUp', function(e) {
         AS2Key.$lastKeyCode = e.keyCode;
         delete AS2Key.$keyStates[e.keyCode];
         AS2Key.broadcastMessage('onKeyUp');
@@ -1089,19 +1089,19 @@ defineObjectProperties(AS2Mouse, {
         AS2Mouse.$lastY = (mouseY - state.offsetY) / state.scale;
       }
 
-      stage.addEventListener('mousedown', function(e) {
+      stage._addEventListener('mousedown', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseDown');
       }, false);
-      stage.addEventListener('mousemove', function(e) {
+      stage._addEventListener('mousemove', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
-      stage.addEventListener('mouseout', function(e) {
+      stage._addEventListener('mouseout', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseMove');
       }, false);
-      stage.addEventListener('mouseup', function(e) {
+      stage._addEventListener('mouseup', function(e) {
         updateMouseState(e);
         AS2Mouse.broadcastMessage('onMouseUp');
       }, false);

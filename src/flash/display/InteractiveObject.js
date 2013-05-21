@@ -80,7 +80,7 @@ var InteractiveObjectDefinition = (function () {
       this._tabEnabled = val;
       if (old !== val) {
         var Event = flash.events.Event;
-        this.dispatchEvent(new Event(Event.class.TAB_ENABLED_CHANGE, false, false));
+        this._dispatchEvent(new Event('tabEnabledChange', false, false));
       }
     },
     requestSoftKeyboard: function () {

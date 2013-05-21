@@ -77,7 +77,7 @@ SWF.embed = function(file, doc, container, options) {
     stage._invalidate = true;
   }
 
-  loaderInfo.addEventListener('init', function () {
+  loaderInfo._addEventListener('init', function () {
     if (container.clientHeight) {
       fitCanvas(container, canvas);
       window.addEventListener('resize', function () {
@@ -98,17 +98,17 @@ SWF.embed = function(file, doc, container, options) {
       ShumwayKeyboardListener.focus = stage;
 
       if (stage._clickTarget) {
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('click'));
+        stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('click'));
       }
     });
     canvas.addEventListener('dblclick', function () {
       if (stage._clickTarget && stage._clickTarget._doubleClickEnabled) {
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('doubleClick'));
+        stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('doubleClick'));
       }
     });
     canvas.addEventListener('mousedown', function () {
       if (stage._clickTarget) {
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+        stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
       }
     });
     canvas.addEventListener('mousemove', function (domEvt) {
@@ -130,7 +130,7 @@ SWF.embed = function(file, doc, container, options) {
     });
     canvas.addEventListener('mouseup', function () {
       if (stage._clickTarget) {
-        stage._clickTarget.dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+        stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseUp'));
       }
     });
     canvas.addEventListener('mouseover', function () {
@@ -168,8 +168,8 @@ SWF.embed = function(file, doc, container, options) {
     stage._children[0] = root;
     stage._control.appendChild(root._control);
 
-    root.dispatchEvent(new flash.events.Event("added"));
-    root.dispatchEvent(new flash.events.Event("addedToStage"));
+    root._dispatchEvent(new flash.events.Event("added"));
+    root._dispatchEvent(new flash.events.Event("addedToStage"));
 
     syncCursor();
 
@@ -183,7 +183,7 @@ SWF.embed = function(file, doc, container, options) {
   });
 
   if (options.onComplete) {
-    loaderInfo.addEventListener("complete", function () {
+    loaderInfo._addEventListener("complete", function () {
       options.onComplete();
     });
   }

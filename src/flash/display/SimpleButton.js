@@ -85,19 +85,19 @@ var SimpleButtonDefinition = (function () {
 
       // binding mouse events
       var MouseEventClass = avm2.systemDomain.getClass("flash.events.MouseEvent");
-      this.addEventListener(MouseEventClass.MOUSE_DOWN, function (evt) {
+      this._addEventListener(MouseEventClass.MOUSE_DOWN, function (evt) {
         this._isMouseDown = true;
         this._updateButton();
       }.bind(this), true);
-      this.addEventListener(MouseEventClass.MOUSE_OUT, function (evt) {
+      this._addEventListener(MouseEventClass.MOUSE_OUT, function (evt) {
         this._isMouseOver = false;
         this._updateButton();
       }.bind(this), true);
-      this.addEventListener(MouseEventClass.MOUSE_OVER, function (evt) {
+      this._addEventListener(MouseEventClass.MOUSE_OVER, function (evt) {
         this._isMouseOver = true;
         this._updateButton();
       }.bind(this), true);
-      this.addEventListener(MouseEventClass.MOUSE_UP, function (evt) {
+      this._addEventListener(MouseEventClass.MOUSE_UP, function (evt) {
         this._isMouseDown = false;
         this._updateButton();
       }.bind(this), true);
@@ -178,8 +178,8 @@ var SimpleButtonDefinition = (function () {
         };
         // XXX: attaching events to the stage for now
         var KeyboardEventClass = avm2.systemDomain.getClass("flash.events.KeyboardEvent");
-        this.stage.addEventListener(KeyboardEventClass.KEY_DOWN, keyListener, false);
-        this.addEventListener('removed', function () {
+        this.stage._addEventListener(KeyboardEventClass.KEY_DOWN, keyListener, false);
+        this._addEventListener('removed', function () {
           this.stage.removeEventListener(KeyboardEventClass.KEY_DOWN, keyListener, false);
         }.bind(this), false);
       }

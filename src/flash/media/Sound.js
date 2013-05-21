@@ -92,7 +92,7 @@ var SoundDefinition = (function () {
       var mp3DecodingSession = null;
       var soundData = { completed: false };
 
-      stream.addEventListener("progress", function (event) {
+      stream._addEventListener("progress", function (event) {
         _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
         _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
 
@@ -120,11 +120,11 @@ var SoundDefinition = (function () {
         }
         dataPosition += bytesAvailable;
 
-        _this.dispatchEvent(event);
+        _this._dispatchEvent(event);
       });
 
-      stream.addEventListener("complete", function (event) {
-        _this.dispatchEvent(event);
+      stream._addEventListener("complete", function (event) {
+        _this._dispatchEvent(event);
         soundData.data = data.a;
         soundData.mimeType = 'audio/mpeg';
         soundData.completed = true;

@@ -40,7 +40,7 @@ var ShumwayKeyboardListener = {
     }
 
     if (this.focus) {
-      this.focus.dispatchEvent(new flash.events.KeyboardEvent(
+      this.focus._dispatchEvent(new flash.events.KeyboardEvent(
         domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,

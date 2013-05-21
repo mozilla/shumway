@@ -40,16 +40,16 @@ var URLStreamDefinition = (function () {
         }
         self._stream.push(data);
         var ProgressEventClass = avm2.systemDomain.getClass("flash.events.ProgressEvent");
-        self.dispatchEvent(ProgressEventClass.createInstance(["progress",
+        self._dispatchEvent(ProgressEventClass.createInstance(["progress",
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
         self._connected = false;
-        self.dispatchEvent(new flash.events.IOErrorEvent(flash.events.IOErrorEvent.IO_ERROR, false, false, error));
+        self._dispatchEvent(new flash.events.IOErrorEvent(flash.events.IOErrorEvent.IO_ERROR, false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new flash.events.Event("open", false, false));
+        self._dispatchEvent(new flash.events.Event("open", false, false));
       };
       session.onhttpstatus = function (location, httpStatus, httpHeaders) {
         var HTTPStatusEventClass = avm2.systemDomain.getClass("flash.events.HTTPStatusEvent");
@@ -69,7 +69,7 @@ var URLStreamDefinition = (function () {
 
         httpStatusEvent.public$responseHeaders = headers;
         httpStatusEvent.public$responseURL = location;
-        self.dispatchEvent(httpStatusEvent);
+        self._dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {
         self._connected = false;
@@ -79,7 +79,7 @@ var URLStreamDefinition = (function () {
           self._stream = new Stream(buffer, 0, 0, 0);
         }
 
-        self.dispatchEvent(new flash.events.Event("complete", false, false))
+        self._dispatchEvent(new flash.events.Event("complete", false, false))
       };
       session.open(request._toFileRequest());
       this._session = session;

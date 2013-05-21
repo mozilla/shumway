@@ -269,7 +269,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
             continue;
           }
           target._mouseOver = false;
-          target.dispatchEvent(this.mouseOutEvt);
+          target._dispatchEvent(this.mouseOutEvt);
 
           if (TRACE_SYMBOLS_INFO && target._control) {
             delete target._control.dataset.mouseOver;
@@ -279,7 +279,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
         while (newMouseOverTargets.length > 0) {
           target = newMouseOverTargets.pop();
           target._mouseOver = true;
-          target.dispatchEvent(this.mouseOverEvt);
+          target._dispatchEvent(this.mouseOverEvt);
 
           if (TRACE_SYMBOLS_INFO && target._control) {
             target._control.dataset.mouseOver = true;
@@ -316,7 +316,7 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
       if (stage._mouseOver &&
           hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
         if (mouseMoved) {
-          interactiveParent.dispatchEvent(this.mouseMoveEvt);
+          interactiveParent._dispatchEvent(this.mouseMoveEvt);
         }
         // saving the current interactive symbol and whole stack of
         // its parents (including duplicates)

@@ -44,10 +44,7 @@ var NetConnectionDefinition = (function () {
                 level : 'status',
                 code : 'NetConnection.Connect.Success'
               };
-              this.dispatchEvent(new flash.events.NetStatusEvent('netStatus',
-                                                                 false,
-                                                                 false,
-                                                                 info));
+              this._dispatchEvent(new flash.events.NetStatusEvent('netStatus', false, false, info));
             }
           },
           call: function call(command, responder) { // (command:String, responder:Responder, ...arguments) -> any
