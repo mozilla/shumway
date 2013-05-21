@@ -47,18 +47,17 @@ var NetConnectionDefinition = (function () {
         },
         instance: {
           connect: function connect(command) { // (command:String, ...arguments) -> void
+            var NetStatusEvent = flash.events.NetStatusEvent;
+
             somewhatImplemented("NetConnection.connect");
             this._uri = command;
             if (command == null) {
               this._connected = true;
-              var info = {
-                level : 'status',
-                code : 'NetConnection.Connect.Success'
-              };
-              this.dispatchEvent(new flash.events.NetStatusEvent('netStatus',
-                                                                 false,
-                                                                 false,
-                                                                 info));
+              this.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+                false, false, { level : 'status', code : 'NetConnection.Connect.Success'}));
+            } else {
+              this.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+                false, false, { level : 'status', code : 'NetConnection.Connect.Failed'}));
             }
           },
           call: function call(command, responder) { // (command:String, responder:Responder, ...arguments) -> any
