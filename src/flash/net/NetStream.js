@@ -26,12 +26,16 @@ var NetStreamDefinition = (function () {
     },
     _invoke: function (index, args) {
       var simulated = false, result;
+      var videoElement = this._videoElement;
       switch (index) {
       case 4: // set bufferTime
         simulated = true;
         break;
+      case 202: // call, e.g. ('pause', null, paused, time)
+        simulated = true;
+        break;
       case 300: // time
-        // result = videoElement.currentTime;
+        result = videoElement ? videoElement.currentTime : 0;
         simulated = true;
         return 0;
       case 305: // get bytesLoaded
@@ -48,6 +52,45 @@ var NetStreamDefinition = (function () {
         "NetStream._invoke (" + index + ")");
       return result;
     },
+    _createVideoElement: function (url) {
+      function notifyPlayStart(e) {
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false, {code: "NetStream.Play.Start"}));
+      }
+      function notifyPlayStop(e) {
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false, {code: "NetStream.Play.Stop"}));
+      }
+      function notifyBufferFull(e) {
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false, {code: "NetStream.Buffer.Full"}));
+      }
+      function notifyBufferEmpty(e) {
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false, {code: "NetStream.Buffer.Empty"}));
+      }
+      function notifyMetadata(e) {
+        netStream._videoMetadataReady.resolve({
+          videoWidth: element.videoWidth,
+          videoHeight: element.videoHeight
+        });
+      }
+
+      var NetStatusEvent = flash.events.NetStatusEvent;
+      var netStream = this;
+
+      var element = document.createElement('video');
+      element.src = url;
+      element.addEventListener("play", notifyPlayStart);
+      element.addEventListener("ended", notifyPlayStop);
+      element.addEventListener("loadeddata", notifyBufferFull);
+      element.addEventListener("waiting", notifyBufferEmpty);
+      element.addEventListener("loadedmetadata", notifyMetadata);
+      element.play();
+
+      this._videoElement = element;
+      this._videoReady.resolve(element);
+    },
     __glue__: {
       script: {
         instance: scriptProperties("public", ["appendBytes",
@@ -63,7 +106,9 @@ var NetStreamDefinition = (function () {
             this._contentTypeHint = null;
             this._mediaSource = null;
             this._checkPolicyFile = true;
-            this._urlReady = new Promise();
+            this._videoElement = null;
+            this._videoReady = new Promise();
+            this._videoMetadataReady = new Promise();
           },
           onResult: function onResult(streamId) {
             // (streamId:int) -> void
@@ -81,8 +126,8 @@ var NetStreamDefinition = (function () {
               isMediaSourceEnabled = false;
             }
             if (!isMediaSourceEnabled) {
-              this._urlReady.resolve(FileLoadingService.resolveUrl(url));
               somewhatImplemented("NetStream.play");
+              this._createVideoElement(FileLoadingService.resolveUrl(url));
               return;
             }
 
@@ -93,7 +138,7 @@ var NetStreamDefinition = (function () {
             mediaSource.addEventListener('sourceend', function(e) {
               this._mediaSource = null;
             }.bind(this));
-            this._urlReady.resolve(window.URL.createObjectURL(mediaSource));
+            this._createVideoElement(window.URL.createObjectURL(mediaSource));
 
             if (!url) {
               return;

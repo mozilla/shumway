@@ -15,7 +15,8 @@ var AccessibilityDefinition = (function () {
           },
           active: {
             get: function active() { // (void) -> Boolean
-              notImplemented("Accessibility.active");
+              somewhatImplemented("Accessibility.active");
+              return false;
             }
           }
         },

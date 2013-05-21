@@ -19,39 +19,43 @@
 var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
-      this._element = document.createElement('video');
-      this._element.setAttribute("style",
-          "position: absolute; top:0; left:0; z-index: 100; background: black;");
-      this._added = false;
     },
-
+    _updateBounds: function () {
+      this._videoScaleX = this._width / this._videoWidth;
+      this._videoScaleY = this._height / this._videoHeight;
+      this._bbox = {left: 0, top: 0, right: this._width, bottom: this._height};
+      this._updateCurrentTransform();
+    },
     attachNetStream: function (netStream) {
       this._netStream = netStream;
-      netStream._urlReady.then(function (url) {
-        this._element.src = url;
+      netStream._videoReady.then(function (element) {
+        this._element = element;
+        netStream._videoMetadataReady.then(function (url) {
+          this._element.width = this._videoWidth = this._element.videoWidth;
+          this._element.height = this._videoHeight = this._element.videoHeight;
+          this._width = this._width || this._videoWidth;
+          this._height = this._height || this._videoHeight;
+          this._updateBounds();
+        }.bind(this));
       }.bind(this));
     },
     ctor: function(width, height) {
       if (width == null) width = 320;
       if (height == null) height = 240;
+
       this._width = this._videoWidth = width;
       this._height = this._videoHeight = height;
-      this._videoScaleX = 1;
-      this._videoScaleY = 1;
+      this._updateBounds();
 
-      this._bbox = {left: 0, top: 0, right: width, bottom: height};
-
-      this._element.addEventListener('loadedmetadata', function () {
-        this._videoScaleX = this._width / this._element.videoWidth;
-        this._videoScaleY = this._height / this._element.videoHeight;
-        this._element.width = this._element.videoWidth;
-        this._element.height = this._element.videoHeight;
-      }.bind(this));
+      this._element = null;
+      this._added = false;
     },
     draw: function (ctx) {
+      if (!this._element) {
+        return;
+      }
       if (!this._added) {
         ctx.canvas.parentNode.appendChild(this._element);
-        this._element.play();
         this._added = true;
       }
 
@@ -80,9 +84,17 @@ var VideoDefinition = (function () {
       instance: {
         attachNetStream: def.attachNetStream,
         ctor: def.ctor,
+        height: {
+          get: function () {
+            return this._height;
+          },
+          set: function (val) {
+            this._height = val;
+            this._updateBounds();
+          }
+        },
         smoothing: {
           get: function smoothing() { // (void) -> Boolean
-            somewhatImplemented("Video.smoothing");
             return this._smoothing;
           },
           set: function smoothing(value) { // (value:Boolean) -> void
@@ -90,18 +102,25 @@ var VideoDefinition = (function () {
             this._smoothing = value;
           }
         },
+        videoHeight: {
+          get: function videoHeight() { // (void) -> int
+            return this._videoHeight;
+          }
+        },
         videoWidth: {
           get: function videoWidth() { // (void) -> int
-            somewhatImplemented("Video.videoWidth");
             return this._videoWidth;
           }
         },
-        videoHeight: {
-          get: function videoHeight() { // (void) -> int
-            somewhatImplemented("Video.videoHeight");
-            return this._videoHeight;
+        width: {
+          get: function () {
+            return this._width;
+          },
+          set: function (val) {
+            this._width = val;
+            this._updateBounds();
           }
-        }
+        },
       }
     }
   };

@@ -185,6 +185,7 @@ var Stubs = new (function () {
     M("flash.events.TextEvent", "TextEventClass", TextEventDefinition),
     M("flash.events.TimerEvent", "TimerEventClass", TimerEventDefinition),
     M("flash.events.ProgressEvent"),
+    M("flash.events.NetStatusEvent"),
 
     M("flash.external.ExternalInterface", "ExternalInterfaceClass", ExternalInterfaceDefinition),
 
