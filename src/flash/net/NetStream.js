@@ -54,20 +54,20 @@ var NetStreamDefinition = (function () {
     },
     _createVideoElement: function (url) {
       function notifyPlayStart(e) {
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, {code: "NetStream.Play.Start"}));
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+          false, false, {code: "NetStream.Play.Start", level: "status"}));
       }
       function notifyPlayStop(e) {
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, {code: "NetStream.Play.Stop"}));
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+          false, false, {code: "NetStream.Play.Stop", level: "status"}));
       }
       function notifyBufferFull(e) {
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, {code: "NetStream.Buffer.Full"}));
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+          false, false, {code: "NetStream.Buffer.Full", level: "status"}));
       }
       function notifyBufferEmpty(e) {
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, {code: "NetStream.Buffer.Empty"}));
+        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+          false, false, {code: "NetStream.Buffer.Empty", level: "status"}));
       }
       function notifyMetadata(e) {
         netStream._videoMetadataReady.resolve({
