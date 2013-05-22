@@ -120,6 +120,7 @@ function findDefiningAbc(mn) {
 
 // avm2 must be global.
 var avm2;
+var sanityTests = [];
 var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
 var libraryNames = playerGlobalNames;        // ditto
 
