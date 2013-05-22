@@ -368,3 +368,38 @@ function execEq(file, frames, onprogress) {
     });
     TestContext._resultPromise = resultPromise;
 }
+
+function execSanity(file, callback) {
+    var promise = new Promise;
+    TestContext._previousPromise.then(function () {
+      TestContext._currentPromise = promise;
+    });
+
+    promise.then(function (result) {
+      callback(result);
+      resultPromise.resolve();
+    });
+    TestContext._previousPromise = promise;
+
+    var resultPromise = new Promise;
+    TestContext._resultPromise.then(function () {
+      TestContext.log('Testing ' + file + '...');
+      TestContext._currentResultPromise = resultPromise;
+
+      var id = TestContext._id++;
+      var movieFrame = document.getElementById('movie')
+      movieFrame.addEventListener('load', function frameLoad() {
+        movieFrame.removeEventListener('load', frameLoad);
+        var movie = movieFrame.contentWindow;
+        TestContext._driverWindow = movie;
+        TestContext._responsePromise = promise;
+        movie.postMessage({
+          type: 'test-message',
+          topic: 'js',
+          path: file.indexOf(':') >= 0 || file[0] === '/' ? file : '../' + file
+        }, '*');
+      });
+      movieFrame.src = 'harness/slave.html?n=' + id;
+    });
+    TestContext._resultPromise = resultPromise;
+}

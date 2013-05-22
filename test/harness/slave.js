@@ -49,6 +49,32 @@ function loadMovie(path, reportFrames) {
   });
 }
 
+function loadScript(path) {
+  var script = document.createElement('script');
+  script.src = path;
+  document.getElementsByTagName('head')[0].appendChild(script);
+}
+
+function runSanityTest(test) {
+  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+    var failed = false;
+    try {
+      test({
+        info: function (m) {
+          console.info(m);
+        },
+        error: function (m) {
+          console.error(m);
+          failed = true;
+        }
+      });
+    } catch (ex) {
+      failed = true;
+    }
+    sendResponse({failure: failed, snapshot: null});
+  });
+}
+
 var FileLoadingService = {
   createSession: function () {
     return {
@@ -109,6 +135,9 @@ window.addEventListener('message', function (e) {
   switch (data.topic) {
   case 'load':
     loadMovie(data.path, data.reportFrames);
+    break;
+  case 'js':
+    loadScript(data.path);
     break;
   case 'advance':
     var delay = data.args[0];

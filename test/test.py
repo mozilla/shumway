@@ -438,6 +438,8 @@ def check(task, results, browser, masterMode):
         checkEq(task, results, browser, masterMode)
     elif 'stas' == kind:
         checkStas(task, results, browser)
+    elif 'sanity' == kind:
+        checkSanity(task, results, browser)
     else:
         assert 0 and 'Unknown test type'
 
@@ -525,6 +527,21 @@ def checkStas(task, results, browser):
 
     if passed:
         print 'TEST-PASS | stas test', task['id'], '| in', browser
+
+def checkSanity(task, results, browser):
+    taskId = task['id']
+    taskType = task['type']
+
+    passed = True
+    for p in xrange(len(results)):
+        if results[p].failure:
+          print 'TEST-UNEXPECTED-FAIL |', taskType, taskId, '| in', browser, '| trace of ', p + 1, '!= reference trace'
+
+          passed = False
+
+    if passed:
+        print 'TEST-PASS | sanity test', task['id'], '| in', browser
+
 
 def processResults():
     print ''

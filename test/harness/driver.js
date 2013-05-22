@@ -72,6 +72,20 @@ function execManifest(path) {
             }
         });
         break;
+      case 'sanity':
+        execSanity(test.js,
+          function (result) {
+            postData('/result', JSON.stringify({
+              browser: browser,
+              id: test.id,
+              failure: result.failure,
+              item: 1,
+              numItems: 1,
+              snapshot: result.snapshot
+            }));
+            next();
+        });
+        break;
       default:
         throw 'unknown test type';
       }
