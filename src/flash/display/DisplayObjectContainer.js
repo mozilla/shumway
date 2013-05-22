@@ -67,7 +67,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._control.appendChild(child._control);
 
-      child.dispatchEvent(new flash.events.Event("added"));
+      child._dispatchEvent(new flash.events.Event("added"));
       if (child.stage)
         child._addedToStage();
 
@@ -126,7 +126,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       var child = children[index];
 
-      child.dispatchEvent(new flash.events.Event("removed"));
+      child._dispatchEvent(new flash.events.Event("removed"));
       if (child.stage)
         child._removedFromStage();
 

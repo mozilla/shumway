@@ -51,7 +51,7 @@ var SoundChannelDefinition = (function () {
           // end of buffer
           self._unregisterWithSoundMixer();
           self._audioChannel.stop();
-          self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
+          self._dispatchEvent(new flash.events.Event("soundComplete", false, false))
           return;
         }
 
@@ -109,7 +109,7 @@ var SoundChannelDefinition = (function () {
       });
       element.addEventListener("ended", function ended() {
         self._unregisterWithSoundMixer();
-        self.dispatchEvent(new flash.events.Event("soundComplete", false, false))
+        self._dispatchEvent(new flash.events.Event("soundComplete", false, false))
       });
       this._element = element;
     },

@@ -17,49 +17,54 @@
  */
 
 var KeyboardEventDefinition = (function () {
-  var def = {
-    __class__: 'flash.events.KeyboardEvent',
-
-    updateAfterEvent: function () {
-      notImplemented();
-    },
-    get keyCode() {
-      var keyCodePropertyName = new Multiname(ShumwayNamespace.fromSimpleName(
-        'private flash.events:KeyboardEvent'), 'm_keyCode');
-      return getProperty(this, keyCodePropertyName);
-    }
-  };
-
-  def.__glue__ = {
-    script: {
-      instance: scriptProperties("private", ["m_keyCode",
-                                             "m_keyLocation"]),
-      static: scriptProperties("public", ["KEY_DOWN",
-                                          "KEY_UP"])
-    },
-
-    native: {
-      instance: {
-        charCode: {
-          get: function () { return this.charCode; },
-          set: function (v) { this.charCode = v; }
-        },
-        ctrlKey: {
-          get: function () { return this.ctrlKey; },
-          set: function (v) { this.ctrlKey = v; }
-        },
-        altKey: {
-          get: function () { return this.altKey; },
-          set: function (v) { this.altKey = v; }
-        },
-        shiftKey: {
-          get: function () { return this.shiftKey; },
-          set: function (v) { this.shiftKey = v; }
-        },
-        updateAfterEvent: def.updateAfterEvent
+  return {
+    // (type:String, bubbles:Boolean = true, cancelable:Boolean = false, charCodeValue:uint = 0, keyCodeValue:uint = 0, keyLocationValue:uint = 0, ctrlKeyValue:Boolean = false, altKeyValue:Boolean = false, shiftKeyValue:Boolean = false)
+    __class__: "flash.events.KeyboardEvent",
+    __glue__: {
+      native: {
+        instance: {
+          updateAfterEvent: function updateAfterEvent() { // (void) -> void
+            notImplemented("KeyboardEvent.updateAfterEvent");
+          },
+          charCode: {
+            get: function charCode() { // (void) -> uint
+              return this._charCode;
+            },
+            set: function charCode(value) { // (value:uint) -> void
+              this._charCode = value;
+            }
+          },
+          ctrlKey: {
+            get: function ctrlKey() { // (void) -> Boolean
+              return this._ctrlKey;
+            },
+            set: function ctrlKey(value) { // (value:Boolean) -> void
+              this._ctrlKey = value;
+            }
+          },
+          altKey: {
+            get: function altKey() { // (void) -> Boolean
+              return this._altKey;
+            },
+            set: function altKey(value) { // (value:Boolean) -> void
+              this._altKey = value;
+            }
+          },
+          shiftKey: {
+            get: function shiftKey() { // (void) -> Boolean
+              return this._shiftKey;
+            },
+            set: function shiftKey(value) { // (value:Boolean) -> void
+              this._shiftKey = value;
+            }
+          }
+        }
+      },
+      script: {
+        instance: {
+          keyCode: 'public keyCode'
+        }
       }
     }
   };
-
-  return def;
 }).call(this);

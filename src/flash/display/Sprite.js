@@ -128,10 +128,10 @@ var SpriteDefinition = (function () {
 
           instance._markAsDirty();
 
-          instance.dispatchEvent(new flash.events.Event("load"));
-          instance.dispatchEvent(new flash.events.Event("added"));
+          instance._dispatchEvent(new flash.events.Event("load"));
+          instance._dispatchEvent(new flash.events.Event("added"));
           if (this.stage)
-            instance.dispatchEvent(new flash.events.Event("addedToStage"));
+            instance._dispatchEvent(new flash.events.Event("addedToStage"));
 
           children[i] = instance;
         }
@@ -167,8 +167,8 @@ var SpriteDefinition = (function () {
 
       instance._markAsDirty();
 
-      instance.dispatchEvent(new flash.events.Event("load"));
-      instance.dispatchEvent(new flash.events.Event("added"));
+      instance._dispatchEvent(new flash.events.Event("load"));
+      instance._dispatchEvent(new flash.events.Event("added"));
 
       children.push(instance);
 
@@ -220,12 +220,12 @@ var SpriteDefinition = (function () {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            this.addEventListener(avm2EventName, fn, false);
+            this._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn});
           }
         }
         if (eventsBound.length > 0) {
-          instance.addEventListener('removed', function (eventsBound) {
+          instance._addEventListener('removed', function (eventsBound) {
             for (var i = 0; i < eventsBound.length; i++) {
               this.removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }

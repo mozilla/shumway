@@ -147,7 +147,7 @@ var NetStreamDefinition = (function () {
             var request = new flash.net.URLRequest(url);
             request._checkPolicyFile = this._checkPolicyFile;
             var stream = new flash.net.URLStream();
-            stream.addEventListener('httpStatus', function (e) {
+            stream._addEventListener('httpStatus', function (e) {
               var responseHeaders = e[Multiname.getPublicQualifiedName('responseHeaders')];
               var contentTypeHeader = responseHeaders.filter(function (h) {
                 return h[Multiname.getPublicQualifiedName('name')] === 'Content-Type';
@@ -158,14 +158,14 @@ var NetStreamDefinition = (function () {
                 this._contentTypeHint = contentTypeHeader[Multiname.getPublicQualifiedName('value')];
               }
             }.bind(this));
-            stream.addEventListener('progress', function (e) {
+            stream._addEventListener('progress', function (e) {
               var available = stream.bytesAvailable;
               var ByteArrayClass = avm2.systemDomain.getClass("flash.utils.ByteArray");
               var data = ByteArrayClass.createInstance();
               stream.readBytes(data, 0, available);
               this.appendBytes(data);
             }.bind(this));
-            stream.addEventListener('complete', function (e) {
+            stream._addEventListener('complete', function (e) {
               this.appendBytesAction('endSequence'); // NetStreamAppendBytesAction.END_SEQUENCE
             }.bind(this));
             stream.load(request);

@@ -63,7 +63,7 @@ var MovieClipDefinition = (function () {
 
       var that = this;
       avm2.systemDomain.onMessage.register(function (e) {
-        if (e.data.type === 'constructFrame' && that._isPlaying) {
+        if (e.data._type === 'constructFrame' && that._isPlaying) {
           that._constructNextFrame();
         }
       });
@@ -152,7 +152,7 @@ var MovieClipDefinition = (function () {
                 children.splice(currentIndex, 1);
 
                 this._control.removeChild(currentChild._control);
-                currentChild.dispatchEvent(new flash.events.Event("removed"));
+                currentChild._dispatchEvent(new flash.events.Event("removed"));
                 if (this.stage)
                     currentChild._removedFromStage();
               }
@@ -194,7 +194,7 @@ var MovieClipDefinition = (function () {
                   replace = true;
 
                   this._control.removeChild(currentChild._control);
-                  currentChild.dispatchEvent(new flash.events.Event("removed"));
+                  currentChild._dispatchEvent(new flash.events.Event("removed"));
                   if (this.stage)
                     currentChild._removedFromStage();
                 }

@@ -128,7 +128,7 @@ var DisplayObjectDefinition = (function () {
 
       var that = this;
       avm2.systemDomain.onMessage.register(function (e) {
-        var type = e.data.type;
+        var type = e.data._type;
         if (type === 'constructFrame' && that._refreshAS2Variables) {
           that._refreshAS2Variables();
           return;
@@ -137,7 +137,7 @@ var DisplayObjectDefinition = (function () {
             type === 'exitFrame' ||
             type === 'frameConstructed' ||
             type === 'render') {
-          that.dispatchEvent(e.data);
+          that._dispatchEvent(e.data);
         }
       });
     },
@@ -160,9 +160,9 @@ var DisplayObjectDefinition = (function () {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child.dispatchEvent(new flash.events.Event("addedToStage"));
+        child._dispatchEvent(new flash.events.Event("addedToStage"));
       }
-      this.dispatchEvent(new flash.events.Event("addedToStage"));
+      this._dispatchEvent(new flash.events.Event("addedToStage"));
     },
     _applyCurrentInverseTransform: function (point, targetCoordSpace) {
       if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
@@ -260,9 +260,9 @@ var DisplayObjectDefinition = (function () {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child.dispatchEvent(new flash.events.Event("removedFromStage"));
+        child._dispatchEvent(new flash.events.Event("removedFromStage"));
       }
-      this.dispatchEvent(new flash.events.Event("removedFromStage"));
+      this._dispatchEvent(new flash.events.Event("removedFromStage"));
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;

@@ -53,10 +53,10 @@ var NetConnectionDefinition = (function () {
             this._uri = command;
             if (command == null) {
               this._connected = true;
-              this.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+              this._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
                 false, false, { level : 'status', code : 'NetConnection.Connect.Success'}));
             } else {
-              this.dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+              this._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
                 false, false, { level : 'status', code : 'NetConnection.Connect.Failed'}));
             }
           },
