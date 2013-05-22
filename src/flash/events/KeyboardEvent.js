@@ -61,6 +61,7 @@ var KeyboardEventDefinition = (function () {
         }
       },
       script: {
+        static: Glue.ALL,
         instance: {
           keyCode: 'public keyCode'
         }
