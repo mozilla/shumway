@@ -173,7 +173,7 @@ var EventDispatcherDefinition = (function () {
             return this._hasEventListener(type);
           },
           willTrigger: function willTrigger(type) { // (type:String) -> Boolean
-            var currentNode = this;
+            var currentNode = this._target;
             do {
               if (currentNode._hasEventListener(type)) {
                 return true;
