@@ -49,6 +49,53 @@ function loadMovie(path, reportFrames) {
   });
 }
 
+var sanityTests = {
+  tests: [],
+  push: function () {
+    this.tests.push.apply(this.tests, arguments);
+    this.onload();
+  },
+  onload: null
+};
+
+function loadScripts(files) {
+  sanityTests.onload = next;
+
+  var i = 0;
+  function next() {
+    if (i >= files.length) {
+      return runSanityTests(sanityTests.tests);
+    }
+    var script = document.createElement('script');
+    script.src = files[i++];
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+  next();
+}
+
+function runSanityTests(tests) {
+  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+    sendResponse();
+    for (var i = 0; i < tests.length; i++) {
+      var failed = false;
+      try {
+        tests[i]({
+          info: function (m) {
+            console.info(m);
+          },
+          error: function (m) {
+            console.error(m);
+            failed = true;
+          }
+        }, avm2);
+      } catch (ex) {
+        failed = true;
+      }
+      sendResponse({index: i, failure: failed});
+    }
+  });
+}
+
 var FileLoadingService = {
   createSession: function () {
     return {
@@ -109,6 +156,9 @@ window.addEventListener('message', function (e) {
   switch (data.topic) {
   case 'load':
     loadMovie(data.path, data.reportFrames);
+    break;
+  case 'js':
+    loadScripts(data.files);
     break;
   case 'advance':
     var delay = data.args[0];

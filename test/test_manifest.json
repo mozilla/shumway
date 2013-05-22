@@ -1,4 +1,10 @@
 [
+    {  "id": "sanity",
+       "filenames": [
+         "sanity/sanity.js"
+       ],
+       "type": "sanity"
+    },
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [

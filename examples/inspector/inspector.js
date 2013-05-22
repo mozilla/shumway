@@ -121,6 +121,9 @@ function findDefiningAbc(mn) {
   return null;
 }
 
+/** Global sanityTests array, sanity tests add themselves to this */
+var sanityTests = [];
+
 // avm2 must be global.
 var avm2;
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
@@ -196,15 +199,6 @@ if (yt) {
   xhr.send(null);
 }
 
-if (getQueryVariable('sanity')) {
-  libraryScripts = playerGlobalScripts;
-  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
-    runInspectorSanityTests(avm2);
-  });
-}
-
 function showMessage(msg) {
   document.getElementById('message').textContent = msg;
   document.getElementById('message').parentElement.removeAttribute('hidden');
@@ -256,6 +250,39 @@ function executeFile(file, buffer, movieParams) {
         });
       } else {
         runSWF(file, buffer);
+      }
+    });
+  } else if (file.endsWith(".js") || file.endsWith("/")) {
+    libraryScripts = playerGlobalScripts;
+    var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+    var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+    createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+      if (file.endsWith("/")) {
+        readDirectoryListing(file, function (files) {
+          function loadNextScript(done) {
+            if (!files.length) {
+              done();
+              return;
+            }
+            var sanityTest = files.pop();
+            console.info("Loading Sanity Test: " + sanityTest);
+            loadScript(sanityTest, function () {
+              loadNextScript(done);
+            });
+          }
+          loadNextScript(function whenAllScriptsAreLoaded() {
+            console.info("Executing Sanity Test");
+            sanityTests.forEach(function (test) {
+              test(console, avm2);
+            });
+          });
+        });
+      } else {
+        loadScript(file, function () {
+          sanityTests.forEach(function (test) {
+            test(console, avm2);
+          });
+        });
       }
     });
   }
