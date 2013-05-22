@@ -86,6 +86,7 @@ var EventDefinition = (function () {
         }
       },
       script: {
+        static: Glue.ALL,
         instance: {
           clone: 'public clone'
         }
