@@ -1,4 +1,4 @@
-function runInspectorSanityTests() {
+sanityTests.push(function runInspectorSanityTests(console, avm2) {
   function log(message) {
     console.info(message);
   }
@@ -51,4 +51,4 @@ function runInspectorSanityTests() {
     f[Multiname.getPublicQualifiedName("x")] = 123;
     check (f.toString() === "x=123");
   })();
-}
+});
