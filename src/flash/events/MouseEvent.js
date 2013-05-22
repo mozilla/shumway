@@ -49,7 +49,8 @@ var MouseEventDefinition = (function () {
             }
           }
         }
-      }
+      },
+      script: { static: Glue.ALL }
     }
   };
 }).call(this);
