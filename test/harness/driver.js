@@ -73,17 +73,19 @@ function execManifest(path) {
         });
         break;
       case 'sanity':
-        execSanity(test.js,
-          function (result) {
+        execSanity(test.filenames,
+          function (itemNumber, itemsCount, item, result) {
             postData('/result', JSON.stringify({
               browser: browser,
               id: test.id,
               failure: result.failure,
-              item: 1,
-              numItems: 1,
+              item: item,
+              numItems: itemsCount,
               snapshot: result.snapshot
             }));
-            next();
+            if (itemNumber + 1 == itemsCount) { // last item
+              next();
+            }
         });
         break;
       default:

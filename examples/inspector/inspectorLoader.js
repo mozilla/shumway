@@ -45,7 +45,7 @@ function readDirectoryListing(path, next) {
   var xhr = new XMLHttpRequest({mozSystem:true});
   xhr.open("GET", path, true);
   xhr.onload = function() {
-    var re = /<a href="([^"]+)/g;
+    var re = /<a href="([^"]+)/g, m;
     while ((m = re.exec(xhr.response))) {
       var file = m[1];
       if (file.endsWith("/")) {

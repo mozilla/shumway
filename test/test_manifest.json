@@ -1,6 +1,8 @@
 [
     {  "id": "sanity",
-       "js": "sanity/default.js",
+       "filenames": [
+         "sanity/sanity.js"
+       ],
        "type": "sanity"
     },
     {  "id": "basic",

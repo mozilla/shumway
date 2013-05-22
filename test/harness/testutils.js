@@ -369,21 +369,41 @@ function execEq(file, frames, onprogress) {
     TestContext._resultPromise = resultPromise;
 }
 
-function execSanity(file, callback) {
+function execSanity(tests, onprogress) {
     var promise = new Promise;
     TestContext._previousPromise.then(function () {
       TestContext._currentPromise = promise;
     });
 
-    promise.then(function (result) {
-      callback(result);
-      resultPromise.resolve();
-    });
-    TestContext._previousPromise = promise;
+    var testsPromises = [];
+    var lastPromise = promise;
+    for (var i = 0; i < tests.length; i++) {
+      var testPromise = new Promise
+      testPromise.then(function (i, result) {
+        onprogress(i, tests.length, tests[i], result);
+      }.bind(null, i));
+      testsPromises.push(testPromise);
+      var responsePromise = new Promise;
+      lastPromise.then(function (responsePromise) {
+        TestContext._currentPromise = responsePromise;
+        TestContext._responsePromise = responsePromise;
+      }.bind(null, responsePromise));
+      lastPromise = responsePromise;
 
-    var resultPromise = new Promise;
+      responsePromise.then(function (result) {
+        // redirecting to right promise (in case if snapshots send out-of-order)
+        var j = result.index;
+        testsPromises[j].resolve({
+          failure: result.failure,
+          snapshot: null
+        });
+      });
+    }
+    TestContext._previousPromise = lastPromise;
+
+    var resultPromise = Promise.when.apply(Promise, testsPromises);
     TestContext._resultPromise.then(function () {
-      TestContext.log('Testing ' + file + '...');
+      TestContext.log('Testing ' + tests + '...');
       TestContext._currentResultPromise = resultPromise;
 
       var id = TestContext._id++;
@@ -396,7 +416,9 @@ function execSanity(file, callback) {
         movie.postMessage({
           type: 'test-message',
           topic: 'js',
-          path: file.indexOf(':') >= 0 || file[0] === '/' ? file : '../' + file
+          files: tests.map(function (file) {
+            return file.indexOf(':') >= 0 || file[0] === '/' ? file : '../' + file;
+          })
         }, '*');
       });
       movieFrame.src = 'harness/slave.html?n=' + id;
