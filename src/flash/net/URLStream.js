@@ -51,7 +51,12 @@ var URLStreamDefinition = (function () {
       };
       session.onerror = function (error) {
         self._connected = false;
-        self._dispatchEvent(new flash.events.IOErrorEvent(flash.events.IOErrorEvent.IO_ERROR, false, false, error));
+        if (!self._stream) {
+          // We need to have something to return in data
+          self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
+        }
+        self._dispatchEvent(new flash.events.IOErrorEvent(
+          flash.events.IOErrorEvent.class.IO_ERROR, false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
@@ -81,8 +86,7 @@ var URLStreamDefinition = (function () {
         self._connected = false;
         if (!self._stream) {
           // We need to have something to return in data
-          var buffer = new ArrayBuffer(0);
-          self._stream = new Stream(buffer, 0, 0, 0);
+          self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
         }
 
         self._dispatchEvent(new flash.events.Event("complete", false, false))
