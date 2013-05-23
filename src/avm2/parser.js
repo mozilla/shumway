@@ -1316,9 +1316,10 @@ var ClassInfo = (function () {
 
   function getDefaultValue(qn) {
     if (Multiname.getQualifiedName(qn) === Multiname.Int ||
-        Multiname.getQualifiedName(qn) === Multiname.Uint ||
-        Multiname.getQualifiedName(qn) === Multiname.Number) {
+        Multiname.getQualifiedName(qn) === Multiname.Uint) {
       return 0;
+    } else if (Multiname.getQualifiedName(qn) === Multiname.Number) {
+      return NaN;
     } else if (Multiname.getQualifiedName(qn) === Multiname.Boolean) {
       return false;
     } else {
