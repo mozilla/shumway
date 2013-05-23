@@ -54,10 +54,12 @@ var NetConnectionDefinition = (function () {
             if (command == null) {
               this._connected = true;
               this._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
-                false, false, { level : 'status', code : 'NetConnection.Connect.Success'}));
+                false, false,
+                wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
             } else {
               this._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
-                false, false, { level : 'status', code : 'NetConnection.Connect.Failed'}));
+                false, false,
+                wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
             }
           },
           call: function call(command, responder) { // (command:String, responder:Responder, ...arguments) -> any
