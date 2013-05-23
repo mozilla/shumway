@@ -1,0 +1,23 @@
+3
+255
+0
+255
+7
+255
+0
+255
+255
+255
+255
+255
+get length(): 7
+-1
+0
+-1
+4294967295
+get length(): 20
+0
+Invalid UTF8 character
+Bytes available:6
+Bytes read:0
+FAIL readBytes()
