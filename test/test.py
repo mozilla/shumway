@@ -32,7 +32,7 @@ TRACELOG_FILE = 'trace.log'
 REFDIR = 'ref'
 TMPDIR = 'tmp'
 VERBOSE = False
-BROWSER_TIMEOUT = 60
+BROWSER_TIMEOUT = 90
 
 SERVER_HOST = "localhost"
 
