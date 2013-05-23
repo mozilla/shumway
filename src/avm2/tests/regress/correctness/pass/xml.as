@@ -1,3 +1,13 @@
+print("XML statics");
+(function () {
+  var tests = [
+    [XML.ignoreWhitespace = true, XML.ignoreWhitespace],
+  ];
+  for (var i = 0; i < tests.length; i++) {
+    print(i + ": " + tests[i]);
+  }
+})();
+
 print("Testing Basic XML");
 (function () {
   var x = <foo a="aaa"><bar b="bbb">e=mc^2</bar></foo>;

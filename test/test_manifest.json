@@ -15,7 +15,6 @@
        ],
        "type": "sanity"
     },
-
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -81,5 +80,19 @@
        "frames": [50, 150, 300],
        "swf": "/examples/Box2DFlashAS3/demo.swf",
        "type": "eq"
+    },
+    {  "id": "flash_utils_ByteArray",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_utils_ByteArray.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_utils_Timer",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_utils_Timer.swf"
+       ],
+       "type": "stas"
     }
 ]
