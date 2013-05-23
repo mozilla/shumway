@@ -974,6 +974,20 @@ function forEachPublicProperty(obj, fn, self) {
   }
 }
 
+function wrapJSObject(obj) {
+  var wrapper = Object.create(obj);
+  for (var i in obj) {
+    Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (obj, i) {
+      return {
+        get: function () { return obj[i] },
+        set: function (value) { obj[i] = value; },
+        enumerable: true
+      };
+    })(obj, i));
+  }
+  return wrapper;
+}
+
 function isInstanceOf(value, type) {
   /*
   if (type instanceof Class) {
