@@ -36,6 +36,9 @@ CLOSURE_URL = http://closure-compiler.googlecode.com/files/compiler-latest.zip
 ASC_JAR = ./asc.jar
 ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
 
+FLEX_HOME = ./flex_sdk
+FLEX_URL = http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip
+
 ifeq ($(UNAME), Darwin)
 DARWING_VER = $(shell uname -a)
 ifneq ("$(filter 12.%, $(DARWING_VER))", "")
@@ -124,6 +127,12 @@ install-node-modules:
 install-swfdec:
 	git clone git://anongit.freedesktop.org/swfdec/swfdec
 
+install-flex-sdk:
+	-rm -rf $(FLEX_HOME)
+	mkdir -p $(FLEX_HOME)
+	wget $(FLEX_URL) -O $(FLEX_HOME)/flex_sdk.zip
+	unzip $(FLEX_HOME)/flex_sdk.zip -d $(FLEX_HOME)
+
 build-playerglobal:
 	make -C playerGlobal/ build
 
@@ -133,7 +142,7 @@ clean:
 	-rm -rf $(JSSHELL_HOME)
 	make -C playerGlobal/ clean
 
-.PHONY: install-tamarin install-js install-swfdec \
+.PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \
         clean default
 

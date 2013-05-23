@@ -37,7 +37,7 @@ install-libs:
 	git submodule update
 
 install-utils: check-system
-	make -C utils/ install-asc install-closure install-tamarin install-js install-node-modules
+	make -C utils/ install-asc install-closure install-tamarin install-js install-node-modules install-flex-sdk
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
@@ -63,6 +63,11 @@ check-extension: build-extension
 
 build-web:
 	make -C web/ build
+
+MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
+MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
+%.swf: %.as
+	$(MXMLC) $<
 
 update-flash-refs:
 	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
