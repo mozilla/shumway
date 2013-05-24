@@ -1,22 +1,13 @@
-addedHandler: [Event type="added" bubbles=false cancelable=false eventPhase=2]
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get x=100
 get y=100
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get height=80
 get width=80
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get alpha=0.3
 Capabilities.hasAccessibility=false
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get accessibilityProperties=Greeting
 set filters
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get filters: filters.length=2
 set visible = false
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
 get visible: false
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
-frame 7
-enterFrameHandler: [Event type="enterFrame" bubbles=false cancelable=false eventPhase=2]
+(x=-50, y=-50, width=200, height=200)
+(x=29, y=-37, width=282, height=282)

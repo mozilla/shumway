@@ -21,6 +21,7 @@ import flash.display.Stage;
 import flash.display.StageAlign;
 import flash.display.StageScaleMode;
 import flash.system.Capabilities;
+import flash.accessibility.Accessibility;
 import flash.accessibility.AccessibilityProperties;
 import flash.events.*;
 import flash.filters.*;
@@ -51,7 +52,6 @@ class CustomDisplayObject extends Sprite {
     }
 
     private function addedHandler(event:Event):void {
-        trace("addedHandler: " + event);
         stage.scaleMode = StageScaleMode.NO_SCALE;
         stage.align = StageAlign.TOP_LEFT;
         stage.addEventListener("resize", resizeHandler);
@@ -60,40 +60,39 @@ class CustomDisplayObject extends Sprite {
     private var frameCount = 0;
 
     private function enterFrameHandler(event:Event):void {
-        trace("enterFrameHandler: " + event);
-	var target = event.target;
-	switch (frameCount) {
-	case 0:
-	    target.x = 100;
-	    target.y = 100;
+        var target = event.target;
+        switch (frameCount) {
+        case 0:
+            target.x = 100;
+            target.y = 100;
             break;
         case 1:
-	    trace("get x=" + target.x);
-	    trace("get y=" + target.y);
-	    target.width = 200;
-	    target.height = 200;
+            trace("get x=" + target.x);
+            trace("get y=" + target.y);
+            target.width = 200;
+            target.height = 200;
             break;
         case 2:
-	    trace("get height=" + target.width);
-	    trace("get width=" + target.height);
-	    target.alpha = 0.3;
+            trace("get height=" + target.width);
+            trace("get width=" + target.height);
+            target.alpha = 0.3;
             break;
         case 3:
-	    trace("get alpha=" + target.alpha);
-	    target.alpha = 1;
+            trace("get alpha=" + target.alpha);
+            target.alpha = 1;
             var accessProps:AccessibilityProperties = new AccessibilityProperties();
             accessProps.name = "Greeting";
             target.accessibilityProperties = accessProps;
-	    trace("Capabilities.hasAccessibility=" + Capabilities.hasAccessibility);
+            trace("Capabilities.hasAccessibility=" + Capabilities.hasAccessibility);
             if (Capabilities.hasAccessibility) {
                 Accessibility.updateProperties();
             }
-	    target.accessibilityProperties = accessProps;
+            target.accessibilityProperties = accessProps;
             break;
         case 4:
-	    trace("get accessibilityProperties=" + target.accessibilityProperties.name);
-	    trace("set filters");
-	    var filter1:DropShadowFilter = new DropShadowFilter();
+            trace("get accessibilityProperties=" + target.accessibilityProperties.name);
+            trace("set filters");
+            var filter1:DropShadowFilter = new DropShadowFilter();
             var angleInDegrees:Number = 45;
             var colors:Array     = [0xFFFFFF, 0xFF0000, 0xFFFF00, 0x00CCFF];
             var alphas:Array     = [0, 1, 1, 1];
@@ -118,15 +117,15 @@ class CustomDisplayObject extends Sprite {
             target.filters = [filter1, filter2];
             break;
         case 5:
-	    trace("get filters: filters.length=" + target.filters.length);
-	    trace("set visible = false");
-	    target.visible = false;
-	    break;
+            trace("get filters: filters.length=" + target.filters.length);
+            trace("set visible = false");
+            target.visible = false;
+            break;
         case 6:
-	    trace("get visible: " + target.visible);
-	    target.graphics.clear();
-	    target.visible = true;
-	    (function () {
+            trace("get visible: " + target.visible);
+            target.graphics.clear();
+            target.visible = true;
+            (function () {
                 var red:uint = 0xFF0000;
                 var green:uint = 0x00FF00;
                 var blue:uint = 0x0000FF;
@@ -134,9 +133,8 @@ class CustomDisplayObject extends Sprite {
                 target.graphics.beginGradientFill(GradientType.LINEAR, [red, blue, green], [1, 0.5, 1], [0, 200, 255]);
                 target.graphics.drawRect(0, 0, 100, 100);
             })();
-	    break;
+            break;
         case 7:
-            trace("frame 7");
             (function () {
                 var skewMatrix:Matrix = new Matrix();
                 skewMatrix.c = 0.25;
@@ -148,29 +146,55 @@ class CustomDisplayObject extends Sprite {
                 target.transform.colorTransform = new ColorTransform(1, 1, 1, 1, rOffset, 0, bOffset, 0);            
             })();
             break;
+        case 8:
+            (function () {
+                var container = new Sprite;
+                container.x = 100;
+                container.y = 100;
+                container.rotation = -42;
+                var contents = new Shape;
+                contents.graphics.drawCircle(0, 0, 100);
+                contents.x = 50;
+                contents.y = 50;
+                contents.scaleX = -1;
+                // FIXME not compatible with Flash
+                // traceRoundedRect(contents.getBounds(container));
+                container.addChild(contents);
+                traceRoundedRect(contents.getBounds(container));
+                traceRoundedRect(contents.getBounds(target));
+                function traceRoundedRect(rect) {
+                    trace('(' +
+                        'x=' + ~~rect.x + ', ' +
+                        'y=' + ~~rect.y + ', ' +
+                        'width=' + ~~rect.width + ', ' +
+                        'height=' + ~~rect.height +
+                    ')');
+                }
+            })();
+            // Expected output:
+            // (x=-144, y=-211, width=282, height=282)
+            // (x=-50, y=-50, width=200, height=200)
+            // (x=29, y=-37, width=282, height=282)
+            break;
         default:
             removeEventListener("enterFrame", enterFrameHandler);
         }
-	frameCount++;
+        frameCount++;
     }
 
+    private var distance:Number  = 0;
 
+    public function GradientGlowFilterExample() {
+        draw();
+        var filter:BitmapFilter = getBitmapFilter();
+        var myFilters:Array = new Array();
+        myFilters.push(filter);
+        filters = myFilters;
+    }
 
- private var distance:Number  = 0;
-
-        public function GradientGlowFilterExample() {
-            draw();
-            var filter:BitmapFilter = getBitmapFilter();
-            var myFilters:Array = new Array();
-            myFilters.push(filter);
-            filters = myFilters;
-        }
-
-        private function getBitmapFilter():BitmapFilter {
-            return new GradientGlowFilter();
-        }
-
-
+    private function getBitmapFilter():BitmapFilter {
+       return new GradientGlowFilter();
+    }
 
     private function removedHandler(event:Event):void {
         trace("removedHandler: " + event);
