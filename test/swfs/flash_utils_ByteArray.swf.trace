@@ -21,3 +21,5 @@ Invalid UTF8 character
 Bytes available:6
 Bytes read:0
 FAIL readBytes()
+baObj.length=16
+ByteArray.readObject(): b=20

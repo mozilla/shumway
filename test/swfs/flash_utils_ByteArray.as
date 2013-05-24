@@ -18,20 +18,20 @@ package {
             byteArr.writeByte(0xff);
             byteArr.writeByte(0x00);
             byteArr.writeByte(0xff);
-            trace(byteArr.length);            // 1
-            trace(byteArr[0]);            // 0
-            trace(byteArr[1]);            // 64
-            trace(byteArr[2]);            // 9
+            trace(byteArr.length);
+            trace(byteArr[0]);
+            trace(byteArr[1]);
+            trace(byteArr[2]);
 
             byteArr.writeUnsignedInt(0xffffffff);
-            trace(byteArr.length);            // 9
-            trace(byteArr[0]);            // 0
-            trace(byteArr[1]);            // 64
-            trace(byteArr[2]);            // 9
-            trace(byteArr[3]);            // 33
-            trace(byteArr[4]);            // 251
-            trace(byteArr[5]);            // 84
-            trace(byteArr[6]);            // 68
+            trace(byteArr.length);
+            trace(byteArr[0]);
+            trace(byteArr[1]);
+            trace(byteArr[2]);
+            trace(byteArr[3]);
+            trace(byteArr[4]);
+            trace(byteArr[5]);
+            trace(byteArr[6]);
             
             byteArr.position = 0;
 
@@ -50,7 +50,7 @@ package {
             try {
                 trace("toString(): " + byteArr.toString());
             } catch (e) {
-            trace(e);
+                trace(e);
             }
 
             var ba2 = new ByteArray();
@@ -67,6 +67,14 @@ package {
             if (ba3.length !== 6) {
                 trace("FAIL readBytes()");
             }
+
+	    var baObj = new ByteArray();
+	    baObj.objectEncoding = 3;
+	    baObj.writeObject({a:10, b: 20, c: 30});
+            trace("baObj.length=" + baObj.length);
+	    baObj.position = 0;
+	    var obj = baObj.readObject();
+	    trace("ByteArray.readObject(): b=" + obj.b);
         }
     }
 }
