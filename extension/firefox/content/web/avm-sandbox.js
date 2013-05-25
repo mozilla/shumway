@@ -185,6 +185,7 @@ function parseSwf(url, movieParams, objectParams) {
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
     console.time("Initialize Renderer");
     SWF.embed(url, document, document.getElementById("viewer"), {
+       url: url,
        movieParams: movieParams,
        objectParams: objectParams,
        onComplete: loaded,
