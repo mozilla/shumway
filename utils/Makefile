@@ -132,6 +132,10 @@ install-flex-sdk:
 	mkdir -p $(FLEX_HOME)
 	wget $(FLEX_URL) -O $(FLEX_HOME)/flex_sdk.zip
 	unzip $(FLEX_HOME)/flex_sdk.zip -d $(FLEX_HOME)
+ifeq ($(UNAME), Darwin)
+	sed -i .bak 's/check64" != "/check64" = "/g' $(FLEX_HOME)/bin/mxmlc
+	sed -i .bak 's/check64" != "/check64" = "/g' $(FLEX_HOME)/bin/swfdump
+endif
 
 build-playerglobal:
 	make -C playerGlobal/ build
