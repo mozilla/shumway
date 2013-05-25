@@ -35,6 +35,27 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SHADER     = 'shader';
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
+  var ADJUST_SCALE_RATIO_TABLE = [0, 0.07973903588256626, 0.1500346500346502,
+    0.21160295103957072, 0.26651330923430827, 0.3182410423452769,
+    0.36618798955613585, 0.4117063492063492, 0.45627118644067816,
+    0.5, 0.5438401775804661, 0.5876777251184835, 0.6337907375643225,
+    0.6818830242510697, 0.7325392528424471, 0.7887683471601787,
+    0.850592885375494, 0.9202975557917109, 1];
+
+  function getAdjustScaleRatio(rotation) {
+    // black-box function, using linear interpolation
+    rotation = (180 + (rotation % 180)) % 180;
+    if (rotation === 0)
+      return 0;
+    var x = rotation > 90 ? (180 - rotation) / 90 : rotation / 90;
+    if (x >= 1)
+      return 1;
+    var i = (x * ADJUST_SCALE_RATIO_TABLE.length) | 0;
+    var ratio = x - (i / ADJUST_SCALE_RATIO_TABLE.length);
+    return ADJUST_SCALE_RATIO_TABLE[i] +
+      (ADJUST_SCALE_RATIO_TABLE[i + 1] - ADJUST_SCALE_RATIO_TABLE[i]) * ratio;
+  }
+
   var def = {
     __class__: 'flash.display.DisplayObject',
 
@@ -346,22 +367,30 @@ var DisplayObjectDefinition = (function () {
       this._filters = val;
     },
     get height() {
-      var bounds = this.getBounds(this);
-      return bounds.height;
+      var bounds = this._getContentBounds();
+      var t = this._currentTransform;
+      return Math.abs(t.b) * (bounds.xMax - bounds.xMin) +
+             Math.abs(t.d) * (bounds.yMax - bounds.yMin);
     },
     set height(val) {
-      if (val < 0)
-        val = 0;
-      var height = this.height;
-      if (height == 0) {
-        warning('scaleY cannot be adjusted when height = 0');
+      if (val < 0) {
         return;
       }
-      var scaleY = this.scaleY;
-      if (scaleY === 0 && val > 0) {
-        this.scaleY = scaleY = 1; // reset scale to have valid height
+
+      var rotation = this._rotation / 180 * Math.PI;
+      var u = Math.abs(Math.cos(rotation));
+      var v = Math.abs(Math.sin(rotation));
+      var bounds = this._getContentBounds();
+      var baseHeight = v * (bounds.xMax - bounds.xMin) +
+                       u * (bounds.yMax - bounds.yMin);
+      if (baseHeight === 0) {
+        return;
       }
-      this.scaleY = scaleY * val / height;
+
+      var scaleRatio = getAdjustScaleRatio(this._rotation);
+      this.scaleX += scaleRatio * (this.scaleY - this.scaleX);
+
+      this.scaleY = val / baseHeight;
     },
     get loaderInfo() {
       return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
@@ -485,22 +514,30 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get width() {
-      var bounds = this.getBounds(this);
-      return bounds.width;
+      var bounds = this._getContentBounds();
+      var t = this._currentTransform;
+      return Math.abs(t.a) * (bounds.xMax - bounds.xMin) +
+             Math.abs(t.c) * (bounds.yMax - bounds.yMin);
     },
     set width(val) {
-      if (val < 0)
-        val = 0;
-      var width = this.width;
-      if (width == 0) {
-        warning('scaleY cannot be adjusted when width = 0');
+      if (val < 0) {
         return;
       }
-      var scaleX = this.scaleX;
-      if (scaleX === 0 && val > 0) {
-        this.scaleX = scaleX = 1; // reset scale to have valid width
+
+      var rotation = this._rotation / 180 * Math.PI;
+      var u = Math.abs(Math.cos(rotation));
+      var v = Math.abs(Math.sin(rotation));
+      var bounds = this._getContentBounds();
+      var baseWidth = u * (bounds.xMax - bounds.xMin) +
+                      v * (bounds.yMax - bounds.yMin);
+      if (baseWidth === 0) {
+        return;
       }
-      this.scaleX = scaleX * val / width;
+
+      var scaleRatio = getAdjustScaleRatio(this._rotation);
+      this.scaleY += scaleRatio * (this.scaleX - this.scaleY);
+
+      this.scaleX = val / baseWidth;
     },
     get x() {
       return this._x;
@@ -533,7 +570,7 @@ var DisplayObjectDefinition = (function () {
       this._updateCurrentTransform();
     },
 
-    getBounds: function (targetCoordSpace) {
+    _getContentBounds: function () {
       if (!this._bounds) {
         var bbox = this._bbox;
 
@@ -596,8 +633,11 @@ var DisplayObjectDefinition = (function () {
           yMax: yMax
         };
       }
+      return this._bounds;
+    },
 
-      var b = this._bounds;
+    getBounds: function (targetCoordSpace) {
+      var b = this._getContentBounds();
       var p1 = { x: b.xMin, y: b.yMin };
       this._applyCurrentTransform(p1, targetCoordSpace);
       var p2 = { x: b.xMax, y: b.yMin };
