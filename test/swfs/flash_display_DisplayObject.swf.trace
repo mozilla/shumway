@@ -1,7 +1,7 @@
 get x=100
 get y=100
-get height=80
-get width=80
+get height=200
+get width=200
 get alpha=0.3
 Capabilities.hasAccessibility=false
 get accessibilityProperties=Greeting
