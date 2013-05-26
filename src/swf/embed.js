@@ -25,6 +25,7 @@ SWF.embed = function(file, doc, container, options) {
 
   stage._loader = loader;
   loaderInfo._parameters = options.movieParams;
+  loaderInfo._url = options.url || (typeof file === 'string' ? file : null);
 
   // HACK support of HiDPI displays
   var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
@@ -180,7 +181,7 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    renderStage(stage, ctx, options.onBeforeFrame, options.onFrame);
+    renderStage(stage, ctx, options);
   });
 
   if (options.onComplete) {

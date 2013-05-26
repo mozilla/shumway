@@ -20,8 +20,18 @@ var FSCommandDefinition = (function () {
   var def = {};
 
   function fscommand(command, parameters) {
-    // TODO ignoring all fscommand
     console.log('FSCommand: ' + command + '; ' + parameters);
+    switch (command.toLowerCase()) {
+    case 'quit':
+      renderingTerminated = true;
+      return;
+    case 'debugger':
+      debugger; // shumway breakpoint... for convinience
+      return;
+    default:
+      // TODO ignoring all other fscommand
+      break;
+    }
   }
 
   def.__glue__ = {
