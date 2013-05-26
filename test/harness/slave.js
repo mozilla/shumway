@@ -38,13 +38,32 @@ function loadMovie(path, reportFrames) {
 
   createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     function loaded() { movieReady.resolve(); }
+    function terminate() {
+      ignoreAdanvances = true;
+      // cleaning up
+      if (!movieReady.resolved) { // movieReady needs to be resolved
+        movieReady.resolve();
+      }
+      if (advanceTimeout) { // invoke current timeout
+        clearTimeout(advanceTimeout);
+        advanceCallback();
+      }
+      // reports unreported frames
+      while (reportFrames && i < reportFrames.length) {
+        onFrameCallback();
+      }
+    }
 
     FileLoadingService.baseUrl = path;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
       }
-      SWF.embed(buffer, document, document.getElementById("stage"), { onComplete: loaded, onFrame: onFrameCallback });
+      SWF.embed(buffer, document, document.getElementById("stage"), {
+        onComplete: loaded,
+        onAfterFrame: onFrameCallback,
+        onTerminated: terminate
+      });
     });
   });
 }
@@ -149,6 +168,13 @@ function sendMouseEvent(type, x, y) {
   canvas.dispatchEvent(e);
 }
 
+var advanceTimeout = null, ignoreAdanvances = false;
+
+function advanceCallback() {
+  advanceTimeout = null;
+  sendResponse();
+}
+
 window.addEventListener('message', function (e) {
   var data = e.data;
   if (typeof data !== 'object' || data.type !== 'test-message')
@@ -161,10 +187,12 @@ window.addEventListener('message', function (e) {
     loadScripts(data.files);
     break;
   case 'advance':
+    if (ignoreAdanvances) {
+      advanceCallback();
+      break;
+    }
     var delay = data.args[0];
-    setTimeout(function () {
-      sendResponse();
-    }, delay);
+    advanceTimeout = setTimeout(advanceCallback, delay);
     break;
   case 'mouse-move':
     if (mouseOutside) {

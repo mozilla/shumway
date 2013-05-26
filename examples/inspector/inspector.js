@@ -234,6 +234,7 @@ function executeFile(file, buffer, movieParams) {
           onComplete: terminate,
           onStageInitialized: stageInitialized,
           onBeforeFrame: frame,
+          url: FileLoadingService.resolveUrl(file),
           movieParams: movieParams || {},
         });
       }

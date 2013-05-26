@@ -84,7 +84,9 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     child.draw(ctx, child.ratio);
 }
 
-function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
+var renderingTerminated = false;
+
+function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
   var refreshStage;
 
@@ -502,9 +504,9 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
     var now = Date.now();
     var renderFrame;
     var renderFrame = now >= nextRenderAt;
-    if (renderFrame && onBeforeFrame) {
+    if (renderFrame && events.onBeforeFrame) {
       var e = { cancel: false };
-      onBeforeFrame(e);
+      events.onBeforeFrame(e);
       renderFrame = !e.cancel;
     }
     if (renderFrame) {
@@ -537,10 +539,17 @@ function renderStage(stage, ctx, onBeforeFrame, onAfterFrame) {
 
         stage._syncCursor();
 
-        if (onAfterFrame) {
-          onAfterFrame();
+        if (events.onAfterFrame) {
+          events.onAfterFrame();
         }
       }
+    }
+
+    if (renderingTerminated) {
+      if (events.onTerminated) {
+        events.onTerminated();
+      }
+      return;
     }
 
     requestAnimationFrame(draw);
