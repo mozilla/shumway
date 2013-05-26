@@ -181,7 +181,7 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    renderStage(stage, ctx, options.onBeforeFrame, options.onFrame);
+    renderStage(stage, ctx, options);
   });
 
   if (options.onComplete) {
