@@ -69,6 +69,12 @@ var NetStreamDefinition = (function () {
         netStream._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
           false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
       }
+      function notifyError(e) {
+        var code = e.target.error.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
+          e.target.error.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
+        netStream._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
+          false, false, wrapJSObject({code: code, level: "error"})));
+      }
       function notifyMetadata(e) {
         netStream._videoMetadataReady.resolve({
           videoWidth: element.videoWidth,
@@ -86,6 +92,7 @@ var NetStreamDefinition = (function () {
       element.addEventListener("loadeddata", notifyBufferFull);
       element.addEventListener("waiting", notifyBufferEmpty);
       element.addEventListener("loadedmetadata", notifyMetadata);
+      element.addEventListener("error", notifyError);
       element.play();
 
       this._videoElement = element;

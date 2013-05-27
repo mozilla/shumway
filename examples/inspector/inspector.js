@@ -189,7 +189,13 @@ if (yt) {
   var xhr = new XMLHttpRequest({mozSystem: true});
   xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
   xhr.onload = function (e) {
-    var config = JSON.parse(/ytplayer\.config\s*=\s*([^;]+)/.exec(xhr.responseText)[1]);
+    var config = JSON.parse(/ytplayer\.config\s*=\s*(.+?);<\/script/.exec(xhr.responseText)[1]);
+    // HACK removing FLVs from the fmt_list
+    config.args.fmt_list = config.args.fmt_list.split(',').filter(function (s) {
+      var fid = s.split('/')[0];
+      return fid !== '5' && fid !== '34' && fid !== '35'; // more?
+    }).join(',');
+
     var swf = JSON.parse(/swf\s*=\s*("[^;]+)/.exec(xhr.responseText)[1]);
     swf = /src="([^"]+)/.exec(swf)[1];
 
@@ -326,10 +332,10 @@ var FileLoadingService = {
   createSession: function () {
     return {
       open: function (request) {
-        if (request.url === 'http://s.youtube.com/stream_204') {
+        if (request.url.indexOf('http://s.youtube.com/stream_204') === 0) {
           // No reason to send error report yet, let's keep it this way for now.
           // 204 means no response, so no data will be expected.
-          console.error('YT_ERROR_REPORT: ' + request.data);
+          console.error('YT_CALLBACK: ' + request.url);
           this.onopen && this.onopen();
           this.onclose && this.onclose();
           return;
