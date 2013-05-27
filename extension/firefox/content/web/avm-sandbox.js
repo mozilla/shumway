@@ -90,6 +90,14 @@ function runViewer() {
   pauseExecution = flashParams.isPausedAtStart;
 
   console.log("url=" + movieUrl + ";params=" + uneval(movieParams));
+  if (movieParams.fmt_list && movieParams.url_encoded_fmt_stream_map) {
+    // HACK removing FLVs from the fmt_list
+    movieParams.fmt_list = movieParams.fmt_list.split(',').filter(function (s) {
+      var fid = s.split('/')[0];
+      return fid !== '5' && fid !== '34' && fid !== '35'; // more?
+    }).join(',');
+  }
+
   parseSwf(movieUrl, movieParams, objectParams);
 
   if (isOverlay) {
