@@ -67,7 +67,12 @@ var BitmapDataDefinition = (function () {
       this._checkCanvas();
       this._ctx.save();
       this._ctx.beginPath();
-      this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+      if (clipRect) {
+        this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+      } else {
+        var canvas = this._drawable;
+        this._ctx.rect(0, 0, canvas.width, canvas.height);
+      }
       this._ctx.clip();
       renderDisplayObject(source, this._ctx, matrix, colorTransform);
       this._ctx.restore();
