@@ -1,0 +1,13 @@
+PASS: flash.display::DisplayObjectContainer/addChild ()
+PASS: flash.display::DisplayObjectContainer/contains ()
+PASS: flash.display::DisplayObjectContainer/get numChildren ()
+PASS: flash.display::DisplayObjectContainer/get numChildren ()
+PASS: flash.display::DisplayObjectContainer/removeChild ()
+PASS: flash.display::DisplayObjectContainer/get numChildren ()
+1
+0
+PASS: flash.display::DisplayObjectContainer/addChildAt ()
+PASS: flash.display::DisplayObjectContainer/getChildIndex ()
+PASS: flash.display::DisplayObjectContainer/get numChildren ()
+PASS: flash.display::DisplayObjectContainer/removeChildAt ()
+PASS: flash.display::DisplayObjectContainer/get numChildren ()

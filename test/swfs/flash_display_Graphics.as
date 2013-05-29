@@ -70,10 +70,10 @@ dynamic class GraphicsObject extends Sprite {
         graphics.lineStyle(10, color);
         graphics.moveTo(0, 0);
         graphics.lineTo(size, size);
-        var bits = new BitmapData(100, 100);
-        bits.draw(this);
-        trace("expected: " + color);
-        trace("found: " + bits.getPixel(size, size));
+        //var bits = new BitmapData(100, 100);
+        //bits.draw(this);
+        //trace("expected: " + color);
+        //trace("found: " + bits.getPixel(size, size));
     }
 
     private function moveTo():void {
