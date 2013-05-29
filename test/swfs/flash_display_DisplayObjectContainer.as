@@ -61,8 +61,6 @@ dynamic class DisplayObjectContainerObject extends Sprite {
         shape2.graphics.beginFill(color << 8);
         shape2.graphics.drawRect(30, 30, 60, 60);
         this.addChildAt(shape2, 0);
-        trace(this.getChildIndex(shape1));
-        trace(this.getChildIndex(shape2));
         var result = (this.getChildIndex(shape1) === 1 &&
                       this.getChildIndex(shape2) === 0) ? "PASS" : "FAIL";
         trace(result + ": flash.display::DisplayObjectContainer/addChildAt ()");
