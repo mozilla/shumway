@@ -1372,7 +1372,7 @@ var natives = (function () {
             var cap = this.a.byteLength;
             /* XXX: Do we need to zero the difference if length <= cap? */
             if (length > cap) {
-              this.ensureSize(length);
+              this.ensureCapacity(length);
             }
             this.length = length;
           }
