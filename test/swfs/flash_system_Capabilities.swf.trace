@@ -1,0 +1,20 @@
+Capabilities.version=SHUMWAY 10,0,0,0
+PASS: flash.system::Capabilities/get version ()
+Capabilities.serverString=OS=Mac%20OS%2010.5.2
+PASS: flash.system::Capabilities/get serverString ()
+Capabilities.screenResolutionX=1440
+PASS: flash.system::Capabilities/get screenResolutionX ()
+Capabilities.screenResolutionX=900
+PASS: flash.system::Capabilities/get screenResolutionY ()
+Capabilities.playerType=undefined
+FAIL: flash.system::Capabilities/get playerType ()
+Capabilities.os=Mac OS 10.5.2
+PASS: flash.system::Capabilities/get os ()
+Capabilities.manufacturer=undefined
+FAIL: flash.system::Capabilities/get manufacturer ()
+Capabilities.language=undefined
+FAIL: flash.system::Capabilities/get language ()
+Capabilities.isDebugger=undefined
+FAIL: flash.system::Capabilities/get isDebugger ()
+Capabilities.hasAccessibility=false
+PASS: flash.system::Capabilities/get hasAccessibility ()
