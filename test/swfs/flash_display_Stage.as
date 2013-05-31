@@ -101,6 +101,15 @@ class Test extends Sprite {
                 trace(result + ": flash.display::Stage/set scaleMode ()");
             })();
             break;
+        case 9:
+            (function () {
+                var event = new Event(Event.CANCEL);
+                stage.addEventListener(Event.CANCEL, function (e) {
+                    trace("PASS" + ": flash.display::Stage/dispatchEvent ()");
+                });
+                stage.dispatchEvent(event);
+            })();
+            break;
         default:
             stage.removeEventListener(Event.ENTER_FRAME, enterFrameHandler);
             break;

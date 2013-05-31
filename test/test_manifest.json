@@ -119,5 +119,26 @@
          "swfs/flash_display_Stage.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "flash_system_System trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_system_System.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_system_Security trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_system_Security.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_system_SecurityDomain trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_system_SecurityDomain.swf"
+       ],
+       "type": "stas"
     }
 ]

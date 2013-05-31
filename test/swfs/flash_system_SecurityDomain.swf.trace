@@ -1,0 +1,2 @@
+currentDomain=undefined
+FAIL: flash.system::SecurityDomain/get currentDomain ()
