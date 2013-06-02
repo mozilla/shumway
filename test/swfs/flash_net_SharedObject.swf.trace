@@ -1,0 +1,3 @@
+PASS: flash.net::SharedObject$/set defaultObjectEncoding ()
+PASS: flash.net::SharedObject$/getLocal ()
+PASS: flash.net::SharedObject/get data ()
