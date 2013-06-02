@@ -147,5 +147,12 @@
          "swfs/flash_system_Capabilities.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "flash_net_SharedObject trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_net_SharedObject.swf"
+       ],
+       "type": "stas"
     }
 ]
