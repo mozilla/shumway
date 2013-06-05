@@ -162,6 +162,18 @@
        ],
        "type": "stas"
     },
+    {  "id": "flash_filters_BlurFilter trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_filters_BlurFilter.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_filters_BlurFilter screen",
+       "frames": [0,1,2,3,4,5,6,7,8,9,10,11,12],
+       "swf": "swfs/flash_filters_BlurFilter.swf",
+       "type": "eq"
+    },
     {  "id": "flash_filters_DropShadowFilter trace",
        "stas": "swfs/trace.stas",
        "filenames": [
