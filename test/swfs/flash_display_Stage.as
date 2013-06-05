@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf StageTest,100,100,2 test/swfs/flash_display_Stage.as
+   java -jar utils/asc.jar -import playerglobal.abc -swf StageTest,600,600 test/swfs/flash_display_Stage.as
 */
 
 package {
@@ -12,11 +12,11 @@ package {
     public class StageTest extends Sprite {
         public var loader;
         public function StageTest() {
-            var child = new Test();
+            stage.frameRate = 20;
+            var child = new TestObject();
             addChild(child);
             child.stage.addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);
             child.stage.focus = child;
-            child.stage.frameRate = 10;
         }
     }
 }
@@ -25,12 +25,12 @@ import flash.display.*;
 import flash.events.*;
 import flash.net.*;
 
-class Test extends Sprite {
+class TestObject extends Sprite {
     private var bgColor: uint = 0xFFCC00;
     private var pos: uint     = 10;
     private var size: uint    = 80;
 
-    public function Test() {        
+    public function TestObject() {
     }
 
     private var frameCount = 0;
@@ -54,8 +54,8 @@ class Test extends Sprite {
         case 3:
             (function () {
                 var frameRate = stage.frameRate;
-                stage.frameRate = 20;
-                var result = stage.frameRate === 20 ? "PASS" : "FAIL";
+                stage.frameRate = 10;
+                var result = stage.frameRate === 10 ? "PASS" : "FAIL";
                 trace(result + ": flash.display::Stage/get frameRate ()");
                 trace(result + ": flash.display::Stage/set frameRate ()");
                 stage.frameRate = frameRate;
@@ -65,7 +65,7 @@ class Test extends Sprite {
             (function () {
                 var stageHeight = stage.stageHeight;
                 //stage.stageHeight = 400;   // NOT IMPLEMENTED
-                var result = stage.stageHeight === 100 ? "PASS" : "FAIL";
+                var result = stage.stageHeight === 600 ? "PASS" : "FAIL";
                 trace(result + ": flash.display::Stage/get stageHeight ()");
                 //stage.stageHeight = stageHeight;
             })();
@@ -80,7 +80,7 @@ class Test extends Sprite {
             (function () {
                 var stageWidth = stage.stageWidth;
                 //stage.stageWidth = 400;   // NOT IMPLEMENTED
-                var result = stage.stageWidth === 100 ? "PASS" : "FAIL";
+                var result = stage.stageWidth === 600 ? "PASS" : "FAIL";
                 trace(result + ": flash.display::Stage/get stageWidth ()");
                 //stage.stageWidth = stageWidth;
             })();
