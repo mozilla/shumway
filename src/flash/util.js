@@ -58,7 +58,7 @@ var Promise = (function PromiseClosure() {
     }
     delete subject.subpromises;
   }
-  function propagateReject(subject, reason) {
+  function propagateRejected(subject, reason) {
     subject.subpromisesReason = reason;
     var subpromises = subject.subpromises;
     if (!subpromises) {
@@ -70,25 +70,30 @@ var Promise = (function PromiseClosure() {
     delete subject.subpromises;
   }
 
+  function performCall(callback, arg, subject) {
+    try {
+      var value = callback(arg);
+      if (isPromise(value)) {
+        value.then(function Promise_queueCall_onFulfilled(value) {
+          propagateFulfilled(subject, value);
+        }, function Promise_queueCall_onRejected(reason) {
+          propagateRejected(subject, reason);
+        });
+        return;
+      }
+
+      propagateFulfilled(subject, value);
+    } catch (ex) {
+      propagateRejected(subject, ex);
+    }
+  }
+
   var queue = [];
   function processQueue() {
     while (queue.length > 0) {
-      var task = queue.shift();
-      try {
-        var value = task.callback(task.arg);
-        if (isPromise(value)) {
-          value.then(function Promise_queueCall_onFulfilled(value) {
-            propagateFulfilled(task.subject, value);
-          }, function Promise_queueCall_onRejected(reason) {
-            propagateReject(task.subject, reason);
-          });
-          return;
-        }
-
-        propagateFulfilled(task.subject, value);
-      } catch (ex) {
-        propagateReject(task.subject, ex);
-      }
+      var task = queue[0];
+      performCall(task.callback, task.arg, task.subject);
+      queue.shift();
     }
   }
 
