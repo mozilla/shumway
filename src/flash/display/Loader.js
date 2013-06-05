@@ -551,6 +551,7 @@ var LoaderDefinition = (function () {
         }
 
         if (exports && loader._isAvm2Enabled) {
+          var exportPromises = [];
           for (var i = 0, n = exports.length; i < n; i++) {
             var asset = exports[i];
             var symbolPromise = dictionary[asset.symbolId];
@@ -565,9 +566,11 @@ var LoaderDefinition = (function () {
                 };
               })(symbolPromise, asset.className)
             );
+            exportPromises.push(symbolPromise);
           }
+          return Promise.when.apply(Promise, exportPromises);
         }
-
+     }).then(function () {
         var root = loader._content;
 
         if (!root) {
