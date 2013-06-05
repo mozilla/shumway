@@ -64,7 +64,7 @@ class TestObject extends Sprite {
                 var result = filter.blurY === 14 ? "PASS" : "FAIL";
                 trace(result + ": flash.filters::GlowFilter/get blurY ()");
                 var result = filter.color === 0 ? "PASS" : "FAIL";
-                trace(result + ": flash.filters::GlowFilter/get blurY ()");
+                trace(result + ": flash.filters::GlowFilter/get color ()");
                 var result = filter.inner === false ? "PASS" : "FAIL";
                 trace(result + ": flash.filters::GlowFilter/get inner ()");
                 var result = filter.knockout === false ? "PASS" : "FAIL";
