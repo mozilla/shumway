@@ -94,6 +94,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "flash_display_Stage trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_display_Stage.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "flash_display_DisplayObject trace",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -110,13 +117,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_display_Graphics.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Stage trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Stage.swf"
        ],
        "type": "stas"
     },
@@ -161,5 +161,17 @@
          "swfs/flash_display_Shape.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "flash_filters_GlowFilter trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_filters_GlowFilter.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_filters_GlowFilter screen",
+       "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
+       "swf": "swfs/flash_filters_GlowFilter.swf",
+       "type": "eq"
     }
 ]

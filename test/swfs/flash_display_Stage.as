@@ -12,7 +12,7 @@ package {
     public class StageTest extends Sprite {
         public var loader;
         public function StageTest() {
-            child.stage.frameRate = 20;
+            stage.frameRate = 20;
             var child = new TestObject();
             addChild(child);
             child.stage.addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);
@@ -65,7 +65,7 @@ class TestObject extends Sprite {
             (function () {
                 var stageHeight = stage.stageHeight;
                 //stage.stageHeight = 400;   // NOT IMPLEMENTED
-                var result = stage.stageHeight === 100 ? "PASS" : "FAIL";
+                var result = stage.stageHeight === 600 ? "PASS" : "FAIL";
                 trace(result + ": flash.display::Stage/get stageHeight ()");
                 //stage.stageHeight = stageHeight;
             })();
@@ -80,7 +80,7 @@ class TestObject extends Sprite {
             (function () {
                 var stageWidth = stage.stageWidth;
                 //stage.stageWidth = 400;   // NOT IMPLEMENTED
-                var result = stage.stageWidth === 100 ? "PASS" : "FAIL";
+                var result = stage.stageWidth === 600 ? "PASS" : "FAIL";
                 trace(result + ": flash.display::Stage/get stageWidth ()");
                 //stage.stageWidth = stageWidth;
             })();
