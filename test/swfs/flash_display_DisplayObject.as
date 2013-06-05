@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf DisplayObjectTest,400,400 test/swfs/flash_display_DisplayObject.as
+   java -jar utils/asc.jar -import playerglobal.abc -swf DisplayObjectTest,600,600 test/swfs/flash_display_DisplayObject.as
 */
 
 package {
