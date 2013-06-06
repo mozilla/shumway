@@ -22,6 +22,9 @@ var TextFieldDefinition = (function () {
 
     initialize: function () {
       this._defaultTextFormat = null;
+      this._type = 'dynamic';
+      this._textHeight = 0;
+      this._textWidth = 0;
 
       var s = this.symbol;
       if (s) {
@@ -203,6 +206,16 @@ var TextFieldDefinition = (function () {
           set: function borderColor(value) { // (value:uint) -> void
             somewhatImplemented("TextField.borderColor");
             this._borderColor = value;
+          }
+        },
+        type: {
+          get: function borderColor() { // (void) -> String
+            somewhatImplemented("TextField.type");
+            return this._type;
+          },
+          set: function borderColor(value) { // (value:String) -> void
+            somewhatImplemented("TextField.type");
+            this._type = value;
           }
         }
       }

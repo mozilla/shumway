@@ -68,6 +68,7 @@ SWF.embed = function(file, doc, container, options) {
     syncCursor();
   };
   stage._syncCursor = syncCursor;
+  stage._mouseMoved = false;
 
   function fitCanvas(container, canvas) {
     if (canvasHolder) {
@@ -109,6 +110,7 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mousedown', function () {
+      stage._mouseMoved = true;
       if (stage._clickTarget) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
       }
@@ -129,17 +131,21 @@ SWF.embed = function(file, doc, container, options) {
         canvasState.scaleX;
       stage._mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
         canvasState.scaleY;
+      stage._mouseMoved = true;
     });
     canvas.addEventListener('mouseup', function () {
+      stage._mouseMoved = true;
       if (stage._clickTarget) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseUp'));
       }
     });
     canvas.addEventListener('mouseover', function () {
+      stage._mouseMoved = true;
       stage._mouseOver = true;
       stage._mouseJustLeft = false;
     });
     canvas.addEventListener('mouseout', function () {
+      stage._mouseMoved = true;
       stage._mouseOver = false;
       stage._mouseJustLeft = true;
     });
