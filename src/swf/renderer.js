@@ -88,10 +88,8 @@ var renderingTerminated = false;
 
 function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
-  var refreshStage;
 
   function updateRenderTransform() {
-    refreshStage = true;
     frameWidth = ctx.canvas.width;
     frameHeight = ctx.canvas.height;
 
@@ -148,7 +146,6 @@ function renderStage(stage, ctx, events) {
       offsetX: offsetX,
       offsetY: offsetY
     };
-    stage._invalidate = false;
   }
 
   updateRenderTransform();
@@ -332,9 +329,10 @@ function renderStage(stage, ctx, events) {
     }
   };
 
-  function RenderVisitor(ctx) {
+  function RenderVisitor(ctx, refreshStage) {
     this.ctx = ctx;
     this.depth = 0;
+    this.refreshStage = refreshStage;
 
     this.clipDepth = null;
     this.clipStack = null;
@@ -347,9 +345,7 @@ function renderStage(stage, ctx, events) {
 
         ctx.save();
 
-        if (refreshStage) {
-          refreshStage = false;
-        } else {
+        if (!this.refreshStage) {
           ctx.clip();
         }
 
@@ -509,20 +505,38 @@ function renderStage(stage, ctx, events) {
       events.onBeforeFrame(e);
       renderFrame = !e.cancel;
     }
-    if (renderFrame) {
-      if (stage._invalidate) {
-        updateRenderTransform();
-      }
 
+    if (renderFrame && renderDummyBalls) {
       frameTime = now;
       nextRenderAt = frameTime + maxDelay;
 
-      if (renderDummyBalls) {
-        renderDummyBalls();
-      } else {
-        visitContainer(stage, new MouseVisitor());
+      renderDummyBalls();
 
-        stage._flushPendingScripts();
+      requestAnimationFrame(draw);
+      return;
+    }
+
+    var refreshStage = false;
+    if (stage._invalidate) {
+      updateRenderTransform();
+      stage._invalidate = false;
+      refreshStage = true;
+    }
+
+    var mouseMoved = false;
+    if (stage._mouseMoved) {
+      stage._mouseMoved = false;
+      mouseMoved = true;
+    }
+
+    if (renderFrame || refreshStage || mouseMoved) {
+      visitContainer(stage, new MouseVisitor());
+
+      stage._flushPendingScripts();
+
+      if (renderFrame) {
+        frameTime = now;
+        nextRenderAt = frameTime + maxDelay;
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
         avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
@@ -530,19 +544,27 @@ function renderStage(stage, ctx, events) {
         stage._flushPendingScripts();
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
+      }
 
+      if (refreshStage) {
+        stage._dispatchEvent(new flash.events.Event("render"));
+      }
+
+      if (refreshStage || renderFrame) {
         ctx.beginPath();
         visitContainer(stage, new PreVisitor(ctx));
-        visitContainer(stage, new RenderVisitor(ctx));
+        visitContainer(stage, new RenderVisitor(ctx, refreshStage));
+      }
 
+      if (renderFrame) {
         avm2.systemDomain.broadcastMessage(new flash.events.Event("exitFrame"));
-
-        stage._syncCursor();
 
         if (events.onAfterFrame) {
           events.onAfterFrame();
         }
       }
+
+      stage._syncCursor();
     }
 
     if (renderingTerminated) {

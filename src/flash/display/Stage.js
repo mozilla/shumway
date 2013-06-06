@@ -157,7 +157,8 @@ var StageDefinition = (function () {
     },
 
     invalidate: function () {
-      notImplemented();
+      this._invalidate = true;
+      somewhatImplemented('Stage.invalidate');
     },
     isFocusInaccessible: function() {
       notImplemented();
@@ -209,7 +210,8 @@ var StageDefinition = (function () {
             somewhatImplemented("Stage.displayState");
             this._displayState = value;
           }
-        }
+        },
+        invalidate: def.invalidate
       }
     }
   };
