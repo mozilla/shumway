@@ -20,12 +20,6 @@ var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
     },
-    _updateBounds: function () {
-      this._videoScaleX = this._width / this._videoWidth;
-      this._videoScaleY = this._height / this._videoHeight;
-      this._bbox = {left: 0, top: 0, right: this._width, bottom: this._height};
-      this._updateCurrentTransform();
-    },
     attachNetStream: function (netStream) {
       this._netStream = netStream;
       netStream._videoReady.then(function (element) {
@@ -33,19 +27,20 @@ var VideoDefinition = (function () {
         netStream._videoMetadataReady.then(function (url) {
           this._element.width = this._videoWidth = this._element.videoWidth;
           this._element.height = this._videoHeight = this._element.videoHeight;
-          this._width = this._width || this._videoWidth;
-          this._height = this._height || this._videoHeight;
-          this._updateBounds();
+          if (this.stage) {
+            this.stage.invalidate();
+          }
         }.bind(this));
       }.bind(this));
     },
     ctor: function(width, height) {
-      if (width == null) width = 320;
-      if (height == null) height = 240;
+      if (width == null || width <= 0) width = 320;
+      if (height == null || height <= 0) height = 240;
 
-      this._width = this._videoWidth = width;
-      this._height = this._videoHeight = height;
-      this._updateBounds();
+      this._bbox = {left: 0, top: 0, right: width, bottom: height};
+
+      this._initialWidth = this._videoWidth = width;
+      this._initialHeight = this._videoHeight = height;
 
       this._element = null;
       this._added = false;
@@ -59,22 +54,36 @@ var VideoDefinition = (function () {
         this._added = true;
       }
 
+      var width = this._initialWidth;
+      var height = this._initialHeight;
+
+      ctx.save();
       ctx.beginPath();
-      ctx.rect(0, 0, this._width, this._height);
+      ctx.rect(0, 0, width, height);
       ctx.clip();
-      ctx.clearRect(0, 0, this._width, this._height);
+      ctx.clearRect(0, 0, width, height);
+      ctx.restore();
 
       var matrix = ctx.currentTransform;
-      var sx = this._videoScaleX, sy = this._videoScaleY;
-      var cssTransform = "transform: matrix(" + sx * matrix.a + ", " +
-         sx * matrix.b + ", " + sy * matrix.c + ", " + sy * matrix.d + ", " +
-         matrix.e + ", " + matrix.f + ");";
+      var sx = width / this._videoWidth;
+      var sy = height / this._videoHeight;
+
+      var scaleFactor = (this.stage && this.stage._contentsScaleFactor) || 1;
+      var a = sx * matrix.a / scaleFactor;
+      var b = sx * matrix.b / scaleFactor;
+      var c = sy * matrix.c / scaleFactor;
+      var d = sy * matrix.d / scaleFactor;
+      var e = matrix.e / scaleFactor;
+      var f = matrix.f / scaleFactor;
+
+      var cssTransform = "transform: matrix(" + a + "," + b + "," + c + "," +
+         d + "," + e + "," + f + ");";
+
       if (this._currentCssTransform !== cssTransform) {
         this._currentCssTransform = cssTransform;
         this._element.setAttribute("style", "position: absolute; top:0; left:0; z-index: -100;" +
                                    "transform-origin: 0px 0px 0;" + cssTransform +
                                    "-webkit-transform-origin: 0px 0px 0; -webkit-" + cssTransform);
-        this._markAsDirty();
       }
     }
   };
@@ -84,15 +93,6 @@ var VideoDefinition = (function () {
       instance: {
         attachNetStream: def.attachNetStream,
         ctor: def.ctor,
-        height: {
-          get: function () {
-            return this._height;
-          },
-          set: function (val) {
-            this._height = val;
-            this._updateBounds();
-          }
-        },
         smoothing: {
           get: function smoothing() { // (void) -> Boolean
             return this._smoothing;
@@ -110,15 +110,6 @@ var VideoDefinition = (function () {
         videoWidth: {
           get: function videoWidth() { // (void) -> int
             return this._videoWidth;
-          }
-        },
-        width: {
-          get: function () {
-            return this._width;
-          },
-          set: function (val) {
-            this._width = val;
-            this._updateBounds();
           }
         },
       }
