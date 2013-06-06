@@ -1483,7 +1483,7 @@ var natives = (function () {
 
         getDefinition: function (name) {
           var simpleName = name.replace("::", ".");
-          return this.dom.getProperty(Multiname.fromSimpleName(simpleName), false, true);
+          return this.dom.getProperty(Multiname.fromSimpleName(simpleName), true, true);
         },
 
         hasDefinition: function (name) {
