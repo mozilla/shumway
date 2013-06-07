@@ -148,18 +148,16 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var that = this;
-      avm2.systemDomain.onMessage.register(function (e) {
-        var type = e.data._type;
-        if (type === 'constructFrame' && that._refreshAS2Variables) {
+      avm2.systemDomain.onMessage('constructFrame').register(function (e) {
+        if (that._refreshAS2Variables) {
           that._refreshAS2Variables();
-          return;
         }
-        if (type === 'enterFrame' ||
-            type === 'exitFrame' ||
-            type === 'frameConstructed' ||
-            type === 'render') {
-          that._dispatchEvent(e.data);
-        }
+      });
+      var dispatcher = function (e) {
+        that._dispatchEvent(e.data);
+      };
+      ['enterFrame', 'exitFrame', 'frameConstructed', 'render'].forEach(function(message) {
+        avm2.systemDomain.onMessage(message).register(dispatcher);
       });
     },
 

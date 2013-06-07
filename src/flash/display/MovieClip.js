@@ -62,8 +62,9 @@ var MovieClipDefinition = (function () {
       }
 
       var that = this;
-      avm2.systemDomain.onMessage.register(function (e) {
-        if (e.data._type === 'constructFrame' && that._isPlaying) {
+      avm2.systemDomain.onMessage('constructFrame').register(function (e) {
+        assert (e.data._type === 'constructFrame');
+        if (that._isPlaying) {
           that._constructNextFrame();
         }
       });
