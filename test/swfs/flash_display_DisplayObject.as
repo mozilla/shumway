@@ -10,7 +10,7 @@ package {
 
     public class DisplayObjectTest extends Sprite {
         public function DisplayObjectTest() {
-            stage.frameRate = 20;
+            stage.frameRate = 4;
             var child:CustomDisplayObject = new CustomDisplayObject();
             addChild(child);
         }
