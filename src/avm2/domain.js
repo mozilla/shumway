@@ -473,19 +473,27 @@ var Domain = (function () {
     },
 
     findClassInfo: function findClassInfo(mn) {
-      release || Multiname.isQName(mn);
-      var qn = Multiname.getQualifiedName(mn);
-
-      var ci = this.classInfoCache[qn];
-      if (ci) {
-        return ci;
-      }
-      if (this.base) {
-        ci = this.base.findClassInfo(mn);
+      if (!Multiname.isQName(mn)) {
+        var script = this.findDefiningScript(mn);
+        if (script) {
+          mn = resolveMultiname(script.script.global, mn);
+        }
+      } else {
+        release || Multiname.isQName(mn);
+        var qn = Multiname.getQualifiedName(mn);
+        var ci = this.classInfoCache[qn];
         if (ci) {
           return ci;
         }
+        if (this.base) {
+          ci = this.base.findClassInfo(mn);
+          if (ci) {
+            return ci;
+          }
+        }
       }
+      // The class amoung the instantiated classes, so let's go looking of it
+      // amoungst the loaded ABCs.
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
         var abc = abcs[i];
@@ -493,16 +501,23 @@ var Domain = (function () {
         for (var j = 0; j < scripts.length; j++) {
           var script = scripts[j];
           var traits = script.traits;
+          // One wonders if we could call 'nameInTraits' for each qname in mn,
+          // instead of doing the following
           for (var k = 0; k < traits.length; k++) {
             var trait = traits[k];
-            if (trait.isClass() && Multiname.getQualifiedName(trait.name) == qn) {
-              return (this.classInfoCache[qn] = trait.classInfo);
+            if (trait.isClass()) {
+              var traitName = Multiname.getQualifiedName(trait.name);
+              for (var m = 0, n = mn.namespaces.length; m < n; m++) {
+                var qn = mn.getQName(m);
+                if (traitName === Multiname.getQualifiedName(qn)) {
+                  return (this.classInfoCache[qn] = trait.classInfo);
+                }
+              }
             }
           }
         }
       }
-
-      // Ask host to load the defining ABC
+      // Still no luck, so let's ask host to load the defining ABC and try again.
       if (!this.base && this.vm.findDefiningAbc) {
         var abc = this.vm.findDefiningAbc(mn);
         if (abc !== null && !this.loadedAbcs[abc.name]) {
