@@ -473,27 +473,28 @@ var Domain = (function () {
     },
 
     findClassInfo: function findClassInfo(mn) {
-      if (!Multiname.isQName(mn)) {
-        var script = this.findDefiningScript(mn);
-        if (script) {
-          mn = resolveMultiname(script.script.global, mn);
-        }
-      } else {
-        release || Multiname.isQName(mn);
-        var qn = Multiname.getQualifiedName(mn);
-        var ci = this.classInfoCache[qn];
+      var originalQn; // Remember for later in this function
+      if (Multiname.isQName(mn)) {
+        // This deals with the case where mn is already a qn.
+        originalQn = Multiname.getQualifiedName(mn);
+        var ci = this.classInfoCache[originalQn];
         if (ci) {
           return ci;
         }
-        if (this.base) {
-          ci = this.base.findClassInfo(mn);
-          if (ci) {
-            return ci;
-          }
+      } else {
+        var ci = this.classInfoCache[mn.id];
+        if (ci) {
+          return ci;
         }
       }
-      // The class amoung the instantiated classes, so let's go looking of it
-      // amoungst the loaded ABCs.
+      if (this.base) {
+        // Recurse with the mn as is.
+        ci = this.base.findClassInfo(mn);
+        if (ci) {
+          return ci;
+        }
+      }
+      // The class info may be among the loaded ABCs, go looking for it.
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
         var abc = abcs[i];
@@ -501,16 +502,21 @@ var Domain = (function () {
         for (var j = 0; j < scripts.length; j++) {
           var script = scripts[j];
           var traits = script.traits;
-          // One wonders if we could call 'nameInTraits' for each qname in mn,
-          // instead of doing the following
           for (var k = 0; k < traits.length; k++) {
             var trait = traits[k];
             if (trait.isClass()) {
               var traitName = Multiname.getQualifiedName(trait.name);
-              for (var m = 0, n = mn.namespaces.length; m < n; m++) {
-                var qn = mn.getQName(m);
-                if (traitName === Multiname.getQualifiedName(qn)) {
-                  return (this.classInfoCache[qn] = trait.classInfo);
+              // So here mn is either a Multiname or a QName.
+              if (originalQn) {
+                if (traitName === originalQn) {
+                  return (this.classInfoCache[originalQn] = trait.classInfo);
+                }
+              } else {
+                for (var m = 0, n = mn.namespaces.length; m < n; m++) {
+                  var qn = mn.getQName(m);
+                  if (traitName === qn) {
+                    return (this.classInfoCache[qn] = trait.classInfo);
+                  }
                 }
               }
             }
@@ -526,7 +532,6 @@ var Domain = (function () {
           return this.findClassInfo(mn);
         }
       }
-
       return undefined;
     },
 
