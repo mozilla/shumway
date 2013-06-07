@@ -145,16 +145,13 @@ var EventDispatcherDefinition = (function () {
       return type in this._listeners || type in this._captureListeners;
     },
     _dispatchEvent: function dispatchEvent(event) {
-      if (event._target) {
-        event = event.clone();
-      }
-
+      var savedTarget = event._target;
       var target = this._target;
       if (target[event._handlerName]) {
         target[event._handlerName](event);
       }
-
       doDispatchEvent(this, event);
+      event._target = savedTarget;
     },
 
     __glue__: {
