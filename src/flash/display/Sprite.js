@@ -204,6 +204,7 @@ var SpriteDefinition = (function () {
         instance._refreshAS2Variables = function() {
           instance.text = clip[variableName];
         };
+        instance.addEventListener('constructFrame', instance._refreshAS2Variables.bind(instance));
       }
 
       if (events) {
