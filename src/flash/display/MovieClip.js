@@ -62,6 +62,12 @@ var MovieClipDefinition = (function () {
       }
     },
 
+    onConstructFrame: function () {
+      if (this._isPlaying) {
+        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      }
+    },
+
     _callFrame: function (frameNum) {
       this._deferScriptExecution = true;
       if (frameNum in this._frameScripts) {
@@ -248,11 +254,6 @@ var MovieClipDefinition = (function () {
         decoderSession.pushAsync(streamBlock.data);
       } else {
         soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
-      }
-    },
-    _constructFrame: function () {
-      if (this._isPlaying) {
-        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
       }
     },
     _startSounds: function (frameNum) {
