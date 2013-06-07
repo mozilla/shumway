@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf DisplayObjectContainerTest,100,100,2 test/swfs/flash_display_DisplayObjectContainer.as
+   java -jar utils/asc.jar -import playerglobal.abc -swf DisplayObjectContainerTest,600,600 test/swfs/flash_display_DisplayObjectContainer.as
 */
 
 package {
@@ -10,6 +10,7 @@ package {
 
     public class DisplayObjectContainerTest extends Sprite {
         public function DisplayObjectContainerTest() {
+            stage.frameRate = 4;
             var child:DisplayObjectContainerObject = new DisplayObjectContainerObject();
             addChild(child);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);
@@ -32,8 +33,8 @@ dynamic class DisplayObjectContainerObject extends Sprite {
     private function _addChild():void {
         var shape = new Shape;
         shape.graphics.lineStyle(10, color);
-        shape.graphics.moveTo(10, 10);
-        shape.graphics.lineTo(90, 90);
+        shape.graphics.moveTo(5, 5);
+        shape.graphics.lineTo(95, 95);
         this.addChild(shape);
         var result = this.contains(shape) ? "PASS" : "FAIL";
         trace(result + ": flash.display::DisplayObjectContainer/addChild ()");
@@ -54,11 +55,11 @@ dynamic class DisplayObjectContainerObject extends Sprite {
 
     private function _addChildAt():void {
         var shape1 = new Shape;
-        shape1.graphics.beginFill(color);
+        shape1.graphics.beginFill(color, .3);
         shape1.graphics.drawRect(10, 10, 60, 60);
         this.addChildAt(shape1, 0);
         var shape2 = new Shape;
-        shape2.graphics.beginFill(color << 8);
+        shape2.graphics.beginFill(color << 8, .3);
         shape2.graphics.drawRect(30, 30, 60, 60);
         this.addChildAt(shape2, 0);
         var result = (this.getChildIndex(shape1) === 1 &&
@@ -80,7 +81,7 @@ dynamic class DisplayObjectContainerObject extends Sprite {
         var shape1 = new Shape;
         var name = "foo";
         shape1.graphics.beginFill(0x00FF00);
-        shape1.graphics.drawRect(0, 0, 100, 100);
+        shape1.graphics.drawRect(0, 0, 20, 100);
         shape1.name = name;
         this.addChildAt(shape1, 0);
         var result = (this.getChildByName(name).name === name) ? "PASS" : "FAIL";
