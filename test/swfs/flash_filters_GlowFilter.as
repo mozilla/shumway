@@ -13,7 +13,7 @@ package {
     public class GlowFilterTest extends Sprite {
         public var loader;
         public function GlowFilterTest() {
-            stage.frameRate = 20;
+            stage.frameRate = 4;
             var child = new TestObject();
             background(0xFFFFFF);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

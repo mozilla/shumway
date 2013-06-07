@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf GraphicsTest,400,400 test/swfs/flash_display_Grahics.as
+   java -jar utils/asc.jar -import playerglobal.abc -swf GraphicsTest,600,600 test/swfs/flash_display_Grahics.as
 */
 
 package {
@@ -9,6 +9,7 @@ package {
 
     public class GraphicsTest extends Sprite {
         public function GraphicsTest() {
+            stage.frameRate = 4;
             var child:GraphicsObject = new GraphicsObject();
             addChild(child);
         }
@@ -26,100 +27,10 @@ dynamic class GraphicsObject extends Sprite {
         addEventListener(Event.ENTER_FRAME, enterFrameHandler);
     }
 
-    private function beginFill():void {
-        graphics.clear();
-        graphics.beginFill(color);
-        graphics.drawRect(0, 0, size, size);
-        graphics.endFill();
-    }
-
-    private function drawCircle():void {
-        graphics.clear();
-        graphics.beginFill(color);
-        graphics.drawCircle(50, 50, size/2);
-        graphics.endFill();
-    }
-
-    private function drawRect():void {
-        graphics.clear();
-        graphics.beginFill(color);
-        graphics.drawRect(0, 0, size, size);
-        graphics.endFill();
-    }
-
-    private function drawRoundRect():void {
-        graphics.clear();
-        graphics.beginFill(color);
-        graphics.drawRoundRect(0, 0, size, size, size/5, size/5);
-        graphics.endFill();
-    }
-
-    private function beginGradientFill():void {
-        graphics.clear();
-        var fillType:String = GradientType.LINEAR;
-        var colors:Array = [0xFF0000, 0x0000FF];
-        var alphas:Array = [1, 1];
-        var ratios:Array = [0x00, 0xFF];
-        graphics.beginGradientFill(fillType, colors, alphas, ratios);        
-        graphics.drawRect(0,0,size,size);
-        graphics.endFill();
-    }
-
-    private function lineTo():void {
-        graphics.clear();
-        graphics.lineStyle(10, color);
-        graphics.moveTo(0, 0);
-        graphics.lineTo(size, size);
-        //var bits = new BitmapData(100, 100);
-        //bits.draw(this);
-        //trace("expected: " + color);
-        //trace("found: " + bits.getPixel(size, size));
-    }
-
-    private function moveTo():void {
-        graphics.clear();
-        graphics.lineStyle(10, color);
-        graphics.moveTo(size, 10);
-        graphics.lineTo(size, size);
-    }
-
-    private function lineStyle():void {
-        graphics.clear();
-        graphics.lineStyle(10, color << 2, 0.5);
-        graphics.moveTo(size/2, size);
-        graphics.lineTo(10, 10);
-        graphics.lineStyle(10, color >> 2, 0.5);
-        graphics.lineTo(size, 10);
-        graphics.lineStyle(10, color, 0.5);
-        graphics.lineTo(10, size);
-    }
-
-    private function endFill():void {
-        graphics.clear();
-        graphics.beginFill(0x00FF00);
-        graphics.lineStyle(10, color << 2, 0.5);
-        graphics.moveTo(size/2, size);
-        graphics.lineTo(10, 10);
-        graphics.lineTo(size, 10);
-        graphics.endFill();
-    }
-
-    private function lineGradientStyle():void {
-        graphics.clear();
-        var fillType:String = GradientType.LINEAR;
-        var colors:Array = [0xFF0000, 0x00FFFF];
-        var alphas:Array = [1, 1];
-        var ratios:Array = [0x00, 0xFF];
-        graphics.lineStyle(20);
-        graphics.lineGradientStyle(fillType, colors, alphas, ratios);        
-        graphics.moveTo(size/2, size);
-        graphics.lineTo(10, 10);
-        graphics.lineTo(size, 10);
-        graphics.lineTo(10, size);
-    }
-
     private function clear() {
-        graphics.clear();
+        graphics.beginFill(0xFFFFFF);
+        graphics.lineStyle(0, 0x000000, 0);
+        graphics.drawRect(0, 0, 600, 600);
     }
 
     private var frameCount = 0;
@@ -128,34 +39,112 @@ dynamic class GraphicsObject extends Sprite {
         var target = event.target;
         switch (frameCount) {
         case 0:
-            beginFill();
+            (function () {
+                clear();
+                graphics.beginFill(color);
+                graphics.drawRect(0, 0, size, size);
+                graphics.endFill();
+            })();
             break;
         case 1:
-            drawRoundRect();
+            (function () {
+                clear();
+                graphics.beginFill(color);
+                graphics.drawRoundRect(0, 0, size, size, size/5, size/5);
+                graphics.endFill();
+            })();
             break;
         case 2:
-            drawRect();
+            (function () {
+                clear();
+                graphics.beginFill(color);
+                graphics.drawRect(0, 0, size, size);
+                graphics.endFill();
+            })();
             break;
         case 3:
-            drawCircle();
+            (function () {
+                clear();
+                graphics.beginFill(color);
+                graphics.drawCircle(50, 50, size/2);
+                graphics.endFill();
+            })();
             break;
         case 4:
-            beginGradientFill();
+            (function () {
+                clear();
+                var fillType:String = GradientType.LINEAR;
+                var colors:Array = [0xFF0000, 0x0000FF];
+                var alphas:Array = [1, 1];
+                var ratios:Array = [0x00, 0xFF];
+                graphics.beginGradientFill(fillType, colors, alphas, ratios);        
+                graphics.drawRect(0,0,size,size);
+                graphics.endFill();
+            })();
             break;
         case 5:
-            lineTo();
+            (function () {
+                clear();
+                graphics.lineStyle(10, color);
+                graphics.moveTo(0, 0);
+                graphics.lineTo(size, size);
+                graphics.lineTo(0, size);
+                graphics.lineTo(size, 0);
+            })();
             break;
         case 6:
-            moveTo();
+            (function () {
+                clear();
+                graphics.lineStyle(10, color);
+                graphics.moveTo(size, 10);
+                graphics.lineTo(size, size);
+            })();
             break;
         case 7:
-            lineStyle();
+            (function () {
+                clear();
+                graphics.lineStyle(10, color << 2, 0.5);
+                graphics.moveTo(size/2, size);
+                graphics.lineTo(10, 10);
+                graphics.lineStyle(10, color >> 2, 0.5);
+                graphics.lineTo(size, 10);
+                graphics.lineStyle(10, color, 0.5);
+                graphics.lineTo(10, size);
+            })();
+            return;
             break;
         case 8:
-            lineGradientStyle();
+            (function ():void {
+                clear();
+                var fillType:String = GradientType.LINEAR;
+                var colors:Array = [0xFF0000, 0x00FFFF];
+                var alphas:Array = [1, 1];
+                var ratios:Array = [0x00, 0xFF];
+                graphics.lineStyle(20);
+                //FIXME not implemented
+                //graphics.lineGradientStyle(fillType, colors, alphas, ratios);        
+                graphics.moveTo(size/2, size);
+                graphics.lineTo(10, 10);
+                graphics.lineTo(size, 10);
+                graphics.lineTo(10, size);
+            })();
             break;
         case 9:
-            endFill();
+            (function () {
+                clear();
+                graphics.beginFill(0x00FF00);
+                graphics.lineStyle(10, color << 2, 0.5);
+                graphics.moveTo(size/2, size);
+                graphics.lineTo(10, 10);
+                graphics.lineTo(size, 10);
+                graphics.endFill();
+            })();
+            break;
+        case 10:
+            graphics.clear();
+            break;
+        case 11:
+            // check for blank stage
             break;
         default:
             removeEventListener("enterFrame", enterFrameHandler);
