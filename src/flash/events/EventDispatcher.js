@@ -20,6 +20,7 @@ var EventDispatcherDefinition = (function () {
   function doDispatchEvent(dispatcher, event) {
     var target = dispatcher._target;
     var type = event._type;
+    var listeners = dispatcher._listeners[type];
 
     if (event._bubbles) {
       var ancestors = [];
@@ -29,6 +30,14 @@ var EventDispatcherDefinition = (function () {
           ancestors.push(currentNode);
         }
         currentNode = currentNode._parent;
+      }
+
+      if (!listeners && !ancestors.length) {
+        return true;
+      }
+
+      if (event._target) {
+        event = event.clone();
       }
 
       var keepPropagating = true;
@@ -41,21 +50,22 @@ var EventDispatcherDefinition = (function () {
           processListeners(queue, event, target, currentTarget, 1);
       }
 
-      if (keepPropagating) {
-        keepPropagating =
-          processListeners(dispatcher._listeners[type], event, target);
+      if (listeners && keepPropagating) {
+        keepPropagating = processListeners(listeners, event, target);
       }
 
-      if (keepPropagating) {
-        for (var i = 0; i < ancestors.length && keepPropagating; i++) {
-          var currentTarget = ancestors[i];
-          var queue = currentTarget._listeners[type];
-          keepPropagating =
-            processListeners(queue, event, target, currentTarget, 3);
-        }
+      for (var i = 0; i < ancestors.length && keepPropagating; i++) {
+        var currentTarget = ancestors[i];
+        var queue = currentTarget._listeners[type];
+        keepPropagating =
+          processListeners(queue, event, target, currentTarget, 3);
       }
-    } else {
-      processListeners(dispatcher._listeners[type], event, target);
+    } else if (listeners) {
+      if (event._target) {
+        event = event.clone();
+      }
+
+      processListeners(listeners, event, target);
     }
 
     return !event._isDefaultPrevented;
@@ -145,15 +155,6 @@ var EventDispatcherDefinition = (function () {
       return type in this._listeners || type in this._captureListeners;
     },
     _dispatchEvent: function dispatchEvent(event) {
-      if (event._target) {
-        event = event.clone();
-      }
-
-      var target = this._target;
-      if (target[event._handlerName]) {
-        target[event._handlerName](event);
-      }
-
       doDispatchEvent(this, event);
     },
 
