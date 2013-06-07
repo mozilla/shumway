@@ -1077,6 +1077,31 @@ function shouldCompile(mi) {
 }
 
 /**
+ * Checks if the specified method must be compiled, even if the compiled is not enabled.
+ */
+function forceCompile(mi) {
+  var holder = mi.holder;
+  if (holder instanceof ClassInfo) {
+    holder = holder.instanceInfo;
+  }
+  if (holder instanceof InstanceInfo) {
+    var packageName = holder.name.namespaces[0].originalURI;
+    switch (packageName) {
+      case "flash.geom":
+      case "flash.events":
+        return true;
+      default:
+        break;
+    }
+    var className = holder.name.getOriginalName();
+    switch (className) {
+      // ...
+    }
+  }
+  return false;
+}
+
+/**
  * Execution context for an ABC.
  */
 var Runtime = (function () {
@@ -1262,7 +1287,7 @@ var Runtime = (function () {
 
     totalFunctionCount ++;
 
-    if (mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) {
+    if ((mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
       return interpretedMethod(this.interpreter, mi, scope);
     }
 
