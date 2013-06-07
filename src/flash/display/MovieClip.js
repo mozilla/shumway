@@ -60,6 +60,11 @@ var MovieClipDefinition = (function () {
           this._scenes = [scene];
         }
       }
+
+      this._onConstructFrame = function () {
+        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      }.bind(this);
+      this._addEventListener('constructFrame', this._onConstructFrame);
     },
 
     _callFrame: function (frameNum) {
@@ -250,11 +255,6 @@ var MovieClipDefinition = (function () {
         soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
       }
     },
-    _constructFrame: function () {
-      if (this._isPlaying) {
-        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
-      }
-    },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
       if (starts) {
@@ -407,7 +407,10 @@ var MovieClipDefinition = (function () {
       notImplemented();
     },
     play: function () {
-      this._isPlaying = true;
+      if (!this._isPlaying) {
+        this._isPlaying = true;
+        this._addEventListener('constructFrame', this._onConstructFrame);
+      }
     },
     prevFrame: function () {
       this.stop();
@@ -419,7 +422,10 @@ var MovieClipDefinition = (function () {
       notImplemented();
     },
     stop: function () {
-      this._isPlaying = false;
+      if (this._isPlaying) {
+        this._isPlaying = false;
+        this._removeEventListener('constructFrame', this._onConstructFrame);
+      }
     }
   };
 

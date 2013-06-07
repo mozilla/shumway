@@ -150,12 +150,9 @@ var DisplayObjectDefinition = (function () {
       var that = this;
       avm2.systemDomain.onMessage.register(function (msg) {
         var evt = msg.data;
-        if (evt._type === 'constructFrame' && that._refreshAS2Variables) {
-          that._refreshAS2Variables();
-        }
-        if (that[evt._handlerName]) {
-          that[evt._handlerName](evt);
-        } else {
+        var listeners = that._listeners;
+        // shortcut: checking if the listeners are exist before dispatching
+        if (listeners[evt._type]) {
           that._dispatchEvent(evt);
         }
       });
