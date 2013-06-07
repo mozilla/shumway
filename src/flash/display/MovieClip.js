@@ -60,13 +60,6 @@ var MovieClipDefinition = (function () {
           this._scenes = [scene];
         }
       }
-
-      var that = this;
-      avm2.systemDomain.onMessage.register(function (e) {
-        if (e.data._type === 'constructFrame' && that._isPlaying) {
-          that._constructNextFrame();
-        }
-      });
     },
 
     _callFrame: function (frameNum) {
@@ -257,8 +250,10 @@ var MovieClipDefinition = (function () {
         soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
       }
     },
-    _constructNextFrame: function () {
-      this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+    _constructFrame: function () {
+      if (this._isPlaying) {
+        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      }
     },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
