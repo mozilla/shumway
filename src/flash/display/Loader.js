@@ -1067,7 +1067,10 @@ var LoaderDefinition = (function () {
         },
         _load: def._load,
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
-          notImplemented("Loader._loadBytes");
+          somewhatImplemented("Loader._loadBytes");
+          var str = base64ArrayBuffer(bytes.a);
+          print(str)
+          loadFromWorker(null, bytes.a);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
           notImplemented("Loader._unload");

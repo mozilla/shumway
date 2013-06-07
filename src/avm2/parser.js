@@ -579,7 +579,7 @@ var Multiname = (function () {
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
       assert (name === null || isString(name), "Multiname name must be a string. " + name);
-      assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
+      // Multiname name may be any string, including one that encodes a number.
     }
     this.id = nextID ++;
     this.namespaces = namespaces;
