@@ -431,11 +431,10 @@ var LoaderDefinition = (function () {
         break;
       case 'complete':
         var frameConstructed = new Promise;
-        avm2.systemDomain.onMessage.register(function waitForFrame(e) {
-          if (e.data._type === 'frameConstructed') {
-            frameConstructed.resolve();
-            avm2.systemDomain.onMessage.unregister(waitForFrame);
-          }
+        avm2.systemDomain.onMessage('frameConstructed').register(function waitForFrame(e) {
+          assert (e.data._type === 'frameConstructed');
+          frameConstructed.resolve();
+          avm2.systemDomain.onMessage('frameConstructed').unregister(waitForFrame);
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent(new flash.events.Event("complete"));

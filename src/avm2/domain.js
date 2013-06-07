@@ -100,7 +100,13 @@ var Domain = (function () {
 
     this.onClassCreated = new Callback();
 
-    this.onMessage = new Callback();
+    // Message callback queues.
+    var onMessageCallbacks = createEmptyObject();
+
+    this.onMessage = function (topic) {
+      assert (isString(topic));
+      return onMessageCallbacks[topic] || (onMessageCallbacks[topic] = new Callback());
+    };
 
     // If we are the system domain (the root), we should initialize the Class
     // and MethodClosure classes.
@@ -600,8 +606,9 @@ var Domain = (function () {
       }
     },
 
-    broadcastMessage: function (message, origin) {
-      this.onMessage.notify({
+    broadcastMessage: function (topic, message, origin) {
+      assert (arguments.length > 1);
+      this.onMessage(topic).notify({
         data: message,
         origin: origin,
         source: this

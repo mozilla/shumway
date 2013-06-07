@@ -538,12 +538,12 @@ function renderStage(stage, ctx, events) {
         frameTime = now;
         nextRenderAt = frameTime + maxDelay;
 
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
+        avm2.systemDomain.broadcastMessage("constructFrame", new flash.events.Event("constructFrame"));
+        avm2.systemDomain.broadcastMessage("frameConstructed", new flash.events.Event("frameConstructed"));
 
         stage._flushPendingScripts();
 
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
+        avm2.systemDomain.broadcastMessage("enterFrame", new flash.events.Event("enterFrame"));
       }
 
       if (refreshStage) {
@@ -557,7 +557,7 @@ function renderStage(stage, ctx, events) {
       }
 
       if (renderFrame) {
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("exitFrame"));
+        avm2.systemDomain.broadcastMessage("exitFrame", new flash.events.Event("exitFrame"));
 
         if (events.onAfterFrame) {
           events.onAfterFrame();
