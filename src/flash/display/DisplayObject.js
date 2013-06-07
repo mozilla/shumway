@@ -148,17 +148,12 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var that = this;
-      avm2.systemDomain.onMessage.register(function (e) {
-        var type = e.data._type;
-        if (type === 'constructFrame' && that._refreshAS2Variables) {
-          that._refreshAS2Variables();
-          return;
-        }
-        if (type === 'enterFrame' ||
-            type === 'exitFrame' ||
-            type === 'frameConstructed' ||
-            type === 'render') {
-          that._dispatchEvent(e.data);
+      avm2.systemDomain.onMessage.register(function (msg) {
+        var evt = msg.data;
+        var listeners = that._listeners;
+        // shortcut: checking if the listeners are exist before dispatching
+        if (listeners[evt._type]) {
+          that._dispatchEvent(evt);
         }
       });
     },
