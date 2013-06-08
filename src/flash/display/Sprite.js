@@ -227,7 +227,7 @@ var SpriteDefinition = (function () {
         if (eventsBound.length > 0) {
           instance._addEventListener('removed', function (eventsBound) {
             for (var i = 0; i < eventsBound.length; i++) {
-              this.removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
+              this._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
           }.bind(instance, eventsBound), false);
         }
