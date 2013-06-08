@@ -286,10 +286,12 @@ AS2Globals.prototype = {
   Stage: AS2Stage,
   Button: AS2Button,
   TextField: AS2TextField,
+  Color: AS2Color,
   Rectangle: AS2Rectangle,
   Key: AS2Key,
   Mouse: AS2Mouse,
   // lazy initialized built-ins
+  get ColorTransform() { return delete this.ColorTransform, this.ColorTransform = flash.geom.ColorTransform; },
   get TextFormat() { return delete this.TextFormat, this.TextFormat = flash.text.TextFormat; }
 };
 
