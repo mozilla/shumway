@@ -25,10 +25,11 @@ function loadMovie(path, reportFrames) {
     var i = 0, frame = 0;
     onFrameCallback = function () {
       while (i < reportFrames.length && frame >= reportFrames[i]) {
+        var snapshot = getCanvasData();
         movieReady.then(sendResponse.bind(null, {
           index: i,
           frame: frame,
-          snapshot: getCanvasData()
+          snapshot: snapshot
         }));
         i++;
       }
