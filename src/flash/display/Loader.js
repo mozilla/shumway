@@ -533,7 +533,7 @@ var LoaderDefinition = (function () {
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
       else
-        loaderInfo._backgroundColor = { color: 0xFFFFFF, alpha: 0xFF };
+        loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
 
       Promise.when.apply(Promise, promiseQueue).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {

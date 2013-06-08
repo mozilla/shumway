@@ -52,7 +52,7 @@ function proxyEventHandler(eventName, argsConverter) {
         return;
       }
       if (currentHandler) {
-        this.$nativeObject.removeEventListener(eventName, handlerRunner);
+        this.$nativeObject._removeEventListener(eventName, handlerRunner);
       }
       currentHandler = newHandler;
       if (currentHandler) {
@@ -1191,6 +1191,35 @@ defineObjectProperties(AS2Stage, {
 });
 AS2Broadcaster.initialize(AS2Stage);
 
+function AS2Color(target_mc) {
+  this.$target = AS2Context.instance.resolveTarget(target_mc);
+}
+AS2Color.prototype = Object.create(Object.prototype, {
+  getRGB: {
+    value: function getRGB() {
+      var transform = this.getTransform();
+      return transform.rgb;
+    }
+  },
+  getTransform: {
+    value: function getTransform() {
+      return this.$target.$nativeObject.transform.colorTransform;
+    }
+  },
+  setRGB: {
+    value: function setRGB(offset) {
+      var transform = new flash.geom.ColorTransform();
+      transform.rgb = offset;
+      this.setTransform(transform);
+    }
+  },
+  setTransform: {
+    value: function setTransform(transform) {
+      this.$target.$nativeObject.transform.colorTransform = transform;
+    }
+  }
+});
+
 function AS2Rectangle(x, y, width, height) {
   this.x = x;
   this.y = y;
@@ -1365,6 +1394,7 @@ if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2Key = AS2Key;
   GLOBAL.AS2Mouse = AS2Mouse;
   GLOBAL.AS2Stage = AS2Stage;
+  GLOBAL.AS2Color = AS2Color;
   GLOBAL.AS2Rectangle = AS2Rectangle;
   GLOBAL.AS2System = AS2System;
   GLOBAL.createBuiltinType = createBuiltinType;
