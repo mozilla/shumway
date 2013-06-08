@@ -215,7 +215,7 @@ function executeActions(actionsData, context, scope, assets) {
 }
 
 function lookupAS2Children(targetPath, defaultTarget, root) {
-  var path = targetPath.split('/');
+  var path = targetPath.split(/[\/.]/g);
   if (path[path.length - 1] === '') {
     path.pop();
   }
@@ -891,7 +891,7 @@ function interpretActions(actionsData, scopeContainer,
         // work.
         var result = new (method.bind.apply(method, [null].concat(args)))();
         if (!result) {
-          result = {};
+          result = Object.create(method.prototype || Object.prototype);
           result.constructor = method;
           method.apply(result, args);
         }
@@ -905,7 +905,7 @@ function interpretActions(actionsData, scopeContainer,
         var result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
-          result = {};
+          result = Object.create(obj.prototype || Object.prototype);
           obj.apply(result, args);
           result.constructor = obj;
         }
