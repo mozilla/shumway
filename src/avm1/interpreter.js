@@ -196,7 +196,16 @@ function as2ResolveProperty(obj, name) {
   if (avm2PublicName in obj) {
     return avm2PublicName;
   }
-  return name in obj ? name : null;
+  if (name in obj) {
+    return name;
+  }
+  var lowerCaseName = name.toLowerCase();
+  for (var i in obj) {
+    if (i.toLowerCase() === lowerCaseName) {
+      return i;
+    }
+  }
+  return null;
 }
 
 function executeActions(actionsData, context, scope, assets) {
