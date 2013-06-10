@@ -63,6 +63,7 @@ var StageDefinition = (function () {
       this._scaleMode = STAGE_SCALE_MODE_SHOW_ALL;
       this._contentsScaleFactor = 1;
       this._displayState = "normal";
+      this._showDefaultContextMenu = true;
     },
 
     _flushPendingScripts: function () {
@@ -126,10 +127,11 @@ var StageDefinition = (function () {
       this._invalidate = true;
     },
     get showDefaultContextMenu() {
-      return true;
+      return this._showDefaultContextMenu;
     },
     set showDefaultContextMenu(val) {
-      notImplemented();
+      somewhatImplemented('Stage.showDefaultContextMenu');
+      this._showDefaultContextMenu = val
     },
     get stageFocusRect() {
       return false;
