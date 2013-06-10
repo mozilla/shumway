@@ -291,6 +291,9 @@ AS2Globals.prototype = {
   Key: AS2Key,
   Mouse: AS2Mouse,
   // lazy initialized built-ins
+  get Sound() { return delete this.Sound, this.Sound = flash.media.Sound; },
+  get ContextMenu() { return delete this.ContextMenu, this.ContextMenu = flash.ui.ContextMenu; },
+  get ContextMenuItem() { return delete this.ContextMenuItem, this.ContextMenuItem = flash.ui.ContextMenuItem; },
   get ColorTransform() { return delete this.ColorTransform, this.ColorTransform = flash.geom.ColorTransform; },
   get TextFormat() { return delete this.TextFormat, this.TextFormat = flash.text.TextFormat; }
 };

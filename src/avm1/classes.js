@@ -36,7 +36,7 @@ function proxyNativeMethod(methodName) {
     value: function proxyMethod(id) {
       return this.$nativeObject[methodName].apply(this.$nativeObject, arguments);
     },
-    enumerable: false
+    enumerable: true
   };
 }
 
@@ -130,13 +130,13 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     value: function attachAudio(id) {
       throw 'Not implemented: attachAudio';
     },
-    enumerable: false
+    enumerable: true
   },
   attachBitmap: {
     value: function attachBitmap(bmp, depth, pixelSnapping, smoothing) {
       throw 'Not implemented: attachBitmap';
     },
-    enumerable: false
+    enumerable: true
   },
   attachMovie: {
     value: function attachMovie(id, name, depth, initObject) {
@@ -150,12 +150,13 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 
       return as2mc;
     },
-    enumerable: false
+    enumerable: true
   },
   beginFill: {
     value: function beginFill(color, alpha) {
       this.$nativeObject._graphics.beginFill(color, alpha);
     },
+    enumerable: true
   },
   beginBitmapFill: {
     value: function beginBitmapFill(bmp, matrix, repeat, smoothing) {
@@ -164,13 +165,13 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 
       this.$nativeObject._graphics.beginBitmapFill(bmp, matrix, repeat, smoothing);
     },
-    enumerable: false
+    enumerable: true
   },
   beginGradientFill: {
     value: function beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
       this.$nativeObject._graphics.beginGradientFill(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     },
-    enumerable: false
+    enumerable: true
   },
   blendMode: proxyNativeProperty('blendMode'),
   cacheAsBitmap: proxyNativeProperty('cacheAsBitmap'),
@@ -178,7 +179,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     value: function clear() {
       this.$nativeObject._graphics.clear();
     },
-    enumerable: false
+    enumerable: true
   },
   createEmptyMovieClip: {
     value: function createEmptyMovieClip(name, depth) {
@@ -188,7 +189,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       this.$nativeObject._insertChildAtDepth(mc, +depth);
       return mc._getAS2Object();
     },
-    enumerable: false
+    enumerable: true
   },
   createTextField: {
     value: function createTextField(name, depth, x, y, width, height) {
@@ -199,14 +200,14 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       this.$nativeObject._insertChildAtDepth(text, +depth);
       return text._getAS2Object();
     },
-    enumerable: false
+    enumerable: true
   },
   _currentframe: proxyNativeReadonlyProperty('currentFrame'),
   curveTo: {
     value: function curveTo(controlX, controlY, anchorX, anchorY) {
       this.$nativeObject._graphics.curveTo(controlX, controlY, anchorX, anchorY);
     },
-    enumerable: false
+    enumerable: true
   },
   _droptarget: proxyNativeReadonlyProperty('dropTarget'),
   duplicateMovieClip: {
@@ -215,14 +216,14 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
         _duplicate(name, +depth, initObject)._getAS2Object();
       return newMovieClip;
     },
-    enumerable: false
+    enumerable: true
   },
   enabled: proxyNativeProperty('enabled'),
   endFill: {
     value: function endFill() {
       this.$nativeObject._graphics.endFill();
     },
-    enumerable: false
+    enumerable: true
   },
   filters: { // @flash.display.DisplayObject
     get: function get$filters() { throw 'Not implemented: get$filters'; },
@@ -252,58 +253,58 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
         throw 'Unsupported bounds type';
       return this.$nativeObject.getBounds(obj);
     },
-    enumerable: false
+    enumerable: true
   },
   getBytesLoaded: {
     value: function getBytesLoaded() {
       var loaderInfo = this.$nativeObject.loaderInfo;
       return loaderInfo.bytesLoaded;
     },
-    enumerable: false
+    enumerable: true
   },
   getBytesTotal: {
     value: function getBytesTotal() {
       var loaderInfo = this.$nativeObject.loaderInfo;
       return loaderInfo.bytesTotal;
     },
-    enumerable: false
+    enumerable: true
   },
   getDepth: {
     value: function getDepth() {
       return this.$nativeObject._clipDepth;
     },
-    enumerable: false
+    enumerable: true
   },
   getInstanceAtDepth: {
     value: function getInstanceAtDepth(depth) {
       return this.$nativeObject._depthMap[depth];
     },
-    enumerable: false
+    enumerable: true
   },
   getNextHighestDepth: {
     value: function getNextHighestDepth() {
       return this.$nativeObject._depthMap.length;
     },
-    enumerable: false
+    enumerable: true
   },
   getRect: {
     value: function getRect(bounds) {
       throw 'Not implemented: getRect';
     },
-    enumerable: false
+    enumerable: true
   },
   getSWFVersion: {
     value: function getSWFVersion() {
       var loaderInfo = this.$nativeObject.loaderInfo;
       return loaderInfo.swfVersion;
     },
-    enumerable: false
+    enumerable: true
   },
   getTextSnapshot: {
     value: function getTextSnapshot() {
       throw 'Not implemented: getTextSnapshot';
     },
-    enumerable: false
+    enumerable: true
   },
   getURL: {
     value: function getURL(url, window, method) {
@@ -312,13 +313,13 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
         request.method = method;
       flash.net.navigateToURL(request, window);
     },
-    enumerable: false
+    enumerable: true
   },
   globalToLocal: {
     value: function globalToLocal(pt) {
       throw 'Not implemented: globalToLocal';
     },
-    enumerable: false
+    enumerable: true
   },
   gotoAndPlay: proxyNativeMethod('gotoAndPlay'),
   gotoAndStop: proxyNativeMethod('gotoAndStop'),
@@ -341,37 +342,37 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
         return this.$nativeObject.hitTestPoint(x, y, shapeFlag);
       }
     },
-    enumerable: false
+    enumerable: true
   },
   lineGradientStyle: {
     value: function lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio) {
       this.$nativeObject._graphics.lineGradientStyle(fillType, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPointRatio);
     },
-    enumerable: false
+    enumerable: true
   },
   lineStyle: {
     value: function lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit) {
       this.$nativeObject._graphics.lineStyle(thickness, rgb, alpha, pixelHinting, noScale, capsStyle, jointStyle, miterLimit);
     },
-    enumerable: false
+    enumerable: true
   },
   lineTo: {
     value: function lineTo(x, y) {
       this.$nativeObject._graphics.lineTo(x, y);
     },
-    enumerable: false
+    enumerable: true
   },
   loadMovie: {
     value: function loadMovie(url, method) {
       throw 'Not implemented: loadMovie';
     },
-    enumerable: false
+    enumerable: true
   },
   loadVariables: {
     value: function loadVariables(url, method) {
       throw 'Not implemented: loadVariables';
     },
-    enumerable: false
+    enumerable: true
   },
   localToGlobal: {
     value: function localToGlobal(pt) {
@@ -379,7 +380,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       pt.x = tmp.x;
       pt.y = tmp.y;
     },
-    enumerable: false
+    enumerable: true
   },
   _lockroot: {
     get: function get$_lockroot() { throw 'Not implemented: get$_lockroot'; },
@@ -387,15 +388,15 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   menu: {
-    get: function get$menu() { throw 'Not implemented: get$menu'; },
-    set: function set$menu(value) { throw 'Not implemented: set$menu'; },
+    get: function get$menu() { return this.$nativeObject.contextMenu; },
+    set: function set$menu(value) { this.$nativeObject.contextMenu = value; },
     enumerable: true
   },
   moveTo: {
     value: function moveTo(x, y) {
       this.$nativeObject._graphics.moveTo(x, y);
     },
-    enumerable: false
+    enumerable: true
   },
   _name: proxyNativeProperty('name'),
   nextFrame: proxyNativeMethod('nextFrame'),
@@ -434,7 +435,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       var parent = this._parent.$nativeObject;
       parent.removeChild(this.$nativeObject);
     },
-    enumerable: false
+    enumerable: true
   },
   _rotation: proxyNativeProperty('rotation'),
   scale9Grid: { // @flash.display.DisplayObject
@@ -451,7 +452,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     value: function setMask(mc) {
       throw 'Not implemented: setMask';
     },
-    enumerable: false
+    enumerable: true
   },
   _soundbuftime: {
     get: function get$_soundbuftime() { throw 'Not implemented: get$_soundbuftime'; },
@@ -463,7 +464,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       this.$nativeObject.startDrag(lock, arguments.length < 3 ? null :
         new AS2Rectangle(left, top, right - left, bottom - top));
     },
-    enumerable: false
+    enumerable: true
   },
   stop: proxyNativeMethod('stop'),
   stopDrag: proxyNativeMethod('stopDrag'),
@@ -471,7 +472,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     value: function swapDepths(target) {
       throw 'Not implemented: swapDepths';
     },
-    enumerable: false
+    enumerable: true
   },
   tabChildren: proxyNativeProperty('tabChildren'),
   tabEnabled: proxyNativeProperty('tabEnabled'),
@@ -509,10 +510,10 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       // TODO remove movie clip content
       nativeObject.stop();
     },
-    enumerable: false
+    enumerable: true
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   useHandCursor: proxyNativeProperty('useHandCursor'),
@@ -578,7 +579,7 @@ AS2Button.prototype = Object.create(Object.prototype, {
     value: function getDepth() {
       throw 'Not implemented: getDepth';
     },
-    enumerable: false
+    enumerable: true
   },
   _height: { // @flash.display.DisplayObject
     get: function get$_height() { return this.$nativeObject.height; },
@@ -591,8 +592,8 @@ AS2Button.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   menu: {
-    get: function get$menu() { throw 'Not implemented: get$menu'; },
-    set: function set$menu(value) { throw 'Not implemented: set$menu'; },
+    get: function get$menu() { return this.$nativeObject.contextMenu; },
+    set: function set$menu(value) { this.$nativeObject.contextMenu = value; },
     enumerable: true
   },
   _name: { // @flash.display.DisplayObject
@@ -656,7 +657,7 @@ AS2Button.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   useHandCursor: {
@@ -919,7 +920,7 @@ AS2TextField.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   variable: {
@@ -982,7 +983,7 @@ defineObjectProperties(AS2Broadcaster, {
       obj.addListener = AS2Broadcaster.prototype.addListener;
       obj.removeListener = AS2Broadcaster.prototype.removeListener;
     },
-    enumerable: false
+    enumerable: true
   }
 });
 AS2Broadcaster.prototype = Object.create(Object.prototype, {
@@ -996,13 +997,13 @@ AS2Broadcaster.prototype = Object.create(Object.prototype, {
         listener[eventName].apply(listener, args);
       }
     },
-    enumerable: false
+    enumerable: true
   },
   addListener: {
     value: function addListener(listener) {
       this._listeners.push(listener);
     },
-    enumerable: false
+    enumerable: true
   },
   removeListener: {
     value: function removeListener(listener) {
@@ -1011,7 +1012,7 @@ AS2Broadcaster.prototype = Object.create(Object.prototype, {
         return;
       this._listeners.splice(i, 1);
     },
-    enumerable: false
+    enumerable: true
   }
 });
 
@@ -1112,13 +1113,13 @@ defineObjectProperties(AS2Mouse, {
     value: function hide() {
       Mouse.hide();
     },
-    enumerable: false
+    enumerable: true
   },
   show: {
     value: function show() {
       Mouse.show();
     },
-    enumerable: false
+    enumerable: true
   }
 });
 AS2Broadcaster.initialize(AS2Mouse);
@@ -1199,24 +1200,28 @@ AS2Color.prototype = Object.create(Object.prototype, {
     value: function getRGB() {
       var transform = this.getTransform();
       return transform.rgb;
-    }
+    },
+    enumerable: true
   },
   getTransform: {
     value: function getTransform() {
       return this.$target.$nativeObject.transform.colorTransform;
-    }
+    },
+    enumerable: true
   },
   setRGB: {
     value: function setRGB(offset) {
       var transform = new flash.geom.ColorTransform();
       transform.rgb = offset;
       this.setTransform(transform);
-    }
+    },
+    enumerable: true
   },
   setTransform: {
     value: function setTransform(transform) {
       this.$target.$nativeObject.transform.colorTransform = transform;
-    }
+    },
+    enumerable: true
   }
 });
 

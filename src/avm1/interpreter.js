@@ -190,6 +190,24 @@ function as2InstanceOf(obj, constructor) {
   return false;
 }
 
+function as2ResolveProperty(obj, name) {
+  // checking if avm2 public property is present
+  var avm2PublicName = Multiname.getPublicQualifiedName(name);
+  if (avm2PublicName in obj) {
+    return avm2PublicName;
+  }
+  if (name in obj) {
+    return name;
+  }
+  var lowerCaseName = name.toLowerCase();
+  for (var i in obj) {
+    if (i.toLowerCase() === lowerCaseName) {
+      return i;
+    }
+  }
+  return null;
+}
+
 function executeActions(actionsData, context, scope, assets) {
   var actionTracer = ActionTracerFactory.get();
 
@@ -322,6 +340,7 @@ function interpretActions(actionsData, scopeContainer,
   function deleteProperty(propertyName) {
     for (var p = scopeContainer; p; p = p.next) {
       if (propertyName in p.scope) {
+        p.scope[propertyName] = undefined; // in some cases we need to cleanup events binding
         delete p.scope[propertyName];
         return !(propertyName in p.scope);
       }
@@ -351,7 +370,8 @@ function interpretActions(actionsData, scopeContainer,
     if(!obj)
       return; // local variable
 
-    return { obj: obj, name: name };
+    var resolvedName = as2ResolveProperty(obj, name);
+    return { obj: obj, name: resolvedName || name };
   }
   function getVariable(variableName) {
     // fast check if variable in the current scope
@@ -370,8 +390,9 @@ function interpretActions(actionsData, scopeContainer,
       return mc;
 
     for (var p = scopeContainer; p; p = p.next) {
-      if (variableName in p.scope) {
-        return p.scope[variableName];
+      var resolvedName = as2ResolveProperty(p.scope, variableName);
+      if (resolvedName) {
+        return p.scope[resolvedName];
       }
     }
   }
@@ -792,9 +813,10 @@ function interpretActions(actionsData, scopeContainer,
         stackItemsExpected++;
         if (methodName) {
           obj = Object(obj);
-          if (!(methodName in obj))
+          var resolvedName = as2ResolveProperty(obj, methodName);
+          if (!resolvedName)
             throw 'Method ' + methodName + ' is not defined.';
-          result = obj[methodName].apply(obj, args);
+          result = obj[resolvedName].apply(obj, args);
         } else
           result = obj.apply(defaultTarget, args);
         stack.push(result);
@@ -833,13 +855,14 @@ function interpretActions(actionsData, scopeContainer,
       case 0x3A: // ActionDelete
         var name = stack.pop();
         var obj = stack.pop();
+        obj[name] = undefined; // in some cases we need to cleanup events binding
         delete obj[name];
-        stack.push(!(name in obj)); // XXX undocumented ???
+        stack.push(!(name in obj));
         break;
       case 0x3B: // ActionDelete2
         var name = stack.pop();
         var result = deleteProperty(name);
-        stack.push(result); // undocumented ???
+        stack.push(result);
         break;
       case 0x46: // ActionEnumerate
         var objectName = stack.pop();
@@ -856,7 +879,8 @@ function interpretActions(actionsData, scopeContainer,
       case 0x4E: // ActionGetMember
         var name = stack.pop();
         var obj = stack.pop();
-        stack.push(obj[name]);
+        var resolvedName = as2ResolveProperty(obj, name);
+        stack.push(obj[resolvedName || name]);
         break;
       case 0x42: // ActionInitArray
         var arr = readArgs(stack);
@@ -880,9 +904,10 @@ function interpretActions(actionsData, scopeContainer,
         stackItemsExpected++;
         var method;
         if (methodName) {
-          if (!(methodName in obj))
+          var resolvedName = as2ResolveProperty(obj, methodName);
+          if (!resolvedName)
             throw 'Method ' + methodName + ' is not defined.';
-          method = obj[methodName];
+          method = obj[resolvedName];
         } else {
           method = obj;
         }
