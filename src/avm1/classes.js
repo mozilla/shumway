@@ -387,8 +387,8 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   menu: {
-    get: function get$menu() { throw 'Not implemented: get$menu'; },
-    set: function set$menu(value) { throw 'Not implemented: set$menu'; },
+    get: function get$menu() { return this.$nativeObject.contextMenu; },
+    set: function set$menu(value) { this.$nativeObject.contextMenu = value; },
     enumerable: true
   },
   moveTo: {
@@ -512,7 +512,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     enumerable: false
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   useHandCursor: proxyNativeProperty('useHandCursor'),
@@ -591,8 +591,8 @@ AS2Button.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   menu: {
-    get: function get$menu() { throw 'Not implemented: get$menu'; },
-    set: function set$menu(value) { throw 'Not implemented: set$menu'; },
+    get: function get$menu() { return this.$nativeObject.contextMenu; },
+    set: function set$menu(value) { this.$nativeObject.contextMenu = value; },
     enumerable: true
   },
   _name: { // @flash.display.DisplayObject
@@ -656,7 +656,7 @@ AS2Button.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   useHandCursor: {
@@ -919,7 +919,7 @@ AS2TextField.prototype = Object.create(Object.prototype, {
     enumerable: true
   },
   _url: {
-    get: function get$_url() { throw 'Not implemented: get$_url'; },
+    get: function get$_url() { return this.$nativeObject.loaderInfo._url; },
     enumerable: true
   },
   variable: {
