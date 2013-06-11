@@ -43,7 +43,6 @@ var VM_IS_PROXY = "vm is proxy";
 var VM_CALL_PROXY = "vm call proxy";
 
 function isProxyObject(obj) {
-  assert (obj);
   return obj[VM_IS_PROXY];
 }
 

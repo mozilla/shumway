@@ -770,6 +770,7 @@ function callProperty(obj, mn, isLex, args) {
     obj = boxValue(obj);
   }
   var receiver = isLex ? null : obj;
+  assert (obj, "NullReferenceException");
   if (isProxyObject(obj)) {
     return obj[VM_CALL_PROXY](mn, receiver, args);
   }
