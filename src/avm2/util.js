@@ -80,7 +80,7 @@ function somewhatImplemented(message) {
 }
 
 function unexpected(message) {
-  release || assert(false, message);
+  release || assert(false, "Unexpected: " + message);
 }
 
 function makeForwardingGetter(target) {

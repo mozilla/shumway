@@ -579,7 +579,7 @@ var Multiname = (function () {
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
       assert (name === null || isString(name), "Multiname name must be a string. " + name);
-      assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
+      // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
     }
     this.id = nextID ++;
     this.namespaces = namespaces;
@@ -623,9 +623,6 @@ var Multiname = (function () {
         index = stream.readU30();
         if (index) {
           name = constantPool.strings[index];
-          if (isNumeric(name)) {
-            return +name;
-          }
         } else {
           flags &= ~RUNTIME_NAME;
         }
