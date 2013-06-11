@@ -1224,6 +1224,17 @@ var natives = (function () {
       runtime.throwErrorFromVM("flash.errors.EOFError", "End of file was encountered.");
     }
 
+    function throwRangeError() {
+      var error = Errors.ParamRangeError;
+      runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
+    }
+
+    function checkRange(x, min, max) {
+      if (x !== clamp(x, min, max)) {
+        throwRangeError();
+      }
+    }
+
     function get(b, m, size) {
       if (b.position + size > b.length) {
         throwEOFError();
@@ -1247,14 +1258,30 @@ var natives = (function () {
     c.extendBuiltin(baseClass);
 
     var BAp = ByteArray.prototype;
-    BAp.indexGet = function (i) { return this.uint8v[i]; };
-    BAp.indexSet = function (i, v) { this.uint8v[i] = v; };
+    BAp.indexGet = function (i) {
+      if (i >= this.length) {
+        return undefined;
+      }
+      return this.uint8v[i];
+    };
+    BAp.indexSet = function (i, v) {
+      var len = i + 1;
+      this.ensureCapacity(len);
+      this.uint8v[i] = v;
+      if (len > this.length) {
+        this.length = len;
+      }
+    };
 
     BAp.cacheViews = function cacheViews() {
       var a = this.a;
       this.int8v  = new Int8Array(a);
       this.uint8v = new Uint8Array(a);
       this.view   = new DataView(a);
+    };
+
+    BAp.getBytes = function getBytes() {
+      return new Uint8Array(this.a, 0, this.length);
     };
 
     BAp.ensureCapacity = function ensureCapacity(size) {
@@ -1329,7 +1356,7 @@ var natives = (function () {
       }
     };
 
-    BAp.writeUnsignedByte = function writeByte(v) {
+    BAp.writeUnsignedByte = function writeUnsignedByte(v) {
       var len = this.position + 1;
       this.ensureCapacity(len);
       this.uint8v[this.position++] = v;
@@ -1349,11 +1376,18 @@ var natives = (function () {
     };
 
     BAp.writeBytes = function writeBytes(bytes, offset, length) {
-      if (offset || length) {
-        this.writeRawBytes(new Int8Array(bytes.a, offset, length));
-      } else {
-        this.writeRawBytes(bytes.int8v);
+      if (arguments.length < 2) {
+        offset = 0;
       }
+      if (arguments.length < 3) {
+        length = 0;
+      }
+      checkRange(offset, 0, bytes.length);
+      checkRange(offset + length, 0, bytes.length);
+      if (length === 0) {
+        length = bytes.length - offset;
+      }
+      this.writeRawBytes(new Int8Array(bytes.a, offset, length));
     };
 
     BAp.readDouble = function readDouble() { return get(this, 'getFloat64', 8); };
@@ -1411,6 +1445,7 @@ var natives = (function () {
               this.ensureCapacity(length);
             }
             this.length = length;
+            this.position = clamp(this.position, 0, this.length);
           }
         },
 
@@ -1440,6 +1475,7 @@ var natives = (function () {
         writeShort: BAp.writeShort,
         writeInt: BAp.writeInt,
         writeUnsignedInt: BAp.writeUnsignedInt,
+        writeFloat: BAp.writeFloat,
         writeDouble: BAp.writeDouble,
         writeMultiByte: BAp.writeMultiByte,
         writeUTF: BAp.writeUTF,
@@ -1458,7 +1494,8 @@ var natives = (function () {
         readUTF: BAp.readUTF,
         readUTFBytes: BAp.readUTFBytes,
         readObject: BAp.readObject,
-        toString: BAp.toString
+        toString: BAp.toString,
+        clear: BAp.clear
       },
       static: {
         defaultObjectEncoding: {
