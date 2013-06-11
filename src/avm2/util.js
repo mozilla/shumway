@@ -80,7 +80,7 @@ function somewhatImplemented(message) {
 }
 
 function unexpected(message) {
-  release || assert(false, message);
+  release || assert(false, "Unexpected: " + message);
 }
 
 function makeForwardingGetter(target) {
@@ -179,6 +179,15 @@ function time(fn, count) {
   var time = (new Date() - start) / count;
   console.info("Took: " + time + "ms.");
   return time;
+}
+
+function clamp(x, min, max) {
+  if (x < min) {
+    return min;
+  } else if (x > max) {
+    return max;
+  }
+  return x;
 }
 
 /**
