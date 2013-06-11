@@ -245,7 +245,7 @@ var natives = (function () {
         },
         isPrototypeOf: Object.prototype.isPrototypeOf,
         hasOwnProperty: function (name) {
-          if (!name) {
+          if (name === undefined) {
             return false;
           }
           name = Multiname.getPublicQualifiedName(name);
@@ -256,7 +256,7 @@ var natives = (function () {
           return Object.getPrototypeOf(this).hasOwnProperty(name);
         },
         propertyIsEnumerable: function (name) {
-          if (!name) {
+          if (name === undefined) {
             return false;
           }
           name = Multiname.getPublicQualifiedName(name);
@@ -1487,7 +1487,7 @@ var natives = (function () {
         },
 
         hasDefinition: function (name) {
-          if (!name) {
+          if (name === undefined) {
             return false;
           }
           var simpleName = name.replace("::", ".");
