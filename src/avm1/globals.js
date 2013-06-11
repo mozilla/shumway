@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global AS2Context, avm2, flash, Multiname, AS2Rectangle, AS2MovieClip,
+         AS2Broadcaster, AS2System, AS2Stage, AS2Button, AS2TextField, AS2Color,
+         AS2Key, AS2Mouse, notImplemented */
 
 function ASSetPropFlags(obj, children, flags, allowFalse) {
   // flags (from bit 0): dontenum, dontdelete, readonly, ....
@@ -33,7 +36,7 @@ function AS2Globals(context) {
 }
 AS2Globals.prototype = {
   $asfunction: function(link) {
-    throw 'Not implemented: $asfunction';
+    notImplemented('AS2Globals.$asfunction');
   },
   ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
@@ -73,8 +76,9 @@ AS2Globals.prototype = {
   },
   getURL: function(url, target, method) {
     var request = new flash.net.URLRequest(url);
-    if (method)
+    if (method) {
       request.method = method;
+    }
     var navigateToURL = avm2.applicationDomain.getProperty(
       Multiname.fromSimpleName('flash.net.navigateToURL'), true, true);
     navigateToURL(request, target);
@@ -84,17 +88,19 @@ AS2Globals.prototype = {
   },
   gotoAndPlay: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    if (arguments.length < 2)
+    if (arguments.length < 2) {
       nativeTarget.gotoAndPlay(arguments[0]);
-    else
+    } else {
       nativeTarget.gotoAndPlay(arguments[1], arguments[0]); // scene and frame are swapped for AS3
+    }
   },
   gotoAndStop: function(scene, frame) {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    if (arguments.length < 2)
+    if (arguments.length < 2) {
       nativeTarget.gotoAndStop(arguments[0]);
-    else
+    } else {
       nativeTarget.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
+    }
   },
   gotoLabel: function(label) {
     var nativeTarget = AS2Context.instance.resolveTarget();
@@ -116,30 +122,30 @@ AS2Globals.prototype = {
   loadMovie: function(url, target, method) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     // some swfs are using loadMovie to call fscommmand
-    if (/^fscommand:/i.test(url))
+    if (/^fscommand:/i.test(url)) {
       return this.fscommand(url.substring('fscommand:'.length), target);
-
+    }
     // flash.display.Loader, flash.net.URLLoader
-    throw 'Not implemented: loadMovie';
+    notImplemented('AS2Globals.loadMovie');
   },
   loadMovieNum: function(url, level, method) {
     var nativeTarget = AS2Context.instance.resolveLevel(level);
     // some swfs are using loadMovieNum to call fscommmand
-    if (/^fscommand:/i.test(url))
+    if (/^fscommand:/i.test(url)) {
       return this.fscommand(url.substring('fscommand:'.length));
-
+    }
     // flash.display.Loader, flash.net.URLLoader
-    throw 'Not implemented: loadMovieNum';
+    notImplemented('AS2Globals.loadMovieNum');
   },
   loadVariables: function(url, target, method) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     // flash.display.Loader, flash.net.URLLoader
-    throw 'Not implemented: loadVariables';
+    notImplemented('AS2Globals.loadVariables');
   },
   loadVariablesNum: function(url, level, method) {
     var nativeTarget = AS2Context.instance.resolveLevel(level);
     // flash.display.Loader, flash.net.URLLoader
-    throw 'Not implemented: loadVariablesNum';
+    notImplemented('AS2Globals.loadVariablesNum');
   },
   mbchr: function(number) {
     return String.fromCharCode.charCodeAt(number);
@@ -182,16 +188,16 @@ AS2Globals.prototype = {
   },
   print: function(target, boundingBox) {
     // flash.printing.PrintJob
-    throw 'Not implemented: print';
+    notImplemented('AS2Globals.print');
   },
   printAsBitmap: function(target, boundingBox) {
-    throw 'Not implemented: printAsBitmap';
+    notImplemented('AS2Globals.printAsBitmap');
   },
   printAsBitmapNum: function(level, boundingBox) {
-    throw 'Not implemented: printAsBitmapNum';
+    notImplemented('AS2Globals.printAsBitmapNum');
   },
   printNum: function(level, bondingBox) {
-    throw 'Not implemented: printNum';
+    notImplemented('AS2Globals.printNum');
   },
   random: function(value) {
     return 0 | (Math.random() * (0 | value));
@@ -217,7 +223,7 @@ AS2Globals.prototype = {
   },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
-    throw 'Not implemented: showRedrawRegions';
+    notImplemented('AS2Globals.showRedrawRegions');
   },
   startDrag: function(target, lock, left, top, right, bottom) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
@@ -245,7 +251,7 @@ AS2Globals.prototype = {
   },
   toggleHighQuality: function() {
     // flash.display.Stage.quality
-    throw 'Not implemented: toggleHighQuality';
+    notImplemented('AS2Globals.toggleHighQuality');
   },
   trace: function(expression) {
     var trace = avm2.applicationDomain.getProperty(
@@ -262,7 +268,7 @@ AS2Globals.prototype = {
   },
   updateAfterEvent: function() {
     // flash.events.TimerEvent.updateAfterEvent
-    throw 'Not implemented';
+    notImplemented('AS2Globals.updateAfterEvent');
   },
   // built-ins
   Boolean: Boolean,
