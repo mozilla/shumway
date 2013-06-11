@@ -514,7 +514,6 @@ var Domain = (function () {
               } else {
                 for (var m = 0, n = mn.namespaces.length; m < n; m++) {
                   var qn = mn.getQName(m);
-                  if (traitName === qn) {
                   if (traitName === Multiname.getQualifiedName(qn)) {
                     return (this.classInfoCache[qn] = trait.classInfo);
                   }
