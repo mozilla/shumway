@@ -1142,6 +1142,42 @@ var natives = (function () {
   }
 
   /**
+   * File.as
+   */
+  function FileClass(runtime, scope, instance, baseClass) {
+    function File() {}
+    var c = new runtime.domain.system.Class("File", File, C(File));
+    c.extend(baseClass);
+    c.native = {
+      static: {
+        exists: function (filename) {
+          notImplemented("File.exists");
+          return false;
+        },
+        read: function (filename) {
+          return snarf(filename);
+        },
+        write: function (filename, data) {
+          notImplemented("File.write");
+          return true;
+        },
+        readByteArray: function (filename) {
+          notImplemented("File.readByteArray");
+          return "";
+        },
+        writeByteArray: function (filename, bytes) {
+          // NOTE: |write| is only defined in a special build of the Spidermonkey shell,
+          // ask mbx for a patch.
+          // HACK: Hack for now to deal with weird issue in relative file path.
+          write("bin/" + filename, bytes.getBytes());
+          return true;
+        }
+      }
+    };
+    return c;
+  }
+
+  /**
    * Shumway.as
    */
   function ShumwayClass(runtime, scope, instance, baseClass) {
@@ -1598,6 +1634,7 @@ var natives = (function () {
 
     ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,
+    FileClass: FileClass,
     ApplicationDomainClass: ApplicationDomainClass,
 
     /**
