@@ -15,14 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 function ActionsDataStream(array, swfVersion) {
   this.array = array;
   this.position = 0;
   this.end = array.length;
 
-  if (swfVersion >= 6)
+  if (swfVersion >= 6) {
     this.readString = this.readUTF8String;
-  else {
+  } else {
     // TODO use system locale to determine if the shift-JIS
     // decoding is necessary
     this.readString = this.readANSIString;
@@ -31,8 +32,9 @@ function ActionsDataStream(array, swfVersion) {
   // endianess sanity check
   var buffer = new ArrayBuffer(4);
   (new Int32Array(buffer))[0] = 1;
-  if (!(new Uint8Array(buffer))[0])
-    throw "big-endian platform";
+  if (!(new Uint8Array(buffer))[0]) {
+    throw new Error("big-endian platform");
+  }
 }
 ActionsDataStream.prototype = {
   readUI8: function ActionsDataStream_readUI8() {
@@ -105,15 +107,17 @@ ActionsDataStream.prototype = {
         continue;
       }
 
-      if ((ch & 0xC0) == 0x80)
-        throw 'Invalid UTF8 encoding';
+      if ((ch & 0xC0) === 0x80) {
+        throw new Error('Invalid UTF8 encoding');
+      }
 
       var currentPrefix = 0xC0;
       var validBits = 5;
       do {
         var mask = (currentPrefix >> 1) | 0x80;
-        if ((ch & mask) == currentPrefix)
+        if ((ch & mask) === currentPrefix) {
           break;
+        }
         currentPrefix = mask;
         --validBits;
       } while (validBits >= 0);
@@ -121,24 +125,27 @@ ActionsDataStream.prototype = {
       var code = (ch & ((1 << validBits) - 1));
       for (var i = 5; i >= validBits; --i) {
         ch = this.readUI8();
-        if ((ch & 0xC0) != 0x80)
-          throw 'Invalid UTF8 encoding';
+        if ((ch & 0xC0) !== 0x80) {
+          throw new Error('Invalid UTF8 encoding');
+        }
         code = (code << 6) | (ch & 0x3F);
       }
 
       if (code >= 0x10000) {
         value += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
           0xD800, (code & 0x3FF) | 0xDC00);
-      } else
+      } else {
         value += String.fromCharCode(code);
+      }
     }
     return value;
   },
   readBytes: function ActionsDataStream_readBytes(length) {
     var position = this.position;
     var remaining = Math.max(this.end - position, 0);
-    if (remaining < length)
+    if (remaining < length) {
       length = remaining;
+    }
     var subarray = this.array.subarray(position, position + length);
     this.position = position + length;
     return subarray;
