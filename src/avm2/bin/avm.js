@@ -71,8 +71,8 @@ var console = {
   timeEnd: function (name) {
     Timer.stop(name)
   },
-  warn: function () { },
-  info: function () { },
+  warn: function (s) { },
+  info: function (s) { }
 };
 
 Timer.start("Loading VM");
@@ -169,7 +169,8 @@ if (execute.value) {
   Timer.stop();
 }
 
-files.forEach(function (file) {
+for (var f = 0; f < files.length; f++) {
+  var file = files[f];
   if (file.endsWith(".swf")) {
     SWF.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
@@ -194,69 +195,25 @@ files.forEach(function (file) {
     });
   } else {
     release || assert(file.endsWith(".abc"));
-    processAbc(new AbcFile(snarf(file, "binary"), file));
+    processAbc(new AbcFile(snarf(file, "binary"), file), f < files.length - 1);
   }
-});
+}
 
-function processAbc(abc) {
+function processAbc(abc, loadOnly) {
   var methodBodies = abc.methodBodies;
 
   if (disassemble.value) {
     abc.trace(stdout);
   }
 
-  if (test.value) {
-    function mapToString(map) {
-      return map.map(function (v, i) {
-        if (!v) {
-          return "B" + i + "->X";
-        }
-        return "B" + i + "->[" + v + "]";
-      }).join(",");
-    }
-
-    var CFG = IR.CFG;
-
-    var levelCount = 0;
-    var maxLevel = 0;
-    abc.methods.forEach(function (method) {
-      try {
-        method.analysis = new Analysis(method, opts);
-        method.analysis.analyzeControlFlow();
-        method.analysis.markLoops();
-      } catch (x) {
-        return;
-      }
-
-      builder.build(abc, method, new Scope());
-    });
-
-
-    stdout.writeLn("Methods: " + abc.methods.length + ", Average: " + (levelCount / abc.methods.length) + ", Max: " + maxLevel);
-
-    quit();
-  }
-
-  if (traceGraphViz.value) {
-    stdout.enter("digraph {");
-    var graph = 0;
-    var opts = { massage: true };
-    abc.methods.forEach(function (method) {
-      method.analysis = new Analysis(method, opts);
-      method.analysis.analyzeControlFlow();
-      method.analysis.restructureControlFlow();
-      if (method.analysis) {
-        method.analysis.traceCFG(stdout, method, "G" + graph + "_");
-        graph += 1;
-      }
-    });
-    stdout.leave("}");
-  }
-
   if (execute.value) {
     release || assert(avm2);
     try {
-      avm2.applicationDomain.executeAbc(abc);
+      if (loadOnly) {
+        avm2.applicationDomain.loadAbc(abc);
+      } else {
+        avm2.applicationDomain.executeAbc(abc);
+      }
     } catch(e) {
       print(e);
       print("");
