@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
+         createBuiltinType */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
@@ -56,7 +58,8 @@ AS2Context.prototype = {
     }
     if (typeof target !== 'object' || target === null ||
         !('$nativeObject' in target)) {
-      throw 'Invalid AS2 target object: ' + Object.prototype.toString.call(target);
+      throw new Error('Invalid AS2 target object: ' +
+                      Object.prototype.toString.call(target));
     }
 
     return target;
@@ -70,13 +73,17 @@ function AS2Error(error) {
 }
 
 function as2GetType(v) {
-  if (v === null)
+  if (v === null) {
     return 'null';
+  }
+
   var type = typeof v;
-  if (type === 'function')
+  if (type === 'function') {
     return 'object';
-  if (type === 'object' && v instanceof AS2MovieClip)
+  }
+  if (type === 'object' && v instanceof AS2MovieClip) {
     return 'movieclip';
+  }
   return type;
 }
 
@@ -85,8 +92,10 @@ function as2ToPrimitive(value) {
 }
 
 function as2ToAddPrimitive(value) {
-  if (as2GetType(value) !== 'object')
+  if (as2GetType(value) !== 'object') {
     return value;
+  }
+
   if (value instanceof Date && AS2Context.instance.swfVersion >= 6) {
     return value.toString();
   } else {
@@ -96,14 +105,14 @@ function as2ToAddPrimitive(value) {
 
 function as2ToBoolean(value) {
   switch (as2GetType(value)) {
+  default:
   case 'undefined':
   case 'null':
-  default:
     return false;
   case 'boolean':
     return value;
   case 'number':
-    return value != 0 && !isNaN(value);
+    return value !== 0 && !isNaN(value);
   case 'string':
     return value.length !== 0;
   case 'object':
@@ -126,24 +135,27 @@ function as2ToNumber(value) {
   case 'number':
     return value;
   case 'string':
-    if (value === '' && AS2Context.instance.swfVersion < 5)
+    if (value === '' && AS2Context.instance.swfVersion < 5) {
       return 0;
+    }
     return +value;
   }
 }
 
 function as2ToInteger(value) {
   var result = as2ToNumber(value);
-  if (isNaN(result))
+  if (isNaN(result)) {
     return 0;
-  if (!isFinite(result) || result == 0)
+  }
+  if (!isFinite(result) || result === 0) {
     return result;
+  }
   return (result < 0 ? -1 : 1) * Math.floor(Math.abs(result));
 }
 
 function as2ToInt32(value) {
   var result = as2ToNumber(value);
-  return (isNaN(result) || !isFinite(result) || result == 0) ? 0 :
+  return (isNaN(result) || !isFinite(result) || result === 0) ? 0 :
     (result | 0);
 }
 
@@ -166,8 +178,9 @@ function as2ToString(value) {
   case 'object':
     var result = value.toString !== Function.prototype.toString ?
       value.toString() : value;
-    if (typeof result === 'string')
+    if (typeof result === 'string') {
       return result;
+    }
     return typeof value === 'function' ? '[type Function]'
                                        : '[type Object]';
   }
@@ -184,8 +197,9 @@ function as2Compare(x, y) {
 }
 
 function as2InstanceOf(obj, constructor) {
-  if (obj instanceof constructor)
+  if (obj instanceof constructor) {
     return true;
+  }
   // TODO interface check
   return false;
 }
@@ -217,8 +231,9 @@ function executeActions(actionsData, context, scope, assets) {
     AS2Context.instance = context;
     context.defaultTarget = scope;
     context.globals['this'] = scope;
-    if (assets)
+    if (assets) {
       context.addAssets(assets);
+    }
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
@@ -246,7 +261,8 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
     var prevObj = obj;
     obj = obj.$lookupChild(path[0]);
     if (!obj) {
-      throw path[0] + ' (expr ' + targetPath + ') is not found in ' + prevObj._target;
+      throw new Error(path[0] + ' (expr ' + targetPath + ') is not found in ' +
+                      prevObj._target);
     }
     path.shift();
   }
@@ -277,15 +293,18 @@ function interpretActions(actionsData, scopeContainer,
     var fn = (function() {
       var newScope = { 'this': this, 'arguments': arguments };
       var newScopeContainer = scopeContainer.create(newScope);
+      var i;
 
-      for (var i = 0; i < arguments.length || i < parametersNames.length; i++)
+      for (i = 0; i < arguments.length || i < parametersNames.length; i++) {
         newScope[parametersNames[i]] = arguments[i];
+      }
       var registers = [];
       if (registersAllocation) {
-        for (var i = 0; i < registersAllocation.length; i++) {
+        for (i = 0; i < registersAllocation.length; i++) {
           var registerAllocation = registersAllocation[i];
-          if (!registerAllocation)
+          if (!registerAllocation) {
             continue;
+          }
           if (registerAllocation.type == 'param') {
             registers[i] = arguments[registerAllocation.index];
           } else { // var
@@ -297,7 +316,7 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = arguments;
                 break;
               case 'super':
-                throw 'Not implemented: super';
+                throw new Error('Not implemented: super');
               case '_global':
                 registers[i] = _global;
                 break;
@@ -333,8 +352,9 @@ function interpretActions(actionsData, scopeContainer,
         AS2Context.instance = savedContext;
       }
     });
-    if (functionName)
+    if (functionName) {
       fn.name = functionName;
+    }
     return fn;
   }
   function deleteProperty(propertyName) {
@@ -348,27 +368,28 @@ function interpretActions(actionsData, scopeContainer,
     return false;
   }
   function resolveVariableName(variableName) {
-    var obj, name;
+    var obj, name, i;
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      var obj = lookupAS2Children(parts[0], defaultTarget, _global._root);
+      obj = lookupAS2Children(parts[0], defaultTarget, _global._root);
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference
       var objPath = variableName.split('.');
       name = objPath.pop();
-      var obj = _global;
-      for (var i = 0; i < objPath.length; i++) {
+      obj = _global;
+      for (i = 0; i < objPath.length; i++) {
         obj = obj[objPath[i]];
         if (!obj) {
-          throw objPath.slice(0, i + 1) + ' is undefined';
+          throw new Error(objPath.slice(0, i + 1) + ' is undefined');
         }
       }
     }
 
-    if(!obj)
+    if (!obj) {
       return; // local variable
+    }
 
     var resolvedName = as2ResolveProperty(obj, name);
     return { obj: obj, name: resolvedName || name };
@@ -380,15 +401,15 @@ function interpretActions(actionsData, scopeContainer,
     }
 
     var target = resolveVariableName(variableName);
-    if (target)
+    if (target) {
       return target.obj[target.name];
-
+    }
     // trying movie clip children (if object is a MovieClip)
     var mc = defaultTarget instanceof AS2MovieClip &&
              defaultTarget.$lookupChild(variableName);
-    if (mc)
+    if (mc) {
       return mc;
-
+    }
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName) {
@@ -413,14 +434,16 @@ function interpretActions(actionsData, scopeContainer,
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
-    if (!(fn instanceof Function))
-      throw 'Function "' + functionName + '" is not found';
+    if (!(fn instanceof Function)) {
+      throw new Error('Function "' + functionName + '" is not found');
+    }
     return fn;
   }
   function getObjectByName(objectName) {
     var obj = getVariable(objectName);
-    if (!(obj instanceof Object))
-      throw 'Object "' + objectName + '" is not found';
+    if (!(obj instanceof Object)) {
+      throw new Error('Object "' + objectName + '" is not found');
+    }
     return obj;
   }
   function processWith(obj, withBlock) {
@@ -432,37 +455,42 @@ function interpretActions(actionsData, scopeContainer,
     try {
       interpretActions(tryBlock, scopeContainer, constantPool, registers);
     } catch (e) {
-      if (!catchBlockFlag)
+      if (!catchBlockFlag) {
         throw e;
-      if (!(e instanceof AS2Error))
+      }
+      if (!(e instanceof AS2Error)) {
         throw e;
-      if (typeof catchTarget === 'string')
+      }
+      if (typeof catchTarget === 'string') {
         scope[catchTarget] = e.error;
-      else
+      } else {
         registers[catchTarget] = e.error;
+      }
       interpretActions(catchBlock, scopeContainer, constantPool, registers);
     } finally {
-      if (finallyBlockFlag)
+      if (finallyBlockFlag) {
         interpretActions(finallyBlock, scopeContainer, constantPool, registers);
+      }
     }
   }
   function validateArgsCount(numArgs, maxAmount) {
     if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
         numArgs != (0|numArgs)) {
-      throw 'Invalid number of arguments: ' + numArgs;
+      throw new Error('Invalid number of arguments: ' + numArgs);
     }
   }
   function readArgs(stack) {
     var numArgs = +stack.pop();
     validateArgsCount(numArgs, stack.length);
     var args = [];
-    for (var i = 0; i < numArgs; i++)
+    for (var i = 0; i < numArgs; i++) {
       args.push(stack.pop());
+    }
     return args;
   }
 
   var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
-  var _global = currentContext.globals
+  var _global = currentContext.globals;
   var defaultTarget = currentContext.defaultTarget;
   var stack = [];
   var scope = scopeContainer.scope;
@@ -490,7 +518,7 @@ function interpretActions(actionsData, scopeContainer,
   while (stream.position < stream.end) {
     if (currentContext.instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
       executionAborted = true;
-      throw 'long running script -- AVM1 instruction limit is reached';
+      throw new Error('long running script -- AVM1 instruction limit is reached');
     }
 
     var actionCode = stream.readUI8();
@@ -499,10 +527,16 @@ function interpretActions(actionsData, scopeContainer,
     stackItemsExpected = 0;
 
     actionTracer.print(stream.position, actionCode, stack);
-    switch (actionCode) {
+
+    var frame, type, count, index, target, method, constr, codeSize, offset;
+    var name, variableName, methodName, functionName, targetName;
+    var paramName, resolvedName, objectName;
+    var value, a, b, c, f, sa, sb, obj, args, fn, result, flags, i;
+    var dragParams, register;
+    switch (actionCode | 0) {
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
-        var frame = stream.readUI16();
+        frame = stream.readUI16();
         _global.gotoAndPlay(frame + 1);
         break;
       case 0x83: // ActionGetURL
@@ -529,13 +563,14 @@ function interpretActions(actionsData, scopeContainer,
         _global.stopAllSounds();
         break;
       case 0x8A: // ActionWaitForFrame
-        var frame = stream.readUI16();
-        var skipCount = stream.readUI8();
-        if (!_global.ifFrameLoaded(frame))
-          skipActions(skipCount);
+        frame = stream.readUI16();
+        count = stream.readUI8();
+        if (!_global.ifFrameLoaded(frame)) {
+          skipActions(count);
+        }
         break;
       case 0x8B: // ActionSetTarget
-        var targetName = stream.readString();
+        targetName = stream.readString();
         setTarget(targetName);
         break;
       case 0x8C: // ActionGoToLabel
@@ -545,8 +580,7 @@ function interpretActions(actionsData, scopeContainer,
       // SWF 4 actions
       case 0x96: // ActionPush
         while (stream.position < nextPosition) {
-          var type = stream.readUI8();
-          var value;
+          type = stream.readUI8();
           switch (type) {
             case 0: // STRING
               value = stream.readString();
@@ -579,7 +613,7 @@ function interpretActions(actionsData, scopeContainer,
               value = constantPool[stream.readUI16()];
               break;
             default:
-              throw 'Unknown value type: ' + type;
+              throw new Error('Unknown value type: ' + type);
           }
           stack.push(value);
         }
@@ -588,86 +622,86 @@ function interpretActions(actionsData, scopeContainer,
         stack.pop();
         break;
       case 0x0A: // ActionAdd
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
         stack.push(a + b);
         break;
       case 0x0B: // ActionSubtract
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
         stack.push(b - a);
         break;
       case 0x0C: // ActionMultiply
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
         stack.push(a * b);
         break;
       case 0x0D: // ActionDivide
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
-        var c = b / a;
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
+        c = b / a;
         stack.push(isSwfVersion5 ? c : isFinite(c) ? c : '#ERROR#');
         break;
       case 0x0E: // ActionEquals
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
-        var f = a == b;
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
+        f = a == b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x0F: // ActionLess
-        var a = as2ToNumber(stack.pop());
-        var b = as2ToNumber(stack.pop());
-        var f = b < a;
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
+        f = b < a;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x10: // ActionAnd
-        var a = as2ToBoolean(stack.pop());
-        var b = as2ToBoolean(stack.pop());
-        var f = a && b;
+        a = as2ToBoolean(stack.pop());
+        b = as2ToBoolean(stack.pop());
+        f = a && b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x11: // ActionOr
-        var a = as2ToBoolean(stack.pop());
-        var b = as2ToBoolean(stack.pop());
-        var f = a || b;
+        a = as2ToBoolean(stack.pop());
+        b = as2ToBoolean(stack.pop());
+        f = a || b;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x12: // ActionNot
-        var f = !as2ToBoolean(stack.pop());
+        f = !as2ToBoolean(stack.pop());
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x13: // ActionStringEquals
-        var sa = as2ToString(stack.pop());
-        var sb = as2ToString(stack.pop());
-        var f = sa == sb;
+        sa = as2ToString(stack.pop());
+        sb = as2ToString(stack.pop());
+        f = sa == sb;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x14: // ActionStringLength
       case 0x31: // ActionMBStringLength
-        var sa = as2ToString(stack.pop());
+        sa = as2ToString(stack.pop());
         stack.push(_global.length(sa));
         break;
       case 0x21: // ActionStringAdd
-        var sa = as2ToString(stack.pop());
-        var sb = as2ToString(stack.pop());
+        sa = as2ToString(stack.pop());
+        sb = as2ToString(stack.pop());
         stack.push(sb + sa);
         break;
       case 0x15: // ActionStringExtract
-        var count = stack.pop();
-        var index = stack.pop();
-        var value = as2ToString(stack.pop());
+        count = stack.pop();
+        index = stack.pop();
+        value = as2ToString(stack.pop());
         stack.push(_global.substring(value, index, count));
         break;
       case 0x35: // ActionMBStringExtract
-        var count = stack.pop();
-        var index = stack.pop();
-        var value = as2ToString(stack.pop());
+        count = stack.pop();
+        index = stack.pop();
+        value = as2ToString(stack.pop());
         stack.push(_global.mbsubstring(value, index, count));
         break;
       case 0x29: // ActionStringLess
-        var sa = as2ToString(stack.pop());
-        var sb = as2ToString(stack.pop());
-        var f = sb < sa;
+        sa = as2ToString(stack.pop());
+        sb = as2ToString(stack.pop());
+        f = sb < sa;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       case 0x18: // ActionToInteger
@@ -686,31 +720,32 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(_global.mbord(stack.pop()));
         break;
       case 0x99: // ActionJump
-        var branchOffset = stream.readSI16();
-        nextPosition += branchOffset;
+        offset = stream.readSI16();
+        nextPosition += offset;
         break;
       case 0x9D: // ActionIf
-        var branchOffset = stream.readSI16();
-        var f = !!stack.pop();
-        if (f)
-          nextPosition += branchOffset;
+        offset = stream.readSI16();
+        f = !!stack.pop();
+        if (f) {
+          nextPosition += offset;
+        }
         break;
       case 0x9E: // ActionCall
-        var label = stack.pop();
+        label = stack.pop();
         _global.call(label);
         break;
       case 0x1C: // ActionGetVariable
-        var variableName = '' + stack.pop();
+        variableName = '' + stack.pop();
         stackItemsExpected++;
         stack.push(getVariable(variableName));
         break;
       case 0x1D: // ActionSetVariable
-        var value = stack.pop();
-        var variableName = '' + stack.pop();
+        value = stack.pop();
+        variableName = '' + stack.pop();
         setVariable(variableName, value);
         break;
       case 0x9A: // ActionGetURL2
-        var flags = stream.readUI8();
+        flags = stream.readUI8();
         var httpMethod;
         switch ((flags >> 6) & 3) {
           case 1:
@@ -723,46 +758,47 @@ function interpretActions(actionsData, scopeContainer,
         var loadMethod = !!(flags & 2) ?
           (!!(flags & 1) ? _global.loadVariables : _global.loadMovie) :
           (!!(flags & 1) ? _global.loadVariablesNum : _global.loadMovieNum);
-        var target = stack.pop();
+        target = stack.pop();
         var url = stack.pop();
         loadMethod.call(_global, url, target, httpMethod);
         break;
       case 0x9F: // ActionGotoFrame2
-        var flags = stream.readUI8();
+        flags = stream.readUI8();
         var gotoParams = [stack.pop()];
-        if (!!(flags & 2))
+        if (!!(flags & 2)) {
           gotoParams.push(stream.readUI16());
+        }
         var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
         gotoMethod.apply(_global, gotoParams);
         break;
       case 0x20: // ActionSetTarget2
-        var target = stack.pop();
+        target = stack.pop();
         setTarget(target);
         break;
       case 0x22: // ActionGetProperty
-        var index = stack.pop();
-        var target = stack.pop();
+        index = stack.pop();
+        target = stack.pop();
         stackItemsExpected++;
         stack.push(_global.getProperty(target, index));
         break;
       case 0x23: // ActionSetProperty
-        var value = stack.pop();
-        var index = stack.pop();
-        var target = stack.pop();
+        value = stack.pop();
+        index = stack.pop();
+        target = stack.pop();
         _global.setProperty(target, index, value);
         break;
       case 0x24: // ActionCloneSprite
         var depth = stack.pop();
-        var target = stack.pop();
+        target = stack.pop();
         var source = stack.pop();
         _global.duplicateMovieClip(source, target, depth);
         break;
       case 0x25: // ActionRemoveSprite
-        var target = stack.pop();
+        target = stack.pop();
         _global.unloadMovie(target);
         break;
       case 0x27: // ActionStartDrag
-        var target = stack.pop();
+        target = stack.pop();
         var lockcenter = stack.pop();
         var constrain = !stack.pop() ? null : {
           y2: stack.pop(),
@@ -781,13 +817,14 @@ function interpretActions(actionsData, scopeContainer,
         _global.stopDrag();
         break;
       case 0x8D: // ActionWaitForFrame2
-        var skipCount = stream.readUI8();
-        var frame = stack.pop();
-        if (!_global.ifFrameLoaded(frame))
-          skipActions(skipCount);
+        count = stream.readUI8();
+        frame = stack.pop();
+        if (!_global.ifFrameLoaded(frame)) {
+          skipActions(count);
+        }
         break;
       case 0x26: // ActionTrace
-        var value = stack.pop();
+        value = stack.pop();
         _global.trace(value);
         break;
       case 0x34: // ActionGetTime
@@ -798,115 +835,120 @@ function interpretActions(actionsData, scopeContainer,
         break;
       // SWF 5
       case 0x3D: // ActionCallFunction
-        var functionName = stack.pop();
-        var args = readArgs(stack);
+        functionName = stack.pop();
+        args = readArgs(stack);
         stackItemsExpected++;
-        var fn = getFunction(functionName);
-        var result = fn.apply(scope, args);
+        fn = getFunction(functionName);
+        result = fn.apply(scope, args);
         stack.push(result);
         break;
       case 0x52: // ActionCallMethod
-        var methodName = stack.pop();
-        var obj = stack.pop();
-        var args = readArgs(stack);
-        var result;
+        methodName = stack.pop();
+        obj = stack.pop();
+        args = readArgs(stack);
         stackItemsExpected++;
         if (methodName) {
           obj = Object(obj);
-          var resolvedName = as2ResolveProperty(obj, methodName);
-          if (!resolvedName)
-            throw 'Method ' + methodName + ' is not defined.';
+          resolvedName = as2ResolveProperty(obj, methodName);
+          if (!resolvedName) {
+            throw new Error('Method ' + methodName + ' is not defined.');
+          }
           result = obj[resolvedName].apply(obj, args);
-        } else
+        } else {
           result = obj.apply(defaultTarget, args);
+        }
         stack.push(result);
         break;
       case 0x88: // ActionConstantPool
-        var count = stream.readUI16();
+        count = stream.readUI16();
         constantPool = [];
-        for (var i = 0; i < count; i++)
+        for (i = 0; i < count; i++) {
           constantPool.push(stream.readString());
+        }
         break;
       case 0x9B: // ActionDefineFunction
-        var functionName = stream.readString();
-        var numParams = stream.readUI16();
-        var functionParams = [];
-        for (var i = 0; i < numParams; i++)
-          functionParams.push(stream.readString());
-        var codeSize = stream.readUI16();
+        functionName = stream.readString();
+        count = stream.readUI16();
+        args = [];
+        for (i = 0; i < count; i++) {
+          args.push(stream.readString());
+        }
+        codeSize = stream.readUI16();
         nextPosition += codeSize;
 
-        var fn = defineFunction(functionName, functionParams, null,
-          stream.readBytes(codeSize));
-        if (functionName)
+        fn = defineFunction(functionName, args, null,
+                            stream.readBytes(codeSize));
+        if (functionName) {
           scope[functionName] = fn;
-        else
+        } else {
           stack.push(fn);
+        }
         break;
       case 0x3C: // ActionDefineLocal
-        var value = stack.pop();
-        var name = stack.pop();
+        value = stack.pop();
+        name = stack.pop();
         scope[name] = value;
         break;
       case 0x41: // ActionDefineLocal2
-        var name = stack.pop();
+        name = stack.pop();
         scope[name] = void(0);
         break;
       case 0x3A: // ActionDelete
-        var name = stack.pop();
-        var obj = stack.pop();
+        name = stack.pop();
+        obj = stack.pop();
         obj[name] = undefined; // in some cases we need to cleanup events binding
         delete obj[name];
         stack.push(!(name in obj));
         break;
       case 0x3B: // ActionDelete2
-        var name = stack.pop();
-        var result = deleteProperty(name);
+        name = stack.pop();
+        result = deleteProperty(name);
         stack.push(result);
         break;
       case 0x46: // ActionEnumerate
-        var objectName = stack.pop();
+        objectName = stack.pop();
         stack.push(null);
-        var obj = getObjectByName(objectName);
-        for (var name in obj)
+        obj = getObjectByName(objectName);
+        for (name in obj) {
           stack.push(name);
+        }
         break;
       case 0x49: // ActionEquals2
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
-        stack.push(arg1 == arg2);
+        a = stack.pop();
+        b = stack.pop();
+        stack.push(a == b);
         break;
       case 0x4E: // ActionGetMember
-        var name = stack.pop();
-        var obj = stack.pop();
-        var resolvedName = as2ResolveProperty(obj, name);
+        name = stack.pop();
+        obj = stack.pop();
+        resolvedName = as2ResolveProperty(obj, name);
         stack.push(obj[resolvedName || name]);
         break;
       case 0x42: // ActionInitArray
-        var arr = readArgs(stack);
-        stack.push(arr);
+        obj = readArgs(stack);
+        stack.push(obj);
         break;
       case 0x43: // ActionInitObject
-        var numArgs = +stack.pop();
-        validateArgsCount(numArgs, stack.length >> 1);
-        var obj = {};
-        for (var i = 0; i < numArgs; i++) {
-          var value = stack.pop();
-          var name = stack.pop();
+        count = +stack.pop();
+        validateArgsCount(count, stack.length >> 1);
+        obj = {};
+        for (i = 0; i < count; i++) {
+          value = stack.pop();
+          name = stack.pop();
           obj[name] = value;
         }
         stack.push(obj);
         break;
       case 0x53: // ActionNewMethod
-        var methodName = stack.pop();
-        var obj = stack.pop();
-        var args = readArgs(stack);
+        methodName = stack.pop();
+        obj = stack.pop();
+        args = readArgs(stack);
         stackItemsExpected++;
-        var method;
         if (methodName) {
-          var resolvedName = as2ResolveProperty(obj, methodName);
-          if (!resolvedName)
-            throw 'Method ' + methodName + ' is not defined.';
+          resolvedName = as2ResolveProperty(obj, methodName);
+          if (!resolvedName) {
+            throw new Error('Method ' + methodName + ' is not defined.');
+          }
           method = obj[resolvedName];
         } else {
           method = obj;
@@ -914,7 +956,7 @@ function interpretActions(actionsData, scopeContainer,
         // XXX: this is non-semantics-preserving, but it's
         // necessary to make constructors for runtime objects
         // work.
-        var result = new (method.bind.apply(method, [null].concat(args)))();
+        result = new (method.bind.apply(method, [null].concat(args)))();
         if (!result) {
           result = Object.create(method.prototype || Object.prototype);
           result.constructor = method;
@@ -923,11 +965,11 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(result);
         break;
       case 0x40: // ActionNewObject
-        var objectName = stack.pop();
-        var obj = getObjectByName(objectName);
-        var args = readArgs(stack);
+        objectName = stack.pop();
+        obj = getObjectByName(objectName);
+        args = readArgs(stack);
         stackItemsExpected++;
-        var result = createBuiltinType(obj, args);
+        result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
           result = Object.create(obj.prototype || Object.prototype);
@@ -937,18 +979,18 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(result);
         break;
       case 0x4F: // ActionSetMember
-        var value = stack.pop();
-        var name = stack.pop();
-        var obj = stack.pop();
+        value = stack.pop();
+        name = stack.pop();
+        obj = stack.pop();
         obj[name] = value;
         break;
       case 0x45: // ActionTargetPath
-        var obj = stack.pop();
+        obj = stack.pop();
         stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
         break;
       case 0x94: // ActionWith
-        var codeSize = stream.readUI16();
-        var obj = stack.pop();
+        codeSize = stream.readUI16();
+        obj = stack.pop();
         nextPosition += codeSize;
         processWith(obj, stream.readBytes(codeSize));
         break;
@@ -959,69 +1001,68 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(as2ToString(stack.pop()));
         break;
       case 0x44: // ActionTypeOf
-        var obj = stack.pop();
-        var result = as2GetType(obj);
+        obj = stack.pop();
+        result = as2GetType(obj);
         stack.push(result);
         break;
       case 0x47: // ActionAdd2
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
-        var sb = as2ToAddPrimitive(arg1);
-        var sa = as2ToAddPrimitive(arg2);
-        if (typeof sa === 'string' || typeof sb === 'string')
-          stack.push(as2ToString(sa) + as2ToString(sb));
-        else
-          stack.push(as2ToNumber(sa) + as2ToNumber(sb));
+        a = as2ToAddPrimitive(stack.pop());
+        b = as2ToAddPrimitive(stack.pop());
+        if (typeof a === 'string' || typeof b === 'string') {
+          stack.push(as2ToString(b) + as2ToString(a));
+        } else {
+          stack.push(as2ToNumber(b) + as2ToNumber(a));
+        }
         break;
       case 0x48: // ActionLess2
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
-        stack.push(as2Compare(arg2, arg1));
+        a = stack.pop();
+        b = stack.pop();
+        stack.push(as2Compare(b, a));
         break;
       case 0x3F: // ActionModulo
-        var arg1 = as2ToNumber(stack.pop());
-        var arg2 = as2ToNumber(stack.pop());
-        stack.push(arg2 % arg1);
+        a = as2ToNumber(stack.pop());
+        b = as2ToNumber(stack.pop());
+        stack.push(b % a);
         break;
       case 0x60: // ActionBitAnd
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 & arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b & a);
         break;
       case 0x63: // ActionBitLShift
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 << arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b << a);
         break;
       case 0x61: // ActionBitOr
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 | arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b | a);
         break;
       case 0x64: // ActionBitRShift
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 >> arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b >> a);
         break;
       case 0x65: // ActionBitURShift
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 >>> arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b >>> a);
         break;
       case 0x62: // ActionBitXor
-        var arg1 = as2ToInt32(stack.pop());
-        var arg2 = as2ToInt32(stack.pop());
-        stack.push(arg2 ^ arg1);
+        a = as2ToInt32(stack.pop());
+        b = as2ToInt32(stack.pop());
+        stack.push(b ^ a);
         break;
       case 0x51: // ActionDecrement
-        var arg1 = as2ToNumber(stack.pop());
-        arg1--;
-        stack.push(arg1);
+        a = as2ToNumber(stack.pop());
+        a--;
+        stack.push(a);
         break;
       case 0x50: // ActionIncrement
-        var arg1 = as2ToNumber(stack.pop());
-        arg1++;
-        stack.push(arg1);
+        a = as2ToNumber(stack.pop());
+        a++;
+        stack.push(a);
         break;
       case 0x4C: // ActionPushDuplicate
         stack.push(stack[stack.length - 1]);
@@ -1032,49 +1073,50 @@ function interpretActions(actionsData, scopeContainer,
         stack.push(stack.pop(), stack.pop());
         break;
       case 0x87: // ActionStoreRegister
-        var register = stream.readUI8();
+        register = stream.readUI8();
         registers[register] = stack[stack.length - 1];
         break;
       // SWF 6
       case 0x54: // ActionInstanceOf
-        var constr = stack.pop();
-        var obj = stack.pop();
+        constr = stack.pop();
+        obj = stack.pop();
         stack.push(as2InstanceOf(Object(obj), constr));
         break;
       case 0x55: // ActionEnumerate2
-        var obj = stack.pop();
+        obj = stack.pop();
         stack.push(null);
-        for (var name in obj)
+        for (name in obj) {
           stack.push(name);
+        }
         break;
       case 0x66: // ActionStrictEquals
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
-        stack.push(arg1 === arg2);
+        a = stack.pop();
+        b = stack.pop();
+        stack.push(b === a);
         break;
       case 0x67: // ActionGreater
-        var arg1 = stack.pop();
-        var arg2 = stack.pop();
-        stack.push(as2Compare(arg1, arg2));
+        a = stack.pop();
+        b = stack.pop();
+        stack.push(as2Compare(a, b));
         break;
       case 0x68: // ActionStringGreater
-        var sa = as2ToString(stack.pop());
-        var sb = as2ToString(stack.pop());
-        var f = sb > sa;
+        sa = as2ToString(stack.pop());
+        sb = as2ToString(stack.pop());
+        f = sb > sa;
         stack.push(isSwfVersion5 ? f : f ? 1 : 0);
         break;
       // SWF 7
       case 0x8E: // ActionDefineFunction2
-        var functionName = stream.readString();
-        var numParams = stream.readUI16();
+        functionName = stream.readString();
+        count = stream.readUI16();
         var registerCount = stream.readUI8();
-        var flags = stream.readUI16();
+        flags = stream.readUI16();
         var registerAllocation = [];
-        var functionParams = [];
-        for (var i = 0; i < numParams; i++) {
-          var register = stream.readUI8();
-          var paramName = stream.readString();
-          functionParams.push(paramName);
+        args = [];
+        for (i = 0; i < count; i++) {
+          register = stream.readUI8();
+          paramName = stream.readString();
+          args.push(paramName);
           if (register) {
             registerAllocation[register] = {
               type: 'param',
@@ -1083,55 +1125,63 @@ function interpretActions(actionsData, scopeContainer,
             };
           }
         }
-        var codeSize = stream.readUI16();
+        codeSize = stream.readUI16();
         nextPosition += codeSize;
 
         var j = 1;
         // order this, arguments, super, _root, _parent, and _global
-        if (flags & 0x0001) // preloadThis
+        if (flags & 0x0001) { // preloadThis
           registerAllocation[j++] = { type: 'var', name: 'this' };
-        if (flags & 0x0004) // preloadArguments
+        }
+        if (flags & 0x0004) { // preloadArguments
           registerAllocation[j++] = { type: 'var', name: 'arguments' };
-        if (flags & 0x0010) // preloadSuper
+        }
+        if (flags & 0x0010) { // preloadSuper
           registerAllocation[j++] = { type: 'var', name: 'super' };
-        if (flags & 0x0040) // preloadRoot
+        }
+        if (flags & 0x0040) { // preloadRoot
           registerAllocation[j++] = { type: 'var', name: '_root' };
-        if (flags & 0x0080) // preloadParent
+        }
+        if (flags & 0x0080) { // preloadParent
           registerAllocation[j++] = { type: 'var', name: '_parent' };
-        if (flags & 0x0100) // preloadGlobal
+        }
+        if (flags & 0x0100) { // preloadGlobal
           registerAllocation[j++] = { type: 'var', name: '_global' };
+        }
 
-        var fn = defineFunction(functionName, functionParams,
-          registerAllocation, stream.readBytes(codeSize));
-        if (functionName)
+        fn = defineFunction(functionName, args,
+                            registerAllocation, stream.readBytes(codeSize));
+        if (functionName) {
           scope[functionName] = fn;
-        else
+        } else {
           stack.push(fn);
+        }
         break;
       case 0x69: // ActionExtends
         var constrSuper = stack.pop();
-        var constrSub = stack.pop();
-        var obj = Object.create(constrSuper.prototype, {
-          constructor: { value: constrSub, enumerable: false }
+        constr = stack.pop();
+        obj = Object.create(constrSuper.prototype, {
+          constructor: { value: constr, enumerable: false }
         });
-        constrSub.prototype = obj;
+        constr.prototype = obj;
         break;
       case 0x2B: // ActionCastOp
-        var obj =  stack.pop();
-        var constr = stack.pop();
+        obj =  stack.pop();
+        constr = stack.pop();
         stack.push(as2InstanceOf(obj, constr) ? obj : null);
         break;
       case 0x2C: // ActionImplementsOp
-        var constr = stack.pop();
-        var interfacesCount = +stack.pop();
-        validateArgsCount(interfacesCount, stack.length);
+        constr = stack.pop();
+        count = +stack.pop();
+        validateArgsCount(count, stack.length);
         var interfaces = [];
-        for (var i = 0; i < interfacesCount; i++)
+        for (i = 0; i < count; i++) {
           interfaces.push(stack.pop());
+        }
         constr.$interfaces = interfaces;
         break;
       case 0x8F: // ActionTry
-        var flags = stream.readUI8();
+        flags = stream.readUI8();
         var catchIsRegisterFlag = !!(flags & 4);
         var finallyBlockFlag = !!(flags & 2);
         var catchBlockFlag = !!(flags & 1);
@@ -1144,13 +1194,13 @@ function interpretActions(actionsData, scopeContainer,
           stream.readBytes(trySize), stream.readBytes(catchSize), stream.readBytes(finallySize));
         break;
       case 0x2A: // ActionThrow
-        var obj = stack.pop();
+        obj = stack.pop();
         throw new AS2Error(obj);
       // Not documented by the spec
       case 0x2D: // ActionFSCommand2
-        var args = readArgs(stack);
+        args = readArgs(stack);
         stackItemsExpected++;
-        var result = _global.fscommand.apply(null, args);
+        result = _global.fscommand.apply(null, args);
         stack.push(result);
         break;
       case 0x89: // ActionStrictMode
@@ -1159,7 +1209,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0: // End of actions
         return;
       default:
-        throw 'Unknown action code: ' + actionCode;
+        throw new Error('Unknown action code: ' + actionCode);
     }
     stream.position = nextPosition;
     recoveringFromError = false;
@@ -1167,18 +1217,22 @@ function interpretActions(actionsData, scopeContainer,
 
     // handling AVM1 errors
     } catch (e) {
-      if (!AVM1_ERRORS_IGNORED || executionAborted)
+      if (!AVM1_ERRORS_IGNORED || executionAborted) {
         throw e;
-      if (e instanceof AS2Error)
+      }
+      if (e instanceof AS2Error) {
         throw e;
+      }
       stream.position = nextPosition;
       if (stackItemsExpected > 0) {
-        while (stackItemsExpected--) stack.push(undefined);
+        while (stackItemsExpected--) {
+          stack.push(undefined);
+        }
       }
       if (!recoveringFromError) {
         if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
           executionAborted = true;
-          throw 'long running script -- AVM1 errors limit is reached';
+          throw new Error('long running script -- AVM1 errors limit is reached');
         }
         console.error('AVM1 error: ' + e);
         recoveringFromError = true;
