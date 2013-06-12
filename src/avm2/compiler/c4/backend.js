@@ -240,7 +240,7 @@
 
   Context.prototype.compileLabelBody = function compileLabelBody(node) {
     var body = [];
-    if (node.label) {
+    if (node.label !== undefined) {
       this.useVariable(this.label);
       body.push(new ExpressionStatement(assignment(id(this.label.name), new Literal(node.label))));
     }

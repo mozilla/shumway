@@ -1133,6 +1133,7 @@
         this.controlTree = induce(root, new BlockSet(), {});
       },
 
+      /*
       massageControlTree: function massageControlTree() {
         function massage(node, exit, cont, br) {
           switch (node.kind) {
@@ -1236,6 +1237,7 @@
 
         this.controlTree = massage(this.controlTree);
       },
+      */
 
       restructureControlFlow: function restructureControlFlow() {
         Timer.start("restructureControlFlow");
@@ -1245,9 +1247,6 @@
         }
 
         this.induceControlTree();
-        if (this.options.massage) {
-          this.massageControlTree();
-        }
 
         this.restructuredControlFlow = true;
         Timer.stop();
@@ -1400,7 +1399,7 @@
   exports.Control = Control;
 
   exports.analyze = function (cfg) {
-    var analysis = new Analysis(cfg, {massage: true});
+    var analysis = new Analysis(cfg);
     analysis.restructureControlFlow();
     return analysis.controlTree;
   };
