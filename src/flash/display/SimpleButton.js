@@ -103,7 +103,9 @@ var SimpleButtonDefinition = (function () {
       }.bind(this), false);
 
       if (!this._loader._isAvm2Enabled && s && s.buttonActions) {
-        this._initAvm1Events(s.buttonActions);
+        this._addEventListener("addedToStage", function (e) {
+          this._initAvm1Events(s.buttonActions);
+        }.bind(this), false);
       }
     },
 
@@ -179,7 +181,7 @@ var SimpleButtonDefinition = (function () {
         // XXX: attaching events to the stage for now
         var KeyboardEventClass = flash.events.KeyboardEvent;
         this.stage._addEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
-        this._addEventListener('removed', function () {
+        this._addEventListener('removedFromStage', function () {
           this.stage._removeEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
         }.bind(this), false);
       }
