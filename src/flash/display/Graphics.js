@@ -193,6 +193,7 @@ var GraphicsDefinition = (function () {
           this._currentPath.arc(x+radiusW, y+radiusH, radiusW, 0, Math.PI * 2);
         else
           this._currentPath.ellipse(x+radiusW, y+radiusH, radiusW, radiusH, 0, 0, Math.PI * 2);
+        this._revision++;
         return;
       }
 
@@ -209,6 +210,7 @@ var GraphicsDefinition = (function () {
       this._currentPath.arcTo(x, y+h, x, y+h-radiusH, radiusW, radiusH);
       this._currentPath.arcTo(x, y, x+radiusW, y, radiusW, radiusH);
       this._currentPath.arcTo(x+w, y, x+w, y+radiusH, radiusW, radiusH);
+      this._revision++;
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius) {
       if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
@@ -219,6 +221,7 @@ var GraphicsDefinition = (function () {
       this._currentPath.arcTo(x, y+h, x, y+h-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
       this._currentPath.arcTo(x+w, y, x+w, y+topRightRadius, topRightRadius);
+      this._revision++;
     },
     drawTriangles: function (vertices, indices, uvtData, culling) {
       notImplemented();
