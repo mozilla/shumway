@@ -52,7 +52,19 @@ test-all:
 	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
 
 test-regress:
-	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py reg
+	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py reg
 	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icv
 
-.PHONY: default hello-world test-pypy test-interpreter test-compiler test-all
+run-avm:
+	$(AVM) $(TEST_PATH)
+
+run-shu-i:
+	$(UTILS_HOME)/jsshell/js -m -n avm.js -x -i -rel $(TEST_PATH)
+
+run-shu-c:
+	$(UTILS_HOME)/jsshell/js -m -n avm.js -x -c4 -rel $(TEST_PATH)
+
+run-shu-cv:
+	$(UTILS_HOME)/jsshell/js -m -n avm.js -x -c4 -verify -rel $(TEST_PATH)
+
+.PHONY: default hello-world test-pypy test-interpreter test-compiler test-all run-avm run-shu-i run-shu-c run-shu-cv
