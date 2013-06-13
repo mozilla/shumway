@@ -69,7 +69,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       child._dispatchEvent(new flash.events.Event("added"));
       if (child.stage)
-        child._addedToStage();
+        child._addedToStage(new flash.events.Event("addedToStage"));
 
       this._markAsDirty();
 
@@ -128,7 +128,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       child._dispatchEvent(new flash.events.Event("removed"));
       if (child.stage)
-        child._removedFromStage();
+        child._removedFromStage(new flash.events.Event("removedFromStage"));
 
       children.splice(index, 1);
       child._parent = null;
@@ -193,6 +193,16 @@ var DisplayObjectContainerDefinition = (function () {
       child2._owned = false;
 
       this._markAsDirty();
+    },
+    destroy: function () {
+      if (this._destroyed) {
+        return;
+      }
+      this._destroyed = true;
+      this._children.forEach(function (child) {
+        child.destroy();
+      });
+      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
     }
   };
 

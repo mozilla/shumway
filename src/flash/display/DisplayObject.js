@@ -96,6 +96,7 @@ var DisplayObjectDefinition = (function () {
       this._wasCachedAsBitmap = false;
       this._x = 0;
       this._y = 0;
+      this._destroyed = false;
 
       var s = this.symbol;
       if (s) {
@@ -148,14 +149,15 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var that = this;
-      avm2.systemDomain.onMessage.register(function (msg) {
+      this._onBroadcastMessage = function (msg) {
         var evt = msg.data;
         var listeners = that._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[evt._type]) {
           that._dispatchEvent(evt);
         }
-      });
+      };
+      avm2.systemDomain.onMessage.register(this._onBroadcastMessage);
     },
 
     _updateTraceSymbolInfo: function () {
@@ -172,13 +174,13 @@ var DisplayObjectDefinition = (function () {
         'class: ' + this.__class__;
       this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
     },
-    _addedToStage: function () {
+    _addedToStage: function (e) {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child._dispatchEvent(new flash.events.Event("addedToStage"));
+        child._addedToStage(e);
       }
-      this._dispatchEvent(new flash.events.Event("addedToStage"));
+      this._dispatchEvent(e);
     },
     _applyCurrentInverseTransform: function (point, targetCoordSpace) {
       if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
@@ -272,13 +274,13 @@ var DisplayObjectDefinition = (function () {
         this._dirtyArea = this.getBounds();
       this._bounds = null;
     },
-    _removedFromStage: function () {
+    _removedFromStage: function (e) {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child._dispatchEvent(new flash.events.Event("removedFromStage"));
+        child._removedFromStage(e);
       }
-      this._dispatchEvent(new flash.events.Event("removedFromStage"));
+      this._dispatchEvent(e);
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;
@@ -672,6 +674,13 @@ var DisplayObjectDefinition = (function () {
       var result = new flash.geom.Point(pt.x, pt.y);
       this._applyCurrentTransform(result);
       return result;
+    },
+    destroy: function () {
+      if (this._destroyed) {
+        return;
+      }
+      this._destroyed = true;
+      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
     }
   };
 
