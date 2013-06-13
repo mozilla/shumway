@@ -1173,37 +1173,38 @@ var Runtime = (function () {
   };
 
   /**
-   * Wraps the compiled method in a closure that passes the dynamic scope object as the
+   * Wraps the free method in a closure that passes the dynamic scope object as the
    * first argument and also makes sure that the |asGlobal| object gets passed in as
    * |this| when the method is called with |fn.call(null)|.
    */
-  function bindScope(methodInfo, scope) {
-    var fn = methodInfo.compiledMethod;
-    assert (fn, "There should already be a compiled method.");
-    var closure;
+  function bindFreeMethodScope(methodInfo, scope) {
+    var fn = methodInfo.freeMethod;
+    if (methodInfo.lastBoundMethod && methodInfo.lastBoundMethod.scope === scope) {
+      return methodInfo.lastBoundMethod.boundMethod;
+    }
+    assert (fn, "There should already be a cached method.");
+    var boundMethod;
     var asGlobal = scope.global.object;
-    // if (!methodInfo.needsArguments() ) {
-    if (!methodInfo.hasOptional() &&
-        !methodInfo.needsArguments()) {
+    if (!methodInfo.hasOptional() && !methodInfo.needsArguments() && !methodInfo.needsRest()) {
       // Special case the common path.
       switch (methodInfo.parameters.length) {
         case 0:
-          closure = function () {
+          boundMethod = function () {
             return fn.call(this === jsGlobal ? asGlobal : this, scope);
           };
           break;
         case 1:
-          closure = function (x) {
+          boundMethod = function (x) {
             return fn.call(this === jsGlobal ? asGlobal : this, scope, x);
           };
           break;
         case 2:
-          closure = function (x, y) {
+          boundMethod = function (x, y) {
             return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y);
           };
           break;
         case 3:
-          closure = function (x, y, z) {
+          boundMethod = function (x, y, z) {
             return fn.call(this === jsGlobal ? asGlobal : this, scope, x, y, z);
           };
           break;
@@ -1212,34 +1213,23 @@ var Runtime = (function () {
           break;
       }
     }
-    if (!closure) {
+    if (!boundMethod) {
       Counter.count("Bind Scope - Slow Path");
-      closure = function () {
+      boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
         return fn.apply(global, arguments);
       };
     }
-    closure.instance = closure;
-    return closure;
+    boundMethod.instance = boundMethod;
+    methodInfo.lastBoundMethod = {
+      scope: scope,
+      boundMethod: boundMethod
+    };
+    return boundMethod;
   }
 
-  /**
-   * Creates a method from the specified |methodInfo| that is bound to the given |scope|. If the
-   * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
-   * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
-   * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
-   * compiler bakes it in as a constant which should be much more efficient.
-   */
-  runtime.prototype.createFunction = function createFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
-    var mi = methodInfo;
-    release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
-
-    if (mi.compiledMethod) {
-      release || assert(hasDynamicScope);
-      return bindScope(mi, scope);
-    }
-
+  runtime.prototype.checkMethodOverrides = function checkMethodOverrides(methodInfo) {
     if (methodInfo.name) {
       var qn = Multiname.getQualifiedName(methodInfo.name);
       if (qn in VM_METHOD_OVERRIDES) {
@@ -1247,36 +1237,81 @@ var Runtime = (function () {
         return VM_METHOD_OVERRIDES[qn];
       }
     }
+  };
 
-    var hasDefaults = false;
-    var defaults = mi.parameters.map(function (p) {
-      if (p.value !== undefined) {
-        hasDefaults = true;
-      }
-      return p.value;
-    });
+  /**
+   * Creates a function from the specified |methodInfo| that is bound to the given |scope|. If the
+   * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
+   * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
+   * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
+   * compiler bakes it in as a constant which should be much more efficient. If the interpreter
+   * is used, the scope object is passed in every time.
+   */
+  runtime.prototype.createFunction = function createFunction(mi, scope, hasDynamicScope, breakpoint) {
+    release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
-    function interpretedMethod(interpreter, methodInfo, scope) {
-      var fn = function () {
-        var global = (this === jsGlobal ? scope.global.object : this);
-        var args;
-        if (hasDefaults && arguments.length < defaults.length) {
-          args = Array.prototype.slice.call(arguments);
-          args = args.concat(defaults.slice(arguments.length - defaults.length));
-        } else {
-          args = sliceArguments(arguments);
-        }
-        return interpreter.interpretMethod(global, methodInfo, scope, args);
-      };
-      fn.instance = fn;
+    if (mi.freeMethod) {
+      release || assert(hasDynamicScope);
+      return bindFreeMethodScope(mi, scope);
+    }
+
+    var fn;
+
+    if ((fn = this.checkMethodOverrides(mi))) {
+      assert (!hasDynamicScope);
       return fn;
     }
 
-    var mode = this.domain.mode;
+    this.ensureFunctionIsInitialized(mi);
+
+    totalFunctionCount ++;
+
+    var useInterpreter = false;
+    if ((this.domain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
+      useInterpreter = true;
+    }
+
+    if (compileOnly.value >= 0) {
+      if (Number(compileOnly.value) !== totalFunctionCount) {
+        print("Compile Only Skipping " + totalFunctionCount);
+        useInterpreter = true;
+      }
+    }
+
+    if (compileUntil.value >= 0) {
+      if (totalFunctionCount > 1000) {
+        print(backtrace());
+        print(Runtime.getStackTrace());
+      }
+      if (totalFunctionCount > compileUntil.value) {
+        print("Compile Until Skipping " + totalFunctionCount);
+        useInterpreter = true;
+      }
+    }
+
+    if (useInterpreter) {
+      mi.freeMethod = this.createInterpretedFunction(mi, scope, hasDynamicScope);
+    } else {
+      compiledFunctionCount++;
+      if (compileOnly.value >= 0 || compileUntil.value >= 0) {
+        print("Compiling " + totalFunctionCount);
+      }
+      mi.freeMethod = this.createCompiledFunction(mi, scope, hasDynamicScope);
+    }
+
+    if (hasDynamicScope) {
+      return bindFreeMethodScope(mi, scope);
+    } else {
+      return mi.freeMethod;
+    }
+  };
+
+  runtime.prototype.ensureFunctionIsInitialized = function ensureFunctionIsInitialized(methodInfo) {
+    var mi = methodInfo;
 
     // We use not having an analysis to mean "not initialized".
     if (!mi.analysis) {
-      mi.analysis = new Analysis(mi, { massage: true });
+      mi.analysis = new Analysis(mi);
 
       if (mi.traits) {
         mi.activationPrototype = this.applyTraits(new Activation(mi), null, null, mi.traits, null, false);
@@ -1298,31 +1333,44 @@ var Runtime = (function () {
         }
       }
     }
+  };
 
-    totalFunctionCount ++;
-
-    if ((mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
-      return interpretedMethod(this.interpreter, mi, scope);
-    }
-
-    if (compileOnly.value >= 0) {
-      if (Number(compileOnly.value) !== totalFunctionCount) {
-        print("Compile Only Skipping " + totalFunctionCount);
-        return interpretedMethod(this.interpreter, mi, scope);
+  runtime.prototype.createInterpretedFunction = function createInterpretedFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
+    var mi = methodInfo;
+    var hasDefaults = false;
+    var defaults = mi.parameters.map(function (p) {
+      if (p.value !== undefined) {
+        hasDefaults = true;
       }
+      return p.value;
+    });
+    var interpreter = this.interpreter;
+    var fn;
+    if (hasDynamicScope) {
+      fn = function (scope) {
+        var global = (this === jsGlobal ? scope.global.object : this);
+        var args = sliceArguments(arguments, 1);
+        if (hasDefaults && args.length < defaults.length) {
+          args = args.concat(defaults.slice(args.length - defaults.length));
+        }
+        return interpreter.interpretMethod(global, methodInfo, scope, args);
+      };
+    } else {
+      fn = function () {
+        var global = (this === jsGlobal ? scope.global.object : this);
+        var args = sliceArguments(arguments);
+        if (hasDefaults && args.length < defaults.length) {
+          args = args.concat(defaults.slice(arguments.length - defaults.length));
+        }
+        return interpreter.interpretMethod(global, methodInfo, scope, args);
+      };
     }
+    fn.instance = fn;
+    return fn;
+  };
 
-    if (compileUntil.value >= 0) {
-      if (totalFunctionCount > compileUntil.value) {
-        print("Compile Until Skipping " + totalFunctionCount);
-        return interpretedMethod(this.interpreter, mi, scope);
-      }
-    }
-
-    if (compileOnly.value >= 0 || compileUntil.value >= 0) {
-      print("Compiling " + totalFunctionCount);
-    }
-
+  runtime.prototype.createCompiledFunction = function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
+    var mi = methodInfo;
     var parameters = mi.parameters.map(function (p) {
       return PARAMETER_PREFIX + p.name;
     });
@@ -1370,16 +1418,9 @@ var Runtime = (function () {
     if (traceLevel.value > 0) {
       print (fnSource);
     }
-    // mi.compiledMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
-    // mi.compiledMethod = new Function(parameters, body);
-    mi.compiledMethod = new Function("return " + fnSource)();
-    compiledFunctionCount++;
-
-    if (hasDynamicScope) {
-      return bindScope(mi, scope);
-    } else {
-      return mi.compiledMethod;
-    }
+    // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+    // mi.freeMethod = new Function(parameters, body);
+    return new Function("return " + fnSource)();
   };
 
   /**
