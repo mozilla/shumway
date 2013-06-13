@@ -193,6 +193,16 @@ var DisplayObjectContainerDefinition = (function () {
       child2._owned = false;
 
       this._markAsDirty();
+    },
+    destroy: function () {
+      if (this._destroyed) {
+        return;
+      }
+      this._destroyed = true;
+      this._children.forEach(function (child) {
+        child.destroy();
+      });
+      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
     }
   };
 

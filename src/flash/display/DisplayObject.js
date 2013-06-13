@@ -96,6 +96,7 @@ var DisplayObjectDefinition = (function () {
       this._wasCachedAsBitmap = false;
       this._x = 0;
       this._y = 0;
+      this._destroyed = false;
 
       var s = this.symbol;
       if (s) {
@@ -148,14 +149,15 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var that = this;
-      avm2.systemDomain.onMessage.register(function (msg) {
+      this._onBroadcastMessage = function (msg) {
         var evt = msg.data;
         var listeners = that._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[evt._type]) {
           that._dispatchEvent(evt);
         }
-      });
+      };
+      avm2.systemDomain.onMessage.register(this._onBroadcastMessage);
     },
 
     _updateTraceSymbolInfo: function () {
@@ -672,6 +674,13 @@ var DisplayObjectDefinition = (function () {
       var result = new flash.geom.Point(pt.x, pt.y);
       this._applyCurrentTransform(result);
       return result;
+    },
+    destroy: function () {
+      if (this._destroyed) {
+        return;
+      }
+      this._destroyed = true;
+      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
     }
   };
 
