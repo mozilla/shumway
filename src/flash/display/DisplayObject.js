@@ -97,6 +97,7 @@ var DisplayObjectDefinition = (function () {
       this._x = 0;
       this._y = 0;
       this._destroyed = false;
+      this._maskedObject = null;
 
       var s = this.symbol;
       if (s) {
@@ -396,7 +397,19 @@ var DisplayObjectDefinition = (function () {
       return this._mask;
     },
     set mask(val) {
+      if (this._mask === val) {
+        return;
+      }
+
+      if (val && val._maskedObject) {
+        val._maskedObject.mask = null;
+      }
+
       this._mask = val;
+      if (val) { val._maskedObject = this;
+      }
+
+      this._markAsDirty();
     },
     get name() {
       return this._name;
