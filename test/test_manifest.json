@@ -221,5 +221,12 @@
        "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
        "swf": "swfs/flash_filters_GlowFilter.swf",
        "type": "eq"
+    },
+    {  "id": "flash_text_TextField trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_text_TextField.swf"
+       ],
+       "type": "stas"
     }
 ]
