@@ -1,0 +1,3 @@
+PASS: flash.text::TextField/set text ()
+PASS: flash.text::TextField/get text ()
+FAIL expected 10: flash.text::TextField/get textHeight ()
