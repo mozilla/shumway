@@ -117,7 +117,7 @@ var Interpreter = (function () {
         locals.push(sliceArguments(methodArgs, 0));
       }
 
-      var obj, receiver, type, index, multiname, res, a, b, args = [], name;
+      var obj, type, index, multiname, res, a, b, args = [], name;
       var bytecodes = method.analysis.bytecodes;
 
       interpret:
@@ -335,12 +335,13 @@ var Interpreter = (function () {
           case 0x46: // OP_callproperty
           case 0x4F: // OP_callpropvoid
             popManyInto(stack, bc.argCount, args);
-            name = popName(stack, multinames[bc.index]);
-            receiver = obj = stack.pop();
-            if (op === OP_callproplex) {
-              receiver = null;
+            multiname = multinames[bc.index];
+            if (!multiname.isRuntime()) {
+              res = callPropertyWithIC(stack.pop(), multiname, op === OP_callproplex, args, ic(bc));
+            } else {
+              name = popName(stack, multiname);
+              res = callProperty(stack.pop(), name, op === OP_callproplex, args);
             }
-            res = callProperty(obj, name, op === OP_callproplex, args);
             if (op !== OP_callpropvoid) {
               stack.push(res);
             }
@@ -428,7 +429,7 @@ var Interpreter = (function () {
           case 0x66: // OP_getproperty
             multiname = multinames[bc.index];
             if (!multiname.isRuntime()) {
-              stack.push(getPropertyWithIC(stack.pop(), multiname, ic(bc)));
+              stack.push(getPropertyWithIC(stack.pop(), multiname, false, ic(bc)));
             } else {
               name = popName(stack, multiname);
               stack.push(getProperty(stack.pop(), name));

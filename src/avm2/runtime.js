@@ -764,6 +764,19 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
+function callPropertyWithIC(obj, mn, isLex, args, ic) {
+  if (typeof obj === "number") {
+    obj = boxValue(obj);
+  }
+  var receiver = isLex ? null : obj;
+  assert (obj, "NullReferenceException");
+  if (isProxyObject(obj)) {
+    return obj[VM_CALL_PROXY](mn, receiver, args);
+  }
+  var property = getPropertyWithIC(obj, mn, true, ic);
+  return property.apply(receiver, args);
+}
+
 function callProperty(obj, mn, isLex, args) {
   // Counter.count("callProperty " + mn.name);
   if (typeof obj === "number") {
@@ -863,9 +876,9 @@ function resolveNameWithIC(obj, name, ic) {
   }
   return qn;
 }
-function getPropertyWithIC(obj, name, ic) {
+function getPropertyWithIC(obj, name, isMethod, ic) {
   if (obj.getProperty) {
-    return obj.getProperty(name);
+    return obj.getProperty(name, isMethod);
   }
   var qn = resolveNameWithIC(obj, name, ic);
   if (obj.indexGet && Multiname.isNumeric(qn)) {
