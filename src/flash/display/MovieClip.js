@@ -153,6 +153,7 @@ var MovieClipDefinition = (function () {
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
                 if (this.stage)
                     currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                currentChild.destroy();
               }
             } else if (cmd !== currentListCmd) {
               if (currentChild &&
@@ -195,6 +196,7 @@ var MovieClipDefinition = (function () {
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
                   if (this.stage)
                     currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                  currentChild.destroy();
                 }
 
                 this._addTimelineChild(cmd, index, replace);
