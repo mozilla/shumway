@@ -235,5 +235,10 @@
          "swfs/flash_ui_ContextMenu.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "MaskTest",
+       "frames": [1],
+       "swf": "swfs/MaskTest.swf",
+       "type": "eq"
     }
 ]
