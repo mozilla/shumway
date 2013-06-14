@@ -74,8 +74,12 @@ update-flash-refs:
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
 	node utils/update-flash-refs.js test/harness/slave.html src/flash
 
-test:
+test: test-avm1 test-avm2
+
+test-avm1:
 	make -C src/avm1/tests/ test
+
+test-avm2:
 	make -C src/avm2/bin/ test-regress
 
 BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
@@ -144,5 +148,6 @@ start-build-bot:
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
         build-playerglobal build-extension build-web test default \
-        reftest reftest-swfdec makeref check-browser-manifest
+        reftest reftest-swfdec makeref check-browser-manifest \
+        test-avm1 test-avm2
 

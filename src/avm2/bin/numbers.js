@@ -399,12 +399,16 @@ function runNextTest () {
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
         console.log(counts);
         console.log(padRight("=== DONE ", "=", 120));
+        var exitCode = 0;
         if (failedTests.length) {
           console.log(padRight("=== FAILED TESTS ", "=", 120));
           for (var i = 0; i < failedTests.length; i++) {
             console.log(failedTests[i]);
           }
           console.log(padRight("", "=", 120));
+          exitCode = 1;
+        } else {
+          console.log(padRight("=== SUCCESS: ALL TESTS PASSED ", "=", 120));
         }
         if (summary.value) {
           printSummary();
@@ -441,6 +445,7 @@ function runNextTest () {
             })(test);
           }
         }
+        process.exit(exitCode);
       });
     }
   }
@@ -474,6 +479,6 @@ if (!isWin) {
     if (summary.value) {
       printSummary();
     }
-    process.exit();
+    process.exit(2);
   });
 }

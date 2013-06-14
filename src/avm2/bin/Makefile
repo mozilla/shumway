@@ -53,7 +53,7 @@ test-all:
 
 test-regress:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py reg
-	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icv
+	$(TEST_CMD) -i ../tests/regress/correctness/pass/ -c icv
 
 run-avm:
 	$(AVM) $(TEST_PATH)
