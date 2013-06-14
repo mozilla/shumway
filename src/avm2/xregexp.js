@@ -65,7 +65,9 @@ var XRegExp = (function(undefined) {
     },
 
 // Any backreference or dollar-prefixed character in replacement strings
-    replacementToken = /\$(?:{([\w$]+)}|(\d\d?|[\s\S]))/g,
+// Shumway Hack: AS3 doesn't like two digit group back references -- using only
+//   first digit, also AS3 ignores '$' command if it's invalid one
+    replacementToken = /\$(?:{([\w$]+)}|([\d$&`']))/g,
 
 // Check for correct `exec` handling of nonparticipating capturing groups
     correctExecNpcg = nativ.exec.call(/()??/, '')[1] === undefined,
@@ -1366,10 +1368,6 @@ var XRegExp = (function(undefined) {
                 return replacement.apply(undefined, args);
             });
         } else {
-            // Shumway Hack: AS3 doesn't like two digit group back references, so we
-            // replace replacement strings of the form "$12$32" to "${1}2${3}2";
-            replacement = nativ.replace.call(replacement, /\$(\d)/g, "$${$1}");
-
             // Ensure that the last value of `args` will be a string when given nonstring `this`,
             // while still throwing on `null` or `undefined` context
             result = nativ.replace.call(this == null ? this : String(this), search, function() {

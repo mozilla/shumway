@@ -111,4 +111,15 @@
   trace(actual + " " + expect);
 })();
 
+(function () {
+  trace("--- Test 9 ---");
+  var str1:String = "test";
+  var pattern:RegExp = /(es)/;
+  var str2:String = str1.replace(pattern, "$M$1$$");
+
+  var actual  = str2;
+  var expect = 't$Mes$t';
+  trace(actual + " " + expect);
+})();
+
 trace("--- DONE ---");
