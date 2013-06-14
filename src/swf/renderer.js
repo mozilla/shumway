@@ -17,14 +17,16 @@
  */
 
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
-  var m = transform;
-  if (m.a * m.d == m.b * m.c) {
-    // Workaround for bug 844184 -- the object is invisible
-    ctx.closePath();
-    ctx.rect(0, 0, 0, 0);
-    ctx.clip();
-  } else {
-    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+  if (transform) {
+    var m = transform;
+    if (m.a * m.d == m.b * m.c) {
+      // Workaround for bug 844184 -- the object is invisible
+      ctx.closePath();
+      ctx.rect(0, 0, 0, 0);
+      ctx.clip();
+    } else {
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    }
   }
 
   if (cxform) {
