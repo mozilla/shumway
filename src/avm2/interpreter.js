@@ -312,7 +312,7 @@ var Interpreter = (function () {
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);
             obj = stack.pop();
-            savedScope.object.baseClass.instanceNoInitialize.apply(obj, args);
+            savedScope.object.baseClass.instanceConstructorNoInitialize.apply(obj, args);
             break;
           case 0x4A: // OP_constructprop
             popManyInto(stack, bc.argCount, args);

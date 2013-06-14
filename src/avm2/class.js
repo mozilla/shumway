@@ -27,7 +27,7 @@ var Class = (function () {
     if (instanceConstructor) {
       release || assert(instanceConstructor.prototype);
       this.instanceConstructor = instanceConstructor;
-      this.instanceNoInitialize = instanceConstructor;
+      this.instanceConstructorNoInitialize = instanceConstructor;
       this.hasInitialize = 0;
       this.instanceConstructor.class = this;
     }
@@ -119,13 +119,13 @@ var Class = (function () {
       this.baseClass = baseClass;
       this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
       if (baseClass.hasInitialize) {
-        var instanceNoInitialize = this.instanceConstructor;
+        var instanceConstructorNoInitialize = this.instanceConstructor;
         var self = this;
         this.instanceConstructor = function () {
           self.initializeInstance(this);
-          instanceNoInitialize.apply(this, arguments);
+          instanceConstructorNoInitialize.apply(this, arguments);
         };
-        defineReadOnlyProperty(this.instanceConstructor, "class", instanceNoInitialize.class);
+        defineReadOnlyProperty(this.instanceConstructor, "class", instanceConstructorNoInitialize.class);
         this.hasInitialize |= SUPER_INITIALIZE;
       }
       this.instanceConstructor.prototype = this.traitsPrototype = Object.create(this.dynamicPrototype);
@@ -142,14 +142,14 @@ var Class = (function () {
 
       if (definition.initialize) {
         if (!this.hasInitialize) {
-          var instanceNoInitialize = this.instanceConstructor;
+          var instanceConstructorNoInitialize = this.instanceConstructor;
           var self = this;
           this.instanceConstructor = function () {
             self.initializeInstance(this);
-            instanceNoInitialize.apply(this, arguments);
+            instanceConstructorNoInitialize.apply(this, arguments);
           };
-          defineReadOnlyProperty(this.instanceConstructor, "class", instanceNoInitialize.class);
-          this.instanceConstructor.prototype = instanceNoInitialize.prototype;
+          defineReadOnlyProperty(this.instanceConstructor, "class", instanceConstructorNoInitialize.class);
+          this.instanceConstructor.prototype = instanceConstructorNoInitialize.prototype;
         }
         this.hasInitialize |= OWN_INITIALIZE;
       }

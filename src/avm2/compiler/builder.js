@@ -1059,7 +1059,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
-                callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
+                callee = getJSProperty(savedScope(), "object.baseClass.instanceConstructorNoInitialize");
                 call(callee, object, args);
               }
               break;
