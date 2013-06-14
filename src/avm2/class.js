@@ -14,8 +14,35 @@
  * limitations under the License.
  */
 
-/**
+/*
  * AVM2 Class
+ *
+ * +---------------------------------+
+ * | Class Object                    |<------------------------------+
+ * +---------------------------------+                               |
+ * | scope                           |     D'                        |
+ * | classInfo                       |     ^                         |
+ * | baseClass                       |     |                         |
+ * |                                 |   +---+                       |
+ * | dynamicPrototype ---------------+-->| D |                       |
+ * |                                 |   +---+                       |
+ * |                                 |     ^                         |
+ * |                                 |     | .__proto__              |
+ * |                                 |   +---+                       |
+ * | traitsPrototype ----------------+-->| T |                       |
+ * |                                 |   +---+                       |
+ * |                                 |     ^                         |
+ * |                                 |     | .prototype   +-------+  |
+ * | instanceConstructor             |-----+------------->| class |--+
+ * |                                 |     |              +-------+
+ * | instanceConstructorNoInitialize |-----+
+ * | call                            |
+ * | apply                           |
+ * +---------------------------------+
+ *
+ * D  - Dynamic prototype object.
+ * D' - Base class dynamic prototype object.
+ * T  - Traits prototype, class traits + base class traits.
  */
 var Class = (function () {
   var OWN_INITIALIZE   = 0x1;
@@ -40,6 +67,51 @@ var Class = (function () {
     defineNonEnumerableProperty(this, "call", callable.call);
     defineNonEnumerableProperty(this, "apply", callable.apply);
   }
+
+  Class.createClass = function createClass(runtime, classInfo, baseClass, scope) {
+    var ci = classInfo;
+    var ii = ci.instanceInfo;
+    var className = Multiname.getName(ii.name);
+    var isNativeClass = ci.native;
+    if (isNativeClass) {
+      var classBuilder = getNative(ci.native.cls);
+      if (!classBuilder) {
+        unexpected("No native for " + ci.native.cls);
+      }
+      // Special case Object, which has no base class but needs the Class class on the scope.
+      if (!baseClass) {
+        scope = new Scope(scope, Class);
+      }
+    }
+    var classScope = new Scope(scope, null);
+    var instanceConstructor = runtime.createFunction(ii.init, classScope);
+    var cls;
+    if (isNativeClass) {
+      cls = classBuilder(runtime, classScope, instanceConstructor, baseClass);
+    } else {
+      cls = new Class(className, instanceConstructor);
+    }
+    cls.classInfo = classInfo;
+    cls.scope = classScope;
+    classScope.object = cls;
+    var classNatives;
+    var instanceNatives;
+    if (isNativeClass) {
+      if (cls.native) {
+        classNatives = cls.native.static;
+        instanceNatives = cls.native.instance;
+      }
+    } else {
+      cls.extend(baseClass);
+    }
+    var baseBindings = baseClass ? baseClass.traitsPrototype : null;
+    if (cls.instanceConstructor) {
+      runtime.applyInstanceTraits(cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
+    }
+    runtime.applyClassTraits(cls, classScope, null, ci.traits, classNatives);
+    defineReadOnlyProperty(cls, VM_IS_CLASS, true);
+    return cls;
+  };
 
   function setDefaultProperties(cls) {
     defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);

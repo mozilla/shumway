@@ -1462,54 +1462,7 @@ var Runtime = (function () {
       print("Creating class " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
 
-    // Make the class and apply traits.
-    //
-    // User-defined classes should always have a base class, so we can save on
-    // a few conditionals.
-    var cls, instanceConstructor;
-    var baseBindings = baseClass ? baseClass.instanceConstructor.prototype : null;
-
-    var nativeClassBuilder;
-
-    if (ci.native) {
-      nativeClassBuilder = getNative(ci.native.cls);
-      if (!nativeClassBuilder) {
-        warning("No native for " + ci.native.cls);
-      }
-    }
-
-    if (ci.native && nativeClassBuilder) {
-      release || assert(nativeClassBuilder, "No native for ", ci.native.cls);
-
-      // Special case Object, which has no base class but needs the Class class on the scope.
-      if (!baseClass) {
-        scope = new Scope(scope, Class);
-      }
-      scope = new Scope(scope, null);
-      cls = nativeClassBuilder(this, scope, this.createFunction(ii.init, scope), baseClass);
-      cls.classInfo = classInfo;
-      cls.scope = scope;
-      scope.object = cls;
-      var natives;
-      if (cls.instanceConstructor) {
-        // Instance traits live on instance.prototype.
-        natives = cls.native ? cls.native.instance : undefined;
-        this.applyInstanceTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, natives);
-      }
-      natives = cls.native ? cls.native.static : undefined;
-      this.applyClassTraits(cls, scope, null, ci.traits, natives);
-    } else {
-      scope = new Scope(scope, null);
-      cls = new Class(className, this.createFunction(ii.init, scope));
-      cls.classInfo = classInfo;
-      cls.scope = scope;
-      scope.object = cls;
-      cls.extend(baseClass);
-      this.applyInstanceTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, null);
-      this.applyClassTraits(cls, scope, null, ci.traits, null);
-    }
-
-    defineReadOnlyProperty(cls, VM_IS_CLASS, true);
+    var cls = Class.createClass(this, classInfo, baseClass, scope);
 
     if (cls.instanceConstructor) {
       this.applyProtectedBindings(cls.traitsPrototype, cls);
@@ -1523,12 +1476,6 @@ var Runtime = (function () {
       cls.verify();
     }
 
-    // Run the static initializer.
-    this.createFunction(classInfo.init, scope).call(cls);
-
-    // Seal constant traits in the class object.
-    compatibility && this.sealConstantTraits(cls, ci.traits);
-
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.
 
@@ -1541,6 +1488,12 @@ var Runtime = (function () {
       // TODO: This is very hackish.
       installProxyClassWrapper(cls);
     }
+
+    // Run the static initializer.
+    this.createFunction(classInfo.init, scope).call(cls);
+
+    // Seal constant traits in the class object.
+    compatibility && this.sealConstantTraits(cls, ci.traits);
 
     return cls;
   };
