@@ -98,6 +98,7 @@ var DisplayObjectDefinition = (function () {
       this._y = 0;
       this._destroyed = false;
       this._maskedObject = null;
+      this._scrollRect = null;
 
       var s = this.symbol;
       if (s) {
@@ -492,10 +493,11 @@ var DisplayObjectDefinition = (function () {
       this._scale9Grid = val;
     },
     get scrollRect() {
-      return null;
+      return this._scrollRect;
     },
     set scrollRect(val) {
-      notImplemented();
+      somewhatImplemented('DisplayObject.scrollRect');
+      this._scrollRect = val;
     },
     get transform() {
       return this._transform || new flash.geom.Transform(this);
