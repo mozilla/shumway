@@ -601,7 +601,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
    *
    */
 
-  XMLClass = function XMLClass(runtime, scope, instance, baseClass) {
+  XMLClass = function XMLClass(runtime, scope, instanceConstructor, baseClass) {
     var FLAG_IGNORE_COMMENTS                = 0x01;
     var FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02;
     var FLAG_IGNORE_WHITESPACE              = 0x04;
@@ -1345,7 +1345,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     return c;
   }
 
-  XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
+  XMLListClass = function XMLListClass(runtime, scope, instanceConstructor, baseClass) {
 
     // Constructor used by ActionScript
     ASXMLList = function (value) {
@@ -1853,7 +1853,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     return c;
   }
 
-  QNameClass = function QNameClass(runtime, scope, instance, baseClass) {
+  QNameClass = function QNameClass(runtime, scope, instanceConstructor, baseClass) {
     // Construct a QName from a ns and name. If name is a multiname with
     // multiple namespaces then it is an unqualified name and we need to
     // construct a new multiname with the default namespace. if it is a

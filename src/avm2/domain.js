@@ -146,13 +146,13 @@ var Domain = (function () {
     };
   };
 
-  Domain.constructingCallable = function constructingCallable(instance) {
+  Domain.constructingCallable = function constructingCallable(instanceConstructor) {
     return {
       call: function ($this) {
-        return new Function.bind.apply(instance, arguments);
+        return new Function.bind.apply(instanceConstructor, arguments);
       },
       apply: function ($this, args) {
-        return new Function.bind.apply(instance, [$this].concat(args));
+        return new Function.bind.apply(instanceConstructor, [$this].concat(args));
       }
     };
   };

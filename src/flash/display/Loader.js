@@ -661,7 +661,7 @@ var LoaderDefinition = (function () {
             root.symbol.scenes = scenes;
           }
 
-          rootClass.instance.call(root);
+          rootClass.instanceConstructor.call(root);
 
           loader._content = root;
         } else {
@@ -718,10 +718,10 @@ var LoaderDefinition = (function () {
         var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
         var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
         var bitmapData = BitmapData.createAsSymbol(props);
-        BitmapData.instance.call(bitmapData, 0, 0, true, 0xffffff00);
+        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffff00);
         var image = Bitmap.createAsSymbol(bitmapData);
         loader._children.push(image);
-        Bitmap.instance.call(image, bitmapData);
+        Bitmap.instanceConstructor.call(image, bitmapData);
         image._parent = loader;
         loader._control.appendChild(image._control);
         loader._content = image;

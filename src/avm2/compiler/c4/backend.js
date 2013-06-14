@@ -532,7 +532,7 @@
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
-    callee = property(callee, "instance");
+    callee = property(callee, "instanceConstructor");
     return new NewExpression(callee, args);
   };
 

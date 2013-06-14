@@ -809,7 +809,7 @@ function getSuper(scope, obj, mn) {
   release || assert(Multiname.isMultiname(mn));
   var superClass = scope.object.baseClass;
   release || assert(superClass);
-  var superTraits = superClass.instance.prototype;
+  var superTraits = superClass.instanceConstructor.prototype;
 
   var resolved = mn.isQName() ? mn : resolveMultiname(superTraits, mn);
   var value = undefined;
@@ -952,7 +952,7 @@ function setSuper(scope, obj, mn, value) {
   var superClass = scope.object.baseClass;
   release || assert(superClass);
 
-  var superTraits = superClass.instance.prototype;
+  var superTraits = superClass.instanceConstructor.prototype;
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraits, mn);
 
   if (resolved !== undefined) {
@@ -1009,7 +1009,7 @@ function wrapJSObject(obj) {
 function isInstanceOf(value, type) {
   /*
   if (type instanceof Class) {
-    return value instanceof type.instance;
+    return value instanceof type.instanceConstructor;
   } else if (typeof type === "function") {
     return value instanceof type;
   } else {
@@ -1225,7 +1225,7 @@ var Runtime = (function () {
         return fn.apply(global, arguments);
       };
     }
-    boundMethod.instance = boundMethod;
+    boundMethod.instanceConstructor = boundMethod;
     methodInfo.lastBoundMethod = {
       scope: scope,
       boundMethod: boundMethod
@@ -1369,7 +1369,7 @@ var Runtime = (function () {
         return interpreter.interpretMethod(global, methodInfo, scope, args);
       };
     }
-    fn.instance = fn;
+    fn.instanceConstructor = fn;
     return fn;
   };
 
@@ -1466,8 +1466,8 @@ var Runtime = (function () {
     //
     // User-defined classes should always have a base class, so we can save on
     // a few conditionals.
-    var cls, instance;
-    var baseBindings = baseClass ? baseClass.instance.prototype : null;
+    var cls, instanceConstructor;
+    var baseBindings = baseClass ? baseClass.instanceConstructor.prototype : null;
 
     var nativeClassBuilder;
 
@@ -1491,7 +1491,7 @@ var Runtime = (function () {
       cls.scope = scope;
       scope.object = cls;
       var natives;
-      if (cls.instance) {
+      if (cls.instanceConstructor) {
         // Instance traits live on instance.prototype.
         natives = cls.native ? cls.native.instance : undefined;
         this.applyInstanceTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, natives);
@@ -1511,7 +1511,7 @@ var Runtime = (function () {
 
     defineReadOnlyProperty(cls, VM_IS_CLASS, true);
 
-    if (cls.instance) {
+    if (cls.instanceConstructor) {
       this.applyProtectedBindings(cls.traitsPrototype, cls);
       this.applyInterfaceBindings(cls.traitsPrototype, cls);
     }
@@ -1519,7 +1519,7 @@ var Runtime = (function () {
     // Notify domain of class creation.
     domain.onClassCreated.notify(cls);
 
-    if (cls.instance && cls !== Class) {
+    if (cls.instanceConstructor && cls !== Class) {
       cls.verify();
     }
 
@@ -2182,22 +2182,22 @@ var Runtime = (function () {
   };
 
   runtime.prototype.throwErrorFromVM = function (errorClass, message, id) {
-    throw new (this.domain.getClass(errorClass)).instance(message, id);
+    throw new (this.domain.getClass(errorClass)).instanceConstructor(message, id);
   };
 
   runtime.prototype.translateError = function (error) {
     if (error instanceof Error) {
       var type = this.domain.getClass(error.name);
       if (type) {
-        return new type.instance(translateErrorMessage(error));
+        return new type.instanceConstructor(translateErrorMessage(error));
       }
       unexpected("Can't translate error: " + error);
     }
     return error;
   };
 
-  runtime.prototype.notifyConstruct = function notifyConstruct(instance, args) {
-    return this.domain.vm.notifyConstruct(instance, args);
+  runtime.prototype.notifyConstruct = function notifyConstruct(instanceConstructor, args) {
+    return this.domain.vm.notifyConstruct(instanceConstructor, args);
   };
 
   return runtime;

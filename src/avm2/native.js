@@ -234,7 +234,7 @@ var natives = (function () {
   /**
    * Object.as
    */
-  function ObjectClass(runtime, scope, instance, baseClass) {
+  function ObjectClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
     c.native = {
@@ -310,7 +310,7 @@ var natives = (function () {
   /**
    * Class.as
    */
-  function ClassClass(runtime, scope, instance, baseClass) {
+  function ClassClass(runtime, scope, instanceConstructor, baseClass) {
     var c = Class;
     c.debugName = "Class";
     c.prototype.extendBuiltin.call(c, baseClass);
@@ -321,7 +321,7 @@ var natives = (function () {
       return true; // TODO: Fix me.
     };
     c.isInstance = function (value) {
-      return value instanceof c.instance;
+      return value instanceof c.instanceConstructor;
     };
     return c;
   }
@@ -329,7 +329,7 @@ var natives = (function () {
   /**
    * Boolean.as
    */
-  function BooleanClass(runtime, scope, instance, baseClass) {
+  function BooleanClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Boolean", Boolean, C(Boolean));
     c.extendBuiltin(baseClass);
     c.native = {
@@ -354,7 +354,7 @@ var natives = (function () {
   /**
    * Function.as
    */
-  function FunctionClass(runtime, scope, instance, baseClass) {
+  function FunctionClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Function", Function, C(Function));
     c.extendBuiltin(baseClass);
     c.native = {
@@ -388,7 +388,7 @@ var natives = (function () {
     return c;
   }
 
-  function MethodClosureClass(runtime, scope, instance, baseClass) {
+  function MethodClosureClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("MethodClosure", runtime.domain.system.MethodClosure);
     c.extendBuiltin(baseClass);
     return c;
@@ -398,7 +398,7 @@ var natives = (function () {
    * String.as
    */
 
-  function StringClass(runtime, scope, instance, baseClass) {
+  function StringClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("String", String, C(String));
     c.extendBuiltin(baseClass);
 
@@ -474,7 +474,7 @@ var natives = (function () {
   /**
    * Array.as
    */
-  function ArrayClass(runtime, scope, instance, baseClass) {
+  function ArrayClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Array", Array, C(Array));
     c.extendBuiltin(baseClass);
 
@@ -657,7 +657,7 @@ var natives = (function () {
         _some: TAp.some,
         _sort: TAp.sort,
         newThisType: function newThisType() {
-          return c.instance();
+          return c.instanceConstructor();
         },
         _spliceHelper: function _spliceHelper(insertPoint, insertCount, deleteCount, args, offset) {
           somewhatImplemented("_spliceHelper");
@@ -675,39 +675,39 @@ var natives = (function () {
       if (value === null || typeof value !== "object") {
         return false;
       }
-      if (!this.instance.vectorType && value.class.vectorType) {
+      if (!this.instanceConstructor.vectorType && value.class.vectorType) {
         return true;
       }
-      return this.instance.prototype.isPrototypeOf(value);
+      return this.instanceConstructor.prototype.isPrototypeOf(value);
     };
 
     return c;
   }
 
-  function VectorClass(runtime, scope, instance, baseClass) {
+  function VectorClass(runtime, scope, instanceConstructor, baseClass) {
     return createVectorClass(runtime, undefined, baseClass);
   }
 
-  function ObjectVectorClass(runtime, scope, instance, baseClass) {
+  function ObjectVectorClass(runtime, scope, instanceConstructor, baseClass) {
     return createVectorClass(runtime, runtime.domain.getClass("Object"), baseClass);
   }
 
-  function IntVectorClass(runtime, scope, instance, baseClass) {
+  function IntVectorClass(runtime, scope, instanceConstructor, baseClass) {
     return createVectorClass(runtime, runtime.domain.getClass("int"), baseClass);
   }
 
-  function UIntVectorClass(runtime, scope, instance, baseClass) {
+  function UIntVectorClass(runtime, scope, instanceConstructor, baseClass) {
     return createVectorClass(runtime, runtime.domain.getClass("uint"), baseClass);
   }
 
-  function DoubleVectorClass(runtime, scope, instance, baseClass) {
+  function DoubleVectorClass(runtime, scope, instanceConstructor, baseClass) {
     return createVectorClass(runtime, runtime.domain.getClass("Number"), baseClass);
   }
 
   /**
    * Number.as
    */
-  function NumberClass(runtime, scope, instance, baseClass) {
+  function NumberClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Number", Number, C(Number));
     c.extendBuiltin(baseClass);
     c.native = {
@@ -735,7 +735,7 @@ var natives = (function () {
     return Object(Int(x));
   }
 
-  function intClass(runtime, scope, instance, baseClass) {
+  function intClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("int", boxedInt, C(Int));
     c.extendBuiltin(baseClass);
     c.defaultValue = 0;
@@ -760,7 +760,7 @@ var natives = (function () {
     return Object(Uint(x));
   }
 
-  function uintClass(runtime, scope, instance, baseClass) {
+  function uintClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("uint", boxedUint, C(Uint));
     c.extend(baseClass);
     c.defaultValue = 0;
@@ -780,7 +780,7 @@ var natives = (function () {
   /**
    * Math.as
    */
-  function MathClass(runtime, scope, instance, baseClass) {
+  function MathClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Math");
     c.native = {
       static: Math
@@ -791,7 +791,7 @@ var natives = (function () {
   /**
    * Date.as
    */
-  function DateClass(runtime, scope, instance, baseClass) {
+  function DateClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Date", Date, C(Date));
     c.extendBuiltin(baseClass);
     c.native = {
@@ -829,8 +829,8 @@ var natives = (function () {
       }
     };
 
-    return function (runtime, scope, instance, baseClass) {
-      var c = new Class(name, instance);
+    return function (runtime, scope, instanceConstructor, baseClass) {
+      var c = new Class(name, instanceConstructor);
       c.extend(baseClass);
       if (name === "Error") {
         c.link(ErrorDefinition);
@@ -846,7 +846,7 @@ var natives = (function () {
    * RegExp is implemented using XRegExp copyright 2007-present by Steven Levithan.
    */
 
-  function RegExpClass(runtime, scope, instance, baseClass) {
+  function RegExpClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("RegExp", XRegExp, C(XRegExp));
     c.extendBuiltin(baseClass);
 
@@ -929,7 +929,7 @@ var natives = (function () {
   /**
    * Dictionary.as
    */
-  function DictionaryClass(runtime, scope, instance, baseClass) {
+  function DictionaryClass(runtime, scope, instanceConstructor, baseClass) {
     function ASDictionary(weakKeys) {
       this.weakKeys = weakKeys;
       this.map = new WeakMap();
@@ -1035,7 +1035,7 @@ var natives = (function () {
   /**
    * Namespace.as
    */
-  function NamespaceClass(runtime, scope, instance, baseClass) {
+  function NamespaceClass(runtime, scope, instanceConstructor, baseClass) {
     ASNamespace = function ASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
@@ -1107,7 +1107,7 @@ var natives = (function () {
   /**
    * JSON.as
    */
-  function JSONClass(runtime, scope, instance, baseClass) {
+  function JSONClass(runtime, scope, instanceConstructor, baseClass) {
     function ASJSON() {}
     var c = new Class("JSON", ASJSON, C(ASJSON));
     c.extend(baseClass);
@@ -1127,7 +1127,7 @@ var natives = (function () {
   /**
    * Capabilities.as
    */
-  function CapabilitiesClass(runtime, scope, instance, baseClass) {
+  function CapabilitiesClass(runtime, scope, instanceConstructor, baseClass) {
     function Capabilities() {}
     var c = new Class("Capabilities", Capabilities, C(Capabilities));
     c.extend(baseClass);
@@ -1144,7 +1144,7 @@ var natives = (function () {
   /**
    * File.as
    */
-  function FileClass(runtime, scope, instance, baseClass) {
+  function FileClass(runtime, scope, instanceConstructor, baseClass) {
     function File() {}
     var c = new Class("File", File, C(File));
     c.extend(baseClass);
@@ -1180,7 +1180,7 @@ var natives = (function () {
   /**
    * Shumway.as
    */
-  function ShumwayClass(runtime, scope, instance, baseClass) {
+  function ShumwayClass(runtime, scope, instanceConstructor, baseClass) {
     function Shumway() {}
     var c = new Class("Shumway", Shumway, C(Shumway));
     c.extend(baseClass);
@@ -1204,7 +1204,7 @@ var natives = (function () {
   /**
    * ByteArray.as
    */
-  function ByteArrayClass(runtime, scope, instance, baseClass) {
+  function ByteArrayClass(runtime, scope, instanceConstructor, baseClass) {
     /* The initial size of the backing, in bytes. Doubled every OOM. */
     var INITIAL_SIZE = 128;
 
@@ -1511,8 +1511,8 @@ var natives = (function () {
   /**
    * ApplicationDomain.as
    */
-  function ApplicationDomainClass(runtime, scope, instance, baseClass) {
-    var c = new Class("ApplicationDomain", instance, C(instance));
+  function ApplicationDomainClass(runtime, scope, instanceConstructor, baseClass) {
+    var c = new Class("ApplicationDomain", instanceConstructor, C(instanceConstructor));
     c.extendBuiltin(baseClass);
 
     c.native = {
@@ -1547,7 +1547,7 @@ var natives = (function () {
             }
 
             if (!base.scriptObject) {
-              base.scriptObject = new instance();
+              base.scriptObject = new instanceConstructor();
             }
 
             return base.scriptObject;
@@ -1574,7 +1574,7 @@ var natives = (function () {
             var domain = Runtime.currentDomain();
 
             if (!domain.scriptObject) {
-              domain.scriptObject = new instance();
+              domain.scriptObject = new instanceConstructor();
             }
 
             return domain.scriptObject;

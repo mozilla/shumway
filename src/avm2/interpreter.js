@@ -43,7 +43,7 @@ var Interpreter = (function () {
         return Number.apply(null, args);
       }
     }
-    return new (Function.bind.apply(constructor.instance, [,].concat(args)));
+    return new (Function.bind.apply(constructor.instanceConstructor, [,].concat(args)));
   }
 
   function popName(stack, mn) {

@@ -19,7 +19,7 @@
 /**
  * Proxy.as
  */
-function ProxyClass(runtime, scope, instance, baseClass) {
+function ProxyClass(runtime, scope, instanceConstructor, baseClass) {
   function ProxyConstructor() {
     somewhatImplemented("Proxy");
   }
@@ -63,13 +63,13 @@ function installProxyClassWrapper(cls) {
     print("proxy wrapping, class: " + cls);
   }
 
-  var instance = cls.instance;
+  var instanceConstructor = cls.instanceConstructor;
 
   function construct() {
     if (TRACE_PROXY) {
       print("proxy create, class: " + cls);
     }
-    var target = Object.create(instance.prototype);
+    var target = Object.create(instanceConstructor.prototype);
     var proxy = Proxy.create({
       get: function(o, qn) {
         if (qn === VM_IS_PROXY) {
@@ -161,11 +161,11 @@ function installProxyClassWrapper(cls) {
       keys: function() {
         notImplemented("keys");
       }
-    }, instance.prototype);
+    }, instanceConstructor.prototype);
     // The derived proxy constructor needs to have a reference to the proxy object itself.
-    instance.apply(proxy, sliceArguments(arguments, 0));
+    instanceConstructor.apply(proxy, sliceArguments(arguments, 0));
     return proxy;
   }
 
-  cls.instance = construct;
+  cls.instanceConstructor = construct;
 }

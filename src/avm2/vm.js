@@ -41,7 +41,7 @@ var AVM2 = (function () {
   };
 
   AVM2.prototype = {
-    notifyConstruct: function notifyConstruct (instance, args) {
+    notifyConstruct: function notifyConstruct (instanceConstructor, args) {
       // REMOVEME
     }
   };

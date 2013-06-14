@@ -278,7 +278,7 @@ var MovieClipDefinition = (function () {
               avm2.applicationDomain.getClass(symbolInfo.className);
 
             var soundObj = symbolClass.createAsSymbol(symbolInfo.props);
-            symbolClass.instance.call(soundObj);
+            symbolClass.instanceConstructor.call(soundObj);
             sounds[symbolId] = sound = { object: soundObj };
           }
 
@@ -302,7 +302,7 @@ var MovieClipDefinition = (function () {
             avm2.applicationDomain.getClass(className);
 
           var sound = symbolClass.createAsSymbol(this._soundStream.data);
-          symbolClass.instance.call(sound);
+          symbolClass.instanceConstructor.call(sound);
           var channel = sound.play();
           this._soundStream.sound = sound;
           this._soundStream.channel = channel;

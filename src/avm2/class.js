@@ -21,15 +21,15 @@ var Class = (function () {
   var OWN_INITIALIZE   = 0x1;
   var SUPER_INITIALIZE = 0x2;
 
-  function Class(name, instance, callable) {
+  function Class(name, instanceConstructor, callable) {
     this.debugName = name;
 
-    if (instance) {
-      release || assert(instance.prototype);
-      this.instance = instance;
-      this.instanceNoInitialize = instance;
+    if (instanceConstructor) {
+      release || assert(instanceConstructor.prototype);
+      this.instanceConstructor = instanceConstructor;
+      this.instanceNoInitialize = instanceConstructor;
       this.hasInitialize = 0;
-      this.instance.class = this;
+      this.instanceConstructor.class = this;
     }
 
     if (!callable) {
@@ -44,17 +44,17 @@ var Class = (function () {
   function setDefaultProperties(cls) {
     defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);
     defineReadOnlyProperty(cls.traitsPrototype, "class", cls);
-    defineReadOnlyProperty(cls.instance, "class", cls);
+    defineReadOnlyProperty(cls.instanceConstructor, "class", cls);
     defineObjectShape(cls.traitsPrototype);
   }
 
   Class.prototype = {
     setSymbol: function setSymbol(props) {
-      this.instance.prototype.symbol = props;
+      this.instanceConstructor.prototype.symbol = props;
     },
 
     getSymbol: function getSymbol() {
-      return this.instance.prototype.symbol;
+      return this.instanceConstructor.prototype.symbol;
     },
 
     initializeInstance: function initializeInstance(obj) {
@@ -65,7 +65,7 @@ var Class = (function () {
       var initializes = [];
       while (c) {
         if (c.hasInitialize & OWN_INITIALIZE) {
-          initializes.push(c.instance.prototype.initialize);
+          initializes.push(c.instanceConstructor.prototype.initialize);
         }
         c = c.baseClass;
       }
@@ -77,13 +77,13 @@ var Class = (function () {
     },
 
     createInstance: function createInstance(args) {
-      var o = Object.create(this.instance.prototype);
-      this.instance.apply(o, args);
+      var o = Object.create(this.instanceConstructor.prototype);
+      this.instanceConstructor.apply(o, args);
       return o;
     },
 
     createAsSymbol: function createAsSymbol(props) {
-      var o = Object.create(this.instance.prototype);
+      var o = Object.create(this.instanceConstructor.prototype);
       // Custom classes will have already have .symbol linked.
       if (o.symbol) {
         var symbol = Object.create(o.symbol);
@@ -100,7 +100,7 @@ var Class = (function () {
     extendNative: function (baseClass, native) {
       this.baseClass = baseClass;
       this.dynamicPrototype = Object.getPrototypeOf(native.prototype);
-      this.instance.prototype = this.traitsPrototype = native.prototype;
+      this.instanceConstructor.prototype = this.traitsPrototype = native.prototype;
       setDefaultProperties(this);
     },
 
@@ -110,7 +110,7 @@ var Class = (function () {
       // traits/public prototype BS, e.g. Object, Array, etc.
       // FIXME: This is technically non-semantics preserving.
       this.baseClass = baseClass;
-      this.dynamicPrototype = this.traitsPrototype = this.instance.prototype;
+      this.dynamicPrototype = this.traitsPrototype = this.instanceConstructor.prototype;
       setDefaultProperties(this);
     },
 
@@ -119,16 +119,16 @@ var Class = (function () {
       this.baseClass = baseClass;
       this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
       if (baseClass.hasInitialize) {
-        var instanceNoInitialize = this.instance;
+        var instanceNoInitialize = this.instanceConstructor;
         var self = this;
-        this.instance = function () {
+        this.instanceConstructor = function () {
           self.initializeInstance(this);
           instanceNoInitialize.apply(this, arguments);
         };
-        defineReadOnlyProperty(this.instance, "class", instanceNoInitialize.class);
+        defineReadOnlyProperty(this.instanceConstructor, "class", instanceNoInitialize.class);
         this.hasInitialize |= SUPER_INITIALIZE;
       }
-      this.instance.prototype = this.traitsPrototype = Object.create(this.dynamicPrototype);
+      this.instanceConstructor.prototype = this.traitsPrototype = Object.create(this.dynamicPrototype);
       setDefaultProperties(this);
     },
 
@@ -142,14 +142,14 @@ var Class = (function () {
 
       if (definition.initialize) {
         if (!this.hasInitialize) {
-          var instanceNoInitialize = this.instance;
+          var instanceNoInitialize = this.instanceConstructor;
           var self = this;
-          this.instance = function () {
+          this.instanceConstructor = function () {
             self.initializeInstance(this);
             instanceNoInitialize.apply(this, arguments);
           };
-          defineReadOnlyProperty(this.instance, "class", instanceNoInitialize.class);
-          this.instance.prototype = instanceNoInitialize.prototype;
+          defineReadOnlyProperty(this.instanceConstructor, "class", instanceNoInitialize.class);
+          this.instanceConstructor.prototype = instanceNoInitialize.prototype;
         }
         this.hasInitialize |= OWN_INITIALIZE;
       }
@@ -227,19 +227,19 @@ var Class = (function () {
     },
 
     verify: function () {
-      var instance = this.instance;
+      var instanceConstructor = this.instanceConstructor;
       var tP = this.traitsPrototype;
       var dP = this.dynamicPrototype;
-      assert (instance && tP && dP);
-      assert (tP === instance.prototype);
-      assert (dP === instance.prototype || dP === Object.getPrototypeOf(instance.prototype));
+      assert (instanceConstructor && tP && dP);
+      assert (tP === instanceConstructor.prototype);
+      assert (dP === instanceConstructor.prototype || dP === Object.getPrototypeOf(instanceConstructor.prototype));
       assert (isClass(this));
       if (tP !== Object.prototype) {
         // We don't want to put "class" and "shape" on the Object.prototype.
         assert (Object.hasOwnProperty.call(tP, "class"));
         assert (Object.hasOwnProperty.call(tP, "shape"), "Classes should have a shape ID.");
       }
-      assert (instance.class === this);
+      assert (instanceConstructor.class === this);
     },
 
     coerce: function (value) {
@@ -267,11 +267,11 @@ var Class = (function () {
   defineNonEnumerableProperty(Class, "call", callable.call);
   defineNonEnumerableProperty(Class, "apply", callable.apply);
 
-  Class.instance = Class;
+  Class.instanceConstructor = Class;
   Class.toString = Class.prototype.toString;
 
   // Traits are below the dynamic instant prototypes,
-  // i.e. this.dynamicPrototype === Object.getPrototypeOf(this.instance.prototype)
+  // i.e. this.dynamicPrototype === Object.getPrototypeOf(this.instanceConstructor.prototype)
   // and we cache the dynamic instant prototype as this.dynamicPrototype.
   //
   // Traits are not visible to the AVM script.

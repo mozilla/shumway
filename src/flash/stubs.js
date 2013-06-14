@@ -101,9 +101,9 @@ var Stubs = new (function () {
       get: function () {
         assert (avm2, "AVM2 is not initialized.");
         var cls = avm2.systemDomain.getClass(classSimpleName);
-        release || assert(cls.instance);
+        release || assert(cls.instanceConstructor);
         Object.defineProperty(container, shortName, {
-          value: cls.instance,
+          value: cls.instanceConstructor,
           writable: false
         });
         return container[shortName];
@@ -237,8 +237,8 @@ var Stubs = new (function () {
     makeStub(container, m.classSimpleName, path[path.length - 1]);
     if (m.nativeName) {
       // Hook up the native.
-      natives[m.nativeName] = function (runtime, scope, instance, baseClass) {
-        var c = new Class(undefined, instance, Domain.coerceCallable);
+      natives[m.nativeName] = function (runtime, scope, instanceConstructor, baseClass) {
+        var c = new Class(undefined, instanceConstructor, Domain.coerceCallable);
         c.extend(baseClass);
         c.linkNatives(m.definition);
         return c;
@@ -248,7 +248,7 @@ var Stubs = new (function () {
   });
 })();
 
-natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instance, baseClass) {
+natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instanceConstructor, baseClass) {
 //  notImplemented("FlashUtilScript::getAliasName");
   return function getAliasName(value) {
     // FIXME don't know what is expected here
@@ -258,22 +258,22 @@ natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instance, b
 
 natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 
-natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instance, baseClass) {
+natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instanceConstructor, baseClass) {
   var start = Date.now();
   return function getTimer() {
     return Date.now() - start;
   };
 };
 
-natives['FlashUtilScript::escapeMultiByte'] = function EscapeMultiByteMethod(runtime, scope, instance, baseClass) {
+natives['FlashUtilScript::escapeMultiByte'] = function EscapeMultiByteMethod(runtime, scope, instanceConstructor, baseClass) {
   return escape;
 };
 
-natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod(runtime, scope, instance, baseClass) {
+natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod(runtime, scope, instanceConstructor, baseClass) {
   return unescape;
 };
 
-natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instance, baseClass) {
+natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instanceConstructor, baseClass) {
   return function navigateToURL(request, window_) {
     if (!request || !request.url)
       throw new Error('Invalid request object');
@@ -289,7 +289,7 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
   };
 };
 
-natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scope, instance, baseClass) {
+natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scope, instanceConstructor, baseClass) {
   return function sendToURL(request) {
     if (!request || !request.url)
       throw new Error('Invalid request object');

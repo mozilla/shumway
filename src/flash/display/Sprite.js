@@ -112,12 +112,12 @@ var SpriteDefinition = (function () {
           //
           // XXX: I think we're supposed to throw if the symbol class
           // constructor is not nullary.
-          symbolClass.instance.call(instance);
+          symbolClass.instanceConstructor.call(instance);
 
           if (BitmapDataClass.isInstanceOf(instance)) {
             var bitmapData = instance;
             instance = BitmapClass.createAsSymbol(props);
-            BitmapClass.instance.call(instance, bitmapData);
+            BitmapClass.instanceConstructor.call(instance, bitmapData);
           }
 
           assert(instance._control);
@@ -157,7 +157,7 @@ var SpriteDefinition = (function () {
       if (name)
         parent[Multiname.getPublicQualifiedName(name)] = instance;
 
-      symbolClass.instance.call(instance);
+      symbolClass.instanceConstructor.call(instance);
 
       assert(instance._control);
       parent._control.appendChild(instance._control);
