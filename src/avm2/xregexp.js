@@ -67,7 +67,7 @@ var XRegExp = (function(undefined) {
 // Any backreference or dollar-prefixed character in replacement strings
 // Shumway Hack: AS3 doesn't like two digit group back references -- using only
 //   first digit, also AS3 ignores '$' command if it's invalid one
-    replacementToken = /\$(?:{([\w$]+)}|([\d$&`']))/g,
+    replacementToken = /\$(?:{([\w$]+)}|([\S\s]))/g,
 
 // Check for correct `exec` handling of nonparticipating capturing groups
     correctExecNpcg = nativ.exec.call(/()??/, '')[1] === undefined,
