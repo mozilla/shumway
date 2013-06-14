@@ -38,6 +38,10 @@ var NetStreamDefinition = (function () {
         result = videoElement ? videoElement.currentTime : 0;
         simulated = true;
         return 0;
+      case 302: // get bufferTime
+        result = videoElement.duration;
+        simulated = true;
+        return 0;
       case 305: // get bytesLoaded
         result = 1000000;
         simulated = true;
