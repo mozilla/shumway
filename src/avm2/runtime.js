@@ -102,6 +102,10 @@ var InlineCache = (function () {
   return inlineCache;
 })();
 
+function ic(bc) {
+  return bc.ic || (bc.ic = new InlineCache());
+}
+
 /**
  * This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
@@ -1442,6 +1446,8 @@ var Runtime = (function () {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   runtime.prototype.createClass = function createClass(classInfo, baseClass, scope) {
+    assert (!baseClass || baseClass instanceof Class);
+
     var ci = classInfo;
     var ii = ci.instanceInfo;
 
@@ -1477,7 +1483,7 @@ var Runtime = (function () {
 
       // Special case Object, which has no base class but needs the Class class on the scope.
       if (!baseClass) {
-        scope = new Scope(scope, domain.system.Class);
+        scope = new Scope(scope, Class);
       }
       scope = new Scope(scope, null);
       cls = nativeClassBuilder(this, scope, this.createFunction(ii.init, scope), baseClass);
@@ -1488,19 +1494,19 @@ var Runtime = (function () {
       if (cls.instance) {
         // Instance traits live on instance.prototype.
         natives = cls.native ? cls.native.instance : undefined;
-        this.applyTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, natives, true);
+        this.applyInstanceTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, natives);
       }
       natives = cls.native ? cls.native.static : undefined;
-      this.applyTraits(cls, scope, null, ci.traits, natives, true);
+      this.applyClassTraits(cls, scope, null, ci.traits, natives);
     } else {
       scope = new Scope(scope, null);
-      cls = new domain.system.Class(className, this.createFunction(ii.init, scope));
+      cls = new Class(className, this.createFunction(ii.init, scope));
       cls.classInfo = classInfo;
       cls.scope = scope;
       scope.object = cls;
       cls.extend(baseClass);
-      this.applyTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, null, true);
-      this.applyTraits(cls, scope, null, ci.traits, null, true);
+      this.applyInstanceTraits(cls.traitsPrototype, scope, baseBindings, ii.traits, null);
+      this.applyClassTraits(cls, scope, null, ci.traits, null);
     }
 
     defineReadOnlyProperty(cls, VM_IS_CLASS, true);
@@ -1513,7 +1519,7 @@ var Runtime = (function () {
     // Notify domain of class creation.
     domain.onClassCreated.notify(cls);
 
-    if (cls.instance && cls !== domain.system.Class) {
+    if (cls.instance && cls !== Class) {
       cls.verify();
     }
 
@@ -2078,6 +2084,14 @@ var Runtime = (function () {
         defineNonEnumerableGetterOrSetter(obj, qn, trampoline, trait.isGetter());
       }
     }
+  };
+
+  runtime.prototype.applyInstanceTraits = function applyClassTraits(obj, scope, base, traits, natives) {
+    this.applyTraits(obj, scope, base, traits, natives, true);
+  };
+
+  runtime.prototype.applyClassTraits = function applyClassTraits(obj, scope, base, traits, natives) {
+    this.applyTraits(obj, scope, base, traits, natives, true);
   };
 
   runtime.prototype.applyTraits = function applyTraits(obj, scope, base, traits, natives, methodsNeedMemoizers) {

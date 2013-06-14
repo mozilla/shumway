@@ -66,10 +66,6 @@ var Interpreter = (function () {
     return mn;
   }
 
-  function ic(bc) {
-    return bc.ic || (bc.ic = new InlineCache());
-  }
-
   Interpreter.prototype = {
     interpretMethod: function interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);

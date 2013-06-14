@@ -63,7 +63,7 @@ var Type = (function () {
       return new TraitsType(x.classInfo, domain);
     } else if (x instanceof MethodInfo) {
       return new MethodType(x);
-    } else if (domain && (x instanceof (domain.system.Class))) {
+    } else if (domain && (x instanceof (Class))) {
       return type.from(x.classInfo, domain);
     }
     return Type.Any;

@@ -637,7 +637,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.init(kind, uri, name, prefix);
     }
 
-    var c = new runtime.domain.system.Class("XML", ASXML, Domain.passthroughCallable(ASXML));
+    var c = new Class("XML", ASXML, Domain.passthroughCallable(ASXML));
     c.flags = FLAG_IGNORE_COMMENTS |
       FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
       FLAG_IGNORE_WHITESPACE |
@@ -1383,7 +1383,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.children = [];
     }
 
-    var c = new runtime.domain.system.Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
+    var c = new Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
     c.extend(baseClass);
 
     var XLp = XMLList.prototype = ASXMLList.prototype;
@@ -1915,7 +1915,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.isAttr = mn.isAttribute();
     }
 
-    var c = new runtime.domain.system.Class("QName", QName, Domain.passthroughCallable(QName));
+    var c = new Class("QName", QName, Domain.passthroughCallable(QName));
     c.extend(baseClass);
     QNp = QName.prototype;
     defineNonEnumerableGetter(QNp, "localName", function () {
