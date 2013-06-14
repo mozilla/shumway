@@ -125,7 +125,13 @@ class A {}
   for each (variable in loc3) {
       eventClass[variable.@name] = type.@name + "." + variable.@name;
   }
+  var keys = [];
   for (var p in eventClass) {
+    keys.push(p);
+  }
+  keys.sort();
+  for (var i = 0; i < keys.length; i++) {
+    var p = keys[i];
     print("eventClass[p]="+eventClass[p]);
   }
 })();
