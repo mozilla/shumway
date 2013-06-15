@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Multiname, MP3DecoderSession, base64ArrayBuffer */
 
 var PLAY_USING_AUDIO_TAG = true;
 

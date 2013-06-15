@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/*global renderDisplayObject */
 var BitmapDataDefinition = (function () {
   var def = {
     __class__: 'flash.display.BitmapData',
