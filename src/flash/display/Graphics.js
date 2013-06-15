@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Kanvas, describeProperty */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
@@ -68,7 +69,7 @@ var GraphicsDefinition = (function () {
     },
 
     get _currentPath() {
-      var path = new Kanvas.Path;
+      var path = new Kanvas.Path();
       if (this._mx !== null || this._my !== null) {
         path.moveTo(this._mx, this._my);
         this._mx = this._my = null;
@@ -116,6 +117,8 @@ var GraphicsDefinition = (function () {
 
       this._fillStyle = pattern;
 
+      // NOTE firefox really sensitive to really small scale when painting gradients
+      var scale = 819.2;
       pattern.currentTransform = matrix ?
         { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
         { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
@@ -216,7 +219,7 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
         throw ArgumentError();
 
-      this._currentPath.moveTo(x+w, y+h-radiusH);
+      this._currentPath.moveTo(x+w, y+h-bottomRightRadius);
       this._currentPath.arcTo(x+w, y+h, x+w-bottomRightRadius, y+h, bottomRightRadius);
       this._currentPath.arcTo(x, y+h, x, y+h-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);

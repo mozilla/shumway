@@ -34,8 +34,8 @@ var VideoDefinition = (function () {
       }.bind(this));
     },
     ctor: function(width, height) {
-      if (width == null || width <= 0) width = 320;
-      if (height == null || height <= 0) height = 240;
+      if (!width || width < 0) width = 320;
+      if (!height || height < 0) height = 240;
 
       this._bbox = {left: 0, top: 0, right: width, bottom: height};
 
