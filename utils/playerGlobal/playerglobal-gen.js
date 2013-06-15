@@ -103,7 +103,7 @@ SWF.parse(snarf("bin/library.swf", "binary"), {
       "      }\n" +
       "    }\n" +
       "  }\n" +
-      "})()";
+      "})();";
 
     print(out);
   }

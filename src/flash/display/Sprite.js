@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Multiname, executeActions */
 
 var SpriteDefinition = (function () {
   var def = {
@@ -26,7 +27,7 @@ var SpriteDefinition = (function () {
 
       var s = this.symbol;
       if (s) {
-        this._graphics = s.graphics || new flash.display.Graphics;
+        this._graphics = s.graphics || new flash.display.Graphics();
 
         if (s.timeline) {
           var displayList = s.timeline[0];
@@ -39,7 +40,7 @@ var SpriteDefinition = (function () {
           }
         }
       } else {
-        this._graphics = new flash.display.Graphics;
+        this._graphics = new flash.display.Graphics();
       }
     },
 
@@ -213,6 +214,7 @@ var SpriteDefinition = (function () {
           if (event.eoe) {
             break;
           }
+          /*jshint -W083 */
           var fn = function(actionBlock) {
             return executeActions(actionBlock, avm1Context, this._getAS2Object());
           }.bind(instance, event.actionsData);

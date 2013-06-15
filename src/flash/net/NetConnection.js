@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global wrapJSObject */
 
 var NetConnectionDefinition = (function () {
   return {
@@ -51,7 +52,7 @@ var NetConnectionDefinition = (function () {
 
             somewhatImplemented("NetConnection.connect");
             this._uri = command;
-            if (command == null) {
+            if (!command) {
               this._connected = true;
               this._dispatchEvent(new NetStatusEvent(NetStatusEvent.class.NET_STATUS,
                 false, false,

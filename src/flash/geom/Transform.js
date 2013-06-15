@@ -34,7 +34,7 @@ var TransformDefinition = (function () {
           cxform.alphaOffset
         );
       } else {
-        return new flash.geom.ColorTransform;
+        return new flash.geom.ColorTransform();
       }
     },
     set colorTransform(val) {

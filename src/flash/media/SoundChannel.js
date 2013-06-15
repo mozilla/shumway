@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global base64ArrayBuffer, AudioContext, webkitAudioContext, Audio */
 
 var SoundChannelDefinition = (function () {
   return {
@@ -51,7 +52,7 @@ var SoundChannelDefinition = (function () {
           // end of buffer
           self._unregisterWithSoundMixer();
           self._audioChannel.stop();
-          self._dispatchEvent(new flash.events.Event("soundComplete", false, false))
+          self._dispatchEvent(new flash.events.Event("soundComplete", false, false));
           return;
         }
 
@@ -109,7 +110,7 @@ var SoundChannelDefinition = (function () {
       });
       element.addEventListener("ended", function ended() {
         self._unregisterWithSoundMixer();
-        self._dispatchEvent(new flash.events.Event("soundComplete", false, false))
+        self._dispatchEvent(new flash.events.Event("soundComplete", false, false));
       });
       this._element = element;
     },
@@ -341,5 +342,5 @@ AudioDataChannel.prototype = {
   }
 };
 AudioDataChannel.isSupported = (function () {
-  return 'mozSetup' in (new Audio);
+  return 'mozSetup' in (new Audio());
 })();

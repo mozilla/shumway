@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global AS2TextField */
 
 var TextFieldDefinition = (function () {
   var def = {
@@ -25,6 +26,12 @@ var TextFieldDefinition = (function () {
       this._type = 'dynamic';
       this._textHeight = 0;
       this._textWidth = 0;
+
+      var bbox = this._bbox;
+      if (bbox) {
+        // // TODO: use canvas.measureText(txt).height
+        this._textHeight = bbox.bottom - bbox.top;
+      }
 
       var s = this.symbol;
       if (s) {
@@ -81,15 +88,6 @@ var TextFieldDefinition = (function () {
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
       // TODO
-    },
-
-    textHeight: function() {
-      var bbox = this._bbox;
-      if (!bbox) {
-        return 0;
-      }
-      somewhatImplemented("TextField.textHeight");
-      return bbox.bottom - bbox.top; // TODO: use canvas.measureText(txt).height
     }
 
   };
@@ -105,7 +103,6 @@ var TextFieldDefinition = (function () {
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,
-        textHeight: def.textHeight,
         autoSize: {
           get: function autoSize() { // (void) -> String
             somewhatImplemented("TextField.autoSize");

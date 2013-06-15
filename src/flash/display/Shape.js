@@ -30,7 +30,7 @@ var ShapeDefinition = (function () {
 
         this._graphics = graphics;
       } else {
-        this._graphics = new flash.display.Graphics;
+        this._graphics = new flash.display.Graphics();
       }
     }
   };

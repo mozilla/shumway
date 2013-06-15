@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global renderingTerminated:true */
 
 var FSCommandDefinition = (function () {
   var def = {};
@@ -26,6 +27,7 @@ var FSCommandDefinition = (function () {
       renderingTerminated = true;
       return;
     case 'debugger':
+      /*jshint -W087 */
       debugger; // shumway breakpoint... for convinience
       return;
     default:

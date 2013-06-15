@@ -659,10 +659,10 @@ var DisplayObjectDefinition = (function () {
       var p4 = { x: b.xMin, y: b.yMax };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
-      xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
       return new flash.geom.Rectangle(
         xMin,

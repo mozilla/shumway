@@ -95,7 +95,7 @@ var EventDispatcherDefinition = (function () {
     __class__: "flash.events.EventDispatcher",
     initialize: function () {
       this._target = this;
-      this._listeners = { }
+      this._listeners = { };
       this._captureListeners = { };
     },
 
@@ -179,7 +179,7 @@ var EventDispatcherDefinition = (function () {
               if (currentNode._hasEventListener(type)) {
                 return true;
               }
-            } while (currentNode = currentNode._parent);
+            } while ((currentNode = currentNode._parent));
 
             return false;
           },

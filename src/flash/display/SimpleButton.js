@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global AS2Button, executeActions */
 
 var SimpleButtonDefinition = (function () {
   var def = {
@@ -152,6 +153,7 @@ var SimpleButtonDefinition = (function () {
       var keyEvents = null;
       for (var i = 0; i < buttonActions.length; i++) {
         var buttonAction = buttonActions[i];
+        /*jshint -W083 */
         var fn = function (actionBlock) {
           return executeActions(actionBlock, avm1Context, this._getAS2Object());
         }.bind(this.parent, buttonAction.actionsData);

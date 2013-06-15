@@ -131,7 +131,7 @@ var StageDefinition = (function () {
     },
     set showDefaultContextMenu(val) {
       somewhatImplemented('Stage.showDefaultContextMenu');
-      this._showDefaultContextMenu = val
+      this._showDefaultContextMenu = val;
     },
     get stageFocusRect() {
       return false;

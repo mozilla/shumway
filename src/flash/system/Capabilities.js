@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global toKeyValueArray */
 
 var CapabilitiesDefinition = (function () {
   var def = {};
@@ -49,7 +50,7 @@ var CapabilitiesDefinition = (function () {
         serverString: {
           get: function () {
             var str = toKeyValueArray({OS: os}).map(function (pair) {
-              return pair[0] + "=" + encodeURIComponent(pair[1])
+              return pair[0] + "=" + encodeURIComponent(pair[1]);
             }).join("&");
             somewhatImplemented("Capabilities.serverString: " + str);
             return str;

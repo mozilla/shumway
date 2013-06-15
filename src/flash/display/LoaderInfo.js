@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Multiname */
 
 var LoaderInfoDefinition = (function () {
   function dispatchEvent(event) { // (event:Event) -> Boolean

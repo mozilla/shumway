@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Multiname, getProperty */
 
 var URLRequestDefinition = (function () {
   function toFileLoadingServiceRequest() {
@@ -88,7 +89,7 @@ var URLRequestDefinition = (function () {
       return this._requestHeaders;
     },
     set requestHeaders(requestHeaders) {
-      this._requestHeaders = requestHeaders
+      this._requestHeaders = requestHeaders;
     },
     get url() {
       return this._url;

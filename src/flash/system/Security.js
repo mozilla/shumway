@@ -17,6 +17,8 @@
  */
 
 var SecurityDefinition = (function () {
+  var _exactSettings;
+
   return {
     // ()
     __class__: "flash.system.Security",

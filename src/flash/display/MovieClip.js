@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global MP3DecoderSession, AS2MovieClip */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -76,7 +77,7 @@ var MovieClipDefinition = (function () {
             try {
               scripts[i].call(this);
             } catch (e) {
-              log('error ' + e + ', stack: \n' + e.stack);
+              console.error('error ' + e + ', stack: \n' + e.stack);
             }
           } else {
             scripts[i].call(this);
@@ -161,7 +162,7 @@ var MovieClipDefinition = (function () {
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
                   if (cmd.hasClipDepth)
-                    child._clipDepth = cmd.clipDepth;
+                    currentChild._clipDepth = cmd.clipDepth;
 
                   if (cmd.hasMatrix) {
                     var m = cmd.matrix;
