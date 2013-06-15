@@ -875,22 +875,16 @@ var LoaderDefinition = (function () {
         props.height = symbol.height;
         break;
       case 'label':
-        var drawFn = new Function('d,c,r', symbol.data);
-        className = 'flash.text.StaticText';
-        props.bbox = symbol.bbox;
-        props.draw = function (c, r) {
-          return drawFn.call(this, dictionary, c, r);
-        };
-        break;
       case 'text':
-        var drawFn = new Function('d,c,r', symbol.data);
-        className = 'flash.text.TextField';
         props.bbox = symbol.bbox;
-        props.draw = function (c, r) {
-          return drawFn.call(this, dictionary, c, r);
-        };
-        props.text = symbol.value;
-        props.variableName = symbol.variableName;
+        props.html = symbol.html;
+        if (symbol.type === 'label') {
+          className = 'flash.text.StaticText';
+        } else {
+          className = 'flash.text.TextField';
+          props.tag = symbol.tag;
+          props.variableName = symbol.variableName;
+        }
         break;
       case 'shape':
         var createGraphicsSubPaths = new Function('c,d,r', 'return ' + symbol.data);
