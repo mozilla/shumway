@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global slice, splice, max, fail, Stream */
 
 var codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
 
@@ -64,7 +65,7 @@ function makeHuffmanTable(bitLengths) {
 function verifyDeflateHeader(bytes) {
   var header = (bytes[0] << 8) | bytes[1];
   assert((header & 0x0f00) === 0x0800, 'unknown compression method', 'inflate');
-  assert(!(header % 31), 'bad FCHECK', 'inflate');
+  assert((header % 31) === 0, 'bad FCHECK', 'inflate');
   assert(!(header & 0x20), 'FDICT bit set', 'inflate');
 }
 
@@ -120,10 +121,11 @@ function inflateBlock(stream, output, state) {
       var savedBufferPos = stream.pos;
       var savedBitBuffer = stream.bitBuffer;
       var savedBitLength = stream.bitLength;
+      var bitLengths = [];
+      var numLiteralCodes, numDistanceCodes;
       try  {
-        var bitLengths = [];
-        var numLiteralCodes = readBits(sbytes, stream, 5) + 257;
-        var numDistanceCodes = readBits(sbytes, stream, 5) + 1;
+        numLiteralCodes = readBits(sbytes, stream, 5) + 257;
+        numDistanceCodes = readBits(sbytes, stream, 5) + 1;
         var numCodes = numLiteralCodes + numDistanceCodes;
         var numLengthCodes = readBits(sbytes, stream, 4) + 4;
         for (var i = 0; i < 19; ++i)

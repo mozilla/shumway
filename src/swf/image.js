@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/*global createInflatedStream, Blob */
 
 function getUint16(buff, pos) {
   return (buff[pos] << 8) | buff[pos + 1];
