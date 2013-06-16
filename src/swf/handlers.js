@@ -15,6 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global DEFINE_BITMAP, DEFINE_BUTTON, DEFINE_FONT, DEFINE_FONT2, DEFINE_IMAGE,
+         DEFINE_JPEG_TABLES, DEFINE_LABEL, DEFINE_SCALING_GRID, DEFINE_SCENE,
+         DEFINE_SHAPE, DEFINE_SOUND, DEFINE_TEXT, DO_ABC, DO_ACTION,
+         FILE_ATTRIBUTES, FRAME_LABEL, PLACE_OBJECT, REMOVE_OBJECT,
+         SET_BACKGROUND_COLOR, SOUND_STREAM_BLOCK, SOUND_STREAM_HEAD,
+         START_SOUND, SYMBOL_CLASS */
 
 var tagHandler = {
   /* End */                            0: undefined,

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global pow, slice, fromCharCode */
 
 function readSi8($bytes, $stream) {
   return $stream.getInt8($stream.pos++);
@@ -108,7 +109,7 @@ function readString($bytes, $stream, length) {
     codes = slice.call($bytes, pos, pos += length);
   } else {
     length = 0;
-    for (var code; code = $bytes[pos++]; length++)
+    for (var code; (code = $bytes[pos++]); length++)
       codes[length] = code;
   }
   $stream.pos = pos;

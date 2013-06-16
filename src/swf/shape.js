@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global push, fail */
 
 var GRAPHICS_FILL_CLIPPED_BITMAP               = 65;
 var GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT        = 19;
@@ -90,7 +91,7 @@ function defineShape(tag, dictionary) {
   var fill0 = 0;
   var fill1 = 0;
   var line = 0;
-  for (var i = 0, j = 0, record; record = records[i]; ++i) {
+  for (var i = 0, j = 0, record; (record = records[i]); ++i) {
     if (record.type) {
       sx = dx;
       sy = dy;
@@ -128,6 +129,7 @@ function defineShape(tag, dictionary) {
       } else {
         var cx = sx + record.controlDeltaX;
         var cy = sy + record.controlDeltaY;
+        var cxm, cym;
         dx = cx + record.anchorDeltaX;
         dy = cy + record.anchorDeltaY;
         if (isMorph) {
@@ -141,11 +143,11 @@ function defineShape(tag, dictionary) {
             } else {
               dxm += recordMorph.deltaX;
             }
-            var cxm = sxm + ((dxm - sxm) / 2);
-            var cym = sym + ((dym - sym) / 2);
+            cxm = sxm + ((dxm - sxm) / 2);
+            cym = sym + ((dym - sym) / 2);
           } else {
-            var cxm = sxm + recordMorph.controlDeltaX;
-            var cym = sym + recordMorph.controlDeltaY;
+            cxm = sxm + recordMorph.controlDeltaX;
+            cym = sym + recordMorph.controlDeltaY;
             dxm = cxm + recordMorph.anchorDeltaX;
             dym = cym + recordMorph.anchorDeltaY;
           }
@@ -261,7 +263,7 @@ function defineShape(tag, dictionary) {
         }
       }
       var dpt = segment.dpt;
-      while (dpt !== spt && (list = map[dpt]) != false) {
+      while (dpt !== spt && (list = map[dpt]) && list.length !== 0) {
         segment = list.shift();
         subpath.push(segment);
         segment.skip = true;
@@ -280,7 +282,7 @@ function defineShape(tag, dictionary) {
         if (fillStyle.colorMorph) {
           fill = morphColor(fillStyle.color, fillStyle.colorMorph);
         } else {
-          var color = fillStyle.color
+          var color = fillStyle.color;
           fill = '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
         }
         break;
@@ -380,7 +382,7 @@ function defineShape(tag, dictionary) {
   var i = 0;
   var lineStyle;
   while ((lineStyle = lineStyles[i++])) {
-    var segments = lineSegments[i];
+    var segments = lineSegments[i], segment;
     if (segments) {
       var color = lineStyle.color;
       var stroke = lineStyle.colorMorph ?

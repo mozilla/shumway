@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global SWF, MOVIE_HEADER, SWF_TAG_CODE_FILE_ATTRIBUTES, tagHandler, Stream,
+         readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
+         generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError */
 
 // TODO: clean up. For now, we don't include the generator after pre-building
 // the handlers. This doesn't work during build-playerglobal, though.x
@@ -345,7 +348,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
           type: 'image',
           props: props,
           data : new Blob(chunks, {type: type})
-        }
+        };
         options.oncomplete && options.oncomplete(symbol);
       }
     };

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global toStringRgba */
 
 function defineText(tag, dictionary) {
   var cmds = [];
@@ -26,11 +27,12 @@ function defineText(tag, dictionary) {
   cmds.push('c.clip()');
   cmds.push('c.scale(0.05, 0.05)');
   var dependencies = [];
+  var initialText;
   var y;
   if (tag.hasText) {
-	var initialText = tag.html ? tag.initialText.replace(/<[^>]*>/g, '') : tag.initialText;
+    initialText = tag.html ? tag.initialText.replace(/<[^>]*>/g, '') : tag.initialText;
   } else {
-  	var initialText = '';
+    initialText = '';
   }
 
   if (tag.hasFont) {

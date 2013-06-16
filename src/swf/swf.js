@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global self */
 
 var SWF_TAG_CODE_CSM_TEXT_SETTINGS                 = 74;
 var SWF_TAG_CODE_DEFINE_BINARY_DATA                = 87;

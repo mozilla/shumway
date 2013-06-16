@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO */
 
 var CanvasCache = {
   cache: [],
@@ -367,7 +368,7 @@ function renderStage(stage, ctx, events) {
   RenderVisitor.prototype = {
     ignoreVisibleAttribute: false,
     childrenStart: function(parent) {
-      if (this.depth == 0) {
+      if (this.depth === 0) {
         var ctx = this.ctx;
 
         ctx.save();
@@ -522,12 +523,14 @@ function renderStage(stage, ctx, events) {
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
     var radius = 10;
     var speed = 1;
+    var canvasState = stage._canvasState;
+    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
     dummyBalls = [];
     for (var i = 0; i < 10; i++) {
       dummyBalls.push({
         position: {
-          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scale),
-          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scale)
+          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
+          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
         },
         velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
       });
@@ -548,16 +551,16 @@ function renderStage(stage, ctx, events) {
         ctx.stroke();
         var x = (position.x + velocity.x);
         var y = (position.y + velocity.y);
-        if (x < radius || x > ctx.canvas.width / scale - radius) {
+        if (x < radius || x > ctx.canvas.width / scaleX - radius) {
           velocity.x *= -1;
         }
-        if (y < radius || y > ctx.canvas.height / scale - radius) {
+        if (y < radius || y > ctx.canvas.height / scaleY - radius) {
           velocity.y *= -1;
         }
         position.x += velocity.x;
         position.y += velocity.y;
       });
-    }
+    };
   }
 
   console.timeEnd("Initialize Renderer");

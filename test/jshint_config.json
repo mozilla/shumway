@@ -12,6 +12,6 @@
     "escape", "unescape", "performance", "document",
     "GLOBAL", "exports",
     "notImplemented", "somewhatImplemented", "avm2", "flash", "ArgumentError",
-    "release", "assert", "$DEBUG", "error", "scriptProperties", "Glue"
+    "release", "assert", "error", "scriptProperties", "Glue"
   ]
 }

@@ -48,15 +48,19 @@ function toStringRgba(color) {
 
 // Some browser feature testing
 (function functionNameSupport() {
+  /*jshint -W061 */
   if (eval("function t() {} t.name === 't'")) {
     return; // function name feature is supported
   }
   Object.defineProperty(Function.prototype, 'name', {
     get: function () {
-      if (this.__name) return this.__name;
+      if (this.__name) {
+        return this.__name;
+      }
       var m = /function\s([^\(]+)/.exec(this.toString());
       var name = m && m[1] !== 'anonymous' ? m[1] : null;
-      return (this.__name = name);
+      this.__name = name;
+      return name;
     },
     configurable: true,
     enumerable: false
