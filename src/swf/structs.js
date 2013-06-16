@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*globals UI8, UI16, SB, UB, FB, ALIGN, BINARY, STRING, FIXED, FLOAT, FIXED8,
+          SI16, UI32 */
 
 var RGB = {
   red: UI8,

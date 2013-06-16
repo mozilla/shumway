@@ -41,6 +41,7 @@ FLASH_PATH = $(SRC_ROOT)/flash
 SOURCES = \
 	$(AVM1_PATH)/*.js \
 	$(FLASH_PATH) \
+	$(SWF_PATH)/*.js \
 	$(NULL)
 
 lint:

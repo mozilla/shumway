@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, AS2MovieClip */
+/*global MP3DecoderSession, AS2MovieClip, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {

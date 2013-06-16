@@ -15,6 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global self, importScripts, Worker, MP3Decoder, SHUMWAY_ROOT */
+
+// TODO: Investigate moving function definitions out of if-blocks
+/*jshint -W082 */
 
 var isWorker = typeof window === 'undefined';
 if (isWorker) {

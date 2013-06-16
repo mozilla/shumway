@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global toStringRgba, fromCharCode */
 
 function defineLabel(tag, dictionary) {
   var records = tag.records;
@@ -29,13 +30,14 @@ function defineLabel(tag, dictionary) {
   var y = 0;
   var i = 0;
   var record;
+  var codes;
   while ((record = records[i++])) {
     if (record.eot)
       break;
     if (record.hasFont) {
       var font = dictionary[record.fontId];
       assert(font, 'undefined font', 'label');
-      var codes = font.codes;
+      codes = font.codes;
       cmds.push('c.font="' + record.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(font.id);
     }

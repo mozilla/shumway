@@ -25,7 +25,7 @@ function defineButton(tag, dictionary) {
     down: {},
     hitTest: {}
   };
-  var i = 0;
+  var i = 0, character;
   while ((character = characters[i++])) {
     if (character.eob)
       break;

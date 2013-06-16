@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/*global createInflatedStream, Blob, fail */
 
 /** @const */ var FORMAT_COLORMAPPED  = 3;
 /** @const */ var FORMAT_15BPP        = 4;
@@ -161,13 +161,14 @@ function defineBitmap(tag) {
     }
     break;
   case FORMAT_24BPP:
+    var padding;
     if (hasAlpha) {
       var colorType = 0x06;
-      var padding = 0;
+      padding = 0;
       literals = new Uint8Array(width * height * 4 + height);
     } else {
       var colorType = 0x02;
-      var padding = 1;
+      padding = 1;
       literals = new Uint8Array(width * height * 3 + height);
     }
     var bytesPerLine = width * 4;

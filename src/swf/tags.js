@@ -15,6 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*globals UI8, UI16, SB, UB, FB, ALIGN, BINARY, STRING, FIXED, FLOAT, FIXED8,
+          SI16, UI32, RECT, SHAPE, MATRIX, RGBA, CXFORM, BUTTON, KERNING, RGB,
+          BUTTONCONDACTION, ANY_FILTER, TEXT_RECORD, SOUND_INFO, EVENT,
+          SHAPE_WITH_STYLE, MORPH_SHAPE_WITH_STYLE, EncodedU32 */
 
 var DEFINE_BITMAP = {
   id: UI16,
