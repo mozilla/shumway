@@ -263,9 +263,7 @@ function defineShape(tag, dictionary) {
         }
       }
       var dpt = segment.dpt;
-      // TODO: make (list = map[dpt]) != false more readable
-      /*jshint -W041 */ 
-      while (dpt !== spt && (list = map[dpt]) != false) {
+      while (dpt !== spt && (list = map[dpt]) && list.length !== 0) {
         segment = list.shift();
         subpath.push(segment);
         segment.skip = true;
