@@ -63,7 +63,7 @@ var BitmapDataDefinition = (function () {
       this._drawable.height = 0;
       this._drawable = null;
     },
-    draw : function(source, matrix, colorTransform, blendMode, clipRect) {
+    draw : function(source, matrix, colorTransform, blendMode, clipRect, smoothing) {
       this._checkCanvas();
       this._ctx.save();
       this._ctx.beginPath();
@@ -75,6 +75,11 @@ var BitmapDataDefinition = (function () {
       }
       this._ctx.clip();
       renderDisplayObject(source, this._ctx, matrix, colorTransform);
+      var children = source._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        this.draw(child, child._currentTransform, child._cxform);
+      }
       this._ctx.restore();
     },
     fillRect : function(rect, color) {
@@ -88,12 +93,12 @@ var BitmapDataDefinition = (function () {
     },
     getPixel : function(x, y) {
       this._checkCanvas();
-      var data = this._ctx.getImageData(x, y, 1, 1);
+      var data = this._ctx.getImageData(x, y, 1, 1).data;
       return dataToRGB(data);
     },
     getPixel32 : function(x, y) {
       this._checkCanvas();
-      var data = this._ctx.getImageData(x, y, 1, 1);
+      var data = this._ctx.getImageData(x, y, 1, 1).data;
       return dataToARGB(data);
     },
     setPixel : function(x, y, color) {
@@ -162,10 +167,10 @@ var BitmapDataDefinition = (function () {
 }).call(this);
 
 function dataToRGB(data) {
-  return data[0] << 24 | data[1] << 16 | data[2];
+  return data[0] << 16 | data[1] << 8 | data[2];
 }
 function dataToARGB(data) {
-  return data[3] << 32 | dataToRGB(data);
+  return data[3] << 24 | dataToRGB(data);
 }
 function ARGBtoRGBA(argb) {
   return (argb >>> 24 | argb << 8) >>> 0;
