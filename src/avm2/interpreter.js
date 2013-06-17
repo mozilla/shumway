@@ -676,7 +676,7 @@ var Interpreter = (function () {
           case 0xF1: // OP_debugfile
             break;
           default:
-            notImplemented(opcodeName(bc));
+            notImplemented(opcodeName(op));
           }
           pc++;
         } catch (e) {
