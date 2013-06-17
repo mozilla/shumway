@@ -228,6 +228,10 @@ function isString(value) {
   return typeof value === "string";
 }
 
+function isFunction(value) {
+  return typeof value === "function";
+}
+
 function isNumber(value) {
   return typeof value === "number";
 }

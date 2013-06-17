@@ -330,6 +330,73 @@ var Class = (function () {
       return this.dynamicPrototype.isPrototypeOf(value);
     },
 
+    trace: function trace(writer) {
+      var description = this.debugName + (this.baseClass ? " extends " + this.baseClass.debugName : "");
+      writer.enter(description + " {");
+      writer.writeLn("scope: " + this.scope);
+      writer.writeLn("baseClass: " + this.baseClass);
+      writer.writeLn("classInfo: " + this.classInfo);
+      writer.writeLn("dynamicPrototype: " + this.dynamicPrototype);
+      writer.writeLn("traitsPrototype: " + this.traitsPrototype);
+      writer.writeLn("dynamicPrototype === traitsPrototype: " + (this.dynamicPrototype === this.traitsPrototype));
+
+      writer.writeLn("instanceConstructor: " + this.instanceConstructor);
+      writer.writeLn("instanceConstructorNoInitialize: " + this.instanceConstructorNoInitialize);
+      writer.writeLn("instanceConstructor === instanceConstructorNoInitialize: " + (this.instanceConstructor === this.instanceConstructorNoInitialize));
+
+      var traitsPrototype = this.traitsPrototype;
+      writer.enter("traitsPrototype: ");
+      if (traitsPrototype) {
+        writer.enter("VM_SLOTS: ");
+        writer.writeArray(traitsPrototype[VM_SLOTS].map(function (slot) {
+          return slot.trait;
+        }));
+        writer.outdent();
+
+        function debugName(value) {
+          if (isFunction(value)) {
+            return value.debugName;
+          }
+          return value;
+        }
+
+
+        writer.enter("VM_BINDINGS: ");
+        writer.writeArray(traitsPrototype[VM_BINDINGS].map(function (binding) {
+          var pd = Object.getOwnPropertyDescriptor(traitsPrototype, binding);
+          var str = binding;
+          if (pd.get || pd.set) {
+            if (pd.get) {
+              str += " getter: " + debugName(pd.get);
+            }
+            if (pd.set) {
+              str += " setter: " + debugName(pd.set);
+            }
+          } else {
+            str += " value: " + debugName(pd.value);
+          }
+          return str;
+        }));
+        writer.outdent();
+
+        writer.enter("VM_OPEN_METHODS: ");
+        writer.writeArray(toKeyValueArray(traitsPrototype[VM_OPEN_METHODS]).map(function (pair) {
+          return pair[0] + ": " + debugName(pair[1]);
+        }));
+        writer.outdent();
+
+        writer.enter("VM_TRAITS: ");
+        traitsPrototype[VM_TRAITS].trace(writer);
+        writer.outdent();
+      }
+
+      writer.outdent();
+      writer.writeLn("call: " + this.call);
+      writer.writeLn("apply: " + this.apply);
+
+      writer.leave("}");
+    },
+
     toString: function () {
       return "[class " + this.classInfo.instanceInfo.name.name + "]";
     }

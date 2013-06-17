@@ -337,9 +337,6 @@ var Domain = (function () {
       console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
       executeScript(abc.lastScript);
-      if (traceClasses.value) {
-        this.traceLoadedClasses();
-      }
       console.timeEnd("Execute ABC: " + abc.name);
     },
 
@@ -372,54 +369,16 @@ var Domain = (function () {
       return this.scriptObject;
     },
 
-    traceLoadedClasses: function () {
+    traceLoadedClasses: function (lastOnly) {
       var writer = new IndentingWriter();
-      function traceProperties(obj) {
-        for (var key in obj) {
-          var str = key;
-          var descriptor = Object.getOwnPropertyDescriptor(obj, key);
-          if (descriptor) {
-            if (descriptor.get) {
-              str += " getter";
-            }
-            if (descriptor.set) {
-              str += " setter";
-            }
-            if (descriptor.value) {
-              var value = obj[key];
-              if (value instanceof Scope) {
-                str += ": ";
-                var scope = value;
-                while (scope) {
-                  release || assert(scope.object);
-                  str += scope.object.debugName || "T";
-                  if ((scope = scope.parent)) {
-                    str += " <: ";
-                  }
-                }
-              } else if (value instanceof Function) {
-                str += ": " + (value.name ? value.name : "anonymous");
-              } else if (value) {
-                str += ": " + value;
-              }
-            }
-          }
-          writer.writeLn(str);
+      lastOnly || writer.enter("Loaded Classes");
+      var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
+      classes.forEach(function (cls) {
+        if (cls !== Class) {
+          cls.trace(writer);
         }
-      }
-      writer.enter("Loaded Classes");
-      this.loadedClasses.forEach(function (cls) {
-        var description = cls.debugName + (cls.baseClass ? " extends " + cls.baseClass.debugName : "");
-        writer.enter(description + " {");
-        writer.enter("instance");
-        traceProperties(cls.prototype);
-        writer.leave("");
-        writer.enter("static");
-        traceProperties(cls);
-        writer.leave("");
-        writer.leave("}");
       });
-      writer.leave("");
+      lastOnly || writer.leave("");
     }
   };
 

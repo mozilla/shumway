@@ -297,7 +297,7 @@ var Trait = (function () {
       case TRAIT_Method:
       case TRAIT_Setter:
       case TRAIT_Getter:
-        return str + ", method: " + this.methodInfo + ", dispId: " + this.dispId;
+        return str + ", " + ["method", "getter", "setter"][this.kind - 1] + ": " + this.methodInfo + ", dispId: " + this.dispId;
       case TRAIT_Class:
         return str + ", slotId: " + this.slotId + ", class: " + this.classInfo;
       case TRAIT_Function: // TODO
