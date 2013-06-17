@@ -46,6 +46,7 @@ SOURCES = \
 
 lint:
 	$(JSHINT) --config $(JSHINT_CONFIG) $(SOURCES)
+	echo "SUCCESS: no lint errors"
 
 .PHONY: default reftest reftest-swfdec makeref check-browser-manifest \
         lint
