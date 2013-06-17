@@ -93,16 +93,21 @@ var Promise = (function PromiseClosure() {
   function processQueue() {
     while (queue.length > 0) {
       var task = queue[0];
-      performCall(task.callback, task.arg, task.subject);
+      if (task.directCallback) {
+        task.callback.call(task.subject, task.arg);
+      } else {
+        performCall(task.callback, task.arg, task.subject);
+      }
       queue.shift();
     }
   }
 
-  function queueCall(callback, arg, subject) {
+  function queueCall(callback, arg, subject, directCallback) {
     if (queue.length === 0) {
       setTimeout(processQueue, 0);
     }
-    queue.push({callback: callback, arg: arg, subject: subject});
+    queue.push({callback: callback, arg: arg, subject: subject,
+                directCallback: directCallback});
   }
 
   function Promise(onFulfilled, onRejected) {
@@ -119,7 +124,7 @@ var Promise = (function PromiseClosure() {
       }
       this.state = 'fulfilled';
       this.value = value;
-      queueCall(this.onFulfilled, value, this);
+      queueCall(this.onFulfilled, value, this, false);
     },
     reject: function Promise_reject(reason) {
       if (this.state !== 'pending') {
@@ -127,14 +132,14 @@ var Promise = (function PromiseClosure() {
       }
       this.state = 'rejected';
       this.reason = reason;
-      queueCall(this.onRejected, reason, this);
+      queueCall(this.onRejected, reason, this, false);
     },
     then: function Promise_then(onFulfilled, onRejected) {
       var promise = new Promise(onFulfilled, onRejected);
       if ('subpromisesValue' in this) {
-        promise.fulfill(this.subpromisesValue);
+        queueCall(promise.fulfill, this.subpromisesValue, promise, true);
       } else if ('subpromisesReason' in this) {
-        promise.reject(this.subpromisesReason);
+        queueCall(promise.reject, this.subpromisesReason, promise, true);
       } else {
         var subpromises = this.subpromises || (this.subpromises = []);
         subpromises.push(promise);
