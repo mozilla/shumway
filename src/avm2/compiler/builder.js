@@ -704,8 +704,8 @@ var createName = function createName(namespaces, name) {
         function getProperty(object, name, ti, getOpenMethod) {
           var get;
           name = simplifyName(name);
-          if (ti && ti.trait && ti.type &&
-              !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
+          if (ti && ti.trait && object.ty &&
+              !(object.ty === Type.Any || object.ty === Type.XML || object.ty === Type.XMLList)) {
             if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
               return constant(ti.trait.value);
             }
@@ -754,8 +754,8 @@ var createName = function createName(namespaces, name) {
             store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
             return;
           }
-          if (ti && ti.trait && ti.type &&
-              !(ti.type === Type.Any || ti.type === Type.XML || ti.type === Type.XMLList)) {
+          if (ti && ti.trait && object.ty &&
+              !(object.ty === Type.Any || object.ty === Type.XML || object.ty === Type.XMLList)) {
             store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)), value));
             return;
           }

@@ -192,4 +192,24 @@ package {
     clockUnder(5000, "Math.abs()");
     return s;
   })();
+
+  class D {
+    var foobar = 0;
+    var y = 0;
+    function D(x, y) {
+      this.foobar = x;
+      this.y = y;
+    }
+  }
+
+  (function () {
+    var s = 0;
+    for (var i = 0; i < 1000000; i++) {
+      s += (new D(2, 3)).foobar;
+      s += (new D(2, 3)).y;
+    }
+    clockUnder(500, "Object Allocation with property access");
+    return s;
+  })();
+
 }
