@@ -64,6 +64,7 @@ var StageDefinition = (function () {
       this._contentsScaleFactor = 1;
       this._displayState = "normal";
       this._showDefaultContextMenu = true;
+      this._deferScriptExecution = false;
     },
 
     _flushPendingScripts: function () {
@@ -78,6 +79,7 @@ var StageDefinition = (function () {
           return;
         }
       }
+      this._deferScriptExecution = false;
     },
 
     get allowsFullScreen() {

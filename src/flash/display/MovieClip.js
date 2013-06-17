@@ -26,7 +26,6 @@ var MovieClipDefinition = (function () {
       this._currentFrameLabel = null;
       this._currentLabel = false;
       this._currentScene = 0;
-      this._deferScriptExecution = false;
       this._enabled = null;
       this._frameScripts = { };
       this._framesLoaded = 1;
@@ -69,7 +68,9 @@ var MovieClipDefinition = (function () {
     },
 
     _callFrame: function (frameNum) {
-      this._deferScriptExecution = true;
+      if (this._stage) {
+        this._stage._deferScriptExecution = true;
+      }
       if (frameNum in this._frameScripts) {
         var scripts = this._frameScripts[frameNum];
         for (var i = 0, n = scripts.length; i < n; i++) {
@@ -84,7 +85,6 @@ var MovieClipDefinition = (function () {
           }
         }
       }
-      this._deferScriptExecution = false;
     },
     _as2CallFrame: function (frame) {
       if (isNaN(frame)) {
@@ -363,10 +363,7 @@ var MovieClipDefinition = (function () {
       }
     },
     _addToPendingScripts: function (fn) {
-      if (!this._deferScriptExecution) {
-        return fn();
-      }
-      if (this._stage === null) {
+      if (this._stage === null || !this._stage._deferScriptExecution) {
         // HACK called from the constructor, applying _gotoFrame frame at once?
         return fn();
       }
