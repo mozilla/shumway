@@ -426,15 +426,6 @@ function renderStage(stage, ctx, events) {
         ctx.clip();
       }
 
-      if (stage._showRedrawRegions && child._dirtyArea) {
-        var b = child._dirtyArea;
-        ctx.save();
-        ctx.strokeStyle = '#f00';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(b.x, b.y, b.width, b.height);
-        ctx.restore();
-      }
-
       child._dirtyArea = null;
     }
   };
@@ -519,9 +510,9 @@ function renderStage(stage, ctx, events) {
     }
 
     var refreshStage = false;
-    if (stage._invalidate) {
+    if (stage._invalid) {
       updateRenderTransform();
-      stage._invalidate = false;
+      stage._invalid = false;
       refreshStage = true;
     }
 
@@ -534,17 +525,12 @@ function renderStage(stage, ctx, events) {
     if (renderFrame || refreshStage || mouseMoved) {
       visitContainer(stage, new MouseVisitor());
 
-      stage._flushPendingScripts();
-
       if (renderFrame) {
         frameTime = now;
         nextRenderAt = frameTime + maxDelay;
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
         avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
-
-        stage._flushPendingScripts();
-
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
       }
 
