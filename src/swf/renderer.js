@@ -39,14 +39,16 @@ var CanvasCache = {
 };
 
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
-  var m = transform;
-  if (m.a * m.d == m.b * m.c) {
-    // Workaround for bug 844184 -- the object is invisible
-    ctx.closePath();
-    ctx.rect(0, 0, 0, 0);
-    ctx.clip();
-  } else {
-    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+  if (transform) {
+    var m = transform;
+    if (m.a * m.d == m.b * m.c) {
+      // Workaround for bug 844184 -- the object is invisible
+      ctx.closePath();
+      ctx.rect(0, 0, 0, 0);
+      ctx.clip();
+    } else {
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    }
   }
 
   if (cxform) {
@@ -492,21 +494,12 @@ function renderStage(stage, ctx, events) {
         ctx.clip();
       }
 
-      if (stage._showRedrawRegions && child._dirtyArea) {
-        var b = child._dirtyArea;
-        ctx.save();
-        ctx.strokeStyle = '#f00';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(b.x, b.y, b.width, b.height);
-        ctx.restore();
-      }
-
       child._dirtyArea = null;
     }
   };
 
   var frameTime = 0;
-  var maxDelay = 1000 / stage.frameRate;
+  var maxDelay = 1000 / stage._frameRate;
   var nextRenderAt = Date.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
@@ -587,9 +580,9 @@ function renderStage(stage, ctx, events) {
     }
 
     var refreshStage = false;
-    if (stage._invalidate) {
+    if (stage._invalid) {
       updateRenderTransform();
-      stage._invalidate = false;
+      stage._invalid = false;
       refreshStage = true;
     }
 
@@ -602,17 +595,12 @@ function renderStage(stage, ctx, events) {
     if (renderFrame || refreshStage || mouseMoved) {
       visitContainer(stage, new MouseVisitor());
 
-      stage._flushPendingScripts();
-
       if (renderFrame) {
         frameTime = now;
         nextRenderAt = frameTime + maxDelay;
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
         avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
-
-        stage._flushPendingScripts();
-
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
       }
 
