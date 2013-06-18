@@ -16,10 +16,6 @@
  * limitations under the License.
  */
 
-function describeProperty(val) {
-  return { value: val, writable: true, configurable: true, enumerable: true };
-}
-
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
     o[p] = namespace + " " + p;
