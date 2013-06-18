@@ -10,7 +10,7 @@ package {
 
     public class DisplayObjectContainerTest extends Sprite {
         public function DisplayObjectContainerTest() {
-            stage.frameRate = 4;
+            stage.frameRate = 20;
             var child:DisplayObjectContainerObject = new DisplayObjectContainerObject();
             addChild(child);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);
