@@ -810,42 +810,6 @@ function resolveMultiname(object, mn, traitsOnly) {
   return result;
 }
 
-function createPublicKeyedClone(source) {
-  const visited = new WeakMap();
-  function visit(item) {
-    if (!item || typeof item !== 'object') {
-      return item;
-    }
-    if (visited.has(item)) {
-      return visited.get(item);
-    }
-
-    var result = createEmptyObject();
-    visited.set(item, result);
-    var keys = Object.keys(item);
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      result[Multiname.getPublicQualifiedName(key)] = visit(item[key]);
-    }
-    return result;
-  }
-  return visit(source);
-}
-
-function isNameInObject(qn, object) {
-  if (qn.isAttribute()) {
-    for (var i = 0; i < object.attributes.length; i++) {
-      var attr = object.attributes[i];
-      if (attr.name === qn.name) {
-        return true;
-      }
-    }
-    return false;
-  } else {
-    return Multiname.getQualifiedName(qn) in object;
-  }
-}
-
 function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
