@@ -102,40 +102,25 @@
        "type": "stas"
     },
     {  "id": "flash_display_DisplayObject trace",
-       "stas": "swfs/trace5s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_display_DisplayObject.swf"
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_DisplayObject screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
-       "swf": "swfs/flash_display_DisplayObject.swf",
-       "type": "eq"
-    },
     {  "id": "flash_display_DisplayObjectContainer trace",
-       "stas": "swfs/trace5s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_display_DisplayObjectContainer.swf"
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_DisplayObjectContainer screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
-       "swf": "swfs/flash_display_DisplayObjectContainer.swf",
-       "type": "eq"
-    },
     {  "id": "flash_display_Graphics trace",
-       "stas": "swfs/trace5s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_display_Graphics.swf"
        ],
        "type": "stas"
-    },
-    {  "id": "flash_display_Graphics screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
-       "swf": "swfs/flash_display_Graphics.swf",
-       "type": "eq"
     },
     {  "id": "flash_system_System trace",
        "stas": "swfs/trace.stas",
@@ -187,40 +172,25 @@
        "type": "stas"
     },
     {  "id": "flash_filters_BlurFilter trace",
-       "stas": "swfs/trace2s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_filters_BlurFilter.swf"
        ],
        "type": "stas"
     },
-    {  "id": "flash_filters_BlurFilter screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11,12],
-       "swf": "swfs/flash_filters_BlurFilter.swf",
-       "type": "eq"
-    },
     {  "id": "flash_filters_DropShadowFilter trace",
-       "stas": "swfs/trace5s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_filters_DropShadowFilter.swf"
        ],
        "type": "stas"
     },
-    {  "id": "flash_filters_DropShadowFilter screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11,12],
-       "swf": "swfs/flash_filters_DropShadowFilter.swf",
-       "type": "eq"
-    },
     {  "id": "flash_filters_GlowFilter trace",
-       "stas": "swfs/trace5s.stas",
+       "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_filters_GlowFilter.swf"
        ],
        "type": "stas"
-    },
-    {  "id": "flash_filters_GlowFilter screen",
-       "frames": [0,1,2,3,4,5,6,7,8,9,10,11],
-       "swf": "swfs/flash_filters_GlowFilter.swf",
-       "type": "eq"
     },
     {  "id": "flash_text_TextField trace",
        "stas": "swfs/trace.stas",

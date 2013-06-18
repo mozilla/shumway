@@ -13,7 +13,7 @@ package {
     public class BlurFilterTest extends Sprite {
         public var loader;
         public function BlurFilterTest() {
-            stage.frameRate = 4;
+            stage.frameRate = 20;
             var child = new TestObject();
             background(0xFFFFFF);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

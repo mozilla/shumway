@@ -11,7 +11,7 @@ package {
     public class TextFieldTest extends Sprite {
         public var child;
         public function TextFieldTest() {
-            stage.frameRate = 1;
+            stage.frameRate = 20;
             child = new TextFieldObject();
             addChild(child);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

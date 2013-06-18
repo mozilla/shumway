@@ -9,7 +9,7 @@ package {
 
     public class GraphicsTest extends Sprite {
         public function GraphicsTest() {
-            stage.frameRate = 4;
+            stage.frameRate = 20;
             var child:GraphicsObject = new GraphicsObject();
             addChild(child);
         }

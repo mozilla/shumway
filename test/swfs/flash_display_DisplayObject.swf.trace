@@ -10,4 +10,8 @@ get filters: filters.length=2
 set visible = false
 get visible: false
 (x=-50, y=-50, width=200, height=200)
+PASS: flash.display::DisplayObject/getBounds () [container]
+(x=-100, y=-100, width=200, height=200)
+PASS: flash.display::DisplayObject/getBounds () [child]
 (x=29, y=-37, width=282, height=282)
+PASS: flash.display::DisplayObject/getBounds () [target, rotation]
