@@ -1409,8 +1409,6 @@ var AbcFile = (function () {
       MethodInfo.parseBody(this, stream);
     }
 
-    InlineCacheManager.updateInlineCaches(this);
-
     console.timeEnd("Parse ABC: " + name);
   }
 
