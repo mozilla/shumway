@@ -20,13 +20,11 @@ var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Optio
 
 var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
 
-
 var interpretedBytecode = 0;
 
-var Interpreter = (function () {
+var Interpreter = new ((function () {
+  function Interpreter() {
 
-  function Interpreter(abc) {
-    this.abc = abc;
   }
 
   function applyNew(constructor, args) {
@@ -70,7 +68,7 @@ var Interpreter = (function () {
     interpretMethod: function interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
       Counter.count("Interpret Method");
-      var abc = this.abc;
+      var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;
       var doubles = abc.constantPool.doubles;
@@ -89,9 +87,9 @@ var Interpreter = (function () {
       var parameterCount = method.parameters.length;
       var argCount = methodArgs.length;
 
-      Runtime.stack.push(runtime);
+      AVM2.domainStack.push(domain);
       var frame = { method: method, bc: null };
-      Runtime.callStack.push(frame);
+      AVM2.callStack.push(frame);
 
       var value;
       for (var i = 0; i < parameterCount; i++) {
@@ -283,7 +281,7 @@ var Interpreter = (function () {
             scopeHeight++;
             break;
           case 0x40: // OP_newfunction
-            stack.push(runtime.createFunction(methods[bc.index], scope, true));
+            stack.push(createFunction(methods[bc.index], scope, true));
             break;
           case 0x41: // OP_call
             popManyInto(stack, bc.argCount, args);
@@ -302,12 +300,12 @@ var Interpreter = (function () {
             stack.push(getSuper(savedScope, obj, name).apply(obj, args));
             break;
           case 0x47: // OP_returnvoid
-            Runtime.stack.pop();
-            Runtime.callStack.pop();
+            AVM2.domainStack.pop();
+            AVM2.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            Runtime.stack.pop();
-            Runtime.callStack.pop();
+            AVM2.domainStack.pop();
+            AVM2.callStack.pop();
             return stack.pop();
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);
@@ -320,7 +318,7 @@ var Interpreter = (function () {
             obj = stack.pop();
             var p = getProperty(obj, name);
             if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", name + " not found.");
+              throwErrorFromVM(domain, "ReferenceError", name + " not found.");
             }
             stack.push(applyNew(p, args));
             break;
@@ -350,7 +348,7 @@ var Interpreter = (function () {
             break;
           case 0x53: // OP_applytype
             popManyInto(stack, bc.argCount, args);
-            stack.push(runtime.applyType(stack.pop(), args));
+            stack.push(applyType(domain, stack.pop(), args));
             break;
           case 0x55: // OP_newobject
             obj = {};
@@ -371,7 +369,7 @@ var Interpreter = (function () {
             stack.push(createActivation(method));
             break;
           case 0x58: // OP_newclass
-            stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));
+            stack.push(createClass(abc.classes[bc.index], stack.pop(), scope));
             break;
           case 0x59: // OP_getdescendants
             name = popName(stack, multinames[bc.index]);
@@ -707,4 +705,4 @@ var Interpreter = (function () {
 
   return Interpreter;
 
-})();
+})());

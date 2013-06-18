@@ -389,7 +389,7 @@ var natives = (function () {
   }
 
   function MethodClosureClass(runtime, scope, instanceConstructor, baseClass) {
-    var c = new Class("MethodClosure", runtime.domain.system.MethodClosure);
+    var c = new Class("MethodClosure", MethodClosure);
     c.extendBuiltin(baseClass);
     return c;
   }
@@ -684,24 +684,24 @@ var natives = (function () {
     return c;
   }
 
-  function VectorClass(runtime, scope, instanceConstructor, baseClass) {
-    return createVectorClass(runtime, undefined, baseClass);
+  function VectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain, undefined, baseClass);
   }
 
-  function ObjectVectorClass(runtime, scope, instanceConstructor, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Object"), baseClass);
+  function ObjectVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain, domain.getClass("Object"), baseClass);
   }
 
-  function IntVectorClass(runtime, scope, instanceConstructor, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("int"), baseClass);
+  function IntVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain, domain.getClass("int"), baseClass);
   }
 
-  function UIntVectorClass(runtime, scope, instanceConstructor, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("uint"), baseClass);
+  function UIntVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain, domain.getClass("uint"), baseClass);
   }
 
-  function DoubleVectorClass(runtime, scope, instanceConstructor, baseClass) {
-    return createVectorClass(runtime, runtime.domain.getClass("Number"), baseClass);
+  function DoubleVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain, domain.getClass("Number"), baseClass);
   }
 
   /**

@@ -68,9 +68,10 @@ var Class = (function () {
     defineNonEnumerableProperty(this, "apply", callable.apply);
   }
 
-  Class.createClass = function createClass(runtime, classInfo, baseClass, scope) {
+  Class.createClass = function createClass(classInfo, baseClass, scope) {
     var ci = classInfo;
     var ii = ci.instanceInfo;
+    var domain = ci.abc.domain;
     var className = Multiname.getName(ii.name);
     var isNativeClass = ci.native;
     if (isNativeClass) {
@@ -84,10 +85,10 @@ var Class = (function () {
       }
     }
     var classScope = new Scope(scope, null);
-    var instanceConstructor = runtime.createFunction(ii.init, classScope);
+    var instanceConstructor = createFunction(ii.init, classScope);
     var cls;
     if (isNativeClass) {
-      cls = classBuilder(runtime, classScope, instanceConstructor, baseClass);
+      cls = classBuilder(domain, classScope, instanceConstructor, baseClass);
     } else {
       cls = new Class(className, instanceConstructor);
     }
@@ -106,9 +107,9 @@ var Class = (function () {
     }
     var baseBindings = baseClass ? baseClass.traitsPrototype : null;
     if (cls.instanceConstructor) {
-      runtime.applyInstanceTraits(cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
+      applyInstanceTraits(domain, cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
     }
-    runtime.applyClassTraits(cls, classScope, null, ci.traits, classNatives);
+    applyClassTraits(domain, cls, classScope, null, ci.traits, classNatives);
     defineReadOnlyProperty(cls, VM_IS_CLASS, true);
     return cls;
   };
@@ -423,3 +424,15 @@ var Class = (function () {
   };
   return Class;
 })();
+
+function MethodClosure($this, fn) {
+  var bound = safeBind(fn, $this);
+  defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+  defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+}
+
+MethodClosure.prototype = {
+  toString: function () {
+    return "function Function() {}";
+  }
+};

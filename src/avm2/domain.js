@@ -34,7 +34,7 @@ function executeScript(script) {
     print("Executing: " + abc.name + " " + script);
   }
   release || assert(!script.executing && !script.executed);
-  var global = new Global(abc.runtime, script);
+  var global = new Global(script);
   if (abc.domain.allowNatives) {
     global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
   }
@@ -42,9 +42,9 @@ function executeScript(script) {
   var scope = new Scope(null, script.global);
   // XXX interpreted methods populate stack with every call, compiled don't
   // pushing current runtime to the stack, so Runtime.currentDomain is successful
-  Runtime.stack.push(abc.runtime);
-  abc.runtime.createFunction(script.init, scope).call(script.global);
-  Runtime.stack.pop();
+  AVM2.domainStack.push(abc.domain);
+  createFunction(script.init, scope).call(script.global);
+  AVM2.domainStack.pop();
   script.executed = true;
 }
 
@@ -95,9 +95,6 @@ var Domain = (function () {
     // Do we compile or interpret?
     this.mode = mode;
 
-    // Storage for custom natives
-    this.natives = {};
-
     this.onClassCreated = new Callback();
 
     this.onMessage = new Callback();
@@ -108,18 +105,6 @@ var Domain = (function () {
       this.system = base.system;
     } else {
       this.system = this;
-
-      var MethodClosure = this.MethodClosure = function MethodClosure($this, fn) {
-        var bound = safeBind(fn, $this);
-        defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
-        defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
-      };
-
-      MethodClosure.prototype = {
-        toString: function () {
-          return "function Function() {}";
-        }
-      };
     }
   }
 
@@ -346,7 +331,6 @@ var Domain = (function () {
       }
       abc.domain = this;
       this.abcs.push(abc);
-      abc.runtime = new Runtime(abc);
       if (!this.base) {
         Type.initializeTypes(this);
       }

@@ -1262,6 +1262,7 @@ var InstanceInfo = (function () {
   var nextID = 1;
   function instanceInfo(abc, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     var constantPool = abc.constantPool;
     var methods = abc.methods;
 
@@ -1306,6 +1307,7 @@ var ClassInfo = (function () {
   var nextID = 1;
   function classInfo(abc, instanceInfo, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     this.init = abc.methods[stream.readU30()];
     this.init.isClassInitializer = true;
     attachHolder(this.init, this);
