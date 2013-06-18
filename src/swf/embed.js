@@ -77,7 +77,7 @@ SWF.embed = function(file, doc, container, options) {
     }
     canvas.width = container.clientWidth * pixelRatio;
     canvas.height = container.clientHeight * pixelRatio;
-    stage._invalidate = true;
+    stage._invalid = true;
   }
 
   loaderInfo._addEventListener('init', function () {

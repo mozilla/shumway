@@ -515,6 +515,7 @@ var DisplayObjectDefinition = (function () {
 
       this.scaleX = val / baseWidth;
     },
+    get x() {
       return this._x;
     },
     set x(val) {

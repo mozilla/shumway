@@ -431,7 +431,7 @@ function renderStage(stage, ctx, events) {
   };
 
   var frameTime = 0;
-  var maxDelay = 1000 / stage.frameRate;
+  var maxDelay = 1000 / stage._frameRate;
   var nextRenderAt = Date.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
