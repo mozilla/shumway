@@ -479,7 +479,7 @@
     var left = compileValue(this.left, cx);
     var right = compileValue(this.right, cx);
     if (this.operator === Operator.AVM2ADD) {
-      return call(id("add"), [left, right]);
+      return call(id("avm2Add"), [left, right]);
     }
     return new BinaryExpression (this.operator.name, left, right);
   };

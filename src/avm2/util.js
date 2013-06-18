@@ -164,7 +164,7 @@ function defineNonEnumerableProperty(obj, name, value) {
 }
 
 function isNullOrUndefined(value) {
-  return value === null || value === undefined;
+  return value == undefined;
 }
 
 function isPowerOfTwo(x) {
@@ -234,6 +234,27 @@ function isFunction(value) {
 
 function isNumber(value) {
   return typeof value === "number";
+}
+
+function toDouble(x) {
+  return Number(x);
+}
+
+function toBoolean(x) {
+  return !!x;
+}
+
+function toUint(x) {
+  var object = x | 0;
+  return object < 0 ? (object + 4294967296) : object;
+}
+
+function toInt(x) {
+  return x | 0;
+}
+
+function toString(x) {
+  return String(x);
 }
 
 function setBitFlags(flags, flag, value) {

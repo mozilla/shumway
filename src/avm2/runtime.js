@@ -26,7 +26,6 @@ var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "num
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
 
-var enableInlineCaching = runtimeOptions.register(new Option("ic", "inlineCaching", "boolean", false, "Enable inline caching."));
 var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
 
 var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
@@ -84,10 +83,10 @@ var VM_METHOD_OVERRIDES = createEmptyObject();
  */
 var vmNextShapeId = 1;
 
-function defineObjectShape(obj) {
+function defineObjectShape(object) {
   // TODO: This assertion seems to fail for proxies, investigate.
   // assert (!obj.shape, "Shouldn't already have a shape ID. " + obj.shape);
-  defineReadOnlyProperty(obj, "shape", vmNextShapeId ++);
+  defineReadOnlyProperty(object, "shape", vmNextShapeId ++);
 }
 
 /**
@@ -108,26 +107,26 @@ var InlineCache = (function () {
   return inlineCache;
 })();
 
-function ic(bc) {
-  return bc.ic || (bc.ic = new InlineCache());
+/**
+ * Attaches InlineCache to an object.
+ */
+function ic(object) {
+  return object.ic || (object.ic = new InlineCache());
 }
 
-/**
- * This is used to keep track if we're in a runtime context. For instance, proxies need to
+/* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
- */
+*/
 
 var AS = 1, JS = 2;
 
 var RUNTIME_ENTER_LEAVE_STACK = [AS];
 
 function enter(mode) {
-  // print("enter " + RUNTIME_ENTER_LEAVE_STACK);
   RUNTIME_ENTER_LEAVE_STACK.push(mode);
 }
 
 function leave(mode) {
-  // print("leave " + RUNTIME_ENTER_LEAVE_STACK);
   var top = RUNTIME_ENTER_LEAVE_STACK.pop();
   assert (top === mode);
 }
@@ -140,15 +139,14 @@ function inAS() {
   return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
 }
 
-/**
- * To embed object references in compiled code we index into globally accessible constant table [$C].
- * This table maintains an unique set of object references, each of which holds its own position in
- * the constant table, thus providing for fast lookup. We can also define constants in the JS global
- * scope.
+
+/*
+ * We pollute the JS global object with object constants used in compiled code.
  */
 
-var OBJECT_NAME = "Object Name";
 var objectIDs = 0;
+var OBJECT_NAME = "Object Name";
+
 function objectConstantName(object) {
   release || assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {
@@ -169,31 +167,30 @@ function objectConstantName(object) {
   return name;
 }
 
-
 function initializeGlobalObject(global) {
-  function getEnumerationKeys(obj) {
-    if (obj.node && obj.node.childNodes) {
-      obj = obj.node.childNodes;
+  function getEnumerationKeys(object) {
+    if (object.node && object.node.childNodes) {
+      object = object.node.childNodes;
     }
     var keys = [];
 
-    var boxedValue = obj.valueOf();
+    var boxedValue = object.valueOf();
 
     // TODO: This is probably broken if the object has overwritten |valueOf|.
     if (typeof boxedValue === "string" || typeof boxedValue === "number") {
       return [];
     }
 
-    if (obj.getEnumerationKeys) {
-      return obj.getEnumerationKeys();
+    if (object.getEnumerationKeys) {
+      return object.getEnumerationKeys();
     }
 
     // TODO: Implement fast path for Array objects.
-    for (var key in obj) {
+    for (var key in object) {
       if (isNumeric(key)) {
         keys.push(Number(key));
       } else if (Multiname.isPublicQualifiedName(key)) {
-        if (obj[VM_BINDINGS] && obj[VM_BINDINGS].indexOf(key) >= 0) {
+        if (object[VM_BINDINGS] && object[VM_BINDINGS].indexOf(key) >= 0) {
           continue;
         }
         keys.push(key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length));
@@ -270,13 +267,6 @@ function initializeGlobalObject(global) {
   });
 }
 
-/**
- * Checks if the specified |obj| is the prototype of a native JavaScript object.
- */
-function isNativePrototype(obj) {
-  return Object.prototype.hasOwnProperty.call(obj, VM_NATIVE_PROTOTYPE_FLAG)
-}
-
 initializeGlobalObject(jsGlobal);
 
 function createNewGlobalObject() {
@@ -293,36 +283,20 @@ function createNewGlobalObject() {
   return global;
 }
 
-function toDouble(x) {
-  return Number(x);
-}
-
-function toBoolean(x) {
-  return !!x;
-}
-
-function toUint(x) {
-  var obj = x | 0;
-  return obj < 0 ? (obj + 4294967296) : obj;
-}
-
-function toInt(x) {
-  return x | 0;
-}
-
-function toString(x) {
-  return String(x);
+/**
+ * Checks if the specified |object| is the prototype of a native JavaScript object.
+ */
+function isNativePrototype(object) {
+  return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG)
 }
 
 /**
- * ActionScript 3 has different behaviour when deciding whether to call
- * toString or valueOf when one operand is a string. Unlike JavaScript,
- * it calls toString if one operand is a string and valueOf otherwise.
- *
- * This sux, but we have to emulate this behaviour because YouTube
- * depends on it.
+ * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
+ * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
+ * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
+ * YouTube depends on it.
  */
-function add(l, r) {
+function avm2Add(l, r) {
   if (typeof l === "string" || typeof r === "string") {
     return String(l) + String(r);
   }
@@ -383,45 +357,45 @@ function typeOf(x) {
  * Make an object's properties accessible from AS3. This prefixes all non-numeric
  * properties with the public prefix.
  */
-function publicizeProperties(obj) {
-  var keys = Object.keys(obj);
+function publicizeProperties(object) {
+  var keys = Object.keys(object);
   for (var i = 0; i < keys.length; i++) {
     var k = keys[i];
     if (!Multiname.isPublicQualifiedName(k)) {
-      var v = obj[k];
-      obj[Multiname.getPublicQualifiedName(k)] = v;
-      delete obj[k];
+      var v = object[k];
+      object[Multiname.getPublicQualifiedName(k)] = v;
+      delete object[k];
     }
   }
 }
 
-function getSlot(obj, index) {
-  return obj[obj[VM_SLOTS][index].name];
+function getSlot(object, index) {
+  return object[object[VM_SLOTS][index].name];
 }
 
-function setSlot(obj, index, value) {
-  var binding = obj[VM_SLOTS][index];
+function setSlot(object, index, value) {
+  var binding = object[VM_SLOTS][index];
   if (binding.const) {
     return;
   }
   var name = binding.name;
   var type = binding.type;
   if (type && type.coerce) {
-    obj[name] = type.coerce(value);
+    object[name] = type.coerce(value);
   } else {
-    obj[name] = value;
+    object[name] = value;
   }
 }
 
-function nextName(obj, index) {
-  return obj[VM_NEXT_NAME](index);
+function nextName(object, index) {
+  return object[VM_NEXT_NAME](index);
 }
 
-function nextValue(obj, index) {
-  if (obj.getProperty) {
-    return obj.getProperty(obj[VM_NEXT_NAME](index), false);
+function nextValue(object, index) {
+  if (object.getProperty) {
+    return object.getProperty(object[VM_NEXT_NAME](index), false);
   }
-  return obj[Multiname.getPublicQualifiedName(obj[VM_NEXT_NAME](index))];
+  return object[Multiname.getPublicQualifiedName(object[VM_NEXT_NAME](index))];
 }
 
 /**
@@ -448,12 +422,12 @@ function nextValue(obj, index) {
  *
  * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
  */
-function hasNext2(obj, index) {
-  if (obj === null || obj === undefined) {
+function hasNext2(object, index) {
+  if (object === null || object === undefined) {
     return {index: 0, object: null};
   }
-  obj = boxValue(obj);
-  release || assert(obj);
+  object = boxValue(object);
+  release || assert(object);
   release || assert(index >= 0);
 
   /**
@@ -464,14 +438,14 @@ function hasNext2(obj, index) {
    * stack, if the original object has any more properties left, will _always_
    * be the original object.
    */
-  return {index: obj[VM_NEXT_NAME_INDEX](index), object: obj};
+  return {index: object[VM_NEXT_NAME_INDEX](index), object: object};
 }
 
-function getDescendants(obj, mn) {
-  if (!isXMLType(obj)) {
+function getDescendants(object, mn) {
+  if (!isXMLType(object)) {
     throw "Not XML object in getDescendants";
   }
-  return obj.descendants(mn);
+  return object.descendants(mn);
 }
 
 function checkFilter(value) {
@@ -570,11 +544,11 @@ var Scope = (function () {
     this.cache = createEmptyObject();
   }
 
-  scope.prototype.findDepth = function findDepth(obj) {
+  scope.prototype.findDepth = function findDepth(object) {
     var current = this;
     var depth = 0;
     while (current) {
-      if (current.object === obj) {
+      if (current.object === object) {
         return depth;
       }
       depth ++;
@@ -586,45 +560,45 @@ var Scope = (function () {
   scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
-    var obj;
+    var object;
     var cache = this.cache;
 
     var id = typeof mn === "string" ? mn : mn.id;
-    if (!scopeOnly && id && (obj = cache[id])) {
-      return obj;
+    if (!scopeOnly && id && (object = cache[id])) {
+      return object;
     }
 
-    obj = this.object;
+    object = this.object;
     if (Multiname.isQName(mn)) {
       if (this.isWith) {
-        if (obj.hasProperty && obj.hasProperty(mn) ||
-            Multiname.getQualifiedName(mn) in obj) {
-          return obj;
+        if (object.hasProperty && object.hasProperty(mn) ||
+            Multiname.getQualifiedName(mn) in object) {
+          return object;
         }
       } else {
-        if (nameInTraits(obj, Multiname.getQualifiedName(mn))) {
-          id && (cache[id] = obj);
-          return obj;
+        if (nameInTraits(object, Multiname.getQualifiedName(mn))) {
+          id && (cache[id] = object);
+          return object;
         }
       }
     } else {
       if (this.isWith) {
-        if (obj.hasProperty && obj.hasProperty(mn) ||
-            resolveMultiname(obj, mn)) {
-          return obj;
+        if (object.hasProperty && object.hasProperty(mn) ||
+            resolveMultiname(object, mn)) {
+          return object;
         }
       } else {
-        if (resolveMultinameInTraits(obj, mn)) {
-          id && (cache[id] = obj);
-          return obj;
+        if (resolveMultinameInTraits(object, mn)) {
+          id && (cache[id] = object);
+          return object;
         }
       }
     }
 
     if (this.parent) {
-      obj = this.parent.findProperty(mn, domain, strict, scopeOnly);
-      id && (cache[mn.id] = obj);
-      return obj;
+      object = this.parent.findProperty(mn, domain, strict, scopeOnly);
+      id && (cache[mn.id] = object);
+      return object;
     }
 
     if (scopeOnly) {
@@ -760,27 +734,27 @@ var TraitsInfo = (function () {
 /**
  * Check if a qualified name is in an object's traits.
  */
-function nameInTraits(obj, qn) {
+function nameInTraits(object, qn) {
   // If the object itself holds traits, try to resolve it. This is true for
   // things like global objects and activations, but also for classes, which
   // both have their own traits and the traits of the Class class.
-  if (obj.hasOwnProperty(VM_BINDINGS) && obj.hasOwnProperty(qn)) {
+  if (object.hasOwnProperty(VM_BINDINGS) && object.hasOwnProperty(qn)) {
     return true;
   }
 
   // Else look on the prototype.
-  var proto = Object.getPrototypeOf(obj);
+  var proto = Object.getPrototypeOf(object);
   return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
 }
 
-function resolveMultinameInTraits(obj, mn) {
+function resolveMultinameInTraits(object, mn) {
   release || assert(!Multiname.isQName(mn), mn, " already resolved");
 
-  obj = boxValue(obj);
+  object = boxValue(object);
 
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
-    if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+    if (nameInTraits(object, Multiname.getQualifiedName(qn))) {
       return qn;
     }
   }
@@ -791,10 +765,10 @@ function resolveMultinameInTraits(obj, mn) {
 /**
  * Resolving a multiname on an object using linear search.
  */
-function resolveMultinameUnguarded(obj, mn, traitsOnly) {
+function resolveMultinameUnguarded(object, mn, traitsOnly) {
   release || assert(Multiname.needsResolution(mn), "Multiname " + mn + " is already resolved.");
   release || assert(!Multiname.isNumeric(mn), "Should not resolve numeric multinames.");
-  obj = boxValue(obj);
+  object = boxValue(object);
   var publicQn;
 
   // Check if the object that we are resolving the multiname on is a JavaScript native prototype
@@ -802,11 +776,11 @@ function resolveMultinameUnguarded(obj, mn, traitsOnly) {
   // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
   // work around it here during name resolution.
 
-  var isNative = isNativePrototype(obj);
+  var isNative = isNativePrototype(object);
   for (var i = 0, j = mn.namespaces.length; i < j; i++) {
     var qn = mn.getQName(i);
     if (traitsOnly) {
-      if (nameInTraits(obj, Multiname.getQualifiedName(qn))) {
+      if (nameInTraits(object, Multiname.getQualifiedName(qn))) {
         return qn;
       }
       continue;
@@ -818,20 +792,20 @@ function resolveMultinameUnguarded(obj, mn, traitsOnly) {
         break;
       }
     } else if (!isNative) {
-      if (Multiname.getQualifiedName(qn) in obj) {
+      if (Multiname.getQualifiedName(qn) in object) {
         return qn;
       }
     }
   }
-  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in obj)) {
+  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in object)) {
     return publicQn;
   }
   return undefined;
 }
 
-function resolveMultiname(obj, mn, traitsOnly) {
+function resolveMultiname(object, mn, traitsOnly) {
   enter(JS);
-  var result = resolveMultinameUnguarded(obj, mn, traitsOnly);
+  var result = resolveMultinameUnguarded(object, mn, traitsOnly);
   leave(JS);
   return result;
 }
@@ -858,17 +832,17 @@ function createPublicKeyedClone(source) {
   return visit(source);
 }
 
-function isNameInObject(qn, obj) {
+function isNameInObject(qn, object) {
   if (qn.isAttribute()) {
-    for (var i = 0; i < obj.attributes.length; i++) {
-      var attr = obj.attributes[i];
+    for (var i = 0; i < object.attributes.length; i++) {
+      var attr = object.attributes[i];
       if (attr.name === qn.name) {
         return true;
       }
     }
     return false;
   } else {
-    return Multiname.getQualifiedName(qn) in obj;
+    return Multiname.getQualifiedName(qn) in object;
   }
 }
 
@@ -876,44 +850,44 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function callPropertyWithIC(obj, mn, isLex, args, ic) {
-  if (typeof obj === "number") {
-    obj = boxValue(obj);
+function callPropertyWithIC(object, mn, isLex, args, ic) {
+  if (typeof object === "number") {
+    object = boxValue(object);
   }
-  var receiver = isLex ? null : obj;
-  assert (obj, "NullReferenceException");
-  if (isProxyObject(obj)) {
-    return obj[VM_CALL_PROXY](mn, receiver, args);
+  var receiver = isLex ? null : object;
+  assert (object, "NullReferenceException");
+  if (isProxyObject(object)) {
+    return object[VM_CALL_PROXY](mn, receiver, args);
   }
-  var property = getPropertyWithIC(obj, mn, true, ic);
+  var property = getPropertyWithIC(object, mn, true, ic);
   return property.apply(receiver, args);
 }
 
-function callProperty(obj, mn, isLex, args) {
+function callProperty(object, mn, isLex, args) {
   // Counter.count("callProperty " + mn.name);
-  if (typeof obj === "number") {
-    obj = boxValue(obj);
+  if (typeof object === "number") {
+    object = boxValue(object);
   }
-  var receiver = isLex ? null : obj;
-  assert (obj, "NullReferenceException");
-  if (isProxyObject(obj)) {
-    return obj[VM_CALL_PROXY](mn, receiver, args);
+  var receiver = isLex ? null : object;
+  assert (object, "NullReferenceException");
+  if (isProxyObject(object)) {
+    return object[VM_CALL_PROXY](mn, receiver, args);
   }
-  var property = getProperty(obj, mn, true);
+  var property = getProperty(object, mn, true);
   return property.apply(receiver, args);
 }
 
-function hasProperty(obj, name) {
-  obj = boxValue(obj);
-  if (obj.hasProperty) {
-    return obj.hasProperty(name);
+function hasProperty(object, name) {
+  object = boxValue(object);
+  if (object.hasProperty) {
+    return object.hasProperty(name);
   }
-  return resolveName(obj, name) in obj;
+  return resolveName(object, name) in object;
 }
 
-function getSuper(scope, obj, mn) {
+function getSuper(scope, object, mn) {
   release || assert(scope instanceof Scope);
-  release || assert(obj !== undefined, "getSuper(" + mn + ") on undefined");
+  release || assert(object !== undefined, "getSuper(" + mn + ") on undefined");
   release || assert(Multiname.isMultiname(mn));
   var superClass = scope.object.baseClass;
   release || assert(superClass);
@@ -937,24 +911,24 @@ function getSuper(scope, obj, mn) {
       // getting into an infinite loop (getters that access the property
       // they're set to on the same object is bad news).
       if (openMethod) {
-        value = obj[superName + " " + qn];
+        value = object[superName + " " + qn];
         if (!value) {
-          value = obj[superName + " " + qn] = safeBind(openMethod, obj);
+          value = object[superName + " " + qn] = safeBind(openMethod, object);
         }
       } else {
         var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
         release || assert(descriptor);
-        value = descriptor.get ? descriptor.get.call(obj) : obj[qn];
+        value = descriptor.get ? descriptor.get.call(object) : object[qn];
       }
     }
   }
   return value;
 }
 
-function resolveName(obj, name) {
+function resolveName(object, name) {
   if (name instanceof Multiname) {
     if (name.namespaces.length > 1) {
-      var resolved = resolveMultiname(obj, name);
+      var resolved = resolveMultiname(object, name);
       if (resolved !== undefined) {
         return Multiname.getQualifiedName(resolved);
       } else {
@@ -971,91 +945,91 @@ function resolveName(obj, name) {
   }
 }
 
-function resolveNameWithIC(obj, name, ic) {
+function resolveNameWithIC(object, name, ic) {
   var qn;
-  if (obj.shape) {
-    if (ic.key === obj.shape) {
+  if (object.shape) {
+    if (ic.key === object.shape) {
       qn = ic.value;
     } else {
       if (!ic.key) {
         Counter.count("resolveName: IC Miss");
       }
-      ic.key = obj.shape;
-      qn = ic.value = resolveName(obj, name);
+      ic.key = object.shape;
+      qn = ic.value = resolveName(object, name);
     }
   } else {
-    qn = resolveName(obj, name);
+    qn = resolveName(object, name);
   }
   return qn;
 }
-function getPropertyWithIC(obj, name, isMethod, ic) {
-  if (obj.getProperty) {
-    return obj.getProperty(name, isMethod);
+function getPropertyWithIC(object, name, isMethod, ic) {
+  if (object.getProperty) {
+    return object.getProperty(name, isMethod);
   }
-  var qn = resolveNameWithIC(obj, name, ic);
-  if (obj.indexGet && Multiname.isNumeric(qn)) {
-    return obj.indexGet(qn);
+  var qn = resolveNameWithIC(object, name, ic);
+  if (object.indexGet && Multiname.isNumeric(qn)) {
+    return object.indexGet(qn);
   }
-  return obj[qn];
+  return object[qn];
 }
 
-function getProperty(obj, name, isMethod) {
-  if (obj.getProperty) {
-    return obj.getProperty(name, isMethod);
+function getProperty(object, name, isMethod) {
+  if (object.getProperty) {
+    return object.getProperty(name, isMethod);
   }
-  var qn = resolveName(obj, name);
-  if (obj.indexGet && Multiname.isNumeric(qn)) {
-    return obj.indexGet(qn);
+  var qn = resolveName(object, name);
+  if (object.indexGet && Multiname.isNumeric(qn)) {
+    return object.indexGet(qn);
   }
-  return obj[qn];
+  return object[qn];
 }
 
-function setPropertyWithIC(obj, name, value, ic) {
-  if (obj.setProperty) {
-    return obj.setProperty(name, value);
+function setPropertyWithIC(object, name, value, ic) {
+  if (object.setProperty) {
+    return object.setProperty(name, value);
   }
-  var qn = resolveNameWithIC(obj, name, ic);
-  if (obj.indexGet && Multiname.isNumeric(qn)) {
-    return obj.indexSet(qn, value);
+  var qn = resolveNameWithIC(object, name, ic);
+  if (object.indexGet && Multiname.isNumeric(qn)) {
+    return object.indexSet(qn, value);
   }
-  obj[qn] = value;
+  object[qn] = value;
 }
 
-function setProperty(obj, name, value) {
-  if (obj.setProperty) {
-    return obj.setProperty(name, value);
+function setProperty(object, name, value) {
+  if (object.setProperty) {
+    return object.setProperty(name, value);
   }
-  var qn = resolveName(obj, name);
-  if (obj.indexGet && Multiname.isNumeric(qn)) {
-    return obj.indexSet(qn, value);
+  var qn = resolveName(object, name);
+  if (object.indexGet && Multiname.isNumeric(qn)) {
+    return object.indexSet(qn, value);
   }
-  obj[qn] = value;
+  object[qn] = value;
 }
 
-function deleteProperty(obj, name) {
-  if (obj.deleteProperty) {
-    return obj.deleteProperty(name);
+function deleteProperty(object, name) {
+  if (object.deleteProperty) {
+    return object.deleteProperty(name);
   }
-  var qn = resolveName(obj, name);
-  if (obj.indexDelete && Multiname.isNumeric(qn)) {
-    return obj.indexDelete(qn);
+  var qn = resolveName(object, name);
+  if (object.indexDelete && Multiname.isNumeric(qn)) {
+    return object.indexDelete(qn);
   }
   /**
    * If we're in the middle of an enumeration, we need to remove the property name
    * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
    * to be skipped by the enumeration code.
    */
-  if (obj[VM_ENUMERATION_KEYS]) {
-    var index = obj[VM_ENUMERATION_KEYS].indexOf(qn);
+  if (object[VM_ENUMERATION_KEYS]) {
+    var index = object[VM_ENUMERATION_KEYS].indexOf(qn);
     if (index >= 0) {
-      obj[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
+      object[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
     }
   }
-  return delete obj[qn];
+  return delete object[qn];
 }
 
-function setSuper(scope, obj, mn, value) {
-  release || assert(obj);
+function setSuper(scope, object, mn, value) {
+  release || assert(object);
   release || assert(Multiname.isMultiname(mn));
   var superClass = scope.object.baseClass;
   release || assert(superClass);
@@ -1071,9 +1045,9 @@ function setSuper(scope, obj, mn, value) {
       var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
       release || assert(descriptor);
       if (descriptor.set) {
-        descriptor.set.call(obj, value);
+        descriptor.set.call(object, value);
       } else {
-        obj[qn] = value;
+        object[qn] = value;
       }
     }
   } else {
@@ -1082,34 +1056,34 @@ function setSuper(scope, obj, mn, value) {
   }
 }
 
-function forEachPublicProperty(obj, fn, self) {
-  if (!obj[VM_BINDINGS]) {
-    for (var key in obj) {
-      fn.call(self, key, obj[key]);
+function forEachPublicProperty(object, fn, self) {
+  if (!object[VM_BINDINGS]) {
+    for (var key in object) {
+      fn.call(self, key, object[key]);
     }
     return;
   }
 
-  for (var key in obj) {
+  for (var key in object) {
     if (isNumeric(key)) {
-      fn.call(self, key, obj[key]);
-    } else if (Multiname.isPublicQualifiedName(key) && obj[VM_BINDINGS].indexOf(key) < 0) {
+      fn.call(self, key, object[key]);
+    } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
       var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-      fn.call(self, name, obj[key]);
+      fn.call(self, name, object[key]);
     }
   }
 }
 
-function wrapJSObject(obj) {
-  var wrapper = Object.create(obj);
-  for (var i in obj) {
-    Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (obj, i) {
+function wrapJSObject(object) {
+  var wrapper = Object.create(object);
+  for (var i in object) {
+    Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (object, i) {
       return {
-        get: function () { return obj[i] },
-        set: function (value) { obj[i] = value; },
+        get: function () { return object[i] },
+        set: function (value) { object[i] = value; },
         enumerable: true
       };
-    })(obj, i));
+    })(object, i));
   }
   return wrapper;
 }
@@ -1139,9 +1113,9 @@ function createActivation(methodInfo) {
   return Object.create(methodInfo.activationPrototype);
 }
 
-function isClass(obj) {
-  assert (obj);
-  return Object.hasOwnProperty.call(obj, VM_IS_CLASS);
+function isClass(object) {
+  assert (object);
+  return Object.hasOwnProperty.call(object, VM_IS_CLASS);
 }
 
 function isTrampoline(fn) {
@@ -1574,24 +1548,24 @@ function getTraitFunction(trait, scope, natives) {
   return fn;
 }
 
-function applyCatchTrait(domain, obj, scope, trait) {
-  return applyTraits(domain, obj, scope, null, [trait], null, false);
+function applyCatchTrait(domain, object, scope, trait) {
+  return applyTraits(domain, object, scope, null, [trait], null, false);
 }
 
-function applyScriptTraits(domain, obj, scope, traits) {
-  return applyTraits(domain, obj, scope, null, traits, null, false);
+function applyScriptTraits(domain, object, scope, traits) {
+  return applyTraits(domain, object, scope, null, traits, null, false);
 }
 
-function applyActivationTraits(domain, obj, traits) {
-  return applyTraits(domain, obj, null, null, traits, null, false);
+function applyActivationTraits(domain, object, traits) {
+  return applyTraits(domain, object, null, null, traits, null, false);
 }
 
-function applyInstanceTraits(domain, obj, scope, base, traits, natives) {
-  return applyTraits(domain, obj, scope, base, traits, natives, true);
+function applyInstanceTraits(domain, object, scope, base, traits, natives) {
+  return applyTraits(domain, object, scope, base, traits, natives, true);
 }
 
-function applyClassTraits(domain, obj, scope, base, traits, natives) {
-  return applyTraits(domain, obj, scope, base, traits, natives, true);
+function applyClassTraits(domain, object, scope, base, traits, natives) {
+  return applyTraits(domain, object, scope, base, traits, natives, true);
 }
 
 function makeQualifiedNameTraitMap(traits) {
@@ -1606,17 +1580,17 @@ function makeQualifiedNameTraitMap(traits) {
  * Inherit trait bindings. This is the primary inheritance mechanism, we clone the trait bindings then
  * overwrite them for overrides.
  */
-function inheritBindings(obj, base, traits) {
+function inheritBindings(object, base, traits) {
   if (!base) {
-    defineNonEnumerableProperty(obj, VM_TRAITS, new TraitsInfo(null, traits));
+    defineNonEnumerableProperty(object, VM_TRAITS, new TraitsInfo(null, traits));
   } else {
-    defineNonEnumerableProperty(obj, VM_TRAITS, new TraitsInfo(base[VM_TRAITS], traits));
+    defineNonEnumerableProperty(object, VM_TRAITS, new TraitsInfo(base[VM_TRAITS], traits));
   }
 
   if (!base) {
-    defineNonEnumerableProperty(obj, VM_BINDINGS, []);
-    defineNonEnumerableProperty(obj, VM_SLOTS, []);
-    defineNonEnumerableProperty(obj, VM_OPEN_METHODS, createEmptyObject());
+    defineNonEnumerableProperty(object, VM_BINDINGS, []);
+    defineNonEnumerableProperty(object, VM_SLOTS, []);
+    defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
   } else {
     var traitMap = makeQualifiedNameTraitMap(traits);
     var openMethods = createEmptyObject();
@@ -1628,34 +1602,34 @@ function inheritBindings(obj, base, traits) {
       // broken for getters / setters.
       if (!traitMap[qn] || traitMap[qn].isGetter() || traitMap[qn].isSetter()) {
         var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
-        Object.defineProperty(obj, qn, baseBindingDescriptor);
+        Object.defineProperty(object, qn, baseBindingDescriptor);
         if (Object.prototype.hasOwnProperty.call(baseOpenMethods, qn)) {
           var openMethod = baseOpenMethods[qn];
           openMethods[qn] = openMethod;
-          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+          defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, openMethod);
           if (openMethod.patchTargets) {
             openMethod.patchTargets.push({object: openMethods, name: qn});
-            openMethod.patchTargets.push({object: obj, name: VM_OPEN_METHOD_PREFIX + qn});
+            openMethod.patchTargets.push({object: object, name: VM_OPEN_METHOD_PREFIX + qn});
           }
         }
       }
     }
-    defineNonEnumerableProperty(obj, VM_BINDINGS, base[VM_BINDINGS].slice());
-    defineNonEnumerableProperty(obj, VM_SLOTS, base[VM_SLOTS].slice());
-    defineNonEnumerableProperty(obj, VM_OPEN_METHODS, openMethods);
+    defineNonEnumerableProperty(object, VM_BINDINGS, base[VM_BINDINGS].slice());
+    defineNonEnumerableProperty(object, VM_SLOTS, base[VM_SLOTS].slice());
+    defineNonEnumerableProperty(object, VM_OPEN_METHODS, openMethods);
   }
 
   return;
 }
 
-function applyTraits(domain, obj, scope, base, traits, natives, methodsNeedMemoizers) {
+function applyTraits(domain, object, scope, base, traits, natives, methodsNeedMemoizers) {
   assert (domain instanceof Domain, "domain is not a Domain object");
 
-  var traitsInfo = inheritBindings(obj, base, traits);
+  var traitsInfo = inheritBindings(object, base, traits);
 
-  // Go through each trait and apply it to the |obj|.
+  // Go through each trait and apply it to the |object|.
 
-  var baseSlotId = obj[VM_SLOTS].length;
+  var baseSlotId = object[VM_SLOTS].length;
   var nextSlotId = baseSlotId + 1;
 
   for (var i = 0; i < traits.length; i++) {
@@ -1686,30 +1660,30 @@ function applyTraits(domain, obj, scope, base, traits, natives, methodsNeedMemoi
           defaultValue = domain.findClassInfo(trait.typeName).defaultValue;
         }
       }
-      defineNonEnumerableProperty(obj, qn, defaultValue);
-      obj[VM_SLOTS][trait.slotId] = {
+      defineNonEnumerableProperty(object, qn, defaultValue);
+      object[VM_SLOTS][trait.slotId] = {
         name: qn,
         const: trait.isConst(),
         type: trait.typeName ? domain.getProperty(trait.typeName, false, false) : null,
         trait: trait
       };
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      applyMethodTrait(obj, trait, scope, methodsNeedMemoizers, natives);
+      applyMethodTrait(object, trait, scope, methodsNeedMemoizers, natives);
     } else {
       release || unexpected(trait);
     }
 
-    obj[VM_BINDINGS].pushUnique(qn);
+    object[VM_BINDINGS].pushUnique(qn);
 
     if (traceExecution.value >= 3) {
       print("Applied Trait: " + trait + " " + qn);
     }
   }
 
-  return obj;
+  return object;
 }
 
-function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
+function applyMethodTrait(object, trait, scope, needsMemoizer, natives) {
   var runtime = this;
 
   release || assert (!trait.value);
@@ -1717,7 +1691,7 @@ function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
   var qn = Multiname.getQualifiedName(trait.name);
 
   if (needsMemoizer) {
-    release || assert(obj[VM_OPEN_METHODS]);
+    release || assert(object[VM_OPEN_METHODS]);
     if (trait.isMethod()) {
       // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
       // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
@@ -1740,27 +1714,27 @@ function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
       }, trait.methodInfo.parameters.length);
 
       memoizerTarget.value = trampoline;
-      var openMethods = obj[VM_OPEN_METHODS];
+      var openMethods = object[VM_OPEN_METHODS];
       openMethods[qn] = trampoline;
-      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
+      defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
 
       // TODO: We make the |memoizeMethodClosure| configurable since it may be
       // overridden by a derived class. Only do this non final classes.
 
-      defineNonEnumerableGetter(obj, qn, makeMemoizer(qn, memoizerTarget));
+      defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
 
       trampoline.patchTargets = [
         { object: memoizerTarget, name: "value"},
         { object: openMethods,    name: qn },
-        { object: obj,            name: VM_OPEN_METHOD_PREFIX + qn }
+        { object: object,            name: VM_OPEN_METHOD_PREFIX + qn }
       ];
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = runtime.getTraitFunction(trait, scope, natives);
-        defineNonEnumerableGetterOrSetter(obj, qn, fn, trait.isGetter());
+        defineNonEnumerableGetterOrSetter(object, qn, fn, trait.isGetter());
         return fn;
       });
-      defineNonEnumerableGetterOrSetter(obj, qn, trampoline, trait.isGetter());
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
       // obj[VM_OPEN_METHODS][qn] = trampoline;
       // defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
     }
@@ -1768,22 +1742,22 @@ function applyMethodTrait(obj, trait, scope, needsMemoizer, natives) {
     if (trait.isMethod()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = runtime.getTraitFunction(trait, scope, natives);
-        defineReadOnlyProperty(obj, qn, fn);
-        defineReadOnlyProperty(obj, VM_OPEN_METHOD_PREFIX + qn, fn);
+        defineReadOnlyProperty(object, qn, fn);
+        defineReadOnlyProperty(object, VM_OPEN_METHOD_PREFIX + qn, fn);
         return fn;
       }, trait.methodInfo.parameters.length);
-      var closure = safeBind(trampoline, obj);
+      var closure = safeBind(trampoline, object);
       defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
       defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
-      defineNonEnumerableProperty(obj, qn, closure);
-      defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, closure);
+      defineNonEnumerableProperty(object, qn, closure);
+      defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, closure);
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = runtime.getTraitFunction(trait, scope, natives);
-        defineNonEnumerableGetterOrSetter(obj, qn, fn, trait.isGetter());
+        defineNonEnumerableGetterOrSetter(object, qn, fn, trait.isGetter());
         return fn;
       });
-      defineNonEnumerableGetterOrSetter(obj, qn, trampoline, trait.isGetter());
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
     }
   }
 }
@@ -1875,7 +1849,7 @@ function createInterface(classInfo) {
   return new Interface(classInfo);
 }
 
-function applyProtectedBindings(domain, obj, cls) {
+function applyProtectedBindings(domain, object, cls) {
   // Deal with the protected namespace bullshit. In AS3, if you have the following code:
   //
   // class A {
@@ -1925,8 +1899,8 @@ function applyProtectedBindings(domain, obj, cls) {
     }
   })(cls);
 
-  var openMethods = obj[VM_OPEN_METHODS];
-  var vmBindings = obj[VM_BINDINGS];
+  var openMethods = object[VM_OPEN_METHODS];
+  var vmBindings = object[VM_BINDINGS];
   for (var name in map) {
     var definingNamespace = map[name].definingNamespace;
     var protectedQn = Multiname.getQualifiedName(new Multiname([definingNamespace], name));
@@ -1936,13 +1910,13 @@ function applyProtectedBindings(domain, obj, cls) {
       var qn = Multiname.getQualifiedName(new Multiname([namespaces[i]], name));
       if (qn !== protectedQn) {
         Counter.count("Protected Aliases");
-        defineNonEnumerableGetter(obj, qn, makeForwardingGetter(protectedQn));
-        defineNonEnumerableSetter(obj, qn, makeForwardingSetter(protectedQn));
+        defineNonEnumerableGetter(object, qn, makeForwardingGetter(protectedQn));
+        defineNonEnumerableSetter(object, qn, makeForwardingSetter(protectedQn));
         vmBindings.push(qn);
         if (trait.isMethod()) {
           var openMethod = openMethods[protectedQn];
           assert (openMethod);
-          defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, openMethod);
+          defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, openMethod);
           openMethods[qn] = openMethod;
         }
       }
@@ -1950,7 +1924,7 @@ function applyProtectedBindings(domain, obj, cls) {
   }
 }
 
-function applyInterfaceBindings(domain, obj, cls) {
+function applyInterfaceBindings(domain, object, cls) {
   var implementedInterfaces = cls.implementedInterfaces = createEmptyObject();
 
   // Apply interface traits recursively.
@@ -2005,7 +1979,7 @@ function applyInterfaceBindings(domain, obj, cls) {
           }
         }(interfaceTraitBindingQn);
         Counter.count("Interface Aliases");
-        defineNonEnumerableGetter(obj, interfaceTraitQn, getter);
+        defineNonEnumerableGetter(object, interfaceTraitQn, getter);
       }
     }
   }
@@ -2021,15 +1995,15 @@ function applyInterfaceBindings(domain, obj, cls) {
  * initializer throws a |ReferenceError| exception. To emulate this behaviour in JavaScript,
  * we "seal" constant traits properties by replacing them with setters that throw exceptions.
  */
-function sealConstantTraits(obj, traits) {
+function sealConstantTraits(object, traits) {
   var rt = this;
   for (var i = 0, j = traits.length; i < j; i++) {
     var trait = traits[i];
     if (trait.isConst()) {
       var qn = Multiname.getQualifiedName(trait.name);
-      var value = obj[qn];
+      var value = object[qn];
       (function (qn, value) {
-        Object.defineProperty(obj, qn, { configurable: false, enumerable: false,
+        Object.defineProperty(object, qn, { configurable: false, enumerable: false,
           get: function () {
             return value;
           },
@@ -2088,7 +2062,7 @@ function notifyConstruct(domain, instanceConstructor, args) {
 }
 
 
-/**
+/*
  * Memoizers and Trampolines:
  * ==========================
  *
