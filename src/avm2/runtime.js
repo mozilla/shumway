@@ -1157,9 +1157,9 @@ function isMemoizer(fn) {
 /**
  * Scope object backing for catch blocks.
  */
-function CatchScopeObject(runtime, trait) {
+function CatchScopeObject(domain, trait) {
   if (trait) {
-    runtime.applyCatchTrait(this, new Scope(null, this), trait);
+    applyCatchTrait(domain, this, new Scope(null, this), trait);
   }
 }
 
@@ -1512,7 +1512,7 @@ function ensureFunctionIsInitialized(methodInfo) {
         varTrait.name = handler.varName;
         varTrait.typeName = handler.typeName;
         varTrait.holder = mi;
-        handler.scopeObject = new CatchScopeObject(this, varTrait);
+        handler.scopeObject = new CatchScopeObject(mi.abc.domain, varTrait);
       } else {
         handler.scopeObject = new CatchScopeObject();
       }
@@ -1827,8 +1827,8 @@ function createClass(classInfo, baseClass, scope) {
   var cls = Class.createClass(classInfo, baseClass, scope);
 
   if (cls.instanceConstructor) {
-    applyProtectedBindings(cls.traitsPrototype, cls);
-    applyInterfaceBindings(cls.traitsPrototype, cls);
+    applyProtectedBindings(domain, cls.traitsPrototype, cls);
+    applyInterfaceBindings(domain, cls.traitsPrototype, cls);
   }
 
   // Notify domain of class creation.
@@ -1875,7 +1875,7 @@ function createInterface(classInfo) {
   return new Interface(classInfo);
 }
 
-function applyProtectedBindings(obj, cls) {
+function applyProtectedBindings(domain, obj, cls) {
   // Deal with the protected namespace bullshit. In AS3, if you have the following code:
   //
   // class A {
@@ -1950,9 +1950,7 @@ function applyProtectedBindings(obj, cls) {
   }
 }
 
-function applyInterfaceBindings(obj, cls) {
-  var domain = this.domain;
-
+function applyInterfaceBindings(domain, obj, cls) {
   var implementedInterfaces = cls.implementedInterfaces = createEmptyObject();
 
   // Apply interface traits recursively.
@@ -2089,121 +2087,103 @@ function notifyConstruct(domain, instanceConstructor, args) {
   return domain.vm.notifyConstruct(instanceConstructor, args);
 }
 
+
 /**
- * Execution context for an ABC.
+ * Memoizers and Trampolines:
+ * ==========================
+ *
+ * In ActionScript 3 the following code creates a method closure for function |m|:
+ *
+ * class A {
+ *   function m() { }
+ * }
+ *
+ * var a = new A();
+ * var x = a.m;
+ *
+ * Here |x| is a method closure for |m| whose |this| pointer is bound to |a|. We want method closures to be
+ * created transparently whenever the |m| property is read from |a|. To do this, we install a memoizing
+ * getter in the instance prototype that sets the |m| property of the instance object to a bound method closure:
+ *
+ * Ma = A.instance.prototype.m = function memoizer() {
+ *   this.m = m.bind(this);
+ * }
+ *
+ * var a = new A();
+ * var x = a.m; // |a.m| calls the memoizer which in turn patches |a.m| to |m.bind(this)|
+ * x = a.m; // |a.m| is already a method closure
+ *
+ * However, this design causes problems for method calls. For instance, we don't want the call expression |a.m()|
+ * to be interpreted as |(a.m)()| which creates method closures every time a method is called on a new object.
+ * Luckily, method call expressions such as |a.m()| are usually compiled as |callProperty(a, m)| by ASC and
+ * lets us determine at compile time whenever a method closure needs to be created. In order to prevent the
+ * method closure from being created by the memoizer we install the original |m| in the instance prototype
+ * as well, but under a different name |m'|. Whenever we want to avoid creating a method closure, we just
+ * access the |m'| property on the object. The expression |a.m()| is compiled by Shumway to |a.m'()|.
+ *
+ * Memoizers are installed whenever traits are applied which happens when a class is created. At this point
+ * we don't actually have the function |m| available, it hasn't been compiled yet. We only want to compile the
+ * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
+ * trampoline that compiles |m| before executing it.
+ *
+ * Tm = function trampoline() {
+ *   return compile(m).apply(this, arguments);
+ * }
+ *
+ * Of course we don't want to recompile |m| every time it is called. We can optimize the trampoline a bit
+ * so that it keeps track of repeated executions:
+ *
+ * Tm = function trampolineContext() {
+ *   var c;
+ *   return function () {
+ *     if (!c) {
+ *       c = compile(m);
+ *     }
+ *     return c.apply(this, arguments);
+ *   }
+ * }();
+ *
+ * This is not good enough, we want to prevent repeated executions as much as possible. The way to fix this is
+ * to patch the instance prototype to point to the compiled version instead, so that the trampoline doesn't get
+ * called again.
+ *
+ * Tm = function trampolineContext() {
+ *   var c;
+ *   return function () {
+ *     if (!c) {
+ *       A.instance.prototype.m = c = compile(m);
+ *     }
+ *     return c.apply(this, arguments);
+ *   }
+ * }();
+ *
+ * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
+ * could have leaked somewhere.
+ *
+ * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
+ * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
+ * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
+ *
+ * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
+ * instance of |B|.
+ *
+ * class B extends A { }
+ *
+ * var b = new B();
+ * b.m();
+ *
+ * At first class |A| has a memoizer for |m| and a trampoline for |m'|. If we never call |m| on an instance of |A|
+ * then the trampoline is not resolved to a function. When we create class |B| we copy over all the traits in the
+ * |A.instance.prototype| to |B.instance.prototype| including the memoizers and trampolines. If we call |m| on an
+ * instance of |B| then we're going through a memoizer which will be patched to |Fm| by the trampoline and will
+ * be reflected in the entire inheritance hierarchy. The problem is when calling |b.m'()| which currently holds
+ * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
+ *
+ * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
+ * locations in the trampoline function object themselves.
+ *
  */
-var Runtime = (function () {
 
-  function runtime(abc) {
-    this.abc = abc;
-    this.domain = abc.domain;
-
-
-  }
-
-
-
-
-  /**
-   * Memoizers and Trampolines:
-   * ==========================
-   *
-   * In ActionScript 3 the following code creates a method closure for function |m|:
-   *
-   * class A {
-   *   function m() { }
-   * }
-   *
-   * var a = new A();
-   * var x = a.m;
-   *
-   * Here |x| is a method closure for |m| whose |this| pointer is bound to |a|. We want method closures to be
-   * created transparently whenever the |m| property is read from |a|. To do this, we install a memoizing
-   * getter in the instance prototype that sets the |m| property of the instance object to a bound method closure:
-   *
-   * Ma = A.instance.prototype.m = function memoizer() {
-   *   this.m = m.bind(this);
-   * }
-   *
-   * var a = new A();
-   * var x = a.m; // |a.m| calls the memoizer which in turn patches |a.m| to |m.bind(this)|
-   * x = a.m; // |a.m| is already a method closure
-   *
-   * However, this design causes problems for method calls. For instance, we don't want the call expression |a.m()|
-   * to be interpreted as |(a.m)()| which creates method closures every time a method is called on a new object.
-   * Luckily, method call expressions such as |a.m()| are usually compiled as |callProperty(a, m)| by ASC and
-   * lets us determine at compile time whenever a method closure needs to be created. In order to prevent the
-   * method closure from being created by the memoizer we install the original |m| in the instance prototype
-   * as well, but under a different name |m'|. Whenever we want to avoid creating a method closure, we just
-   * access the |m'| property on the object. The expression |a.m()| is compiled by Shumway to |a.m'()|.
-   *
-   * Memoizers are installed whenever traits are applied which happens when a class is created. At this point
-   * we don't actually have the function |m| available, it hasn't been compiled yet. We only want to compile the
-   * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
-   * trampoline that compiles |m| before executing it.
-   *
-   * Tm = function trampoline() {
-   *   return compile(m).apply(this, arguments);
-   * }
-   *
-   * Of course we don't want to recompile |m| every time it is called. We can optimize the trampoline a bit
-   * so that it keeps track of repeated executions:
-   *
-   * Tm = function trampolineContext() {
-   *   var c;
-   *   return function () {
-   *     if (!c) {
-   *       c = compile(m);
-   *     }
-   *     return c.apply(this, arguments);
-   *   }
-   * }();
-   *
-   * This is not good enough, we want to prevent repeated executions as much as possible. The way to fix this is
-   * to patch the instance prototype to point to the compiled version instead, so that the trampoline doesn't get
-   * called again.
-   *
-   * Tm = function trampolineContext() {
-   *   var c;
-   *   return function () {
-   *     if (!c) {
-   *       A.instance.prototype.m = c = compile(m);
-   *     }
-   *     return c.apply(this, arguments);
-   *   }
-   * }();
-   *
-   * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
-   * could have leaked somewhere.
-   *
-   * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
-   * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
-   * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
-   *
-   * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
-   * instance of |B|.
-   *
-   * class B extends A { }
-   *
-   * var b = new B();
-   * b.m();
-   *
-   * At first class |A| has a memoizer for |m| and a trampoline for |m'|. If we never call |m| on an instance of |A|
-   * then the trampoline is not resolved to a function. When we create class |B| we copy over all the traits in the
-   * |A.instance.prototype| to |B.instance.prototype| including the memoizers and trampolines. If we call |m| on an
-   * instance of |B| then we're going through a memoizer which will be patched to |Fm| by the trampoline and will
-   * be reflected in the entire inheritance hierarchy. The problem is when calling |b.m'()| which currently holds
-   * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
-   *
-   * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
-   * locations in the trampoline function object themselves.
-   *
-   */
-
-
-
-  return runtime;
-})();
 
 /**
  * Inline caching is used to optimize property access. In AS3, the property access expression |o.p| may be compiled as

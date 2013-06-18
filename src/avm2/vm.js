@@ -61,13 +61,13 @@ var AVM2 = (function () {
   };
 
   // This is called from catch blocks.
-  avm2.unwindStackTo = function unwindStackTo(rt) {
-    var stack = avm2.stack;
-    var unwind = stack.length;
-    while (stack[unwind - 1] !== rt) {
+  avm2.unwindStackTo = function unwindStackTo(domain) {
+    var domainStack = avm2.domainStack;
+    var unwind = domainStack.length;
+    while (domainStack[unwind - 1] !== domain) {
       unwind--;
     }
-    stack.length = unwind;
+    domainStack.length = unwind;
   };
 
   /**

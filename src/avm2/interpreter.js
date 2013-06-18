@@ -682,13 +682,13 @@ var Interpreter = new ((function () {
             throw e;
           }
 
-          e = runtime.translateError(e);
+          e = translateError(domain, e);
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
                 domain.getProperty(handler.typeName, true, true).isInstance(e))) {
-              Runtime.unwindStackTo(runtime);
+              AVM2.unwindStackTo(domain);
               scope = savedScope;
               scopeHeight = 0;
               stack.length = 0;
