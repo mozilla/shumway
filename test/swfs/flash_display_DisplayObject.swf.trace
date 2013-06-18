@@ -10,4 +10,4 @@ get filters: filters.length=2
 set visible = false
 get visible: false
 (x=-50, y=-50, width=200, height=200)
-(x=29, y=-37, width=282, height=282)
+(x=-37, y=-55, width=111, height=112)
