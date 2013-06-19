@@ -44,6 +44,225 @@
  * D' - Base class dynamic prototype object.
  * T  - Traits prototype, class traits + base class traits.
  */
+
+var Traits = (function () {
+  function traits() {
+    this.map = createEmptyObject();
+  }
+  traits.prototype.trace = function trace(writer) {
+    for (var key in this.map) {
+      var value = this.map[key];
+      writer.writeLn(value.kindName() + ": " + key + " -> " + value);
+    }
+  };
+  return traits;
+})();
+
+var ClassTraits = (function () {
+  function classTraits(classInfo) {
+    Traits.call(this);
+
+    this.classInfo = classInfo;
+
+    function getKey(key, trait) {
+      if (trait.isGetter()) {
+        key = "get " + key;
+      } else if (trait.isSetter()) {
+        key = "set " + key;
+      }
+      return key;
+    }
+
+    /**
+     * Add class traits.
+     */
+    var traits = classInfo.traits;
+    for (var i = 0; i < traits.length; i++) {
+      var trait = traits[i];
+      var name = Multiname.getQualifiedName(trait.name);
+      var key = getKey(name, trait);
+      this.map[key] = trait;
+    }
+  }
+  classTraits.prototype = Object.create(Traits.prototype);
+  return classTraits;
+})();
+
+var InstanceTraits = (function () {
+  function instanceTraits(parent, instanceInfo) {
+    Traits.call(this);
+    this.parent = parent;
+    this.instanceInfo = instanceInfo;
+    this.interfaces = [];
+    extend.call(this, parent);
+  }
+
+  function extend(parent) {
+    var ii = this.instanceInfo, it;
+    var map = this.map;
+    var name, key, trait, protectedName, protectedKey;
+
+    function getKey(key, trait) {
+      if (trait.isGetter()) {
+        key = "get " + key;
+      } else if (trait.isSetter()) {
+        key = "set " + key;
+      }
+      return key;
+    }
+
+    /**
+     * Inherit parent traits.
+     */
+    if (parent) {
+      for (key in parent.map) {
+        trait = parent.map[key];
+        map[key] = trait;
+        if (trait.isProtected()) {
+          // Inherit protected trait also in the local protected namespace.
+          protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName()));
+          protectedKey = getKey(protectedName, trait);
+          map[protectedKey] = trait;
+        }
+      }
+    }
+
+    function writeOrOverwriteTrait(object, key, trait) {
+      var oldTrait = object[key];
+      if (oldTrait) {
+        assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
+        // TODO: Object.as has a trait named length, we need to remove this since
+        // it doesn't appear in Tamarin.
+        assert (trait.isOverride() || trait.name.getName() === "length",
+          "Overriding a trait that is not marked for override: ", trait);
+      } else {
+        assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
+      }
+      object[key] = trait;
+    }
+
+    function overwriteProtectedTrait(object, key, trait) {
+      if (key in object) {
+        object[key] = trait;
+      }
+    }
+
+    /**
+     * Add instance traits.
+     */
+    var traits = ii.traits;
+    for (var i = 0; i < traits.length; i++) {
+      trait = traits[i];
+      name = Multiname.getQualifiedName(trait.name);
+      key = getKey(name, trait);
+      writeOrOverwriteTrait(map, key, trait);
+      if (trait.isProtected()) {
+        // Overwrite protected traits.
+        it = this.parent;
+        while (it) {
+          protectedName = Multiname.getQualifiedName(new Multiname([it.instanceInfo.protectedNs], trait.name.getName()));
+          protectedKey = getKey(protectedName, trait);
+          overwriteProtectedTrait(map, protectedKey, trait);
+          it = it.parent;
+        }
+      }
+    }
+
+    /**
+     * Add interface traits.
+     */
+    if (!ii.isInterface()) {
+      var domain = ii.abc.domain;
+      var interfaces = ii.interfaces;
+      for (var i = 0; i < interfaces.length; i++) {
+        it = domain.getProperty(interfaces[i], true, true).instanceTraits;
+        for (var interfaceKey in it.map) {
+          var interfaceTrait = it.map[interfaceKey];
+          name = Multiname.getPublicQualifiedName(interfaceTrait.name.getName());
+          key = getKey(name, interfaceTrait);
+          map[interfaceKey] = map[key];
+        }
+      }
+    }
+  }
+  instanceTraits.prototype = Object.create(Traits.prototype);
+  instanceTraits.prototype.toString = function toString() {
+    return this.instanceInfo.toString();
+  };
+  return instanceTraits;
+})();
+
+var Interface = (function () {
+  function Interface(classInfo) {
+    var ii = classInfo.instanceInfo;
+    release || assert(ii.isInterface());
+    this.name = ii.name;
+    this.classInfo = classInfo;
+  }
+
+  Interface.createInterface = function createInterface(classInfo) {
+    var ii = classInfo.instanceInfo;
+    release || assert(ii.isInterface());
+    if (traceExecution.value) {
+      var str = "Creating Interface " + ii.name;
+      if (ii.interfaces.length) {
+        str += " implements " + ii.interfaces.map(function (name) {
+          return name.getName();
+        }).join(", ");
+      }
+      print(str);
+    }
+    var cls = new Interface(classInfo);
+    if (ii.interfaces.length) {
+      var domain = classInfo.abc.domain;
+      assert (ii.interfaces.length === 1);
+      var interface = domain.getProperty(ii.interfaces[0], true, true);
+      cls.instanceTraits = new InstanceTraits(interface.instanceTraits, ii);
+    } else {
+      cls.instanceTraits = new InstanceTraits(null, ii);
+    }
+    return cls;
+  };
+
+  Interface.prototype = {
+    toString: function () {
+      return "[interface " + this.name + "]";
+    },
+
+    isInstance: function (value) {
+      if (value === null || typeof value !== "object") {
+        return false;
+      }
+
+      release || assert(value.class.implementedInterfaces,
+        "No 'implementedInterfaces' map found on class " +
+          value.class);
+
+      var qualifiedName = Multiname.getQualifiedName(this.name);
+      return value.class.implementedInterfaces[qualifiedName] !== undefined;
+    },
+
+    trace: function trace(writer) {
+      writer.enter("interface " + this.name.getName());
+      writer.enter("instanceTraits: ");
+      this.instanceTraits.trace(writer);
+      writer.outdent();
+      writer.outdent();
+      writer.leave("}");
+    },
+
+    call: function (v) {
+      return v;
+    },
+
+    apply: function ($this, args) {
+      return args[0];
+    }
+  };
+
+  return Interface;
+})();
+
 var Class = (function () {
   var OWN_INITIALIZE   = 0x1;
   var SUPER_INITIALIZE = 0x2;
@@ -105,6 +324,8 @@ var Class = (function () {
     } else {
       cls.extend(baseClass);
     }
+    cls.classTraits = new ClassTraits(classInfo);
+    cls.instanceTraits = new InstanceTraits(baseClass ? baseClass.instanceTraits : null, ii);
     var baseBindings = baseClass ? baseClass.traitsPrototype : null;
     if (cls.instanceConstructor) {
       applyInstanceTraits(domain, cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
@@ -333,7 +554,7 @@ var Class = (function () {
 
     trace: function trace(writer) {
       var description = this.debugName + (this.baseClass ? " extends " + this.baseClass.debugName : "");
-      writer.enter(description + " {");
+      writer.enter("class " + description + " {");
       writer.writeLn("scope: " + this.scope);
       writer.writeLn("baseClass: " + this.baseClass);
       writer.writeLn("classInfo: " + this.classInfo);
@@ -353,14 +574,6 @@ var Class = (function () {
           return slot.trait;
         }));
         writer.outdent();
-
-        function debugName(value) {
-          if (isFunction(value)) {
-            return value.debugName;
-          }
-          return value;
-        }
-
 
         writer.enter("VM_BINDINGS: ");
         writer.writeArray(traitsPrototype[VM_BINDINGS].map(function (binding) {
@@ -386,8 +599,12 @@ var Class = (function () {
         }));
         writer.outdent();
 
-        writer.enter("VM_TRAITS: ");
-        traitsPrototype[VM_TRAITS].trace(writer);
+        writer.enter("classTraits: ");
+        this.classTraits.trace(writer);
+        writer.outdent();
+
+        writer.enter("instanceTraits: ");
+        this.instanceTraits.trace(writer);
         writer.outdent();
       }
 

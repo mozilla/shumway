@@ -355,7 +355,7 @@ var Domain = (function () {
 
     traceLoadedClasses: function (lastOnly) {
       var writer = new IndentingWriter();
-      lastOnly || writer.enter("Loaded Classes");
+      lastOnly || writer.enter("Loaded Classes And Interfaces");
       var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
       classes.forEach(function (cls) {
         if (cls !== Class) {

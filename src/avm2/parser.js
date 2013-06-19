@@ -289,15 +289,15 @@ var Trait = (function () {
     if (str) {
       str += " ";
     }
-    str += Multiname.getQualifiedName(this.name) + ", kind: " + this.kind;
+    str += Multiname.getQualifiedName(this.name);
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
-        return str + ", slotId: " + this.slotId + ", typeName: " + this.typeName + ", value: " + this.value;
+        return str + ", typeName: " + this.typeName + ", value: " + this.value;
       case TRAIT_Method:
       case TRAIT_Setter:
       case TRAIT_Getter:
-        return str + ", " + ["method", "getter", "setter"][this.kind - 1] + ": " + this.methodInfo + ", dispId: " + this.dispId;
+        return str + ", " + this.kindName() + ": " + this.methodInfo.name;
       case TRAIT_Class:
         return str + ", slotId: " + this.slotId + ", class: " + this.classInfo;
       case TRAIT_Function: // TODO

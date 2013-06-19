@@ -460,43 +460,6 @@ function Activation(methodInfo) {
   defineObjectShape(this);
 }
 
-var Interface = (function () {
-  function Interface(classInfo) {
-    var ii = classInfo.instanceInfo;
-    release || assert(ii.isInterface());
-    this.name = ii.name;
-    this.classInfo = classInfo;
-  }
-
-  Interface.prototype = {
-    toString: function () {
-      return "[interface " + this.name + "]";
-    },
-
-    isInstance: function (value) {
-      if (value === null || typeof value !== "object") {
-        return false;
-      }
-
-      release || assert(value.class.implementedInterfaces,
-                        "No 'implementedInterfaces' map found on class " +
-                            value.class);
-
-      var qualifiedName = Multiname.getQualifiedName(this.name);
-      return value.class.implementedInterfaces[qualifiedName] !== undefined;
-    },
-
-    call: function (v) {
-      return v;
-    },
-
-    apply: function ($this, args) {
-      return args[0];
-    }
-  };
-
-  return Interface;
-})();
 
 /**
  * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
@@ -703,12 +666,12 @@ var TraitsInfo = (function () {
       var traitQn = Multiname.getQualifiedName(trait.name);
       if (trait.isGetter() || trait.isSetter()) {
         if (!traits[traitQn]) {
-          traits[traitQn] = [undefined, undefined];
+          traits[traitQn] = {get: undefined, set: undefined};
         }
         if (trait.isGetter()) {
-          traits[traitQn][0] = trait;
+          traits[traitQn].get = trait;
         } else if (trait.isSetter()) {
-          traits[traitQn][1] = trait;
+          traits[traitQn].set = trait;
         }
       } else {
         traits[traitQn] = trait;
@@ -716,12 +679,15 @@ var TraitsInfo = (function () {
     }
   }
   traitsInfo.prototype.trace = function trace(writer) {
+    function nameOf(value) {
+      return value;
+    }
     for (var k in this.traits) {
       var value = this.traits[k];
-      if (value instanceof Array) {
-        writer.writeLn(k + ": [" + value[0] + ", " + value[1] + "]");
+      if (value instanceof Trait) {
+        writer.writeLn(value.kindName() + ": " + nameOf(value));
       } else {
-        writer.writeLn(k + ": " + value);
+        writer.writeLn("Getter / Setter: {" + nameOf(value.get) + ", " + nameOf(value.set) + "}");
       }
     }
   };
@@ -1211,6 +1177,13 @@ function createInterpretedFunction(methodInfo, scope, hasDynamicScope) {
 var totalFunctionCount = 0;
 var compiledFunctionCount = 0;
 
+function debugName(value) {
+  if (isFunction(value)) {
+    return value.debugName;
+  }
+  return value;
+}
+
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
   var mi = methodInfo;
   var parameters = mi.parameters.map(function (p) {
@@ -1546,12 +1519,6 @@ function makeQualifiedNameTraitMap(traits) {
  */
 function inheritBindings(object, base, traits) {
   if (!base) {
-    defineNonEnumerableProperty(object, VM_TRAITS, new TraitsInfo(null, traits));
-  } else {
-    defineNonEnumerableProperty(object, VM_TRAITS, new TraitsInfo(base[VM_TRAITS], traits));
-  }
-
-  if (!base) {
     defineNonEnumerableProperty(object, VM_BINDINGS, []);
     defineNonEnumerableProperty(object, VM_SLOTS, []);
     defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
@@ -1589,7 +1556,7 @@ function inheritBindings(object, base, traits) {
 function applyTraits(domain, object, scope, base, traits, natives, methodsNeedMemoizers) {
   assert (domain instanceof Domain, "domain is not a Domain object");
 
-  var traitsInfo = inheritBindings(object, base, traits);
+  inheritBindings(object, base, traits);
 
   // Go through each trait and apply it to the |object|.
 
@@ -1750,19 +1717,29 @@ function createClass(classInfo, baseClass, scope) {
 
   var ci = classInfo;
   var ii = ci.instanceInfo;
-
-  if (ii.isInterface()) {
-    return this.createInterface(classInfo);
-  }
-
   var domain = ci.abc.domain;
 
   var className = Multiname.getName(ii.name);
   if (traceExecution.value) {
-    print("Creating class " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
+    print("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
   }
 
-  var cls = Class.createClass(classInfo, baseClass, scope);
+  var cls;
+
+  if (ii.isInterface()) {
+    cls = Interface.createInterface(classInfo);
+  } else {
+    cls = Class.createClass(classInfo, baseClass, scope);
+  }
+
+  if (traceClasses.value) {
+    domain.loadedClasses.push(cls);
+    domain.traceLoadedClasses(true);
+  }
+
+  if (ii.isInterface()) {
+    return cls;
+  }
 
   if (cls.instanceConstructor) {
     applyProtectedBindings(domain, cls.traitsPrototype, cls);
@@ -1779,11 +1756,6 @@ function createClass(classInfo, baseClass, scope) {
   // TODO: Seal constant traits in the instance object. This should be done after
   // the instance constructor has executed.
 
-  if (traceClasses.value) {
-    domain.loadedClasses.push(cls);
-    domain.traceLoadedClasses(true);
-  }
-
   if (baseClass && Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
     // TODO: This is very hackish.
     installProxyClassWrapper(cls);
@@ -1796,21 +1768,6 @@ function createClass(classInfo, baseClass, scope) {
   compatibility && this.sealConstantTraits(cls, ci.traits);
 
   return cls;
-};
-
-function createInterface(classInfo) {
-  var ii = classInfo.instanceInfo;
-  release || assert(ii.isInterface());
-  if (traceExecution.value) {
-    var str = "Creating interface " + ii.name;
-    if (ii.interfaces.length) {
-      str += " implements " + ii.interfaces.map(function (name) {
-        return name.getName();
-      }).join(", ");
-    }
-    print(str);
-  }
-  return new Interface(classInfo);
 }
 
 function applyProtectedBindings(domain, object, cls) {
