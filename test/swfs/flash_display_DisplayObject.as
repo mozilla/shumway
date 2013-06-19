@@ -10,7 +10,7 @@ package {
 
     public class DisplayObjectTest extends Sprite {
         public function DisplayObjectTest() {
-            stage.frameRate = 4;
+            stage.frameRate = 20;
             var child:CustomDisplayObject = new CustomDisplayObject();
             addChild(child);
         }
@@ -154,16 +154,40 @@ class CustomDisplayObject extends Sprite {
                 container.x = 100;
                 container.y = 100;
                 container.rotation = -42;
-                var contents = new Shape;
-                contents.graphics.drawCircle(0, 0, 100);
-                contents.x = 50;
-                contents.y = 50;
-                contents.scaleX = -1;
-                // FIXME not compatible with Flash
-                // traceRoundedRect(contents.getBounds(container));
-                container.addChild(contents);
-                traceRoundedRect(contents.getBounds(container));
-                traceRoundedRect(contents.getBounds(target));
+                addChild(container);
+                var child = new Shape;
+                child.graphics.drawCircle(0, 0, 100);
+                child.x = 50;
+                child.y = 50;
+                child.scaleX = -1;
+                container.addChild(child);
+                var bounds = child.getBounds(container);
+                var result = 
+                    ~~bounds.x === -50 &&
+                    ~~bounds.y === -50 &&
+                    ~~bounds.width === 200 &&
+                    ~~bounds.height === 200 ? "PASS" : "FAIL";
+                traceRoundedRect(bounds);
+                trace(result + ": flash.display::DisplayObject/getBounds () [container]");
+
+                var bounds = child.getBounds(child);
+                var result =
+                    ~~bounds.x === -100 &&
+                    ~~bounds.y === -100 &&
+                    ~~bounds.width === 200 &&
+                    ~~bounds.height === 200 ? "PASS" : "FAIL";
+                traceRoundedRect(bounds);
+                trace(result + ": flash.display::DisplayObject/getBounds () [child]");
+
+                var bounds = child.getBounds(target);
+                var result =
+                    ~~bounds.x === 29 &&
+                    ~~bounds.y === -37 &&
+                    ~~bounds.width === 282 &&
+                    ~~bounds.height === 282 ? "PASS" : "FAIL";
+                traceRoundedRect(bounds);
+                trace(result + ": flash.display::DisplayObject/getBounds () [target, rotation]");
+
                 function traceRoundedRect(rect) {
                     trace('(' +
                         'x=' + ~~rect.x + ', ' +
@@ -173,10 +197,6 @@ class CustomDisplayObject extends Sprite {
                     ')');
                 }
             })();
-            // Expected output:
-            // (x=-144, y=-211, width=282, height=282)
-            // (x=-50, y=-50, width=200, height=200)
-            // (x=29, y=-37, width=282, height=282)
             break;
         default:
             removeEventListener("enterFrame", enterFrameHandler);
