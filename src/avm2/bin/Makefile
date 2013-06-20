@@ -52,11 +52,8 @@ test-all:
 	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
 
 test-regress:
-	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py reg
+	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py build-tests
 	$(TEST_CMD) -i ../tests/regress/correctness/pass/ -c icv
-
-test-perf:
-	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/performance/c4/basic.as
 	TEST_PATH=../tests/performance/c4/basic.abc make run-shu-cv
 
 run-avm:
