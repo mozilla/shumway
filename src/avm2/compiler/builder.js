@@ -742,14 +742,18 @@ var createName = function createName(namespaces, name) {
               return store(set);
             }
             if (object.ty && object.ty.isParameterizedType()) {
-              var coercer = getCoercerForType(object.ty.parameter);
-              if (coercer) {
-                value = coercer(value);
-                return store(new IR.SetProperty(region, state.store, object, name, value));
+              if (object.ty.parameter.isSubtypeOf(value.ty)) {
+                return store(set);
+              } else {
+                var coercer = getCoercerForType(object.ty.parameter);
+                if (coercer) {
+                  value = coercer(value);
+                  return store(new IR.SetProperty(region, state.store, object, name, value));
+                }
               }
-            }
-            if (object.ty && object.ty.isDirectlyIndexable()) {
-              return store(set);
+              if (object.ty && object.ty.isDirectlyIndexable()) {
+                return store(set);
+              }
             }
             store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
             return;

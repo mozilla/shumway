@@ -184,7 +184,7 @@ package {
 
   (function () {
     var s = 0;
-    for (var i = 0; i < 10000000; i++) {
+    for (var i = 0; i < 5000000; i++) {
       s += -Number.MAX_VALUE;
       s += Number.MAX_VALUE;
       s += Math.abs(i);
@@ -208,7 +208,7 @@ package {
       s += (new D(2, 3)).foobar;
       s += (new D(2, 3)).y;
     }
-    clockUnder(500, "Object Allocation with property access");
+    clockUnder(500, "Object allocation with property access");
     return s;
   })();
 

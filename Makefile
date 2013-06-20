@@ -81,6 +81,7 @@ test-avm1:
 
 test-avm2:
 	make -C src/avm2/bin/ test-regress
+#	make -C src/avm2/bin/ test-perf
 
 reftest:
 	make -C test/ reftest
