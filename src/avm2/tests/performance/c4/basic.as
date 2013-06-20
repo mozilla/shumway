@@ -15,6 +15,7 @@ package {
   }
 
   var K = 1024;
+  var K2 = 1024 * 128;
 
   var JS_FAST = 200;
   var AS_FAST = JS_FAST * 5;
@@ -22,7 +23,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K * K;
+    var COUNT = 1 * K2;
     for (var i = 0; i < COUNT; i++) {
       s = s + i;
       s = s + i;
@@ -45,8 +46,20 @@ package {
 
   (function () {
     var s = "";
-    var COUNT = 1 * K * K;
+    var COUNT = 1 * K2;
     for (var i = 0; i < COUNT; i++) {
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
+      s = s + i;
       s = s + i;
     }
     trace(s.length);
@@ -208,7 +221,7 @@ package {
       s += (new D(2, 3)).foobar;
       s += (new D(2, 3)).y;
     }
-    clockUnder(500, "Object allocation with property access");
+    clockUnder(1000, "Object allocation with property access");
     return s;
   })();
 

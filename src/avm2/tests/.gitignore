@@ -1,6 +1,7 @@
 abc/
 tamarin/
 acceptance/
+performance/*/*.abc
 regress/*/*.abc
 regress/*/*/*.abc
 hello-world.abc

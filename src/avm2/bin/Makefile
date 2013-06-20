@@ -54,7 +54,8 @@ test-all:
 test-regress:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py build-tests
 	$(TEST_CMD) -i ../tests/regress/correctness/pass/ -c icv
-	TEST_PATH=../tests/performance/c4/basic.abc make run-shu-cv
+	$(TEST_CMD) -i ../tests/performance/c4/basic.abc -c v
+	echo "SUCCESS: ALL AVM2 TESTS PASSED"
 
 run-avm:
 	$(AVM) $(TEST_PATH)
