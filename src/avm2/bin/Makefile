@@ -55,6 +55,10 @@ test-regress:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py reg
 	$(TEST_CMD) -i ../tests/regress/correctness/pass/ -c icv
 
+test-perf:
+	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/performance/c4/basic.as
+	TEST_PATH=../tests/performance/c4/basic.abc make run-shu-cv
+
 run-avm:
 	$(AVM) $(TEST_PATH)
 
