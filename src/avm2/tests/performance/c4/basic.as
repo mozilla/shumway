@@ -4,7 +4,7 @@ package {
   function clockUnder(max, name) {
     var elapsed = new Date() - last;
     // Keep this disabled when committing this file.
-    var elapsedSuffix = true ? " (" + elapsed + ")" : "";
+    var elapsedSuffix = false ? " (" + elapsed + ")" : "";
     var nameSuffix = name ? ": " + name : "";
     if (elapsed > max) {
       trace("FAIL: > " + max + " ms" + elapsedSuffix + nameSuffix);
@@ -184,7 +184,7 @@ package {
 
   (function () {
     var s = 0;
-    for (var i = 0; i < 4000000; i++) {
+    for (var i = 0; i < 1000000; i++) {
       s += -Number.MAX_VALUE;
       s += Number.MAX_VALUE;
       s += Math.abs(i);
