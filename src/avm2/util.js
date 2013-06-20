@@ -84,15 +84,11 @@ function unexpected(message) {
 }
 
 function makeForwardingGetter(target) {
-  return function () {
-    return this[target];
-  }
+  return new Function("return this[\"" + target + "\"]");
 }
 
 function makeForwardingSetter(target) {
-  return function (value) {
-    this[target] = value;
-  }
+  return new Function("value", "this[\"" + target + "\"] = value;");
 }
 
 function defineReadOnlyProperty(obj, name, value) {
