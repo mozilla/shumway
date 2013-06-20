@@ -604,8 +604,9 @@ function renderStage(stage, ctx, events) {
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
       }
 
-      if (refreshStage) {
-        stage._dispatchEvent(new flash.events.Event("render"));
+      if (stage._deferRenderEvent) {
+        stage._deferRenderEvent = false;
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("render"));
       }
 
       if (refreshStage || renderFrame) {
