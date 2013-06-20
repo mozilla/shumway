@@ -330,7 +330,7 @@ function renderStage(stage, ctx, events) {
 
       var parent = child._parent;
       var pt = { x: parent._mouseX, y: parent._mouseY };
-      child._applyCurrentInverseTransform(pt, parent);
+      child._applyCurrentInverseTransform(pt, true);
 
       if (pt.x !== child._mouseX || pt.y !== child._mouseY) {
         mouseMoved = true;

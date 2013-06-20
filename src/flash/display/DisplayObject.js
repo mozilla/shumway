@@ -163,8 +163,8 @@ var DisplayObjectDefinition = (function () {
       }
       this._dispatchEvent(e);
     },
-    _applyCurrentInverseTransform: function (point) {
-      if (this._parent && this._parent !== this._stage)
+    _applyCurrentInverseTransform: function (point, immediate) {
+      if (this._parent && this._parent !== this._stage && !immediate)
         this._parent._applyCurrentInverseTransform(point);
 
       var m = this._currentTransform;
