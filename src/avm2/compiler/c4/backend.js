@@ -124,7 +124,7 @@
     } else if (typeof value === "number") {
       return new Literal(value);
     } else {
-      unexpected("Cannot emit constant for value: " + value);
+      unexpected("Cannot emit constant for value: ", value);
     }
   }
 
@@ -390,14 +390,14 @@
 
   function compileValue(value, cx, noVariable) {
     assert (value);
-    assert (value.compile, "Implement |compile| for " + value + " (" + value.nodeName + ")");
+    assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
     assert (cx instanceof Context);
     assert (!isArray(value));
     if (noVariable || !value.variable) {
       var node = value.compile(cx);
       return node;
     }
-    assert (value.variable, "Value has no variable: " + value);
+    assert (value.variable, "Value has no variable: ", value);
     return id(value.variable.name);
   }
 

@@ -92,7 +92,10 @@ function defineObjectShape(object) {
 /**
  * We use this to give functions unique IDs to help with debugging.
  */
-var vmNextFunctionId = 1;
+var vmNextInterpreterFunctionId = 1;
+var vmNextCompiledFunctionId = 1;
+var vmNextTrampolineId = 1;
+var vmNextMemoizerId = 1;
 
 var InlineCache = (function () {
   function inlineCache () {
@@ -843,7 +846,7 @@ function getSuper(scope, object, mn) {
       if (openMethod) {
         value = object[superName + " " + qn];
         if (!value) {
-          value = object[superName + " " + qn] = safeBind(openMethod, object);
+          value = object[superName + " " + qn] = bindSafely(openMethod, object);
         }
       } else {
         var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
@@ -1074,7 +1077,9 @@ var Global = (function () {
   function Global(script) {
     this.scriptInfo = script;
     script.global = this;
-    applyScriptTraits(script.abc.domain, this, new Scope(null, this), script.traits);
+    script.scriptTraits = new ScriptTraits(script);
+    script.scriptTraits.applyTo(script.abc.domain, this, new Scope(null, this));
+    // applyScriptTraits(script.abc.domain, this, new Scope(null, this), script.traits);
     script.loaded = true;
     defineObjectShape(this);
   }
@@ -1170,7 +1175,7 @@ function createInterpretedFunction(methodInfo, scope, hasDynamicScope) {
     };
   }
   fn.instanceConstructor = fn;
-  fn.debugName = "Interpreter Function #" + vmNextFunctionId++;
+  fn.debugName = "Interpreter Function #" + vmNextInterpreterFunctionId++;
   return fn;
 }
 
@@ -1236,7 +1241,7 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) 
   // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
   // mi.freeMethod = new Function(parameters, body);
   var fn = new Function("return " + fnSource)();
-  fn.debugName = "Compiled Function #" + vmNextFunctionId++;
+  fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
   return fn;
 }
 
@@ -1281,7 +1286,7 @@ function makeTrampoline(forward, parameterLength) {
       }
     };
     trampoline.isTrampoline = true;
-    trampoline.debugName = "Trampoline #" + vmNextFunctionId++;
+    trampoline.debugName = "Trampoline #" + vmNextTrampolineId++;
     // Make sure that the length property of the trampoline matches the trait's number of
     // parameters. However, since we can't redefine the |length| property of a function,
     // we define a new hidden |VM_LENGTH| property to store this value.
@@ -1299,7 +1304,7 @@ function makeMemoizer(qn, target) {
     }
     if (isNativePrototype(this)) {
       Counter.count("Runtime: Method Closures");
-      return safeBind(target.value, this);
+      return bindSafely(target.value, this);
     }
     if (isTrampoline(target.value)) {
       // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
@@ -1311,7 +1316,7 @@ function makeMemoizer(qn, target) {
     var mc = null;
     if (isClass(this)) {
       Counter.count("Runtime: Static Method Closures");
-      mc = safeBind(target.value, this);
+      mc = bindSafely(target.value, this);
       defineReadOnlyProperty(this, qn, mc);
       return mc;
     }
@@ -1319,19 +1324,19 @@ function makeMemoizer(qn, target) {
       var pd = Object.getOwnPropertyDescriptor(this, qn);
       if (pd.get) {
         Counter.count("Runtime: Method Closures");
-        return safeBind(target.value, this);
+        return bindSafely(target.value, this);
       }
       Counter.count("Runtime: Unpatched Memoizer");
       return this[qn];
     }
-    mc = safeBind(target.value, this);
+    mc = bindSafely(target.value, this);
     defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
     defineReadOnlyProperty(this, qn, mc);
     return mc;
   }
   Counter.count("Runtime: Memoizers");
   memoizer.isMemoizer = true;
-  memoizer.debugName = "Memoizer #" + vmNextFunctionId++;
+  memoizer.debugName = "Memoizer #" + vmNextMemoizerId++;
   return memoizer;
 }
 
@@ -1409,8 +1414,9 @@ function ensureFunctionIsInitialized(methodInfo) {
   if (!mi.analysis) {
     mi.analysis = new Analysis(mi);
 
-    if (mi.traits) {
-      mi.activationPrototype = applyActivationTraits(mi.abc.domain, new Activation(mi), mi.traits);
+    if (mi.needsActivation()) {
+      mi.activationPrototype = new Activation(mi);
+      new ActivationTraits(mi).applyTo(mi.abc.domain, mi.activationPrototype);
     }
 
     // If we have exceptions, make the catch scopes now.
@@ -1489,14 +1495,6 @@ function applyCatchTrait(domain, object, scope, trait) {
   return applyTraits(domain, object, scope, null, [trait], null, false);
 }
 
-function applyScriptTraits(domain, object, scope, traits) {
-  return applyTraits(domain, object, scope, null, traits, null, false);
-}
-
-function applyActivationTraits(domain, object, traits) {
-  return applyTraits(domain, object, null, null, traits, null, false);
-}
-
 function applyInstanceTraits(domain, object, scope, base, traits, natives) {
   return applyTraits(domain, object, scope, base, traits, natives, true);
 }
@@ -1551,6 +1549,71 @@ function inheritBindings(object, base, traits) {
   }
 
   return;
+}
+
+function applyTraits2(domain, object, scope, base, traits, natives, methodsNeedMemoizers) {
+  assert (domain instanceof Domain, "domain is not a Domain object");
+
+  // inheritBindings(object, base, traits);
+
+  defineNonEnumerableProperty(object, VM_BINDINGS, []);
+  defineNonEnumerableProperty(object, VM_SLOTS, []);
+  defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
+
+  // Go through each trait and apply it to the |object|.
+
+  var baseSlotId = object[VM_SLOTS].length;
+  var nextSlotId = baseSlotId + 1;
+
+  for (var i = 0; i < traits.length; i++) {
+    var trait = traits[i];
+    var qn = Multiname.getQualifiedName(trait.name);
+    if (trait.isSlot() || trait.isConst() || trait.isClass()) {
+      if (!trait.slotId) {
+        trait.slotId = nextSlotId++;
+      }
+
+      if (trait.slotId < baseSlotId) {
+        // XXX: Hope we don't throw while doing builtins.
+        release || assert(false);
+        this.throwErrorFromVM("VerifyError", "Bad slot ID.");
+      }
+
+      if (trait.isClass()) {
+        if (trait.metadata && trait.metadata.native && domain.allowNatives) {
+          trait.classInfo.native = trait.metadata.native;
+        }
+      }
+
+      var defaultValue = undefined;
+      if (trait.isSlot() || trait.isConst()) {
+        if (trait.hasDefaultValue) {
+          defaultValue = trait.value;
+        } else if (trait.typeName) {
+          defaultValue = domain.findClassInfo(trait.typeName).defaultValue;
+        }
+      }
+      defineNonEnumerableProperty(object, qn, defaultValue);
+      object[VM_SLOTS][trait.slotId] = {
+        name: qn,
+        const: trait.isConst(),
+        type: trait.typeName ? domain.getProperty(trait.typeName, false, false) : null,
+        trait: trait
+      };
+    } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+      applyMethodTrait(object, trait, scope, methodsNeedMemoizers, natives);
+    } else {
+      release || unexpected(trait);
+    }
+
+    object[VM_BINDINGS].pushUnique(qn);
+
+    if (traceExecution.value >= 3) {
+      print("Applied Trait: " + trait + " " + qn);
+    }
+  }
+
+  return object;
 }
 
 function applyTraits(domain, object, scope, base, traits, natives, methodsNeedMemoizers) {
@@ -1657,11 +1720,11 @@ function applyMethodTrait(object, trait, scope, needsMemoizer, natives) {
       trampoline.patchTargets = [
         { object: memoizerTarget, name: "value"},
         { object: openMethods,    name: qn },
-        { object: object,            name: VM_OPEN_METHOD_PREFIX + qn }
+        { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
       ];
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
-        var fn = runtime.getTraitFunction(trait, scope, natives);
+        var fn = getTraitFunction(trait, scope, natives);
         defineNonEnumerableGetterOrSetter(object, qn, fn, trait.isGetter());
         return fn;
       });
@@ -1670,21 +1733,22 @@ function applyMethodTrait(object, trait, scope, needsMemoizer, natives) {
       // defineNonEnumerableProperty(obj, VM_OPEN_METHOD_PREFIX + qn, trampoline);
     }
   } else {
+    // unexpected();
     if (trait.isMethod()) {
       var trampoline = makeTrampoline(function (self) {
-        var fn = runtime.getTraitFunction(trait, scope, natives);
+        var fn = getTraitFunction(trait, scope, natives);
         defineReadOnlyProperty(object, qn, fn);
         defineReadOnlyProperty(object, VM_OPEN_METHOD_PREFIX + qn, fn);
         return fn;
       }, trait.methodInfo.parameters.length);
-      var closure = safeBind(trampoline, object);
+      var closure = bindSafely(trampoline, object);
       defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
       defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
       defineNonEnumerableProperty(object, qn, closure);
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, closure);
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
-        var fn = runtime.getTraitFunction(trait, scope, natives);
+        var fn = getTraitFunction(trait, scope, natives);
         defineNonEnumerableGetterOrSetter(object, qn, fn, trait.isGetter());
         return fn;
       });

@@ -293,7 +293,7 @@ var Trait = (function () {
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
-        return str + ", typeName: " + this.typeName + ", value: " + this.value;
+        return str + ", typeName: " + this.typeName + ", slotId: " + this.slotId + ", value: " + this.value;
       case TRAIT_Method:
       case TRAIT_Setter:
       case TRAIT_Getter:

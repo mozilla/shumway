@@ -101,7 +101,7 @@ function defineReadOnlyProperty(obj, name, value) {
 /**
  * Makes sure you never re-bind a method.
  */
-function safeBind(fn, obj) {
+function bindSafely(fn, obj) {
   assert (!fn.boundTo && obj);
   var f = fn.bind(obj);
   f.boundTo = obj;
@@ -159,6 +159,21 @@ function defineNonEnumerableProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+function defineNonEnumerableForwardingProperty(obj, name, otherName) {
+  Object.defineProperty(obj, name, {
+    get: makeForwardingGetter(otherName),
+    set: makeForwardingSetter(otherName),
+    writable: true,
+    configurable: true,
+    enumerable: false
+  });
+}
+
+function defineNewNonEnumerableProperty(obj, name, value) {
+  assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
+  defineNonEnumerableProperty(obj, name, value);
+}
+
 function isNullOrUndefined(value) {
   return value == undefined;
 }
@@ -184,6 +199,10 @@ function clamp(x, min, max) {
     return max;
   }
   return x;
+}
+
+function hasOwnProperty(object, name) {
+  return Object.prototype.hasOwnProperty.call(object, name);
 }
 
 /**
@@ -955,10 +974,26 @@ var IndentingWriter = (function () {
     }
   };
 
-  indentingWriter.prototype.debugLn = function writeLn(str) {
+  indentingWriter.prototype.debugLn = function debugLn(str) {
+    this.colorLn(PURPLE, str);
+  };
+
+  indentingWriter.prototype.yellowLn = function yellowLn(str) {
+    this.colorLn(YELLOW, str);
+  };
+
+  indentingWriter.prototype.greenLn = function greenLn(str) {
+    this.colorLn(GREEN, str);
+  };
+
+  indentingWriter.prototype.redLn = function redLn(str) {
+    this.colorLn(RED, str);
+  };
+
+  indentingWriter.prototype.colorLn = function writeLn(color, str) {
     if (!this.suppressOutput) {
       if (!inBrowser) {
-        this.out(this.padding + PURPLE + str + ENDC);
+        this.out(this.padding + color + str + ENDC);
       } else {
         this.out(this.padding + str);
       }

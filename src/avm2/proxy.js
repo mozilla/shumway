@@ -111,7 +111,7 @@ function installProxyClassWrapper(cls) {
           }
         }
         if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
-          return safeBind(target[VM_OPEN_METHODS][qn], o);
+          return bindSafely(target[VM_OPEN_METHODS][qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];
