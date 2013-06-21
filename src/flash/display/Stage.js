@@ -30,19 +30,27 @@ var StageDefinition = (function () {
       this._color = 0xFFFFFFFF;
       this._stage = this;
       this._invalid = true;
+      this._deferRenderEvent = false;
+      this._focus = null;
+      this._showDefaultContextMenu = true;
+      this._displayState = "normal";
+      this._colorCorrection = "default";
+      this._fullScreenSourceRect = null;
+      this._wmodeGPU = false;
     },
     __glue__: {
       native: {
         instance: {
           invalidate: function invalidate() { // (void) -> void
-            avm2.systemDomain.broadcastMessage(new flash.events.Event('render'));
             this._invalid = true;
+            this._deferRenderEvent = true;
           },
           isFocusInaccessible: function isFocusInaccessible() { // (void) -> Boolean
             notImplemented("Stage.isFocusInaccessible");
           },
           set_displayState: function set_displayState(value) { // (value:String) -> void
-            notImplemented("Stage.set_displayState");
+            somewhatImplemented("Stage.set_displayState");
+            this._displayState = value;
           },
           get_simulatedFullScreenWidth: function get_simulatedFullScreenWidth() { // (void) -> uint
             notImplemented("Stage.get_simulatedFullScreenWidth");
@@ -57,7 +65,7 @@ var StageDefinition = (function () {
             notImplemented("Stage.swapChildrenAt");
           },
           requireOwnerPermissions: function requireOwnerPermissions() { // (void) -> void
-            notImplemented("Stage.requireOwnerPermissions");
+            somewhatImplemented("Stage.requireOwnerPermissions");
           },
           frameRate: {
             get: function frameRate() { // (void) -> Number
@@ -107,27 +115,24 @@ var StageDefinition = (function () {
           },
           showDefaultContextMenu: {
             get: function showDefaultContextMenu() { // (void) -> Boolean
-              notImplemented("Stage.showDefaultContextMenu");
               return this._showDefaultContextMenu;
             },
             set: function showDefaultContextMenu(value) { // (value:Boolean) -> void
-              notImplemented("Stage.showDefaultContextMenu");
+              somewhatImplemented("Stage.showDefaultContextMenu");
               this._showDefaultContextMenu = value;
             }
           },
           focus: {
             get: function focus() { // (void) -> InteractiveObject
-              notImplemented("Stage.focus");
               return this._focus;
             },
             set: function focus(newFocus) { // (newFocus:InteractiveObject) -> void
-              notImplemented("Stage.focus");
+              somewhatImplemented("Stage.focus");
               this._focus = newFocus;
             }
           },
           colorCorrection: {
             get: function colorCorrection() { // (void) -> String
-              notImplemented("Stage.colorCorrection");
               return this._colorCorrection;
             },
             set: function colorCorrection(value) { // (value:String) -> void
@@ -155,13 +160,13 @@ var StageDefinition = (function () {
               return this._quality;
             },
             set: function quality(value) { // (value:String) -> void
+              somewhatImplemented("Stage.stageFocusRect");
               this._quality = value;
             }
           },
           displayState: {
             get: function displayState() { // (void) -> String
-              notImplemented("Stage.displayState");
-              return 'normal';
+              return this._displayState;
             }
           },
           simulatedDisplayState: {
@@ -176,7 +181,6 @@ var StageDefinition = (function () {
           },
           fullScreenSourceRect: {
             get: function fullScreenSourceRect() { // (void) -> Rectangle
-              notImplemented("Stage.fullScreenSourceRect");
               return this._fullScreenSourceRect;
             },
             set: function fullScreenSourceRect(value) { // (value:Rectangle) -> void
@@ -229,7 +233,7 @@ var StageDefinition = (function () {
           },
           wmodeGPU: {
             get: function wmodeGPU() { // (void) -> Boolean
-              notImplemented("Stage.wmodeGPU");
+              somewhatImplemented("Stage.wmodeGPU");
               return this._wmodeGPU;
             }
           },

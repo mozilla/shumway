@@ -330,7 +330,7 @@ function renderStage(stage, ctx, events) {
 
       var parent = child._parent;
       var pt = { x: parent._mouseX, y: parent._mouseY };
-      child._applyCurrentInverseTransform(pt, parent);
+      child._applyCurrentInverseTransform(pt, true);
 
       if (pt.x !== child._mouseX || pt.y !== child._mouseY) {
         mouseMoved = true;
@@ -604,8 +604,9 @@ function renderStage(stage, ctx, events) {
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
       }
 
-      if (refreshStage) {
-        stage._dispatchEvent(new flash.events.Event("render"));
+      if (stage._deferRenderEvent) {
+        stage._deferRenderEvent = false;
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("render"));
       }
 
       if (refreshStage || renderFrame) {
