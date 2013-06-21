@@ -15,7 +15,9 @@ package {
   }
 
   var K = 1024;
-  var K2 = 1024 * 128;
+  var K_SMALLER = 256;
+  var K_BIGGER = 128 * K;
+  var K_BIG = 2 * 1024 * K;
 
   var JS_FAST = 200;
   var AS_FAST = JS_FAST * 5;
@@ -23,7 +25,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K2;
+    var COUNT = 1 * K_BIGGER;
     for (var i = 0; i < COUNT; i++) {
       s = s + i;
       s = s + i;
@@ -46,16 +48,8 @@ package {
 
   (function () {
     var s = "";
-    var COUNT = 1 * K2;
+    var COUNT = 1 * K_BIGGER;
     for (var i = 0; i < COUNT; i++) {
-      s = s + i;
-      s = s + i;
-      s = s + i;
-      s = s + i;
-      s = s + i;
-      s = s + i;
-      s = s + i;
-      s = s + i;
       s = s + i;
       s = s + i;
       s = s + i;
@@ -84,7 +78,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K;
+    var COUNT = 1 * K_SMALLER;
     for (var i = 0; i < COUNT; i++) {
       var a = [];
       for (var j = 0; j < K; j++) {
@@ -105,7 +99,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K * K;
+    var COUNT = 1 * K_BIG;
     var c = new C();
     for (var i = 0; i < COUNT; i++) {
       s += c.foo();
@@ -117,7 +111,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K * K;
+    var COUNT = 1 * K_BIG;
     var v : Vector.<C> = new Vector.<C>();
     v.push(new C());
     for (var i = 0; i < COUNT; i++) {
@@ -130,7 +124,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K * K;
+    var COUNT = 1 * K_BIG;
     var v : Vector.<C> = new Vector.<C>();
     var o = new C();
     for (var i = 0; i < COUNT; i++) {
@@ -149,21 +143,21 @@ package {
 
     static function staticFunction() {
       var s = 0;
-      for (var i = 0; i < 10000000; i++) {
+      for (var i = 0; i < K_BIG; i++) {
         s += staticConstant;
         s += staticVar;
       }
-      clockUnder(5000, "Access Static Constant / Var");
+      clockUnder(AS_FAST, "Access Static Constant / Var");
       return s;
     }
 
     function instanceFunction() {
       var s = 0;
-      for (var i = 0; i < 10000000; i++) {
+      for (var i = 0; i < K_BIG; i++) {
         s += instanceConstant;
         s += instanceVar;
       }
-      clockUnder(5000, "Access Instance Constant / Var");
+      clockUnder(AS_FAST, "Access Instance Constant / Var");
       return s;
     }
   }
@@ -171,20 +165,20 @@ package {
   class B extends A {
     static function staticFunctionB() {
       var s = 0;
-      for (var i = 0; i < 10000000; i++) {
+      for (var i = 0; i < K_BIG; i++) {
         s += staticConstant;
         s += staticVar;
       }
-      clockUnder(5000, "Access Static Constant / Var");
+      clockUnder(AS_FAST, "Access Static Constant / Var");
       return s;
     }
     function instanceFunctionB() {
       var s = 0;
-      for (var i = 0; i < 10000000; i++) {
+      for (var i = 0; i < K_BIG; i++) {
         s += instanceConstant;
         s += instanceVar;
       }
-      clockUnder(5000, "Access Instance Constant / Var");
+      clockUnder(AS_FAST, "Access Instance Constant / Var");
       return s;
     }
   }
@@ -197,12 +191,12 @@ package {
 
   (function () {
     var s = 0;
-    for (var i = 0; i < 1000000; i++) {
+    for (var i = 0; i < K_BIGGER; i++) {
       s += -Number.MAX_VALUE;
       s += Number.MAX_VALUE;
       s += Math.abs(i);
     }
-    clockUnder(5000, "Math.abs()");
+    clockUnder(AS_FAST, "Math.abs()");
     return s;
   })();
 
@@ -217,11 +211,11 @@ package {
 
   (function () {
     var s = 0;
-    for (var i = 0; i < 1000000; i++) {
+    for (var i = 0; i < K_BIGGER; i++) {
       s += (new D(2, 3)).foobar;
       s += (new D(2, 3)).y;
     }
-    clockUnder(1000, "Object allocation with property access");
+    clockUnder(AS_FAST, "Object allocation with property access");
     return s;
   })();
 
