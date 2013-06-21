@@ -40,6 +40,8 @@ function AS2Context(swfVersion) {
   this.assets = {};
   this.instructionsExecuted = 0;
   this.errorsIgnored = 0;
+  this.deferScriptExecution = true;
+  this.pendingScripts = [];
 }
 AS2Context.instance = null;
 AS2Context.prototype = {
@@ -66,6 +68,19 @@ AS2Context.prototype = {
   },
   resolveLevel: function(level) {
     return this.resolveTarget(this.globals['_level' + level]);
+  },
+  addToPendingScripts: function (fn) {
+    if (!this.deferScriptExecution) {
+      return fn();
+    }
+    this.pendingScripts.push(fn);
+  },
+  flushPendingScripts: function () {
+    var scripts = this.pendingScripts;
+    while (scripts.length) {
+      scripts.shift()();
+    }
+    this.deferScriptExecution = false;
   }
 };
 function AS2Error(error) {
@@ -497,6 +512,10 @@ function interpretActions(actionsData, scopeContainer,
   var isSwfVersion5 = currentContext.swfVersion >= 5;
   var actionTracer = ActionTracerFactory.get();
   var nextPosition;
+
+  if (scope.$nativeObject && scope.$nativeObject._deferScriptExecution) {
+    currentContext.deferScriptExecution = true;
+  }
 
   function skipActions(count) {
     while (count > 0 && stream.position < stream.end) {

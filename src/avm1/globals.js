@@ -90,21 +90,22 @@ AS2Globals.prototype = {
     var nativeTarget = AS2Context.instance.resolveTarget();
     if (arguments.length < 2) {
       nativeTarget.gotoAndPlay(arguments[0]);
+      AS2Context.instance.addToPendingScripts(nativeTarget.gotoAndPlay.bind(nativeTarget, arguments[0]));
     } else {
-      nativeTarget.gotoAndPlay(arguments[1], arguments[0]); // scene and frame are swapped for AS3
+      AS2Context.instance.addToPendingScripts(nativeTarget.gotoAndPlay.bind(nativeTarget, arguments[1], arguments[0])); // scene and frame are swapped for AS3
     }
   },
   gotoAndStop: function(scene, frame) {
     var nativeTarget = AS2Context.instance.resolveTarget();
     if (arguments.length < 2) {
-      nativeTarget.gotoAndStop(arguments[0]);
+      AS2Context.instance.addToPendingScripts(nativeTarget.gotoAndStop.bind(nativeTarget, arguments[0]));
     } else {
-      nativeTarget.gotoAndStop(arguments[1], arguments[0]); // scene and frame are swapped for AS3
+      AS2Context.instance.addToPendingScripts(nativeTarget.gotoAndStop.bind(nativeTarget, arguments[1], arguments[0])); // scene and frame are swapped for AS3
     }
   },
   gotoLabel: function(label) {
-    var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.$nativeObject.gotoLabel(label);
+    var nativeObject = AS2Context.instance.resolveTarget().$nativeObject;
+    AS2Context.instance.addToPendingScripts(nativeObject.gotoLabel.bind(nativeObject, label));
   },
   ifFrameLoaded: function(scene, frame) {
     // ignoring scene parameter ?
@@ -165,7 +166,7 @@ AS2Globals.prototype = {
   },
   nextFrame: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.nextFrame();
+    AS2Context.instance.addToPendingScripts(nativeTarget.nextFrame.bind(nativeTarget));
   },
   nextScene: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
@@ -180,7 +181,7 @@ AS2Globals.prototype = {
   },
   prevFrame: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.prevFrame();
+    AS2Context.instance.addToPendingScripts(nativeTarget.prevFrame.bind(nativeTarget));
   },
   prevScene: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();

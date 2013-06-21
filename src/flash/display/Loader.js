@@ -1077,6 +1077,11 @@ var LoaderDefinition = (function () {
 
         AS2Key.$bind(stage);
         AS2Mouse.$bind(stage);
+
+        stage._addEventListener('frameConstructed',
+                                avm1Context.flushPendingScripts.bind(avm1Context),
+                                false,
+                                Number.MAX_VALUE);
       }
 
       loader._vmPromise.resolve();
