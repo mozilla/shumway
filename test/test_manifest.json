@@ -94,10 +94,10 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_Stage trace",
+    {  "id": "flash_display_BitmapData",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/flash_display_Stage.swf"
+         "swfs/flash_display_BitmapData.swf"
        ],
        "type": "stas"
     },
@@ -105,6 +105,13 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_display_DisplayObject.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_display_Stage trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_display_Stage.swf"
        ],
        "type": "stas"
     },

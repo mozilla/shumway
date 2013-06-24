@@ -29,7 +29,7 @@ class BitmapDataObject extends Sprite {
 
     public function BitmapDataObject() {
         graphics.beginFill(color);
-        graphics.drawRect(0, 0, 100, 100);
+        graphics.drawRect(60, 60, 80, 80);
     }
 
     function menuSelectHandler(e) {
