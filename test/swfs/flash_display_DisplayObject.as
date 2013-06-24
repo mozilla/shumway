@@ -11,7 +11,7 @@ package {
     public class DisplayObjectTest extends Sprite {
         public function DisplayObjectTest() {
             stage.frameRate = 20;
-            var child:CustomDisplayObject = new CustomDisplayObject();
+            var child:TestDisplayObject = new TestDisplayObject(0, 0, stage.stageWidth, stage.stageHeight);
             addChild(child);
         }
     }
@@ -29,23 +29,21 @@ import flash.events.*;
 import flash.filters.*;
 import flash.geom.*;
 
-class CustomDisplayObject extends Sprite {
+class TestDisplayObject extends Sprite {
     private var bgColor:uint = 0xFFCC00;
-    private var size:uint    = 80;
+    private var pos:uint =  60;
+    private var size:uint = 80;
 
-    public function CustomDisplayObject() {
-        draw();
+    public function TestDisplayObject(x, y, width, height) {
         addEventListener(Event.ADDED, addedHandler);
         addEventListener(Event.ENTER_FRAME, enterFrameHandler);
         addEventListener(Event.REMOVED, removedHandler);
         addEventListener(MouseEvent.CLICK, clickHandler);
         addEventListener(Event.RENDER, renderHandler);
-    }
-
-    private function draw():void {
         graphics.beginFill(bgColor);
-        graphics.drawRect(0, 0, size, size);
+        graphics.drawRect(pos, pos, size, size);
         graphics.endFill();
+        initPixelCapture(0, 0, width, height);
     }
 
     private function clickHandler(event:MouseEvent):void {
@@ -59,28 +57,67 @@ class CustomDisplayObject extends Sprite {
         stage.addEventListener("resize", resizeHandler);
     }
 
+    // Begin pixel capture
+
+    public var points = [];
+    private function initPixelCapture(x, y, width, height) {
+        var dx = 50;
+        var dy = 50;
+        for (var i = x + dx; i < width - x; i += dx) {
+            for (var j = y + dy; j < height - y; j += dy) {
+                points.push({x: i, y: j});
+            }
+        }
+    }
+
+    private function capturePixels(traceWhitespace=false) {
+        var pixels = [];
+        var bitmapData = new BitmapData(stage.stageWidth, stage.stageHeight, false);
+        bitmapData.draw(stage);
+        points.forEach(function (p, i) {
+            var px = bitmapData.getPixel(p.x, p.y);
+            if (traceWhitespace || px != 0xFFFFFF) {
+                pixels.push("[" + p.x + "," + p.y + "]=" + px.toString(16).toUpperCase());
+            }
+        });
+        trace(pixels.join("\n"));
+    }
+
+    // end pixel capture
+
     private var frameCount = 0;
 
     private function enterFrameHandler(event:Event):void {
+        frameCount++;
         var target = event.target;
+        trace("FRAME " + frameCount);
         switch (frameCount) {
-        case 0:
-            target.x = 100;
-            target.y = 100;
-            break;
         case 1:
+            capturePixels();
+            break;
+        case 2:
+            target.x += 100;
+            capturePixels();
+            break;
+        case 3:
+            target.y += 100;
+            //capturePixels();
+            break;
+        case 4:
             trace("get x=" + target.x);
             trace("get y=" + target.y);
             target.width = 200;
             target.height = 200;
+            //capturePixels();
             break;
-        case 2:
+        case 5:
             trace("get height=" + target.width);
             trace("get width=" + target.height);
             target.alpha = 0.3;
+            //capturePixels();
             break;
-        case 3:
-            trace("get alpha=" + target.alpha);
+        case 6:
+            trace("get alpha=" + (Math.round(target.alpha*10)));  // round to avoid false neg
             target.alpha = 1;
             var accessProps:AccessibilityProperties = new AccessibilityProperties();
             accessProps.name = "Greeting";
@@ -90,8 +127,9 @@ class CustomDisplayObject extends Sprite {
                 Accessibility.updateProperties();
             }
             target.accessibilityProperties = accessProps;
+            //capturePixels();
             break;
-        case 4:
+        case 7:
             trace("get accessibilityProperties=" + target.accessibilityProperties.name);
             trace("set filters");
             var filter1:DropShadowFilter = new DropShadowFilter();
@@ -117,13 +155,15 @@ class CustomDisplayObject extends Sprite {
                                           type,
                                           knockout);
             target.filters = [filter1, filter2];
+            //capturePixels();
             break;
-        case 5:
+        case 8:
             trace("get filters: filters.length=" + target.filters.length);
             trace("set visible = false");
             target.visible = false;
+            //capturePixels();
             break;
-        case 6:
+        case 9:
             trace("get visible: " + target.visible);
             target.graphics.clear();
             target.visible = true;
@@ -134,9 +174,10 @@ class CustomDisplayObject extends Sprite {
                 var size:Number = 100;
                 target.graphics.beginGradientFill(GradientType.LINEAR, [red, blue, green], [1, 0.5, 1], [0, 200, 255]);
                 target.graphics.drawRect(0, 0, 100, 100);
+                //capturePixels();
             })();
             break;
-        case 7:
+        case 10:
             (function () {
                 var skewMatrix:Matrix = new Matrix();
                 skewMatrix.c = 0.25;
@@ -146,9 +187,10 @@ class CustomDisplayObject extends Sprite {
                 var rOffset:Number = target.transform.colorTransform.redOffset + 25;
                 var bOffset:Number = target.transform.colorTransform.blueOffset - 25;
                 target.transform.colorTransform = new ColorTransform(1, 1, 1, 1, rOffset, 0, bOffset, 0);            
+                //capturePixels();
             })();
             break;
-        case 8:
+        case 11:
             (function () {
                 var container = new Sprite;
                 container.x = 100;
@@ -196,12 +238,12 @@ class CustomDisplayObject extends Sprite {
                         'height=' + ~~rect.height +
                     ')');
                 }
+                //capturePixels();
             })();
             break;
         default:
             removeEventListener("enterFrame", enterFrameHandler);
         }
-        frameCount++;
     }
 
     private var distance:Number  = 0;

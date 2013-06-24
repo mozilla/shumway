@@ -71,7 +71,20 @@ var BitmapDataDefinition = (function () {
         this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
       } else {
         var canvas = this._drawable;
-        this._ctx.rect(0, 0, canvas.width, canvas.height);
+        var x, y, width, height, bounds;
+        if ((bounds = source.getBounds())) {
+          // If there are display object bounds, then use them
+          x = bounds.x;
+          y = bounds.y;
+          width = bounds.width;
+          height = bounds.height;
+        } else {
+          // Otherwise use the canvas (stage) bounds
+          x = y = 0;
+          width = canvas.width;
+          height = canvas.height;
+        }
+        this._ctx.rect(x, y, width, height);
       }
       this._ctx.clip();
       renderDisplayObject(source, this._ctx, matrix, colorTransform);
