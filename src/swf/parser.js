@@ -19,17 +19,6 @@
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
          generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError */
 
-// TODO: clean up. For now, we don't include the generator after pre-building
-// the handlers. This doesn't work during build-playerglobal, though.x
-if (this.generateParser) {
-  for (var tag in tagHandler) {
-    var handler = tagHandler[tag];
-    if (typeof handler === 'object')
-      tagHandler[tag] = generateParser(handler, 'swfVersion', 'tagCode');
-  }
-  var readHeader = generateParser(MOVIE_HEADER);
-}
-
 function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
