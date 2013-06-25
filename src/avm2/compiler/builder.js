@@ -136,7 +136,7 @@ var createName = function createName(namespaces, name) {
 
     constructor.prototype.merge = function merge(control, other) {
       assert (control);
-      assert (this.matches(other), this + " !== " + other);
+      assert (this.matches(other), this, " !== ", other);
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
@@ -319,7 +319,6 @@ var createName = function createName(namespaces, name) {
       var classes = this.abc.classes;
       var multinames = this.abc.constantPool.multinames;
       var domain = new Constant(this.abc.domain);
-      var runtime = new Constant(this.abc.runtime);
 
       var traceBuilder = c4TraceLevel.value > 2;
 
@@ -427,7 +426,7 @@ var createName = function createName(namespaces, name) {
       var start = new Start();
       this.buildStart(start);
 
-      var createFunctionCallee = getJSPropertyWithState(start.entryState, runtime, "createFunction");
+      var createFunctionCallee = globalProperty("createFunction");
 
       worklist.push({region: start, block: blocks[0]});
 
@@ -515,7 +514,7 @@ var createName = function createName(namespaces, name) {
         var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
-          assert (x);
+          assert (x instanceof IR.Node);
           if (bc.ti) {
             if (x.ty) {
               // assert (x.ty == bc.ti.type);
@@ -1024,7 +1023,7 @@ var createName = function createName(namespaces, name) {
             case OP_debugline:
               break;
             case OP_newfunction:
-              push(callPure(createFunctionCallee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              push(callPure(createFunctionCallee, null, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
               args = popMany(bc.argCount);
@@ -1063,7 +1062,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
-                callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
+                callee = getJSProperty(savedScope(), "object.baseClass.instanceConstructorNoInitialize");
                 call(callee, object, args);
               }
               break;
@@ -1269,8 +1268,8 @@ var createName = function createName(namespaces, name) {
             case OP_applytype:
               args = popMany(bc.argCount);
               type = pop();
-              callee = getJSProperty(runtime, "applyType");
-              push(call(callee, runtime, [type, new NewArray(region, args)]));
+              callee = globalProperty("applyType");
+              push(call(callee, null, [domain, type, new NewArray(region, args)]));
               break;
             case OP_newarray:
               args = popMany(bc.argCount);
@@ -1291,8 +1290,8 @@ var createName = function createName(namespaces, name) {
               push(new IR.AVM2NewActivation(constant(methodInfo)));
               break;
             case OP_newclass:
-              callee = getJSProperty(runtime, "createClass");
-              push(call(callee, runtime, [constant(classes[bc.index]), pop(), topScope()]));
+              callee = globalProperty("createClass");
+              push(call(callee, null, [constant(classes[bc.index]), pop(), topScope()]));
               break;
             default:
               unexpected("Not Implemented: " + bc);
