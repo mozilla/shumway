@@ -136,7 +136,7 @@ var createName = function createName(namespaces, name) {
 
     constructor.prototype.merge = function merge(control, other) {
       assert (control);
-      assert (this.matches(other), this + " !== " + other);
+      assert (this.matches(other), this, " !== ", other);
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
@@ -514,7 +514,7 @@ var createName = function createName(namespaces, name) {
         var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
-          assert (x);
+          assert (x instanceof IR.Node);
           if (bc.ti) {
             if (x.ty) {
               // assert (x.ty == bc.ti.type);

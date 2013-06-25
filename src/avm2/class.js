@@ -14,14 +14,45 @@
  * limitations under the License.
  */
 
-var traitsWriter = null; new IndentingWriter();
+var traitsWriter = null; // new IndentingWriter();
+
+var Binding = (function () {
+  function binding(trait) {
+    assert (trait instanceof Trait);
+    this.trait = trait;
+  }
+
+  /**
+   * Returns a name that uniquely identifies a trait. We can't use the trait's QName directly
+   * because getters and setters share the same name, so we prefix the QName with "set " or
+   * "get ".
+   */
+  var SET_PREFIX = "set ";
+  var GET_PREFIX = "get ";
+
+  binding.KEY_PREFIX_LENGTH = SET_PREFIX.length;
+  binding.getKey = function getKey(qn, trait) {
+    var key = qn;
+    if (trait.isGetter()) {
+      key = GET_PREFIX + qn;
+    } else if (trait.isSetter()) {
+      key = SET_PREFIX + qn;
+    }
+    return key;
+  };
+
+  binding.prototype.toString = function toString() {
+    return String(this.trait);
+  };
+  return binding;
+})();
 
 /**
  * Abstraction over a collection of traits.
  */
-var Traits = (function () {
+var Bindings = (function () {
 
-  function traits() {
+  function bindings() {
     this.map = createEmptyObject();
     this.slots = [];
     this.nextSlotId = 1;
@@ -31,7 +62,8 @@ var Traits = (function () {
    * Assigns the next available slot to the specified trait. Traits that have a non-zero slotId
    * are allocated by ASC and we can't relocate them elsewhere.
    */
-  traits.prototype.assignNextSlot = function assignNextSlot(trait) {
+  bindings.prototype.assignNextSlot = function assignNextSlot(trait) {
+    assert (trait instanceof Trait);
     assert (trait.isSlot() || trait.isConst() || trait.isClass());
     if (!trait.slotId) {
       trait.slotId = this.nextSlotId ++;
@@ -42,29 +74,11 @@ var Traits = (function () {
     this.slots[trait.slotId] = trait;
   };
 
-  /**
-   * Returns a name that uniquely identifies a trait. We can't use the trait's QName directly
-   * because getters and setters share the same name, so we prefix the QName with "set " or
-   * "get ".
-   */
-  var SET_PREFIX = "set ";
-  var GET_PREFIX = "get ";
-  var PREFIX_LENGTH = SET_PREFIX.length;
-  traits.getKey = function getKey(qn, trait) {
-    var key = qn;
-    if (trait.isGetter()) {
-      key = GET_PREFIX + qn;
-    } else if (trait.isSetter()) {
-      key = SET_PREFIX + qn;
-    }
-    return key;
-  };
-
-  traits.prototype.trace = function trace(writer) {
+  bindings.prototype.trace = function trace(writer) {
     writer.enter("Bindings");
     for (var key in this.map) {
-      var value = this.map[key];
-      writer.writeLn(value.kindName() + ": " + key + " -> " + value);
+      var binding = this.map[key];
+      writer.writeLn(binding.trait.kindName() + ": " + key + " -> " + binding);
     }
     writer.leaveAndEnter("Slots");
     writer.writeArray(this.slots);
@@ -79,14 +93,23 @@ var Traits = (function () {
   }
 
   function patch(patchTargets, value) {
+    assert (isFunction(value));
     for (var i = 0; i < patchTargets.length; i++) {
       var patchTarget = patchTargets[i];
       if (traceExecution.value >= 3) {
-        traitsWriter && traitsWriter.redLn("Trampoline: Patching: name: " + patchTarget.name + ", get: " + patchTarget.get + ", set: " + patchTarget.set);
+        var str = "Patching: ";
+        if (patchTarget.name) {
+          str += patchTarget.name;
+        } else if (patchTarget.get) {
+          str += "get " + patchTarget.get;
+        } else if (patchTarget.set) {
+          str += "set " + patchTarget.set;
+        }
+        traitsWriter && traitsWriter.redLn(str);
       }
-      if ("get" in patchTarget) {
+      if (patchTarget.get) {
         defineNonEnumerableGetterOrSetter(patchTarget.object, patchTarget.get, value, true);
-      } else if ("set" in patchTarget) {
+      } else if (patchTarget.set) {
         defineNonEnumerableGetterOrSetter(patchTarget.object, patchTarget.set, value, false);
       } else {
         defineNonEnumerableProperty(patchTarget.object, patchTarget.name, value);
@@ -97,8 +120,8 @@ var Traits = (function () {
   /**
    * Applies a method trait that doesn't need a memoizer.
    */
-  function applyNonMemoizedMethodTrait(trait, object, scope, natives) {
-    var qn = Multiname.getQualifiedName(trait.name);
+  function applyNonMemoizedMethodTrait(qn, trait, object, scope, natives) {
+    assert (scope);
     if (trait.isMethod()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = getTraitFunction(trait, scope, natives);
@@ -131,6 +154,49 @@ var Traits = (function () {
     }
   }
 
+  function applyMemoizedMethodTrait(qn, trait, object, scope, natives) {
+    assert (scope, trait);
+    if (trait.isMethod()) {
+      // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
+      // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
+      // target value for subsequent memoizations.
+      var memoizerTarget = { value: null };
+      var trampoline = makeTrampoline(function (self) {
+        var fn = getTraitFunction(trait, scope, natives);
+        patch(self.patchTargets, fn);
+        return fn;
+      }, trait.methodInfo.parameters.length);
+
+      memoizerTarget.value = trampoline;
+      var openMethods = object[VM_OPEN_METHODS];
+      openMethods[qn] = trampoline;
+      defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
+
+      // TODO: We make the |memoizeMethodClosure| configurable since it may be
+      // overridden by a derived class. Only do this non final classes.
+
+      defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
+
+      trampoline.patchTargets = [
+        { object: memoizerTarget, name: "value"},
+        { object: openMethods,    name: qn },
+        { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
+      ];
+    } else if (trait.isGetter() || trait.isSetter()) {
+      var trampoline = makeTrampoline(function (self) {
+        var fn = getTraitFunction(trait, scope, natives);
+        patch(self.patchTargets, fn);
+        return fn;
+      });
+      if (trait.isGetter()) {
+        trampoline.patchTargets = [{ object: object, get: qn }];
+      } else {
+        trampoline.patchTargets = [{ object: object, set: qn }];
+      }
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
+    }
+  }
+
   /**
    * Applies traits to a traitsPrototype object. Every traitsPrototype object must have the following layout:
    *
@@ -138,20 +204,23 @@ var Traits = (function () {
    * VM_SLOTS = [ Array of Slot Names ]
    *
    */
-  traits.prototype.applyTo = function applyTo(domain, object, scope, natives) {
+  bindings.prototype.applyTo = function applyTo(domain, object) {
     assert (!hasOwnProperty(object, VM_SLOTS));
     assert (!hasOwnProperty(object, VM_BINDINGS));
     assert (!hasOwnProperty(object, VM_OPEN_METHODS));
 
-    object[VM_SLOTS] = [];
-    object[VM_BINDINGS] = [];
-    object[VM_OPEN_METHODS] = createEmptyObject();
+    defineNonEnumerableProperty(object, VM_SLOTS, []);
+    defineNonEnumerableProperty(object, VM_BINDINGS, []);
+    defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
+
+    traitsWriter && traitsWriter.greenLn("Applying Traits");
 
     for (var key in this.map) {
-      var trait = this.map[key];
+      var binding = this.map[key];
+      var trait = binding.trait;
       var qn = Multiname.getQualifiedName(trait.name);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
-        var defaultValue;
+        var defaultValue = undefined;
         if (trait.isSlot() || trait.isConst()) {
           if (trait.hasDefaultValue) {
             defaultValue = trait.value;
@@ -175,24 +244,31 @@ var Traits = (function () {
           );
         }
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-        // unexpected("trait: " + trait);
-        traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
-        object[VM_BINDINGS].pushUnique(qn);
-        if (this instanceof ScriptTraits) {
-          applyNonMemoizedMethodTrait(trait, object, scope, natives);
+        if (trait.isGetter() || trait.isSetter()) {
+          key = key.substring(Binding.KEY_PREFIX_LENGTH);
+        }
+        if (key !== qn) {
+          traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
         } else {
-          unexpected();
+          traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
+        }
+        object[VM_BINDINGS].pushUnique(key);
+        if (this instanceof ScriptBindings) {
+          applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
+        } else {
+          applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
         }
       }
     }
   };
 
-  return traits;
+  return bindings;
 })();
 
-var ActivationTraits = (function () {
-  function activationTraits(methodInfo) {
-    Traits.call(this);
+
+var ActivationBindings = (function () {
+  function activationBindings(methodInfo) {
+    Bindings.call(this);
     assert (methodInfo.needsActivation());
     this.methodInfo = methodInfo;
     // ASC creates activation even if the method has no traits, weird.
@@ -206,19 +282,34 @@ var ActivationTraits = (function () {
       var trait = traits[i];
       assert (trait.isSlot(), "Only slot traits are allowed in activation objects.");
       var key = Multiname.getQualifiedName(trait.name);
-      this.map[key] = trait;
+      this.map[key] = new Binding(trait);
       this.assignNextSlot(trait);
     }
-
-    // this.trace(traitsWriter);
   }
-  activationTraits.prototype = Object.create(Traits.prototype);
-  return activationTraits;
+  activationBindings.prototype = Object.create(Bindings.prototype);
+  return activationBindings;
 })();
 
-var ScriptTraits = (function () {
-  function scriptTraits(scriptInfo) {
-    Traits.call(this);
+var CatchBindings = (function () {
+  function catchBindings(scope, trait) {
+    Bindings.call(this);
+
+    /**
+     * Add catch traits.
+     */
+    var key = Multiname.getQualifiedName(trait.name);
+    this.map[key] = new Binding(trait);
+    assert (trait.isSlot(), "Only slot traits are allowed in catch objects.");
+    this.assignNextSlot(trait);
+  }
+  catchBindings.prototype = Object.create(Bindings.prototype);
+  return catchBindings;
+})();
+
+var ScriptBindings = (function () {
+  function scriptBindings(scriptInfo, scope) {
+    Bindings.call(this);
+    this.scope = scope;
     this.scriptInfo = scriptInfo;
 
     /**
@@ -228,8 +319,8 @@ var ScriptTraits = (function () {
     for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
       var name = Multiname.getQualifiedName(trait.name);
-      var key = Traits.getKey(name, trait);
-      this.map[key] = trait;
+      var key = Binding.getKey(name, trait);
+      var binding = this.map[key] = new Binding(trait);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
         this.assignNextSlot(trait);
       }
@@ -238,16 +329,20 @@ var ScriptTraits = (function () {
           trait.classInfo.native = trait.metadata.native;
         }
       }
+      if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+        binding.scope = this.scope;
+      }
     }
   }
-  scriptTraits.prototype = Object.create(Traits.prototype);
-  return scriptTraits;
+  scriptBindings.prototype = Object.create(Bindings.prototype);
+  return scriptBindings;
 })();
 
-var ClassTraits = (function () {
-  function classTraits(classInfo) {
-    Traits.call(this);
-
+var ClassBindings = (function () {
+  function classBindings(classInfo, scope, natives) {
+    Bindings.call(this);
+    this.scope = scope;
+    this.natives = natives;
     this.classInfo = classInfo;
 
     /**
@@ -257,20 +352,26 @@ var ClassTraits = (function () {
     for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
       var name = Multiname.getQualifiedName(trait.name);
-      var key = Traits.getKey(name, trait);
-      this.map[key] = trait;
+      var key = Binding.getKey(name, trait);
+      var binding = this.map[key] = new Binding(trait);
       if (trait.isSlot() || trait.isConst()) {
         this.assignNextSlot(trait);
       }
+      if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+        binding.scope = this.scope;
+        binding.natives = this.natives;
+      }
     }
   }
-  classTraits.prototype = Object.create(Traits.prototype);
-  return classTraits;
+  classBindings.prototype = Object.create(Bindings.prototype);
+  return classBindings;
 })();
 
-var InstanceTraits = (function () {
-  function instanceTraits(parent, instanceInfo) {
-    Traits.call(this);
+var InstanceBindings = (function () {
+  function instanceBindings(parent, instanceInfo, scope, natives) {
+    Bindings.call(this);
+    this.scope = scope;
+    this.natives = natives;
     this.parent = parent;
     this.instanceInfo = instanceInfo;
     this.interfaces = [];
@@ -281,30 +382,91 @@ var InstanceTraits = (function () {
     extend.call(this, parent);
   }
 
+  /*
+   * Extend base Instance Bindings
+   *
+   * Protected Members:
+   *
+   *   In AS3, if you have the following code:
+   *
+   *   class A {
+   *     protected foo() { ... } // this is actually protected$A$foo
+   *   }
+   *
+   *   class B extends A {
+   *     function bar() {
+   *       foo(); // this looks for protected$B$foo, not protected$A$foo
+   *     }
+   *   }
+   *
+   *   You would expect the call to |foo| in the |bar| function to have the protected A
+   *   namespace open, but it doesn't. So we must create a binding in B's instance
+   *   prototype from protected$B$foo -> protected$A$foo.
+   *
+   *   If we override foo:
+   *
+   *   class C extends B {
+   *     protected override foo() { ... } this is protected$C$foo
+   *   }
+   *
+   *   Then we need a binding from protected$A$foo -> protected$C$foo, and
+   *   protected$B$foo -> protected$C$foo.
+   *
+   * Interfaces:
+   *
+   *   interface IA {
+   *     function foo();
+   *   }
+   *
+   *   interface IB implements IA {
+   *     function bar();
+   *   }
+   *
+   *   class C implements IB {
+   *     function foo() { ... }
+   *     function bar() { ... }
+   *   }
+   *
+   *   var a:IA = new C();
+   *   a.foo(); // Call Property: IA::foo
+   *
+   *   var b:IB = new C();
+   *   b.foo(); // Call Property: IB::foo
+   *   b.bar(); // Call Property: IB::bar
+   *
+   *   So, class C must have bindings for:
+   *
+   *   IA$$foo -> public$$foo
+   *   IB$$foo -> public$$foo
+   *   IB$$bar -> public$$bar
+   */
   function extend(parent) {
-    var ii = this.instanceInfo, it;
+    var ii = this.instanceInfo, ib;
     var map = this.map;
-    var name, key, trait, protectedName, protectedKey;
+    var name, key, trait, binding, protectedName, protectedKey;
 
     /**
      * Inherit parent traits.
      */
     if (parent) {
       for (key in parent.map) {
-        trait = parent.map[key];
-        map[key] = trait;
+        binding = parent.map[key];
+        trait = binding.trait;
+        map[key] = binding;
         if (trait.isProtected()) {
           // Inherit protected trait also in the local protected namespace.
           protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName()));
-          protectedKey = Traits.getKey(protectedName, trait);
-          map[protectedKey] = trait;
+          protectedKey = Binding.getKey(protectedName, trait);
+          map[protectedKey] = binding;
         }
       }
     }
 
-    function writeOrOverwriteTrait(object, key, trait) {
-      var oldTrait = object[key];
-      if (oldTrait) {
+    function writeOrOverwriteBinding(object, key, binding) {
+      var trait = binding.trait;
+      var oldBinding = object[key];
+      if (oldBinding) {
+        var oldTrait = oldBinding.trait;
         assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
         // TODO: Object.as has a trait named length, we need to remove this since
         // it doesn't appear in Tamarin.
@@ -313,12 +475,12 @@ var InstanceTraits = (function () {
       } else {
         assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
       }
-      object[key] = trait;
+      object[key] = binding;
     }
 
-    function overwriteProtectedTrait(object, key, trait) {
+    function overwriteProtectedBinding(object, key, binding) {
       if (key in object) {
-        object[key] = trait;
+        object[key] = binding;
       }
     }
 
@@ -329,45 +491,50 @@ var InstanceTraits = (function () {
     for (var i = 0; i < traits.length; i++) {
       trait = traits[i];
       name = Multiname.getQualifiedName(trait.name);
-      key = Traits.getKey(name, trait);
-      writeOrOverwriteTrait(map, key, trait);
+      key = Binding.getKey(name, trait);
+      binding = new Binding(trait);
+      writeOrOverwriteBinding(map, key, binding);
       if (trait.isProtected()) {
         // Overwrite protected traits.
-        it = this.parent;
-        while (it) {
-          protectedName = Multiname.getQualifiedName(new Multiname([it.instanceInfo.protectedNs], trait.name.getName()));
-          protectedKey = Traits.getKey(protectedName, trait);
-          overwriteProtectedTrait(map, protectedKey, trait);
-          it = it.parent;
+        ib = this.parent;
+        while (ib) {
+          protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs], trait.name.getName()));
+          protectedKey = Binding.getKey(protectedName, trait);
+          overwriteProtectedBinding(map, protectedKey, binding);
+          ib = ib.parent;
         }
       }
       if (trait.isSlot() || trait.isConst()) {
         this.assignNextSlot(trait);
       }
+      if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+        binding.scope = this.scope;
+        binding.natives = this.natives;
+      }
     }
 
-    /**
+    /*
      * Add interface traits.
      */
     if (!ii.isInterface()) {
       var domain = ii.abc.domain;
       var interfaces = ii.interfaces;
       for (var i = 0; i < interfaces.length; i++) {
-        it = domain.getProperty(interfaces[i], true, true).instanceTraits;
-        for (var interfaceKey in it.map) {
-          var interfaceTrait = it.map[interfaceKey];
-          name = Multiname.getPublicQualifiedName(interfaceTrait.name.getName());
-          key = Traits.getKey(name, interfaceTrait);
+        ib = domain.getProperty(interfaces[i], true, true).interfaceBindings;
+        for (var interfaceKey in ib.map) {
+          var interfaceBinding = ib.map[interfaceKey];
+          name = Multiname.getPublicQualifiedName(interfaceBinding.trait.name.getName());
+          key = Binding.getKey(name, interfaceBinding.trait);
           map[interfaceKey] = map[key];
         }
       }
     }
   }
-  instanceTraits.prototype = Object.create(Traits.prototype);
-  instanceTraits.prototype.toString = function toString() {
+  instanceBindings.prototype = Object.create(Bindings.prototype);
+  instanceBindings.prototype.toString = function toString() {
     return this.instanceInfo.toString();
   };
-  return instanceTraits;
+  return instanceBindings;
 })();
 
 var Interface = (function () {
@@ -395,9 +562,9 @@ var Interface = (function () {
       var domain = classInfo.abc.domain;
       assert (ii.interfaces.length === 1);
       var interface = domain.getProperty(ii.interfaces[0], true, true);
-      cls.instanceTraits = new InstanceTraits(interface.instanceTraits, ii);
+      cls.interfaceBindings = new InstanceBindings(interface.interfaceBindings, ii);
     } else {
-      cls.instanceTraits = new InstanceTraits(null, ii);
+      cls.interfaceBindings = new InstanceBindings(null, ii);
     }
     return cls;
   };
@@ -422,8 +589,8 @@ var Interface = (function () {
 
     trace: function trace(writer) {
       writer.enter("interface " + this.name.getName());
-      writer.enter("instanceTraits: ");
-      this.instanceTraits.trace(writer);
+      writer.enter("interfaceBindings: ");
+      this.interfaceBindings.trace(writer);
       writer.outdent();
       writer.outdent();
       writer.leave("}");
@@ -533,16 +700,24 @@ var Class = (function () {
     } else {
       cls.extend(baseClass);
     }
-    cls.classTraits = new ClassTraits(classInfo);
-    cls.instanceTraits = new InstanceTraits(baseClass ? baseClass.instanceTraits : null, ii);
-    var baseBindings = baseClass ? baseClass.traitsPrototype : null;
-    if (cls.instanceConstructor) {
-      applyInstanceTraits(domain, cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
-      // cls.instanceTraits.applyTo(domain, cls.traitsPrototype, classScope, classNatives);
-    }
-    applyClassTraits(domain, cls, classScope, null, ci.traits, classNatives);
-    // cls.classTraits.applyTo(domain, cls, classScope, classNatives);
+
+    cls.classBindings = new ClassBindings(classInfo, classScope, classNatives);
+    cls.classBindings.applyTo(domain, cls);
     defineReadOnlyProperty(cls, VM_IS_CLASS, true);
+
+    cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null, ii, classScope, instanceNatives);
+    // var baseBindings = baseClass ? baseClass.traitsPrototype : null;
+    if (cls.instanceConstructor) {
+      // applyInstanceTraits(domain, cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
+      cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
+    }
+
+    cls.implementedInterfaces = createEmptyObject();
+    var interfaces = ii.interfaces;
+    for (var i = 0; i < interfaces.length; i++) {
+      var interface = domain.getProperty(interfaces[i], true, true);
+      cls.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
+    }
     return cls;
   };
 
@@ -811,12 +986,12 @@ var Class = (function () {
         writer.outdent();
       }
 
-      writer.enter("classTraits: ");
-      this.classTraits.trace(writer);
+      writer.enter("classBindings: ");
+      this.classBindings.trace(writer);
       writer.outdent();
 
-      writer.enter("instanceTraits: ");
-      this.instanceTraits.trace(writer);
+      writer.enter("instanceBindings: ");
+      this.instanceBindings.trace(writer);
       writer.outdent();
 
       writer.outdent();

@@ -1249,7 +1249,7 @@
     };
 
     constructor.prototype.computeDominators = function (apply) {
-      assert (this.root.predecessors.length === 0, "Root node " + this.root + " must not have predecessors.");
+      assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
 
       var dom = new Int32Array(this.blocks.length);
       for (var i = 0; i < dom.length; i++) {
