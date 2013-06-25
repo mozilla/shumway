@@ -47,7 +47,7 @@ var BitmapDataDefinition = (function () {
         this._drawable = this._img;
       } else {
         var canvas = document.createElement('canvas');
-        this._ctx = canvas.getContext('2d');
+        this._ctx = canvas.getContext('kanvas-2d');
         canvas.width = width | 0;
         canvas.height = height | 0;
         this._drawable = canvas;
@@ -69,11 +69,8 @@ var BitmapDataDefinition = (function () {
       this._ctx.beginPath();
       if (clipRect) {
         this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
-      } else {
-        var canvas = this._drawable;
-        this._ctx.rect(0, 0, canvas.width, canvas.height);
+        this._ctx.clip();
       }
-      this._ctx.clip();
       renderDisplayObject(source, this._ctx, matrix, colorTransform);
       var children = source._children;
       for (var i = 0; i < children.length; i++) {
