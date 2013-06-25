@@ -47,7 +47,7 @@ var BitmapDataDefinition = (function () {
         this._drawable = this._img;
       } else {
         var canvas = document.createElement('canvas');
-        this._ctx = canvas.getContext('2d');
+        this._ctx = canvas.getContext('kanvas-2d');
         canvas.width = width | 0;
         canvas.height = height | 0;
         this._drawable = canvas;
