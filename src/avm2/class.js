@@ -706,13 +706,11 @@ var Class = (function () {
     defineReadOnlyProperty(cls, VM_IS_CLASS, true);
 
     cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null, ii, classScope, instanceNatives);
-    // var baseBindings = baseClass ? baseClass.traitsPrototype : null;
     if (cls.instanceConstructor) {
-      // applyInstanceTraits(domain, cls.traitsPrototype, classScope, baseBindings, ii.traits, instanceNatives);
       cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
     }
 
-    cls.implementedInterfaces = createEmptyObject();
+    cls.implementedInterfaces = baseClass ? cloneObject(baseClass.implementedInterfaces) : createEmptyObject();
     var interfaces = ii.interfaces;
     for (var i = 0; i < interfaces.length; i++) {
       var interface = domain.getProperty(interfaces[i], true, true);

@@ -112,6 +112,14 @@ function createEmptyObject() {
   return Object.create(null);
 }
 
+function cloneObject(object) {
+  var clone = Object.create(null);
+  for (var property in object) {
+    clone[property] = object[property];
+  }
+  return clone;
+}
+
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
   var descriptor = {};
   while (obj) {
