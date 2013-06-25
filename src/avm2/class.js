@@ -67,9 +67,9 @@ var Bindings = (function () {
     assert (trait.isSlot() || trait.isConst() || trait.isClass());
     if (!trait.slotId) {
       trait.slotId = this.nextSlotId ++;
+    } else {
+      this.nextSlotId = trait.slotId + 1;
     }
-    // TODO: We could have trait slot collisions if ASC generates some traits with slotIds and
-    // some without, so be a little smarter here if the assertion fails.
     assert (!this.slots[trait.slotId], "Trait slot already taken.");
     this.slots[trait.slotId] = trait;
   };
