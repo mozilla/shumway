@@ -1,5 +1,5 @@
 package {
-  var k, v;
+  var k, v, i, list;
 
   trace("for k in array");
   for (k in [1, 2, 3]) {
@@ -7,8 +7,13 @@ package {
   }
 
   trace("for k in object");
+  list = [];
   for (k in {a: 0, b: 1, c: 2}) {
-    trace(k);
+    list.push(k);
+  }
+  list.sort();
+  for (i = 0; i < list.length; i++) {
+    trace(list[i]);
   }
 
   trace("for each v in array");
@@ -17,8 +22,13 @@ package {
   }
 
   trace("for each v in object");
+  list = [];
   for each (v in {a: 0, b: 1, c: 2}) {
-    trace(v);
+    list.push(v);
+  }
+  list.sort();
+  for (i = 0; i < list.length; i++) {
+    trace(list[i]);
   }
 
   trace("-- DONE --");

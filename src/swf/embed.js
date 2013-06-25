@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global SWF, renderStage, toStringRgba, ShumwayKeyboardListener */
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
   var ctx = canvas.getContext('kanvas-2d');
-  var loader = new flash.display.Loader;
+  var loader = new flash.display.Loader();
   var loaderInfo = loader.contentLoaderInfo;
-  var stage = new flash.display.Stage;
+  var stage = new flash.display.Stage();
 
   stage._loader = loader;
   loaderInfo._parameters = options.movieParams;
@@ -77,7 +78,7 @@ SWF.embed = function(file, doc, container, options) {
     }
     canvas.width = container.clientWidth * pixelRatio;
     canvas.height = container.clientHeight * pixelRatio;
-    stage._invalidate = true;
+    stage._invalid = true;
   }
 
   loaderInfo._addEventListener('init', function () {
@@ -123,7 +124,7 @@ SWF.embed = function(file, doc, container, options) {
         do {
           left += node.offsetLeft;
           top += node.offsetTop;
-        } while (node = node.offsetParent);
+        } while ((node = node.offsetParent));
       }
 
       var canvasState = stage._canvasState;

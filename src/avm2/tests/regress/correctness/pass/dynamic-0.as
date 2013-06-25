@@ -273,8 +273,13 @@ package {
     trace(k);
   }
   trace("for each object:");
+  var values = [];
   for each (k in {a: 0, b: 1, c: 2}) {
-    trace(k);
+    values.push(k);
+  }
+  values.sort();
+  for (i = 0; i < values.length; i++) {
+    trace(values[i]);
   }
   trace("-- DONE --");
 }

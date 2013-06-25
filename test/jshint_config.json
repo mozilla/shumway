@@ -1,0 +1,17 @@
+{
+  "undef": true,
+  "esnext": true,
+  "onecase": true,
+  "shadow" : true,
+  "expr": true,
+  "maxerr": 1000,
+  "predef": [
+    "DataView", "ArrayBuffer", "Int8Array", "Uint8Array", "Int32Array", "Int16Array",
+    "Uint16Array", "Uint32Array", "Float32Array", "Float64Array", "Uint8ClampedArray",
+    "console", "window", "setInterval", "setTimeout", "clearInterval", "print",
+    "escape", "unescape", "performance", "document",
+    "GLOBAL", "exports",
+    "notImplemented", "somewhatImplemented", "avm2", "flash", "ArgumentError",
+    "release", "assert", "error", "scriptProperties", "Glue"
+  ]
+}

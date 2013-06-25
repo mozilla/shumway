@@ -65,9 +65,14 @@
  *   3) For non-native classes that you still want access to, use:
  *      M("fully.qualified.Name")
  */
+/*global createEmptyObject */
 
+// Ignoring all "is not defined." errors in this file
+/*jshint undef: false */
 
+/*jshint -W057 */
 var Stubs = new (function () {
+
   var that = this;
   var definitions = createEmptyObject();
   var DEFAULT_DEFINITION = {
@@ -253,8 +258,8 @@ natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instanceCon
   return function getAliasName(value) {
     // FIXME don't know what is expected here
     return value.debugName;
-  }
-}
+  };
+};
 
 natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 

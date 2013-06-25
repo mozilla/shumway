@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global FileLoadingService, Stream */
 
 var URLStreamDefinition = (function () {
   var def = {
@@ -40,7 +41,7 @@ var URLStreamDefinition = (function () {
         } else if (self._stream.end + data.length > self._stream.bytes.length) {
           var length = self._stream.end + data.length;
           var buffer = new ArrayBuffer(length);
-          newStream = new Stream(buffer, 0, 0, length);
+          var newStream = new Stream(buffer, 0, 0, length);
           newStream.push(self._stream.bytes.subarray(0, self._stream.end));
           self._stream = newStream;
         }
@@ -89,7 +90,7 @@ var URLStreamDefinition = (function () {
           self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
         }
 
-        self._dispatchEvent(new flash.events.Event("complete", false, false))
+        self._dispatchEvent(new flash.events.Event("complete", false, false));
       };
       session.open(request._toFileRequest());
       this._session = session;

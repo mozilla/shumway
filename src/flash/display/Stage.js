@@ -17,206 +17,245 @@
  */
 
 var StageDefinition = (function () {
-  var COLOR_CORRECTION_DEFAULT     = 'default';
-  var COLOR_CORRECTION_OFF         = 'on';
-  var COLOR_CORRECTION_ON          = 'off';
-
-  var COLOR_CORRECTION_DEFAULT_OFF = 'defaultOff';
-  var COLOR_CORRECTION_DEFAULT_ON  = 'defaultOn';
-  var COLOR_CORRECTION_UNSUPPORTED = 'unsuported';
-
-  var STAGE_ALIGN_BOTTOM           = 'B';
-  var STAGE_ALIGN_BOTTOM_LEFT      = 'BL';
-  var STAGE_ALIGN_BOTTOM_RIGHT     = 'BR';
-  var STAGE_ALIGN_LEFT             = 'L';
-  var STAGE_ALIGN_RIGHT            = 'R';
-  var STAGE_ALIGN_TOP              = 'T';
-  var STAGE_ALIGN_TOP_LEFT         = 'TL';
-  var STAGE_ALIGN_TOP_RIGHT        = 'TR';
-
-  var STAGE_SCALE_MODE_EXACT_FIT   = 'exactFit';
-  var STAGE_SCALE_MODE_NO_BORDER   = 'noBorder';
-  var STAGE_SCALE_MODE_NO_SCALE    = 'noScale';
-  var STAGE_SCALE_MODE_SHOW_ALL    = 'showAll';
-
-  var STAGE_QUALITY_BEST           = 'best';
-  var STAGE_QUALITY_HIGH           = 'high';
-  var STAGE_QUALITY_LOW            = 'low';
-  var STAGE_QUALITY_MEDIUM         = 'medium';
-
-  var def = {
-    __class__: 'flash.display.Stage',
-
+  return {
+    // ()
+    __class__: "flash.display.Stage",
     initialize: function () {
-      this._color = 0xFFFFFFFF;
-      this._focus = null;
-      this._clickTarget = null;
-      this._showRedrawRegions = false;
-      this._stage = this;
-      this._stageHeight = 0;
+      this._frameRate = 24;
+      this._scaleMode = 'showAll';
+      this._align = '';
       this._stageWidth = 0;
-      this._transform = { };
-      this._mouseJustLeft = false;
-      this._quality = STAGE_QUALITY_HIGH;
-      this._pendingScripts = [];
-      this._align = "";
-      this._scaleMode = STAGE_SCALE_MODE_SHOW_ALL;
-      this._contentsScaleFactor = 1;
-      this._displayState = "normal";
+      this._stageHeight = 0;
+      this._quality = 'high';
+      this._color = 0xFFFFFFFF;
+      this._stage = this;
+      this._invalid = true;
+      this._deferRenderEvent = false;
+      this._focus = null;
       this._showDefaultContextMenu = true;
+      this._displayState = "normal";
+      this._colorCorrection = "default";
+      this._fullScreenSourceRect = null;
+      this._wmodeGPU = false;
     },
-
-    _flushPendingScripts: function () {
-      var MAX_PENDING_SCRIPTS_EXECUTED = 100;
-      var executed = 0;
-      while (this._pendingScripts.length > 0) {
-        var fn = this._pendingScripts.shift();
-        fn();
-        if (++executed > MAX_PENDING_SCRIPTS_EXECUTED) {
-          console.error('ERROR: pending script limit was reached');
-          this._pendingScripts = [];
-          return;
+    __glue__: {
+      native: {
+        instance: {
+          invalidate: function invalidate() { // (void) -> void
+            this._invalid = true;
+            this._deferRenderEvent = true;
+          },
+          isFocusInaccessible: function isFocusInaccessible() { // (void) -> Boolean
+            notImplemented("Stage.isFocusInaccessible");
+          },
+          set_displayState: function set_displayState(value) { // (value:String) -> void
+            somewhatImplemented("Stage.set_displayState");
+            this._displayState = value;
+          },
+          get_simulatedFullScreenWidth: function get_simulatedFullScreenWidth() { // (void) -> uint
+            notImplemented("Stage.get_simulatedFullScreenWidth");
+          },
+          get_simulatedFullScreenHeight: function get_simulatedFullScreenHeight() { // (void) -> uint
+            notImplemented("Stage.get_simulatedFullScreenHeight");
+          },
+          removeChildAt: function removeChildAt(index) { // (index:int) -> DisplayObject
+            notImplemented("Stage.removeChildAt");
+          },
+          swapChildrenAt: function swapChildrenAt(index1, index2) { // (index1:int, index2:int) -> void
+            notImplemented("Stage.swapChildrenAt");
+          },
+          requireOwnerPermissions: function requireOwnerPermissions() { // (void) -> void
+            somewhatImplemented("Stage.requireOwnerPermissions");
+          },
+          frameRate: {
+            get: function frameRate() { // (void) -> Number
+              notImplemented("Stage.frameRate");
+              return this._frameRate;
+            },
+            set: function frameRate(value) { // (value:Number) -> void
+              notImplemented("Stage.frameRate");
+              this._frameRate = value;
+            }
+          },
+          scaleMode: {
+            get: function scaleMode() { // (void) -> String
+              return this._scaleMode;
+            },
+            set: function scaleMode(value) { // (value:String) -> void
+              this._scaleMode = value;
+              this._invalid = true;
+            }
+          },
+          align: {
+            get: function align() { // (void) -> String
+              return this._align;
+            },
+            set: function align(value) { // (value:String) -> void
+              this._align = value;
+              this._invalid = true;
+            }
+          },
+          stageWidth: {
+            get: function stageWidth() { // (void) -> int
+              return this._stageWidth;
+            },
+            set: function stageWidth(value) { // (value:int) -> void
+              notImplemented("Stage.stageWidth");
+              this._stageWidth = value;
+            }
+          },
+          stageHeight: {
+            get: function stageHeight() { // (void) -> int
+              return this._stageHeight;
+            },
+            set: function stageHeight(value) { // (value:int) -> void
+              notImplemented("Stage.stageHeight");
+              this._stageHeight = value;
+            }
+          },
+          showDefaultContextMenu: {
+            get: function showDefaultContextMenu() { // (void) -> Boolean
+              return this._showDefaultContextMenu;
+            },
+            set: function showDefaultContextMenu(value) { // (value:Boolean) -> void
+              somewhatImplemented("Stage.showDefaultContextMenu");
+              this._showDefaultContextMenu = value;
+            }
+          },
+          focus: {
+            get: function focus() { // (void) -> InteractiveObject
+              return this._focus;
+            },
+            set: function focus(newFocus) { // (newFocus:InteractiveObject) -> void
+              somewhatImplemented("Stage.focus");
+              this._focus = newFocus;
+            }
+          },
+          colorCorrection: {
+            get: function colorCorrection() { // (void) -> String
+              return this._colorCorrection;
+            },
+            set: function colorCorrection(value) { // (value:String) -> void
+              notImplemented("Stage.colorCorrection");
+              this._colorCorrection = value;
+            }
+          },
+          colorCorrectionSupport: {
+            get: function colorCorrectionSupport() { // (void) -> String
+              return false;
+            }
+          },
+          stageFocusRect: {
+            get: function stageFocusRect() { // (void) -> Boolean
+              notImplemented("Stage.stageFocusRect");
+              return this._stageFocusRect;
+            },
+            set: function stageFocusRect(on) { // (on:Boolean) -> void
+              notImplemented("Stage.stageFocusRect");
+              this._stageFocusRect = on;
+            }
+          },
+          quality: {
+            get: function quality() { // (void) -> String
+              return this._quality;
+            },
+            set: function quality(value) { // (value:String) -> void
+              somewhatImplemented("Stage.stageFocusRect");
+              this._quality = value;
+            }
+          },
+          displayState: {
+            get: function displayState() { // (void) -> String
+              return this._displayState;
+            }
+          },
+          simulatedDisplayState: {
+            get: function simulatedDisplayState() { // (void) -> String
+              notImplemented("Stage.simulatedDisplayState");
+              return this._simulatedDisplayState;
+            },
+            set: function simulatedDisplayState(value) { // (value:String) -> void
+              notImplemented("Stage.simulatedDisplayState");
+              this._simulatedDisplayState = value;
+            }
+          },
+          fullScreenSourceRect: {
+            get: function fullScreenSourceRect() { // (void) -> Rectangle
+              return this._fullScreenSourceRect;
+            },
+            set: function fullScreenSourceRect(value) { // (value:Rectangle) -> void
+              notImplemented("Stage.fullScreenSourceRect");
+              this._fullScreenSourceRect = value;
+            }
+          },
+          simulatedFullScreenSourceRect: {
+            get: function simulatedFullScreenSourceRect() { // (void) -> Rectangle
+              notImplemented("Stage.simulatedFullScreenSourceRect");
+              return this._simulatedFullScreenSourceRect;
+            },
+            set: function simulatedFullScreenSourceRect(value) { // (value:Rectangle) -> void
+              notImplemented("Stage.simulatedFullScreenSourceRect");
+              this._simulatedFullScreenSourceRect = value;
+            }
+          },
+          stageVideos: {
+            get: function stageVideos() { // (void) -> Vector
+              notImplemented("Stage.stageVideos");
+              return this._stageVideos;
+            }
+          },
+          stage3Ds: {
+            get: function stage3Ds() { // (void) -> Vector
+              notImplemented("Stage.stage3Ds");
+              return this._stage3Ds;
+            }
+          },
+          color: {
+            get: function color() { // (void) -> uint
+              return this._color;
+            },
+            set: function color(color) { // (color:uint) -> void
+              this._color = color;
+              this._invalid = true;
+            }
+          },
+          fullScreenWidth: {
+            get: function fullScreenWidth() { // (void) -> uint
+              notImplemented("Stage.fullScreenWidth");
+              return this._fullScreenWidth;
+            }
+          },
+          fullScreenHeight: {
+            get: function fullScreenHeight() { // (void) -> uint
+              notImplemented("Stage.fullScreenHeight");
+              return this._fullScreenHeight;
+            }
+          },
+          wmodeGPU: {
+            get: function wmodeGPU() { // (void) -> Boolean
+              somewhatImplemented("Stage.wmodeGPU");
+              return this._wmodeGPU;
+            }
+          },
+          softKeyboardRect: {
+            get: function softKeyboardRect() { // (void) -> Rectangle
+              notImplemented("Stage.softKeyboardRect");
+              return this._softKeyboardRect;
+            }
+          },
+          allowsFullScreen: {
+            get: function allowsFullScreen() { // (void) -> Boolean
+              return false;
+            }
+          },
+          displayContextInfo: {
+            get: function displayContextInfo() { // (void) -> String
+              notImplemented("Stage.displayContextInfo");
+              return this._displayContextInfo;
+            }
+          }
         }
       }
-    },
-
-    get allowsFullScreen() {
-      return false;
-    },
-    get colorCorrection() {
-      return COLOR_CORRECTION_DEFAULT;
-    },
-    set colorCorrection(val) {
-      notImplemented();
-    },
-    get colorCorrectionSupport() {
-      return COLOR_CORRECTION_UNSUPPORTED;
-    },
-    get displayState() {
-      return null;
-    },
-    get frameRate() {
-      return this._frameRate;
-    },
-    set frameRate(val) {
-      this._frameRate = val;
-    },
-    get fullScreenHeight() {
-      notImplemented();
-    },
-    get fullScreenSourceRect() {
-        return null;
-    },
-    set fullScreenSourceRect(val) {
-      notImplemented();
-    },
-    get fullScreenWidth() {
-      notImplemented();
-    },
-    get quality() {
-      return this._quality;
-    },
-    set quality(val) {
-      this._quality = val;
-    },
-    get scaleMode() {
-      return this._scaleMode;
-    },
-    set scaleMode(val) {
-      this._scaleMode = val;
-      this._invalidate = true;
-    },
-    get showDefaultContextMenu() {
-      return this._showDefaultContextMenu;
-    },
-    set showDefaultContextMenu(val) {
-      somewhatImplemented('Stage.showDefaultContextMenu');
-      this._showDefaultContextMenu = val
-    },
-    get stageFocusRect() {
-      return false;
-    },
-    set stageFocusRect(val) {
-      notImplemented();
-    },
-    get stageHeight() {
-      return this._stageHeight;
-    },
-    set stageHeight(val) {
-      notImplemented();
-    },
-    get stageWidth() {
-      return this._stageWidth;
-    },
-    set stageWidth(val) {
-      notImplemented();
-    },
-    get stageVideos() {
-      notImplemented();
-    },
-    get wmodeGPU() {
-      return false;
-    },
-
-    invalidate: function () {
-      this._invalidate = true;
-      somewhatImplemented('Stage.invalidate');
-    },
-    isFocusInaccessible: function() {
-      notImplemented();
     }
   };
-
-  var desc = Object.getOwnPropertyDescriptor;
-
-  // TODO
-  def.__glue__  = {
-    native: {
-      instance: {
-        stageHeight: desc(def, "stageHeight"),
-        stageWidth: desc(def, "stageWidth"),
-        frameRate: desc(def, "frameRate"),
-        scaleMode: desc(def, "scaleMode"),
-        contentsScaleFactor: {
-          get: function contentsScaleFactor() { // (void) -> Number
-            return this._contentsScaleFactor;
-          }
-        },
-        align: {
-          get: function align() { // (void) -> String
-            return this._align;
-          },
-          set: function align(value) { // (value:String) -> void
-            this._align = value;
-            this._invalidate = true;
-          }
-        },
-        focus: {
-          get: function focus() { // (void) -> InteractiveObject
-            somewhatImplemented("Stage.focus");
-            return this._focus;
-          },
-          set: function focus(newFocus) { // (newFocus:InteractiveObject) -> void
-            somewhatImplemented("Stage.focus");
-            this._focus = newFocus;
-          }
-        },
-        requireOwnerPermissions: function () {
-          // private undocumented
-        },
-        displayState: {
-          get: function displayState() { // (void) -> String
-            return this._displayState;
-          },
-          set: function displayState(value) { // (value:String) -> void
-            somewhatImplemented("Stage.displayState");
-            this._displayState = value;
-          }
-        },
-        invalidate: def.invalidate
-      }
-    }
-  };
-
-  return def;
 }).call(this);

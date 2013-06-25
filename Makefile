@@ -74,34 +74,30 @@ update-flash-refs:
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
 	node utils/update-flash-refs.js test/harness/slave.html src/flash
 
-test:
+test: test-avm1 test-avm2
+
+test-avm1:
 	make -C src/avm1/tests/ test
+
+test-avm2:
 	make -C src/avm2/bin/ test-regress
 
-BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
+reftest:
+	make -C test/ reftest
 
-check-browser-manifest:
-	@ls test/$(BROWSER_MANIFEST) || { echo "ERROR: Browser manifest file is not found at test/$(BROWSER_MANIFEST). Create one using the examples at test/resources/browser_manifests/."; exit 1; }
+makeref:
+	make -C test/ makeref
 
-reftest: check-browser-manifest
-	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) $(TEST_FLAGS)
+reftest-swfdec:
+	make -C test/ reftest-swfdec
 
-makeref: check-browser-manifest
-	cd test; python test.py --masterMode --browserManifestFile=$(BROWSER_MANIFEST) $(TEST_FLAGS)
-
-reftest-swfdec: check-browser-manifest
-	cd test; python test.py --reftest --browserManifestFile=$(BROWSER_MANIFEST) --manifestFile=swfdec_test_manifest.json
+lint:
+	make -C test/ lint
 
 hello-world:
 	make -C src/avm2/bin/ hello-world
 
 IRC_ROOM = shumway-build-bot
-
-lint:
-	make -C utils/ -f lint.mk lint
-
-lint-all:
-	make -C utils/ -f lint.mk lint-all
 
 server:
 	python -m SimpleHTTPServer
@@ -144,5 +140,6 @@ start-build-bot:
 
 .PHONY: check-system install-libs install-utils build-tamarin-tests \
         build-playerglobal build-extension build-web test default \
-        reftest reftest-swfdec makeref check-browser-manifest
+        reftest reftest-swfdec makeref check-browser-manifest \
+        test-avm1 test-avm2
 

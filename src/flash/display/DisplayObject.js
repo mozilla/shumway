@@ -35,27 +35,6 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SHADER     = 'shader';
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
-  var ADJUST_SCALE_RATIO_TABLE = [0, 0.07973903588256626, 0.1500346500346502,
-    0.21160295103957072, 0.26651330923430827, 0.3182410423452769,
-    0.36618798955613585, 0.4117063492063492, 0.45627118644067816,
-    0.5, 0.5438401775804661, 0.5876777251184835, 0.6337907375643225,
-    0.6818830242510697, 0.7325392528424471, 0.7887683471601787,
-    0.850592885375494, 0.9202975557917109, 1];
-
-  function getAdjustScaleRatio(rotation) {
-    // black-box function, using linear interpolation
-    rotation = (180 + (rotation % 180)) % 180;
-    if (rotation === 0)
-      return 0;
-    var x = rotation > 90 ? (180 - rotation) / 90 : rotation / 90;
-    if (x >= 1)
-      return 1;
-    var i = (x * ADJUST_SCALE_RATIO_TABLE.length) | 0;
-    var ratio = x - (i / ADJUST_SCALE_RATIO_TABLE.length);
-    return ADJUST_SCALE_RATIO_TABLE[i] +
-      (ADJUST_SCALE_RATIO_TABLE[i + 1] - ADJUST_SCALE_RATIO_TABLE[i]) * ratio;
-  }
-
   var def = {
     __class__: 'flash.display.DisplayObject',
 
@@ -97,6 +76,8 @@ var DisplayObjectDefinition = (function () {
       this._x = 0;
       this._y = 0;
       this._destroyed = false;
+      this._maskedObject = null;
+      this._scrollRect = null;
 
       var s = this.symbol;
       if (s) {
@@ -182,8 +163,8 @@ var DisplayObjectDefinition = (function () {
       }
       this._dispatchEvent(e);
     },
-    _applyCurrentInverseTransform: function (point, targetCoordSpace) {
-      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
+    _applyCurrentInverseTransform: function (point, immediate) {
+      if (this._parent && this._parent !== this._stage && !immediate)
         this._parent._applyCurrentInverseTransform(point);
 
       var m = this._currentTransform;
@@ -194,9 +175,6 @@ var DisplayObjectDefinition = (function () {
       point.y = (m.a * y - m.b * x) * d;
     },
     _applyCurrentTransform: function (point, targetCoordSpace) {
-      if (targetCoordSpace === this)
-        return;
-
       var m = this._currentTransform;
       var x = point.x;
       var y = point.y;
@@ -204,8 +182,11 @@ var DisplayObjectDefinition = (function () {
       point.x = m.a * x + m.c * y + m.tx;
       point.y = m.d * y + m.b * x + m.ty;
 
-      if (this._parent && this._parent !== this._stage && this._parent !== targetCoordSpace)
-        this._parent._applyCurrentTransform(point, targetCoordSpace);
+      if (this._parent && this._parent !== this._stage)
+        this._parent._applyCurrentTransform(point);
+
+      if (targetCoordSpace)
+        targetCoordSpace._applyCurrentInverseTransform(point);
     },
     _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
       if (use_xy) {
@@ -384,8 +365,9 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      var scaleRatio = getAdjustScaleRatio(this._rotation);
-      this.scaleX += scaleRatio * (this.scaleY - this.scaleX);
+      var baseWidth = u * (bounds.xMax - bounds.xMin) +
+                      v * (bounds.yMax - bounds.yMin);
+      this.scaleX = this.width / baseWidth;
 
       this.scaleY = val / baseHeight;
     },
@@ -396,7 +378,19 @@ var DisplayObjectDefinition = (function () {
       return this._mask;
     },
     set mask(val) {
+      if (this._mask === val) {
+        return;
+      }
+
+      if (val && val._maskedObject) {
+        val._maskedObject.mask = null;
+      }
+
       this._mask = val;
+      if (val) { val._maskedObject = this;
+      }
+
+      this._markAsDirty();
     },
     get name() {
       return this._name;
@@ -479,10 +473,11 @@ var DisplayObjectDefinition = (function () {
       this._scale9Grid = val;
     },
     get scrollRect() {
-      return null;
+      return this._scrollRect;
     },
     set scrollRect(val) {
-      notImplemented();
+      somewhatImplemented('DisplayObject.scrollRect');
+      this._scrollRect = val;
     },
     get transform() {
       return this._transform || new flash.geom.Transform(this);
@@ -531,8 +526,9 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      var scaleRatio = getAdjustScaleRatio(this._rotation);
-      this.scaleY += scaleRatio * (this.scaleX - this.scaleY);
+      var baseHeight = v * (bounds.xMax - bounds.xMin) +
+                       u * (bounds.yMax - bounds.yMin);
+      this.scaleY = this.height / baseHeight;
 
       this.scaleX = val / baseWidth;
     },
@@ -644,10 +640,10 @@ var DisplayObjectDefinition = (function () {
       var p4 = { x: b.xMin, y: b.yMax };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
-      xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
       return new flash.geom.Rectangle(
         xMin,

@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Promise, FileLoadingService, MediaSource, Multiname, wrapJSObject */
 
 var USE_MEDIASOURCE_API = true;
 
@@ -36,6 +37,10 @@ var NetStreamDefinition = (function () {
         break;
       case 300: // time
         result = videoElement ? videoElement.currentTime : 0;
+        simulated = true;
+        return 0;
+      case 302: // get bufferTime
+        result = videoElement.duration;
         simulated = true;
         return 0;
       case 305: // get bytesLoaded

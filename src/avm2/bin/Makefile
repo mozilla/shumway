@@ -24,7 +24,7 @@ TIMEOUT ?= 30000
 
 NODE_MODULES = ../../../utils/node_modules
 
-TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -j $(THREADS) -t $(TIMEOUT) -jo
+TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -t $(TIMEOUT) -jo
 
 TEST_PATH ?= $(error Specify TEST_PATH variable)
 
@@ -34,26 +34,28 @@ default:
 hello-world:
 	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) ./shu.py asc -builtin ../tests/hello-world.as
 	$(JSSHELL) avm.js -x ../tests/hello-world.abc
-	$(TEST_CMD) -i ../tests/hello-world.abc -c icv
+	$(TEST_CMD) -j $(THREADS) -i ../tests/hello-world.abc -c icv
 
 test-pypy:
-	$(TEST_CMD) -i pypy.i.passed -c ic
+	$(TEST_CMD) -j $(THREADS) -i pypy.i.passed -c ic
 
 test-interpreter:
-	$(TEST_CMD) -i $(TEST_PATH) -c i
+	$(TEST_CMD) -j $(THREADS) -i $(TEST_PATH) -c i
 
 test-compiler:
-	$(TEST_CMD) -i $(TEST_PATH) -c c
+	$(TEST_CMD) -j $(THREADS) -i $(TEST_PATH) -c c
 
 test-interpreter-all:
-	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c i -nm
+	$(TEST_CMD) -j $(THREADS) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c i -nm
 
 test-all:
-	$(TEST_CMD) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
+	$(TEST_CMD) -j $(THREADS) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
 
 test-regress:
-	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py reg
-	$(TEST_CMD) -i ../tests/regress -e regress.disabled -c icv
+	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py build-tests
+	$(TEST_CMD) -j $(THREADS) -i ../tests/regress/correctness/pass/ -c icv
+	$(TEST_CMD) -j 1 -i ../tests/performance/c4/basic.abc -c v
+	echo "SUCCESS: ALL AVM2 TESTS PASSED"
 
 run-avm:
 	$(AVM) $(TEST_PATH)

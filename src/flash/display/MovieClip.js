@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global MP3DecoderSession, AS2MovieClip, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -22,6 +23,7 @@ var MovieClipDefinition = (function () {
 
     initialize: function () {
       this._currentFrame = 0;
+      this._actualFrame = 0;
       this._currentFrameLabel = null;
       this._currentLabel = false;
       this._currentScene = 0;
@@ -76,7 +78,7 @@ var MovieClipDefinition = (function () {
             try {
               scripts[i].call(this);
             } catch (e) {
-              log('error ' + e + ', stack: \n' + e.stack);
+              console.error('error ' + e + ', stack: \n' + e.stack);
             }
           } else {
             scripts[i].call(this);
@@ -84,6 +86,9 @@ var MovieClipDefinition = (function () {
         }
       }
       this._deferScriptExecution = false;
+      if (this._actualFrame !== this._currentFrame) {
+        this._gotoFrame(this._actualFrame);
+      }
     },
     _as2CallFrame: function (frame) {
       if (isNaN(frame)) {
@@ -113,6 +118,12 @@ var MovieClipDefinition = (function () {
 
       if (frameNum === currentFrame)
         return;
+
+      this._actualFrame = frameNum;
+
+      if (this._deferScriptExecution) {
+        return;
+      }
 
       this._markAsDirty();
 
@@ -161,7 +172,7 @@ var MovieClipDefinition = (function () {
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
                   if (cmd.hasClipDepth)
-                    child._clipDepth = cmd.clipDepth;
+                    currentChild._clipDepth = cmd.clipDepth;
 
                   if (cmd.hasMatrix) {
                     var m = cmd.matrix;
@@ -361,23 +372,12 @@ var MovieClipDefinition = (function () {
           frameScripts[frameNum] = [fn];
       }
     },
-    _addToPendingScripts: function (fn) {
-      if (!this._deferScriptExecution) {
-        return fn();
-      }
-      if (this._stage === null) {
-        // HACK called from the constructor, applying _gotoFrame frame at once?
-        return fn();
-      }
-      return this._stage._pendingScripts.push(fn);
-    },
     gotoAndPlay: function (frame, scene) {
       this.play();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._addToPendingScripts(
-          this._gotoFrame.bind(this, frame));
+        this._gotoFrame(frame);
       }
     },
     gotoAndStop: function (frame, scene) {
@@ -385,15 +385,13 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else if (this._stage) {
-        this._addToPendingScripts(
-          this._gotoFrame.bind(this, frame));
+        this._gotoFrame(frame);
       }
     },
     gotoLabel: function (labelName) {
       var frameNum = this._labelMap[labelName];
       if (frameNum !== undefined && this._stage) {
-        this._addToPendingScripts(
-          this._gotoFrame.bind(this, frameNum));
+        this._gotoFrame(frameNum);
       }
     },
     isPlaying: function () {
@@ -401,9 +399,7 @@ var MovieClipDefinition = (function () {
     },
     nextFrame: function () {
       this.stop();
-      this._addToPendingScripts(function () {
-        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
-      }.bind(this));
+      this._gotoFrame(this._currentFrame % this._totalFrames + 1);
     },
     nextScene: function () {
       notImplemented();
@@ -416,9 +412,7 @@ var MovieClipDefinition = (function () {
     },
     prevFrame: function () {
       this.stop();
-      this._addToPendingScripts(function () {
-        this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
-      }.bind(this));
+      this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
     },
     prevScene: function () {
       notImplemented();

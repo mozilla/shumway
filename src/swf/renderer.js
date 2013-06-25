@@ -15,16 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO */
+
+var CanvasCache = {
+  cache: [],
+  getCanvas: function getCanvas(protoCanvas) {
+    var tempCanvas = this.cache.shift();
+    if (!tempCanvas) {
+      tempCanvas = {
+        canvas: document.createElement('canvas')
+      };
+      tempCanvas.ctx = tempCanvas.canvas.getContext('kanvas-2d');
+    }
+    tempCanvas.canvas.width = protoCanvas.width;
+    tempCanvas.canvas.height = protoCanvas.height;
+    tempCanvas.ctx.save();
+    return tempCanvas;
+  },
+  releaseCanvas: function releaseCanvas(tempCanvas) {
+    tempCanvas.ctx.restore();
+    this.cache.push(tempCanvas);
+  }
+};
 
 function renderDisplayObject(child, ctx, transform, cxform, clip) {
-  var m = transform;
-  if (m.a * m.d == m.b * m.c) {
-    // Workaround for bug 844184 -- the object is invisible
-    ctx.closePath();
-    ctx.rect(0, 0, 0, 0);
-    ctx.clip();
-  } else {
-    ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+  if (transform) {
+    var m = transform;
+    if (m.a * m.d == m.b * m.c) {
+      // Workaround for bug 844184 -- the object is invisible
+      ctx.closePath();
+      ctx.rect(0, 0, 0, 0);
+      ctx.clip();
+    } else {
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    }
   }
 
   if (cxform) {
@@ -177,14 +201,15 @@ function renderStage(stage, ctx, events) {
 
     for (var i = 0, n = children.length; i < n; i++) {
       var child = children[i];
-      if (child && (child._visible || visitor.ignoreVisibleAttribute)) {
+      if (!child) {
+        continue;
+      }
+
+      if (visitor.ignoreVisibleAttribute || (child._visible && !child._maskedObject)) {
         var isContainer = ContainerClass.isInstanceOf(child) ||
                           SimpleButtonClass.isInstanceOf(child);
 
-        visitor.visit(child, isContainer);
-
-        if (isContainer)
-          visitContainer(child, visitor);
+        visitor.visit(child, isContainer, visitContainer);
 
         if (child._dirtyArea)
           dirty = true;
@@ -204,7 +229,7 @@ function renderStage(stage, ctx, events) {
     ignoreVisibleAttribute: true,
     childrenStart: function() {},
     childrenEnd: function() {},
-    visit: function (child, isContainer) {
+    visit: function (child, isContainer, visitContainer) {
       if (child._dirtyArea) {
         var b1 = roundForClipping(child._dirtyArea);
         var b2 = roundForClipping(child.getBounds());
@@ -215,6 +240,9 @@ function renderStage(stage, ctx, events) {
         child._markAsDirty();
         // redraw entire stage till we calculate bounding boxes for dynamic graphics
         this.ctx.rect(0, 0, frameWidth, frameHeight);
+      }
+      if (isContainer) {
+        visitContainer(child, this);
       }
     }
   };
@@ -286,7 +314,7 @@ function renderStage(stage, ctx, events) {
         }
       }
     },
-    visit: function (child, isContainer) {
+    visit: function (child, isContainer, visitContainer) {
       var interactiveParent = this.interactiveParent;
       if (InteractiveClass.isInstanceOf(child) && child._mouseEnabled &&
           interactiveParent._mouseChildren) {
@@ -302,7 +330,7 @@ function renderStage(stage, ctx, events) {
 
       var parent = child._parent;
       var pt = { x: parent._mouseX, y: parent._mouseY };
-      child._applyCurrentInverseTransform(pt, parent);
+      child._applyCurrentInverseTransform(pt, true);
 
       if (pt.x !== child._mouseX || pt.y !== child._mouseY) {
         mouseMoved = true;
@@ -325,6 +353,8 @@ function renderStage(stage, ctx, events) {
       if (isContainer) {
         this.parentsStack.push(this.interactiveParent);
         this.interactiveParent = interactiveParent;
+
+        visitContainer(child, this);
       }
     }
   };
@@ -340,7 +370,7 @@ function renderStage(stage, ctx, events) {
   RenderVisitor.prototype = {
     ignoreVisibleAttribute: false,
     childrenStart: function(parent) {
-      if (this.depth == 0) {
+      if (this.depth === 0) {
         var ctx = this.ctx;
 
         ctx.save();
@@ -388,9 +418,11 @@ function renderStage(stage, ctx, events) {
       }
 
       this.depth--;
-      this.ctx.restore();
+      if (this.depth === 0) {
+        this.ctx.restore();
+      }
     },
-    visit: function (child, isContainer) {
+    visit: function (child, isContainer, visitContainer) {
       var ctx = this.ctx;
 
       var clippingMask = false;
@@ -413,24 +445,53 @@ function renderStage(stage, ctx, events) {
 
       ctx.save();
 
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
+      if (child._mask) {
+        // TODO create canvas small enough to fit the object and
+        // TODO cache the results when cacheAsBitmap is set
+        var tempCanvas, tempCtx, maskCanvas, maskCtx;
+        maskCanvas = CanvasCache.getCanvas(ctx.canvas);
+        maskCtx = maskCanvas.ctx;
+        maskCtx.currentTransform = ctx.currentTransform;
+        var isMaskContainer = ContainerClass.isInstanceOf(child._mask) ||
+                              SimpleButtonClass.isInstanceOf(child._mask);
+        this.ctx = maskCtx;
+        this.visit(child._mask, isMaskContainer, visitContainer);
+        this.ctx = ctx;
 
-      if (!isContainer) {
-        // letting the container to restore transforms after all children are painted
+        tempCanvas = CanvasCache.getCanvas(ctx.canvas);
+        tempCtx = tempCanvas.ctx;
+        tempCtx.currentTransform = ctx.currentTransform;
+        renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask);
+
+        if (isContainer) {
+          this.ctx = tempCtx;
+          visitContainer(child, this);
+          this.ctx = ctx;
+        }
+
+        tempCtx.globalCompositeOperation = 'destination-in';
+        tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+        tempCtx.drawImage(maskCanvas.canvas, 0, 0);
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(tempCanvas.canvas, 0, 0);
         ctx.restore();
+
+        CanvasCache.releaseCanvas(tempCanvas);
+        CanvasCache.releaseCanvas(maskCanvas);
+      } else {
+        renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
+
+        if (isContainer) {
+          visitContainer(child, this);
+        }
       }
+
+      ctx.restore();
 
       if (clippingMask) {
         ctx.clip();
-      }
-
-      if (stage._showRedrawRegions && child._dirtyArea) {
-        var b = child._dirtyArea;
-        ctx.save();
-        ctx.strokeStyle = '#f00';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(b.x, b.y, b.width, b.height);
-        ctx.restore();
       }
 
       child._dirtyArea = null;
@@ -438,7 +499,7 @@ function renderStage(stage, ctx, events) {
   };
 
   var frameTime = 0;
-  var maxDelay = 1000 / stage.frameRate;
+  var maxDelay = 1000 / stage._frameRate;
   var nextRenderAt = Date.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
@@ -455,12 +516,14 @@ function renderStage(stage, ctx, events) {
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
     var radius = 10;
     var speed = 1;
+    var canvasState = stage._canvasState;
+    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
     dummyBalls = [];
     for (var i = 0; i < 10; i++) {
       dummyBalls.push({
         position: {
-          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scale),
-          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scale)
+          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
+          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
         },
         velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
       });
@@ -481,16 +544,16 @@ function renderStage(stage, ctx, events) {
         ctx.stroke();
         var x = (position.x + velocity.x);
         var y = (position.y + velocity.y);
-        if (x < radius || x > ctx.canvas.width / scale - radius) {
+        if (x < radius || x > ctx.canvas.width / scaleX - radius) {
           velocity.x *= -1;
         }
-        if (y < radius || y > ctx.canvas.height / scale - radius) {
+        if (y < radius || y > ctx.canvas.height / scaleY - radius) {
           velocity.y *= -1;
         }
         position.x += velocity.x;
         position.y += velocity.y;
       });
-    }
+    };
   }
 
   console.timeEnd("Initialize Renderer");
@@ -517,9 +580,9 @@ function renderStage(stage, ctx, events) {
     }
 
     var refreshStage = false;
-    if (stage._invalidate) {
+    if (stage._invalid) {
       updateRenderTransform();
-      stage._invalidate = false;
+      stage._invalid = false;
       refreshStage = true;
     }
 
@@ -532,22 +595,18 @@ function renderStage(stage, ctx, events) {
     if (renderFrame || refreshStage || mouseMoved) {
       visitContainer(stage, new MouseVisitor());
 
-      stage._flushPendingScripts();
-
       if (renderFrame) {
         frameTime = now;
         nextRenderAt = frameTime + maxDelay;
 
         avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
         avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
-
-        stage._flushPendingScripts();
-
         avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
       }
 
-      if (refreshStage) {
-        stage._dispatchEvent(new flash.events.Event("render"));
+      if (stage._deferRenderEvent) {
+        stage._deferRenderEvent = false;
+        avm2.systemDomain.broadcastMessage(new flash.events.Event("render"));
       }
 
       if (refreshStage || renderFrame) {

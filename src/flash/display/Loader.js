@@ -15,6 +15,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global self, importScripts, FileReader, FileReaderSync, Image, Worker, btoa,
+         URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
+         defineBitmap, defineImage, defineFont, defineShape, defineSound,
+         defineLabel, defineButton, defineText,
+         AS2Key, AS2Mouse, AS2Context, executeActions,
+         createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
+         cloneObject, fromCharCode */
+/*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
+          SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
+          SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
+          SWF_TAG_CODE_DEFINE_BUTTON, SWF_TAG_CODE_DEFINE_BUTTON2,
+          SWF_TAG_CODE_DEFINE_EDIT_TEXT, SWF_TAG_CODE_DEFINE_FONT,
+          SWF_TAG_CODE_DEFINE_FONT2, SWF_TAG_CODE_DEFINE_FONT3,
+          SWF_TAG_CODE_DEFINE_FONT4, SWF_TAG_CODE_DEFINE_MORPH_SHAPE,
+          SWF_TAG_CODE_DEFINE_MORPH_SHAPE2, SWF_TAG_CODE_DEFINE_SCALING_GRID,
+          SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA, SWF_TAG_CODE_DEFINE_SHAPE,
+          SWF_TAG_CODE_DEFINE_SHAPE2, SWF_TAG_CODE_DEFINE_SHAPE3,
+          SWF_TAG_CODE_DEFINE_SHAPE4, SWF_TAG_CODE_DEFINE_SOUND,
+          SWF_TAG_CODE_DEFINE_SPRITE, SWF_TAG_CODE_DEFINE_TEXT,
+          SWF_TAG_CODE_DEFINE_TEXT2, SWF_TAG_CODE_DO_ABC,
+          SWF_TAG_CODE_DO_ABC_, SWF_TAG_CODE_DO_ACTION,
+          SWF_TAG_CODE_DO_INIT_ACTION, SWF_TAG_CODE_FRAME_LABEL,
+          SWF_TAG_CODE_JPEG_TABLES, SWF_TAG_CODE_PLACE_OBJECT,
+          SWF_TAG_CODE_PLACE_OBJECT2, SWF_TAG_CODE_PLACE_OBJECT3,
+          SWF_TAG_CODE_REMOVE_OBJECT, SWF_TAG_CODE_REMOVE_OBJECT2,
+          SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
+          SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
+          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS */
+// Ignoring "The Function constructor is a form of eval."
+/*jshint -W054 */
+// TODO: Investigate "Don't make functions within a loop."
+/*jshint -W083 */
 
 var $RELEASE = false;
 
@@ -118,6 +150,7 @@ var LoaderDefinition = (function () {
         var tags = swfTag.tags;
         var frameScripts = null;
         var frameIndex = 0;
+        var soundStream = null;
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
           switch (tag.code) {
@@ -326,7 +359,7 @@ var LoaderDefinition = (function () {
           commitData(result);
           commitData({command: 'complete'});
         }
-      }
+      };
     }
     function parseBytes(bytes) {
       SWF.parse(bytes, createParsingContext());
@@ -346,11 +379,11 @@ var LoaderDefinition = (function () {
           }
         });
       } else if (typeof FileReaderSync !== 'undefined') {
-        var reader = new FileReaderSync;
+        var reader = new FileReaderSync();
         var buffer = reader.readAsArrayBuffer(input);
         parseBytes(buffer);
       } else {
-        var reader = new FileReader;
+        var reader = new FileReader();
         reader.onload = function () {
           parseBytes(this.result);
         };
@@ -413,7 +446,7 @@ var LoaderDefinition = (function () {
     __class__: 'flash.display.Loader',
 
     initialize: function () {
-      this._contentLoaderInfo = new flash.display.LoaderInfo;
+      this._contentLoaderInfo = new flash.display.LoaderInfo();
       this._contentLoaderInfo._loader = this;
       this._dictionary = { };
       this._displayList = null;
@@ -430,7 +463,7 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        var frameConstructed = new Promise;
+        var frameConstructed = new Promise();
         avm2.systemDomain.onMessage.register(function waitForFrame(e) {
           if (e.data._type === 'frameConstructed') {
             frameConstructed.resolve();
@@ -522,7 +555,7 @@ var LoaderDefinition = (function () {
       var loaderInfo = loader.contentLoaderInfo;
       var timeline = loader._timeline;
       var frameNum = timeline.length + 1;
-      var framePromise = new Promise;
+      var framePromise = new Promise();
       var labelName = frame.labelName;
       var prevPromise = this._lastPromise;
       this._lastPromise = framePromise;
@@ -655,7 +688,7 @@ var LoaderDefinition = (function () {
                 var lbl = ld[j];
                 labels.push(new flash.display.FrameLabel(lbl.name, lbl.frame + 1));
               }
-              var scene = new flash.display.Scene(s.name, labels, o - s.offset);
+              var scene = new flash.display.Scene(s.name, labels, s.offset);
               scenes.push(scene);
             }
             root.symbol.scenes = scenes;
@@ -706,8 +739,8 @@ var LoaderDefinition = (function () {
     },
     _commitImage : function (imageInfo) {
       var loader = this;
-      var imgPromise = this._lastPromise = new Promise;
-      var img = new Image;
+      var imgPromise = this._lastPromise = new Promise();
+      var img = new Image();
       imageInfo.props.img = img;
       img.onload = function() {
         var props = imageInfo.props;
@@ -727,7 +760,7 @@ var LoaderDefinition = (function () {
         loader._content = image;
         imgPromise.resolve(imageInfo);
         loader.contentLoaderInfo._dispatchEvent(new flash.events.Event("init"));
-      }
+      };
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
     },
@@ -746,7 +779,7 @@ var LoaderDefinition = (function () {
       var dependencies = symbol.require;
       var promiseQueue = [];
       var props = { loader: this };
-      var symbolPromise = new Promise;
+      var symbolPromise = new Promise();
 
       if (dependencies && dependencies.length) {
         for (var i = 0, n = dependencies.length; i < n; i++) {
@@ -780,7 +813,7 @@ var LoaderDefinition = (function () {
           if (characters.length === 1) {
             states[stateName] = characters[0];
           } else {
-            var statePromise = new Promise;
+            var statePromise = new Promise();
             statePromise.resolve({
               className: 'flash.display.Sprite',
               props: {
@@ -814,8 +847,8 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'image':
-        var img = new Image;
-        var imgPromise = new Promise;
+        var img = new Image();
+        var imgPromise = new Promise();
         img.onload = function () {
           if (symbol.mask) {
             // Write the symbol image into new canvas and apply
@@ -871,7 +904,7 @@ var LoaderDefinition = (function () {
           if (graphicsFactory[ratio])
             return graphicsFactory[ratio];
 
-          var graphics = new flash.display.Graphics;
+          var graphics = new flash.display.Graphics();
           graphics._scale = 0.05;
           graphics._subpaths = createGraphicsSubPaths(graphics, dictionary, ratio);
 
@@ -884,7 +917,7 @@ var LoaderDefinition = (function () {
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
           assert(symbol.packaged.mimeType === 'audio/mpeg');
 
-          var decodePromise = new Promise;
+          var decodePromise = new Promise();
           MP3DecoderSession.processAll(symbol.packaged.data,
             function (props, pcm, id3tags, error) {
               props.pcm = pcm || new Uint8Array(0);
@@ -979,9 +1012,9 @@ var LoaderDefinition = (function () {
       loaderInfo._height = bbox.bottom - bbox.top;
       loaderInfo._frameRate = info.frameRate;
 
-      var documentPromise = new Promise;
+      var documentPromise = new Promise();
 
-      var vmPromise = new Promise;
+      var vmPromise = new Promise();
       vmPromise.then(function() {
         documentPromise.resolve({
           className: 'flash.display.MovieClip',
@@ -1044,6 +1077,11 @@ var LoaderDefinition = (function () {
 
         AS2Key.$bind(stage);
         AS2Mouse.$bind(stage);
+
+        stage._addEventListener('frameConstructed',
+                                avm1Context.flushPendingScripts.bind(avm1Context),
+                                false,
+                                Number.MAX_VALUE);
       }
 
       loader._vmPromise.resolve();
