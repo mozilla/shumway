@@ -205,7 +205,7 @@ var SimpleButtonDefinition = (function () {
     props.animated = true;
     props.parent = parent;
     var instance = symbolClass.createAsSymbol(props);
-    symbolClass.instance.call(instance);
+    symbolClass.instanceConstructor.call(instance);
     return instance;
   }
 

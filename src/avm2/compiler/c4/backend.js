@@ -124,7 +124,7 @@
     } else if (typeof value === "number") {
       return new Literal(value);
     } else {
-      unexpected("Cannot emit constant for value: " + value);
+      unexpected("Cannot emit constant for value: ", value);
     }
   }
 
@@ -240,7 +240,7 @@
 
   Context.prototype.compileLabelBody = function compileLabelBody(node) {
     var body = [];
-    if (node.label) {
+    if (node.label !== undefined) {
       this.useVariable(this.label);
       body.push(new ExpressionStatement(assignment(id(this.label.name), new Literal(node.label))));
     }
@@ -390,14 +390,14 @@
 
   function compileValue(value, cx, noVariable) {
     assert (value);
-    assert (value.compile, "Implement |compile| for " + value + " (" + value.nodeName + ")");
+    assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
     assert (cx instanceof Context);
     assert (!isArray(value));
     if (noVariable || !value.variable) {
       var node = value.compile(cx);
       return node;
     }
-    assert (value.variable, "Value has no variable: " + value);
+    assert (value.variable, "Value has no variable: ", value);
     return id(value.variable.name);
   }
 
@@ -479,7 +479,7 @@
     var left = compileValue(this.left, cx);
     var right = compileValue(this.right, cx);
     if (this.operator === Operator.AVM2ADD) {
-      return call(id("add"), [left, right]);
+      return call(id("avm2Add"), [left, right]);
     }
     return new BinaryExpression (this.operator.name, left, right);
   };
@@ -532,7 +532,7 @@
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
-    callee = property(callee, "instance");
+    callee = property(callee, "instanceConstructor");
     return new NewExpression(callee, args);
   };
 
