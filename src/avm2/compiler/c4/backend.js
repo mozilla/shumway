@@ -457,6 +457,9 @@
       );
     }
     var isMethod = new Literal(this.isMethod);
+    if (this.ic) {
+      return call(id("getPropertyWithIC"), [object, name, isMethod, compileValue(this.ic, cx)]);
+    }
     return call(id("getProperty"), [object, name, isMethod]);
   };
 
@@ -504,6 +507,9 @@
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
+    if (this.ic) {
+      return call(id("callPropertyWithIC"), [object, name, new Literal(this.isLex), new ArrayExpression(args), compileValue(this.ic, cx)]);
+    }
     return call(id("callProperty"), [object, name, new Literal(this.isLex), new ArrayExpression(args)]);
   };
 
@@ -564,6 +570,9 @@
         call(property(object, "indexSet"), [name, value]),
         assignment(property(object, name), value)
       );
+    }
+    if (this.ic) {
+      return call(id("setPropertyWithIC"), [object, name, value, compileValue(this.ic, cx)]);
     }
     return call(id("setProperty"), [object, name, value]);
   };

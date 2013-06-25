@@ -591,12 +591,14 @@
   })();
 
   var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name, isIndexed, isMethod) {
+    function avm2GetProperty(control, store, object, name, isIndexed, isMethod, ic) {
       GetProperty.call(this, control, store, object, name);
       assert (isBoolean(isIndexed));
       assert (isBoolean(isMethod));
+      assert (isNullOrUndefined(ic) || isConstant(ic));
       this.isIndexed = isIndexed;
       this.isMethod = isMethod;
+      this.ic = ic;
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;
@@ -630,10 +632,12 @@
   })();
 
   var AVM2SetProperty = (function () {
-    function avm2SetProperty(control, store, object, name, value, isIndexed) {
+    function avm2SetProperty(control, store, object, name, value, isIndexed, ic) {
       SetProperty.call(this, control, store, object, name, value);
       assert (isBoolean(isIndexed));
+      assert (isNullOrUndefined(ic) || isConstant(ic));
       this.isIndexed = isIndexed;
+      this.ic = ic;
     }
     avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
     return avm2SetProperty;
@@ -793,10 +797,12 @@
   })();
 
   var AVM2CallProperty = (function () {
-    function avm2CallProperty(control, store, object, name, isLex, args, pristine) {
+    function avm2CallProperty(control, store, object, name, isLex, args, pristine, ic) {
       CallProperty.call(this, control, store, object, name, args, pristine);
       assert (isBoolean(isLex));
+      assert (isNullOrUndefined(ic) || isConstant(ic));
       this.isLex = isLex;
+      this.ic = ic;
     }
     avm2CallProperty.prototype = extend(GetProperty, "AVM2_CallProperty");
     return avm2CallProperty;
