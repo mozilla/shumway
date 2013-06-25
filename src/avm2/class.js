@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var traitsWriter = null; // new IndentingWriter();
+var traitsWriter = null;  // new IndentingWriter();
 
 var Binding = (function () {
   function binding(trait) {
