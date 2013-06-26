@@ -308,6 +308,16 @@
     return variable;
   })();
 
+  var Copy = (function () {
+    function copy(argument) {
+      Node.call(this);
+      assert (argument);
+      this.argument = argument;
+    }
+    copy.prototype = extend(Value, "Copy");
+    return copy;
+  })();
+
   var Move = (function () {
     function move(to, from) {
       assert (to instanceof Variable);
@@ -2031,6 +2041,7 @@
   exports.Operator = Operator;
   exports.Variable = Variable;
   exports.Move = Move;
+  exports.Copy = Copy;
   exports.Parameter = Parameter;
   exports.NewArray = NewArray;
   exports.NewObject = NewObject;

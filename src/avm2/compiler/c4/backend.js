@@ -478,6 +478,10 @@
     );
   };
 
+  IR.Copy.prototype.compile = function (cx) {
+    return compileValue(this.argument, cx);
+  };
+
   IR.Binary.prototype.compile = function (cx) {
     var left = compileValue(this.left, cx);
     var right = compileValue(this.right, cx);
