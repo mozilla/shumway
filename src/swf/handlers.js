@@ -90,100 +90,23 @@ var tagHandler = (function () {
     $.id=
       readUi16($bytes,$stream)
     var $0=$.bbox={}
-    align($bytes,$stream)
-    var bits=
-      readUb($bytes,$stream,5)
-    var xMin=
-      readSb($bytes,$stream,bits)
-    var xMax=
-      readSb($bytes,$stream,bits)
-    var yMin=
-      readSb($bytes,$stream,bits)
-    var yMax=
-      readSb($bytes,$stream,bits)
-    $0.left=
-      xMin/20
-    $0.right=
-      xMax/20
-    $0.top=
-      yMin/20
-    $0.bottom=
-      yMax/20
-    align($bytes,$stream)
+    bbox($bytes, $stream, $0);
     var isMorph=
       $.isMorph=
       tagCode===46||tagCode===84
     if(isMorph){
       var $1=$.bboxMorph={}
-      align($bytes,$stream)
-      var bits=
-        readUb($bytes,$stream,5)
-      var xMin=
-        readSb($bytes,$stream,bits)
-      var xMax=
-        readSb($bytes,$stream,bits)
-      var yMin=
-        readSb($bytes,$stream,bits)
-      var yMax=
-        readSb($bytes,$stream,bits)
-      $1.left=
-        xMin/20
-      $1.right=
-        xMax/20
-      $1.top=
-        yMin/20
-      $1.bottom=
-        yMax/20
-      align($bytes,$stream)
+      bbox($bytes, $stream, $1);
     }
     var hasStrokes=
       $.hasStrokes=
       tagCode===83||tagCode===84
     if(hasStrokes){
-
       var $2=$.strokeBbox={}
-      align($bytes,$stream)
-      var bits=
-        readUb($bytes,$stream,5)
-      var xMin=
-        readSb($bytes,$stream,bits)
-      var xMax=
-        readSb($bytes,$stream,bits)
-      var yMin=
-        readSb($bytes,$stream,bits)
-      var yMax=
-        readSb($bytes,$stream,bits)
-      $2.left=
-        xMin/20
-      $2.right=
-        xMax/20
-      $2.top=
-        yMin/20
-      $2.bottom=
-        yMax/20
-      align($bytes,$stream)
+      bbox($bytes, $stream, $2);
       if(isMorph){
         var $3=$.strokeBboxMorph={}
-        align($bytes,$stream)
-        var bits=
-          readUb($bytes,$stream,5)
-        var xMin=
-          readSb($bytes,$stream,bits)
-        var xMax=
-          readSb($bytes,$stream,bits)
-        var yMin=
-          readSb($bytes,$stream,bits)
-        var yMax=
-          readSb($bytes,$stream,bits)
-        $3.left=
-          xMin/20
-        $3.right=
-          xMax/20
-        $3.top=
-          yMin/20
-        $3.bottom=
-          yMax/20
-        align($bytes,$stream)
+        bbox($bytes, $stream, $3);
       }
       var reserved=
         readUb($bytes,$stream,5)
@@ -195,12 +118,8 @@ var tagHandler = (function () {
         readUb($bytes,$stream,1)
     }
     if(isMorph){
-
       $.offsetMorph=
         readUi32($bytes,$stream)
-
-
-
       var tmp=
         readUi8($bytes,$stream)
       if(tagCode>2&&tmp===255){
@@ -222,7 +141,6 @@ var tagHandler = (function () {
           readUi8($bytes,$stream)
         switch(type){
         case 0:
-
           if(tagCode>22||isMorph){
             var $7=$6.color={}
             $7.red=
@@ -6436,7 +6354,7 @@ var tagHandler = (function () {
 
   function setBackgroundColor($bytes,$stream,$,swfVersion,tagCode) {
     $||($={})
-    var $0=$.color={}
+    var $0 = $.color={}
     $0.red=
       readUi8($bytes,$stream)
     $0.green=
@@ -7392,25 +7310,8 @@ var tagHandler = (function () {
     $.id=
       readUi16($bytes,$stream)
     var $0=$.bbox={}
-    align($bytes,$stream)
-    var bits=
-      readUb($bytes,$stream,5)
-    var xMin=
-      readSb($bytes,$stream,bits)
-    var xMax=
-      readSb($bytes,$stream,bits)
-    var yMin=
-      readSb($bytes,$stream,bits)
-    var yMax=
-      readSb($bytes,$stream,bits)
-    $0.left=
-      xMin/20
-    $0.right=
-      xMax/20
-    $0.top=
-      yMin/20
-    $0.bottom=
-      yMax/20
+    bbox($bytes,$stream,$0);
+
     align($bytes,$stream)
     var $1=$.matrix={}
     align($bytes,$stream)
@@ -7720,26 +7621,7 @@ var tagHandler = (function () {
     $.id=
       readUi16($bytes,$stream)
     var $0=$.bbox={}
-    align($bytes,$stream)
-    var bits=
-      readUb($bytes,$stream,5)
-    var xMin=
-      readSb($bytes,$stream,bits)
-    var xMax=
-      readSb($bytes,$stream,bits)
-    var yMin=
-      readSb($bytes,$stream,bits)
-    var yMax=
-      readSb($bytes,$stream,bits)
-    $0.left=
-      xMin/20
-    $0.right=
-      xMax/20
-    $0.top=
-      yMin/20
-    $0.bottom=
-      yMax/20
-    align($bytes,$stream)
+    bbox($bytes, $stream, $0)
     var flags=
       readUi16($bytes,$stream)
     var hasText=
@@ -8878,26 +8760,7 @@ var tagHandler = (function () {
       var $54=glyphCount
       while($54--){
         var $55={}
-        align($bytes,$stream)
-        var bits=
-          readUb($bytes,$stream,5)
-        var xMin=
-          readSb($bytes,$stream,bits)
-        var xMax=
-          readSb($bytes,$stream,bits)
-        var yMin=
-          readSb($bytes,$stream,bits)
-        var yMax=
-          readSb($bytes,$stream,bits)
-        $55.left=
-          xMin/20
-        $55.right=
-          xMax/20
-        $55.top=
-          yMin/20
-        $55.bottom=
-          yMax/20
-        align($bytes,$stream)
+        bbox($bytes, $stream, $55);
         $53.push($55)}
       var kerningCount=
         readUi16($bytes,$stream)
@@ -8997,26 +8860,7 @@ var tagHandler = (function () {
     $.symbolId=
       readUi16($bytes,$stream)
     var $0=$.splitter={}
-    align($bytes,$stream)
-    var bits=
-      readUb($bytes,$stream,5)
-    var xMin=
-      readSb($bytes,$stream,bits)
-    var xMax=
-      readSb($bytes,$stream,bits)
-    var yMin=
-      readSb($bytes,$stream,bits)
-    var yMax=
-      readSb($bytes,$stream,bits)
-    $0.left=
-      xMin/20
-    $0.right=
-      xMax/20
-    $0.top=
-      yMin/20
-    $0.bottom=
-      yMax/20
-    align($bytes,$stream)
+    bbox($bytes, $stream, $0)
     return $
   }
 
@@ -9049,6 +8893,29 @@ var tagHandler = (function () {
         readString($bytes,$stream,0)
       $3.push($5)}
     return $
+  }
+
+  function bbox($bytes, $stream, $) {
+    align($bytes,$stream)
+    var bits=
+      readUb($bytes,$stream,5)
+    var xMin=
+      readSb($bytes,$stream,bits)
+    var xMax=
+      readSb($bytes,$stream,bits)
+    var yMin=
+      readSb($bytes,$stream,bits)
+    var yMax=
+      readSb($bytes,$stream,bits)
+    $.left=
+      xMin/20
+    $.right=
+      xMax/20
+    $.top=
+      yMin/20
+    $.bottom=
+      yMax/20
+    align($bytes,$stream)
   }
 
 })();
