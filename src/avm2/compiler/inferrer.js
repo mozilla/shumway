@@ -676,7 +676,7 @@ var Verifier = (function() {
 
       function construct(obj) {
         if (obj instanceof TraitsType || obj instanceof ParameterizedType) {
-          if (obj === Type.Function || obj === Type.Class) {
+          if (obj === Type.Function || obj === Type.Class || obj === Type.Object) {
             return Type.Object;
           }
           return obj.instance();
