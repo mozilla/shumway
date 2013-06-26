@@ -19,9 +19,11 @@ package {
   var K_BIGGER = 128 * K;
   var K_BIG = 2 * 1024 * K;
 
-  var JS_FAST = 200;
-  var AS_FAST = JS_FAST * 5;
-  var VERY_SLOW = 5000;
+  /**
+   * Make sure all tests run at least twice as fast as this threshold to
+   * account for slower machines and slowdowns in Tamarin.
+   */
+  var THRESHOLD = 500 * 5;
 
   (function () {
     var s = 0;
@@ -41,10 +43,10 @@ package {
       s = s + i;
       s = s + i;
     }
-    trace(s);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Adding Numbers");
+  clockUnder(THRESHOLD, "Adding Numbers");
 
   (function () {
     var s = "";
@@ -56,10 +58,10 @@ package {
       s = s + i;
       s = s + i;
     }
-    trace(s.length);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Adding Strings + Numbers");
+  clockUnder(THRESHOLD, "Adding Strings + Numbers");
 
   (function () {
     var s = 0;
@@ -71,10 +73,10 @@ package {
       }
       s += a.length;
     }
-    trace(s);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Arrays AS3 Namespace Push");
+  clockUnder(THRESHOLD, "Arrays AS3 Namespace Push");
 
   (function () {
     var s = 0;
@@ -86,10 +88,10 @@ package {
       }
       s += a.length;
     }
-    trace(s);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Arrays AS3 Prototype Push");
+  clockUnder(THRESHOLD, "Arrays AS3 Prototype Push");
 
   class C {
     function foo() {
@@ -104,10 +106,10 @@ package {
     for (var i = 0; i < COUNT; i++) {
       s += c.foo();
     }
-    trace(s);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Class Method Call");
+  clockUnder(THRESHOLD, "Class Method Call");
 
   (function () {
     var s = 0;
@@ -117,10 +119,10 @@ package {
     for (var i = 0; i < COUNT; i++) {
       s += v[0].foo();
     }
-    trace(s);
+    return s;
   })();
 
-  clockUnder(AS_FAST, "Class Method Call - Vector");
+  clockUnder(THRESHOLD, "Class Method Call - Vector");
 
   (function () {
     var s = 0;
@@ -132,7 +134,7 @@ package {
     }
   })();
 
-  clockUnder(AS_FAST, "Set Vector");
+  clockUnder(THRESHOLD, "Set Vector");
 
   class A {
     static const staticConstant = 123;
@@ -147,7 +149,7 @@ package {
         s += staticConstant;
         s += staticVar;
       }
-      clockUnder(AS_FAST, "Access Static Constant / Var");
+      clockUnder(THRESHOLD, "Access Static Constant / Var");
       return s;
     }
 
@@ -157,7 +159,7 @@ package {
         s += instanceConstant;
         s += instanceVar;
       }
-      clockUnder(AS_FAST, "Access Instance Constant / Var");
+      clockUnder(THRESHOLD, "Access Instance Constant / Var");
       return s;
     }
   }
@@ -169,7 +171,7 @@ package {
         s += staticConstant;
         s += staticVar;
       }
-      clockUnder(AS_FAST, "Access Static Constant / Var");
+      clockUnder(THRESHOLD, "Access Static Constant / Var");
       return s;
     }
     function instanceFunctionB() {
@@ -178,7 +180,7 @@ package {
         s += instanceConstant;
         s += instanceVar;
       }
-      clockUnder(AS_FAST, "Access Instance Constant / Var");
+      clockUnder(THRESHOLD, "Access Instance Constant / Var");
       return s;
     }
   }
@@ -196,7 +198,7 @@ package {
       s += Number.MAX_VALUE;
       s += Math.abs(i);
     }
-    clockUnder(AS_FAST, "Math.abs()");
+    clockUnder(THRESHOLD, "Math.abs()");
     return s;
   })();
 
@@ -215,8 +217,48 @@ package {
       s += (new D(2, 3)).foobar;
       s += (new D(2, 3)).y;
     }
-    clockUnder(AS_FAST, "Object allocation with property access");
+    clockUnder(THRESHOLD, "Object allocation with property access");
     return s;
+  })();
+
+  dynamic class E {
+    var e = 0;
+    E.prototype.foo = function() {
+      var e : E = this;
+      e.vir = 123;
+    };
+    function bar() {
+      return 1;
+    }
+  }
+
+  (function () {
+    var s = 0;
+    var e = new E();
+    for (var i = 0; i < 100; i++) {
+      s += e.foo();
+    }
+    clockUnder(THRESHOLD, "Coerced this access.");
+    return s;
+  })();
+
+  (function (e) {
+    var s = 0;
+    for (var i = 0; i < 100000; i++) {
+      e.e += e.bar();
+    }
+    clockUnder(THRESHOLD, "ICs.");
+    return s;
+  })(new E());
+
+  (function () {
+    var a = [];
+    for (var i = 0; i < 1000000; i++) {
+      a[i] = i;
+      a[i] += a[i];
+    }
+    clockUnder(THRESHOLD, "Array Access.");
+    return a.length;
   })();
 
 }
