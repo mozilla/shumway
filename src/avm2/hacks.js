@@ -19,3 +19,11 @@
 /**
  * Random collection of Hacks to get demos work, this file should be empty.
  */
+
+VM_METHOD_OVERRIDES["static mochi.as3.MochiServices::connect"] = function () {
+  return;
+};
+
+VM_METHOD_OVERRIDES["static MochiBot::track"] = function () {
+  return;
+};
