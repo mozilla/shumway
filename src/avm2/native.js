@@ -1529,7 +1529,7 @@ var natives = (function () {
           // If no parent domain is passed in, get the current system domain.
           var parent;
           if (!parentDomain) {
-            parent = Runtime.stack.top().domain.system;
+            parent = AVM2.domainStack.top().system;
           } else {
             parent = parentDomain.dom;
           }
@@ -1571,7 +1571,7 @@ var natives = (function () {
       static: {
         currentDomain: {
           get: function () {
-            var domain = Runtime.currentDomain();
+            var domain = AVM2.currentDomain();
 
             if (!domain.scriptObject) {
               domain.scriptObject = new instanceConstructor();
@@ -1742,7 +1742,7 @@ var natives = (function () {
 
     getDefinitionByName: constant(function (name) {
       var simpleName = name.replace("::", ".");
-      return Runtime.currentDomain().getClass(simpleName);
+      return AVM2.currentDomain().getClass(simpleName);
     }),
 
     describeTypeJSON: constant(describeTypeJSON),
@@ -1954,13 +1954,13 @@ var natives = (function () {
 
 })();
 
-function getNative(p) {
-  var chain = p.split(".");
+function getNative(path) {
+  var chain = path.split(".");
   var v = natives;
   for (var i = 0, j = chain.length; i < j; i++) {
     v = v && v[chain[i]];
   }
 
-  release || assert(v, "getNative(" + p + ") not found.");
+  release || assert(v, "getNative(" + path + ") not found.");
   return v;
 }

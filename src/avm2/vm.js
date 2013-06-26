@@ -30,14 +30,19 @@ var AVM2 = (function () {
      * originated from within the VM.
      */
     this.exception = { value: undefined };
+
+    // TODO: This is a hack because we don't yet keep track of the domain
+    // in the compiler. Here we just put the applicationDomain on top of
+    // the domainStack.
+    avm2.domainStack.push(this.applicationDomain);
   }
 
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
   avm2.domainStack = [];
   avm2.currentDomain = function () {
-    if (avm2.stack.length) {
-      return avm2.stack.top().domain;
+    if (avm2.domainStack.length) {
+      return avm2.domainStack.top();
     }
     return null;
   };
