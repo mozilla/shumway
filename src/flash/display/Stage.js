@@ -69,11 +69,9 @@ var StageDefinition = (function () {
           },
           frameRate: {
             get: function frameRate() { // (void) -> Number
-              notImplemented("Stage.frameRate");
               return this._frameRate;
             },
             set: function frameRate(value) { // (value:Number) -> void
-              notImplemented("Stage.frameRate");
               this._frameRate = value;
             }
           },

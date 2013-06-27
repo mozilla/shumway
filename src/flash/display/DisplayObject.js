@@ -653,7 +653,8 @@ var DisplayObjectDefinition = (function () {
       );
     },
     getRect: function (targetCoordSpace) {
-      notImplemented();
+      somewhatImplemented('DisplayObject.getRect');
+      return this.getBounds(targetCoordSpace);
     },
     globalToLocal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);

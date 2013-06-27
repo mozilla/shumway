@@ -18,34 +18,84 @@
 
 var AVM2 = (function () {
 
-  function AVM2(sysMode, appMode, findDefiningAbc) {
+  function avm2(sysMode, appMode, findDefiningAbc) {
     // TODO: this will change when we implement security domains.
     this.systemDomain = new Domain(this, null, sysMode, true);
     this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
     this.findDefiningAbc = findDefiningAbc;
+
+
+    /**
+     * All runtime exceptions are boxed in this object to tag them as having
+     * originated from within the VM.
+     */
+    this.exception = { value: undefined };
+
+    // TODO: This is a hack because we don't yet keep track of the domain
+    // in the compiler. Here we just put the applicationDomain on top of
+    // the domainStack.
+    avm2.domainStack.push(this.applicationDomain);
   }
+
+  // We sometimes need to know where we came from, such as in
+  // |ApplicationDomain.currentDomain|.
+  avm2.domainStack = [];
+  avm2.currentDomain = function () {
+    if (avm2.domainStack.length) {
+      return avm2.domainStack.top();
+    }
+    return null;
+  };
+
+  avm2.callStack = [];
+
+  /**
+   * This only works for interpreter frames.
+   */
+  avm2.getStackTrace = function getStackTrace () {
+    return avm2.callStack.slice().reverse().map(function (frame) {
+      var str = "";
+      if (frame.method) {
+        if (frame.method.holder) {
+          str += frame.method.holder + " ";
+        }
+        str += frame.method + ":";
+      }
+      return str + frame.bc.originalPosition;
+    }).join("\n");
+  };
+
+  // This is called from catch blocks.
+  avm2.unwindStackTo = function unwindStackTo(domain) {
+    var domainStack = avm2.domainStack;
+    var unwind = domainStack.length;
+    while (domainStack[unwind - 1] !== domain) {
+      unwind--;
+    }
+    domainStack.length = unwind;
+  };
 
   /**
    * Returns the current VM context. This can be used to find out the VM execution context
    * when running in native code.
    */
-  AVM2.currentVM = function () {
-    return Runtime.stack.top().domain.system.vm;
+  avm2.currentVM = function () {
+    return avm2.stack.top().domain.system.vm;
   };
 
   /**
    * Returns true if AVM2 code is running, otherwise false.
    */
-  AVM2.isRunning = function () {
-    return Runtime.stack.length !== 0;
+  avm2.isRunning = function () {
+    return avm2.stack.length !== 0;
   };
 
-  AVM2.prototype = {
-    notifyConstruct: function notifyConstruct (instance, args) {
+  avm2.prototype = {
+    notifyConstruct: function notifyConstruct (instanceConstructor, args) {
       // REMOVEME
     }
   };
 
-  return AVM2;
+  return avm2;
 
 })();

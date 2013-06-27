@@ -601,7 +601,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
    *
    */
 
-  XMLClass = function XMLClass(runtime, scope, instance, baseClass) {
+  XMLClass = function XMLClass(runtime, scope, instanceConstructor, baseClass) {
     var FLAG_IGNORE_COMMENTS                = 0x01;
     var FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02;
     var FLAG_IGNORE_WHITESPACE              = 0x04;
@@ -637,7 +637,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.init(kind, uri, name, prefix);
     }
 
-    var c = new runtime.domain.system.Class("XML", ASXML, Domain.passthroughCallable(ASXML));
+    var c = new Class("XML", ASXML, Domain.passthroughCallable(ASXML));
     c.flags = FLAG_IGNORE_COMMENTS |
       FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
       FLAG_IGNORE_WHITESPACE |
@@ -1345,7 +1345,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     return c;
   }
 
-  XMLListClass = function XMLListClass(runtime, scope, instance, baseClass) {
+  XMLListClass = function XMLListClass(runtime, scope, instanceConstructor, baseClass) {
 
     // Constructor used by ActionScript
     ASXMLList = function (value) {
@@ -1383,7 +1383,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.children = [];
     }
 
-    var c = new runtime.domain.system.Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
+    var c = new Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
     c.extend(baseClass);
 
     var XLp = XMLList.prototype = ASXMLList.prototype;
@@ -1856,7 +1856,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     return c;
   }
 
-  QNameClass = function QNameClass(runtime, scope, instance, baseClass) {
+  QNameClass = function QNameClass(runtime, scope, instanceConstructor, baseClass) {
     // Construct a QName from a ns and name. If name is a multiname with
     // multiple namespaces then it is an unqualified name and we need to
     // construct a new multiname with the default namespace. if it is a
@@ -1918,7 +1918,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       this.isAttr = mn.isAttribute();
     }
 
-    var c = new runtime.domain.system.Class("QName", QName, Domain.passthroughCallable(QName));
+    var c = new Class("QName", QName, Domain.passthroughCallable(QName));
     c.extend(baseClass);
     QNp = QName.prototype;
     defineNonEnumerableGetter(QNp, "localName", function () {
