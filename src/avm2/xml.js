@@ -1718,7 +1718,10 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         },
         children: function children() { // (void) -> XMLList
           var list = new XMLList();
-          Array.prototype.push.apply(list.children, this.children);
+          for (var i = 0; i < this.children.length; i++) {
+            var child = this.children[i];
+            Array.prototype.push.apply(list.children, child.children);
+          }
           return list;
         },
         comments: function comments() { // (void) -> XMLList
