@@ -289,15 +289,15 @@ var Trait = (function () {
     if (str) {
       str += " ";
     }
-    str += Multiname.getQualifiedName(this.name) + ", kind: " + this.kind;
+    str += Multiname.getQualifiedName(this.name);
     switch (this.kind) {
       case TRAIT_Slot:
       case TRAIT_Const:
-        return str + ", slotId: " + this.slotId + ", typeName: " + this.typeName + ", value: " + this.value;
+        return str + ", typeName: " + this.typeName + ", slotId: " + this.slotId + ", value: " + this.value;
       case TRAIT_Method:
       case TRAIT_Setter:
       case TRAIT_Getter:
-        return str + ", method: " + this.methodInfo + ", dispId: " + this.dispId;
+        return str + ", " + this.kindName() + ": " + this.methodInfo.name;
       case TRAIT_Class:
         return str + ", slotId: " + this.slotId + ", class: " + this.classInfo;
       case TRAIT_Function: // TODO
@@ -1262,6 +1262,7 @@ var InstanceInfo = (function () {
   var nextID = 1;
   function instanceInfo(abc, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     var constantPool = abc.constantPool;
     var methods = abc.methods;
 
@@ -1306,6 +1307,7 @@ var ClassInfo = (function () {
   var nextID = 1;
   function classInfo(abc, instanceInfo, stream) {
     this.id = nextID ++;
+    this.abc = abc;
     this.init = abc.methods[stream.readU30()];
     this.init.isClassInitializer = true;
     attachHolder(this.init, this);
@@ -1406,8 +1408,6 @@ var AbcFile = (function () {
     for (i = 0; i < n; ++i) {
       MethodInfo.parseBody(this, stream);
     }
-
-    InlineCacheManager.updateInlineCaches(this);
 
     console.timeEnd("Parse ABC: " + name);
   }

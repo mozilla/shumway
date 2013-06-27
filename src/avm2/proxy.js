@@ -19,11 +19,11 @@
 /**
  * Proxy.as
  */
-function ProxyClass(runtime, scope, instance, baseClass) {
+function ProxyClass(runtime, scope, instanceConstructor, baseClass) {
   function ProxyConstructor() {
     somewhatImplemented("Proxy");
   }
-  var c = new runtime.domain.system.Class("Proxy", ProxyConstructor, Domain.coerceCallable(ProxyConstructor));
+  var c = new Class("Proxy", ProxyConstructor, Domain.coerceCallable(ProxyConstructor));
   c.extendBuiltin(baseClass);
   return c;
 }
@@ -63,13 +63,13 @@ function installProxyClassWrapper(cls) {
     print("proxy wrapping, class: " + cls);
   }
 
-  var instance = cls.instance;
+  var instanceConstructor = cls.instanceConstructor;
 
   function construct() {
     if (TRACE_PROXY) {
       print("proxy create, class: " + cls);
     }
-    var target = Object.create(instance.prototype);
+    var target = Object.create(instanceConstructor.prototype);
     var proxy = Proxy.create({
       get: function(o, qn) {
         if (qn === VM_IS_PROXY) {
@@ -111,7 +111,7 @@ function installProxyClassWrapper(cls) {
           }
         }
         if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
-          return safeBind(target[VM_OPEN_METHODS][qn], o);
+          return bindSafely(target[VM_OPEN_METHODS][qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];
@@ -161,11 +161,11 @@ function installProxyClassWrapper(cls) {
       keys: function() {
         notImplemented("keys");
       }
-    }, instance.prototype);
+    }, instanceConstructor.prototype);
     // The derived proxy constructor needs to have a reference to the proxy object itself.
-    instance.apply(proxy, sliceArguments(arguments, 0));
+    instanceConstructor.apply(proxy, sliceArguments(arguments, 0));
     return proxy;
   }
 
-  cls.instance = construct;
+  cls.instanceConstructor = construct;
 }

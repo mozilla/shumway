@@ -84,15 +84,11 @@ function unexpected(message) {
 }
 
 function makeForwardingGetter(target) {
-  return function () {
-    return this[target];
-  }
+  return new Function("return this[\"" + target + "\"]");
 }
 
 function makeForwardingSetter(target) {
-  return function (value) {
-    this[target] = value;
-  }
+  return new Function("value", "this[\"" + target + "\"] = value;");
 }
 
 function defineReadOnlyProperty(obj, name, value) {
@@ -105,7 +101,7 @@ function defineReadOnlyProperty(obj, name, value) {
 /**
  * Makes sure you never re-bind a method.
  */
-function safeBind(fn, obj) {
+function bindSafely(fn, obj) {
   assert (!fn.boundTo && obj);
   var f = fn.bind(obj);
   f.boundTo = obj;
@@ -114,6 +110,14 @@ function safeBind(fn, obj) {
 
 function createEmptyObject() {
   return Object.create(null);
+}
+
+function cloneObject(object) {
+  var clone = Object.create(null);
+  for (var property in object) {
+    clone[property] = object[property];
+  }
+  return clone;
 }
 
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
@@ -163,8 +167,23 @@ function defineNonEnumerableProperty(obj, name, value) {
                                      enumerable: false });
 }
 
+function defineNonEnumerableForwardingProperty(obj, name, otherName) {
+  Object.defineProperty(obj, name, {
+    get: makeForwardingGetter(otherName),
+    set: makeForwardingSetter(otherName),
+    writable: true,
+    configurable: true,
+    enumerable: false
+  });
+}
+
+function defineNewNonEnumerableProperty(obj, name, value) {
+  assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
+  defineNonEnumerableProperty(obj, name, value);
+}
+
 function isNullOrUndefined(value) {
-  return value === null || value === undefined;
+  return value == undefined;
 }
 
 function isPowerOfTwo(x) {
@@ -188,6 +207,10 @@ function clamp(x, min, max) {
     return max;
   }
   return x;
+}
+
+function hasOwnProperty(object, name) {
+  return Object.prototype.hasOwnProperty.call(object, name);
 }
 
 /**
@@ -228,8 +251,33 @@ function isString(value) {
   return typeof value === "string";
 }
 
+function isFunction(value) {
+  return typeof value === "function";
+}
+
 function isNumber(value) {
   return typeof value === "number";
+}
+
+function toDouble(x) {
+  return Number(x);
+}
+
+function toBoolean(x) {
+  return !!x;
+}
+
+function toUint(x) {
+  var object = x | 0;
+  return object < 0 ? (object + 4294967296) : object;
+}
+
+function toInt(x) {
+  return x | 0;
+}
+
+function toString(x) {
+  return String(x);
 }
 
 function setBitFlags(flags, flag, value) {
@@ -934,10 +982,26 @@ var IndentingWriter = (function () {
     }
   };
 
-  indentingWriter.prototype.debugLn = function writeLn(str) {
+  indentingWriter.prototype.debugLn = function debugLn(str) {
+    this.colorLn(PURPLE, str);
+  };
+
+  indentingWriter.prototype.yellowLn = function yellowLn(str) {
+    this.colorLn(YELLOW, str);
+  };
+
+  indentingWriter.prototype.greenLn = function greenLn(str) {
+    this.colorLn(GREEN, str);
+  };
+
+  indentingWriter.prototype.redLn = function redLn(str) {
+    this.colorLn(RED, str);
+  };
+
+  indentingWriter.prototype.colorLn = function writeLn(color, str) {
     if (!this.suppressOutput) {
       if (!inBrowser) {
-        this.out(this.padding + PURPLE + str + ENDC);
+        this.out(this.padding + color + str + ENDC);
       } else {
         this.out(this.padding + str);
       }

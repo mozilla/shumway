@@ -20,13 +20,11 @@ var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Optio
 
 var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
 
-
 var interpretedBytecode = 0;
 
-var Interpreter = (function () {
+var Interpreter = new ((function () {
+  function Interpreter() {
 
-  function Interpreter(abc) {
-    this.abc = abc;
   }
 
   function applyNew(constructor, args) {
@@ -43,7 +41,7 @@ var Interpreter = (function () {
         return Number.apply(null, args);
       }
     }
-    return new (Function.bind.apply(constructor.instance, [,].concat(args)));
+    return new (Function.bind.apply(constructor.instanceConstructor, [,].concat(args)));
   }
 
   function popName(stack, mn) {
@@ -66,15 +64,11 @@ var Interpreter = (function () {
     return mn;
   }
 
-  function ic(bc) {
-    return bc.ic || (bc.ic = new InlineCache());
-  }
-
   Interpreter.prototype = {
     interpretMethod: function interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
       Counter.count("Interpret Method");
-      var abc = this.abc;
+      var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;
       var doubles = abc.constantPool.doubles;
@@ -93,9 +87,9 @@ var Interpreter = (function () {
       var parameterCount = method.parameters.length;
       var argCount = methodArgs.length;
 
-      Runtime.stack.push(runtime);
+      AVM2.domainStack.push(domain);
       var frame = { method: method, bc: null };
-      Runtime.callStack.push(frame);
+      AVM2.callStack.push(frame);
 
       var value;
       for (var i = 0; i < parameterCount; i++) {
@@ -117,7 +111,7 @@ var Interpreter = (function () {
         locals.push(sliceArguments(methodArgs, 0));
       }
 
-      var obj, receiver, type, index, multiname, res, a, b, args = [], name;
+      var obj, type, index, multiname, res, a, b, args = [], name;
       var bytecodes = method.analysis.bytecodes;
 
       interpret:
@@ -287,7 +281,7 @@ var Interpreter = (function () {
             scopeHeight++;
             break;
           case 0x40: // OP_newfunction
-            stack.push(runtime.createFunction(methods[bc.index], scope, true));
+            stack.push(createFunction(methods[bc.index], scope, true));
             break;
           case 0x41: // OP_call
             popManyInto(stack, bc.argCount, args);
@@ -306,17 +300,17 @@ var Interpreter = (function () {
             stack.push(getSuper(savedScope, obj, name).apply(obj, args));
             break;
           case 0x47: // OP_returnvoid
-            Runtime.stack.pop();
-            Runtime.callStack.pop();
+            AVM2.domainStack.pop();
+            AVM2.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            Runtime.stack.pop();
-            Runtime.callStack.pop();
+            AVM2.domainStack.pop();
+            AVM2.callStack.pop();
             return stack.pop();
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);
             obj = stack.pop();
-            savedScope.object.baseClass.instanceNoInitialize.apply(obj, args);
+            savedScope.object.baseClass.instanceConstructorNoInitialize.apply(obj, args);
             break;
           case 0x4A: // OP_constructprop
             popManyInto(stack, bc.argCount, args);
@@ -324,7 +318,7 @@ var Interpreter = (function () {
             obj = stack.pop();
             var p = getProperty(obj, name);
             if (!p) {
-              runtime.throwErrorFromVM("ReferenceError", name + " not found.");
+              throwErrorFromVM(domain, "ReferenceError", name + " not found.");
             }
             stack.push(applyNew(p, args));
             break;
@@ -335,12 +329,13 @@ var Interpreter = (function () {
           case 0x46: // OP_callproperty
           case 0x4F: // OP_callpropvoid
             popManyInto(stack, bc.argCount, args);
-            name = popName(stack, multinames[bc.index]);
-            receiver = obj = stack.pop();
-            if (op === OP_callproplex) {
-              receiver = null;
+            multiname = multinames[bc.index];
+            if (!multiname.isRuntime()) {
+              res = callPropertyWithIC(stack.pop(), multiname, op === OP_callproplex, args, ic(bc));
+            } else {
+              name = popName(stack, multiname);
+              res = callProperty(stack.pop(), name, op === OP_callproplex, args);
             }
-            res = callProperty(obj, name, op === OP_callproplex, args);
             if (op !== OP_callpropvoid) {
               stack.push(res);
             }
@@ -353,7 +348,7 @@ var Interpreter = (function () {
             break;
           case 0x53: // OP_applytype
             popManyInto(stack, bc.argCount, args);
-            stack.push(runtime.applyType(stack.pop(), args));
+            stack.push(applyType(domain, stack.pop(), args));
             break;
           case 0x55: // OP_newobject
             obj = {};
@@ -374,7 +369,7 @@ var Interpreter = (function () {
             stack.push(createActivation(method));
             break;
           case 0x58: // OP_newclass
-            stack.push(runtime.createClass(abc.classes[bc.index], stack.pop(), scope));
+            stack.push(createClass(abc.classes[bc.index], stack.pop(), scope));
             break;
           case 0x59: // OP_getdescendants
             name = popName(stack, multinames[bc.index]);
@@ -428,7 +423,7 @@ var Interpreter = (function () {
           case 0x66: // OP_getproperty
             multiname = multinames[bc.index];
             if (!multiname.isRuntime()) {
-              stack.push(getPropertyWithIC(stack.pop(), multiname, ic(bc)));
+              stack.push(getPropertyWithIC(stack.pop(), multiname, false, ic(bc)));
             } else {
               name = popName(stack, multiname);
               stack.push(getProperty(stack.pop(), name));
@@ -519,7 +514,7 @@ var Interpreter = (function () {
           case 0xA0: // OP_add
             b = stack.pop();
             a = stack.pop();
-            stack.push(add(a, b));
+            stack.push(avm2Add(a, b));
             break;
           case 0xA1: // OP_subtract
             b = stack.pop();
@@ -679,7 +674,7 @@ var Interpreter = (function () {
           case 0xF1: // OP_debugfile
             break;
           default:
-            notImplemented(opcodeName(bc));
+            notImplemented(opcodeName(op));
           }
           pc++;
         } catch (e) {
@@ -687,13 +682,13 @@ var Interpreter = (function () {
             throw e;
           }
 
-          e = runtime.translateError(e);
+          e = translateError(domain, e);
           for (var i = 0, j = exceptions.length; i < j; i++) {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
                 domain.getProperty(handler.typeName, true, true).isInstance(e))) {
-              Runtime.unwindStackTo(runtime);
+              AVM2.unwindStackTo(domain);
               scope = savedScope;
               scopeHeight = 0;
               stack.length = 0;
@@ -710,4 +705,4 @@ var Interpreter = (function () {
 
   return Interpreter;
 
-})();
+})());

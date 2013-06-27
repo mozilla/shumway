@@ -83,6 +83,7 @@ load($SHUMWAY_ROOT + "src/avm2/compiler/builder.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/looper.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/backend.js");
 load($SHUMWAY_ROOT + "src/avm2/domain.js");
+load($SHUMWAY_ROOT + "src/avm2/class.js");
 load($SHUMWAY_ROOT + "src/avm2/xregexp.js");
 load($SHUMWAY_ROOT + "src/avm2/runtime.js");
 load($SHUMWAY_ROOT + "src/avm2/hacks.js");

@@ -136,7 +136,7 @@ var createName = function createName(namespaces, name) {
 
     constructor.prototype.merge = function merge(control, other) {
       assert (control);
-      assert (this.matches(other), this + " !== " + other);
+      assert (this.matches(other), this, " !== ", other);
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
@@ -319,7 +319,6 @@ var createName = function createName(namespaces, name) {
       var classes = this.abc.classes;
       var multinames = this.abc.constantPool.multinames;
       var domain = new Constant(this.abc.domain);
-      var runtime = new Constant(this.abc.runtime);
 
       var traceBuilder = c4TraceLevel.value > 2;
 
@@ -427,7 +426,7 @@ var createName = function createName(namespaces, name) {
       var start = new Start();
       this.buildStart(start);
 
-      var createFunctionCallee = getJSPropertyWithState(start.entryState, runtime, "createFunction");
+      var createFunctionCallee = globalProperty("createFunction");
 
       worklist.push({region: start, block: blocks[0]});
 
@@ -515,7 +514,7 @@ var createName = function createName(namespaces, name) {
         var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
-          assert (x);
+          assert (x instanceof IR.Node);
           if (bc.ti) {
             if (x.ty) {
               // assert (x.ty == bc.ti.type);
@@ -665,7 +664,7 @@ var createName = function createName(namespaces, name) {
           return node;
         }
 
-        function callProperty(object, name, args, isLex, ti) {
+        function callProperty(object, name, args, isLex, ti, ic) {
           name = simplifyName(name);
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
@@ -697,11 +696,16 @@ var createName = function createName(namespaces, name) {
           } else if (ti && ti.propertyQName) {
             return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
           }
-          warn("Can't optimize call to " + name.value);
-          return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
+          if (isConstant(name)) {
+            assert (ic);
+            return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true, constant(ic)));
+          } else {
+            warn("Can't optimize call to " + name.value);
+            return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
+          }
         }
 
-        function getProperty(object, name, ti, getOpenMethod) {
+        function getProperty(object, name, ti, getOpenMethod, ic) {
           var get;
           name = simplifyName(name);
           if (ti && ti.trait && object.ty &&
@@ -725,8 +729,13 @@ var createName = function createName(namespaces, name) {
             }
             return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
           }
-          warn("Can't optimize getProperty to " + name);
-          return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
+          if (isConstant(name)) {
+            assert (ic);
+            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod, constant(ic)));
+          } else {
+            warn("Can't optimize getProperty name: " + name);
+            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
+          }
         }
 
         function getDescendants(object, name, ti) {
@@ -734,7 +743,7 @@ var createName = function createName(namespaces, name) {
           return new IR.AVM2GetDescendants(region, state.store, object, name);
         }
 
-        function setProperty(object, name, value, ti) {
+        function setProperty(object, name, value, ti, ic) {
           name = simplifyName(name);
           if (hasNumericType(name) || isStringConstant(name)) {
             var set = new IR.SetProperty(region, state.store, object, name, value);
@@ -751,10 +760,11 @@ var createName = function createName(namespaces, name) {
                   return store(new IR.SetProperty(region, state.store, object, name, value));
                 }
               }
-              if (object.ty && object.ty.isDirectlyIndexable()) {
-                return store(set);
-              }
             }
+            if (object.ty && object.ty.isDirectlyIndexable()) {
+              return store(set);
+            }
+            warn("Can't optimize setProperty, name: " + name);
             store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
             return;
           }
@@ -763,8 +773,13 @@ var createName = function createName(namespaces, name) {
             store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)), value));
             return;
           }
-          warn("Can't optimize setProperty to " + name);
-          store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
+          if (isConstant(name)) {
+            assert (ic);
+            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false, constant(ic)));
+          } else {
+            warn("Can't optimize setProperty, name: " + name);
+            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
+          }
         }
 
         function getSlot(object, index, ti) {
@@ -977,7 +992,7 @@ var createName = function createName(namespaces, name) {
             case OP_getproperty:
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(getProperty(object, multiname, bc.ti));
+              push(getProperty(object, multiname, bc.ti, false, ic(bc)));
               break;
             case OP_getdescendants:
               multiname = buildMultiname(bc.index);
@@ -986,14 +1001,14 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_getlex:
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false, ic(bc)));
               break;
             case OP_initproperty:
             case OP_setproperty:
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              setProperty(object, multiname, value, bc.ti);
+              setProperty(object, multiname, value, bc.ti, ic(bc));
               break;
             case OP_deleteproperty:
               multiname = buildMultiname(bc.index);
@@ -1024,7 +1039,7 @@ var createName = function createName(namespaces, name) {
             case OP_debugline:
               break;
             case OP_newfunction:
-              push(callPure(createFunctionCallee, runtime, [constant(methods[bc.index]), topScope(), constant(true)]));
+              push(callPure(createFunctionCallee, null, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
             case OP_call:
               args = popMany(bc.argCount);
@@ -1038,7 +1053,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti);
+              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti, ic(bc));
               if (op !== OP_callpropvoid) {
                 push(value);
               }
@@ -1063,7 +1078,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
-                callee = getJSProperty(savedScope(), "object.baseClass.instanceNoInitialize");
+                callee = getJSProperty(savedScope(), "object.baseClass.instanceConstructorNoInitialize");
                 call(callee, object, args);
               }
               break;
@@ -1071,7 +1086,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname, bc.ti);
+              callee = getProperty(object, multiname, bc.ti, false, ic(bc));
               push(store(new IR.AVM2New(region, state.store, callee, args)));
               break;
             case OP_coerce:
@@ -1269,8 +1284,8 @@ var createName = function createName(namespaces, name) {
             case OP_applytype:
               args = popMany(bc.argCount);
               type = pop();
-              callee = getJSProperty(runtime, "applyType");
-              push(call(callee, runtime, [type, new NewArray(region, args)]));
+              callee = globalProperty("applyType");
+              push(call(callee, null, [domain, type, new NewArray(region, args)]));
               break;
             case OP_newarray:
               args = popMany(bc.argCount);
@@ -1291,8 +1306,8 @@ var createName = function createName(namespaces, name) {
               push(new IR.AVM2NewActivation(constant(methodInfo)));
               break;
             case OP_newclass:
-              callee = getJSProperty(runtime, "createClass");
-              push(call(callee, runtime, [constant(classes[bc.index]), pop(), topScope()]));
+              callee = globalProperty("createClass");
+              push(call(callee, null, [constant(classes[bc.index]), pop(), topScope()]));
               break;
             default:
               unexpected("Not Implemented: " + bc);

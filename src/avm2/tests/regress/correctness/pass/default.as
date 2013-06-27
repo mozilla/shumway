@@ -15,3 +15,23 @@ function bar(a = 1, b = 2, c = 3, d = 4) {
 }
 
 trace(bar(1));
+
+(function (a, b = 2) {
+  trace (b);
+})(0);
+
+(function (a, b = 3) {
+  trace (b);
+})(0, 5);
+
+(function (a, b = 3, c, d, e = 9, ...rest) {
+  trace (a);
+  trace (b);
+  trace (c);
+  trace (d);
+  trace (e);
+})(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+(function (a, b = 3, ...rest) {
+  trace (b);
+})(0);
