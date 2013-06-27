@@ -219,7 +219,7 @@ var Stubs = new (function () {
     M("flash.net.URLLoader", "URLLoaderClass", URLLoaderDefinition),
     M("flash.net.SharedObject", "SharedObjectClass", SharedObjectDefinition),
     M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
-    M("flash.net.LocalConnectionDefinition", "LocalConnectionClass", LocalConnectionDefinition),
+    M("flash.net.LocalConnection", "LocalConnectionClass", LocalConnectionDefinition),
     M("flash.net.URLVariables"),
 
     M("packageInternal flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
