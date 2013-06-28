@@ -384,7 +384,7 @@ var MovieClipDefinition = (function () {
       this.stop();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
-      } else if (this._stage) {
+      } else {
         this._gotoFrame(frame);
       }
     },
