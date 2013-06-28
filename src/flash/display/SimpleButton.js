@@ -206,6 +206,11 @@ var SimpleButtonDefinition = (function () {
     props.parent = parent;
     var instance = symbolClass.createAsSymbol(props);
     symbolClass.instanceConstructor.call(instance);
+
+    if (instance._children.length === 1) {
+      return instance._children[0];
+    }
+
     return instance;
   }
 

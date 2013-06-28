@@ -75,7 +75,9 @@ var BitmapDataDefinition = (function () {
       var children = source._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        this.draw(child, child._currentTransform, child._cxform);
+        if (child._visible) {
+          this.draw(child, child._currentTransform, child._cxform);
+        }
       }
       this._ctx.restore();
     },

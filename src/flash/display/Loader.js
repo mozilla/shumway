@@ -810,20 +810,16 @@ var LoaderDefinition = (function () {
             });
           }
 
-          if (characters.length === 1) {
-            states[stateName] = characters[0];
-          } else {
-            var statePromise = new Promise();
-            statePromise.resolve({
-              className: 'flash.display.Sprite',
-              props: {
-                loader: this,
-                timeline: [displayList]
-              }
-            });
+          var statePromise = new Promise();
+          statePromise.resolve({
+            className: 'flash.display.Sprite',
+            props: {
+              loader: this,
+              timeline: [displayList]
+            }
+          });
 
-            states[stateName] = statePromise;
-          }
+          states[stateName] = statePromise;
         }
 
         className = 'flash.display.SimpleButton';
