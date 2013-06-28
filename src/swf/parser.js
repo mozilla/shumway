@@ -72,7 +72,8 @@ function readTags(context, stream, swfVersion, onprogress) {
       }
     } while (stream.pos < stream.end);
   } catch (e) {
-    if (e !== StreamNoDataError) throw e;
+    
+    if (e !== StreamNoDataError) throw e + "\n" + e.stack;
     stream.pos = lastSuccessfulPosition;
   }
 }

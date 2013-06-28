@@ -16,6 +16,12 @@
  * limitations under the License.
  */
 
+function trace (str) {
+  if (this.print) {
+    print(str);
+  }
+}
+
 var tagHandler = (function () {
   return {
     /* End */                            0: undefined,
@@ -86,44 +92,33 @@ var tagHandler = (function () {
   };
 
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
-    $||($={})
-    $.id=
-      readUi16($bytes, $stream)
-    var $0=$.bbox={}
-    bbox($bytes, $stream, $0);
-    var isMorph=
-      $.isMorph=
-      tagCode===46||tagCode===84
-    if(isMorph){
-      var $1=$.bboxMorph={}
-      bbox($bytes, $stream, $1);
+    $ || ($ = {});
+    $.id = readUi16($bytes, $stream);
+    var $0 = $.bbox = {};
+    bbox($bytes, $stream, $0, swfVersion, tagCode);
+    var isMorph = $.isMorph = tagCode === 46 || tagCode === 84;
+    if (isMorph) {
+      var $1 = $.bboxMorph = {};
+      bbox($bytes, $stream, $1, swfVersion, tagCode);
     }
-    var hasStrokes=
-      $.hasStrokes=
-      tagCode===83||tagCode===84
-    if(hasStrokes){
-      var $2=$.strokeBbox={}
-      bbox($bytes, $stream, $2);
-      if(isMorph){
-        var $3=$.strokeBboxMorph={}
-        bbox($bytes, $stream, $3);
+    var hasStrokes = $.hasStrokes = tagCode === 83 || tagCode === 84;
+    if (hasStrokes) {
+      var $2 = $.strokeBbox = {};
+      bbox($bytes, $stream, $2, swfVersion, tagCode);
+      if (isMorph) {
+        var $3 = $.strokeBboxMorph = {};
+        bbox($bytes, $stream, $3, swfVersion, tagCode);
       }
-      var reserved=
-        readUb($bytes, $stream, 5)
-      $.fillWinding=
-        readUb($bytes, $stream, 1)
-      $.nonScalingStrokes=
-        readUb($bytes, $stream, 1)
-      $.scalingStrokes=
-        readUb($bytes, $stream, 1)
+      var reserved = readUb($bytes, $stream, 5);
+      $.fillWinding = readUb($bytes, $stream, 1);
+      $.nonScalingStrokes = readUb($bytes, $stream, 1);
+      $.scalingStrokes = readUb($bytes, $stream, 1);
     }
-    if(isMorph) {
-      $.offsetMorph=
-        readUi32($bytes, $stream);
-      morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode);
-    }
-    else{
-      shapeWithStyle($bytes, $stream, $, swfVersion, tagCode);
+    if (isMorph) {
+      $.offsetMorph = readUi32($bytes, $stream);
+      morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+    } else {
+      shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     }
     return $
   }
@@ -212,121 +207,11 @@ var tagHandler = (function () {
       }
       if(hasMatrix){
         var $0=$.matrix={}
-        align($bytes, $stream)
-        var hasScale=
-          readUb($bytes, $stream, 1)
-        if(hasScale){
-
-          var bits=
-            readUb($bytes, $stream, 5)
-          $0.a=
-            readFb($bytes, $stream, bits)
-          $0.d=
-            readFb($bytes, $stream, bits)
-        }
-        else{
-
-          $0.a=
-            1
-          $0.d=
-            1
-        }
-        var hasRotate=
-          readUb($bytes, $stream, 1)
-        if(hasRotate){
-
-          var bits=
-            readUb($bytes, $stream, 5)
-          $0.b=
-            readFb($bytes, $stream, bits)
-          $0.c=
-            readFb($bytes, $stream, bits)
-        }
-        else{
-
-          $0.b=
-            0
-          $0.c=
-            0
-        }
-        var bits=
-          readUb($bytes, $stream, 5)
-        var e=
-          readSb($bytes, $stream, bits)
-        var f=
-          readSb($bytes, $stream, bits)
-        $0.tx=
-          e/20
-        $0.ty=
-          f/20
-        align($bytes, $stream)
+        matrix($bytes, $stream, $0, swfVersion, tagCode);
       }
       if(hasCxform){
         var $1=$.cxform={}
-        align($bytes, $stream)
-        var hasOffsets=
-          readUb($bytes, $stream, 1)
-        var hasMultipliers=
-          readUb($bytes, $stream, 1)
-        var bits=
-          readUb($bytes, $stream, 4)
-        if(hasMultipliers){
-
-          $1.redMultiplier=
-            readSb($bytes, $stream, bits)
-          $1.greenMultiplier=
-            readSb($bytes, $stream, bits)
-          $1.blueMultiplier=
-            readSb($bytes, $stream, bits)
-          if(tagCode>4){
-            $1.alphaMultiplier=
-              readSb($bytes, $stream, bits)
-          }
-          else{
-            $1.alphaMultiplier=
-              256
-          }
-        }
-        else{
-
-          $1.redMultiplier=
-            256
-          $1.greenMultiplier=
-            256
-          $1.blueMultiplier=
-            256
-          $1.alphaMultiplier=
-            256
-        }
-        if(hasOffsets){
-
-          $1.redOffset=
-            readSb($bytes, $stream, bits)
-          $1.greenOffset=
-            readSb($bytes, $stream, bits)
-          $1.blueOffset=
-            readSb($bytes, $stream, bits)
-          if(tagCode>4){
-            $1.alphaOffset=
-              readSb($bytes, $stream, bits)
-          }
-          else{
-            $1.alphaOffset=
-              0
-          }
-        }
-        else{
-
-          $1.redOffset=
-            0
-          $1.greenOffset=
-            0
-          $1.blueOffset=
-            0
-          $1.alphaOffset=
-            0
-        }
-        align($bytes, $stream)
+        cxform($bytes, $stream, $0, swfVersion, tagCode);
       }
       if(hasRatio){
         $.ratio=
@@ -778,7 +663,7 @@ var tagHandler = (function () {
       }
       if(hasBackgroundColor){
         $.backgroundColor=
-          ARGB
+          argb($bytes, $stream, $126, swfVersion, tagCode);
       }
       if(hasVisibility){
         $.visibility=
@@ -796,123 +681,12 @@ var tagHandler = (function () {
       $.hasMatrix=
         1
       var $30=$.matrix={}
-      align($bytes, $stream)
-      var hasScale=
-        readUb($bytes, $stream, 1)
-      if(hasScale){
-
-        var bits=
-          readUb($bytes, $stream, 5)
-        $30.a=
-          readFb($bytes, $stream, bits)
-        $30.d=
-          readFb($bytes, $stream, bits)
-      }
-      else{
-
-        $30.a=
-          1
-        $30.d=
-          1
-      }
-      var hasRotate=
-        readUb($bytes, $stream, 1)
-      if(hasRotate){
-
-        var bits=
-          readUb($bytes, $stream, 5)
-        $30.b=
-          readFb($bytes, $stream, bits)
-        $30.c=
-          readFb($bytes, $stream, bits)
-      }
-      else{
-
-        $30.b=
-          0
-        $30.c=
-          0
-      }
-      var bits=
-        readUb($bytes, $stream, 5)
-      var e=
-        readSb($bytes, $stream, bits)
-      var f=
-        readSb($bytes, $stream, bits)
-      $30.tx=
-        e/20
-      $30.ty=
-        f/20
-      align($bytes, $stream)
+      matrix($bytes, $stream, $30, swfVersion, tagCode);
       if($stream.remaining()){
 
         $.hasCxform=
           1
         var $31=$.cxform={}
-        align($bytes, $stream)
-        var hasOffsets=
-          readUb($bytes, $stream, 1)
-        var hasMultipliers=
-          readUb($bytes, $stream, 1)
-        var bits=
-          readUb($bytes, $stream, 4)
-        if(hasMultipliers){
-
-          $31.redMultiplier=
-            readSb($bytes, $stream, bits)
-          $31.greenMultiplier=
-            readSb($bytes, $stream, bits)
-          $31.blueMultiplier=
-            readSb($bytes, $stream, bits)
-          if(tagCode>4){
-            $31.alphaMultiplier=
-              readSb($bytes, $stream, bits)
-          }
-          else{
-            $31.alphaMultiplier=
-              256
-          }
-        }
-        else{
-
-          $31.redMultiplier=
-            256
-          $31.greenMultiplier=
-            256
-          $31.blueMultiplier=
-            256
-          $31.alphaMultiplier=
-            256
-        }
-        if(hasOffsets){
-
-          $31.redOffset=
-            readSb($bytes, $stream, bits)
-          $31.greenOffset=
-            readSb($bytes, $stream, bits)
-          $31.blueOffset=
-            readSb($bytes, $stream, bits)
-          if(tagCode>4){
-            $31.alphaOffset=
-              readSb($bytes, $stream, bits)
-          }
-          else{
-            $31.alphaOffset=
-              0
-          }
-        }
-        else{
-
-          $31.redOffset=
-            0
-          $31.greenOffset=
-            0
-          $31.blueOffset=
-            0
-          $31.alphaOffset=
-            0
-        }
-        align($bytes, $stream)
       }
     }
     return $
@@ -1027,120 +801,10 @@ var tagHandler = (function () {
           $1.depth=
             readUi16($bytes, $stream)
           var $2=$1.matrix={}
-          align($bytes, $stream)
-          var hasScale=
-            readUb($bytes, $stream, 1)
-          if(hasScale){
-
-            var bits=
-              readUb($bytes, $stream, 5)
-            $2.a=
-              readFb($bytes, $stream, bits)
-            $2.d=
-              readFb($bytes, $stream, bits)
-          }
-          else{
-
-            $2.a=
-              1
-            $2.d=
-              1
-          }
-          var hasRotate=
-            readUb($bytes, $stream, 1)
-          if(hasRotate){
-
-            var bits=
-              readUb($bytes, $stream, 5)
-            $2.b=
-              readFb($bytes, $stream, bits)
-            $2.c=
-              readFb($bytes, $stream, bits)
-          }
-          else{
-
-            $2.b=
-              0
-            $2.c=
-              0
-          }
-          var bits=
-            readUb($bytes, $stream, 5)
-          var e=
-            readSb($bytes, $stream, bits)
-          var f=
-            readSb($bytes, $stream, bits)
-          $2.tx=
-            e/20
-          $2.ty=
-            f/20
-          align($bytes, $stream)
+          matrix($bytes, $stream, $2, swfVersion, tagCode);
           if(tagCode===34){
             var $3=$1.cxform={}
-            align($bytes, $stream)
-            var hasOffsets=
-              readUb($bytes, $stream, 1)
-            var hasMultipliers=
-              readUb($bytes, $stream, 1)
-            var bits=
-              readUb($bytes, $stream, 4)
-            if(hasMultipliers){
-
-              $3.redMultiplier=
-                readSb($bytes, $stream, bits)
-              $3.greenMultiplier=
-                readSb($bytes, $stream, bits)
-              $3.blueMultiplier=
-                readSb($bytes, $stream, bits)
-              if(tagCode>4){
-                $3.alphaMultiplier=
-                  readSb($bytes, $stream, bits)
-              }
-              else{
-                $3.alphaMultiplier=
-                  256
-              }
-            }
-            else{
-
-              $3.redMultiplier=
-                256
-              $3.greenMultiplier=
-                256
-              $3.blueMultiplier=
-                256
-              $3.alphaMultiplier=
-                256
-            }
-            if(hasOffsets){
-
-              $3.redOffset=
-                readSb($bytes, $stream, bits)
-              $3.greenOffset=
-                readSb($bytes, $stream, bits)
-              $3.blueOffset=
-                readSb($bytes, $stream, bits)
-              if(tagCode>4){
-                $3.alphaOffset=
-                  readSb($bytes, $stream, bits)
-              }
-              else{
-                $3.alphaOffset=
-                  0
-              }
-            }
-            else{
-
-              $3.redOffset=
-                0
-              $3.greenOffset=
-                0
-              $3.blueOffset=
-                0
-              $3.alphaOffset=
-                0
-            }
-            align($bytes, $stream)
+            cxform($bytes, $stream, $2, swfVersion, tagCode);
           }
           if(hasFilters){
 
@@ -1534,54 +1198,7 @@ var tagHandler = (function () {
           $29.depth=
             readUi16($bytes, $stream)
           var $30=$29.matrix={}
-          align($bytes, $stream)
-          var hasScale=
-            readUb($bytes, $stream, 1)
-          if(hasScale){
-
-            var bits=
-              readUb($bytes, $stream, 5)
-            $30.a=
-              readFb($bytes, $stream, bits)
-            $30.d=
-              readFb($bytes, $stream, bits)
-          }
-          else{
-
-            $30.a=
-              1
-            $30.d=
-              1
-          }
-          var hasRotate=
-            readUb($bytes, $stream, 1)
-          if(hasRotate){
-
-            var bits=
-              readUb($bytes, $stream, 5)
-            $30.b=
-              readFb($bytes, $stream, bits)
-            $30.c=
-              readFb($bytes, $stream, bits)
-          }
-          else{
-
-            $30.b=
-              0
-            $30.c=
-              0
-          }
-          var bits=
-            readUb($bytes, $stream, 5)
-          var e=
-            readSb($bytes, $stream, bits)
-          var f=
-            readSb($bytes, $stream, bits)
-          $30.tx=
-            e/20
-          $30.ty=
-            f/20
-          align($bytes, $stream)
+          matrix($bytes, $stream, $30, swfVersion, tagCode);
           if(tagCode===34){
             var $31=$29.cxform={}
             align($bytes, $stream)
@@ -2261,104 +1878,10 @@ var tagHandler = (function () {
               case 19:
 
                 var $12=$8.matrix={}
-                align($bytes, $stream)
-                var hasScale=
-                  readUb($bytes, $stream, 1)
-                if(hasScale){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $12.a=
-                    readFb($bytes, $stream, bits)
-                  $12.d=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $12.a=
-                    1
-                  $12.d=
-                    1
-                }
-                var hasRotate=
-                  readUb($bytes, $stream, 1)
-                if(hasRotate){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $12.b=
-                    readFb($bytes, $stream, bits)
-                  $12.c=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $12.b=
-                    0
-                  $12.c=
-                    0
-                }
-                var bits=
-                  readUb($bytes, $stream, 5)
-                var e=
-                  readSb($bytes, $stream, bits)
-                var f=
-                  readSb($bytes, $stream, bits)
-                $12.tx=
-                  e/20
-                $12.ty=
-                  f/20
-                align($bytes, $stream)
+                matrix($bytes, $stream, $12, swfVersion, tagCode);
                 if(isMorph){
                   var $13=$8.matrixMorph={}
-                  align($bytes, $stream)
-                  var hasScale=
-                    readUb($bytes, $stream, 1)
-                  if(hasScale){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $13.a=
-                      readFb($bytes, $stream, bits)
-                    $13.d=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $13.a=
-                      1
-                    $13.d=
-                      1
-                  }
-                  var hasRotate=
-                    readUb($bytes, $stream, 1)
-                  if(hasRotate){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $13.b=
-                      readFb($bytes, $stream, bits)
-                    $13.c=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $13.b=
-                      0
-                    $13.c=
-                      0
-                  }
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  var e=
-                    readSb($bytes, $stream, bits)
-                  var f=
-                    readSb($bytes, $stream, bits)
-                  $13.tx=
-                    e/20
-                  $13.ty=
-                    f/20
-                  align($bytes, $stream)
+                  matrix($bytes, $stream, $13, swfVersion, tagCode);
                 }
 
                 if(tagCode===83){
@@ -2439,104 +1962,10 @@ var tagHandler = (function () {
                 $8.bitmapId=
                   readUi16($bytes, $stream)
                 var $20=$8.matrix={}
-                align($bytes, $stream)
-                var hasScale=
-                  readUb($bytes, $stream, 1)
-                if(hasScale){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $20.a=
-                    readFb($bytes, $stream, bits)
-                  $20.d=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $20.a=
-                    1
-                  $20.d=
-                    1
-                }
-                var hasRotate=
-                  readUb($bytes, $stream, 1)
-                if(hasRotate){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $20.b=
-                    readFb($bytes, $stream, bits)
-                  $20.c=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $20.b=
-                    0
-                  $20.c=
-                    0
-                }
-                var bits=
-                  readUb($bytes, $stream, 5)
-                var e=
-                  readSb($bytes, $stream, bits)
-                var f=
-                  readSb($bytes, $stream, bits)
-                $20.tx=
-                  e/20
-                $20.ty=
-                  f/20
-                align($bytes, $stream)
+                matrix($bytes, $stream, $20, swfVersion, tagCode);
                 if(isMorph){
                   var $21=$8.matrixMorph={}
-                  align($bytes, $stream)
-                  var hasScale=
-                    readUb($bytes, $stream, 1)
-                  if(hasScale){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $21.a=
-                      readFb($bytes, $stream, bits)
-                    $21.d=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $21.a=
-                      1
-                    $21.d=
-                      1
-                  }
-                  var hasRotate=
-                    readUb($bytes, $stream, 1)
-                  if(hasRotate){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $21.b=
-                      readFb($bytes, $stream, bits)
-                    $21.c=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $21.b=
-                      0
-                    $21.c=
-                      0
-                  }
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  var e=
-                    readSb($bytes, $stream, bits)
-                  var f=
-                    readSb($bytes, $stream, bits)
-                  $21.tx=
-                    e/20
-                  $21.ty=
-                    f/20
-                  align($bytes, $stream)
+                  matrix($bytes, $stream, $21, swfVersion, tagCode);
                 }
                 $8.condition=
                   type===64||type===67
@@ -2567,7 +1996,7 @@ var tagHandler = (function () {
                 $24.widthMorph=
                   readUi16($bytes, $stream)
               }
-              if(hasStrokes){
+              if($.hasStrokes){
 
                 align($bytes, $stream)
                 $24.startCapStyle=
@@ -2642,104 +2071,10 @@ var tagHandler = (function () {
                   case 19:
 
                     var $29=$25.matrix={}
-                    align($bytes, $stream)
-                    var hasScale=
-                      readUb($bytes, $stream, 1)
-                    if(hasScale){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $29.a=
-                        readFb($bytes, $stream, bits)
-                      $29.d=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $29.a=
-                        1
-                      $29.d=
-                        1
-                    }
-                    var hasRotate=
-                      readUb($bytes, $stream, 1)
-                    if(hasRotate){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $29.b=
-                        readFb($bytes, $stream, bits)
-                      $29.c=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $29.b=
-                        0
-                      $29.c=
-                        0
-                    }
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    var e=
-                      readSb($bytes, $stream, bits)
-                    var f=
-                      readSb($bytes, $stream, bits)
-                    $29.tx=
-                      e/20
-                    $29.ty=
-                      f/20
-                    align($bytes, $stream)
+                    matrix($bytes, $stream, $29, swfVersion, tagCode);
                     if(isMorph){
                       var $30=$25.matrixMorph={}
-                      align($bytes, $stream)
-                      var hasScale=
-                        readUb($bytes, $stream, 1)
-                      if(hasScale){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $30.a=
-                          readFb($bytes, $stream, bits)
-                        $30.d=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $30.a=
-                          1
-                        $30.d=
-                          1
-                      }
-                      var hasRotate=
-                        readUb($bytes, $stream, 1)
-                      if(hasRotate){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $30.b=
-                          readFb($bytes, $stream, bits)
-                        $30.c=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $30.b=
-                          0
-                        $30.c=
-                          0
-                      }
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      var e=
-                        readSb($bytes, $stream, bits)
-                      var f=
-                        readSb($bytes, $stream, bits)
-                      $30.tx=
-                        e/20
-                      $30.ty=
-                        f/20
-                      align($bytes, $stream)
+                      matrix($bytes, $stream, $30, swfVersion, tagCode);
                     }
 
                     if(tagCode===83){
@@ -2820,104 +2155,10 @@ var tagHandler = (function () {
                     $25.bitmapId=
                       readUi16($bytes, $stream)
                     var $37=$25.matrix={}
-                    align($bytes, $stream)
-                    var hasScale=
-                      readUb($bytes, $stream, 1)
-                    if(hasScale){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $37.a=
-                        readFb($bytes, $stream, bits)
-                      $37.d=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $37.a=
-                        1
-                      $37.d=
-                        1
-                    }
-                    var hasRotate=
-                      readUb($bytes, $stream, 1)
-                    if(hasRotate){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $37.b=
-                        readFb($bytes, $stream, bits)
-                      $37.c=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $37.b=
-                        0
-                      $37.c=
-                        0
-                    }
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    var e=
-                      readSb($bytes, $stream, bits)
-                    var f=
-                      readSb($bytes, $stream, bits)
-                    $37.tx=
-                      e/20
-                    $37.ty=
-                      f/20
-                    align($bytes, $stream)
+                    matrix($bytes, $stream, $37, swfVersion, tagCode);
                     if(isMorph){
                       var $38=$25.matrixMorph={}
-                      align($bytes, $stream)
-                      var hasScale=
-                        readUb($bytes, $stream, 1)
-                      if(hasScale){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $38.a=
-                          readFb($bytes, $stream, bits)
-                        $38.d=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $38.a=
-                          1
-                        $38.d=
-                          1
-                      }
-                      var hasRotate=
-                        readUb($bytes, $stream, 1)
-                      if(hasRotate){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $38.b=
-                          readFb($bytes, $stream, bits)
-                        $38.c=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $38.b=
-                          0
-                        $38.c=
-                          0
-                      }
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      var e=
-                        readSb($bytes, $stream, bits)
-                      var f=
-                        readSb($bytes, $stream, bits)
-                      $38.tx=
-                        e/20
-                      $38.ty=
-                        f/20
-                      align($bytes, $stream)
+                      matrix($bytes, $stream, $38, swfVersion, tagCode);
                     }
                     $25.condition=
                       type===64||type===67
@@ -3006,58 +2247,11 @@ var tagHandler = (function () {
     $.id=
       readUi16($bytes, $stream)
     var $0=$.bbox={}
-    bbox($bytes, $stream, $0);
+    bbox($bytes, $stream, $0, swfVersion, tagCode);
 
     align($bytes, $stream)
     var $1=$.matrix={}
-    align($bytes, $stream)
-    var hasScale=
-      readUb($bytes, $stream, 1)
-    if(hasScale){
-
-      var bits=
-        readUb($bytes, $stream, 5)
-      $1.a=
-        readFb($bytes, $stream, bits)
-      $1.d=
-        readFb($bytes, $stream, bits)
-    }
-    else{
-
-      $1.a=
-        1
-      $1.d=
-        1
-    }
-    var hasRotate=
-      readUb($bytes, $stream, 1)
-    if(hasRotate){
-
-      var bits=
-        readUb($bytes, $stream, 5)
-      $1.b=
-        readFb($bytes, $stream, bits)
-      $1.c=
-        readFb($bytes, $stream, bits)
-    }
-    else{
-
-      $1.b=
-        0
-      $1.c=
-        0
-    }
-    var bits=
-      readUb($bytes, $stream, 5)
-    var e=
-      readSb($bytes, $stream, bits)
-    var f=
-      readSb($bytes, $stream, bits)
-    $1.tx=
-      e/20
-    $1.ty=
-      f/20
-    align($bytes, $stream)
+    matrix($bytes, $stream, $1, swfVersion, tagCode);
     var glyphBits=
       $.glyphBits=
       readUi8($bytes, $stream)
@@ -3317,7 +2511,7 @@ var tagHandler = (function () {
     $.id=
       readUi16($bytes, $stream)
     var $0=$.bbox={}
-    bbox($bytes, $stream, $0)
+    bbox($bytes, $stream, $0, swfVersion, tagCode)
     var flags=
       readUi16($bytes, $stream)
     var hasText=
@@ -3673,104 +2867,10 @@ var tagHandler = (function () {
               case 19:
 
                 var $15=$11.matrix={}
-                align($bytes, $stream)
-                var hasScale=
-                  readUb($bytes, $stream, 1)
-                if(hasScale){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $15.a=
-                    readFb($bytes, $stream, bits)
-                  $15.d=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $15.a=
-                    1
-                  $15.d=
-                    1
-                }
-                var hasRotate=
-                  readUb($bytes, $stream, 1)
-                if(hasRotate){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $15.b=
-                    readFb($bytes, $stream, bits)
-                  $15.c=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $15.b=
-                    0
-                  $15.c=
-                    0
-                }
-                var bits=
-                  readUb($bytes, $stream, 5)
-                var e=
-                  readSb($bytes, $stream, bits)
-                var f=
-                  readSb($bytes, $stream, bits)
-                $15.tx=
-                  e/20
-                $15.ty=
-                  f/20
-                align($bytes, $stream)
+                matrix($bytes, $stream, $15, swfVersion, tagCode);
                 if(isMorph){
                   var $16=$11.matrixMorph={}
-                  align($bytes, $stream)
-                  var hasScale=
-                    readUb($bytes, $stream, 1)
-                  if(hasScale){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $16.a=
-                      readFb($bytes, $stream, bits)
-                    $16.d=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $16.a=
-                      1
-                    $16.d=
-                      1
-                  }
-                  var hasRotate=
-                    readUb($bytes, $stream, 1)
-                  if(hasRotate){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $16.b=
-                      readFb($bytes, $stream, bits)
-                    $16.c=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $16.b=
-                      0
-                    $16.c=
-                      0
-                  }
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  var e=
-                    readSb($bytes, $stream, bits)
-                  var f=
-                    readSb($bytes, $stream, bits)
-                  $16.tx=
-                    e/20
-                  $16.ty=
-                    f/20
-                  align($bytes, $stream)
+                  matrix($bytes, $stream, $16, swfVersion, tagCode);
                 }
 
                 if(tagCode===83){
@@ -3851,104 +2951,10 @@ var tagHandler = (function () {
                 $11.bitmapId=
                   readUi16($bytes, $stream)
                 var $23=$11.matrix={}
-                align($bytes, $stream)
-                var hasScale=
-                  readUb($bytes, $stream, 1)
-                if(hasScale){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $23.a=
-                    readFb($bytes, $stream, bits)
-                  $23.d=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $23.a=
-                    1
-                  $23.d=
-                    1
-                }
-                var hasRotate=
-                  readUb($bytes, $stream, 1)
-                if(hasRotate){
-
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  $23.b=
-                    readFb($bytes, $stream, bits)
-                  $23.c=
-                    readFb($bytes, $stream, bits)
-                }
-                else{
-
-                  $23.b=
-                    0
-                  $23.c=
-                    0
-                }
-                var bits=
-                  readUb($bytes, $stream, 5)
-                var e=
-                  readSb($bytes, $stream, bits)
-                var f=
-                  readSb($bytes, $stream, bits)
-                $23.tx=
-                  e/20
-                $23.ty=
-                  f/20
-                align($bytes, $stream)
+                matrix($bytes, $stream, $23, swfVersion, tagCode);
                 if(isMorph){
                   var $24=$11.matrixMorph={}
-                  align($bytes, $stream)
-                  var hasScale=
-                    readUb($bytes, $stream, 1)
-                  if(hasScale){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $24.a=
-                      readFb($bytes, $stream, bits)
-                    $24.d=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $24.a=
-                      1
-                    $24.d=
-                      1
-                  }
-                  var hasRotate=
-                    readUb($bytes, $stream, 1)
-                  if(hasRotate){
-
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    $24.b=
-                      readFb($bytes, $stream, bits)
-                    $24.c=
-                      readFb($bytes, $stream, bits)
-                  }
-                  else{
-
-                    $24.b=
-                      0
-                    $24.c=
-                      0
-                  }
-                  var bits=
-                    readUb($bytes, $stream, 5)
-                  var e=
-                    readSb($bytes, $stream, bits)
-                  var f=
-                    readSb($bytes, $stream, bits)
-                  $24.tx=
-                    e/20
-                  $24.ty=
-                    f/20
-                  align($bytes, $stream)
+                  matrix($bytes, $stream, $24, swfVersion, tagCode);
                 }
                 $11.condition=
                   type===64||type===67
@@ -3979,7 +2985,7 @@ var tagHandler = (function () {
                 $27.widthMorph=
                   readUi16($bytes, $stream)
               }
-              if(hasStrokes){
+              if($.hasStrokes){
 
                 align($bytes, $stream)
                 $27.startCapStyle=
@@ -4054,104 +3060,10 @@ var tagHandler = (function () {
                   case 19:
 
                     var $32=$28.matrix={}
-                    align($bytes, $stream)
-                    var hasScale=
-                      readUb($bytes, $stream, 1)
-                    if(hasScale){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $32.a=
-                        readFb($bytes, $stream, bits)
-                      $32.d=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $32.a=
-                        1
-                      $32.d=
-                        1
-                    }
-                    var hasRotate=
-                      readUb($bytes, $stream, 1)
-                    if(hasRotate){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $32.b=
-                        readFb($bytes, $stream, bits)
-                      $32.c=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $32.b=
-                        0
-                      $32.c=
-                        0
-                    }
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    var e=
-                      readSb($bytes, $stream, bits)
-                    var f=
-                      readSb($bytes, $stream, bits)
-                    $32.tx=
-                      e/20
-                    $32.ty=
-                      f/20
-                    align($bytes, $stream)
+                    matrix($bytes, $stream, $32, swfVersion, tagCode);
                     if(isMorph){
                       var $33=$28.matrixMorph={}
-                      align($bytes, $stream)
-                      var hasScale=
-                        readUb($bytes, $stream, 1)
-                      if(hasScale){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $33.a=
-                          readFb($bytes, $stream, bits)
-                        $33.d=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $33.a=
-                          1
-                        $33.d=
-                          1
-                      }
-                      var hasRotate=
-                        readUb($bytes, $stream, 1)
-                      if(hasRotate){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $33.b=
-                          readFb($bytes, $stream, bits)
-                        $33.c=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $33.b=
-                          0
-                        $33.c=
-                          0
-                      }
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      var e=
-                        readSb($bytes, $stream, bits)
-                      var f=
-                        readSb($bytes, $stream, bits)
-                      $33.tx=
-                        e/20
-                      $33.ty=
-                        f/20
-                      align($bytes, $stream)
+                      matrix($bytes, $stream, $33, swfVersion, tagCode);
                     }
 
                     if(tagCode===83){
@@ -4232,104 +3144,10 @@ var tagHandler = (function () {
                     $28.bitmapId=
                       readUi16($bytes, $stream)
                     var $40=$28.matrix={}
-                    align($bytes, $stream)
-                    var hasScale=
-                      readUb($bytes, $stream, 1)
-                    if(hasScale){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $40.a=
-                        readFb($bytes, $stream, bits)
-                      $40.d=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $40.a=
-                        1
-                      $40.d=
-                        1
-                    }
-                    var hasRotate=
-                      readUb($bytes, $stream, 1)
-                    if(hasRotate){
-
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      $40.b=
-                        readFb($bytes, $stream, bits)
-                      $40.c=
-                        readFb($bytes, $stream, bits)
-                    }
-                    else{
-
-                      $40.b=
-                        0
-                      $40.c=
-                        0
-                    }
-                    var bits=
-                      readUb($bytes, $stream, 5)
-                    var e=
-                      readSb($bytes, $stream, bits)
-                    var f=
-                      readSb($bytes, $stream, bits)
-                    $40.tx=
-                      e/20
-                    $40.ty=
-                      f/20
-                    align($bytes, $stream)
+                    matrix($bytes, $stream, $40, swfVersion, tagCode);
                     if(isMorph){
                       var $41=$28.matrixMorph={}
-                      align($bytes, $stream)
-                      var hasScale=
-                        readUb($bytes, $stream, 1)
-                      if(hasScale){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $41.a=
-                          readFb($bytes, $stream, bits)
-                        $41.d=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $41.a=
-                          1
-                        $41.d=
-                          1
-                      }
-                      var hasRotate=
-                        readUb($bytes, $stream, 1)
-                      if(hasRotate){
-
-                        var bits=
-                          readUb($bytes, $stream, 5)
-                        $41.b=
-                          readFb($bytes, $stream, bits)
-                        $41.c=
-                          readFb($bytes, $stream, bits)
-                      }
-                      else{
-
-                        $41.b=
-                          0
-                        $41.c=
-                          0
-                      }
-                      var bits=
-                        readUb($bytes, $stream, 5)
-                      var e=
-                        readSb($bytes, $stream, bits)
-                      var f=
-                        readSb($bytes, $stream, bits)
-                      $41.tx=
-                        e/20
-                      $41.ty=
-                        f/20
-                      align($bytes, $stream)
+                      matrix($bytes, $stream, $41, swfVersion, tagCode);
                     }
                     $28.condition=
                       type===64||type===67
@@ -4408,7 +3226,8 @@ var tagHandler = (function () {
         }
         $7.push($8)}
       while(!eos)
-      $4.push($6)}
+      $4.push($6)
+    }
     if(wide){
 
       var $47=
@@ -4453,7 +3272,7 @@ var tagHandler = (function () {
       var $54=glyphCount
       while($54--){
         var $55={}
-        bbox($bytes, $stream, $55);
+        bbox($bytes, $stream, $55, swfVersion, tagCode);
         $53.push($55)}
       var kerningCount=
         readUi16($bytes, $stream)
@@ -4553,7 +3372,7 @@ var tagHandler = (function () {
     $.symbolId=
       readUi16($bytes, $stream)
     var $0=$.splitter={}
-    bbox($bytes, $stream, $0)
+    bbox($bytes, $stream, $0, swfVersion, tagCode)
     return $
   }
 
@@ -4633,19 +3452,30 @@ var tagHandler = (function () {
       readUi8($bytes, $stream)
   }
 
+  function argb($bytes, $stream, $, swfVersion, tagCode) {
+    $.alpha=
+      readUi8($bytes, $stream)
+    $.red=
+      readUi8($bytes, $stream)
+    $.green=
+      readUi8($bytes, $stream)
+    $.blue=
+      readUi8($bytes, $stream)
+  }
+
   function fillSolid($bytes, $stream, $, swfVersion, tagCode) {
     var isMorph = $.isMorph;
     if(tagCode>22||isMorph){
       var $125=$.color={}
-      rgba($bytes, $stream, $125);
+      rgba($bytes, $stream, $125, swfVersion, tagCode);
     }
     else{
       var $126=$.color={}
-      rgb($bytes, $stream, $126);
+      rgb($bytes, $stream, $126, swfVersion, tagCode);
     }
     if(isMorph){
       var $127=$.colorMorph={}
-      rgba($bytes, $stream, $127);
+      rgba($bytes, $stream, $127, swfVersion, tagCode);
     }
   }
 
@@ -4696,15 +3526,82 @@ var tagHandler = (function () {
     align($bytes, $stream)
   }
 
+  function cxform($bytes, $stream, $, swfVersion, tagCode) {
+    align($bytes, $stream)
+    var hasOffsets=
+      readUb($bytes, $stream, 1)
+    var hasMultipliers=
+      readUb($bytes, $stream, 1)
+    var bits=
+      readUb($bytes, $stream, 4)
+    if(hasMultipliers){
+
+      $.redMultiplier=
+        readSb($bytes, $stream, bits)
+      $.greenMultiplier=
+        readSb($bytes, $stream, bits)
+      $.blueMultiplier=
+        readSb($bytes, $stream, bits)
+      if(tagCode>4){
+        $.alphaMultiplier=
+          readSb($bytes, $stream, bits)
+      }
+      else{
+        $.alphaMultiplier=
+          256
+      }
+    }
+    else{
+
+      $.redMultiplier=
+        256
+      $.greenMultiplier=
+        256
+      $.blueMultiplier=
+        256
+      $.alphaMultiplier=
+        256
+    }
+    if(hasOffsets){
+
+      $.redOffset=
+        readSb($bytes, $stream, bits)
+      $.greenOffset=
+        readSb($bytes, $stream, bits)
+      $.blueOffset=
+        readSb($bytes, $stream, bits)
+      if(tagCode>4){
+        $.alphaOffset=
+          readSb($bytes, $stream, bits)
+      }
+      else{
+        $.alphaOffset=
+          0
+      }
+    }
+    else{
+
+      $.redOffset=
+        0
+      $.greenOffset=
+        0
+      $.blueOffset=
+        0
+      $.alphaOffset=
+        0
+    }
+    align($bytes, $stream)
+  }
+
   function fillGradient($bytes, $stream, $, swfVersion, tagCode, type) {
     var isMorph = $.isMorph;
     var $128=$.matrix={}
-    matrix($bytes, $stream, $128);
+    matrix($bytes, $stream, $128, swfVersion, tagCode);
     if(isMorph){
       var $129=$.matrixMorph={}
-      matrix($bytes, $stream, $129);
+      matrix($bytes, $stream, $129, swfVersion, tagCode);
     }
-    gradient($bytes, $stream, $);
+    gradient($bytes, $stream, $, swfVersion, tagCode);
   }
 
   function gradient($bytes, $stream, $, swfVersion, tagCode, type) {
@@ -4728,7 +3625,7 @@ var tagHandler = (function () {
     var $131=count
     while($131--){
       var $132={}
-      gradientRecord($bytes, $stream, $132);
+      gradientRecord($bytes, $stream, $132, swfVersion, tagCode);
       $130.push($132)
     }
     if(type===19){
@@ -4782,9 +3679,8 @@ var tagHandler = (function () {
     }
   }
 
-  function morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode) {
-    var eos = $.eos;
-    var temp = styles($bytes, $stream, $, swfVersion, tagCode);
+  function morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var lineBits = temp.lineBits;
     var fillBits = temp.fillBits;
     var $160=
@@ -4792,59 +3688,73 @@ var tagHandler = (function () {
       []
     do{
       var $161={}
-      shapeRecord($bytes, $stream, $161, swfVersion, tagCode, fillBits, lineBits);
+      var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
+                             fillBits, lineBits, hasStrokes);
+      var eos = temp.eos;
+      var flags = temp.flags;
+      var type = temp.type;
+      var fillBits = temp.fillBits;
+      var lineBits = temp.lineBits;
       $160.push($161)}
     while(!eos)
-    //styleBits($bytes, $stream, $, swfVersion, tagCode);
-    align($bytes, $stream)
-    var fillBits=
-      readUb($bytes, $stream, 4)
-    var lineBits=
-      readUb($bytes, $stream, 4)
-    var $162=
-      $.recordsMorph=
-      []
-    do{
-      var $163={}
-      shapeRecord($bytes, $stream, $163, swfVersion, tagCode, fillBits, lineBits);
-      $164.push($163)}
-    while(!eos)
-  }
-
-  function shapeWithStyle($bytes, $stream, $, swfVersion, tagCode) {
-    var eos = $.eos;
-    var temp = styles($bytes, $stream, $, swfVersion, tagCode);
+    var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
-    var $160=
-      $.records=
-      []
+    var $162 = $.recordsMorph = [];
     do{
-      var $161={}
-      shapeRecord($bytes, $stream, $161, swfVersion, tagCode, fillBits, lineBits);
-      $160.push($161)}
+      var $163 = {};
+      var temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
+                             fillBits, lineBits, hasStrokes);
+      var eos = temp.eos;
+      var flags = temp.flags;
+      var type = temp.type;
+      var fillBits = temp.fillBits;
+      var lineBits = temp.lineBits;
+      $162.push($163)}
     while(!eos)
   }
 
-  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, fillBits, lineBits) {
-    var type=
-      $.type=
-      readUb($bytes, $stream, 1)
-    var flags=
-      readUb($bytes, $stream, 5)
-    var eos=
-      $.eos=
-      !(type||flags)
-    if(type){
+  function shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+    var fillBits = temp.fillBits;
+    var lineBits = temp.lineBits;
+    var $160 = $.records = [];
+    do {
+      var $161 = {};
+      var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
+                             fillBits, lineBits, hasStrokes);
+      var eos = temp.eos;
+      var flags = temp.flags;
+      var type = temp.type;
+      var fillBits = temp.fillBits;
+      var lineBits = temp.lineBits;
+      $160.push($161)
+    } while(!eos)
+  }
+
+  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph,
+                       fillBits, lineBits, hasStrokes) {
+    var type = $.type = readUb($bytes, $stream, 1);
+    var flags = readUb($bytes, $stream, 5);
+    var eos = $.eos = !(type || flags);
+    if (type) {
       shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags);
+    } else {
+      var temp = shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
+                                  fillBits, lineBits, hasStrokes);
+      var fillBits = temp.fillBits;
+      var lineBits = temp.lineBits;
     }
-    else{
-      shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, fillBits, lineBits);
-    }
+    return {
+      type: type,
+      flags: flags,
+      eos: eos,
+      fillBits: fillBits,
+      lineBits: lineBits
+    };
   }
 
   function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags) {
-    
     var isStraight=
       $.isStraight=
       flags>>4
@@ -4881,8 +3791,7 @@ var tagHandler = (function () {
         }
       }
     }
-    else{
-
+    else {
       $.controlDeltaX=
         readSb($bytes, $stream, bits)
       $.controlDeltaY=
@@ -4894,120 +3803,110 @@ var tagHandler = (function () {
     }
   }
 
-  function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, fillBits, lineBits) {
-    if(tagCode>2){
-      var hasNewStyles=$.hasNewStyles=
-        flags>>4
+  function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
+                            fillBits, lineBits, hasStrokes) {
+    var $161 = $;
+		if (tagCode>2) {
+			var hasNewStyles = $161.hasNewStyles = flags >> 4;
+		}
+		else{
+			var hasNewStyles = $161.hasNewStyles = 0;
+		}
+		var hasLineStyle =
+      $161.hasLineStyle =
+      flags >> 3 & 1;
+		var hasFillStyle1 =
+			$161.hasFillStyle1 =
+			flags >> 2 & 1;
+		var hasFillStyle0 =
+			$161.hasFillStyle0 =
+			flags >> 1 & 1;
+		var move=
+			$161.move =
+			flags & 1;
+		if (move) {
+			var bits =
+			  readUb($bytes, $stream, 5);
+			$161.moveX =
+			  readSb($bytes, $stream, bits);
+			$161.moveY=
+			  readSb($bytes, $stream, bits);
+		}
+		if (hasFillStyle0) {
+			$161.fillStyle0 =
+			  readUb($bytes, $stream, fillBits);
+		}
+		if(hasFillStyle1){
+			$161.fillStyle1=
+			  readUb($bytes,$stream,fillBits)
+		}
+		if (hasLineStyle) {
+			$161.lineStyle =
+			  readUb($bytes, $stream, lineBits);
+		}
+		if (hasNewStyles) {
+      var temp = styles($bytes, $stream, $161, swfVersion, tagCode, isMorph, hasStrokes);
+      var lineBits = temp.lineBits;
+      var fillBits = temp.fillBits;
     }
-    else{
-      var hasNewStyles=$.hasNewStyles=
-        0
-    }
-    var hasLineStyle=
-      $.hasLineStyle=
-      flags>>3&1
-    var hasFillStyle1=
-      $.hasFillStyle1=
-      flags>>2&1
-    var hasFillStyle0=
-      $.hasFillStyle0=
-      flags>>1&1
-    var move=
-      $.move=
-      flags&1
-    if(move){
-      var bits=
-        readUb($bytes, $stream, 5)
-      $.moveX=
-        readSb($bytes, $stream, bits)
-      $.moveY=
-        readSb($bytes, $stream, bits)
-    }
-    if(hasFillStyle0){
-      $.fillStyle0=
-        readUb($bytes, $stream, fillBits)
-    }
-    if(hasFillStyle1){
-      $.fillStyle1=
-        readUb($bytes, $stream, fillBits)
-    }
-    if(hasLineStyle){
-      $.lineStyle=
-        readUb($bytes, $stream, lineBits)
-    }
-    if(hasNewStyles){
-      var temp = styles($bytes, $stream, $, swfVersion, tagCode);
-    }
+    return {lineBits: lineBits, fillBits: fillBits};
   }
 
-  function styles($bytes, $stream, $, swfVersion, tagCode) {
-    fillStyleArray($bytes, $stream, $, swfVersion, tagCode);
-    lineStyleArray($bytes, $stream, $, swfVersion, tagCode);
-    //styleBits($bytes, $stream, $, swfVersion, tagCode);
-    align($bytes, $stream)
-    var fillBits=
-      readUb($bytes, $stream, 4)
-    var lineBits=
-      readUb($bytes, $stream, 4)
+  function styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph);
+    lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+    var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    var fillBits = temp.fillBits;
+    var lineBits = temp.lineBits;
     return {fillBits: fillBits, lineBits: lineBits};
   }
 
-  function fillStyleArray($bytes, $stream, $, swfVersion, tagCode) {
-    var tmp=
-      readUi8($bytes, $stream)
-    if(tagCode>2&&tmp===255){
-      var count=
-        readUi16($bytes, $stream)
+  function fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+    var tmp = readUi8($bytes, $stream)
+    if (tagCode > 2 && tmp === 255) {
+      var count = readUi16($bytes, $stream);
     }
     else{
-      var count=
-        tmp
+      var count = tmp;
     }
-    var $4=
-      $.fillStyles=
-      []
-    var $5=count
-    while($5--){
-      var $6={}
-      fillStyle($bytes, $stream, $6, swfVersion, tagCode);
-      $4.push($6)
+    var $4 = $.fillStyles = [];
+    var $5 = count;
+    while ($5--) {
+      var $6 = {};
+      fillStyle($bytes, $stream, $6, swfVersion, tagCode, isMorph);
+      $4.push($6);
     }
   }
 
-  function lineStyleArray($bytes, $stream, $, swfVersion, tagCode) {
-    var tmp=
-      readUi8($bytes, $stream)
-    if(tagCode>2&&tmp===255){
-      var count=
-        readUi16($bytes, $stream)
+  function lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var tmp = readUi8($bytes, $stream);
+    if (tagCode > 2 && tmp === 255) {
+      var count = readUi16($bytes, $stream);
+    } else {
+      var count = tmp;
     }
-    else{
-      var count=
-        tmp
+    var $138 = $.lineStyles = [];
+    var $139 = count;
+    while ($139--) {
+      var $140 = {};
+      lineStyle($bytes, $stream, $140, swfVersion, tagCode, isMorph, hasStrokes);
+      $138.push($140)
     }
-    var $138=
-      $.lineStyles=
-      []
-    var $139=count
-    while($139--){
-      var $140={}
-      lineStyle($bytes, $stream, $140, swfVersion, tagCode);
-      $138.push($140)}
   }
 
   function styleBits($bytes, $stream, $, swfVersion, tagCode) {
-    align($bytes, $stream)
-    var fillBits=
-      readUb($bytes, $stream, 4)
-    var lineBits=
-      readUb($bytes, $stream, 4)
+    align($bytes, $stream);
+    var fillBits = readUb($bytes, $stream, 4);
+    var lineBits = readUb($bytes, $stream, 4);
+    return {
+      fillBits: fillBits,
+      lineBits: lineBits
+    };
   }
 
-  function fillStyle($bytes, $stream, $, swfVersion, tagCode) {
-    var type=
-      $.type=
-      readUi8($bytes, $stream)
-    switch(type){
+  function fillStyle($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+    var type = $.type = readUi8($bytes, $stream);
+    switch (type) {
     case 0:
       fillSolid($bytes, $stream, $, swfVersion, tagCode);
       break
@@ -5020,14 +3919,14 @@ var tagHandler = (function () {
     case 65:
     case 66:
     case 67:
-      fillBitmap($bytes, $stream, $, swfVersion, tagCode, type);
+      fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
       break
     default:
+      throw new Error("Invalid fill style parsing SWF: tagCode=" + tagCode + " type=" + type);
     }
   };
 
-  function lineStyle($bytes, $stream, $, swfVersion, tagCode) {
-    var isMorph = $.isMorph;
+  function lineStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
     $.width=
       readUi16($bytes, $stream)
     if(isMorph){
@@ -5062,139 +3961,46 @@ var tagHandler = (function () {
       }
       if(hasFill){
         var $141=$.fillStyle={}
-        fillStyle($bytes, $stream, $141);
+        fillStyle($bytes, $stream, $141, swfVersion, tagCode, isMorph);
       }
       else{
         var $155=$.color={}
-        rgba($bytes, $stream, $155);
+        rgba($bytes, $stream, $155, swfVersion, tagCode);
         if(isMorph){
           var $156=$.colorMorph={}
-          rgba($bytes, $stream, $156);
+          rgba($bytes, $stream, $156, swfVersion, tagCode);
         }
       }
     }
     else{
       if(tagCode>22){
         var $157=$.color={}
-        rgba($bytes, $stream, $157);
+        rgba($bytes, $stream, $157, swfVersion, tagCode);
       }
       else{
         var $158=$.color={}
-        rgb($bytes, $stream, $158);
+        rgb($bytes, $stream, $158, swfVersion, tagCode);
       }
       if(isMorph){
         var $159=$.colorMorph={}
-        rgba($bytes, $stream, $159);
+        rgba($bytes, $stream, $159, swfVersion, tagCode);
       }
     }
   }
 
-  function fillBitmap($bytes, $stream, $, swfVersion, tagCode, type) {
-    var isMorph = $.isMorph;
+  function fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     $.bitmapId=
       readUi16($bytes, $stream)
     var $18=$.matrix={}
-    align($bytes, $stream)
-    var hasScale=
-      readUb($bytes, $stream, 1)
-    if(hasScale){
-      var bits=
-        readUb($bytes, $stream, 5)
-      $18.a=
-        readFb($bytes, $stream, bits)
-      $18.d=
-        readFb($bytes, $stream, bits)
-    }
-    else{
-
-      $18.a=
-        1
-      $18.d=
-        1
-    }
-    var hasRotate=
-      readUb($bytes, $stream, 1)
-    if(hasRotate){
-
-      var bits=
-        readUb($bytes, $stream, 5)
-      $18.b=
-        readFb($bytes, $stream, bits)
-      $18.c=
-        readFb($bytes, $stream, bits)
-    }
-    else{
-
-      $18.b=
-        0
-      $18.c=
-        0
-    }
-    var bits=
-      readUb($bytes, $stream, 5)
-    var e=
-      readSb($bytes, $stream, bits)
-    var f=
-      readSb($bytes, $stream, bits)
-    $18.tx=
-      e/20
-    $18.ty=
-      f/20
-    align($bytes, $stream)
+    matrix($bytes, $stream, $18, swfVersion, tagCode);
     if(isMorph){
       var $19=$.matrixMorph={}
-      align($bytes, $stream)
-      var hasScale=
-        readUb($bytes, $stream, 1)
-      if(hasScale){
-
-        var bits=
-          readUb($bytes, $stream, 5)
-        $19.a=
-          readFb($bytes, $stream, bits)
-        $19.d=
-          readFb($bytes, $stream, bits)
-      }
-      else{
-
-        $19.a=
-          1
-        $19.d=
-          1
-      }
-      var hasRotate=
-        readUb($bytes, $stream, 1)
-      if(hasRotate){
-
-        var bits=
-          readUb($bytes, $stream, 5)
-        $19.b=
-          readFb($bytes, $stream, bits)
-        $19.c=
-          readFb($bytes, $stream, bits)
-      }
-      else{
-
-        $19.b=
-          0
-        $19.c=
-          0
-      }
-      var bits=
-        readUb($bytes, $stream, 5)
-      var e=
-        readSb($bytes, $stream, bits)
-      var f=
-        readSb($bytes, $stream, bits)
-      $19.tx=
-        e/20
-      $19.ty=
-        f/20
-      align($bytes, $stream)
+      matrix($bytes, $stream, $19, swfVersion, tagCode);
     }
     $.condition=
       type===64||type===67
   }
+
 })();
 
 var readHeader = function ($bytes, $stream, $){
