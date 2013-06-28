@@ -818,7 +818,7 @@ var natives = (function () {
           instance: {
             getStackTrace: function () {
               somewhatImplemented("Error.getStackTrace()");
-              return Runtime.getStackTrace();
+              return AVM2.getStackTrace();
             }
           },
 

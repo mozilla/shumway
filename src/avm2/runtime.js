@@ -1489,7 +1489,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
   if (compileUntil.value >= 0) {
     if (totalFunctionCount > 1000) {
       print(backtrace());
-      print(Runtime.getStackTrace());
+      print(AVM2.getStackTrace());
     }
     if (totalFunctionCount > compileUntil.value) {
       print("Compile Until Skipping " + totalFunctionCount);

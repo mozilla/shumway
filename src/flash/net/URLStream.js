@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FileLoadingService, Stream */
+/*global FileLoadingService, Stream, utf8encode */
 
 var URLStreamDefinition = (function () {
   var def = {
@@ -134,10 +134,18 @@ var URLStreamDefinition = (function () {
       throw 'Not implemented: URLStream.readShort';
     },
     readUTF: function readUTF() {
-      throw 'Not implemented: URLStream.readUTF';
+      return this.readUTFBytes(this.readUnsignedShort());
     },
     readUTFBytes: function readUTFBytes(length) {
-      throw 'Not implemented: URLStream.readUTFBytes';
+      if (length < 0)
+        throw 'Invalid length argument';
+
+      var stream = this._stream;
+      stream.ensure(length);
+      var str = utf8encode(stream.bytes.subarray(stream.pos,
+                           stream.pos + length));
+      stream.pos += length;
+      return str;
     },
     readUnsignedByte: function readUnsignedByte() {
       throw 'Not implemented: URLStream.readUnsignedByte';
