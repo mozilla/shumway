@@ -120,6 +120,12 @@ function cloneObject(object) {
   return clone;
 }
 
+function copyProperties(object, template) {
+  for (var property in template) {
+    object[property] = template[property];
+  }
+}
+
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
   var descriptor = {};
   while (obj) {

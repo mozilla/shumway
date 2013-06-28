@@ -1134,7 +1134,12 @@ var MethodInfo = (function () {
     var paramnames = null;
     if (flags & METHOD_HasParamNames) {
       for (var i = 0; i < parameterCount; i++) {
-        parameters[i].name = constantPool.strings[stream.readU30()];
+        // NOTE: We can't get the parameter name as described in the spec because
+        // some SWFs have invalid parameter names. Tamarin doesn't parse parameter
+        // names correctly, so we must follow that same behaviour.
+        // parameters[i].name = constantPool.strings[stream.readU30()];
+        stream.readU30();
+        parameters[i].name = getParameterName(i);
       }
     } else {
       for (var i = 0; i < parameterCount; i++) {

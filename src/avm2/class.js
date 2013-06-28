@@ -374,7 +374,7 @@ var InstanceBindings = (function () {
     this.natives = natives;
     this.parent = parent;
     this.instanceInfo = instanceInfo;
-    this.interfaces = [];
+    this.implementedInterfaces = parent ? cloneObject(parent.implementedInterfaces) : createEmptyObject();
     if (parent) {
       this.slots = parent.slots.slice();
       this.nextSlotId = parent.nextSlotId;
@@ -516,18 +516,26 @@ var InstanceBindings = (function () {
     /*
      * Add interface traits.
      */
-    if (!ii.isInterface()) {
-      var domain = ii.abc.domain;
-      var interfaces = ii.interfaces;
-      for (var i = 0; i < interfaces.length; i++) {
-        ib = domain.getProperty(interfaces[i], true, true).interfaceBindings;
-        for (var interfaceKey in ib.map) {
-          var interfaceBinding = ib.map[interfaceKey];
+    var domain = ii.abc.domain;
+    var interfaces = ii.interfaces;
+
+    for (var i = 0; i < interfaces.length; i++) {
+      var interface = domain.getProperty(interfaces[i], true, true);
+      ib = interface.interfaceBindings;
+      for (var interfaceKey in ib.map) {
+        var interfaceBinding = ib.map[interfaceKey];
+        if (ii.isInterface()) {
+          map[interfaceKey] = interfaceBinding;
+        } else {
           name = Multiname.getPublicQualifiedName(interfaceBinding.trait.name.getName());
           key = Binding.getKey(name, interfaceBinding.trait);
           map[interfaceKey] = map[key];
         }
       }
+
+      // Also collect all implemented interfaces.
+      copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
+      this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
     }
   }
   instanceBindings.prototype = Object.create(Bindings.prototype);
@@ -558,14 +566,7 @@ var Interface = (function () {
       print(str);
     }
     var cls = new Interface(classInfo);
-    if (ii.interfaces.length) {
-      var domain = classInfo.abc.domain;
-      assert (ii.interfaces.length === 1);
-      var interface = domain.getProperty(ii.interfaces[0], true, true);
-      cls.interfaceBindings = new InstanceBindings(interface.interfaceBindings, ii);
-    } else {
-      cls.interfaceBindings = new InstanceBindings(null, ii);
-    }
+    cls.interfaceBindings = new InstanceBindings(null, ii);
     return cls;
   };
 
@@ -710,12 +711,7 @@ var Class = (function () {
       cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
     }
 
-    cls.implementedInterfaces = baseClass ? cloneObject(baseClass.implementedInterfaces) : createEmptyObject();
-    var interfaces = ii.interfaces;
-    for (var i = 0; i < interfaces.length; i++) {
-      var interface = domain.getProperty(interfaces[i], true, true);
-      cls.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
-    }
+    cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
     return cls;
   };
 
@@ -751,7 +747,7 @@ var Class = (function () {
       while ((s = initializes.pop())) {
         s.call(obj);
       }
-      Counter.count("Initialize: " + this.classInfo.instanceInfo.name);
+      Counter.count("Initialize Instance");
     },
 
     createInstance: function createInstance(args) {
