@@ -1396,7 +1396,7 @@ var natives = (function () {
     BAp.readShort = function readShort() { return get(this, 'getInt16', 2); };
     BAp.readUnsignedInt = function readUnsignedInt() { return get(this, 'getUint32', 4); };
     BAp.readUnsignedShort = function readUnsignedShort() { return get(this, 'getUint16', 2); };
-    BAp.readObject = function readObject() { return AMFUtils[this.objectEncoding].read(this); };
+    BAp.readObject = function readObject() { return AMFUtils.encodings[this.objectEncoding].read(this); };
 
     BAp.writeDouble = function writeDouble(v) { set(this, 'setFloat64', 8, v); };
     BAp.writeFloat = function writeFloat(v) { set(this, 'setFloat32', 4, v); };
@@ -1404,7 +1404,7 @@ var natives = (function () {
     BAp.writeShort = function writeShort(v) { set(this, 'setInt16', 2, v); };
     BAp.writeUnsignedInt = function writeUnsignedInt(v) { set(this, 'setUint32', 4, v); };
     BAp.writeUnsignedShort = function writeUnsignedShort(v) { set(this, 'setUint16', 2, v); };
-    BAp.writeObject = function readObject(v) { return AMFUtils[this.objectEncoding].write(this, v); };
+    BAp.writeObject = function readObject(v) { return AMFUtils.encodings[this.objectEncoding].write(this, v); };
 
     BAp.readUTF = function readUTF() {
       return this.readUTFBytes(this.readShort());

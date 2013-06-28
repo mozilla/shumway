@@ -304,3 +304,31 @@ natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scop
     session.open(request);
   };
 };
+
+natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(runtime, scope, instance, baseClass) {
+  return function registerClassAlias(aliasName, classObject) {
+    if (!aliasName) {
+      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'aliasName'));
+    }
+    if (!classObject) {
+      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'classObject'));
+    }
+
+    AMFUtils.aliasesCache.classes.set(classObject, aliasName);
+    AMFUtils.aliasesCache.names[aliasName] = classObject;
+  };
+};
+
+natives['Toplevel::getClassByAlias'] = function GetGetClassByAliasMethod(runtime, scope, instance, baseClass) {
+  return function getClassByAlias(aliasName) {
+    if (!aliasName) {
+      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'aliasName'));
+    }
+
+    var classObject = AMFUtils.aliasesCache.names[aliasName];
+    if (!classObject) {
+      throw ReferenceError();
+    }
+    return classObject;
+  };
+};
