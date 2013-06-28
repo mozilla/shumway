@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global utf8decode, utf8encode, Multiname, forEachPublicProperty, setProperty,
+         isNumeric, createEmptyObject */
 
 var AMFUtils = (function AMFUtilsClosure() {
   var AMF0_NUMBER_MARKER = 0x00;
@@ -182,7 +184,7 @@ var AMFUtils = (function AMFUtilsClosure() {
       case AMF0_AVMPLUS_MARKER:
         return readAmf3Data(ba, {});
       default:
-        throw 'AMF0 Unknown marker ' + marker; 
+        throw 'AMF0 Unknown marker ' + marker;
       }
     }
   };
@@ -311,29 +313,47 @@ var AMFUtils = (function AMFUtilsClosure() {
       if ((u29o & 4) !== 0) {
         throw 'AMF3 Traits-Ext is not supported';
       }
-      var traits;
+      var traits, objectClass;
       if ((u29o & 2) === 0) {
         traits = caches.traitsCache[u29o >> 2];
+        objectClass = traits.class;
       } else {
-        traits = createEmptyObject();
-        traits.className = readUTF8vr(ba, caches);
+        traits = {};
+        var aliasName = readUTF8vr(ba, caches);
+        traits.className = aliasName;
+        objectClass = aliasName && aliasesCache.names[aliasName];
+        traits.class = objectClass;
+        traits.isDynamic = (u29o & 8) !== 0;
         traits.members = [];
+        var slots = objectClass && objectClass.instanceBindings.slots;
         for (var i = 0, j = u29o >> 4; i < j; i++) {
-          traits.members.push(readUTF8vr(ba, caches));
+          var traitName = readUTF8vr(ba, caches);
+          var slot = null;
+          for (var j = 1; slots && j < slots.length; j++) {
+            if (slots[j].name.name === traitName) {
+              slot = slots[j];
+              break;
+            }
+          }
+          traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
+                              Multiname.getPublicQualifiedName(traitName));
         }
         (caches.traitsCache || (caches.traitsCache = [])).push(traits);
       }
-      
-      var obj = {};
+
+      var obj = objectClass ? objectClass.createInstance() : createEmptyObject();
+      (caches.objectsCache || (caches.objectsCache = [])).push(obj);
       for (var i = 0; i < traits.members.length; i++) {
         var value = readAmf3Data(ba, caches);
-        setAvmProperty(obj, traits.members[i], value);
+        obj[traits.members[i]] = value;
       }
-      while (true) {
-        var key = readUTF8vr(ba, caches);
-        if (!key.length) break;
-        var value = readAmf3Data(ba, caches);
-        setAvmProperty(obj, key, value);
+      if (traits.isDynamic) {
+        while (true) {
+          var key = readUTF8vr(ba, caches);
+          if (!key.length) break;
+          var value = readAmf3Data(ba, caches);
+          setAvmProperty(obj, key, value);
+        }
       }
       return obj;
     case AMF3_ARRAY_MARKER:
@@ -342,10 +362,11 @@ var AMFUtils = (function AMFUtilsClosure() {
         return caches.objectsCache[u29o >> 1];
       }
       var obj = [];
+      (caches.objectsCache || (caches.objectsCache = [])).push(obj);
       var densePortionLength = u29o >> 1;
       while (true) {
         var key = readUTF8vr(ba, caches);
-        if (!key.length) break;        
+        if (!key.length) break;
         var value = readAmf3Data(ba, caches);
         setAvmProperty(obj, key, value);
       }
@@ -355,7 +376,7 @@ var AMFUtils = (function AMFUtilsClosure() {
       }
       return obj;
     default:
-      throw 'AMF3 Unknown marker ' + marker; 
+      throw 'AMF3 Unknown marker ' + marker;
     }
   }
 
@@ -425,18 +446,70 @@ var AMFUtils = (function AMFUtilsClosure() {
         ba.writeByte(AMF3_OBJECT_MARKER);
         if (writeCachedReference(ba, obj, caches))
           break;
-        // TODO better AVM2 object serialization -- using simple method for now
-        writeU29(ba, 11); // traits mode for dynamic type (xxx1011), no members
-        writeUTF8vr(ba, '', caches); // empty class name
-        forEachPublicProperty(obj, function (i, value) {
-          writeUTF8vr(ba, i, caches);
-          writeAmf3Data(ba, value, caches);
-        });
-        writeUTF8vr(ba, '', caches);
+
+        var isDynamic = true;
+
+        var objectClass = obj.class;
+        if (objectClass) {
+          isDynamic = !objectClass.classInfo.instanceInfo.isSealed();
+
+          var aliasName = aliasesCache.classes.get(objectClass) || '';
+
+          var traits, traitsCount;
+          var traitsCache = caches.traitsCache || (caches.traitsCache = []);
+          var traitsInfos = caches.traitsInfos || (caches.traitsInfos = []);
+          var traitsRef = traitsCache.indexOf(objectClass);
+          if (traitsRef < 0) {
+            var slots = objectClass.instanceBindings.slots;
+            traits = [];
+            var traitsNames = [];
+            for (var i = 1; i < slots.length; i++) {
+              var slot = slots[i];
+              if (!slot.name.getNamespace().isPublic()) {
+                continue;
+              }
+              traits.push(Multiname.getQualifiedName(slot.name));
+              traitsNames.push(slot.name.name);
+            }
+            traitsCache.push(objectClass);
+            traitsInfos.push(traits);
+            traitsCount = traitsNames.length;
+            writeU29(ba, (isDynamic ? 0x0B : 0x03) + (traitsCount << 4));
+            writeUTF8vr(ba, aliasName, caches);
+            for (var i = 0; i < traitsCount; i++) {
+              writeUTF8vr(ba, traitsNames[i], caches);
+            }
+          } else {
+            traits = traitsInfos[traitsRef];
+            traitsCount = traits.length;
+            writeU29(ba, 0x01 + (traitsRef << 2));
+          }
+
+          for (var i = 0; i < traitsCount; i++) {
+            writeAmf3Data(ba, obj[traits[i]], caches);
+          }
+        } else {
+          // object with no class definition
+          writeU29(ba, 0x0B);
+          writeUTF8vr(ba, '', caches); // empty alias name
+        }
+
+        if (isDynamic) {
+          forEachPublicProperty(obj, function (i, value) {
+            writeUTF8vr(ba, i, caches);
+            writeAmf3Data(ba, value, caches);
+          });
+          writeUTF8vr(ba, '', caches);
+        }
       }
       return;
     }
   }
+
+  var aliasesCache = {
+    classes: new WeakMap(),
+    names: Object.create(null)
+  };
 
   var amf3 = {
     write: function (ba, obj) {
@@ -447,5 +520,8 @@ var AMFUtils = (function AMFUtilsClosure() {
     }
   };
 
-  return [amf0, null, null, amf3];
+  return {
+    encodings: [amf0, null, null, amf3],
+    aliasesCache: aliasesCache
+  };
 })();
