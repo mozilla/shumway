@@ -254,7 +254,7 @@ function defineBitmap(tag) {
   idat[pi++] = (~len & 0xffff) >> 8 & 0xff;
 
   idat.set(literals.subarray(pos), pi);
-  pi += len - pos;
+  pi += literals.length - pos;
 
   var adler = adler32(literals, 0, literals.length); // checksum
   idat[pi++] = adler >> 24 & 0xff;
