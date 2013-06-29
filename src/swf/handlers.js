@@ -2499,22 +2499,7 @@ var tagHandler = (function () {
       var $57=kerningCount
       while($57--){
         var $58={}
-        if(wide){
-
-          $58.code1=
-            readUi16($bytes, $stream)
-          $58.code2=
-            readUi16($bytes, $stream)
-        }
-        else{
-
-          $58.code1=
-            readUi8($bytes, $stream)
-          $58.code2=
-            readUi8($bytes, $stream)
-        }
-        $58.adjustment=
-          readUi16($bytes, $stream)
+        kerning($bytes, $stream, $58, swfVersion, tagCode);
         $56.push($58)}
     }
     return $
@@ -3438,6 +3423,25 @@ var tagHandler = (function () {
       $29.actionsData=
         readBinary($bytes, $stream, length - (keyPress ? 1 : 0))
     }
+  }
+
+  function kerning($bytes, $stream, $, swfVersion, tagCode) {
+    if(wide){
+
+      $58.code1=
+        readUi16($bytes, $stream)
+      $58.code2=
+        readUi16($bytes, $stream)
+    }
+    else{
+
+      $58.code1=
+        readUi8($bytes, $stream)
+      $58.code2=
+        readUi8($bytes, $stream)
+    }
+    $58.adjustment=
+      readUi16($bytes, $stream)
   }
 
 })();
