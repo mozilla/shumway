@@ -1529,55 +1529,7 @@ var tagHandler = (function () {
         readString($bytes, $stream, 0)
     }
     var $0=$.soundInfo={}
-    var reserved=
-      readUb($bytes, $stream, 2)
-    $0.stop=
-      readUb($bytes, $stream, 1)
-    $0.noMultiple=
-      readUb($bytes, $stream, 1)
-    var hasEnvelope=
-      $0.hasEnvelope=
-      readUb($bytes, $stream, 1)
-    var hasLoops=
-      $0.hasLoops=
-      readUb($bytes, $stream, 1)
-    var hasOutPoint=
-      $0.hasOutPoint=
-      readUb($bytes, $stream, 1)
-    var hasInPoint=
-      $0.hasInPoint=
-      readUb($bytes, $stream, 1)
-    if(hasInPoint){
-      $0.inPoint=
-        readUi32($bytes, $stream)
-    }
-    if(hasOutPoint){
-      $0.outPoint=
-        readUi32($bytes, $stream)
-    }
-    if(hasLoops){
-      $0.loopCount=
-        readUi16($bytes, $stream)
-    }
-    if(hasEnvelope){
-
-      var envelopeCount=
-        $0.envelopeCount=
-        readUi8($bytes, $stream)
-      var $1=
-        $0.envelopes=
-        []
-      var $2=envelopeCount
-      while($2--){
-        var $3={}
-        $3.pos44=
-          readUi32($bytes, $stream)
-        $3.volumeLeft=
-          readUi16($bytes, $stream)
-        $3.volumeRight=
-          readUi16($bytes, $stream)
-        $1.push($3)}
-    }
+    soundInfo($bytes, $stream, $0, swfVersion, tagCode);
     return $
   }
 
@@ -3456,6 +3408,62 @@ var tagHandler = (function () {
     }
     return {eot: eot};
   }
+
+  function soundEnvelope($bytes, $stream, $, swfVersion, tagCode) {          
+    $.pos44=
+      readUi32($bytes, $stream)
+    $.volumeLeft=
+      readUi16($bytes, $stream)
+    $.volumeRight=
+      readUi16($bytes, $stream)
+  }
+
+  function soundInfo($bytes, $stream, $, swfVersion, tagCode) {          
+    var reserved=
+      readUb($bytes, $stream, 2)
+    $.stop=
+      readUb($bytes, $stream, 1)
+    $.noMultiple=
+      readUb($bytes, $stream, 1)
+    var hasEnvelope=
+      $.hasEnvelope=
+      readUb($bytes, $stream, 1)
+    var hasLoops=
+      $.hasLoops=
+      readUb($bytes, $stream, 1)
+    var hasOutPoint=
+      $.hasOutPoint=
+      readUb($bytes, $stream, 1)
+    var hasInPoint=
+      $.hasInPoint=
+      readUb($bytes, $stream, 1)
+    if(hasInPoint){
+      $.inPoint=
+        readUi32($bytes, $stream)
+    }
+    if(hasOutPoint){
+      $.outPoint=
+        readUi32($bytes, $stream)
+    }
+    if(hasLoops){
+      $.loopCount=
+        readUi16($bytes, $stream)
+    }
+    if(hasEnvelope){
+
+      var envelopeCount=
+        $.envelopeCount=
+        readUi8($bytes, $stream)
+      var $1=
+        $.envelopes=
+        []
+      var $2=envelopeCount
+      while($2--){
+        var $3={}
+        soundEnvelope($bytes, $stream, $3, swfVersion, tagCode);
+        $1.push($3)}
+    }
+}
 
 })();
 
