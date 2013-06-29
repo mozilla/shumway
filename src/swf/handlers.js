@@ -233,333 +233,9 @@ var tagHandler = (function () {
           $.filters=
           []
         var $3=count
-        while($3--){
+        while ($3--) {
           var $4={}
-          var type=
-            $4.type=
-            readUi8($bytes, $stream)
-          switch(type){
-          case 0:
-
-            if(type===4||type===7){
-              var count=
-                readUi8($bytes, $stream)
-            }
-            else{
-              var count=
-                1
-            }
-            var $5=
-              $4.colors=
-              []
-            var $6=count
-            while($6--){
-              var $7={}
-              $7.red=
-                readUi8($bytes, $stream)
-              $7.green=
-                readUi8($bytes, $stream)
-              $7.blue=
-                readUi8($bytes, $stream)
-              $7.alpha=
-                readUi8($bytes, $stream)
-              $5.push($7)}
-            if(type===3){
-              var $8=$4.higlightColor={}
-              $8.red=
-                readUi8($bytes, $stream)
-              $8.green=
-                readUi8($bytes, $stream)
-              $8.blue=
-                readUi8($bytes, $stream)
-              $8.alpha=
-                readUi8($bytes, $stream)
-            }
-            if(type===4||type===7){
-
-              var $9=
-                $4.ratios=
-                []
-              var $10=count
-              while($10--){
-                $9.push(
-                  readUi8($bytes, $stream)
-                )}
-            }
-            $4.blurX=
-              readFixed($bytes, $stream)
-            $4.blurY=
-              readFixed($bytes, $stream)
-            if(type!==2){
-
-              $4.angle=
-                readFixed($bytes, $stream)
-              $4.distance=
-                readFixed($bytes, $stream)
-            }
-            $4.strength=
-              readFixed8($bytes, $stream)
-            $4.innerShadow=
-              readUb($bytes, $stream, 1)
-            $4.knockout=
-              readUb($bytes, $stream, 1)
-            $4.compositeSource=
-              readUb($bytes, $stream, 1)
-            if(type===3){
-
-              $4.onTop=
-                readUb($bytes, $stream, 1)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 1)
-            }
-            if(type===4||type===7){
-
-              $4.passes=
-                readUb($bytes, $stream, 4)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 4)
-            }
-            break
-          case 1:
-
-            $4.blurX=
-              readFixed($bytes, $stream)
-            $4.blurY=
-              readFixed($bytes, $stream)
-            $4.passes=
-              readUb($bytes, $stream, 5)
-            var reserved=
-              readUb($bytes, $stream, 3)
-            break
-          case 2:
-          case 3:
-          case 4:
-
-            if(type===4||type===7){
-              var count=
-                readUi8($bytes, $stream)
-            }
-            else{
-              var count=
-                1
-            }
-            var $11=
-              $4.colors=
-              []
-            var $12=count
-            while($12--){
-              var $13={}
-              $13.red=
-                readUi8($bytes, $stream)
-              $13.green=
-                readUi8($bytes, $stream)
-              $13.blue=
-                readUi8($bytes, $stream)
-              $13.alpha=
-                readUi8($bytes, $stream)
-              $11.push($13)}
-            if(type===3){
-              var $14=$4.higlightColor={}
-              $14.red=
-                readUi8($bytes, $stream)
-              $14.green=
-                readUi8($bytes, $stream)
-              $14.blue=
-                readUi8($bytes, $stream)
-              $14.alpha=
-                readUi8($bytes, $stream)
-            }
-            if(type===4||type===7){
-
-              var $15=
-                $4.ratios=
-                []
-              var $16=count
-              while($16--){
-                $15.push(
-                  readUi8($bytes, $stream)
-                )}
-            }
-            $4.blurX=
-              readFixed($bytes, $stream)
-            $4.blurY=
-              readFixed($bytes, $stream)
-            if(type!==2){
-
-              $4.angle=
-                readFixed($bytes, $stream)
-              $4.distance=
-                readFixed($bytes, $stream)
-            }
-            $4.strength=
-              readFixed8($bytes, $stream)
-            $4.innerShadow=
-              readUb($bytes, $stream, 1)
-            $4.knockout=
-              readUb($bytes, $stream, 1)
-            $4.compositeSource=
-              readUb($bytes, $stream, 1)
-            if(type===3){
-
-              $4.onTop=
-                readUb($bytes, $stream, 1)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 1)
-            }
-            if(type===4||type===7){
-
-              $4.passes=
-                readUb($bytes, $stream, 4)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 4)
-            }
-            break
-          case 5:
-
-            $4.columns=
-              readUi8($bytes, $stream)
-            $4.rows=
-              readUi8($bytes, $stream)
-            $4.divisor=
-              readFloat($bytes, $stream)
-            $4.bias=
-              readFloat($bytes, $stream)
-            var $17=
-              $4.weights=
-              []
-            var $18=columns*rows
-            while($18--){
-              $17.push(
-                readFloat($bytes, $stream)
-              )}
-            var $19=$4.defaultColor={}
-            $19.red=
-              readUi8($bytes, $stream)
-            $19.green=
-              readUi8($bytes, $stream)
-            $19.blue=
-              readUi8($bytes, $stream)
-            $19.alpha=
-              readUi8($bytes, $stream)
-            var reserved=
-              readUb($bytes, $stream, 6)
-            $4.clamp=
-              readUb($bytes, $stream, 1)
-            $4.preserveAlpha=
-              readUb($bytes, $stream, 1)
-            break
-          case 6:
-
-            var $20=
-              $4.matrix=
-              []
-            var $21=20
-            while($21--){
-              $20.push(
-                readFloat($bytes, $stream)
-              )}
-            break
-          case 7:
-
-            if(type===4||type===7){
-              var count=
-                readUi8($bytes, $stream)
-            }
-            else{
-              var count=
-                1
-            }
-            var $22=
-              $4.colors=
-              []
-            var $23=count
-            while($23--){
-              var $24={}
-              $24.red=
-                readUi8($bytes, $stream)
-              $24.green=
-                readUi8($bytes, $stream)
-              $24.blue=
-                readUi8($bytes, $stream)
-              $24.alpha=
-                readUi8($bytes, $stream)
-              $22.push($24)}
-            if(type===3){
-              var $25=$4.higlightColor={}
-              $25.red=
-                readUi8($bytes, $stream)
-              $25.green=
-                readUi8($bytes, $stream)
-              $25.blue=
-                readUi8($bytes, $stream)
-              $25.alpha=
-                readUi8($bytes, $stream)
-            }
-            if(type===4||type===7){
-
-              var $26=
-                $4.ratios=
-                []
-              var $27=count
-              while($27--){
-                $26.push(
-                  readUi8($bytes, $stream)
-                )}
-            }
-            $4.blurX=
-              readFixed($bytes, $stream)
-            $4.blurY=
-              readFixed($bytes, $stream)
-            if(type!==2){
-
-              $4.angle=
-                readFixed($bytes, $stream)
-              $4.distance=
-                readFixed($bytes, $stream)
-            }
-            $4.strength=
-              readFixed8($bytes, $stream)
-            $4.innerShadow=
-              readUb($bytes, $stream, 1)
-            $4.knockout=
-              readUb($bytes, $stream, 1)
-            $4.compositeSource=
-              readUb($bytes, $stream, 1)
-            if(type===3){
-
-              $4.onTop=
-                readUb($bytes, $stream, 1)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 1)
-            }
-            if(type===4||type===7){
-
-              $4.passes=
-                readUb($bytes, $stream, 4)
-            }
-            else{
-
-              var reserved=
-                readUb($bytes, $stream, 4)
-            }
-            break
-          default:
-          }
+          anyFilter($bytes, $stream, $4, swfVersion, tagCode);
           $2.push($4)}
       }
       if(blend){
@@ -669,8 +345,7 @@ var tagHandler = (function () {
         $.visibility=
           readUi8($bytes, $stream)
       }
-    }
-    else{
+    } else {
 
       $.place=
         1
@@ -687,7 +362,7 @@ var tagHandler = (function () {
           1
         var $31=$.cxform={}
         cxform($bytes, $stream, $31, swfVersion, tagCode);
-     }
+      }
     }
     return $
   }
@@ -807,335 +482,10 @@ var tagHandler = (function () {
             cxform($bytes, $stream, $3, swfVersion, tagCode);
           }
           if(hasFilters){
-
             $1.filterCount=
               readUi8($bytes, $stream)
             var $4=$1.filters={}
-            var type=
-              $4.type=
-              readUi8($bytes, $stream)
-            switch(type){
-            case 0:
-
-              if(type===4||type===7){
-                var count=
-                  readUi8($bytes, $stream)
-              }
-              else{
-                var count=
-                  1
-              }
-              var $5=
-                $4.colors=
-                []
-              var $6=count
-              while($6--){
-                var $7={}
-                $7.red=
-                  readUi8($bytes, $stream)
-                $7.green=
-                  readUi8($bytes, $stream)
-                $7.blue=
-                  readUi8($bytes, $stream)
-                $7.alpha=
-                  readUi8($bytes, $stream)
-                $5.push($7)}
-              if(type===3){
-                var $8=$4.higlightColor={}
-                $8.red=
-                  readUi8($bytes, $stream)
-                $8.green=
-                  readUi8($bytes, $stream)
-                $8.blue=
-                  readUi8($bytes, $stream)
-                $8.alpha=
-                  readUi8($bytes, $stream)
-              }
-              if(type===4||type===7){
-
-                var $9=
-                  $4.ratios=
-                  []
-                var $10=count
-                while($10--){
-                  $9.push(
-                    readUi8($bytes, $stream)
-                  )}
-              }
-              $4.blurX=
-                readFixed($bytes, $stream)
-              $4.blurY=
-                readFixed($bytes, $stream)
-              if(type!==2){
-
-                $4.angle=
-                  readFixed($bytes, $stream)
-                $4.distance=
-                  readFixed($bytes, $stream)
-              }
-              $4.strength=
-                readFixed8($bytes, $stream)
-              $4.innerShadow=
-                readUb($bytes, $stream, 1)
-              $4.knockout=
-                readUb($bytes, $stream, 1)
-              $4.compositeSource=
-                readUb($bytes, $stream, 1)
-              if(type===3){
-
-                $4.onTop=
-                  readUb($bytes, $stream, 1)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 1)
-              }
-              if(type===4||type===7){
-
-                $4.passes=
-                  readUb($bytes, $stream, 4)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 4)
-              }
-              break
-            case 1:
-
-              $4.blurX=
-                readFixed($bytes, $stream)
-              $4.blurY=
-                readFixed($bytes, $stream)
-              $4.passes=
-                readUb($bytes, $stream, 5)
-              var reserved=
-                readUb($bytes, $stream, 3)
-              break
-            case 2:
-            case 3:
-            case 4:
-
-              if(type===4||type===7){
-                var count=
-                  readUi8($bytes, $stream)
-              }
-              else{
-                var count=
-                  1
-              }
-              var $11=
-                $4.colors=
-                []
-              var $12=count
-              while($12--){
-                var $13={}
-                $13.red=
-                  readUi8($bytes, $stream)
-                $13.green=
-                  readUi8($bytes, $stream)
-                $13.blue=
-                  readUi8($bytes, $stream)
-                $13.alpha=
-                  readUi8($bytes, $stream)
-                $11.push($13)}
-              if(type===3){
-                var $14=$4.higlightColor={}
-                $14.red=
-                  readUi8($bytes, $stream)
-                $14.green=
-                  readUi8($bytes, $stream)
-                $14.blue=
-                  readUi8($bytes, $stream)
-                $14.alpha=
-                  readUi8($bytes, $stream)
-              }
-              if(type===4||type===7){
-
-                var $15=
-                  $4.ratios=
-                  []
-                var $16=count
-                while($16--){
-                  $15.push(
-                    readUi8($bytes, $stream)
-                  )}
-              }
-              $4.blurX=
-                readFixed($bytes, $stream)
-              $4.blurY=
-                readFixed($bytes, $stream)
-              if(type!==2){
-
-                $4.angle=
-                  readFixed($bytes, $stream)
-                $4.distance=
-                  readFixed($bytes, $stream)
-              }
-              $4.strength=
-                readFixed8($bytes, $stream)
-              $4.innerShadow=
-                readUb($bytes, $stream, 1)
-              $4.knockout=
-                readUb($bytes, $stream, 1)
-              $4.compositeSource=
-                readUb($bytes, $stream, 1)
-              if(type===3){
-
-                $4.onTop=
-                  readUb($bytes, $stream, 1)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 1)
-              }
-              if(type===4||type===7){
-
-                $4.passes=
-                  readUb($bytes, $stream, 4)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 4)
-              }
-              break
-            case 5:
-
-              $4.columns=
-                readUi8($bytes, $stream)
-              $4.rows=
-                readUi8($bytes, $stream)
-              $4.divisor=
-                readFloat($bytes, $stream)
-              $4.bias=
-                readFloat($bytes, $stream)
-              var $17=
-                $4.weights=
-                []
-              var $18=columns*rows
-              while($18--){
-                $17.push(
-                  readFloat($bytes, $stream)
-                )}
-              var $19=$4.defaultColor={}
-              $19.red=
-                readUi8($bytes, $stream)
-              $19.green=
-                readUi8($bytes, $stream)
-              $19.blue=
-                readUi8($bytes, $stream)
-              $19.alpha=
-                readUi8($bytes, $stream)
-              var reserved=
-                readUb($bytes, $stream, 6)
-              $4.clamp=
-                readUb($bytes, $stream, 1)
-              $4.preserveAlpha=
-                readUb($bytes, $stream, 1)
-              break
-            case 6:
-
-              var $20=
-                $4.matrix=
-                []
-              var $21=20
-              while($21--){
-                $20.push(
-                  readFloat($bytes, $stream)
-                )}
-              break
-            case 7:
-
-              if(type===4||type===7){
-                var count=
-                  readUi8($bytes, $stream)
-              }
-              else{
-                var count=
-                  1
-              }
-              var $22=
-                $4.colors=
-                []
-              var $23=count
-              while($23--){
-                var $24={}
-                $24.red=
-                  readUi8($bytes, $stream)
-                $24.green=
-                  readUi8($bytes, $stream)
-                $24.blue=
-                  readUi8($bytes, $stream)
-                $24.alpha=
-                  readUi8($bytes, $stream)
-                $22.push($24)}
-              if(type===3){
-                var $25=$4.higlightColor={}
-                $25.red=
-                  readUi8($bytes, $stream)
-                $25.green=
-                  readUi8($bytes, $stream)
-                $25.blue=
-                  readUi8($bytes, $stream)
-                $25.alpha=
-                  readUi8($bytes, $stream)
-              }
-              if(type===4||type===7){
-
-                var $26=
-                  $4.ratios=
-                  []
-                var $27=count
-                while($27--){
-                  $26.push(
-                    readUi8($bytes, $stream)
-                  )}
-              }
-              $4.blurX=
-                readFixed($bytes, $stream)
-              $4.blurY=
-                readFixed($bytes, $stream)
-              if(type!==2){
-
-                $4.angle=
-                  readFixed($bytes, $stream)
-                $4.distance=
-                  readFixed($bytes, $stream)
-              }
-              $4.strength=
-                readFixed8($bytes, $stream)
-              $4.innerShadow=
-                readUb($bytes, $stream, 1)
-              $4.knockout=
-                readUb($bytes, $stream, 1)
-              $4.compositeSource=
-                readUb($bytes, $stream, 1)
-              if(type===3){
-
-                $4.onTop=
-                  readUb($bytes, $stream, 1)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 1)
-              }
-              if(type===4||type===7){
-
-                $4.passes=
-                  readUb($bytes, $stream, 4)
-              }
-              else{
-
-                var reserved=
-                  readUb($bytes, $stream, 4)
-              }
-              break
-            default:
-            }
+            anyFilter($bytes, $stream, $4, swfVersion, tagCode);
           }
           if(blend){
             $1.blendMode=
@@ -3938,10 +3288,179 @@ var tagHandler = (function () {
       type===64||type===67
   }
 
+            
+  function filterGlow($bytes, $stream, $, swfVersion, tagCode) {
+    if(type===4||type===7){
+      var count=
+        readUi8($bytes, $stream)
+    }
+    else{
+      var count=
+        1
+    }
+    var $5=
+      $4.colors=
+      []
+    var $6=count
+    while($6--){
+      var $7={}
+      $7.red=
+        readUi8($bytes, $stream)
+      $7.green=
+        readUi8($bytes, $stream)
+      $7.blue=
+        readUi8($bytes, $stream)
+      $7.alpha=
+        readUi8($bytes, $stream)
+      $5.push($7)}
+    if(type===3){
+      var $8=$4.higlightColor={}
+      $8.red=
+        readUi8($bytes, $stream)
+      $8.green=
+        readUi8($bytes, $stream)
+      $8.blue=
+        readUi8($bytes, $stream)
+      $8.alpha=
+        readUi8($bytes, $stream)
+    }
+    if(type===4||type===7){
+
+      var $9=
+        $4.ratios=
+        []
+      var $10=count
+      while($10--){
+        $9.push(
+          readUi8($bytes, $stream)
+        )}
+    }
+    $4.blurX=
+      readFixed($bytes, $stream)
+    $4.blurY=
+      readFixed($bytes, $stream)
+    if(type!==2){
+
+      $4.angle=
+        readFixed($bytes, $stream)
+      $4.distance=
+        readFixed($bytes, $stream)
+    }
+    $4.strength=
+      readFixed8($bytes, $stream)
+    $4.innerShadow=
+      readUb($bytes, $stream, 1)
+    $4.knockout=
+      readUb($bytes, $stream, 1)
+    $4.compositeSource=
+      readUb($bytes, $stream, 1)
+    if(type===3){
+
+      $4.onTop=
+        readUb($bytes, $stream, 1)
+    }
+    else{
+
+      var reserved=
+        readUb($bytes, $stream, 1)
+    }
+    if(type===4||type===7){
+
+      $4.passes=
+        readUb($bytes, $stream, 4)
+    }
+    else{
+
+      var reserved=
+        readUb($bytes, $stream, 4)
+    }
+  }
+
+  function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
+    $4.blurX=
+      readFixed($bytes, $stream)
+    $4.blurY=
+      readFixed($bytes, $stream)
+    $4.passes=
+      readUb($bytes, $stream, 5)
+    var reserved=
+      readUb($bytes, $stream, 3)
+  }
+
+  function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
+    $4.columns=
+      readUi8($bytes, $stream)
+    $4.rows=
+      readUi8($bytes, $stream)
+    $4.divisor=
+      readFloat($bytes, $stream)
+    $4.bias=
+      readFloat($bytes, $stream)
+    var $17=
+      $4.weights=
+      []
+    var $18=columns*rows
+    while($18--){
+      $17.push(
+        readFloat($bytes, $stream)
+      )}
+    var $19=$4.defaultColor={}
+    $19.red=
+      readUi8($bytes, $stream)
+    $19.green=
+      readUi8($bytes, $stream)
+    $19.blue=
+      readUi8($bytes, $stream)
+    $19.alpha=
+      readUi8($bytes, $stream)
+    var reserved=
+      readUb($bytes, $stream, 6)
+    $4.clamp=
+      readUb($bytes, $stream, 1)
+    $4.preserveAlpha=
+      readUb($bytes, $stream, 1)
+  }
+
+  function filterColorMatrix($bytes, $stream, $, swfVersion, tagCode) {
+    var $20=
+      $4.matrix=
+      []
+    var $21=20
+    while($21--){
+      $20.push(
+        readFloat($bytes, $stream)
+      )}
+  }
+
+  function anyFilter($bytes, $stream, $, swfVersion, tagCode) {
+    var type=
+      $.type=
+      readUi8($bytes, $stream)
+    switch(type){
+    case 0:
+    case 2:
+    case 3:
+    case 4:
+    case 7:
+      filterGlow($bytes, $stream, $, swfVersion, tagCode);
+      break
+    case 1:
+      filterBlur($bytes, $stream, $, swfVersion, tagCode);
+      break
+    case 5:
+      filterConvolution($bytes, $stream, $, swfVersion, tagCode);
+      break
+    case 6:
+      filterColorMatrix($bytes, $stream, $, swfVersion, tagCode);
+      break
+    default:
+    }
+  }
+
 })();
 
-var readHeader = function ($bytes, $stream, $){
-  $||($={})
+var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode){
+  $ || ($ = {});
   var $0=$.bbox={}
   align($bytes, $stream)
   var bits=
@@ -3970,4 +3489,4 @@ var readHeader = function ($bytes, $stream, $){
   $.frameCount=
     readUi16($bytes, $stream)
   return $
-};
+}
