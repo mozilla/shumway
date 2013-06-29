@@ -126,7 +126,6 @@ var tagHandler = (function () {
   function placeObject($bytes, $stream, $, swfVersion, tagCode){
     $||($={})
     if(tagCode>4){
-
       if(tagCode>26){
         var flags=
           readUi16($bytes, $stream)
@@ -270,7 +269,8 @@ var tagHandler = (function () {
       }
       if(hasBackgroundColor){
         $.backgroundColor=
-          argb($bytes, $stream, $126, swfVersion, tagCode);
+          // FIXME is this right? tags.js has "ARGB" in quotes.
+          argb($bytes, $stream, $126, swfVersion, tagCode);  
       }
       if(hasVisibility){
         $.visibility=
@@ -798,15 +798,7 @@ var tagHandler = (function () {
 
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
     $||($={})
-    var $0 = $.color={}
-    $0.red=
-      readUi8($bytes, $stream)
-    $0.green=
-      readUi8($bytes, $stream)
-    $0.blue=
-      readUi8($bytes, $stream)
-    $0.alpha=
-      255
+    rgb($bytes, $stream, $57, swfVersion, tagCode);
     return $
   }
 
