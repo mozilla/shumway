@@ -211,7 +211,7 @@ var tagHandler = (function () {
       }
       if(hasCxform){
         var $1=$.cxform={}
-        cxform($bytes, $stream, $0, swfVersion, tagCode);
+        cxform($bytes, $stream, $1, swfVersion, tagCode);
       }
       if(hasRatio){
         $.ratio=
@@ -683,11 +683,11 @@ var tagHandler = (function () {
       var $30=$.matrix={}
       matrix($bytes, $stream, $30, swfVersion, tagCode);
       if($stream.remaining()){
-
         $.hasCxform=
           1
         var $31=$.cxform={}
-      }
+        cxform($bytes, $stream, $31, swfVersion, tagCode);
+     }
     }
     return $
   }
@@ -804,7 +804,7 @@ var tagHandler = (function () {
           matrix($bytes, $stream, $2, swfVersion, tagCode);
           if(tagCode===34){
             var $3=$1.cxform={}
-            cxform($bytes, $stream, $2, swfVersion, tagCode);
+            cxform($bytes, $stream, $3, swfVersion, tagCode);
           }
           if(hasFilters){
 
@@ -1201,70 +1201,7 @@ var tagHandler = (function () {
           matrix($bytes, $stream, $30, swfVersion, tagCode);
           if(tagCode===34){
             var $31=$29.cxform={}
-            align($bytes, $stream)
-            var hasOffsets=
-              readUb($bytes, $stream, 1)
-            var hasMultipliers=
-              readUb($bytes, $stream, 1)
-            var bits=
-              readUb($bytes, $stream, 4)
-            if(hasMultipliers){
-
-              $31.redMultiplier=
-                readSb($bytes, $stream, bits)
-              $31.greenMultiplier=
-                readSb($bytes, $stream, bits)
-              $31.blueMultiplier=
-                readSb($bytes, $stream, bits)
-              if(tagCode>4){
-                $31.alphaMultiplier=
-                  readSb($bytes, $stream, bits)
-              }
-              else{
-                $31.alphaMultiplier=
-                  256
-              }
-            }
-            else{
-
-              $31.redMultiplier=
-                256
-              $31.greenMultiplier=
-                256
-              $31.blueMultiplier=
-                256
-              $31.alphaMultiplier=
-                256
-            }
-            if(hasOffsets){
-
-              $31.redOffset=
-                readSb($bytes, $stream, bits)
-              $31.greenOffset=
-                readSb($bytes, $stream, bits)
-              $31.blueOffset=
-                readSb($bytes, $stream, bits)
-              if(tagCode>4){
-                $31.alphaOffset=
-                  readSb($bytes, $stream, bits)
-              }
-              else{
-                $31.alphaOffset=
-                  0
-              }
-            }
-            else{
-
-              $31.redOffset=
-                0
-              $31.greenOffset=
-                0
-              $31.blueOffset=
-                0
-              $31.alphaOffset=
-                0
-            }
-            align($bytes, $stream)
+            cxform($bytes, $stream, $31, swfVersion, tagCode);
           }
           if(hasFilters){
 
