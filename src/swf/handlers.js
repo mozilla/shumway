@@ -369,60 +369,8 @@ var tagHandler = (function () {
         []
       do{
         var $1={}
-        var flags=
-          readUi8($bytes, $stream)
-        var eob=
-          $1.eob=
-          !flags
-        if(swfVersion>=8){
-
-          var blend=
-            $1.blend=
-            flags>>5&1
-          var hasFilters=
-            $1.hasFilters=
-            flags>>4&1
-        }
-        else{
-
-          var blend=
-            $1.blend=
-            0
-          var hasFilters=
-            $1.hasFilters=
-            0
-        }
-        $1.stateHitTest=
-          flags>>3&1
-        $1.stateDown=
-          flags>>2&1
-        $1.stateOver=
-          flags>>1&1
-        $1.stateUp=
-          flags&1
-        if(!eob){
-
-          $1.symbolId=
-            readUi16($bytes, $stream)
-          $1.depth=
-            readUi16($bytes, $stream)
-          var $2=$1.matrix={}
-          matrix($bytes, $stream, $2, swfVersion, tagCode);
-          if(tagCode===34){
-            var $3=$1.cxform={}
-            cxform($bytes, $stream, $3, swfVersion, tagCode);
-          }
-          if(hasFilters){
-            $1.filterCount=
-              readUi8($bytes, $stream)
-            var $4=$1.filters={}
-            anyFilter($bytes, $stream, $4, swfVersion, tagCode);
-          }
-          if(blend){
-            $1.blendMode=
-              readUi8($bytes, $stream)
-          }
-        }
+        var temp = button($bytes, $stream, $1, swfVersion, tagCode);
+        var eob = temp.eob;
         $0.push($1)}
       while(!eob)
       $.actionsData=
@@ -829,40 +777,7 @@ var tagHandler = (function () {
           []
         do{
           var $57={}
-          var buttonCondSize=
-            readUi16($bytes, $stream)
-          var buttonConditions=
-            readUi16($bytes, $stream)
-          $57.idleToOverDown=
-            buttonConditions>>7&1
-          $57.outDownToIdle=
-            buttonConditions>>6&1
-          $57.outDownToOverDown=
-            buttonConditions>>5&1
-          $57.overDownToOutDown=
-            buttonConditions>>4&1
-          $57.overDownToOverUp=
-            buttonConditions>>3&1
-          $57.overUpToOverDown=
-            buttonConditions>>2&1
-          $57.overUpToIdle=
-            buttonConditions>>1&1
-          $57.idleToOverUp=
-            buttonConditions&1
-          $57.mouseEventFlags=
-            buttonConditions&511
-          $57.keyPress=
-            buttonConditions>>9&127
-          $57.overDownToIdle=
-            buttonConditions>>8&1
-          if(!buttonCondSize){
-            $57.actionsData=
-              readBinary($bytes, $stream, 0)
-          }
-          else{
-            $57.actionsData=
-              readBinary($bytes, $stream, buttonCondSize - 4)
-          }
+          buttonCondAction($bytes, $stream, $57, swfVersion, tagCode);
           $56.push($57)}
         while($stream.remaining() > 0)
       }
@@ -3463,8 +3378,103 @@ var tagHandler = (function () {
         soundEnvelope($bytes, $stream, $3, swfVersion, tagCode);
         $1.push($3)}
     }
-}
+  }
 
+  function button($bytes, $stream, $, swfVersion, tagCode) {          
+    var flags=
+      readUi8($bytes, $stream)
+    var eob=
+      $.eob=
+      !flags
+    if(swfVersion>=8){
+
+      var blend=
+        $.blend=
+        flags>>5&1
+      var hasFilters=
+        $.hasFilters=
+        flags>>4&1
+    }
+    else{
+
+      var blend=
+        $.blend=
+        0
+      var hasFilters=
+        $.hasFilters=
+        0
+    }
+    $.stateHitTest=
+      flags>>3&1
+    $.stateDown=
+      flags>>2&1
+    $.stateOver=
+      flags>>1&1
+    $.stateUp=
+      flags&1
+    if(!eob){
+
+      $.symbolId=
+        readUi16($bytes, $stream)
+      $.depth=
+        readUi16($bytes, $stream)
+      var $2=$.matrix={}
+      matrix($bytes, $stream, $2, swfVersion, tagCode);
+      if(tagCode===34){
+        var $3=$.cxform={}
+        cxform($bytes, $stream, $3, swfVersion, tagCode);
+      }
+      if(hasFilters){
+        $.filterCount=
+          readUi8($bytes, $stream)
+        var $4=$.filters={}
+        anyFilter($bytes, $stream, $4, swfVersion, tagCode);
+      }
+      if(blend){
+        $.blendMode=
+          readUi8($bytes, $stream)
+      }
+    }
+    return {eob: eob}
+  }
+
+
+  function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {          
+    var buttonCondSize=
+      readUi16($bytes, $stream)
+    var buttonConditions=
+      readUi16($bytes, $stream)
+    $.idleToOverDown=
+      buttonConditions>>7&1
+    $.outDownToIdle=
+      buttonConditions>>6&1
+    $.outDownToOverDown=
+      buttonConditions>>5&1
+    $.overDownToOutDown=
+      buttonConditions>>4&1
+    $.overDownToOverUp=
+      buttonConditions>>3&1
+    $.overUpToOverDown=
+      buttonConditions>>2&1
+    $.overUpToIdle=
+      buttonConditions>>1&1
+    $.idleToOverUp=
+      buttonConditions&1
+    $.mouseEventFlags=
+      buttonConditions&511
+    $.keyPress=
+      buttonConditions>>9&127
+    $.overDownToIdle=
+      buttonConditions>>8&1
+    if(!buttonCondSize){
+      $.actionsData=
+        readBinary($bytes, $stream, 0)
+    }
+    else{
+      $.actionsData=
+        readBinary($bytes, $stream, buttonCondSize - 4)
+    }
+  }
 })();
 
 var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode){
