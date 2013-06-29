@@ -263,7 +263,8 @@ var tagHandler = (function () {
           []
         do{
           var $29={}
-          events($bytes, $stream, $29, swfVersion, tagCode);
+          var temp = events($bytes, $stream, $29, swfVersion, tagCode);
+          var eoe = temp.eoe;
           $28.push($29)}
         while(!eoe)
       }
@@ -1478,7 +1479,8 @@ var tagHandler = (function () {
       []
     do{
       var $3={}
-      textRecord($bytes, $stream, $3, swfVersion, tagCode);
+      var temp = textRecord($bytes, $stream, $3, swfVersion, tagCode, glyphBits, advanceBits);
+      var eot = temp.eot;
       $2.push($3)}
     while(!eot)
     return $
@@ -3276,68 +3278,69 @@ var tagHandler = (function () {
         readUi16($bytes, $stream)
     }
     var eoe=
-      $29.eoe=
+      $.eoe=
       !flags
-    $29.onKeyUp=
+    $.onKeyUp=
       flags>>7&1
-    $29.onKeyDown=
+    $.onKeyDown=
       flags>>6&1
-    $29.onMouseUp=
+    $.onMouseUp=
       flags>>5&1
-    $29.onMouseDown=
+    $.onMouseDown=
       flags>>4&1
-    $29.onMouseMove=
+    $.onMouseMove=
       flags>>3&1
-    $29.onUnload=
+    $.onUnload=
       flags>>2&1
-    $29.onEnterFrame=
+    $.onEnterFrame=
       flags>>1&1
-    $29.onLoad=
+    $.onLoad=
       flags&1
     if(swfVersion>=6){
 
-      $29.onDragOver=
+      $.onDragOver=
         flags>>15&1
-      $29.onRollOut=
+      $.onRollOut=
         flags>>14&1
-      $29.onRollOver=
+      $.onRollOver=
         flags>>13&1
-      $29.onReleaseOutside=
+      $.onReleaseOutside=
         flags>>12&1
-      $29.onRelease=
+      $.onRelease=
         flags>>11&1
-      $29.onPress=
+      $.onPress=
         flags>>10&1
-      $29.onInitialize=
+      $.onInitialize=
         flags>>9&1
-      $29.onData=
+      $.onData=
         flags>>8&1
       if(swfVersion>=7){
-        $29.onConstruct=
+        $.onConstruct=
           flags>>18&1
       }
       else{
-        $29.onConstruct=
+        $.onConstruct=
           0
       }
       var keyPress=
-        $29.keyPress=
+        $.keyPress=
         flags>>17&1
-      $29.onDragOut=
+      $.onDragOut=
         flags>>16&1
     }
     if(!eoe){
 
       var length=
-        $29.length=
+        $.length=
         readUi32($bytes, $stream)
       if(keyPress){
-        $29.keyCode=
+        $.keyCode=
           readUi8($bytes, $stream)
       }
-      $29.actionsData=
+      $.actionsData=
         readBinary($bytes, $stream, length - (keyPress ? 1 : 0))
     }
+    return {eoe: eoe};
   }
 
   function kerning($bytes, $stream, $, swfVersion, tagCode) {
@@ -3359,14 +3362,14 @@ var tagHandler = (function () {
       readUi16($bytes, $stream)
   }
 
-  function textEntry($bytes, $stream, $, swfVersion, tagCode) {          
+  function textEntry($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {          
     $.glyphIndex=
       readUb($bytes, $stream, glyphBits)
     $.advance=
       readSb($bytes, $stream, advanceBits)
   }
 
-  function textRecordSetup($bytes, $stream, $, swfVersion, tagCode) {          
+  function textRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags) {
     var hasFont=
       $.hasFont=
       flags>>3&1
@@ -3422,14 +3425,14 @@ var tagHandler = (function () {
     }
   }
 
-  function textRecord($bytes, $stream, $, swfVersion, tagCode) {          
+  function textRecord($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {          
     align($bytes, $stream)
     var flags=
       readUb($bytes, $stream, 8)
     var eot=
       $.eot=
       !flags
-    textRecordSetup($bytes, $stream, $, swfVersion, tagCode);
+    textRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags);
     if(!eot){
 
       var tmp=
@@ -3448,9 +3451,10 @@ var tagHandler = (function () {
       var $7=glyphCount
       while($7--){
         var $8={}
-        textEntry($bytes, $stream, $8, swfVersion, tagCode);
+        textEntry($bytes, $stream, $8, swfVersion, tagCode, glyphBits, advanceBits);
         $6.push($8)}
     }
+    return {eot: eot};
   }
 
 })();
