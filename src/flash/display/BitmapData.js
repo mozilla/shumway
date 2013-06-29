@@ -45,6 +45,7 @@ var BitmapDataDefinition = (function () {
 
       if (this._skipCopyToCanvas) {
         this._drawable = this._img;
+        this._img = null;
       } else {
         var canvas = document.createElement('canvas');
         this._ctx = canvas.getContext('kanvas-2d');
@@ -53,8 +54,10 @@ var BitmapDataDefinition = (function () {
         this._drawable = canvas;
         if (!transparent || this._backgroundColor)
           this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
-        if (this._img)
+        if (this._img) {
           this._ctx.drawImage(this._img, 0, 0);
+          this._img = null;
+        }
       }
     },
     dispose: function() {
@@ -138,7 +141,7 @@ var BitmapDataDefinition = (function () {
 
     get height() {
       return this._drawable.height;
-    },
+    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -157,7 +160,7 @@ var BitmapDataDefinition = (function () {
         clone : def.clone,
         scroll : def.scroll,
         width : desc(def, "width"),
-        height : desc(def, "height"),
+        height : desc(def, "height")
       }
     }
   };

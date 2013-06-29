@@ -17,105 +17,50 @@
  */
 /*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO */
 
-var CanvasCache = {
-  cache: [],
-  getCanvas: function getCanvas(protoCanvas) {
-    var tempCanvas = this.cache.shift();
-    if (!tempCanvas) {
-      tempCanvas = {
-        canvas: document.createElement('canvas')
-      };
-      tempCanvas.ctx = tempCanvas.canvas.getContext('kanvas-2d');
-    }
-    tempCanvas.canvas.width = protoCanvas.width;
-    tempCanvas.canvas.height = protoCanvas.height;
-    tempCanvas.ctx.save();
-    return tempCanvas;
-  },
-  releaseCanvas: function releaseCanvas(tempCanvas) {
-    tempCanvas.ctx.restore();
-    this.cache.push(tempCanvas);
-  }
-};
+function renderDisplayObject(child, transform, cxform, clip) {
+  var control = child._control;
+  release || assert(control, "All display object must have _controls");
+  var style = control.style;
 
-function renderDisplayObject(child, ctx, transform, cxform, clip) {
-  if (transform) {
-    var m = transform;
-    if (m.a * m.d == m.b * m.c) {
-      // Workaround for bug 844184 -- the object is invisible
-      ctx.closePath();
-      ctx.rect(0, 0, 0, 0);
-      ctx.clip();
-    } else {
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-    }
-  }
+  var m = transform;
+  var cssTransform = 'matrix('+m.a+','+m.b+','+m.c+','+m.d+','+m.tx+','+m.ty+')';
+  style.transform = cssTransform;
+  style.WebkitTransform = cssTransform;
 
+  var opacity = child._alpha || 1;
   if (cxform) {
     // We only support alpha channel transformation for now
-    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+    opacity *= (cxform.alphaMultiplier + cxform.alphaOffset) / 256;
   }
-  if (child._alpha !== 1) {
-    ctx.globalAlpha *= child._alpha;
-  }
+  style.opacity = opacity;
 
-  if (child._graphics) {
-    var graphics = child._graphics;
-
-    if (graphics._bitmap) {
-      ctx.translate(child._bbox.left, child._bbox.top);
-      ctx.drawImage(graphics._bitmap, 0, 0);
-    } else {
-      var scale = graphics._scale;
-      if (scale !== 1)
-        ctx.scale(scale, scale);
-
-      var subpaths = graphics._subpaths;
-      for (var j = 0, o = subpaths.length; j < o; j++) {
-        var path = subpaths[j];
-
-        ctx.currentPath = path;
-
-        if (clip) {
-          ctx.closePath();
-        } else {
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle;
-
-            var m = path.fillStyle.currentTransform;
-            if (m) {
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-              ctx.fill();
-              ctx.restore();
-            } else {
-              ctx.fill();
-            }
-          }
-          if (path.strokeStyle) {
-            ctx.strokeStyle = path.strokeStyle;
-            var drawingStyles = path.drawingStyles;
-            for (var prop in drawingStyles)
-              ctx[prop] = drawingStyles[prop];
-            ctx.stroke();
-          }
-        }
+  var graphics = child._graphics;
+  if (graphics) {
+    graphics.draw(clip);
+    var canvas = graphics._canvas;
+    if (canvas && canvas.parentNode !== control) {
+      if (control.firstChild) {
+        control.insertBefore(canvas, control.firstChild);
+      } else {
+        control.appendChild(canvas);
       }
     }
   }
 
-  if (child.draw)
-    child.draw(ctx, child.ratio);
+  if (child._dirty) {
+    child.draw && child.draw(null, child.ratio);
+    child._dirty = false;
+  }
 }
 
 var renderingTerminated = false;
 
-function renderStage(stage, ctx, events) {
+function renderStage(stage, events) {
   var frameWidth, frameHeight;
 
   function updateRenderTransform() {
-    frameWidth = ctx.canvas.width;
-    frameHeight = ctx.canvas.height;
+    frameWidth = stage._frameWidth;
+    frameHeight = stage._frameHeight;
 
     var scaleX = frameWidth / stage._stageWidth;
     var scaleY = frameHeight / stage._stageHeight;
@@ -131,7 +76,8 @@ function renderStage(stage, ctx, events) {
       }
       break;
     case 'noScale':
-      var pixelRatio = ctx.canvas._pixelRatio || 1;
+      //TODO: re-add support for pixelRatio
+      var pixelRatio = 1;
       scaleX = pixelRatio;
       scaleY = pixelRatio;
       break;
@@ -161,10 +107,10 @@ function renderStage(stage, ctx, events) {
       offsetY = (frameHeight - scaleY * stage._stageHeight) / 2;
     }
 
-    ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
+    stage._control.style.transform = 'offset(' + offsetX + ', ' + offsetY +
+                                     ' scale(' + scaleX + ', ' + scaleY + ');';
 
     stage._canvasState = {
-      canvas: ctx.canvas,
       scaleX: scaleX,
       scaleY: scaleY,
       offsetX: offsetX,
@@ -222,28 +168,13 @@ function renderStage(stage, ctx, events) {
       container._bounds = null;
   }
 
-  function PreVisitor(ctx) {
-    this.ctx = ctx;
+  function PreVisitor() {
   }
   PreVisitor.prototype = {
     ignoreVisibleAttribute: true,
     childrenStart: function() {},
     childrenEnd: function() {},
     visit: function (child, isContainer, visitContainer) {
-      if (child._dirtyArea) {
-        var b1 = roundForClipping(child._dirtyArea);
-        var b2 = roundForClipping(child.getBounds());
-        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
-        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
-      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
-        child._revision = child._graphics._revision;
-        child._markAsDirty();
-        // redraw entire stage till we calculate bounding boxes for dynamic graphics
-        this.ctx.rect(0, 0, frameWidth, frameHeight);
-      }
-      if (isContainer) {
-        visitContainer(child, this);
-      }
     }
   };
 
@@ -359,8 +290,7 @@ function renderStage(stage, ctx, events) {
     }
   };
 
-  function RenderVisitor(ctx, refreshStage) {
-    this.ctx = ctx;
+  function RenderVisitor(refreshStage) {
     this.depth = 0;
     this.refreshStage = refreshStage;
 
@@ -371,24 +301,14 @@ function renderStage(stage, ctx, events) {
     ignoreVisibleAttribute: false,
     childrenStart: function(parent) {
       if (this.depth === 0) {
-        var ctx = this.ctx;
 
-        ctx.save();
-
-        if (!this.refreshStage) {
-          ctx.clip();
+        // TODO: find out what to do with this
+        if (this.refreshStage) {
+          this.refreshStage = false;
         }
 
         var bgcolor = stage._color;
-        if (bgcolor.alpha < 255) {
-          ctx.clearRect(0, 0, frameWidth, frameHeight);
-        }
-        if (bgcolor.alpha > 0) {
-          ctx.fillStyle = toStringRgba(bgcolor);
-          ctx.fill();
-        }
-
-        ctx.mozFillRule = 'evenodd';
+        stage._control.style.backgroundColor = toStringRgba(bgcolor);
       }
       this.depth++;
 
@@ -407,7 +327,6 @@ function renderStage(stage, ctx, events) {
         // removing existing clippings
         while (this.clipDepth.length > 0) {
           this.clipDepth.pop();
-          this.ctx.restore();
         }
         this.clipDepth = null;
       }
@@ -418,19 +337,15 @@ function renderStage(stage, ctx, events) {
       }
 
       this.depth--;
-      if (this.depth === 0) {
-        this.ctx.restore();
-      }
     },
     visit: function (child, isContainer, visitContainer) {
-      var ctx = this.ctx;
 
       var clippingMask = false;
       // removing clipping if the required character depth is achived
       while (this.clipDepth && this.clipDepth.length > 0 &&
-          child._depth > this.clipDepth[0]) {
+          child._depth > this.clipDepth[0])
+      {
         this.clipDepth.shift();
-        ctx.restore();
       }
       // TODO: handle container as a clipping mask
       if (child._clipDepth && !isContainer) {
@@ -440,59 +355,63 @@ function renderStage(stage, ctx, events) {
         clippingMask = true;
         // saving clipping until certain character depth
         this.clipDepth.unshift(child._clipDepth);
-        ctx.save();
       }
 
-      ctx.save();
+      renderDisplayObject(child, child._currentTransform, child._cxform, clippingMask);
 
-      if (child._mask) {
-        // TODO create canvas small enough to fit the object and
-        // TODO cache the results when cacheAsBitmap is set
-        var tempCanvas, tempCtx, maskCanvas, maskCtx;
-        maskCanvas = CanvasCache.getCanvas(ctx.canvas);
-        maskCtx = maskCanvas.ctx;
-        maskCtx.currentTransform = ctx.currentTransform;
-        var isMaskContainer = ContainerClass.isInstanceOf(child._mask) ||
-                              SimpleButtonClass.isInstanceOf(child._mask);
-        this.ctx = maskCtx;
-        this.visit(child._mask, isMaskContainer, visitContainer);
-        this.ctx = ctx;
+      //TODO: restore masking
+//      if (child._mask) {
+//        // TODO create canvas small enough to fit the object and
+//        // TODO cache the results when cacheAsBitmap is set
+//        var tempCanvas, tempCtx, maskCanvas, maskCtx;
+//        maskCanvas = CanvasCache.getCanvas(ctx.canvas);
+//        maskCtx = maskCanvas.ctx;
+//        maskCtx.currentTransform = ctx.currentTransform;
+//        var isMaskContainer = ContainerClass.isInstanceOf(child._mask) ||
+//                              SimpleButtonClass.isInstanceOf(child._mask);
+//        this.ctx = maskCtx;
+//        this.visit(child._mask, isMaskContainer, visitContainer);
+//        this.ctx = ctx;
+//
+//        tempCanvas = CanvasCache.getCanvas(ctx.canvas);
+//        tempCtx = tempCanvas.ctx;
+//        tempCtx.currentTransform = ctx.currentTransform;
+//        renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask);
+//
+//        if (isContainer) {
+//          this.ctx = tempCtx;
+//          visitContainer(child, this);
+//          this.ctx = ctx;
+//        }
+//
+//        tempCtx.globalCompositeOperation = 'destination-in';
+//        tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+//        tempCtx.drawImage(maskCanvas.canvas, 0, 0);
+//
+//        ctx.save();
+//        ctx.setTransform(1, 0, 0, 1, 0, 0);
+//        ctx.drawImage(tempCanvas.canvas, 0, 0);
+//        ctx.restore();
+//
+//        CanvasCache.releaseCanvas(tempCanvas);
+//        CanvasCache.releaseCanvas(maskCanvas);
+//      } else {
+//        renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
+//
+//        if (isContainer) {
+//          visitContainer(child, this);
+//        }
+//      }
 
-        tempCanvas = CanvasCache.getCanvas(ctx.canvas);
-        tempCtx = tempCanvas.ctx;
-        tempCtx.currentTransform = ctx.currentTransform;
-        renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask);
+//      ctx.restore();
+
+//      if (clippingMask) {
+//        ctx.clip();
+//      }
 
         if (isContainer) {
-          this.ctx = tempCtx;
-          visitContainer(child, this);
-          this.ctx = ctx;
-        }
-
-        tempCtx.globalCompositeOperation = 'destination-in';
-        tempCtx.setTransform(1, 0, 0, 1, 0, 0);
-        tempCtx.drawImage(maskCanvas.canvas, 0, 0);
-
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.drawImage(tempCanvas.canvas, 0, 0);
-        ctx.restore();
-
-        CanvasCache.releaseCanvas(tempCanvas);
-        CanvasCache.releaseCanvas(maskCanvas);
-      } else {
-        renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
-
-        if (isContainer) {
           visitContainer(child, this);
         }
-      }
-
-      ctx.restore();
-
-      if (clippingMask) {
-        ctx.clip();
-      }
 
       child._dirtyArea = null;
     }
@@ -509,74 +428,16 @@ function renderStage(stage, ctx, events) {
                               window.msRequestAnimationFrame ||
                               window.setTimeout;
 
-  var renderDummyBalls;
-
-  var dummyBalls;
-  if (typeof FirefoxCom !== 'undefined' &&
-    FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
-    var radius = 10;
-    var speed = 1;
-    var canvasState = stage._canvasState;
-    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
-    dummyBalls = [];
-    for (var i = 0; i < 10; i++) {
-      dummyBalls.push({
-        position: {
-          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
-          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
-        },
-        velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
-      });
-    }
-    ctx.fillStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    renderDummyBalls = function () {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.strokeStyle = "green";
-      dummyBalls.forEach(function (ball) {
-        var position = ball.position;
-        var velocity = ball.velocity;
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
-        ctx.stroke();
-        var x = (position.x + velocity.x);
-        var y = (position.y + velocity.y);
-        if (x < radius || x > ctx.canvas.width / scaleX - radius) {
-          velocity.x *= -1;
-        }
-        if (y < radius || y > ctx.canvas.height / scaleY - radius) {
-          velocity.y *= -1;
-        }
-        position.x += velocity.x;
-        position.y += velocity.y;
-      });
-    };
-  }
-
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
   (function draw() {
     var now = Date.now();
-    var renderFrame;
     var renderFrame = now >= nextRenderAt;
     if (renderFrame && events.onBeforeFrame) {
       var e = { cancel: false };
       events.onBeforeFrame(e);
       renderFrame = !e.cancel;
-    }
-
-    if (renderFrame && renderDummyBalls) {
-      frameTime = now;
-      nextRenderAt = frameTime + maxDelay;
-
-      renderDummyBalls();
-
-      requestAnimationFrame(draw);
-      return;
     }
 
     var refreshStage = false;
@@ -610,9 +471,8 @@ function renderStage(stage, ctx, events) {
       }
 
       if (refreshStage || renderFrame) {
-        ctx.beginPath();
-        visitContainer(stage, new PreVisitor(ctx));
-        visitContainer(stage, new RenderVisitor(ctx, refreshStage));
+        visitContainer(stage, new PreVisitor());
+        visitContainer(stage, new RenderVisitor(refreshStage));
       }
 
       if (renderFrame) {

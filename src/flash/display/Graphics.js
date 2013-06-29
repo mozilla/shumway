@@ -50,6 +50,90 @@ var GraphicsDefinition = (function () {
       this._scale = 1;
       this._strokeStyle = null;
       this._subpaths = [];
+      this._revision = 0;
+      this._drawnRevision = 0;
+    },
+
+    draw: function(clip) {
+      if (this._bitmap) {
+        console.error("broken: graphics with _bitmap");
+//        ctx.translate(child._bbox.left, child._bbox.top);
+//        ctx.drawImage(this._bitmap, 0, 0);
+      } else {
+//        this._drawToCtx(ctx, clip);
+        if (this._drawnRevision === this._revision) {
+          return;
+        }
+        var canvas = this._canvas;
+        if (!canvas) {
+          canvas = this._canvas = document.createElement('canvas');
+          this._context = canvas.getContext('kanvas-2d');
+          var style = canvas.style;
+          style.position = 'absolute';
+          style.left = '0';
+          style.top = '0';
+          style.transformOrigin = '0 0';
+          style.WebkitTransformOrigin = '0 0';
+        }
+        var context = this._context;
+        var bounds = this._getBounds(true);
+        if (bounds === 0) {
+          return;
+        }
+        if (bounds.width != canvas.width || bounds.height != canvas.height) {
+          canvas.width = bounds.width;
+          canvas.height = bounds.height;
+        } else {
+          context.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        var transform = 'translate(' + bounds.x + 'px,' + bounds.y + 'px)';
+        canvas.style.transform = transform;
+        canvas.style.WebkitTransform = transform;
+        context.resetTransform();
+        context.translate(-bounds.x, -bounds.y);
+        this._drawToCtx(context, clip);
+        this._drawnRevision = this._revision;
+      }
+    },
+
+    _drawToCtx: function (ctx, clip) {
+      var scale = this._scale;
+      if (scale !== 1) {
+        ctx.scale(scale, scale);
+      }
+
+      var subpaths = this._subpaths;
+      for (var j = 0, o = subpaths.length; j < o; j++) {
+        var path = subpaths[j];
+
+        ctx.currentPath = path;
+
+        if (clip) {
+          ctx.closePath();
+          continue;
+        }
+        if (path.fillStyle) {
+          ctx.fillStyle = path.fillStyle;
+
+          var m = path.fillStyle.currentTransform;
+          if (m) {
+            ctx.save();
+            ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+            ctx.fill();
+            ctx.restore();
+          } else {
+            ctx.fill();
+          }
+        }
+        if (path.strokeStyle) {
+          ctx.strokeStyle = path.strokeStyle;
+          var drawingStyles = path.drawingStyles;
+          for (var prop in drawingStyles) {
+            ctx[prop] = drawingStyles[prop];
+          }
+          ctx.stroke();
+        }
+      }
     },
 
     _createLinearGradient: function (x0, y0, x1, y1) {
@@ -130,9 +214,11 @@ var GraphicsDefinition = (function () {
       this._fillStyle = null;
       this._strokeStyle = null;
       this._subpaths = [];
+      this._revision = 0;
     },
     copyFrom: function (sourceGraphics) {
-      notImplemented();
+      notImplemented('Graphics.copyFrom');
+      this._revision++;
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
       this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
@@ -174,6 +260,7 @@ var GraphicsDefinition = (function () {
           break;
         }
       }
+      this._revision++;
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
@@ -227,7 +314,8 @@ var GraphicsDefinition = (function () {
       this._revision++;
     },
     drawTriangles: function (vertices, indices, uvtData, culling) {
-      notImplemented();
+      notImplemented('Graphics.drawTriangles');
+      this._revision++;
     },
     endFill: function () {
       delete this._currentPath;
@@ -235,10 +323,10 @@ var GraphicsDefinition = (function () {
       this._fillStyle = null;
     },
     lineBitmapStyle: function (bitmap, matrix, repeat, smooth) {
-      notImplemented();
+      notImplemented('Graphics.lineBitmapStyle');
     },
     lineGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      notImplemented();
+      notImplemented('Graphics.lineGradientStyle');
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint, mlimit) {

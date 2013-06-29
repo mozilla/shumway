@@ -18,8 +18,11 @@
 /*global SWF, renderStage, toStringRgba, ShumwayKeyboardListener */
 
 SWF.embed = function(file, doc, container, options) {
-  var canvas = doc.createElement('canvas');
-  var ctx = canvas.getContext('kanvas-2d');
+  if (!SWF.stylesInitialized) {
+    SWF.initStyles(doc);
+  }
+//  var canvas = doc.createElement('canvas');
+//  var ctx = canvas.getContext('kanvas-2d');
   var loader = new flash.display.Loader();
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new flash.display.Stage();
@@ -29,22 +32,22 @@ SWF.embed = function(file, doc, container, options) {
   loaderInfo._url = options.url || (typeof file === 'string' ? file : null);
 
   // HACK support of HiDPI displays
-  var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
-  var canvasHolder = null;
-  canvas._pixelRatio = pixelRatio;
-  if (pixelRatio > 1) {
-    var cssScale = 'scale(' + (1 / pixelRatio) + ', ' + (1 / pixelRatio) + ')';
-    canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
-                                 '-webkit-transform: ' + cssScale + ';' +
-                                 'transform: ' + cssScale + ';' +
-                                 '-moz-transform-origin: 0% 0%;' +
-                                 '-webkit-transform-origin: 0% 0%;' +
-                                 'transform-origin: 0% 0%;');
-    canvasHolder = doc.createElement('div');
-    canvasHolder.setAttribute('style', 'display: inline-block; overflow: hidden;');
-    canvasHolder.appendChild(canvas);
-  }
-  stage._contentsScaleFactor = pixelRatio;
+  var pixelRatio = 1;
+//  var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+//  var canvasHolder = null;
+//  canvas._pixelRatio = pixelRatio;
+//  if (pixelRatio > 1) {
+//    var cssScale = 'scale(' + (1 / pixelRatio) + ', ' + (1 / pixelRatio) + ')';
+//    canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
+//                                 '-webkit-transform: ' + cssScale + ';' +
+//                                 'transform: ' + cssScale + ';' +
+//                                 '-moz-transform-origin: 0% 0%;' +
+//                                 '-webkit-transform-origin: 0% 0%;' +
+//                                 'transform-origin: 0% 0%;');
+//    canvasHolder = doc.createElement('div');
+//    canvasHolder.setAttribute('style', 'display: inline-block; overflow: hidden;');
+//    canvasHolder.appendChild(canvas);
+//  }
 
   loader._parent = stage;
   loader._stage = stage;
@@ -71,52 +74,48 @@ SWF.embed = function(file, doc, container, options) {
   stage._syncCursor = syncCursor;
   stage._mouseMoved = false;
 
-  function fitCanvas(container, canvas) {
-    if (canvasHolder) {
-      canvasHolder.style.width = container.clientWidth + 'px';
-      canvasHolder.style.height = container.clientHeight + 'px';
-    }
-    canvas.width = container.clientWidth * pixelRatio;
-    canvas.height = container.clientHeight * pixelRatio;
+  function fitCanvas(container) {
+    stage._frameWidth = container.clientWidth;
+    stage._frameHeight = container.clientHeight;
+    stage._control.style.width = container.clientWidth + 'px';
+    stage._control.style.height = container.clientHeight + 'px';
     stage._invalid = true;
   }
 
   loaderInfo._addEventListener('init', function () {
     if (container.clientHeight) {
-      fitCanvas(container, canvas);
+      fitCanvas(container);
       window.addEventListener('resize', function () {
-        fitCanvas(container, canvas);
+        fitCanvas(container);
       });
     } else {
-      if (canvasHolder) {
-        canvasHolder.style.width = stage._stageWidth + 'px';
-        canvasHolder.style.height = stage._stageHeight + 'px';
-      }
-      canvas.width = stage._stageWidth * pixelRatio;
-      canvas.height = stage._stageHeight * pixelRatio;
+      stage._frameWidth = stage._stageWidth;
+      stage._frameHeight = stage._stageHeight;
+      stage._control.style.width = stage._stageWidth + 'px';
+      stage._control.style.height = stage._stageHeight + 'px';
     }
 
     container.setAttribute("style", "position: relative");
 
-    canvas.addEventListener('click', function () {
+    stage._control.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
 
       if (stage._clickTarget) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('click'));
       }
     });
-    canvas.addEventListener('dblclick', function () {
+    stage._control.addEventListener('dblclick', function () {
       if (stage._clickTarget && stage._clickTarget._doubleClickEnabled) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('doubleClick'));
       }
     });
-    canvas.addEventListener('mousedown', function () {
+    stage._control.addEventListener('mousedown', function () {
       stage._mouseMoved = true;
       if (stage._clickTarget) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
       }
     });
-    canvas.addEventListener('mousemove', function (domEvt) {
+    stage._control.addEventListener('mousemove', function (domEvt) {
       var node = this;
       var left = 0;
       var top = 0;
@@ -134,18 +133,18 @@ SWF.embed = function(file, doc, container, options) {
         canvasState.scaleY;
       stage._mouseMoved = true;
     });
-    canvas.addEventListener('mouseup', function () {
+    stage._control.addEventListener('mouseup', function () {
       stage._mouseMoved = true;
       if (stage._clickTarget) {
         stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseUp'));
       }
     });
-    canvas.addEventListener('mouseover', function () {
+    stage._control.addEventListener('mouseover', function () {
       stage._mouseMoved = true;
       stage._mouseOver = true;
       stage._mouseJustLeft = false;
     });
-    canvas.addEventListener('mouseout', function () {
+    stage._control.addEventListener('mouseout', function () {
       stage._mouseMoved = true;
       stage._mouseOver = false;
       stage._mouseJustLeft = true;
@@ -168,10 +167,11 @@ SWF.embed = function(file, doc, container, options) {
         bgcolor = {red: 0, green: 0, blue: 0, alpha: 0};
       }
     }
-    stage._color = bgcolor;
 
-    ctx.fillStyle = toStringRgba(bgcolor);
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    doc.body.appendChild(stage._control);
+
+    stage._color = bgcolor;
+    stage._control.style.backgroundColor = toStringRgba(bgcolor);
 
     var root = loader._content;
     stage._children[0] = root;
@@ -182,13 +182,11 @@ SWF.embed = function(file, doc, container, options) {
 
     syncCursor();
 
-    container.appendChild(canvasHolder || canvas);
-
     if (options.onStageInitialized) {
       options.onStageInitialized(stage);
     }
 
-    renderStage(stage, ctx, options);
+    renderStage(stage, options);
   });
 
   if (options.onComplete) {
@@ -199,3 +197,23 @@ SWF.embed = function(file, doc, container, options) {
 
   loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
 };
+
+
+SWF.styles = [
+  ".shumway-static-text span {" +
+  "  position: absolute;" +
+  "  font-size: 12px;" +
+  "  color: black;" +
+  "  top: 0;" +
+  "}"
+];
+
+SWF.initStyles = function(doc) {
+  var style = doc.createElement('style');
+  doc.getElementsByTagName('head')[0].appendChild(style);
+  var s = doc.styleSheets[doc.styleSheets.length - 1];
+  for (var i = 0; i < SWF.styles.length; i++) {
+    s.insertRule(SWF.styles[i], s.cssRules.length);
+  }
+  SWF.stylesInitialized = true;
+}

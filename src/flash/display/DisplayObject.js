@@ -47,6 +47,12 @@ var DisplayObjectDefinition = (function () {
       this._cacheAsBitmap = false;
       this._children = [];
       this._control = document.createElement('div');
+      var style = this._control.style;
+      style.position = 'absolute';
+      style.left = '0';
+      style.top = '0';
+      style.transformOrigin = '0 0';
+      style.WebkitTransformOrigin = '0 0';
       this._clipDepth = null;
       this._currentTransform = null;
       this._cxform = null;
@@ -251,9 +257,7 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _markAsDirty: function() {
-      if (!this._dirtyArea)
-        this._dirtyArea = this.getBounds();
-      this._bounds = null;
+      this._dirty = true;
     },
     _removedFromStage: function (e) {
       var children = this._children;

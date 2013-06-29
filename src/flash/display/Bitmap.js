@@ -17,69 +17,71 @@
  */
 
 var BitmapDefinition = (function () {
-  function setBitmapData(value) {
-    this._bitmapData = value;
+  var def = {
+    __class__: "flash.display.Bitmap",
+    initialize: function () {
+    },
 
-    if (value) {
-      var canvas = value._drawable;
+    ctor : function(bitmapData /*:BitmapData = null*/,
+                    pixelSnapping /*:String = 'auto'*/,
+                    smoothing /*:Boolean = false*/)
+    {
+      this._pixelSnapping = pixelSnapping === undefined
+                            ? 'auto' : pixelSnapping + '';
+      this._smoothing = !!smoothing;
+      this.bitmapData = this._bitmapData || bitmapData;
+    },
+
+    get pixelSnapping() { // (void) -> String
+      return this._pixelSnapping;
+    },
+    set pixelSnapping(value) { // (value:String) -> void
+      this._pixelSnapping = value;
+    },
+
+    get smoothing() { // (void) -> Boolean
+      return this._smoothing;
+    },
+    set smoothing(value) { // (value:Boolean) -> void
+      this._smoothing = value;
+    },
+    get bitmapData() { // (void) -> BitmapData
+      return this._bitmapData;
+    },
+    set bitmapData(value) { // (value:BitmapData) -> void
+      if (value === this._bitmapData) {
+        return;
+      }
+      this._markAsDirty();
+      if (this._bitmapData) {
+        this._control.removeChild(this._bitmapData._drawable);
+      }
+      this._bitmapData = value;
+      if (value) {
+        this._control.appendChild(this._bitmapData._drawable);
+      }
       this._bbox = {
         left: 0,
         top: 0,
-        right: canvas.width,
-        bottom: canvas.height
+        right: value ? value.width : 0,
+        bottom: value ? value.height : 0
       };
-    } else {
-      this._bbox = { left: 0, top: 0, right: 0, bottom: 0 };
-    }
-    this._markAsDirty();
-  }
-
-  return {
-    // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
-    __class__: "flash.display.Bitmap",
-    draw : function(ctx, ratio) {
-      if (!this._bitmapData) {
-        return;
-      }
-      ctx.drawImage(this._bitmapData._drawable, 0, 0);
-    },
-    initialize: function () {
-    },
-    __glue__: {
-      native: {
-        static: {
-        },
-        instance: {
-          ctor : function(bitmapData, pixelSnapping, smoothing) {
-            this._pixelSnapping = pixelSnapping;
-            this._smoothing = smoothing;
-
-            setBitmapData.call(this, bitmapData || null);
-          },
-          pixelSnapping: {
-            get: function pixelSnapping() { // (void) -> String
-              return this._pixelSnapping;
-            },
-            set: function pixelSnapping(value) { // (value:String) -> void
-              this._pixelSnapping = value;
-            }
-          },
-          smoothing: {
-            get: function smoothing() { // (void) -> Boolean
-              return this._smoothing;
-            },
-            set: function smoothing(value) { // (value:Boolean) -> void
-              this._smoothing = value;
-            }
-          },
-          bitmapData: {
-            get: function bitmapData() { // (void) -> BitmapData
-              return this._bitmapData;
-            },
-            set: setBitmapData // (value:BitmapData) -> void
-          }
-        }
-      },
     }
   };
+
+  var desc = Object.getOwnPropertyDescriptor;
+  def.__glue__ = {
+    native: {
+      static: {
+      },
+      instance: {
+        ctor : def.ctor,
+        pixelSnapping : desc(def, 'pixelSnapping'),
+        smoothing : desc(def, 'smoothing'),
+        bitmapData : desc(def, 'bitmapData')
+      }
+    }
+  }
+
+  return def;
 }).call(this);

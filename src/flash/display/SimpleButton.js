@@ -182,9 +182,9 @@ var SimpleButtonDefinition = (function () {
         };
         // XXX: attaching events to the stage for now
         var KeyboardEventClass = flash.events.KeyboardEvent;
-        this.stage._addEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
+        this.stage._control._addEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
         this._addEventListener('removedFromStage', function () {
-          this.stage._removeEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
+          this.stage._control._removeEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
         }.bind(this), false);
       }
     },

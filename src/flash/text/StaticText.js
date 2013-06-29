@@ -21,12 +21,15 @@ var StaticTextDefinition = (function () {
     __class__: 'flash.text.StaticText',
 
     initialize: function () {
-      var s = this.symbol;
-      if (s) {
-        this.draw = s.draw || null;
-      }
+      this._html = this.symbol ? renderContent(this.symbol.html) : '';
     },
-
+    draw : function() {
+      if (this._valid) {
+        return;
+      }
+      this._control.innerHTML = this._html;
+      this._valid = true;
+    },
     get text() {
       return this._text;
     },
@@ -34,6 +37,31 @@ var StaticTextDefinition = (function () {
       this._text = val;
     }
   };
+
+  function renderContent(content) {
+    var html = '<div class="shumway-static-text">';
+    for (var i = 0; i < content.length; i++) {
+      var run = content[i];
+      var style = 'top:' + run.y + 'px;';
+      if (run.fontName) {
+        style += 'font-family: ' + run.fontName +
+                 '; font-size: ' + run.fontSize + 'px;';
+      }
+      if (run.color) {
+        style += 'color: ' + run.color;
+      }
+      html += '<span style="' + style + '">';
+
+      var chars = run.chars;
+      var positions = run.positions;
+      for (var j = 0; j < chars.length; j++) {
+        html += '<span style="left:' + positions[j] + 'px">' +
+                chars[j] + '</span>';
+      }
+      html += '</span>';
+    }
+    return html + '</div>';
+  }
 
   var desc = Object.getOwnPropertyDescriptor;
 

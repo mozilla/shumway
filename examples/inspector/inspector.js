@@ -297,9 +297,9 @@ function executeFile(file, buffer, movieParams) {
 
 function stageInitialized(stage) {
   if (TRACE_SYMBOLS_INFO) {
-    var traceSymbolsInfo = document.getElementById('traceSymbolsInfo');
-    traceSymbolsInfo.removeAttribute('hidden');
-    traceSymbolsInfo.appendChild(stage._control);
+    console.error("trace symbols not supported ATM.");
+//    var traceSymbolsInfo = document.getElementById('traceSymbolsInfo');
+//    traceSymbolsInfo.removeAttribute('hidden');
   }
 }
 

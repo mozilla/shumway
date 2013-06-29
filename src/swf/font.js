@@ -43,6 +43,7 @@ function defineFont(tag, dictionary) {
   var codes = [];
   var glyphIndex = { };
   var ranges = [];
+  var resolution = tag.resolution || 1;
 
   var glyphs = tag.glyphs;
   var glyphCount = glyphs.length;
@@ -79,8 +80,8 @@ function defineFont(tag, dictionary) {
     ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
-  var ascent = tag.ascent || 1024;
-  var descent = tag.descent || 1024;
+  var ascent = (tag.ascent || 1024) / resolution;
+  var descent = (tag.descent || 1024) / resolution;
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
@@ -142,7 +143,7 @@ function defineFont(tag, dictionary) {
     '\x00\x00' + // language
     toString16(segCount * 2) + // segCountX2
     toString16(searchRange) +
-    toString16(log(segCount) / log(2)) + // entrySelector
+    toString16(logE(segCount) / logE(2)) + // entrySelector
     toString16(rangeShift) +
     endCount +
     '\x00\x00' + // reservedPad
@@ -163,7 +164,6 @@ function defineFont(tag, dictionary) {
 
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
-  var resolution = tag.resolution || 1;
   var offset = 16;
   var maxPoints = 0;
   var xMins = [];
@@ -311,7 +311,6 @@ function defineFont(tag, dictionary) {
   ;
 
   var advance = tag.advance;
-  var resolution = tag.resolution || 1;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
@@ -349,7 +348,7 @@ function defineFont(tag, dictionary) {
       '\x00\x01' + // coverage
       toString16(nPairs) +
       toString16(searchRange) +
-      toString16(log(nPairs) / log(2)) + // entrySelector
+      toString16(logE(nPairs) / logE(2)) + // entrySelector
       toString16((2 * nPairs) - searchRange) // rangeShift
     ;
     var i = 0;
