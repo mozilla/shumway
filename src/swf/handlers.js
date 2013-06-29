@@ -798,7 +798,7 @@ var tagHandler = (function () {
 
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
     $||($={})
-    rgb($bytes, $stream, $57, swfVersion, tagCode);
+    rgb($bytes, $stream, $, swfVersion, tagCode);
     return $
   }
 
