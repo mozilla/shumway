@@ -270,7 +270,7 @@ var tagHandler = (function () {
       if(hasBackgroundColor){
         $.backgroundColor=
           // FIXME is this right? tags.js has "ARGB" in quotes.
-          argb($bytes, $stream, $126, swfVersion, tagCode);  
+          argb($bytes, $stream, $126, swfVersion, tagCode);
       }
       if(hasVisibility){
         $.visibility=
@@ -1576,7 +1576,7 @@ var tagHandler = (function () {
       $134.alpha=
         255
     }
-    if(isMorph){        
+    if(isMorph){
       $.ratioMorph=
         readUi8($bytes, $stream)
       var $135=$.colorMorph={}
@@ -1718,45 +1718,45 @@ var tagHandler = (function () {
   function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
                             fillBits, lineBits, hasStrokes) {
     var $161 = $;
-		if (tagCode>2) {
-			var hasNewStyles = $161.hasNewStyles = flags >> 4;
-		}
-		else{
-			var hasNewStyles = $161.hasNewStyles = 0;
-		}
-		var hasLineStyle =
+    if (tagCode>2) {
+      var hasNewStyles = $161.hasNewStyles = flags >> 4;
+    }
+    else{
+      var hasNewStyles = $161.hasNewStyles = 0;
+    }
+    var hasLineStyle =
       $161.hasLineStyle =
       flags >> 3 & 1;
-		var hasFillStyle1 =
-			$161.hasFillStyle1 =
-			flags >> 2 & 1;
-		var hasFillStyle0 =
-			$161.hasFillStyle0 =
-			flags >> 1 & 1;
-		var move=
-			$161.move =
-			flags & 1;
-		if (move) {
-			var bits =
-			  readUb($bytes, $stream, 5);
-			$161.moveX =
-			  readSb($bytes, $stream, bits);
-			$161.moveY=
-			  readSb($bytes, $stream, bits);
-		}
-		if (hasFillStyle0) {
-			$161.fillStyle0 =
-			  readUb($bytes, $stream, fillBits);
-		}
-		if(hasFillStyle1){
-			$161.fillStyle1=
-			  readUb($bytes,$stream,fillBits)
-		}
-		if (hasLineStyle) {
-			$161.lineStyle =
-			  readUb($bytes, $stream, lineBits);
-		}
-		if (hasNewStyles) {
+    var hasFillStyle1 =
+      $161.hasFillStyle1 =
+      flags >> 2 & 1;
+    var hasFillStyle0 =
+      $161.hasFillStyle0 =
+      flags >> 1 & 1;
+    var move=
+      $161.move =
+      flags & 1;
+    if (move) {
+      var bits =
+        readUb($bytes, $stream, 5);
+      $161.moveX =
+        readSb($bytes, $stream, bits);
+      $161.moveY=
+        readSb($bytes, $stream, bits);
+    }
+    if (hasFillStyle0) {
+      $161.fillStyle0 =
+        readUb($bytes, $stream, fillBits);
+    }
+    if(hasFillStyle1){
+      $161.fillStyle1=
+        readUb($bytes,$stream,fillBits)
+    }
+    if (hasLineStyle) {
+      $161.lineStyle =
+        readUb($bytes, $stream, lineBits);
+    }
+    if (hasNewStyles) {
       var temp = styles($bytes, $stream, $161, swfVersion, tagCode, isMorph, hasStrokes);
       var lineBits = temp.lineBits;
       var fillBits = temp.fillBits;
@@ -1913,7 +1913,6 @@ var tagHandler = (function () {
       type===64||type===67
   }
 
-            
   function filterGlow($bytes, $stream, $, swfVersion, tagCode) {
     if(type===4||type===7){
       var count=
@@ -2155,7 +2154,7 @@ var tagHandler = (function () {
       readUi16($bytes, $stream)
   }
 
-  function textEntry($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {          
+  function textEntry($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
     $.glyphIndex=
       readUb($bytes, $stream, glyphBits)
     $.advance=
@@ -2218,7 +2217,7 @@ var tagHandler = (function () {
     }
   }
 
-  function textRecord($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {          
+  function textRecord($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
     align($bytes, $stream)
     var flags=
       readUb($bytes, $stream, 8)
@@ -2250,7 +2249,7 @@ var tagHandler = (function () {
     return {eot: eot};
   }
 
-  function soundEnvelope($bytes, $stream, $, swfVersion, tagCode) {          
+  function soundEnvelope($bytes, $stream, $, swfVersion, tagCode) {
     $.pos44=
       readUi32($bytes, $stream)
     $.volumeLeft=
@@ -2259,7 +2258,7 @@ var tagHandler = (function () {
       readUi16($bytes, $stream)
   }
 
-  function soundInfo($bytes, $stream, $, swfVersion, tagCode) {          
+  function soundInfo($bytes, $stream, $, swfVersion, tagCode) {
     var reserved=
       readUb($bytes, $stream, 2)
     $.stop=
@@ -2306,7 +2305,7 @@ var tagHandler = (function () {
     }
   }
 
-  function button($bytes, $stream, $, swfVersion, tagCode) {          
+  function button($bytes, $stream, $, swfVersion, tagCode) {
     var flags=
       readUi8($bytes, $stream)
     var eob=
@@ -2365,7 +2364,7 @@ var tagHandler = (function () {
   }
 
 
-  function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {          
+  function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {
     var buttonCondSize=
       readUi16($bytes, $stream)
     var buttonConditions=
@@ -2402,7 +2401,7 @@ var tagHandler = (function () {
     }
   }
 
-  function shape($bytes, $stream, $, swfVersion, tagCode) {          
+  function shape($bytes, $stream, $, swfVersion, tagCode) {
     var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
