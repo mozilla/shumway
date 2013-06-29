@@ -263,77 +263,7 @@ var tagHandler = (function () {
           []
         do{
           var $29={}
-          if(swfVersion>=6){
-            var flags=
-              readUi32($bytes, $stream)
-          }
-          else{
-            var flags=
-              readUi16($bytes, $stream)
-          }
-          var eoe=
-            $29.eoe=
-            !flags
-          $29.onKeyUp=
-            flags>>7&1
-          $29.onKeyDown=
-            flags>>6&1
-          $29.onMouseUp=
-            flags>>5&1
-          $29.onMouseDown=
-            flags>>4&1
-          $29.onMouseMove=
-            flags>>3&1
-          $29.onUnload=
-            flags>>2&1
-          $29.onEnterFrame=
-            flags>>1&1
-          $29.onLoad=
-            flags&1
-          if(swfVersion>=6){
-
-            $29.onDragOver=
-              flags>>15&1
-            $29.onRollOut=
-              flags>>14&1
-            $29.onRollOver=
-              flags>>13&1
-            $29.onReleaseOutside=
-              flags>>12&1
-            $29.onRelease=
-              flags>>11&1
-            $29.onPress=
-              flags>>10&1
-            $29.onInitialize=
-              flags>>9&1
-            $29.onData=
-              flags>>8&1
-            if(swfVersion>=7){
-              $29.onConstruct=
-                flags>>18&1
-            }
-            else{
-              $29.onConstruct=
-                0
-            }
-            var keyPress=
-              $29.keyPress=
-              flags>>17&1
-            $29.onDragOut=
-              flags>>16&1
-          }
-          if(!eoe){
-
-            var length=
-              $29.length=
-              readUi32($bytes, $stream)
-            if(keyPress){
-              $29.keyCode=
-                readUi8($bytes, $stream)
-            }
-            $29.actionsData=
-              readBinary($bytes, $stream, length - (keyPress ? 1 : 0))
-          }
+          events($bytes, $stream, $29, swfVersion, tagCode);
           $28.push($29)}
         while(!eoe)
       }
@@ -3304,25 +3234,11 @@ var tagHandler = (function () {
     var $6=count
     while($6--){
       var $7={}
-      $7.red=
-        readUi8($bytes, $stream)
-      $7.green=
-        readUi8($bytes, $stream)
-      $7.blue=
-        readUi8($bytes, $stream)
-      $7.alpha=
-        readUi8($bytes, $stream)
+      rgba($bytes, $stream, $7, swfVersion, tagCode);
       $5.push($7)}
     if(type===3){
       var $8=$4.higlightColor={}
-      $8.red=
-        readUi8($bytes, $stream)
-      $8.green=
-        readUi8($bytes, $stream)
-      $8.blue=
-        readUi8($bytes, $stream)
-      $8.alpha=
-        readUi8($bytes, $stream)
+      rgba($bytes, $stream, $8, swfVersion, tagCode);
     }
     if(type===4||type===7){
 
@@ -3405,14 +3321,7 @@ var tagHandler = (function () {
         readFloat($bytes, $stream)
       )}
     var $19=$4.defaultColor={}
-    $19.red=
-      readUi8($bytes, $stream)
-    $19.green=
-      readUi8($bytes, $stream)
-    $19.blue=
-      readUi8($bytes, $stream)
-    $19.alpha=
-      readUi8($bytes, $stream)
+    rgba($bytes, $stream, $19, swfVersion, tagCode);
     var reserved=
       readUb($bytes, $stream, 6)
     $4.clamp=
@@ -3454,6 +3363,80 @@ var tagHandler = (function () {
       filterColorMatrix($bytes, $stream, $, swfVersion, tagCode);
       break
     default:
+    }
+  }
+
+  function events($bytes, $stream, $, swfVersion, tagCode) {
+    if(swfVersion>=6){
+      var flags=
+        readUi32($bytes, $stream)
+    }
+    else{
+      var flags=
+        readUi16($bytes, $stream)
+    }
+    var eoe=
+      $29.eoe=
+      !flags
+    $29.onKeyUp=
+      flags>>7&1
+    $29.onKeyDown=
+      flags>>6&1
+    $29.onMouseUp=
+      flags>>5&1
+    $29.onMouseDown=
+      flags>>4&1
+    $29.onMouseMove=
+      flags>>3&1
+    $29.onUnload=
+      flags>>2&1
+    $29.onEnterFrame=
+      flags>>1&1
+    $29.onLoad=
+      flags&1
+    if(swfVersion>=6){
+
+      $29.onDragOver=
+        flags>>15&1
+      $29.onRollOut=
+        flags>>14&1
+      $29.onRollOver=
+        flags>>13&1
+      $29.onReleaseOutside=
+        flags>>12&1
+      $29.onRelease=
+        flags>>11&1
+      $29.onPress=
+        flags>>10&1
+      $29.onInitialize=
+        flags>>9&1
+      $29.onData=
+        flags>>8&1
+      if(swfVersion>=7){
+        $29.onConstruct=
+          flags>>18&1
+      }
+      else{
+        $29.onConstruct=
+          0
+      }
+      var keyPress=
+        $29.keyPress=
+        flags>>17&1
+      $29.onDragOut=
+        flags>>16&1
+    }
+    if(!eoe){
+
+      var length=
+        $29.length=
+        readUi32($bytes, $stream)
+      if(keyPress){
+        $29.keyCode=
+          readUi8($bytes, $stream)
+      }
+      $29.actionsData=
+        readBinary($bytes, $stream, length - (keyPress ? 1 : 0))
     }
   }
 
