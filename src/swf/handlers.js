@@ -1465,8 +1465,6 @@ var tagHandler = (function () {
       readUi16($bytes, $stream)
     var $0=$.bbox={}
     bbox($bytes, $stream, $0, swfVersion, tagCode);
-
-    align($bytes, $stream)
     var $1=$.matrix={}
     matrix($bytes, $stream, $1, swfVersion, tagCode);
     var glyphBits=
@@ -1480,90 +1478,7 @@ var tagHandler = (function () {
       []
     do{
       var $3={}
-      align($bytes, $stream)
-      var flags=
-        readUb($bytes, $stream, 8)
-      var eot=
-        $3.eot=
-        !flags
-
-      var hasFont=
-        $3.hasFont=
-        flags>>3&1
-      var hasColor=
-        $3.hasColor=
-        flags>>2&1
-      var hasMoveY=
-        $3.hasMoveY=
-        flags>>1&1
-      var hasMoveX=
-        $3.hasMoveX=
-        flags&1
-      if(hasFont){
-        $3.fontId=
-          readUi16($bytes, $stream)
-      }
-      if(hasColor){
-
-        if(tagCode===33){
-          var $4=$3.color={}
-          $4.red=
-            readUi8($bytes, $stream)
-          $4.green=
-            readUi8($bytes, $stream)
-          $4.blue=
-            readUi8($bytes, $stream)
-          $4.alpha=
-            readUi8($bytes, $stream)
-        }
-        else{
-          var $5=$3.color={}
-          $5.red=
-            readUi8($bytes, $stream)
-          $5.green=
-            readUi8($bytes, $stream)
-          $5.blue=
-            readUi8($bytes, $stream)
-          $5.alpha=
-            255
-        }
-      }
-      if(hasMoveX){
-        $3.moveX=
-          readSi16($bytes, $stream)
-      }
-      if(hasMoveY){
-        $3.moveY=
-          readSi16($bytes, $stream)
-      }
-      if(hasFont){
-        $3.fontHeight=
-          readUi16($bytes, $stream)
-      }
-      if(!eot){
-
-        var tmp=
-          readUi8($bytes, $stream)
-        if(swfVersion>6){
-          var glyphCount=$3.glyphCount=
-            tmp
-        }
-        else{
-          var glyphCount=$3.glyphCount=
-            tmp&0x7f
-        }
-        var $6=
-          $3.entries=
-          []
-        var $7=glyphCount
-        while($7--){
-          var $8={}
-          $8.glyphIndex=
-            readUb($bytes, $stream, glyphBits)
-          $8.advance=
-            readSb($bytes, $stream, advanceBits)
-          $6.push($8)}
-      }
+      textRecord($bytes, $stream, $3, swfVersion, tagCode);
       $2.push($3)}
     while(!eot)
     return $
@@ -3442,6 +3357,100 @@ var tagHandler = (function () {
     }
     $58.adjustment=
       readUi16($bytes, $stream)
+  }
+
+  function textEntry($bytes, $stream, $, swfVersion, tagCode) {          
+    $.glyphIndex=
+      readUb($bytes, $stream, glyphBits)
+    $.advance=
+      readSb($bytes, $stream, advanceBits)
+  }
+
+  function textRecordSetup($bytes, $stream, $, swfVersion, tagCode) {          
+    var hasFont=
+      $.hasFont=
+      flags>>3&1
+    var hasColor=
+      $.hasColor=
+      flags>>2&1
+    var hasMoveY=
+      $.hasMoveY=
+      flags>>1&1
+    var hasMoveX=
+      $.hasMoveX=
+      flags&1
+    if(hasFont){
+      $.fontId=
+        readUi16($bytes, $stream)
+    }
+    if(hasColor){
+
+      if(tagCode===33){
+        var $4=$.color={}
+        $4.red=
+          readUi8($bytes, $stream)
+        $4.green=
+          readUi8($bytes, $stream)
+        $4.blue=
+          readUi8($bytes, $stream)
+        $4.alpha=
+          readUi8($bytes, $stream)
+      }
+      else{
+        var $5=$.color={}
+        $5.red=
+          readUi8($bytes, $stream)
+        $5.green=
+          readUi8($bytes, $stream)
+        $5.blue=
+          readUi8($bytes, $stream)
+        $5.alpha=
+          255
+      }
+    }
+    if(hasMoveX){
+      $.moveX=
+        readSi16($bytes, $stream)
+    }
+    if(hasMoveY){
+      $.moveY=
+        readSi16($bytes, $stream)
+    }
+    if(hasFont){
+      $.fontHeight=
+        readUi16($bytes, $stream)
+    }
+  }
+
+  function textRecord($bytes, $stream, $, swfVersion, tagCode) {          
+    align($bytes, $stream)
+    var flags=
+      readUb($bytes, $stream, 8)
+    var eot=
+      $.eot=
+      !flags
+    textRecordSetup($bytes, $stream, $, swfVersion, tagCode);
+    if(!eot){
+
+      var tmp=
+        readUi8($bytes, $stream)
+      if(swfVersion>6){
+        var glyphCount=$.glyphCount=
+          tmp
+      }
+      else{
+        var glyphCount=$.glyphCount=
+          tmp&0x7f
+      }
+      var $6=
+        $.entries=
+        []
+      var $7=glyphCount
+      while($7--){
+        var $8={}
+        textEntry($bytes, $stream, $8, swfVersion, tagCode);
+        $6.push($8)}
+    }
   }
 
 })();
