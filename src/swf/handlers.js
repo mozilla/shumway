@@ -1601,14 +1601,15 @@ var tagHandler = (function () {
     do{
       var $161={}
       var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes);
+                             fillBits, lineBits, hasStrokes, bits);
       var eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      $160.push($161)}
-    while(!eos)
+      var bits = temp.bits;
+      $160.push($161)
+    } while(!eos)
     var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
@@ -1616,14 +1617,15 @@ var tagHandler = (function () {
     do{
       var $163 = {};
       var temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes);
+                             fillBits, lineBits, hasStrokes, bits);
       var eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      $162.push($163)}
-    while(!eos)
+      var bits = temp.bits;
+      $162.push($163)
+    } while(!eos)
   }
 
   function shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
@@ -1634,39 +1636,43 @@ var tagHandler = (function () {
     do {
       var $161 = {};
       var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes);
+                             fillBits, lineBits, hasStrokes, bits);
       var eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
+      var bits = temp.bits;
       $160.push($161)
     } while(!eos)
   }
 
   function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph,
-                       fillBits, lineBits, hasStrokes) {
+                       fillBits, lineBits, hasStrokes, bits) {
     var type = $.type = readUb($bytes, $stream, 1);
     var flags = readUb($bytes, $stream, 5);
     var eos = $.eos = !(type || flags);
     if (type) {
-      shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags);
+      var temp = shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits);
+      var bits = temp.bits;
     } else {
       var temp = shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
-                                  fillBits, lineBits, hasStrokes);
+                                  fillBits, lineBits, hasStrokes, bits);
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
+      var bits = temp.bits;
     }
     return {
       type: type,
       flags: flags,
       eos: eos,
       fillBits: fillBits,
-      lineBits: lineBits
+      lineBits: lineBits,
+      bits: bits
     };
   }
 
-  function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags) {
+  function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits) {
     var isStraight=
       $.isStraight=
       flags>>4
@@ -1713,10 +1719,11 @@ var tagHandler = (function () {
       $.anchorDeltaY=
         readSb($bytes, $stream, bits)
     }
+    return {bits: bits};
   }
 
   function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
-                            fillBits, lineBits, hasStrokes) {
+                            fillBits, lineBits, hasStrokes, bits) {
     var $161 = $;
     if (tagCode>2) {
       var hasNewStyles = $161.hasNewStyles = flags >> 4;
@@ -1761,7 +1768,7 @@ var tagHandler = (function () {
       var lineBits = temp.lineBits;
       var fillBits = temp.fillBits;
     }
-    return {lineBits: lineBits, fillBits: fillBits};
+    return {lineBits: lineBits, fillBits: fillBits, bits: bits};
   }
 
   function styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
@@ -1834,7 +1841,6 @@ var tagHandler = (function () {
       fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
       break
     default:
-      throw new Error("Invalid fill style parsing SWF: tagCode=" + tagCode + " type=" + type);
     }
   };
 
@@ -2413,10 +2419,11 @@ var tagHandler = (function () {
       var isMorph = false; // FIXME Is this right?
       var hasStrokes = false;  // FIXME Is this right?
       var temp = shapeRecord($bytes, $stream, $5, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes);
+                             fillBits, lineBits, hasStrokes, bits);
       var eos = temp.eos;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
+      var bits = bits;
       $4.push($5)
     }
     while(!eos)
