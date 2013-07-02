@@ -71,14 +71,10 @@ var BitmapDataDefinition = (function () {
         this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
         this._ctx.clip();
       }
-      renderDisplayObject(source, this._ctx, matrix, colorTransform);
-      var children = source._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        if (child._visible) {
-          this.draw(child, child._currentTransform, child._cxform);
-        }
+      if (matrix) {
+        this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
+      (new RenderVisitor(source, this._ctx, true)).start();
       this._ctx.restore();
     },
     fillRect : function(rect, color) {

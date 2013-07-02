@@ -76,15 +76,12 @@ var SpriteDefinition = (function () {
     },
     _constructChildren: function () {
       var loader = this._loader;
-      var DisplayObjectClass = avm2.systemDomain.getClass("flash.display.DisplayObject");
-      var BitmapClass = avm2.systemDomain.getClass("flash.display.Bitmap");
-      var BitmapDataClass = avm2.systemDomain.getClass("flash.display.BitmapData");
 
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
         var symbolInfo = children[i];
 
-        if (!DisplayObjectClass.isInstanceOf(symbolInfo)) {
+        if (!flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
           // HACK application domain may have the symbol class --
           // checking which domain has a symbol class
           var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
@@ -115,10 +112,10 @@ var SpriteDefinition = (function () {
           // constructor is not nullary.
           symbolClass.instanceConstructor.call(instance);
 
-          if (BitmapDataClass.isInstanceOf(instance)) {
+          if (flash.display.BitmapData.class.isInstanceOf(instance)) {
             var bitmapData = instance;
-            instance = BitmapClass.createAsSymbol(props);
-            BitmapClass.instanceConstructor.call(instance, bitmapData);
+            instance = flash.display.Bitmap.class.createAsSymbol(props);
+            flash.display.Bitmap.class.instanceConstructor.call(instance, bitmapData);
           }
 
           assert(instance._control);
