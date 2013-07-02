@@ -1919,7 +1919,7 @@ var tagHandler = (function () {
       type===64||type===67
   }
 
-  function filterGlow($bytes, $stream, $, swfVersion, tagCode) {
+  function filterGlow($bytes, $stream, $, swfVersion, tagCode, type) {
     if(type===4||type===7){
       var count=
         readUi8($bytes, $stream)
@@ -1929,7 +1929,7 @@ var tagHandler = (function () {
         1
     }
     var $5=
-      $4.colors=
+      $.colors=
       []
     var $6=count
     while($6--){
@@ -1937,13 +1937,12 @@ var tagHandler = (function () {
       rgba($bytes, $stream, $7, swfVersion, tagCode);
       $5.push($7)}
     if(type===3){
-      var $8=$4.higlightColor={}
+      var $8=$.higlightColor={}
       rgba($bytes, $stream, $8, swfVersion, tagCode);
     }
     if(type===4||type===7){
-
       var $9=
-        $4.ratios=
+        $.ratios=
         []
       var $10=count
       while($10--){
@@ -1951,28 +1950,28 @@ var tagHandler = (function () {
           readUi8($bytes, $stream)
         )}
     }
-    $4.blurX=
+    $.blurX=
       readFixed($bytes, $stream)
-    $4.blurY=
+    $.blurY=
       readFixed($bytes, $stream)
     if(type!==2){
 
-      $4.angle=
+      $.angle=
         readFixed($bytes, $stream)
-      $4.distance=
+      $.distance=
         readFixed($bytes, $stream)
     }
-    $4.strength=
+    $.strength=
       readFixed8($bytes, $stream)
-    $4.innerShadow=
+    $.innerShadow=
       readUb($bytes, $stream, 1)
-    $4.knockout=
+    $.knockout=
       readUb($bytes, $stream, 1)
-    $4.compositeSource=
+    $.compositeSource=
       readUb($bytes, $stream, 1)
     if(type===3){
 
-      $4.onTop=
+      $.onTop=
         readUb($bytes, $stream, 1)
     }
     else{
@@ -1982,7 +1981,7 @@ var tagHandler = (function () {
     }
     if(type===4||type===7){
 
-      $4.passes=
+      $.passes=
         readUb($bytes, $stream, 4)
     }
     else{
@@ -1993,46 +1992,46 @@ var tagHandler = (function () {
   }
 
   function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
-    $4.blurX=
+    $.blurX=
       readFixed($bytes, $stream)
-    $4.blurY=
+    $.blurY=
       readFixed($bytes, $stream)
-    $4.passes=
+    $.passes=
       readUb($bytes, $stream, 5)
     var reserved=
       readUb($bytes, $stream, 3)
   }
 
   function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
-    $4.columns=
+    $.columns=
       readUi8($bytes, $stream)
-    $4.rows=
+    $.rows=
       readUi8($bytes, $stream)
-    $4.divisor=
+    $.divisor=
       readFloat($bytes, $stream)
-    $4.bias=
+    $.bias=
       readFloat($bytes, $stream)
     var $17=
-      $4.weights=
+      $.weights=
       []
     var $18=columns*rows
     while($18--){
       $17.push(
         readFloat($bytes, $stream)
       )}
-    var $19=$4.defaultColor={}
+    var $19=$.defaultColor={}
     rgba($bytes, $stream, $19, swfVersion, tagCode);
     var reserved=
       readUb($bytes, $stream, 6)
-    $4.clamp=
+    $.clamp=
       readUb($bytes, $stream, 1)
-    $4.preserveAlpha=
+    $.preserveAlpha=
       readUb($bytes, $stream, 1)
   }
 
   function filterColorMatrix($bytes, $stream, $, swfVersion, tagCode) {
     var $20=
-      $4.matrix=
+      $.matrix=
       []
     var $21=20
     while($21--){
@@ -2051,7 +2050,7 @@ var tagHandler = (function () {
     case 3:
     case 4:
     case 7:
-      filterGlow($bytes, $stream, $, swfVersion, tagCode);
+      filterGlow($bytes, $stream, $, swfVersion, tagCode, type);
       break
     case 1:
       filterBlur($bytes, $stream, $, swfVersion, tagCode);
@@ -2185,7 +2184,6 @@ var tagHandler = (function () {
         readUi16($bytes, $stream)
     }
     if(hasColor){
-
       if(tagCode===33){
         var $4=$.color={}
         $4.red=
@@ -2369,41 +2367,24 @@ var tagHandler = (function () {
     return {eob: eob}
   }
 
-
   function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {
-    var buttonCondSize=
-      readUi16($bytes, $stream)
-    var buttonConditions=
-      readUi16($bytes, $stream)
-    $.idleToOverDown=
-      buttonConditions>>7&1
-    $.outDownToIdle=
-      buttonConditions>>6&1
-    $.outDownToOverDown=
-      buttonConditions>>5&1
-    $.overDownToOutDown=
-      buttonConditions>>4&1
-    $.overDownToOverUp=
-      buttonConditions>>3&1
-    $.overUpToOverDown=
-      buttonConditions>>2&1
-    $.overUpToIdle=
-      buttonConditions>>1&1
-    $.idleToOverUp=
-      buttonConditions&1
-    $.mouseEventFlags=
-      buttonConditions&511
-    $.keyPress=
-      buttonConditions>>9&127
-    $.overDownToIdle=
-      buttonConditions>>8&1
-    if(!buttonCondSize){
-      $.actionsData=
-        readBinary($bytes, $stream, 0)
-    }
-    else{
-      $.actionsData=
-        readBinary($bytes, $stream, buttonCondSize - 4)
+    var buttonCondSize = readUi16($bytes, $stream);
+    var buttonConditions = readUi16($bytes, $stream);
+    $.idleToOverDown = buttonConditions >> 7 & 1;
+    $.outDownToIdle = buttonConditions >> 6 & 1;
+    $.outDownToOverDown = buttonConditions >> 5 & 1;
+    $.overDownToOutDown = buttonConditions >> 4 & 1;
+    $.overDownToOverUp = buttonConditions >> 3 & 1;
+    $.overUpToOverDown = buttonConditions >> 2 & 1;
+    $.overUpToIdle = buttonConditions >> 1 & 1;
+    $.idleToOverUp = buttonConditions & 1;
+    $.mouseEventFlags = buttonConditions & 511;
+    $.keyPress = buttonConditions >> 9 & 127;
+    $.overDownToIdle = buttonConditions >> 8& 1;
+    if (! buttonCondSize) {
+      $.actionsData = readBinary($bytes, $stream, 0);
+    } else {
+      $.actionsData = readBinary($bytes, $stream, buttonCondSize - 4);
     }
   }
 
