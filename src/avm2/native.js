@@ -1717,6 +1717,8 @@ var natives = (function () {
         case "string":
         case "boolean":
           return "Object";
+        case "function":
+          return "Function";
         case "object":
           if (value instanceof Date) {
             return "Object";
