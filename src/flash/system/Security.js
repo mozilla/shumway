@@ -35,7 +35,7 @@ var SecurityDefinition = (function () {
           },
           allowInsecureDomain: function allowInsecureDomain() {
             // (void) -> void
-            notImplemented("Security.allowInsecureDomain");
+            somewhatImplemented("Security.allowInsecureDomain");
           },
           loadPolicyFile: function loadPolicyFile(url) {
             // (url:String) -> void

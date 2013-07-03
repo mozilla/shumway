@@ -26,6 +26,7 @@ var TextFieldDefinition = (function () {
       this._type = 'dynamic';
       this._textHeight = 0;
       this._textWidth = 0;
+      this._text = '';
 
       var bbox = this._bbox;
       if (bbox) {
@@ -36,7 +37,7 @@ var TextFieldDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this.draw = s.draw || this.draw;
-        this.text = s.text || '';
+        this._text = s.text || '';
       }
     },
 

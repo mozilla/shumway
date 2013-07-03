@@ -37,6 +37,7 @@ var StageDefinition = (function () {
       this._colorCorrection = "default";
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
+      this._stageFocusRect = true;
     },
     __glue__: {
       native: {
@@ -145,11 +146,10 @@ var StageDefinition = (function () {
           },
           stageFocusRect: {
             get: function stageFocusRect() { // (void) -> Boolean
-              notImplemented("Stage.stageFocusRect");
               return this._stageFocusRect;
             },
             set: function stageFocusRect(on) { // (on:Boolean) -> void
-              notImplemented("Stage.stageFocusRect");
+              somewhatImplemented("Stage.stageFocusRect");
               this._stageFocusRect = on;
             }
           },

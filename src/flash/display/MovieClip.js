@@ -63,8 +63,13 @@ var MovieClipDefinition = (function () {
         }
       }
 
+      this._needAdvance = true;
       this._onConstructFrame = function () {
         this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+        this._needAdvance = false;
+        if (!this._isPlaying) {
+          this._removeEventListener('constructFrame', this._onConstructFrame);
+        }
       }.bind(this);
       this._addEventListener('constructFrame', this._onConstructFrame);
     },
@@ -407,7 +412,9 @@ var MovieClipDefinition = (function () {
     play: function () {
       if (!this._isPlaying) {
         this._isPlaying = true;
-        this._addEventListener('constructFrame', this._onConstructFrame);
+        if (!this._needAdvance) {
+          this._addEventListener('constructFrame', this._onConstructFrame);
+        }
       }
     },
     prevFrame: function () {
@@ -420,7 +427,9 @@ var MovieClipDefinition = (function () {
     stop: function () {
       if (this._isPlaying) {
         this._isPlaying = false;
-        this._removeEventListener('constructFrame', this._onConstructFrame);
+        if (!this._needAdvance) {
+          this._removeEventListener('constructFrame', this._onConstructFrame);
+        }
       }
     }
   };
