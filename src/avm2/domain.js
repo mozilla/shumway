@@ -337,11 +337,13 @@ var Domain = (function () {
     },
 
     broadcastMessage: function (message, origin) {
+      Timer.start("broadcast: " + message._type);
       this.onMessage.notify({
         data: message,
         origin: origin,
         source: this
       });
+      Timer.stop();
     },
 
     _getScriptObject: function () {
