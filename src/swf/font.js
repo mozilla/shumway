@@ -225,6 +225,16 @@ function defineFont(tag, dictionary) {
           x += cx + dx;
           y += cy + dy;
         }
+
+        if (x < xMin)
+          xMin = x;
+        if (x > xMax)
+          xMax = x;
+        if (y < yMin)
+          yMin = y;
+        if (y > yMax)
+          yMax = y;
+        ++endPoint;
       } else {
         if (record.eos)
           break;
@@ -244,17 +254,18 @@ function defineFont(tag, dictionary) {
           y = moveY;
           if (endPoint > maxPoints)
             maxPoints = endPoint;
+
+          if (x < xMin)
+            xMin = x;
+          if (x > xMax)
+            xMax = x;
+          if (y < yMin)
+            yMin = y;
+          if (y > yMax)
+            yMax = y;
+          ++endPoint;
         }
       }
-      if (x < xMin)
-        xMin = x;
-      if (x > xMax)
-        xMax = x;
-      if (y < yMin)
-        yMin = y;
-      if (y > yMax)
-        yMax = y;
-      ++endPoint;
     }
     endPtsOfContours += toString16((endPoint || 1) - 1);
     if (!j) {
