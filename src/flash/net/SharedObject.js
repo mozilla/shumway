@@ -23,11 +23,33 @@ var SharedObjectDefinition = (function () {
 
   var sharedObjects = createEmptyObject();
 
+  function invokeWithArgsArray(index, args) {
+    var simulated = false, result;
+    switch (index) {
+    case 4: // get size()
+      result = JSON.stringify(this._data).length;
+      simulated = true;
+      break;
+    case 6: // clear
+      this._data = {};
+      simulated = true;
+      break;
+    case 3: // close
+    case 2: // flush
+      simulated = true;
+      break;
+    }
+    (simulated ? somewhatImplemented : notImplemented)(
+      "SharedObject.invoke (" + index + ")");
+    return result;
+  }
+
   return {
     // ()
     __class__: "flash.net.SharedObject",
     initialize: function () {
       this._data = {};
+      this._objectEncoding = _defaultObjectEncoding;
     },
     __glue__: {
       native: {
@@ -59,10 +81,11 @@ var SharedObjectDefinition = (function () {
             notImplemented("SharedObject.setDirty");
           },
           invoke: function invoke(index) { // (index:uint) -> any
-            notImplemented("SharedObject.invoke");
+            return invokeWithArgsArray.call(this, index,
+              Array.prototype.slice.call(arguments, 1));
           },
           invokeWithArgsArray: function invokeWithArgsArray(index, args) { // (index:uint, args:Array) -> any
-            notImplemented("SharedObject.invokeWithArgsArray");
+            return invokeWithArgsArray.call(this, index, args);
           },
           data: {
             get: function data() { // (void) -> Object
@@ -71,11 +94,9 @@ var SharedObjectDefinition = (function () {
           },
           objectEncoding: {
             get: function objectEncoding() { // (void) -> uint
-              notImplemented("SharedObject.objectEncoding");
               return this._objectEncoding;
             },
             set: function objectEncoding(version) { // (version:uint) -> void
-              notImplemented("SharedObject.objectEncoding");
               this._objectEncoding = version;
             }
           },

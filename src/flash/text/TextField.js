@@ -27,6 +27,7 @@ var TextFieldDefinition = (function () {
       this._textHeight = 0;
       this._textWidth = 0;
       this._text = '';
+      this._embedFonts = false;
 
       var bbox = this._bbox;
       if (bbox) {
@@ -214,6 +215,26 @@ var TextFieldDefinition = (function () {
           set: function borderColor(value) { // (value:String) -> void
             somewhatImplemented("TextField.type");
             this._type = value;
+          }
+        },
+        embedFonts: {
+          get: function embedFonts() { // (void) -> Boolean
+            return this._embedFonts;
+          },
+          set: function embedFonts(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.embedFonts");
+            this._embedFonts = value;
+          }
+        },
+        numLines: {
+          get: function numLines() { // (void) -> uint
+            somewhatImplemented("TextField.numLines");
+            return 1;
+          }
+        },
+        length: {
+          get: function length() { // (void) -> uint
+            return this._text.length;
           }
         }
       }
