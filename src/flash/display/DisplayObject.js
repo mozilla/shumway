@@ -37,7 +37,7 @@ var DisplayObjectDefinition = (function () {
 
   var nextInstanceId = 1;
   function generateName() {
-    return 'instance' + nextInstanceId;
+    return 'instance' + (nextInstanceId++);
   }
 
   var def = {
