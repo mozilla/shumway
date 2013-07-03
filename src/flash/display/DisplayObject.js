@@ -35,6 +35,11 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SHADER     = 'shader';
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
+  var nextInstanceId = 1;
+  function generateName() {
+    return 'instance' + nextInstanceId;
+  }
+
   var def = {
     __class__: 'flash.display.DisplayObject',
 
@@ -393,7 +398,7 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get name() {
-      return this._name;
+      return this._name || (this._name = generateName());
     },
     set name(val) {
       this._name = val;

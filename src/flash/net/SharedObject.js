@@ -34,8 +34,11 @@ var SharedObjectDefinition = (function () {
       this._data = {};
       simulated = true;
       break;
-    case 3: // close
     case 2: // flush
+      simulated = true;
+      result = true;
+      break;
+    case 3: // close
       simulated = true;
       break;
     }
