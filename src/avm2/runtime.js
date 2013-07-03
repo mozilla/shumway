@@ -333,7 +333,9 @@ function coerce(value, type) {
  * of "null" or "undefined".
  */
 function coerceString(x) {
-  if (x === null || x === undefined) {
+  if (typeof x === "string") {
+    return x;
+  } else if (x === null || x === undefined) {
     return null;
   }
   return String(x);
