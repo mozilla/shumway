@@ -31,8 +31,8 @@ var TextFieldDefinition = (function () {
    */
   function parseHtml(val) {
     var xml = xmlParser.parseFromString(val).children[0];
-    var content = {ranges : [], text : ''};
-    convertXML(xml, content);
+    var content = {text : '', tree : null};
+    content.tree = convertXML(xml, content);
     return content;
   }
 
@@ -43,27 +43,27 @@ var TextFieldDefinition = (function () {
     {
       return;
     }
-    var range = {start : content.text.length};
-    content.ranges.push(range);
+    var node = {type : '', text : '', format : null, children : null};
 
     if (xml.kind === 'text') {
       var text = xml.value;
-      range.type = 'text';
-      range.text = text;
+      node.type = 'text';
+      node.text = text;
       content.text += text;
-      range.end = content.text.length;
-      return;
+      return node;
     }
 
-    range.type = xml.name.localName;
-    range.attributes = extractAttributes(xml);
+    node.type = xml.name.localName;
+    node.format = extractAttributes(xml);
+    node.children = [];
 
     var children = xml.children;
     var childCount = children.length;
     for (var i = 0; i < childCount; i++) {
-      convertXML(children[i], content);
+      node.children.push(convertXML(children[i], content));
     }
-    range.end = content.text.length;
+
+    return node;
   }
 
   /**
@@ -85,40 +85,30 @@ var TextFieldDefinition = (function () {
     return attributesMap;
   }
 
-  function renderRanges(ranges) {
-    var output = '';
-    var length = 0;
-    var rangeStack = [];
-    var currentRange = null;
-
-    for (var i = 0; i < ranges.length; i++) {
-      var range = ranges[i];
-      while (currentRange && currentRange.end <= range.start) {
-        output += renderRangeEnd(currentRange);
-        rangeStack.pop();
-        currentRange = rangeStack[rangeStack.length - 1];
-      }
-      assert(range.start === length);
-      if (range.type === 'text') {
-        output += range.text;
-        length = range.end;
-        continue;
-      }
-      output += renderRangeStart(range);
-      currentRange = range;
-      rangeStack.push(range);
-    }
-    while (rangeStack.length) {
-      output += renderRangeEnd(rangeStack.pop());
-    }
-    console.log(output);
-    return output;
+  function renderContent(content, ctx) {
+    return renderNode(content.tree, ctx);
   }
-  function renderRangeStart(range) {
-    var attributes = range.attributes;
+
+  function renderNode(node, ctx) {
+    if (node.type === 'text') {
+      return node.text;
+    }
+
+    var output = renderNodeStart(node, ctx);
+    var children = node.children;
+
+    for (var i = 0; i < children.length; i++) {
+      var childNode = children[i];
+      output += renderNode(childNode, ctx);
+    }
+    return output + renderNodeEnd(node, ctx);
+  }
+
+  function renderNodeStart(node, ctx) {
+    var format = node.format;
     var output;
     var styles;
-    switch (range.type) {
+    switch (node.type) {
       case 'br': return '<br />';
       case 'b': return '<strong>';
       case 'i': return '<i>';
@@ -127,22 +117,22 @@ var TextFieldDefinition = (function () {
       case 'u': return '<span style="text-decoration: underline;">';
       case 'a': {
         output = '<a';
-        if ('href' in attributes) {
-          output += ' href="' + attributes.href + '"';
+        if ('href' in format) {
+          output += ' href="' + format.href + '"';
         }
-        if ('target' in attributes) {
-          output += ' target="' + attributes.href + '"';
+        if ('target' in format) {
+          output += ' target="' + format.href + '"';
         }
         break;
       }
       case 'font': {
         output = '<span';
         styles = '';
-        if ('color' in attributes) {
-          styles += 'color:' + attributes.color + ';';
+        if ('color' in format) {
+          styles += 'color:' + format.color + ';';
         }
-        if ('face' in attributes) {
-          var fontFace = attributes.face;
+        if ('face' in format) {
+          var fontFace = format.face;
           if (fontFace === '_sans') {
             fontFace = 'sans-serif';
           } else if (fontFace === '_serif') {
@@ -151,28 +141,28 @@ var TextFieldDefinition = (function () {
           //TODO: adapt to embedded font names
           styles += 'font-family:' + fontFace + ';';
         }
-        if ('size' in attributes) {
+        if ('size' in format) {
           //TODO: verify that px is the right unit
-          styles += 'font-size:' + attributes.size + 'px;';
+          styles += 'font-size:' + format.size + 'px;';
         }
         break;
       }
       case 'img': {
-        output = '<img src="' + (attributes.src || '') + '"';
+        output = '<img src="' + (format.src || '') + '"';
         styles = '';
-        if ('width' in attributes) {
-          styles += 'width:' + attributes.width + 'px;';
+        if ('width' in format) {
+          styles += 'width:' + format.width + 'px;';
         }
-        if ('height' in attributes) {
-          styles += 'height:' + attributes.height + 'px;';
+        if ('height' in format) {
+          styles += 'height:' + format.height + 'px;';
         }
-        if ('hspace' in attributes && 'vspace' in attributes) {
-          styles += 'margin:' + attributes.vspace + 'px ' +
-                    attributes.hspace + 'px;';
-        } else if ('hspace' in attributes) {
-          styles += 'margin:0 ' + attributes.hspace + 'px;';
-        } else if ('vspace' in attributes) {
-          styles += 'margin:' + attributes.hspace + 'px 0;';
+        if ('hspace' in format && 'vspace' in format) {
+          styles += 'margin:' + format.vspace + 'px ' +
+                    format.hspace + 'px;';
+        } else if ('hspace' in format) {
+          styles += 'margin:0 ' + format.hspace + 'px;';
+        } else if ('vspace' in format) {
+          styles += 'margin:' + format.hspace + 'px 0;';
         }
         // TODO: support `align`, `id` and `checkPolicyFile`
         output += ' /';
@@ -181,39 +171,39 @@ var TextFieldDefinition = (function () {
       case 'p': {
         output = '<p';
         styles = '';
-        if ('class' in attributes) {
-          styles += ' class="' + attributes['class'] + '"';
+        if ('class' in format) {
+          styles += ' class="' + format['class'] + '"';
         }
-        if ('align' in attributes) {
-          styles += 'text-align:' + attributes.align;
+        if ('align' in format) {
+          styles += 'text-align:' + format.align;
         }
         break;
       }
       case 'span': {
         output = '<span';
-        if ('class' in attributes) {
-          output += ' class="' + attributes['class'] + '"';
+        if ('class' in format) {
+          output += ' class="' + format['class'] + '"';
         }
         break;
       }
       case 'textformat': {
         // TODO: we probably need to merge textformat nodes with <p> nodes
         output = '<span';
-        var styles = '';
+        styles = '';
         var marginLeft = 0;
-        if ('blockIdent' in attributes) {
-          marginLeft += parseInt(attributes.blockIndent);
+        if ('blockIdent' in format) {
+          marginLeft += parseInt(format.blockIndent);
         }
-        if ('leftMargin' in attributes) {
-          marginLeft += parseInt(attributes.leftMargin);
+        if ('leftMargin' in format) {
+          marginLeft += parseInt(format.leftMargin);
         }
         if (marginLeft !== 0) {
           styles += 'margin-left:' + marginLeft + 'px"';
         }
-        if ('indent' in attributes) {
-          styles += 'text-indent:' + attributes.indent + 'px"';
+        if ('indent' in format) {
+          styles += 'text-indent:' + format.indent + 'px"';
         }
-        if ('rightMargin' in attributes) {
+        if ('rightMargin' in format) {
           styles += 'margin-left:' + marginLeft + 'px"';
         }
         // TODO: support leading
@@ -230,14 +220,15 @@ var TextFieldDefinition = (function () {
     }
     return output + '>';
   }
-  function renderRangeEnd(range) {
-    switch (range.type) {
+
+  function renderNodeEnd(node, ctx) {
+    switch (node.type) {
       case 'b': return '</strong>';
       case 'i':
       case 'li':
       case 'a':
       case 'p': {
-        return '</' + range.type + '>';
+        return '</' + node.type + '>';
       }
       default: { // <u>, <font>, <span>, <textformat>, and all others
         return '</span>';
@@ -267,7 +258,7 @@ var TextFieldDefinition = (function () {
       }
 
       var tag = s.tag;
-      var bbox = tag.bbox;
+      var bbox = this._bbox = tag.bbox;
       this._elementWidth = (bbox.right - bbox.left);
       this._elementHeight = (bbox.bottom - bbox.top);
       //TODO: we might need to move things down and right by 2px, or add a 2px margin
@@ -298,14 +289,13 @@ var TextFieldDefinition = (function () {
     },
 
     draw: function (ctx) {
-      var bbox = this._bbox;
       var content = this._contentChanged === false ? this._renderedContent :
           "<svg xmlns='http://www.w3.org/2000/svg' " +
           "width='" + this._elementWidth +
           "' height='" + this._elementHeight + "'>" +
           "<foreignObject width='100%' height='100%'>" +
           "<div xmlns='http://www.w3.org/1999/xhtml' style='" +
-          this.boundsStyle + "'>" + renderRanges(this._content.ranges) +
+          this.boundsStyle + "'>" + renderContent(this._content) +
           '</div></foreignObject></svg>';
 
       this._renderedContent = content;
@@ -330,8 +320,8 @@ var TextFieldDefinition = (function () {
         return;
       }
       //TODO: add default markup.
-      var range = {type : 'text', text: val, start : 0, end : val.length};
-      this._content = {ranges : [range], text : val};
+      var node = {type : 'text', text: val, format : {}, children : null};
+      this._content = {tree : [node], text : val};
       this._htmlText = val;
       this._contentChanged = true;
       this._markAsDirty();
