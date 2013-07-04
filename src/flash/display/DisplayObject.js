@@ -258,7 +258,9 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _markAsDirty: function() {
-      this._dirty = true;
+      if (!this._dirtyArea)
+        this._dirtyArea = this.getBounds();
+      this._bounds = null;
     },
     _removedFromStage: function (e) {
       var children = this._children;
