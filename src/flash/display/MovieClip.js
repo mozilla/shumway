@@ -63,7 +63,12 @@ var MovieClipDefinition = (function () {
         }
       }
 
+      if (!this._stage) {
+        this._currentFrame = 1;
+      }
+
       this._needAdvance = true;
+
       this._onConstructFrame = function () {
         this._gotoFrame(this._currentFrame % this._totalFrames + 1);
         this._needAdvance = false;
@@ -389,7 +394,7 @@ var MovieClipDefinition = (function () {
       this.stop();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
-      } else if (this._stage) {
+      } else {
         this._gotoFrame(frame);
       }
     },
