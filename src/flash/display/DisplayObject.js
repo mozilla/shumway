@@ -78,6 +78,8 @@ var DisplayObjectDefinition = (function () {
       this._destroyed = false;
       this._maskedObject = null;
       this._scrollRect = null;
+      this._width = null;
+      this._height = null;
 
       var s = this.symbol;
       if (s) {
@@ -355,6 +357,11 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
+      if (this._height !== null) {
+        this._height = val;
+        return;
+      }
+
       var rotation = this._rotation / 180 * Math.PI;
       var u = Math.abs(Math.cos(rotation));
       var v = Math.abs(Math.sin(rotation));
@@ -513,6 +520,11 @@ var DisplayObjectDefinition = (function () {
     },
     set width(val) {
       if (val < 0) {
+        return;
+      }
+
+      if (this._width !== null) {
+        this._width = val;
         return;
       }
 
