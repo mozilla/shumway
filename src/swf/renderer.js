@@ -134,9 +134,6 @@ RenderVisitor.prototype = {
     this.depth--;
     if (this.depth === 0) {
       this.ctx.restore();
-
-        ctx.restore();
-      }
     }
   },
   visit: function (child, isContainer, visitContainer) {
