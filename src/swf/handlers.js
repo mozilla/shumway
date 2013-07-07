@@ -22,74 +22,780 @@ function trace (str) {
   }
 }
 
-var tagHandler = (function () {
-  return {
-    /* End */                            0: undefined,
-    /* ShowFrame */                      1: undefined,
-    /* DefineShape */                    2: defineShape,
-    /* PlaceObject */                    4: placeObject,
-    /* RemoveObject */                   5: removeObject,
-    /* DefineBits */                     6: defineImage,
-    /* DefineButton */                   7: defineButton,
-    /* JPEGTables */                     8: defineJPEGTables,
-    /* SetBackgroundColor */             9: setBackgroundColor,
-    /* DefineFont */                    10: defineFont,
-    /* DefineText */                    11: defineLabel,
-    /* DoAction */                      12: doAction,
-    /* DefineFontInfo */                13: undefined,
-    /* DefineSound */                   14: defineSound,
-    /* StartSound */                    15: startSound,
-    /* DefineButtonSound */             17: undefined,
-    /* SoundStreamHead */               18: soundStreamHead,
-    /* SoundStreamBlock */              19: soundStreamBlock,
-    /* DefineBitsLossless */            20: defineBitmap,
-    /* DefineBitsJPEG2 */               21: defineImage,
-    /* DefineShape2 */                  22: defineShape,
-    /* DefineButtonCxform */            23: undefined,
-    /* Protect */                       24: undefined,
-    /* PlaceObject2 */                  26: placeObject,
-    /* RemoveObject2 */                 28: removeObject,
-    /* DefineShape3 */                  32: defineShape,
-    /* DefineText2 */                   33: defineLabel,
-    /* DefineButton2 */                 34: defineButton,
-    /* DefineBitsJPEG3 */               35: defineImage,
-    /* DefineBitsLossless2 */           36: defineBitmap,
-    /* DefineEditText */                37: defineText,
-    /* DefineSprite */                  39: undefined,
-    /* FrameLabel */                    43: frameLabel,
-    /* SoundStreamHead2 */              45: soundStreamHead,
-    /* DefineMorphShape */              46: defineShape,
-    /* DefineFont2 */                   48: defineFont2,
-    /* ExportAssets */                  56: undefined,
-    /* ImportAssets */                  57: undefined,
-    /* EnableDebugger */                58: undefined,
-    /* DoInitAction */                  59: doAction,
-    /* DefineVideoStream */             60: undefined,
-    /* VideoFrame */                    61: undefined,
-    /* DefineFontInfo2 */               62: undefined,
-    /* EnableDebugger2 */               64: undefined,
-    /* ScriptLimits */                  65: undefined,
-    /* SetTabIndex */                   66: undefined,
-    /* FileAttributes */                69: fileAttributes,
-    /* PlaceObject3 */                  70: placeObject,
-    /* ImportAssets2 */                 71: undefined,
-    /* DoABC (undoc) */                 72: doABC,
-    /* DefineFontAlignZones */          73: undefined,
-    /* CSMTextSettings */               74: undefined,
-    /* DefineFont3 */                   75: defineFont2,
-    /* SymbolClass */                   76: symbolClass,
-    /* Metadata */                      77: undefined,
-    /* DefineScalingGrid */             78: defineScalingGrid,
-    /* DoABC */                         82: doABC,
-    /* DefineShape4 */                  83: defineShape,
-    /* DefineMorphShape2 */             84: defineShape,
-    /* DefineSceneAndFrameLabelData */  86: defineScene,
-    /* DefineBinaryData */              87: undefined,
-    /* DefineFontName */                88: undefined,
-    /* StartSound2 */                   89: startSound,
-    /* DefineBitsJPEG4 */               90: defineImage,
-    /* DefineFont4 */                   91: undefined
+
+
+var tagHandler = (function (global) {
+
+  var Asm = function Asm(stdlib, imports, heap) {
+    "use asm";
+
+    var RED = 1;
+    var GREEN = 2;
+    var BLUE = 3;
+    var ALPHA = 4;
+    var WIDTH = 5;
+    var WIDTH_MORPH = 6;
+    var START_CAP_STYLE = 7;
+    var JOIN_STYLE = 8;
+    var HAS_FILL = 9;
+    var NO_HSCALE = 10;
+    var NO_VSCALE = 11;
+    var PIXEL_HINTING = 12;
+    var NO_CLOSE = 13;
+    var END_CAP_STYLE = 14;
+    var MITER_LIMIT_FACTOR = 15;
+    var COLOR = 16;
+    var COLOR_MORPH = 17;
+    var MATRIX = 18;
+    var SYMBOL_ID = 19;
+    var DEPTH = 20;
+
+    var readU8 = imports.readU8;
+    var readU16 = imports.readU16;
+    var readUb = imports.readUb;
+    var readFixed8 = imports.readFixed8;
+
+    // BEGIN
+
+    var pos = 0;
+    var bytesU8 = new stdlib.Uint8Array(heap);
+    var bytesD32 = new stdlib.Float32Array(heap);
+    var bytesD64 = new stdlib.Float64Array(heap);
+
+    var imul = stdlib.Math.imul;
+    var trace = imports.trace;
+    var pushNull = imports.pushNull;
+    var pushTrue = imports.pushTrue;
+    var pushFalse = imports.pushFalse;
+    var pushInt = imports.pushInt;
+    var pushFloat32 = imports.pushFloat32;
+    var pushFloat64 = imports.pushFloat64;
+    var pushString = imports.pushString;
+    var newObject = imports.newObject;
+    var newArray = imports.newArray;
+
+    // Markers for UBJSON types
+    var $o = 111;
+    var $O = 79;
+    var $a = 97;
+    var $A = 65;
+    var $B = 66;
+    var $i = 105;
+    var $I = 73;
+    var $L = 76;
+    var $d = 100;
+    var $D = 68;
+    var $s = 115;
+    var $S = 83;
+    var $Z = 90;
+    var $T = 84;
+    var $F = 70;
+
+    var $_ = 95;   // place holder byte
+
+    // Flag bits
+    var BIG = 0x00000001;
+
+    // Return the current position in the ArrayBuffer.
+    function getPos() {
+      return pos | 0;
+    }
+
+    function setPos(p) {
+      p = p | 0;
+      pos = p;
+    }
+
+    // BEGIN Builder
+
+    // Write a null value.
+    function writeNull() {
+      bytesU8[pos] = $Z;
+      pos = pos + 1 | 0;
+    }
+
+    // Write a true value.
+    function writeTrue() {
+      bytesU8[pos] = $T;
+      pos = pos + 1 | 0;
+    }
+
+    // Write a false value.
+    function writeFalse() {
+      bytesU8[pos] = $F;
+      pos = pos + 1 | 0;
+    }
+
+    // Write a byte (int8) value.
+    function writeByte(val) {
+      val = val | 0;
+      bytesU8[pos] = $B;
+      bytesU8[pos + 1 | 0] = val;
+      pos = pos + 2 | 0;
+    }
+
+    // Write an int16 value.
+    function writeI16(val) {
+      val = val | 0;
+      bytesU8[pos] = $i;
+      bytesU8[pos + 1 | 0] = val >> 8 & 0xFF;
+      bytesU8[pos + 2 | 0] = val & 0xFF;
+      pos = pos + 3 | 0;
+    }
+
+    // Write an int32 value.
+    function writeI32(val) {
+      val = val | 0;
+      bytesU8[pos] = $I;
+      bytesU8[pos + 1 | 0] = val >> 24 & 0xFF;
+      bytesU8[pos + 2 | 0] = val >> 16 & 0xFF;
+      bytesU8[pos + 3 | 0] = val >> 8 & 0xFF;
+      bytesU8[pos + 4 | 0] = val & 0xFF;
+      pos = pos + 5 | 0;
+    }
+
+    // WARNING writeD32() and writeD64() write bytes out with the reverse
+    // endian-ness of the host computer. The order is reversed because UBJSON
+    // demands big endian-ness and most computers use litte endian as their
+    // native encoding. Either way the dependency of this implementation on the
+    // native endian-ness of the host computer creates an incompatibility with
+    // the UBJSON spec. This bug will only manifest itself when reading and
+    // writing UBJSON values from a computer or UBJSON implementation with a
+    // different endian-ness. However, these are not use cases that are in scope
+    // for the current implementation.
+
+    // Write an float32 value.
+    function writeD32(val) {
+      val = +val;
+      var scratchPos = 0;
+      scratchPos = imul(pos + 1, 4) | 0;
+      bytesD32[scratchPos >> 2] = val;  // Write out float32 to get bytes.
+      bytesU8[pos] = $d;
+      // Copy bytes in reverse order to produce big endian on Intel hardward.
+      bytesU8[pos + 1 | 0] = bytesU8[scratchPos + 3 | 0];
+      bytesU8[pos + 2 | 0] = bytesU8[scratchPos + 2 | 0];
+      bytesU8[pos + 3 | 0] = bytesU8[scratchPos + 1 | 0];
+      bytesU8[pos + 4 | 0] = bytesU8[scratchPos | 0];
+      pos = pos + 5 | 0;
+      //trace("pos="+pos);
+    }
+
+    // Write an float64 value.
+    function writeD64(val) {
+      val = +val;
+      var scratchPos = 0;
+      scratchPos = imul(pos + 1, 8) | 0;
+      bytesD64[scratchPos >> 3] = val;  // Write out float64 to get bytes.
+      bytesU8[pos] = $D;
+      // Copy bytes in reverse order to produce big endian on Intel hardward.
+      bytesU8[pos + 1 | 0] = bytesU8[scratchPos + 7 | 0];
+      bytesU8[pos + 2 | 0] = bytesU8[scratchPos + 6 | 0];
+      bytesU8[pos + 3 | 0] = bytesU8[scratchPos + 5 | 0];
+      bytesU8[pos + 4 | 0] = bytesU8[scratchPos + 4 | 0];
+      bytesU8[pos + 5 | 0] = bytesU8[scratchPos + 3 | 0];
+      bytesU8[pos + 6 | 0] = bytesU8[scratchPos + 2 | 0];
+      bytesU8[pos + 7 | 0] = bytesU8[scratchPos + 1 | 0];
+      bytesU8[pos + 8 | 0] = bytesU8[scratchPos | 0];
+      pos = pos + 9 | 0;
+      //trace("pos="+pos);
+    }
+
+    // Start an object. Allocate space for a new object. (flags & BIG) means
+    // more than 255 properties.
+    function startObject(flags) {
+      flags = flags | 0;
+      var startPos = 0;
+      startPos = pos;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[pos] = $o;
+        bytesU8[pos + 1 | 0] = $_;
+        pos = pos + 2 | 0;
+      } else {
+        bytesU8[pos] = $O;
+        bytesU8[pos + 1 | 0] = $_;
+        bytesU8[pos + 2 | 0] = $_;
+        bytesU8[pos + 3 | 0] = $_;
+        bytesU8[pos + 4 | 0] = $_;
+        pos = pos + 5 | 0;
+      }
+      return startPos | 0;
+    }
+
+    // Finish an object. Offset is position before calling startObject().
+    function finishObject(offset, count, flags) {
+      offset = offset | 0;
+      count = count | 0;
+      flags = flags | 0;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[offset + 1 | 0] = count;
+      } else {
+        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
+        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
+        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
+        bytesU8[offset + 4 | 0] = count & 0xFF;
+      }
+    }
+
+    // Start an array. Allocate space for a new array. (flags & BIG) means
+    // more than 255 elements.
+    function startArray(flags) {
+      flags = flags | 0;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[pos] = $a;
+        bytesU8[pos + 1 | 0] = $_;
+        pos = pos + 2 | 0;
+      } else {
+        bytesU8[pos] = $A;
+        bytesU8[pos + 1 | 0] = $_;
+        bytesU8[pos + 2 | 0] = $_;
+        bytesU8[pos + 3 | 0] = $_;
+        bytesU8[pos + 4 | 0] = $_;
+        pos = pos + 5 | 0;
+      }
+    }
+
+    // Finish an array. Offset is position before calling startArray().
+    function finishArray(offset, count, flags) {
+      offset = offset | 0;
+      count = count | 0;
+      flags = flags | 0;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[offset + 1 | 0] = count;
+      } else {
+        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
+        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
+        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
+        bytesU8[offset + 4 | 0] = count & 0xFF;
+      }
+    }
+
+    // Start a string value. Allocate space for a new string. (flags & BIG)
+    // means contains more 255 bytes. Call writeStringChar() to add characters,
+    // and finishString() to patch the byte count. Notice that characters are
+    // encoded as UTF8 so they may consist of more than one byte.
+    function startString(flags) {
+      flags = flags | 0;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[pos] = $s;
+        bytesU8[pos + 1 | 0] = $_;
+        pos = pos + 2 | 0;
+      } else {
+        bytesU8[pos] = $S;
+        bytesU8[pos + 1 | 0] = $_;
+        bytesU8[pos + 2 | 0] = $_;
+        bytesU8[pos + 3 | 0] = $_;
+        bytesU8[pos + 4 | 0] = $_;
+        pos = pos + 5 | 0;
+      }
+    }
+
+    // Finish a string value. Patch its byte count.
+    function finishString(offset, count, flags) {
+      offset = offset | 0;
+      count = count | 0;
+      flags = flags | 0;
+      if ((flags & BIG | 0) == 0) {
+        bytesU8[offset + 1 | 0] = count;
+      } else {
+        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
+        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
+        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
+        bytesU8[offset + 4 | 0] = count & 0xFF;
+      }
+    }
+
+    // Write a UTF8 character into a string value.
+    function writeStringChar(val) {
+      val = val | 0;
+      // FIXME decode multibyte characters.
+      bytesU8[pos] = val;
+      pos = pos + 1 | 0;
+    }
+    // END Builder
+
+    // BEGIN Decoder
+    // Construct a UBJSON value from a sequence of bytes.
+    function decode(count) {
+      count = count | 0;
+      var marker = 0;
+      var childCount = 0;
+      var i = 0;
+      while (count) {
+        marker = readI8() | 0;
+        //trace("decode() marker=" + marker);
+        switch (marker | 0) {
+        case 90:  // $Z
+          pushNull();
+          break;
+        case 84:  // $T
+          pushTrue();
+          break;
+        case 70:  // $F
+          pushFalse();
+          break;
+        case 66:  // $B
+          pushInt(readI8() | 0);
+          break;
+        case 105: // $i
+          pushInt(readI16() | 0);
+          break;
+        case 73:  // $I
+          pushInt(readI32() | 0);
+          break;
+        case 100: // $d
+          pushFloat32();
+          break;
+        case 68:  // $D
+          pushFloat64();
+          break;
+        case 115: // $s
+          pushString(readI8() | 0);
+          break;
+        case 83:  // $S
+          pushString(readI32() | 0);
+          break;
+        case 111: // $o
+          //trace("$o");
+          count = readI8() | 0;
+          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+            decode(1);
+            decode(1);
+          }
+          newObject(count | 0);
+          break;
+        case 79:  // $O
+          count = readI32() | 0;
+          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+            decode(1);
+            decode(1);
+          }
+          newObject(count | 0);
+          break;
+        case 97:  // $a
+          count = readI8() | 0;
+          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+            decode(1);
+          }
+          newArray(count | 0);
+          break;
+        case 65:  // $A
+          count = readI32() | 0;
+          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+            decode(count);
+          }
+          newArray(count | 0);
+          break;
+        default:
+          //trace("done");
+          return;
+        }
+        count = count - 1 | 0;
+      }
+      return;
+    }
+
+    function readI8() {
+      var val = 0;
+      val = bytesU8[pos] | 0;
+      pos = pos + 1 | 0;
+      return val | 0;
+    }
+
+    // Read an int16 value.
+    function readI16() {
+      var val = 0;
+      val = bytesU8[pos] << 8 | 0;
+      val = (val + (bytesU8[pos + 1 | 0] | 0)) | 0;
+      pos = pos + 2 | 0;
+      return val | 0;
+    }
+
+    // Write an int32 value.
+    function readI32() {
+      var val = 0;
+      val = bytesU8[pos] << 24;
+      val = (val + (bytesU8[pos + 1 | 0] << 16 | 0)) | 0;
+      val = (val + (bytesU8[pos + 2 | 0] << 8 | 0)) | 0;
+      val = (val + (bytesU8[pos + 3 | 0] | 0)) | 0;
+      pos = pos + 4 | 0;
+      return val | 0;
+    }
+    // END Decoder
+    // END
+
+    function writePropI8(id, val) {
+      id = id | 0;
+      val = val | 0;
+      writeByte(id);
+      writeByte(val);
+    }
+
+    function writePropI16(id, val) {
+      id = id | 0;
+      val = val | 0;
+      writeByte(id);
+      writeI16(val);
+    }
+
+    function removeObject(swfVersion, tagCode) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      var childCount = 1;
+      if (~~tagCode == ~~5) {
+        writePropI16(SYMBOL_ID, readU16() | 0);
+        childCount = childCount + 1 | 0;
+      }
+      writePropI16(DEPTH, readU16() | 0);
+      return childCount | 0;
+    }
+
+    function rgb() {
+      writePropI8(RED, readU8() | 0);
+      writePropI8(GREEN, readU8() | 0);
+      writePropI8(BLUE, readU8() | 0);
+      writePropI8(ALPHA, 255);
+      return 4;
+    }
+
+    function rgba() {
+      writePropI8(RED, readU8() | 0);
+      writePropI8(GREEN, readU8() | 0);
+      writePropI8(BLUE, readU8() | 0);
+      writePropI8(ALPHA, readU8() | 0);
+      return 4;
+    }
+
+/*
+    function fillSolid(swfVersion, tagCode, isMorph) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      isMorph = isMorph | 0;
+      var count = 0;
+      var pos = 0;
+      if (~~tagCode > 22 | 0) {
+        writeByte(COLOR);
+        pos = startObject(BIG) | 0;
+        rgba();
+        finishObject(pos, 4, BIG);
+        count = count + 1 | 0;
+      } else if (isMorph) {
+        writeByte(COLOR);
+        pos = startObject(BIG) | 0;
+        rgba();
+        finishObject(pos, 4, BIG);
+        count = count + 1 | 0;
+      } else {
+        writeByte(COLOR);
+        pos = startObject(BIG) | 0;
+        rgba();
+        finishObject(pos, 4, BIG);
+        count = count + 1 | 0;
+      }
+      if (isMorph) {
+        writeByte(COLOR_MORPH);
+        pos = startObject(BIG) | 0;
+        rgba();
+        finishObject(pos, 4, BIG);
+        count = count + 1 | 0;
+      }
+      return count | 0;
+    }
+
+    function fillGradient(swfVersion, tagCode, isMorph) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      isMorph = isMorph | 0;
+      var pos = 0;
+      var count = 2;
+      var childCount = 0;
+      writeByte(MATRIX);  // write name
+      pos = startObject(BIG) | 0; // begin write value
+      childCount = matrix(swfVersion, tagCode) | 0;
+      finishObject(pos, childCount, BIG);
+      if (isMorph) {
+        writeByte(MATRIX_MORPH);  // write name
+        pos = startObject(BIG) | 0; // begin write value
+        childCount = matrix(swfVersion, tagCode) | 0;
+        finishObject(pos, childCount, BIG);
+        count = count + 1;
+      }
+      count = count + gradient(swfVersion, tagCode);
+      return count | 0;
+    }
+
+    function fillStyle(swfVersion, tagCode, isMorph) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      isMorph = isMorph | 0;
+      var type = 0;
+      var count = 0;
+      writePropI8(TYPE, (type = readUi8($bytes, $stream))); 
+      count = count + 1;
+      switch (type) {
+      case 0:
+        count = count + fillSolid(swfVersion, tagCode, isMorph) | 0;
+        break
+      case 16:
+      case 18:
+      case 19:
+        count = count + fillGradient(swfVersion, tagCode) | 0;
+        break
+      case 64:
+      case 65:
+      case 66:
+      case 67:
+        count = count + fillBitmap(swfVersion, tagCode, isMorph, type) | 0;
+        break
+      default:
+      }
+      return count | 0;
+    }
+
+    function fillBitmap(swfVersion, tagCode, isMorph, type) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      isMorph = isMorph | 0;
+      type = type | 0;
+      var count = 3;
+      var pos = 0;
+      var childCount = 0;
+      writeByte(BITMAP_ID);
+      writeI16(readI16());
+      writeByte(MATRIX);
+      pos = startObject(BIG);
+      childCount = matrix(swfVersion, tagCode);
+      finishObject(pos, childCount, BIG);
+      if (isMorph) {
+        writeByte(MATRIX_MORPH);
+        pos = startObject(BIG);
+        childCount = matrix(swfVersion, tagCode);
+        finishObject(pos, childCount, BIG);
+        count++;
+      }
+      writeByte(CONDITION);
+      writeByte(type===64||type===67);
+      return count | 0;
+    }
+
+    function lineStyle(obj, swfVersion, tagCode, isMorph, hasStrokes) {
+      obj = obj | 0;
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      isMorph = isMorph | 0;
+      hasStrokes = hasStrokes | 0;
+      var joinStyle = 0, hasFill = 0, reserved = 0, color = 0;
+      writePropI16(WIDTH, readU16() | 0);
+      if (isMorph) {
+        writePropI16(WIDTH_MORPH, readU16() | 0);
+      }
+      if (hasStrokes) {
+        align();
+        writePropI8(START_CAP_STYLE, readUb(2) | 0);
+        writePropI8(JOIN_STYLE, (joinStyle = readUb(2) | 0));
+        writePropI8(HAS_FILL, (hasFill = readUb(1) | 0));
+        writePropI8(NO_HSCALE, readUb(1) | 0);
+        writePropI8(NO_VSCALE, readUb(1) | 0);
+        writePropI8(PIXEL_HINTING, readUb(1) | 0);
+        reserved = readUb(5) | 0;
+        writePropI8(NO_CLOSE, readUb(1) | 0);
+        writePropI8(END_CAP_STYLE, readUb(2) | 0);
+        if (joinStyle | 0 == 2) {
+          writePropI8(MITER_LIMIT_FACTOR, readFixed8() | 0);
+        }
+        if (hasFill | 0 != 0) {
+          writeByte(FILL_STYLE);
+          var pos = startObject(BIG);
+          var count = fillStyle(swfVersion, tagCode, isMorph);
+          finishObject($141, count, BIG);
+        } else {
+          writeByte(COLOR);
+          var pos = startObject(BIG);          
+          var count = rgba();
+          finishObject($141, count, BIG);
+          if (isMorph) {
+            writeByte(MORPH_COLOR);
+            var pos = startObject(BIG);          
+            var count = rgba();
+            finishObject(pos, count, BIG);
+          }
+        }
+      } else {
+        // ASM BUG tagCode should already be type int
+        if (tagCode | 0 > 22) {
+          writeByte(COLOR);
+          var pos = startObject();
+          var count = rgba();
+          finishObject(pos, count);
+        } else {
+          writeByte(COLOR);
+          var pos = startObject();
+          var count = rgba();
+          finishObject(pos, count);
+        }
+        if (isMorph) {
+          writeByte(COLOR_MORPH);
+          var pos = startObject();
+          var count = rgba();
+          finishObject(pos, count);
+        }
+      }
+    }
+*/
+    return {
+      removeObject: removeObject,
+//      rgb: rgb,
+//      rgba: rgba,
+//      lineStyle: lineStyle,
+//      fillStyle: fillStyle,
+      // Decode function
+      decode: decode,
+      // Utils
+      getPos: getPos,
+      setPos: setPos,
+    };
+
+  }
+
+  var objectStack = [];
+  var objectPool = [];
+  var streamStack = [];
+  var bytesStack = [];
+
+  function pushStream(bytes, stream) {
+    bytesStack.push(bytes);
+    streamStack.push(stream);
+  }
+
+  function popStream() {
+    bytesStack.pop();
+    streamStack.pop();
+  }
+
+  var values = [];
+
+  var imports = {
+    red: 1,
+    green: 2,
+    blue: 3,
+    alpha: 4,
+    width: 5,
+    widthMorph: 6,
+    startCapStyle: 7,
+    joinStyle: 8,
+    hasFill: 9,
+    noHscale: 10,
+    noVscale: 11,
+    pixelHinting: 12,
+    noClose: 13,
+    endCapStyle: 14,
+    miterLimitFactor: 15,
+    color: 16,
+    colorMorph: 17,
+    matrix: 18,
+    symbolId: 19,
+    depth: 20,
+
+    trace: trace,
+    readU8: _readU8,
+    readU16: _readU16,
+    readUb: _readUb,
+    readFixed8: _readFixed8,
+//    align: align,
+    pushNull: function () {
+      values.push(null);
+    },
+    pushTrue: function () {
+      values.push(true);
+    },
+    pushFalse: function () {
+      values.push(false);
+    },
+    pushInt: function (val) {
+      values.push(val);
+    },
+    pushFloat32: function () {
+      var pos = asm.getPos();
+      var val = view.getFloat32(pos);
+      values.push(val);
+      asm.setPos(pos+4);
+    },
+    pushFloat64: function () {
+      var pos = asm.getPos();
+      var val = view.getFloat64(pos);
+      values.push(val);
+      asm.setPos(pos+8);
+    },
+    pushString: function (size) {
+      var start = asm.getPos();
+      var stop = start + size;
+      var val = "";
+      for (var i = start; i < stop; i++) {
+        val += String.fromCharCode(view.getInt8(i));
+      }
+      values.push(val);
+      asm.setPos(stop);
+    },
+    newObject: newObject,
+    newArray: function (count) {
+      var val = [];
+      for (var i = count - 1; i >= 0; i--) {
+        var v = values.pop();
+        val[i] = v;
+      }
+      values.push(val);
+    },
   };
+
+  function newObject(count, val) {
+    if (!val) {
+      val = {};
+    }
+    for (var i = count - 1; i >= 0; i--) {
+      var v = values.pop();
+      var i = values.pop();
+      var n = names[i];
+      val[n] = v;
+    }
+    values.push(val);
+  }
+
+  function setObjectProps(obj, count) {
+    for (var i = count - 1; i >= 0; i--) {
+      var v = values.pop();
+      var i = values.pop();
+      var n = names[i];
+      obj[n] = v;
+    }
+  }
+
+  function popObject() {
+    values.pop();
+  }
+
+  function _readU8() {
+    return readUi8(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+  };
+
+  function _readU16() {
+    return readUi16(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+  };
+
+  function _readUb() {
+    return readUb(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+  };
+
+  function _readFixed8() {
+    return readFixed8(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+  };
+
+  var names = {}
+  Object.keys(imports).forEach(function (v, i) {
+    names[imports[v]] = v;
+  });
+
+  var buffer = new ArrayBuffer(4096);
+  var view = new DataView(buffer);
+  var asm = Asm(global, imports, buffer);
 
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
@@ -299,14 +1005,13 @@ var tagHandler = (function () {
   }
 
   function removeObject($bytes, $stream, $, swfVersion, tagCode){
-    $||($={})
-    if(tagCode===5){
-      $.symbolId=
-        readUi16($bytes, $stream)
-    }
-    $.depth=
-      readUi16($bytes, $stream)
-    return $
+    var pos = asm.getPos();
+    var count = asm.removeObject(swfVersion, tagCode);
+    asm.setPos(pos);
+    asm.decode(2*count);
+    setObjectProps($, count);
+    asm.setPos(pos);
+    return $;
   }
 
   function defineImage($bytes, $stream, $, swfVersion, tagCode){
@@ -1239,6 +1944,9 @@ var tagHandler = (function () {
   }
 
   function doABC($bytes, $stream, $, swfVersion, tagCode){
+    if (asm.doABC) {
+      return asm.doABC(swfVersion, tagCode);
+    }
     $||($={})
     if(tagCode===82){
       $.flags=
@@ -1343,6 +2051,16 @@ var tagHandler = (function () {
   }
 
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
+    if (asm.rgb) {
+      var pos = asm.getPos();
+      asm.rgb();
+      asm.setPos(pos);
+      asm.decode(1);
+      $ = values.pop();
+      asm.setPos(pos);
+//      print("rgb() pos=" + pos + " val=" + JSON.stringify($));
+      return $;
+    }
     $.red=
       readUi8($bytes, $stream)
     $.green=
@@ -1351,9 +2069,21 @@ var tagHandler = (function () {
       readUi8($bytes, $stream)
     $.alpha=
       255
+//    print("rgb() pos=" + pos + " val=" + JSON.stringify($));
+    return $;
   }
 
   function rgba($bytes, $stream, $, swfVersion, tagCode) {
+    if (asm.rgba) {
+      var pos = asm.getPos();
+      asm.rgba();
+      asm.setPos(pos);
+      asm.decode(1);
+      $ = values.pop();
+      asm.setPos(pos);
+//      print("rgba() pos=" + pos + " val=" + $);
+      return $;
+    }
     $.red=
       readUi8($bytes, $stream)
     $.green=
@@ -1362,6 +2092,7 @@ var tagHandler = (function () {
       readUi8($bytes, $stream)
     $.alpha=
       readUi8($bytes, $stream)
+    return $;
   }
 
   function argb($bytes, $stream, $, swfVersion, tagCode) {
@@ -1845,6 +2576,10 @@ var tagHandler = (function () {
   };
 
   function lineStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    if (asm.lineStyle) {
+      asm.lineStyle(swfVersion, tagCode, isMorph, hasStrokes);
+      return;
+    }
     $.width=
       readUi16($bytes, $stream)
     if(isMorph){
@@ -2410,7 +3145,78 @@ var tagHandler = (function () {
     while(!eos)
   }
 
-})();
+  return {
+    /* End */                            0: undefined,
+    /* ShowFrame */                      1: undefined,
+    /* DefineShape */                    2: defineShape,
+    /* PlaceObject */                    4: placeObject,
+    /* RemoveObject */                   5: removeObject,
+    /* DefineBits */                     6: defineImage,
+    /* DefineButton */                   7: defineButton,
+    /* JPEGTables */                     8: defineJPEGTables,
+    /* SetBackgroundColor */             9: setBackgroundColor,
+    /* DefineFont */                    10: defineFont,
+    /* DefineText */                    11: defineLabel,
+    /* DoAction */                      12: doAction,
+    /* DefineFontInfo */                13: undefined,
+    /* DefineSound */                   14: defineSound,
+    /* StartSound */                    15: startSound,
+    /* DefineButtonSound */             17: undefined,
+    /* SoundStreamHead */               18: soundStreamHead,
+    /* SoundStreamBlock */              19: soundStreamBlock,
+    /* DefineBitsLossless */            20: defineBitmap,
+    /* DefineBitsJPEG2 */               21: defineImage,
+    /* DefineShape2 */                  22: defineShape,
+    /* DefineButtonCxform */            23: undefined,
+    /* Protect */                       24: undefined,
+    /* PlaceObject2 */                  26: placeObject,
+    /* RemoveObject2 */                 28: removeObject,
+    /* DefineShape3 */                  32: defineShape,
+    /* DefineText2 */                   33: defineLabel,
+    /* DefineButton2 */                 34: defineButton,
+    /* DefineBitsJPEG3 */               35: defineImage,
+    /* DefineBitsLossless2 */           36: defineBitmap,
+    /* DefineEditText */                37: defineText,
+    /* DefineSprite */                  39: undefined,
+    /* FrameLabel */                    43: frameLabel,
+    /* SoundStreamHead2 */              45: soundStreamHead,
+    /* DefineMorphShape */              46: defineShape,
+    /* DefineFont2 */                   48: defineFont2,
+    /* ExportAssets */                  56: undefined,
+    /* ImportAssets */                  57: undefined,
+    /* EnableDebugger */                58: undefined,
+    /* DoInitAction */                  59: doAction,
+    /* DefineVideoStream */             60: undefined,
+    /* VideoFrame */                    61: undefined,
+    /* DefineFontInfo2 */               62: undefined,
+    /* EnableDebugger2 */               64: undefined,
+    /* ScriptLimits */                  65: undefined,
+    /* SetTabIndex */                   66: undefined,
+    /* FileAttributes */                69: fileAttributes,
+    /* PlaceObject3 */                  70: placeObject,
+    /* ImportAssets2 */                 71: undefined,
+    /* DoABC (undoc) */                 72: doABC,
+    /* DefineFontAlignZones */          73: undefined,
+    /* CSMTextSettings */               74: undefined,
+    /* DefineFont3 */                   75: defineFont2,
+    /* SymbolClass */                   76: symbolClass,
+    /* Metadata */                      77: undefined,
+    /* DefineScalingGrid */             78: defineScalingGrid,
+    /* DoABC */                         82: doABC,
+    /* DefineShape4 */                  83: defineShape,
+    /* DefineMorphShape2 */             84: defineShape,
+    /* DefineSceneAndFrameLabelData */  86: defineScene,
+    /* DefineBinaryData */              87: undefined,
+    /* DefineFontName */                88: undefined,
+    /* StartSound2 */                   89: startSound,
+    /* DefineBitsJPEG4 */               90: defineImage,
+    /* DefineFont4 */                   91: undefined,
+
+    pushStream: pushStream,
+    popStream: popStream,
+  };
+
+})(this);
 
 var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode){
   $ || ($ = {});
