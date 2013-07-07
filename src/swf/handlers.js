@@ -440,10 +440,10 @@ var tagHandler = (function (global) {
     function removeObject(swfVersion, tagCode) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
-      var childCount = 1;
+      var childCount = 2;
       if (~~tagCode == ~~5) {
         writePropI16(SYMBOL_ID, readU16() | 0);
-        childCount = childCount + 1 | 0;
+        childCount = childCount + 2 | 0;
       }
       writePropI16(DEPTH, readU16() | 0);
       return childCount | 0;
@@ -454,7 +454,7 @@ var tagHandler = (function (global) {
       writePropI8(GREEN, readU8() | 0);
       writePropI8(BLUE, readU8() | 0);
       writePropI8(ALPHA, 255);
-      return 4;
+      return 8;
     }
 
     function rgba() {
@@ -462,7 +462,7 @@ var tagHandler = (function (global) {
       writePropI8(GREEN, readU8() | 0);
       writePropI8(BLUE, readU8() | 0);
       writePropI8(ALPHA, readU8() | 0);
-      return 4;
+      return 8;
     }
 
 /*
@@ -643,7 +643,7 @@ var tagHandler = (function (global) {
 */
     return {
       removeObject: removeObject,
-//      rgb: rgb,
+      rgb: rgb,
 //      rgba: rgba,
 //      lineStyle: lineStyle,
 //      fillStyle: fillStyle,
@@ -760,7 +760,7 @@ var tagHandler = (function (global) {
   }
 
   function setObjectProps(obj, count) {
-    for (var i = count - 1; i >= 0; i--) {
+    for (var i = 0; i < count; i += 2) {
       var v = values.pop();
       var i = values.pop();
       var n = names[i];
@@ -1008,7 +1008,7 @@ var tagHandler = (function (global) {
     var pos = asm.getPos();
     var count = asm.removeObject(swfVersion, tagCode);
     asm.setPos(pos);
-    asm.decode(2*count);
+    asm.decode(count);
     setObjectProps($, count);
     asm.setPos(pos);
     return $;
@@ -2051,37 +2051,24 @@ var tagHandler = (function (global) {
   }
 
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
-    if (asm.rgb) {
-      var pos = asm.getPos();
-      asm.rgb();
-      asm.setPos(pos);
-      asm.decode(1);
-      $ = values.pop();
-      asm.setPos(pos);
-//      print("rgb() pos=" + pos + " val=" + JSON.stringify($));
-      return $;
-    }
-    $.red=
-      readUi8($bytes, $stream)
-    $.green=
-      readUi8($bytes, $stream)
-    $.blue=
-      readUi8($bytes, $stream)
-    $.alpha=
-      255
-//    print("rgb() pos=" + pos + " val=" + JSON.stringify($));
+    var pos = asm.getPos();
+    var count = asm.rgb();
+    asm.setPos(pos);
+    asm.decode(count);
+    setObjectProps($, count);
+    asm.setPos(pos);
     return $;
   }
 
   function rgba($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.rgba) {
       var pos = asm.getPos();
-      asm.rgba();
+      var count = asm.rgba();
       asm.setPos(pos);
-      asm.decode(1);
-      $ = values.pop();
+      asm.decode(count);
+      setObjectProps($, count);
       asm.setPos(pos);
-//      print("rgba() pos=" + pos + " val=" + $);
+//      print("rgb() pos=" + pos + " val=" + JSON.stringify($));
       return $;
     }
     $.red=
