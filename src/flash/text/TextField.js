@@ -110,18 +110,19 @@ var TextFieldDefinition = (function () {
       case 'text': addTextRun(state, node); return;
       case 'br': finishLine(state); return;
 
-      case 'li': /* TODO: draw bullet points. */
+      case 'li': /* TODO: draw bullet points. */ /* falls through */
       case 'p': finishLine(state); blockNode = true; break;
 
-      case 'b':
-      case 'i':
-      case 'font':
+      case 'b': /* falls through */
+      case 'i': /* falls through */
+      case 'font': /* falls through */
       case 'textformat': pushFormat(state, node); formatNode = true; break;
 
-      case 'u': /* TODO: implement <u>-support. */
-      case 'a': /* TODO: implement <a>-support. */
-      case 'img': /* TODO: implement <img>-support. */
+      case 'u': /* TODO: implement <u>-support. */ /* falls through */
+      case 'a': /* TODO: implement <a>-support. */ /* falls through */
+      case 'img': /* TODO: implement <img>-support. */ /* falls through */
       case 'span': /* TODO: implement what puny support for CSS Flash has. */
+      /* falls through */
       default:
         // For all unknown nodes, we just emit their children.
     }
@@ -168,7 +169,7 @@ var TextFieldDefinition = (function () {
     switch (node.type) {
       case 'b': format.bold = true; format.str += ' bold'; break;
       case 'i': format.italic = true; format.str += ' italic'; break;
-      case 'font': {
+      case 'font':
         if ('color' in attributes) {
           format.color = attributes.color;
         }
@@ -185,9 +186,9 @@ var TextFieldDefinition = (function () {
         if ('size' in attributes) {
           format.size = attributes.size;
         }
-      }
-      // `textFormat` has, among others, the same attributes as `font`
-      case 'textformat': {
+      /* falls through */
+      case 'textformat':
+        // `textFormat` has, among others, the same attributes as `font`
         if ('indent' in attributes) {
           state.x += attributes.indent;
         }
@@ -197,7 +198,6 @@ var TextFieldDefinition = (function () {
         format.str = makeFormatString(format);
         state.lineHeight = Math.max(state.lineHeight, format.size);
         break;
-      }
       default:
         warning('Unknown format node encountered: ' + node.type); return;
     }
@@ -265,7 +265,7 @@ var TextFieldDefinition = (function () {
       // TODO: check if we need to emit <ul>'s around runs of <li>'s
       case 'li': return '<li>';
       case 'u': return '<span style="text-decoration: underline;">';
-      case 'a': {
+      case 'a':
         output = '<a';
         if ('href' in format) {
           output += ' href="' + format.href + '"';
@@ -274,8 +274,7 @@ var TextFieldDefinition = (function () {
           output += ' target="' + format.href + '"';
         }
         break;
-      }
-      case 'font': {
+      case 'font':
         output = '<span';
         styles = '';
         if ('color' in format) {
@@ -296,8 +295,7 @@ var TextFieldDefinition = (function () {
           styles += 'font-size:' + format.size + 'px;';
         }
         break;
-      }
-      case 'img': {
+      case 'img':
         output = '<img src="' + (format.src || '') + '"';
         styles = '';
         if ('width' in format) {
@@ -317,8 +315,7 @@ var TextFieldDefinition = (function () {
         // TODO: support `align`, `id` and `checkPolicyFile`
         output += ' /';
         break;
-      }
-      case 'p': {
+      case 'p':
         output = '<p';
         styles = '';
         if ('class' in format) {
@@ -328,15 +325,13 @@ var TextFieldDefinition = (function () {
           styles += 'text-align:' + format.align;
         }
         break;
-      }
-      case 'span': {
+      case 'span':
         output = '<span';
         if ('class' in format) {
           output += ' class="' + format['class'] + '"';
         }
         break;
-      }
-      case 'textformat': {
+      case 'textformat':
         // TODO: we probably need to merge textformat nodes with <p> nodes
         output = '<span';
         styles = '';
@@ -359,7 +354,6 @@ var TextFieldDefinition = (function () {
         // TODO: support leading
         // TODO: support tabStops, if possible
         break;
-      }
       default:
         // For all unknown nodes, we just emit spans. We might not actually
         // need to, but it doesn't do any harm, either.
@@ -374,15 +368,12 @@ var TextFieldDefinition = (function () {
   function renderNodeEnd(node) {
     switch (node.type) {
       case 'b': return '</strong>';
-      case 'i':
-      case 'li':
-      case 'a':
-      case 'p': {
-        return '</' + node.type + '>';
-      }
-      default: { // <u>, <font>, <span>, <textformat>, and all others
+      case 'i': /* falls through */
+      case 'li': /* falls through */
+      case 'a': /* falls through */
+      case 'p': return '</' + node.type + '>';
+      default: // <u>, <font>, <span>, <textformat>, and all others
         return '</span>';
-      }
     }
   }
 
