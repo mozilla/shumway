@@ -15,13 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba */
 
 function defineText(tag, dictionary) {
   var dependencies = [];
   if (tag.hasFont) {
     var font = dictionary[tag.fontId];
     assert(font, 'undefined font', 'label');
+    tag.font = font.name;
     dependencies.push(font.id);
   }
 

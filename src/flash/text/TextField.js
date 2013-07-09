@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2TextField */
+/*global AS2TextField, toStringRgba */
 
 var TextFieldDefinition = (function () {
 
@@ -85,26 +85,176 @@ var TextFieldDefinition = (function () {
     return attributesMap;
   }
 
-  function renderContent(content, ctx) {
-    return renderNode(content.tree, ctx);
+  function renderContent(content, initialFormat, bounds, ctx) {
+    if (!ctx) {
+      return renderNode(content.tree);
+    }
+    var firstRun = {type: 'f', format: initialFormat};
+    var width = bounds.right - bounds.left;
+    var height = bounds.bottom - bounds.top;
+    var state = {ctx: ctx, y: 0, x: 0, w: width, h: height,
+                 line: [], lineHeight: 0, formats: [initialFormat],
+                 currentFormat: initialFormat, runs: [firstRun]};
+    collectRuns(content.tree, state);
+    finishLine(state);
+
+    return renderToCanvas(ctx, bounds, state.runs);
   }
 
-  function renderNode(node, ctx) {
+  function collectRuns(node, state) {
+    // for formatNodes, the format is popped after child processing
+    var formatNode = false;
+    // for blockNodes, the current line is finished after child processing
+    var blockNode = false;
+    switch (node.type) {
+      case 'text': addTextRun(state, node); return;
+      case 'br': finishLine(state); return;
+
+      case 'li': /* TODO: draw bullet points. */
+      case 'p': finishLine(state); blockNode = true; break;
+
+      case 'b':
+      case 'i':
+      case 'font':
+      case 'textformat': pushFormat(state, node); formatNode = true; break;
+
+      case 'u': /* TODO: implement <u>-support. */
+      case 'a': /* TODO: implement <a>-support. */
+      case 'img': /* TODO: implement <img>-support. */
+      case 'span': /* TODO: implement what puny support for CSS Flash has. */
+      default:
+        // For all unknown nodes, we just emit their children.
+    }
+    for (var i = 0; i < node.children.length; i++) {
+      var child = node.children[i];
+      collectRuns(child, state);
+    }
+    if (formatNode) {
+      popFormat(state);
+    }
+    if (blockNode) {
+      finishLine(state);
+    }
+  }
+  function addTextRun(state, node) {
+    var text = node.text;
+    // `y` is set by `finishLine`
+    var run = {type: 't', text: text, x: state.x, y: 0};
+    state.runs.push(run);
+    state.line.push(run);
+    state.x += state.ctx.measureText(text).width;
+    state.lineHeight = Math.max(state.lineHeight, state.currentFormat.size);
+    // TODO: implement wordWrap
+//    var overflow = '';
+//    var ctx = state.ctx;
+//    var space = state.width = state.x;
+//    while (ctx.measureText(text) > space) {
+//
+//    }
+  }
+  function finishLine(state) {
+    state.x = 0;
+    state.y += state.lineHeight;
+    var y = state.y;
+    while (state.line.length) {
+      var run = state.line.pop();
+      run.y = y;
+    }
+    state.lineHeight = 0;
+  }
+  function pushFormat(state, node) {
+    var attributes = node.format;
+    var format = Object.create(state.formats[state.formats.length - 1]);
+    switch (node.type) {
+      case 'b': format.bold = true; format.str += ' bold'; break;
+      case 'i': format.italic = true; format.str += ' italic'; break;
+      case 'font': {
+        if ('color' in attributes) {
+          format.color = attributes.color;
+        }
+        if ('face' in attributes) {
+          var fontFace = attributes.face;
+          if (fontFace === '_sans') {
+            fontFace = 'sans-serif';
+          } else if (fontFace === '_serif') {
+            fontFace = 'serif';
+          }
+          //TODO: adapt to embedded font names
+          format.face = fontFace;
+        }
+        if ('size' in attributes) {
+          format.size = attributes.size;
+        }
+      }
+      // `textFormat` has, among others, the same attributes as `font`
+      case 'textformat': {
+        if ('indent' in attributes) {
+          state.x += attributes.indent;
+        }
+        // TODO: support leftMargin, rightMargin & blockIndent
+        // TODO: support leading
+        // TODO: support tabStops, if possible
+        format.str = makeFormatString(format);
+        state.lineHeight = Math.max(state.lineHeight, format.size);
+        break;
+      }
+      default:
+        warning('Unknown format node encountered: ' + node.type); return;
+    }
+    state.formats.push(format);
+    state.runs.push({type: 'f', format: format});
+    state.currentFormat = format;
+    state.ctx.font = format.str;
+  }
+  function popFormat(state) {
+    state.formats.pop();
+    var format = state.currentFormat = state.formats[state.formats.length - 1];
+    state.runs.push({type: 'f', format: format});
+    state.ctx.font = state.str;
+  }
+  function makeFormatString(format) {
+    //TODO: verify that px is the right unit
+    return format.size + 'px ' +
+           (format.bold ? 'bold ' : '') +
+           (format.italic ? 'italic ' : '') +
+           format.face;
+  }
+
+  function renderToCanvas(ctx, bounds, runs) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(bounds.left, bounds.top,
+                 bounds.right - bounds.left, bounds.bottom - bounds.top);
+    ctx.clip();
+    for (var i = 0; i < runs.length; i++) {
+      var run = runs[i];
+      if (run.type === 'f') {
+        ctx.font = run.format.str;
+        ctx.fillStyle = run.format.color;
+      } else {
+        assert(run.type === 't', 'Invalid run type: ' + run.type);
+        ctx.fillText(run.text, run.x, run.y);
+      }
+    }
+    ctx.restore();
+  }
+
+  function renderNode(node) {
     if (node.type === 'text') {
       return node.text;
     }
 
-    var output = renderNodeStart(node, ctx);
+    var output = renderNodeStart(node);
     var children = node.children;
 
     for (var i = 0; i < children.length; i++) {
       var childNode = children[i];
-      output += renderNode(childNode, ctx);
+      output += renderNode(childNode);
     }
-    return output + renderNodeEnd(node, ctx);
+    return output + renderNodeEnd(node);
   }
 
-  function renderNodeStart(node, ctx) {
+  function renderNodeStart(node) {
     var format = node.format;
     var output;
     var styles;
@@ -221,7 +371,7 @@ var TextFieldDefinition = (function () {
     return output + '>';
   }
 
-  function renderNodeEnd(node, ctx) {
+  function renderNodeEnd(node) {
     switch (node.type) {
       case 'b': return '</strong>';
       case 'i':
@@ -241,16 +391,13 @@ var TextFieldDefinition = (function () {
 
     initialize: function () {
       this._defaultTextFormat = null;
+      var initialFormat = this._initialFormat = {face: 'serif', size: 10,
+                                                 bold: false, italic: false,
+                                                 color: 'black'};
       this._type = 'dynamic';
       this._textHeight = 0;
       this._textWidth = 0;
       this._embedFonts = false;
-
-      var bbox = this._bbox;
-      if (bbox) {
-        // // TODO: use canvas.measureText(txt).height
-        this._textHeight = bbox.bottom - bbox.top;
-      }
 
       var s = this.symbol;
       if (!s) {
@@ -259,12 +406,19 @@ var TextFieldDefinition = (function () {
 
       var tag = s.tag;
       var bbox = this._bbox = tag.bbox;
-      this._elementWidth = (bbox.right - bbox.left);
-      this._elementHeight = (bbox.bottom - bbox.top);
-      //TODO: we might need to move things down and right by 2px, or add a 2px margin
-      this.boundsStyle = 'top:' + bbox.top + 'px;left:' + bbox.left + 'px;' +
-                         'width:' + this._elementWidth + 'px;' +
-                         'height:' + this._elementHeight + 'px;';
+      // // TODO: use canvas.measureText(txt).height
+      this._textHeight = bbox.bottom - bbox.top;
+
+      if (tag.hasLayout) {
+        initialFormat.size = tag.fontHeight / 20;
+      }
+      if (tag.hasColor) {
+        initialFormat.color = toStringRgba(tag.color);
+      }
+      if (tag.hasFont) {
+        initialFormat.face = tag.font;
+      }
+      initialFormat.str = makeFormatString(initialFormat);
 
       if (tag.initialText) {
         if (tag.html) {
@@ -289,27 +443,7 @@ var TextFieldDefinition = (function () {
     },
 
     draw: function (ctx) {
-      var content = this._contentChanged === false ? this._renderedContent :
-          "<svg xmlns='http://www.w3.org/2000/svg' " +
-          "width='" + this._elementWidth +
-          "' height='" + this._elementHeight + "'>" +
-          "<foreignObject width='100%' height='100%'>" +
-          "<div xmlns='http://www.w3.org/1999/xhtml' style='" +
-          this.boundsStyle + "'>" + renderContent(this._content) +
-          '</div></foreignObject></svg>';
-
-      this._renderedContent = content;
-      this._contentChanged = false;
-
-      var img = new Image();
-      var svg = new Blob([content], {type: "image/svg+xml;charset=utf-8"});
-      var DOMURL = self.URL || self.webkitURL || self;
-      var url = DOMURL.createObjectURL(svg);
-      img.onload = function() {
-        ctx.drawImage(img, 0, 0);
-        DOMURL.revokeObjectURL(url);
-      };
-      img.src = url;
+      renderContent(this._content, this._initialFormat, this._bbox, ctx);
     },
 
     get text() {
@@ -319,9 +453,8 @@ var TextFieldDefinition = (function () {
       if (this._text === val) {
         return;
       }
-      //TODO: add default markup.
-      var node = {type : 'text', text: val, format : {}, children : null};
-      this._content = {tree : [node], text : val};
+      var node = {type : 'text', text: val};
+      this._content = {tree : node, text : val};
       this._htmlText = val;
       this._contentChanged = true;
       this._markAsDirty();
