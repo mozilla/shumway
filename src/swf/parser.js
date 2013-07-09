@@ -82,8 +82,7 @@ function readTags(context, stream, swfVersion, onprogress) {
     if (e !== StreamNoDataError) throw e + "\n" + e.stack;
     stream.pos = lastSuccessfulPosition;
   }
-  //print(JSON.stringify(tags, null, 2));
-
+//  print(JSON.stringify(tags, null, 2));
 }
 
 function HeadTailBuffer(defaultSize) {
