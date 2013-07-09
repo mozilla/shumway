@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2TextField, toStringRgba */
+/*global AS2TextField, toStringRgba, warning, XMLParser */
 
 var TextFieldDefinition = (function () {
 
@@ -342,10 +342,10 @@ var TextFieldDefinition = (function () {
         styles = '';
         var marginLeft = 0;
         if ('blockIdent' in format) {
-          marginLeft += parseInt(format.blockIndent);
+          marginLeft += parseInt(format.blockIndent, 10);
         }
         if ('leftMargin' in format) {
-          marginLeft += parseInt(format.leftMargin);
+          marginLeft += parseInt(format.leftMargin, 10);
         }
         if (marginLeft !== 0) {
           styles += 'margin-left:' + marginLeft + 'px"';
