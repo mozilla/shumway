@@ -346,15 +346,6 @@ var Domain = (function () {
       Timer.stop();
     },
 
-    getScriptObject: function () {
-      if (!this.scriptObject) {
-        var ApplicationDomainClass = avm2.systemDomain.getClass("flash.system.ApplicationDomain");
-        var scriptObject = ApplicationDomainClass.createInstance([this]); // wrapping native Domain
-        release || assert(scriptObject === this.scriptObject);
-      }
-      return this.scriptObject;
-    },
-
     traceLoadedClasses: function (lastOnly) {
       var writer = new IndentingWriter();
       lastOnly || writer.enter("Loaded Classes And Interfaces");

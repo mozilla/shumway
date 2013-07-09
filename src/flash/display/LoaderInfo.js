@@ -89,7 +89,7 @@ var LoaderInfoDefinition = (function () {
           },
           applicationDomain: {
             get: function applicationDomain() { // (void) -> ApplicationDomain
-              return avm2.applicationDomain.getScriptObject();
+              return new flash.system.ApplicationDomain(avm2.applicationDomain);
             }
           },
           swfVersion: {

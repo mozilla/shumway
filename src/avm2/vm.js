@@ -47,7 +47,8 @@ var AVM2 = (function () {
       }
       caller = caller.caller;
     }
-    assert (domain);
+    assert (domain, "No domain environment was found on the stack, increase STACK_DEPTH or " +
+                    "make sure that a compiled / interpreted function is on the call stack.");
     return domain;
   };
 

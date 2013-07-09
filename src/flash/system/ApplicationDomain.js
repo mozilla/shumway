@@ -16,6 +16,12 @@
  * limitations under the License.
  */
 
+/**
+ * Application domains don't have 1-1 object reference relationship with the real domain objects, not sure
+ * why, but for instance ApplicationDomain.currentDomain !== ApplicationDomain.currentDomain. The getter
+ * returns a new ApplicationDomain object reference each time. This is easier to implement, we just always
+ * keep track of the nativeObject and create new ApplicationDomains views on it each time.
+ */
 var ApplicationDomainDefinition = (function () {
   return {
     // (parentDomain:ApplicationDomain = null)
@@ -27,7 +33,7 @@ var ApplicationDomainDefinition = (function () {
         static: {
           currentDomain: {
             get: function currentDomain() { // (void) -> ApplicationDomain
-              return AVM2.currentDomain().getScriptObject();
+              return new flash.system.ApplicationDomain(AVM2.currentDomain());
             }
           },
           MIN_DOMAIN_MEMORY_LENGTH: {
@@ -37,25 +43,15 @@ var ApplicationDomainDefinition = (function () {
           }
         },
         instance: {
-          ctor: function ctor(parentDomain) { // (parentDomain:ApplicationDomain) -> void
-            var nativeObject = null;
-
-            if (parentDomain instanceof Domain) {
-              // Late binding with native Domain objects.
-              nativeObject = parentDomain;
-              parentDomain = !parentDomain.base ? null : parentDomain.base.getScriptObject();
+          ctor: function ctor(parentDomainOrNativeObject) { // (parentDomain:ApplicationDomain) -> void
+            if (parentDomainOrNativeObject instanceof Domain) {
+              this.nativeObject = parentDomainOrNativeObject;
+              return;
             }
-
-            // If no parent domain is passed in, get the current system domain.
-            var parent;
-            if (!parentDomain) {
-              parent = AVM2.currentDomain().system;
-            } else {
-              parent = parentDomain.nativeObject;
-            }
-
-            this.nativeObject = nativeObject || new Domain(parent.vm, parent);
-            this.nativeObject.scriptObject = this;
+            // If no parent domain is passed in, use the current system domain.
+            var parentNativeObject = parentDomainOrNativeObject ?
+              parentDomainOrNativeObject.nativeObject : AVM2.currentDomain().system;
+            this.nativeObject = new Domain(parentNativeObject.vm, parentNativeObject);
           },
           getDefinition: function getDefinition(name) { // (name:String) -> Object
             var simpleName = name.replace("::", ".");
@@ -77,7 +73,7 @@ var ApplicationDomainDefinition = (function () {
               if (!base) {
                 return undefined;
               }
-              return base.getScriptObject();
+              return new flash.system.ApplicationDomain(base);
             }
           },
           domainMemory: {
