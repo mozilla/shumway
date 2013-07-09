@@ -94,7 +94,7 @@ RenderVisitor.prototype = {
       var bgcolor = this.root._color;
       if (bgcolor) {
         if (bgcolor.alpha < 255) {
-          ctx.clearRect(0, 0, frameWidth, frameHeight);
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = toStringRgba(bgcolor);
