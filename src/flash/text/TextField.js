@@ -401,6 +401,8 @@ var TextFieldDefinition = (function () {
 
       var s = this.symbol;
       if (!s) {
+        this._bbox = {top: -2, right: 102, bottom: 22, left: -2};
+        this.text = '';
         return;
       }
 
@@ -427,6 +429,8 @@ var TextFieldDefinition = (function () {
           this.text = tag.initialText;
         }
         this._contentChanged = true;
+      } else {
+        this.text = '';
       }
     },
 
@@ -438,8 +442,9 @@ var TextFieldDefinition = (function () {
     },
 
     replaceText: function(begin, end, str) {
-      this._text = this._text.substring(0, begin) + str + this._text.substring(end);
-      this._markAsDirty();
+      // TODO: preserve formatting
+      var text = this._content.text;
+      this.text = text.substring(0, begin) + str + text.substring(end);
     },
 
     draw: function (ctx) {
@@ -447,16 +452,15 @@ var TextFieldDefinition = (function () {
     },
 
     get text() {
-      return this._text;
+      return this._content.text;
     },
     set text(val) {
-      if (this._text === val) {
+      if (this._content && this._content.text === val) {
         return;
       }
       var node = {type : 'text', text: val};
       this._content = {tree : node, text : val};
       this._htmlText = val;
-      this._contentChanged = true;
       this._markAsDirty();
     },
 
@@ -469,7 +473,6 @@ var TextFieldDefinition = (function () {
       }
       this._htmlText = val;
       this._content = parseHtml(val);
-      this._contentChanged = true;
       this._markAsDirty();
     },
 
@@ -629,7 +632,7 @@ var TextFieldDefinition = (function () {
         },
         length: {
           get: function length() { // (void) -> uint
-            return this._text.length;
+            return this._content.text.length;
           }
         }
       }
