@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/*global AVM2, Domain, Multiname */
 /**
  * Application domains don't have 1-1 object reference relationship with the real domain objects, not sure
  * why, but for instance ApplicationDomain.currentDomain !== ApplicationDomain.currentDomain. The getter
