@@ -30,21 +30,25 @@ var AVM2 = (function () {
      * originated from within the VM.
      */
     this.exception = { value: undefined };
-
-    // TODO: This is a hack because we don't yet keep track of the domain
-    // in the compiler. Here we just put the applicationDomain on top of
-    // the domainStack.
-    avm2.domainStack.push(this.applicationDomain);
   }
 
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
-  avm2.domainStack = [];
+
   avm2.currentDomain = function () {
-    if (avm2.domainStack.length) {
-      return avm2.domainStack.top();
+    var caller = arguments.callee;
+    var MAX_DEPTH = 20;
+    var domain;
+    for (var i = 0; i < MAX_DEPTH && caller; i++) {
+      var mi = caller[VM_METHOD_INFO];
+      if (mi) {
+        domain = mi.abc.domain;
+        break;
+      }
+      caller = caller.caller;
     }
-    return null;
+    assert (domain);
+    return domain;
   };
 
   avm2.callStack = [];
@@ -63,16 +67,6 @@ var AVM2 = (function () {
       }
       return str + frame.bc.originalPosition;
     }).join("\n");
-  };
-
-  // This is called from catch blocks.
-  avm2.unwindStackTo = function unwindStackTo(domain) {
-    var domainStack = avm2.domainStack;
-    var unwind = domainStack.length;
-    while (domainStack[unwind - 1] !== domain) {
-      unwind--;
-    }
-    domainStack.length = unwind;
   };
 
   /**

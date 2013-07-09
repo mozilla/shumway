@@ -27,7 +27,7 @@ var ApplicationDomainDefinition = (function () {
         static: {
           currentDomain: {
             get: function currentDomain() { // (void) -> ApplicationDomain
-              notImplemented("ApplicationDomain.currentDomain");
+              return AVM2.currentDomain().getScriptObject();
             }
           },
           MIN_DOMAIN_MEMORY_LENGTH: {
@@ -38,21 +38,46 @@ var ApplicationDomainDefinition = (function () {
         },
         instance: {
           ctor: function ctor(parentDomain) { // (parentDomain:ApplicationDomain) -> void
-            notImplemented("ApplicationDomain.ctor");
+            var nativeObject = null;
+
+            if (parentDomain instanceof Domain) {
+              // Late binding with native Domain objects.
+              nativeObject = parentDomain;
+              parentDomain = !parentDomain.base ? null : parentDomain.base.getScriptObject();
+            }
+
+            // If no parent domain is passed in, get the current system domain.
+            var parent;
+            if (!parentDomain) {
+              parent = AVM2.currentDomain().system;
+            } else {
+              parent = parentDomain.nativeObject;
+            }
+
+            this.nativeObject = nativeObject || new Domain(parent.vm, parent);
+            this.nativeObject.scriptObject = this;
           },
           getDefinition: function getDefinition(name) { // (name:String) -> Object
-            notImplemented("ApplicationDomain.getDefinition");
+            var simpleName = name.replace("::", ".");
+            return this.nativeObject.getProperty(Multiname.fromSimpleName(simpleName), true, true);
           },
           hasDefinition: function hasDefinition(name) { // (name:String) -> Boolean
-            notImplemented("ApplicationDomain.hasDefinition");
+            if (name === undefined) {
+              return false;
+            }
+            var simpleName = name.replace("::", ".");
+            return !!this.nativeObject.findProperty(Multiname.fromSimpleName(simpleName), false, false);
           },
           getQualifiedDefinitionNames: function getQualifiedDefinitionNames() { // (void) -> Vector
             notImplemented("ApplicationDomain.getQualifiedDefinitionNames");
           },
           parentDomain: {
             get: function parentDomain() { // (void) -> ApplicationDomain
-              notImplemented("ApplicationDomain.parentDomain");
-              return this._parentDomain;
+              var base = this.nativeObject.base;
+              if (!base) {
+                return undefined;
+              }
+              return base.getScriptObject();
             }
           },
           domainMemory: {
@@ -67,6 +92,7 @@ var ApplicationDomainDefinition = (function () {
           }
         }
       },
+      script: { static: Glue.ALL, instance: Glue.ALL }
     }
   };
 }).call(this);

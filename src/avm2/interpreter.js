@@ -87,7 +87,6 @@ var Interpreter = new ((function () {
       var parameterCount = method.parameters.length;
       var argCount = methodArgs.length;
 
-      AVM2.domainStack.push(domain);
       var frame = { method: method, bc: null };
       AVM2.callStack.push(frame);
 
@@ -300,11 +299,9 @@ var Interpreter = new ((function () {
             stack.push(getSuper(savedScope, obj, name).apply(obj, args));
             break;
           case 0x47: // OP_returnvoid
-            AVM2.domainStack.pop();
             AVM2.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            AVM2.domainStack.pop();
             AVM2.callStack.pop();
             return stack.pop();
           case 0x49: // OP_constructsuper
@@ -688,7 +685,6 @@ var Interpreter = new ((function () {
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
                 domain.getProperty(handler.typeName, true, true).isInstance(e))) {
-              AVM2.unwindStackTo(domain);
               scope = savedScope;
               scopeHeight = 0;
               stack.length = 0;
