@@ -19,6 +19,7 @@
 // The XML parser is designed only for parsing of simple XML documents
 
 var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLType, isXMLName;
+var XMLParser;
 
 (function () {
   function XMLEncoder(ancestorNamespaces, indentLevel, prettyPrinting) {
@@ -133,7 +134,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
     return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function XMLParser() {
+  XMLParser = function XMLParser() {
     function parseXml(s, sink) {
       var i = 0, scopes = [{
         space:"default",
@@ -881,20 +882,20 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return !!this[Multiname.getQualifiedName(resolved)];
-      } else {
-        if (isNumeric(mn)) {
-          // this is a shortcut to the E4X logic that wants us to create a new
-          // XMLList with of size 1 and access it with the given index.
-          if (Number(0) === 0) {
-            return true;
-          }
-          return false;
+      }
+      if (isNumeric(mn)) {
+        // this is a shortcut to the E4X logic that wants us to create a new
+        // XMLList with of size 1 and access it with the given index.
+        if (Number(0) === 0) {
+          return true;
         }
-        var name = toXMLName(mn);
-        switch (nameKind(name.mn)) {
+        return false;
+      }
+      var name = toXMLName(mn);
+      switch (nameKind(name.mn)) {
         case ANY_ATTR_NAME:
           var any = true;
-          // fall through
+        // fall through
         case ATTR_NAME:
           return this.attributes.some(function (v, i) {
             if ((any || (v.name.localName === name.localName)) &&
@@ -905,7 +906,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           break;
         case ANY_NAME:
           var any = true;
-          // fall through
+        // fall through
         default:
           return this.children.some(function (v, i) {
             if ((any || v.kind === "element" && v.name.localName === name.localName) &&
@@ -913,52 +914,7 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
               return true;
             }
           });
-          break;
-        }
       }
-      return false;
-    };
-
-    Xp.hasProperty = function (mn, isMethod) {
-      if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
-        return !!this[Multiname.getQualifiedName(resolved)];
-      } else {
-        if (isNumeric(mn)) {
-          // this is a shortcut to the E4X logic that wants us to create a new
-          // XMLList with of size 1 and access it with the given index.
-          if (Number(0) === 0) {
-            return true;
-          }
-          return false;
-        }
-        var name = toXMLName(mn);
-        switch (nameKind(name.mn)) {
-        case ANY_ATTR_NAME:
-          var any = true;
-          // fall through
-        case ATTR_NAME:
-          return this.attributes.some(function (v, i) {
-            if ((any || (v.name.localName === name.localName)) &&
-                ((name.uri === null || v.name.uri === name.uri))) {
-              return true;
-            }
-          });
-          break;
-        case ANY_NAME:
-          var any = true;
-          // fall through
-        default:
-          return this.children.some(function (v, i) {
-            if ((any || v.kind === "element" && v.name.localName === name.localName) &&
-                ((name.uri === null || v.kind === "element" && v.name.uri === name.uri))) {
-              return true;
-            }
-          });
-          break;
-        }
-      }
-      return false;
     };
 
     Xp.delete = function (key, isMethod) {
@@ -1062,7 +1018,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         }
         x.children[p] = t;
       }
-      return;
     };
 
     // 9.1.1.13 [[AddInScopeNamespace]] ( N )
@@ -1101,7 +1056,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           }
         });       
       }
-      return;
     }
 
     // 9.1.1.8 [[Descendants]] (P)
@@ -1543,7 +1497,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
         }
         x.children[0].setProperty(p, v);
       }
-      return;
     };
 
     XLp.getProperty = function (mn, isMethod) {
@@ -1584,7 +1537,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
           return true;
         }
       });
-      return false;
     };
 
     XLp.delete = function (key, isMethod) {
@@ -1604,7 +1556,6 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       } else if (val.isXML) {
         this.children.push(val);
       }
-      return;
     };
 
     // XMLList.[[Length]]
@@ -1651,9 +1602,9 @@ var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLTyp
       if (this.length() > 0) {
         return this;
       }
-      var x = this
+      var x = this;
       var name = x.name;
-      var targetObject = x.targetObject
+      var targetObject = x.targetObject;
       var targetProperty = x.targetProperty;
       if (targetObject === null ||
           targetProperty === null ||
