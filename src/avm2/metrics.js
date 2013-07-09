@@ -19,6 +19,7 @@
 (function (exports) {
   var Timer = (function () {
     var base = new timer(null, "Total"), top = base;
+    var flat = new timer(null, "Flat"), flatStack = [];
     function timer(parent, name) {
       this.parent = parent;
       this.timers = {};
@@ -28,6 +29,7 @@
       this.total = 0;
       this.count = 0;
     }
+    timer.flat = flat;
     function getTicks() {
       return new Date().getTime();
     }
@@ -47,11 +49,21 @@
     timer.start = function (name) {
       top = name in top.timers ? top.timers[name] : top.timers[name] = new timer(top, name);
       top.start();
+
+      var tmp = name in flat.timers ? flat.timers[name] : flat.timers[name] = new timer(flat, name);
+      tmp.start();
+      flatStack.push(tmp);
     };
     timer.stop = function () {
       top.stop();
       top = top.parent;
+
+      flatStack.pop().stop();
     };
+    timer.stopStart = function (name) {
+      Timer.stop();
+      Timer.start(name);
+    },
     timer.prototype.toJSON = function () {
       return {name: this.name, total: this.total, timers: this.timers};
     };
@@ -70,6 +82,7 @@
     };
     timer.trace = function (writer, json) {
       base.trace(writer, json);
+      flat.trace(writer, json);
     };
     return timer;
   })();

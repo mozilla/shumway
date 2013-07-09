@@ -227,6 +227,7 @@ var Stubs = new (function () {
     M("flash.system.System", "SystemClass", SystemDefinition),
     M("flash.system.Security", "SecurityClass", SecurityDefinition),
     M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
+    M("flash.system.ApplicationDomain", "ApplicationDomainClass", ApplicationDomainDefinition),
 
     M("flash.accessibility.Accessibility", "AccessibilityClass", AccessibilityDefinition),
     M("flash.utils.Timer", "TimerClass", TimerDefinition)

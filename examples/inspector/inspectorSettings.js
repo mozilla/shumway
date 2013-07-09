@@ -48,6 +48,7 @@ setTimeout(function displayInfo() {
   var output = "";
   var counts = Counter.counts;
   var pairs = [];
+
   for (var name in counts) {
     pairs.push([name, counts[name]]);
   }
@@ -72,11 +73,24 @@ setTimeout(function displayInfo() {
     output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + "</div>";
     totalCount += pair[1];
   });
-  if (totalCount > 3000000) {
+  if (totalCount > 30000000) {
     // Don't delete me, this is meant to be annoying.
-    throw "The Counters Are Too Damn High (> 3,000,000).";
+    throw "The Counters Are Too Damn High (> 30,000,000).";
   }
+
   document.getElementById("info").innerHTML = output;
+
+  output = "";
+  for (var name in Timer.flat.timers) {
+    var timer = Timer.flat.timers[name];
+    var str = timer.name + ": " + timer.total + " ms" +
+      ", count: " + timer.count +
+      ", avg: " + (timer.total / timer.count).toFixed(2) + " ms" +
+      ", last: " + timer.last + " ms";
+    output += str + "<br>";
+  }
+  document.getElementById("timerInfo").innerHTML = output;
+
   setTimeout(displayInfo, 500);
 }, 500);
 
@@ -97,4 +111,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(
   setElementState(state[id]);
 });
 
+document.getElementById("sample").addEventListener("click", function () {
+  triggerSampling(5);
+});
 

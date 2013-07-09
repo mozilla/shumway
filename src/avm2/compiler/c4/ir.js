@@ -1792,7 +1792,7 @@
         if (node.mustFloat || node.shouldFloat) {
           return true;
         }
-        if (node instanceof Parameter || node instanceof This) {
+        if (node instanceof Parameter || node instanceof This || node instanceof Arguments) {
           return true;
         }
         return node instanceof Binary || node instanceof Unary || node instanceof Parameter;

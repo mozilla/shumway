@@ -45,6 +45,7 @@ var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
+var VM_METHOD_INFO = "method info";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -333,7 +334,9 @@ function coerce(value, type) {
  * of "null" or "undefined".
  */
 function coerceString(x) {
-  if (x === null || x === undefined) {
+  if (typeof x === "string") {
+    return x;
+  } else if (x === null || x === undefined) {
     return null;
   }
   return String(x);
@@ -1507,6 +1510,8 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
   }
 
+  mi.freeMethod[VM_METHOD_INFO] = mi;
+
   if (hasDynamicScope) {
     return bindFreeMethodScope(mi, scope);
   }
@@ -1603,46 +1608,6 @@ function makeQualifiedNameTraitMap(traits) {
     map[Multiname.getQualifiedName(traits[i].name)] = traits[i];
   }
   return map;
-}
-
-/**
- * Inherit trait bindings. This is the primary inheritance mechanism, we clone the trait bindings then
- * overwrite them for overrides.
- */
-function inheritBindings(object, base, traits) {
-  if (!base) {
-    defineNonEnumerableProperty(object, VM_BINDINGS, []);
-    defineNonEnumerableProperty(object, VM_SLOTS, []);
-    defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
-  } else {
-    var traitMap = makeQualifiedNameTraitMap(traits);
-    var openMethods = createEmptyObject();
-    var baseBindings = base[VM_BINDINGS];
-    var baseOpenMethods = base[VM_OPEN_METHODS];
-    for (var i = 0; i < baseBindings.length; i++) {
-      var qn = baseBindings[i];
-      // TODO: Make sure we don't add overriden methods as patch targets. This may be
-      // broken for getters / setters.
-      if (!traitMap[qn] || traitMap[qn].isGetter() || traitMap[qn].isSetter()) {
-        var baseBindingDescriptor = Object.getOwnPropertyDescriptor(base, qn);
-        Object.defineProperty(object, qn, baseBindingDescriptor);
-        if (Object.prototype.hasOwnProperty.call(baseOpenMethods, qn)) {
-          var openMethod = baseOpenMethods[qn];
-          openMethods[qn] = openMethod;
-          defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, openMethod);
-          if (openMethod.patchTargets) {
-            openMethod.patchTargets.push({object: openMethods, name: qn});
-            openMethod.patchTargets.push({object: object, name: VM_OPEN_METHOD_PREFIX + qn});
-          }
-        }
-      }
-    }
-    defineNonEnumerableProperty(object, VM_BINDINGS, base[VM_BINDINGS].slice());
-    defineNonEnumerableProperty(object, VM_SLOTS, base[VM_SLOTS].slice());
-    defineNonEnumerableProperty(object, VM_OPEN_METHODS, openMethods);
-  }
-
-  return;
 }
 
 /**
