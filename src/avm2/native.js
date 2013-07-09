@@ -1162,8 +1162,10 @@ var natives = (function () {
           return true;
         },
         readByteArray: function (filename) {
-          notImplemented("File.readByteArray");
-          return "";
+          var ByteArrayClass = AVM2.currentDomain().getClass("flash.utils.ByteArray");
+          var data = ByteArrayClass.createInstance();
+          data.writeRawBytes(snarf(filename, "binary"));
+          return data;
         },
         writeByteArray: function (filename, bytes) {
           // NOTE: |write| is only defined in a special build of the Spidermonkey shell,
@@ -1373,6 +1375,10 @@ var natives = (function () {
       if (len > this.length) {
         this.length = len;
       }
+    };
+
+    BAp.readRawBytes = function readRawBytes() {
+      return new Int8Array(this.a, 0, this.length);
     };
 
     BAp.writeBytes = function writeBytes(bytes, offset, length) {
