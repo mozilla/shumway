@@ -16,13 +16,32 @@
  * limitations under the License.
  */
 
+/*
+
+ STATUS
+
+ 2013-07-10: This version of 'handlers.js' is 10x smaller and loads 4x faster
+             (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining
+             truck game 2.5Mb) than the automatically generated version. This by
+             itself is not very impressive, but this version lays the foundation
+             for further work (see TO DO below) that should yield signficant
+             improvements.
+
+
+ TO DO
+ -- Read bytes directly from $bytes, rather than through ffi helpers
+ -- Build outgoing objects during decoding rather that a separate copy path
+ -- In line asmjs functions like crazy
+ -- Explore the use of hybrid functions that defeat the AOT compiler but
+    directly manipulate outgoing objects and take advantage of the jit
+
+*/
+ 
 function trace (str) {
   if (this.print) {
     print(str);
   }
 }
-
-
 
 var tagHandler = (function (global) {
 
