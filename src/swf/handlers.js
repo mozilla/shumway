@@ -27,7 +27,7 @@ function trace (str) {
 var tagHandler = (function (global) {
 
   var Asm = function Asm(stdlib, imports, heap) {
-    "use asm";
+//    "use asm";
 
     var RED = 1;
     var GREEN = 2;
@@ -163,7 +163,7 @@ var tagHandler = (function (global) {
     function writeU16(val) {
       val = val | 0;
       bytesU8[pos | 0] = val;
-      bytesU8[pos + 1 | 0] = val >> 8 & 0xFF;
+      bytesU8[pos + 1 | 0] = val >> 8;
       pos = pos + 2 | 0;
     }
 
@@ -294,10 +294,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
-        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
-        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
-        bytesU8[offset + 4 | 0] = count & 0xFF;
+        bytesU8[offset + 1 | 0] = count;
+        bytesU8[offset + 2 | 0] = count >> 8;
+        bytesU8[offset + 3 | 0] = count >> 16;
+        bytesU8[offset + 4 | 0] = count >> 24;
       }
     }
 
@@ -327,10 +327,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
-        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
-        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
-        bytesU8[offset + 4 | 0] = count & 0xFF;
+        bytesU8[offset + 1 | 0] = count;
+        bytesU8[offset + 2 | 0] = count >> 8;
+        bytesU8[offset + 3 | 0] = count >> 16;
+        bytesU8[offset + 4 | 0] = count >> 24;
       }
     }
 
@@ -365,10 +365,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count >> 24 & 0xFF;
-        bytesU8[offset + 2 | 0] = count >> 16 & 0xFF;
-        bytesU8[offset + 3 | 0] = count >> 8 & 0xFF;
-        bytesU8[offset + 4 | 0] = count & 0xFF;
+        bytesU8[offset + 1 | 0] = count;
+        bytesU8[offset + 2 | 0] = count >> 8;
+        bytesU8[offset + 3 | 0] = count >> 16;
+        bytesU8[offset + 4 | 0] = count >> 24;
       }
     }
 
@@ -390,7 +390,7 @@ var tagHandler = (function (global) {
       var i = 0;
       while (count) {
         marker = readU8() | 0;
-        //trace("decode() marker=" + marker);
+        // trace("decode() pos=" + pos + " marker=" + marker + " count=" + count);
         switch (marker | 0) {
         case 90:  // $Z
           pushNull();
@@ -424,34 +424,34 @@ var tagHandler = (function (global) {
           break;
         case 111: // $o
           //trace("$o");
-          count = readU8() | 0;
-          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+          childCount = readU8() | 0;
+          for (i = 0; ~~i < ~~childCount; i = i + 2 | 0) {
             decode(1);
             decode(1);
           }
-          newObject(count | 0);
+          newObject(childCount | 0);
           break;
         case 79:  // $O
-          count = readU32() | 0;
-          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+          childCount = readU32() | 0;
+          for (i = 0; ~~i < ~~childCount; i = i + 2 | 0) {
             decode(1);
             decode(1);
           }
-          newObject(count | 0);
+          newObject(childCount | 0);
           break;
         case 97:  // $a
-          count = readU8() | 0;
-          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
+          childCount = readU8() | 0;
+          for (i = 0; ~~i < ~~childCount; i = i + 1 | 0) {
             decode(1);
           }
-          newArray(count | 0);
+          newArray(childCount | 0);
           break;
         case 65:  // $A
-          count = readU32() | 0;
-          for (i = 0; ~~i < ~~count; i = i + 1 | 0) {
-            decode(count);
+          childCount = readU32() | 0;
+          for (i = 0; ~~i < ~~childCount; i = i + 1 | 0) {
+            decode(1);
           }
-          newArray(count | 0);
+          newArray(childCount | 0);
           break;
         // The following codes extend UBJSON
         case 36:  // $$   interned string
@@ -479,10 +479,15 @@ var tagHandler = (function (global) {
     }
 
     function writePropU16(id, val) {
+//      trace("writePropU16() id="+id+" val="+val);
       id = id | 0;
       val = val | 0;
-      writeUBJU8(id);
-      writeUBJU16(val);
+      bytesU8[pos | 0] = $B;
+      bytesU8[pos + 1 | 0] = id;
+      bytesU8[pos + 2 | 0] = $i;
+      bytesU8[pos + 3 | 0] = val;
+      bytesU8[pos + 4 | 0] = val >> 8;
+      pos = pos + 5 | 0;
     }
 
     function writePropU32(id, val) {
@@ -667,6 +672,7 @@ var tagHandler = (function (global) {
     }
 
     function rgb() {
+//      trace("rgb()");
       writePropU16(RED, readStreamU8() | 0);
       writePropU16(GREEN, readStreamU8() | 0);
       writePropU16(BLUE, readStreamU8() | 0);
@@ -682,42 +688,39 @@ var tagHandler = (function (global) {
       return 8;
     }
 
-/*
     function fillSolid(swfVersion, tagCode, isMorph) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
-      var count = 0;
+      var count = 2, childCount = 0;
       var pos = 0;
       if (~~tagCode > 22 | 0) {
         writeUBJU8(COLOR);
-        pos = startObject(BIG) | 0;
-        rgba();
-        finishObject(pos, 4, BIG);
-        count = count + 1 | 0;
+        pos = startObject(0) | 0;
+        childCount = rgba() | 0;
+        finishObject(pos, childCount, 0);
       } else if (isMorph) {
         writeUBJU8(COLOR);
-        pos = startObject(BIG) | 0;
-        rgba();
-        finishObject(pos, 4, BIG);
-        count = count + 1 | 0;
+        pos = startObject(0) | 0;
+        childCount = rgba() | 0;
+        finishObject(pos, childCount, 0);
       } else {
         writeUBJU8(COLOR);
-        pos = startObject(BIG) | 0;
-        rgba();
-        finishObject(pos, 4, BIG);
-        count = count + 1 | 0;
+        pos = startObject(0) | 0;
+        childCount = rgb() | 0;
+        finishObject(pos, childCount, 0);
       }
       if (isMorph) {
         writeUBJU8(COLOR_MORPH);
-        pos = startObject(BIG) | 0;
-        rgba();
-        finishObject(pos, 4, BIG);
-        count = count + 1 | 0;
+        pos = startObject(0) | 0;
+        childCount = rgba() | 0;
+        finishObject(pos, childCount, 0);
+        count = count + 2 | 0;
       }
       return count | 0;
     }
 
+/*
     function fillGradient(swfVersion, tagCode, isMorph) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
@@ -860,8 +863,9 @@ var tagHandler = (function (global) {
 */
     return {
       removeObject: removeObject,
-      rgb: rgb,
-      shapeRecordEdge: shapeRecordEdge,
+//      rgb: rgb,
+//      shapeRecordEdge: shapeRecordEdge,
+//      fillSolid: fillSolid,
 //      rgba: rgba,
 //      lineStyle: lineStyle,
 //      fillStyle: fillStyle,
@@ -985,20 +989,22 @@ var tagHandler = (function (global) {
     },
   };
 
-  function newObject(count, val) {
-    if (!val) {
-      val = {};
-    }
-    for (var i = count - 1; i >= 0; i--) {
-      var v = values.pop();
-      var i = values.pop();
-      var n = names[i];
-      val[n] = v;
-    }
-    values.push(val);
+  function newObject(count) {
+    var obj = {};
+    setObjectProps(obj, count);
+    //var start = values.length - count;
+    //var stop = values.length;
+    //for (var i = start; i < stop; i += 2) {
+    //  var n = names[values[i]];
+    //  var v = values[i+1];
+    //  obj[n] = v;
+    //}
+    //values = values.slice(0, start);
+    values.push(obj);
   }
 
   function setObjectProps(obj, count) {
+//    trace("setObjectProps() count=" + count + " values="+ values);
     var start = values.length - count;
     var stop = values.length;
     for (var i = start; i < stop; i += 2) {
@@ -1006,6 +1012,7 @@ var tagHandler = (function (global) {
       var v = values[i+1];
       obj[n] = v;
     }
+    values = values.slice(0, start);
   }
 
   function popObject() {
@@ -1090,6 +1097,8 @@ var tagHandler = (function (global) {
   }
 
   function placeObject($bytes, $stream, $, swfVersion, tagCode){
+    var pos;
+    asm.setPos((pos = 0));
     $||($={})
     if(tagCode>4){
       if(tagCode>26){
@@ -1265,13 +1274,24 @@ var tagHandler = (function (global) {
   }
 
   function removeObject($bytes, $stream, $, swfVersion, tagCode){
-    var pos = asm.getPos();
-    var count = asm.removeObject(swfVersion, tagCode);
-    asm.setPos(pos);
-    asm.decode(count);
-    setObjectProps($, count);
-    asm.setPos(pos);
-    return $;
+    if (asm.removeObject) {
+      var pos;
+      asm.setPos((pos = 0));
+      var count = asm.removeObject(swfVersion, tagCode);
+      asm.setPos(pos);
+      asm.decode(count);
+      setObjectProps($, count);
+      asm.setPos(pos);
+      return $;
+    }
+	  $||($={})
+	  if(tagCode===5){
+	    $.symbolId=
+		    readUi16($bytes,$stream)
+	  }
+	  $.depth=
+	    readUi16($bytes,$stream)
+	  return $
   }
 
   function defineImage($bytes, $stream, $, swfVersion, tagCode){
@@ -2317,12 +2337,22 @@ var tagHandler = (function (global) {
   }
 
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
-    var pos = asm.getPos();
-    var count = asm.rgb();
-    asm.setPos(pos);
-    asm.decode(count);
-    setObjectProps($, count);
-    asm.setPos(pos);
+    if (asm.rgb) {
+      var pos = asm.getPos();
+      var count = asm.rgb();
+      asm.setPos(pos);
+      asm.decode(count);
+      setObjectProps($, count);
+      return $;
+    }
+    $.red=
+      readUi8($bytes, $stream)
+    $.green=
+      readUi8($bytes, $stream)
+    $.blue=
+      readUi8($bytes, $stream)
+    $.alpha=
+      255;
     return $;
   }
 
@@ -2333,8 +2363,6 @@ var tagHandler = (function (global) {
       asm.setPos(pos);
       asm.decode(count);
       setObjectProps($, count);
-      asm.setPos(pos);
-//      trace("rgb() pos=" + pos + " val=" + JSON.stringify($));
       return $;
     }
     $.red=
@@ -2359,8 +2387,15 @@ var tagHandler = (function (global) {
       readUi8($bytes, $stream)
   }
 
-  function fillSolid($bytes, $stream, $, swfVersion, tagCode) {
-    var isMorph = $.isMorph;
+  function fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+    if (asm.fillSolid) {
+      var pos = asm.getPos();
+      var count = asm.fillSolid(swfVersion, tagCode, isMorph);
+      asm.setPos(pos);                     // backup to decode results
+      asm.decode(count);                   // decode results
+      setObjectProps($, count);            // copy results into context
+      return;
+    }
     if(tagCode>22||isMorph){
       var $125=$.color={}
       rgba($bytes, $stream, $125, swfVersion, tagCode);
@@ -2373,6 +2408,7 @@ var tagHandler = (function (global) {
       var $127=$.colorMorph={}
       rgba($bytes, $stream, $127, swfVersion, tagCode);
     }
+    return;
   }
 
   function matrix($bytes, $stream, $, swfVersion, tagCode) {
@@ -2665,7 +2701,6 @@ var tagHandler = (function (global) {
       asm.setPos(pos);                     // backup to decode results
       asm.decode(count);                   // decode results
       setObjectProps($, count);            // copy results into context
-      asm.setPos(pos);                     // backup to beginning
       return {bits: bits};
     }
     var isStraight=
@@ -2823,7 +2858,7 @@ var tagHandler = (function (global) {
     var type = $.type = readUi8($bytes, $stream);
     switch (type) {
     case 0:
-      fillSolid($bytes, $stream, $, swfVersion, tagCode);
+      fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph);
       break
     case 16:
     case 18:
