@@ -18,7 +18,7 @@
 
 var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-var traceDomain = domainOptions.register(new Option("tdpa", "traceDomain", "boolean", false, "trace domain property access"));
+var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
 
 var EXECUTION_MODE = {
   INTERPRET: 0x1,
@@ -42,9 +42,7 @@ function executeScript(script) {
   var scope = new Scope(null, script.global);
   // XXX interpreted methods populate stack with every call, compiled don't
   // pushing current runtime to the stack, so Runtime.currentDomain is successful
-  AVM2.domainStack.push(abc.domain);
   createFunction(script.init, scope).call(script.global);
-  AVM2.domainStack.pop();
   script.executed = true;
 }
 
@@ -65,6 +63,8 @@ Glue.ALL               = Glue.PUBLIC_PROPERTIES | Glue.PUBLIC_METHODS;
 var Domain = (function () {
 
   function Domain(vm, base, mode, allowNatives) {
+    assert (vm instanceof AVM2, vm);
+    assert (isNullOrUndefined(base) || base instanceof Domain);
 
     this.vm = vm;
 
@@ -337,20 +337,13 @@ var Domain = (function () {
     },
 
     broadcastMessage: function (message, origin) {
+      Timer.start("broadcast: " + message._type);
       this.onMessage.notify({
         data: message,
         origin: origin,
         source: this
       });
-    },
-
-    _getScriptObject: function () {
-      if (!this.scriptObject) {
-        var ApplicationDomainClass = avm2.systemDomain.getClass("flash.system.ApplicationDomain");
-        var dom = ApplicationDomainClass.createInstance([this]); // wrapping native Domain
-        release || assert(dom === this.scriptObject);
-      }
-      return this.scriptObject;
+      Timer.stop();
     },
 
     traceLoadedClasses: function (lastOnly) {

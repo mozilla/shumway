@@ -15,7 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+/*global AVM2, Domain, Multiname */
+/**
+ * Application domains don't have 1-1 object reference relationship with the real domain objects, not sure
+ * why, but for instance ApplicationDomain.currentDomain !== ApplicationDomain.currentDomain. The getter
+ * returns a new ApplicationDomain object reference each time. This is easier to implement, we just always
+ * keep track of the nativeObject and create new ApplicationDomains views on it each time.
+ */
 var ApplicationDomainDefinition = (function () {
   return {
     // (parentDomain:ApplicationDomain = null)
@@ -27,7 +33,7 @@ var ApplicationDomainDefinition = (function () {
         static: {
           currentDomain: {
             get: function currentDomain() { // (void) -> ApplicationDomain
-              notImplemented("ApplicationDomain.currentDomain");
+              return new flash.system.ApplicationDomain(AVM2.currentDomain());
             }
           },
           MIN_DOMAIN_MEMORY_LENGTH: {
@@ -37,22 +43,37 @@ var ApplicationDomainDefinition = (function () {
           }
         },
         instance: {
-          ctor: function ctor(parentDomain) { // (parentDomain:ApplicationDomain) -> void
-            notImplemented("ApplicationDomain.ctor");
+          ctor: function ctor(parentDomainOrNativeObject) { // (parentDomain:ApplicationDomain) -> void
+            if (parentDomainOrNativeObject instanceof Domain) {
+              this.nativeObject = parentDomainOrNativeObject;
+              return;
+            }
+            // If no parent domain is passed in, use the current system domain.
+            var parentNativeObject = parentDomainOrNativeObject ?
+              parentDomainOrNativeObject.nativeObject : AVM2.currentDomain().system;
+            this.nativeObject = new Domain(parentNativeObject.vm, parentNativeObject);
           },
           getDefinition: function getDefinition(name) { // (name:String) -> Object
-            notImplemented("ApplicationDomain.getDefinition");
+            var simpleName = name.replace("::", ".");
+            return this.nativeObject.getProperty(Multiname.fromSimpleName(simpleName), true, true);
           },
           hasDefinition: function hasDefinition(name) { // (name:String) -> Boolean
-            notImplemented("ApplicationDomain.hasDefinition");
+            if (name === undefined) {
+              return false;
+            }
+            var simpleName = name.replace("::", ".");
+            return !!this.nativeObject.findProperty(Multiname.fromSimpleName(simpleName), false, false);
           },
           getQualifiedDefinitionNames: function getQualifiedDefinitionNames() { // (void) -> Vector
             notImplemented("ApplicationDomain.getQualifiedDefinitionNames");
           },
           parentDomain: {
             get: function parentDomain() { // (void) -> ApplicationDomain
-              notImplemented("ApplicationDomain.parentDomain");
-              return this._parentDomain;
+              var base = this.nativeObject.base;
+              if (!base) {
+                return undefined;
+              }
+              return new flash.system.ApplicationDomain(base);
             }
           },
           domainMemory: {
@@ -67,6 +88,7 @@ var ApplicationDomainDefinition = (function () {
           }
         }
       },
+      script: { static: Glue.ALL, instance: Glue.ALL }
     }
   };
 }).call(this);

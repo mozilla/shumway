@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer */
 
 var CanvasCache = {
   cache: [],
@@ -283,6 +283,36 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
 }
 
 var renderingTerminated = false;
+
+var samplesLeftPlusOne = 0;
+
+function triggerSampling(count) {
+  assert (count > 0);
+  samplesLeftPlusOne = -count - 1;
+}
+
+function sampleStart() {
+  if (!samplesLeftPlusOne) {
+    return;
+  }
+  if (samplesLeftPlusOne < 0) {
+    console.profile("Sample");
+    samplesLeftPlusOne *= -1;
+  }
+  if (samplesLeftPlusOne > 0) {
+    console.info("Sampling Frame: " + (samplesLeftPlusOne - 1));
+  }
+}
+
+function sampleEnd() {
+  if (!samplesLeftPlusOne) {
+    return;
+  }
+  samplesLeftPlusOne --;
+  if (samplesLeftPlusOne === 1) {
+    console.profileEnd("Sample");
+  }
+}
 
 function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
@@ -587,6 +617,8 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
+    sampleStart();
+
     var refreshStage = false;
     if (stage._invalid) {
       updateRenderTransform();
@@ -601,7 +633,10 @@ function renderStage(stage, ctx, events) {
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
+
+      Timer.start("MouseVisitor");
       (new MouseVisitor(stage)).start();
+      Timer.stop();
 
       if (renderFrame) {
         frameTime = now;
@@ -619,8 +654,10 @@ function renderStage(stage, ctx, events) {
 
       if (refreshStage || renderFrame) {
         ctx.beginPath();
+        Timer.start("PreVisitor");
         (new PreVisitor(stage, ctx)).start();
         (new RenderVisitor(stage, ctx, refreshStage)).start();
+        Timer.stop();
       }
 
       if (renderFrame) {
@@ -633,6 +670,8 @@ function renderStage(stage, ctx, events) {
 
       stage._syncCursor();
     }
+
+    sampleEnd();
 
     if (renderingTerminated) {
       if (events.onTerminated) {

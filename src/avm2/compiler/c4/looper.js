@@ -1240,7 +1240,7 @@
       */
 
       restructureControlFlow: function restructureControlFlow() {
-        Timer.start("restructureControlFlow");
+        Timer.start("Restructure Control Flow");
         if (!this.markedLoops && !this.markLoops()) {
           Timer.stop();
           return false;

@@ -1162,8 +1162,10 @@ var natives = (function () {
           return true;
         },
         readByteArray: function (filename) {
-          notImplemented("File.readByteArray");
-          return "";
+          var ByteArrayClass = AVM2.currentDomain().getClass("flash.utils.ByteArray");
+          var data = ByteArrayClass.createInstance();
+          data.writeRawBytes(snarf(filename, "binary"));
+          return data;
         },
         writeByteArray: function (filename, bytes) {
           // NOTE: |write| is only defined in a special build of the Spidermonkey shell,
@@ -1375,6 +1377,10 @@ var natives = (function () {
       }
     };
 
+    BAp.readRawBytes = function readRawBytes() {
+      return new Int8Array(this.a, 0, this.length);
+    };
+
     BAp.writeBytes = function writeBytes(bytes, offset, length) {
       if (arguments.length < 2) {
         offset = 0;
@@ -1509,80 +1515,34 @@ var natives = (function () {
   }
 
   /**
-   * ApplicationDomain.as
+   * Domain.as
    */
-  function ApplicationDomainClass(runtime, scope, instanceConstructor, baseClass) {
-    var c = new Class("ApplicationDomain", instanceConstructor, C(instanceConstructor));
-    c.extendBuiltin(baseClass);
-
+  function DomainClass(runtime, scope, instanceConstructor, baseClass) {
+    var c = new Class("File", instanceConstructor, C(instanceConstructor));
+    c.extend(baseClass);
     c.native = {
       instance: {
-        ctor: function (parentDomain) {
-          var nativeObject = null;
-          if (parentDomain instanceof Domain) {
-            // late binding with native Domain
-            nativeObject = parentDomain;
-            parentDomain = !parentDomain.base ? null :
-              parentDomain.base._getScriptObject();
-          }
-
-          // If no parent domain is passed in, get the current system domain.
-          var parent;
-          if (!parentDomain) {
-            parent = AVM2.domainStack.top().system;
-          } else {
-            parent = parentDomain.dom;
-          }
-
-          this.dom = nativeObject || new Domain(parent.vm, parent);
-          this.dom.scriptObject = this;
+        init: function (base) {
+          this.base = base;
+          this.nativeObject = new Domain(avm2, base ? base.nativeObject : null);
         },
-
-        parentDomain: {
-          get: function () {
-            var base = this.dom.base;
-
-            if (!base) {
-              return undefined;
-            }
-
-            if (!base.scriptObject) {
-              base.scriptObject = new instanceConstructor();
-            }
-
-            return base.scriptObject;
-          }
+        loadBytes: function (byteArray, swfVersion) { // (byteArray:ByteArray, swfVersion:uint = 0);
+          this.nativeObject.executeAbc(new AbcFile(byteArray.readRawBytes()));
         },
-
-        getDefinition: function (name) {
-          var simpleName = name.replace("::", ".");
-          return this.dom.getProperty(Multiname.fromSimpleName(simpleName), true, true);
-        },
-
-        hasDefinition: function (name) {
-          if (name === undefined) {
-            return false;
-          }
-          var simpleName = name.replace("::", ".");
-          return !!this.dom.findProperty(Multiname.fromSimpleName(simpleName), false, false);
+        getClass: function (className) { // (className:String);
+          return this.nativeObject.getClass(className);
         }
       },
-
       static: {
         currentDomain: {
           get: function () {
-            var domain = AVM2.currentDomain();
-
-            if (!domain.scriptObject) {
-              domain.scriptObject = new instanceConstructor();
-            }
-
-            return domain.scriptObject;
+            var domain = Object.create(instanceConstructor.prototype);
+            domain.nativeObject = AVM2.currentDomain();
+            return domain;
           }
         }
       }
     };
-
     return c;
   }
 
@@ -1672,7 +1632,7 @@ var natives = (function () {
     ShumwayClass: ShumwayClass,
     CapabilitiesClass: CapabilitiesClass,
     FileClass: FileClass,
-    ApplicationDomainClass: ApplicationDomainClass,
+    DomainClass: DomainClass,
 
     /**
      * DescribeType.as
