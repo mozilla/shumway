@@ -385,6 +385,10 @@ function defineShape(tag, dictionary) {
     var segments = lineSegments[i], segment;
     if (segments) {
       var color = lineStyle.color;
+      if (!color) {
+        // TODO stroke defined by FILL_STYLE
+        color = { red: 255, green: 0, blue: 128, alpha: 255 };
+      }
       var stroke = lineStyle.colorMorph ?
         morphColor(color, lineStyle.colorMorph) :
         '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"'
