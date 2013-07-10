@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2TextField, toStringRgba, warning, XMLParser */
+/*global AS2TextField, toStringRgba, warning */
 
 var TextFieldDefinition = (function () {
 
-  var xmlParser = new XMLParser();
+  var htmlParser = document.createElement('p');
 
   /*
    * Parsing "html", in this context, actually means ensuring that the given
@@ -30,37 +30,38 @@ var TextFieldDefinition = (function () {
    * nodes.
    */
   function parseHtml(val) {
-    var xml = xmlParser.parseFromString(val).children[0];
+    htmlParser.innerHTML = val;
+    var rootElement = htmlParser.childNodes.length !== 1 ? htmlParser :
+      htmlParser.childNodes[0];
     var content = {text : '', tree : null};
-    content.tree = convertXML(xml, content);
+    content.tree = convertMarkup(rootElement, content);
     return content;
   }
 
-  function convertXML(xml, content) {
+  function convertMarkup(tree, content) {
     // Ignore all comments, processing instructions and namespaced nodes.
-    if (xml.kind !== 'element' && xml.kind !== 'text' ||
-        xml.name.prefix !== '')
+    if (tree.nodeType !== 1 && tree.nodeType !== 3 || tree.prefix)
     {
       return;
     }
     var node = {type : '', text : '', format : null, children : null};
 
-    if (xml.kind === 'text') {
-      var text = xml.value;
+    if (tree.nodeType === 3) {
+      var text = tree.textContent;
       node.type = 'text';
       node.text = text;
       content.text += text;
       return node;
     }
 
-    node.type = xml.name.localName;
-    node.format = extractAttributes(xml);
+    node.type = tree.localName;
+    node.format = extractAttributes(tree);
     node.children = [];
 
-    var children = xml.children;
+    var children = tree.childNodes;
     var childCount = children.length;
     for (var i = 0; i < childCount; i++) {
-      node.children.push(convertXML(children[i], content));
+      node.children.push(convertMarkup(children[i], content));
     }
 
     return node;
@@ -77,10 +78,10 @@ var TextFieldDefinition = (function () {
     var attributesMap = Object.create(null);
     for (var i = 0; i < attributesList.length; i++) {
       var attr = attributesList[i];
-      if (attr.name.prefix !== '') {
+      if (attr.prefix !== '') {
         continue;
       }
-      attributesMap[attr.name.localName] = attr.value;
+      attributesMap[attr.localName] = attr.value;
     }
     return attributesMap;
   }
@@ -167,21 +168,14 @@ var TextFieldDefinition = (function () {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
     switch (node.type) {
-      case 'b': format.bold = true; format.str += ' bold'; break;
-      case 'i': format.italic = true; format.str += ' italic'; break;
+      case 'b': format.bold = true; break;
+      case 'i': format.italic = true; break;
       case 'font':
         if ('color' in attributes) {
           format.color = attributes.color;
         }
         if ('face' in attributes) {
-          var fontFace = attributes.face;
-          if (fontFace === '_sans') {
-            fontFace = 'sans-serif';
-          } else if (fontFace === '_serif') {
-            fontFace = 'serif';
-          }
-          //TODO: adapt to embedded font names
-          format.face = fontFace;
+          format.face = convertFontFamily(attributes.face);
         }
         if ('size' in attributes) {
           format.size = attributes.size;
@@ -195,12 +189,12 @@ var TextFieldDefinition = (function () {
         // TODO: support leftMargin, rightMargin & blockIndent
         // TODO: support leading
         // TODO: support tabStops, if possible
-        format.str = makeFormatString(format);
         state.lineHeight = Math.max(state.lineHeight, format.size);
         break;
       default:
         warning('Unknown format node encountered: ' + node.type); return;
     }
+    format.str = makeFormatString(format);
     state.formats.push(format);
     state.runs.push({type: 'f', format: format});
     state.currentFormat = format;
@@ -214,10 +208,10 @@ var TextFieldDefinition = (function () {
   }
   function makeFormatString(format) {
     //TODO: verify that px is the right unit
-    return format.size + 'px ' +
-           (format.bold ? 'bold ' : '') +
-           (format.italic ? 'italic ' : '') +
-           format.face;
+    // order of the font arguments: <style> <weight> <size> <family>
+    return (format.italic ? 'italic ' : 'normal ') +
+           (format.bold ? 'bold ' : 'normal ') +
+           format.size + 'px ' + format.face;
   }
 
   function renderToCanvas(ctx, bounds, runs) {
@@ -254,6 +248,22 @@ var TextFieldDefinition = (function () {
     return output + renderNodeEnd(node);
   }
 
+  function convertFontFamily(face) {
+    //TODO: adapt to embedded font names
+    var family;
+    if (face.indexOf('_') === 0) {
+      // reserved fonts
+      if (face.indexOf('_sans') === 0) {
+        family = 'sans-serif';
+      } else if (face.indexOf('_serif') === 0) {
+        family = 'serif';
+      } else if (face.indexOf('_typewriter') === 0) {
+        family = 'monospace';
+      }
+    }
+    return family || '"' + face + '"';
+  }
+
   function renderNodeStart(node) {
     var format = node.format;
     var output;
@@ -281,13 +291,7 @@ var TextFieldDefinition = (function () {
           styles += 'color:' + format.color + ';';
         }
         if ('face' in format) {
-          var fontFace = format.face;
-          if (fontFace === '_sans') {
-            fontFace = 'sans-serif';
-          } else if (fontFace === '_serif') {
-            fontFace = 'serif';
-          }
-          //TODO: adapt to embedded font names
+          var fontFace = convertFontFamily(format.face);
           styles += 'font-family:' + fontFace + ';';
         }
         if ('size' in format) {
@@ -409,7 +413,7 @@ var TextFieldDefinition = (function () {
         initialFormat.color = toStringRgba(tag.color);
       }
       if (tag.hasFont) {
-        initialFormat.face = tag.font;
+        initialFormat.face = convertFontFamily(tag.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
 
@@ -462,7 +466,7 @@ var TextFieldDefinition = (function () {
       if (this._htmlText === val) {
         return;
       }
-      this._htmlText = val;
+      this._htmlText = '<P>' + val + '</P>'; // TODO add default formatting
       this._content = parseHtml(val);
       this._markAsDirty();
     },
@@ -491,6 +495,7 @@ var TextFieldDefinition = (function () {
         text: desc(def, "text"),
         defaultTextFormat: desc(def, "defaultTextFormat"),
         draw: def.draw,
+        htmlText: desc(def, "htmlText"),
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,
