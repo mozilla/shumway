@@ -188,16 +188,24 @@ var FileLoadingService = {
 };
 
 function parseSwf(url, movieParams, objectParams) {
+  var compilerSettings = JSON.parse(
+    FirefoxCom.requestSync('getCompilerSettings', null));
+  enableVerifier.value = compilerSettings.verifier;
+
+  console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
   function loaded() {}
-  createAVM2(builtinPath, playerGlobalPath, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET, function (avm2) {
-    console.time("Initialize Renderer");
-    SWF.embed(url, document, document.getElementById("viewer"), {
-       url: url,
-       movieParams: movieParams,
-       objectParams: objectParams,
-       onComplete: loaded,
-       onBeforeFrame: frame
+  createAVM2(builtinPath, playerGlobalPath,
+    compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+    compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+    function (avm2) {
+      console.time("Initialize Renderer");
+      SWF.embed(url, document, document.getElementById("viewer"), {
+         url: url,
+         movieParams: movieParams,
+         objectParams: objectParams,
+         onComplete: loaded,
+         onBeforeFrame: frame
     });
   });
 }

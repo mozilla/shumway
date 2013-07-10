@@ -180,6 +180,13 @@ ChromeActions.prototype = {
     }
     return getBoolPref(data.pref, data.def);
   },
+  getCompilerSettings: function getCompilerSettings() {
+    return JSON.stringify({
+      appCompiler: getBoolPref('shumway.appCompiler', true),
+      sysCompiler: getBoolPref('shumway.sysCompiler', false),
+      verifier: getBoolPref('shumway.verifier', true)
+    });
+  },
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
