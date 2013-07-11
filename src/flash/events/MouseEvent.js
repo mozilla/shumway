@@ -27,10 +27,10 @@ var MouseEventDefinition = (function () {
             //notImplemented("MouseEvent.updateAfterEvent");
           },
           getStageX: function getStageX() { // (void) -> Number
-            notImplemented("MouseEvent.getStageX");
+            return this._stageX;
           },
           getStageY: function getStageY() { // (void) -> Number
-            notImplemented("MouseEvent.getStageY");
+            return this._stageY;
           },
           localX: {
             get: function localX() { // (void) -> Number

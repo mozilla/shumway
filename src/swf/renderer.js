@@ -438,6 +438,9 @@ function renderStage(stage, ctx, events) {
   MouseVisitor.prototype = {
     ignoreVisibleAttribute: false,
     start: function () {
+      this.mouseMoveEvt._stageX = stage._mouseX;
+      this.mouseMoveEvt._stageY = stage._mouseY;
+
       visitContainer(this.root, this);
     },
     childrenStart: function() {},
@@ -520,6 +523,9 @@ function renderStage(stage, ctx, events) {
       if (stage._mouseOver &&
           hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
         if (mouseMoved) {
+          this.mouseMoveEvt._localX = interactiveParent._mouseX;
+          this.mouseMoveEvt._localY = interactiveParent._mouseY;
+
           interactiveParent._dispatchEvent(this.mouseMoveEvt);
         }
         // saving the current interactive symbol and whole stack of
