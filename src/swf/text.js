@@ -28,6 +28,7 @@ function defineText(tag, dictionary) {
   var props = {
     type: 'text',
     id: tag.id,
+    variableName: tag.variableName, // for AVM1
     tag: tag
   };
   if (dependencies.length)
