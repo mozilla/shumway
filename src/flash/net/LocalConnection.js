@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global FileLoadingService */
 var LocalConnectionDefinition = (function () {
   return {
     // ()
@@ -43,8 +44,11 @@ var LocalConnectionDefinition = (function () {
           },
           domain: {
             get: function domain() { // (void) -> String
-              notImplemented("LocalConnection.domain");
-              return this._domain;
+              somewhatImplemented("LocalConnection.domain");
+              // HACK some SWFs want to know where they are hosted
+              var url = FileLoadingService.resolveUrl('/');
+              var m = /:\/\/(.+?)[:?#\/]/.exec(url);
+              return m && m[1];
             }
           },
           client: {
