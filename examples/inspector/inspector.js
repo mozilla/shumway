@@ -236,11 +236,14 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
+        var swfURL = FileLoadingService.resolveUrl(file);
+        var loaderURL = getQueryVariable("loaderURL") || swfURL;
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
           onStageInitialized: stageInitialized,
           onBeforeFrame: frame,
-          url: FileLoadingService.resolveUrl(file),
+          url: swfURL,
+          loaderURL: loaderURL,
           movieParams: movieParams || {},
         });
       }
