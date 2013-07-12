@@ -53,13 +53,7 @@ function readTags(context, stream, swfVersion, onprogress) {
       } else {
         var handler = tagHandler[tagCode];
         if (handler) {
-          if (tagHandler.pushStream) {
-            tagHandler.pushStream(subbytes, substream);
-          }
           handler(subbytes, substream, tag, swfVersion, tagCode);
-          if (tagHandler.popStream) {
-            tagHandler.popStream();
-          }
         }
       }
       tags.push(tag);
@@ -145,6 +139,7 @@ function CompressedPipe(target, length) {
     completed: false
   };
 }
+
 CompressedPipe.prototype = {
   push: function (data, progressInfo) {
     var buffer = this.buffer;

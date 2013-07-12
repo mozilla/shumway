@@ -24,16 +24,22 @@
              (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining
              truck game 2.5Mb) than the automatically generated version. This by
              itself is not very impressive, but this version lays the foundation
-             for further work (see TO DO below) that should yield signficant
+             for further work (see TODO below) that should yield signficant
              improvements.
 
+ TODO
 
- TO DO
  -- Read bytes directly from $bytes, rather than through ffi helpers
  -- Build outgoing objects during decoding rather that a separate copy path
  -- In line asmjs functions like crazy
  -- Explore the use of hybrid functions that defeat the AOT compiler but
     directly manipulate outgoing objects and take advantage of the jit
+
+ EXPERIMENTS
+
+ -- Generate C from tags.js/struct.js spec and compile using Emscripten
+ -- Emit JSON as C-strings and call JSON.parse() to decode
+ -- Emit object values directly using ffi imports
 
 */
  
@@ -46,8 +52,12 @@ function trace (str) {
 var tagHandler = (function (global) {
 
   var Asm = function Asm(stdlib, imports, heap) {
-//    "use asm";
+    "use asm";
 
+    var inputStreamOffset = 8388608; // 2^23
+    var inputStreamPos = 8388608;
+    var maskOffset = 8387584; // 2^23 - 2^10
+    var pos = 0;
     var RED = 1;
     var GREEN = 2;
     var BLUE = 3;
@@ -80,20 +90,25 @@ var tagHandler = (function (global) {
     var CONTROL_DELTA_Y = 30;
     var ANCHOR_DELTA_X = 31;
     var ANCHOR_DELTA_Y = 32;
+    var A = 33;
+    var B = 34;
+    var C = 35;
+    var D = 36;
+    var TX = 37;
+    var TY = 38;
 
-    var readStreamU8 = imports.readStreamU8;
-    var readStreamU16 = imports.readStreamU16;
-    var readStreamUb = imports.readStreamUb;
-    var readStreamSb = imports.readStreamSb;
+    var align = imports.align;
+    var getBitBuffer = imports.getBitBuffer;
+    var getBitLength = imports.getBitLength;
+    var setBitBuffer = imports.setBitBuffer;
+    var setBitLength = imports.setBitLength;
     var readStreamFixed8 = imports.readStreamFixed8;
     var readStreamString = imports.readStreamString;
     var readStreamBinary = imports.readStreamBinary;
     var emptyString = imports.emptyString;
 
-    // BEGIN
-
-    var pos = 0;
     var bytesU8 = new stdlib.Uint8Array(heap);
+    var bytesU32 = new stdlib.Uint32Array(heap);
     var bytesS8 = new stdlib.Int8Array(heap);
     var bytesD32 = new stdlib.Float32Array(heap);
     var bytesD64 = new stdlib.Float64Array(heap);
@@ -140,6 +155,90 @@ var tagHandler = (function (global) {
     function setPos(p) {
       p = p | 0;
       pos = p;
+    }
+
+    function getInputStreamPos() {
+      //trace("getInputStreamPos() pos=" + (inputStreamPos - inputStreamOffset | 0));
+      return inputStreamPos - inputStreamOffset | 0;
+    }
+
+    function setInputStreamPos(p) {
+      //trace("setInputStreamPos() p=" + p);
+      p = p | 0;
+      inputStreamPos = inputStreamOffset + p | 0;
+    }
+
+    function readStreamU8() {
+      var val = 0;
+      val = bytesU8[inputStreamPos] | 0;
+      inputStreamPos = inputStreamPos + 1 | 0;
+      return val | 0;
+    }
+
+    function readStreamU16() {
+      var val = 0;
+      val = bytesU8[inputStreamPos] | 0;
+      val = (val + (bytesU8[inputStreamPos + 1 | 0] << 8 | 0)) | 0;
+      inputStreamPos = inputStreamPos + 2 | 0;
+      return val | 0;
+    }
+
+    function readStreamU32() {
+      var val = 0;
+      val = bytesU8[inputStreamPos] | 0;
+      val = (val + (bytesU8[inputStreamPos + 1 | 0] << 8 | 0)) | 0;
+      val = (val + (bytesU8[inputStreamPos + 2 | 0] << 16 | 0)) | 0;
+      val = (val + (bytesU8[inputStreamPos + 3 | 0] << 24 | 0)) | 0;
+      inputStreamPos = inputStreamPos + 4 | 0;
+      return val | 0;
+    }
+
+    // Compute bit masks for values of size 1 through 32.
+    function initMasks() {
+      var i = 0, mask = 0;
+      for (i = 1, mask = 0; ~~i <= ~~32; i = i + 1 | 0) {
+        bytesU32[maskOffset+(4*i | 0) >> 2] = mask = (mask << 1) | 1;
+        //trace("initMasks() offset=" + (maskOffset+4*i>>2) + " mask=" + mask);
+      }
+    }
+
+    function readStreamSb(size) {
+      size = size | 0;
+      return ((readStreamUb(size) | 0) << (32 - size)) >> (32 - size) | 0;
+    }
+
+    function readStreamFb(size) {
+      size = size | 0;
+      return +((readStreamSb(size | 0) | 0) / 65536 | 0);
+    }
+
+    function readStreamUb(size) {
+      size = size | 0;
+      // Get the last bits and bit length in case they are needed for the
+      // current value
+      var buffer = 0;
+      var bitlen = 0;
+      var val = 0;
+      var mask = 0;
+      buffer = getBitBuffer() | 0; //$stream.bitBuffer;
+      bitlen = getBitLength() | 0; //$stream.bitLength;
+      mask = bytesU32[maskOffset + (4 * size | 0) >> 2] | 0;
+      // Shift the old bits left and OR with the new bits, then increment the
+      // relevant counters.
+      while (~~size > ~~bitlen) {
+        buffer = (buffer << 8) | bytesU8[inputStreamPos];
+        inputStreamPos = inputStreamPos + 1 | 0;
+        bitlen = bitlen + 8 | 0;
+      }
+      // Shift off the unused new bits on the right and mask off the unused old
+      // bits on the left.
+      bitlen = bitlen - size | 0;
+      val = (buffer >>> bitlen) & bytesU32[maskOffset + (4 * size | 0) >> 2];
+      // Save the new bits so that the unused bits can be used to compute the
+      // next value.
+      setBitBuffer(buffer | 0);
+      setBitLength(bitlen | 0);
+      return val | 0;
     }
 
     // BEGIN Builder
@@ -522,6 +621,13 @@ var tagHandler = (function (global) {
       pos = pos + 7 | 0;
     }
 
+    function writePropD32(id, val) {
+      id = id | 0;
+      val = +val;
+      writeUBJU8($B);
+      writeUBJD32(val);
+    }
+
     function writeString(id) {
       // FIXME
       id = id | 0;   // string pool id
@@ -707,6 +813,34 @@ var tagHandler = (function (global) {
       return 8;
     }
 
+    function matrix(swfVersion, tagCode) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      var bits = 0, a = 1.0, b = 0.0, c = 0.0, d = 1.0, tx = 0.0, ty = 0.0;
+      align();
+      if (readStreamUb(1) | 0) {
+        bits = readStreamUb(5) | 0;
+        a = +readStreamFb(bits | 0);
+        d = +readStreamFb(bits | 0);
+      }
+      if (readStreamUb(1) | 0) {
+        bits = readStreamUb(5) | 0;
+        b = +readStreamFb(bits | 0);
+        d = +readStreamFb(bits | 0);
+      }
+      bits = readStreamUb(5) | 0;
+      tx = +((readStreamSb(bits | 0) | 0) / 20 | 0);
+      ty = +((readStreamSb(bits | 0) | 0) / 20 | 0);
+      align();
+      writePropD32(A, a);
+      writePropD32(B, b);
+      writePropD32(C, c);
+      writePropD32(D, d);
+      writePropD32(TX, tx);
+      writePropD32(TY, ty);
+      return;
+    }
+
     function fillSolid(swfVersion, tagCode, isMorph) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
@@ -881,11 +1015,15 @@ var tagHandler = (function (global) {
     }
 */
     return {
+      initMasks: initMasks,
+      setInputStreamPos: setInputStreamPos,
+      getInputStreamPos: getInputStreamPos,
       removeObject: removeObject,
+//      matrix: matrix,
 //      rgb: rgb,
-//      shapeRecordEdge: shapeRecordEdge,
-//      fillSolid: fillSolid,
 //      rgba: rgba,
+      shapeRecordEdge: shapeRecordEdge,
+//      fillSolid: fillSolid,
 //      lineStyle: lineStyle,
 //      fillStyle: fillStyle,
       // Decode function
@@ -899,19 +1037,16 @@ var tagHandler = (function (global) {
 
   }
 
-  var objectStack = [];
-  var objectPool = [];
-  var streamStack = [];
-  var bytesStack = [];
+  var bytes;
+  var stream;
+  var inputStreamOffset = 8388608; // 2^23
 
-  function pushStream(bytes, stream) {
-    bytesStack.push(bytes);
-    streamStack.push(stream);
-  }
 
-  function popStream() {
-    bytesStack.pop();
-    streamStack.pop();
+  function setStream(b, s) {
+    bytes = b;
+    stream = s;
+    byteView.set(b, inputStreamOffset);
+    asm.setInputStreamPos(0);
   }
 
   var values = [];
@@ -949,17 +1084,19 @@ var tagHandler = (function (global) {
     controlDeltaY: 30,
     anchorDeltaX: 31,
     anchorDeltaY: 32,
+    a: 33,
+    b: 34,
+    c: 35,
+    d: 36,
+    tx: 37,
+    ty: 38,
 
     trace: trace,
-    readStreamU8: readStreamU8,
-    readStreamU16: readStreamU16,
-    readStreamUb: readStreamUb,
-    readStreamSb: readStreamSb,
     readStreamFixed8: readStreamFixed8,
     readStreamString: readStreamString,
     emptyString: emptyString,
     readStreamBinary: readStreamBinary,
-//    align: align,
+    align: alignStream,
     pushNull: function () {
       values.push(null);
     },
@@ -1006,6 +1143,18 @@ var tagHandler = (function (global) {
       }
       values.push(val);
     },
+    getBitBuffer: function () {
+      return stream.bitBuffer;
+    },
+    getBitLength: function () {
+      return stream.bitLength;
+    },
+    setBitBuffer: function (buffer) {
+      stream.bitBuffer = buffer;
+    },
+    setBitLength: function (bitlen) {
+      stream.bitLength = bitlen;
+    },
   };
 
   function newObject(count) {
@@ -1037,29 +1186,34 @@ var tagHandler = (function (global) {
   function popObject() {
     values.pop();
   }
-
-  function readStreamU8() {
-    return readUi8(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
-  };
-
-  function readStreamU16() {
-    return readUi16(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+  function alignStream() {
+    return align(bytes, stream);
   };
 
   function readStreamS16() {
-    return readSi16(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+    return readSi16(bytes, stream);
   };
 
   function readStreamUb(size) {
-    return readUb(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1], size);
+    var val = readUb(bytes, stream, size);
+    asm.setInputStreamPos(stream.pos);
+    return val;
   };
 
   function readStreamSb(size) {
-    return readSb(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1], size);
+    var val = readSb(bytes, stream, size);
+    asm.setInputStreamPos(stream.pos);
+    return val;
+  };
+
+  function readStreamFb(size) {
+    var val = readFb(bytes, stream, size);
+    asm.setInputStreamPos(stream.pos);
+    return val;
   };
 
   function readStreamFixed8() {
-    return readFixed8(bytesStack[bytesStack.length-1], streamStack[streamStack.length-1]);
+    return readFixed8(bytes, stream);
   };
 
   function readStreamString() {
@@ -1079,9 +1233,11 @@ var tagHandler = (function (global) {
     names[imports[v]] = v;
   });
 
-  var buffer = new ArrayBuffer(Math.pow(2, 16));
-  var view = new DataView(buffer);
+  var buffer = new ArrayBuffer(Math.pow(2, 24));  // 16,777,216 bytes
+  var dataView = new DataView(buffer);
+  var byteView = new Uint8Array(buffer);
   var asm = Asm(global, imports, buffer);
+  asm.initMasks();
 
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
@@ -1177,7 +1333,6 @@ var tagHandler = (function (global) {
           flags>>8&1
       }
       else{
-
         var cache=
           $.cache=
           0
@@ -1294,13 +1449,11 @@ var tagHandler = (function (global) {
 
   function removeObject($bytes, $stream, $, swfVersion, tagCode){
     if (asm.removeObject) {
-      var pos;
-      asm.setPos((pos = 0));
+      asm.setInputStreamPos($stream.pos);
+      var begin = asm.getPos();
       var count = asm.removeObject(swfVersion, tagCode);
-      asm.setPos(pos);
-      asm.decode(count);
-      setObjectProps($, count);
-      asm.setPos(pos);
+      $.binary = byteView.subarray(begin, asm.getPos());
+      $stream.pos = asm.getInputStreamPos();
       return $;
     }
 	  $||($={})
@@ -2355,14 +2508,18 @@ var tagHandler = (function (global) {
     align($bytes, $stream)
   }
 
+  // TODO
+  // -- return count
+  // -- caller updates count
+
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.rgb) {
-      var pos = asm.getPos();
-      var count = asm.rgb();
-      asm.setPos(pos);
-      asm.decode(count);
-      setObjectProps($, count);
-      return $;
+      asm.setInputStreamPos($stream.pos);
+      var begin = asm.getPos();
+      $.count = asm.rgb();
+      $.binary = byteView.subarray(begin, asm.getPos());
+      $stream.pos = asm.getInputStreamPos();
+      return;
     }
     $.red=
       readUi8($bytes, $stream)
@@ -2372,17 +2529,15 @@ var tagHandler = (function (global) {
       readUi8($bytes, $stream)
     $.alpha=
       255;
-    return $;
+    return;
   }
 
   function rgba($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.rgba) {
-      var pos = asm.getPos();
-      var count = asm.rgba();
-      asm.setPos(pos);
-      asm.decode(count);
-      setObjectProps($, count);
-      return $;
+      var begin = asm.getPos();
+      $.count = asm.rgba();
+      $.binary = byteView.subarray(begin, asm.getPos());
+      return;
     }
     $.red=
       readUi8($bytes, $stream)
@@ -2392,7 +2547,7 @@ var tagHandler = (function (global) {
       readUi8($bytes, $stream)
     $.alpha=
       readUi8($bytes, $stream)
-    return $;
+    return;
   }
 
   function argb($bytes, $stream, $, swfVersion, tagCode) {
@@ -2431,50 +2586,34 @@ var tagHandler = (function (global) {
   }
 
   function matrix($bytes, $stream, $, swfVersion, tagCode) {
+    if (asm.matrix) {
+      var begin = asm.getPos();
+      $.count = asm.matrix(swfVersion, tagCode);
+      $.binary = byteView.subarray(begin, asm.getPos());
+      return;
+    }
+    var bits = 0, a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
     align($bytes, $stream)
-    var hasScale=
-      readUb($bytes, $stream, 1)
-    if(hasScale){
-      var bits=
-        readUb($bytes, $stream, 5)
-      $.a=
-        readFb($bytes, $stream, bits)
-      $.d=
-        readFb($bytes, $stream, bits)
+    if (readUb($bytes, $stream, 1) | 0) {
+      bits = readUb($bytes, $stream, 5) | 0;
+      a = readFb($bytes, $stream, bits) | 0;
+      d = readFb($bytes, $stream, bits) | 0;
     }
-    else{
-      $.a=
-        1
-      $.d=
-        1
+    if (readUb($bytes, $stream, 1)) {
+      bits = readUb($bytes, $stream, 5);
+      b = readFb($bytes, $stream, bits);
+      d = readFb($bytes, $stream, bits);
     }
-    var hasRotate=
-      readUb($bytes, $stream, 1)
-    if(hasRotate){
-      var bits=
-        readUb($bytes, $stream, 5)
-      $.b=
-        readFb($bytes, $stream, bits)
-      $.c=
-        readFb($bytes, $stream, bits)
-    }
-    else{
-      $.b=
-        0
-      $.c=
-        0
-    }
-    var bits=
-      readUb($bytes, $stream, 5)
-    var e=
-      readSb($bytes, $stream, bits)
-    var f=
-      readSb($bytes, $stream, bits)
-    $.tx=
-      e/20
-    $.ty=
-      f/20
+    bits = readUb($bytes, $stream, 5);
+    tx = readSb($bytes, $stream, bits) / 20;
+    ty = readFb($bytes, $stream, bits) / 20;
     align($bytes, $stream)
+    $.a = a;
+    $.b = b;
+    $.c = c;
+    $.d = d;
+    $.tx = tx;
+    $.ty = ty;
   }
 
   function cxform($bytes, $stream, $, swfVersion, tagCode) {
@@ -2713,112 +2852,80 @@ var tagHandler = (function (global) {
 
   function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits) {
     if (asm.shapeRecordEdge) {
-      var pos = asm.getPos();
-      var count = asm.shapeRecordEdge(swfVersion, tagCode, flags, bits);
+      asm.setInputStreamPos($stream.pos);
+      //print("shapeRecordEdge() pos=" + $stream.pos);
+      var begin = asm.getPos();
+      $.count = asm.shapeRecordEdge(swfVersion, tagCode, flags, bits);
+      $.binary = byteView.subarray(begin, asm.getPos());
       asm.setPos(asm.getPos() - 1);        // backup to read return values
-      var bits = asm.readU8();            // read return value
-      asm.setPos(pos);                     // backup to decode results
-      asm.decode(count);                   // decode results
-      setObjectProps($, count);            // copy results into context
+      var bits = asm.readU8();             // read return value
+      asm.setPos(asm.getPos() - 1);        // backup to read return values
+      $stream.pos = asm.getInputStreamPos();      
       return {bits: bits};
     }
-    var isStraight=
-      $.isStraight=
-      flags>>4
-    var tmp=
-      flags&0x0f
-    var bits=
-      tmp+2
-    if(isStraight){
-
-      var isGeneral=
-        $.isGeneral=
-        readUb($bytes, $stream, 1)
-      if(isGeneral){
-
-        $.deltaX=
-          readSb($bytes, $stream, bits)
-        $.deltaY=
-          readSb($bytes, $stream, bits)
-      }
-      else{
-
-        var isVertical=
-          $.isVertical=
-          readUb($bytes, $stream, 1)
-        if(isVertical){
-
-          $.deltaY=
-            readSb($bytes, $stream, bits)
-        }
-        else{
-
-          $.deltaX=
-            readSb($bytes, $stream, bits)
+    var isStraight = 0, tmp = 0, bits = 0, isGeneral = 0, isVertical = 0;
+    isStraight = $.isStraight = flags >> 4;
+    tmp = flags & 0x0f;
+    bits = tmp + 2;
+    if (isStraight) {
+      isGeneral = $.isGeneral = readUb($bytes, $stream, 1);
+      if (isGeneral) {
+        $.deltaX = readSb($bytes, $stream, bits);
+        $.deltaY = readSb($bytes, $stream, bits);
+      } else {
+        isVertical = $.isVertical = readUb($bytes, $stream, 1);
+        if (isVertical) {
+          $.deltaY = readSb($bytes, $stream, bits);
+        } else {
+          $.deltaX = readSb($bytes, $stream, bits);
         }
       }
+    } else {
+      $.controlDeltaX = readSb($bytes, $stream, bits);
+      $.controlDeltaY = readSb($bytes, $stream, bits);
+      $.anchorDeltaX = readSb($bytes, $stream, bits);
+      $.anchorDeltaY = readSb($bytes, $stream, bits);
     }
-    else {
-      $.controlDeltaX=
-        readSb($bytes, $stream, bits)
-      $.controlDeltaY=
-        readSb($bytes, $stream, bits)
-      $.anchorDeltaX=
-        readSb($bytes, $stream, bits)
-      $.anchorDeltaY=
-        readSb($bytes, $stream, bits)
-    }
-//    trace("shapeRecordEdge() bits=" + bits);
     return {bits: bits};
   }
 
   function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
                             fillBits, lineBits, hasStrokes, bits) {
-    var $161 = $;
-    if (tagCode>2) {
-      var hasNewStyles = $161.hasNewStyles = flags >> 4;
+    var hasNewStyles = 0, hasLineStyle = 0, hasFillStyle1 = 0;
+    var hasFillStyle0 = 0, move = 0, bits = 0;
+    if (tagCode > 2) {
+      hasNewStyles = $.hasNewStyles = flags >> 4;
+    } else {
+      hasNewStyles = $.hasNewStyles = 0;
     }
-    else{
-      var hasNewStyles = $161.hasNewStyles = 0;
-    }
-    var hasLineStyle =
-      $161.hasLineStyle =
-      flags >> 3 & 1;
-    var hasFillStyle1 =
-      $161.hasFillStyle1 =
-      flags >> 2 & 1;
-    var hasFillStyle0 =
-      $161.hasFillStyle0 =
-      flags >> 1 & 1;
-    var move=
-      $161.move =
-      flags & 1;
+    hasLineStyle = $.hasLineStyle = flags >> 3 & 1;
+    hasFillStyle1 = $.hasFillStyle1 = flags >> 2 & 1;
+    hasFillStyle0 = $.hasFillStyle0 = flags >> 1 & 1;
+    move = $.move = flags & 1;
     if (move) {
-      var bits =
-        readUb($bytes, $stream, 5);
-      $161.moveX =
-        readSb($bytes, $stream, bits);
-      $161.moveY=
-        readSb($bytes, $stream, bits);
+      bits = readUb($bytes, $stream, 5);
+      $.moveX = readSb($bytes, $stream, bits);
+      $.moveY= readSb($bytes, $stream, bits);
     }
     if (hasFillStyle0) {
-      $161.fillStyle0 =
-        readUb($bytes, $stream, fillBits);
+      $.fillStyle0 = readUb($bytes, $stream, fillBits);
     }
-    if(hasFillStyle1){
-      $161.fillStyle1=
-        readUb($bytes,$stream,fillBits)
+    if (hasFillStyle1) {
+      $.fillStyle1 = readUb($bytes, $stream, fillBits);
     }
     if (hasLineStyle) {
-      $161.lineStyle =
-        readUb($bytes, $stream, lineBits);
+      $.lineStyle = readUb($bytes, $stream, lineBits);
     }
     if (hasNewStyles) {
-      var temp = styles($bytes, $stream, $161, swfVersion, tagCode, isMorph, hasStrokes);
+      var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
       var lineBits = temp.lineBits;
       var fillBits = temp.fillBits;
     }
-    return {lineBits: lineBits, fillBits: fillBits, bits: bits};
+    return {
+      lineBits: lineBits,
+      fillBits: fillBits,
+      bits: bits
+    };
   }
 
   function styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
@@ -3531,8 +3638,7 @@ var tagHandler = (function (global) {
     /* DefineBitsJPEG4 */               90: defineImage,
     /* DefineFont4 */                   91: undefined,
 
-    pushStream: pushStream,
-    popStream: popStream,
+    setStream: setStream,
   };
 
 })(this);
