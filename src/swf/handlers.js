@@ -17,7 +17,67 @@
  */
 
 /*
+  SWF Parser
+
+  We investigate the efficacy of rewriting the SWF parser in C using Emscripten
+  to generate efficient JS. Before we can rewrite the SWF parser in C we need
+  to define the interface between the existing code and the parts to be
+  rewritten in C, which can accept numeric values and typed arrays of numeric
+  values.
+
+  That interface currently consists of a table of tag handlers (functions that
+  parse individual SWF tags), and a Stream class that manages reading source
+  bytes down the the bit level. (The SWF file format encodes values at the sub-
+  byte level to conserve space.) The tag handlers parse a SWF tags to object
+  values, which are then interpreted by the Shumway runtime. Since C code cannot
+  produce JS object values, it will produce a byte array that encodes the
+  resulting syntax tree in binary form. It will be left to the runtime to decode
+  that blob when needed during rendering.
+
+  -- Binary object encoding for parse trees
+  -- Stream class for reading bytes (and bits) from the input stream
+
+  Work list
+
+  1. Rewrite the Stream class to read bytes directly from the source byte array,
+     without the use of non-numeric values.
+  2. Define a binary format for encoding parse trees as binary encoded object
+     values (e.g. Universal Binary JSON, UBJSON).
+  3. Rewrite the tag handlers in C (or hand optimized asm.js) to read SWF bits
+     and write syntax trees as UBJSON.
+  4. Decode binary objects as needed during rendering.
+
+  Goals and Risks
+
+  We are aiming for a 10x improvement in parsing time (not including the lazy
+  decoding time.) This will provide very quick startup times for large files and
+  hopefully faster overall SWF rendering times. We hope to use form flexible
+  construction of decoded syntax trees to avoid blocking startup and mimimizing
+  memory use by allocating tag object values incrementally.
+  
+  Risks include falling short of the 10x improvement, and not being able to
+  efficiently decode binary syntax trees to the object values used by the
+  renderer.
+
+  NEXT STEPS
+
+  Our next steps focus on proving that the proposed design will likely result in
+  the performance gains we aim for. This consists of two sub-proofs: 1/that a
+  SWF to binary syntax tree parser can be much (10x) faster than the existing
+  parser; and 2/that lazy decoding of binary syntax trees is not inttrude in the
+  process of rendering the binary tags.
+
+  We intend to initially write SWF tag handlers using asm.js. This will allow us
+  to avoid the overhead of writing rewriting and integrating a C based parser.
+  Writing  code in asm.js allows us to patch existing tag handlers incrementally,
+  sometimes depending on non-asmjs code in non-critical paths.
+  
   STATUS
+
+  [2013-07-13] Items 1 and 2 above are approaching completeness. 3 is prototyped
+  in ASM.JS and is showing promising but still inconclusive results. 4 is not
+  started.
+  
 
   [2013-07-10] This version of 'handlers.js' is 10x smaller and loads 4x faster
   (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining truck game
