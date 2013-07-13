@@ -240,8 +240,8 @@ BodyParser.prototype = {
     }
 
     if (progressInfo) {
-      swf.bytesLoaded = progressInfo.loaded;
-      swf.bytesTotal = progressInfo.total;
+      swf.bytesLoaded = progressInfo.bytesLoaded;
+      swf.bytesTotal = progressInfo.bytesTotal;
     }
 
     readTags(swf, stream, swfVersion, options.onprogress);
@@ -363,6 +363,6 @@ SWF.parse = function(buffer, options) {
 
   var pipe = SWF.parseAsync(options);
   var bytes = new Uint8Array(buffer);
-  var progressInfo = { loaded: bytes.length, total: bytes.length };
+  var progressInfo = { bytesLoaded: bytes.length, bytesTotal: bytes.length };
   pipe.push(bytes, progressInfo);
 };
