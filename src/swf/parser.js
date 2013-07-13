@@ -236,6 +236,9 @@ BodyParser.prototype = {
       swf.bytesTotal = progressInfo.total;
     }
 
+    if (tagHandler.setStream) {
+      tagHandler.setStream(stream);
+    }
     readTags(swf, stream, swfVersion, options.onprogress);
 
     var read = stream.pos;

@@ -73,7 +73,6 @@ var Stream = (function StreamClosure() {
     stream.remaining = Stream_remaining;
     stream.substream = Stream_substream;
     stream.push = Stream_push;
-    tagHandler.setStream(bytes, stream);
     return stream;
   }
 

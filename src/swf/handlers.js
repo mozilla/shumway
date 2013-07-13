@@ -17,29 +17,27 @@
  */
 
 /*
+  STATUS
 
- STATUS
+  [2013-07-10] This version of 'handlers.js' is 10x smaller and loads 4x faster
+  (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining truck game
+  2.5Mb) than the automatically generated version. This by itself is not very
+  impressive, but this version lays the foundation for further work (see TODO
+  below) that should yield signficant improvements.
 
- 2013-07-10: This version of 'handlers.js' is 10x smaller and loads 4x faster
-             (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining
-             truck game 2.5Mb) than the automatically generated version. This by
-             itself is not very impressive, but this version lays the foundation
-             for further work (see TODO below) that should yield signficant
-             improvements.
+  TODO
 
- TODO
+  -- Read bytes directly from $bytes, rather than through ffi helpers
+  -- Build outgoing objects during decoding rather that a separate copy path
+  -- In line asmjs functions like crazy
+  -- Explore the use of hybrid functions that defeat the AOT compiler but
+     directly manipulate outgoing objects and take advantage of the jit
 
- -- Read bytes directly from $bytes, rather than through ffi helpers
- -- Build outgoing objects during decoding rather that a separate copy path
- -- In line asmjs functions like crazy
- -- Explore the use of hybrid functions that defeat the AOT compiler but
-    directly manipulate outgoing objects and take advantage of the jit
+  EXPERIMENTS
 
- EXPERIMENTS
-
- -- Generate C from tags.js/struct.js spec and compile using Emscripten
- -- Emit JSON as C-strings and call JSON.parse() to decode
- -- Emit object values directly using ffi imports
+  -- Generate C from tags.js/struct.js spec and compile using Emscripten
+  -- Emit JSON as C-strings and call JSON.parse() to decode
+  -- Emit object values directly using ffi imports
 
 */
  
@@ -52,7 +50,7 @@ function trace (str) {
 var tagHandler = (function (global) {
 
   var Asm = function Asm(stdlib, imports, heap) {
-    "use asm";
+//    "use asm";
 
     var inputStreamOffset = 8388608; // 2^23
     var inputStreamPos = 8388608;
@@ -96,6 +94,31 @@ var tagHandler = (function (global) {
     var D = 36;
     var TX = 37;
     var TY = 38;
+    var HAS_EVENTS = 39;
+    var CLIP = 40;
+    var HAS_NAME = 41;
+    var HAS_RATIO = 42;
+    var HAS_CXFORM = 43;
+    var HAS_MATRIX = 44;
+    var PLACE = 45;
+    var MOVE = 46;
+    var HAS_BACKGROUND_COLOR = 47;
+    var HAS_VISIBILITY = 48;
+    var HAS_IMAGE = 49;
+    var HAS_CLASS_NAME = 50;
+    var HAS_CACHE = 51;
+    var BLEND = 52;
+    var HAS_FILTERS = 53;
+    var CLASS_NAME = 54;
+    var RATIO = 55;
+    var CLIP_DEPTH = 56;
+    var FILTERS = 57;
+    var BLEND_MODE = 58;
+    var BMP_CACHE = 59;
+    var BACKGROUND_COLOR = 60;
+    var VISIBILITY = 61;
+    var CACHE = 62;
+    var CXFORM = 63;
 
     var align = imports.align;
     var getBitBuffer = imports.getBitBuffer;
@@ -239,6 +262,35 @@ var tagHandler = (function (global) {
       setBitBuffer(buffer | 0);
       setBitLength(bitlen | 0);
       return val | 0;
+    }
+
+    // Copy the string bytes to the current position in the output buffer.
+    function readString(length) {
+      length = length | 0;
+      var code = 0, i = 0;
+      if (length) {
+        for (i = 0; ~~i < ~~length; i = i + 1 | 0) {
+          writeU8(readStreamU8() | 0);
+        }
+      } else {
+        for (length = 0; (code = readStreamU8() | 0); length = length + 1 | 0) {
+          writeU8(code);
+        }
+      }
+      pos = pos + length | 0;
+      inputStreamPos = inputStreamPos + length | 0;
+/*
+      var numChunks = length / 65536;
+      var str = '';
+      for (var i = 0; i < numChunks; ++i) {
+        var begin = i * 65536;
+        var end = begin + 65536;
+        var chunk = codes.slice(begin, end);
+        str += fromCharCode.apply(null, chunk);
+      }
+      return decodeURIComponent(escape(str.replace('\0', '', 'g')));
+*/
+      return length | 0;
     }
 
     // BEGIN Builder
@@ -423,6 +475,8 @@ var tagHandler = (function (global) {
     // more than 255 elements.
     function startArray(flags) {
       flags = flags | 0;
+      var startPos = 0;
+      startPos = pos;
       if ((flags & BIG | 0) == 0) {
         bytesU8[pos] = $a;
         bytesU8[pos + 1 | 0] = $_;
@@ -435,6 +489,7 @@ var tagHandler = (function (global) {
         bytesU8[pos + 4 | 0] = $_;
         pos = pos + 5 | 0;
       }
+      return startPos | 0;
     }
 
     // Finish an array. Offset is position before calling startArray().
@@ -638,6 +693,161 @@ var tagHandler = (function (global) {
       id = id | 0;   // blob pool id
     }
 
+    // BEGIN handlers
+
+    function placeObject(swfVersion, tagCode) {
+      swfVersion = swfVersion | 0;
+      tagCode = tagCode | 0;
+      var flags = 0, hasEvents = 0, clip = 0, hasName = 0, hasRatio = 0;
+      var hasCxform = 0, hasMatrix = 0, place = 0, move = 0, hasCache = 0;
+      var hasBackgroundColor = 0, hasVisibility = 0, hasImage = 0;
+      var hasClassName = 0, cache = 0, blend = 0, hasFilters = 0;
+      var stringPos = 0, stringLen = 0, objectPos = 0, objectLen = 0;
+      var arrayPos = 0, arrayLen = 0, i = 0;
+      var filterCount = 0, reserved = 0, allFlags = 0, eoe = 0;
+      var count = 0;
+      if (~~tagCode > ~~4) {
+        if (~~tagCode > ~~26) {
+          flags = readStreamU16() | 0;
+        } else {
+          flags = readStreamU8() | 0;
+        }
+        writePropU8(HAS_EVENTS, (hasEvents = flags >> 7 & 1));
+        writePropU8(CLIP, (clip = flags >> 6 & 1));
+        writePropU8(HAS_NAME, (hasName = flags >> 5 & 1));
+        writePropU8(HAS_RATIO, (hasRatio = flags >> 4 & 1));
+        writePropU8(HAS_CXFORM, (hasCxform = flags >> 3 & 1));
+        writePropU8(HAS_MATRIX, (hasMatrix = flags >> 2 & 1));
+        writePropU8(PLACE, (place = flags >> 1 & 1));
+        writePropU8(MOVE, (move = flags & 1));
+        if (~~tagCode == ~~70) {
+          writePropU8(HAS_BACKGROUND_COLOR, (hasBackgroundColor = flags >> 15 & 1));
+          writePropU8(HAS_VISIBILITY, (hasVisibility = flags >> 14 & 1));
+          writePropU8(HAS_IMAGE, (hasImage = flags >> 12 & 1));
+          writePropU8(HAS_CLASS_NAME, (hasClassName = flags >> 11 & 1));
+          writePropU8(HAS_CACHE, (hasCache = flags >> 10 & 1));
+          writePropU8(BLEND, (blend = flags >> 9 & 1));
+          writePropU8(HAS_FILTERS, (hasFilters = flags >> 8 & 1));
+          count = count + 14;
+        } else {
+          writePropU8(CACHE, (cache = 0));
+          writePropU8(BLEND, (blend = 0));
+          writePropU8(HAS_FILTERS, (hasFilters = 0));
+          count = count + 6;
+        }
+        writePropU32(DEPTH, readStreamU16() | 0);
+        if (hasClassName) {
+          writeU8(CLASS_NAME);
+          stringPos = startString(0) | 0;
+          stringLen = readString(0) | 0;
+          finishString(stringPos, stringLen, 0);
+        }
+        if (place) {
+          writePropU32(PLACE, readStreamU16() | 0);
+        }
+        count = count + 20;
+        if (hasMatrix) {
+          writeU8(MATRIX);
+          objectPos = startObject(0) | 0;
+          objectLen = matrix(swfVersion, tagCode) | 0;
+          finishObject(objectPos, objectLen, 0);
+          count = count + 2;
+        }
+        if (hasCxform) {
+//          writeU8(CX_FORM);
+//          objectPos = startObject(0) | 0;
+//          objectLen = cxform(swfVersion, tagCode) | 0;
+//          finishObject(objectPos, objectLen, 0);
+//          count = count + 2;
+        }
+        if (hasRatio) {
+          writePropU32(RATIO, readStreamU16() | 0);
+          count = count + 2;
+        }
+        if (hasName) {
+          writeU8(NAME);
+          stringPos = startString(BIG) | 0;
+          stringLen = readString(0) | 0;
+          finishString(stringPos, stringLen, BIG);
+          count = count + 2;
+        }
+        if (clip) {
+          writePropU32(CLIP_DEPTH, readStreamU16() | 0);
+          count = count + 2;
+        }
+        if (hasFilters) {
+          filterCount = readStreamU8() | 0;
+          writeU8(FILTERS);
+          arrayPos = startArray(0) | 0;
+          for (i = 0; ~~i < ~~filterCount; i = i + 1 | 0) {
+            objectPos = startObject(0) | 0;
+//            objectLen = anyFilter(swfVersion, tagCode) | 0;
+            finishObject(objectPos, objectLen, 0);
+          }
+          finishArray(arrayPos, filterCount, 0);
+          count = count + 2;
+        }
+        if (blend) {
+          writePropU16(BLEND_MODE, readStreamU8() | 0);
+          count = count + 2;
+        }
+        if (cache) {
+          writePropU16(BMP_CACHE, readStreamU8() | 0);
+          count = count + 2;
+        }
+        if (hasEvents) {
+          reserved = readStreamU16() | 0;
+          if (~~swfVersion >= ~~6) {
+            allFlags = readStreamU32() | 0;
+          } else {
+            allFlags = readStreamU16() | 0;
+          }
+          writeU8(EVENTS);
+          arrayPos = startArray(0) | 0;
+          arrayLen = 0;
+          do {
+            objectPos = startObject(0) | 0;
+            //objectLen = event(swfVersion, tagCode) | 0;
+            //eoe = temp.eoe;
+            finishObject(objectPos, objectLen, 0);
+            arrayLen = arrayLen + 1 | 0;
+          } while (!eoe)
+          finishArray(arrayPos, arrayLen, 0);
+          count = count + 2;
+        }
+        if (hasBackgroundColor) {
+          // FIXME is this right? tags.js has "ARGB" in quotes.
+          writeU8(BACKGROUND_COLOR);
+          //objectPos = startObject(0) | 0;
+          //objectLen = argb(swfVersion, tagCode) | 0;
+          finishObject(objectPos, objectLen, 0);
+          count = count + 2;
+        }
+        if (hasVisibility) {
+          writePropU16(VISIBILITY, readStreamU8() | 0);
+          count = count + 2;
+        }
+      } else {
+        writePropU8(PLACE, 1);
+        writePropU32(SYMBOL_ID, readStreamU16() | 0);
+        writePropU32(DEPTH, readStreamU16() | 0);
+        writePropU8(HAS_MATRIX, 1);
+        objectPos = startObject(0) | 0;
+        objectLen = matrix(swfVersion, tagCode) | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 8;
+        if (1 /*remaining()*/ | 0) {
+          writePropU8(HAS_CXFORM, 1);
+          writeU8(CXFORM);
+          objectPos = startObject(0) | 0;
+          //objectLen = cxform(swfVersion, tagCode) | 0;
+          finishObject(objectPos, objectLen, 0);
+          count = count + 4;
+        }
+      }
+      return count | 0;
+    }
+
     function removeObject(swfVersion, tagCode) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
@@ -797,7 +1007,6 @@ var tagHandler = (function (global) {
     }
 
     function rgb() {
-//      trace("rgb()");
       writePropU16(RED, readStreamU8() | 0);
       writePropU16(GREEN, readStreamU8() | 0);
       writePropU16(BLUE, readStreamU8() | 0);
@@ -838,7 +1047,7 @@ var tagHandler = (function (global) {
       writePropD32(D, d);
       writePropD32(TX, tx);
       writePropD32(TY, ty);
-      return;
+      return 12 | 0;
     }
 
     function fillSolid(swfVersion, tagCode, isMorph) {
@@ -1019,10 +1228,11 @@ var tagHandler = (function (global) {
       setInputStreamPos: setInputStreamPos,
       getInputStreamPos: getInputStreamPos,
       removeObject: removeObject,
+      placeObject: placeObject,
 //      matrix: matrix,
 //      rgb: rgb,
 //      rgba: rgba,
-      shapeRecordEdge: shapeRecordEdge,
+//      shapeRecordEdge: shapeRecordEdge,
 //      fillSolid: fillSolid,
 //      lineStyle: lineStyle,
 //      fillStyle: fillStyle,
@@ -1041,11 +1251,13 @@ var tagHandler = (function (global) {
   var stream;
   var inputStreamOffset = 8388608; // 2^23
 
-
-  function setStream(b, s) {
-    bytes = b;
+  var bCached, sCached, count = 0;
+  function setStream(s) {
+    print("setStream() count=" + count);
+    count = count + 1;
+    bytes = s.bytes;
     stream = s;
-    byteView.set(b, inputStreamOffset);
+    byteView.set(bytes, inputStreamOffset);
     asm.setInputStreamPos(0);
   }
 
@@ -1172,7 +1384,6 @@ var tagHandler = (function (global) {
   }
 
   function setObjectProps(obj, count) {
-//    trace("setObjectProps() count=" + count + " values="+ values);
     var start = values.length - count;
     var stop = values.length;
     for (var i = start; i < stop; i += 2) {
@@ -1239,7 +1450,9 @@ var tagHandler = (function (global) {
   var asm = Asm(global, imports, buffer);
   asm.initMasks();
 
+  var defineShapeCount = 0;
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
+    trace("defineShape() count=" + defineShapeCount++);
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var $0 = $.bbox = {};
@@ -1272,6 +1485,14 @@ var tagHandler = (function (global) {
   }
 
   function placeObject($bytes, $stream, $, swfVersion, tagCode){
+    if (asm.placeObject) {
+      asm.setInputStreamPos($stream.pos);
+      var begin = asm.getPos();
+      $.count = asm.placeObject(swfVersion, tagCode);
+      $.binary = byteView.subarray(begin, asm.getPos());
+      $stream.pos = asm.getInputStreamPos();
+      return $;
+    }
     var pos;
     asm.setPos((pos = 0));
     $||($={})
