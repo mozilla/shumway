@@ -28,7 +28,7 @@ var VideoDefinition = (function () {
           this._element.width = this._videoWidth = this._element.videoWidth;
           this._element.height = this._videoHeight = this._element.videoHeight;
           if (this.stage) {
-            this.stage.invalidate();
+            this.stage._invalid = true;
           }
         }.bind(this));
       }.bind(this));
