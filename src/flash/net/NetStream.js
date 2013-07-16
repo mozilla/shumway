@@ -17,7 +17,7 @@
  */
 /*global Promise, FileLoadingService, MediaSource, Multiname, wrapJSObject */
 
-var USE_MEDIASOURCE_API = true;
+var USE_MEDIASOURCE_API = false;
 
 var NetStreamDefinition = (function () {
   return {
