@@ -19,6 +19,17 @@ package {
     }
   }
 
+  var c1 = new Class1();
+  var i1: Interface1 = Interface1(c1);
+
+  trace(i1.test());
+
+  var c2 = new Class2();
+  var i2: Interface1 = Interface1(c2);
+
+  trace(i2.test());
+  trace(c2.test());
+
   (function () {
     var c1 = new Class1();
     var i1: Interface1 = Interface1(c1);
