@@ -513,14 +513,22 @@ var InstanceBindings = (function () {
       }
     }
 
-    /*
+    /**
      * Add interface traits.
      */
     var domain = ii.abc.domain;
     var interfaces = ii.interfaces;
 
+    // Collect all implemented interfaces.
     for (var i = 0; i < interfaces.length; i++) {
       var interface = domain.getProperty(interfaces[i], true, true);
+      copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
+      this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
+    }
+
+    // Apply all interface bindings.
+    for (var interfaceName in this.implementedInterfaces) {
+      var interface = this.implementedInterfaces[interfaceName];
       ib = interface.interfaceBindings;
       for (var interfaceKey in ib.map) {
         var interfaceBinding = ib.map[interfaceKey];
@@ -532,10 +540,6 @@ var InstanceBindings = (function () {
           map[interfaceKey] = map[key];
         }
       }
-
-      // Also collect all implemented interfaces.
-      copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
-      this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
     }
   }
   instanceBindings.prototype = Object.create(Bindings.prototype);
