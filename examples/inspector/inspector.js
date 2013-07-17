@@ -196,8 +196,7 @@ if (yt) {
       return fid !== '5' && fid !== '34' && fid !== '35'; // more?
     }).join(',');
 
-    var swf = JSON.parse(/swf\s*=\s*("[^;]+)/.exec(xhr.responseText)[1]);
-    swf = /src="([^"]+)/.exec(swf)[1];
+    var swf = config.url;
 
     document.getElementById('openFileToolbar').setAttribute('hidden', true);
     executeFile(swf, null, config.args);
