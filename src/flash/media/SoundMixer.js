@@ -17,36 +17,77 @@
  */
 
 var SoundMixerDefinition = (function () {
-  var def = {};
-
   var registeredChannels = [];
-
-  function stopAll() {
-    registeredChannels.forEach(function (channel) {
-      channel.stop();
-    });
-    registeredChannels = [];
-  }
-
-  function _registerChannel(channel) {
-    registeredChannels.push(channel);
-  }
-
-  function _unregisterChannel(channel) {
-    var index = registeredChannels.indexOf(channel);
-    if (index >= 0)
-      registeredChannels.splice(index, 1);
-  }
-
-  def.__glue__ = {
-    native: {
-      static: {
-        stopAll: stopAll,
-        _registerChannel: _registerChannel,
-        _unregisterChannel: _unregisterChannel
+  return {
+    // ()
+    __class__: "flash.media.SoundMixer",
+    initialize: function () {
+    },
+    __glue__: {
+      native: {
+        static: {
+          _registerChannel: function _registerChannel(channel) {
+            registeredChannels.push(channel);
+          },
+          _unregisterChannel: function _unregisterChannel(channel) {
+            var index = registeredChannels.indexOf(channel);
+            if (index >= 0)
+              registeredChannels.splice(index, 1);
+          },
+          stopAll: function stopAll() {
+            registeredChannels.forEach(function (channel) {
+              channel.stop();
+            });
+            registeredChannels = [];
+          },
+          computeSpectrum: function computeSpectrum(outputArray, FFTMode, stretchFactor) { // (outputArray:ByteArray, FFTMode:Boolean = false, stretchFactor:int = 0) -> void
+            somewhatImplemented("SoundMixer.computeSpectrum");
+            var data = new Float32Array(1024);
+            for (var i = 0; i < 1024; i++) {
+              data[i] = Math.random();
+            }
+            outputArray.writeRawBytes(data);
+            outputArray.position = 0;
+          },
+          areSoundsInaccessible: function areSoundsInaccessible() { // (void) -> Boolean
+            notImplemented("SoundMixer.areSoundsInaccessible");
+          },
+          bufferTime: {
+            get: function bufferTime() { // (void) -> int
+              notImplemented("SoundMixer.bufferTime");
+            },
+            set: function bufferTime(pA) { // (pA:int) -> void
+              notImplemented("SoundMixer.bufferTime");
+            }
+          },
+          soundTransform: {
+            get: function soundTransform() { // (void) -> SoundTransform
+              notImplemented("SoundMixer.soundTransform");
+            },
+            set: function soundTransform(pA) { // (pA:SoundTransform) -> void
+              notImplemented("SoundMixer.soundTransform");
+            }
+          },
+          audioPlaybackMode: {
+            get: function audioPlaybackMode() { // (void) -> String
+              notImplemented("SoundMixer.audioPlaybackMode");
+            },
+            set: function audioPlaybackMode(pA) { // (pA:String) -> void
+              notImplemented("SoundMixer.audioPlaybackMode");
+            }
+          },
+          useSpeakerphoneForVoice: {
+            get: function useSpeakerphoneForVoice() { // (void) -> Boolean
+              notImplemented("SoundMixer.useSpeakerphoneForVoice");
+            },
+            set: function useSpeakerphoneForVoice(pA) { // (pA:Boolean) -> void
+              notImplemented("SoundMixer.useSpeakerphoneForVoice");
+            }
+          }
+        },
+        instance: {
+        }
       }
     }
   };
-
-  return def;
 }).call(this);

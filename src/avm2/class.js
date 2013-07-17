@@ -597,8 +597,8 @@ var Interface = (function () {
       writer.leave("}");
     },
 
-    call: function (v) {
-      return v;
+    call: function ($this, x) {
+      return x;
     },
 
     apply: function ($this, args) {
