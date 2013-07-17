@@ -269,11 +269,6 @@ var tagHandler = (function (global) {
     var KEY_CODE = 150;
     var ACTION_DATA = 151;
 
-
-    var getBitBuffer = imports.getBitBuffer;
-    var getBitLength = imports.getBitLength;
-    var setBitBuffer = imports.setBitBuffer;
-    var setBitLength = imports.setBitLength;
     var bytesU8 = new stdlib.Uint8Array(heap);
     var bytesU32 = new stdlib.Uint32Array(heap);
     var bytesS8 = new stdlib.Int8Array(heap);
@@ -305,6 +300,11 @@ var tagHandler = (function (global) {
 
     // Flag bits
     var BIG = 0x00000001;
+
+    // Bitbuffer
+
+    var bitBuffer = 0;
+    var bitLength = 0;
 
     // Return the current position in the ArrayBuffer.
     function getPos() {
@@ -403,36 +403,30 @@ var tagHandler = (function (global) {
     }
     
     function alignStream() {
-      setBitBuffer(0);
-      setBitLength(0);
+      bitBuffer = 0;
+      bitLength = 0;
     }
 
     function readStreamUb(size) {
       size = size | 0;
       // Get the last bits and bit length in case they are needed for the
       // current value
-      var buffer = 0;
-      var bitlen = 0;
       var val = 0;
       var mask = 0;
-      buffer = getBitBuffer() | 0; //$stream.bitBuffer;
-      bitlen = getBitLength() | 0; //$stream.bitLength;
       mask = bytesU32[maskOffset + (4 * size | 0) >> 2] | 0;
       // Shift the old bits left and OR with the new bits, then increment the
       // relevant counters.
-      while (~~size > ~~bitlen) {
-        buffer = (buffer << 8) | bytesU8[inputStreamPos];
+      while (~~size > ~~bitLength) {
+        bitBuffer = (bitBuffer << 8) | bytesU8[inputStreamPos];
         inputStreamPos = inputStreamPos + 1 | 0;
-        bitlen = bitlen + 8 | 0;
+        bitLength = bitLength + 8 | 0;
       }
       // Shift off the unused new bits on the right and mask off the unused old
       // bits on the left.
-      bitlen = bitlen - size | 0;
-      val = (buffer >>> bitlen) & bytesU32[maskOffset + (4 * size | 0) >> 2];
+      bitLength = bitLength - size | 0;
+      val = (bitBuffer >>> bitLength) & bytesU32[maskOffset + (4 * size | 0) >> 2];
       // Save the new bits so that the unused bits can be used to compute the
       // next value.
-      setBitBuffer(buffer | 0);
-      setBitLength(bitlen | 0);
       return val | 0;
     }
 
@@ -821,7 +815,7 @@ var tagHandler = (function (global) {
       var count = 0, childPos = 0, childLen = 0, childCount = 0;
       var reserved = 0, isMorph = 0, hasStrokes = 0;
       writePropU32(ID, readStreamU16() | 0);
-      writeU8(BBOX);
+      writeUBJU8(BBOX);
       childPos = startObject(0) | 0;
       childLen = bbox(swfVersion, tagCode) | 0;
       finishObject(childPos, childLen, 0);
@@ -832,7 +826,7 @@ var tagHandler = (function (global) {
       };
       writePropU8(IS_MORPH, isMorph);
       if (isMorph) {
-        writeU8(BBOX_MORPH);
+        writeUBJU8(BBOX_MORPH);
         childPos = startObject(0) | 0;
         childLen = bbox(swfVersion, tagCode) | 0;
         finishObject(childPos, childLen, 0);
@@ -846,12 +840,12 @@ var tagHandler = (function (global) {
       writePropU8(HAS_STROKES, hasStrokes);
       count = count + 8 | 0;
       if (hasStrokes) {
-        writeU8(STROKE_BBOX);
+        writeUBJU8(STROKE_BBOX);
         childPos = startObject(0) | 0;
         childLen = bbox(swfVersion, tagCode) | 0;
         finishObject(childPos, childLen, 0);
         if (isMorph) {
-          writeU8(STROKE_BBOX_MORPH);
+          writeUBJU8(STROKE_BBOX_MORPH);
           childPos = startObject(0) | 0;
           childLen = bbox(swfVersion, tagCode) | 0;
           finishObject(childPos, childLen, 0);
@@ -916,7 +910,7 @@ var tagHandler = (function (global) {
         }
         writePropU32(DEPTH, readStreamU16() | 0);
         if (hasClassName) {
-          writeU8(CLASS_NAME);
+          writeUBJU8(CLASS_NAME);
           stringPos = startString(0) | 0;
           stringLen = readStreamString(0) | 0;
           finishString(stringPos, stringLen, 0);
@@ -926,14 +920,14 @@ var tagHandler = (function (global) {
         }
         count = count + 20 | 0;
         if (hasMatrix) {
-          writeU8(MATRIX);
+          writeUBJU8(MATRIX);
           objectPos = startObject(0) | 0;
           objectLen = matrix(swfVersion, tagCode) | 0;
           finishObject(objectPos, objectLen, 0);
           count = count + 2 | 0;
         }
         if (hasCxform) {
-          writeU8(CXFORM);
+          writeUBJU8(CXFORM);
           objectPos = startObject(0) | 0;
           objectLen = cxform(swfVersion, tagCode) | 0;
           finishObject(objectPos, objectLen, 0);
@@ -944,7 +938,7 @@ var tagHandler = (function (global) {
           count = count + 2 | 0;
         }
         if (hasName) {
-          writeU8(NAME);
+          writeUBJU8(NAME);
           stringPos = startString(BIG) | 0;
           stringLen = readStreamString(0) | 0;
           finishString(stringPos, stringLen, BIG);
@@ -956,7 +950,7 @@ var tagHandler = (function (global) {
         }
         if (hasFilters) {
           filterCount = readStreamU8() | 0;
-          writeU8(FILTERS);
+          writeUBJU8(FILTERS);
           arrayPos = startArray(0) | 0;
           for (i = 0; ~~i < ~~filterCount; i = i + 1 | 0) {
             objectPos = startObject(0) | 0;
@@ -981,7 +975,7 @@ var tagHandler = (function (global) {
           } else {
             allFlags = readStreamU16() | 0;
           }
-          writeU8(EVENTS);
+          writeUBJU8(EVENTS);
           arrayPos = startArray(0) | 0;
           arrayLen = 0;
           do {
@@ -999,7 +993,7 @@ var tagHandler = (function (global) {
         }
         if (hasBackgroundColor) {
           // FIXME is this right? tags.js has "ARGB" in quotes.
-          writeU8(BACKGROUND_COLOR);
+          writeUBJU8(BACKGROUND_COLOR);
           objectPos = startObject(0) | 0;
           objectLen = argb() | 0;
           finishObject(objectPos, objectLen, 0);
@@ -1020,7 +1014,7 @@ var tagHandler = (function (global) {
         count = count + 8 | 0;
         if (1 /*remaining()*/ | 0) {
           writePropU8(HAS_CXFORM, 1);
-          writeU8(CXFORM);
+          writeUBJU8(CXFORM);
           objectPos = startObject(0) | 0;
           objectLen = cxform(swfVersion, tagCode) | 0;
           finishObject(objectPos, objectLen, 0);
@@ -1056,7 +1050,7 @@ var tagHandler = (function (global) {
       fillBits = readU8() | 0;
       lineBits = readU8() | 0;
       pos = pos - 2 | 0;
-      writeU8(RECORDS);
+      writeUBJU8(RECORDS);
       arrayPos = startArray(0) | 0;
       do {
         objectPos = startObject(0) | 0;
@@ -1092,7 +1086,7 @@ var tagHandler = (function (global) {
       fillBits = readU8() | 0;
       lineBits = readU8() | 0;
       pos = pos - 2 | 0;
-      writeU8(RECORDS);
+      writeUBJU8(RECORDS);
       arrayPos = startArray(0) | 0;
       do {
         objectPos = startObject(0) | 0;
@@ -2002,13 +1996,13 @@ var tagHandler = (function (global) {
     }
 
     return {
+      defineShape: defineShape,
+      removeObject: removeObject,
+//      placeObject: placeObject,
+      // Utils
       initMasks: initMasks,
       setInputStreamPos: setInputStreamPos,
       getInputStreamPos: getInputStreamPos,
-      removeObject: removeObject,
-//      placeObject: placeObject,
-      defineShape: defineShape,
-      // Utils
       getPos: getPos,
       setPos: setPos,
     };
@@ -2069,18 +2063,6 @@ var tagHandler = (function (global) {
     ty: 38,
 
     trace: trace,
-    getBitBuffer: function () {
-      return stream.bitBuffer;
-    },
-    getBitLength: function () {
-      return stream.bitLength;
-    },
-    setBitBuffer: function (buffer) {
-      stream.bitBuffer = buffer;
-    },
-    setBitLength: function (bitlen) {
-      stream.bitLength = bitlen;
-    },
   };
 
   var names = {}
@@ -3384,14 +3366,6 @@ var tagHandler = (function (global) {
   // -- caller updates count
 
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
-    if (asm.rgb) {
-      asm.setInputStreamPos($stream.pos);
-      var begin = asm.getPos();
-      $.count = asm.rgb();
-      $.binary = byteView.subarray(begin, asm.getPos());
-      $stream.pos = asm.getInputStreamPos();
-      return;
-    }
     $.red=
       readUi8($bytes, $stream)
     $.green=
@@ -3404,12 +3378,6 @@ var tagHandler = (function (global) {
   }
 
   function rgba($bytes, $stream, $, swfVersion, tagCode) {
-    if (asm.rgba) {
-      var begin = asm.getPos();
-      $.count = asm.rgba();
-      $.binary = byteView.subarray(begin, asm.getPos());
-      return;
-    }
     $.red=
       readUi8($bytes, $stream)
     $.green=
@@ -3433,14 +3401,6 @@ var tagHandler = (function (global) {
   }
 
   function fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph) {
-    if (asm.fillSolid) {
-      var pos = asm.getPos();
-      var count = asm.fillSolid(swfVersion, tagCode, isMorph);
-      asm.setPos(pos);                     // backup to decode results
-      asm.decode(count);                   // decode results
-      setObjectProps($, count);            // copy results into context
-      return;
-    }
     if(tagCode>22||isMorph){
       var $125=$.color={}
       rgba($bytes, $stream, $125, swfVersion, tagCode);
@@ -3457,12 +3417,6 @@ var tagHandler = (function (global) {
   }
 
   function matrix($bytes, $stream, $, swfVersion, tagCode) {
-    if (asm.matrix) {
-      var begin = asm.getPos();
-      $.count = asm.matrix(swfVersion, tagCode);
-      $.binary = byteView.subarray(begin, asm.getPos());
-      return;
-    }
     var bits = 0, a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
     align($bytes, $stream)
     if (readUb($bytes, $stream, 1) | 0) {
@@ -3723,18 +3677,6 @@ var tagHandler = (function (global) {
   }
 
   function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits) {
-    if (asm.shapeRecordEdge) {
-      asm.setInputStreamPos($stream.pos);
-      //print("shapeRecordEdge() pos=" + $stream.pos);
-      var begin = asm.getPos();
-      $.count = asm.shapeRecordEdge(swfVersion, tagCode, flags, bits);
-      $.binary = byteView.subarray(begin, asm.getPos());
-      asm.setPos(asm.getPos() - 1);        // backup to read return values
-      var bits = asm.readU8();             // read return value
-      asm.setPos(asm.getPos() - 1);        // backup to read return values
-      $stream.pos = asm.getInputStreamPos();      
-      return {bits: bits};
-    }
     var isStraight = 0, tmp = 0, bits = 0, isGeneral = 0, isVertical = 0;
     isStraight = $.isStraight = flags >> 4;
     tmp = flags & 0x0f;
@@ -3874,10 +3816,6 @@ var tagHandler = (function (global) {
   };
 
   function lineStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
-    if (asm.lineStyle) {
-      asm.lineStyle(swfVersion, tagCode, isMorph, hasStrokes);
-      return;
-    }
     $.width=
       readUi16($bytes, $stream)
     if(isMorph){
