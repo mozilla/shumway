@@ -100,7 +100,7 @@
   -- Emit object values directly using ffi imports
 
 */
- 
+
 function trace (str) {
   if (this.print) {
     print(str);
@@ -317,12 +317,10 @@ var tagHandler = (function (global) {
     }
 
     function getInputStreamPos() {
-      //trace("getInputStreamPos() pos=" + (inputStreamPos - inputStreamOffset | 0));
       return inputStreamPos - inputStreamOffset | 0;
     }
 
     function setInputStreamPos(p) {
-      //trace("setInputStreamPos() p=" + p);
       p = p | 0;
       inputStreamPos = inputStreamOffset + p | 0;
     }
@@ -336,18 +334,18 @@ var tagHandler = (function (global) {
 
     function readStreamU16() {
       var val = 0;
-      val = bytesU8[inputStreamPos] | 0;
-      val = (val + (bytesU8[inputStreamPos + 1 | 0] << 8 | 0)) | 0;
+      val = (bytesU8[inputStreamPos] << 8 | 0) | 0;
+      val = (val + (bytesU8[inputStreamPos + 1 | 0] | 0)) | 0;
       inputStreamPos = inputStreamPos + 2 | 0;
       return val | 0;
     }
 
     function readStreamU32() {
       var val = 0;
-      val = bytesU8[inputStreamPos] | 0;
-      val = (val + (bytesU8[inputStreamPos + 1 | 0] << 8 | 0)) | 0;
-      val = (val + (bytesU8[inputStreamPos + 2 | 0] << 16 | 0)) | 0;
-      val = (val + (bytesU8[inputStreamPos + 3 | 0] << 24 | 0)) | 0;
+      val = bytesU8[inputStreamPos] << 24 | 0;
+      val = (val + (bytesU8[inputStreamPos + 1 | 0] << 16 | 0)) | 0;
+      val = (val + (bytesU8[inputStreamPos + 2 | 0] << 8 | 0)) | 0;
+      val = (val + (bytesU8[inputStreamPos + 3 | 0] << 0 | 0)) | 0;
       inputStreamPos = inputStreamPos + 4 | 0;
       return val | 0;
     }
@@ -417,14 +415,13 @@ var tagHandler = (function (global) {
       // Shift the old bits left and OR with the new bits, then increment the
       // relevant counters.
       while (~~size > ~~bitLength) {
-        bitBuffer = (bitBuffer << 8) | bytesU8[inputStreamPos];
-        inputStreamPos = inputStreamPos + 1 | 0;
+        bitBuffer = bitBuffer << 8 | (readStreamU8() | 0) | 0;
         bitLength = bitLength + 8 | 0;
       }
       // Shift off the unused new bits on the right and mask off the unused old
       // bits on the left.
       bitLength = bitLength - size | 0;
-      val = (bitBuffer >>> bitLength) & bytesU32[maskOffset + (4 * size | 0) >> 2];
+      val = (bitBuffer >>> bitLength) & mask;
       // Save the new bits so that the unused bits can be used to compute the
       // next value.
       return val | 0;
@@ -590,7 +587,6 @@ var tagHandler = (function (global) {
       bytesU8[pos + 3 | 0] = bytesU8[scratchPos + 1 | 0];
       bytesU8[pos + 4 | 0] = bytesU8[scratchPos | 0];
       pos = pos + 5 | 0;
-      //trace("pos="+pos);
     }
 
     // Write an float64 value.
@@ -610,7 +606,6 @@ var tagHandler = (function (global) {
       bytesU8[pos + 7 | 0] = bytesU8[scratchPos + 1 | 0];
       bytesU8[pos + 8 | 0] = bytesU8[scratchPos | 0];
       pos = pos + 9 | 0;
-      //trace("pos="+pos);
     }
 
     // Start an object. Allocate space for a new object. (flags & BIG) means
@@ -1110,11 +1105,6 @@ var tagHandler = (function (global) {
       fillBits = readStreamUb(4) | 0;
       lineBits = readStreamUb(4) | 0;
       // end styleBits()
-      // Read return values
-      pos = pos - 2 | 0;
-      fillBits = readU8() | 0;
-      lineBits = readU8() | 0;
-      pos = pos - 2 | 0;
       writeUBJU8(RECORDS_MORPH);
       arrayPos = startArray(0) | 0;
       do {
@@ -1123,14 +1113,14 @@ var tagHandler = (function (global) {
                                fillBits, lineBits, hasStrokes, bits) | 0;
         finishObject(objectPos, objectLen, 0);
         // Read return values
-        pos = pos - 12 | 0;
-        bits = readU16() | 0;
-        eos = readU16() | 0;
-        fillBits = readU16() | 0;
-        flags = readU16() | 0;
-        lineBits = readU16() | 0;
-        type = readU16() | 0;
-        pos = pos - 12 | 0;
+        pos = pos - 6 | 0;
+        bits = readU8() | 0;
+        eos = readU8() | 0;
+        fillBits = readU8() | 0;
+        flags = readU8() | 0;
+        lineBits = readU8() | 0;
+        type = readU8() | 0;
+        pos = pos - 6 | 0;
         arrayLen = arrayLen + 1 | 0;
       } while(!eos)
       finishArray(arrayPos, arrayLen, 0);
@@ -1161,14 +1151,9 @@ var tagHandler = (function (global) {
       isMorph = isMorph | 0;
       var tmp = 0, count = 0, arrayLen = 0, arrayPos = 0, objectLen = 0, objectPos = 0;
       tmp = readStreamU8() | 0;
-      if (~~tagCode > 2) {
-        if (~~tmp == 255) {
+      if (~~tagCode > 2 ? ~~tmp == 255 ? 1 : 0 : 0) {
           count = readStreamU16() | 0;
-        }
-        else{
-          count = tmp;
-        }
-      } else {
+      } else{
         count = tmp;
       }
       arrayLen = count;
@@ -1190,14 +1175,9 @@ var tagHandler = (function (global) {
       hasStrokes = hasStrokes | 0;
       var tmp = 0, count = 0, arrayLen = 0, arrayPos = 0, objectLen = 0, objectPos = 0;
       tmp = readStreamU8() | 0;
-      if (~~tagCode > 2) {
-        if (~~tmp == 255) {
-          count = readStreamU16() | 0;
-        }
-        else{
-          count = tmp;
-        }
-      } else {
+      if (~~tagCode > 2 ? ~~tmp == 255 ? 1 : 0 : 0) {
+        count = readStreamU16() | 0;
+      } else{
         count = tmp;
       }
       arrayLen = count;
@@ -1607,15 +1587,15 @@ var tagHandler = (function (global) {
         finishObject(pos, childCount, BIG);
         count = count + 1 | 0;
       }
-      count = count + (gradient(swfVersion, tagCode, type, isMorph) | 0) | 0;
+      count = count + (gradient(swfVersion, tagCode, isMorph, type) | 0) | 0;
       return count | 0;
     }
 
-    function gradient(swfVersion, tagCode, type, isMorph) {
+    function gradient(swfVersion, tagCode, isMorph, type) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
-      type = type | 0;
       isMorph = isMorph | 0;
+      type = type | 0;
       var count = 0, n = 0, pad = 0, arrayPos = 0, arrayLen = 0;
       var objectPos = 0, objectLen = 0;
       if (~~tagCode == 83) {
@@ -1653,7 +1633,6 @@ var tagHandler = (function (global) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
-      //var isMorph = $.isMorph;
       var objectPos = 0, objectLen = 0, count = 0;
       writePropU16(RATIO, readStreamU8() | 0);
       if (~~tagCode > 22) {
@@ -1695,7 +1674,7 @@ var tagHandler = (function (global) {
       case 16:
       case 18:
       case 19:
-        count = count + (fillGradient(swfVersion, tagCode, type, isMorph) | 0) | 0;
+        count = count + (fillGradient(swfVersion, tagCode, isMorph, type) | 0) | 0;
         break
       case 64:
       case 65:
@@ -1997,7 +1976,7 @@ var tagHandler = (function (global) {
 
     return {
       defineShape: defineShape,
-      removeObject: removeObject,
+//      removeObject: removeObject,
 //      placeObject: placeObject,
       // Utils
       initMasks: initMasks,
@@ -2006,7 +1985,6 @@ var tagHandler = (function (global) {
       getPos: getPos,
       setPos: setPos,
     };
-
   }
 
   var bytes;
@@ -3430,7 +3408,6 @@ var tagHandler = (function (global) {
       d = readFb($bytes, $stream, bits);
     }
     bits = readUb($bytes, $stream, 5);
-//trace("matrix() pos=" + $stream.pos + " bits=" + bits);
     tx = readSb($bytes, $stream, bits) / 20;
     ty = readFb($bytes, $stream, bits) / 20;
     align($bytes, $stream)
@@ -3509,19 +3486,17 @@ var tagHandler = (function (global) {
     align($bytes, $stream)
   }
 
-  function fillGradient($bytes, $stream, $, swfVersion, tagCode, type) {
-    var isMorph = $.isMorph;
+  function fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     var $128=$.matrix={}
     matrix($bytes, $stream, $128, swfVersion, tagCode);
     if(isMorph){
       var $129=$.matrixMorph={}
       matrix($bytes, $stream, $129, swfVersion, tagCode);
     }
-    gradient($bytes, $stream, $, swfVersion, tagCode, type);
+    gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
   }
 
-  function gradient($bytes, $stream, $, swfVersion, tagCode, type) {
-    var isMorph = $.isMorph;
+  function gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     if(tagCode===83){
       $.spreadMode=
         readUb($bytes, $stream, 2)
@@ -3541,7 +3516,7 @@ var tagHandler = (function (global) {
     var $131=count
     while($131--){
       var $132={}
-      gradientRecord($bytes, $stream, $132, swfVersion, tagCode);
+      gradientRecord($bytes, $stream, $132, swfVersion, tagCode, isMorph);
       $130.push($132)
     }
     if(type===19){
@@ -3554,8 +3529,8 @@ var tagHandler = (function (global) {
     }
   }
 
-  function gradientRecord($bytes, $stream, $, swfVersion, tagCode) {
-    var isMorph = $.isMorph;
+  function gradientRecord($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+//    var isMorph = $.isMorph;
     $.ratio=
       readUi8($bytes, $stream)
     if(tagCode>22){
@@ -3706,7 +3681,7 @@ var tagHandler = (function (global) {
   function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
                             fillBits, lineBits, hasStrokes, bits) {
     var hasNewStyles = 0, hasLineStyle = 0, hasFillStyle1 = 0;
-    var hasFillStyle0 = 0, move = 0, bits = 0;
+    var hasFillStyle0 = 0, move = 0;
     if (tagCode > 2) {
       hasNewStyles = $.hasNewStyles = flags >> 4;
     } else {
@@ -3719,7 +3694,7 @@ var tagHandler = (function (global) {
     if (move) {
       bits = readUb($bytes, $stream, 5);
       $.moveX = readSb($bytes, $stream, bits);
-      $.moveY= readSb($bytes, $stream, bits);
+      $.moveY = readSb($bytes, $stream, bits);
     }
     if (hasFillStyle0) {
       $.fillStyle0 = readUb($bytes, $stream, fillBits);
@@ -3803,7 +3778,7 @@ var tagHandler = (function (global) {
     case 16:
     case 18:
     case 19:
-      fillGradient($bytes, $stream, $, swfVersion, tagCode, type);
+      fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
       break
     case 64:
     case 65:
