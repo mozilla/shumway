@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
- Compiled with: (assuming the internal playerglobal.abc in the shumway checkout's parent dir)
- java -jar utils/asc.jar -import ../playerglobal.abc -in test/printers.as -swf TextFieldTest,600,600 test/swfs/flash_text_TextField.as
+ Compiled with: (from shumway tld, assuming the internal playerglobal.abc in the shumway checkout's parent dir)
+ java -jar utils/asc.jar -AS3 -strict -import ../playerglobal.abc -in test/printers.as -swf TextFieldTest,600,600 test/swfs/flash_text_TextField.as
  */
 
 package {
@@ -42,14 +42,7 @@ class TextFieldObject extends TextField {
   }
 
   public function runSyncTests() {
-
-    printEquals(text, '', "flash.text::TextField/get text() // default value");
-    var testText = "hello, world!";
-    text = testText;
-    printEquals(text, testText, "flash.text::TextField/{get|set} text()");
-
-    printEquals(textHeight, 12, "flash.text::TextField/get textHeight()");
-
+    shunit.printSuccess = false;
     printEquals(autoSize, TextFieldAutoSize.NONE, "flash.text::TextField/get autoSize() // default value");
     autoSize = TextFieldAutoSize.CENTER;
     printEquals(autoSize, TextFieldAutoSize.CENTER, "flash.text::TextField/{get|set} autoSize()");
@@ -62,10 +55,18 @@ class TextFieldObject extends TextField {
 
     printEquals(defaultTextFormat ? defaultTextFormat.size : undefined, 12, "flash.text::TextField/{get|set} defaultTextFormat()");
 
+    printEquals(text, '', "flash.text::TextField/get text() // default value");
+    printEquals(htmlText, '', "flash.text::TextField/get htmlText() // default value");
+    printEquals(textHeight, 0, "flash.text::TextField/get textHeight()");
+    var testText = "hello, world!";
+    text = testText;
+    printEquals(text, testText, "flash.text::TextField/{get|set} text()");
     printEquals(htmlText, '<P ALIGN="LEFT"><FONT FACE="Times Roman" SIZE="12" COLOR="#000000" LETTERSPACING="0" KERNING="0">hello, world!</FONT></P>',
-                "flash.text::TextField/get htmlText() // default value");
-    htmlText = "<b>foo</b>";
-    printEquals(htmlText, '<P ALIGN="LEFT"><FONT FACE="Times Roman" SIZE="12" COLOR="#000000" LETTERSPACING="0" KERNING="0"><B>foo</B></FONT></P>',
+                "flash.text::TextField/{set text(), get htmlText()");
+    printEquals(textHeight, 12, "flash.text::TextField/get textHeight()");
+    htmlText = '<FONT FACE="Times Roman" SIZE="120px" COLOR="#00ff00" LETTERSPACING="2" KERNING="0"><B><invalid>foo</invalid></B></FONT></P';
+    printEquals(text, "foo", "flash.text::TextField/set htmlText(), get text()");
+    printEquals(htmlText, '<P ALIGN="LEFT"><FONT FACE="Times Roman" SIZE="120" COLOR="#00FF00" LETTERSPACING="2" KERNING="0"><B>foo</B></FONT></P>',
                 "flash.text::TextField/{get|set} htmlText()");
 
     printEquals(selectable, true, "flash.text::TextField/get selectable() // default value");
@@ -80,9 +81,13 @@ class TextFieldObject extends TextField {
     wordWrap = false;
     printEquals(wordWrap, false, "flash.text::TextField/{get|set} wordWrap()");
 
-    setTextFormat(new TextFormat("Verdana", 20));
-    var format = getTextFormat();
-    printEquals(format ? format.size : undefined, 20, "flash.text::TextField/{get|set}TextFormat()");
+    var originalFormat = new TextFormat("Verdana", 20);
+    setTextFormat(originalFormat);
+    originalFormat.size = 10;
+    var format = getTextFormat() || {};
+    printTruthy(format.size != originalFormat.size, "flash.text::TextField/set TextFormat() copies result");
+    printTruthy(format != originalFormat, "flash.text::TextField/get TextFormat() copies result");
+    printEquals(format.size, 20, "flash.text::TextField/{get|set}TextFormat()");
 
     printEquals(background, false, "flash.text::TextField/get background() // default value");
     background = true;

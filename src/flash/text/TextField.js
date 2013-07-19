@@ -54,7 +54,7 @@ var TextFieldDefinition = (function () {
       return node;
     }
 
-    node.type = tree.localName;
+    node.type = tree.localName.toUpperCase();
     node.format = extractAttributes(tree);
     node.children = [];
 
@@ -109,20 +109,20 @@ var TextFieldDefinition = (function () {
     var blockNode = false;
     switch (node.type) {
       case 'text': addTextRun(state, node); return;
-      case 'br': finishLine(state); return;
+      case 'BR': finishLine(state); return;
 
-      case 'li': /* TODO: draw bullet points. */ /* falls through */
-      case 'p': finishLine(state); blockNode = true; break;
+      case 'LI': /* TODO: draw bullet points. */ /* falls through */
+      case 'P': finishLine(state); blockNode = true; break;
 
-      case 'b': /* falls through */
-      case 'i': /* falls through */
-      case 'font': /* falls through */
-      case 'textformat': pushFormat(state, node); formatNode = true; break;
+      case 'B': /* falls through */
+      case 'I': /* falls through */
+      case 'FONT': /* falls through */
+      case 'TEXTFORMAT': pushFormat(state, node); formatNode = true; break;
 
-      case 'u': /* TODO: implement <u>-support. */ /* falls through */
-      case 'a': /* TODO: implement <a>-support. */ /* falls through */
-      case 'img': /* TODO: implement <img>-support. */ /* falls through */
-      case 'span': /* TODO: implement what puny support for CSS Flash has. */
+      case 'U': /* TODO: implement <u>-support. */ /* falls through */
+      case 'U': /* TODO: implement <a>-support. */ /* falls through */
+      case 'IMG': /* TODO: implement <img>-support. */ /* falls through */
+      case 'SPAN': /* TODO: implement what puny support for CSS Flash has. */
       /* falls through */
       default:
         // For all unknown nodes, we just emit their children.
@@ -168,20 +168,20 @@ var TextFieldDefinition = (function () {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
     switch (node.type) {
-      case 'b': format.bold = true; break;
-      case 'i': format.italic = true; break;
-      case 'font':
+      case 'B': format.bold = true; break;
+      case 'I': format.italic = true; break;
+      case 'FONT':
         if ('color' in attributes) {
           format.color = attributes.color;
         }
-        if ('face' in attributes) {
+        if ('FACE' in attributes) {
           format.face = convertFontFamily(attributes.face);
         }
-        if ('size' in attributes) {
+        if ('SIZE' in attributes) {
           format.size = attributes.size;
         }
       /* falls through */
-      case 'textformat':
+      case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
         if ('indent' in attributes) {
           state.x += attributes.indent;
@@ -269,13 +269,13 @@ var TextFieldDefinition = (function () {
     var output;
     var styles;
     switch (node.type) {
-      case 'br': return '<br />';
-      case 'b': return '<strong>';
-      case 'i': return '<i>';
+      case 'BR': return '<br />';
+      case 'B': return '<strong>';
+      case 'I': return '<i>';
       // TODO: check if we need to emit <ul>'s around runs of <li>'s
-      case 'li': return '<li>';
-      case 'u': return '<span style="text-decoration: underline;">';
-      case 'a':
+      case 'LI': return '<li>';
+      case 'U': return '<span style="text-decoration: underline;">';
+      case 'A':
         output = '<a';
         if ('href' in format) {
           output += ' href="' + format.href + '"';
@@ -284,7 +284,7 @@ var TextFieldDefinition = (function () {
           output += ' target="' + format.href + '"';
         }
         break;
-      case 'font':
+      case 'FONT':
         output = '<span';
         styles = '';
         if ('color' in format) {
@@ -299,7 +299,7 @@ var TextFieldDefinition = (function () {
           styles += 'font-size:' + format.size + 'px;';
         }
         break;
-      case 'img':
+      case 'IMG':
         output = '<img src="' + (format.src || '') + '"';
         styles = '';
         if ('width' in format) {
@@ -319,7 +319,7 @@ var TextFieldDefinition = (function () {
         // TODO: support `align`, `id` and `checkPolicyFile`
         output += ' /';
         break;
-      case 'p':
+      case 'P':
         output = '<p';
         styles = '';
         if ('class' in format) {
@@ -329,13 +329,13 @@ var TextFieldDefinition = (function () {
           styles += 'text-align:' + format.align;
         }
         break;
-      case 'span':
+      case 'SPAN':
         output = '<span';
         if ('class' in format) {
           output += ' class="' + format['class'] + '"';
         }
         break;
-      case 'textformat':
+      case 'TEXTFORMAT':
         // TODO: we probably need to merge textformat nodes with <p> nodes
         output = '<span';
         styles = '';
@@ -371,11 +371,11 @@ var TextFieldDefinition = (function () {
 
   function renderNodeEnd(node) {
     switch (node.type) {
-      case 'b': return '</strong>';
-      case 'i': /* falls through */
-      case 'li': /* falls through */
-      case 'a': /* falls through */
-      case 'p': return '</' + node.type + '>';
+      case 'B': return '</strong>';
+      case 'I': /* falls through */
+      case 'LI': /* falls through */
+      case 'A': /* falls through */
+      case 'P': return '</' + node.type + '>';
       default: // <u>, <font>, <span>, <textformat>, and all others
         return '</span>';
     }
@@ -385,14 +385,26 @@ var TextFieldDefinition = (function () {
     __class__: 'flash.text.TextField',
 
     initialize: function () {
-      this._defaultTextFormat = null;
-      var initialFormat = this._initialFormat = {face: 'serif', size: 10,
-                                                 bold: false, italic: false,
-                                                 color: 'black'};
+      var initialFormat = this._initialFormat = this._defaultTextFormat =
+        {
+          face: 'serif', size: 10,
+          bold: false, italic: false,
+          color: 'black'
+        };
       this._type = 'dynamic';
+      this._selectable = true;
       this._textHeight = 0;
       this._textWidth = 0;
       this._embedFonts = false;
+      this._autoSize = 'none';
+      this._wordWrap = false;
+      this._multiline = false;
+      this._condenseWhite = false;
+      this._background = false;
+      this._border = false;
+      this._backgroundColor = 0xffffff;
+      this._borderColor = 0x000000;
+      this._textColor = 0x000000;
 
       var s = this.symbol;
       if (!s) {
@@ -472,6 +484,8 @@ var TextFieldDefinition = (function () {
     },
 
     get defaultTextFormat() {
+      var format = new flash.text.TextFormat('foo', 12);
+      return format;
       return this._defaultTextFormat;
     },
     set defaultTextFormat(val) {
@@ -618,6 +632,15 @@ var TextFieldDefinition = (function () {
           set: function embedFonts(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.embedFonts");
             this._embedFonts = value;
+          }
+        },
+        condenseWhite: {
+          get: function condenseWhite() { // (void) -> Boolean
+            return this._condenseWhite;
+          },
+          set: function condenseWhite(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.condenseWhite");
+            this._condenseWhite = value;
           }
         },
         numLines: {
