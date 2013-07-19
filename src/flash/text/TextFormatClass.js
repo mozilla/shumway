@@ -18,9 +18,45 @@
 
 var TextFormatDefinition = (function () {
   return {
-    // (font:String = null, size:Object = null, color:Object = null, bold:Object = null, italic:Object = null, underline:Object = null, url:String = null, target:String = null, align:String = null, leftMargin:Object = null, rightMargin:Object = null, indent:Object = null, leading:Object = null)
+    // (font:String = null, size:Object = null, color:Object = null, bold:Object = null,
+    // italic:Object = null, underline:Object = null, url:String = null, target:String = null,
+    // align:String = null, leftMargin:Object = null, rightMargin:Object = null,
+    // indent:Object = null, leading:Object = null)
     __class__: "flash.text.TextFormat",
     initialize: function () {
+    },
+    fromObject: function(obj) {
+      this._font = obj.font;
+      this._size = obj.size;
+      this._color = obj.color;
+      this._bold = obj.bold;
+      this._italic = obj.italic;
+      this._underline = obj.underline;
+      this._url = obj.url;
+      this._target = obj.target;
+      this._align = obj.align;
+      this._leftMargin = obj.leftMargin;
+      this._rightMargin = obj.rightMargin;
+      this._indent = obj.indent;
+      this._leading = obj.leading;
+      return this;
+    },
+    toObject: function() {
+      return {
+        font: this._font,
+        size: this._size,
+        color: this._color,
+        bold: this._bold,
+        italic: this._italic,
+        underline: this._underline,
+        url: this._url,
+        target: this._target,
+        align: this._align,
+        leftMargin: this._leftMargin,
+        rightMargin: this._rightMargin,
+        indent: this._indent,
+        leading: this._leading
+      }
     },
     __glue__: {
       native: {

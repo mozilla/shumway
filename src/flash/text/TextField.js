@@ -21,6 +21,9 @@ var TextFieldDefinition = (function () {
 
   var htmlParser = document.createElement('p');
 
+  // Used for measuring text runs, not for rendering
+  var measureCtx = document.createElement('canvas').getContext('kanvas-2d');
+
   /*
    * Parsing "html", in this context, actually means ensuring that the given
    * string is valid *xml*, and removing any tags that mustn't be supported.
@@ -78,7 +81,7 @@ var TextFieldDefinition = (function () {
     var attributesMap = Object.create(null);
     for (var i = 0; i < attributesList.length; i++) {
       var attr = attributesList[i];
-      if (attr.prefix !== '') {
+      if (attr.prefix) {
         continue;
       }
       attributesMap[attr.localName] = attr.value;
@@ -86,20 +89,11 @@ var TextFieldDefinition = (function () {
     return attributesMap;
   }
 
-  function renderContent(content, initialFormat, bounds, ctx) {
-    if (!ctx) {
-      return renderNode(content.tree);
-    }
-    var firstRun = {type: 'f', format: initialFormat};
-    var width = bounds.right - bounds.left;
-    var height = bounds.bottom - bounds.top;
-    var state = {ctx: ctx, y: 0, x: 0, w: width, h: height,
-                 line: [], lineHeight: 0, formats: [initialFormat],
-                 currentFormat: initialFormat, runs: [firstRun]};
-    collectRuns(content.tree, state);
-    finishLine(state);
-
-    return renderToCanvas(ctx, bounds, state.runs);
+  function renderContent(content, bounds, ctx) {
+//    if (!ctx) {
+//      return renderNode(content.tree);
+//    }
+    return renderToCanvas(ctx, bounds, content.textruns);
   }
 
   function collectRuns(node, state) {
@@ -155,6 +149,7 @@ var TextFieldDefinition = (function () {
 //    }
   }
   function finishLine(state) {
+    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
     state.y += state.lineHeight;
     var y = state.y;
@@ -174,10 +169,10 @@ var TextFieldDefinition = (function () {
         if ('color' in attributes) {
           format.color = attributes.color;
         }
-        if ('FACE' in attributes) {
+        if ('face' in attributes) {
           format.face = convertFontFamily(attributes.face);
         }
-        if ('SIZE' in attributes) {
+        if ('size' in attributes) {
           format.size = attributes.size;
         }
       /* falls through */
@@ -214,6 +209,22 @@ var TextFieldDefinition = (function () {
            format.size + 'px ' + format.face;
   }
 
+  function convertFontFamily(face) {
+    //TODO: adapt to embedded font names
+    var family;
+    if (face.indexOf('_') === 0) {
+      // reserved fonts
+      if (face.indexOf('_sans') === 0) {
+        family = 'sans-serif';
+      } else if (face.indexOf('_serif') === 0) {
+        family = 'serif';
+      } else if (face.indexOf('_typewriter') === 0) {
+        family = 'monospace';
+      }
+    }
+    return family || '"' + face + '"';
+  }
+
   function renderToCanvas(ctx, bounds, runs) {
     ctx.save();
     ctx.beginPath();
@@ -233,161 +244,145 @@ var TextFieldDefinition = (function () {
     ctx.restore();
   }
 
-  function renderNode(node) {
-    if (node.type === 'text') {
-      return node.text;
-    }
-
-    var output = renderNodeStart(node);
-    var children = node.children;
-
-    for (var i = 0; i < children.length; i++) {
-      var childNode = children[i];
-      output += renderNode(childNode);
-    }
-    return output + renderNodeEnd(node);
-  }
-
-  function convertFontFamily(face) {
-    //TODO: adapt to embedded font names
-    var family;
-    if (face.indexOf('_') === 0) {
-      // reserved fonts
-      if (face.indexOf('_sans') === 0) {
-        family = 'sans-serif';
-      } else if (face.indexOf('_serif') === 0) {
-        family = 'serif';
-      } else if (face.indexOf('_typewriter') === 0) {
-        family = 'monospace';
-      }
-    }
-    return family || '"' + face + '"';
-  }
-
-  function renderNodeStart(node) {
-    var format = node.format;
-    var output;
-    var styles;
-    switch (node.type) {
-      case 'BR': return '<br />';
-      case 'B': return '<strong>';
-      case 'I': return '<i>';
-      // TODO: check if we need to emit <ul>'s around runs of <li>'s
-      case 'LI': return '<li>';
-      case 'U': return '<span style="text-decoration: underline;">';
-      case 'A':
-        output = '<a';
-        if ('href' in format) {
-          output += ' href="' + format.href + '"';
-        }
-        if ('target' in format) {
-          output += ' target="' + format.href + '"';
-        }
-        break;
-      case 'FONT':
-        output = '<span';
-        styles = '';
-        if ('color' in format) {
-          styles += 'color:' + format.color + ';';
-        }
-        if ('face' in format) {
-          var fontFace = convertFontFamily(format.face);
-          styles += 'font-family:' + fontFace + ';';
-        }
-        if ('size' in format) {
-          //TODO: verify that px is the right unit
-          styles += 'font-size:' + format.size + 'px;';
-        }
-        break;
-      case 'IMG':
-        output = '<img src="' + (format.src || '') + '"';
-        styles = '';
-        if ('width' in format) {
-          styles += 'width:' + format.width + 'px;';
-        }
-        if ('height' in format) {
-          styles += 'height:' + format.height + 'px;';
-        }
-        if ('hspace' in format && 'vspace' in format) {
-          styles += 'margin:' + format.vspace + 'px ' +
-                    format.hspace + 'px;';
-        } else if ('hspace' in format) {
-          styles += 'margin:0 ' + format.hspace + 'px;';
-        } else if ('vspace' in format) {
-          styles += 'margin:' + format.hspace + 'px 0;';
-        }
-        // TODO: support `align`, `id` and `checkPolicyFile`
-        output += ' /';
-        break;
-      case 'P':
-        output = '<p';
-        styles = '';
-        if ('class' in format) {
-          styles += ' class="' + format['class'] + '"';
-        }
-        if ('align' in format) {
-          styles += 'text-align:' + format.align;
-        }
-        break;
-      case 'SPAN':
-        output = '<span';
-        if ('class' in format) {
-          output += ' class="' + format['class'] + '"';
-        }
-        break;
-      case 'TEXTFORMAT':
-        // TODO: we probably need to merge textformat nodes with <p> nodes
-        output = '<span';
-        styles = '';
-        var marginLeft = 0;
-        if ('blockIdent' in format) {
-          marginLeft += parseInt(format.blockIndent, 10);
-        }
-        if ('leftMargin' in format) {
-          marginLeft += parseInt(format.leftMargin, 10);
-        }
-        if (marginLeft !== 0) {
-          styles += 'margin-left:' + marginLeft + 'px"';
-        }
-        if ('indent' in format) {
-          styles += 'text-indent:' + format.indent + 'px"';
-        }
-        if ('rightMargin' in format) {
-          styles += 'margin-left:' + marginLeft + 'px"';
-        }
-        // TODO: support leading
-        // TODO: support tabStops, if possible
-        break;
-      default:
-        // For all unknown nodes, we just emit spans. We might not actually
-        // need to, but it doesn't do any harm, either.
-        return '<span>';
-    }
-    if (styles) {
-      output += ' style="' + styles + '"';
-    }
-    return output + '>';
-  }
-
-  function renderNodeEnd(node) {
-    switch (node.type) {
-      case 'B': return '</strong>';
-      case 'I': /* falls through */
-      case 'LI': /* falls through */
-      case 'A': /* falls through */
-      case 'P': return '</' + node.type + '>';
-      default: // <u>, <font>, <span>, <textformat>, and all others
-        return '</span>';
-    }
-  }
+//  function renderNode(node) {
+//    if (node.type === 'text') {
+//      return node.text;
+//    }
+//
+//    var output = renderNodeStart(node);
+//    var children = node.children;
+//
+//    for (var i = 0; i < children.length; i++) {
+//      var childNode = children[i];
+//      output += renderNode(childNode);
+//    }
+//    return output + renderNodeEnd(node);
+//  }
+//
+//  function renderNodeStart(node) {
+//    var format = node.format;
+//    var output;
+//    var styles;
+//    switch (node.type) {
+//      case 'BR': return '<br />';
+//      case 'B': return '<strong>';
+//      case 'I': return '<i>';
+//      // TODO: check if we need to emit <ul>'s around runs of <li>'s
+//      case 'LI': return '<li>';
+//      case 'U': return '<span style="text-decoration: underline;">';
+//      case 'A':
+//        output = '<a';
+//        if ('href' in format) {
+//          output += ' href="' + format.href + '"';
+//        }
+//        if ('target' in format) {
+//          output += ' target="' + format.href + '"';
+//        }
+//        break;
+//      case 'FONT':
+//        output = '<span';
+//        styles = '';
+//        if ('color' in format) {
+//          styles += 'color:' + format.color + ';';
+//        }
+//        if ('face' in format) {
+//          var fontFace = convertFontFamily(format.face);
+//          styles += 'font-family:' + fontFace + ';';
+//        }
+//        if ('size' in format) {
+//          //TODO: verify that px is the right unit
+//          styles += 'font-size:' + format.size + 'px;';
+//        }
+//        break;
+//      case 'IMG':
+//        output = '<img src="' + (format.src || '') + '"';
+//        styles = '';
+//        if ('width' in format) {
+//          styles += 'width:' + format.width + 'px;';
+//        }
+//        if ('height' in format) {
+//          styles += 'height:' + format.height + 'px;';
+//        }
+//        if ('hspace' in format && 'vspace' in format) {
+//          styles += 'margin:' + format.vspace + 'px ' +
+//                    format.hspace + 'px;';
+//        } else if ('hspace' in format) {
+//          styles += 'margin:0 ' + format.hspace + 'px;';
+//        } else if ('vspace' in format) {
+//          styles += 'margin:' + format.hspace + 'px 0;';
+//        }
+//        // TODO: support `align`, `id` and `checkPolicyFile`
+//        output += ' /';
+//        break;
+//      case 'P':
+//        output = '<p';
+//        styles = '';
+//        if ('class' in format) {
+//          styles += ' class="' + format['class'] + '"';
+//        }
+//        if ('align' in format) {
+//          styles += 'text-align:' + format.align;
+//        }
+//        break;
+//      case 'SPAN':
+//        output = '<span';
+//        if ('class' in format) {
+//          output += ' class="' + format['class'] + '"';
+//        }
+//        break;
+//      case 'TEXTFORMAT':
+//        // TODO: we probably need to merge textformat nodes with <p> nodes
+//        output = '<span';
+//        styles = '';
+//        var marginLeft = 0;
+//        if ('blockIdent' in format) {
+//          marginLeft += parseInt(format.blockIndent, 10);
+//        }
+//        if ('leftMargin' in format) {
+//          marginLeft += parseInt(format.leftMargin, 10);
+//        }
+//        if (marginLeft !== 0) {
+//          styles += 'margin-left:' + marginLeft + 'px"';
+//        }
+//        if ('indent' in format) {
+//          styles += 'text-indent:' + format.indent + 'px"';
+//        }
+//        if ('rightMargin' in format) {
+//          styles += 'margin-left:' + marginLeft + 'px"';
+//        }
+//        // TODO: support leading
+//        // TODO: support tabStops, if possible
+//        break;
+//      default:
+//        // For all unknown nodes, we just emit spans. We might not actually
+//        // need to, but it doesn't do any harm, either.
+//        return '<span>';
+//    }
+//    if (styles) {
+//      output += ' style="' + styles + '"';
+//    }
+//    return output + '>';
+//  }
+//
+//  function renderNodeEnd(node) {
+//    switch (node.type) {
+//      case 'B': return '</strong>';
+//      case 'I': /* falls through */
+//      case 'LI': /* falls through */
+//      case 'A': /* falls through */
+//      case 'P': return '</' + node.type + '>';
+//      default: // <u>, <font>, <span>, <textformat>, and all others
+//        return '</span>';
+//    }
+//  }
 
   var def = {
     __class__: 'flash.text.TextField',
 
     initialize: function () {
-      var initialFormat = this._initialFormat = this._defaultTextFormat =
+      var initialFormat = this._defaultTextFormat =
         {
-          face: 'serif', size: 10,
+          face: 'serif', size: 12,
           bold: false, italic: false,
           color: 'black'
         };
@@ -414,9 +409,7 @@ var TextFieldDefinition = (function () {
       }
 
       var tag = s.tag;
-      var bbox = this._bbox = tag.bbox;
-      // // TODO: use canvas.measureText(txt).height
-      this._textHeight = bbox.bottom - bbox.top;
+      this._bbox = tag.bbox;
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -435,7 +428,6 @@ var TextFieldDefinition = (function () {
         } else {
           this.text = tag.initialText;
         }
-        this._contentChanged = true;
       } else {
         this.text = '';
       }
@@ -455,7 +447,28 @@ var TextFieldDefinition = (function () {
     },
 
     draw: function (ctx) {
-      renderContent(this._content, this._initialFormat, this._bbox, ctx);
+      this.ensureDimensions();
+      renderContent(this._content, this._bbox, ctx);
+    },
+
+    ensureDimensions: function() {
+      if (this._dimensionsValid) {
+        return;
+      }
+      var bounds = this._bbox;
+      var initialFormat = this._defaultTextFormat;
+      var firstRun = {type: 'f', format: initialFormat};
+      var width = bounds.right - bounds.left;
+      var height = bounds.bottom - bounds.top;
+      var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
+                   lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
+                   currentFormat: initialFormat, runs: [firstRun]};
+      collectRuns(this._content.tree, state);
+      finishLine(state);
+      this._textWidth = state.maxLineWidth;
+      this._textHeight = state.y;
+      this._content.textruns = state.runs;
+      this._dimensionsValid = true;
     },
 
     get text() {
@@ -469,6 +482,7 @@ var TextFieldDefinition = (function () {
       this._content = {tree : node, text : val};
       this._htmlText = val;
       this._markAsDirty();
+      this._dimensionsValid = false;
     },
 
     get htmlText() {
@@ -480,23 +494,22 @@ var TextFieldDefinition = (function () {
       }
       this._htmlText = '<P>' + val + '</P>'; // TODO add default formatting
       this._content = parseHtml(val);
+      this._dimensionsValid = false;
       this._markAsDirty();
     },
 
     get defaultTextFormat() {
-      var format = new flash.text.TextFormat('foo', 12);
-      return format;
-      return this._defaultTextFormat;
+      return new flash.text.TextFormat().fromObject(this._defaultTextFormat);
     },
     set defaultTextFormat(val) {
-      this._defaultTextFormat = val;
+      this._defaultTextFormat = val.toObject();
     },
 
     getTextFormat: function (beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
-      return null; // TODO
+      return this.defaultTextFormat; // TODO
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
-      // TODO
+      this.defaultTextFormat = format;// TODO
     }
 
   };
@@ -515,7 +528,6 @@ var TextFieldDefinition = (function () {
         setTextFormat: def.setTextFormat,
         autoSize: {
           get: function autoSize() { // (void) -> String
-            somewhatImplemented("TextField.autoSize");
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
@@ -525,7 +537,6 @@ var TextFieldDefinition = (function () {
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            somewhatImplemented("TextField.multiline");
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
@@ -535,7 +546,6 @@ var TextFieldDefinition = (function () {
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            somewhatImplemented("TextField.textColor");
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
@@ -545,7 +555,6 @@ var TextFieldDefinition = (function () {
         },
         selectable: {
           get: function selectable() { // (void) -> Boolean
-            somewhatImplemented("TextField.selectable");
             return this._selectable;
           },
           set: function selectable(value) { // (value:Boolean) -> void
@@ -555,7 +564,6 @@ var TextFieldDefinition = (function () {
         },
         wordWrap: {
           get: function wordWrap() { // (void) -> Boolean
-            somewhatImplemented("TextField.wordWrap");
             return this._wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
@@ -566,18 +574,19 @@ var TextFieldDefinition = (function () {
         textHeight: {
           get: function textHeight() { // (void) -> Number
             somewhatImplemented("TextField.textHeight");
+            this.ensureDimensions();
             return this._textHeight;
           }
         },
         textWidth: {
           get: function textWidth() { // (void) -> Number
             somewhatImplemented("TextField.textWidth");
+            this.ensureDimensions();
             return this._textWidth;
           }
         },
         background: {
           get: function background() { // (void) -> Boolean
-            somewhatImplemented("TextField.background");
             return this._background;
           },
           set: function background(value) { // (value:Boolean) -> void
@@ -587,7 +596,6 @@ var TextFieldDefinition = (function () {
         },
         backgroundColor: {
           get: function backgroundColor() { // (void) -> uint
-            somewhatImplemented("TextField.backgroundColor");
             return this._backgroundColor;
           },
           set: function backgroundColor(value) { // (value:uint) -> void
@@ -597,7 +605,6 @@ var TextFieldDefinition = (function () {
         },
         border: {
           get: function border() { // (void) -> Boolean
-            somewhatImplemented("TextField.border");
             return this._border;
           },
           set: function border(value) { // (value:Boolean) -> void
@@ -607,7 +614,6 @@ var TextFieldDefinition = (function () {
         },
         borderColor: {
           get: function borderColor() { // (void) -> uint
-            somewhatImplemented("TextField.borderColor");
             return this._borderColor;
           },
           set: function borderColor(value) { // (value:uint) -> void
@@ -617,7 +623,6 @@ var TextFieldDefinition = (function () {
         },
         type: {
           get: function borderColor() { // (void) -> String
-            somewhatImplemented("TextField.type");
             return this._type;
           },
           set: function borderColor(value) { // (value:String) -> void

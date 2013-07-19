@@ -53,11 +53,12 @@ class TextFieldObject extends TextField {
     autoSize = TextFieldAutoSize.NONE;
     printEquals(autoSize, TextFieldAutoSize.NONE, "flash.text::TextField/{get|set} autoSize()");
 
-    printEquals(defaultTextFormat ? defaultTextFormat.size : undefined, 12, "flash.text::TextField/{get|set} defaultTextFormat()");
+    printEquals(defaultTextFormat.size, 12, "flash.text::TextField/{get|set} defaultTextFormat()");
 
     printEquals(text, '', "flash.text::TextField/get text() // default value");
     printEquals(htmlText, '', "flash.text::TextField/get htmlText() // default value");
-    printEquals(textHeight, 0, "flash.text::TextField/get textHeight()");
+    printEquals(textWidth, 0, "flash.text::TextField/get textWidth() // default value");
+    printEquals(textHeight, 0, "flash.text::TextField/get textHeight() // default value");
     var testText = "hello, world!";
     text = testText;
     printEquals(text, testText, "flash.text::TextField/{get|set} text()");
