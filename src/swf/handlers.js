@@ -107,6 +107,18 @@ function trace (str) {
   }
 }
 
+function dumpBytes(bytes, start, length, offset) {  
+  var s = "";
+  var end = start + length;
+  for (var i = start; i < end; i++) {
+    if (((i - start) % 16) === 0) {
+      s += "\n" + (i - offset) + ": ";
+    }
+    s += bytes[i] + " ";
+  }
+  print("dumping " + length + " bytes: " + s);
+}      
+
 var tagHandler = (function (global) {
 
   var Asm = function Asm(stdlib, imports, heap) {
@@ -115,6 +127,7 @@ var tagHandler = (function (global) {
     var inputStreamOffset = 8388608; // 2^23
     var inputStreamPos = 8388608;
     var maskOffset = 8387584; // 2^23 - 2^10
+    var scratchOffset = 8387520; // 2^23 - 2^10 - 2^3
     var pos = 0;
     var RED = 1;
     var GREEN = 2;
@@ -271,7 +284,6 @@ var tagHandler = (function (global) {
 
     var bytesU8 = new stdlib.Uint8Array(heap);
     var bytesU32 = new stdlib.Uint32Array(heap);
-    var bytesS8 = new stdlib.Int8Array(heap);
     var bytesD32 = new stdlib.Float32Array(heap);
     var bytesD64 = new stdlib.Float64Array(heap);
 
@@ -309,11 +321,6 @@ var tagHandler = (function (global) {
     // Return the current position in the ArrayBuffer.
     function getPos() {
       return pos | 0;
-    }
-
-    function setPos(p) {
-      p = p | 0;
-      pos = p;
     }
 
     function getInputStreamPos() {
@@ -577,34 +584,32 @@ var tagHandler = (function (global) {
     // Write an float32 value.
     function writeUBJD32(val) {
       val = +val;
-      var scratchPos = 0;
-      scratchPos = imul(pos + 1, 4) | 0;
-      bytesD32[scratchPos >> 2] = val;  // Write out float32 to get bytes.
+      bytesD32[scratchOffset >> 2] = val;  // Write out float32 to get bytes.
       bytesU8[pos] = $d;
       // Copy bytes in reverse order to produce big endian on Intel hardward.
-      bytesU8[pos + 1 | 0] = bytesU8[scratchPos + 3 | 0];
-      bytesU8[pos + 2 | 0] = bytesU8[scratchPos + 2 | 0];
-      bytesU8[pos + 3 | 0] = bytesU8[scratchPos + 1 | 0];
-      bytesU8[pos + 4 | 0] = bytesU8[scratchPos | 0];
+      bytesU8[pos + 1 | 0] = bytesU8[scratchOffset + 3 | 0];
+      bytesU8[pos + 2 | 0] = bytesU8[scratchOffset + 2 | 0];
+      bytesU8[pos + 3 | 0] = bytesU8[scratchOffset + 1 | 0];
+      bytesU8[pos + 4 | 0] = bytesU8[scratchOffset | 0];
       pos = pos + 5 | 0;
     }
 
     // Write an float64 value.
     function writeUBJD64(val) {
       val = +val;
-      var scratchPos = 0;
-      scratchPos = imul(pos + 1, 8) | 0;
-      bytesD64[scratchPos >> 3] = val;  // Write out float64 to get bytes.
+      var scratchOffset = 0;
+      scratchOffset = imul(pos + 1, 8) | 0;
+      bytesD64[scratchOffset >> 3] = val;  // Write out float64 to get bytes.
       bytesU8[pos] = $D;
       // Copy bytes in reverse order to produce big endian on Intel hardward.
-      bytesU8[pos + 1 | 0] = bytesU8[scratchPos + 7 | 0];
-      bytesU8[pos + 2 | 0] = bytesU8[scratchPos + 6 | 0];
-      bytesU8[pos + 3 | 0] = bytesU8[scratchPos + 5 | 0];
-      bytesU8[pos + 4 | 0] = bytesU8[scratchPos + 4 | 0];
-      bytesU8[pos + 5 | 0] = bytesU8[scratchPos + 3 | 0];
-      bytesU8[pos + 6 | 0] = bytesU8[scratchPos + 2 | 0];
-      bytesU8[pos + 7 | 0] = bytesU8[scratchPos + 1 | 0];
-      bytesU8[pos + 8 | 0] = bytesU8[scratchPos | 0];
+      bytesU8[pos + 1 | 0] = bytesU8[scratchOffset + 7 | 0];
+      bytesU8[pos + 2 | 0] = bytesU8[scratchOffset + 6 | 0];
+      bytesU8[pos + 3 | 0] = bytesU8[scratchOffset + 5 | 0];
+      bytesU8[pos + 4 | 0] = bytesU8[scratchOffset + 4 | 0];
+      bytesU8[pos + 5 | 0] = bytesU8[scratchOffset + 3 | 0];
+      bytesU8[pos + 6 | 0] = bytesU8[scratchOffset + 2 | 0];
+      bytesU8[pos + 7 | 0] = bytesU8[scratchOffset + 1 | 0];
+      bytesU8[pos + 8 | 0] = bytesU8[scratchOffset | 0];
       pos = pos + 9 | 0;
     }
 
@@ -1976,26 +1981,27 @@ var tagHandler = (function (global) {
 
     return {
       defineShape: defineShape,
-//      removeObject: removeObject,
-//      placeObject: placeObject,
+      removeObject: removeObject,
+      placeObject: placeObject,
       // Utils
       initMasks: initMasks,
       setInputStreamPos: setInputStreamPos,
       getInputStreamPos: getInputStreamPos,
       getPos: getPos,
-      setPos: setPos,
     };
   }
 
   var bytes;
   var stream;
   var inputStreamOffset = 8388608; // 2^23
+  var inputStreamLength;
 
   function setStream(s) {
     bytes = s.bytes;
     stream = s;
     byteView.set(bytes, inputStreamOffset);
     asm.setInputStreamPos(0);
+    inputStreamLength = s.bytes.length;
   }
 
   var values = [];
@@ -2103,8 +2109,6 @@ var tagHandler = (function (global) {
       $stream.pos = asm.getInputStreamPos();
       return $;
     }
-    var pos;
-    asm.setPos((pos = 0));
     $||($={})
     if(tagCode>4){
       if(tagCode>26){
@@ -3227,15 +3231,6 @@ var tagHandler = (function (global) {
   }
 
   function doABC($bytes, $stream, $, swfVersion, tagCode){
-    if (asm.doABC) {
-      var pos = asm.getPos();
-      var count = asm.doABC(swfVersion, tagCode);
-      asm.setPos(pos);
-      asm.decode(count);
-      setObjectProps($, count);
-      asm.setPos(pos);
-      return $;
-    }
     $||($={})
     if(tagCode===82){
       $.flags=
