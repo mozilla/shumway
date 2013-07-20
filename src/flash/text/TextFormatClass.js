@@ -25,6 +25,7 @@ var TextFormatDefinition = (function () {
     __class__: "flash.text.TextFormat",
     initialize: function () {
     },
+    // TODO: make this a static function and call the ctor with the right args
     fromObject: function(obj) {
       this._font = obj.font;
       this._size = obj.size;
@@ -56,7 +57,7 @@ var TextFormatDefinition = (function () {
         rightMargin: this._rightMargin,
         indent: this._indent,
         leading: this._leading
-      }
+      };
     },
     __glue__: {
       native: {

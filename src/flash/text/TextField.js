@@ -25,66 +25,136 @@ var TextFieldDefinition = (function () {
   var measureCtx = document.createElement('canvas').getContext('kanvas-2d');
 
   /*
-   * Parsing "html", in this context, actually means ensuring that the given
-   * string is valid *xml*, and removing any tags that mustn't be supported.
+   * Parsing, in this context, actually means using the browser's html parser
+   * and then removing any tags and attributes that mustn't be supported.
    *
    * After that, two things are generated: a plain-text version of the content,
-   * and a list of ranges with types and attributes, representing all nested
-   * nodes.
+   * and a tree of objects with types and attributes, representing all nodes.
    */
-  function parseHtml(val) {
+  function parseHtml(val, initialFormat) {
     htmlParser.innerHTML = val;
-    var rootElement = htmlParser.childNodes.length !== 1 ? htmlParser :
-      htmlParser.childNodes[0];
-    var content = {text : '', tree : null};
-    content.tree = convertMarkup(rootElement, content);
+    var rootElement = htmlParser.childNodes.length !== 1 ?
+                      htmlParser :
+                      htmlParser.childNodes[0];
+    // TODO: create the htmlText by serializing the converted tree
+    var content = {text : '', htmlText: val, tree : createTrunk(initialFormat)};
+
+    if (rootElement.nodeType === 3) {
+      convertNode(rootElement, content.tree.children[0].children, content);
+      return content;
+    }
+
+    var initialNodeList = [rootElement];
+    // If the outermost node is a <P>, merge its attributes and discard it
+    var attributes;
+    var format;
+    var key;
+    if (initialNodeList.length == 1 &&
+        rootElement.localName.toUpperCase() == 'P')
+    {
+      attributes = extractAttributes(rootElement);
+      format = content.tree.format;
+      for (key in attributes) {
+        format[key] = attributes[key];
+      }
+      initialNodeList = rootElement.childNodes;
+      rootElement = rootElement.childNodes[0];
+    }
+    // If the now-outermost node is a <FONT>, do the same with it
+    if (initialNodeList.length == 1 &&
+        rootElement.localName.toUpperCase() == 'FONT')
+    {
+      attributes = extractAttributes(rootElement);
+      format = content.tree.children[0].format;
+      for (key in attributes) {
+        format[key] = attributes[key];
+      }
+      initialNodeList = rootElement.childNodes;
+    }
+    convertNodeList(initialNodeList, content.tree.children[0].children, content);
     return content;
   }
 
-  function convertMarkup(tree, content) {
+  function createTrunk(initialFormat) {
+    // The outermost node is always a <P>, with an ALIGN attribute
+    var trunk = {type: 'P', format: {ALIGN: initialFormat.align}, children: []};
+    // The first child is then a <FONT>, with FACE, LETTERSPACING and KERNING
+    var fontAttributes = { FACE: initialFormat.font,
+                           LETTERSPACING: initialFormat.letterSpacing,
+                           KERNING: initialFormat.kerning
+                         };
+    trunk.children[0] = {type: 'FONT', format: fontAttributes, children: []};
+    return trunk;
+  }
+
+  var knownNodeTypes = {
+    'BR': true,
+    'LI': true,
+    'P': true,
+    'B': true,
+    'I': true,
+    'FONT': true,
+    'TEXTFORMAT': true,
+    'U': true,
+    'A': true,
+    'IMG': true,
+    'SPAN': true
+  };
+
+  function convertNode(input, destinationList, content) {
     // Ignore all comments, processing instructions and namespaced nodes.
-    if (tree.nodeType !== 1 && tree.nodeType !== 3 || tree.prefix)
-    {
+    if (!(input.nodeType === 1 || input.nodeType === 3) || input.prefix) {
       return;
     }
-    var node = {type : '', text : '', format : null, children : null};
 
-    if (tree.nodeType === 3) {
-      var text = tree.textContent;
-      node.type = 'text';
-      node.text = text;
+    var node;
+
+    if (input.nodeType === 3) {
+      var text = input.textContent;
+      node = { type: 'text', text: text, format: null, children: null };
       content.text += text;
-      return node;
+      destinationList.push(node);
+      return;
     }
+    // For unknown node types, skip the node itself, but convert its children
+    // and add them to the parent's child list
+    var nodeType = input.localName.toUpperCase();
+    if (!knownNodeTypes[nodeType]) {
+      convertNodeList(input.childNodes, destinationList, content);
+      return;
+    }
+    node = { type: nodeType,
+                 text: null,
+                 format: extractAttributes(input),
+                 children: []
+               };
 
-    node.type = tree.localName.toUpperCase();
-    node.format = extractAttributes(tree);
-    node.children = [];
+    convertNodeList(input.childNodes, node.children, content);
+    destinationList.push(node);
+  }
 
-    var children = tree.childNodes;
-    var childCount = children.length;
+  function convertNodeList(from, to, content) {
+    var childCount = from.length;
     for (var i = 0; i < childCount; i++) {
-      node.children.push(convertMarkup(children[i], content));
+      convertNode(from[i], to, content);
     }
-
-    return node;
   }
 
   /**
    * Creates an object containing all attributes with their localName as keys.
    * Ignores all namespaced attributes, as we don't need them for the
    * TextField's purposes.
-   * TODO: check whether we still have to keep them around for round-tripping.
+   * TODO: Whitelist known attributes and throw out the rest.
    */
   function extractAttributes(node) {
     var attributesList = node.attributes;
-    var attributesMap = Object.create(null);
+    var attributesMap = {};
     for (var i = 0; i < attributesList.length; i++) {
       var attr = attributesList[i];
       if (attr.prefix) {
         continue;
       }
-      attributesMap[attr.localName] = attr.value;
+      attributesMap[attr.localName.toUpperCase()] = attr.value;
     }
     return attributesMap;
   }
@@ -111,10 +181,13 @@ var TextFieldDefinition = (function () {
       case 'B': /* falls through */
       case 'I': /* falls through */
       case 'FONT': /* falls through */
-      case 'TEXTFORMAT': pushFormat(state, node); formatNode = true; break;
+      case 'TEXTFORMAT':
+        pushFormat(state, node);
+        formatNode = true;
+        break;
 
       case 'U': /* TODO: implement <u>-support. */ /* falls through */
-      case 'U': /* TODO: implement <a>-support. */ /* falls through */
+      case 'A': /* TODO: implement <a>-support. */ /* falls through */
       case 'IMG': /* TODO: implement <img>-support. */ /* falls through */
       case 'SPAN': /* TODO: implement what puny support for CSS Flash has. */
       /* falls through */
@@ -134,12 +207,17 @@ var TextFieldDefinition = (function () {
   }
   function addTextRun(state, node) {
     var text = node.text;
+    if (!text) {
+      return;
+    }
     // `y` is set by `finishLine`
     var run = {type: 't', text: text, x: state.x, y: 0};
     state.runs.push(run);
     state.line.push(run);
     state.x += state.ctx.measureText(text).width;
-    state.lineHeight = Math.max(state.lineHeight, state.currentFormat.size);
+    if (state.currentFormat.size > state.lineHeight) {
+      state.lineHeight = state.currentFormat.size;
+    }
     // TODO: implement wordWrap
 //    var overflow = '';
 //    var ctx = state.ctx;
@@ -166,25 +244,30 @@ var TextFieldDefinition = (function () {
       case 'B': format.bold = true; break;
       case 'I': format.italic = true; break;
       case 'FONT':
-        if ('color' in attributes) {
-          format.color = attributes.color;
+        if ('COLOR' in attributes) {
+          format.color = attributes.COLOR;
         }
-        if ('face' in attributes) {
-          format.face = convertFontFamily(attributes.face);
+        if ('FACE' in attributes) {
+          format.face = convertFontFamily(attributes.FACE);
         }
-        if ('size' in attributes) {
-          format.size = attributes.size;
+        if ('SIZE' in attributes) {
+          format.size = parseFloat(attributes.SIZE);
+        }
+        if ('LETTERSPACING' in attributes) {
+          format.letterspacing = parseFloat(attributes.LETTERSPACING);
+        }
+        if ('KERNING' in attributes) {
+          format.kerning = parseFloat(attributes.KERNING);
         }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
-        if ('indent' in attributes) {
-          state.x += attributes.indent;
+        if ('INDENT' in attributes) {
+          state.x += attributes.INDENT;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
         // TODO: support leading
         // TODO: support tabStops, if possible
-        state.lineHeight = Math.max(state.lineHeight, format.size);
         break;
       default:
         warning('Unknown format node encountered: ' + node.type); return;
@@ -222,7 +305,7 @@ var TextFieldDefinition = (function () {
         family = 'monospace';
       }
     }
-    return family || '"' + face + '"';
+    return family || face;
   }
 
   function renderToCanvas(ctx, bounds, runs) {
@@ -380,12 +463,10 @@ var TextFieldDefinition = (function () {
     __class__: 'flash.text.TextField',
 
     initialize: function () {
-      var initialFormat = this._defaultTextFormat =
-        {
-          face: 'serif', size: 12,
-          bold: false, italic: false,
-          color: 'black'
-        };
+      var initialFormat = this._defaultTextFormat = {
+        align: 'LEFT', font: 'serif', size: 12,
+        letterspacing: 0, kerning: 0
+      };
       this._type = 'dynamic';
       this._selectable = true;
       this._textHeight = 0;
@@ -418,7 +499,8 @@ var TextFieldDefinition = (function () {
         initialFormat.color = toStringRgba(tag.color);
       }
       if (tag.hasFont) {
-        initialFormat.face = convertFontFamily(tag.font);
+        initialFormat.font = convertFontFamily(tag.font);
+        print("initial font: " + initialFormat.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
 
@@ -469,7 +551,6 @@ var TextFieldDefinition = (function () {
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun]};
       collectRuns(this._content.tree, state);
-      finishLine(state);
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
@@ -483,21 +564,21 @@ var TextFieldDefinition = (function () {
       if (this._content && this._content.text === val) {
         return;
       }
-      var node = {type : 'text', text: val};
-      this._content = {tree : node, text : val};
-      this._htmlText = val;
+      this._content = { text: val, tree: createTrunk(this._defaultTextFormat),
+                        htmlText: val
+                      };
+      this._content.tree.children[0].children[0] = {type: 'text', text: val };
       this.invalidateDimensions();
     },
 
     get htmlText() {
-      return this._htmlText;
+      return this._content.htmlText;
     },
     set htmlText(val) {
       if (this._htmlText === val) {
         return;
       }
-      this._htmlText = '<P>' + val + '</P>'; // TODO add default formatting
-      this._content = parseHtml(val);
+      this._content = parseHtml(val, this._defaultTextFormat);
       this.invalidateDimensions();
     },
 
