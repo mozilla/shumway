@@ -451,6 +451,11 @@ var TextFieldDefinition = (function () {
       renderContent(this._content, this._bbox, ctx);
     },
 
+    invalidateDimensions: function() {
+      this._markAsDirty();
+      this._dimensionsValid = false;
+    },
+
     ensureDimensions: function() {
       if (this._dimensionsValid) {
         return;
@@ -481,8 +486,7 @@ var TextFieldDefinition = (function () {
       var node = {type : 'text', text: val};
       this._content = {tree : node, text : val};
       this._htmlText = val;
-      this._markAsDirty();
-      this._dimensionsValid = false;
+      this.invalidateDimensions();
     },
 
     get htmlText() {
@@ -494,8 +498,7 @@ var TextFieldDefinition = (function () {
       }
       this._htmlText = '<P>' + val + '</P>'; // TODO add default formatting
       this._content = parseHtml(val);
-      this._dimensionsValid = false;
-      this._markAsDirty();
+      this.invalidateDimensions();
     },
 
     get defaultTextFormat() {
@@ -510,8 +513,32 @@ var TextFieldDefinition = (function () {
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
       this.defaultTextFormat = format;// TODO
-    }
+    },
 
+    get width() { // (void) -> Number
+      return this._bbox.right - this._bbox.left;
+    },
+    set width(value) { // (Number) -> Number
+      if (value < 0) {
+        return;
+      }
+      this._bbox.right = this._bbox.left + value;
+      // TODO: optimization potential: don't invalidate if !wordWrap and no \n
+      if (this._multiline || this._wordWrap) {
+        this.invalidateDimensions();
+      }
+    },
+
+    get height() { // (void) -> Number
+      return this._bbox.bottom - this._bbox.top;
+    },
+    set height(value) { // (Number) -> Number
+      if (value < 0) {
+        return;
+      }
+      this._bbox.bottom = this._bbox.top + value;
+      this._markAsDirty();
+    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;

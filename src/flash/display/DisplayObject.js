@@ -722,8 +722,22 @@ var DisplayObjectDefinition = (function () {
         rotationY: desc(def, "rotationY"),
         rotationZ: desc(def, "rotationZ"),
         alpha: desc(def, "alpha"),
-        width: desc(def, "width"),
-        height: desc(def, "height"),
+        width: {
+          get: function width() {
+            return this.width;
+          },
+          set: function width(value) {
+            this.width = value;
+          }
+        },
+        height: {
+          get: function height() {
+            return this.height;
+          },
+          set: function height(value) {
+            this.height = value;
+          }
+        },
         _hitTest: def._hitTest,
         cacheAsBitmap: desc(def, "cacheAsBitmap"),
         opaqueBackground: desc(def, "opaqueBackground"),
