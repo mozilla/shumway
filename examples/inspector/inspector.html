@@ -83,7 +83,7 @@ limitations under the License.
 
     <script>
       window.print = function (msg) {
-        console.log(msg);
+        console.log.apply(console, arguments);
       };
       var webShell = true;
       function getQueryVariable(variable) {

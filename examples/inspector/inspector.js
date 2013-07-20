@@ -366,9 +366,11 @@ var FileLoadingService = {
     document.body.removeChild(a);
   },
   resolveUrl: function (url) {
-    if (url.indexOf('://') >= 0) return url;
+    if (url.indexOf('://') >= 0) {
+      return url;
+    }
 
-    var base = FileLoadingService.baseUrl;
+    var base = FileLoadingService.baseUrl || '';
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {
       var m = /^[^:]+:\/\/[^\/]+/.exec(base);
