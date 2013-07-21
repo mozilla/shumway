@@ -213,6 +213,9 @@ var Bindings = (function () {
     defineNonEnumerableProperty(object, VM_BINDINGS, []);
     defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
 
+    defineNonEnumerableProperty(object, "bindings", this);
+    defineNonEnumerableProperty(object, "resolutionMap", []);
+
     traitsWriter && traitsWriter.greenLn("Applying Traits");
 
     for (var key in this.map) {

@@ -330,7 +330,7 @@ var ShumwayNamespace = (function () {
   var MIN_API_MARK              = 0xe294;
   var MAX_API_MARK              = 0xf8ff;
 
-  function namespace(kind, uri, prefix) {
+  function namespace(kind, uri, prefix, dontMangle) {
     if (kind !== undefined) {
       if (uri === undefined) {
         uri = "";
@@ -340,7 +340,7 @@ var ShumwayNamespace = (function () {
       }
       this.kind = kind;
       this.originalURI = this.uri = uri;
-      buildNamespace.call(this);
+      buildNamespace.call(this, dontMangle);
     }
     // Otherwise, we are creating an empty namespace to be build
     // by the parse method.
@@ -349,7 +349,7 @@ var ShumwayNamespace = (function () {
   namespace.PREFIXES = prefixes;
 
   var uniqueNamespaceCounter = 0;
-  function buildNamespace() {
+  function buildNamespace(dontMangle) {
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
       var n = this.uri.length - 1;
@@ -360,7 +360,7 @@ var ShumwayNamespace = (function () {
     } else if (this.isUnique()) {
       this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
-    this.uri = mangleNamespaceURI(this.uri);
+    this.uri = dontMangle ? this.uri : mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + "$" + this.uri;
   }
@@ -408,8 +408,9 @@ var ShumwayNamespace = (function () {
     var kind = namespace.kindFromString(str);
     str = qn.substring(a + 1, b);
     var uri = str === "" ? str : (MANGLE_NAMESPACES ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
-    assert (uri || uri === "", "uri is " + uri);
-    return new namespace(kind, uri);
+    release || assert (uri || uri === "", "uri is " + uri);
+    release || assert (qn.indexOf(new namespace(kind, uri, undefined, true).getQualifiedName()) >= 0);
+    return new namespace(kind, uri, undefined, true);
   };
 
   namespace.kindFromString = function kindFromString(str) {
@@ -469,10 +470,22 @@ var ShumwayNamespace = (function () {
       return this.qualifiedName === o.qualifiedName;
     },
 
+    inNamespaceSet: function inNamespaceSet(set) {
+      for (var i = 0; i < set.length; i++) {
+        if (set[i].qualifiedName === this.qualifiedName) {
+          return true;
+        }
+      }
+      return false;
+    },
+
     getAccessModifier: function getAccessModifier() {
       return kinds[this.kind];
     },
 
+    getQualifiedName: function getQualifiedName() {
+      return this.qualifiedName;
+    }
   });
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
@@ -803,7 +816,7 @@ var Multiname = (function () {
     } else if (typeof mn === "string") {
       return isNumeric(mn);
     }
-    release || assert(mn instanceof multiname);
+    release || assert(mn instanceof multiname, typeof mn);
     return !isNaN(parseInt(multiname.getName(mn), 10));
   };
 
@@ -980,6 +993,7 @@ var Multiname = (function () {
 })();
 
 var ConstantPool = (function constantPool() {
+  var nextNamespaceSetID = 1;
   function constantPool(stream, name) {
     var i, n;
 
@@ -1032,12 +1046,12 @@ var ConstantPool = (function constantPool() {
     for (i = 1; i < n; ++i) {
       var count = stream.readU30();
       var set = [];
+      set.id = nextNamespaceSetID ++;
       for (var j = 0; j < count; ++j) {
         set.push(namespaces[stream.readU30()]);
       }
       namespaceSets.push(set);
     }
-
 
     this.namespaces = namespaces;
     this.namespaceSets = namespaceSets;

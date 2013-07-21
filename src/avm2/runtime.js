@@ -269,6 +269,122 @@ function initializeGlobalObject(global) {
   VM_NATIVE_BUILTINS.forEach(function (o) {
     defineReadOnlyProperty(o.prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
   });
+
+  /**
+   * Property Access Methods:
+   *  - getResolutionMap(namespaces, name)
+   *  - getPropertyByMultiname(namespaces, name, isMethod)
+   *  - setPropertyByMultiname(namespaces, name, value)
+   *  - hasPropertyByMultiname(namespaces, name)
+   *  - callPropertyByMultiname(namespaces, name, isLex, args)
+   *  - deletePropertyByMultiname(namespaces, name, value)
+   */
+
+  defineNonEnumerableProperty(global.Object.prototype, "getResolutionMap", function getResolutionMap(namespaces) {
+    var map = this.resolutionMap[namespaces.id];
+    if (map) return map;
+    map = this.resolutionMap[namespaces.id] = createEmptyObject();
+    var bindings = this.bindings;
+
+    for (var key in bindings.map) {
+      var multiname = key;
+      var trait = bindings.map[key].trait;
+      if (trait.isGetter() || trait.isSetter()) {
+        multiname = multiname.substring(Binding.KEY_PREFIX_LENGTH);
+      }
+      var k = multiname;
+      multiname = Multiname.fromQualifiedName(multiname);
+      if (multiname.getNamespace().inNamespaceSet(namespaces)) {
+        map[multiname.getName()] = Multiname.getQualifiedName(trait.name);
+//        print("> Creating Resolver " + multiname.getName() + " -> " + Multiname.getQualifiedName(trait.name));
+      }
+    }
+    return map;
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "resolvePropertyByMultiname", function resolvePropertyByMultiname(namespaces, name) {
+    if (typeof name === "object") {
+      name = String(name);
+    }
+    if (isNumeric(name)) {
+      return Number(name);
+    }
+    if (!namespaces) {
+      return Multiname.getPublicQualifiedName(name);
+    }
+    if (namespaces.length > 1) {
+      var resolved = this.getResolutionMap(namespaces)[name];
+      if (resolved) return resolved;
+      return Multiname.getPublicQualifiedName(name);
+    } else {
+      return namespaces[0].qualifiedName + "$" + name;
+    }
+  }),
+
+  defineNonEnumerableProperty(global.Object.prototype, "getPropertyByMultiname", function getPropertyByMultiname(namespaces, name, isMethod) {
+    if (this.getProperty) {
+      return this.getProperty(namespaces, name, isMethod);
+    }
+    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+    // print("getPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
+    if (this.indexGet && Multiname.isNumeric(resolved)) {
+      return this.indexGet(resolved);
+    }
+    return this[resolved];
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "setPropertyByMultiname", function setPropertyByMultiname(namespaces, name, value) {
+    if (this.setProperty) {
+      return this.setProperty(namespaces, name, value);
+    }
+    if (typeof name === "object") {
+      name = String(name);
+    }
+    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+//    print("setPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
+    if (this.indexSet && Multiname.isNumeric(resolved)) {
+      return this.indexSet(resolved, value);
+    }
+    this[resolved] = value;
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "callPropertyByMultiname", function callPropertyByMultiname(namespaces, name, isLex, args) {
+    var receiver = isLex ? null : this;
+    if (isProxyObject(this)) {
+      return this[VM_CALL_PROXY](new Multiname(namespaces, name), receiver, args);
+    }
+    var property = this.getPropertyByMultiname(namespaces, name, true);
+    return property.apply(receiver, args);
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "hasPropertyByMultiname", function hasPropertyByMultiname(namespaces, name) {
+    if (this.hasProperty) {
+      return this.hasProperty(namespaces, name);
+    }
+    return this.resolvePropertyByMultiname(namespaces, name) in this;
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "deletePropertyByMultiname", function deletePropertyByMultiname(namespaces, name) {
+    if (this.deleteProperty) {
+      return this.deleteProperty(namespaces, name);
+    }
+    if (this.indexDelete && Multiname.isNumeric(name)) {
+      return this.indexDelete(name);
+    }
+    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+    /**
+     * If we're in the middle of an enumeration, we need to remove the property name
+     * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
+     * to be skipped by the enumeration code.
+     */
+    if (this[VM_ENUMERATION_KEYS]) {
+      var index = this[VM_ENUMERATION_KEYS].indexOf(resolved);
+      if (index >= 0) {
+        this[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
+      }
+    }
+    return delete this[resolved];
+  });
 }
 
 initializeGlobalObject(jsGlobal);
@@ -786,32 +902,32 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function callPropertyWithIC(object, mn, isLex, args, ic) {
-  if (typeof object === "number") {
-    object = boxValue(object);
-  }
-  var receiver = isLex ? null : object;
-  assert (object, "NullReferenceException");
-  if (isProxyObject(object)) {
-    return object[VM_CALL_PROXY](mn, receiver, args);
-  }
-  var property = getPropertyWithIC(object, mn, true, ic);
-  return property.apply(receiver, args);
-}
-
-function callProperty(object, mn, isLex, args) {
-  // Counter.count("callProperty " + mn.name);
-  if (typeof object === "number") {
-    object = boxValue(object);
-  }
-  var receiver = isLex ? null : object;
-  assert (object, "NullReferenceException");
-  if (isProxyObject(object)) {
-    return object[VM_CALL_PROXY](mn, receiver, args);
-  }
-  var property = getProperty(object, mn, true);
-  return property.apply(receiver, args);
-}
+//function callPropertyWithIC(object, mn, isLex, args, ic) {
+//  if (typeof object === "number") {
+//    object = boxValue(object);
+//  }
+//  var receiver = isLex ? null : object;
+//  assert (object, "NullReferenceException");
+//  if (isProxyObject(object)) {
+//    return object[VM_CALL_PROXY](mn, receiver, args);
+//  }
+//  var property = getPropertyWithIC(object, mn, true, ic);
+//  return property.apply(receiver, args);
+//}
+//
+//function callProperty(object, mn, isLex, args) {
+//  // Counter.count("callProperty " + mn.name);
+//  if (typeof object === "number") {
+//    object = boxValue(object);
+//  }
+//  var receiver = isLex ? null : object;
+//  assert (object, "NullReferenceException");
+//  if (isProxyObject(object)) {
+//    return object[VM_CALL_PROXY](mn, receiver, args);
+//  }
+//  var property = getProperty(object, mn, true);
+//  return property.apply(receiver, args);
+//}
 
 function hasProperty(object, name) {
   object = boxValue(object);
@@ -897,6 +1013,8 @@ function resolveNameWithIC(object, name, ic) {
   }
   return qn;
 }
+
+/*
 function getPropertyWithIC(object, name, isMethod, ic) {
   if (object.getProperty) {
     return object.getProperty(name, isMethod);
@@ -940,28 +1058,29 @@ function setProperty(object, name, value) {
   }
   object[qn] = value;
 }
+*/
 
-function deleteProperty(object, name) {
-  if (object.deleteProperty) {
-    return object.deleteProperty(name);
-  }
-  var qn = resolveName(object, name);
-  if (object.indexDelete && Multiname.isNumeric(qn)) {
-    return object.indexDelete(qn);
-  }
-  /**
-   * If we're in the middle of an enumeration, we need to remove the property name
-   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
-   * to be skipped by the enumeration code.
-   */
-  if (object[VM_ENUMERATION_KEYS]) {
-    var index = object[VM_ENUMERATION_KEYS].indexOf(qn);
-    if (index >= 0) {
-      object[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
-    }
-  }
-  return delete object[qn];
-}
+//function deleteProperty(object, name) {
+//  if (object.deleteProperty) {
+//    return object.deleteProperty(name);
+//  }
+//  var qn = resolveName(object, name);
+//  if (object.indexDelete && Multiname.isNumeric(qn)) {
+//    return object.indexDelete(qn);
+//  }
+//  /**
+//   * If we're in the middle of an enumeration, we need to remove the property name
+//   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
+//   * to be skipped by the enumeration code.
+//   */
+//  if (object[VM_ENUMERATION_KEYS]) {
+//    var index = object[VM_ENUMERATION_KEYS].indexOf(qn);
+//    if (index >= 0) {
+//      object[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
+//    }
+//  }
+//  return delete object[qn];
+//}
 
 function setSuper(scope, object, mn, value) {
   release || assert(object);
@@ -1126,6 +1245,7 @@ function shouldCompile(mi) {
  * Checks if the specified method must be compiled, even if the compiled is not enabled.
  */
 function forceCompile(mi) {
+  return false;
   var holder = mi.holder;
   if (holder instanceof ClassInfo) {
     holder = holder.instanceInfo;
@@ -1676,7 +1796,7 @@ function createClass(classInfo, baseClass, scope) {
   createFunction(classInfo.init, scope).call(cls);
 
   // Seal constant traits in the class object.
-  compatibility && this.sealConstantTraits(cls, ci.traits);
+  this.sealConstantTraits(cls, ci.traits);
 
   return cls;
 }

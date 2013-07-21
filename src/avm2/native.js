@@ -241,7 +241,7 @@ var natives = (function () {
       instance: {
         length: {
           get: function() { return this.length; },
-          set: function(l) { this.length = l }
+          set: function(l) { this.length = l; }
         },
         isPrototypeOf: Object.prototype.isPrototypeOf,
         hasOwnProperty: function (name) {
@@ -936,91 +936,63 @@ var natives = (function () {
       if (!weakKeys) {
         this.keys = [];
       }
-      this.primitiveMap = {};
+      this.primitiveMap = createEmptyObject();
     }
 
     var c = new Class("Dictionary", ASDictionary, C(ASDictionary));
     c.extendNative(baseClass, ASDictionary);
 
-    function tryMakePrimitiveKey(key) {
-      if (typeof key === "string" ||
-          typeof key === "number") {
+    function makePrimitiveKey(key) {
+      if (typeof key === "string" || typeof key === "number") {
         return key;
       }
-      assert (typeof key === "object" || typeof key === "function");
+      assert (typeof key === "object" || typeof key === "function", typeof key);
+      return undefined;
     }
 
     var Dp = ASDictionary.prototype;
-    defineNonEnumerableProperty(Dp, "setProperty", function (qn, value) {
-      if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
-          qn = Multiname.getPublicQualifiedName(qn.name);
-        } else {
-          qn = qn.name;
-        }
-      }
-      var primitiveKey = tryMakePrimitiveKey(qn);
-      if (primitiveKey !== undefined) {
-        this.primitiveMap[primitiveKey] = value;
+    defineNonEnumerableProperty(Dp, "setProperty", function (namespaces, name, value) {
+      var key = makePrimitiveKey(name);
+      if (key !== undefined) {
+        this.primitiveMap[key] = value;
         return;
       }
-      this.map.set(Object(qn), value);
-      if (!this.weakKeys && this.keys.indexOf(qn) < 0) {
-        this.keys.push(qn);
+      this.map.set(Object(name), value);
+      if (!this.weakKeys && this.keys.indexOf(name) < 0) {
+        this.keys.push(name);
       }
     });
-    defineNonEnumerableProperty(Dp, "getProperty", function (qn) {
-      if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
-          qn = Multiname.getPublicQualifiedName(qn.name);
-        } else {
-          qn = qn.name;
-        }
+    defineNonEnumerableProperty(Dp, "getProperty", function (namespaces, name) {
+      var key = makePrimitiveKey(name);
+      if (key !== undefined) {
+        return this.primitiveMap[key];
       }
-      var primitiveKey = tryMakePrimitiveKey(qn);
-      if (primitiveKey !== undefined) {
-        return this.primitiveMap[primitiveKey];
-      }
-      return this.map.get(Object(qn));
+      return this.map.get(Object(name));
     });
-    defineNonEnumerableProperty(Dp, "hasProperty", function (qn) {
-      if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
-          qn = Multiname.getPublicQualifiedName(qn.name);
-        } else {
-          qn = qn.name;
-        }
+    defineNonEnumerableProperty(Dp, "hasProperty", function (namespaces, name) {
+      var key = makePrimitiveKey(name);
+      if (key !== undefined) {
+        return key in this.primitiveMap;
       }
-      var primitiveKey = tryMakePrimitiveKey(qn);
-      if (primitiveKey !== undefined) {
-        return primitiveKey in this.primitiveMap;
-      }
-      return this.map.has(Object(qn));
+      return this.map.has(Object(name));
     });
-    defineNonEnumerableProperty(Dp, "deleteProperty", function (qn) {
-      if (qn instanceof Multiname) {
-        if (typeof qn.name !== "object" && typeof qn.name !== "function") {
-          qn = Multiname.getPublicQualifiedName(qn.name);
-        } else {
-          qn = qn.name;
-        }
+    defineNonEnumerableProperty(Dp, "deleteProperty", function (namespaces, name) {
+      var key = makePrimitiveKey(name);
+      if (key !== undefined) {
+        delete this.primitiveMap[key];
       }
-      var primitiveKey = tryMakePrimitiveKey(qn);
-      if (primitiveKey !== undefined) {
-        delete this.primitiveMap[primitiveKey];
-      }
-      this.map.delete(Object(qn));
+      this.map.delete(Object(name));
       var i;
-      if (!this.weakKeys && (i = this.keys.indexOf(qn)) >= 0) {
+      if (!this.weakKeys && (i = this.keys.indexOf(name)) >= 0) {
         this.keys.splice(i, 1);
       }
       return true;
     });
     defineNonEnumerableProperty(Dp, "getEnumerationKeys", function () {
       var primitiveMapKeys = [];
-      forEachPublicProperty(this.primitiveMap, function (i) {
-        primitiveMapKeys.push(i);
-      });
+      for (var k in this.primitiveMap) {
+        primitiveMapKeys.push(k);
+      }
       return primitiveMapKeys.concat(this.keys);
     });
     c.native = {
