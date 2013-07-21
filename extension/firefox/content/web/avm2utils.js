@@ -108,7 +108,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;
-    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
+    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(builtinAbc);
     avm2.builtinsLoaded = true;
     console.info(Counter.toJSON());

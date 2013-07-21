@@ -1658,7 +1658,7 @@ function createClass(classInfo, baseClass, scope) {
   }
 
   // Notify domain of class creation.
-  domain.onClassCreated.notify(cls);
+  domain.onMessage.notify1('classCreated', cls);
 
   if (cls.instanceConstructor && cls !== Class) {
     cls.verify();

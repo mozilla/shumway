@@ -98,8 +98,8 @@ var EventDispatcherDefinition = (function () {
       this._listeners = { };
       this._captureListeners = { };
     },
-
-    _addEventListener: function addEventListener(type, listener, useCapture, priority) {
+    // We need to be able to cheaply override these in DisplayObject
+    _addEventListenerImpl: function addEventListenerImpl(type, listener, useCapture, priority) {
       if (typeof listener !== 'function') {
         throw new ArgumentError();
       }
@@ -131,7 +131,10 @@ var EventDispatcherDefinition = (function () {
         listeners[type] = [listenerObj];
       }
     },
-    _removeEventListener: function removeEventListener(type, listener, useCapture) {
+    _addEventListener: function addEventListener(type, listener, useCapture, priority) {
+      this._addEventListenerImpl(type, listener, useCapture, priority);
+    },
+    _removeEventListenerImpl: function removeEventListenerImpl(type, listener, useCapture) {
       if (typeof listener !== 'function') {
         return;
       }
@@ -150,6 +153,9 @@ var EventDispatcherDefinition = (function () {
           }
         }
       }
+    },
+    _removeEventListener: function removeEventListener(type, listener, useCapture) {
+      this._removeEventListenerImpl(type, listener, useCapture);
     },
     _hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
       return type in this._listeners || type in this._captureListeners;

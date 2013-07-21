@@ -95,8 +95,6 @@ var Domain = (function () {
     // Do we compile or interpret?
     this.mode = mode;
 
-    this.onClassCreated = new Callback();
-
     this.onMessage = new Callback();
 
     // If we are the system domain (the root), we should initialize the Class
@@ -336,14 +334,18 @@ var Domain = (function () {
       }
     },
 
-    broadcastMessage: function (message, origin) {
-      Timer.start("broadcast: " + message._type);
-      this.onMessage.notify({
+    broadcastMessage: function (type, message, origin) {
+      if ($DEBUG) {
+        Timer.start("broadcast: " + message._type);
+      }
+      this.onMessage.notify1(type, {
         data: message,
         origin: origin,
         source: this
       });
-      Timer.stop();
+      if ($DEBUG) {
+        Timer.stop();
+      }
     },
 
     traceLoadedClasses: function (lastOnly) {
