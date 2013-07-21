@@ -65,7 +65,7 @@ var MovieClipDefinition = (function () {
 
       this._needAdvance = true;
       this._onConstructFrame = function () {
-        this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+        this._gotoFrame(this._currentFrame + 1);
         this._needAdvance = false;
         if (!this._isPlaying) {
           this._removeEventListener('constructFrame', this._onConstructFrame);
@@ -130,8 +130,6 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      this._markAsDirty();
-
       if (currentFrame > 0) {
         var children = this._children;
         var timeline = this._timeline;
@@ -139,6 +137,7 @@ var MovieClipDefinition = (function () {
         var displayList = timeline[frameNum - 1];
 
         if (displayList !== currentDisplayList) {
+          this._markAsDirty();
           var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
 
           for (var depth in walkList) {
@@ -412,7 +411,7 @@ var MovieClipDefinition = (function () {
     play: function () {
       if (!this._isPlaying) {
         this._isPlaying = true;
-        if (!this._needAdvance) {
+        if (!this._needAdvance && this._totalFrames > 1) {
           this._addEventListener('constructFrame', this._onConstructFrame);
         }
       }

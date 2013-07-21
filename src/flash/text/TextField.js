@@ -500,7 +500,6 @@ var TextFieldDefinition = (function () {
       }
       if (tag.hasFont) {
         initialFormat.font = convertFontFamily(tag.font);
-        print("initial font: " + initialFormat.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
 
