@@ -202,7 +202,7 @@ var DisplayObjectContainerDefinition = (function () {
       this._children.forEach(function (child) {
         child.destroy();
       });
-      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
+      this.cleanupBroadcastListeners();
     }
   };
 
