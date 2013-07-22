@@ -134,7 +134,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
-    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
+    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");

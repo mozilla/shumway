@@ -28,7 +28,7 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
   (function loadStubs() {
     log("--- Load all defined stubs ---");
     check (Stubs, "Has Stubs");
-    avm2.systemDomain.onClassCreated.register(function (cls) {
+    avm2.systemDomain.onMessage.register('classCreated', function (eventType, cls) {
       console.info("Loaded: " + cls);
     });
     Stubs.getClassNames().forEach(function (className) {
