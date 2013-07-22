@@ -23,7 +23,7 @@ var StaticTextDefinition = (function () {
     initialize: function () {
       var s = this.symbol;
       if (s) {
-        this.draw = s.draw || null;
+        this.draw = s.draw;
       }
     },
 
