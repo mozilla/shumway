@@ -80,7 +80,7 @@ function somewhatImplemented(message) {
 }
 
 function unexpected(message) {
-  release || assert(false, "Unexpected: " + message);
+  assert(false, "Unexpected: " + message);
 }
 
 function makeForwardingGetter(target) {
@@ -102,7 +102,7 @@ function defineReadOnlyProperty(obj, name, value) {
  * Makes sure you never re-bind a method.
  */
 function bindSafely(fn, obj) {
-  assert (!fn.boundTo && obj);
+  release || assert (!fn.boundTo && obj);
   var f = fn.bind(obj);
   f.boundTo = obj;
   return f;
@@ -184,7 +184,7 @@ function defineNonEnumerableForwardingProperty(obj, name, otherName) {
 }
 
 function defineNewNonEnumerableProperty(obj, name, value) {
-  assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
+  release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
   defineNonEnumerableProperty(obj, name, value);
 }
 
@@ -1217,11 +1217,11 @@ var Callback = (function () {
     this.queue = [];
   }
   callback.prototype.register = function register(callback) {
-    assert (callback);
+    release || assert (callback);
     this.queue.push(callback);
   };
   callback.prototype.unregister = function unregister(callback) {
-    assert (callback);
+    release || assert (callback);
     var i = this.queue.indexOf(callback);
     if (i !== -1) {
       this.queue.splice(i, 1);
@@ -1231,7 +1231,6 @@ var Callback = (function () {
     var args = sliceArguments(arguments, 0);
     var queue = this.queue;
     for (var i = 0; i < queue.length; i++) {
-      Counter.count("callback.notify");
       var callback = queue[i];
       callback.apply(null, args);
     }

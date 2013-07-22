@@ -259,7 +259,7 @@ var Trait = (function () {
   };
 
   trait.prototype.isProtected = function isProtected() {
-    assert (Multiname.isQName(this.name));
+    release || assert (Multiname.isQName(this.name));
     return this.name.namespaces[0].isProtected();
   };
 
@@ -591,7 +591,7 @@ var Multiname = (function () {
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
-      assert (name === null || isString(name), "Multiname name must be a string. " + name);
+      release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
       // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
     }
     this.id = nextID ++;
@@ -764,7 +764,7 @@ var Multiname = (function () {
     if (qn instanceof Multiname) {
       return qn;
     }
-    assert (typeof qn === "string" && !isNumeric(qn));
+    release || assert (typeof qn === "string" && !isNumeric(qn));
     var a = qn.indexOf("$");
     if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
       return undefined;
@@ -793,7 +793,7 @@ var Multiname = (function () {
     } else if (name !== null && isObject(name)) {
       return name;
     }
-    assert (isString(name) || isNullOrUndefined(name));
+    release || assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 
@@ -863,6 +863,7 @@ var Multiname = (function () {
 
   multiname.prototype.getQName = function getQName(index) {
     release || assert(index >= 0 && index < this.namespaces.length);
+    release || assert(this !== multiname.TEMPORARY, "Can't cache QNames on temporary Multiname.");
     if (!this.cache) {
       this.cache = [];
     }
@@ -875,7 +876,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.hasQName = function hasQName(qn) {
-    assert (qn instanceof Multiname);
+    release || assert (qn instanceof Multiname);
     if (this.name !== qn.name) {
       return false;
     }
@@ -1065,7 +1066,7 @@ var ConstantPool = (function constantPool() {
     }
     patchFactoryTypes.forEach(function (patch) {
       var multiname = multinames[patch.index];
-      assert (multiname);
+      release || assert (multiname);
       patch.multiname.name = multiname.name;
       patch.multiname.namespaces = multiname.namespaces;
     });

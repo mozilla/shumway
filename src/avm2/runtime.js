@@ -132,7 +132,7 @@ function enter(mode) {
 
 function leave(mode) {
   var top = RUNTIME_ENTER_LEAVE_STACK.pop();
-  assert (top === mode);
+  release || assert (top === mode);
 }
 
 function inJS() {
