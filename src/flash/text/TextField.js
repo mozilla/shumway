@@ -287,9 +287,14 @@ var TextFieldDefinition = (function () {
   function makeFormatString(format) {
     //TODO: verify that px is the right unit
     // order of the font arguments: <style> <weight> <size> <family>
-    return (format.italic ? 'italic ' : 'normal ') +
-           (format.bold ? 'bold ' : 'normal ') +
-           format.size + 'px ' + format.face;
+    var boldItalic = '';
+    if (format.bold) {
+      boldItalic = 'bold';
+    }
+    if (format.italic) {
+      boldItalic += ' italic';
+    }
+    return boldItalic + format.size + 'px ' + format.face;
   }
 
   function convertFontFamily(face) {
