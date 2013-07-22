@@ -587,8 +587,9 @@ var Multiname = (function () {
   var ATTRIBUTE         = 0x01;
   var RUNTIME_NAMESPACE = 0x02;
   var RUNTIME_NAME      = 0x04;
-  var nextID = 1;
+  var nextID = 0;
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
+
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
       release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
@@ -599,6 +600,9 @@ var Multiname = (function () {
     this.name = name;
     this.flags = flags || 0;
   }
+
+  multiname.TEMPORARY = new multiname();
+  release || assert (multiname.TEMPORARY.id === 0);
 
   multiname.RUNTIME_NAME = RUNTIME_NAME;
   multiname.ATTRIBUTE = ATTRIBUTE;

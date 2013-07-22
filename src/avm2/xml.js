@@ -831,6 +831,21 @@ var XMLParser;
       return;
     };
 
+    Xp.getPropertyByMultiname = function getPropertyByMultiname(namespaces, name, flags, isMethod) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      return this.getProperty(mn, isMethod);
+    };
+
+    Xp.setPropertyByMultiname = function setPropertyByMultiname(namespaces, name, flags, value) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      this.setProperty(mn, value);
+    };
+
+    Xp.hasPropertyByMultiname = function hasPropertyByMultiname(namespaces, name, flags) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      return this.hasProperty(mn);
+    };
+
     // 9.1.1.1 XML.[[Get]] (P)
     Xp.getProperty = function (mn, isMethod) {
       var val;
@@ -1359,6 +1374,22 @@ var XMLParser;
       });
       return result;
     }
+
+
+    XLp.getPropertyByMultiname = function getPropertyByMultiname(namespaces, name, flags, isMethod) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      return this.getProperty(mn, isMethod);
+    };
+
+    XLp.setPropertyByMultiname = function setPropertyByMultiname(namespaces, name, flags, value) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      this.setProperty(mn, value);
+    };
+
+    XLp.hasPropertyByMultiname = function hasPropertyByMultiname(namespaces, name, flags) {
+      var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
+      return this.hasProperty(mn);
+    };
 
     XLp.setProperty = function (mn, v, isMethod) {
       var x, i, r;

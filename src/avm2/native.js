@@ -928,6 +928,9 @@ var natives = (function () {
 
   /**
    * Dictionary.as
+   *
+   * TODO: We need a more robust Dictionary implementation that doesn't only give you back
+   * string keys when enumerating.
    */
   function DictionaryClass(runtime, scope, instanceConstructor, baseClass) {
     function ASDictionary(weakKeys) {
@@ -951,7 +954,7 @@ var natives = (function () {
     }
 
     var Dp = ASDictionary.prototype;
-    defineNonEnumerableProperty(Dp, "setProperty", function (namespaces, name, value) {
+    defineNonEnumerableProperty(Dp, "setProperty", function (namespaces, name, flags, value) {
       var key = makePrimitiveKey(name);
       if (key !== undefined) {
         this.primitiveMap[key] = value;
@@ -962,21 +965,21 @@ var natives = (function () {
         this.keys.push(name);
       }
     });
-    defineNonEnumerableProperty(Dp, "getProperty", function (namespaces, name) {
+    defineNonEnumerableProperty(Dp, "getProperty", function (namespaces, name, flags) {
       var key = makePrimitiveKey(name);
       if (key !== undefined) {
         return this.primitiveMap[key];
       }
       return this.map.get(Object(name));
     });
-    defineNonEnumerableProperty(Dp, "hasProperty", function (namespaces, name) {
+    defineNonEnumerableProperty(Dp, "hasProperty", function (namespaces, name, flags) {
       var key = makePrimitiveKey(name);
       if (key !== undefined) {
         return key in this.primitiveMap;
       }
       return this.map.has(Object(name));
     });
-    defineNonEnumerableProperty(Dp, "deleteProperty", function (namespaces, name) {
+    defineNonEnumerableProperty(Dp, "deleteProperty", function (namespaces, name, flags) {
       var key = makePrimitiveKey(name);
       if (key !== undefined) {
         delete this.primitiveMap[key];

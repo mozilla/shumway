@@ -302,7 +302,7 @@ function initializeGlobalObject(global) {
     return map;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "resolvePropertyByMultiname", function resolvePropertyByMultiname(namespaces, name) {
+  defineNonEnumerableProperty(global.Object.prototype, "resolvePropertyByMultiname", function resolvePropertyByMultiname(namespaces, name, flags) {
     if (typeof name === "object") {
       name = String(name);
     }
@@ -321,11 +321,11 @@ function initializeGlobalObject(global) {
     }
   }),
 
-  defineNonEnumerableProperty(global.Object.prototype, "getPropertyByMultiname", function getPropertyByMultiname(namespaces, name, isMethod) {
+  defineNonEnumerableProperty(global.Object.prototype, "getPropertyByMultiname", function getPropertyByMultiname(namespaces, name, flags, isMethod) {
     if (this.getProperty) {
-      return this.getProperty(namespaces, name, isMethod);
+      return this.getProperty(namespaces, name, flags, isMethod);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
     // print("getPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexGet && Multiname.isNumeric(resolved)) {
       return this.indexGet(resolved);
@@ -333,14 +333,14 @@ function initializeGlobalObject(global) {
     return this[resolved];
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "setPropertyByMultiname", function setPropertyByMultiname(namespaces, name, value) {
+  defineNonEnumerableProperty(global.Object.prototype, "setPropertyByMultiname", function setPropertyByMultiname(namespaces, name, flags, value) {
     if (this.setProperty) {
-      return this.setProperty(namespaces, name, value);
+      return this.setProperty(namespaces, name, flags, value);
     }
     if (typeof name === "object") {
       name = String(name);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
 //    print("setPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexSet && Multiname.isNumeric(resolved)) {
       return this.indexSet(resolved, value);
@@ -348,30 +348,35 @@ function initializeGlobalObject(global) {
     this[resolved] = value;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "callPropertyByMultiname", function callPropertyByMultiname(namespaces, name, isLex, args) {
+  defineNonEnumerableProperty(global.Object.prototype, "callPropertyByMultiname", function callPropertyByMultiname(namespaces, name, flags, isLex, args) {
     var receiver = isLex ? null : this;
     if (isProxyObject(this)) {
-      return this[VM_CALL_PROXY](new Multiname(namespaces, name), receiver, args);
+      return this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
     }
-    var property = this.getPropertyByMultiname(namespaces, name, true);
-    return property.apply(receiver, args);
+    var property = this.getPropertyByMultiname(namespaces, name, flags, true);
+    var result = property.apply(receiver, args);
+    return result;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "hasPropertyByMultiname", function hasPropertyByMultiname(namespaces, name) {
+  defineNonEnumerableProperty(global.Object.prototype, "hasPropertyByMultiname", function hasPropertyByMultiname(namespaces, name, flags, nonProxy) {
     if (this.hasProperty) {
-      return this.hasProperty(namespaces, name);
+      return this.hasProperty(namespaces, name, flags);
     }
-    return this.resolvePropertyByMultiname(namespaces, name) in this;
+    if (nonProxy) {
+      return nonProxyingHasProperty(this, this.resolvePropertyByMultiname(namespaces, name, flags));
+    } else {
+      return this.resolvePropertyByMultiname(namespaces, name, flags) in this;
+    }
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "deletePropertyByMultiname", function deletePropertyByMultiname(namespaces, name) {
+  defineNonEnumerableProperty(global.Object.prototype, "deletePropertyByMultiname", function deletePropertyByMultiname(namespaces, name, flags) {
     if (this.deleteProperty) {
-      return this.deleteProperty(namespaces, name);
+      return this.deleteProperty(namespaces, name, flags);
     }
     if (this.indexDelete && Multiname.isNumeric(name)) {
       return this.indexDelete(name);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name);
+    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
     /**
      * If we're in the middle of an enumeration, we need to remove the property name
      * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
@@ -613,15 +618,59 @@ function Activation(methodInfo) {
  *
  * Scope Caching:
  *
- * Calls to |findProperty| are very expensive. They recurse all the way to the top of the scope chain and then
+ * Calls to |findScopeProperty| are very expensive. They recurse all the way to the top of the scope chain and then
  * laterally across other scripts. We optimize this by caching property lookups in each scope using Multiname
  * |id|s as keys. Each Multiname object is given a unique ID when it's constructed. For QNames we only cache
  * string QNames.
  *
  * TODO: This is not sound, since you can add/delete properties to/from with scopes.
  */
+
+/**
+ * Helps the interpreter allocate fewer Scope objects.
+ */
+var ScopeStack = (function () {
+  function scopeStack(parent) {
+    this.parent = parent;
+    this.stack = [];
+    this.isWith = [];
+  }
+  scopeStack.prototype.push = function push(object, isWith) {
+
+    this.stack.push(object);
+    this.isWith.push(!!isWith);
+  };
+  scopeStack.prototype.get = function get(index) {
+    return this.stack[index];
+  };
+  scopeStack.prototype.clear = function clear() {
+    this.stack.length = 0;
+    this.isWith.length = 0;
+  };
+  scopeStack.prototype.pop = function pop() {
+    this.isWith.pop();
+    this.stack.pop();
+  };
+  scopeStack.prototype.topScope = function topScope() {
+    if (!this.scopes) {
+      this.scopes = [];
+    }
+    var parent = this.parent;
+    for (var i = 0; i < this.stack.length; i++) {
+      var object = this.stack[i], isWith = this.isWith[i], scope = this.scopes[i];
+      if (!scope || scope.parent !== parent || scope.object !== object || scope.isWith !== isWith) {
+        scope = this.scopes[i] = new Scope(parent, object, isWith);
+      }
+      parent = scope;
+    }
+    return parent;
+  };
+  return scopeStack;
+})();
+
 var Scope = (function () {
   function scope(parent, object, isWith) {
+    release || assert (isObject(object));
     this.parent = parent;
     this.object = object;
     this.global = parent ? parent.global : this;
@@ -642,7 +691,39 @@ var Scope = (function () {
     return -1;
   };
 
-  scope.prototype.findProperty = function findProperty(mn, domain, strict, scopeOnly) {
+  function makeCacheKey(namespaces, name, flags) {
+    return name;
+//    if (!namespaces) return name;
+//    if (namespaces.length > 1) {
+//      return namespaces.id + "$" + name;
+//    } else {
+//      return namespaces[0].qualifiedName + "$" + name;
+//    }
+  }
+
+  scope.prototype.findScopeProperty = function findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly) {
+    var object;
+    var key = makeCacheKey(namespaces, name, flags);
+    if ((object = this.cache[key])) return object;
+    if (this.object.hasPropertyByMultiname(namespaces, name, flags, true)) {
+      return this.isWith ? this.object : (this.cache[key] = this.object);
+    }
+    if (this.parent) {
+      return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly));
+    }
+    if (scopeOnly) return null;
+    // If we can't find the property look in the domain.
+    if ((object = domain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
+      return object;
+    }
+    if (strict) {
+      unexpected("Cannot find property " + name);
+    }
+    // Can't find it still, return the global object.
+    return this.global.object;
+  };
+
+  scope.prototype.findScopeProperty3 = function findScopeProperty(mn, domain, strict, scopeOnly) {
     release || assert(this.object);
     release || assert(Multiname.isMultiname(mn));
     var object;
@@ -681,7 +762,7 @@ var Scope = (function () {
     }
 
     if (this.parent) {
-      object = this.parent.findProperty(mn, domain, strict, scopeOnly);
+      object = this.parent.findScopeProperty(mn, domain, strict, scopeOnly);
       id && (cache[mn.id] = object);
       return object;
     }
@@ -692,7 +773,7 @@ var Scope = (function () {
 
     // If we can't find it still, then look at the domain toplevel.
     var r;
-    if ((r = domain.findProperty(mn, strict, true))) {
+    if ((r = domain.findDomainProperty(mn, strict, true))) {
       return r;
     }
 
@@ -724,7 +805,7 @@ function bindFreeMethodScope(methodInfo, scope) {
   if (methodInfo.lastBoundMethod && methodInfo.lastBoundMethod.scope === scope) {
     return methodInfo.lastBoundMethod.boundMethod;
   }
-  assert (fn, "There should already be a cached method.");
+  release || assert (fn, "There should already be a cached method.");
   var boundMethod;
   var asGlobal = scope.global.object;
   if (!methodInfo.hasOptional() && !methodInfo.needsArguments() && !methodInfo.needsRest()) {
@@ -935,6 +1016,13 @@ function hasProperty(object, name) {
     return object.hasProperty(name);
   }
   return resolveName(object, name) in object;
+}
+
+/**
+ * Proxy traps ignore operations passing through nonProxying functions.
+ */
+function nonProxyingHasProperty(object, name) {
+  return name in object;
 }
 
 function getSuper(scope, object, mn) {
@@ -1168,17 +1256,17 @@ function createActivation(methodInfo) {
 }
 
 function isClass(object) {
-  assert (object);
+  release || assert (object);
   return Object.hasOwnProperty.call(object, VM_IS_CLASS);
 }
 
 function isTrampoline(fn) {
-  assert (fn && typeof fn === "function");
+  release || assert (fn && typeof fn === "function");
   return fn.isTrampoline;
 }
 
 function isMemoizer(fn) {
-  assert (fn && typeof fn === "function");
+  release || assert (fn && typeof fn === "function");
   return fn.isMemoizer;
 }
 
@@ -1499,7 +1587,7 @@ function makeTrampoline(forward, parameterLength) {
       Counter.count("Executing Trampoline");
       if (!target) {
         target = forward(trampoline);
-        assert (target);
+        release || assert (target);
       }
       return target.apply(this, arguments);
     };
@@ -1510,7 +1598,7 @@ function makeTrampoline(forward, parameterLength) {
       Counter.count("Triggering Trampoline");
       if (!target) {
         target = forward(trampoline);
-        assert (target);
+        release || assert (target);
       }
     };
     trampoline.isTrampoline = true;
@@ -1526,7 +1614,7 @@ function makeTrampoline(forward, parameterLength) {
 function makeMemoizer(qn, target) {
   function memoizer() {
     Counter.count("Runtime: Memoizing");
-    assert (!Object.prototype.hasOwnProperty.call(this, "class"));
+    release || assert (!Object.prototype.hasOwnProperty.call(this, "class"));
     if (traceExecution.value >= 3) {
       print("Memoizing: " + qn);
     }
@@ -1540,7 +1628,7 @@ function makeMemoizer(qn, target) {
       // call it.
       target.value.trigger();
     }
-    assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
+    release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
     var mc = null;
     if (isClass(this)) {
       Counter.count("Runtime: Static Method Closures");
@@ -1589,7 +1677,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
   var fn;
 
   if ((fn = checkMethodOverrides(mi))) {
-    assert (!hasDynamicScope);
+    release || assert (!hasDynamicScope);
     return fn;
   }
 
@@ -1714,7 +1802,7 @@ function getTraitFunction(trait, scope, natives) {
       print("Creating Function For Trait: " + trait.holder + " " + trait);
     }
     fn = createFunction(mi, scope);
-    assert (fn);
+    release || assert (fn);
   }
   if (traceExecution.value >= 3) {
     print("Made Function: " + Multiname.getQualifiedName(mi.name));
@@ -1749,7 +1837,7 @@ function makeQualifiedNameTraitMap(traits) {
  * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
  */
 function createClass(classInfo, baseClass, scope) {
-  assert (!baseClass || baseClass instanceof Class);
+  release || assert (!baseClass || baseClass instanceof Class);
 
   var ci = classInfo;
   var ii = ci.instanceInfo;

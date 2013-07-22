@@ -57,6 +57,22 @@ function nameFromQualifiedName(qn) {
   return mn.name;
 }
 
+/**
+ * Searches the call stack for non-proxying traps.
+ */
+function hasNonProxyingCaller() {
+  var caller = arguments.callee;
+  var MAX_DEPTH = 5;
+  var domain;
+  for (var i = 0; i < MAX_DEPTH && caller; i++) {
+    if (caller === nonProxyingHasProperty) {
+      return true;
+    }
+    caller = caller.caller;
+  }
+  return false;
+}
+
 function installProxyClassWrapper(cls) {
   var TRACE_PROXY = false;
   if (TRACE_PROXY) {
@@ -81,7 +97,7 @@ function installProxyClassWrapper(cls) {
           return function apply(mn, receiver, args) {
             receiver = receiver ? target : null;
             if (TRACE_PROXY) {
-              print("proxy call, class: " + target.class + ", mn: " + mn + " inAS: " + inAS());
+              print("proxy call, class: " + target.class + ", mn: " + mn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
             }
             var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(target, mn);
             var qn = resolved ? Multiname.getQualifiedName(resolved) :
@@ -102,9 +118,9 @@ function installProxyClassWrapper(cls) {
           }
         }
         if (TRACE_PROXY) {
-          print("proxy get, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
+          print("proxy get, class: " + target.class + ", qn: " + qn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
         }
-        if (inAS()) {
+        if (!hasNonProxyingCaller()) {
           var name = nameFromQualifiedName(qn);
           if (name !== undefined && !nameInTraits(target, qn)) {
             return target[proxyTrapQns.getProperty](name);
@@ -118,9 +134,9 @@ function installProxyClassWrapper(cls) {
       },
       set: function(o, qn, value) {
         if (TRACE_PROXY) {
-          print("proxy set, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
+          print("proxy set, class: " + target.class + ", qn: " + qn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
         }
-        if (inAS()) {
+        if (!hasNonProxyingCaller()) {
           var name = nameFromQualifiedName(qn);
           if (name !== undefined && !nameInTraits(target, qn)) {
             target[proxyTrapQns.setProperty](name, value);
@@ -132,9 +148,9 @@ function installProxyClassWrapper(cls) {
       },
       has: function(qn) {
         if (TRACE_PROXY) {
-          print("proxy has, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
+          print("proxy has, class: " + target.class + ", qn: " + qn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
         }
-        if (inAS()) {
+        if (!hasNonProxyingCaller()) {
           var name = nameFromQualifiedName(qn);
           if (name !== undefined && !nameInTraits(target, qn)) {
             return target[proxyTrapQns.hasProperty](name);
@@ -144,9 +160,9 @@ function installProxyClassWrapper(cls) {
       },
       hasOwn: function(qn) {
         if (TRACE_PROXY) {
-          print("proxy hasOwn, class: " + target.class + ", qn: " + qn + " inAS: " + inAS());
+          print("proxy hasOwn, class: " + target.class + ", qn: " + qn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
         }
-        if (inAS()) {
+        if (!hasNonProxyingCaller()) {
           var name = nameFromQualifiedName(qn);
           if (name !== undefined && !nameInTraits(target, qn)) {
             return target[proxyTrapQns.hasProperty](name);
