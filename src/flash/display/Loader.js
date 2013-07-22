@@ -836,9 +836,24 @@ var LoaderDefinition = (function () {
               '}',
             style.cssRules.length
           );
-          //var ctx = (document.createElement('canvas')).getContext('2d');
-          //ctx.font = '1024px "' + symbol.name + '"';
-          //var defaultWidth = ctx.measureText(charset).width;
+
+          // HACK non-Gecko browsers need time to load fonts
+          if (!/Mozilla\/5.0.*?rv:(\d+).*? Gecko/.test(window.navigator.userAgent)) {
+            var testDiv = document.createElement('div');
+            testDiv.setAttribute('style', 'position: absolute; top: 0; right: 0;' +
+                                          'visibility: hidden; z-index: -500;' +
+                                          'font-family:"' + symbol.name + '";');
+            testDiv.textContent = 'font test';
+            document.body.appendChild(testDiv);
+
+            var fontPromise = new Promise();
+            setTimeout(function () {
+              fontPromise.resolve();
+              document.body.removeChild(testDiv);
+            }, 200);
+            promiseQueue.push(fontPromise);
+          }
+
           className = 'flash.text.Font';
         }
         break;
