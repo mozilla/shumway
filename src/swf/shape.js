@@ -338,42 +338,43 @@ function defineShape(tag, dictionary) {
         fail('invalid fill style', 'shape');
       }
 
-      var cmds = [];
+      commands.push("(p=Kanvas.Path()");
       var j = 0;
       var subpath;
       var prev = { };
       while ((subpath = path[j++])) {
-        if (subpath.spt !== prev.dpt)
-          cmds.push('M' + subpath.spt);
+        if (subpath.spt !== prev.dpt) {
+          commands.push('p.moveTo(' + subpath.spt + ")");
+        }
         var edges = subpath.edges;
         if (subpath.flip) {
           var k = edges.length;
           var edge;
           while ((edge = edges[--k])) {
-            if (edge.cpt)
-              cmds.push('Q' + edge.cpt + ',' + edge.spt);
-            else
-              cmds.push('L' + edge.spt);
+            if (edge.cpt) {
+              commands.push('p.quadraticCurveTo(' + edge.cpt + ',' +
+                        edge.spt + ")");
+            } else {
+              commands.push('p.lineTo(' + edge.spt + ")");
+            }
           }
         } else {
           var k = 0;
           var edge;
           while ((edge = edges[k++])) {
-            if (edge.cpt)
-              cmds.push('Q' + edge.cpt + ',' + edge.dpt);
-            else
-              cmds.push('L' + edge.dpt);
+            if (edge.cpt) {
+              commands.push('p.quadraticCurveTo(' + edge.cpt + ',' +
+                        edge.dpt + ")");
+            } else {
+              commands.push('p.lineTo(' + edge.dpt + ")");
+            }
           }
         }
         prev = subpath;
       }
 
-      commands.push(
-        '(' +
-          'p=Kanvas.Path("' + cmds.join('') + '"),' +
-          'p.fillStyle=' + fill + ',' +
-        'p)'
-      );
+      commands.push("p.fillStyle=" + fill);
+      commands.push("p)");
 
       paths.push({ i: path[0].i, commands: commands});
     }
@@ -403,6 +404,7 @@ function defineShape(tag, dictionary) {
       var miterLimitFactor = lineStyle.miterLimitFactor;
 
       var cmds = [];
+      commands.push("(p=Kanvas.Path()");
       var j = 0;
       var prev = { };
       while ((segment = segments[j++])) {
@@ -410,31 +412,29 @@ function defineShape(tag, dictionary) {
         var k = 0;
         var edge;
         while ((edge = edges[k++])) {
-          if (edge.spt !== prev.dpt)
-            cmds.push('M' + edge.spt);
-          if (edge.cpt)
-            cmds.push('Q' + edge.cpt + ',' + edge.dpt);
-          else
-            cmds.push('L' + edge.dpt);
+          if (edge.spt !== prev.dpt) {
+            commands.push('p.moveTo(' + edge.spt + ")");
+          }
+          if (edge.cpt) {
+            commands.push('p.quadraticCurveTo(' + edge.cpt + ',' +
+                          edge.dpt + ")");
+          } else {
+            commands.push('p.lineTo(' + edge.dpt + ")");
+          }
           prev = edge;
         }
       }
 
-      paths.push({
-        i: Number.MAX_VALUE,
-        commands: [
-          '(' +
-            'p=Kanvas.Path("' + cmds.join('') + '"),' +
-            'p.strokeStyle=' + stroke + ',' +
-            'p.drawingStyles={' +
-              'lineWidth:' + lineWidth + ',' +
-              'lineCap:"' + capsStyle + '",' +
-              'lineJoin:"' + joinStyle + '",' +
-              'miterLimit:' + (miterLimitFactor * 2) +
-            '},' +
-          'p)'
-        ]
-      });
+      commands.push("p.strokeStyle=" + fill);
+      commands.push('p.drawingStyles={' +
+                    'lineWidth:' + lineWidth + ',' +
+                    'lineCap:"' + capsStyle + '",' +
+                    'lineJoin:"' + joinStyle + '",' +
+                    'miterLimit:' + (miterLimitFactor * 2) +
+                    '}');
+      commands.push("p)");
+
+      paths.push({i: Number.MAX_VALUE, commands: commands});
     }
   }
 
