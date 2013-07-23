@@ -146,7 +146,7 @@ var AbcStream = (function () {
         } // Otherwise it's an invalid UTF8, skipped.
       }
       this.pos = pos;
-      return String.fromCharCode.apply(null, result.subarray(0, i));
+      return fromCharCodeArray(result.subarray(0, i));
     }
   };
 

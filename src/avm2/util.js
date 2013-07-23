@@ -215,6 +215,18 @@ function clamp(x, min, max) {
   return x;
 }
 
+/**
+ * Workaround for max stack size limit.
+ */
+function fromCharCodeArray(buffer) {
+  var str = "", SLICE = 1024 * 16;
+  for (var i = 0; i < buffer.length; i += SLICE) {
+    var chunk = Math.min(buffer.length - i, SLICE);
+    str += String.fromCharCode.apply(null, buffer.subarray(i, i + chunk));
+  }
+  return str;
+}
+
 function hasOwnProperty(object, name) {
   return Object.prototype.hasOwnProperty.call(object, name);
 }
