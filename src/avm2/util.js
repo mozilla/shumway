@@ -1214,25 +1214,57 @@ var SortedList = (function() {
 
 var Callback = (function () {
   function callback() {
-    this.queue = [];
+    this.queues = {};
   }
-  callback.prototype.register = function register(callback) {
-    release || assert (callback);
-    this.queue.push(callback);
+  callback.prototype.register = function register(type, callback) {
+    assert(type);
+    assert(callback);
+    var queue = this.queues[type];
+    if (!queue) {
+      queue = this.queues[type] = [];
+    }
+    queue.push(callback);
   };
-  callback.prototype.unregister = function unregister(callback) {
-    release || assert (callback);
-    var i = this.queue.indexOf(callback);
+  callback.prototype.unregister = function unregister(type, callback) {
+    assert(type);
+    assert(callback);
+    var queue = this.queues[type];
+    if (!queue) {
+      return;
+    }
+    var i = queue.indexOf(callback);
     if (i !== -1) {
-      this.queue.splice(i, 1);
+      queue.splice(i, 1);
+    }
+    if (queue.length === 0) {
+      this.queues[type] = null;
     }
   };
-  callback.prototype.notify = function notify() {
+  callback.prototype.notify = function notify(type, /*...*/args) {
+    var queue = this.queues[type];
+    if (!queue) {
+      return;
+    }
     var args = sliceArguments(arguments, 0);
-    var queue = this.queue;
     for (var i = 0; i < queue.length; i++) {
+      if ($DEBUG) {
+        Counter.count("callback(" + type + ").notify");
+      }
       var callback = queue[i];
       callback.apply(null, args);
+    }
+  };
+  callback.prototype.notify1 = function notify1(type, value) {
+    var queue = this.queues[type];
+    if (!queue) {
+      return;
+    }
+    for (var i = 0; i < queue.length; i++) {
+      if ($DEBUG) {
+        Counter.count("callback(" + type + ").notify1");
+      }
+      var callback = queue[i];
+      callback(type, value);
     }
   };
   return callback;

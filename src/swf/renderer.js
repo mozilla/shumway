@@ -639,23 +639,28 @@ function renderStage(stage, ctx, events) {
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
-
+      FrameCounter.clear();
       Timer.start("MouseVisitor");
       (new MouseVisitor(stage)).start();
       Timer.stop();
+
+      var domain = avm2.systemDomain;
 
       if (renderFrame) {
         frameTime = now;
         nextRenderAt = frameTime + maxDelay;
 
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("constructFrame"));
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("frameConstructed"));
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("enterFrame"));
+        domain.broadcastMessage("constructFrame",
+                                new flash.events.Event("constructFrame"));
+        domain.broadcastMessage("frameConstructed",
+                                new flash.events.Event("frameConstructed"));
+        domain.broadcastMessage("enterFrame",
+                                new flash.events.Event("enterFrame"));
       }
 
       if (stage._deferRenderEvent) {
         stage._deferRenderEvent = false;
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("render"));
+        domain.broadcastMessage("render", new flash.events.Event("render"));
       }
 
       if (refreshStage || renderFrame) {
@@ -667,7 +672,8 @@ function renderStage(stage, ctx, events) {
       }
 
       if (renderFrame) {
-        avm2.systemDomain.broadcastMessage(new flash.events.Event("exitFrame"));
+        domain.broadcastMessage("exitFrame",
+                                new flash.events.Event("exitFrame"));
 
         if (events.onAfterFrame) {
           events.onAfterFrame();

@@ -40,6 +40,10 @@ var DisplayObjectDefinition = (function () {
     return 'instance' + (nextInstanceId++);
   }
 
+  var broadcastedEvents = { constructFrame: true, frameConstructed: true,
+                            enterFrame: true, render: true, exitFrame: true
+                          };
+
   var def = {
     __class__: 'flash.display.DisplayObject',
 
@@ -136,17 +140,32 @@ var DisplayObjectDefinition = (function () {
 
       this._accessibilityProperties = null;
 
-      var that = this;
-      this._onBroadcastMessage = function (msg) {
-        var evt = msg.data;
-        var listeners = that._listeners;
+      var self = this;
+      this._onBroadcastMessage = function (type, msg) {
+        var listeners = self._listeners;
         // shortcut: checking if the listeners are exist before dispatching
-        if (listeners[evt._type]) {
-          Counter.count("dispatchEvent");
-          that._dispatchEvent(evt);
+        if (listeners[type]) {
+          var evt = msg.data;
+          self._dispatchEvent(evt);
         }
       };
-      avm2.systemDomain.onMessage.register(this._onBroadcastMessage);
+    },
+
+    _addEventListener: function addEventListener(type, listener, useCapture,
+                                                 priority)
+    {
+      if (broadcastedEvents[type] && !this._listeners[type]) {
+        avm2.systemDomain.onMessage.register(type, this._onBroadcastMessage);
+      }
+      this._addEventListenerImpl(type, listener, useCapture, priority);
+    },
+
+    _removeEventListener: function addEventListener(type, listener, useCapture)
+    {
+      this._removeEventListenerImpl(type, listener, useCapture);
+      if (broadcastedEvents[type] && !this._listeners[type]) {
+        avm2.systemDomain.onMessage.unregister(type, this._onBroadcastMessage);
+      }
     },
 
     _updateTraceSymbolInfo: function () {
@@ -695,7 +714,13 @@ var DisplayObjectDefinition = (function () {
         return;
       }
       this._destroyed = true;
-      avm2.systemDomain.onMessage.unregister(this._onBroadcastMessage);
+      this.cleanupBroadcastListeners();
+    },
+    cleanupBroadcastListeners: function() {
+      var listenerLists = this._listeners;
+      for (var type in listenerLists) {
+        avm2.systemDomain.onMessage.unregister(type, this._onBroadcastMessage);
+      }
     }
   };
 
@@ -723,8 +748,22 @@ var DisplayObjectDefinition = (function () {
         rotationY: desc(def, "rotationY"),
         rotationZ: desc(def, "rotationZ"),
         alpha: desc(def, "alpha"),
-        width: desc(def, "width"),
-        height: desc(def, "height"),
+        width: {
+          get: function width() {
+            return this.width;
+          },
+          set: function width(value) {
+            this.width = value;
+          }
+        },
+        height: {
+          get: function height() {
+            return this.height;
+          },
+          set: function height(value) {
+            this.height = value;
+          }
+        },
         _hitTest: def._hitTest,
         cacheAsBitmap: desc(def, "cacheAsBitmap"),
         opaqueBackground: desc(def, "opaqueBackground"),

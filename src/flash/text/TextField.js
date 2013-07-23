@@ -21,85 +21,149 @@ var TextFieldDefinition = (function () {
 
   var htmlParser = document.createElement('p');
 
+  // Used for measuring text runs, not for rendering
+  var measureCtx = document.createElement('canvas').getContext('kanvas-2d');
+
   /*
-   * Parsing "html", in this context, actually means ensuring that the given
-   * string is valid *xml*, and removing any tags that mustn't be supported.
+   * Parsing, in this context, actually means using the browser's html parser
+   * and then removing any tags and attributes that mustn't be supported.
    *
    * After that, two things are generated: a plain-text version of the content,
-   * and a list of ranges with types and attributes, representing all nested
-   * nodes.
+   * and a tree of objects with types and attributes, representing all nodes.
    */
-  function parseHtml(val) {
+  function parseHtml(val, initialFormat) {
     htmlParser.innerHTML = val;
-    var rootElement = htmlParser.childNodes.length !== 1 ? htmlParser :
-      htmlParser.childNodes[0];
-    var content = {text : '', tree : null};
-    content.tree = convertMarkup(rootElement, content);
+    var rootElement = htmlParser.childNodes.length !== 1 ?
+                      htmlParser :
+                      htmlParser.childNodes[0];
+    // TODO: create the htmlText by serializing the converted tree
+    var content = {text : '', htmlText: val, tree : createTrunk(initialFormat)};
+
+    if (rootElement.nodeType === 3) {
+      convertNode(rootElement, content.tree.children[0].children, content);
+      return content;
+    }
+
+    var initialNodeList = [rootElement];
+    // If the outermost node is a <P>, merge its attributes and discard it
+    var attributes;
+    var format;
+    var key;
+    if (initialNodeList.length == 1 &&
+        rootElement.localName.toUpperCase() == 'P')
+    {
+      attributes = extractAttributes(rootElement);
+      format = content.tree.format;
+      for (key in attributes) {
+        format[key] = attributes[key];
+      }
+      initialNodeList = rootElement.childNodes;
+      rootElement = rootElement.childNodes[0];
+    }
+    // If the now-outermost node is a <FONT>, do the same with it
+    if (initialNodeList.length == 1 &&
+        rootElement.localName.toUpperCase() == 'FONT')
+    {
+      attributes = extractAttributes(rootElement);
+      format = content.tree.children[0].format;
+      for (key in attributes) {
+        format[key] = attributes[key];
+      }
+      initialNodeList = rootElement.childNodes;
+    }
+    convertNodeList(initialNodeList, content.tree.children[0].children, content);
     return content;
   }
 
-  function convertMarkup(tree, content) {
+  function createTrunk(initialFormat) {
+    // The outermost node is always a <P>, with an ALIGN attribute
+    var trunk = {type: 'P', format: {ALIGN: initialFormat.align}, children: []};
+    // The first child is then a <FONT>, with FACE, LETTERSPACING and KERNING
+    var fontAttributes = { FACE: initialFormat.font,
+                           LETTERSPACING: initialFormat.letterSpacing,
+                           KERNING: initialFormat.kerning
+                         };
+    trunk.children[0] = {type: 'FONT', format: fontAttributes, children: []};
+    return trunk;
+  }
+
+  var knownNodeTypes = {
+    'BR': true,
+    'LI': true,
+    'P': true,
+    'B': true,
+    'I': true,
+    'FONT': true,
+    'TEXTFORMAT': true,
+    'U': true,
+    'A': true,
+    'IMG': true,
+    'SPAN': true
+  };
+
+  function convertNode(input, destinationList, content) {
     // Ignore all comments, processing instructions and namespaced nodes.
-    if (tree.nodeType !== 1 && tree.nodeType !== 3 || tree.prefix)
-    {
+    if (!(input.nodeType === 1 || input.nodeType === 3) || input.prefix) {
       return;
     }
-    var node = {type : '', text : '', format : null, children : null};
 
-    if (tree.nodeType === 3) {
-      var text = tree.textContent;
-      node.type = 'text';
-      node.text = text;
+    var node;
+
+    if (input.nodeType === 3) {
+      var text = input.textContent;
+      node = { type: 'text', text: text, format: null, children: null };
       content.text += text;
-      return node;
+      destinationList.push(node);
+      return;
     }
+    // For unknown node types, skip the node itself, but convert its children
+    // and add them to the parent's child list
+    var nodeType = input.localName.toUpperCase();
+    if (!knownNodeTypes[nodeType]) {
+      convertNodeList(input.childNodes, destinationList, content);
+      return;
+    }
+    node = { type: nodeType,
+                 text: null,
+                 format: extractAttributes(input),
+                 children: []
+               };
 
-    node.type = tree.localName;
-    node.format = extractAttributes(tree);
-    node.children = [];
+    convertNodeList(input.childNodes, node.children, content);
+    destinationList.push(node);
+  }
 
-    var children = tree.childNodes;
-    var childCount = children.length;
+  function convertNodeList(from, to, content) {
+    var childCount = from.length;
     for (var i = 0; i < childCount; i++) {
-      node.children.push(convertMarkup(children[i], content));
+      convertNode(from[i], to, content);
     }
-
-    return node;
   }
 
   /**
    * Creates an object containing all attributes with their localName as keys.
    * Ignores all namespaced attributes, as we don't need them for the
    * TextField's purposes.
-   * TODO: check whether we still have to keep them around for round-tripping.
+   * TODO: Whitelist known attributes and throw out the rest.
    */
   function extractAttributes(node) {
     var attributesList = node.attributes;
-    var attributesMap = Object.create(null);
+    var attributesMap = {};
     for (var i = 0; i < attributesList.length; i++) {
       var attr = attributesList[i];
-      if (attr.prefix !== '') {
+      if (attr.prefix) {
         continue;
       }
-      attributesMap[attr.localName] = attr.value;
+      attributesMap[attr.localName.toUpperCase()] = attr.value;
     }
     return attributesMap;
   }
 
-  function renderContent(content, initialFormat, bounds, ctx) {
-    if (!ctx) {
-      return renderNode(content.tree);
-    }
-    var firstRun = {type: 'f', format: initialFormat};
-    var width = bounds.right - bounds.left;
-    var height = bounds.bottom - bounds.top;
-    var state = {ctx: ctx, y: 0, x: 0, w: width, h: height,
-                 line: [], lineHeight: 0, formats: [initialFormat],
-                 currentFormat: initialFormat, runs: [firstRun]};
-    collectRuns(content.tree, state);
-    finishLine(state);
-
-    return renderToCanvas(ctx, bounds, state.runs);
+  function renderContent(content, bounds, ctx) {
+//    if (!ctx) {
+//      return renderNode(content.tree);
+//    }
+    return renderToCanvas(ctx, bounds, content.textruns);
   }
 
   function collectRuns(node, state) {
@@ -109,20 +173,23 @@ var TextFieldDefinition = (function () {
     var blockNode = false;
     switch (node.type) {
       case 'text': addTextRun(state, node); return;
-      case 'br': finishLine(state); return;
+      case 'BR': finishLine(state); return;
 
-      case 'li': /* TODO: draw bullet points. */ /* falls through */
-      case 'p': finishLine(state); blockNode = true; break;
+      case 'LI': /* TODO: draw bullet points. */ /* falls through */
+      case 'P': finishLine(state); blockNode = true; break;
 
-      case 'b': /* falls through */
-      case 'i': /* falls through */
-      case 'font': /* falls through */
-      case 'textformat': pushFormat(state, node); formatNode = true; break;
+      case 'B': /* falls through */
+      case 'I': /* falls through */
+      case 'FONT': /* falls through */
+      case 'TEXTFORMAT':
+        pushFormat(state, node);
+        formatNode = true;
+        break;
 
-      case 'u': /* TODO: implement <u>-support. */ /* falls through */
-      case 'a': /* TODO: implement <a>-support. */ /* falls through */
-      case 'img': /* TODO: implement <img>-support. */ /* falls through */
-      case 'span': /* TODO: implement what puny support for CSS Flash has. */
+      case 'U': /* TODO: implement <u>-support. */ /* falls through */
+      case 'A': /* TODO: implement <a>-support. */ /* falls through */
+      case 'IMG': /* TODO: implement <img>-support. */ /* falls through */
+      case 'SPAN': /* TODO: implement what puny support for CSS Flash has. */
       /* falls through */
       default:
         // For all unknown nodes, we just emit their children.
@@ -140,12 +207,17 @@ var TextFieldDefinition = (function () {
   }
   function addTextRun(state, node) {
     var text = node.text;
+    if (!text) {
+      return;
+    }
     // `y` is set by `finishLine`
     var run = {type: 't', text: text, x: state.x, y: 0};
     state.runs.push(run);
     state.line.push(run);
     state.x += state.ctx.measureText(text).width;
-    state.lineHeight = Math.max(state.lineHeight, state.currentFormat.size);
+    if (state.currentFormat.size > state.lineHeight) {
+      state.lineHeight = state.currentFormat.size;
+    }
     // TODO: implement wordWrap
 //    var overflow = '';
 //    var ctx = state.ctx;
@@ -155,6 +227,7 @@ var TextFieldDefinition = (function () {
 //    }
   }
   function finishLine(state) {
+    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
     state.y += state.lineHeight;
     var y = state.y;
@@ -168,28 +241,33 @@ var TextFieldDefinition = (function () {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
     switch (node.type) {
-      case 'b': format.bold = true; break;
-      case 'i': format.italic = true; break;
-      case 'font':
-        if ('color' in attributes) {
-          format.color = attributes.color;
+      case 'B': format.bold = true; break;
+      case 'I': format.italic = true; break;
+      case 'FONT':
+        if ('COLOR' in attributes) {
+          format.color = attributes.COLOR;
         }
-        if ('face' in attributes) {
-          format.face = convertFontFamily(attributes.face);
+        if ('FACE' in attributes) {
+          format.face = convertFontFamily(attributes.FACE);
         }
-        if ('size' in attributes) {
-          format.size = attributes.size;
+        if ('SIZE' in attributes) {
+          format.size = parseFloat(attributes.SIZE);
+        }
+        if ('LETTERSPACING' in attributes) {
+          format.letterspacing = parseFloat(attributes.LETTERSPACING);
+        }
+        if ('KERNING' in attributes) {
+          format.kerning = parseFloat(attributes.KERNING);
         }
       /* falls through */
-      case 'textformat':
+      case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
-        if ('indent' in attributes) {
-          state.x += attributes.indent;
+        if ('INDENT' in attributes) {
+          state.x += attributes.INDENT;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
         // TODO: support leading
         // TODO: support tabStops, if possible
-        state.lineHeight = Math.max(state.lineHeight, format.size);
         break;
       default:
         warning('Unknown format node encountered: ' + node.type); return;
@@ -214,6 +292,22 @@ var TextFieldDefinition = (function () {
            format.size + 'px ' + format.face;
   }
 
+  function convertFontFamily(face) {
+    //TODO: adapt to embedded font names
+    var family;
+    if (face.indexOf('_') === 0) {
+      // reserved fonts
+      if (face.indexOf('_sans') === 0) {
+        family = 'sans-serif';
+      } else if (face.indexOf('_serif') === 0) {
+        family = 'serif';
+      } else if (face.indexOf('_typewriter') === 0) {
+        family = 'monospace';
+      }
+    }
+    return family || face;
+  }
+
   function renderToCanvas(ctx, bounds, runs) {
     ctx.save();
     ctx.beginPath();
@@ -233,166 +327,160 @@ var TextFieldDefinition = (function () {
     ctx.restore();
   }
 
-  function renderNode(node) {
-    if (node.type === 'text') {
-      return node.text;
-    }
-
-    var output = renderNodeStart(node);
-    var children = node.children;
-
-    for (var i = 0; i < children.length; i++) {
-      var childNode = children[i];
-      output += renderNode(childNode);
-    }
-    return output + renderNodeEnd(node);
-  }
-
-  function convertFontFamily(face) {
-    //TODO: adapt to embedded font names
-    var family;
-    if (face.indexOf('_') === 0) {
-      // reserved fonts
-      if (face.indexOf('_sans') === 0) {
-        family = 'sans-serif';
-      } else if (face.indexOf('_serif') === 0) {
-        family = 'serif';
-      } else if (face.indexOf('_typewriter') === 0) {
-        family = 'monospace';
-      }
-    }
-    return family || '"' + face + '"';
-  }
-
-  function renderNodeStart(node) {
-    var format = node.format;
-    var output;
-    var styles;
-    switch (node.type) {
-      case 'br': return '<br />';
-      case 'b': return '<strong>';
-      case 'i': return '<i>';
-      // TODO: check if we need to emit <ul>'s around runs of <li>'s
-      case 'li': return '<li>';
-      case 'u': return '<span style="text-decoration: underline;">';
-      case 'a':
-        output = '<a';
-        if ('href' in format) {
-          output += ' href="' + format.href + '"';
-        }
-        if ('target' in format) {
-          output += ' target="' + format.href + '"';
-        }
-        break;
-      case 'font':
-        output = '<span';
-        styles = '';
-        if ('color' in format) {
-          styles += 'color:' + format.color + ';';
-        }
-        if ('face' in format) {
-          var fontFace = convertFontFamily(format.face);
-          styles += 'font-family:' + fontFace + ';';
-        }
-        if ('size' in format) {
-          //TODO: verify that px is the right unit
-          styles += 'font-size:' + format.size + 'px;';
-        }
-        break;
-      case 'img':
-        output = '<img src="' + (format.src || '') + '"';
-        styles = '';
-        if ('width' in format) {
-          styles += 'width:' + format.width + 'px;';
-        }
-        if ('height' in format) {
-          styles += 'height:' + format.height + 'px;';
-        }
-        if ('hspace' in format && 'vspace' in format) {
-          styles += 'margin:' + format.vspace + 'px ' +
-                    format.hspace + 'px;';
-        } else if ('hspace' in format) {
-          styles += 'margin:0 ' + format.hspace + 'px;';
-        } else if ('vspace' in format) {
-          styles += 'margin:' + format.hspace + 'px 0;';
-        }
-        // TODO: support `align`, `id` and `checkPolicyFile`
-        output += ' /';
-        break;
-      case 'p':
-        output = '<p';
-        styles = '';
-        if ('class' in format) {
-          styles += ' class="' + format['class'] + '"';
-        }
-        if ('align' in format) {
-          styles += 'text-align:' + format.align;
-        }
-        break;
-      case 'span':
-        output = '<span';
-        if ('class' in format) {
-          output += ' class="' + format['class'] + '"';
-        }
-        break;
-      case 'textformat':
-        // TODO: we probably need to merge textformat nodes with <p> nodes
-        output = '<span';
-        styles = '';
-        var marginLeft = 0;
-        if ('blockIdent' in format) {
-          marginLeft += parseInt(format.blockIndent, 10);
-        }
-        if ('leftMargin' in format) {
-          marginLeft += parseInt(format.leftMargin, 10);
-        }
-        if (marginLeft !== 0) {
-          styles += 'margin-left:' + marginLeft + 'px"';
-        }
-        if ('indent' in format) {
-          styles += 'text-indent:' + format.indent + 'px"';
-        }
-        if ('rightMargin' in format) {
-          styles += 'margin-left:' + marginLeft + 'px"';
-        }
-        // TODO: support leading
-        // TODO: support tabStops, if possible
-        break;
-      default:
-        // For all unknown nodes, we just emit spans. We might not actually
-        // need to, but it doesn't do any harm, either.
-        return '<span>';
-    }
-    if (styles) {
-      output += ' style="' + styles + '"';
-    }
-    return output + '>';
-  }
-
-  function renderNodeEnd(node) {
-    switch (node.type) {
-      case 'b': return '</strong>';
-      case 'i': /* falls through */
-      case 'li': /* falls through */
-      case 'a': /* falls through */
-      case 'p': return '</' + node.type + '>';
-      default: // <u>, <font>, <span>, <textformat>, and all others
-        return '</span>';
-    }
-  }
+//  function renderNode(node) {
+//    if (node.type === 'text') {
+//      return node.text;
+//    }
+//
+//    var output = renderNodeStart(node);
+//    var children = node.children;
+//
+//    for (var i = 0; i < children.length; i++) {
+//      var childNode = children[i];
+//      output += renderNode(childNode);
+//    }
+//    return output + renderNodeEnd(node);
+//  }
+//
+//  function renderNodeStart(node) {
+//    var format = node.format;
+//    var output;
+//    var styles;
+//    switch (node.type) {
+//      case 'BR': return '<br />';
+//      case 'B': return '<strong>';
+//      case 'I': return '<i>';
+//      // TODO: check if we need to emit <ul>'s around runs of <li>'s
+//      case 'LI': return '<li>';
+//      case 'U': return '<span style="text-decoration: underline;">';
+//      case 'A':
+//        output = '<a';
+//        if ('href' in format) {
+//          output += ' href="' + format.href + '"';
+//        }
+//        if ('target' in format) {
+//          output += ' target="' + format.href + '"';
+//        }
+//        break;
+//      case 'FONT':
+//        output = '<span';
+//        styles = '';
+//        if ('color' in format) {
+//          styles += 'color:' + format.color + ';';
+//        }
+//        if ('face' in format) {
+//          var fontFace = convertFontFamily(format.face);
+//          styles += 'font-family:' + fontFace + ';';
+//        }
+//        if ('size' in format) {
+//          //TODO: verify that px is the right unit
+//          styles += 'font-size:' + format.size + 'px;';
+//        }
+//        break;
+//      case 'IMG':
+//        output = '<img src="' + (format.src || '') + '"';
+//        styles = '';
+//        if ('width' in format) {
+//          styles += 'width:' + format.width + 'px;';
+//        }
+//        if ('height' in format) {
+//          styles += 'height:' + format.height + 'px;';
+//        }
+//        if ('hspace' in format && 'vspace' in format) {
+//          styles += 'margin:' + format.vspace + 'px ' +
+//                    format.hspace + 'px;';
+//        } else if ('hspace' in format) {
+//          styles += 'margin:0 ' + format.hspace + 'px;';
+//        } else if ('vspace' in format) {
+//          styles += 'margin:' + format.hspace + 'px 0;';
+//        }
+//        // TODO: support `align`, `id` and `checkPolicyFile`
+//        output += ' /';
+//        break;
+//      case 'P':
+//        output = '<p';
+//        styles = '';
+//        if ('class' in format) {
+//          styles += ' class="' + format['class'] + '"';
+//        }
+//        if ('align' in format) {
+//          styles += 'text-align:' + format.align;
+//        }
+//        break;
+//      case 'SPAN':
+//        output = '<span';
+//        if ('class' in format) {
+//          output += ' class="' + format['class'] + '"';
+//        }
+//        break;
+//      case 'TEXTFORMAT':
+//        // TODO: we probably need to merge textformat nodes with <p> nodes
+//        output = '<span';
+//        styles = '';
+//        var marginLeft = 0;
+//        if ('blockIdent' in format) {
+//          marginLeft += parseInt(format.blockIndent, 10);
+//        }
+//        if ('leftMargin' in format) {
+//          marginLeft += parseInt(format.leftMargin, 10);
+//        }
+//        if (marginLeft !== 0) {
+//          styles += 'margin-left:' + marginLeft + 'px"';
+//        }
+//        if ('indent' in format) {
+//          styles += 'text-indent:' + format.indent + 'px"';
+//        }
+//        if ('rightMargin' in format) {
+//          styles += 'margin-left:' + marginLeft + 'px"';
+//        }
+//        // TODO: support leading
+//        // TODO: support tabStops, if possible
+//        break;
+//      default:
+//        // For all unknown nodes, we just emit spans. We might not actually
+//        // need to, but it doesn't do any harm, either.
+//        return '<span>';
+//    }
+//    if (styles) {
+//      output += ' style="' + styles + '"';
+//    }
+//    return output + '>';
+//  }
+//
+//  function renderNodeEnd(node) {
+//    switch (node.type) {
+//      case 'B': return '</strong>';
+//      case 'I': /* falls through */
+//      case 'LI': /* falls through */
+//      case 'A': /* falls through */
+//      case 'P': return '</' + node.type + '>';
+//      default: // <u>, <font>, <span>, <textformat>, and all others
+//        return '</span>';
+//    }
+//  }
 
   var def = {
     __class__: 'flash.text.TextField',
 
     initialize: function () {
-      this._defaultTextFormat = null;
-      var initialFormat = this._initialFormat = {face: 'serif', size: 10,
-                                                 bold: false, italic: false,
-                                                 color: 'black'};
+      var initialFormat = this._defaultTextFormat = {
+        align: 'LEFT', font: 'serif', size: 12,
+        letterspacing: 0, kerning: 0
+      };
       this._type = 'dynamic';
+      this._selectable = true;
       this._textHeight = 0;
       this._textWidth = 0;
       this._embedFonts = false;
+      this._autoSize = 'none';
+      this._wordWrap = false;
+      this._multiline = false;
+      this._condenseWhite = false;
+      this._background = false;
+      this._border = false;
+      this._backgroundColor = 0xffffff;
+      this._borderColor = 0x000000;
+      this._textColor = 0x000000;
 
       var s = this.symbol;
       if (!s) {
@@ -402,9 +490,7 @@ var TextFieldDefinition = (function () {
       }
 
       var tag = s.tag;
-      var bbox = this._bbox = tag.bbox;
-      // // TODO: use canvas.measureText(txt).height
-      this._textHeight = bbox.bottom - bbox.top;
+      this._bbox = tag.bbox;
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -413,7 +499,7 @@ var TextFieldDefinition = (function () {
         initialFormat.color = toStringRgba(tag.color);
       }
       if (tag.hasFont) {
-        initialFormat.face = convertFontFamily(tag.font);
+        initialFormat.font = convertFontFamily(tag.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
 
@@ -423,7 +509,6 @@ var TextFieldDefinition = (function () {
         } else {
           this.text = tag.initialText;
         }
-        this._contentChanged = true;
       } else {
         this.text = '';
       }
@@ -443,7 +528,32 @@ var TextFieldDefinition = (function () {
     },
 
     draw: function (ctx) {
-      renderContent(this._content, this._initialFormat, this._bbox, ctx);
+      this.ensureDimensions();
+      renderContent(this._content, this._bbox, ctx);
+    },
+
+    invalidateDimensions: function() {
+      this._markAsDirty();
+      this._dimensionsValid = false;
+    },
+
+    ensureDimensions: function() {
+      if (this._dimensionsValid) {
+        return;
+      }
+      var bounds = this._bbox;
+      var initialFormat = this._defaultTextFormat;
+      var firstRun = {type: 'f', format: initialFormat};
+      var width = bounds.right - bounds.left;
+      var height = bounds.bottom - bounds.top;
+      var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
+                   lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
+                   currentFormat: initialFormat, runs: [firstRun]};
+      collectRuns(this._content.tree, state);
+      this._textWidth = state.maxLineWidth;
+      this._textHeight = state.y;
+      this._content.textruns = state.runs;
+      this._dimensionsValid = true;
     },
 
     get text() {
@@ -453,38 +563,62 @@ var TextFieldDefinition = (function () {
       if (this._content && this._content.text === val) {
         return;
       }
-      var node = {type : 'text', text: val};
-      this._content = {tree : node, text : val};
-      this._htmlText = val;
-      this._markAsDirty();
+      this._content = { text: val, tree: createTrunk(this._defaultTextFormat),
+                        htmlText: val
+                      };
+      this._content.tree.children[0].children[0] = {type: 'text', text: val };
+      this.invalidateDimensions();
     },
 
     get htmlText() {
-      return this._htmlText;
+      return this._content.htmlText;
     },
     set htmlText(val) {
       if (this._htmlText === val) {
         return;
       }
-      this._htmlText = '<P>' + val + '</P>'; // TODO add default formatting
-      this._content = parseHtml(val);
-      this._markAsDirty();
+      this._content = parseHtml(val, this._defaultTextFormat);
+      this.invalidateDimensions();
     },
 
     get defaultTextFormat() {
-      return this._defaultTextFormat;
+      return new flash.text.TextFormat().fromObject(this._defaultTextFormat);
     },
     set defaultTextFormat(val) {
-      this._defaultTextFormat = val;
+      this._defaultTextFormat = val.toObject();
     },
 
     getTextFormat: function (beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
-      return null; // TODO
+      return this.defaultTextFormat; // TODO
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
-      // TODO
-    }
+      this.defaultTextFormat = format;// TODO
+    },
 
+    get width() { // (void) -> Number
+      return this._bbox.right - this._bbox.left;
+    },
+    set width(value) { // (Number) -> Number
+      if (value < 0) {
+        return;
+      }
+      this._bbox.right = this._bbox.left + value;
+      // TODO: optimization potential: don't invalidate if !wordWrap and no \n
+      if (this._multiline || this._wordWrap) {
+        this.invalidateDimensions();
+      }
+    },
+
+    get height() { // (void) -> Number
+      return this._bbox.bottom - this._bbox.top;
+    },
+    set height(value) { // (Number) -> Number
+      if (value < 0) {
+        return;
+      }
+      this._bbox.bottom = this._bbox.top + value;
+      this._markAsDirty();
+    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -501,7 +635,6 @@ var TextFieldDefinition = (function () {
         setTextFormat: def.setTextFormat,
         autoSize: {
           get: function autoSize() { // (void) -> String
-            somewhatImplemented("TextField.autoSize");
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
@@ -511,7 +644,6 @@ var TextFieldDefinition = (function () {
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            somewhatImplemented("TextField.multiline");
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
@@ -521,7 +653,6 @@ var TextFieldDefinition = (function () {
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            somewhatImplemented("TextField.textColor");
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
@@ -531,7 +662,6 @@ var TextFieldDefinition = (function () {
         },
         selectable: {
           get: function selectable() { // (void) -> Boolean
-            somewhatImplemented("TextField.selectable");
             return this._selectable;
           },
           set: function selectable(value) { // (value:Boolean) -> void
@@ -541,7 +671,6 @@ var TextFieldDefinition = (function () {
         },
         wordWrap: {
           get: function wordWrap() { // (void) -> Boolean
-            somewhatImplemented("TextField.wordWrap");
             return this._wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
@@ -552,18 +681,19 @@ var TextFieldDefinition = (function () {
         textHeight: {
           get: function textHeight() { // (void) -> Number
             somewhatImplemented("TextField.textHeight");
+            this.ensureDimensions();
             return this._textHeight;
           }
         },
         textWidth: {
           get: function textWidth() { // (void) -> Number
             somewhatImplemented("TextField.textWidth");
+            this.ensureDimensions();
             return this._textWidth;
           }
         },
         background: {
           get: function background() { // (void) -> Boolean
-            somewhatImplemented("TextField.background");
             return this._background;
           },
           set: function background(value) { // (value:Boolean) -> void
@@ -573,7 +703,6 @@ var TextFieldDefinition = (function () {
         },
         backgroundColor: {
           get: function backgroundColor() { // (void) -> uint
-            somewhatImplemented("TextField.backgroundColor");
             return this._backgroundColor;
           },
           set: function backgroundColor(value) { // (value:uint) -> void
@@ -583,7 +712,6 @@ var TextFieldDefinition = (function () {
         },
         border: {
           get: function border() { // (void) -> Boolean
-            somewhatImplemented("TextField.border");
             return this._border;
           },
           set: function border(value) { // (value:Boolean) -> void
@@ -593,7 +721,6 @@ var TextFieldDefinition = (function () {
         },
         borderColor: {
           get: function borderColor() { // (void) -> uint
-            somewhatImplemented("TextField.borderColor");
             return this._borderColor;
           },
           set: function borderColor(value) { // (value:uint) -> void
@@ -603,7 +730,6 @@ var TextFieldDefinition = (function () {
         },
         type: {
           get: function borderColor() { // (void) -> String
-            somewhatImplemented("TextField.type");
             return this._type;
           },
           set: function borderColor(value) { // (value:String) -> void
@@ -618,6 +744,15 @@ var TextFieldDefinition = (function () {
           set: function embedFonts(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.embedFonts");
             this._embedFonts = value;
+          }
+        },
+        condenseWhite: {
+          get: function condenseWhite() { // (void) -> Boolean
+            return this._condenseWhite;
+          },
+          set: function condenseWhite(value) { // (value:Boolean) -> void
+            somewhatImplemented("TextField.condenseWhite");
+            this._condenseWhite = value;
           }
         },
         numLines: {

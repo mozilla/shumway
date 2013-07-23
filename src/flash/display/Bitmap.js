@@ -41,6 +41,15 @@ var BitmapDefinition = (function () {
       if (!this._bitmapData) {
         return;
       }
+      if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
+        var transform = ctx.currentTransform;
+        var EPSILON = 0.0001;
+        if (Math.abs(transform.a - 1) <= EPSILON && Math.abs(transform.d - 1) <= EPSILON &&
+            Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
+          ctx.setTransform(1, 0, 0, 1, Math.floor(transform.e), Math.floor(transform.f));
+        }
+        // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
+      }
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
       FrameCounter.count("Bitmap.draw");
     },
