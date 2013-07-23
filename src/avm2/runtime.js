@@ -990,33 +990,6 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-//function callPropertyWithIC(object, mn, isLex, args, ic) {
-//  if (typeof object === "number") {
-//    object = boxValue(object);
-//  }
-//  var receiver = isLex ? null : object;
-//  assert (object, "NullReferenceException");
-//  if (isProxyObject(object)) {
-//    return object[VM_CALL_PROXY](mn, receiver, args);
-//  }
-//  var property = getPropertyWithIC(object, mn, true, ic);
-//  return property.apply(receiver, args);
-//}
-//
-//function callProperty(object, mn, isLex, args) {
-//  // Counter.count("callProperty " + mn.name);
-//  if (typeof object === "number") {
-//    object = boxValue(object);
-//  }
-//  var receiver = isLex ? null : object;
-//  assert (object, "NullReferenceException");
-//  if (isProxyObject(object)) {
-//    return object[VM_CALL_PROXY](mn, receiver, args);
-//  }
-//  var property = getProperty(object, mn, true);
-//  return property.apply(receiver, args);
-//}
-
 function hasProperty(object, name) {
   object = boxValue(object);
   if (object.hasProperty) {
