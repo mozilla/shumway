@@ -481,6 +481,14 @@
     return isPhi(scope) || scope instanceof AVM2Scope || isProjection(scope, Projection.Type.SCOPE);
   }
 
+  function isMultinameConstant(node) {
+    return node instanceof Constant && node.value instanceof Multiname;
+  }
+
+  function isMultiname(name) {
+    return isMultinameConstant(name) || name instanceof AVM2Multiname;
+  }
+
   function isStore(store) {
     return isPhi(store) || store instanceof Store || isProjection(store, Projection.Type.STORE);
   }
@@ -606,12 +614,45 @@
       assert (isBoolean(isIndexed));
       assert (isBoolean(isMethod));
       assert (isNullOrUndefined(ic) || isConstant(ic));
+      assert (isMultiname(name));
       this.isIndexed = isIndexed;
       this.isMethod = isMethod;
       this.ic = ic;
     }
     avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
     return avm2GetProperty;
+  })();
+
+  var AVM2DeleteProperty = (function () {
+    function avm2DeleteProperty(control, store, object, name) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (name);
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.name = name;
+    }
+    avm2DeleteProperty.prototype = extend(Value, "AVM2_DeleteProperty");
+    return avm2DeleteProperty;
+  })();
+
+  var AVM2HasProperty = (function () {
+    function avm2HasProperty(control, store, object, name) {
+      Node.call(this);
+      assert (isControlOrNull(control));
+      assert (isStore(store));
+      assert (object);
+      assert (name);
+      this.control = control;
+      this.store = store;
+      this.object = object;
+      this.name = name;
+    }
+    avm2HasProperty.prototype = extend(Value, "AVM2_HasProperty");
+    return avm2HasProperty;
   })();
 
   // Override GetProperty to take advantage of its common structure
@@ -646,6 +687,7 @@
       SetProperty.call(this, control, store, object, name, value);
       assert (isBoolean(isIndexed));
       assert (isNullOrUndefined(ic) || isConstant(ic));
+      assert (isMultiname(name));
       this.isIndexed = isIndexed;
       this.ic = ic;
     }
@@ -693,7 +735,7 @@
       assert (isControlOrNull(control));
       assert (isStore(store));
       assert (isScope(scope));
-      assert (name);
+      assert (isMultiname(name), name);
       assert (isConstant(domain));
       assert (isBoolean(strict));
       this.control = control;
@@ -754,18 +796,18 @@
     return avm2NewActivation;
   })();
 
-  var AVM2RuntimeMultiname = (function () {
-    function avm2RuntimeMultiname(multiname, namespaces, name) {
+  var AVM2Multiname = (function () {
+    function avm2Multiname(namespaces, name, flags) {
       Node.call(this);
-      assert (multiname);
       assert (namespaces);
       assert (name);
-      this.multiname = multiname;
       this.namespaces = namespaces;
       this.name = name;
+      this.flags = flags;
     }
-    avm2RuntimeMultiname.prototype = extend(Value, "AVM2_Runtime_Multiname");
-    return avm2RuntimeMultiname;
+    avm2Multiname.prototype = extend(Value, "AVM2_Multiname");
+    avm2Multiname.prototype.mustFloat = true;
+    return avm2Multiname;
   })();
 
   var Call = (function () {
@@ -811,6 +853,7 @@
       CallProperty.call(this, control, store, object, name, args, pristine);
       assert (isBoolean(isLex));
       assert (isNullOrUndefined(ic) || isConstant(ic));
+      assert (isMultiname(name));
       this.isLex = isLex;
       this.ic = ic;
     }
@@ -2025,6 +2068,8 @@
   exports.CallProperty = CallProperty;
   exports.AVM2CallProperty = AVM2CallProperty;
   exports.AVM2GetProperty = AVM2GetProperty;
+  exports.AVM2HasProperty = AVM2HasProperty;
+  exports.AVM2DeleteProperty = AVM2DeleteProperty;
   exports.AVM2GetDescendants = AVM2GetDescendants;
   exports.AVM2SetProperty = AVM2SetProperty;
   exports.AVM2GetSlot = AVM2GetSlot;
@@ -2047,7 +2092,7 @@
   exports.NewObject = NewObject;
   exports.AVM2NewActivation = AVM2NewActivation;
   exports.KeyValuePair = KeyValuePair;
-  exports.AVM2RuntimeMultiname = AVM2RuntimeMultiname;
+  exports.AVM2Multiname = AVM2Multiname;
 
   exports.DFG = DFG;
   exports.CFG = CFG;

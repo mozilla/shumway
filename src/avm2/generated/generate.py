@@ -61,8 +61,8 @@ def main():
         # Build without float suppot by default
         configs = ['-config', 'CONFIG::VMCFG_FLOAT=false']
 
-    compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as"], configs=configs)
-    compile_abc("shell", ["Capabilities.as", "Dictionary.as", "Domain.as"], deps=["builtin"], configs=configs)
+    compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as"], configs=configs)
+    compile_abc("shell", ["Capabilities.as", "Domain.as"], deps=["builtin"], configs=configs)
     compile_abc("avmplus", ["avmplus.as"], deps=["builtin"], configs=configs)
 
 if __name__ == "__main__":

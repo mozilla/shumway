@@ -739,7 +739,7 @@ var Multiname = (function () {
    * a mangled Multiname object.
    */
 
-  function qualifyName(qualifier, name) {
+  function qualifyNameInternal(qualifier, name) {
     release || assert (typeof name !== "object");
     return qualifier ? qualifier + "$" + name : name;
   }
@@ -755,9 +755,13 @@ var Multiname = (function () {
         release || assert (mn.namespaces[0].isPublic());
         return mn.qualifiedName = name;
       }
-      mn = mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, name);
+      mn = mn.qualifiedName = qualifyNameInternal(mn.namespaces[0].qualifiedName, name);
     }
     return mn;
+  };
+
+  multiname.qualifyName = function qualifyName(namespace, name) {
+    return qualifyNameInternal(namespace.qualifiedName, name)
   };
 
   /**

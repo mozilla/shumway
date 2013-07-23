@@ -701,10 +701,17 @@ var Scope = (function () {
 //    }
   }
 
+  /**
+   * Searches the scope stack for the object containing the specified property. If |strict| is specified then throw
+   * an exception if the property is not found. If |scopeOnly| is specified then only search the scope chain and not
+   * any of the top level domains (this is used by the verifier to bake in direct object references).
+   *
+   * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
+   */
   scope.prototype.findScopeProperty = function findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly) {
     var object;
     var key = makeCacheKey(namespaces, name, flags);
-    if ((object = this.cache[key])) return object;
+    if (!scopeOnly && (object = this.cache[key])) return object;
     if (this.object.hasPropertyByMultiname(namespaces, name, flags, true)) {
       return this.isWith ? this.object : (this.cache[key] = this.object);
     }
@@ -1614,7 +1621,7 @@ function makeTrampoline(forward, parameterLength) {
 function makeMemoizer(qn, target) {
   function memoizer() {
     Counter.count("Runtime: Memoizing");
-    release || assert (!Object.prototype.hasOwnProperty.call(this, "class"));
+    // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
     if (traceExecution.value >= 3) {
       print("Memoizing: " + qn);
     }
