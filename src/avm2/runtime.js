@@ -1340,7 +1340,9 @@ function shouldCompile(mi) {
  * Checks if the specified method must be compiled, even if the compiled is not enabled.
  */
 function forceCompile(mi) {
-  return false;
+  if (mi.hasExceptions()) {
+    return false;
+  }
   var holder = mi.holder;
   if (holder instanceof ClassInfo) {
     holder = holder.instanceInfo;
@@ -1356,7 +1358,8 @@ function forceCompile(mi) {
     }
     var className = holder.name.getOriginalName();
     switch (className) {
-      // ...
+      case "com.google.youtube.model.VideoData":
+        return true;
     }
   }
   return false;

@@ -142,6 +142,7 @@ var DisplayObjectDefinition = (function () {
         var listeners = that._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[evt._type]) {
+          Counter.count("dispatchEvent");
           that._dispatchEvent(evt);
         }
       };

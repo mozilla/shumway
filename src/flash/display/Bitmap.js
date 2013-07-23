@@ -42,6 +42,7 @@ var BitmapDefinition = (function () {
         return;
       }
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
+      FrameCounter.count("Bitmap.draw");
     },
     initialize: function () {
     },

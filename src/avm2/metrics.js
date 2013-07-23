@@ -98,6 +98,9 @@
     counter.prototype.setEnabled = function (enabled) {
       this.enabled = enabled;
     };
+    counter.prototype.clear = function () {
+      this.counts = {};
+    };
     counter.prototype.toJSON = function () {
       return {counts: this.counts};
     };
