@@ -25,11 +25,8 @@ import flash.utils.Dictionary;
   var d:* = new Dictionary();
   var obj = {};
   d[obj] = 3.14;
-
-  for (var m in d) {
-    trace(obj === m);
-    trace(d[m]);
-  }
+  trace(obj in d);
+  trace(d[obj]);
 })();
 
 (function () {
@@ -39,12 +36,6 @@ import flash.utils.Dictionary;
   var fn1 = function () {};
   d[fn0] = 1.23;
   d[fn1] = 2.34;
-
-  for (var m in d) {
-    trace(fn0 === m);
-    trace(fn1 === m);
-    trace(d[m]);
-  }
 
   trace(fn0 in d);
   trace(fn1 in d);
