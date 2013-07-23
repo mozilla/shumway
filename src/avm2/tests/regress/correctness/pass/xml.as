@@ -135,3 +135,51 @@ class A {}
     print("eventClass[p]="+eventClass[p]);
   }
 })();
+
+print("Testing XML.prototype.child as used by Candy Crush");
+(function () {
+  var x = new XML(
+    '<gamedata randomseed="1282661104" version="1">' +
+    '<musicOn>false</musicOn>' +
+    '<soundOn>true</soundOn>' +
+    '<isShortGame>false</isShortGame>' +
+    '<booster_1>0</booster_1>' +
+    '<booster_2>0</booster_2>' +
+    '<booster_3>0</booster_3>' +
+    '<booster_4>0</booster_4>' +
+    '<booster_5>0</booster_5>' +
+    '<bestScore>100</bestScore>' +
+    '<bestChain>2</bestChain>' +
+    '<bestLevel>1</bestLevel>' +
+    '<bestCrushed>5</bestCrushed>' +
+    '<bestMixed>2</bestMixed>' +
+    '<text id="intro.time">Le jeu commence dans {0} secondes</text>' +
+    '<text id="intro.title">Speel als volgt:</text>' +
+    '<text id="intro.info1">Sett sammen 3 godteri i samme farge for å knuse  ...</text>' +
+    '<text id="intro.info2">You can also combine the power candy for additio ...</text>' +
+    '<text id="game.nomoves">No more moves!</text>' +
+    '<text id="outro.opengame">Please register to play the full game</text>' +
+    '<text id="outro.title">Game Over</text>' +
+    '<text id="outro.now">now</text>' +
+    '<text id="outro.bestever">best ever</text>' +
+    '<text id="outro.score">Score</text>' +
+    '<text id="outro.chain">Longest chain</text>' +
+    '<text id="outro.level">Level reached</text>' +
+    '<text id="outro.crushed">Candy crushed</text>' +
+    '<text id="outro.time">Game ends in {0} seconds</text>' +
+    '<text id="outro.trophy.one">crushed {0} candy in one game</text>' +
+    '<text id="outro.trophy.two">scored {0} in one game</text>' +
+    '<text id="outro.trophy.three">made {0} combined candy in one game</text>' +
+    '<text id="outro.combo_wrapper_line">combo wrapper line description</text>' +
+    '<text id="outro.combo_color_color">combo color color description</text>' +
+    '<text id="outro.combo_color_line">combo color line description</text>' +
+    '<text id="outro.combo_color_wrapper">combo color wrapper description. ...</text>' +
+    '</gamedata>');
+  var tests = [
+    [x.child("text").length()],
+  ];
+  for (var i = 0; i < tests.length; i++) {
+    print(i + ": " + tests[i]);
+  }
+})();
+
