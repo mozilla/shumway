@@ -323,6 +323,11 @@ var tagHandler = (function (global) {
       return pos | 0;
     }
 
+    function setPos(p) {
+      p = p | 0;
+      pos = p;
+    }
+
     function getInputStreamPos() {
       return inputStreamPos - inputStreamOffset | 0;
     }
@@ -556,18 +561,19 @@ var tagHandler = (function (global) {
     function writeUBJU16(val) {
       val = val | 0;
       bytesU8[pos | 0] = $i;
-      pos = pos + 1 | 0;
-      writeU16(val);
+      bytesU8[pos + 1 | 0] = val >> 8;
+      bytesU8[pos + 2 | 0] = val;
+      pos = pos + 3 | 0;
     }
 
     // Write an int32 value.
     function writeUBJU32(val) {
       val = val | 0;
       bytesU8[pos | 0] = $I;
-      bytesU8[pos + 1 | 0] = val;
-      bytesU8[pos + 2 | 0] = val >> 8;
-      bytesU8[pos + 3 | 0] = val >> 16;
-      bytesU8[pos + 4 | 0] = val >> 24;
+      bytesU8[pos + 1 | 0] = val >> 24 & 0xFF;
+      bytesU8[pos + 2 | 0] = val >> 16 & 0xFF;
+      bytesU8[pos + 3 | 0] = val >> 8 & 0xFF;
+      bytesU8[pos + 4 | 0] = val & 0xFF;
       pos = pos + 5 | 0;
     }
 
@@ -642,10 +648,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count;
-        bytesU8[offset + 2 | 0] = count >> 8;
-        bytesU8[offset + 3 | 0] = count >> 16;
-        bytesU8[offset + 4 | 0] = count >> 24;
+        bytesU8[offset + 4 | 0] = count;
+        bytesU8[offset + 3 | 0] = count >> 8;
+        bytesU8[offset + 2 | 0] = count >> 16;
+        bytesU8[offset + 1 | 0] = count >> 24;
       }
     }
 
@@ -678,10 +684,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count;
-        bytesU8[offset + 2 | 0] = count >> 8;
-        bytesU8[offset + 3 | 0] = count >> 16;
-        bytesU8[offset + 4 | 0] = count >> 24;
+        bytesU8[offset + 4 | 0] = count;
+        bytesU8[offset + 3 | 0] = count >> 8;
+        bytesU8[offset + 2 | 0] = count >> 16;
+        bytesU8[offset + 1 | 0] = count >> 24;
       }
     }
 
@@ -716,10 +722,10 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
       } else {
-        bytesU8[offset + 1 | 0] = count;
-        bytesU8[offset + 2 | 0] = count >> 8;
-        bytesU8[offset + 3 | 0] = count >> 16;
-        bytesU8[offset + 4 | 0] = count >> 24;
+        bytesU8[offset + 4 | 0] = count;
+        bytesU8[offset + 3 | 0] = count >> 8;
+        bytesU8[offset + 2 | 0] = count >> 16;
+        bytesU8[offset + 1 | 0] = count >> 24;
       }
     }
 
@@ -739,10 +745,10 @@ var tagHandler = (function (global) {
     function finishBinary(offset, count) {
       offset = offset | 0;
       count = count | 0;
-      bytesU8[offset + 1 | 0] = count;
-      bytesU8[offset + 2 | 0] = count >> 8;
-      bytesU8[offset + 3 | 0] = count >> 16;
-      bytesU8[offset + 4 | 0] = count >> 24;
+      bytesU8[offset + 4 | 0] = count;
+      bytesU8[offset + 3 | 0] = count >> 8;
+      bytesU8[offset + 2 | 0] = count >> 16;
+      bytesU8[offset + 1 | 0] = count >> 24;
     }
 
     // Write a UTF8 character into a string value.
@@ -772,28 +778,30 @@ var tagHandler = (function (global) {
       bytesU8[pos | 0] = $B;
       bytesU8[pos + 1 | 0] = id;
       bytesU8[pos + 2 | 0] = $i;
-      bytesU8[pos + 3 | 0] = val;
-      bytesU8[pos + 4 | 0] = val >> 8;
+      bytesU8[pos + 3 | 0] = val >> 8;
+      bytesU8[pos + 4 | 0] = val;
       pos = pos + 5 | 0;
     }
 
     function writePropU32(id, val) {
       id = id | 0;
       val = val | 0;
-      bytesU8[pos | 0] = $B;
-      bytesU8[pos + 1 | 0] = id;
-      bytesU8[pos + 2 | 0] = $I;
-      bytesU8[pos + 3 | 0] = val;
-      bytesU8[pos + 4 | 0] = val >> 8;
-      bytesU8[pos + 5 | 0] = val >> 16;
-      bytesU8[pos + 6 | 0] = val >> 24;
-      pos = pos + 7 | 0;
+      writeUBJU8(id);
+      writeUBJU32(val);
+//      bytesU8[pos | 0] = $B;
+//      bytesU8[pos + 1 | 0] = id;
+//      bytesU8[pos + 2 | 0] = $I;
+//      bytesU8[pos + 3 | 0] = val >> 24;
+//      bytesU8[pos + 4 | 0] = val >> 16;
+//      bytesU8[pos + 5 | 0] = val >> 8;
+//      bytesU8[pos + 6 | 0] = val;
+//      pos = pos + 7 | 0;
     }
 
     function writePropD32(id, val) {
       id = id | 0;
       val = +val;
-      writeUBJU8($B);
+      writeUBJU8(id);
       writeUBJD32(val);
     }
 
@@ -815,16 +823,19 @@ var tagHandler = (function (global) {
       var count = 0, childPos = 0, childLen = 0, childCount = 0;
       var reserved = 0, isMorph = 0, hasStrokes = 0;
       writePropU32(ID, readStreamU16() | 0);
+      count = count + 2 | 0;
       writeUBJU8(BBOX);
       childPos = startObject(0) | 0;
       childLen = bbox(swfVersion, tagCode) | 0;
       finishObject(childPos, childLen, 0);
+      count = count + 2 | 0;
       if (~~tagCode == 46) {
         isMorph = 1;
       } else if (~~tagCode == 84) {
         isMorph = 1;
       };
       writePropU8(IS_MORPH, isMorph);
+      count = count + 2 | 0;
       if (isMorph) {
         writeUBJU8(BBOX_MORPH);
         childPos = startObject(0) | 0;
@@ -838,12 +849,13 @@ var tagHandler = (function (global) {
         hasStrokes = 1;
       };
       writePropU8(HAS_STROKES, hasStrokes);
-      count = count + 8 | 0;
+      count = count + 2 | 0;
       if (hasStrokes) {
         writeUBJU8(STROKE_BBOX);
         childPos = startObject(0) | 0;
         childLen = bbox(swfVersion, tagCode) | 0;
         finishObject(childPos, childLen, 0);
+        count = count + 2 | 0;
         if (isMorph) {
           writeUBJU8(STROKE_BBOX_MORPH);
           childPos = startObject(0) | 0;
@@ -852,15 +864,16 @@ var tagHandler = (function (global) {
           count = count + 2 | 0;
         }
         reserved = readStreamUb(5) | 0;
-        writePropU16(FILL_WINDING, readStreamUb(1) | 0);
-        writePropU16(NONSCALING_STROKES, readStreamUb(1) | 0);
-        writePropU16(SCALING_STROKES, readStreamUb(1) | 0);
-        count = count + 8 | 0;
+        writePropU32(FILL_WINDING, readStreamUb(1) | 0);
+        writePropU32(NONSCALING_STROKES, readStreamUb(1) | 0);
+        writePropU32(SCALING_STROKES, readStreamUb(1) | 0);
+        count = count + 6 | 0;
       }
       if (isMorph) {
         writePropU32(OFFSET_MORPH, readStreamU32() | 0);
+        count = count + 2 | 0;
         childCount = morphShapeWithStyle(swfVersion, tagCode, isMorph, hasStrokes) | 0;
-        count = count + childCount + 2 | 0;
+        count = count + childCount | 0;
       } else {
         childCount = shapeWithStyle(swfVersion, tagCode, isMorph, hasStrokes) | 0;
         count = count + childCount | 0;
@@ -939,9 +952,9 @@ var tagHandler = (function (global) {
         }
         if (hasName) {
           writeUBJU8(NAME);
-          stringPos = startString(BIG) | 0;
+          stringPos = startString(0) | 0;
           stringLen = readStreamString(0) | 0;
-          finishString(stringPos, stringLen, BIG);
+          finishString(stringPos, stringLen, 0);
           count = count + 2 | 0;
         }
         if (clip) {
@@ -1029,10 +1042,10 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       var childCount = 2;
       if (~~tagCode == 5) {
-        writePropU16(SYMBOL_ID, readStreamU16() | 0);
+        writePropU32(SYMBOL_ID, readStreamU16() | 0);
         childCount = childCount + 2 | 0;
       }
-      writePropU16(DEPTH, readStreamU16() | 0);
+      writePropU32(DEPTH, readStreamU16() | 0);
       return childCount | 0;
     }
 
@@ -1069,7 +1082,8 @@ var tagHandler = (function (global) {
         arrayLen = arrayLen + 1 | 0;
       } while(!eos)
       finishArray(arrayPos, arrayLen, 0);
-      return 2 | 0;
+      count = count + 2 | 0;
+      return count | 0;
     }
 
     function morphShapeWithStyle(swfVersion, tagCode, isMorph, hasStrokes) {
@@ -1105,6 +1119,7 @@ var tagHandler = (function (global) {
         arrayLen = arrayLen + 1 | 0;
       } while(!eos)
       finishArray(arrayPos, arrayLen, 0);
+      count = count + 2 | 0;
       // begin styleBits()
       alignStream();
       fillBits = readStreamUb(4) | 0;
@@ -1129,7 +1144,8 @@ var tagHandler = (function (global) {
         arrayLen = arrayLen + 1 | 0;
       } while(!eos)
       finishArray(arrayPos, arrayLen, 0);
-      return 2;
+      count = count + 2 | 0;
+      return count | 0;
     }
 
     function styles(swfVersion, tagCode, isMorph, hasStrokes) {
@@ -1137,7 +1153,7 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
       hasStrokes = hasStrokes | 0;
-      var fillBits = 0, lineBits = 0, childCount = 0;
+      var count = 0, fillBits = 0, lineBits = 0, childCount = 0;
       childCount = fillStyleArray(swfVersion, tagCode, isMorph) | 0;
       childCount = lineStyleArray(swfVersion, tagCode, isMorph, hasStrokes) | 0;
       // begin styleBits()
@@ -1163,6 +1179,7 @@ var tagHandler = (function (global) {
       }
       arrayLen = count;
       arrayPos = startArray(0) | 0;
+//      trace("fillStyleArray() arrayPos=" + arrayPos + " arrayLen=" + arrayLen);
       while (count) {
         objectPos = startObject(0) | 0;
         objectLen = fillStyle(swfVersion, tagCode, isMorph) | 0;
@@ -1208,6 +1225,7 @@ var tagHandler = (function (global) {
       bits = bits | 0;
       var count = 0, childCount = 0, type = 0, flags = 0, eos = 0;
       writePropU8(TYPE, (type = readStreamUb(1) | 0));
+      count = count + 2 | 0;
       flags = readStreamUb(5) | 0;
       eos = !(type ? 1 : flags ? 1 : 0);
       if (type) {
@@ -1244,110 +1262,126 @@ var tagHandler = (function (global) {
       flags = flags | 0;
       bits = bits | 0;
       var isStraight = 0, tmp = 0, isGeneral = 0, isVertical = 0, val = 0;
-      var childCount = 2;
-      bytesU8[pos | 0] = $B;
-      bytesU8[pos + 1 | 0] = IS_STRAIGHT;
-      bytesU8[pos + 2 | 0] = $B;
-      bytesU8[pos + 3 | 0] = isStraight = flags >> 4 | 0;
-      pos = pos + 4 | 0;
+      var childCount = 0, count = 0;
+      writePropU8(IS_STRAIGHT, isStraight = flags >> 4 | 0);
+//      bytesU8[pos | 0] = $B;
+//      bytesU8[pos + 1 | 0] = IS_STRAIGHT;
+//      bytesU8[pos + 2 | 0] = $B;
+//      bytesU8[pos + 3 | 0] = isStraight = flags >> 4 | 0;
+//      pos = pos + 4 | 0;
+      count = count + 2 | 0;
       tmp = flags & 0x0f | 0;
       bits = tmp + 2 | 0;
       if (isStraight) {
-        bytesU8[pos | 0] = $B;
-        bytesU8[pos + 1 | 0] = IS_GENERAL;
-        bytesU8[pos + 2 | 0] = $B;
-        bytesU8[pos + 3 | 0] = isGeneral = readStreamUb(1) | 0;
-        pos = pos + 4 | 0;
+        writePropU8(IS_GENERAL, isGeneral = readStreamUb(1) | 0);
+//        bytesU8[pos | 0] = $B;
+//        bytesU8[pos + 1 | 0] = IS_GENERAL;
+//        bytesU8[pos + 2 | 0] = $B;
+//        bytesU8[pos + 3 | 0] = isGeneral = readStreamUb(1) | 0;
+//        pos = pos + 4 | 0;
+        count = count + 2 | 0;
         if (isGeneral) {
           val = readStreamSb(bits | 0) | 0;
-          bytesU8[pos | 0] = $B;
-          bytesU8[pos + 1 | 0] = DELTA_X;
-          bytesU8[pos + 2 | 0] = $I;
-          bytesU8[pos + 3 | 0] = val;
-          bytesU8[pos + 4 | 0] = val >> 8;
-          bytesU8[pos + 5 | 0] = val >> 16;
-          bytesU8[pos + 6 | 0] = val >> 24;
-          pos = pos + 7 | 0;
+          writePropU32(DELTA_X, val);
+//          bytesU8[pos | 0] = $B;
+//          bytesU8[pos + 1 | 0] = DELTA_X;
+//          bytesU8[pos + 2 | 0] = $I;
+//          bytesU8[pos + 6 | 0] = val;
+//          bytesU8[pos + 5 | 0] = val >> 8;
+//          bytesU8[pos + 4 | 0] = val >> 16;
+//          bytesU8[pos + 3 | 0] = val >> 24;
+//          pos = pos + 7 | 0;
           val = readStreamSb(bits | 0) | 0;
-          bytesU8[pos | 0] = $B;
-          bytesU8[pos + 1 | 0] = DELTA_Y;
-          bytesU8[pos + 2 | 0] = $I;
-          bytesU8[pos + 3 | 0] = val;
-          bytesU8[pos + 4 | 0] = val >> 8;
-          bytesU8[pos + 5 | 0] = val >> 16;
-          bytesU8[pos + 6 | 0] = val >> 24;
-          pos = pos + 7 | 0;
+          writePropU32(DELTA_Y, val);
+//          bytesU8[pos | 0] = $B;
+//          bytesU8[pos + 1 | 0] = DELTA_Y;
+//          bytesU8[pos + 2 | 0] = $I;
+//          bytesU8[pos + 6 | 0] = val;
+//          bytesU8[pos + 5 | 0] = val >> 8;
+//          bytesU8[pos + 4 | 0] = val >> 16;
+//          bytesU8[pos + 3 | 0] = val >> 24;
+//          pos = pos + 7 | 0;
+          count = count + 4 | 0;
         } else {
-          bytesU8[pos | 0] = $B;
-          bytesU8[pos + 1 | 0] = IS_VERTICAL;
-          bytesU8[pos + 2 | 0] = $B;
-          bytesU8[pos + 3 | 0] = isVertical = readStreamUb(1) | 0;
-          pos = pos + 4 | 0;
+          writePropU8(IS_VERTICAL, isVertical = readStreamUb(1) | 0);
+//          bytesU8[pos | 0] = $B;
+//          bytesU8[pos + 1 | 0] = IS_VERTICAL;
+//          bytesU8[pos + 2 | 0] = $B;
+//          bytesU8[pos + 3 | 0] = isVertical = readStreamUb(1) | 0;
+//          pos = pos + 4 | 0;
+          count = count + 2 | 0;
           if (isVertical) {
             val = readStreamSb(bits | 0) | 0;
-            bytesU8[pos | 0] = $B;
-            bytesU8[pos + 1 | 0] = DELTA_Y;
-            bytesU8[pos + 2 | 0] = $I;
-            bytesU8[pos + 3 | 0] = val;
-            bytesU8[pos + 4 | 0] = val >> 8;
-            bytesU8[pos + 5 | 0] = val >> 16;
-            bytesU8[pos + 6 | 0] = val >> 24;
-            pos = pos + 7 | 0;
+            writePropU32(DELTA_Y, val);
+//            bytesU8[pos | 0] = $B;
+//            bytesU8[pos + 1 | 0] = DELTA_Y;
+//            bytesU8[pos + 2 | 0] = $I;
+//            bytesU8[pos + 6 | 0] = val;
+//            bytesU8[pos + 5 | 0] = val >> 8;
+//            bytesU8[pos + 4 | 0] = val >> 16;
+//            bytesU8[pos + 3 | 0] = val >> 24;
+//            pos = pos + 7 | 0;
+            count = count + 2 | 0;
           } else {
             val = readStreamSb(bits | 0) | 0;
-            bytesU8[pos | 0] = $B;
-            bytesU8[pos + 1 | 0] = DELTA_X;
-            bytesU8[pos + 2 | 0] = $I;
-            bytesU8[pos + 3 | 0] = val;
-            bytesU8[pos + 4 | 0] = val >> 8;
-            bytesU8[pos + 5 | 0] = val >> 16;
-            bytesU8[pos + 6 | 0] = val >> 24;
-            pos = pos + 7 | 0;
+            writePropU32(DELTA_X, val);
+//            bytesU8[pos | 0] = $B;
+//            bytesU8[pos + 1 | 0] = DELTA_X;
+//            bytesU8[pos + 2 | 0] = $I;
+//            bytesU8[pos + 6 | 0] = val;
+//            bytesU8[pos + 5 | 0] = val >> 8;
+//            bytesU8[pos + 4 | 0] = val >> 16;
+//            bytesU8[pos + 3 | 0] = val >> 24;
+//            pos = pos + 7 | 0;
+            count = count + 2 | 0;
           }
         }
-        childCount = childCount + 6 | 0;
       } else {
         val = readStreamSb(bits | 0) | 0;
-        bytesU8[pos | 0] = $B;
-        bytesU8[pos + 1 | 0] = CONTROL_DELTA_X;
-        bytesU8[pos + 2 | 0] = $I;
-        bytesU8[pos + 3 | 0] = val;
-        bytesU8[pos + 4 | 0] = val >> 8;
-        bytesU8[pos + 5 | 0] = val >> 16;
-        bytesU8[pos + 6 | 0] = val >> 24;
-        pos = pos + 7 | 0;
+        writePropU32(CONTROL_DELTA_X, val);
+//        bytesU8[pos | 0] = $B;
+//        bytesU8[pos + 1 | 0] = CONTROL_DELTA_X;
+//        bytesU8[pos + 2 | 0] = $I;
+//        bytesU8[pos + 6 | 0] = val;
+//        bytesU8[pos + 5 | 0] = val >> 8;
+//        bytesU8[pos + 4 | 0] = val >> 16;
+//        bytesU8[pos + 3 | 0] = val >> 24;
+//        pos = pos + 7 | 0;
         val = readStreamSb(bits | 0) | 0;
-        bytesU8[pos | 0] = $B;
-        bytesU8[pos + 1 | 0] = CONTROL_DELTA_Y;
-        bytesU8[pos + 2 | 0] = $I;
-        bytesU8[pos + 3 | 0] = val;
-        bytesU8[pos + 4 | 0] = val >> 8;
-        bytesU8[pos + 5 | 0] = val >> 16;
-        bytesU8[pos + 6 | 0] = val >> 24;
-        pos = pos + 7 | 0;
+        writePropU32(CONTROL_DELTA_Y, val);
+//        bytesU8[pos | 0] = $B;
+//        bytesU8[pos + 1 | 0] = CONTROL_DELTA_Y;
+//        bytesU8[pos + 2 | 0] = $I;
+//        bytesU8[pos + 6 | 0] = val;
+//        bytesU8[pos + 5 | 0] = val >> 8;
+//        bytesU8[pos + 4 | 0] = val >> 16;
+//        bytesU8[pos + 3 | 0] = val >> 24;
+//        pos = pos + 7 | 0;
         val = readStreamSb(bits | 0) | 0;
-        bytesU8[pos | 0] = $B;
-        bytesU8[pos + 1 | 0] = ANCHOR_DELTA_X;
-        bytesU8[pos + 2 | 0] = $I;
-        bytesU8[pos + 3 | 0] = val;
-        bytesU8[pos + 4 | 0] = val >> 8;
-        bytesU8[pos + 5 | 0] = val >> 16;
-        bytesU8[pos + 6 | 0] = val >> 24;
-        pos = pos + 7 | 0;
+        writePropU32(ANCHOR_DELTA_X, val);
+//        bytesU8[pos | 0] = $B;
+//        bytesU8[pos + 1 | 0] = ANCHOR_DELTA_X;
+//        bytesU8[pos + 2 | 0] = $I;
+//        bytesU8[pos + 6 | 0] = val;
+//        bytesU8[pos + 5 | 0] = val >> 8;
+//        bytesU8[pos + 4 | 0] = val >> 16;
+//        bytesU8[pos + 3 | 0] = val >> 24;
+//        pos = pos + 7 | 0;
         val = readStreamSb(bits | 0) | 0;
-        bytesU8[pos | 0] = $B;
-        bytesU8[pos + 1 | 0] = ANCHOR_DELTA_Y;
-        bytesU8[pos + 2 | 0] = $I;
-        bytesU8[pos + 3 | 0] = val;
-        bytesU8[pos + 4 | 0] = val >> 8;
-        bytesU8[pos + 5 | 0] = val >> 16;
-        bytesU8[pos + 6 | 0] = val >> 24;
-        pos = pos + 7 | 0;
-        childCount = childCount + 8 | 0;
+        writePropU32(ANCHOR_DELTA_Y, val);
+//        bytesU8[pos | 0] = $B;
+//        bytesU8[pos + 1 | 0] = ANCHOR_DELTA_Y;
+//        bytesU8[pos + 2 | 0] = $I;
+//        bytesU8[pos + 6 | 0] = val;
+//        bytesU8[pos + 5 | 0] = val >> 8;
+//        bytesU8[pos + 4 | 0] = val >> 16;
+//        bytesU8[pos + 3 | 0] = val >> 24;
+//        pos = pos + 7 | 0;
+        count = count + 8 | 0;
       }
       bytesU8[pos | 0] = bits;
       pos = pos + 1 | 0;
-      return childCount | 0;
+      return count | 0;
     }
 
     function shapeRecordSetup(swfVersion, tagCode, flags, isMorph,
@@ -1362,32 +1396,34 @@ var tagHandler = (function (global) {
       bits = bits | 0;
       var hasNewStyles = 0, hasLineStyle = 0, hasFillStyle1 = 0;
       var hasFillStyle0 = 0, move = 0;
-      var count = 10, childCount = 0;
+      var count = 0, childCount = 0;
       if (~~tagCode > 2) {
         writePropU8(HAS_NEW_STYLES, (hasNewStyles = flags >> 4));
       } else {
         writePropU8(HAS_NEW_STYLES, (hasNewStyles = 0));
       }
+      count = count + 2 | 0;
       writePropU8(HAS_LINE_STYLE, (hasLineStyle = flags >> 3 & 1));
       writePropU8(HAS_FILL_STYLE_1, (hasFillStyle1 = flags >> 2 & 1));
       writePropU8(HAS_FILL_STYLE_0, (hasFillStyle0 = flags >> 1 & 1));
       writePropU8(MOVE, (move = flags & 1));
+      count = count + 8 | 0;
       if (move) {
         bits = readStreamUb(5) | 0;
-        writePropU16(MOVE_X, readStreamSb(bits) | 0);
-        writePropU16(MOVE_Y, readStreamSb(bits) | 0);
+        writePropU32(MOVE_X, readStreamSb(bits) | 0);
+        writePropU32(MOVE_Y, readStreamSb(bits) | 0);
         count = count + 4 | 0;
       }
       if (hasFillStyle0) {
-        writePropU16(FILL_STYLE_0, readStreamUb(fillBits) | 0);
+        writePropU32(FILL_STYLE_0, readStreamUb(fillBits) | 0);
         count = count + 2 | 0;
       }
       if (hasFillStyle1) {
-        writePropU16(FILL_STYLE_1, readStreamUb(fillBits) | 0);
+        writePropU32(FILL_STYLE_1, readStreamUb(fillBits) | 0);
         count = count + 2 | 0;
       }
       if (hasLineStyle) {
-        writePropU16(HAS_LINE_STYLE, readStreamUb(lineBits) | 0);
+        writePropU32(HAS_LINE_STYLE, readStreamUb(lineBits) | 0);
         count = count + 2 | 0;
       }
       if (hasNewStyles) {
@@ -1411,10 +1447,10 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       var stringPos = 0, ch = 0, childCount = 0, count = 0, binaryPos = 0, binaryLen = 0;
       if (~~tagCode == 82) {
-        writePropU16(FLAGS, readStreamU16() | 0);
+        writePropU32(FLAGS, readStreamU16() | 0);
       }
       else{
-        writePropU16(FLAGS, 0);
+        writePropU32(FLAGS, 0);
       }
       if (~~tagCode == 82) {
         writeUBJU8(NAME);
@@ -1530,14 +1566,14 @@ var tagHandler = (function (global) {
         }
       }
       alignStream();
-      writePropU16(RED_MULTIPLIER, redMultiplier);
-      writePropU16(GREEN_MULTIPLIER, greenMultiplier);
-      writePropU16(BLUE_MULTIPLIER, blueMultiplier);
-      writePropU16(ALPHA_MULTIPLIER, alphaMultiplier);
-      writePropU16(RED_OFFSET, redOffset);
-      writePropU16(GREEN_OFFSET, greenOffset);
-      writePropU16(BLUE_OFFSET, blueOffset);
-      writePropU16(ALPHA_OFFSET, alphaOffset);
+      writePropU32(RED_MULTIPLIER, redMultiplier);
+      writePropU32(GREEN_MULTIPLIER, greenMultiplier);
+      writePropU32(BLUE_MULTIPLIER, blueMultiplier);
+      writePropU32(ALPHA_MULTIPLIER, alphaMultiplier);
+      writePropU32(RED_OFFSET, redOffset);
+      writePropU32(GREEN_OFFSET, greenOffset);
+      writePropU32(BLUE_OFFSET, blueOffset);
+      writePropU32(ALPHA_OFFSET, alphaOffset);
       return 16 | 0;
     }
 
@@ -1545,29 +1581,32 @@ var tagHandler = (function (global) {
       swfVersion = swfVersion | 0;
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
-      var count = 2, childCount = 0;
-      var pos = 0;
+      var count = 0, childCount = 0;
+      var objectPos = 0, objectLen = 0;
       if (~~tagCode > 22 | 0) {
         writeUBJU8(COLOR);
-        pos = startObject(0) | 0;
-        childCount = rgba() | 0;
-        finishObject(pos, childCount, 0);
+        objectPos = startObject(0) | 0;
+        objectLen = rgba() | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       } else if (isMorph) {
         writeUBJU8(COLOR);
-        pos = startObject(0) | 0;
-        childCount = rgba() | 0;
-        finishObject(pos, childCount, 0);
+        objectPos = startObject(0) | 0;
+        objectLen = rgba() | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       } else {
         writeUBJU8(COLOR);
-        pos = startObject(0) | 0;
-        childCount = rgb() | 0;
-        finishObject(pos, childCount, 0);
+        objectPos = startObject(0) | 0;
+        objectLen = rgb() | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       }
       if (isMorph) {
         writeUBJU8(COLOR_MORPH);
-        pos = startObject(0) | 0;
-        childCount = rgba() | 0;
-        finishObject(pos, childCount, 0);
+        objectPos = startObject(0) | 0;
+        objectLen = rgba() | 0;
+        finishObject(objectPos, objectLen, 0);
         count = count + 2 | 0;
       }
       return count | 0;
@@ -1578,21 +1617,22 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
       type = type | 0;
-      var pos = 0;
-      var count = 2;
-      var childCount = 0;
+      var objectPos = 0, objectLen;
+      var count = 0;
       writeUBJU8(MATRIX);  // write name
-      pos = startObject(BIG) | 0; // begin write value
-      childCount = matrix(swfVersion, tagCode) | 0;
-      finishObject(pos, childCount, BIG);
+      objectPos = startObject(0) | 0; // begin write value
+      objectLen = matrix(swfVersion, tagCode) | 0;
+      finishObject(objectPos, objectLen, 0);
+      count = count + 2 | 0;
       if (isMorph) {
         writeUBJU8(MATRIX_MORPH);  // write name
-        pos = startObject(BIG) | 0; // begin write value
-        childCount = matrix(swfVersion, tagCode) | 0;
-        finishObject(pos, childCount, BIG);
-        count = count + 1 | 0;
+        objectPos = startObject(0) | 0; // begin write value
+        objectLen = matrix(swfVersion, tagCode) | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       }
-      count = count + (gradient(swfVersion, tagCode, isMorph, type) | 0) | 0;
+      childCount = gradient(swfVersion, tagCode, isMorph, type) | 0;
+      count = count + childCount | 0;
       return count | 0;
     }
 
@@ -1612,7 +1652,7 @@ var tagHandler = (function (global) {
         pad = readStreamUb(4) | 0;
       }
       writePropU8(COUNT, (n = readStreamUb(4) | 0) | 0);
-      writeU8(RECORDS);
+      writeUBJU8(RECORDS);
       arrayPos = startArray(0) | 0;
       arrayLen = n;
       while (n) {
@@ -1641,13 +1681,13 @@ var tagHandler = (function (global) {
       var objectPos = 0, objectLen = 0, count = 0;
       writePropU16(RATIO, readStreamU8() | 0);
       if (~~tagCode > 22) {
-        writeU8(COLOR);
+        writeUBJU8(COLOR);
         objectPos = startObject(0) | 0;
         objectLen = rgba() | 0;
         finishObject(objectPos, objectLen, 0);
         count = count + 2 | 0;
       } else {
-        writeU8(COLOR);
+        writeUBJU8(COLOR);
         objectPos = startObject(0) | 0;
         objectLen = rgb() | 0;
         finishObject(objectPos, objectLen, 0);
@@ -1655,7 +1695,7 @@ var tagHandler = (function (global) {
       }
       if (isMorph) {
         writePropU16(RATIO_MORPH, readStreamU8() | 0);
-        writeU8(COLOR_MORPH);
+        writeUBJU8(COLOR_MORPH);
         objectPos = startObject(0) | 0;
         objectLen = rgba() | 0;
         finishObject(objectPos, objectLen, 0);
@@ -1669,23 +1709,26 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
       var type = 0;
-      var count = 0;
+      var count = 0, childCount = 0;
       writePropU8(TYPE, (type = readStreamU8() | 0) | 0); 
-      count = count + 1 | 0;
+      count = count + 2 | 0;
       switch (type | 0) {
       case 0:
-        count = count + (fillSolid(swfVersion, tagCode, isMorph) | 0) | 0;
+        childCount = fillSolid(swfVersion, tagCode, isMorph) | 0;
+        count = count + childCount | 0;
         break
       case 16:
       case 18:
       case 19:
-        count = count + (fillGradient(swfVersion, tagCode, isMorph, type) | 0) | 0;
+        childCount = fillGradient(swfVersion, tagCode, isMorph, type) | 0;
+        count = count + childCount | 0;
         break
       case 64:
       case 65:
       case 66:
       case 67:
-        count = count + (fillBitmap(swfVersion, tagCode, isMorph, type) | 0) | 0;
+        childCount = fillBitmap(swfVersion, tagCode, isMorph, type) | 0;
+        count = count + childCount | 0;
         break
       default:
       }
@@ -1697,24 +1740,26 @@ var tagHandler = (function (global) {
       tagCode = tagCode | 0;
       isMorph = isMorph | 0;
       type = type | 0;
-      var count = 3;
+      var count = 0;
       var objectPos = 0, objectLen = 0;
       var childCount = 0;
       writeUBJU8(BITMAP_ID);
       writeUBJU16(readStreamU16() | 0);
       writeUBJU8(MATRIX);
-      objectPos = startObject(BIG) | 0;
+      objectPos = startObject(0) | 0;
       objectLen = matrix(swfVersion, tagCode) | 0;
-      finishObject(objectPos, objectLen, BIG);
+      finishObject(objectPos, objectLen, 0);
+      count = count + 4 | 0;
       if (isMorph) {
         writeUBJU8(MATRIX_MORPH);
-        objectPos = startObject(BIG) | 0;
+        objectPos = startObject(0) | 0;
         objectLen = matrix(swfVersion, tagCode) | 0;
-        finishObject(objectPos, objectLen, BIG);
-        count = count + 1 | 0;
+        finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       }
       writeUBJU8(CONDITION);
       writeUBJU8(~~type == 64 ? 1 : ~~type == 67 ? 1 : 0);
+      count = count + 2 | 0;
       return count | 0;
     }
 
@@ -1739,12 +1784,14 @@ var tagHandler = (function (global) {
         finishObject(objectPos, objectLen, 0);
       }
       finishArray(arrayPos, arrayLen, 0);
+      count = count + 2 | 0;
 
       if (~~type == 3) {
         writeUBJU8(HIGHLIGHT_COLOR);
         objectPos = startObject(0) | 0;
         objectLen = rgba() | 0;
         finishObject(objectPos, objectLen, 0);
+        count = count + 2 | 0;
       }
       if (~~type == 4 ? 1 : ~~type == 7 ? 1 : 0) {
         n = arrayLen;
@@ -1754,24 +1801,30 @@ var tagHandler = (function (global) {
           writeUBJU16(readStreamU8() | 0);
         }
         finishArray(arrayPos, arrayLen, 0);
+        count = count + 2 | 0;
       }
       writePropD32(BLUR_X, +readStreamFixed());
       writePropD32(BLUR_Y, +readStreamFixed());
+      count = count + 4 | 0;
       if (~~type != 2) {
         writePropD32(ANGLE, +readStreamFixed());
         writePropD32(DISTANCE, +readStreamFixed());
+        count = count + 4 | 0;
       }
       writePropD32(STRENGTH, +readStreamFixed8());
-      writePropU16(INNER_SHADOW, readStreamUb(1) | 0);
-      writePropU16(KNOCKOUT, readStreamUb(1) | 0);
-      writePropU16(COMPOSITE_SOURCE, readStreamUb(1) | 0);
+      writePropU32(INNER_SHADOW, readStreamUb(1) | 0);
+      writePropU32(KNOCKOUT, readStreamUb(1) | 0);
+      writePropU32(COMPOSITE_SOURCE, readStreamUb(1) | 0);
+      count = count + 8 | 0;
       if(~~type == 3) {
-        writePropU16(ON_TOP, readStreamUb(1) | 0);
+        writePropU32(ON_TOP, readStreamUb(1) | 0);
+        count = count + 2 | 0;
       } else {
         reserved = readStreamUb(1) | 0;
       }
       if (~~type == 4 ? 1 : ~~type == 7 ? 1 : 0) {
-        writePropU16(PASSES, readStreamUb(4) | 0);
+        writePropU32(PASSES, readStreamUb(4) | 0);
+        count = count + 2 | 0;
       } else {
         reserved = readStreamUb(4) | 0;
       }
@@ -1784,7 +1837,7 @@ var tagHandler = (function (global) {
       var reserved = 0;
       writePropD32(BLUR_X, +readStreamFixed());
       writePropD32(BLUR_Y, +readStreamFixed());
-      writePropU16(PASSES, readStreamUb(5) | 0);
+      writePropU32(PASSES, readStreamUb(5) | 0);
       reserved = readStreamUb(3) | 0;
       return 6 | 0;
     }
@@ -1921,9 +1974,9 @@ var tagHandler = (function (global) {
       hasStrokes = hasStrokes | 0;
       var joinStyle = 0, hasFill = 0, reserved = 0, color = 0;
       var count = 0, objectPos = 0, objectLen = 0;
-      writePropU16(WIDTH, readStreamU16() | 0);
+      writePropU32(WIDTH, readStreamU16() | 0);
       if (isMorph) {
-        writePropU16(WIDTH_MORPH, readStreamU16() | 0);
+        writePropU32(WIDTH_MORPH, readStreamU16() | 0);
       }
       if (hasStrokes) {
         alignStream();
@@ -1941,19 +1994,19 @@ var tagHandler = (function (global) {
         }
         if (hasFill | 0 != 0) {
           writeUBJU8(FILL_STYLE);
-          objectPos = startObject(BIG) | 0;
+          objectPos = startObject(0) | 0;
           objectLen = fillStyle(swfVersion, tagCode, isMorph) | 0;
-          finishObject(objectPos, objectLen, BIG);
+          finishObject(objectPos, objectLen, 0);
         } else {
           writeUBJU8(COLOR);
-          objectPos = startObject(BIG) | 0;
+          objectPos = startObject(0) | 0;
           objectLen = rgba() | 0;
-          finishObject(objectPos, objectLen, BIG);
+          finishObject(objectPos, objectLen, 0);
           if (isMorph) {
             writeUBJU8(MORPH_COLOR);
-            objectPos = startObject(BIG) | 0;          
+            objectPos = startObject(0) | 0;          
             objectLen = rgba() | 0;
-            finishObject(objectPos, objectLen, BIG);
+            finishObject(objectPos, objectLen, 0);
           }
         }
       } else {
@@ -1981,13 +2034,14 @@ var tagHandler = (function (global) {
 
     return {
       defineShape: defineShape,
-      removeObject: removeObject,
-      placeObject: placeObject,
+//      removeObject: removeObject,
+//      placeObject: placeObject,
       // Utils
       initMasks: initMasks,
       setInputStreamPos: setInputStreamPos,
       getInputStreamPos: getInputStreamPos,
       getPos: getPos,
+      setPos: setPos,
     };
   }
 
@@ -2003,8 +2057,6 @@ var tagHandler = (function (global) {
     asm.setInputStreamPos(0);
     inputStreamLength = s.bytes.length;
   }
-
-  var values = [];
 
   var imports = {
     red: 1,
@@ -2045,7 +2097,121 @@ var tagHandler = (function (global) {
     d: 36,
     tx: 37,
     ty: 38,
-
+    hasEvents: 39,
+    clip: 40,
+    hasName: 41,
+    hasRatio: 42,
+    hasCxform: 43,
+    hasMatrix: 44,
+    place: 45,
+    move: 46,
+    hasBackgroundColor: 47,
+    hasVisibility: 48,
+    hasImage: 49,
+    hasClassName: 50,
+    hasCache: 51,
+    blend: 52,
+    hasFilters: 53,
+    className: 54,
+    ratio: 55,
+    clipDepth: 56,
+    filters: 57,
+    blendMode: 58,
+    bmpCache: 59,
+    backgroundColor: 60,
+    visibility: 61,
+    cache: 62,
+    cxform: 63,
+    redMultiplier: 64,
+    greenMultiplier: 65,
+    blueMultiplier: 66,
+    alphaMultiplier: 67,
+    redOffset: 68,
+    greenOffset: 69,
+    blueOffset: 70,
+    alphaOffset: 71,
+    events: 72,
+    id: 73,
+    bbox: 74,
+    isMorph: 75,
+    bboxMorph: 76,
+    hasStrokes: 77,
+    strokeBbox: 78,
+    strokeBboxMorph: 79,
+    fillWinding: 80,
+    nonScalingStrokes: 81,
+    scalingStrokes: 82,
+    offsetMorph: 83,
+    left: 84,
+    right: 85,
+    top: 86,
+    bottom: 87,
+    records: 88,
+    type: 89,
+    hasNewStyles: 90,
+    hasLineStyle: 91,
+    hasFillStyle1: 92,
+    hasfillStyle0: 93,
+    moveX: 94,
+    moveY: 95,
+    fillStyle0: 96,
+    fillStyle1: 97,
+    matrixMorph: 98,
+    spreadMode: 99,
+    interpolationMode: 100,
+    count: 101,
+    focalPoint: 102,
+    focalPointMorph: 102,
+    ratioMorph: 103,
+    bitmapId: 104,
+    condition: 105,
+    fillStyle: 106,
+    morphColor: 107,
+    recordsMorph: 108,
+    colors: 109,
+    highlightColor: 110,
+    ratios: 111,
+    blurX: 112,
+    blueY: 113,
+    angle: 114,
+    distance: 115,
+    strength: 116,
+    innerShadow: 117,
+    knockout: 118,
+    compositeSource: 119,
+    onTop: 120,
+    passes: 121,
+    columns: 122,
+    rows: 123,
+    divisor: 124,
+    bias: 125,
+    weights: 126,
+    defaultColor: 127,
+    clamp: 128,
+    preserveAlpha: 129,
+    onKeyUp: 130,
+    onKeyDown: 131,
+    onMouseUp: 132,
+    onMouseDown: 133,
+    onMouseMove: 134,
+    onUnload: 135,
+    onEnterFrame: 136,
+    onLoad: 137,
+    onDragOver: 138,
+    onRollOut: 139,
+    onRollOver: 140,
+    onReleaseOutside: 141,
+    onRelease: 142,
+    onPress: 143,
+    onInitialize: 144,
+    onData: 145,
+    onConstruct: 146,
+    keyPress: 147,
+    onDragOut: 148,
+    length: 149,
+    keyCode: 150,
+    actionData: 151,
+    
     trace: trace,
   };
 
@@ -2062,11 +2228,19 @@ var tagHandler = (function (global) {
 
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.defineShape) {
+      var begin = 0; //asm.getPos();
+      asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
-      var begin = asm.getPos();
-      $.count = asm.defineShape(swfVersion, tagCode);
-      $.binary = byteView.subarray(begin, asm.getPos());
+      var count = asm.defineShape(swfVersion, tagCode);
+//      trace("defineShape() pos=" + asm.getPos());
+      decode(dataView, begin, count);
+      for (i = count - 1 | 0; i >= 0; i--) {
+        var v = values.pop();
+        var n = values.pop();
+        $[n] = v;
+      }
       $stream.pos = asm.getInputStreamPos();
+      trace(JSON.stringify($, null, 2));
       return $;
     }
     $ || ($ = {});
@@ -4352,6 +4526,144 @@ var tagHandler = (function (global) {
       $4.push($5)
     }
     while(!eos)
+  }
+
+  var values = [];
+
+  var nesting = 0;
+  function decode(dataView, pos, count) {
+    nesting = nesting + 1;
+//    dumpBytes(byteView, pos, 32, 0);
+//    trace(nesting + ">> decode() pos=" + pos + " originalCount=" + count);
+    pos = pos | 0;
+    var marker = 0;
+    var size = 0;
+    var i = 0;
+    var originalCount = count;
+    while (count) {
+      marker = dataView.getUint8(pos) | 0;
+//      trace("decode() count=" + count + " marker=" + marker);
+      pos = pos + 1 | 0;
+      switch (marker | 0) {
+      case 90:  // $Z
+        values.push(null);
+        break;
+      case 84:  // $T
+        values.push(true);
+        break;
+      case 70:  // $F
+        values.push(false);
+        break;
+      case 66:  // $B
+        values.push(dataView.getUint8(pos));
+        pos = pos + 1 | 0;
+        break;
+      case 105: // $i
+        values.push(dataView.getUint16(pos));
+        pos = pos + 2 | 0;
+        break;
+      case 73:  // $I
+        values.push(dataView.getUint32(pos));
+        pos = pos + 4 | 0;
+        break;
+      case 100: // $d
+        values.push(dataView.getFloat32(pos));
+        pos = pos + 4 | 0;
+        break;
+      case 68:  // $D
+        values.push(dataView.getFloat64(pos));
+        pos = pos + 8 | 0;
+        break;
+      case 115: // $s
+        var size = dataView.getUint8(pos);
+        pos = pos + 1 | 0;
+        var start = pos | 0;
+        var stop = start + size | 0;
+        var val = "";
+        for (i = start | 0; i < stop; i = i + 1 | 0) {
+          val += String.fromCharCode(view.getUint8(i));
+        }
+        values.push(val);
+        pos = pos + size | 0;
+        break;
+      case 83:  // $S
+        var size = dataView.getUint32(pos) | 0;
+        pos = pos + 4 | 0;
+        var start = pos | 0;
+        var stop = start + size | 0;
+        var val = "";
+        for (i = start | 0; i < stop; i = i + 1 | 0) {
+          val += String.fromCharCode(view.getUint8(i));
+        }
+        values.push(val);
+        pos = pos + size | 0;
+        break;
+      case 111: // $o
+        var size = dataView.getUint8(pos);
+//        trace(">> decode() $o size=" + size);
+        pos = pos + 1 | 0;
+        for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
+          pos = decode(dataView, pos, 2) | 0;
+        }
+        var val = {};
+        for (i = size - 1 | 0; i >= 0; i = i - 2 | 0) {
+          var v = values.pop();
+          var n = names[values.pop()];
+//          trace("decode() $o " + n + ": " + v);
+          val[n] = v;
+        }
+        values.push(val);
+//        trace("<< decode() $o");
+        break;
+      case 79:  // $O
+        size = dataView.getUint32(pos) | 0;
+        pos = pos + 4 | 0;
+        for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
+          pos = decode(dataView, pos, 2) | 0;
+        }
+        var val = {};
+        for (i = size - 1 | 0; i >= 0; i = i - 2 | 0) {
+          var v = values.pop();
+          var n = names[values.pop()];
+          val[n] = v;
+        }
+        values.push(val);
+        break;
+      case 97:  // $a
+        size = dataView.getUint8(pos) | 0;
+        pos = pos + 1 | 0;
+        for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
+          pos = decode(dataView, pos, 1) | 0;
+        }
+        var val = [];
+        for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
+          var v = values.pop();
+          val[i] = v;
+        }
+        values.push(val);
+        break;
+      case 65:  // $A
+        size = dataView.getUint32(pos) | 0;
+        pos = pos + 4 | 0;
+        for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
+          pos = decode(dataView, pos, 1);
+        }
+        var val = [];
+        for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
+          var v = values.pop();
+          val[i] = v;
+        }
+        values.push(val);
+        break;
+      default:
+        assert(false, "Internal error: decoding UBJSON");
+        break;
+      }
+      count = count - 1 | 0;
+    }
+//    trace(nesting + "<< decode() values=" + values.slice(values.length - originalCount));
+    nesting = nesting - 1;
+    return pos;
   }
 
   return {

@@ -56,6 +56,7 @@ function readTags(context, stream, swfVersion, onprogress) {
           handler(subbytes, substream, tag, swfVersion, tagCode);
         }
       }
+//      print(JSON.stringify(tag, null, 2));
       tags.push(tag);
 
       if (tagCode === 1) {
