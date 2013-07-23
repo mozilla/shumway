@@ -1177,8 +1177,8 @@ var XMLParser;
         attributes: function attributes() { // (void) -> XMLList
           return this.getProperty(toAttributeName("*"));
         },
-        child: function child(propertyName) { // (propertyName) -> XMLList
-          notImplemented("XML.child");
+        child: function child(name) { // (name) -> XMLList
+          return this.getProperty(name);
         },
         childIndex: function childIndex() { // (void) -> int
           notImplemented("XML.childIndex");
