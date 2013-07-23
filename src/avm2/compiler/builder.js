@@ -606,7 +606,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function findProperty(multiname, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), multiname, domain, strict);
+          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), multiname, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
