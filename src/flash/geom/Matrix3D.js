@@ -140,7 +140,7 @@ var Matrix3DDefinition = (function () {
           }
         }
       },
-      script: { Glue.ALL }
+      script: { instance: Glue.ALL }
     }
   };
 }).call(this);
