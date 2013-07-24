@@ -16,31 +16,31 @@
 
 var Matrix3DDefinition = (function () {
   return {
-    // (pA:Vector = null)
+    // (v:Vector = null)
     __class__: "flash.geom.Matrix3D",
     initialize: function () {
     },
     __glue__: {
       native: {
         static: {
-          interpolate: function interpolate(pA, pB, pC) { // (pA:Matrix3D, pB:Matrix3D, pC:Number) -> Matrix3D
+          interpolate: function interpolate(thisMat, toMat, percent) { // (thisMat:Matrix3D, toMat:Matrix3D, percent:Number) -> Matrix3D
             notImplemented("Matrix3D.interpolate");
           }
         },
         instance: {
-          ctor: function ctor(pA) { // (pA:Vector) -> void
+          ctor: function ctor(v) { // (v:Vector) -> void
             notImplemented("Matrix3D.ctor");
           },
           clone: function clone() { // (void) -> Matrix3D
             notImplemented("Matrix3D.clone");
           },
-          copyToMatrix3D: function copyToMatrix3D(pA) { // (pA:Matrix3D) -> void
+          copyToMatrix3D: function copyToMatrix3D(dest) { // (dest:Matrix3D) -> void
             notImplemented("Matrix3D.copyToMatrix3D");
           },
-          append: function append(pA) { // (pA:Matrix3D) -> void
+          append: function append(lhs) { // (lhs:Matrix3D) -> void
             notImplemented("Matrix3D.append");
           },
-          prepend: function prepend(pA) { // (pA:Matrix3D) -> void
+          prepend: function prepend(rhs) { // (rhs:Matrix3D) -> void
             notImplemented("Matrix3D.prepend");
           },
           invert: function invert() { // (void) -> Boolean
@@ -49,67 +49,67 @@ var Matrix3DDefinition = (function () {
           identity: function identity() { // (void) -> void
             notImplemented("Matrix3D.identity");
           },
-          decompose: function decompose(pA) { // (pA:String = "eulerAngles") -> Vector
+          decompose: function decompose(orientationStyle) { // (orientationStyle:String = "eulerAngles") -> Vector
             notImplemented("Matrix3D.decompose");
           },
-          recompose: function recompose(pA, pB) { // (pA:Vector, pB:String = "eulerAngles") -> Boolean
+          recompose: function recompose(components, orientationStyle) { // (components:Vector, orientationStyle:String = "eulerAngles") -> Boolean
             notImplemented("Matrix3D.recompose");
           },
-          appendTranslation: function appendTranslation(pA, pB, pC) { // (pA:Number, pB:Number, pC:Number) -> void
+          appendTranslation: function appendTranslation(x, y, z) { // (x:Number, y:Number, z:Number) -> void
             notImplemented("Matrix3D.appendTranslation");
           },
-          appendRotation: function appendRotation(pA, pB, pC) { // (pA:Number, pB:Vector3D, pC:Vector3D = null) -> void
+          appendRotation: function appendRotation(degrees, axis, pivotPoint) { // (degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null) -> void
             notImplemented("Matrix3D.appendRotation");
           },
-          appendScale: function appendScale(pA, pB, pC) { // (pA:Number, pB:Number, pC:Number) -> void
+          appendScale: function appendScale(xScale, yScale, zScale) { // (xScale:Number, yScale:Number, zScale:Number) -> void
             notImplemented("Matrix3D.appendScale");
           },
-          prependTranslation: function prependTranslation(pA, pB, pC) { // (pA:Number, pB:Number, pC:Number) -> void
+          prependTranslation: function prependTranslation(x, y, z) { // (x:Number, y:Number, z:Number) -> void
             notImplemented("Matrix3D.prependTranslation");
           },
-          prependRotation: function prependRotation(pA, pB, pC) { // (pA:Number, pB:Vector3D, pC:Vector3D = null) -> void
+          prependRotation: function prependRotation(degrees, axis, pivotPoint) { // (degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null) -> void
             notImplemented("Matrix3D.prependRotation");
           },
-          prependScale: function prependScale(pA, pB, pC) { // (pA:Number, pB:Number, pC:Number) -> void
+          prependScale: function prependScale(xScale, yScale, zScale) { // (xScale:Number, yScale:Number, zScale:Number) -> void
             notImplemented("Matrix3D.prependScale");
           },
-          transformVector: function transformVector(pA) { // (pA:Vector3D) -> Vector3D
+          transformVector: function transformVector(v) { // (v:Vector3D) -> Vector3D
             notImplemented("Matrix3D.transformVector");
           },
-          deltaTransformVector: function deltaTransformVector(pA) { // (pA:Vector3D) -> Vector3D
+          deltaTransformVector: function deltaTransformVector(v) { // (v:Vector3D) -> Vector3D
             notImplemented("Matrix3D.deltaTransformVector");
           },
-          transformVectors: function transformVectors(pA, pB) { // (pA:Vector, pB:Vector) -> void
+          transformVectors: function transformVectors(vin, vout) { // (vin:Vector, vout:Vector) -> void
             notImplemented("Matrix3D.transformVectors");
           },
           transpose: function transpose() { // (void) -> void
             notImplemented("Matrix3D.transpose");
           },
-          pointAt: function pointAt(pA, pB, pC) { // (pA:Vector3D, pB:Vector3D = null, pC:Vector3D = null) -> void
+          pointAt: function pointAt(pos, at, up) { // (pos:Vector3D, at:Vector3D = null, up:Vector3D = null) -> void
             notImplemented("Matrix3D.pointAt");
           },
-          interpolateTo: function interpolateTo(pA, pB) { // (pA:Matrix3D, pB:Number) -> void
+          interpolateTo: function interpolateTo(toMat, percent) { // (toMat:Matrix3D, percent:Number) -> void
             notImplemented("Matrix3D.interpolateTo");
           },
-          copyFrom: function copyFrom(pA) { // (pA:Matrix3D) -> void
+          copyFrom: function copyFrom(sourceMatrix3D) { // (sourceMatrix3D:Matrix3D) -> void
             notImplemented("Matrix3D.copyFrom");
           },
-          copyRawDataTo: function copyRawDataTo(pA, pB, pC) { // (pA:Vector, pB:uint = 0, pC:Boolean = false) -> void
+          copyRawDataTo: function copyRawDataTo(vector, index, transpose) { // (vector:Vector, index:uint = 0, transpose:Boolean = false) -> void
             notImplemented("Matrix3D.copyRawDataTo");
           },
-          copyRawDataFrom: function copyRawDataFrom(pA, pB, pC) { // (pA:Vector, pB:uint = 0, pC:Boolean = false) -> void
+          copyRawDataFrom: function copyRawDataFrom(vector, index, transpose) { // (vector:Vector, index:uint = 0, transpose:Boolean = false) -> void
             notImplemented("Matrix3D.copyRawDataFrom");
           },
-          copyRowTo: function copyRowTo(pA, pB) { // (pA:uint, pB:Vector3D) -> void
+          copyRowTo: function copyRowTo(row, vector3D) { // (row:uint, vector3D:Vector3D) -> void
             notImplemented("Matrix3D.copyRowTo");
           },
-          copyColumnTo: function copyColumnTo(pA, pB) { // (pA:uint, pB:Vector3D) -> void
+          copyColumnTo: function copyColumnTo(column, vector3D) { // (column:uint, vector3D:Vector3D) -> void
             notImplemented("Matrix3D.copyColumnTo");
           },
-          copyRowFrom: function copyRowFrom(pA, pB) { // (pA:uint, pB:Vector3D) -> void
+          copyRowFrom: function copyRowFrom(row, vector3D) { // (row:uint, vector3D:Vector3D) -> void
             notImplemented("Matrix3D.copyRowFrom");
           },
-          copyColumnFrom: function copyColumnFrom(pA, pB) { // (pA:uint, pB:Vector3D) -> void
+          copyColumnFrom: function copyColumnFrom(column, vector3D) { // (column:uint, vector3D:Vector3D) -> void
             notImplemented("Matrix3D.copyColumnFrom");
           },
           rawData: {
@@ -117,9 +117,9 @@ var Matrix3DDefinition = (function () {
               notImplemented("Matrix3D.rawData");
               return this._rawData;
             },
-            set: function rawData(pA) { // (pA:Vector) -> void
+            set: function rawData(v) { // (v:Vector) -> void
               notImplemented("Matrix3D.rawData");
-              this._rawData = pA;
+              this._rawData = v;
             }
           },
           position: {
@@ -127,9 +127,9 @@ var Matrix3DDefinition = (function () {
               notImplemented("Matrix3D.position");
               return this._position;
             },
-            set: function position(pA) { // (pA:Vector3D) -> void
+            set: function position(pos) { // (pos:Vector3D) -> void
               notImplemented("Matrix3D.position");
-              this._position = pA;
+              this._position = pos;
             }
           },
           determinant: {
@@ -140,7 +140,7 @@ var Matrix3DDefinition = (function () {
           }
         }
       },
-      script: { instance: Glue.ALL }
+      script: { Glue.ALL }
     }
   };
 }).call(this);
