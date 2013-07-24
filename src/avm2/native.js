@@ -606,8 +606,18 @@ var natives = (function () {
       TAp.indexSet = function (i, v) { this[i] = coerce(v); };
     }
 
-    function TypedVector (length, fixed) {
-      length = Int(length);
+    function TypedVector (obj, fixed) {
+      if (isObject(obj) && obj !== null && 'length' in obj) {
+        var length = Int(obj.length);
+        var array = new TypedArray(length);
+        for (var i = 0; i < length; i++) {
+          array[i] = obj[i];
+        }
+        array[VM_VECTOR_IS_FIXED] = true;
+        return array;
+      }
+
+      var length = Int(obj);
       var array = new TypedArray(length);
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
