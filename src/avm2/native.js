@@ -1801,12 +1801,12 @@ var natives = (function () {
     }
     
     function addTraits(cls, flags) {
-      const includedMembers = [flags & Flags.INCLUDE_VARIABLES,
+      var includedMembers = [flags & Flags.INCLUDE_VARIABLES,
                                flags & Flags.INCLUDE_METHODS,
                                flags & Flags.INCLUDE_ACCESSORS,
                                flags & Flags.INCLUDE_ACCESSORS];
-      const includeBases = flags & Flags.INCLUDE_BASES;
-      const includeMetadata = flags & Flags.INCLUDE_METADATA;
+      var includeBases = flags & Flags.INCLUDE_BASES;
+      var includeMetadata = flags & Flags.INCLUDE_METADATA;
 
       var obj = {};
 
