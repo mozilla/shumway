@@ -62,9 +62,9 @@ function nameFromQualifiedName(qn) {
  */
 function hasNonProxyingCaller() {
   var caller = arguments.callee;
-  var MAX_DEPTH = 5;
+  var maxDepth = 5;
   var domain;
-  for (var i = 0; i < MAX_DEPTH && caller; i++) {
+  for (var i = 0; i < maxDepth && caller; i++) {
     if (caller === nonProxyingHasProperty) {
       return true;
     }

@@ -37,9 +37,9 @@ var AVM2 = (function () {
 
   avm2.currentDomain = function () {
     var caller = arguments.callee;
-    var MAX_DEPTH = 20;
+    var maxDepth = 20;
     var domain;
-    for (var i = 0; i < MAX_DEPTH && caller; i++) {
+    for (var i = 0; i < maxDepth && caller; i++) {
       var mi = caller[VM_METHOD_INFO];
       if (mi) {
         domain = mi.abc.domain;
