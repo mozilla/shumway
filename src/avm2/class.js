@@ -18,7 +18,7 @@ var traitsWriter = null;  // new IndentingWriter();
 
 var Binding = (function () {
   function binding(trait) {
-    assert (trait instanceof Trait);
+    release || assert (trait instanceof Trait);
     this.trait = trait;
   }
 
@@ -63,14 +63,14 @@ var Bindings = (function () {
    * are allocated by ASC and we can't relocate them elsewhere.
    */
   bindings.prototype.assignNextSlot = function assignNextSlot(trait) {
-    assert (trait instanceof Trait);
-    assert (trait.isSlot() || trait.isConst() || trait.isClass());
+    release || assert (trait instanceof Trait);
+    release || assert (trait.isSlot() || trait.isConst() || trait.isClass());
     if (!trait.slotId) {
       trait.slotId = this.nextSlotId ++;
     } else {
       this.nextSlotId = trait.slotId + 1;
     }
-    assert (!this.slots[trait.slotId], "Trait slot already taken.");
+    release || assert (!this.slots[trait.slotId], "Trait slot already taken.");
     this.slots[trait.slotId] = trait;
   };
 
@@ -93,7 +93,7 @@ var Bindings = (function () {
   }
 
   function patch(patchTargets, value) {
-    assert (isFunction(value));
+    release || assert (isFunction(value));
     for (var i = 0; i < patchTargets.length; i++) {
       var patchTarget = patchTargets[i];
       if (traceExecution.value >= 3) {
@@ -121,7 +121,7 @@ var Bindings = (function () {
    * Applies a method trait that doesn't need a memoizer.
    */
   function applyNonMemoizedMethodTrait(qn, trait, object, scope, natives) {
-    assert (scope);
+    release || assert (scope);
     if (trait.isMethod()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = getTraitFunction(trait, scope, natives);
@@ -155,7 +155,7 @@ var Bindings = (function () {
   }
 
   function applyMemoizedMethodTrait(qn, trait, object, scope, natives) {
-    assert (scope, trait);
+    release || assert (scope, trait);
     if (trait.isMethod()) {
       // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
       // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
@@ -205,13 +205,16 @@ var Bindings = (function () {
    *
    */
   bindings.prototype.applyTo = function applyTo(domain, object) {
-    assert (!hasOwnProperty(object, VM_SLOTS));
-    assert (!hasOwnProperty(object, VM_BINDINGS));
-    assert (!hasOwnProperty(object, VM_OPEN_METHODS));
+    release || assert (!hasOwnProperty(object, VM_SLOTS));
+    release || assert (!hasOwnProperty(object, VM_BINDINGS));
+    release || assert (!hasOwnProperty(object, VM_OPEN_METHODS));
 
     defineNonEnumerableProperty(object, VM_SLOTS, []);
     defineNonEnumerableProperty(object, VM_BINDINGS, []);
     defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
+
+    defineNonEnumerableProperty(object, "bindings", this);
+    defineNonEnumerableProperty(object, "resolutionMap", []);
 
     traitsWriter && traitsWriter.greenLn("Applying Traits");
 
@@ -269,7 +272,7 @@ var Bindings = (function () {
 var ActivationBindings = (function () {
   function activationBindings(methodInfo) {
     Bindings.call(this);
-    assert (methodInfo.needsActivation());
+    release || assert (methodInfo.needsActivation());
     this.methodInfo = methodInfo;
     // ASC creates activation even if the method has no traits, weird.
     // assert (methodInfo.traits.length);
@@ -280,7 +283,7 @@ var ActivationBindings = (function () {
     var traits = methodInfo.traits;
     for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
-      assert (trait.isSlot(), "Only slot traits are allowed in activation objects.");
+      release || assert (trait.isSlot(), "Only slot traits are allowed in activation objects.");
       var key = Multiname.getQualifiedName(trait.name);
       this.map[key] = new Binding(trait);
       this.assignNextSlot(trait);
@@ -299,7 +302,7 @@ var CatchBindings = (function () {
      */
     var key = Multiname.getQualifiedName(trait.name);
     this.map[key] = new Binding(trait);
-    assert (trait.isSlot(), "Only slot traits are allowed in catch objects.");
+    release || assert (trait.isSlot(), "Only slot traits are allowed in catch objects.");
     this.assignNextSlot(trait);
   }
   catchBindings.prototype = Object.create(Bindings.prototype);
@@ -467,13 +470,13 @@ var InstanceBindings = (function () {
       var oldBinding = object[key];
       if (oldBinding) {
         var oldTrait = oldBinding.trait;
-        assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
+        release || assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
         // TODO: Object.as has a trait named length, we need to remove this since
         // it doesn't appear in Tamarin.
-        assert (trait.isOverride() || trait.name.getName() === "length",
+        release || assert (trait.isOverride() || trait.name.getName() === "length",
           "Overriding a trait that is not marked for override: ", trait);
       } else {
-        assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
+        release || assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
       }
       object[key] = binding;
     }
@@ -844,7 +847,7 @@ var Class = (function () {
         for (var i = 0; i < keys.length; i++) {
           var propertyName = keys[i];
           var propertySimpleName = properties[propertyName];
-          assert (isString(propertySimpleName), "Make sure it's not a function.");
+          release || assert (isString(propertySimpleName), "Make sure it's not a function.");
           var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propertySimpleName));
           release || assert(isString(qn));
           var descriptor = Object.getOwnPropertyDescriptor(obj, qn);
@@ -880,7 +883,7 @@ var Class = (function () {
       if (glue.script) {
         if (glue.script.instance) {
           if (isNumber(glue.script.instance)) {
-            assert (glue.script.instance === Glue.ALL);
+            release || assert (glue.script.instance === Glue.ALL);
             glueProperties(dynamicPrototype, generatePropertiesFromTraits(this.classInfo.instanceInfo.traits));
           } else {
             glueProperties(dynamicPrototype, glue.script.instance);
@@ -888,7 +891,7 @@ var Class = (function () {
         }
         if (glue.script.static) {
           if (isNumber(glue.script.static)) {
-            assert (glue.script.static === Glue.ALL);
+            release || assert (glue.script.static === Glue.ALL);
             glueProperties(this, generatePropertiesFromTraits(this.classInfo.traits));
           } else {
             glueProperties(this, glue.script.static);
@@ -908,16 +911,16 @@ var Class = (function () {
       var instanceConstructor = this.instanceConstructor;
       var tP = this.traitsPrototype;
       var dP = this.dynamicPrototype;
-      assert (instanceConstructor && tP && dP);
-      assert (tP === instanceConstructor.prototype);
-      assert (dP === instanceConstructor.prototype || dP === Object.getPrototypeOf(instanceConstructor.prototype));
-      assert (isClass(this));
+      release || assert (instanceConstructor && tP && dP);
+      release || assert (tP === instanceConstructor.prototype);
+      release || assert (dP === instanceConstructor.prototype || dP === Object.getPrototypeOf(instanceConstructor.prototype));
+      release || assert (isClass(this));
       if (tP !== Object.prototype) {
         // We don't want to put "class" and "shape" on the Object.prototype.
-        assert (Object.hasOwnProperty.call(tP, "class"));
-        assert (Object.hasOwnProperty.call(tP, "shape"), "Classes should have a shape ID.");
+        release || assert (Object.hasOwnProperty.call(tP, "class"));
+        release || assert (Object.hasOwnProperty.call(tP, "shape"), "Classes should have a shape ID.");
       }
-      assert (instanceConstructor.class === this);
+      release || assert (instanceConstructor.class === this);
     },
 
     coerce: function (value) {

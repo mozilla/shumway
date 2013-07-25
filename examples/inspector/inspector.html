@@ -109,6 +109,7 @@ limitations under the License.
 
     <script>
       var Counter = new metrics.Counter(true);
+      var FrameCounter = new metrics.Counter(true);
       var Timer = metrics.Timer;
       var Option = options.Option;
       var OptionSet = options.OptionSet;
@@ -254,7 +255,9 @@ limitations under the License.
       </div>
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 300px; left: auto; right: 0px; width: 400px; height: 300px; font-size: 10px;" id="info">
       </div>
-      <div class="toolbarInfo" style="position: fixed; top: 310px; bottom: 70px; left: auto; right: 0px; width: 400px; font-size: 10px;" id="timerInfo">
+      <div class="toolbarInfo" style="position: fixed; top: 310px; bottom: 500px; left: auto; right: 0px; width: 400px; font-size: 10px;" id="frameInfo">
+      </div>
+      <div class="toolbarInfo" style="position: fixed; top: 500px; bottom: 70px; left: auto; right: 0px; width: 400px; font-size: 10px;" id="timerInfo">
       </div>
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; right: 320px; width: 200px;" id="traceSymbolsInfo" hidden>
       </div>

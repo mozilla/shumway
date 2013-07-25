@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global FrameCounter */
 
 var BitmapDefinition = (function () {
   function setBitmapData(value) {
@@ -51,6 +52,7 @@ var BitmapDefinition = (function () {
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
+      FrameCounter.count("Bitmap.draw");
     },
     initialize: function () {
     },

@@ -29,7 +29,7 @@ var URLRequestDefinition = (function () {
       if (ByteArrayClass.isInstanceOf(this._data)) {
         obj.data = new Uint8Array(this._data.a, 0, this._data.length);
       } else {
-        var data = getProperty(this._data, Multiname.getPublicQualifiedName('toString'))
+        var data = this._data.getMultinameProperty(undefined, "toString", 0)
           .call(this._data);
         if (this._method === 'GET') {
           var i = obj.url.lastIndexOf('?');

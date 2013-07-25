@@ -171,12 +171,12 @@ var Domain = (function () {
       if (simpleName in this.classCache) {
         return true;
       }
-      return this.findProperty(Multiname.fromSimpleName(simpleName), false, true);
+      return this.findDomainProperty(Multiname.fromSimpleName(simpleName), false, true);
     },
 
-    findProperty: function findProperty(multiname, strict, execute) {
+    findDomainProperty: function findDomainProperty(multiname, strict, execute) {
       if (traceDomain.value) {
-        print("Domain.findProperty: " + multiname);
+        print("Domain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {

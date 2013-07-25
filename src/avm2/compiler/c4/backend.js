@@ -401,6 +401,14 @@
     return id(value.variable.name);
   }
 
+  function compileMultiname(name, cx) {
+    return [
+      compileValue(name.namespaces, cx),
+      compileValue(name.name, cx),
+      constant(name.flags)
+    ];
+  }
+
   function isArray(array) {
     return array instanceof Array;
   }
@@ -437,17 +445,18 @@
     return new NewExpression(id("Scope"), [parent, object, isWith]);
   };
 
+
   IR.AVM2FindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
-    var name = compileValue(this.name, cx);
+    var name = compileMultiname(this.name, cx);
     var domain = compileValue(this.domain, cx);
     var strict = new Literal(this.strict);
-    return call(property(scope, "findProperty"), [name, domain, strict]);
+    return call(property(scope, "findScopeProperty"), name.concat([domain, strict]));
   };
 
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
+    var name = compileMultiname(this.name, cx);
     if (this.isIndexed) {
       assert (this.isMethod === false);
       return new ConditionalExpression (
@@ -457,10 +466,7 @@
       );
     }
     var isMethod = new Literal(this.isMethod);
-    if (this.ic) {
-      return call(id("getPropertyWithIC"), [object, name, isMethod, compileValue(this.ic, cx)]);
-    }
-    return call(id("getProperty"), [object, name, isMethod]);
+    return call(property(object, "getMultinameProperty"), name.concat(isMethod));
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -507,14 +513,11 @@
 
   IR.AVM2CallProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
+    var name = compileMultiname(this.name, cx);
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
-    if (this.ic) {
-      return call(id("callPropertyWithIC"), [object, name, new Literal(this.isLex), new ArrayExpression(args), compileValue(this.ic, cx)]);
-    }
-    return call(id("callProperty"), [object, name, new Literal(this.isLex), new ArrayExpression(args)]);
+    return call(property(object, "callMultinameProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -566,7 +569,7 @@
 
   IR.AVM2SetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileValue(this.name, cx);
+    var name = compileMultiname(this.name, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
       return new ConditionalExpression (
@@ -575,10 +578,19 @@
         assignment(property(object, name), value)
       );
     }
-    if (this.ic) {
-      return call(id("setPropertyWithIC"), [object, name, value, compileValue(this.ic, cx)]);
-    }
-    return call(id("setProperty"), [object, name, value]);
+    return call(property(object, "setMultinameProperty"), name.concat(value));
+  };
+
+  IR.AVM2DeleteProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileMultiname(this.name, cx);
+    return call(property(object, "deleteMultinameProperty"), name);
+  };
+
+  IR.AVM2HasProperty.prototype.compile = function (cx) {
+    var object = compileValue(this.object, cx);
+    var name = compileMultiname(this.name, cx);
+    return call(property(object, "hasMultinameProperty"), name);
   };
 
   IR.GlobalProperty.prototype.compile = function (cx) {
@@ -641,7 +653,7 @@
     return call(id("createActivation"), [methodInfo]);
   };
 
-  IR.AVM2RuntimeMultiname.prototype.compile = function (cx) {
+  IR.AVM2Multiname.prototype.compile = function (cx) {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(id("createName"), [namespaces, name]);

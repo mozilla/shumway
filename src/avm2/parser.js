@@ -146,7 +146,7 @@ var AbcStream = (function () {
         } // Otherwise it's an invalid UTF8, skipped.
       }
       this.pos = pos;
-      return String.fromCharCode.apply(null, result.subarray(0, i));
+      return fromCharCodeArray(result.subarray(0, i));
     }
   };
 
@@ -259,7 +259,7 @@ var Trait = (function () {
   };
 
   trait.prototype.isProtected = function isProtected() {
-    assert (Multiname.isQName(this.name));
+    release || assert (Multiname.isQName(this.name));
     return this.name.namespaces[0].isProtected();
   };
 
@@ -330,7 +330,7 @@ var ShumwayNamespace = (function () {
   var MIN_API_MARK              = 0xe294;
   var MAX_API_MARK              = 0xf8ff;
 
-  function namespace(kind, uri, prefix) {
+  function namespace(kind, uri, prefix, dontMangle) {
     if (kind !== undefined) {
       if (uri === undefined) {
         uri = "";
@@ -340,7 +340,7 @@ var ShumwayNamespace = (function () {
       }
       this.kind = kind;
       this.originalURI = this.uri = uri;
-      buildNamespace.call(this);
+      buildNamespace.call(this, dontMangle);
     }
     // Otherwise, we are creating an empty namespace to be build
     // by the parse method.
@@ -349,7 +349,7 @@ var ShumwayNamespace = (function () {
   namespace.PREFIXES = prefixes;
 
   var uniqueNamespaceCounter = 0;
-  function buildNamespace() {
+  function buildNamespace(dontMangle) {
     if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
       var n = this.uri.length - 1;
@@ -360,7 +360,7 @@ var ShumwayNamespace = (function () {
     } else if (this.isUnique()) {
       this.uri = String(this.uri + uniqueNamespaceCounter++);
     }
-    this.uri = mangleNamespaceURI(this.uri);
+    this.uri = dontMangle ? this.uri : mangleNamespaceURI(this.uri);
     release || assert(kinds[this.kind]);
     this.qualifiedName = kinds[this.kind] + "$" + this.uri;
   }
@@ -408,8 +408,9 @@ var ShumwayNamespace = (function () {
     var kind = namespace.kindFromString(str);
     str = qn.substring(a + 1, b);
     var uri = str === "" ? str : (MANGLE_NAMESPACES ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
-    assert (uri || uri === "", "uri is " + uri);
-    return new namespace(kind, uri);
+    release || assert (uri || uri === "", "uri is " + uri);
+    release || assert (qn.indexOf(new namespace(kind, uri, undefined, true).getQualifiedName()) >= 0);
+    return new namespace(kind, uri, undefined, true);
   };
 
   namespace.kindFromString = function kindFromString(str) {
@@ -469,10 +470,22 @@ var ShumwayNamespace = (function () {
       return this.qualifiedName === o.qualifiedName;
     },
 
+    inNamespaceSet: function inNamespaceSet(set) {
+      for (var i = 0; i < set.length; i++) {
+        if (set[i].qualifiedName === this.qualifiedName) {
+          return true;
+        }
+      }
+      return false;
+    },
+
     getAccessModifier: function getAccessModifier() {
       return kinds[this.kind];
     },
 
+    getQualifiedName: function getQualifiedName() {
+      return this.qualifiedName;
+    }
   });
 
   namespace.PUBLIC = new namespace(CONSTANT_Namespace);
@@ -574,11 +587,12 @@ var Multiname = (function () {
   var ATTRIBUTE         = 0x01;
   var RUNTIME_NAMESPACE = 0x02;
   var RUNTIME_NAME      = 0x04;
-  var nextID = 1;
+  var nextID = 0;
   var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
+
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
-      assert (name === null || isString(name), "Multiname name must be a string. " + name);
+      release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
       // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
     }
     this.id = nextID ++;
@@ -586,6 +600,9 @@ var Multiname = (function () {
     this.name = name;
     this.flags = flags || 0;
   }
+
+  multiname.TEMPORARY = new multiname();
+  release || assert (multiname.TEMPORARY.id === 0);
 
   multiname.RUNTIME_NAME = RUNTIME_NAME;
   multiname.ATTRIBUTE = ATTRIBUTE;
@@ -722,7 +739,7 @@ var Multiname = (function () {
    * a mangled Multiname object.
    */
 
-  function qualifyName(qualifier, name) {
+  function qualifyNameInternal(qualifier, name) {
     release || assert (typeof name !== "object");
     return qualifier ? qualifier + "$" + name : name;
   }
@@ -738,9 +755,13 @@ var Multiname = (function () {
         release || assert (mn.namespaces[0].isPublic());
         return mn.qualifiedName = name;
       }
-      mn = mn.qualifiedName = qualifyName(mn.namespaces[0].qualifiedName, name);
+      mn = mn.qualifiedName = qualifyNameInternal(mn.namespaces[0].qualifiedName, name);
     }
     return mn;
+  };
+
+  multiname.qualifyName = function qualifyName(namespace, name) {
+    return qualifyNameInternal(namespace.qualifiedName, name)
   };
 
   /**
@@ -751,7 +772,7 @@ var Multiname = (function () {
     if (qn instanceof Multiname) {
       return qn;
     }
-    assert (typeof qn === "string" && !isNumeric(qn));
+    release || assert (typeof qn === "string" && !isNumeric(qn));
     var a = qn.indexOf("$");
     if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
       return undefined;
@@ -780,7 +801,7 @@ var Multiname = (function () {
     } else if (name !== null && isObject(name)) {
       return name;
     }
-    assert (isString(name) || isNullOrUndefined(name));
+    release || assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 
@@ -803,7 +824,7 @@ var Multiname = (function () {
     } else if (typeof mn === "string") {
       return isNumeric(mn);
     }
-    release || assert(mn instanceof multiname);
+    release || assert(mn instanceof multiname, typeof mn);
     return !isNaN(parseInt(multiname.getName(mn), 10));
   };
 
@@ -850,6 +871,7 @@ var Multiname = (function () {
 
   multiname.prototype.getQName = function getQName(index) {
     release || assert(index >= 0 && index < this.namespaces.length);
+    release || assert(this !== multiname.TEMPORARY, "Can't cache QNames on temporary Multiname.");
     if (!this.cache) {
       this.cache = [];
     }
@@ -862,7 +884,7 @@ var Multiname = (function () {
   };
 
   multiname.prototype.hasQName = function hasQName(qn) {
-    assert (qn instanceof Multiname);
+    release || assert (qn instanceof Multiname);
     if (this.name !== qn.name) {
       return false;
     }
@@ -980,6 +1002,7 @@ var Multiname = (function () {
 })();
 
 var ConstantPool = (function constantPool() {
+  var nextNamespaceSetID = 1;
   function constantPool(stream, name) {
     var i, n;
 
@@ -1032,12 +1055,12 @@ var ConstantPool = (function constantPool() {
     for (i = 1; i < n; ++i) {
       var count = stream.readU30();
       var set = [];
+      set.id = nextNamespaceSetID ++;
       for (var j = 0; j < count; ++j) {
         set.push(namespaces[stream.readU30()]);
       }
       namespaceSets.push(set);
     }
-
 
     this.namespaces = namespaces;
     this.namespaceSets = namespaceSets;
@@ -1051,7 +1074,7 @@ var ConstantPool = (function constantPool() {
     }
     patchFactoryTypes.forEach(function (patch) {
       var multiname = multinames[patch.index];
-      assert (multiname);
+      release || assert (multiname);
       patch.multiname.name = multiname.name;
       patch.multiname.namespaces = multiname.namespaces;
     });

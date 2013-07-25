@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter */
 
 var CanvasCache = {
   cache: [],
@@ -639,7 +639,7 @@ function renderStage(stage, ctx, events) {
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
-
+      FrameCounter.clear();
       Timer.start("MouseVisitor");
       (new MouseVisitor(stage)).start();
       Timer.stop();
