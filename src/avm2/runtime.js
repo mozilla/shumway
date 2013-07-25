@@ -272,15 +272,41 @@ function initializeGlobalObject(global) {
 
   /**
    * Property Access Methods:
-   *  - getResolutionMap(namespaces, name)
-   *  - getPropertyByMultiname(namespaces, name, isMethod)
-   *  - setPropertyByMultiname(namespaces, name, value)
-   *  - hasPropertyByMultiname(namespaces, name)
-   *  - callPropertyByMultiname(namespaces, name, isLex, args)
-   *  - deletePropertyByMultiname(namespaces, name, value)
+   *
+   * Define the following get/set/has/call/delete "virtual" methods on every global Object.prototype:
+   * - getMultinameProperty(namespaces, name, flags, isMethod)
+   * - setMultinameProperty(namespaces, name, flags, value)
+   * - hasMultinameProperty(namespaces, name, flags)
+   * - callMultinameProperty(namespaces, name, flags, isLex, args)
+   * - deleteMultinameProperty(namespaces, name, flags)
+   *
+   * Define multiname resolution methods:
+   * - getNamespaceResolutionMap(namespaces)
+   * - resolveMultinameProperty(namespaces, name, flags)
+   *
+   * Special objects like Vector, Dictionary, XML, etc. can override these to provide different behaviour.
+   *
+   * To avoid boxing we represent multinames as a group of 3 parts: |namespaces| undefined or an array of
+   * namespace objects, |name| any value, and |flags| an integer value. To resolve a multiname to a qualified
+   * name we call |resolveMultinameProperty|. The expensive case is when we resolve multinames with multiple
+   * namespaces. This is done with the help of |getNamespaceResolutionMap|.
+   *
+   * Every object that contains traits has a hidden array property called "resolutionMap". This maps between
+   * namespace sets to an object that maps all trait names to their resolved qualified names in each namespace.
+   *
+   * For example, suppose we had the class A { n0 var x; n1 var x; n0 var y; n1 var y; } and two namespace sets:
+   * {n0, n2} and {n2, n1}. The namespace sets are given the unique IDs 0 and 1 respectively. The resolution map
+   * for class A would be:
+   *
+   * resolutionMap[0] = {x: n0$$x, y: n0$$y}
+   * resolutionMap[1] = {x: n1$$x, y: n1$$y}
+   *
+   * Resolving {n2, n1}::x on a = new A() then becomes:
+   *
+   * a[a.resolutionMap[1]["x"]] -> a[{x: n1$$x, y: n1$$y}["x"]] -> a[n1$$x]
    */
 
-  defineNonEnumerableProperty(global.Object.prototype, "getResolutionMap", function getResolutionMap(namespaces) {
+  defineNonEnumerableProperty(global.Object.prototype, "getNamespaceResolutionMap", function getNamespaceResolutionMap(namespaces) {
     var map = this.resolutionMap[namespaces.id];
     if (map) return map;
     map = this.resolutionMap[namespaces.id] = createEmptyObject();
@@ -302,7 +328,7 @@ function initializeGlobalObject(global) {
     return map;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "resolvePropertyByMultiname", function resolvePropertyByMultiname(namespaces, name, flags) {
+  defineNonEnumerableProperty(global.Object.prototype, "resolveMultinameProperty", function resolveMultinameProperty(namespaces, name, flags) {
     if (typeof name === "object") {
       name = String(name);
     }
@@ -313,7 +339,7 @@ function initializeGlobalObject(global) {
       return Multiname.getPublicQualifiedName(name);
     }
     if (namespaces.length > 1) {
-      var resolved = this.getResolutionMap(namespaces)[name];
+      var resolved = this.getNamespaceResolutionMap(namespaces)[name];
       if (resolved) return resolved;
       return Multiname.getPublicQualifiedName(name);
     } else {
@@ -321,62 +347,67 @@ function initializeGlobalObject(global) {
     }
   }),
 
-  defineNonEnumerableProperty(global.Object.prototype, "getPropertyByMultiname", function getPropertyByMultiname(namespaces, name, flags, isMethod) {
+  defineNonEnumerableProperty(global.Object.prototype, "getMultinameProperty", function getMultinameProperty(namespaces, name, flags, isMethod) {
     if (this.getProperty) {
       return this.getProperty(namespaces, name, flags, isMethod);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
-    // print("getPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
+    var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+    // print("getMultinameProperty(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexGet && Multiname.isNumeric(resolved)) {
       return this.indexGet(resolved);
     }
     return this[resolved];
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "setPropertyByMultiname", function setPropertyByMultiname(namespaces, name, flags, value) {
+  defineNonEnumerableProperty(global.Object.prototype, "setMultinameProperty", function setMultinameProperty(namespaces, name, flags, value) {
     if (this.setProperty) {
       return this.setProperty(namespaces, name, flags, value);
     }
     if (typeof name === "object") {
       name = String(name);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
-//    print("setPropertyByMultiname(" + namespaces.id + ", " + name + ") -> " + resolved);
+    var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+//    print("setMultinameProperty(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexSet && Multiname.isNumeric(resolved)) {
       return this.indexSet(resolved, value);
     }
     this[resolved] = value;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "callPropertyByMultiname", function callPropertyByMultiname(namespaces, name, flags, isLex, args) {
+  defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
+    // print("Calling : " + name + " " + this + " " + typeof (this) + " " + args);
+    if (name == "charCodeAt") {
+      debugger;
+    }
     var receiver = isLex ? null : this;
     if (isProxyObject(this)) {
       return this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
     }
-    var property = this.getPropertyByMultiname(namespaces, name, flags, true);
+    var property = this.getMultinameProperty(namespaces, name, flags, true);
     var result = property.apply(receiver, args);
+    // print("> " + result);
     return result;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "hasPropertyByMultiname", function hasPropertyByMultiname(namespaces, name, flags, nonProxy) {
+  defineNonEnumerableProperty(global.Object.prototype, "hasMultinameProperty", function hasMultinameProperty(namespaces, name, flags, nonProxy) {
     if (this.hasProperty) {
       return this.hasProperty(namespaces, name, flags);
     }
     if (nonProxy) {
-      return nonProxyingHasProperty(this, this.resolvePropertyByMultiname(namespaces, name, flags));
+      return nonProxyingHasProperty(this, this.resolveMultinameProperty(namespaces, name, flags));
     } else {
-      return this.resolvePropertyByMultiname(namespaces, name, flags) in this;
+      return this.resolveMultinameProperty(namespaces, name, flags) in this;
     }
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "deletePropertyByMultiname", function deletePropertyByMultiname(namespaces, name, flags) {
+  defineNonEnumerableProperty(global.Object.prototype, "deleteMultinameProperty", function deleteMultinameProperty(namespaces, name, flags) {
     if (this.deleteProperty) {
       return this.deleteProperty(namespaces, name, flags);
     }
     if (this.indexDelete && Multiname.isNumeric(name)) {
       return this.indexDelete(name);
     }
-    var resolved = this.resolvePropertyByMultiname(namespaces, name, flags);
+    var resolved = this.resolveMultinameProperty(namespaces, name, flags);
     /**
      * If we're in the middle of an enumeration, we need to remove the property name
      * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
@@ -712,7 +743,7 @@ var Scope = (function () {
     var object;
     var key = makeCacheKey(namespaces, name, flags);
     if (!scopeOnly && (object = this.cache[key])) return object;
-    if (this.object.hasPropertyByMultiname(namespaces, name, flags, true)) {
+    if (this.object.hasMultinameProperty(namespaces, name, flags, true)) {
       return this.isWith ? this.object : (this.cache[key] = this.object);
     }
     if (this.parent) {
@@ -1937,8 +1968,4 @@ function translateError(domain, error) {
     unexpected("Can't translate error: " + error);
   }
   return error;
-}
-
-function notifyConstruct(domain, instanceConstructor, args) {
-  return domain.vm.notifyConstruct(instanceConstructor, args);
 }

@@ -466,7 +466,7 @@
       );
     }
     var isMethod = new Literal(this.isMethod);
-    return call(property(object, "getPropertyByMultiname"), name.concat(isMethod));
+    return call(property(object, "getMultinameProperty"), name.concat(isMethod));
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -517,7 +517,7 @@
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
-    return call(property(object, "callPropertyByMultiname"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
+    return call(property(object, "callMultinameProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -578,19 +578,19 @@
         assignment(property(object, name), value)
       );
     }
-    return call(property(object, "setPropertyByMultiname"), name.concat(value));
+    return call(property(object, "setMultinameProperty"), name.concat(value));
   };
 
   IR.AVM2DeleteProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "deletePropertyByMultiname"), name);
+    return call(property(object, "deleteMultinameProperty"), name);
   };
 
   IR.AVM2HasProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "hasPropertyByMultiname"), name);
+    return call(property(object, "hasMultinameProperty"), name);
   };
 
   IR.GlobalProperty.prototype.compile = function (cx) {
