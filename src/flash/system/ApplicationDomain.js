@@ -62,7 +62,7 @@ var ApplicationDomainDefinition = (function () {
               return false;
             }
             var simpleName = name.replace("::", ".");
-            return !!this.nativeObject.findProperty(Multiname.fromSimpleName(simpleName), false, false);
+            return !!this.nativeObject.findDomainProperty(Multiname.fromSimpleName(simpleName), false, false);
           },
           getQualifiedDefinitionNames: function getQualifiedDefinitionNames() { // (void) -> Vector
             notImplemented("ApplicationDomain.getQualifiedDefinitionNames");

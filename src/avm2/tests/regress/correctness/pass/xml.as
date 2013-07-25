@@ -113,9 +113,17 @@ class A {}
   var loc5:*=0;
   var loc6:*=type;
   var loc4:*=new XMLList("");
+  for each (var x:* in loc6.*) {
+    with(x) {
+      print("K: " + @type);
+    }
+  }
+  return;
+
   for each (var loc7:* in loc6.*) {
     var loc8:*;
     with (loc8 = loc7) {
+      print("WITH: " + @type.toString());
       if (@type == "String") {
         loc4[loc5++] = loc7;
       }
@@ -123,13 +131,14 @@ class A {}
   }
   var loc3:*=loc4;
   for each (variable in loc3) {
-      eventClass[variable.@name] = type.@name + "." + variable.@name;
+    eventClass[variable.@name] = type.@name + "." + variable.@name;
   }
   var keys = [];
   for (var p in eventClass) {
     keys.push(p);
   }
   keys.sort();
+  print("keys: " + keys.length);
   for (var i = 0; i < keys.length; i++) {
     var p = keys[i];
     print("eventClass[p]="+eventClass[p]);

@@ -59,6 +59,7 @@ load($SHUMWAY_ROOT + "src/avm2/options.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Counter = new metrics.Counter(true);
+var FrameCounter = new metrics.Counter(true);
 var Timer = metrics.Timer;
 var Option = options.Option;
 var OptionSet = options.OptionSet;

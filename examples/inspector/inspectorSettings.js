@@ -44,14 +44,16 @@ function updateAVM2State() {
   AVM1_TRACE_ENABLED = state.trace;
 }
 
+var lastCounts = {};
+
 setTimeout(function displayInfo() {
   var output = "";
-  var counts = Counter.counts;
   var pairs = [];
 
-  for (var name in counts) {
-    pairs.push([name, counts[name]]);
+  for (var name in Counter.counts) {
+    pairs.push([name, Counter.counts[name]]);
   }
+
   pairs.sort(function (a, b) {
     return b[1] - a[1];
   });
@@ -70,7 +72,7 @@ setTimeout(function displayInfo() {
     } else {
       color = "green";
     }
-    output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + "</div>";
+    output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + " " + (pair[1] - lastCounts[pair[0]]) + "</div>";
     totalCount += pair[1];
   });
   if (totalCount > 30000000) {
@@ -79,6 +81,14 @@ setTimeout(function displayInfo() {
   }
 
   document.getElementById("info").innerHTML = output;
+
+  copyProperties(lastCounts, Counter.counts);
+
+  output = "";
+  for (var name in FrameCounter.counts) {
+    output += "<div style=\"padding: 2px;\">" + name + ": " + FrameCounter.counts[name] + "</div>";
+  }
+  document.getElementById("frameInfo").innerHTML = output;
 
   output = "";
   for (var name in Timer.flat.timers) {

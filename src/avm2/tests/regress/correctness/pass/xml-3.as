@@ -1,0 +1,1 @@
+trace(<test>ABC</test>.toLowerCase());
