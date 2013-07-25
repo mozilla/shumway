@@ -85,8 +85,7 @@ var AMFUtils = (function AMFUtilsClosure() {
   }
 
   function setAvmProperty(obj, propertyName, value) {
-    setProperty(obj, isNumeric(propertyName) ? propertyName :
-      Multiname.fromSimpleName(propertyName), value);
+    obj.setMultinameProperty(undefined, propertyName, 0, value);
   }
 
   var amf0 = {
@@ -341,7 +340,7 @@ var AMFUtils = (function AMFUtilsClosure() {
         (caches.traitsCache || (caches.traitsCache = [])).push(traits);
       }
 
-      var obj = objectClass ? objectClass.createInstance() : createEmptyObject();
+      var obj = objectClass ? objectClass.createInstance() : {};
       (caches.objectsCache || (caches.objectsCache = [])).push(obj);
       for (var i = 0; i < traits.members.length; i++) {
         var value = readAmf3Data(ba, caches);
