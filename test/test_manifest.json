@@ -192,6 +192,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "flash_geom_Matrix3D trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_geom_Matrix3D.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "flash_text_TextField trace",
        "stas": "swfs/trace.stas",
        "filenames": [
