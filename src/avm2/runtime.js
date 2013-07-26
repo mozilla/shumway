@@ -21,6 +21,7 @@ var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
 var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
+
 var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
 var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
@@ -143,6 +144,10 @@ function inJS() {
 function inAS() {
   return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
 }
+
+var callWriter = new IndentingWriter(false, function (str){
+  print(str);
+});
 
 
 /*
@@ -371,10 +376,6 @@ function initializeGlobalObject(global) {
       return this.indexSet(resolved, value);
     }
     this[resolved] = value;
-  });
-
-  var callWriter = new IndentingWriter(false, function (str){
-    print(str);
   });
 
   var callCounter = new metrics.Counter(true);
@@ -1602,6 +1603,7 @@ function makeTrampoline(forward, parameterLength) {
         print("Trampolining");
       }
       Counter.count("Executing Trampoline");
+      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline");
       if (!target) {
         target = forward(trampoline);
         release || assert (target);
@@ -1635,6 +1637,7 @@ function makeMemoizer(qn, target) {
     if (traceExecution.value >= 3) {
       print("Memoizing: " + qn);
     }
+    traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
     if (isNativePrototype(this)) {
       Counter.count("Runtime: Method Closures");
       return bindSafely(target.value, this);

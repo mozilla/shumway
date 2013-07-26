@@ -39,7 +39,8 @@ function updateAVM2State() {
   enableVerifier.value = state.verifier;
   traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
-  traceCallExecution.value = state.traceCalls ? 2 : 0;
+  traceCallExecution.value = state.traceCalls ? 1 : 0;
+  traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
   release = state.release;
   TRACE_SYMBOLS_INFO = state.symbolsInfo;
