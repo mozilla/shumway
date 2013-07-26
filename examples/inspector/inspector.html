@@ -21,9 +21,26 @@ limitations under the License.
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
-    <div id="stage">
-        <div id="xstats"></div>
-    </div>
+    <table>
+      <tr>
+        <td colspan="3">
+          <div id="stage">
+            <div id="xstats"></div>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <canvas id="terminal" width="600" height="400" tabindex='0'></canvas>
+        </td>
+        <td>
+          <canvas id="frameInfoTerminal" width="500" height="400" tabindex='1'></canvas>
+        </td>
+        <td>
+          <div class="toolbarInfo" id="timerInfo"></div>
+        </td>
+      </tr>
+    </table>
 
     <script>
       var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline",
@@ -41,6 +58,13 @@ limitations under the License.
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
 
+    <script src="../../src/avm2/options.js"></script>
+
+    <script>
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var coreOptions = new OptionSet("Core Options");
+    </script>
 
     <script> console.time("Load SWF Dependencies"); </script>
     <!-- Load SWF Dependencies -->
@@ -104,15 +128,12 @@ limitations under the License.
 
     <script src="../../src/avm2/config.js"></script>
     <script src="../../src/avm2/util.js"></script>
-    <script src="../../src/avm2/options.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
 
     <script>
       var Counter = new metrics.Counter(true);
       var FrameCounter = new metrics.Counter(true);
       var Timer = metrics.Timer;
-      var Option = options.Option;
-      var OptionSet = options.OptionSet;
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
@@ -248,17 +269,16 @@ limitations under the License.
       http://people.mozilla.com/~shorlander/highlighter-toolbar/highlighter-toolbar.html
     -->
 
+
+
     <div class="toolbarGroup">
       <div class="toolbarBox withEmphasis" style="position: fixed; bottom: 380px; left: auto; right: 0px; width: 300px;" hidden>
         <div class="closeButton"></div>
         <div class="toolbarLabel " style="width: 240px; text-align: left;" id="message">Test</div>
       </div>
-      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 300px; left: auto; right: 0px; width: 400px; height: 300px; font-size: 10px;" id="info">
+      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 500px; left: auto; right: 0px; width: 400px; height: 500px; font-size: 10px;" id="info">
       </div>
-      <div class="toolbarInfo" style="position: fixed; top: 310px; bottom: 500px; left: auto; right: 0px; width: 400px; font-size: 10px;" id="frameInfo">
-      </div>
-      <div class="toolbarInfo" style="position: fixed; top: 500px; bottom: 70px; left: auto; right: 0px; width: 400px; font-size: 10px;" id="timerInfo">
-      </div>
+
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; right: 320px; width: 200px;" id="traceSymbolsInfo" hidden>
       </div>
       <div class="toolbarBox" style="position: fixed; bottom: 35px; left: 0; right: 0; width: auto;" id="openFileToolbar">
@@ -273,12 +293,16 @@ limitations under the License.
         <div class="avm2Option toolbarButton" id="appCompiler" style="width: 60px">App</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="verifier">Verifier</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="trace">Trace</div>
+        <div class="avm2Option toolbarButton" style="width: 90px" id="traceCalls">Trace Calls</div>
+        <div class="avm2Option toolbarButton" style="width: 100px" id="traceRuntime">Trace Runtime</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="release">Release</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="symbolsInfo">Symbols</div>
         <div class="toolbarButton" style="width: 60px" id="sample">Sample</div>
       </div>
     </div>
 
+
+    <script src="terminal.js"></script>
     <script src="inspectorSettings.js"></script>
     <script src="inspectorLoader.js"></script>
     <script src="inspector.js"></script>

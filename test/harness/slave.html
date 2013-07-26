@@ -31,6 +31,13 @@ limitations under the License.
 
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
+    <script src="../../src/avm2/options.js"></script>
+
+    <script>
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var coreOptions = new OptionSet("Core Options");
+    </script>
 
     <!-- Load SWF Dependencies -->
     <script src="../../src/swf/config.js"></script>
@@ -70,15 +77,12 @@ limitations under the License.
     <!-- Load AVM2 Dependencies -->
     <script src="../../src/avm2/config.js"></script>
     <script src="../../src/avm2/util.js"></script>
-    <script src="../../src/avm2/options.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
 
     <script>
       var Counter = new metrics.Counter(true);
       var FrameCounter = new metrics.Counter(true);
       var Timer = metrics.Timer;
-      var Option = options.Option;
-      var OptionSet = options.OptionSet;
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
