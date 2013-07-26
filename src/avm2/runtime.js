@@ -380,7 +380,10 @@ function initializeGlobalObject(global) {
 
   var callCounter = new metrics.Counter(true);
   defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
-    traceCallExecution.value > 0 && callWriter.enter("call " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+    if (traceCallExecution.value) {
+      var receiver = this.class ? this.class.className + " ": "";
+      callWriter.enter("call " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+    }
     var receiver = isLex ? null : this;
     var result;
     if (isProxyObject(this)) {
@@ -1591,7 +1594,7 @@ function checkMethodOverrides(methodInfo) {
  * callback is only executed the first time the trampoline is executed and its result is cached in
  * the trampoline closure.
  */
-function makeTrampoline(forward, parameterLength) {
+function makeTrampoline(forward, parameterLength, description) {
   release || assert (forward && typeof forward === "function");
   return (function trampolineContext() {
     var target = null;
@@ -1603,7 +1606,7 @@ function makeTrampoline(forward, parameterLength) {
         print("Trampolining");
       }
       Counter.count("Executing Trampoline");
-      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline");
+      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
       if (!target) {
         target = forward(trampoline);
         release || assert (target);

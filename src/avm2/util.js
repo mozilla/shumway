@@ -131,7 +131,10 @@ function copyProperties(object, template) {
  */
 
 function toSafeString(value) {
-  if (typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+  if (typeof value === "string") {
+    return "\"" + value + "\"";
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
   return typeof value;

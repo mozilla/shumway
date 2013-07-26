@@ -165,7 +165,7 @@ var Bindings = (function () {
         var fn = getTraitFunction(trait, scope, natives);
         patch(self.patchTargets, fn);
         return fn;
-      }, trait.methodInfo.parameters.length);
+      }, trait.methodInfo.parameters.length, String(trait.name));
 
       memoizerTarget.value = trampoline;
       var openMethods = object[VM_OPEN_METHODS];
@@ -187,7 +187,7 @@ var Bindings = (function () {
         var fn = getTraitFunction(trait, scope, natives);
         patch(self.patchTargets, fn);
         return fn;
-      });
+      }, 0, String(trait.name));
       if (trait.isGetter()) {
         trampoline.patchTargets = [{ object: object, get: qn }];
       } else {
@@ -695,6 +695,7 @@ var Class = (function () {
     } else {
       cls = new Class(className, instanceConstructor);
     }
+    cls.className = className;
     cls.classInfo = classInfo;
     cls.scope = classScope;
     classScope.object = cls;
