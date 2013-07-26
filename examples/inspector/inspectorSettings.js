@@ -86,10 +86,6 @@ setTimeout(function displayInfo() {
 
   copyProperties(lastCounts, Counter.counts);
 
-  for (var name in FrameCounter.counts) {
-    appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
-  }
-
   output = "";
   for (var name in Timer.flat.timers) {
     var timer = Timer.flat.timers[name];

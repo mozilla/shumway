@@ -379,7 +379,7 @@ function initializeGlobalObject(global) {
 
   var callCounter = new metrics.Counter(true);
   defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
-    traceCallExecution.value > 0 && callWriter.enter("call " + name + " [" + toSafeArrayString(args) + "] #" + callCounter.count(name));
+    traceCallExecution.value > 0 && callWriter.enter("call " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
     var receiver = isLex ? null : this;
     var result;
     if (isProxyObject(this)) {

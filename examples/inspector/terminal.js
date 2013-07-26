@@ -58,6 +58,7 @@ var Terminal = (function () {
 
     // HACK support of HiDPI displays
     this.pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+    this.pixelRatio = 1;
     if (this.pixelRatio > 1) {
       var cssScale = 'scale(' + (1 / this.pixelRatio) + ', ' + (1 / this.pixelRatio) + ')';
       canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +

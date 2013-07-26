@@ -606,6 +606,8 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
+  var frameCount = 0;
+
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -643,7 +645,7 @@ function renderStage(stage, ctx, events) {
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
-      traceRenderer.value && appendToFrameTerminal("Render Frame", "green");
+      traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
       traceRenderer.value && frameWriter.enter("> Mouse Visitor");
       (new MouseVisitor(stage)).start();
       traceRenderer.value && frameWriter.leave("< Mouse Visitor");
@@ -685,6 +687,14 @@ function renderStage(stage, ctx, events) {
       }
 
       stage._syncCursor();
+
+      if (traceRenderer.value) {
+        for (var name in FrameCounter.counts) {
+          appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
+        }
+      }
+    } else {
+      traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
     }
 
     sampleEnd();

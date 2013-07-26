@@ -93,7 +93,7 @@
   var Counter = (function () {
     function counter(enabled) {
       this.enabled = !!enabled;
-      this.counts = {};
+      this.counts = createEmptyObject();
     }
     counter.prototype.setEnabled = function (enabled) {
       this.enabled = enabled;
