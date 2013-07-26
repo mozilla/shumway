@@ -92,7 +92,6 @@ var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
 var libraryNames = playerGlobalNames;        // ditto
 
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
-  console.time("Load AVM2");
   assert (builtinPath);
   avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
   var builtinAbc, libraryAbc;
@@ -109,11 +108,9 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;
-    avm2.systemDomain.onClassCreated.register(Stubs.onClassCreated);
+    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(builtinAbc);
     avm2.builtinsLoaded = true;
-    console.info(Counter.toJSON());
-    console.timeEnd("Load AVM2");
     next(avm2);
   }
 }

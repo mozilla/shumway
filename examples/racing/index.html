@@ -33,6 +33,16 @@
 
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/Kanvas/kanvas.js"></script>
+    <script src="../../src/avm2/options.js"></script>
+
+    <script>
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var coreOptions = new OptionSet("Core Options");
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+    </script>
 
     <!-- Load SWF Dependencies -->
     <script src="../../src/swf/config.js"></script>
@@ -73,12 +83,8 @@
 
     <script>
       var Counter = new metrics.Counter(true);
+      var FrameCounter = new metrics.Counter(true); 
       var Timer = metrics.Timer;
-      var Option = options.Option;
-      var OptionSet = options.OptionSet;
-      var systemOptions = new OptionSet("System Options");
-      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
-      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 
       window.print = function(s) {
         console.log(s);
@@ -119,7 +125,6 @@
     <script src="../../src/flash/display/DisplayObject.js"></script>
     <script src="../../src/flash/display/DisplayObjectContainer.js"></script>
     <script src="../../src/flash/display/FrameLabel.js"></script>
-    <script src="../../src/flash/display/GradientType.js"></script>
     <script src="../../src/flash/display/Graphics.js"></script>
     <script src="../../src/flash/display/InteractiveObject.js"></script>
     <script src="../../src/flash/display/Loader.js"></script>
@@ -135,11 +140,8 @@
     <script src="../../src/flash/display/Stage.js"></script>
     <script src="../../src/flash/events/Event.js"></script>
     <script src="../../src/flash/events/EventDispatcher.js"></script>
-    <script src="../../src/flash/events/IOErrorEvent.js"></script>
     <script src="../../src/flash/events/KeyboardEvent.js"></script>
     <script src="../../src/flash/events/MouseEvent.js"></script>
-    <script src="../../src/flash/events/NetStatusEvent.js"></script>
-    <script src="../../src/flash/events/ProgressEvent.js"></script>
     <script src="../../src/flash/events/TextEvent.js"></script>
     <script src="../../src/flash/events/TimerEvent.js"></script>
     <script src="../../src/flash/external/ExternalInterface.js"></script>
