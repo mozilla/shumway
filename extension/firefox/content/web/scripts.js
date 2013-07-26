@@ -28,6 +28,10 @@
 
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
 load($SHUMWAY_ROOT + "lib/Kanvas/kanvas.js");
+load($SHUMWAY_ROOT + "src/avm2/options.js");
+var Option = options.Option;
+var OptionSet = options.OptionSet;
+var coreOptions = new OptionSet("Core Options");
 
 load($SHUMWAY_ROOT + "src/swf/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
@@ -55,14 +59,11 @@ load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 load($SHUMWAY_ROOT + "src/avm2/config.js");
 load($SHUMWAY_ROOT + "src/avm2/util.js");
-load($SHUMWAY_ROOT + "src/avm2/options.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Counter = new metrics.Counter(true);
 var FrameCounter = new metrics.Counter(true);
 var Timer = metrics.Timer;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
 var systemOptions = new OptionSet("System Options");
 var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
