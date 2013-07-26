@@ -170,7 +170,7 @@ var MovieClipDefinition = (function () {
                     currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
                 currentChild.destroy();
               }
-            } else if (cmd !== currentListCmd && currentListCmd) {
+            } else if (cmd !== currentListCmd) {
               if (currentChild &&
                   cmd.symbolId === currentListCmd.symbolId &&
                   cmd.ratio === currentListCmd.ratio) {
