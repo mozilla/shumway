@@ -847,9 +847,20 @@ var Class = (function () {
         var keys = Object.keys(properties);
         for (var i = 0; i < keys.length; i++) {
           var propertyName = keys[i];
-          var propertySimpleName = properties[propertyName];
+          var propertyGlue = properties[propertyName];
+          var propertySimpleName;
+          var glueOpenMethod = false;
+          if (propertyGlue.indexOf("open ") >= 0) {
+            propertySimpleName = propertyGlue.substring(5);
+            glueOpenMethod = true;
+          } else {
+            propertySimpleName = propertyGlue;
+          }
           release || assert (isString(propertySimpleName), "Make sure it's not a function.");
           var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propertySimpleName));
+          if (glueOpenMethod) {
+            qn = VM_OPEN_METHOD_PREFIX + qn;
+          }
           release || assert(isString(qn));
           var descriptor = Object.getOwnPropertyDescriptor(obj, qn);
           if (descriptor && descriptor.get) {
@@ -870,7 +881,7 @@ var Class = (function () {
           if (!ns.isPublic()) {
             return;
           }
-          properties[trait.name.getName()] = "public " + trait.name.getName();
+          properties[trait.name.getName()] = (trait.isMethod() ? "open " : "") + "public " + trait.name.getName();
         });
         return properties;
       }
