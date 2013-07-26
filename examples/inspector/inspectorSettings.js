@@ -38,6 +38,8 @@ function updateAVM2State() {
   enableC4.value = true;
   enableVerifier.value = state.verifier;
   traceExecution.value = state.trace ? 2 : 0;
+  traceRenderer.value = state.trace ? 2 : 0;
+  traceCallExecution.value = state.traceCalls ? 2 : 0;
   debuggerMode.value = true;
   release = state.release;
   TRACE_SYMBOLS_INFO = state.symbolsInfo;
@@ -84,11 +86,9 @@ setTimeout(function displayInfo() {
 
   copyProperties(lastCounts, Counter.counts);
 
-  output = "";
   for (var name in FrameCounter.counts) {
-    output += "<div style=\"padding: 2px;\">" + name + ": " + FrameCounter.counts[name] + "</div>";
+    appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
   }
-  document.getElementById("frameInfo").innerHTML = output;
 
   output = "";
   for (var name in Timer.flat.timers) {

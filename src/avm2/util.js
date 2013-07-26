@@ -126,6 +126,25 @@ function copyProperties(object, template) {
   }
 }
 
+/*
+ * Stringify functions that try not to call |toString| inadvertently.
+ */
+
+function toSafeString(value) {
+  if (typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+    return String(value);
+  }
+  return typeof value;
+}
+
+function toSafeArrayString(array) {
+  var str = [];
+  for (var i = 0; i < array.length; i++) {
+    str.push(toSafeString(array[i]));
+  }
+  return str.join(", ");
+}
+
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
   var descriptor = {};
   while (obj) {
@@ -347,6 +366,19 @@ function popManyInto(src, count, dst) {
     var max = (n - length) / c.length;
     for (var i = 0; i < max; i++) {
       str += c;
+    }
+    return str;
+  });
+
+  extendBuiltin(Sp, "padLeft", function (c, n) {
+    var str = this;
+    var length = str.length;
+    if (!c || length >= n) {
+      return str;
+    }
+    var max = (n - length) / c.length;
+    for (var i = 0; i < max; i++) {
+      str = c + str;
     }
     return str;
   });

@@ -113,6 +113,7 @@
         this.counts[name] = 0;
       }
       this.counts[name] += increment;
+      return this.counts[name];
     };
     counter.prototype.trace = function (writer, json) {
       if (json) {

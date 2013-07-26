@@ -348,6 +348,7 @@ var DisplayObjectDefinition = (function () {
       return BLEND_MODE_NORMAL;
     },
     set blendMode(val) {
+      if (val === BLEND_MODE_NORMAL) return;
       notImplemented();
     },
     get cacheAsBitmap() {

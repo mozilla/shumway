@@ -20,6 +20,7 @@ var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
 var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
 var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
+var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
 var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
 var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
 var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
@@ -345,14 +346,13 @@ function initializeGlobalObject(global) {
     } else {
       return namespaces[0].qualifiedName + "$" + name;
     }
-  }),
+  });
 
   defineNonEnumerableProperty(global.Object.prototype, "getMultinameProperty", function getMultinameProperty(namespaces, name, flags, isMethod) {
     if (this.getProperty) {
       return this.getProperty(namespaces, name, flags, isMethod);
     }
     var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-    // print("getMultinameProperty(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexGet && Multiname.isNumeric(resolved)) {
       return this.indexGet(resolved);
     }
@@ -367,25 +367,28 @@ function initializeGlobalObject(global) {
       name = String(name);
     }
     var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-//    print("setMultinameProperty(" + namespaces.id + ", " + name + ") -> " + resolved);
     if (this.indexSet && Multiname.isNumeric(resolved)) {
       return this.indexSet(resolved, value);
     }
     this[resolved] = value;
   });
 
+  var callWriter = new IndentingWriter(false, function (str){
+    print(str);
+  });
+
+  var callCounter = new metrics.Counter(true);
   defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
-    // print("Calling : " + name + " " + this + " " + typeof (this) + " " + args);
-    if (name == "charCodeAt") {
-      debugger;
-    }
+    traceCallExecution.value > 0 && callWriter.enter("call " + name + " [" + toSafeArrayString(args) + "] #" + callCounter.count(name));
     var receiver = isLex ? null : this;
+    var result;
     if (isProxyObject(this)) {
-      return this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
+      result = this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
+    } else {
+      var property = this.getMultinameProperty(namespaces, name, flags, true);
+      result = property.apply(receiver, args);
     }
-    var property = this.getMultinameProperty(namespaces, name, flags, true);
-    var result = property.apply(receiver, args);
-    // print("> " + result);
+    traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   });
 

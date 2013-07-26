@@ -15,7 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+
+var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
+var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 
 var CanvasCache = {
   cache: [],
@@ -640,9 +643,10 @@ function renderStage(stage, ctx, events) {
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
-      Timer.start("MouseVisitor");
+      traceRenderer.value && appendToFrameTerminal("Render Frame", "green");
+      traceRenderer.value && frameWriter.enter("> Mouse Visitor");
       (new MouseVisitor(stage)).start();
-      Timer.stop();
+      traceRenderer.value && frameWriter.leave("< Mouse Visitor");
 
       var domain = avm2.systemDomain;
 
@@ -665,10 +669,10 @@ function renderStage(stage, ctx, events) {
 
       if (refreshStage || renderFrame) {
         ctx.beginPath();
-        Timer.start("PreVisitor");
+        traceRenderer.value && frameWriter.enter("> Pre Visitor");
         (new PreVisitor(stage, ctx)).start();
         (new RenderVisitor(stage, ctx, refreshStage)).start();
-        Timer.stop();
+        traceRenderer.value && frameWriter.leave("< Pre Visitor");
       }
 
       if (renderFrame) {
