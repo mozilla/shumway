@@ -109,6 +109,7 @@ function trace (str) {
 
 function dumpBytes(bytes, start, length, offset) {  
   var s = "";
+  bytes = new Uint8Array(bytes.buffer, bytes.byteOffset + start);
   var end = start + length;
   for (var i = start; i < end; i++) {
     if (((i - start) % 16) === 0) {
@@ -682,14 +683,22 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[pos] = $o;
         bytesU8[pos + 1 | 0] = $_;
-        pos = pos + 2 | 0;
+        bytesU8[pos + 2 | 0] = $_;
+        bytesU8[pos + 3 | 0] = $_;
+        bytesU8[pos + 4 | 0] = $_;
+        bytesU8[pos + 5 | 0] = $_;
+        pos = pos + 6 | 0;
       } else {
         bytesU8[pos] = $O;
         bytesU8[pos + 1 | 0] = $_;
         bytesU8[pos + 2 | 0] = $_;
         bytesU8[pos + 3 | 0] = $_;
         bytesU8[pos + 4 | 0] = $_;
-        pos = pos + 5 | 0;
+        bytesU8[pos + 5 | 0] = $_;
+        bytesU8[pos + 6 | 0] = $_;
+        bytesU8[pos + 7 | 0] = $_;
+        bytesU8[pos + 8 | 0] = $_;
+        pos = pos + 9 | 0;
       }
       return startPos | 0;
     }
@@ -699,13 +708,23 @@ var tagHandler = (function (global) {
       offset = offset | 0;
       count = count | 0;
       flags = flags | 0;
+      var size = 0;
+      size = pos - offset | 0;
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
+        bytesU8[offset + 2 | 0] = size >> 24;
+        bytesU8[offset + 3 | 0] = size >> 16;
+        bytesU8[offset + 4 | 0] = size >> 8;
+        bytesU8[offset + 5 | 0] = size;
       } else {
-        bytesU8[offset + 4 | 0] = count;
-        bytesU8[offset + 3 | 0] = count >> 8;
-        bytesU8[offset + 2 | 0] = count >> 16;
         bytesU8[offset + 1 | 0] = count >> 24;
+        bytesU8[offset + 2 | 0] = count >> 16;
+        bytesU8[offset + 3 | 0] = count >> 8;
+        bytesU8[offset + 4 | 0] = count;
+        bytesU8[offset + 5 | 0] = size >> 24;
+        bytesU8[offset + 6 | 0] = size >> 16;
+        bytesU8[offset + 7 | 0] = size >> 8;
+        bytesU8[offset + 8 | 0] = size;
       }
     }
 
@@ -718,14 +737,22 @@ var tagHandler = (function (global) {
       if ((flags & BIG | 0) == 0) {
         bytesU8[pos] = $a;
         bytesU8[pos + 1 | 0] = $_;
-        pos = pos + 2 | 0;
+        bytesU8[pos + 2 | 0] = $_;
+        bytesU8[pos + 3 | 0] = $_;
+        bytesU8[pos + 4 | 0] = $_;
+        bytesU8[pos + 5 | 0] = $_;
+        pos = pos + 6 | 0;
       } else {
         bytesU8[pos] = $A;
         bytesU8[pos + 1 | 0] = $_;
         bytesU8[pos + 2 | 0] = $_;
         bytesU8[pos + 3 | 0] = $_;
         bytesU8[pos + 4 | 0] = $_;
-        pos = pos + 5 | 0;
+        bytesU8[pos + 5 | 0] = $_;
+        bytesU8[pos + 6 | 0] = $_;
+        bytesU8[pos + 7 | 0] = $_;
+        bytesU8[pos + 8 | 0] = $_;
+        pos = pos + 9 | 0;
       }
       return startPos | 0;
     }
@@ -735,13 +762,23 @@ var tagHandler = (function (global) {
       offset = offset | 0;
       count = count | 0;
       flags = flags | 0;
+      var size = 0;
+      size = pos - offset | 0;
       if ((flags & BIG | 0) == 0) {
         bytesU8[offset + 1 | 0] = count;
+        bytesU8[offset + 2 | 0] = size >> 24;
+        bytesU8[offset + 3 | 0] = size >> 16;
+        bytesU8[offset + 4 | 0] = size >> 8;
+        bytesU8[offset + 5 | 0] = size;
       } else {
-        bytesU8[offset + 4 | 0] = count;
-        bytesU8[offset + 3 | 0] = count >> 8;
-        bytesU8[offset + 2 | 0] = count >> 16;
         bytesU8[offset + 1 | 0] = count >> 24;
+        bytesU8[offset + 2 | 0] = count >> 16;
+        bytesU8[offset + 3 | 0] = count >> 8;
+        bytesU8[offset + 4 | 0] = count;
+        bytesU8[offset + 5 | 0] = size >> 24;
+        bytesU8[offset + 6 | 0] = size >> 16;
+        bytesU8[offset + 7 | 0] = size >> 8;
+        bytesU8[offset + 8 | 0] = size;
       }
     }
 
@@ -2235,15 +2272,11 @@ var tagHandler = (function (global) {
 
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.defineShape) {
-      var begin = 0; //asm.getPos();
+      var begin = 0;
       asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
-      var t0 = Date.now();
       var count = asm.defineShape(swfVersion, tagCode);
-      var t1 = Date.now();
-      decode(dataView, begin, count);
-      var t2 = Date.now();
-      //trace("defineShape parse: " + (t1 - t0) + " ms, decode: " + (t2 - t1) + " ms");
+      decode(dataView, begin, count, true);
       var stop = values.length;
       var start = stop - count;
       for (i = start | 0; i < stop; i = i + 2 | 0) {
@@ -2251,7 +2284,7 @@ var tagHandler = (function (global) {
         var v = values[i + 1 | 0];
         $[n] = v;
       }
-      values = values.slice(0, start);
+      values = [];
       $stream.pos = asm.getInputStreamPos();
       return $;
     }
@@ -4575,7 +4608,7 @@ var tagHandler = (function (global) {
   var values = [];
 
   var nesting = 0;
-  function decode(dataView, pos, count) {
+  function decode(dataView, pos, count, shallow) {
     nesting = nesting + 1;
     pos = pos | 0;
     var marker = 0;
@@ -4640,64 +4673,100 @@ var tagHandler = (function (global) {
         pos = pos + size | 0;
         break;
       case 111: // $o
-        var size = dataView.getUint8(pos);
-        pos = pos + 1 | 0;
-        for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
-          pos = decode(dataView, pos, 2) | 0;
+        if (shallow) {
+          var size = dataView.getUint8(pos);
+          var xsize = dataView.getUint32(pos + 1);
+          var val = new DataView(byteView.buffer, pos - 1, xsize + 6);
+          values.push(val);
+          pos = pos - 1 + xsize;
+        } else {
+          var size = dataView.getUint8(pos);
+          var xsize = dataView.getUint32(pos + 1);
+          pos = pos + 5 | 0;
+          for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
+            pos = decode(dataView, pos, 2, true) | 0;
+          }
+          var val = {};
+          var stop = values.length;
+          var start = stop - size;
+          for (i = start | 0; i < stop; i = i + 2 | 0) {
+            var n = names[values[i | 0]];
+            var v = values[i + 1 | 0];
+            val[n] = v;
+          }
+          values = values.slice(0, start);
+          values.push(val);
         }
-        var val = {};
-        var stop = values.length;
-        var start = stop - size;
-        for (i = start | 0; i < stop; i = i + 2 | 0) {
-          var n = names[values[i | 0]];
-          var v = values[i + 1 | 0];
-          val[n] = v;
-        }
-        values = values.slice(0, start);
-        values.push(val);
         break;
       case 79:  // $O
-        size = dataView.getUint32(pos) | 0;
-        pos = pos + 4 | 0;
-        for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
-          pos = decode(dataView, pos, 2) | 0;
+        if (shallow) {
+          var size = dataView.getUint32(pos);
+          var xsize = dataView.getUint32(pos + 4);
+          var val = new DataView(byteView.buffer, pos - 1, xsize + 9);
+          values.push(val);
+          pos = pos - 1 + xsize;
+        } else {
+          var size = dataView.getUint32(pos) | 0;
+          var xsize = dataView.getUint32(pos + 4);
+          pos = pos + 8 | 0;
+          for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
+            pos = decode(dataView, pos, 2, true) | 0;
+          }
+          var val = {};
+          for (i = size - 1 | 0; i >= 0; i = i - 2 | 0) {
+            var v = values.pop();
+            var n = names[values.pop()];
+            val[n] = v;
+          }
+          values.push(val);
         }
-        var val = {};
-        for (i = size - 1 | 0; i >= 0; i = i - 2 | 0) {
-          var v = values.pop();
-          var n = names[values.pop()];
-          val[n] = v;
-        }
-        values.push(val);
         break;
       case 97:  // $a
-        size = dataView.getUint8(pos) | 0;
-        pos = pos + 1 | 0;
-        for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
-          pos = decode(dataView, pos, 1) | 0;
+        if (shallow) {
+          var size = dataView.getUint8(pos);
+          var xsize = dataView.getUint32(pos + 1);
+          var val = new DataView(byteView.buffer, pos - 1, xsize + 6);
+          values.push(val);
+          pos = pos - 1 + xsize;
+        } else {
+          size = dataView.getUint8(pos) | 0;
+          var xsize = dataView.getUint32(pos + 1);
+          pos = pos + 5 | 0;
+          for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
+            pos = decode(dataView, pos, 1, true) | 0;
+          }
+          var val = [];
+          for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
+            var v = values.pop();
+            val[i] = v;
+          }
+          values.push(val);
         }
-        var val = [];
-        for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
-          var v = values.pop();
-          val[i] = v;
-        }
-        values.push(val);
         break;
       case 65:  // $A
-        size = dataView.getUint32(pos) | 0;
-        pos = pos + 4 | 0;
-        for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
-          pos = decode(dataView, pos, 1);
+        if (shallow) {
+          var size = dataView.getUint32(pos);
+          var xsize = dataView.getUint32(pos + 4);
+          var val = new DataView(byteView.buffer, pos - 1, xsize + 9);
+          values.push(val);
+          pos = pos - 1 + xsize;
+        } else {
+          size = dataView.getUint32(pos) | 0;
+          var xsize = dataView.getUint32(pos);
+          pos = pos + 8 | 0;
+          for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
+            pos = decode(dataView, pos, 1, true);
+          }
+          var val = [];
+          for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
+            var v = values.pop();
+            val[i] = v;
+          }
+          values.push(val);
         }
-        var val = [];
-        for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
-          var v = values.pop();
-          val[i] = v;
-        }
-        values.push(val);
         break;
       default:
-        assert(false, "Internal error: decoding UBJSON");
+        assert(false, "Internal error: decoding UBJSON marker=" + marker);
         break;
       }
       count = count - 1 | 0;
@@ -4774,6 +4843,7 @@ var tagHandler = (function (global) {
     /* DefineFont4 */                   91: undefined,
 
     setStream: setStream,
+    decode: decode,
   };
 
 })(this);
