@@ -21,16 +21,16 @@ var ShapeDefinition = (function () {
     __class__: 'flash.display.Shape',
 
     initialize: function () {
+      var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
-      if (s && s.graphicsFactory) {
-        var graphics = s.graphicsFactory(0);
-
+      if (s && s.paths) {
+        graphics._subpaths = s.paths;
+        graphics.bbox = s.bbox;
+        graphics.strokeBbox = s.strokeBbox;
+        graphics.dictionary = s.dictionary;
+        graphics._scale = 0.05;
         if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
           graphics._cacheAsBitmap(this._bbox);
-
-        this._graphics = graphics;
-      } else {
-        this._graphics = new flash.display.Graphics();
       }
     }
   };
@@ -47,3 +47,4 @@ var ShapeDefinition = (function () {
 
   return def;
 }).call(this);
+

@@ -25,9 +25,9 @@ var logE = Math.log;
 var max = Math.max;
 var min = Math.min;
 var pow = Math.pow;
-var push = [].push;
-var slice = [].slice;
-var splice = [].splice;
+var push = Array.prototype.push;
+var slice = Array.prototype.slice;
+var splice = Array.prototype.splice;
 
 function fail(msg, context) {
   throw new Error((context ? context + ': ' : '') + msg);
@@ -38,12 +38,8 @@ function assert(cond, msg, context) {
 }
 
 function toStringRgba(color) {
-  return 'rgba(' + [
-    color.red,
-    color.green,
-    color.blue,
-    color.alpha / 255
-  ].join(',') + ')';
+  return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
+         color.alpha / 255 + ')';
 }
 
 // Some browser feature testing

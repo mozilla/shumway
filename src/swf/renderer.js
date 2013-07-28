@@ -233,6 +233,7 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     ctx.globalAlpha *= child._alpha;
   }
 
+  // TODO: move into Graphics class
   if (child._graphics) {
     var graphics = child._graphics;
 
@@ -240,41 +241,7 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
       ctx.translate(child._bbox.left, child._bbox.top);
       ctx.drawImage(graphics._bitmap, 0, 0);
     } else {
-      var scale = graphics._scale;
-      if (scale !== 1)
-        ctx.scale(scale, scale);
-
-      var subpaths = graphics._subpaths;
-      for (var j = 0, o = subpaths.length; j < o; j++) {
-        var path = subpaths[j];
-
-        ctx.currentPath = path;
-
-        if (clip) {
-          ctx.closePath();
-        } else {
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle;
-
-            var m = path.fillStyle.currentTransform;
-            if (m) {
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-              ctx.fill();
-              ctx.restore();
-            } else {
-              ctx.fill();
-            }
-          }
-          if (path.strokeStyle) {
-            ctx.strokeStyle = path.strokeStyle;
-            var drawingStyles = path.drawingStyles;
-            for (var prop in drawingStyles)
-              ctx[prop] = drawingStyles[prop];
-            ctx.stroke();
-          }
-        }
-      }
+      graphics.draw(ctx, child.ratio);
     }
   }
 

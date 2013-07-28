@@ -51,7 +51,7 @@
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
-  var WORKERS_ENABLED = true;
+  var WORKERS_ENABLED = false;
   var LOADER_PATH = 'flash/display/Loader.js';
 
   var workerScripts;
@@ -892,21 +892,12 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'shape':
-        var createGraphicsSubPaths = new Function('c,d,r', 'return ' + symbol.data);
-        className = symbol.morph ? 'flash.display.MorphShape' : 'flash.display.Shape';
+        className = symbol.morph ?
+                    'flash.display.MorphShape' : 'flash.display.Shape';
         props.bbox = symbol.bbox;
-        props.graphicsFactory = function graphicsFactory(ratio) {
-          if (graphicsFactory[ratio])
-            return graphicsFactory[ratio];
-
-          var graphics = new flash.display.Graphics();
-          graphics._scale = 0.05;
-          graphics._subpaths = createGraphicsSubPaths(graphics, dictionary, ratio);
-
-          graphicsFactory[ratio] = graphics;
-
-          return graphics;
-        };
+        props.strokeBbox = symbol.strokeBbox;
+        props.paths = symbol.paths;
+        props.dictionary = dictionary;
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {

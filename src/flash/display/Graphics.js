@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty */
+/*global Kanvas, describeProperty, ShapePath */
 
 var GraphicsDefinition = (function () {
-  var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
-  var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
-  var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
   var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
-  var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
+  var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
+  var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
   var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
+  var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
+  var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
 
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
@@ -69,18 +69,86 @@ var GraphicsDefinition = (function () {
     },
 
     get _currentPath() {
-      var path = new Kanvas.Path();
+      var path = new ShapePath();
       if (this._mx !== null || this._my !== null) {
         path.moveTo(this._mx, this._my);
         this._mx = this._my = null;
       }
       path.drawingStyles = this._drawingStyles;
       path.fillStyle = this._fillStyle;
-      path.strokeStyle = this._strokeStyle;
+      path.lineStyle = this._strokeStyle;
       this._subpaths.push(path);
       // Cache as an own property.
       Object.defineProperty(this, '_currentPath', { value: path, configurable: true });
       return path;
+    },
+
+    draw: function(ctx, ratio) {
+      var scale = this._scale;
+      if (scale !== 1) {
+        ctx.scale(scale, scale);
+      }
+
+      var subpaths = this._subpaths;
+      for (var i = 0, o = subpaths.length; i < o; i++) {
+        var path = subpaths[i];
+        if (path.isShapePath) {
+          ctx.beginPath();
+          var commands = path.commands;
+          var data = path.data;
+          for (var j = 0, k = 0; j < commands.length; j++) {
+            switch (commands[j]) {
+              case GRAPHICS_PATH_COMMAND_MOVE_TO:
+                ctx.moveTo(data[k++], data[k++]);
+                break;
+              case GRAPHICS_PATH_COMMAND_LINE_TO:
+                ctx.lineTo(data[k++], data[k++]);
+                break;
+              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                ctx.quadraticCurveTo(data[k++], data[k++], data[k++], data[k++]);
+                break;
+            }
+          }
+          if (path.fillStyle) {
+            ctx.fillStyle = toStringRgba(path.fillStyle.color || {red: (Math.random() * 256) | 0, green: (Math.random() * 256) | 0, blue: (Math.random() * 256) | 0, alpha: 255});
+            ctx.fill();
+          }
+          if (path.lineStyle) {
+            ctx.lineWidth = path.lineStyle.width;
+            ctx.strokeStyle = toStringRgba(path.lineStyle.color || {red: (Math.random() * 256) | 0, green: (Math.random() * 256) | 0, blue: (Math.random() * 256) | 0, alpha: 255});
+            ctx.stroke();
+          }
+          ctx.closePath();
+          continue;
+        }
+
+        ctx.currentPath = path;
+
+        if (clip) {
+          ctx.closePath();
+        } else {
+          if (path.fillStyle) {
+            ctx.fillStyle = path.fillStyle;
+
+            var m = path.fillStyle.currentTransform;
+            if (m) {
+              ctx.save();
+              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+              ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.fill();
+            }
+          }
+          if (path.strokeStyle) {
+            ctx.strokeStyle = path.strokeStyle;
+            var drawingStyles = path.drawingStyles;
+            for (var prop in drawingStyles)
+              ctx[prop] = drawingStyles[prop];
+            ctx.stroke();
+          }
+        }
+      }
     },
 
     beginFill: function (color, alpha) {
@@ -273,6 +341,24 @@ var GraphicsDefinition = (function () {
       this._my = y;
     },
     _getBounds: function (includeStroke) {
+      var bbox;
+      if (includeStroke && this.strokeBbox) {
+        bbox = this.strokeBox;
+      } else if (this.bbox) {
+        bbox = this.bbox;
+      }
+      if (bbox) {
+        return {
+          x: bbox.left,
+          y: bbox.top,
+          width: bbox.right - bbox.left,
+          height: bbox.bottom - bbox.top
+        };
+      }
+      // TODO: support cached includeStroke bbox without strokeBox from shape.js
+      if (this.bbox) {
+        return this.bbox;
+      }
       var subpaths = this._subpaths;
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
@@ -291,6 +377,9 @@ var GraphicsDefinition = (function () {
       if (xMins.length === 0) {
         return 0;
       }
+
+      // TODO: check if including the scale in the bbox is correct
+      // TODO: cache bbox
       var scale = this._scale;
       var xMin = Math.min.apply(Math, xMins) * scale;
       var yMin = Math.min.apply(Math, yMins) * scale;
