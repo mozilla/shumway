@@ -21,26 +21,16 @@ limitations under the License.
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
-    <table>
-      <tr>
-        <td colspan="3">
-          <div id="stage">
-            <div id="xstats"></div>
-          </div>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <canvas id="terminal" width="600" height="400" tabindex='0'></canvas>
-        </td>
-        <td>
-          <canvas id="frameInfoTerminal" width="500" height="400" tabindex='1'></canvas>
-        </td>
-        <td>
-          <div class="toolbarInfo" id="timerInfo"></div>
-        </td>
-      </tr>
-    </table>
+    <div id="stageContainer">
+      <div id="stage">
+        <div id="xstats"></div>
+      </div>
+    </div>
+    <div id="terminalContainer">
+      <canvas id="terminal" width="600" height="400" tabindex='0'></canvas>
+      <canvas id="frameInfoTerminal" width="500" height="400" tabindex='1'></canvas>
+      <div class="toolbarInfo" id="timerInfo"></div>
+    </div>
 
     <script>
       var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline",
