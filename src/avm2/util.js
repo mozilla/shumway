@@ -1168,3 +1168,18 @@ var Callback = (function () {
   };
   return callback;
 })();
+
+// Dump the bytes of an ArrayBuffer.
+function dumpBytes(buffer, start, length) {
+  var s = "";
+  bytes = new Uint8Array(buffer, start, length);
+  var end = length;
+  for (var i = 0; i < end; i++) {
+    if (((i) % 16) === 0) {
+      s += "\n" + (start + i) + ": ";
+    }
+    s += bytes[i] + " ";
+  }
+  return s;
+}      
+

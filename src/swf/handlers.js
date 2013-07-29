@@ -101,19 +101,6 @@
 
 */
 
-function dumpBytes(buffer, start, length) {  
-  var s = "";
-  bytes = new Uint8Array(buffer, start, length);
-  var end = length;
-  for (var i = 0; i < end; i++) {
-    if (((i) % 16) === 0) {
-      s += "\n" + (start + i) + ": ";
-    }
-    s += bytes[i] + " ";
-  }
-  print("dumping " + length + " bytes: " + s);
-}      
-
 var tagHandler = (function (global) {
 
   var Asm = function Asm(stdlib, imports, heap) {
@@ -291,8 +278,6 @@ var tagHandler = (function (global) {
     var pow = stdlib.Math.pow;
     var NaN = stdlib.NaN;
     var Infinity = stdlib.Infinity;
-
-    var trace = imports.trace;
 
     // Markers for UBJSON types
     var $o = 111;
@@ -2247,8 +2232,6 @@ var tagHandler = (function (global) {
     lineStyles: 153,
     eos: 154,
     lineStyle: 155,
-    
-    trace: trace,
   };
 
   var names = {}
@@ -2270,15 +2253,15 @@ var tagHandler = (function (global) {
       asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
       var count = asm.defineShape(swfVersion, tagCode);
-      decode(dataView, begin, count, true);
+      decode(dataView, begin, count, 0 /*depth*/);
       var stop = values.length;
       var start = stop - count;
+      // Populate the current tag with parsed properties.
       for (i = start | 0; i < stop; i = i + 2 | 0) {
         var n = names[values[i | 0]];
         var v = values[i + 1 | 0];
         $[n] = v;
       }
-      values = [];
       $stream.pos = asm.getInputStreamPos();
       return $;
     }
@@ -4601,14 +4584,27 @@ var tagHandler = (function (global) {
 
   var values = [];
 
-  function decodeValue(dataView) {
-    values = [];
-    decode(dataView, 0, 1, false);
-    return values.pop();
+  // Decode a binary encoded object. 'val' is a DataView or a partially decoded
+  // binary object. 'depth' is the nesting level to decode. 
+  function decodeValue(val, depth) {
+    if (depth === undefined) {
+      depth = -1; // decode all levels
+    }
+    if (val instanceof DataView) {
+      values = [];
+      decode(val, 0, 1, depth);
+      val = values.pop();
+    } else if (depth !== 0 && val instanceof Object) {
+      Object.keys(val).forEach(function (n) {
+          val[n] = decodeValue(val[n], depth - 1);
+      });
+    }
+    // otherwise, do nothing
+    return val;
   }
 
   var nesting = 0;
-  function decode(dataView, pos, count, shallow) {
+  function decode(dataView, pos, count, depth) {
     nesting = nesting + 1;
     pos = pos | 0;
     var marker = 0;
@@ -4673,7 +4669,7 @@ var tagHandler = (function (global) {
         pos = pos + size | 0;
         break;
       case 111: // $o
-        if (shallow) {
+        if (depth === 0) {
           // skip size
           var xsize = dataView.getUint32(pos + 1);
           var val = new DataView(dataView.buffer, dataView.byteOffset + pos - 1);
@@ -4686,7 +4682,7 @@ var tagHandler = (function (global) {
           var xsize = dataView.getUint32(pos + 1);
           pos = pos + 5 | 0;
           for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
-            pos = decode(dataView, pos, 2, true) | 0;
+            pos = decode(dataView, pos, 2, depth - 1) | 0;
           }
           var val = {};
           var stop = values.length;
@@ -4701,7 +4697,7 @@ var tagHandler = (function (global) {
         }
         break;
       case 79:  // $O
-        if (shallow) {
+        if (depth === 0) {
           // skip size
           var xsize = dataView.getUint32(pos + 4) | 0;
           var val = new DataView(dataView.buffer, dataView.byteOffset + pos - 1, xsize);
@@ -4714,7 +4710,7 @@ var tagHandler = (function (global) {
           values = [];
           pos = pos + 8 | 0;
           for (i = 0; ~~i < ~~size; i = i + 2 | 0) {
-            pos = decode(dataView, pos, 2, true) | 0;
+            pos = decode(dataView, pos, 2, depth - 1) | 0;
           }
           var val = {};
           for (i = size - 1 | 0; i >= 0; i = i - 2 | 0) {
@@ -4727,7 +4723,7 @@ var tagHandler = (function (global) {
         }
         break;
       case 97:  // $a
-        if (shallow) {
+        if (depth === 0) {
           // skip size
           var xsize = dataView.getUint32(pos + 1);
           var val = new DataView(dataView.buffer, dataView.byteOffset + pos - 1, xsize);
@@ -4738,7 +4734,7 @@ var tagHandler = (function (global) {
           var xsize = dataView.getUint32(pos + 1);
           pos = pos + 5 | 0;
           for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
-            pos = decode(dataView, pos, 1, true) | 0;
+            pos = decode(dataView, pos, 1, depth - 1) | 0;
           }
           var val = [];
           for (i = size - 1 | 0; i >= 0; i = i - 1 | 0) {
@@ -4749,7 +4745,7 @@ var tagHandler = (function (global) {
         }
         break;
       case 65:  // $A
-        if (shallow) {
+        if (depth === 0) {
           // skip size
           var xsize = dataView.getUint32(pos + 4);
           var val = new DataView(dataView.buffer, dataView.byteOffset + pos - 1, xsize);
@@ -4762,7 +4758,7 @@ var tagHandler = (function (global) {
           var lastValues = values;
           values = [];
           for (i = 0; ~~i < ~~size; i = i + 1 | 0) {
-            if (dataView.getUint8(pos) === 111) {  // $o
+            if (depth === 0 && dataView.getUint8(pos) === 111) {  // $o
               pos = pos + 1 | 0;
               // skip size
               var xsize = dataView.getUint32(pos + 1);
@@ -4770,7 +4766,7 @@ var tagHandler = (function (global) {
               values.push(val);
               pos = pos - 1 + xsize;
             } else {
-              pos = decode(dataView, pos, 1, true);
+              pos = decode(dataView, pos, 1, depth - 1);
             }
           }
           var val = [];
