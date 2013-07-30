@@ -19,33 +19,28 @@
 /*
   SWF Parser
 
-  We investigate the efficacy of rewriting the SWF parser in C using Emscripten
-  to generate efficient JS. Before we can rewrite the SWF parser in C we need
-  to define the interface between the existing code and the parts to be
-  rewritten in C, which can accept numeric values and typed arrays of numeric
-  values.
+  We investigate the efficacy of rewriting the SWF parser in ASMJS.
 
-  That interface currently consists of a table of tag handlers (functions that
-  parse individual SWF tags), and a Stream class that manages reading source
-  bytes down the the bit level. (The SWF file format encodes values at the sub-
+  The parser consists of a table of tag handlers (functions that parse
+  individual SWF tags), and a Stream class that manages reading source bytes
+  down the the bit level. (The SWF file format encodes values at the sub-
   byte level to conserve space.) The tag handlers parse a SWF tags to object
-  values, which are then interpreted by the Shumway runtime. Since C code cannot
-  produce JS object values, it will produce a byte array that encodes the
-  resulting syntax tree in binary form. It will be left to the runtime to decode
-  that blob when needed during rendering.
-
-  -- Binary object encoding for parse trees
-  -- Stream class for reading bytes (and bits) from the input stream
+  values, which are then interpreted by the Shumway runtime. Since ASMJS cannot
+  produce JS object values, the new parser will produce a byte array that
+  encodes the resulting syntax tree in binary form. It will be left to the
+  runtime to decode that blob as it interprets it.
 
   Work list
 
-  1. Rewrite the Stream class to read bytes directly from the source byte array,
-     without the use of non-numeric values.
-  2. Define a binary format for encoding parse trees as binary encoded object
-     values (e.g. Universal Binary JSON, UBJSON).
-  3. Rewrite the tag handlers in C (or hand optimized asm.js) to read SWF bits
-     and write syntax trees as UBJSON.
-  4. Decode binary objects as needed during rendering.
+  1. (done) Rewrite the Stream class to read bytes directly from the source byte
+     array, without the use of non-numeric values.
+  2. (done) Define a binary format for encoding parse trees as binary encoded
+     object values. We use a modified form of Universal Binary JSON, UBJSON that
+     allows incremental decoding of the binary object by embedding the size of
+     binary segment.
+  3. Rewrite the tag handlers in ASMJS to read SWF bits and write binary syntax
+     trees.
+  4. Decode binary objects when needed.
 
   Goals and Risks
 
@@ -59,25 +54,15 @@
   efficiently decode binary syntax trees to the object values used by the
   renderer.
 
-  NEXT STEPS
-
-  Our next steps focus on proving that the proposed design will likely result in
-  the performance gains we aim for. This consists of two sub-proofs: 1/that a
-  SWF to binary syntax tree parser can be much (10x) faster than the existing
-  parser; and 2/that lazy decoding of binary syntax trees is not inttrude in the
-  process of rendering the binary tags.
-
-  We intend to initially write SWF tag handlers using asm.js. This will allow us
-  to avoid the overhead of writing rewriting and integrating a C based parser.
-  Writing  code in asm.js allows us to patch existing tag handlers incrementally,
-  sometimes depending on non-asmjs code in non-critical paths.
-  
   STATUS
 
+  [2013-07-30] We are now able to parse and decode the DEFINE_SHAPE tag using
+  the ASMJS parser. The new DEFINE_SHAPE parser produces its binary output in
+  5x to 7x less time than it takes the old parser to produce its JS object.
+
   [2013-07-13] Items 1 and 2 above are approaching completeness. 3 is prototyped
-  in ASM.JS and is showing promising but still inconclusive results. 4 is not
+  in ASMJS and is showing promising but still inconclusive results. 4 is not
   started.
-  
 
   [2013-07-10] This version of 'handlers.js' is 10x smaller and loads 4x faster
   (6ms vs 24ms) and parses 10% faster (515ms vs 445ms for the mining truck game
@@ -85,19 +70,18 @@
   impressive, but this version lays the foundation for further work (see TODO
   below) that should yield signficant improvements.
 
-  TODO
-
-  -- Read bytes directly from $bytes, rather than through ffi helpers
-  -- Build outgoing objects during decoding rather that a separate copy path
-  -- In line asmjs functions like crazy
-  -- Explore the use of hybrid functions that defeat the AOT compiler but
-     directly manipulate outgoing objects and take advantage of the jit
-
   EXPERIMENTS
 
+  -- (done, unfeasible) Emit JSON as C-strings and call JSON.parse() to decode
+  -- (done, unfeasible) Emit object values directly using ffi imports
   -- Generate C from tags.js/struct.js spec and compile using Emscripten
-  -- Emit JSON as C-strings and call JSON.parse() to decode
-  -- Emit object values directly using ffi imports
+
+  TODO
+
+  -- Optimize the decoding of binary object tags.
+  -- Write more tag handlers in ASMJS. This should be much easier now that we
+     have written the largest and most complex of the tag handlers.
+  -- Implement lazy (possibly async) decoding of binary tags.
 
 */
 
@@ -988,6 +972,7 @@ var tagHandler = (function (global) {
         writePropU8(HAS_MATRIX, (hasMatrix = flags >> 2 & 1));
         writePropU8(PLACE, (place = flags >> 1 & 1));
         writePropU8(MOVE, (move = flags & 1));
+        count = count + 16 | 0;
         if (~~tagCode == 70) {
           writePropU8(HAS_BACKGROUND_COLOR, (hasBackgroundColor = flags >> 15 & 1));
           writePropU8(HAS_VISIBILITY, (hasVisibility = flags >> 14 & 1));
@@ -1004,16 +989,18 @@ var tagHandler = (function (global) {
           count = count + 6 | 0;
         }
         writePropU32(DEPTH, readStreamU16() | 0);
+        count = count + 2 | 0;
         if (hasClassName) {
           writeUBJU8(CLASS_NAME);
           stringPos = startString(0) | 0;
           stringLen = readStreamString(0) | 0;
           finishString(stringPos, stringLen, 0);
+          count = count + 2 | 0;
         }
         if (place) {
           writePropU32(PLACE, readStreamU16() | 0);
+          count = count + 2 | 0;
         }
-        count = count + 20 | 0;
         if (hasMatrix) {
           writeUBJU8(MATRIX);
           objectPos = startObject(0) | 0;
@@ -1103,10 +1090,11 @@ var tagHandler = (function (global) {
         writePropU32(SYMBOL_ID, readStreamU16() | 0);
         writePropU32(DEPTH, readStreamU16() | 0);
         writePropU8(HAS_MATRIX, 1);
+        writeUBJU8(MATRIX);
         objectPos = startObject(0) | 0;
         objectLen = matrix(swfVersion, tagCode) | 0;
         finishObject(objectPos, objectLen, 0);
-        count = count + 8 | 0;
+        count = count + 10 | 0;
         if (1 /*remaining()*/ | 0) {
           writePropU8(HAS_CXFORM, 1);
           writeUBJU8(CXFORM);
@@ -2263,6 +2251,7 @@ var tagHandler = (function (global) {
         $[n] = v;
       }
       $stream.pos = asm.getInputStreamPos();
+//      $ = decodeValue($);
       return $;
     }
     $ || ($ = {});
@@ -2298,13 +2287,23 @@ var tagHandler = (function (global) {
 
   function placeObject($bytes, $stream, $, swfVersion, tagCode){
     if (asm.placeObject) {
+      var begin = 0;
       asm.setInputStreamPos($stream.pos);
-      var begin = asm.getPos();
-      $.count = asm.placeObject(swfVersion, tagCode);
-      $.binary = byteView.subarray(begin, asm.getPos());
+      var count = asm.placeObject(swfVersion, tagCode);
+      decode(dataView, begin, count, 0 /*depth*/);
+      var stop = values.length;
+      var start = stop - count;
+      // Populate the current tag with parsed properties.
+      for (i = start | 0; i < stop; i = i + 2 | 0) {
+        var n = names[values[i | 0]];
+        var v = values[i + 1 | 0];
+        $[n] = v;
+      }
       $stream.pos = asm.getInputStreamPos();
+      $ = decodeValue($);
       return $;
     }
+    debugger;
     $||($={})
     if(tagCode>4){
       if(tagCode>26){
