@@ -177,3 +177,85 @@ var Promise = (function PromiseClosure() {
 
   return Promise;
 })();
+
+var QuadTree = function (x, y, width, height) {
+  this.x = x || 0;
+  this.y = y || 0;
+  this.width = width || 0;
+  this.height = height || 0;
+  this.children = [];
+  this.stuckChildren = [];
+  this.nodes = [];
+};
+QuadTree.prototype._findIndex = function (x, y, width, height) {
+  var right = x > this.x + this.width / 2;
+  var bottom = y > this.y + this.height / 2;
+
+  var index = 0;
+  if (right) {
+    if (bottom) {
+      index = 3;
+    } else {
+      index = 1;
+    }
+  } else if (bottom) {
+    index = 2;
+  }
+
+  return index;
+};
+QuadTree.prototype.insert = function (item, x, y, width, height) {
+  if (this.nodes.length) {
+    var index = this._findIndex(x, y, width, height);
+    var node = this.nodes[index];
+
+    if (x >= node.x && x + width <= node.x + node.width &&
+        y >= node.y && y + height <= node.y + node.height) {
+      this.nodes[index].insert(item);
+    } else {
+      this.stuckChildren.push(item);
+    }
+
+    return;
+  }
+
+  var children = this.children;
+
+  children.push(item);
+
+  if (children.length > 4) {
+    this.subdivide();
+
+    for (var i = 0; i < children.length; i++) {
+      this.insert(children[i]);
+    }
+
+    children.length = 0;
+  }
+};
+QuadTree.prototype._out = [];
+QuadTree.prototype.retrieve = function (x, y, width, height) {
+  var out = this._out;
+  out.length = 0;
+
+  if (this.nodes.length) {
+    var index = this._findIndex(x, y, width, height);
+
+    out.push.apply(out, this.nodes[index].retrieve(x, y, width, height));
+  }
+
+  out.push.apply(out, this.stuckChildren);
+  out.push.apply(out, this.children);
+
+  return out;
+};
+QuadTree.prototype.subdivide = function () {
+  var halfWidth = this.width / 2;
+  var halfHeight = this.height / 2;
+  var midX = this.x + halfWidth;
+  var midY = this.y + halfHeight;
+  this.nodes[0] = new QuadTree(this.x, this.y, halfWidth, halfHeight);
+  this.nodes[1] = new QuadTree(midX, this.y, halfWidth, halfHeight);
+  this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight);
+  this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight);
+};
