@@ -90,6 +90,7 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
       this._invalid = false;
+      this._qtree = null;
 
       var s = this.symbol;
       if (s) {
