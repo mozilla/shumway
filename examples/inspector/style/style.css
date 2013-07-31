@@ -7,8 +7,22 @@ body {
   padding-top: 20px;
   background-image: url(images/texture.png);
   background-color: #1a2633;
+}
+
+body.simple {
+  text-align: center;
+}
+body.simple > div {
+  display: none;
+}
+body.simple #stageContainer {
+  display: block;
 
 }
+body.simple #xstats {
+  display: none;
+}
+
 
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   body {
@@ -292,8 +306,14 @@ body {
   background-position: calc(100% - 4px) center, top left, top left;
 }
 
+#terminalContainer {
+  padding-top: 20px;
+  padding-bottom: 60px;
+}
+
 #stage {
-  float: left;
+  position: relative;
+  display: inline-block;
 }
 
 #xstats {
