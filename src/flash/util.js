@@ -216,6 +216,7 @@ QuadTree.prototype.insert = function (item, bounds) {
       this.nodes[index].insert(item);
     } else {
       this.stuckChildren.push(item);
+      item._quadtree = this;
     }
 
     return;
@@ -233,7 +234,11 @@ QuadTree.prototype.insert = function (item, bounds) {
     }
 
     children.length = 0;
+
+    return;
   }
+
+  item._quadtree = this;
 };
 QuadTree.prototype._out = [];
 QuadTree.prototype.retrieve = function (bounds) {
