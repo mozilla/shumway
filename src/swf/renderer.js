@@ -212,6 +212,7 @@ RenderVisitor.prototype = {
     }
 
     child._dirtyArea = null;
+    child._invalid = false;
   }
 };
 

@@ -68,10 +68,9 @@ var DisplayObjectContainerDefinition = (function () {
       this._control.appendChild(child._control);
 
       child._dispatchEvent(new flash.events.Event("added"));
-      if (child.stage)
-        child._addedToStage(new flash.events.Event("addedToStage"));
-
-      this._markAsDirty();
+      if (this.stage) {
+        this.stage._addToStage(child);
+      }
 
       return child;
     },
@@ -127,15 +126,14 @@ var DisplayObjectContainerDefinition = (function () {
       var child = children[index];
 
       child._dispatchEvent(new flash.events.Event("removed"));
-      if (child.stage)
-        child._removedFromStage(new flash.events.Event("removedFromStage"));
+      if (this.stage) {
+        this.stage._removeFromStage(child);
+      }
 
       children.splice(index, 1);
       child._parent = null;
 
       this._control.removeChild(child._control);
-
-      this._markAsDirty();
 
       return child;
     },
@@ -154,7 +152,7 @@ var DisplayObjectContainerDefinition = (function () {
       children.splice(index, 0, child);
       child._owned = false;
 
-      this._markAsDirty();
+      // TODO: invalidate
 
       return child;
     },
@@ -192,7 +190,7 @@ var DisplayObjectContainerDefinition = (function () {
       child1._owned = false;
       child2._owned = false;
 
-      this._markAsDirty();
+      // TODO: invalidate
     },
     destroy: function () {
       if (this._destroyed) {

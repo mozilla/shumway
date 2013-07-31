@@ -111,7 +111,7 @@ var SimpleButtonDefinition = (function () {
     },
 
     _updateButton: function () {
-      this._markAsDirty();
+      this._invalidate();
 
       var state = this._upState;
       if (this._isMouseDown && this._isMouseOver && this._downState)

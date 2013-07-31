@@ -89,6 +89,7 @@ var DisplayObjectDefinition = (function () {
       this._scrollRect = null;
       this._width = null;
       this._height = null;
+      this._invalid = false;
 
       var s = this.symbol;
       if (s) {
@@ -182,14 +183,6 @@ var DisplayObjectDefinition = (function () {
         'class: ' + this.__class__;
       this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
     },
-    _addedToStage: function (e) {
-      var children = this._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        child._addedToStage(e);
-      }
-      this._dispatchEvent(e);
-    },
     _applyCurrentInverseTransform: function (point, immediate) {
       if (this._parent && this._parent !== this._stage && !immediate)
         this._parent._applyCurrentInverseTransform(point);
@@ -277,18 +270,10 @@ var DisplayObjectDefinition = (function () {
       var height = Math.min(b1.y + b1.height, b2.y + b2.height) - y;
       return width > 0 && height > 0;
     },
-    _markAsDirty: function() {
-      if (!this._dirtyArea)
-        this._dirtyArea = this.getBounds();
-      this._bounds = null;
-    },
-    _removedFromStage: function (e) {
-      var children = this._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        child._removedFromStage(e);
+    _invalidate: function (foo) {
+      if (this.stage) {
+        this.stage._invalidateOnStage(this, foo);
       }
-      this._dispatchEvent(e);
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;
@@ -339,10 +324,15 @@ var DisplayObjectDefinition = (function () {
       return this._alpha;
     },
     set alpha(val) {
-      this._alpha = val;
       this._slave = false;
 
-      this._markAsDirty();
+      if (val === this._alpha) {
+        return;
+      }
+
+      this._alpha = val;
+
+      this._invalidate();
     },
     get blendMode() {
       return BLEND_MODE_NORMAL;
@@ -420,10 +410,11 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._mask = val;
-      if (val) { val._maskedObject = this;
+      if (val) {
+        val._maskedObject = this;
       }
 
-      this._markAsDirty();
+      this._invalidate();
     },
     get name() {
       return this._name || (this._name = generateName());
@@ -459,7 +450,8 @@ var DisplayObjectDefinition = (function () {
       if (val === this._rotation)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._rotation = val;
 
@@ -477,7 +469,8 @@ var DisplayObjectDefinition = (function () {
       if (val === this._scaleX)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._scaleX = val;
 
@@ -492,7 +485,8 @@ var DisplayObjectDefinition = (function () {
       if (val === this._scaleY)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._scaleY = val;
 
@@ -523,7 +517,8 @@ var DisplayObjectDefinition = (function () {
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
     },
     get visible() {
       return this._visible;
@@ -536,7 +531,7 @@ var DisplayObjectDefinition = (function () {
 
       this._visible = val;
 
-      this._markAsDirty();
+      this._invalidate();
     },
     get width() {
       var bounds = this._getContentBounds();
@@ -579,7 +574,13 @@ var DisplayObjectDefinition = (function () {
       if (val === this._x)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+
+      if (this._bounds) {
+        var dx = val - this._bounds.xMin;
+        this._bounds.xMin += dx;
+        this._bounds.xMax += dx;
+      }
 
       this._x = val;
 
@@ -594,7 +595,13 @@ var DisplayObjectDefinition = (function () {
       if (val === this._y)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+
+      if (this._bounds) {
+        var dy = val - this._bounds.yMin;
+        this._bounds.yMin += dy;
+        this._bounds.yMax += dy;
+      }
 
       this._y = val;
 

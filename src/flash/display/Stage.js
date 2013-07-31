@@ -29,15 +29,42 @@ var StageDefinition = (function () {
       this._quality = 'high';
       this._color = 0xFFFFFFFF;
       this._stage = this;
-      this._invalid = true;
       this._deferRenderEvent = false;
       this._focus = null;
       this._showDefaultContextMenu = true;
       this._displayState = "normal";
       this._colorCorrection = "default";
+      this._stageFocusRect = true;
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
-      this._stageFocusRect = true;
+    _setup: function render(ctx, options) {
+      this._invalid = true;
+    },
+    _addToStage: function addToStage(displayObject) {
+      this._invalidateOnStage(displayObject);
+
+      var children = displayObject._children;
+      for (var i = 0; i < children.length; i++) {
+        this._addToStage(children[i]);
+      }
+      displayObject._dispatchEvent(new flash.events.Event('addedToStage'));
+    },
+    _removeFromStage: function removeFromStage(displayObject) {
+      this._invalidateOnStage(displayObject);
+
+      var children = displayObject._children;
+      for (var i = 0; i < children.length; i++) {
+        this._removeFromStage(children[i]);
+      }
+      displayObject._dispatchEvent(new flash.events.Event('removedFromStage'));
+    },
+    _invalidateOnStage: function invalidateOnStage(displayObject) {
+      if (displayObject._invalid) {
+        return;
+      }
+
+      displayObject._invalid = true;
+      displayObject._dirtyArea = displayObject.getBounds();
     },
     __glue__: {
       native: {

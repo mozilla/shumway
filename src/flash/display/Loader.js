@@ -626,6 +626,7 @@ var LoaderDefinition = (function () {
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
             parent._root = root;
+            parent._setup();
           } else {
             loader._children.push(root);
           }
