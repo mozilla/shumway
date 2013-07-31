@@ -37,7 +37,9 @@ var StageDefinition = (function () {
       this._stageFocusRect = true;
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
+      this._qtree = null;
     _setup: function render(ctx, options) {
+      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight);
       this._invalid = true;
     },
     _addToStage: function addToStage(displayObject) {
