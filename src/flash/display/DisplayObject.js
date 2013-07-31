@@ -273,6 +273,11 @@ var DisplayObjectDefinition = (function () {
     _invalidate: function (foo) {
       if (this.stage) {
         this.stage._invalidateOnStage(this, foo);
+
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          this.stage._invalidateOnStage(children[i]);
+        }
       }
     },
     _updateCurrentTransform: function () {
