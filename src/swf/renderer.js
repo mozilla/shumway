@@ -414,7 +414,8 @@ function renderStage(stage, ctx, events) {
         this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
       } else if (child._graphics && (child._graphics._revision !== child._revision)) {
         child._revision = child._graphics._revision;
-        child._markAsDirty();
+        child._invalidate();
+        child._bounds = null;
         // redraw entire stage till we calculate bounding boxes for dynamic graphics
         this.ctx.rect(0, 0, frameWidth, frameHeight);
       }
