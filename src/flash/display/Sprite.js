@@ -42,6 +42,7 @@ var SpriteDefinition = (function () {
       } else {
         this._graphics = new flash.display.Graphics();
       }
+      this._graphics._parent = this;
     },
 
     _addTimelineChild: function(cmd, index, replace) {

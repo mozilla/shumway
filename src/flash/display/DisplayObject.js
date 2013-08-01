@@ -72,7 +72,6 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = null;
       this._owned = false;
       this._parent = null;
-      this._revision = 0;
       this._root = null;
       this._rotation = 0;
       this._scale9Grid = null;

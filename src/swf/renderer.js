@@ -412,12 +412,6 @@ function renderStage(stage, ctx, events) {
         var b2 = roundForClipping(child.getBounds());
         this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
         this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
-      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
-        child._revision = child._graphics._revision;
-        child._invalidate();
-        child._bounds = null;
-        // redraw entire stage till we calculate bounding boxes for dynamic graphics
-        this.ctx.rect(0, 0, frameWidth, frameHeight);
       }
       if (isContainer) {
         visitContainer(child, this);
