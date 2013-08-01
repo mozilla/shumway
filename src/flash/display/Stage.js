@@ -69,6 +69,19 @@ var StageDefinition = (function () {
         return;
       }
 
+      if (displayObject._qtree) {
+        var qtree = displayObject._qtree;
+        var list = qtree.children;
+        var index = list.indexOf(displayObject);
+        if (index < 0) {
+          list = qtree.stuckChildren;
+          index = list.indexOf(displayObject);
+        }
+        if (index > -1) {
+          list.splice(index, 1);
+        }
+      }
+
       displayObject._invalid = true;
       displayObject._dirtyArea = displayObject.getBounds();
 
@@ -111,6 +124,10 @@ var StageDefinition = (function () {
         }
 
         obj._invalid = false;
+
+        if (obj.stage) {
+          this._qtree.insert(obj);
+        }
       }
     },
 
