@@ -83,7 +83,7 @@ var StageDefinition = (function () {
       }
 
       displayObject._invalid = true;
-      displayObject._dirtyArea = displayObject.getBounds();
+      displayObject._dirtyArea = displayObject.getBounds(this);
 
       this._invalidObjects.push(displayObject);
     },
