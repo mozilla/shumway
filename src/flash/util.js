@@ -187,9 +187,9 @@ var QuadTree = function (x, y, width, height) {
   this.stuckChildren = [];
   this.nodes = [];
 };
-QuadTree.prototype._findIndex = function (bounds) {
-  var right = bounds.x > this.x + this.width / 2;
-  var bottom = bounds.y > this.y + this.height / 2;
+QuadTree.prototype._findIndex = function (item) {
+  var right = item.x > this.x + this.width / 2;
+  var bottom = item.y > this.y + this.height / 2;
 
   var index = 0;
   if (right) {
@@ -204,15 +204,15 @@ QuadTree.prototype._findIndex = function (bounds) {
 
   return index;
 };
-QuadTree.prototype.insert = function (item, bounds) {
+QuadTree.prototype.insert = function (item) {
   if (this.nodes.length) {
-    var index = this._findIndex(bounds);
+    var index = this._findIndex(item);
     var node = this.nodes[index];
 
-    if (bounds.x >= node.x &&
-        bounds.x + bounds.width <= node.x + node.width &&
-        bounds.y >= node.y &&
-        bounds.y + bounds.height <= node.y + node.height) {
+    if (item.x >= node.x &&
+        item.x + item.width <= node.x + node.width &&
+        item.y >= node.y &&
+        item.y + item.height <= node.y + node.height) {
       this.nodes[index].insert(item);
     } else {
       this.stuckChildren.push(item);
@@ -242,14 +242,14 @@ QuadTree.prototype.insert = function (item, bounds) {
   item._quadtree = this;
 };
 QuadTree.prototype._out = [];
-QuadTree.prototype.retrieve = function (bounds) {
+QuadTree.prototype.retrieve = function (item) {
   var out = this._out;
   out.length = 0;
 
   if (this.nodes.length) {
-    var index = this._findIndex(bounds);
+    var index = this._findIndex(item);
 
-    out.push.apply(out, this.nodes[index].retrieve(bounds));
+    out.push.apply(out, this.nodes[index].retrieve(item));
   }
 
   out.push.apply(out, this.stuckChildren);
