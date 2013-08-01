@@ -37,10 +37,14 @@ var StageDefinition = (function () {
       this._stageFocusRect = true;
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
-    _setup: function render(ctx, options) {
+      this._invalidObjects = [];
+    },
+
+    _setup: function setup(ctx, options) {
       this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight);
       this._invalid = true;
     },
+
     _addToStage: function addToStage(displayObject) {
       this._invalidateOnStage(displayObject);
 
@@ -59,6 +63,7 @@ var StageDefinition = (function () {
       }
       displayObject._dispatchEvent(new flash.events.Event('removedFromStage'));
     },
+
     _invalidateOnStage: function invalidateOnStage(displayObject) {
       if (displayObject._invalid) {
         return;
@@ -66,7 +71,49 @@ var StageDefinition = (function () {
 
       displayObject._invalid = true;
       displayObject._dirtyArea = displayObject.getBounds();
+
+      this._invalidObjects.push(displayObject);
     },
+
+    _roundForClipping: function roundForClipping(bounds) {
+      var scaleX = this._canvasState.scaleX;
+      var scaleY = this._canvasState.scaleY;
+      var offsetX = this._canvasState.offsetX;
+      var offsetY = this._canvasState.offsetY;
+
+      var x = (Math.floor(bounds.x * scaleX + offsetX) - offsetX) / scaleX;
+      var y = (Math.floor(bounds.y * scaleY + offsetY) - offsetY) / scaleY;
+      var x2 = (Math.ceil((bounds.x + bounds.width) * scaleX + offsetX) - offsetX) / scaleX;
+      var y2 = (Math.ceil((bounds.y + bounds.height) * scaleY + offsetY) - offsetY) / scaleY;
+
+      return { x: x, y: y, width: x2 - x, height: y2 - y };
+    },
+    _clipDirtyAreas: function clipDirtyAreas(ctx) {
+      var objects = this._invalidObjects;
+      while (objects.length) {
+        var obj = objects.shift();
+
+        if (!obj._invalid) {
+          continue;
+        }
+
+        var b1 = this._roundForClipping(obj._dirtyArea);
+        var b2 = this._roundForClipping(obj.getBounds());
+
+        if (b1.width && b1.height) {
+          ctx.rect(b1.x, b1.y, b1.width, b1.height);
+        }
+        if (b2.width && b2.height && (b1.x !== b2.x ||
+                                      b1.y !== b2.y ||
+                                      b1.width !== b2.width ||
+                                      b1.height !== b2.height)) {
+          ctx.rect(b2.x, b2.y, b2.width, b2.height);
+        }
+
+        obj._invalid = false;
+      }
+    },
+
     __glue__: {
       native: {
         instance: {

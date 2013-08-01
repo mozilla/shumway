@@ -382,43 +382,6 @@ function renderStage(stage, ctx, events) {
 
   updateRenderTransform();
 
-  function roundForClipping(bounds) {
-    var scaleX = stage._canvasState.scaleX;
-    var scaleY = stage._canvasState.scaleY;
-    var offsetX = stage._canvasState.offsetX;
-    var offsetY = stage._canvasState.offsetY;
-
-    var x = (Math.floor(bounds.x * scaleX + offsetX) - offsetX) / scaleX;
-    var y = (Math.floor(bounds.y * scaleY + offsetY) - offsetY) / scaleY;
-    var x2 = (Math.ceil((bounds.x + bounds.width) * scaleX + offsetX) - offsetX) / scaleX;
-    var y2 = (Math.ceil((bounds.y + bounds.height) * scaleY + offsetY) - offsetY) / scaleY;
-    return { x: x, y: y, width: x2 - x, height: y2 - y };
-  }
-
-  function PreVisitor(root, ctx) {
-    this.root = root;
-    this.ctx = ctx;
-  }
-  PreVisitor.prototype = {
-    ignoreVisibleAttribute: true,
-    start: function () {
-      visitContainer(this.root, this);
-    },
-    childrenStart: function() {},
-    childrenEnd: function() {},
-    visit: function (child, isContainer, visitContainer) {
-      if (child._dirtyArea) {
-        var b1 = roundForClipping(child._dirtyArea);
-        var b2 = roundForClipping(child.getBounds());
-        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
-        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
-      }
-      if (isContainer) {
-        visitContainer(child, this);
-      }
-    }
-  };
-
   function MouseVisitor(root) {
     this.root = root;
     this.interactiveParent = stage;
@@ -668,8 +631,11 @@ function renderStage(stage, ctx, events) {
       if (refreshStage || renderFrame) {
         ctx.beginPath();
         traceRenderer.value && frameWriter.enter("> Pre Visitor");
-        (new PreVisitor(stage, ctx)).start();
+
+        stage._clipDirtyAreas(ctx);
+
         (new RenderVisitor(stage, ctx, refreshStage)).start();
+
         traceRenderer.value && frameWriter.leave("< Pre Visitor");
       }
 
