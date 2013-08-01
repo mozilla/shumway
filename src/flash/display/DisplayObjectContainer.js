@@ -152,7 +152,7 @@ var DisplayObjectContainerDefinition = (function () {
       children.splice(index, 0, child);
       child._owned = false;
 
-      // TODO: invalidate
+      child._invalidate();
 
       return child;
     },
@@ -190,7 +190,8 @@ var DisplayObjectContainerDefinition = (function () {
       child1._owned = false;
       child2._owned = false;
 
-      // TODO: invalidate
+      child1._invalidate();
+      child2._invalidate();
     },
     destroy: function () {
       if (this._destroyed) {
