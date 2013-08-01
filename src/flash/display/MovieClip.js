@@ -137,8 +137,6 @@ var MovieClipDefinition = (function () {
         var displayList = timeline[frameNum - 1];
 
         if (displayList !== currentDisplayList) {
-          this._invalidate();
-          this._bounds = null;
           var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
 
           for (var depth in walkList) {
@@ -222,6 +220,8 @@ var MovieClipDefinition = (function () {
                 this._addTimelineChild(cmd, index, replace);
               }
             }
+
+            this._bounds = null;
           }
 
           this._constructChildren();

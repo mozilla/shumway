@@ -65,6 +65,8 @@ var DisplayObjectContainerDefinition = (function () {
       child._owned = false;
       child._parent = this;
 
+      this._bounds = null;
+
       this._control.appendChild(child._control);
 
       child._dispatchEvent(new flash.events.Event("added"));
@@ -132,6 +134,8 @@ var DisplayObjectContainerDefinition = (function () {
 
       children.splice(index, 1);
       child._parent = null;
+
+      this._bounds = null;
 
       this._control.removeChild(child._control);
 
