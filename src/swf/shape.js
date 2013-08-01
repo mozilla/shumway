@@ -29,12 +29,9 @@ var GRAPHICS_FILL_SOLID                        =  0;
 var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
 var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
 var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
-var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
-var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
-var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
 
 /*
- * Applies commands to the paths of all styles specified in the last
+ * Applies the current segment to the paths of all styles specified in the last
  * style-change record.
  *
  * For fill0, we have to apply commands and their data in reverse order, to turn
@@ -44,47 +41,57 @@ var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
  * and have to duplicate them for the other styles. The order is: fill1, line,
  * fill0.
  */
-function applyCommandsForStyles(styles, commands, data, commandsStart,
-                                dataStart, linePaths, fillPaths)
+function applySegmentToStyles(segment, styles, linePaths, fillPaths)
 {
-  if (!commands) {
+  if (!segment) {
     return;
   }
+  var commands = segment.commands;
+  var data = segment.data;
+  assert(commands);
   assert(data);
   var path;
-  var targetCommands;
-  var targetData;
+  var targetSegment;
   var command;
   var i;
-  if (styles.line && styles.fill1)
-  {
-    path = linePaths[styles.line - 1];
-    targetCommands = path.commands;
-    targetData = path.data;
-    for (i = commandsStart; i < commands.length; i++) {
-      targetCommands.push(commands[i]);
-    }
-    for (i = dataStart; i < data.length; i++) {
-      targetData.push(data[i]);
-    }
-  }
   if (styles.fill0) {
     path = fillPaths[styles.fill0 - 1];
-    targetCommands = path.commands;
-    targetData = path.data;
-    var j = data.length;
-    for (i = commands.length; i-- > commandsStart;) {
+    // If fill0 is the only style, we have pushed the segment to it's stack. In
+    // that case, we have to replace its commands and data in place.
+    if (!(styles.fill1 || styles.line)) {
+      targetSegment = path.head();
+      targetSegment.commands = [];
+      targetSegment.data = [];
+    } else {
+      targetSegment = path.addSegment();
+    }
+
+    // For reversing the fill0 segments, we rely on the fact that each segment
+    // starts with a moveTo. We push a new moveTo on the reversed stack, with
+    // the final drawing command's target coordinates. For each of the following
+    // commands, we take the coordinates of the command originally *preceding*
+    // it as the new target coordinates. The final coordinates we target will be
+    // the ones from the original first moveTo.
+    var targetCommands = targetSegment.commands;
+    var targetData = targetSegment.data;
+    targetCommands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+    var j = data.length - 2;
+    targetData.push(data[j], data[j + 1]);
+    for (i = commands.length; i-- > 1; j -= 2) {
       command = commands[i];
       targetCommands.push(command);
+      targetData.push(data[j - 2], data[j - 1]);
       if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
-        targetData.push(data[j - 4], data[j - 3], data[j - 2], data[j - 1]);
-        j -= 4;
-      } else {
-        targetData.push(data[j - 2], data[j - 1]);
+        targetData.push(data[j - 4], data[j - 3]);
         j -= 2;
       }
     }
-    assert(j === dataStart);
+    assert(j === 0);
+  }
+  if (styles.line && styles.fill1)
+  {
+    path = linePaths[styles.line - 1];
+    path.addSegment(commands, data);
   }
 }
 
@@ -99,10 +106,7 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
                                      dictionary, dependencies)
 {
   var styles = {fill0: 0, fill1: 0, line: 0};
-  var commands = null;
-  var data = null;
-  var commandsStart = 0;
-  var dataStart = 0;
+  var segment = null;
 
   // fill- and lineStyles can be added by style change records in the middle of
   // a shape records list. All records refer to those new styles with a starting
@@ -128,77 +132,168 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
         push.apply(allLinePaths, linePaths);
         styles = {fill0: 0, fill1: 0, line: 0};
       }
-      // Annoyingly, moves don't have their own shape record type, so there are
-      // move-only style change records. Before applying style changes, we have
-      // to check for those.
-      if (record.hasFillStyle1 || record.hasFillStyle1 || record.hasLineStyle) {
-        if (commands) {
-          applyCommandsForStyles(styles, commands, data, commandsStart,
-                                 dataStart, linePaths, fillPaths);
-          commands = null;
-          data = null;
-        }
-        if (record.hasFillStyle0) {
-          styles.fill0 = record.fillStyle0;
-        }
-        if (record.hasFillStyle1) {
-          styles.fill1 = record.fillStyle1;
-        }
-        if (record.hasLineStyle) {
-          styles.line = record.lineStyle;
-        }
+
+      //TODO: make the `has*` fields bitflags
+      if (segment) {
+        applySegmentToStyles(segment, styles, linePaths, fillPaths);
+      }
+      if (record.hasFillStyle0) {
+        styles.fill0 = record.fillStyle0;
+      }
+      if (record.hasFillStyle1) {
+        styles.fill1 = record.fillStyle1;
+      }
+      if (record.hasLineStyle) {
+        styles.line = record.lineStyle;
       }
       var path;
-      //TODO: make the `has*` fields bitflags
       if (styles.fill1) {
         path = fillPaths[styles.fill1 - 1];
-        commands = path.commands;
-        data = path.data;
-        // fill1 commands have to be reversed, and line commands can just be
-        // copied over if we're creating fill styles anyway. For both to work,
-        // we have to know where to start the copying.
-        commandsStart = commands.length;
-        dataStart = data.length;
       } else if (styles.line) {
         path = linePaths[styles.line - 1];
-        commands = path.commands;
-        data = path.data;
       } else if (styles.fill0) {
-        commands = [];
-        data = [];
-        commandsStart = 0;
-        dataStart = 0;
+        path = fillPaths[styles.fill0 - 1];
       }
+      segment = path.addSegment();
+
       if (record.move) {
         x = record.moveX;
         y = record.moveY;
       }
-      commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
-      data.push(x, y);
+
+      // Move or not, we want this path segment to start where the last one left
+      // off. Even if the last one belonged to a different style.
+      // "Huh," you say? Yup.
+      segment.commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+      segment.data.push(x, y);
     }
     // type 1 is a StraightEdge or CurvedEdge record
     else {
       assert(record.type === 1);
-      assert(commands);
-      assert(data);
+      assert(segment);
       if (record.isStraight) {
         x += record.deltaX | 0;
         y += record.deltaY | 0;
-        commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
-        data.push(x, y);
+        segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+        segment.data.push(x, y);
       } else {
-        commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+        segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
         x += record.controlDeltaX | 0;
         y += record.controlDeltaY | 0;
-        data.push(x, y);
+        segment.data.push(x, y);
         x += record.anchorDeltaX | 0;
         y += record.anchorDeltaY | 0;
-        data.push(x, y);
+        segment.data.push(x, y);
       }
     }
   }
-  applyCommandsForStyles(styles, commands, data, commandsStart, dataStart,
-                         linePaths, fillPaths);
+  applySegmentToStyles(segment, styles, linePaths, fillPaths);
+
+  // After records processing completed, we can treat line paths just as we do
+  // fill paths. The important thing is for them to come last.
+  push.apply(fillPaths, linePaths);
+
+  var removeCount = 0;
+  for (i = 0; i < fillPaths.length; i++) {
+    var path = fillPaths[i];
+    if (!path.head()) {
+      removeCount++;
+      continue;
+    }
+    fillPaths[i - removeCount] = segmentedPathToShapePath(path);
+  }
+  fillPaths.length -= removeCount;
+  return fillPaths;
+}
+
+function segmentedPathToShapePath(path) {
+  var start = path.head();
+  var end = start;
+
+  var finalRoot = null;
+  var finalHead = null;
+
+  var skippedMoves = 0;
+
+  // Path segments for one style can appear in whatever order in the tag's list
+  // of edge records.
+  // Before we linearize them, we have to identify all pairs of segments where
+  // one ends at a coordinate the other starts at.
+  // The following loop does that, by creating ever-growing runs of matching
+  // segments. If no more segments are found that match the current run (either
+  // at the beginning, or at the end), the current run is complete, and a new
+  // one is started. Rinse, repeat, until no solitary segments remain.
+  var current = start.prev;
+  while (start) {
+    while (current) {
+      if (path.segmentsConnect(current, start)) {
+        if (current.next !== start) {
+          path.removeSegment(current);
+          path.insertSegment(current, start);
+        }
+        start = current;
+        current = start.prev;
+        skippedMoves++;
+        continue;
+      }
+      if (path.segmentsConnect(end, current)) {
+        path.removeSegment(current);
+        end.next = current;
+        current = current.prev;
+        end.next.prev = end;
+        end.next.next = null;
+        end = end.next;
+        skippedMoves++;
+        continue;
+      }
+      current = current.prev;
+    }
+    // This run of segments is finished. Store and forget it (for this loop).
+    current = start.prev;
+    if (!finalRoot) {
+      finalRoot = start;
+      finalHead = end;
+    } else {
+      finalHead.next = start;
+      start.prev = finalHead;
+      finalHead = end;
+      finalHead.next = null;
+    }
+    if (!current) {
+      break;
+    }
+    start = end = current;
+    current = start.prev;
+  }
+
+  var shape = new ShapePath(path.fillStyle, path.lineStyle);
+  var allCommands = shape.commands;
+  var allData = shape.data;
+
+  current = finalRoot;
+  while (current) {
+    var offset = 0;
+    var commands = current.commands;
+    var data = current.data;
+
+    // If the segment's first command is a moveTo to the current coordinates,
+    // we have to skip it. Removing those in the previous loop would be too
+    // costly.
+    if (commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO && commands.length &&
+        data[0] === allData[allData.length - 2] &&
+        data[1] === allData[allData.length - 1])
+    {
+      offset = 1;
+    }
+    for (var i = offset; i < commands.length; i++) {
+      allCommands.push(commands[i]);
+    }
+    for (i = offset * 2; i < data.length; i += 2) {
+      allData.push(data[i], data[i+1]);
+    }
+    current = current.next;
+  }
+  return shape;
 }
 
 function processStyle(style, dictionary, dependencies) {
@@ -279,9 +374,9 @@ function createPathsList(styles, isLineStyle, dictionary, dependencies) {
   for (var i = 0; i < styles.length; i++) {
     var style = processStyle(styles[i], dictionary, dependencies);
     if (!isLineStyle) {
-      paths[i] = new ShapePath(style, null);
+      paths[i] = new SegmentedPath(style, null);
     } else {
-      paths[i] = new ShapePath(null, style);
+      paths[i] = new SegmentedPath(null, style);
     }
   }
   return paths;
@@ -292,21 +387,63 @@ function defineShape(tag, dictionary) {
                                   dictionary, dependencies);
   var linePaths = createPathsList(tag.lineStyles, true,
                                   dictionary, dependencies);
-  convertRecordsToStyledPaths(tag.records, linePaths, fillPaths,
-                              dictionary, dependencies);
-
-  // After all is said and done, we can finally treat line paths just as we do
-  // fills. The important thing is for them to come last.
-  push.apply(fillPaths, linePaths);
+  var paths = convertRecordsToStyledPaths(tag.records, linePaths, fillPaths,
+                                          dictionary, dependencies);
 
   return {
     type: 'shape',
     id: tag.id,
     bbox: tag.bbox,
     strokeBbox: tag.strokeBbox,
-    paths: fillPaths,
+    paths: paths,
     dependencies: dependencies.length ? dependencies : null
   };
+}
+
+function SegmentedPath(fillStyle, lineStyle) {
+  this.fillStyle = fillStyle;
+  this.lineStyle = lineStyle;
+  this._head = null;
+}
+SegmentedPath.prototype = {
+  addSegment: function(commands /* = null */, data /* = null */) {
+    var segment = {commands: commands || [], data: data || [],
+                   prev: this._head, next: null};
+    if (this._head) {
+      this._head.next = segment;
+    }
+    this._head = segment;
+    return segment;
+  },
+  // Does *not* reset the segments prev and next pointers!
+  removeSegment: function(segment) {
+    if (segment.prev) {
+      segment.prev.next = segment.next;
+    }
+    if (segment.next) {
+      segment.next.prev = segment.prev;
+    }
+  },
+  insertSegment: function(segment, next) {
+    var prev = next.prev;
+    segment.prev = prev;
+    segment.next = next;
+    if (prev) {
+      prev.next = segment;
+    }
+    next.prev = segment;
+  },
+  head: function() {
+    return this._head;
+  },
+  segmentsConnect: function(first, second) {
+    if (second.commands[0] !== GRAPHICS_PATH_COMMAND_MOVE_TO) {
+      return false;
+    }
+    var firstLength = first.data.length;
+    return first.data[firstLength - 2] === second.data[0] &&
+           first.data[firstLength - 1] === second.data[1];
+  }
 }
 
 function ShapePath(fillStyle, lineStyle) {
@@ -340,24 +477,24 @@ ShapePath.prototype = {
     this.commands.forEach(function(command) {
       switch (command) {
         case GRAPHICS_PATH_COMMAND_MOVE_TO:
-          out += '\tmoveTo(' + data[dataIndex++]/20 + ', ' + data[dataIndex++]/20 + ');\n';
+          out += '\tmoveTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
           break;
         case GRAPHICS_PATH_COMMAND_LINE_TO:
-          out += '\tlineTo(' + data[dataIndex++]/20 + ', ' + data[dataIndex++]/20 + ');\n';
+          out += '\tlineTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
           break;
         case GRAPHICS_PATH_COMMAND_CURVE_TO:
-          out += 'quadraticCurveTo(' + data[dataIndex++]/20 + ', ' +
-                 data[dataIndex++]/20 + ', ' + data[dataIndex++]/20 + ', ' +
-                 data[dataIndex++]/20 + ');\n';
+          out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
+                 data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
+                 data[dataIndex++] + ');\n';
           break;
       }
     });
 
     if (this.fillStyle && this.fillStyle.color) {
-      out += prefix + 'fillStyle = ' + toStringRgba(this.fillStyle.color) + ';\n';
+      out += '\tfillStyle = ' + toStringRgba(this.fillStyle.color) + ';\n';
     }
     if (this.lineStyle && this.lineStyle.color) {
-      out += prefix + 'strokeStyle = ' + toStringRgba(this.lineStyle.color) + ';\n';
+      out += '\tstrokeStyle = ' + toStringRgba(this.lineStyle.color) + ';\n';
     }
 
     return out + ']';
