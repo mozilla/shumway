@@ -206,7 +206,7 @@ QuadTree.prototype._findIndex = function (bounds) {
 };
 QuadTree.prototype.insert = function (item, bounds) {
   if (this.nodes.length) {
-    var index = this._findIndex(bounds.x, bounds.y, bounds.width, bounds.height);
+    var index = this._findIndex(bounds);
     var node = this.nodes[index];
 
     if (bounds.x >= node.x &&
@@ -230,7 +230,8 @@ QuadTree.prototype.insert = function (item, bounds) {
     this.subdivide();
 
     for (var i = 0; i < children.length; i++) {
-      this.insert(children[i]);
+      var child = children[i];
+      this.insert(child, child.getBounds());
     }
 
     children.length = 0;
