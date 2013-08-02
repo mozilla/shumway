@@ -139,7 +139,31 @@
     return counter;
   })();
 
+  var Average = (function () {
+    function average(max) {
+      this.samples = new Float64Array(max);
+      this.count = 0;
+      this.index = 0;
+    }
+    average.prototype.push = function push(sample) {
+      if (this.count < this.samples.length) {
+        this.count ++;
+      }
+      this.index ++;
+      this.samples[this.index % this.samples.length] = sample;
+    };
+    average.prototype.average = function average() {
+      var sum = 0;
+      for (var i = 0; i < this.count; i++) {
+        sum += this.samples[i];
+      }
+      return sum / this.count;
+    };
+    return average;
+  })();
+
   exports.Timer = Timer;
   exports.Counter = Counter;
+  exports.Average = Average;
 
 })(typeof exports === "undefined" ? (metrics = {}) : exports);
