@@ -53,6 +53,8 @@ var SharedObjectDefinition = (function () {
     initialize: function () {
       this._data = {};
       this._objectEncoding = _defaultObjectEncoding;
+      this._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;
+      this._data[Multiname.getPublicQualifiedName("completeLevels")] = 32;
     },
     __glue__: {
       native: {
