@@ -643,29 +643,6 @@ var LoaderDefinition = (function () {
             avm1Context.globals._root = as2Object;
             avm1Context.globals._level0 = as2Object;
 
-            var frameScripts = { 1: [] };
-
-            //if (initActionBlocks) {
-            //  // HACK using symbol init actions as regular action blocks, the spec has a note
-            //  // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-            //  for (var symbolId in initActionBlocks) {
-            //    root.addFrameScript(frameNum - 1, function(actionBlock) {
-            //      return executeActions(actionBlock, avm1Context, avm1Context.globals._root, exports);
-            //    }.bind(root, initActionBlocks[symbolId]));
-            //  }
-            //}
-
-            if (actionBlocks) {
-              for (var i = 0; i < actionBlocks.length; i++) {
-                var block = actionBlocks[i];
-                frameScripts[1].push((function(block) {
-                  return function () {
-                    return executeActions(block, avm1Context, this._getAS2Object(), exports);
-                  };
-                })(block));
-              }
-            }
-
             // transfer parameters
             var parameters = loader.loaderInfo._parameters;
             for (var paramName in parameters) {
@@ -673,7 +650,6 @@ var LoaderDefinition = (function () {
                 as2Object[paramName] = parameters[paramName];
               }
             }
-            root.symbol.frameScripts = frameScripts;
           }
 
           if (sceneData) {
@@ -703,22 +679,6 @@ var LoaderDefinition = (function () {
           if (labelName && root._labelMap) {
             root._labelMap[labelName] = frameNum;
           }
-
-          if (!loader._isAvm2Enabled) {
-            var avm1Context = loader._avm1Context;
-
-            if (actionBlocks) {
-              for (var i = 0; i < actionBlocks.length; i++) {
-                var block = actionBlocks[i];
-                root.addFrameScript(frameNum - 1, (function(block) {
-                  return function () {
-                    return executeActions(block, avm1Context, this._getAS2Object(), exports);
-                  };
-                })(block));
-              }
-            }
-          }
-
         }
 
         if (frame.startSounds) {
@@ -729,6 +689,33 @@ var LoaderDefinition = (function () {
         }
         if (frame.soundStreamBlock) {
           root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
+        }
+
+        if (!loader._isAvm2Enabled) {
+          var avm1Context = loader._avm1Context;
+
+          if (initActionBlocks) {
+            // HACK using symbol init actions as regular action blocks, the spec has a note
+            // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+            for (var symbolId in initActionBlocks) {
+              root.addFrameScript(frameNum - 1, function(actionBlock, state) {
+                if (state.executed) return;
+                state.executed = true;
+                return executeActions(actionBlock, avm1Context, this._getAS2Object(), exports);
+              }.bind(root, initActionBlocks[symbolId], {executed: false}));
+            }
+          }
+
+          if (actionBlocks) {
+            for (var i = 0; i < actionBlocks.length; i++) {
+              var block = actionBlocks[i];
+              root.addFrameScript(frameNum - 1, (function(block) {
+                return function () {
+                  return executeActions(block, avm1Context, this._getAS2Object(), exports);
+                };
+              })(block));
+            }
+          }
         }
 
         if (frameNum === 1)
