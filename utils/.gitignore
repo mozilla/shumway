@@ -5,7 +5,6 @@ apparat/
 flex_sdk*
 jsshell/
 mtasc/
-node_modules/
 tamarin-redux/
 swfdec/
 *~
