@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
+/*global Proxy, AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
          createBuiltinType */
 
 var AVM1_TRACE_ENABLED = false;
@@ -237,6 +237,58 @@ function as2ResolveProperty(obj, name) {
   return null;
 }
 
+function as2CreatePrototypeProxy(obj) {
+  var prototype = obj.prototype;
+  if (typeof Proxy === 'undefined') {
+    console.error('ES6 proxies are not found');
+    return prototype;
+  }
+  return Proxy.create({
+    getOwnPropertyDescriptor: function(name) {
+      return Object.getOwnPropertyDescriptor(prototype, name);
+    },
+    getPropertyDescriptor:  function(name) {
+      // ES6: return getPropertyDescriptor(prototype, name);
+      for (var p = prototype; p; p = Object.getPrototypeOf(p)) {
+        var desc = Object.getOwnPropertyDescriptor(p, name);
+        if (desc) return desc;
+      }
+    },
+    getOwnPropertyNames: function() {
+      return Object.getOwnPropertyNames(prototype);
+    },
+    getPropertyNames: function() {
+      // ES6: return getPropertyNames(prototype, name);
+      var names = Object.getOwnPropertyNames(prototype);
+      for (var p = Object.getPrototypeOf(prototype); p;
+           p = Object.getPrototypeOf(p)) {
+        names = names.concat(Object.getOwnPropertyNames(p));
+      }
+      return names;
+    },
+    defineProperty: function(name, desc) {
+      if (desc) {
+        if (typeof desc.value === 'function' && desc.value._setClass) {
+          desc.value._setClass(obj);
+        }
+        if (typeof desc.get === 'function' && desc.get._setClass) {
+          desc.get._setClass(obj);
+        }
+        if (typeof desc.set === 'function' && desc.set._setClass) {
+          desc.set._setClass(obj);
+        }
+      }
+      return Object.defineProperty(prototype, name, desc);
+    },
+    delete: function(name) {
+      return delete prototype[name];
+    },
+    fix: function() {
+      return undefined;
+    }
+  });
+}
+
 function executeActions(actionsData, context, scope, assets) {
   var actionTracer = ActionTracerFactory.get();
 
@@ -284,6 +336,8 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
   return obj;
 }
 
+var AS2_SUPER_STUB = {};
+
 function interpretActions(actionsData, scopeContainer,
                           constantPool, registers) {
   var currentContext = AS2Context.instance;
@@ -305,8 +359,10 @@ function interpretActions(actionsData, scopeContainer,
 
   function defineFunction(functionName, parametersNames,
                           registersAllocation, actionsData) {
+    var ownerClass;
     var fn = (function() {
-      var newScope = { 'this': this, 'arguments': arguments };
+      var newScope = { 'this': this, 'arguments': arguments,
+                       'super': AS2_SUPER_STUB, '__class': ownerClass };
       var newScopeContainer = scopeContainer.create(newScope);
       var i;
 
@@ -331,7 +387,8 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = arguments;
                 break;
               case 'super':
-                throw new Error('Not implemented: super');
+                registers[i] = AS2_SUPER_STUB;
+                break;
               case '_global':
                 registers[i] = _global;
                 break;
@@ -367,6 +424,12 @@ function interpretActions(actionsData, scopeContainer,
         AS2Context.instance = savedContext;
       }
     });
+
+    ownerClass = fn;
+    fn._setClass = function (class_) {
+      ownerClass = class_;
+    };
+
     if (functionName) {
       fn.name = functionName;
     }
@@ -873,14 +936,22 @@ function interpretActions(actionsData, scopeContainer,
         // checking "if the method name is blank or undefined"
         if (methodName !== null && methodName !== undefined &&
             methodName !== '') {
-          obj = Object(obj);
-          resolvedName = as2ResolveProperty(obj, methodName);
+          if (obj !== AS2_SUPER_STUB) {
+            target = Object(obj);
+          } else {
+            target = getVariable('__class').__super.prototype;
+            obj = getVariable('this');
+          }
+          resolvedName = as2ResolveProperty(target, methodName);
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          result = obj[resolvedName].apply(obj, args);
+          result = target[resolvedName].apply(obj, args);
+        } else if (obj !== AS2_SUPER_STUB) {
+          result = obj.apply(obj, args);
         } else {
-          result = obj.apply(defaultTarget, args);
+          result = getVariable('__class').__super.apply(
+            getVariable('this'), args);
         }
         stack.push(result);
         break;
@@ -946,8 +1017,13 @@ function interpretActions(actionsData, scopeContainer,
       case 0x4E: // ActionGetMember
         name = stack.pop();
         obj = stack.pop();
-        resolvedName = as2ResolveProperty(obj, name);
-        stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
+        if (name === 'prototype') {
+          // special case to track members
+          stack.push(as2CreatePrototypeProxy(obj));
+        } else {
+          resolvedName = as2ResolveProperty(obj, name);
+          stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
+        }
         break;
       case 0x42: // ActionInitArray
         obj = readArgs(stack);
@@ -1184,6 +1260,7 @@ function interpretActions(actionsData, scopeContainer,
         obj = Object.create(constrSuper.prototype, {
           constructor: { value: constr, enumerable: false }
         });
+        constr.__super = constrSuper;
         constr.prototype = obj;
         break;
       case 0x2B: // ActionCastOp
