@@ -80,10 +80,11 @@
        "swf": "/examples/Box2DFlashAS3/demo.swf",
        "type": "eq"
     },
-    {  "id": "avm1timeline1",
+    {  "id": "avm1timeline",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/avm1timeline1.swf"
+         "swfs/avm1timeline1.swf",
+         "swfs/avm1timeline2.swf"
        ],
        "type": "stas"
     },
