@@ -403,11 +403,15 @@ function interpretActions(actionsData, scopeContainer,
     }
 
     if (!obj) {
-      return; // local variable
+      return null; // local variable
     }
 
     var resolvedName = as2ResolveProperty(obj, name);
-    return { obj: obj, name: resolvedName || name };
+    if (resolvedName !== null) {
+      return { obj: obj, name: resolvedName };
+    }
+
+    return null;
   }
   function getVariable(variableName) {
     // fast check if variable in the current scope
@@ -427,7 +431,7 @@ function interpretActions(actionsData, scopeContainer,
     }
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
-      if (resolvedName) {
+      if (resolvedName !== null) {
         return p.scope[resolvedName];
       }
     }
@@ -866,10 +870,12 @@ function interpretActions(actionsData, scopeContainer,
         obj = stack.pop();
         args = readArgs(stack);
         stackItemsExpected++;
-        if (methodName) {
+        // checking "if the method name is blank or undefined"
+        if (methodName !== null && methodName !== undefined &&
+            methodName !== '') {
           obj = Object(obj);
           resolvedName = as2ResolveProperty(obj, methodName);
-          if (!resolvedName) {
+          if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
           result = obj[resolvedName].apply(obj, args);
@@ -941,7 +947,7 @@ function interpretActions(actionsData, scopeContainer,
         name = stack.pop();
         obj = stack.pop();
         resolvedName = as2ResolveProperty(obj, name);
-        stack.push(obj[resolvedName || name]);
+        stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
         break;
       case 0x42: // ActionInitArray
         obj = readArgs(stack);
@@ -963,24 +969,20 @@ function interpretActions(actionsData, scopeContainer,
         obj = stack.pop();
         args = readArgs(stack);
         stackItemsExpected++;
-        if (methodName) {
+        // checking "if the name of the method is blank"
+        if (methodName !== null && methodName !== undefined &&
+            methodName !== '') {
           resolvedName = as2ResolveProperty(obj, methodName);
-          if (!resolvedName) {
+          if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
           method = obj[resolvedName];
         } else {
           method = obj;
         }
-        // XXX: this is non-semantics-preserving, but it's
-        // necessary to make constructors for runtime objects
-        // work.
-        result = new (method.bind.apply(method, [null].concat(args)))();
-        if (!result) {
-          result = Object.create(method.prototype || Object.prototype);
-          result.constructor = method;
-          method.apply(result, args);
-        }
+        result = Object.create(method.prototype || Object.prototype);
+        result.constructor = method;
+        method.apply(result, args);
         stack.push(result);
         break;
       case 0x40: // ActionNewObject
