@@ -433,6 +433,7 @@ function initializeGlobalObject(global) {
 initializeGlobalObject(jsGlobal);
 
 function createNewGlobalObject() {
+  unexpected("Should not use this unless it's for Security Domains.");
   var global = null;
   if (inBrowser) {
     var iFrame = document.createElement("iframe");

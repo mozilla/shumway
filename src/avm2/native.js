@@ -588,16 +588,13 @@ var natives = (function () {
    * Vector.as
    */
 
-  var VM_VECTOR_IS_FIXED = "vm vector is fixed";
-
   /**
-   * Creates a typed Vector class. It steals the Array object from a new global
-   * and overrides its GET/SET ACCESSOR methods to do the appropriate coercions.
-   * If the |type| argument is undefined it creates the untyped Vector class.
+   * Creates a typed Vector class by injecting an object in the prototype chain to hold
+   * Vector methods.
    */
   function createVectorClass(runtime, type, baseClass) {
-    var TypedArray = createNewGlobalObject().Array;
-    var TAp = TypedArray.prototype;
+    var TypedArray = Array;
+    var TAp = Object.create(Array.prototype);
 
     // Breaks semantics with bounds checking for now.
     if (type) {
@@ -609,20 +606,22 @@ var natives = (function () {
     function TypedVector (obj, fixed) {
       if (isObject(obj) && obj !== null && 'length' in obj) {
         var length = Int(obj.length);
-        var array = new TypedArray(length);
+        var array = new Array(length);
+        array.__proto__ = TAp;
         for (var i = 0; i < length; i++) {
           array[i] = obj[i];
         }
-        array[VM_VECTOR_IS_FIXED] = true;
+        array.isFixed = true;
         return array;
       }
 
       var length = Int(obj);
-      var array = new TypedArray(length);
+      var array = new Array(length);
+      array.__proto__ = TAp;
       for (var i = 0; i < length; i++) {
         array[i] = type ? type.defaultValue : undefined;
       }
-      array[VM_VECTOR_IS_FIXED] = !!fixed;
+      array.isFixed = !!fixed;
       return array;
     }
 
@@ -637,8 +636,8 @@ var natives = (function () {
     c.native = {
       instance: {
         fixed: {
-          get: function () { return this[VM_VECTOR_IS_FIXED]; },
-          set: function (v) { this[VM_VECTOR_IS_FIXED] = v; }
+          get: function () { return this.isFixed; },
+          set: function (v) { this.isFixed = v; }
         },
         length: {
           get: function () { return this.length; },
@@ -648,7 +647,7 @@ var natives = (function () {
           }
         },
         pop: function () {
-          if (this[VM_VECTOR_IS_FIXED]) {
+          if (this.isFixed) {
             var error = Errors.VectorFixedError;
             runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
           } else if (this.length === 0) {
