@@ -130,8 +130,13 @@ argumentParser.addArgument("r", "rootPath", "string", {parse: function (x) {
   rootPath = x;
 }});
 
+/* Old style script arguments */
+if (typeof scriptArgs === "undefined") {
+  scriptArgs = arguments;
+}
+
 try {
-  argumentParser.parse(arguments).filter(function (x) {
+  argumentParser.parse(scriptArgs).filter(function (x) {
     if (x.endsWith(".abc") || x.endsWith(".swf")) {
       files.push(rootPath + x);
     } else {
