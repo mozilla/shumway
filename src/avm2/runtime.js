@@ -1422,17 +1422,10 @@ function debugName(value) {
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
   var mi = methodInfo;
-  var parameters = mi.parameters.map(function (p) {
-    return PARAMETER_PREFIX + p.name;
-  });
-
-  if (hasDynamicScope) {
-    parameters.unshift(SAVED_SCOPE_NAME);
-  }
-
   $M.push(mi);
-
-  var body = Compiler.compileMethod(mi, scope, hasDynamicScope);
+  var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
+  var parameters = result.parameters;
+  var body = result.body;
 
   var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
   if (mi.holder) {

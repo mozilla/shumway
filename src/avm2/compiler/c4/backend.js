@@ -663,7 +663,7 @@
     return escodegen.generate(node, {base: "", indent: "  ", comment: true});
   }
 
-  function generate(cfg) {
+  function generate(cfg, useRegisterAllocator) {
     var root = Looper.analyze(cfg);
 
     var writer = new IndentingWriter();
@@ -686,13 +686,25 @@
       code.body.unshift(variables);
     }
 
-    // var node = new FunctionDeclaration(id("fn"), parameters, code);
+    var node = new FunctionDeclaration(id("fn"), parameters, code);
 
-    // writer.writeLn("==================================");
-    // writer.writeLn(generateSource(node));
-    // writer.writeLn("==================================");
-
-    return generateSource(code);
+    if (useRegisterAllocator) {
+      if (c4TraceLevel.value > 0) {
+        writer.writeLn("=== BEFORE ===============================");
+        writer.writeLn(generateSource(node));
+        writer.writeLn("=== TRANSFORMING =========================");
+      }
+      Transform.transform(node);
+      if (c4TraceLevel.value > 0) {
+        writer.writeLn("=== AFTER ================================");
+        writer.writeLn(generateSource(node));
+        writer.writeLn("==========================================");
+      }
+      var body = generateSource(code);
+      // body = " { debugger; " + body + " }";
+      return {parameters: parameters.map(function (p) { return p.name; }), body: body};
+    }
+    return {parameters: parameters.map(function (p) { return p.name; }), body: generateSource(code)};
   }
 
   Backend.generate = generate;
