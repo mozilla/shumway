@@ -123,6 +123,11 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
     var record = records[i];
     // type 0 is a StyleChange record
     if (record.type === 0) {
+      //TODO: make the `has*` fields bitflags
+      if (segment) {
+        applySegmentToStyles(segment, styles, linePaths, fillPaths);
+      }
+
       if (record.hasNewStyles) {
         fillPaths = createPathsList(record.fillStyles, false,
                                     dictionary, dependencies);
@@ -133,10 +138,6 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
         styles = {fill0: 0, fill1: 0, line: 0};
       }
 
-      //TODO: make the `has*` fields bitflags
-      if (segment) {
-        applySegmentToStyles(segment, styles, linePaths, fillPaths);
-      }
       if (record.hasFillStyle0) {
         styles.fill0 = record.fillStyle0;
       }
@@ -191,19 +192,19 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
 
   // After records processing completed, we can treat line paths just as we do
   // fill paths. The important thing is for them to come last.
-  push.apply(fillPaths, linePaths);
+  push.apply(allFillPaths, allLinePaths);
 
   var removeCount = 0;
-  for (i = 0; i < fillPaths.length; i++) {
-    var path = fillPaths[i];
+  for (i = 0; i < allFillPaths.length; i++) {
+    var path = allFillPaths[i];
     if (!path.head()) {
       removeCount++;
       continue;
     }
-    fillPaths[i - removeCount] = segmentedPathToShapePath(path);
+    allFillPaths[i - removeCount] = segmentedPathToShapePath(path);
   }
-  fillPaths.length -= removeCount;
-  return fillPaths;
+  allFillPaths.length -= removeCount;
+  return allFillPaths;
 }
 
 function segmentedPathToShapePath(path) {
@@ -382,6 +383,7 @@ function createPathsList(styles, isLineStyle, dictionary, dependencies) {
   return paths;
 }
 function defineShape(tag, dictionary) {
+  Timer.start('defineShape');
   var dependencies = [];
   var fillPaths = createPathsList(tag.fillStyles, false,
                                   dictionary, dependencies);
@@ -390,13 +392,14 @@ function defineShape(tag, dictionary) {
   var paths = convertRecordsToStyledPaths(tag.records, linePaths, fillPaths,
                                           dictionary, dependencies);
 
+  Timer.stop();
   return {
     type: 'shape',
     id: tag.id,
     bbox: tag.bbox,
     strokeBbox: tag.strokeBbox,
     paths: paths,
-    dependencies: dependencies.length ? dependencies : null
+    dependencies: dependencies.length ? dependencies : null,
   };
 }
 
