@@ -172,6 +172,10 @@ var SpriteDefinition = (function () {
 
       return instance;
     },
+    _insertChildAtDepth: function (child, depth) {
+      // TODO insert with specific depth
+      this.addChild(child);
+    },
     _initAvm1Bindings: function (instance, name, events) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;

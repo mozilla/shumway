@@ -282,13 +282,27 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   getInstanceAtDepth: {
     value: function getInstanceAtDepth(depth) {
-      return this.$nativeObject._depthMap[depth];
+      var instance;
+      this.$nativeObject._children.some(function (child) {
+        if (child._depth === depth) {
+          instance = child;
+          return true;
+        }
+        return false;
+      });
+      return instance;
     },
     enumerable: true
   },
   getNextHighestDepth: {
     value: function getNextHighestDepth() {
-      return this.$nativeObject._depthMap.length;
+      var max = 0;
+      this.$nativeObject._children.forEach(function (child) {
+        if (child._depth < max) {
+          max = child._depth;
+        }
+      });
+      return max + 1;
     },
     enumerable: true
   },
