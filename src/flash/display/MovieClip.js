@@ -175,6 +175,9 @@ var MovieClipDefinition = (function () {
                   cmd.symbolId === currentListCmd.symbolId &&
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
+                  currentChild._invalidate();
+                  currentChild._bounds = null;
+
                   if (cmd.hasClipDepth)
                     currentChild._clipDepth = cmd.clipDepth;
 
@@ -198,8 +201,6 @@ var MovieClipDefinition = (function () {
 
                   if (cmd.hasCxform)
                     currentChild._cxform = cmd.cxform;
-
-                  currentChild._invalidate();
                 }
               } else {
                 var index = highestIndex;
