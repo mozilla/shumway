@@ -112,6 +112,7 @@ var SimpleButtonDefinition = (function () {
 
     _updateButton: function () {
       this._invalidate();
+      this._bounds = null;
 
       var state = this._upState;
       if (this._isMouseDown && this._isMouseOver && this._downState)
