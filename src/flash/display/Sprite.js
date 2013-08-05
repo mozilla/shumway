@@ -125,6 +125,8 @@ var SpriteDefinition = (function () {
           if (!loader._isAvm2Enabled)
             this._initAvm1Bindings(instance, name, symbolInfo.events);
 
+          instance._index = i;
+
           instance._dispatchEvent(new flash.events.Event("load"));
           instance._dispatchEvent(new flash.events.Event("added"));
           if (this.stage) {
