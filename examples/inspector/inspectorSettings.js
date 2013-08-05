@@ -16,17 +16,32 @@
  * limitations under the License.
  */
 
+var DEFAULT_SETTINGS = {
+  sysCompiler: true,
+  appCompiler: true,
+  verifier: true,
+  trace: false,
+  traceCalls: false,
+  traceRuntime: false,
+  allocator: false,
+  pre: true,
+  render: true,
+  mouse: true,
+  release: true,
+  symbolsInfo: false
+};
+
 function loadState() {
-  return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]) : {
-    appCompiler: true,
-    sysCompiler: false,
-    verifier: true,
-    pre: true,
-    render: true,
-    mouse: true,
-    release: true,
-    symbolsInfo: false
-  };
+  var settings = {};
+  if (localStorage["Inspector-Settings"]) {
+    settings = JSON.parse(localStorage["Inspector-Settings"]);
+  }
+  for (var key in DEFAULT_SETTINGS) {
+    if (settings[key] === undefined) {
+      settings[key] = DEFAULT_SETTINGS[key];
+    }
+  }
+  return settings;
 }
 
 function saveState(state) {
