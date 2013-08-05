@@ -16,14 +16,32 @@
  * limitations under the License.
  */
 
+var DEFAULT_SETTINGS = {
+  sysCompiler: true,
+  appCompiler: true,
+  verifier: true,
+  trace: false,
+  traceCalls: false,
+  traceRuntime: false,
+  allocator: false,
+  pre: true,
+  render: true,
+  mouse: true,
+  release: true,
+  symbolsInfo: false
+};
+
 function loadState() {
-  return localStorage["Inspector-Settings"] ? JSON.parse(localStorage["Inspector-Settings"]) : {
-    appCompiler: true,
-    sysCompiler: false,
-    verifier: true,
-    release: true,
-    symbolsInfo: false
-  };
+  var settings = {};
+  if (localStorage["Inspector-Settings"]) {
+    settings = JSON.parse(localStorage["Inspector-Settings"]);
+  }
+  for (var key in DEFAULT_SETTINGS) {
+    if (settings[key] === undefined) {
+      settings[key] = DEFAULT_SETTINGS[key];
+    }
+  }
+  return settings;
 }
 
 function saveState(state) {
@@ -37,8 +55,12 @@ updateAVM2State();
 function updateAVM2State() {
   enableC4.value = true;
   enableVerifier.value = state.verifier;
+  enableRegisterAllocator.value = state.allocator;
   traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
+  disablePreVisitor.value = state.pre ? false : true;
+  disableRenderVisitor.value = state.render ? false : true;
+  disableMouseVisitor.value = state.mouse ? false : true;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
