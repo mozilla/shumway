@@ -231,7 +231,7 @@ QuadTree.prototype.insert = function (item) {
 
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
-      this.insert(child, child.getBounds());
+      this.insert(child);
     }
 
     children.length = 0;

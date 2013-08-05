@@ -679,6 +679,29 @@ var DisplayObjectDefinition = (function () {
       }
       return this._bounds;
     },
+    _getDrawRegion: function getDrawRegion() {
+      if (!this._graphics) {
+        return this.getBounds();
+      }
+
+      var b = this._graphics._getBounds(true);
+
+      var p1 = { x: b.x, y: b.y };
+      this._applyCurrentTransform(p1);
+      var p2 = { x: b.x + b.width, y: b.y };
+      this._applyCurrentTransform(p2);
+      var p3 = { x: b.x + b.width, y: b.y + b.height };
+      this._applyCurrentTransform(p3);
+      var p4 = { x: b.x, y: b.y + b.height };
+      this._applyCurrentTransform(p4);
+
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+
+      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+    },
 
     getBounds: function (targetCoordSpace) {
       var b = this._getContentBounds();

@@ -83,7 +83,7 @@ var StageDefinition = (function () {
       }
 
       displayObject._invalid = true;
-      displayObject._dirtyArea = displayObject.getBounds(this);
+      displayObject._dirtyArea = displayObject._getDrawRegion();
 
       this._invalidObjects.push(displayObject);
     },
@@ -111,11 +111,12 @@ var StageDefinition = (function () {
         }
 
         var b1 = this._roundForClipping(obj._dirtyArea);
-        var b2 = this._roundForClipping(obj.getBounds());
-
         if (b1.width && b1.height) {
           ctx.rect(b1.x, b1.y, b1.width, b1.height);
         }
+
+        var b2 = this._roundForClipping(obj._getDrawRegion());
+
         if (b2.width && b2.height && (b1.x !== b2.x ||
                                       b1.y !== b2.y ||
                                       b1.width !== b2.width ||
