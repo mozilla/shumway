@@ -16,6 +16,33 @@
  * limitations under the License.
  */
 
+function sortByDepth(a, b) {
+  var containerA = a._parent;
+  var containerB = b._parent;
+
+  var parentA = containerA;
+  var parentB = containerB;
+
+  if (parentA !== parentB) {
+    while (parentA || parentB) {
+      if (parentA === containerB || parentB === containerA) {
+        break;
+      }
+
+      if (parentA) {
+        a = parentA;
+        parentA = parentA._parent;
+      }
+      if (parentB) {
+        b = parentB;
+        parentB = parentB._parent;
+      }
+    }
+  }
+
+  return a._index - b._index;
+}
+
 var StageDefinition = (function () {
   return {
     // ()
@@ -38,6 +65,7 @@ var StageDefinition = (function () {
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
       this._invalidObjects = [];
+      this._clickTarget = this;
     },
 
     _setup: function setup(ctx, options) {
@@ -103,6 +131,7 @@ var StageDefinition = (function () {
     },
     _clipDirtyAreas: function clipDirtyAreas(ctx) {
       var objects = this._invalidObjects;
+
       while (objects.length) {
         var obj = objects.shift();
 
@@ -124,11 +153,67 @@ var StageDefinition = (function () {
           ctx.rect(b2.x, b2.y, b2.width, b2.height);
         }
 
-        obj._invalid = false;
-
         if (obj.stage) {
-          this._qtree.insert(obj);
+          this._qtree.insert({
+            obj: obj,
+            x: b2.x,
+            y: b2.y,
+            width: b2.width,
+            height: b2.height
+          });
         }
+
+        obj._invalid = false;
+      }
+    },
+    _handleMouse: function () {
+      var x = this._mouseX;
+      var y = this._mouseY;
+
+      var targets = [];
+      var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
+      for (var i = 0; i < candidates.length; i++) {
+        var item = candidates[i];
+        if (x >= item.x &&
+            x <= item.x + item.width &&
+            y >= item.y &&
+            y <= item.y + item.height &&
+            item.obj._hitTest(true, x, y, true, null, true)) { // TODO: handle hitArea
+          targets.push(item.obj);
+        }
+      }
+
+      var target;
+      if (targets.length) {
+        targets.sort(sortByDepth);
+        target = targets.pop();
+        while (target && !flash.display.InteractiveObject.class.isInstanceOf(target)) { // TODO: handle mouseEnabled and mouseChildren
+          target = target._parent;
+        }
+      }
+
+      if (!target) {
+        target = this;
+      }
+
+      if (target === this._clickTarget) {
+        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      } else {
+        if (this._clickTarget) {
+          this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+
+          if (TRACE_SYMBOLS_INFO && target._control) {
+            delete target._control.dataset.mouseOver;
+          }
+        }
+
+        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+
+        if (TRACE_SYMBOLS_INFO && target._control) {
+          target._control.dataset.mouseOver = true;
+        }
+
+        this._clickTarget = target;
       }
     },
 

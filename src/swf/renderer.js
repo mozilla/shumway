@@ -382,128 +382,6 @@ function renderStage(stage, ctx, events) {
 
   updateRenderTransform();
 
-  function MouseVisitor(root) {
-    this.root = root;
-    this.interactiveParent = stage;
-    this.parentsStack = [stage];
-    this.mouseOverEvt = new flash.events.MouseEvent("mouseOver");
-    this.mouseOutEvt = new flash.events.MouseEvent("mouseOut");
-    this.mouseMoveEvt = new flash.events.MouseEvent("mouseMove");
-
-    this.mouseOverTargets = [stage._mouseOver ? stage : null];
-    this.oldMouseOverTargets = [];
-    if (stage._mouseJustLeft) {
-      this.oldMouseOverTargets.push(stage);
-      stage._mouseJustLeft = false;
-    }
-  }
-  MouseVisitor.prototype = {
-    ignoreVisibleAttribute: false,
-    start: function () {
-      this.mouseMoveEvt._stageX = stage._mouseX;
-      this.mouseMoveEvt._stageY = stage._mouseY;
-
-      visitContainer(this.root, this);
-    },
-    childrenStart: function() {},
-    childrenEnd: function(container) {
-      this.interactiveParent = this.parentsStack.pop();
-
-      if (container === stage) {
-        var newMouseOverTargets = [];
-        var oldMouseOverTargets = this.oldMouseOverTargets;
-        var target = this.mouseOverTargets.pop();
-        stage._clickTarget = target;
-        if (target) {
-          // removing duplicates from this.mouseOverTargets and removing symbols
-          // from this.oldMouseOverTargets if they are in "mouseOver" state
-          do {
-            var i = oldMouseOverTargets.indexOf(target);
-            if (i >= 0) {
-              oldMouseOverTargets[i] = null;
-            }
-            if (!target._mouseOver) {
-              newMouseOverTargets.push(target);
-            }
-            var prev = target;
-            do {
-              target = this.mouseOverTargets.pop();
-            } while (prev === target);
-          } while(target);
-        }
-        // generating mouseOut events for non-processed oldMouseOverTargets
-        while (oldMouseOverTargets.length > 0) {
-          target = oldMouseOverTargets.pop();
-          if (!target) {
-            continue;
-          }
-          target._mouseOver = false;
-          target._dispatchEvent(this.mouseOutEvt);
-
-          if (TRACE_SYMBOLS_INFO && target._control) {
-            delete target._control.dataset.mouseOver;
-          }
-        }
-        // generating mouseOver events for new "mouseOver" symbols
-        while (newMouseOverTargets.length > 0) {
-          target = newMouseOverTargets.pop();
-          target._mouseOver = true;
-          target._dispatchEvent(this.mouseOverEvt);
-
-          if (TRACE_SYMBOLS_INFO && target._control) {
-            target._control.dataset.mouseOver = true;
-          }
-        }
-      }
-    },
-    visit: function (child, isContainer, visitContainer) {
-      var interactiveParent = this.interactiveParent;
-      if (flash.display.InteractiveObject.class.isInstanceOf(child) && child._mouseEnabled &&
-          interactiveParent._mouseChildren) {
-        interactiveParent = child;
-      }
-
-      if (child._mouseOver) {
-        // remembering all symbols in "mouseOver" state
-        this.oldMouseOverTargets.push(child);
-      }
-
-      var mouseMoved = false;
-
-      var parent = child._parent;
-      var pt = { x: parent._mouseX, y: parent._mouseY };
-      child._applyCurrentInverseTransform(pt, true);
-
-      if (pt.x !== child._mouseX || pt.y !== child._mouseY) {
-        mouseMoved = true;
-      }
-
-      child._mouseX = pt.x;
-      child._mouseY = pt.y;
-
-      var hitArea = child._hitArea || child;
-      if (stage._mouseOver &&
-          hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
-        if (mouseMoved) {
-          this.mouseMoveEvt._localX = interactiveParent._mouseX;
-          this.mouseMoveEvt._localY = interactiveParent._mouseY;
-
-          interactiveParent._dispatchEvent(this.mouseMoveEvt);
-        }
-        // saving the current interactive symbol and whole stack of
-        // its parents (including duplicates)
-        this.mouseOverTargets = this.parentsStack.concat([interactiveParent]);
-      }
-
-      if (isContainer) {
-        this.parentsStack.push(this.interactiveParent);
-        this.interactiveParent = interactiveParent;
-
-        visitContainer(child, this);
-      }
-    }
-  };
-
   var frameTime = 0;
   var maxDelay = 1000 / stage._frameRate;
   var nextRenderAt = Date.now();
@@ -599,15 +477,16 @@ function renderStage(stage, ctx, events) {
     var mouseMoved = false;
     if (stage._mouseMoved) {
       stage._mouseMoved = false;
-      mouseMoved = true;
+      mouseMoved = stage._mouseOver;
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-      traceRenderer.value && frameWriter.enter("> Mouse Visitor");
-      (new MouseVisitor(stage)).start();
-      traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+
+      if (mouseMoved) {
+        stage._handleMouse();
+      }
 
       var domain = avm2.systemDomain;
 
@@ -630,13 +509,10 @@ function renderStage(stage, ctx, events) {
 
       if (refreshStage || renderFrame) {
         ctx.beginPath();
-        traceRenderer.value && frameWriter.enter("> Pre Visitor");
 
         stage._clipDirtyAreas(ctx);
 
         (new RenderVisitor(stage, ctx, refreshStage)).start();
-
-        traceRenderer.value && frameWriter.leave("< Pre Visitor");
       }
 
       if (renderFrame) {

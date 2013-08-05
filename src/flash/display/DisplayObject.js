@@ -430,10 +430,24 @@ var DisplayObjectDefinition = (function () {
       TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
     },
     get mouseX() {
-      return this._mouseX;
+      if (!this.stage) {
+        // TODO: calc local point for display objects that are not on the stage
+        return 0;
+      }
+
+      var pt = this.globalToLocal(new flash.geom.Point(this.stage._mouseX,
+                                                       this.stage._mouseY));
+      return pt.x;
     },
     get mouseY() {
-      return this._mouseY;
+      if (!this.stage) {
+        // TODO: calc local point for display objects that are not on the stage
+        return 0;
+      }
+
+      var pt = this.globalToLocal(new flash.geom.Point(this.stage._mouseX,
+                                                       this.stage._mouseY));
+      return pt.y;
     },
     get opaqueBackground() {
       return this._opaqueBackground;
