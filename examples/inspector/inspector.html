@@ -27,8 +27,8 @@ limitations under the License.
       </div>
     </div>
     <div id="terminalContainer">
-      <canvas id="terminal" width="600" height="400" tabindex='0'></canvas>
-      <canvas id="frameInfoTerminal" width="500" height="400" tabindex='1'></canvas>
+      <canvas id="traceTerminal" width="600" height="400" tabindex='0'></canvas>
+      <canvas id="frameTerminal" width="500" height="400" tabindex='1'></canvas>
       <div class="toolbarInfo" id="timerInfo"></div>
     </div>
 
@@ -147,6 +147,7 @@ limitations under the License.
     <script src="../../src/avm2/compiler/c4/ir.js"></script>
     <script src="../../src/avm2/compiler/builder.js"></script>
     <script src="../../src/avm2/compiler/c4/looper.js"></script>
+    <script src="../../src/avm2/compiler/c4/transform.js"></script>
     <script src="../../src/avm2/compiler/c4/backend.js"></script>
     <script src="../../src/avm2/domain.js"></script>
     <script src="../../src/avm2/class.js"></script>
@@ -258,15 +259,12 @@ limitations under the License.
       Shameless copying from:
       http://people.mozilla.com/~shorlander/highlighter-toolbar/highlighter-toolbar.html
     -->
-
-
-
     <div class="toolbarGroup">
       <div class="toolbarBox withEmphasis" style="position: fixed; bottom: 380px; left: auto; right: 0px; width: 300px;" hidden>
         <div class="closeButton"></div>
         <div class="toolbarLabel " style="width: 240px; text-align: left;" id="message">Test</div>
       </div>
-      <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 500px; left: auto; right: 0px; width: 400px; height: 500px; font-size: 10px;" id="info">
+      <div class="toolbarInfo" style="position: fixed; top: 0px; left: auto; right: 0px; width: 400px; height: 300px; font-size: 10px;" id="info">
       </div>
 
       <div class="toolbarInfo" style="position: fixed; top: 0px; bottom: 70px; right: 320px; width: 200px;" id="traceSymbolsInfo" hidden>
@@ -278,14 +276,18 @@ limitations under the License.
       </div>
       <div class="toolbarBox" style="position: fixed; bottom: 1px; left: 0; right: 0; width: auto;">
         <div class="closeButton"></div>
-        <div class="toolbarLabel" style="width: 140px; text-align: left;">AVM2 Options</div>
-        <div class="avm2Option toolbarButton" id="sysCompiler" style="width: 60px">Sys</div>
-        <div class="avm2Option toolbarButton" id="appCompiler" style="width: 60px">App</div>
+        <div class="toolbarLabel" style="width: 100px; text-align: left;">AVM2 Options</div>
+        <div class="avm2Option toolbarButton" id="sysCompiler" style="width: 40px">Sys</div>
+        <div class="avm2Option toolbarButton" id="appCompiler" style="width: 40px">App</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="verifier">Verifier</div>
-        <div class="avm2Option toolbarButton" style="width: 60px" id="trace">Trace</div>
-        <div class="avm2Option toolbarButton" style="width: 90px" id="traceCalls">Trace Calls</div>
+        <div class="avm2Option toolbarButton" style="width: 70px" id="allocator">Allocator</div>
+        <div class="avm2Option toolbarButton" style="width: 50px" id="trace">Trace</div>
+        <div class="avm2Option toolbarButton" style="width: 80px" id="traceCalls">Trace Calls</div>
         <div class="avm2Option toolbarButton" style="width: 100px" id="traceRuntime">Trace Runtime</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="release">Release</div>
+        <div class="avm2Option toolbarButton" style="width: 40px" id="pre">Pre</div>
+        <div class="avm2Option toolbarButton" style="width: 60px" id="render">Render</div>
+        <div class="avm2Option toolbarButton" style="width: 60px" id="mouse">Mouse</div>
         <div class="avm2Option toolbarButton" style="width: 60px" id="symbolsInfo">Symbols</div>
         <div class="toolbarButton" style="width: 60px" id="sample">Sample</div>
       </div>

@@ -15,10 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
+var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVisitor", "boolean", false, "disable pre visitor"));
+var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
+var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 
 var CanvasCache = {
   cache: [],
@@ -607,7 +610,7 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Total");
 
   var frameCount = 0;
-
+  var frameFPSAverage = new metrics.Average(120);
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -645,10 +648,13 @@ function renderStage(stage, ctx, events) {
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
+      var frameStartTime = performance.now();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-      traceRenderer.value && frameWriter.enter("> Mouse Visitor");
-      (new MouseVisitor(stage)).start();
-      traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+      if (!disableMouseVisitor.value) {
+        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
+        (new MouseVisitor(stage)).start();
+        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+      }
 
       var domain = avm2.systemDomain;
 
@@ -671,10 +677,16 @@ function renderStage(stage, ctx, events) {
 
       if (refreshStage || renderFrame) {
         ctx.beginPath();
-        traceRenderer.value && frameWriter.enter("> Pre Visitor");
-        (new PreVisitor(stage, ctx)).start();
-        (new RenderVisitor(stage, ctx, refreshStage)).start();
-        traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        if (!disablePreVisitor.value) {
+          traceRenderer.value && frameWriter.enter("> Pre Visitor");
+          (new PreVisitor(stage, ctx)).start();
+          traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        }
+        if (!disableRenderVisitor.value) {
+          traceRenderer.value && frameWriter.enter("> Render Visitor");
+          (new RenderVisitor(stage, ctx, refreshStage)).start();
+          traceRenderer.value && frameWriter.leave("< Render Visitor");
+        }
       }
 
       if (renderFrame) {
@@ -692,6 +704,11 @@ function renderStage(stage, ctx, events) {
         for (var name in FrameCounter.counts) {
           appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
         }
+        var frameElapsedTime = performance.now() - frameStartTime;
+        var frameFPS = 1000 / frameElapsedTime;
+        frameFPSAverage.push(frameFPS);
+        traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
+
       }
     } else {
       traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
