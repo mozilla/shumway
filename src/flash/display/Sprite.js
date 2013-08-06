@@ -24,6 +24,7 @@ var SpriteDefinition = (function () {
     initialize: function () {
       this._buttonMode = false;
       this._useHandCursor = true;
+      this._hitTarget = null;
 
       var s = this.symbol;
       if (s) {
@@ -253,7 +254,18 @@ var SpriteDefinition = (function () {
       return this._hitArea;
     },
     set hitArea(val) {
+      if (this._hitArea === val) {
+        return;
+      }
+
+      if (val && val._hitTarget) {
+        val._hitTarget.hitArea = null;
+      }
+
       this._hitArea = val;
+      if (val) {
+        val._hitTarget = this;
+      }
     },
     get soundTransform() {
       notImplemented();

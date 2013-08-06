@@ -146,6 +146,7 @@ SWF.embed = function(file, doc, container, options) {
     canvas.addEventListener('mouseout', function () {
       stage._mouseMoved = true;
       stage._mouseOver = false;
+      stage._clickTarget = null;
     });
 
     var bgcolor = loaderInfo._backgroundColor;

@@ -241,6 +241,7 @@ var DisplayObjectContainerDefinition = (function () {
   var desc = Object.getOwnPropertyDescriptor;
 
   def.initialize = function () {
+    this._mouseChildren = true;
     this._tabChildren = true;
   };
 
