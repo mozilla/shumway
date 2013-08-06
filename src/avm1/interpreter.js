@@ -393,7 +393,7 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = _global;
                 break;
               case '_parent':
-                registers[i] = _global._parent;
+                registers[i] = scope._parent;
                 break;
               case '_root':
                 registers[i] = _global._root;
