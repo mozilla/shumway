@@ -1021,7 +1021,7 @@ function interpretActions(actionsData, scopeContainer,
           // special case to track members
           stack.push(as2CreatePrototypeProxy(obj));
         } else {
-          resolvedName = as2ResolveProperty(obj, name);
+          resolvedName = as2ResolveProperty(Object(obj), name);
           stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
         }
         break;
