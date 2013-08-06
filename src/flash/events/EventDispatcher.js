@@ -90,6 +90,8 @@ var EventDispatcherDefinition = (function () {
     return !event._stopPropagation;
   }
 
+  var eventsCache = Object.create(null);
+
   return {
     // (target:IEventDispatcher = null)
     __class__: "flash.events.EventDispatcher",
@@ -159,6 +161,12 @@ var EventDispatcherDefinition = (function () {
     },
     _hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
       return type in this._listeners || type in this._captureListeners;
+    },
+    _dispatchCachedEvent: function dispatchCachedEvent(eventName) {
+      var event = eventsCache[eventName] ||
+        (eventsCache[eventName] = new flash.events.Event(eventName));
+      event._target = null;
+      doDispatchEvent(this, event);
     },
     _dispatchEvent: function dispatchEvent(event) {
       doDispatchEvent(this, event);
