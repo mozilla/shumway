@@ -271,10 +271,11 @@ var DisplayObjectDefinition = (function () {
       var height = Math.min(b1.y + b1.height, b2.y + b2.height) - y;
       return width > 0 && height > 0;
     },
-    _invalidate: function (foo) {
+    _invalidate: function () {
       if (this.stage) {
-        this.stage._invalidateOnStage(this, foo);
+        this.stage._invalidateOnStage(this);
 
+        // TODO: skip if object didn't move
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
           this.stage._invalidateOnStage(children[i]);

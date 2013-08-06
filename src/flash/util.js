@@ -227,7 +227,7 @@ QuadTree.prototype.insert = function (item) {
   children.push(item);
 
   if (children.length > 4) {
-    this.subdivide();
+    this._subdivide();
 
     for (var i = 0; i < children.length; i++) {
       var child = children[i];
@@ -257,7 +257,7 @@ QuadTree.prototype.retrieve = function (item) {
 
   return out;
 };
-QuadTree.prototype.subdivide = function () {
+QuadTree.prototype._subdivide = function () {
   var halfWidth = this.width / 2;
   var halfHeight = this.height / 2;
   var midX = this.x + halfWidth;

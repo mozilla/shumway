@@ -43,7 +43,6 @@ var CanvasCache = {
 
 function visitContainer(container, visitor) {
   var children = container._children;
-  var dirty = false;
 
   visitor.childrenStart(container);
 
@@ -58,16 +57,10 @@ function visitContainer(container, visitor) {
                         flash.display.SimpleButton.class.isInstanceOf(child);
 
       visitor.visit(child, isContainer, visitContainer);
-
-      if (child._dirtyArea)
-        dirty = true;
     }
   }
 
   visitor.childrenEnd(container);
-
-  if (dirty)
-    container._bounds = null;
 }
 
 function RenderVisitor(root, ctx, refreshStage) {
@@ -210,9 +203,6 @@ RenderVisitor.prototype = {
     if (clippingMask) {
       ctx.clip();
     }
-
-    child._dirtyArea = null;
-    child._invalid = false;
   }
 };
 

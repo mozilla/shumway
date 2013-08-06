@@ -16,34 +16,34 @@
  * limitations under the License.
  */
 
-function sortByDepth(a, b) {
-  var containerA = a._parent;
-  var containerB = b._parent;
+var StageDefinition = (function () {
+  function sortByDepth(a, b) {
+    var containerA = a._parent;
+    var containerB = b._parent;
 
-  var parentA = containerA;
-  var parentB = containerB;
+    var parentA = containerA;
+    var parentB = containerB;
 
-  if (parentA !== parentB) {
-    while (parentA || parentB) {
-      if (parentA === containerB || parentB === containerA) {
-        break;
-      }
+    if (parentA !== parentB) {
+      while (parentA || parentB) {
+        if (parentA === containerB || parentB === containerA) {
+          break;
+        }
 
-      if (parentA) {
-        a = parentA;
-        parentA = parentA._parent;
-      }
-      if (parentB) {
-        b = parentB;
-        parentB = parentB._parent;
+        if (parentA) {
+          a = parentA;
+          parentA = parentA._parent;
+        }
+        if (parentB) {
+          b = parentB;
+          parentB = parentB._parent;
+        }
       }
     }
+
+    return a._index - b._index;
   }
 
-  return a._index - b._index;
-}
-
-var StageDefinition = (function () {
   return {
     // ()
     __class__: "flash.display.Stage",
@@ -65,6 +65,7 @@ var StageDefinition = (function () {
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
       this._invalidObjects = [];
+      this._mouseMoved = false;
       this._clickTarget = this;
     },
 
@@ -164,8 +165,10 @@ var StageDefinition = (function () {
         }
 
         obj._invalid = false;
+        obj._dirtyArea = null;
       }
     },
+
     _handleMouse: function () {
       var x = this._mouseX;
       var y = this._mouseY;

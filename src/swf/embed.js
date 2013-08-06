@@ -70,7 +70,6 @@ SWF.embed = function(file, doc, container, options) {
     syncCursor();
   };
   stage._syncCursor = syncCursor;
-  stage._mouseMoved = false;
 
   function fitCanvas(container, canvas) {
     if (canvasHolder) {
