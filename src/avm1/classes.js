@@ -119,7 +119,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeMovieClip) {
-      this.$nativeObject = nativeMovieClip;
+      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
       nativeMovieClip.$as2Object = this;
       initDefaultListeners(this);
     },
@@ -161,12 +161,17 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   attachMovie: {
     value: function attachMovie(symbolId, name, depth, initObject) {
-      var mc = this.$nativeObject._constructSymbol(symbolId, name);
-      this._insertChildAtDepth(mc, depth);
+      var MovieClipClass = flash.display.MovieClip.class;
+      var mc = MovieClipClass.createAsSymbol({name: name});
+      MovieClipClass.instanceConstructor.call(mc);
+
+      this.$nativeObject._insertChildAtDepth(mc, depth);
 
       var as2mc = mc._getAS2Object();
       for (var i in initObject) {
-        as2mc[i] = initObject[i];
+        if (initObject.hasOwnProperty(i)) {
+          as2mc[i] = initObject[i];
+        }
       }
 
       return as2mc;
@@ -577,7 +582,7 @@ AS2Button.prototype = Object.create(Object.prototype, {
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
+      Object.defineProperty(this, '$nativeObject', { value: nativeButton });
       nativeButton.$as2Object = this;
       initDefaultListeners(this);
     },
@@ -750,9 +755,9 @@ AS2TextField.prototype = Object.create(Object.prototype, {
     value: []
   },
   $attachNativeObject: {
-    value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
-      nativeButton.$as2Object = this;
+    value: function attachNativeObject(nativeTextField) {
+      Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
+      nativeTextField.$as2Object = this;
       initDefaultListeners(this);
     },
     enumerable: false
@@ -1316,7 +1321,11 @@ defineObjectProperties(Object.prototype, {
     enumerable: false
   },
   registerClass: {
-    value: function registerClass() { throw 'Not implemented: registerClass'; },
+    value: function registerClass(name, theClass) {
+      var classes = AS2Context.instance.classes ||
+        (AS2Context.instance.classes = {});
+      classes[name] = theClass;
+    },
     enumerable: false
   }
 });
