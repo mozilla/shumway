@@ -165,9 +165,9 @@ var MovieClipDefinition = (function () {
                 children.splice(currentIndex, 1);
 
                 this._control.removeChild(currentChild._control);
-                currentChild._dispatchEvent(new flash.events.Event("removed"));
+                currentChild._dispatchCachedEvent("removed");
                 if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                    currentChild._removedFromStage();
                 currentChild.destroy();
               }
             } else if (cmd !== currentListCmd) {
@@ -208,9 +208,9 @@ var MovieClipDefinition = (function () {
                   replace = true;
 
                   this._control.removeChild(currentChild._control);
-                  currentChild._dispatchEvent(new flash.events.Event("removed"));
+                  currentChild._dispatchCachedEvent("removed");
                   if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                    currentChild._removedFromStage();
                   currentChild.destroy();
                 }
 

@@ -182,13 +182,13 @@ var DisplayObjectDefinition = (function () {
         'class: ' + this.__class__;
       this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
     },
-    _addedToStage: function (e) {
+    _addedToStage: function () {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child._addedToStage(e);
+        child._addedToStage();
       }
-      this._dispatchEvent(e);
+      this._dispatchCachedEvent("addedToStage");
     },
     _applyCurrentInverseTransform: function (point, immediate) {
       if (this._parent && this._parent !== this._stage && !immediate)
@@ -282,13 +282,13 @@ var DisplayObjectDefinition = (function () {
         this._dirtyArea = this.getBounds();
       this._bounds = null;
     },
-    _removedFromStage: function (e) {
+    _removedFromStage: function () {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        child._removedFromStage(e);
+        child._removedFromStage();
       }
-      this._dispatchEvent(e);
+      this._dispatchCachedEvent("removedFromStage");
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;
