@@ -17,33 +17,6 @@
  */
 
 var StageDefinition = (function () {
-  function sortByDepth(a, b) {
-    var containerA = a._parent;
-    var containerB = b._parent;
-
-    var parentA = containerA;
-    var parentB = containerB;
-
-    if (parentA !== parentB) {
-      while (parentA || parentB) {
-        if (parentA === containerB || parentB === containerA) {
-          break;
-        }
-
-        if (parentA) {
-          a = parentA;
-          parentA = parentA._parent;
-        }
-        if (parentB) {
-          b = parentB;
-          parentB = parentB._parent;
-        }
-      }
-    }
-
-    return a._index - b._index;
-  }
-
   return {
     // ()
     __class__: "flash.display.Stage",
@@ -112,64 +85,60 @@ var StageDefinition = (function () {
       }
 
       displayObject._invalid = true;
-      displayObject._dirtyArea = displayObject._getDrawRegion();
+      displayObject._invalidRegion = displayObject._getDrawRegion();
 
       this._invalidObjects.push(displayObject);
     },
 
-    _roundForClipping: function roundForClipping(bounds) {
+    _clipInvalidRegions: function clipInvalidRegions(ctx) {
+      var objects = this._invalidObjects;
+
+      while (objects.length) {
+        var displayObject = objects.shift();
+
+        if (!displayObject._invalid) {
+          continue;
+        }
+
+        var invalidRegion = displayObject._invalidRegion;
+        if (invalidRegion.width && invalidRegion.height) {
+          this._clipRegion(ctx, invalidRegion);
+        }
+
+        var drawRegion = this._roundForClipping(displayObject._getDrawRegion());
+
+        if (drawRegion.width &&
+            drawRegion.height &&
+            (drawRegion.x !== drawRegion.x ||
+             drawRegion.y !== drawRegion.y ||
+             drawRegion.width !== drawRegion.width ||
+             drawRegion.height !== drawRegion.height)) {
+          this._clipRegion(ctx, drawRegion);
+        }
+
+        if (displayObject.stage) {
+          this._qtree.insert(drawRegion);
+        }
+
+        displayObject._invalid = false;
+        displayObject._invalidRegion = null;
+      }
+    },
+    _clipRegion: function clipRegion(ctx, region) {
       var scaleX = this._canvasState.scaleX;
       var scaleY = this._canvasState.scaleY;
       var offsetX = this._canvasState.offsetX;
       var offsetY = this._canvasState.offsetY;
 
-      var x = (Math.floor(bounds.x * scaleX + offsetX) - offsetX) / scaleX;
-      var y = (Math.floor(bounds.y * scaleY + offsetY) - offsetY) / scaleY;
-      var x2 = (Math.ceil((bounds.x + bounds.width) * scaleX + offsetX) - offsetX) / scaleX;
-      var y2 = (Math.ceil((bounds.y + bounds.height) * scaleY + offsetY) - offsetY) / scaleY;
+      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX;
+      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY;
+      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX;
+      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY;
 
-      return { x: x, y: y, width: x2 - x, height: y2 - y };
-    },
-    _clipDirtyAreas: function clipDirtyAreas(ctx) {
-      var objects = this._invalidObjects;
-
-      while (objects.length) {
-        var obj = objects.shift();
-
-        if (!obj._invalid) {
-          continue;
-        }
-
-        var b1 = this._roundForClipping(obj._dirtyArea);
-        if (b1.width && b1.height) {
-          ctx.rect(b1.x, b1.y, b1.width, b1.height);
-        }
-
-        var b2 = this._roundForClipping(obj._getDrawRegion());
-
-        if (b2.width && b2.height && (b1.x !== b2.x ||
-                                      b1.y !== b2.y ||
-                                      b1.width !== b2.width ||
-                                      b1.height !== b2.height)) {
-          ctx.rect(b2.x, b2.y, b2.width, b2.height);
-        }
-
-        if (obj.stage) {
-          this._qtree.insert({
-            obj: obj,
-            x: b2.x,
-            y: b2.y,
-            width: b2.width,
-            height: b2.height
-          });
-        }
-
-        obj._invalid = false;
-        obj._dirtyArea = null;
-      }
+      ctx.rect(left, top, right - left, bottom - top);
     },
 
-    _handleMouse: function () {
+    _handleMouse: function handleMouse() {
       var x = this._mouseX;
       var y = this._mouseY;
 

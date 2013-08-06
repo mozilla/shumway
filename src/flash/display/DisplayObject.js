@@ -714,7 +714,13 @@ var DisplayObjectDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+      return {
+        obj: this,
+        x: xMin,
+        y: yMin,
+        width: xMax - xMin,
+        height: yMax - yMin
+      };
     },
 
     getBounds: function (targetCoordSpace) {

@@ -31,6 +31,32 @@ function cloneObject(obj) {
   return clone;
 }
 
+function sortByDepth(a, b) {
+  var parent1 = a._parent;
+  var parent2 = b._parent;
+
+  var currentNode1 = parent1;
+  var currentNode2 = parent2;
+
+  if (currentNode1 !== currentNode2) {
+    while (currentNode1 || currentNode2) {
+      if (currentNode1 === parent2 || currentNode2 === parent1) {
+        break;
+      }
+
+      if (currentNode1) {
+        a = currentNode1;
+        currentNode1 = currentNode1._parent;
+      }
+      if (currentNode2) {
+        b = currentNode2;
+        currentNode2 = currentNode2._parent;
+      }
+    }
+  }
+
+  return a._index - b._index;
+}
 
 var Promise = (function PromiseClosure() {
   function isPromise(obj) {
