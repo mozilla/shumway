@@ -49,7 +49,15 @@ function proxyEventHandler(eventName, argsConverter) {
     get: function() {
       return currentHandler;
     },
-    set: function(newHandler) {
+    set: function setter(newHandler) {
+      if (!this.$nativeObject) { // prototype/class ?
+        var defaultListeners = this.$defaultListeners ||
+          (this.$defaultListeners = []);
+        defaultListeners.push({setter: setter, value: newHandler});
+        // see also initDefaultListeners()
+        return;
+      }
+
       if (currentHandler === newHandler) {
         return;
       }
@@ -91,19 +99,29 @@ function getAS2Object(nativeObject) {
   return nativeObject ? nativeObject._getAS2Object() : null;
 }
 
+function initDefaultListeners(thisArg) {
+  if (!thisArg.$defaultListeners) {
+    return;
+  }
+  for (var i = 0; i < thisArg.$defaultListeners.length; i++) {
+    var p = thisArg.$defaultListeners[i];
+    p.setter.call(thisArg, p.value);
+  }
+}
+
 // AS2 Classes
 
 function AS2MovieClip() {
 }
 AS2MovieClip.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeMovieClip) {
       this.$nativeObject = nativeMovieClip;
       nativeMovieClip.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -554,14 +572,14 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 function AS2Button() {
 }
 AS2Button.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeButton) {
       this.$nativeObject = nativeButton;
       nativeButton.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -728,14 +746,14 @@ AS2Button.prototype = Object.create(Object.prototype, {
 function AS2TextField() {
 }
 AS2TextField.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeButton) {
       this.$nativeObject = nativeButton;
       nativeButton.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
