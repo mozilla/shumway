@@ -289,11 +289,9 @@ var LoaderDefinition = (function () {
                 frame.actionBlocks = [tag.actionsData];
               break;
             case SWF_TAG_CODE_DO_INIT_ACTION:
-              var initActionBlocks = frame.initActionBlocks;
-              if (!initActionBlocks) {
-                frame.initActionBlocks = initActionBlocks = {};
-              }
-              initActionBlocks[tag.spriteId] = tag.actionsData;
+              var initActionBlocks = frame.initActionBlocks ||
+                (frame.initActionBlocks = []);
+              initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
               break;
             case SWF_TAG_CODE_START_SOUND:
               var startSounds = frame.startSounds;
@@ -697,12 +695,14 @@ var LoaderDefinition = (function () {
           if (initActionBlocks) {
             // HACK using symbol init actions as regular action blocks, the spec has a note
             // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-            for (var symbolId in initActionBlocks) {
-              root.addFrameScript(frameNum - 1, function(actionBlock, state) {
+            for (var i = 0; i < initActionBlocks.length; i++) {
+              var spriteId = initActionBlocks[i].spriteId;
+              var actionsData = initActionBlocks[i].actionsData;
+              root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
-                return executeActions(actionBlock, avm1Context, this._getAS2Object(), exports);
-              }.bind(root, initActionBlocks[symbolId], {executed: false}));
+                return executeActions(actionsData, avm1Context, this._getAS2Object(), exports);
+              }.bind(root, actionsData, spriteId, {executed: false}));
             }
           }
 
