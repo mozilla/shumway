@@ -121,13 +121,14 @@ var SpriteDefinition = (function () {
           assert(instance._control);
           this._control.appendChild(instance._control);
 
-          if (!loader._isAvm2Enabled)
+          if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
+            instance._dispatchEvent(new flash.events.Event("init"));
+          }
 
           instance._markAsDirty();
 
           instance._dispatchEvent(new flash.events.Event("load"));
-          instance._dispatchEvent(new flash.events.Event("init"));
           instance._dispatchEvent(new flash.events.Event("added"));
           if (this.stage)
             instance._dispatchEvent(new flash.events.Event("addedToStage"));
@@ -161,13 +162,14 @@ var SpriteDefinition = (function () {
       assert(instance._control);
       parent._control.appendChild(instance._control);
 
-      if (!loader._isAvm2Enabled)
+      if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
+        instance._dispatchEvent(new flash.events.Event("init"));
+      }
 
       instance._markAsDirty();
 
       instance._dispatchEvent(new flash.events.Event("load"));
-      instance._dispatchEvent(new flash.events.Event("init"));
       instance._dispatchEvent(new flash.events.Event("added"));
 
       children.push(instance);
