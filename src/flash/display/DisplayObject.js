@@ -275,7 +275,6 @@ var DisplayObjectDefinition = (function () {
       if (this.stage) {
         this.stage._invalidateOnStage(this);
 
-        // TODO: skip if object didn't move
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
           this.stage._invalidateOnStage(children[i]);
