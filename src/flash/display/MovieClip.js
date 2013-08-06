@@ -25,7 +25,7 @@ var MovieClipDefinition = (function () {
       this._currentFrame = 0;
       this._actualFrame = 0;
       this._currentFrameLabel = null;
-      this._currentLabel = false;
+      this._currentLabel = null;
       this._currentScene = 0;
       this._deferScriptExecution = false;
       this._enabled = null;
@@ -224,6 +224,15 @@ var MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
+      this._currentFrameLabel = null;
+
+      var map = this._labelMap;
+      for (var name in map) {
+        if (map[name] == frameNum) {
+          this._currentFrameLabel = this._currentLabel = name;
+          break;
+        }
+      }
 
       if (frameNum) {
         this._callFrame(frameNum);
