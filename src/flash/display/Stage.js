@@ -109,7 +109,7 @@ var StageDefinition = (function () {
           this._clipRegion(ctx, invalidRegion);
         }
 
-        var drawRegion = this._roundForClipping(displayObject._getDrawRegion());
+        var drawRegion = displayObject._getDrawRegion();
 
         if (drawRegion.width &&
             drawRegion.height &&
