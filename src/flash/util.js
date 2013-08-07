@@ -242,7 +242,7 @@ QuadTree.prototype.insert = function (item) {
       this.nodes[index].insert(item);
     } else {
       this.stuckChildren.push(item);
-      item._quadtree = this;
+      item._qtree = this;
     }
 
     return;
@@ -265,7 +265,7 @@ QuadTree.prototype.insert = function (item) {
     return;
   }
 
-  item._quadtree = this;
+  item._qtree = this;
 };
 QuadTree.prototype._out = [];
 QuadTree.prototype.retrieve = function (item) {

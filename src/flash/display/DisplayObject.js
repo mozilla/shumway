@@ -277,7 +277,7 @@ var DisplayObjectDefinition = (function () {
 
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
-          this._stage._invalidateOnStage(children[i]);
+          children[i]._invalidate();
         }
       }
     },
@@ -695,10 +695,14 @@ var DisplayObjectDefinition = (function () {
     },
     _getDrawRegion: function getDrawRegion() {
       if (!this._graphics) {
-        return this.getBounds();
+        return this._children.length ? this.getBounds() : null;
       }
 
       var b = this._graphics._getBounds(true);
+
+      if (!b || (!b.width && !b.height)) {
+        return null;
+      }
 
       var p1 = { x: b.x, y: b.y };
       this._applyCurrentTransform(p1);
@@ -714,13 +718,7 @@ var DisplayObjectDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return {
-        obj: this,
-        x: xMin,
-        y: yMin,
-        width: xMax - xMin,
-        height: yMax - yMin
-      };
+      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
     },
 
     getBounds: function (targetCoordSpace) {

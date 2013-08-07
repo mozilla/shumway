@@ -75,26 +75,19 @@ var StageDefinition = (function () {
         return;
       }
 
-      if (displayObject._qtree) {
-        var qtree = displayObject._qtree;
-        var list = qtree.children;
-        var index = list.indexOf(displayObject);
-        if (index < 0) {
-          list = qtree.stuckChildren;
-          index = list.indexOf(displayObject);
-        }
-        if (index > -1) {
-          list.splice(index, 1);
-        }
+      var region = displayObject._getDrawRegion();
+
+      if (!region) {
+        return;
       }
 
       displayObject._invalid = true;
-      displayObject._invalidRegion = displayObject._getDrawRegion();
+      displayObject._invalidRegion = region;
 
       this._invalidObjects.push(displayObject);
     },
 
-    _clipInvalidRegions: function clipInvalidRegions(ctx) {
+    _prepareInvalidRegions: function prepareInvalidRegions(ctx) {
       var objects = this._invalidObjects;
 
       while (objects.length) {
@@ -104,24 +97,39 @@ var StageDefinition = (function () {
           continue;
         }
 
-        var invalidRegion = displayObject._invalidRegion;
-        if (invalidRegion.width && invalidRegion.height) {
-          this._clipRegion(ctx, invalidRegion);
+        if (displayObject._region) {
+          // TODO: move this into the QuadTree class
+          var region = displayObject._region;
+          var qtree = region._qtree;
+          var list = qtree.children;
+          var index = list.indexOf(region);
+          if (index < 0) {
+            list = qtree.stuckChildren;
+            index = list.indexOf(region);
+          }
+          if (index > -1) {
+            list.splice(index, 1);
+          }
+          displayObject._qtree = null;
+          displayObject._region = null;
         }
+
+        var invalidRegion = displayObject._invalidRegion;
+
+        this._clipRegion(ctx, invalidRegion);
 
         var drawRegion = displayObject._getDrawRegion();
-
-        if (drawRegion.width &&
-            drawRegion.height &&
-            (drawRegion.x !== drawRegion.x ||
-             drawRegion.y !== drawRegion.y ||
-             drawRegion.width !== drawRegion.width ||
-             drawRegion.height !== drawRegion.height)) {
-          this._clipRegion(ctx, drawRegion);
-        }
-
-        if (displayObject.stage) {
+        if (drawRegion && displayObject._stage) {
+          drawRegion.obj = displayObject;
           this._qtree.insert(drawRegion);
+          displayObject._region = drawRegion;
+
+          if (drawRegion.x !== invalidRegion.x ||
+              drawRegion.y !== invalidRegion.y ||
+              drawRegion.width !== invalidRegion.width ||
+              drawRegion.height !== invalidRegion.height) {
+            this._clipRegion(ctx, drawRegion);
+          }
         }
 
         displayObject._invalid = false;
@@ -148,6 +156,7 @@ var StageDefinition = (function () {
 
       var targets = [];
       var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
+
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;

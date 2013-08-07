@@ -71,6 +71,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       child._owned = false;
       child._parent = this;
+      child._stage = this._stage;
       child._index = index;
 
       this._bounds = null;

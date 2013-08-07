@@ -779,7 +779,7 @@ var LoaderDefinition = (function () {
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
       var promiseQueue = [];
-      var props = { loader: this };
+      var props = { symbolId: symbol.id, loader: this };
       var symbolPromise = new Promise();
 
       if (dependencies && dependencies.length) {

@@ -500,7 +500,7 @@ function renderStage(stage, ctx, events) {
       if (refreshStage || renderFrame) {
         ctx.beginPath();
 
-        stage._clipInvalidRegions(ctx);
+        stage._prepareInvalidRegions(ctx);
 
         (new RenderVisitor(stage, ctx, refreshStage)).start();
       }
