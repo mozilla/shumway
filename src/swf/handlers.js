@@ -246,7 +246,7 @@ var tagHandler = (function (global) {
     var ON_DRAG_OUT = 148;
     var LENGTH = 149;
     var KEY_CODE = 150;
-    var ACTION_DATA = 151;
+    var ACTIONS_DATA = 151;
     var FILL_STYLES = 152;
     var LINE_STYLES = 153;
     var EOS = 154;
@@ -262,6 +262,7 @@ var tagHandler = (function (global) {
     var pow = stdlib.Math.pow;
     var NaN = stdlib.NaN;
     var Infinity = stdlib.Infinity;
+    var inputStreamLength = imports.inputStreamLength;
 
     // Markers for UBJSON types
     var $o = 111;
@@ -457,8 +458,6 @@ var tagHandler = (function (global) {
           writeU8(code);
         }
       }
-      pos = pos + length | 0;
-      inputStreamPos = inputStreamPos + length | 0;
 /*
       var numChunks = length / 65536;
       var str = '';
@@ -473,14 +472,9 @@ var tagHandler = (function (global) {
       return length | 0;
     }
 
-
     function readStreamBinary(length) {
       length = length | 0;
-      var code = 0, i = 0;
-      for (i = 0; ~~i < ~~length; i = i + 1 | 0) {
-        writeU8(readStreamU8() | 0);
-      }
-      pos = pos + length | 0;
+      length = length ? length : (inputStreamOffset + (inputStreamLength() | 0) - inputStreamPos) | 0;
       inputStreamPos = inputStreamPos + length | 0;
       return length | 0;
     }
@@ -787,22 +781,28 @@ var tagHandler = (function (global) {
       var startPos = 0;
       startPos = pos;
       bytesU8[pos] = $$;
-      bytesU8[pos + 1 | 0] = $_;
-      bytesU8[pos + 2 | 0] = $_;
-      bytesU8[pos + 3 | 0] = $_;
-      bytesU8[pos + 4 | 0] = $_;
-      pos = pos + 5 | 0;
+      // offset
+      bytesU8[pos + 1 | 0] = inputStreamPos >> 24;
+      bytesU8[pos + 2 | 0] = inputStreamPos >> 16;
+      bytesU8[pos + 3 | 0] = inputStreamPos >> 8;
+      bytesU8[pos + 4 | 0] = inputStreamPos;
+      // length
+      bytesU8[pos + 5 | 0] = $_;
+      bytesU8[pos + 6 | 0] = $_;
+      bytesU8[pos + 7 | 0] = $_;
+      bytesU8[pos + 8 | 0] = $_;
+      pos = pos + 9 | 0;
       return startPos | 0;
     }
 
     // Finish a binary value. Patch its byte count.
-    function finishBinary(offset, count) {
+    function finishBinary(offset, length) {
       offset = offset | 0;
-      count = count | 0;
-      bytesU8[offset + 4 | 0] = count;
-      bytesU8[offset + 3 | 0] = count >> 8;
-      bytesU8[offset + 2 | 0] = count >> 16;
-      bytesU8[offset + 1 | 0] = count >> 24;
+      length = length | 0;
+      bytesU8[offset + 5 | 0] = length >> 24;
+      bytesU8[offset + 6 | 0] = length >> 16;
+      bytesU8[offset + 7 | 0] = length >> 8;
+      bytesU8[offset + 8 | 0] = length;
     }
 
     // Write a UTF8 character into a string value.
@@ -998,7 +998,7 @@ var tagHandler = (function (global) {
           count = count + 2 | 0;
         }
         if (place) {
-          writePropU32(PLACE, readStreamU16() | 0);
+          writePropU32(SYMBOL_ID, readStreamU16() | 0);
           count = count + 2 | 0;
         }
         if (hasMatrix) {
@@ -1095,7 +1095,7 @@ var tagHandler = (function (global) {
         objectLen = matrix(swfVersion, tagCode) | 0;
         finishObject(objectPos, objectLen, 0);
         count = count + 10 | 0;
-        if (1 /*remaining()*/ | 0) {
+        if (remaining() | 0) {
           writePropU8(HAS_CXFORM, 1);
           writeUBJU8(CXFORM);
           objectPos = startObject(0) | 0;
@@ -1105,6 +1105,10 @@ var tagHandler = (function (global) {
         }
       }
       return count | 0;
+    }
+
+    function remaining() {
+      return inputStreamOffset + (inputStreamLength() | 0) - inputStreamPos | 0;
     }
 
     function removeObject(swfVersion, tagCode) {
@@ -1513,7 +1517,7 @@ var tagHandler = (function (global) {
       if (readStreamUb(1) | 0) {
         bits = readStreamUb(5) | 0;
         b = +readStreamFb(bits | 0);
-        d = +readStreamFb(bits | 0);
+        c = +readStreamFb(bits | 0);
       }
       bits = readStreamUb(5) | 0;
       tx = +(+(readStreamSb(bits | 0) | 0) / 20.0);
@@ -1951,7 +1955,7 @@ var tagHandler = (function (global) {
           writePropU8(KEY_CODE, readStreamU8() | 0);
           count = count + 2 | 0;
         }
-        writeUBJU8(ACTION_DATA);
+        writeUBJU8(ACTIONS_DATA);
         binaryPos = startBinary() | 0;
         binaryLen = readStreamBinary(length - (keyPress ? 1 : 0) | 0) | 0;
         finishBinary(binaryPos, binaryLen);
@@ -2039,8 +2043,8 @@ var tagHandler = (function (global) {
 
     return {
       defineShape: defineShape,
-//      removeObject: removeObject,
-//      placeObject: placeObject,
+      removeObject: removeObject,
+      placeObject: placeObject,
       // Utils
       initMasks: initMasks,
       setInputStreamPos: setInputStreamPos,
@@ -2063,7 +2067,7 @@ var tagHandler = (function (global) {
     inputStreamLength = s.bytes.length;
   }
 
-  var imports = {
+  var symbols = {
     red: 1,
     green: 2,
     blue: 3,
@@ -2215,16 +2219,22 @@ var tagHandler = (function (global) {
     onDragOut: 148,
     length: 149,
     keyCode: 150,
-    actionData: 151,
+    actionsData: 151,
     fillStyles: 152,
     lineStyles: 153,
     eos: 154,
     lineStyle: 155,
   };
 
+  var imports = {
+    inputStreamLength: function () {
+      return inputStreamLength;
+    },
+  };
+
   var names = {}
-  Object.keys(imports).forEach(function (v, i) {
-    names[imports[v]] = v;
+  Object.keys(symbols).forEach(function (v, i) {
+    names[symbols[v]] = v;
   });
 
   var buffer = new ArrayBuffer(Math.pow(2, 24));  // 16,777,216 bytes
@@ -2288,9 +2298,10 @@ var tagHandler = (function (global) {
   function placeObject($bytes, $stream, $, swfVersion, tagCode){
     if (asm.placeObject) {
       var begin = 0;
+      asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
       var count = asm.placeObject(swfVersion, tagCode);
-      decode(dataView, begin, count, 0 /*depth*/);
+      decode(dataView, begin, count, -1 /*depth*/);
       var stop = values.length;
       var start = stop - count;
       // Populate the current tag with parsed properties.
@@ -2300,10 +2311,8 @@ var tagHandler = (function (global) {
         $[n] = v;
       }
       $stream.pos = asm.getInputStreamPos();
-      $ = decodeValue($);
       return $;
     }
-    debugger;
     $||($={})
     if(tagCode>4){
       if(tagCode>26){
@@ -4650,7 +4659,7 @@ var tagHandler = (function (global) {
         var stop = start + size | 0;
         var val = "";
         for (i = start | 0; i < stop; i = i + 1 | 0) {
-          val += String.fromCharCode(view.getUint8(i));
+          val += String.fromCharCode(dataView.getUint8(i));
         }
         values.push(val);
         pos = pos + size | 0;
@@ -4776,6 +4785,13 @@ var tagHandler = (function (global) {
           values = lastValues;
           values.push(val);
         }
+        break;
+      case 36: // $$
+        var offset = dataView.getUint32(pos);
+        var length = dataView.getUint32(pos+4);
+        pos = pos + 8 | 0;
+        var val = byteView.subarray(offset, offset + length);
+        values.push(val);
         break;
       default:
         assert(false, "Internal error: decoding UBJSON marker=" + marker);
