@@ -158,8 +158,8 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
       segment = path.addSegment();
 
       if (record.move) {
-        x = record.moveX;
-        y = record.moveY;
+        x = record.moveX|0;
+        y = record.moveY|0;
       }
 
       // Move or not, we want this path segment to start where the last one left
@@ -173,17 +173,17 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
       assert(record.type === 1);
       assert(segment);
       if (record.isStraight) {
-        x += record.deltaX | 0;
-        y += record.deltaY | 0;
+        x += record.deltaX|0;
+        y += record.deltaY|0;
         segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
         segment.data.push(x, y);
       } else {
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
-        x += record.controlDeltaX | 0;
-        y += record.controlDeltaY | 0;
+        x += record.controlDeltaX|0;
+        y += record.controlDeltaY|0;
         segment.data.push(x, y);
-        x += record.anchorDeltaX | 0;
-        y += record.anchorDeltaY | 0;
+        x += record.anchorDeltaX|0;
+        y += record.anchorDeltaY|0;
         segment.data.push(x, y);
       }
     }
@@ -267,9 +267,22 @@ function segmentedPathToShapePath(path) {
     current = start.prev;
   }
 
-  var shape = new ShapePath(path.fillStyle, path.lineStyle);
+  var totalCommandsLength = -skippedMoves;
+  var totalDataLength = -skippedMoves * 2;
+  current = finalRoot;
+  while (current) {
+    totalCommandsLength += current.commands.length;
+    totalDataLength += current.data.length;
+    current = current.next;
+  }
+
+  var shape = new ShapePath(path.fillStyle, path.lineStyle,
+                            totalCommandsLength, totalDataLength);
   var allCommands = shape.commands;
   var allData = shape.data;
+
+  var commandsIndex = 0;
+  var dataIndex = 0;
 
   current = finalRoot;
   while (current) {
@@ -277,20 +290,19 @@ function segmentedPathToShapePath(path) {
     var commands = current.commands;
     var data = current.data;
 
-    // If the segment's first command is a moveTo to the current coordinates,
+    // If the segment's first moveTo goes to the current coordinates,
     // we have to skip it. Removing those in the previous loop would be too
-    // costly.
-    if (commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO && commands.length &&
-        data[0] === allData[allData.length - 2] &&
-        data[1] === allData[allData.length - 1])
+    // costly, and we might share the arrays with another style's path.
+    if (data[0] === allData[dataIndex - 2] &&
+        data[1] === allData[dataIndex - 1])
     {
       offset = 1;
     }
-    for (var i = offset; i < commands.length; i++) {
-      allCommands.push(commands[i]);
+    for (var i = offset; i < commands.length; i++, commandsIndex++) {
+      allCommands[commandsIndex] = commands[i];
     }
-    for (i = offset * 2; i < data.length; i += 2) {
-      allData.push(data[i], data[i+1]);
+    for (i = offset * 2; i < data.length; i++, dataIndex++) {
+      allData[dataIndex] = data[i];
     }
     current = current.next;
   }
@@ -440,22 +452,21 @@ SegmentedPath.prototype = {
     return this._head;
   },
   segmentsConnect: function(first, second) {
-    if (second.commands[0] !== GRAPHICS_PATH_COMMAND_MOVE_TO) {
-      return false;
-    }
+    assert(second.commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO);
+
     var firstLength = first.data.length;
     return first.data[firstLength - 2] === second.data[0] &&
            first.data[firstLength - 1] === second.data[1];
   }
 }
 
-function ShapePath(fillStyle, lineStyle) {
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength) {
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
 
   // TODO: turn into typed arrays
-  this.commands = [];
-  this.data = [];
+  this.commands = new Uint8Array(commandsCount);
+  this.data = new Int32Array(dataLength);
   this.isShapePath = true;
 }
 
