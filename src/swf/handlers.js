@@ -49,7 +49,7 @@
   hopefully faster overall SWF rendering times. We hope to use form flexible
   construction of decoded syntax trees to avoid blocking startup and mimimizing
   memory use by allocating tag object values incrementally.
-  
+
   Risks include falling short of the 10x improvement, and not being able to
   efficiently decode binary syntax trees to the object values used by the
   renderer.
@@ -302,6 +302,8 @@ var tagHandler = (function (global) {
       pos = p;
     }
 
+    // Read bytes from the input stream.
+
     function getInputStreamPos() {
       return inputStreamPos - inputStreamOffset | 0;
     }
@@ -309,6 +311,10 @@ var tagHandler = (function (global) {
     function setInputStreamPos(p) {
       p = p | 0;
       inputStreamPos = inputStreamOffset + p | 0;
+    }
+
+    function remaining() {
+      return inputStreamOffset + (inputStreamLength() | 0) - inputStreamPos | 0;
     }
 
     function readStreamU8() {
@@ -417,7 +423,7 @@ var tagHandler = (function (global) {
       var one = 1.0;
       return +(+(readStreamSb(size | 0) | 0) / 65536.0);
     }
-    
+
     function alignStream() {
       bitBuffer = 0;
       bitLength = 0;
@@ -459,6 +465,7 @@ var tagHandler = (function (global) {
         }
       }
 /*
+      // This is left over from template.js readString(). Needs integration here.
       var numChunks = length / 65536;
       var str = '';
       for (var i = 0; i < numChunks; ++i) {
@@ -479,7 +486,7 @@ var tagHandler = (function (global) {
       return length | 0;
     }
 
-    // BEGIN Builder
+    // Read and write bytes from/to the output buffer.
 
     function readU8() {
       var val = 0;
@@ -588,16 +595,6 @@ var tagHandler = (function (global) {
       bytesU8[pos + 4 | 0] = bytesU8[scratchOffset | 0];
       pos = pos + 5 | 0;
     }
-
-    // WARNING writeUBJD32() and writeUBJD64() write bytes out with the reverse
-    // endian-ness of the host computer. The order is reversed because UBJSON
-    // demands big endian-ness and most computers use litte endian as their
-    // native encoding. Either way the dependency of this implementation on the
-    // native endian-ness of the host computer creates an incompatibility with
-    // the UBJSON spec. This bug will only manifest itself when reading and
-    // writing UBJSON values from a computer or UBJSON implementation with a
-    // different endian-ness. However, these are not use cases that are in scope
-    // for the current implementation.
 
     // Write an float32 value.
     function writeUBJD32(val) {
@@ -739,8 +736,12 @@ var tagHandler = (function (global) {
       }
     }
 
+    // OPTIMIZEME Copy the logic in startBinary/finishBinary and just store the
+    // offset and length of the string data in the heap and use that to retrieve
+    // the string during decoding.
+
     // Start a string value. Allocate space for a new string. (flags & BIG)
-    // means contains more 255 bytes. Call writeStringChar() to add characters,
+    // means contains more 255 bytes. Call readStreamString() to copy characters,
     // and finishString() to patch the byte count. Notice that characters are
     // encoded as UTF8 so they may consist of more than one byte.
     function startString(flags) {
@@ -805,16 +806,8 @@ var tagHandler = (function (global) {
       bytesU8[offset + 8 | 0] = length;
     }
 
-    // Write a UTF8 character into a string value.
-    function writeStringChar(val) {
-      val = val | 0;
-      // FIXME decode multibyte characters.
-      bytesU8[pos] = val;
-      pos = pos + 1 | 0;
-    }
-    // END Builder
-
-    // END
+    // Write object properties. These use an integer name ID during parsing,
+    // which is converted to the corresponding string during decoding.
 
     function writePropBoolean(id, val) {
       id = id | 0;
@@ -881,7 +874,7 @@ var tagHandler = (function (global) {
       id = id | 0;   // blob pool id
     }
 
-    // BEGIN handlers
+    // BEGIN handlers. Here is the meat of the parser.
 
     function defineShape(swfVersion, tagCode) {
       swfVersion = swfVersion | 0;
@@ -1105,10 +1098,6 @@ var tagHandler = (function (global) {
         }
       }
       return count | 0;
-    }
-
-    function remaining() {
-      return inputStreamOffset + (inputStreamLength() | 0) - inputStreamPos | 0;
     }
 
     function removeObject(swfVersion, tagCode) {
@@ -1710,7 +1699,7 @@ var tagHandler = (function (global) {
       isMorph = isMorph | 0;
       var type = 0;
       var count = 0, childCount = 0;
-      writePropU8(TYPE, (type = readStreamU8() | 0) | 0); 
+      writePropU8(TYPE, (type = readStreamU8() | 0) | 0);
       count = count + 2 | 0;
       switch (type | 0) {
       case 0:
@@ -2009,14 +1998,13 @@ var tagHandler = (function (global) {
           count = count + 2 | 0;
           if (isMorph) {
             writeUBJU8(MORPH_COLOR);
-            objectPos = startObject(0) | 0;          
+            objectPos = startObject(0) | 0;
             objectLen = rgba() | 0;
             finishObject(objectPos, objectLen, 0);
             count = count + 2 | 0;
           }
         }
       } else {
-        // ASM BUG tagCode should already be type int
         if (tagCode | 0 > 22) {
           writeUBJU8(COLOR);
           objectPos = startObject(0) | 0;
@@ -2251,7 +2239,7 @@ var tagHandler = (function (global) {
       asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
       var count = asm.defineShape(swfVersion, tagCode);
-      decode(dataView, begin, count, 0 /*depth*/);
+      decode(dataView, begin, count, -1 /*depth*/);
       var stop = values.length;
       var start = stop - count;
       // Populate the current tag with parsed properties.
@@ -2261,7 +2249,6 @@ var tagHandler = (function (global) {
         $[n] = v;
       }
       $stream.pos = asm.getInputStreamPos();
-//      $ = decodeValue($);
       return $;
     }
     $ || ($ = {});
@@ -2488,21 +2475,30 @@ var tagHandler = (function (global) {
 
   function removeObject($bytes, $stream, $, swfVersion, tagCode){
     if (asm.removeObject) {
+      var begin = 0;
+      asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
-      var begin = asm.getPos();
       var count = asm.removeObject(swfVersion, tagCode);
-      $.binary = byteView.subarray(begin, asm.getPos());
+      decode(dataView, begin, count, -1 /*depth*/);
+      var stop = values.length;
+      var start = stop - count;
+      // Populate the current tag with parsed properties.
+      for (i = start | 0; i < stop; i = i + 2 | 0) {
+        var n = names[values[i | 0]];
+        var v = values[i + 1 | 0];
+        $[n] = v;
+      }
       $stream.pos = asm.getInputStreamPos();
       return $;
     }
-	  $||($={})
-	  if(tagCode===5){
-	    $.symbolId=
-		    readUi16($bytes,$stream)
-	  }
-	  $.depth=
-	    readUi16($bytes,$stream)
-	  return $
+    $||($={})
+    if(tagCode===5){
+      $.symbolId=
+        readUi16($bytes,$stream)
+    }
+    $.depth=
+      readUi16($bytes,$stream)
+    return $
   }
 
   function defineImage($bytes, $stream, $, swfVersion, tagCode){
@@ -2993,17 +2989,17 @@ var tagHandler = (function (global) {
   }
 
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
-	  $||($={})
-	  var $0=$.color={}
-	  $0.red=
-	    readUi8($bytes,$stream)
-	  $0.green=
-	    readUi8($bytes,$stream)
-	  $0.blue=
-	    readUi8($bytes,$stream)
-	  $0.alpha=
-	    255
-	  return $
+    $||($={})
+    var $0=$.color={}
+    $0.red=
+      readUi8($bytes,$stream)
+    $0.green=
+      readUi8($bytes,$stream)
+    $0.blue=
+      readUi8($bytes,$stream)
+    $0.alpha=
+      255
+    return $
   }
 
   function defineFont($bytes, $stream, $, swfVersion, tagCode){
@@ -4593,7 +4589,7 @@ var tagHandler = (function (global) {
   var values = [];
 
   // Decode a binary encoded object. 'val' is a DataView or a partially decoded
-  // binary object. 'depth' is the nesting level to decode. 
+  // binary object. 'depth' is the nesting level to decode.
   function decodeValue(val, depth) {
     if (depth === undefined) {
       depth = -1; // decode all levels
