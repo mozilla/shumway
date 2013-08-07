@@ -38,12 +38,6 @@ var DisplayObjectContainerDefinition = (function () {
     },
 
     addChild: function (child) {
-      if (child === this) {
-        throw ArgumentError();
-      }
-
-      // TODO: what if child was already added?
-
       return this.addChildAt(child, this._children.length);
     },
     addChildAt: function (child, index) {
@@ -51,7 +45,9 @@ var DisplayObjectContainerDefinition = (function () {
         throw ArgumentError();
       }
 
-      // TODO: what if child was already added?
+      if (child._parent === this) {
+        return this.setChildIndex(child, index);
+      }
 
       var children = this._children;
 
@@ -173,12 +169,15 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
       }
 
-      // TODO: update indices
       children.splice(child._index, 1);
       children.splice(index, 0, child);
 
+      var i = child._index < index ? child._index : index;
+      while (i < children.length) {
+        children[i]._index = i++;
+      }
+
       child._owned = false;
-      child._index = index;
 
       child._invalidate();
 
