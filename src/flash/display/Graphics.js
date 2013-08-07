@@ -53,8 +53,8 @@ var GraphicsDefinition = (function () {
     },
 
     _invalidate: function () {
-      if (this._parent.stage) {
-        this._parent.stage._invalidateOnStage(this._parent);
+      if (this._parent._stage) {
+        this._parent._stage._invalidateOnStage(this._parent);
       }
       this._parent._bounds = null;
     },

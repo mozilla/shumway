@@ -165,8 +165,8 @@ var MovieClipDefinition = (function () {
 
                 this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
-                if (this.stage) {
-                  this.stage._removeFromStage(currentChild);
+                if (this._stage) {
+                  this._stage._removeFromStage(currentChild);
                 }
                 currentChild.destroy();
               }
@@ -212,8 +212,8 @@ var MovieClipDefinition = (function () {
 
                   this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
-                  if (this.stage) {
-                    this.stage._removeFromStage(currentChild);
+                  if (this._stage) {
+                    this._stage._removeFromStage(currentChild);
                   }
                   currentChild.destroy();
                 }

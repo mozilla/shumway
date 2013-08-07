@@ -96,7 +96,7 @@ var SpriteDefinition = (function () {
           props.animated = true;
           props.owned = true;
           props.parent = this;
-          props.stage = this.stage;
+          props.stage = this._stage;
 
           var instance = symbolClass.createAsSymbol(props);
 
@@ -130,8 +130,8 @@ var SpriteDefinition = (function () {
 
           instance._dispatchEvent(new flash.events.Event("load"));
           instance._dispatchEvent(new flash.events.Event("added"));
-          if (this.stage) {
-            this.stage._addToStage(instance);
+          if (this._stage) {
+            this._stage._addToStage(instance);
           }
 
           children[i] = instance;
@@ -168,7 +168,7 @@ var SpriteDefinition = (function () {
 
       instance._dispatchEvent(new flash.events.Event("load"));
       instance._dispatchEvent(new flash.events.Event("added"));
-      if (this.stage) {
+      if (this._stage) {
         instance._invalidate();
       }
 
@@ -278,8 +278,8 @@ var SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       this._useHandCursor = val;
-      if (this.stage) {
-        this.stage._syncCursor();
+      if (this._stage) {
+        this._stage._syncCursor();
       }
     },
     get shouldHaveHandCursor() {

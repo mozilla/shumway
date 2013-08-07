@@ -272,12 +272,12 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _invalidate: function () {
-      if (this.stage) {
-        this.stage._invalidateOnStage(this);
+      if (this._stage) {
+        this._stage._invalidateOnStage(this);
 
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
-          this.stage._invalidateOnStage(children[i]);
+          this._stage._invalidateOnStage(children[i]);
         }
       }
     },
@@ -430,23 +430,23 @@ var DisplayObjectDefinition = (function () {
       TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
     },
     get mouseX() {
-      if (!this.stage) {
+      if (!this._stage) {
         // TODO: calc local point for display objects that are not on the stage
         return 0;
       }
 
-      var pt = this.globalToLocal(new flash.geom.Point(this.stage._mouseX,
-                                                       this.stage._mouseY));
+      var pt = this.globalToLocal(new flash.geom.Point(this._stage._mouseX,
+                                                       this._stage._mouseY));
       return pt.x;
     },
     get mouseY() {
-      if (!this.stage) {
+      if (!this._stage) {
         // TODO: calc local point for display objects that are not on the stage
         return 0;
       }
 
-      var pt = this.globalToLocal(new flash.geom.Point(this.stage._mouseX,
-                                                       this.stage._mouseY));
+      var pt = this.globalToLocal(new flash.geom.Point(this._stage._mouseX,
+                                                       this._stage._mouseY));
       return pt.y;
     },
     get opaqueBackground() {
@@ -459,7 +459,7 @@ var DisplayObjectDefinition = (function () {
       return this._parent;
     },
     get root() {
-      return this._root || (this._parent ? this._parent.root : null);
+      return this._stage && this._stage._root;
     },
     get rotation() {
       return this._rotation;
@@ -478,7 +478,7 @@ var DisplayObjectDefinition = (function () {
       this._updateCurrentTransform();
     },
     get stage() {
-      return this._stage || (this._parent ? this._parent.stage : null);
+      return this._stage;
     },
     get scaleX() {
       return this._scaleX;

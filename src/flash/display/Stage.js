@@ -50,6 +50,8 @@ var StageDefinition = (function () {
     _addToStage: function addToStage(displayObject) {
       this._invalidateOnStage(displayObject);
 
+      displayObject._stage = this;
+
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
         this._addToStage(children[i]);
@@ -58,6 +60,8 @@ var StageDefinition = (function () {
     },
     _removeFromStage: function removeFromStage(displayObject) {
       this._invalidateOnStage(displayObject);
+
+      displayObject._stage = null;
 
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
