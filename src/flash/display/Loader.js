@@ -261,7 +261,7 @@ var LoaderDefinition = (function () {
 
             switch (tag.code) {
             case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
-              frame.sceneData = tag.data;
+              frame.sceneData = tag;
               break;
             case SWF_TAG_CODE_DEFINE_SCALING_GRID:
               var symbolUpdate = {
@@ -603,6 +603,7 @@ var LoaderDefinition = (function () {
         }
      }).then(function () {
         var root = loader._content;
+        var labelMap;
 
         if (!root) {
           var parent = loader._parent;
@@ -628,10 +629,43 @@ var LoaderDefinition = (function () {
             loader._children.push(root);
           }
 
-          if (labelName) {
-            var labelMap = { };
-            labelMap[labelName] = frameNum;
-            root.symbol.labelMap = labelMap;
+          var labels;
+          labelMap = root.symbol.labelMap = {};
+          if (sceneData) {
+            var scenes = [];
+            var sStartFrame;
+            var sEndFrame = root.symbol.totalFrames - 1;
+            var sd = sceneData.scenes;
+            var ld = sceneData.labels;
+            var i = sd.length;
+            while (i--) {
+              var s = sd[i];
+              sStartFrame = s.offset;
+              labels = [];
+              var j = ld.length;
+              while (j--) {
+                var lbl = ld[j];
+                if (lbl.frame >= sStartFrame && lbl.frame <= sEndFrame) {
+                  labelMap[lbl.name] = lbl.frame + 1;
+                  labels.unshift(new flash.display.FrameLabel(lbl.name, lbl.frame - sStartFrame + 1));
+                }
+              }
+              var scene = new flash.display.Scene(s.name, labels, sEndFrame - sStartFrame + 1);
+              scene._startFrame = sStartFrame + 1;
+              scene._endFrame = sEndFrame + 1;
+              scenes.unshift(scene);
+              sEndFrame = sStartFrame - 1;
+            }
+            root.symbol.scenes = scenes;
+          } else {
+            labels = [];
+            if (labelName) {
+              labelMap[labelName] = frameNum;
+              labels.push(new flash.display.FrameLabel(labelName, frameNum));
+            }
+            var scene = new flash.display.Scene("Scene 1", labels, root.symbol.totalFrames);
+            scene._endFrame = root.symbol.totalFrames;
+            root.symbol.scenes = [scene];
           }
 
           if (!loader._isAvm2Enabled) {
@@ -650,24 +684,6 @@ var LoaderDefinition = (function () {
             }
           }
 
-          if (sceneData) {
-            var sd = sceneData.scenes;
-            var ld = sceneData.labels;
-            var scenes = [];
-            var i = sd.length;
-            while (i--) {
-              var s = sd[i];
-              var labels = [];
-              for (var j = 0; j < ld.length; j++) {
-                var lbl = ld[j];
-                labels.push(new flash.display.FrameLabel(lbl.name, lbl.frame + 1));
-              }
-              var scene = new flash.display.Scene(s.name, labels, s.offset);
-              scenes.push(scene);
-            }
-            root.symbol.scenes = scenes;
-          }
-
           rootClass.instanceConstructor.call(root);
 
           loader._content = root;
@@ -675,7 +691,16 @@ var LoaderDefinition = (function () {
           root._framesLoaded += frame.repeat;
 
           if (labelName && root._labelMap) {
-            root._labelMap[labelName] = frameNum;
+            if (root._labelMap[labelName] === undefined) {
+              root._labelMap[labelName] = frameNum;
+              for (var i = 0, n = root.symbol.scenes.length; i < n; i++) {
+                var scene = root.symbol.scenes[i];
+                if (frameNum >= scene._startFrame && frameNum <= scene._endFrame) {
+                  scene.labels.push(new flash.display.FrameLabel(labelName, frameNum - scene._startFrame));
+                  break;
+                }
+              }
+            }
           }
         }
 
