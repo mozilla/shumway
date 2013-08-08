@@ -117,6 +117,7 @@ var MovieClipDefinition = (function () {
         for (var i = 0, n = scenes.length; i < n; i++) {
           if (scene === scenes[i].name) {
             frameNum += (scenes[i]._startFrame - 1);
+            break;
           }
         }
       }
