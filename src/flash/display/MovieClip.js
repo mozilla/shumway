@@ -362,9 +362,9 @@ var MovieClipDefinition = (function () {
     get currentFrame() {
       // currentFrame is relative to the current scene, if available
       var frameNum = this._currentFrame || 1;
-      return this._scenes
-              ? frameNum - this.currentScene._startFrame + 1
-              : frameNum;
+      return this._scenes ?
+              frameNum - this.currentScene._startFrame + 1 :
+              frameNum;
     },
     get currentFrameLabel() {
       return this._currentFrameLabel;
@@ -391,9 +391,9 @@ var MovieClipDefinition = (function () {
       // The current scene in which the playhead is located in the timeline of
       // the MovieClip instance. Returns a new Scene instance with empty name
       // if the MovieClip instance does not use scenes.
-      return this._scenes
-              ? this._scenes[this._currentScene]
-              : new flash.display.Scene("", this.currentLabels, this._totalFrames);
+      return this._scenes ?
+              this._scenes[this._currentScene] :
+              new flash.display.Scene("", this.currentLabels, this._totalFrames);
     },
     get enabled() {
       return this._enabled;
