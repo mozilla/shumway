@@ -635,28 +635,28 @@ var LoaderDefinition = (function () {
           labelMap = root.symbol.labelMap = createEmptyObject();
           if (sceneData) {
             var scenes = [];
-            var sStartFrame;
-            var sEndFrame = root.symbol.totalFrames - 1;
+            var startFrame;
+            var endFrame = root.symbol.totalFrames - 1;
             var sd = sceneData.scenes;
             var ld = sceneData.labels;
             var i = sd.length;
             while (i--) {
               var s = sd[i];
-              sStartFrame = s.offset;
+              startFrame = s.offset;
               labels = [];
               var j = ld.length;
               while (j--) {
                 var lbl = ld[j];
-                if (lbl.frame >= sStartFrame && lbl.frame <= sEndFrame) {
+                if (lbl.frame >= startFrame && lbl.frame <= endFrame) {
                   labelMap[lbl.name] = lbl.frame + 1;
-                  labels.unshift(new flash.display.FrameLabel(lbl.name, lbl.frame - sStartFrame + 1));
+                  labels.unshift(new flash.display.FrameLabel(lbl.name, lbl.frame - startFrame + 1));
                 }
               }
-              var scene = new flash.display.Scene(s.name, labels, sEndFrame - sStartFrame + 1);
-              scene._startFrame = sStartFrame + 1;
-              scene._endFrame = sEndFrame + 1;
+              var scene = new flash.display.Scene(s.name, labels, endFrame - startFrame + 1);
+              scene._startFrame = startFrame + 1;
+              scene._endFrame = endFrame + 1;
               scenes.unshift(scene);
-              sEndFrame = sStartFrame - 1;
+              endFrame = startFrame - 1;
             }
             root.symbol.scenes = scenes;
           } else {
