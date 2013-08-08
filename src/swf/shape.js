@@ -66,6 +66,7 @@ function toMatrixInstance(matrix, matrixMorph, scale) {
 }
 
 function defineShape(tag, dictionary) {
+  tag = tagHandler.decodeValue(tag);
   var records = tag.records;
   var isMorph = tag.isMorph;
   var recordsMorph = isMorph ? tag.recordsMorph : [];

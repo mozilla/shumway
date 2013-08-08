@@ -19,17 +19,6 @@
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
          generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError */
 
-// TODO: clean up. For now, we don't include the generator after pre-building
-// the handlers. This doesn't work during build-playerglobal, though.x
-if (this.generateParser) {
-  for (var tag in tagHandler) {
-    var handler = tagHandler[tag];
-    if (typeof handler === 'object')
-      tagHandler[tag] = generateParser(handler, 'swfVersion', 'tagCode');
-  }
-  var readHeader = generateParser(MOVIE_HEADER);
-}
-
 function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
@@ -37,7 +26,6 @@ function readTags(context, stream, swfVersion, onprogress) {
   try {
     do {
       lastSuccessfulPosition = stream.pos;
-
       stream.ensure(2);
       var tagCodeAndLength = readUi16(bytes, stream);
       var tagCode = tagCodeAndLength >> 6;
@@ -64,9 +52,11 @@ function readTags(context, stream, swfVersion, onprogress) {
         readTags(tag, substream, swfVersion);
       } else {
         var handler = tagHandler[tagCode];
-        if (handler)
+        if (handler) {
           handler(subbytes, substream, tag, swfVersion, tagCode);
+        }
       }
+//      print(JSON.stringify(tag, null, 2));
       tags.push(tag);
 
       if (tagCode === 1) {
@@ -83,9 +73,11 @@ function readTags(context, stream, swfVersion, onprogress) {
       }
     } while (stream.pos < stream.end);
   } catch (e) {
-    if (e !== StreamNoDataError) throw e;
+    
+    if (e !== StreamNoDataError) throw e + "\n" + e.stack;
     stream.pos = lastSuccessfulPosition;
   }
+//  print(JSON.stringify(tags, null, 2));
 }
 
 function HeadTailBuffer(defaultSize) {
@@ -148,6 +140,7 @@ function CompressedPipe(target, length) {
     completed: false
   };
 }
+
 CompressedPipe.prototype = {
   push: function (data, progressInfo) {
     var buffer = this.buffer;
@@ -244,6 +237,9 @@ BodyParser.prototype = {
       swf.bytesTotal = progressInfo.bytesTotal;
     }
 
+    if (tagHandler.setStream) {
+      tagHandler.setStream(stream);
+    }
     readTags(swf, stream, swfVersion, options.onprogress);
 
     var read = stream.pos;

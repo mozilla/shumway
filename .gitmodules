@@ -7,3 +7,6 @@
 [submodule "lib/xstats"]
 	path = lib/xstats
 	url = https://github.com/bestiejs/xstats.js.git
+[submodule "lib/jasmine"]
+	path = lib/jasmine
+	url = https://github.com/pivotal/jasmine.git
