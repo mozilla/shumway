@@ -119,11 +119,12 @@ var StageDefinition = (function () {
         }
 
         var invalidRegion = displayObject._invalidRegion;
-
-        this._clipRegion(ctx, invalidRegion);
+        if (invalidRegion.width && invalidRegion.height) {
+          this._clipRegion(ctx, invalidRegion);
+        }
 
         var drawRegion = displayObject._getDrawRegion();
-        if (drawRegion && displayObject._stage) {
+        if (drawRegion.width && drawRegion.height && displayObject._stage) {
           drawRegion.obj = displayObject;
           this._qtree.insert(drawRegion);
           displayObject._region = drawRegion;

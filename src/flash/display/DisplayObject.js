@@ -696,13 +696,13 @@ var DisplayObjectDefinition = (function () {
     },
     _getDrawRegion: function getDrawRegion() {
       if (!this._graphics) {
-        return this._children.length ? this.getBounds() : null;
+        return this.getBounds();
       }
 
       var b = this._graphics._getBounds(true);
 
       if (!b || (!b.width && !b.height)) {
-        return null;
+        return b;
       }
 
       var p1 = { x: b.x, y: b.y };
