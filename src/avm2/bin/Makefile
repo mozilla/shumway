@@ -52,7 +52,6 @@ test-all:
 	$(TEST_CMD) -j $(THREADS) -i tamarin.i.passed -i sunspider.i.passed -i pypy.i.passed -c icv -nm
 
 test-regress:
-	ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) ./shu.py build-tests
 	$(TEST_CMD) -j $(THREADS) -i ../tests/regress/correctness/pass/ -c icv
 	$(TEST_CMD) -j 1 -i ../tests/performance/c4/basic.abc -c v
 	echo "SUCCESS: ALL AVM2 TESTS PASSED"
