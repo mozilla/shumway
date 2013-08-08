@@ -52,6 +52,9 @@ var StageDefinition = (function () {
 
       displayObject._stage = this;
 
+      var parent = displayObject._parent;
+      displayObject._level = parent._level + 1;
+
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
         this._addToStage(children[i]);
@@ -62,6 +65,7 @@ var StageDefinition = (function () {
       this._invalidateOnStage(displayObject);
 
       displayObject._stage = null;
+      displayObject._level = -1;
 
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {

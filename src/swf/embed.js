@@ -172,7 +172,11 @@ SWF.embed = function(file, doc, container, options) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     var root = loader._content;
+    root._level = 0;
+    root._index = 0;
+
     stage._children[0] = root;
+
     stage._control.appendChild(root._control);
 
     root._dispatchEvent(new flash.events.Event("added"));
