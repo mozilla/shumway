@@ -21,7 +21,7 @@
          defineLabel, defineButton, defineText,
          AS2Key, AS2Mouse, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
-         cloneObject, fromCharCode */
+         cloneObject, createEmptyObject, fromCharCode */
 /*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
           SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
           SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
@@ -632,7 +632,7 @@ var LoaderDefinition = (function () {
           }
 
           var labels;
-          labelMap = root.symbol.labelMap = {};
+          labelMap = root.symbol.labelMap = createEmptyObject();
           if (sceneData) {
             var scenes = [];
             var sStartFrame;
