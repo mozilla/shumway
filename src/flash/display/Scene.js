@@ -21,6 +21,8 @@ var SceneDefinition = (function () {
     // (name:String, labels:Array, numFrames:int)
     __class__: "flash.display.Scene",
     initialize: function () {
+      this._startFrame = 1;
+      this._endFrame = 1;
     },
     __glue__: {
       native: {
