@@ -236,12 +236,12 @@ var MovieClipDefinition = (function () {
 
       // update currentLabel and currentFrameLabel
       this._currentFrameLabel = null;
-      if (frameNum == 1) {
+      if (frameNum === 1) {
         this._currentLabel = null;
       }
       var map = this._labelMap;
       for (var name in map) {
-        if (map[name] == frameNum) {
+        if (map[name] === frameNum) {
           this._currentFrameLabel = this._currentLabel = name;
           break;
         }
