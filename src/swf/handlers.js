@@ -1770,6 +1770,7 @@ var tagHandler = (function (global) {
         objectPos = startObject(0) | 0;
         objectLen = rgba() | 0;
         finishObject(objectPos, objectLen, 0);
+        n = n - 1 | 0;
       }
       finishArray(arrayPos, arrayLen, 0);
       count = count + 2 | 0;
@@ -1787,6 +1788,7 @@ var tagHandler = (function (global) {
         arrayPos = startArray(0) | 0;
         while (n) {
           writeUBJU16(readStreamU8() | 0);
+          n = n - 1 | 0;
         }
         finishArray(arrayPos, arrayLen, 0);
         count = count + 2 | 0;
@@ -2239,7 +2241,7 @@ var tagHandler = (function (global) {
       asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
       var count = asm.defineShape(swfVersion, tagCode);
-      decode(dataView, begin, count, -1 /*depth*/);
+      decode(dataView, begin, count, 0 /*depth*/);
       var stop = values.length;
       var start = stop - count;
       // Populate the current tag with parsed properties.
@@ -2282,13 +2284,13 @@ var tagHandler = (function (global) {
     return $
   }
 
-  function placeObject($bytes, $stream, $, swfVersion, tagCode){
+  function placeObject($bytes, $stream, $, swfVersion, tagCode) {
     if (asm.placeObject) {
       var begin = 0;
       asm.setPos(begin);
       asm.setInputStreamPos($stream.pos);
       var count = asm.placeObject(swfVersion, tagCode);
-      decode(dataView, begin, count, -1 /*depth*/);
+      decode(dataView, begin, count, 0 /*depth*/);
       var stop = values.length;
       var start = stop - count;
       // Populate the current tag with parsed properties.
