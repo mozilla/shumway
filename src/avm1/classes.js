@@ -49,7 +49,15 @@ function proxyEventHandler(eventName, argsConverter) {
     get: function() {
       return currentHandler;
     },
-    set: function(newHandler) {
+    set: function setter(newHandler) {
+      if (!this.$nativeObject) { // prototype/class ?
+        var defaultListeners = this.$defaultListeners ||
+          (this.$defaultListeners = []);
+        defaultListeners.push({setter: setter, value: newHandler});
+        // see also initDefaultListeners()
+        return;
+      }
+
       if (currentHandler === newHandler) {
         return;
       }
@@ -91,19 +99,29 @@ function getAS2Object(nativeObject) {
   return nativeObject ? nativeObject._getAS2Object() : null;
 }
 
+function initDefaultListeners(thisArg) {
+  if (!thisArg.$defaultListeners) {
+    return;
+  }
+  for (var i = 0; i < thisArg.$defaultListeners.length; i++) {
+    var p = thisArg.$defaultListeners[i];
+    p.setter.call(thisArg, p.value);
+  }
+}
+
 // AS2 Classes
 
 function AS2MovieClip() {
 }
 AS2MovieClip.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeMovieClip) {
-      this.$nativeObject = nativeMovieClip;
+      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
       nativeMovieClip.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -143,12 +161,17 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   attachMovie: {
     value: function attachMovie(symbolId, name, depth, initObject) {
-      var mc = this.$nativeObject._constructSymbol(symbolId, name);
-      this._insertChildAtDepth(mc, depth);
+      var MovieClipClass = flash.display.MovieClip.class;
+      var mc = MovieClipClass.createAsSymbol({name: name});
+      MovieClipClass.instanceConstructor.call(mc);
+
+      this.$nativeObject._insertChildAtDepth(mc, depth);
 
       var as2mc = mc._getAS2Object();
       for (var i in initObject) {
-        as2mc[i] = initObject[i];
+        if (initObject.hasOwnProperty(i)) {
+          as2mc[i] = initObject[i];
+        }
       }
 
       return as2mc;
@@ -282,13 +305,27 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   getInstanceAtDepth: {
     value: function getInstanceAtDepth(depth) {
-      return this.$nativeObject._depthMap[depth];
+      var instance;
+      this.$nativeObject._children.some(function (child) {
+        if (child._depth === depth) {
+          instance = child;
+          return true;
+        }
+        return false;
+      });
+      return instance;
     },
     enumerable: true
   },
   getNextHighestDepth: {
     value: function getNextHighestDepth() {
-      return this.$nativeObject._depthMap.length;
+      var max = 0;
+      this.$nativeObject._children.forEach(function (child) {
+        if (child._depth < max) {
+          max = child._depth;
+        }
+      });
+      return max + 1;
     },
     enumerable: true
   },
@@ -540,14 +577,14 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 function AS2Button() {
 }
 AS2Button.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
+      Object.defineProperty(this, '$nativeObject', { value: nativeButton });
       nativeButton.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -714,14 +751,14 @@ AS2Button.prototype = Object.create(Object.prototype, {
 function AS2TextField() {
 }
 AS2TextField.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
-    value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
-      nativeButton.$as2Object = this;
+    value: function attachNativeObject(nativeTextField) {
+      Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
+      nativeTextField.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -1284,7 +1321,11 @@ defineObjectProperties(Object.prototype, {
     enumerable: false
   },
   registerClass: {
-    value: function registerClass() { throw 'Not implemented: registerClass'; },
+    value: function registerClass(name, theClass) {
+      var classes = AS2Context.instance.classes ||
+        (AS2Context.instance.classes = {});
+      classes[name] = theClass;
+    },
     enumerable: false
   }
 });
