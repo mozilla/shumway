@@ -114,11 +114,19 @@ var Type = (function () {
   };
 
   type.prototype.isDirectlyReadable = function () {
-    return this === Type.Array || this.isParameterizedType();
+    return this === Type.Array;
+  };
+
+  type.prototype.isIndexedReadable = function () {
+    return this.isParameterizedType();
   };
 
   type.prototype.isDirectlyWriteable = function () {
-    return this === Type.Array || this.isParameterizedType() && this.parameter === Type.Any;
+    return this === Type.Array;
+  };
+
+  type.prototype.isIndexedWriteable = function () {
+    return this.isParameterizedType();
   };
 
   type.prototype.isVector = function () {
@@ -828,8 +836,8 @@ var Verifier = (function() {
           } else if (obj.isDirectlyReadable() && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
-          if (isNumericMultiname(mn) && obj.isDirectlyReadable()) {
-            ti().isDirectlyReadable = true;
+          if (isNumericMultiname(mn) && obj.isIndexedReadable()) {
+            ti().isIndexedReadable = true;
             if (obj.isVector()) {
               return obj.parameter
             }
@@ -851,12 +859,7 @@ var Verifier = (function() {
             if (obj.isDirectlyWriteable()) {
               ti().isDirectlyWriteable = true;
             } else if (obj.isVector()) {
-              if (obj.parameter.isSubtypeOf(value)) {
-                ti().isDirectlyWriteable = true;
-              } else {
-                ti().isDirectlyWriteableWithCoercion = true;
-                ti().targetType = obj.parameter;
-              }
+              ti().isIndexedWriteable = true;
             }
           }
         }
