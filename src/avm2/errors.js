@@ -656,3 +656,9 @@ function translateErrorMessage(error) {
     return error.message;
   }
 }
+
+function createError(name, error) {
+  var error = new Error(formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1)), error.code);
+  error.name = name;
+  return error;
+}

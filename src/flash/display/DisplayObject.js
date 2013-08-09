@@ -374,10 +374,7 @@ var DisplayObjectDefinition = (function () {
           notImplemented();
         }
       } else {
-        // TODO: ArgumentError
-        var error = new Error(formatErrorMessage(Errors.InvalidEnumError, "blendMode"), Errors.InvalidEnumError.code);
-        error.name = 'ArgumentError';
-        throw error;
+        throw createError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
     },
     get cacheAsBitmap() {
