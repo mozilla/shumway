@@ -18,6 +18,25 @@
 /*global Multiname, executeActions */
 
 var SpriteDefinition = (function () {
+
+  var blendModes = [
+    "normal",     // 0
+    "normal",     // 1
+    "layer",      // 2
+    "multiply",   // 3
+    "screen",     // 4
+    "lighten",    // 5
+    "darken",     // 6
+    "difference", // 7
+    "add",        // 8
+    "subtract",   // 9
+    "invert",     // 10
+    "alpha",      // 11
+    "erase",      // 12
+    "overlay",    // 13
+    "hardlight"   // 14
+  ];
+
   var def = {
     __class__: 'flash.display.Sprite',
 
@@ -62,6 +81,13 @@ var SpriteDefinition = (function () {
         props.name = cmd.name;
       if (cmd.hasRatio)
         props.ratio = cmd.ratio / 0xffff;
+      if (cmd.blend) {
+        props.blendMode = typeof blendModes[cmd.blendMode] !== "undefined" ?
+                            blendModes[cmd.blendMode] :
+                            "normal";
+      } else {
+        props.blendMode = "normal";
+      }
 
       var child = {
         className: symbolInfo.className,

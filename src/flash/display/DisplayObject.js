@@ -35,6 +35,24 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SHADER     = 'shader';
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
+  var blendModes = [
+    BLEND_MODE_NORMAL,
+    BLEND_MODE_LAYER,
+    BLEND_MODE_MULTIPLY,
+    BLEND_MODE_SCREEN,
+    BLEND_MODE_LIGHTEN,
+    BLEND_MODE_DARKEN,
+    BLEND_MODE_DIFFERENCE,
+    BLEND_MODE_ADD,
+    BLEND_MODE_SUBTRACT,
+    BLEND_MODE_INVERT,
+    BLEND_MODE_ALPHA,
+    BLEND_MODE_ERASE,
+    BLEND_MODE_OVERLAY,
+    BLEND_MODE_HARDLIGHT,
+    BLEND_MODE_SHADER
+  ];
+
   var nextInstanceId = 1;
   function generateName() {
     return 'instance' + (nextInstanceId++);
@@ -52,6 +70,7 @@ var DisplayObjectDefinition = (function () {
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
+      this._blendMode = "normal";
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
@@ -94,6 +113,7 @@ var DisplayObjectDefinition = (function () {
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
+        this._blendMode = s.blendMode || "normal";
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -345,11 +365,18 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get blendMode() {
-      return BLEND_MODE_NORMAL;
+      return this._blendMode;
     },
     set blendMode(val) {
-      if (val === BLEND_MODE_NORMAL) return;
-      notImplemented();
+      if (blendModes.indexOf(val) >= 0) {
+        this._blendMode = val;
+        if (val !== BLEND_MODE_NORMAL) {
+          notImplemented();
+        }
+      } else {
+        // TODO: ArgumentError
+        throw new TypeError(formatErrorMessage(Errors.InvalidEnumError, 'blendMode'));
+      }
     },
     get cacheAsBitmap() {
       return this._cacheAsBitmap;
