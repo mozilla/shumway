@@ -101,6 +101,7 @@ load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
+load(homePath + "src/avm2/vectors.js");
 load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/native.js");

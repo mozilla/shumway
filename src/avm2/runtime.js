@@ -428,6 +428,14 @@ function initializeGlobalObject(global) {
     }
     return delete this[resolved];
   });
+
+  defineNonEnumerableProperty(global.Object.prototype, "indexGet", function (i) {
+    return this[i];
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "indexSet", function (i, v) {
+    this[i] = v;
+  });
 }
 
 initializeGlobalObject(jsGlobal);
@@ -558,10 +566,7 @@ function nextName(object, index) {
 }
 
 function nextValue(object, index) {
-  if (object.getProperty) {
-    return object.getProperty(object[VM_NEXT_NAME](index), false);
-  }
-  return object[Multiname.getPublicQualifiedName(object[VM_NEXT_NAME](index))];
+  return object.getMultinameProperty(undefined, object[VM_NEXT_NAME](index));
 }
 
 /**
@@ -1938,21 +1943,17 @@ function applyType(domain, factory, types) {
     release || assert(types.length === 1);
     var type = types[0];
     var typeClassName;
-    if (type !== null && type !== undefined) {
-      typeClassName = type.classInfo.instanceInfo.name.name;
+    if (!isNullOrUndefined(type)) {
+      typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
       switch (typeClassName) {
         case "int":
         case "uint":
         case "double":
-          break;
-        default:
-          typeClassName = "object";
-          break;
+        case "object":
+          return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
       }
-    } else {
-      typeClassName = "object";
     }
-    return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
+    return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
   } else {
     return notImplemented(factoryClassName);
   }

@@ -456,15 +456,13 @@
 
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     if (this.isIndexed) {
       assert (this.isMethod === false);
-      return new ConditionalExpression (
-        property(object, "indexGet"),
-        call(property(object, "indexGet"), [name]),
-        property(object, name)
-      );
+      if (this.isIndexed) {
+        return call(property(object, "indexGet"), [compileValue(this.name.name, cx)]);
+      }
     }
+    var name = compileMultiname(this.name, cx);
     var isMethod = new Literal(this.isMethod);
     return call(property(object, "getMultinameProperty"), name.concat(isMethod));
   };
@@ -569,15 +567,11 @@
 
   IR.AVM2SetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
-      return new ConditionalExpression (
-        property(object, "indexSet"),
-        call(property(object, "indexSet"), [name, value]),
-        assignment(property(object, name), value)
-      );
+      return call(property(object, "indexSet"), [compileValue(this.name.name, cx), value]);
     }
+    var name = compileMultiname(this.name, cx);
     return call(property(object, "setMultinameProperty"), name.concat(value));
   };
 

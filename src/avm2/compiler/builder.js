@@ -741,6 +741,8 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
             } else if (ti.isDirectlyReadable) {
               return store(new IR.GetProperty(region, state.store, object, multiname.name));
+            } else if (ti.isIndexedReadable) {
+              return store(new IR.AVM2GetProperty(region, state.store, object, multiname, true, getOpenMethod));
             }
           }
           return store(new IR.AVM2GetProperty(region, state.store, object, multiname, false, getOpenMethod));
@@ -757,12 +759,8 @@ var createName = function createName(namespaces, name) {
               return store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
             } else if (ti.isDirectlyWriteable) {
               return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
-            } else if (ti.isDirectlyWriteableWithCoercion) {
-              var coercer = getCoercerForType(ti.targetType);
-              if (coercer) {
-                value = coercer(value);
-                return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
-              }
+            } else if (ti.isIndexedWriteable) {
+              return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, true));
             }
           }
           return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, false));
