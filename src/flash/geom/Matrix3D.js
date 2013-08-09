@@ -28,12 +28,6 @@ var Matrix3DDefinition = (function () {
   var transposeTransform = new Uint32Array([0, 4, 8, 12, 1, 5, 9, 13,
     2, 6, 10, 14, 3, 7, 11, 15]);
 
-  function createVectorOfNumbers() {
-    var VectorOfNumbersClass = avm2.applicationDomain.
-      getClass("packageInternal __AS3__.vec.Vector$object");
-    return new VectorOfNumbersClass.instanceConstructor();
-  }
-
   return {
     // (v:Vector = null)
     __class__: "flash.geom.Matrix3D",
@@ -271,7 +265,7 @@ var Matrix3DDefinition = (function () {
                 m31 = m[2], m32 = m[6], m33 = m[10], m34 = m[14],
                 m41 = m[3], m42 = m[7], m43 = m[11], m44 = m[15];
             for (var i = 0; i < vin.length - 2; i += 3) {
-              var x = vin[i], y = vin[i + 1], z = vin[i + 2];
+              var x = vin.indexGet(i), y = vin.indexGet(i + 1), z = vin.indexGet(i + 2);
 
               vout.push(m11 * x + m12 * y + m13 * z + m14);
               vout.push(m21 * x + m22 * y + m23 * z + m24);
@@ -301,11 +295,11 @@ var Matrix3DDefinition = (function () {
             var m = this._matrix;
             if (transpose) {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                vector[j] = m[transposeTransform[i]];
+                vector.indexSet(j, m[transposeTransform[i]]);
               }
             } else {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                vector[j] = m[i];
+                vector.indexSet(j, m[i]);
               }
             }
           },
@@ -313,11 +307,11 @@ var Matrix3DDefinition = (function () {
             var m = this._matrix;
             if (transpose) {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                m[transposeTransform[i]] = vector[j] || 0; // removing NaN
+                m[transposeTransform[i]] = vector.indexGet(j) || 0; // removing NaN
               }
             } else {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                m[i] = vector[j] || 0; // removing NaN
+                m[i] = vector.indexGet(j) || 0; // removing NaN
               }
             }
           },
@@ -355,7 +349,7 @@ var Matrix3DDefinition = (function () {
           },
           rawData: {
             get: function rawData() { // (void) -> Vector
-              var result = createVectorOfNumbers();
+              var result = new Float64Vector();
               this.copyRawDataTo(result, 0, false);
               return result;
             },
