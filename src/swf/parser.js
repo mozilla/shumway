@@ -17,7 +17,8 @@
  */
 /*global SWF, MOVIE_HEADER, SWF_TAG_CODE_FILE_ATTRIBUTES, tagHandler, Stream,
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
-         generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError */
+         generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError,
+         readHeader */
 
 function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;

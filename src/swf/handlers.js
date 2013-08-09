@@ -15,6 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global readUi16, readUb, readUi32, readUi8, readString, readFixed8, readFixed,
+         readSb, readFloat, readBinary, align, readSi16, readEncodedU32, readFb
+*/
 
 var tagHandler=(function (global) {
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
@@ -49,33 +52,36 @@ var tagHandler=(function (global) {
     return $;
   }
   function placeObject($bytes, $stream, $, swfVersion, tagCode) {
+    var flags, hasEvents, clip, hasName, hasRatio, hasCxform, hasMatrix, place;
+    var move, hasBackgroundColor, hasVisibility, hasImage, hasClassName, cache;
+    var blend, hasFilters, eoe;
     $ || ($ = {});
     if (tagCode > 4) {
       if (tagCode > 26) {
-        var flags = readUi16($bytes, $stream);
+        flags = readUi16($bytes, $stream);
       } else {
-        var flags = readUi8($bytes, $stream);
+        flags = readUi8($bytes, $stream);
       }
-      var hasEvents = $.hasEvents = flags >> 7 & 1;
-      var clip = $.clip = flags >> 6 & 1;
-      var hasName = $.hasName = flags >> 5 & 1;
-      var hasRatio = $.hasRatio = flags >> 4 & 1;
-      var hasCxform = $.hasCxform = flags >> 3 & 1;
-      var hasMatrix = $.hasMatrix = flags >> 2 & 1;
-      var place = $.place = flags >> 1 & 1;
-      var move = $.move = flags & 1;
+      hasEvents = $.hasEvents = flags >> 7 & 1;
+      clip = $.clip = flags >> 6 & 1;
+      hasName = $.hasName = flags >> 5 & 1;
+      hasRatio = $.hasRatio = flags >> 4 & 1;
+      hasCxform = $.hasCxform = flags >> 3 & 1;
+      hasMatrix = $.hasMatrix = flags >> 2 & 1;
+      place = $.place = flags >> 1 & 1;
+      move = $.move = flags & 1;
       if (tagCode === 70) {
-        var hasBackgroundColor = $.hasBackgroundColor = flags >> 15 & 1;
-        var hasVisibility = $.hasVisibility = flags >> 14 & 1;
-        var hasImage = $.hasImage = flags >> 12 & 1;
-        var hasClassName = $.hasClassName = flags >> 11 & 1;
-        var cache = $.cache = flags >> 10 & 1;
-        var blend = $.blend = flags >> 9 & 1;
-        var hasFilters = $.hasFilters = flags >> 8 & 1;
+        hasBackgroundColor = $.hasBackgroundColor = flags >> 15 & 1;
+        hasVisibility = $.hasVisibility = flags >> 14 & 1;
+        hasImage = $.hasImage = flags >> 12 & 1;
+        hasClassName = $.hasClassName = flags >> 11 & 1;
+        cache = $.cache = flags >> 10 & 1;
+        blend = $.blend = flags >> 9 & 1;
+        hasFilters = $.hasFilters = flags >> 8 & 1;
       } else {
-        var cache = $.cache = 0;
-        var blend = $.blend = 0;
-        var hasFilters = $.hasFilters = 0;
+        cache = $.cache = 0;
+        blend = $.blend = 0;
+        hasFilters = $.hasFilters = 0;
       }
       $.depth = readUi16($bytes, $stream);
       if (hasClassName) {
@@ -129,7 +135,7 @@ var tagHandler=(function (global) {
         do {
           var $29 = {};
           var temp = events($bytes, $stream, $29, swfVersion, tagCode);
-          var eoe = temp.eoe;
+          eoe = temp.eoe;
           $28.push($29);
         } while (!eoe);
       }
@@ -164,6 +170,7 @@ var tagHandler=(function (global) {
     return $;
   }
   function defineImage($bytes, $stream, $, swfVersion, tagCode) {
+    var imgData;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     if (tagCode > 21) {
@@ -171,11 +178,11 @@ var tagHandler=(function (global) {
       if (tagCode === 90) {
         $.deblock = readFixed8($bytes, $stream);
       }
-      var imgData = $.imgData = readBinary($bytes, $stream, alphaDataOffset);
+      imgData = $.imgData = readBinary($bytes, $stream, alphaDataOffset);
       $.alphaData = readBinary($bytes, $stream, 0);
     }
     else {
-      var imgData = $.imgData = readBinary($bytes, $stream, 0);
+      imgData = $.imgData = readBinary($bytes, $stream, 0);
     }
     switch(imgData[0]<<8|imgData[1]) {
     case 65496:
@@ -197,6 +204,7 @@ var tagHandler=(function (global) {
     return $;
   }
   function defineButton($bytes, $stream, $, swfVersion, tagCode) {
+    var eob, hasFilters, count, blend;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     if (tagCode == 7) {
@@ -204,7 +212,7 @@ var tagHandler=(function (global) {
       do {
         var $1 = {};
         var temp = button($bytes, $stream, $1, swfVersion, tagCode);
-        var eob = temp.eob;
+        eob = temp.eob;
         $0.push($1);
       } while (!eob);
       $.actionsData = readBinary($bytes, $stream, 0);
@@ -219,12 +227,12 @@ var tagHandler=(function (global) {
         var flags = readUi8($bytes, $stream);
         var eob = $29.eob = !flags;
         if (swfVersion  >= 8) {
-          var blend = $29.blend = flags >> 5 & 1;
-          var hasFilters = $29.hasFilters = flags >> 4 & 1;
+          blend = $29.blend = flags >> 5 & 1;
+          hasFilters = $29.hasFilters = flags >> 4 & 1;
         }
         else {
-          var blend = $29.blend = 0;
-          var hasFilters = $29.hasFilters = 0;
+          blend = $29.blend = 0;
+          hasFilters = $29.hasFilters = 0;
         }
         $29.stateHitTest = flags >> 3 & 1;
         $29.stateDown = flags >> 2 & 1;
@@ -246,9 +254,9 @@ var tagHandler=(function (global) {
             switch(type) {
             case 0:
               if (type === 4 || type === 7) {
-                var count = readUi8($bytes, $stream);
+                count = readUi8($bytes, $stream);
               } else {
-                var count = 1;
+                count = 1;
               }
               var $33 = $32.colors = [];
               var $34 = count;
@@ -305,9 +313,9 @@ var tagHandler=(function (global) {
             case 3:
             case 4:
               if (type === 4 || type === 7) {
-                var count = readUi8($bytes, $stream);
+                count = readUi8($bytes, $stream);
               } else {
-                var count = 1;
+                count = 1;
               }
               var $39 = $32.colors = [];
               var $40 = count;
@@ -355,8 +363,8 @@ var tagHandler=(function (global) {
               }
               break;
             case 5:
-              $32.columns = readUi8($bytes, $stream);
-              $32.rows = readUi8($bytes, $stream);
+              var columns = $32.columns = readUi8($bytes, $stream);
+              var rows = $32.rows = readUi8($bytes, $stream);
               $32.divisor = readFloat($bytes, $stream);
               $32.bias = readFloat($bytes, $stream);
               var $45 = $32.weights = [];
@@ -382,9 +390,9 @@ var tagHandler=(function (global) {
               break;
             case 7:
               if (type === 4 || type === 7) {
-                var count = readUi8($bytes, $stream);
+                count = readUi8($bytes, $stream);
               } else {
-                var count = 1;
+                count = 1;
               }
               var $50 = $32.colors = [];
               var $51 = count;
@@ -488,6 +496,7 @@ var tagHandler=(function (global) {
     return $;
   }
   function defineLabel($bytes, $stream, $, swfVersion, tagCode) {
+    var eot;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var $0 = $.bbox = {};
@@ -500,7 +509,7 @@ var tagHandler=(function (global) {
     do {
       var $3 = {};
       var temp = textRecord($bytes, $stream, $3, swfVersion, tagCode, glyphBits, advanceBits);
-      var eot = temp.eot;
+      eot = temp.eot;
       $2.push($3);
     } while (!eot);
     return $;
@@ -974,6 +983,7 @@ var tagHandler=(function (global) {
     }
   }
   function morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var eos, bits;
     var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var lineBits = temp.lineBits;
     var fillBits = temp.fillBits;
@@ -998,16 +1008,17 @@ var tagHandler=(function (global) {
       var $163 = {};
       var temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
                              fillBits, lineBits, hasStrokes, bits);
-      var eos = temp.eos;
+      eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      var bits = temp.bits;
+      bits = temp.bits;
       $162.push($163);
     } while (!eos);
   }
   function shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var eos;
     var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
@@ -1016,7 +1027,7 @@ var tagHandler=(function (global) {
       var $161 = {};
       var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
                              fillBits, lineBits, hasStrokes, bits);
-      var eos = temp.eos;
+      eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
@@ -1122,12 +1133,13 @@ var tagHandler=(function (global) {
     return {fillBits: fillBits, lineBits: lineBits};
   }
   function fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph) {
+    var count;
     var tmp = readUi8($bytes, $stream);
     if (tagCode  >  2  &&  tmp === 255) {
-      var count = readUi16($bytes, $stream);
+      count = readUi16($bytes, $stream);
     }
     else {
-      var count = tmp;
+      count = tmp;
     }
     var $4 = $.fillStyles = [];
     var $5 = count;
@@ -1138,11 +1150,12 @@ var tagHandler=(function (global) {
     }
   }
   function lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
+    var count;
     var tmp = readUi8($bytes, $stream);
     if (tagCode  >  2  &&  tmp === 255) {
-      var count = readUi16($bytes, $stream);
+      count = readUi16($bytes, $stream);
     } else {
-      var count = tmp;
+      count = tmp;
     }
     var $138 = $.lineStyles = [];
     var $139 = count;
@@ -1238,11 +1251,12 @@ var tagHandler=(function (global) {
     $.condition = type === 64 || type === 67;
   }
   function filterGlow($bytes, $stream, $, swfVersion, tagCode, type) {
+    var count;
     if (type === 4 || type === 7) {
-      var count = readUi8($bytes, $stream);
+      count = readUi8($bytes, $stream);
     }
     else {
-      var count = 1;
+      count = 1;
     }
     var $5 = $.colors = [];
     var $6 = count;
@@ -1292,8 +1306,8 @@ var tagHandler=(function (global) {
     var reserved = readUb($bytes, $stream, 3);
   }
   function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
-    $.columns = readUi8($bytes, $stream);
-    $.rows = readUi8($bytes, $stream);
+    var columns = $.columns = readUi8($bytes, $stream);
+    var rows = $.rows = readUi8($bytes, $stream);
     $.divisor = readFloat($bytes, $stream);
     $.bias = readFloat($bytes, $stream);
     var $17 = $.weights = [];
@@ -1337,11 +1351,12 @@ var tagHandler=(function (global) {
     }
   }
   function events($bytes, $stream, $, swfVersion, tagCode) {
+    var flags, keyPress;
     if (swfVersion  >= 6) {
-      var flags = readUi32($bytes, $stream);
+      flags = readUi32($bytes, $stream);
     }
     else {
-      var flags = readUi16($bytes, $stream);
+      flags = readUi16($bytes, $stream);
     }
     var eoe = $.eoe = !flags;
     $.onKeyUp = flags >> 7 & 1;
@@ -1366,7 +1381,7 @@ var tagHandler=(function (global) {
       } else {
         $.onConstruct = 0;
       }
-      var keyPress = $.keyPress = flags >> 17 & 1;
+      keyPress = $.keyPress = flags >> 17 & 1;
       $.onDragOut = flags >> 16 & 1;
     }
     if (!eoe) {
@@ -1427,6 +1442,7 @@ var tagHandler=(function (global) {
     }
   }
   function textRecord($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
+    var glyphCount;
     align($bytes, $stream);
     var flags = readUb($bytes, $stream, 8);
     var eot = $.eot = !flags;
@@ -1434,9 +1450,9 @@ var tagHandler=(function (global) {
     if (!eot) {
       var tmp = readUi8($bytes, $stream);
       if (swfVersion > 6) {
-        var glyphCount = $.glyphCount = tmp;
+        glyphCount = $.glyphCount = tmp;
       } else {
-        var glyphCount = $.glyphCount = tmp & 0x7f;
+        glyphCount = $.glyphCount = tmp & 0x7f;
       }
       var $6 = $.entries = [];
       var $7 = glyphCount;
@@ -1482,15 +1498,16 @@ var tagHandler=(function (global) {
     }
   }
   function button($bytes, $stream, $, swfVersion, tagCode) {
+    var hasFilters, blend;
     var flags = readUi8($bytes, $stream);
     var eob = $.eob = !flags;
     if (swfVersion  >= 8) {
-      var blend = $.blend = flags >> 5 & 1;
-      var hasFilters = $.hasFilters = flags >> 4 & 1;
+      blend = $.blend = flags >> 5 & 1;
+      hasFilters = $.hasFilters = flags >> 4 & 1;
     }
     else {
-      var blend = $.blend = 0;
-      var hasFilters = $.hasFilters = 0;
+      blend = $.blend = 0;
+      hasFilters = $.hasFilters = 0;
     }
     $.stateHitTest = flags >> 3 & 1;
     $.stateDown = flags >> 2 & 1;
@@ -1537,6 +1554,7 @@ var tagHandler=(function (global) {
     }
   }
   function shape($bytes, $stream, $, swfVersion, tagCode) {
+    var eos;
     var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
@@ -1547,7 +1565,7 @@ var tagHandler=(function (global) {
       var hasStrokes = false;  // FIXME Is this right?
       var temp = shapeRecord($bytes, $stream, $5, swfVersion, tagCode, isMorph,
                              fillBits, lineBits, hasStrokes, bits);
-      var eos = temp.eos;
+      eos = temp.eos;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
       var bits = bits;
