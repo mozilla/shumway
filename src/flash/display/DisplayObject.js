@@ -37,21 +37,21 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
   var blendModeMap = createEmptyObject();
-  blendModeMap[BLEND_MODE_NORMAL] = 1;
-  blendModeMap[BLEND_MODE_LAYER] = 1;
-  blendModeMap[BLEND_MODE_MULTIPLY] = 1;
-  blendModeMap[BLEND_MODE_SCREEN] = 1;
-  blendModeMap[BLEND_MODE_LIGHTEN] = 1;
-  blendModeMap[BLEND_MODE_DARKEN] = 1;
-  blendModeMap[BLEND_MODE_DIFFERENCE] = 1;
-  blendModeMap[BLEND_MODE_ADD] = 1;
-  blendModeMap[BLEND_MODE_SUBTRACT] = 1;
-  blendModeMap[BLEND_MODE_INVERT] = 1;
-  blendModeMap[BLEND_MODE_ALPHA] = 1;
-  blendModeMap[BLEND_MODE_ERASE] = 1;
-  blendModeMap[BLEND_MODE_OVERLAY] = 1;
-  blendModeMap[BLEND_MODE_HARDLIGHT] = 1;
-  blendModeMap[BLEND_MODE_SHADER] = 1;
+  blendModeMap[BLEND_MODE_NORMAL] = "normal";
+  blendModeMap[BLEND_MODE_LAYER] = false;
+  blendModeMap[BLEND_MODE_MULTIPLY] = "multiply";
+  blendModeMap[BLEND_MODE_SCREEN] = "screen";
+  blendModeMap[BLEND_MODE_LIGHTEN] = "lighten";
+  blendModeMap[BLEND_MODE_DARKEN] = "darken";
+  blendModeMap[BLEND_MODE_DIFFERENCE] = "difference";
+  blendModeMap[BLEND_MODE_ADD] = false;
+  blendModeMap[BLEND_MODE_SUBTRACT] = false;
+  blendModeMap[BLEND_MODE_INVERT] = false;
+  blendModeMap[BLEND_MODE_ALPHA] = false;
+  blendModeMap[BLEND_MODE_ERASE] = false;
+  blendModeMap[BLEND_MODE_OVERLAY] = "overlay";
+  blendModeMap[BLEND_MODE_HARDLIGHT] = "hard-light";
+  blendModeMap[BLEND_MODE_SHADER] = false;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -109,6 +109,8 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
 
+      this._blendModeCanvas = "normal";
+
       var s = this.symbol;
       if (s) {
         this._animated = s.animated || false;
@@ -124,6 +126,16 @@ var DisplayObjectDefinition = (function () {
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
+
+        if (typeof blendModeMap[s.blendMode] === "string") {
+          this._blendModeCanvas = blendModeMap[s.blendMode];
+        } else {
+          this._blendModeCanvas = "normal";
+          notImplemented();
+        }
+        //this._blendModeCanvas = typeof blendModeMap[s.blendMode] === "string" ?
+        //                        blendModeMap[s.blendMode] :
+        //                        "normal";
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -370,7 +382,10 @@ var DisplayObjectDefinition = (function () {
     set blendMode(val) {
       if (typeof blendModeMap[val] !== "undefined") {
         this._blendMode = val;
-        if (val !== BLEND_MODE_NORMAL) {
+        if (typeof blendModeMap[val] === "string") {
+          this._blendModeCanvas = blendModeMap[val];
+        } else {
+          this._blendModeCanvas = "normal";
           notImplemented();
         }
       } else {
