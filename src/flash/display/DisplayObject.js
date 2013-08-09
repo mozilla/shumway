@@ -19,6 +19,7 @@
 var TRACE_SYMBOLS_INFO = false;
 
 var DisplayObjectDefinition = (function () {
+
   var BLEND_MODE_ADD        = 'add';
   var BLEND_MODE_ALPHA      = 'alpha';
   var BLEND_MODE_DARKEN     = 'darken';
@@ -35,23 +36,22 @@ var DisplayObjectDefinition = (function () {
   var BLEND_MODE_SHADER     = 'shader';
   var BLEND_MODE_SUBTRACT   = 'subtract';
 
-  var blendModes = [
-    BLEND_MODE_NORMAL,
-    BLEND_MODE_LAYER,
-    BLEND_MODE_MULTIPLY,
-    BLEND_MODE_SCREEN,
-    BLEND_MODE_LIGHTEN,
-    BLEND_MODE_DARKEN,
-    BLEND_MODE_DIFFERENCE,
-    BLEND_MODE_ADD,
-    BLEND_MODE_SUBTRACT,
-    BLEND_MODE_INVERT,
-    BLEND_MODE_ALPHA,
-    BLEND_MODE_ERASE,
-    BLEND_MODE_OVERLAY,
-    BLEND_MODE_HARDLIGHT,
-    BLEND_MODE_SHADER
-  ];
+  var blendModeMap = createEmptyObject();
+  blendModeMap[BLEND_MODE_NORMAL] = 1;
+  blendModeMap[BLEND_MODE_LAYER] = 1;
+  blendModeMap[BLEND_MODE_MULTIPLY] = 1;
+  blendModeMap[BLEND_MODE_SCREEN] = 1;
+  blendModeMap[BLEND_MODE_LIGHTEN] = 1;
+  blendModeMap[BLEND_MODE_DARKEN] = 1;
+  blendModeMap[BLEND_MODE_DIFFERENCE] = 1;
+  blendModeMap[BLEND_MODE_ADD] = 1;
+  blendModeMap[BLEND_MODE_SUBTRACT] = 1;
+  blendModeMap[BLEND_MODE_INVERT] = 1;
+  blendModeMap[BLEND_MODE_ALPHA] = 1;
+  blendModeMap[BLEND_MODE_ERASE] = 1;
+  blendModeMap[BLEND_MODE_OVERLAY] = 1;
+  blendModeMap[BLEND_MODE_HARDLIGHT] = 1;
+  blendModeMap[BLEND_MODE_SHADER] = 1;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -368,7 +368,7 @@ var DisplayObjectDefinition = (function () {
       return this._blendMode;
     },
     set blendMode(val) {
-      if (blendModes.indexOf(val) >= 0) {
+      if (typeof blendModeMap[val] !== "undefined") {
         this._blendMode = val;
         if (val !== BLEND_MODE_NORMAL) {
           notImplemented();
