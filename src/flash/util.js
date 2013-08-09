@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice */
+/*global slice, formatErrorMessage */
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
