@@ -44,6 +44,16 @@ var CanvasCache = {
   }
 };
 
+function isCanvasVisible(canvas) {
+  if (canvas.ownerDocument.hidden) { // Page Visibility API
+    return false;
+  }
+  if (canvas.mozVisible === false) { // HACK Canvas Visibility API
+    return false;
+  }
+  return true;
+}
+
 function visitContainer(container, visitor) {
   var children = container._children;
   var dirty = false;
@@ -676,13 +686,14 @@ function renderStage(stage, ctx, events) {
       }
 
       if (refreshStage || renderFrame) {
+        var canvasVisible = isCanvasVisible(ctx.canvas);
         ctx.beginPath();
-        if (!disablePreVisitor.value) {
+        if (canvasVisible && !disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           (new PreVisitor(stage, ctx)).start();
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
-        if (!disableRenderVisitor.value) {
+        if (canvasVisible && !disableRenderVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Render Visitor");
           (new RenderVisitor(stage, ctx, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
