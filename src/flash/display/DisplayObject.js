@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global createEmptyObject, throwErrorHelper, Errors */
+/*global createEmptyObject, throwErrorHelper, Errors, isString */
 
 var TRACE_SYMBOLS_INFO = false;
 
@@ -119,15 +119,11 @@ var DisplayObjectDefinition = (function () {
         this._root = s.root || null;
         this._stage = s.stage || null;
 
-        if (typeof blendModeMap[s.blendMode] === "string") {
+        if (isString(blendModeMap[s.blendMode])) {
           this._blendModeCanvas = blendModeMap[s.blendMode];
         } else {
-          this._blendModeCanvas = "normal";
-          notImplemented();
+          notImplemented("DisplayObject.blendMode: " + s.blendMode);
         }
-        //this._blendModeCanvas = typeof blendModeMap[s.blendMode] === "string" ?
-        //                        blendModeMap[s.blendMode] :
-        //                        "normal";
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -374,11 +370,10 @@ var DisplayObjectDefinition = (function () {
     set blendMode(val) {
       if (typeof blendModeMap[val] !== "undefined") {
         this._blendMode = val;
-        if (typeof blendModeMap[val] === "string") {
+        if (isString(blendModeMap[val])) {
           // Flash blendMode maps directly to globalCompositeOperation
           this._blendModeCanvas = blendModeMap[val];
         } else {
-          this._blendModeCanvas = "normal";
           notImplemented("DisplayObject.blendMode: " + val);
         }
       } else {
