@@ -21,38 +21,7 @@ var TRACE_SYMBOLS_INFO = false;
 
 var DisplayObjectDefinition = (function () {
 
-  var BLEND_MODE_ADD        = 'add';
-  var BLEND_MODE_ALPHA      = 'alpha';
-  var BLEND_MODE_DARKEN     = 'darken';
-  var BLEND_MODE_DIFFERENCE = 'difference';
-  var BLEND_MODE_ERASE      = 'erase';
-  var BLEND_MODE_HARDLIGHT  = 'hardlight';
-  var BLEND_MODE_INVERT     = 'invert';
-  var BLEND_MODE_LAYER      = 'layer';
-  var BLEND_MODE_LIGHTEN    = 'lighten';
-  var BLEND_MODE_MULTIPLY   = 'multiply';
-  var BLEND_MODE_NORMAL     = 'normal';
-  var BLEND_MODE_OVERLAY    = 'overlay';
-  var BLEND_MODE_SCREEN     = 'screen';
-  var BLEND_MODE_SHADER     = 'shader';
-  var BLEND_MODE_SUBTRACT   = 'subtract';
-
-  var blendModeMap = createEmptyObject();
-  blendModeMap[BLEND_MODE_NORMAL] = "normal";
-  blendModeMap[BLEND_MODE_LAYER] = false;
-  blendModeMap[BLEND_MODE_MULTIPLY] = "multiply";
-  blendModeMap[BLEND_MODE_SCREEN] = "screen";
-  blendModeMap[BLEND_MODE_LIGHTEN] = "lighten";
-  blendModeMap[BLEND_MODE_DARKEN] = "darken";
-  blendModeMap[BLEND_MODE_DIFFERENCE] = "difference";
-  blendModeMap[BLEND_MODE_ADD] = false;
-  blendModeMap[BLEND_MODE_SUBTRACT] = false;
-  blendModeMap[BLEND_MODE_INVERT] = false;
-  blendModeMap[BLEND_MODE_ALPHA] = false;
-  blendModeMap[BLEND_MODE_ERASE] = false;
-  blendModeMap[BLEND_MODE_OVERLAY] = "overlay";
-  blendModeMap[BLEND_MODE_HARDLIGHT] = "hard-light";
-  blendModeMap[BLEND_MODE_SHADER] = false;
+  var blendModeMap;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -110,6 +79,28 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
 
+      // Maps Flash blendMode to Canvas globalCompositeOperation blendMode
+      if (typeof blendModeMap === "undefined") {
+        var blendModeClass = flash.display.BlendMode.class;
+        blendModeMap = createEmptyObject();
+        blendModeMap[blendModeClass.NORMAL]     = "normal";
+        blendModeMap[blendModeClass.LAYER]      = false;
+        blendModeMap[blendModeClass.MULTIPLY]   = "multiply";
+        blendModeMap[blendModeClass.SCREEN]     = "screen";
+        blendModeMap[blendModeClass.LIGHTEN]    = "lighten";
+        blendModeMap[blendModeClass.DARKEN]     = "darken";
+        blendModeMap[blendModeClass.DIFFERENCE] = "difference";
+        blendModeMap[blendModeClass.ADD]        = false;
+        blendModeMap[blendModeClass.SUBTRACT]   = false;
+        blendModeMap[blendModeClass.INVERT]     = false;
+        blendModeMap[blendModeClass.ALPHA]      = false;
+        blendModeMap[blendModeClass.ERASE]      = false;
+        blendModeMap[blendModeClass.OVERLAY]    = "overlay";
+        blendModeMap[blendModeClass.HARDLIGHT]  = "hard-light";
+        blendModeMap[blendModeClass.SHADER]     = false;
+      }
+
+      // Mapped Canvas globalCompositeOperation blendMode
       this._blendModeCanvas = "normal";
 
       var s = this.symbol;
@@ -384,10 +375,11 @@ var DisplayObjectDefinition = (function () {
       if (typeof blendModeMap[val] !== "undefined") {
         this._blendMode = val;
         if (typeof blendModeMap[val] === "string") {
+          // Flash blendMode maps directly to globalCompositeOperation
           this._blendModeCanvas = blendModeMap[val];
         } else {
           this._blendModeCanvas = "normal";
-          notImplemented();
+          notImplemented("DisplayObject.blendMode: " + val);
         }
       } else {
         throw createError("ArgumentError", Errors.InvalidEnumError, "blendMode");
