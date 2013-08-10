@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice, formatErrorMessage */
+/*global slice, formatErrorMessage, throwErrorFromVM, AVM2 */
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
@@ -32,13 +32,11 @@ function cloneObject(obj) {
 }
 
 // ex.:
-// throw createError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+// throwErrorHelper("ArgumentError", Errors.InvalidEnumError, "blendMode");
 // "ArgumentError: Error #2008: Parameter blendMode must be one of the accepted values."
-function createError(name, error) {
+function throwErrorHelper(name, error) {
   var message = formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
-  var error = new Error(message, error.code);
-  error.name = name;
-  return error;
+  throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
 }
 
 var Promise = (function PromiseClosure() {
