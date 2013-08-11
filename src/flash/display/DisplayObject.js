@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global createEmptyObject, throwErrorHelper, Errors, isString */
+/*global createEmptyObject, throwError, Errors, isString */
 
 var TRACE_SYMBOLS_INFO = false;
 
@@ -377,7 +377,7 @@ var DisplayObjectDefinition = (function () {
           notImplemented("DisplayObject.blendMode: " + val);
         }
       } else {
-        throwErrorHelper("ArgumentError", Errors.InvalidEnumError, "blendMode");
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
     },
     get cacheAsBitmap() {
