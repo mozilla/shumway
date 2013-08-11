@@ -31,8 +31,7 @@ function cloneObject(obj) {
   return clone;
 }
 
-// ex.:
-// throwErrorHelper("ArgumentError", Errors.InvalidEnumError, "blendMode");
+// e.g. throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
 // "ArgumentError: Error #2008: Parameter blendMode must be one of the accepted values."
 function throwError(name, error) {
   var message = formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
