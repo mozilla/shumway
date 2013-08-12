@@ -199,20 +199,18 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  FirefoxCom.request('beginActivation', null, function () {
-    createAVM2(builtinPath, playerGlobalPath,
-      compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-      compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-      function (avm2) {
-        console.time("Initialize Renderer");
-        SWF.embed(url, document, document.getElementById("viewer"), {
-           url: url,
-           movieParams: movieParams,
-           objectParams: objectParams,
-           onComplete: loaded,
-           onBeforeFrame: frame
-        });
-    });
+  createAVM2(builtinPath, playerGlobalPath,
+    compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+    compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+    function (avm2) {
+      console.time("Initialize Renderer");
+      SWF.embed(url, document, document.getElementById("viewer"), {
+         url: url,
+         movieParams: movieParams,
+         objectParams: objectParams,
+         onComplete: loaded,
+         onBeforeFrame: frame
+      });
   });
 }
 
