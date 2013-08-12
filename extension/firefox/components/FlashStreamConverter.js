@@ -325,13 +325,6 @@ ChromeActions.prototype = {
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
   },
-  beginActivation: function (data, callback) {
-    this.activationCallback = function (e) {
-      delete this.activationCallback;
-      callback();
-    }.bind(this);
-    ActivationQueue.enqueue(this);
-  },
   endActivation: function () {
     if (ActivationQueue.currentNonActive === this) {
       ActivationQueue.activateNext();
@@ -427,16 +420,21 @@ var ActivationQueue = {
   activateNext: function ActivationQueue_activateNext() {
     function weightInstance(actions) {
       // set of heuristics for find the most important instance to load
-      var window = actions.window;
-      var width = window.innerWidth, height = window.innerHeight;
-      var weight = width * height; // using its area as a base
-
+      var weight = 0;
+      // using linear distance to the top-left of the view area
+      if (actions.embedTag) {
+        var window = actions.window;
+        var clientRect = actions.embedTag.getBoundingClientRect();
+        weight -= Math.abs(clientRect.left - window.scrollX) +
+                  Math.abs(clientRect.top - window.scrollY);
+      }
       var doc = actions.document;
-      var parentDoc = actions.embedTag && actions.embedTag.ownerDocument;
-      if (doc.hidden) {
-        weight /= 1000; // might not be that important if hidden
-      } else if (parentDoc && !parentDoc.hasFocus()) {
-        weight /= 200; // parent document is not focused
+      if (!doc.hidden) {
+        weight += 100000; // might not be that important if hidden
+      }
+      if (actions.embedTag &&
+          actions.embedTag.ownerDocument.hasFocus()) {
+        weight += 10000; // parent document is focused
       }
       return weight;
     }
@@ -445,7 +443,6 @@ var ActivationQueue = {
       this.activationTimeout.cancel();
       this.activationTimeout = null;
     }
-
     do {
       if (this.initializing >= 0) {
         this.nonActive.splice(this.initializing, 1);
@@ -455,8 +452,9 @@ var ActivationQueue = {
         return;
       }
 
-      var maxWeight = -1, maxWeightIndex = -1;
-      for (var i = 0; i < this.nonActive.length; i++) {
+      var maxWeightIndex = 0;
+      var maxWeight = weightInstance(this.nonActive[0]);
+      for (var i = 1; i < this.nonActive.length; i++) {
         var weight = weightInstance(this.nonActive[i]);
         if (maxWeight < weight) {
           maxWeight = weight;
@@ -469,7 +467,7 @@ var ActivationQueue = {
         break;
       } catch (e) {
         // unable to initialize the instance, trying another one
-        log('Skipping shumway instance initialization: ' + e);
+        log('Shumway instance initialization failed: ' + e);
       }
     } while (true);
 
@@ -483,15 +481,7 @@ var ActivationQueue = {
 };
 
 function createSandbox(window, preview) {
-  let sandbox = new Cu.Sandbox(window, {
-    sandboxName : 'Shumway Sandbox',
-    sandboxPrototype: window,
-    wantXrays : false,
-    wantXHRConstructor : true,
-    wantComponents : false});
-  sandbox.SHUMWAY_ROOT = "resource://shumway/";
-
-  sandbox.document.addEventListener('DOMContentLoaded', function() {
+  function initScripts() {
     var scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
                          .getService(Ci.mozIJSSubScriptLoader);
     if (preview) {
@@ -503,7 +493,22 @@ function createSandbox(window, preview) {
                                  sandbox);
       sandbox.runViewer();
     }
-  });
+  }
+
+  let sandbox = new Cu.Sandbox(window, {
+    sandboxName : 'Shumway Sandbox',
+    sandboxPrototype: window,
+    wantXrays : false,
+    wantXHRConstructor : true,
+    wantComponents : false});
+  sandbox.SHUMWAY_ROOT = "resource://shumway/";
+
+  if (sandbox.document.readyState === "interactive" ||
+      sandbox.document.readyState === "complete") {
+    initScripts();
+  } else {
+    sandbox.document.addEventListener('DOMContentLoaded', initScripts);
+  }
   return sandbox;
 }
 
@@ -744,7 +749,13 @@ FlashStreamConverterBase.prototype = {
             actions.fallback();
             return;
           }
-          createSandbox(domWindow, isSimpleMode);
+
+          actions.activationCallback = function(domWindow, isSimpleMode) {
+            delete this.activationCallback;
+            createSandbox(domWindow, isSimpleMode);
+          }.bind(actions, domWindow, isSimpleMode);
+          ActivationQueue.enqueue(actions);
+
           let requestListener = new RequestListener(actions);
           domWindow.addEventListener('shumway.message', function(event) {
             requestListener.receive(event);
