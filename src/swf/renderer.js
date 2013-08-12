@@ -249,6 +249,10 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     ctx.globalAlpha *= child._alpha;
   }
 
+  if (child._blendModeCanvas !== "normal") {
+    ctx.globalCompositeOperation = child._blendModeCanvas;
+  }
+
   if (child._graphics) {
     var graphics = child._graphics;
 

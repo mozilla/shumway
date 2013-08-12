@@ -15,25 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global createEmptyObject, throwError, Errors, isString */
 
 var TRACE_SYMBOLS_INFO = false;
 
 var DisplayObjectDefinition = (function () {
-  var BLEND_MODE_ADD        = 'add';
-  var BLEND_MODE_ALPHA      = 'alpha';
-  var BLEND_MODE_DARKEN     = 'darken';
-  var BLEND_MODE_DIFFERENCE = 'difference';
-  var BLEND_MODE_ERASE      = 'erase';
-  var BLEND_MODE_HARDLIGHT  = 'hardlight';
-  var BLEND_MODE_INVERT     = 'invert';
-  var BLEND_MODE_LAYER      = 'layer';
-  var BLEND_MODE_LIGHTEN    = 'lighten';
-  var BLEND_MODE_MULTIPLY   = 'multiply';
-  var BLEND_MODE_NORMAL     = 'normal';
-  var BLEND_MODE_OVERLAY    = 'overlay';
-  var BLEND_MODE_SCREEN     = 'screen';
-  var BLEND_MODE_SHADER     = 'shader';
-  var BLEND_MODE_SUBTRACT   = 'subtract';
+
+  var blendModeMap;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -52,6 +40,7 @@ var DisplayObjectDefinition = (function () {
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
+      this._blendMode = "normal";
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
@@ -90,10 +79,35 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
 
+      // Maps Flash blendMode to Canvas globalCompositeOperation blendMode
+      if (typeof blendModeMap === "undefined") {
+        var blendModeClass = flash.display.BlendMode.class;
+        blendModeMap = createEmptyObject();
+        blendModeMap[blendModeClass.NORMAL]     = "normal";
+        blendModeMap[blendModeClass.LAYER]      = false;
+        blendModeMap[blendModeClass.MULTIPLY]   = "multiply";
+        blendModeMap[blendModeClass.SCREEN]     = "screen";
+        blendModeMap[blendModeClass.LIGHTEN]    = "lighten";
+        blendModeMap[blendModeClass.DARKEN]     = "darken";
+        blendModeMap[blendModeClass.DIFFERENCE] = "difference";
+        blendModeMap[blendModeClass.ADD]        = false;
+        blendModeMap[blendModeClass.SUBTRACT]   = false;
+        blendModeMap[blendModeClass.INVERT]     = false;
+        blendModeMap[blendModeClass.ALPHA]      = false;
+        blendModeMap[blendModeClass.ERASE]      = false;
+        blendModeMap[blendModeClass.OVERLAY]    = "overlay";
+        blendModeMap[blendModeClass.HARDLIGHT]  = "hard-light";
+        blendModeMap[blendModeClass.SHADER]     = false;
+      }
+
+      // Mapped Canvas globalCompositeOperation blendMode
+      this._blendModeCanvas = "normal";
+
       var s = this.symbol;
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
+        this._blendMode = s.blendMode || "normal";
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -104,6 +118,12 @@ var DisplayObjectDefinition = (function () {
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
+
+        if (isString(blendModeMap[s.blendMode])) {
+          this._blendModeCanvas = blendModeMap[s.blendMode];
+        } else {
+          notImplemented("DisplayObject.blendMode: " + s.blendMode);
+        }
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -345,11 +365,20 @@ var DisplayObjectDefinition = (function () {
       this._markAsDirty();
     },
     get blendMode() {
-      return BLEND_MODE_NORMAL;
+      return this._blendMode;
     },
     set blendMode(val) {
-      if (val === BLEND_MODE_NORMAL) return;
-      notImplemented();
+      if (typeof blendModeMap[val] !== "undefined") {
+        this._blendMode = val;
+        if (isString(blendModeMap[val])) {
+          // Flash blendMode maps directly to globalCompositeOperation
+          this._blendModeCanvas = blendModeMap[val];
+        } else {
+          notImplemented("DisplayObject.blendMode: " + val);
+        }
+      } else {
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+      }
     },
     get cacheAsBitmap() {
       return this._cacheAsBitmap;
