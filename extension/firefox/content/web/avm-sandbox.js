@@ -53,6 +53,7 @@ var FirefoxCom = (function FirefoxComClosure() {
         }
         var cookie = "requestId" + (FirefoxCom.request.nextId++);
         e.detail.cookie = cookie;
+        e.detail.callback = true;
 
         document.addEventListener('shumway.response', function listener(event) {
           if (cookie !== event.detail.cookie)
@@ -194,18 +195,23 @@ function parseSwf(url, movieParams, objectParams) {
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
-  function loaded() {}
-  createAVM2(builtinPath, playerGlobalPath,
-    compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-    compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-    function (avm2) {
-      console.time("Initialize Renderer");
-      SWF.embed(url, document, document.getElementById("viewer"), {
-         url: url,
-         movieParams: movieParams,
-         objectParams: objectParams,
-         onComplete: loaded,
-         onBeforeFrame: frame
+  function loaded() {
+    FirefoxCom.request('endActivation', null);
+  }
+
+  FirefoxCom.request('beginActivation', null, function () {
+    createAVM2(builtinPath, playerGlobalPath,
+      compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+      compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
+      function (avm2) {
+        console.time("Initialize Renderer");
+        SWF.embed(url, document, document.getElementById("viewer"), {
+           url: url,
+           movieParams: movieParams,
+           objectParams: objectParams,
+           onComplete: loaded,
+           onBeforeFrame: frame
+        });
     });
   });
 }
