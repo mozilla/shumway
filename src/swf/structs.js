@@ -142,7 +142,7 @@ var EVENT = {
       onReleaseOutside: 'flags>>12&1',
       onRelease: 'flags>>11&1',
       onPress: 'flags>>10&1',
-      onInitialize: 'flags>>9&1',
+      onInit: 'flags>>9&1',
       onData: 'flags>>8&1',
       onConstruct: ['swfVersion>=7', ['flags>>18&1', '0']],
       $keyPress: 'flags>>17&1',

@@ -380,7 +380,10 @@ function initializeGlobalObject(global) {
 
   var callCounter = new metrics.Counter(true);
   defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
-    traceCallExecution.value > 0 && callWriter.enter("call " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+    if (traceCallExecution.value) {
+      var receiver = this.class ? this.class.className + " ": "";
+      callWriter.enter("call " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+    }
     var receiver = isLex ? null : this;
     var result;
     if (isProxyObject(this)) {
@@ -425,11 +428,20 @@ function initializeGlobalObject(global) {
     }
     return delete this[resolved];
   });
+
+  defineNonEnumerableProperty(global.Object.prototype, "indexGet", function (i) {
+    return this[i];
+  });
+
+  defineNonEnumerableProperty(global.Object.prototype, "indexSet", function (i, v) {
+    this[i] = v;
+  });
 }
 
 initializeGlobalObject(jsGlobal);
 
 function createNewGlobalObject() {
+  unexpected("Should not use this unless it's for Security Domains.");
   var global = null;
   if (inBrowser) {
     var iFrame = document.createElement("iframe");
@@ -554,10 +566,7 @@ function nextName(object, index) {
 }
 
 function nextValue(object, index) {
-  if (object.getProperty) {
-    return object.getProperty(object[VM_NEXT_NAME](index), false);
-  }
-  return object[Multiname.getPublicQualifiedName(object[VM_NEXT_NAME](index))];
+  return object.getMultinameProperty(undefined, object[VM_NEXT_NAME](index));
 }
 
 /**
@@ -1419,17 +1428,10 @@ function debugName(value) {
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
   var mi = methodInfo;
-  var parameters = mi.parameters.map(function (p) {
-    return PARAMETER_PREFIX + p.name;
-  });
-
-  if (hasDynamicScope) {
-    parameters.unshift(SAVED_SCOPE_NAME);
-  }
-
   $M.push(mi);
-
-  var body = Compiler.compileMethod(mi, scope, hasDynamicScope);
+  var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
+  var parameters = result.parameters;
+  var body = result.body;
 
   var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
   if (mi.holder) {
@@ -1591,7 +1593,7 @@ function checkMethodOverrides(methodInfo) {
  * callback is only executed the first time the trampoline is executed and its result is cached in
  * the trampoline closure.
  */
-function makeTrampoline(forward, parameterLength) {
+function makeTrampoline(forward, parameterLength, description) {
   release || assert (forward && typeof forward === "function");
   return (function trampolineContext() {
     var target = null;
@@ -1603,7 +1605,7 @@ function makeTrampoline(forward, parameterLength) {
         print("Trampolining");
       }
       Counter.count("Executing Trampoline");
-      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline");
+      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
       if (!target) {
         target = forward(trampoline);
         release || assert (target);
@@ -1941,21 +1943,17 @@ function applyType(domain, factory, types) {
     release || assert(types.length === 1);
     var type = types[0];
     var typeClassName;
-    if (type !== null && type !== undefined) {
-      typeClassName = type.classInfo.instanceInfo.name.name;
+    if (!isNullOrUndefined(type)) {
+      typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
       switch (typeClassName) {
         case "int":
         case "uint":
         case "double":
-          break;
-        default:
-          typeClassName = "object";
-          break;
+        case "object":
+          return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
       }
-    } else {
-      typeClassName = "object";
     }
-    return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
+    return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
   } else {
     return notImplemented(factoryClassName);
   }

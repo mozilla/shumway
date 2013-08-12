@@ -89,6 +89,7 @@ var escodegen; load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
 load(homePath + "src/avm2/compiler/inferrer.js");
 load(homePath + "src/avm2/compiler/c4/ir.js");
 load(homePath + "src/avm2/compiler/c4/looper.js");
+load(homePath + "src/avm2/compiler/c4/transform.js");
 load(homePath + "src/avm2/compiler/c4/backend.js");
 load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
@@ -100,6 +101,7 @@ load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
+load(homePath + "src/avm2/vectors.js");
 load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/native.js");
@@ -129,8 +131,13 @@ argumentParser.addArgument("r", "rootPath", "string", {parse: function (x) {
   rootPath = x;
 }});
 
+/* Old style script arguments */
+if (typeof scriptArgs === "undefined") {
+  scriptArgs = arguments;
+}
+
 try {
-  argumentParser.parse(arguments).filter(function (x) {
+  argumentParser.parse(scriptArgs).filter(function (x) {
     if (x.endsWith(".abc") || x.endsWith(".swf")) {
       files.push(rootPath + x);
     } else {

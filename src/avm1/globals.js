@@ -211,7 +211,15 @@ AS2Globals.prototype = {
   setInterval: function () {
     var setInterval = avm2.applicationDomain.getProperty(
       Multiname.fromSimpleName('flash.utils.setInterval'), true, true);
-    return setInterval.apply(null, arguments);
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof args[0] !== 'function') {
+      var obj = args.shift();
+      var name = args.shift();
+      args.unshift(function () {
+        obj[name].apply(obj, arguments);
+      });
+    }
+    return setInterval.apply(null, args);
   },
   setProperty: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
@@ -220,7 +228,15 @@ AS2Globals.prototype = {
   setTimeout: function () {
     var setTimeout = avm2.applicationDomain.getProperty(
       Multiname.fromSimpleName('flash.utils.setTimeout'), true, true);
-    return setTimeout.apply(null, arguments);
+    var args = Array.prototype.slice.call(arguments);
+    if (typeof args[0] !== 'function') {
+      var obj = args.shift();
+      var name = args.shift();
+      args.unshift(function () {
+        obj[name].apply(obj, arguments);
+      });
+    }
+    return setTimeout.apply(null, args);
   },
   showRedrawRegions: function(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
@@ -280,6 +296,7 @@ AS2Globals.prototype = {
   NaN: NaN,
   'Infinity': Infinity,
   Object: Object,
+  Array: Array,
   RegExp: RegExp,
   String: String,
   isFinite: isFinite,

@@ -279,10 +279,11 @@ var natives = (function () {
     c.defaultValue = null;
 
     c.coerce = function (value) {
-      if (value === null || value === undefined) {
+      if (isNullOrUndefined(value)) {
         return null;
       }
-      if (typeof value === 'string') {
+      if (typeof value === 'string' ||
+          typeof value === 'number') {
         return value;
       }
       return Object(value);
@@ -510,6 +511,7 @@ var natives = (function () {
     }
 
     var Ap = Array.prototype;
+
     c.native = {
       instance: {
         length: {
@@ -588,100 +590,116 @@ var natives = (function () {
    * Vector.as
    */
 
-  var VM_VECTOR_IS_FIXED = "vm vector is fixed";
+  /**
+   * No idea how this is actually used.
+   */
+  function VectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(undefined, baseClass);
+  }
+
+  function ObjectVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain.getClass("Object"), baseClass);
+  }
+
+  function IntVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain.getClass("int"), baseClass);
+  }
+
+  function UIntVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain.getClass("uint"), baseClass);
+  }
+
+  function DoubleVectorClass(domain, scope, instanceConstructor, baseClass) {
+    return createVectorClass(domain.getClass("Number"), baseClass);
+  }
 
   /**
-   * Creates a typed Vector class. It steals the Array object from a new global
-   * and overrides its GET/SET ACCESSOR methods to do the appropriate coercions.
-   * If the |type| argument is undefined it creates the untyped Vector class.
+   * Only 4 types of vector classes are ever constructed: int, uint, Number and Object.
+   * All other vector classes are created from Object vectors.
    */
-  function createVectorClass(runtime, type, baseClass) {
-    var TypedArray = createNewGlobalObject().Array;
-    var TAp = TypedArray.prototype;
-
-    // Breaks semantics with bounds checking for now.
+  function createVectorClass(type, baseClass) {
+    var V;
     if (type) {
-      var coerce = type.coerce;
-      TAp.indexGet = function (i) { return this[i]; };
-      TAp.indexSet = function (i, v) { this[i] = coerce(v); };
-    }
-
-    function TypedVector (obj, fixed) {
-      if (isObject(obj) && obj !== null && 'length' in obj) {
-        var length = Int(obj.length);
-        var array = new TypedArray(length);
-        for (var i = 0; i < length; i++) {
-          array[i] = obj[i];
-        }
-        array[VM_VECTOR_IS_FIXED] = true;
-        return array;
+      var className = "Vector$" + type.classInfo.instanceInfo.name.name;
+      switch (className) {
+        case "Vector$int":
+          V = Int32Vector;
+          break;
+        case "Vector$uint":
+          V = Uint32Vector;
+          break;
+        case "Vector$Number":
+          V = Float64Vector;
+          break;
+        case "Vector$Object":
+          V = GenericVector;
+          break;
+        default:
+          unexpected();
+          break;
       }
-
-      var length = Int(obj);
-      var array = new TypedArray(length);
-      for (var i = 0; i < length; i++) {
-        array[i] = type ? type.defaultValue : undefined;
-      }
-      array[VM_VECTOR_IS_FIXED] = !!fixed;
-      return array;
+    } else {
+      V = GenericVector.applyType(null);
     }
+    var Vp = V.prototype;
+    var cls = new Class(className, V, C(V.callable));
+    if (V === GenericVector) {
+      cls.applyType = function (type) {
+        return cls;
+//        var V = GenericVector.applyType(type);
+//        var Vp = V.prototype;
+//        var cls = new Class(className, V, C(V.callable));
+//        defineReadOnlyProperty(Vp, "class", cls);
+//        return cls;
+      };
+    }
+    cls.extendWrapper(baseClass, V);
 
-    TypedVector.prototype = TAp;
-    var name = type ? "Vector$" + type.classInfo.instanceInfo.name.name : "Vector";
-    var c = new Class(name, TypedVector, C(TypedVector));
-
-    defineReadOnlyProperty(TypedArray.prototype, "class", c);
-
-    c.extendBuiltin(baseClass);
-
-    c.native = {
+    cls.native = {
       instance: {
         fixed: {
-          get: function () { return this[VM_VECTOR_IS_FIXED]; },
-          set: function (v) { this[VM_VECTOR_IS_FIXED] = v; }
+          get: function () { return this.fixed; },
+          set: function (v) { this.fixed = v; }
         },
         length: {
           get: function () { return this.length; },
-          set: function setLength(length) {
-            // TODO: Fill with zeros if we need to.
-            this.length = length;
-          }
+          set: function setLength(length) { this.length = length; }
         },
-        pop: function () {
-          if (this[VM_VECTOR_IS_FIXED]) {
-            var error = Errors.VectorFixedError;
-            runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-          } else if (this.length === 0) {
-            return type.defaultValue;
-          }
-          return TAp.pop.call(this, arguments);
-        },
-        push: TAp.push,
-        shift: TAp.shift,
-        unshift: TAp.unshift,
-        _reverse: TAp.reverse,
-        _every: TAp.every,
-        _filter: TAp.filter,
-        _forEach: TAp.forEach,
-        _map: TAp.map,
-        _some: TAp.some,
-        _sort: TAp.sort,
+        push: Vp.push,
+        pop: Vp.pop,
+        shift: Vp.shift,
+        unshift: Vp.unshift,
+        _reverse: Vp.reverse,
+        _every: Vp.every,
+        _filter: Vp.filter,
+        _forEach: Vp.forEach,
+        _map: Vp.map,
+        _some: Vp.some,
+        _sort: Vp.sort,
         newThisType: function newThisType() {
-          return c.instanceConstructor();
+          return new cls.instanceConstructor();
         },
         _spliceHelper: function _spliceHelper(insertPoint, insertCount, deleteCount, args, offset) {
-          somewhatImplemented("_spliceHelper");
+          return this._spliceHelper(insertPoint, insertCount, deleteCount, args, offset);
+        }
+      },
+      static: {
+        _every: function (o, callback, thisObject) {
+          return o.every(callback, thisObject);
+        },
+        _forEach: function (o, callback, thisObject) {
+          return o.forEach(callback, thisObject);
         }
       }
     };
-    c.vectorType = type;
-    c.coerce = function (value) {
+    cls.vectorType = type;
+    cls.coerce = function (value) {
       return value; // TODO: Fix me.
     };
-    c.isInstanceOf = function (value) {
+    cls.isInstanceOf = function (value) {
       return true; // TODO: Fix me.
     };
-    c.isInstance = function (value) {
+    cls.isInstance = function (value) {
       if (value === null || typeof value !== "object") {
         return false;
       }
@@ -690,28 +708,7 @@ var natives = (function () {
       }
       return this.instanceConstructor.prototype.isPrototypeOf(value);
     };
-
-    return c;
-  }
-
-  function VectorClass(domain, scope, instanceConstructor, baseClass) {
-    return createVectorClass(domain, undefined, baseClass);
-  }
-
-  function ObjectVectorClass(domain, scope, instanceConstructor, baseClass) {
-    return createVectorClass(domain, domain.getClass("Object"), baseClass);
-  }
-
-  function IntVectorClass(domain, scope, instanceConstructor, baseClass) {
-    return createVectorClass(domain, domain.getClass("int"), baseClass);
-  }
-
-  function UIntVectorClass(domain, scope, instanceConstructor, baseClass) {
-    return createVectorClass(domain, domain.getClass("uint"), baseClass);
-  }
-
-  function DoubleVectorClass(domain, scope, instanceConstructor, baseClass) {
-    return createVectorClass(domain, domain.getClass("Number"), baseClass);
+    return cls;
   }
 
   /**

@@ -123,8 +123,10 @@ var SpriteDefinition = (function () {
           assert(instance._control);
           this._control.appendChild(instance._control);
 
-          if (!loader._isAvm2Enabled)
+          if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
+            instance._dispatchEvent(new flash.events.Event("init"));
+          }
 
           instance._index = i;
 
@@ -163,8 +165,10 @@ var SpriteDefinition = (function () {
       assert(instance._control);
       parent._control.appendChild(instance._control);
 
-      if (!loader._isAvm2Enabled)
+      if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
+        instance._dispatchEvent(new flash.events.Event("init"));
+      }
 
       instance._dispatchEvent(new flash.events.Event("load"));
       instance._dispatchEvent(new flash.events.Event("added"));
@@ -175,6 +179,10 @@ var SpriteDefinition = (function () {
       children.push(instance);
 
       return instance;
+    },
+    _insertChildAtDepth: function (child, depth) {
+      // TODO insert with specific depth
+      this.addChild(child);
     },
     _initAvm1Bindings: function (instance, name, events) {
       var loader = this._loader;
@@ -223,14 +231,14 @@ var SpriteDefinition = (function () {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            this._addEventListener(avm2EventName, fn, false);
+            instance._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn});
           }
         }
         if (eventsBound.length > 0) {
           instance._addEventListener('removed', function (eventsBound) {
             for (var i = 0; i < eventsBound.length; i++) {
-              this._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
+              instance._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
           }.bind(instance, eventsBound), false);
         }

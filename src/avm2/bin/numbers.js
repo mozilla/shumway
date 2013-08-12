@@ -188,6 +188,9 @@ if (configurationSet.value.indexOf("c") >= 0) {
 if (configurationSet.value.indexOf("v") >= 0) {
   configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
 }
+if (configurationSet.value.indexOf("r") >= 0) {
+  configurations.push({name: "shu-r", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify -ra" + commandSuffix});
+}
 
 console.log(padRight("=== Configurations ", "=", 120));
 configurations.forEach(function (x) {

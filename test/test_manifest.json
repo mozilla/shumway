@@ -80,10 +80,11 @@
        "swf": "/examples/Box2DFlashAS3/demo.swf",
        "type": "eq"
     },
-    {  "id": "avm1timeline1",
+    {  "id": "avm1timeline",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/avm1timeline1.swf"
+         "swfs/avm1timeline1.swf",
+         "swfs/avm1timeline2.swf"
        ],
        "type": "stas"
     },
@@ -238,5 +239,17 @@
        "frames": [1],
        "swf": "swfs/MaskTest.swf",
        "type": "eq"
+    },
+    {  "id": "timeline_scene",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/timeline/scene/Scene_1_MainTimeline.swf",
+         "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
+         "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
+         "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
+         "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
+         "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf"
+       ],
+       "type": "stas"
     }
 ]

@@ -112,12 +112,31 @@ function createEmptyObject() {
   return Object.create(null);
 }
 
+function getOwnPropertyDescriptors(object) {
+  var o = createEmptyObject();
+  var properties = Object.getOwnPropertyNames(object);
+  for (var i = 0; i < properties.length; i++) {
+    o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
+  }
+  return o;
+}
+
 function cloneObject(object) {
   var clone = Object.create(null);
   for (var property in object) {
     clone[property] = object[property];
   }
   return clone;
+}
+
+function extendObject(object, properties) {
+  var extended = Object.create(object);
+  if (properties) {
+    for (var key in properties) {
+      extended[key] = properties[key];
+    }
+  }
+  return extended;
 }
 
 function copyProperties(object, template) {
@@ -131,7 +150,10 @@ function copyProperties(object, template) {
  */
 
 function toSafeString(value) {
-  if (typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+  if (typeof value === "string") {
+    return "\"" + value + "\"";
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
   return typeof value;
@@ -635,6 +657,25 @@ function BitSetFunctor(length) {
   Ctor.BIT_INDEX_MASK = BIT_INDEX_MASK;
   Ctor.singleword = singleword;
 
+  function ones(v) {
+    v = v - ((v >> 1) & 0x55555555);
+    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+    return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+  }
+
+  function leadingZeros(v) {
+    v |= (v >> 1);
+    v |= (v >> 2);
+    v |= (v >> 4);
+    v |= (v >> 8);
+    v |= (v >> 16);
+    return 32 - ones(v);
+  }
+
+  function trailingZeros(v) {
+    return ones((v & -v) - 1);
+  }
+
   BitSet.prototype = {
     recount: function recount() {
       if (!this.dirty) {
@@ -669,6 +710,15 @@ function BitSetFunctor(length) {
       }
       this.count = this.size;
       this.dirty = 0;
+    },
+
+    assign: function assign(set) {
+      this.count = set.count;
+      this.dirty = set.dirty;
+      this.size = set.size;
+      for (var i = 0, j = this.bits.length; i < j; i++) {
+        this.bits[i] = set.bits[i];
+      }
     },
 
     clear: function clear(i) {
@@ -803,19 +853,23 @@ function BitSetFunctor(length) {
       return true;
     },
 
-    toBitString: function toBitString() {
+    toBitString: function toBitString(on, off) {
+      on = on || "1";
+      off = off || "0";
       var str = "";
       for (var i = 0; i < length; i++) {
-        str += this.get(i) ? "1" : "0";
+        str += this.get(i) ? on : off;
       }
       return str;
     },
 
-    toString: function toString() {
+    length: length,
+
+    toString: function toString(names) {
       var set = [];
       for (var i = 0; i < length; i++) {
         if (this.get(i)) {
-          set.push(i);
+          set.push(names ? names[i] : i);
         }
       }
       return set.join(", ");
@@ -860,6 +914,13 @@ function BitSetFunctor(length) {
       this.bits = 0xFFFFFFFF;
       this.count = this.size;
       this.dirty = 0;
+    },
+
+    assign: function assign(set) {
+      this.count = set.count;
+      this.dirty = set.dirty;
+      this.size = set.size;
+      this.bits = set.bits;
     },
 
     clear: function clear(i) {
@@ -953,7 +1014,9 @@ function BitSetFunctor(length) {
     },
 
     toBitString: BitSet.prototype.toBitString,
-    toString: BitSet.prototype.toString
+    toString: BitSet.prototype.toString,
+
+    length: length,
   };
 
   return Ctor;
@@ -1154,10 +1217,15 @@ var SortedList = (function() {
     release || assert(compare);
     this.compare = compare;
     this.head = null;
+    this.length = 0;
   }
+
+  sortedList.RETURN = 1;
+  sortedList.DELETE = 2;
 
   sortedList.prototype.push = function push(value) {
     release || assert(value !== undefined);
+    this.length ++;
     if (!this.head) {
       this.head = {value: value, next: null};
       return;
@@ -1184,11 +1252,27 @@ var SortedList = (function() {
     prev.next = node;
   };
 
+  /**
+   * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
+   * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
+   */
   sortedList.prototype.forEach = function forEach(visitor) {
     var curr = this.head;
+    var last = null;
     while (curr) {
-      visitor(curr.value);
-      curr = curr.next;
+      var result = visitor(curr.value);
+      if (result === sortedList.RETURN) {
+        return;
+      } else if (result === sortedList.DELETE) {
+        if (!last) {
+          curr = this.head = this.head.next;
+        } else {
+          curr = last.next = curr.next;
+        }
+      } else {
+        last = curr;
+        curr = curr.next;
+      }
     }
   };
 
@@ -1196,6 +1280,7 @@ var SortedList = (function() {
     if (!this.head) {
       return undefined;
     }
+    this.length --;
     var ret = this.head;
     this.head = this.head.next;
     return ret.value;
@@ -1217,11 +1302,14 @@ var SortedList = (function() {
   };
 
   sortedList.prototype.toString = function () {
-    var str = "[ ";
+    var str = "[";
     var curr = this.head;
     while (curr) {
-      str += curr.value.toString() + " ";
+      str += curr.value.toString();
       curr = curr.next;
+      if (curr) {
+        str += ",";
+      }
     }
     str += "]";
     return str;

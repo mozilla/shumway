@@ -15,10 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
+var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVisitor", "boolean", false, "disable pre visitor"));
+var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
+var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 
 var CanvasCache = {
   cache: [],
@@ -40,6 +43,16 @@ var CanvasCache = {
     this.cache.push(tempCanvas);
   }
 };
+
+function isCanvasVisible(canvas) {
+  if (canvas.ownerDocument.hidden) { // Page Visibility API
+    return false;
+  }
+  if (canvas.mozVisible === false) { // HACK Canvas Visibility API
+    return false;
+  }
+  return true;
+}
 
 function visitContainer(container, visitor) {
   var children = container._children;
@@ -434,7 +447,7 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Total");
 
   var frameCount = 0;
-
+  var frameFPSAverage = new metrics.Average(120);
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -472,10 +485,12 @@ function renderStage(stage, ctx, events) {
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
+      var frameStartTime = performance.now();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-
-      if (mouseMoved) {
+      if (!disableMouseVisitor.value) {
+        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
+        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
       }
 
       var domain = avm2.systemDomain;
@@ -498,11 +513,18 @@ function renderStage(stage, ctx, events) {
       }
 
       if (refreshStage || renderFrame) {
+        var canvasVisible = isCanvasVisible(ctx.canvas);
         ctx.beginPath();
-
-        stage._prepareInvalidRegions(ctx);
-
-        (new RenderVisitor(stage, ctx, refreshStage)).start();
+        if (canvasVisible && !disablePreVisitor.value) {
+          traceRenderer.value && frameWriter.enter("> Pre Visitor");
+          stage._prepareInvalidRegions(ctx);
+          traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        }
+        if (canvasVisible && !disableRenderVisitor.value) {
+          traceRenderer.value && frameWriter.enter("> Render Visitor");
+          (new RenderVisitor(stage, ctx, refreshStage)).start();
+          traceRenderer.value && frameWriter.leave("< Render Visitor");
+        }
       }
 
       if (renderFrame) {
@@ -520,6 +542,11 @@ function renderStage(stage, ctx, events) {
         for (var name in FrameCounter.counts) {
           appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
         }
+        var frameElapsedTime = performance.now() - frameStartTime;
+        var frameFPS = 1000 / frameElapsedTime;
+        frameFPSAverage.push(frameFPS);
+        traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
+
       }
     } else {
       traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");

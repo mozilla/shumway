@@ -165,7 +165,7 @@ var Bindings = (function () {
         var fn = getTraitFunction(trait, scope, natives);
         patch(self.patchTargets, fn);
         return fn;
-      }, trait.methodInfo.parameters.length);
+      }, trait.methodInfo.parameters.length, String(trait.name));
 
       memoizerTarget.value = trampoline;
       var openMethods = object[VM_OPEN_METHODS];
@@ -187,7 +187,7 @@ var Bindings = (function () {
         var fn = getTraitFunction(trait, scope, natives);
         patch(self.patchTargets, fn);
         return fn;
-      });
+      }, 0, String(trait.name));
       if (trait.isGetter()) {
         trampoline.patchTargets = [{ object: object, get: qn }];
       } else {
@@ -695,6 +695,7 @@ var Class = (function () {
     } else {
       cls = new Class(className, instanceConstructor);
     }
+    cls.className = className;
     cls.classInfo = classInfo;
     cls.scope = classScope;
     classScope.object = cls;
@@ -785,6 +786,15 @@ var Class = (function () {
       setDefaultProperties(this);
     },
 
+    extendWrapper: function (baseClass, wrapper) {
+      release || assert(this.instanceConstructor === wrapper);
+      this.baseClass = baseClass;
+      this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
+      var traitsPrototype = Object.create(this.dynamicPrototype, getOwnPropertyDescriptors(wrapper.prototype));
+      this.instanceConstructor.prototype = this.traitsPrototype = traitsPrototype;
+      setDefaultProperties(this);
+    },
+
     extendBuiltin: function(baseClass) {
       release || assert (baseClass);
       // Some natives handle their own prototypes/it's impossible to do the
@@ -846,9 +856,20 @@ var Class = (function () {
         var keys = Object.keys(properties);
         for (var i = 0; i < keys.length; i++) {
           var propertyName = keys[i];
-          var propertySimpleName = properties[propertyName];
+          var propertyGlue = properties[propertyName];
+          var propertySimpleName;
+          var glueOpenMethod = false;
+          if (propertyGlue.indexOf("open ") >= 0) {
+            propertySimpleName = propertyGlue.substring(5);
+            glueOpenMethod = true;
+          } else {
+            propertySimpleName = propertyGlue;
+          }
           release || assert (isString(propertySimpleName), "Make sure it's not a function.");
           var qn = Multiname.getQualifiedName(Multiname.fromSimpleName(propertySimpleName));
+          if (glueOpenMethod) {
+            qn = VM_OPEN_METHOD_PREFIX + qn;
+          }
           release || assert(isString(qn));
           var descriptor = Object.getOwnPropertyDescriptor(obj, qn);
           if (descriptor && descriptor.get) {
@@ -869,7 +890,7 @@ var Class = (function () {
           if (!ns.isPublic()) {
             return;
           }
-          properties[trait.name.getName()] = "public " + trait.name.getName();
+          properties[trait.name.getName()] = (trait.isMethod() ? "open " : "") + "public " + trait.name.getName();
         });
         return properties;
       }
