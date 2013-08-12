@@ -325,6 +325,18 @@ ChromeActions.prototype = {
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
   },
+  beginActivation: function (data, callback) {
+    this.activationCallback = function (e) {
+      delete this.activationCallback;
+      callback();
+    }.bind(this);
+    ActivationQueue.enqueue(this);
+  },
+  endActivation: function () {
+    if (ActivationQueue.currentNonActive === this) {
+      ActivationQueue.activateNext();
+    }
+  },
   externalCom: function (data) {
     if (!this.allowScriptAccess)
       return;
@@ -362,7 +374,6 @@ function RequestListener(actions) {
 // Receive an event and synchronously or asynchronously responds.
 RequestListener.prototype.receive = function(event) {
   var message = event.target;
-  var doc = message.ownerDocument;
   var action = event.detail.action;
   var data = event.detail.data;
   var sync = event.detail.sync;
@@ -381,6 +392,7 @@ RequestListener.prototype.receive = function(event) {
     if (event.detail.callback) {
       var cookie = event.detail.cookie;
       response = function sendResponse(response) {
+        var doc = actions.document;
         try {
           var listener = doc.createEvent('CustomEvent');
           listener.initCustomEvent('shumway.response', true, false,
@@ -396,6 +408,77 @@ RequestListener.prototype.receive = function(event) {
       };
     }
     actions[action].call(this.actions, data, response);
+  }
+};
+
+var ActivationQueue = {
+  nonActive: [],
+  initializing: -1,
+  activationTimeout: null,
+  get currentNonActive() {
+    return this.nonActive[this.initializing];
+  },
+  enqueue: function ActivationQueue_enqueue(actions) {
+    this.nonActive.push(actions);
+    if (this.nonActive.length === 1) {
+      this.activateNext();
+    }
+  },
+  activateNext: function ActivationQueue_activateNext() {
+    function weightInstance(actions) {
+      // set of heuristics for find the most important instance to load
+      var window = actions.window;
+      var width = window.innerWidth, height = window.innerHeight;
+      var weight = width * height; // using its area as a base
+
+      var doc = actions.document;
+      var parentDoc = actions.embedTag && actions.embedTag.ownerDocument;
+      if (doc.hidden) {
+        weight /= 1000; // might not be that important if hidden
+      } else if (parentDoc && !parentDoc.hasFocus()) {
+        weight /= 200; // parent document is not focused
+      }
+      return weight;
+    }
+
+    if (this.activationTimeout) {
+      this.activationTimeout.cancel();
+      this.activationTimeout = null;
+    }
+
+    do {
+      if (this.initializing >= 0) {
+        this.nonActive.splice(this.initializing, 1);
+      }
+      if (this.nonActive.length === 0) {
+        this.initializing = -1;
+        return;
+      }
+
+      var maxWeight = -1, maxWeightIndex = -1;
+      for (var i = 0; i < this.nonActive.length; i++) {
+        var weight = weightInstance(this.nonActive[i]);
+        if (maxWeight < weight) {
+          maxWeight = weight;
+          maxWeightIndex = i;
+        }
+      }
+      try {
+        this.initializing = maxWeightIndex;
+        this.nonActive[maxWeightIndex].activationCallback();
+        break;
+      } catch (e) {
+        // unable to initialize the instance, trying another one
+        log('Skipping shumway instance initialization: ' + e);
+      }
+    } while (true);
+
+    var ACTIVATION_TIMEOUT = 3000;
+    this.activationTimeout = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    this.activationTimeout.initWithCallback(function () {
+      log('Timeout during shumway instance initialization');
+      this.activateNext();
+    }.bind(this), ACTIVATION_TIMEOUT, Ci.nsITimer.TYPE_ONE_SHOT);
   }
 };
 
