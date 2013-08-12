@@ -262,18 +262,12 @@ var tagHandler=(function (global) {
               var $34 = count;
               while ($34--) {
                 var $35 = {};
-                $35.red = readUi8($bytes, $stream);
-                $35.green = readUi8($bytes, $stream);
-                $35.blue = readUi8($bytes, $stream);
-                $35.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $35, swfVersion, tagCode);
                 $33.push($35);
               }
               if (type === 3) {
                 var $36 = $32.higlightColor = {};
-                $36.red = readUi8($bytes, $stream);
-                $36.green = readUi8($bytes, $stream);
-                $36.blue = readUi8($bytes, $stream);
-                $36.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $36, swfVersion, tagCode);
               }
               if (type === 4 || type === 7) {
                 var $37 = $32.ratios = [];
@@ -321,18 +315,12 @@ var tagHandler=(function (global) {
               var $40 = count;
               while ($40--) {
                 var $41 = {};
-                $41.red = readUi8($bytes, $stream);
-                $41.green = readUi8($bytes, $stream);
-                $41.blue = readUi8($bytes, $stream);
-                $41.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $41, swfVersion, tagCode);
                 $39.push($41);
               }
               if (type === 3) {
                 var $42 = $32.higlightColor = {};
-                $42.red = readUi8($bytes, $stream);
-                $42.green = readUi8($bytes, $stream);
-                $42.blue = readUi8($bytes, $stream);
-                $42.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $42, swfVersion, tagCode);
               }
               if (type === 4 || type === 7) {
                 var $43 = $32.ratios = [];
@@ -373,10 +361,7 @@ var tagHandler=(function (global) {
                 $45.push(readFloat($bytes, $stream));
               }
               var $47 = $32.defaultColor = {};
-              $47.red = readUi8($bytes, $stream);
-              $47.green = readUi8($bytes, $stream);
-              $47.blue = readUi8($bytes, $stream);
-              $47.alpha = readUi8($bytes, $stream);
+              rgba($bytes, $stream, $47, swfVersion, tagCode);
               var reserved = readUb($bytes, $stream, 6);
               $32.clamp = readUb($bytes, $stream, 1);
               $32.preserveAlpha = readUb($bytes, $stream, 1);
@@ -398,18 +383,12 @@ var tagHandler=(function (global) {
               var $51 = count;
               while ($51--) {
                 var $52 = {};
-                $52.red = readUi8($bytes, $stream);
-                $52.green = readUi8($bytes, $stream);
-                $52.blue = readUi8($bytes, $stream);
-                $52.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $52, swfVersion, tagCode);
                 $50.push($52);
               }
               if (type === 3) {
                 var $53 = $32.higlightColor = {};
-                $53.red = readUi8($bytes, $stream);
-                $53.green = readUi8($bytes, $stream);
-                $53.blue = readUi8($bytes, $stream);
-                $53.alpha = readUi8($bytes, $stream);
+                rgba($bytes, $stream, $53, swfVersion, tagCode);
               }
               if (type === 4 || type === 7) {
                 var $54 = $32.ratios = [];
@@ -469,10 +448,7 @@ var tagHandler=(function (global) {
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var $0 = $.color = {};
-    $0.red = readUi8($bytes,$stream);
-    $0.green = readUi8($bytes,$stream);
-    $0.blue = readUi8($bytes,$stream);
-    $0.alpha = 255;
+    rgb($bytes, $stream, $0, swfVersion, tagCode);
     return $;
   }
   function defineFont($bytes, $stream, $, swfVersion, tagCode) {
@@ -614,10 +590,7 @@ var tagHandler=(function (global) {
     }
     if (hasColor) {
       var $1 = $.color = {};
-      $1.red = readUi8($bytes, $stream);
-      $1.green = readUi8($bytes, $stream);
-      $1.blue = readUi8($bytes, $stream);
-      $1.alpha = readUi8($bytes, $stream);
+      rgba($bytes, $stream, $1, swfVersion, tagCode);
     }
     if (hasMaxLength) {
       $.maxLength = readUi16($bytes, $stream);
@@ -818,9 +791,6 @@ var tagHandler=(function (global) {
     $.bottom = yMax / 20;
     align($bytes, $stream);
   }
-  // TODO
-  // -- return count;
-  // -- caller updates count;
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
     $.red = readUi8($bytes, $stream);
     $.green = readUi8($bytes, $stream);
@@ -957,29 +927,19 @@ var tagHandler=(function (global) {
     }
   }
   function gradientRecord($bytes, $stream, $, swfVersion, tagCode, isMorph) {
-//    var isMorph = $.isMorph;
     $.ratio = readUi8($bytes, $stream);
     if (tagCode > 22) {
       var $133 = $.color = {};
-      $133.red = readUi8($bytes, $stream);
-      $133.green = readUi8($bytes, $stream);
-      $133.blue = readUi8($bytes, $stream);
-      $133.alpha = readUi8($bytes, $stream);
+      rgba($bytes, $stream, $133, swfVersion, tagCode);
     }
     else {
       var $134 = $.color = {};
-      $134.red = readUi8($bytes, $stream);
-      $134.green = readUi8($bytes, $stream);
-      $134.blue = readUi8($bytes, $stream);
-      $134.alpha = 255;
+      rgb($bytes, $stream, $134, swfVersion, tagCode);
     }
     if (isMorph) {
       $.ratioMorph = readUi8($bytes, $stream);
       var $135 = $.colorMorph = {};
-      $135.red = readUi8($bytes, $stream);
-      $135.green = readUi8($bytes, $stream);
-      $135.blue = readUi8($bytes, $stream);
-      $135.alpha = readUi8($bytes, $stream);
+      rgba($bytes, $stream, $135, swfVersion, tagCode);
     }
   }
   function morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
@@ -1419,16 +1379,10 @@ var tagHandler=(function (global) {
     if (hasColor) {
       if (tagCode === 33) {
         var $4 = $.color = {};
-        $4.red = readUi8($bytes, $stream);
-        $4.green = readUi8($bytes, $stream);
-        $4.blue = readUi8($bytes, $stream);
-        $4.alpha = readUi8($bytes, $stream);
+        rgba($bytes, $stream, $4, swfVersion, tagCode);
       } else {
         var $5 = $.color = {};
-        $5.red = readUi8($bytes, $stream);
-        $5.green = readUi8($bytes, $stream);
-        $5.blue = readUi8($bytes, $stream);
-        $5.alpha = 255;
+        rgb($bytes, $stream, $5, swfVersion, tagCode);
       }
     }
     if (hasMoveX) {
