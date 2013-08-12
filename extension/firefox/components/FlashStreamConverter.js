@@ -443,21 +443,34 @@ var ActivationQueue = {
       this.activationTimeout.cancel();
       this.activationTimeout = null;
     }
-    do {
-      if (this.initializing >= 0) {
-        this.nonActive.splice(this.initializing, 1);
+
+    if (this.initializing >= 0) {
+      this.nonActive.splice(this.initializing, 1);
+    }
+    var weights = [];
+    for (var i = 0; i < this.nonActive.length; i++) {
+      try {
+        var weight = weightInstance(this.nonActive[i]);
+        weights.push(weight);
+      } catch (ex) {
+        // unable to calc weight the instance, removing
+        log('Shumway instance weight calculation failed: ' + ex);
+        this.nonActive.splice(i, 1);
+        i--;
       }
+    }
+
+    do {
       if (this.nonActive.length === 0) {
         this.initializing = -1;
         return;
       }
 
       var maxWeightIndex = 0;
-      var maxWeight = weightInstance(this.nonActive[0]);
-      for (var i = 1; i < this.nonActive.length; i++) {
-        var weight = weightInstance(this.nonActive[i]);
-        if (maxWeight < weight) {
-          maxWeight = weight;
+      var maxWeight = weights[0];
+      for (var i = 1; i < weights.length; i++) {
+        if (maxWeight < weights[i]) {
+          maxWeight = weights[i];
           maxWeightIndex = i;
         }
       }
@@ -465,9 +478,11 @@ var ActivationQueue = {
         this.initializing = maxWeightIndex;
         this.nonActive[maxWeightIndex].activationCallback();
         break;
-      } catch (e) {
+      } catch (ex) {
         // unable to initialize the instance, trying another one
-        log('Shumway instance initialization failed: ' + e);
+        log('Shumway instance initialization failed: ' + ex);
+        this.nonActive.splice(maxWeightIndex, 1);
+        weights.splice(maxWeightIndex, 1);
       }
     } while (true);
 
