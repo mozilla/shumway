@@ -102,15 +102,26 @@ var StageDefinition = (function () {
           continue;
         }
 
-        if (displayObject._region) {
+        var invalidRegion = displayObject._invalidRegion;
+        if (invalidRegion.width && invalidRegion.height) {
+          this._addRedrawRegion(ctx, invalidRegion);
+        }
+
+        var drawRegion = displayObject._getDrawRegion();
+        var currentRegion = displayObject._region;
+        var hasChanged = currentRegion && (drawRegion.x !== currentRegion.x ||
+                                           drawRegion.y !== currentRegion.y ||
+                                           drawRegion.width !== currentRegion.width ||
+                                           drawRegion.height !== currentRegion.height);
+
+        if (currentRegion && (hasChanged || !displayObject._stage)) {
           // TODO: move this into the QuadTree class
-          var region = displayObject._region;
-          var qtree = region._qtree;
+          var qtree = currentRegion._qtree;
           var list = qtree.children;
-          var index = list.indexOf(region);
+          var index = list.indexOf(currentRegion);
           if (index < 0) {
             list = qtree.stuckChildren;
-            index = list.indexOf(region);
+            index = list.indexOf(currentRegion);
           }
           if (index > -1) {
             list.splice(index, 1);
@@ -119,22 +130,18 @@ var StageDefinition = (function () {
           displayObject._region = null;
         }
 
-        var invalidRegion = displayObject._invalidRegion;
-        if (invalidRegion.width && invalidRegion.height) {
-          this._clipRegion(ctx, invalidRegion);
-        }
-
-        var drawRegion = displayObject._getDrawRegion();
         if (drawRegion.width && drawRegion.height && displayObject._stage) {
-          drawRegion.obj = displayObject;
-          this._qtree.insert(drawRegion);
-          displayObject._region = drawRegion;
+          if (!currentRegion || hasChanged) {
+            drawRegion.obj = displayObject;
+            this._qtree.insert(drawRegion);
+            displayObject._region = drawRegion;
+          }
 
           if (drawRegion.x !== invalidRegion.x ||
               drawRegion.y !== invalidRegion.y ||
               drawRegion.width !== invalidRegion.width ||
               drawRegion.height !== invalidRegion.height) {
-            this._clipRegion(ctx, drawRegion);
+            this._addRedrawRegion(ctx, drawRegion);
           }
         }
 
@@ -142,7 +149,7 @@ var StageDefinition = (function () {
         displayObject._invalidRegion = null;
       }
     },
-    _clipRegion: function clipRegion(ctx, region) {
+    _addRedrawRegion: function clipRegion(ctx, region) {
       var scaleX = this._canvasState.scaleX;
       var scaleY = this._canvasState.scaleY;
       var offsetX = this._canvasState.offsetX;
