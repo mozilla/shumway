@@ -27,7 +27,7 @@ load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
 load($SHUMWAY_ROOT + "src/swf/templates.js");
-load($SHUMWAY_ROOT + "build/firefox/content/swf/handlers.js");
+load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/templates.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/swf/bitmap.js");
