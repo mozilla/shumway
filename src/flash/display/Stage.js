@@ -40,6 +40,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = null;
+      this._showRedrawRegions = false;
     },
 
     _setup: function setup(ctx, options) {
@@ -153,6 +154,11 @@ var StageDefinition = (function () {
       var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY;
 
       ctx.rect(left, top, right - left, bottom - top);
+
+      if (this._showRedrawRegions) {
+        ctx.strokeStyle = 'red';
+        ctx.strokeRect(left, top, right - left, bottom - top);
+      }
     },
 
     _handleMouse: function handleMouse() {
@@ -222,6 +228,13 @@ var StageDefinition = (function () {
 
         this._clickTarget = target;
       }
+    },
+
+    _showRedrawRegions: function showRedrawRegions(enable) {
+      if (this._showRedrawRegions && enable) {
+        this._invalid = true;
+      }
+      this._showRedrawRegions = enable;
     },
 
     __glue__: {
