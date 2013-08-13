@@ -146,7 +146,6 @@ var MovieClipDefinition = (function () {
         var displayList = timeline[frameNum - 1];
 
         if (displayList !== currentDisplayList) {
-          this._markAsDirty();
           var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
 
           for (var depth in walkList) {
@@ -175,8 +174,9 @@ var MovieClipDefinition = (function () {
 
                 this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
-                if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                if (this._stage) {
+                  this._stage._removeFromStage(currentChild);
+                }
                 currentChild.destroy();
               }
             } else if (cmd !== currentListCmd) {
@@ -184,6 +184,9 @@ var MovieClipDefinition = (function () {
                   cmd.symbolId === currentListCmd.symbolId &&
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
+                  currentChild._invalidate();
+                  currentChild._bounds = null;
+
                   if (cmd.hasClipDepth)
                     currentChild._clipDepth = cmd.clipDepth;
 
@@ -218,14 +221,17 @@ var MovieClipDefinition = (function () {
 
                   this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
-                  if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                  if (this._stage) {
+                    this._stage._removeFromStage(currentChild);
+                  }
                   currentChild.destroy();
                 }
 
                 this._addTimelineChild(cmd, index, replace);
               }
             }
+
+            this._bounds = null;
           }
 
           this._constructChildren();

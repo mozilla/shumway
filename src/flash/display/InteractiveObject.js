@@ -22,7 +22,6 @@ var InteractiveObjectDefinition = (function () {
       this._doubleClickEnabled = false;
       this._hitArea = null;
       this._mouseEnabled = true;
-
       this._tabEnabled = false;
       this._focusRect = null;
       this._contextMenu = null;
