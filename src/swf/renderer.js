@@ -108,7 +108,11 @@ RenderVisitor.prototype = {
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = toStringRgba(bgcolor);
-          ctx.fill();
+          if (this.refreshStage) {
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          } else {
+            ctx.fill();
+          }
         }
       }
 
