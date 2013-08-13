@@ -27,6 +27,7 @@ var DEFAULT_SETTINGS = {
   pre: true,
   render: true,
   mouse: true,
+  redraw: false,
   release: true,
   symbolsInfo: false
 };
@@ -61,6 +62,7 @@ function updateAVM2State() {
   disablePreVisitor.value = state.pre ? false : true;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
+  showRedrawRegions.value = state.redraw ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;

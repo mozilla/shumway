@@ -22,6 +22,7 @@ var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "
 var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVisitor", "boolean", false, "disable pre visitor"));
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
+var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 
 var CanvasCache = {
   cache: [],
@@ -516,6 +517,7 @@ function renderStage(stage, ctx, events) {
         var canvasVisible = isCanvasVisible(ctx.canvas);
         ctx.beginPath();
         if (canvasVisible && !disablePreVisitor.value) {
+          stage._showRedrawRegions(showRedrawRegions.value);
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           stage._prepareInvalidRegions(ctx);
           traceRenderer.value && frameWriter.leave("< Pre Visitor");

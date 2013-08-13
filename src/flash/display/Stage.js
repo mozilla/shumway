@@ -40,7 +40,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = null;
-      this._showRedrawRegions = false;
+      this._redrawRegionColor = null;
     },
 
     _setup: function setup(ctx, options) {
@@ -155,15 +155,15 @@ var StageDefinition = (function () {
       var offsetX = this._canvasState.offsetX;
       var offsetY = this._canvasState.offsetY;
 
-      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX;
-      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY;
-      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX;
-      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY;
+      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 1;
+      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 1;
+      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 1;
+      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 1;
 
       ctx.rect(left, top, right - left, bottom - top);
 
-      if (this._showRedrawRegions) {
-        ctx.strokeStyle = 'red';
+      if (this._redrawRegionColor) {
+        ctx.strokeStyle = this._redrawRegionColor;
         ctx.strokeRect(left, top, right - left, bottom - top);
       }
     },
@@ -238,10 +238,14 @@ var StageDefinition = (function () {
     },
 
     _showRedrawRegions: function showRedrawRegions(enable) {
-      if (this._showRedrawRegions && enable) {
-        this._invalid = true;
+      if (enable) {
+        this._redrawRegionColor = 'red';
+      } else {
+        if (this._redrawRegionColor) {
+          this._invalid = true;
+        }
+        this._redrawRegionColor = null;
       }
-      this._showRedrawRegions = enable;
     },
 
     __glue__: {
