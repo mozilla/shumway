@@ -155,10 +155,10 @@ var StageDefinition = (function () {
       var offsetX = this._canvasState.offsetX;
       var offsetY = this._canvasState.offsetY;
 
-      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 1;
-      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 1;
-      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 1;
-      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 1;
+      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 2;
+      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 2;
+      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
+      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
 
       ctx.rect(left, top, right - left, bottom - top);
 
