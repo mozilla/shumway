@@ -38,19 +38,22 @@ var DisplayObjectContainerDefinition = (function () {
     },
 
     addChild: function (child) {
-      if (child === this)
-        throw ArgumentError();
-
       return this.addChildAt(child, this._children.length);
     },
     addChildAt: function (child, index) {
-      if (child === this)
+      if (child === this) {
         throw ArgumentError();
+      }
+
+      if (child._parent === this) {
+        return this.setChildIndex(child, index);
+      }
 
       var children = this._children;
 
-      if (index < 0 || index > children.length)
+      if (index < 0 || index > children.length) {
         throw RangeError();
+      }
 
       if (child._parent) {
         var LoaderClass = avm2.systemDomain.getClass('flash.display.Loader');
@@ -61,17 +64,24 @@ var DisplayObjectContainerDefinition = (function () {
         }
       }
 
+      for (var i = children.length; i && i > index; i--) {
+        children[i - 1]._index++;
+      }
       children.splice(index, 0, child);
+
       child._owned = false;
       child._parent = this;
+      child._stage = this._stage;
+      child._index = index;
+
+      this._bounds = null;
 
       this._control.appendChild(child._control);
 
       child._dispatchEvent(new flash.events.Event("added"));
-      if (child.stage)
-        child._addedToStage(new flash.events.Event("addedToStage"));
-
-      this._markAsDirty();
+      if (this._stage) {
+        this._stage._addToStage(child);
+      }
 
       return child;
     },
@@ -79,13 +89,14 @@ var DisplayObjectContainerDefinition = (function () {
       notImplemented();
     },
     contains: function (child) {
-      return this._children.indexOf(child) > -1;
+      return child._parent === this;
     },
     getChildAt: function (index) {
       var children = this._children;
 
-      if (index < 0 || index > children.length)
+      if (index < 0 || index > children.length) {
         throw RangeError();
+      }
 
       return children[index];
     },
@@ -93,68 +104,83 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
         var child = children[i];
-        if (child.name === name)
+        if (child.name === name) {
           return child;
+        }
       }
       return null;
     },
     getChildIndex: function (child) {
-      var index = this._children.indexOf(child);
-
-      if (index < 0)
+      if (child._parent !== this) {
         throw ArgumentError();
+      }
 
-      return index;
+      return child._index;
     },
     getObjectsUnderPoint: function (pt) {
       notImplemented();
     },
     removeChild: function (child) {
-      var children = this._children;
-      var index = children.indexOf(child);
-
-      if (index < 0)
+      if (child._parent !== this) {
         throw ArgumentError();
+      }
 
-      return this.removeChildAt(index);
+      return this.removeChildAt(child._index);
     },
     removeChildAt: function (index) {
       var children = this._children;
 
-      if (index < 0 || index >= children.length)
+      if (index < 0 || index >= children.length) {
         throw RangeError();
+      }
 
       var child = children[index];
 
       child._dispatchEvent(new flash.events.Event("removed"));
-      if (child.stage)
-        child._removedFromStage(new flash.events.Event("removedFromStage"));
+      if (this._stage) {
+        this._stage._removeFromStage(child);
+      }
 
+      for (var i = children.length; i && i > index; i--) {
+        children[i - 1]._index--;
+      }
       children.splice(index, 1);
+
       child._parent = null;
+      child._index = -1;
+
+      this._bounds = null;
 
       this._control.removeChild(child._control);
-
-      this._markAsDirty();
 
       return child;
     },
     setChildIndex: function (child, index) {
+      if (child._parent !== this) {
+        throw ArgumentError();
+      }
+
+      if (child._index === index) {
+        return;
+      }
+
       var children = this._children;
 
-      if (index < 0 || index > children.length)
+      if (index < 0 || index > children.length) {
         throw RangeError();
+      }
 
-      var currentIndex = children.indexOf(child);
-
-      if (currentIndex < 0)
-        throw ArgumentError();
-
-      children.splice(currentIndex, 1);
+      children.splice(child._index, 1);
       children.splice(index, 0, child);
+
+      var i = child._index < index ? child._index : index;
+      while (i < children.length) {
+        children[i]._index = i++;
+      }
+
       child._owned = false;
 
-      this._markAsDirty();
+      child._invalidate();
 
       return child;
     },
@@ -162,37 +188,43 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
       var numChildren = children.length;
 
-      if (begin < 0 || begin > numChildren || end < 0 || end < begin || end > numChildren)
+      if (begin < 0 || begin > numChildren ||
+          end < 0 || end < begin || end > numChildren) {
         throw RangeError();
+      }
 
-      for (var i = begin; i < end; i++)
+      for (var i = begin; i < end; i++) {
         this.removeChildAt(i);
+      }
     },
     swapChildren: function (child1, child2) {
-      var children = this._children;
-      var index1 = children.indexOf(child1);
-      var index2 = children.indexOf(child1);
-
-      if (index1 < 0 || index2 < 0)
+      if (child1._parent !== this || child2._parent !== this) {
         throw ArgumentError();
+      }
 
-      this.swapChildrenAt(index1, index2);
+      this.swapChildrenAt(child1._index, child2._index);
     },
     swapChildrenAt: function (index1, index2) {
       var children = this._children;
       var numChildren = children.length;
 
-      if (index1 < 0 || index1 > numChildren || index2 < 0 || index2 > numChildren)
+      if (index1 < 0 || index1 > numChildren || index2 < 0 || index2 > numChildren) {
         throw RangeError();
+      }
 
       var child1 = children[index1];
       var child2 = children[index2];
+
       children[index1] = child2;
       children[index2] = child1;
+
+      child1._index = index2;
+      child2._index = index1;
       child1._owned = false;
       child2._owned = false;
 
-      this._markAsDirty();
+      child1._invalidate();
+      child2._invalidate();
     },
     destroy: function () {
       if (this._destroyed) {
@@ -209,6 +241,7 @@ var DisplayObjectContainerDefinition = (function () {
   var desc = Object.getOwnPropertyDescriptor;
 
   def.initialize = function () {
+    this._mouseChildren = true;
     this._tabChildren = true;
   };
 

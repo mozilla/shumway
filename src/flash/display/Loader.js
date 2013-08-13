@@ -625,6 +625,7 @@ var LoaderDefinition = (function () {
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
             parent._root = root;
+            parent._setup();
           } else {
             loader._children.push(root);
           }
@@ -790,7 +791,7 @@ var LoaderDefinition = (function () {
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
       var promiseQueue = [];
-      var props = { loader: this };
+      var props = { symbolId: symbol.id, loader: this };
       var symbolPromise = new Promise();
 
       if (dependencies && dependencies.length) {

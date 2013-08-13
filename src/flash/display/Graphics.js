@@ -46,10 +46,17 @@ var GraphicsDefinition = (function () {
       this._fillStyle = null;
       this._mx = null;
       this._my = null;
-      this._revision = 0;
       this._scale = 1;
       this._strokeStyle = null;
       this._subpaths = [];
+      this._parent = 0;
+    },
+
+    _invalidate: function () {
+      if (this._parent._stage) {
+        this._parent._stage._invalidateOnStage(this._parent);
+      }
+      this._parent._bounds = null;
     },
 
     _createLinearGradient: function (x0, y0, x1, y1) {
@@ -124,6 +131,8 @@ var GraphicsDefinition = (function () {
         { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
     },
     clear: function () {
+      this._invalidate();
+
       delete this._currentPath;
 
       this._drawingStyles = null;
@@ -135,20 +144,20 @@ var GraphicsDefinition = (function () {
       notImplemented();
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
+      this._invalidate();
       this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
-      this._revision++;
     },
     curveTo: function (cpx, cpy, x, y) {
+      this._invalidate();
       this._currentPath.quadraticCurveTo(cpx, cpy, x, y);
-      this._revision++;
     },
     drawCircle: function (x, y, radius) {
+      this._invalidate();
       this._currentPath.arc(x, y, radius, 0, Math.PI * 2);
-      this._revision++;
     },
     drawEllipse: function (x, y, width, height) {
+      this._invalidate();
       this._currentPath.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
-      this._revision++;
     },
     drawPath: function (commands, data, winding) {
       delete this._currentPath;
@@ -179,12 +188,14 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h))
         throw ArgumentError();
 
+      this._invalidate();
       this._currentPath.rect(x, y, w, h);
-      this._revision++;
     },
     drawRoundRect: function (x, y, w, h, ellipseWidth, ellipseHeight) {
       if (isNaN(w + h + ellipseWidth) || (ellipseHeight !== undefined && isNaN(ellipseHeight)))
         throw ArgumentError();
+
+      this._invalidate();
 
       var radiusW = ellipseWidth / 2;
       var radiusH = ellipseHeight / 2;
@@ -196,7 +207,6 @@ var GraphicsDefinition = (function () {
           this._currentPath.arc(x+radiusW, y+radiusH, radiusW, 0, Math.PI * 2);
         else
           this._currentPath.ellipse(x+radiusW, y+radiusH, radiusW, radiusH, 0, 0, Math.PI * 2);
-        this._revision++;
         return;
       }
 
@@ -213,18 +223,18 @@ var GraphicsDefinition = (function () {
       this._currentPath.arcTo(x, y+h, x, y+h-radiusH, radiusW, radiusH);
       this._currentPath.arcTo(x, y, x+radiusW, y, radiusW, radiusH);
       this._currentPath.arcTo(x+w, y, x+w, y+radiusH, radiusW, radiusH);
-      this._revision++;
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius) {
       if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
         throw ArgumentError();
+
+      this._invalidate();
 
       this._currentPath.moveTo(x+w, y+h-bottomRightRadius);
       this._currentPath.arcTo(x+w, y+h, x+w-bottomRightRadius, y+h, bottomRightRadius);
       this._currentPath.arcTo(x, y+h, x, y+h-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
       this._currentPath.arcTo(x+w, y, x+w, y+topRightRadius, topRightRadius);
-      this._revision++;
     },
     drawTriangles: function (vertices, indices, uvtData, culling) {
       notImplemented();
@@ -263,8 +273,8 @@ var GraphicsDefinition = (function () {
       }
     },
     lineTo: function (x, y) {
+      this._invalidate();
       this._currentPath.lineTo(x, y);
-      this._revision++;
     },
     moveTo: function (x, y) {
       delete this._currentPath;

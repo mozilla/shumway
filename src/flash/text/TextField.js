@@ -533,7 +533,7 @@ var TextFieldDefinition = (function () {
     },
 
     invalidateDimensions: function() {
-      this._markAsDirty();
+      this._invalidate();
       this._dimensionsValid = false;
     },
 
@@ -617,7 +617,7 @@ var TextFieldDefinition = (function () {
         return;
       }
       this._bbox.bottom = this._bbox.top + value;
-      this._markAsDirty();
+      this._invalidate();
     }
   };
 

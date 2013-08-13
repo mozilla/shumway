@@ -24,6 +24,7 @@ var SpriteDefinition = (function () {
     initialize: function () {
       this._buttonMode = false;
       this._useHandCursor = true;
+      this._hitTarget = null;
 
       var s = this.symbol;
       if (s) {
@@ -42,6 +43,7 @@ var SpriteDefinition = (function () {
       } else {
         this._graphics = new flash.display.Graphics();
       }
+      this._graphics._parent = this;
     },
 
     _addTimelineChild: function(cmd, index, replace) {
@@ -94,7 +96,7 @@ var SpriteDefinition = (function () {
           props.animated = true;
           props.owned = true;
           props.parent = this;
-          props.stage = this.stage;
+          props.stage = this._stage;
 
           var instance = symbolClass.createAsSymbol(props);
 
@@ -126,12 +128,13 @@ var SpriteDefinition = (function () {
             instance._dispatchEvent(new flash.events.Event("init"));
           }
 
-          instance._markAsDirty();
+          instance._index = i;
 
           instance._dispatchEvent(new flash.events.Event("load"));
           instance._dispatchEvent(new flash.events.Event("added"));
-          if (this.stage)
-            instance._dispatchEvent(new flash.events.Event("addedToStage"));
+          if (this._stage) {
+            this._stage._addToStage(instance);
+          }
 
           children[i] = instance;
         }
@@ -167,10 +170,11 @@ var SpriteDefinition = (function () {
         instance._dispatchEvent(new flash.events.Event("init"));
       }
 
-      instance._markAsDirty();
-
       instance._dispatchEvent(new flash.events.Event("load"));
       instance._dispatchEvent(new flash.events.Event("added"));
+      if (this._stage) {
+        instance._invalidate();
+      }
 
       children.push(instance);
 
@@ -258,7 +262,18 @@ var SpriteDefinition = (function () {
       return this._hitArea;
     },
     set hitArea(val) {
+      if (this._hitArea === val) {
+        return;
+      }
+
+      if (val && val._hitTarget) {
+        val._hitTarget.hitArea = null;
+      }
+
       this._hitArea = val;
+      if (val) {
+        val._hitTarget = this;
+      }
     },
     get soundTransform() {
       notImplemented();
@@ -271,8 +286,8 @@ var SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       this._useHandCursor = val;
-      if (this.stage) {
-        this.stage._syncCursor();
+      if (this._stage) {
+        this._stage._syncCursor();
       }
     },
     get shouldHaveHandCursor() {
