@@ -315,7 +315,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
       target = new CompressedPipe(target, bodyLength);
     }
     target.push(buffer.getTail(8), progressInfo);
-    pipe.target = target;
+    pipe["target"] = target;
   }
 
   function parseImage(data, bytesTotal, type) {
@@ -323,7 +323,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
     buffer.set(data);
     var bufferPos = data.length;
 
-    pipe.target = {
+    pipe["target"] = {
       push: function (data) {
         buffer.set(data, bufferPos);
         bufferPos += data.length;
