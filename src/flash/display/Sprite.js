@@ -83,7 +83,9 @@ var SpriteDefinition = (function () {
       for (var i = 0, n = children.length; i < n; i++) {
         var symbolInfo = children[i];
 
-        if (!flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
+        if (flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
+          symbolInfo._index = i;
+        } else {
           // HACK application domain may have the symbol class --
           // checking which domain has a symbol class
           var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
