@@ -172,7 +172,6 @@ var MovieClipDefinition = (function () {
               if (currentChild && currentChild._owned) {
                 children.splice(currentIndex, 1);
 
-                this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
                 if (this._stage) {
                   this._stage._removeFromStage(currentChild);
@@ -219,7 +218,6 @@ var MovieClipDefinition = (function () {
                   index = currentIndex;
                   replace = true;
 
-                  this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
                   if (this._stage) {
                     this._stage._removeFromStage(currentChild);
