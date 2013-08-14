@@ -286,9 +286,6 @@ var SpriteDefinition = (function () {
         this._stage._syncCursor();
       }
     },
-    get shouldHaveHandCursor() {
-      return this._buttonMode && this._useHandCursor;
-    },
 
     startDrag: function (lockCenter, bounds) {
       notImplemented();
