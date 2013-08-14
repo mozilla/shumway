@@ -34,7 +34,7 @@ var MouseEventDefinition = (function () {
           },
           localX: {
             get: function localX() { // (void) -> Number
-              return this._localX == null ? this._target.mouseX : this._localX;
+              return this._localX === undefined ? this._target.mouseX : this._localX;
             },
             set: function localX(value) { // (value:Number) -> void
               this._localX = value;
@@ -42,7 +42,7 @@ var MouseEventDefinition = (function () {
           },
           localY: {
             get: function localY() { // (void) -> Number
-              return this._localY == null ? this._target.mouseY : this._localY;
+              return this._localY === undefined ? this._target.mouseY : this._localY;
             },
             set: function localY(value) { // (value:Number) -> void
               this._localY = value;
