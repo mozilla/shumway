@@ -119,14 +119,10 @@ var SimpleButtonDefinition = (function () {
         state = this._downState;
       else if (this._isMouseOver && this._overState)
         state = this._overState;
-      if (this._children.length > 0) {
-        this._control.removeChild(this._children[0]._control);
-      }
 
       state._stage = this._stage;
 
       this._children = [state];
-      this._control.appendChild(state._control);
 
       if (this._avm1MouseEvents) {
         this._processAvm1MouseEvents(this._avm1MouseEvents);

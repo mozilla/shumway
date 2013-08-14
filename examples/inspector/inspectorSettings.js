@@ -28,8 +28,7 @@ var DEFAULT_SETTINGS = {
   render: true,
   mouse: true,
   redraw: false,
-  release: true,
-  symbolsInfo: false
+  release: true
 };
 
 function loadState() {
@@ -67,7 +66,6 @@ function updateAVM2State() {
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
   release = state.release;
-  TRACE_SYMBOLS_INFO = state.symbolsInfo;
   AVM1_TRACE_ENABLED = state.trace;
 }
 
