@@ -89,6 +89,7 @@ var DisplayObjectDefinition = (function () {
       this._qtree = null;
       this._level = -1;
       this._index = -1;
+      this._mouseEnabled = true;
 
       var s = this.symbol;
       if (s) {
