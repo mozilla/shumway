@@ -92,6 +92,7 @@ var libraryNames = playerGlobalNames;        // ditto
 
 function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
   console.time("Load AVM2");
+  addProfileMarker("Start Load AVM2");
   assert (builtinPath);
   avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
   var builtinAbc, libraryAbc;
@@ -113,6 +114,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.builtinsLoaded = true;
     console.info(Counter.toJSON());
     console.timeEnd("Load AVM2");
+    addProfileMarker("End Load AVM2");
     next(avm2);
   }
 }
