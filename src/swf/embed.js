@@ -56,7 +56,8 @@ SWF.embed = function(file, doc, container, options) {
     if (!cursorVisible) {
       newCursor = 'none';
     } else if (stage._clickTarget &&
-               stage._clickTarget.shouldHaveHandCursor) {
+               stage._clickTarget._buttonMode &&
+               stage._clickTarget._useHandCursor) {
       newCursor = 'pointer';
     } else {
       newCursor = 'auto';
@@ -109,7 +110,9 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mousedown', function () {
-      stage._mouseMoved = true;
+      if (stage._clickTarget._buttonMode) {
+        stage._clickTarget._gotoButtonState('down');
+      }
       stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
     });
     canvas.addEventListener('mousemove', function (domEvt) {
@@ -137,6 +140,9 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mouseup', function () {
+      if (stage._clickTarget._buttonMode) {
+        stage._clickTarget._gotoButtonState('over');
+      }
       stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseUp'));
     });
     canvas.addEventListener('mouseover', function () {

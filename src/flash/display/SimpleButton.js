@@ -18,38 +18,121 @@
 /*global AS2Button, executeActions */
 
 var SimpleButtonDefinition = (function () {
-  var def = {
-    __class__: 'flash.display.SimpleButton',
+  var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
+  var AVM1MouseTransitionEvents = [0, 0, 1, 128, 64, 0, 0, 32, 2, 0, 0, 4, 256, 16, 8, 0];
 
-    get downState() {
-      return this._downState;
+  return {
+    // (upState:DisplayObject = null, overState:DisplayObject = null, downState:DisplayObject = null, hitTestState:DisplayObject = null)
+    __class__: "flash.display.SimpleButton",
+    initialize: function () {
+      this._useHandCursor = true;
+      this._enabled = true;
+      this._trackAsMenu = false;
+      this._upState = null;
+      this._overState = null;
+      this._downState = null;
+      this._hitTestState = null;
+      this._currentState = null;
+      this._mouseChildren = false;
+      this._buttonMode = true;
+      this._prevAvm1StateCode = 0;
+      this._avm1StateCode = 0;
+      this._avm1MouseEvents = null;
+
+      var s = this.symbol;
+      if (s) {
+        var states = s.states;
+        if (states.down) {
+          this._downState = this._constructState(states.down.value, this);
+        }
+        if (states.hitTest) {
+          this._hitTestState =this._constructState(states.hitTest.value, this);
+          this._hitTestState._alpha = 0;
+          this._hitTestState._parent = this;
+          this._hitTestState._index = 1;
+          this._children.push(this._hitTestState);
+        }
+        if (states.over) {
+          this._overState = this._constructState(states.over.value, this);
+        }
+        if (states.up) {
+          this._upState = this._constructState(states.up.value, this);
+        }
+      }
+
+      if (this._loader && !this._loader._isAvm2Enabled && s && s.buttonActions) {
+        this._addEventListener("addedToStage", function (e) {
+          this._initAvm1Events(s.buttonActions);
+        }.bind(this), false);
+      }
     },
-    set downState(val) {
-      this._downState = val;
+
+    _constructState: function constructState(symbolInfo) {
+      var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
+                          avm2.systemDomain.getClass(symbolInfo.className) :
+                          avm2.applicationDomain.getClass(symbolInfo.className);
+
+      var props = Object.create(symbolInfo.props);
+      props.animated = true;
+
+      var instance = symbolClass.createAsSymbol(props);
+      symbolClass.instanceConstructor.call(instance);
+
+      if (instance._children.length === 1) {
+        return instance._children[0];
+      }
+
+      return instance;
     },
-    get hitTestState() {
-      return this._hitArea;
-    },
-    set hitTestState(val) {
-      this._hitArea = val;
-    },
-    get overState() {
-      return this._overState;
-    },
-    set overState(val) {
-      this._overState = val;
-    },
-    get upState() {
-      return this._upState;
-    },
-    set upState(val) {
-      this._upState = val;
-    },
-    get useHandCursor() {
-      return this._useHandCursor;
-    },
-    set useHandCursor(val) {
-      this._useHandCursor = val;
+
+    _gotoButtonState: function gotoButtonState(buttonState) {
+      this._bounds = null;
+
+      var state;
+      switch (buttonState) {
+        case 'up':
+          state = this._upState;
+          break;
+        case 'over':
+          state = this._overState;
+          break;
+        case 'down':
+          state = this._downState;
+          break;
+      }
+
+      if (this._currentState) {
+        if (this._currentState === state) {
+          return;
+        }
+
+        if (this._stage) {
+          this._stage._removeFromStage(this._currentState);
+        }
+
+        this._currentState._parent = null;
+        this._children.shift();
+      }
+
+      this._currentState = state;
+
+      if (!state) {
+        return;
+      }
+
+      state._parent = this;
+      state._parent._index = 0;
+      state._mouseEnabled = false;
+
+      this._children.unshift(state);
+
+      if (this._stage) {
+        this._stage._addToStage(state);
+      }
+
+      if (this._avm1MouseEvents) {
+        this._processAvm1MouseEvents(this._avm1MouseEvents);
+      }
     },
 
     _getAS2Object: function () {
@@ -58,95 +141,6 @@ var SimpleButtonDefinition = (function () {
       }
       return this.$as2Object;
     },
-    initialize: function () {
-      this._downState = null;
-      this._hitArea = null;
-      this._isMouseDown = false;
-      this._isMouseOver = false;
-      this._mouseChildren = false;
-      this._overState = null;
-      this._upState = null;
-      this._useHandCursor = true;
-      this._prevAvm1StateCode = 0;
-      this._avm1StateCode = 0;
-      this._avm1MouseEvents = null;
-
-      var s = this.symbol;
-      if (s) {
-        var states = s.states;
-        if (states.down)
-          this._downState = createState(states.down.value, this);
-        if (states.hitTest)
-          this._hitArea = createState(states.hitTest.value, this);
-        if (states.over)
-          this._overState = createState(states.over.value, this);
-        if (states.up)
-          this._upState = createState(states.up.value, this);
-      }
-
-      // binding mouse events
-      var MouseEventClass = flash.events.MouseEvent;
-      this._addEventListener(MouseEventClass.class.MOUSE_DOWN, function (evt) {
-        this._isMouseDown = true;
-        this._updateButton();
-      }.bind(this), false);
-      this._addEventListener(MouseEventClass.class.MOUSE_OUT, function (evt) {
-        this._isMouseOver = false;
-        this._updateButton();
-      }.bind(this), false);
-      this._addEventListener(MouseEventClass.class.MOUSE_OVER, function (evt) {
-        this._isMouseOver = true;
-        this._updateButton();
-      }.bind(this), false);
-      this._addEventListener(MouseEventClass.class.MOUSE_UP, function (evt) {
-        this._isMouseDown = false;
-        this._updateButton();
-      }.bind(this), false);
-
-      if (!this._loader._isAvm2Enabled && s && s.buttonActions) {
-        this._addEventListener("addedToStage", function (e) {
-          this._initAvm1Events(s.buttonActions);
-        }.bind(this), false);
-      }
-    },
-
-    _updateButton: function () {
-      this._invalidate();
-      this._bounds = null;
-
-      var state = this._upState;
-      if (this._isMouseDown && this._isMouseOver && this._downState)
-        state = this._downState;
-      else if (this._isMouseOver && this._overState)
-        state = this._overState;
-
-      state._stage = this._stage;
-
-      this._children = [state];
-
-      if (this._avm1MouseEvents) {
-        this._processAvm1MouseEvents(this._avm1MouseEvents);
-      }
-    },
-
-    _processAvm1MouseEvents: function (mouseEvents) {
-      // state codes: 0 - idle, 1 - outDown, 2 - overUp, 3 - overDown
-      var prevAvm1StateCode = this._avm1StateCode;
-      var avm1StateCode = (this._isMouseDown ? 1 : 0) |
-                            (this._isMouseOver ? 2 : 0);
-      if (prevAvm1StateCode !== avm1StateCode) {
-        this._prevAvm1StateCode = prevAvm1StateCode;
-        this._avm1StateCode = avm1StateCode;
-        var flag = AVM1MouseTransitionEvents[(prevAvm1StateCode << 2) | avm1StateCode];
-        for (var i = 0; i < mouseEvents.length; i++) {
-          var mouseEvent = mouseEvents[i];
-          if ((mouseEvent.flags & flag) !== 0) {
-            mouseEvent.listener();
-          }
-        }
-      }
-    },
-
     _initAvm1Events: function (buttonActions) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;
@@ -188,49 +182,112 @@ var SimpleButtonDefinition = (function () {
         }.bind(this), false);
       }
     },
+    _processAvm1MouseEvents: function (mouseEvents) {
+      // state codes: 0 - idle, 1 - outDown, 2 - overUp, 3 - overDown
+      var prevAvm1StateCode = this._avm1StateCode;
+      var avm1StateCode = (this._isMouseDown ? 1 : 0) |
+                            (this._isMouseOver ? 2 : 0);
+      if (prevAvm1StateCode !== avm1StateCode) {
+        this._prevAvm1StateCode = prevAvm1StateCode;
+        this._avm1StateCode = avm1StateCode;
+        var flag = AVM1MouseTransitionEvents[(prevAvm1StateCode << 2) | avm1StateCode];
+        for (var i = 0; i < mouseEvents.length; i++) {
+          var mouseEvent = mouseEvents[i];
+          if ((mouseEvent.flags & flag) !== 0) {
+            mouseEvent.listener();
+          }
+        }
+      }
+    },
 
-    get shouldHaveHandCursor() {
-      return this._useHandCursor;
-    }
-  };
+    __glue__: {
+      native: {
+        instance: {
+          _updateButton: function _updateButton() { // (void) -> void
+            this._gotoButtonState('up');
+          },
+          useHandCursor: {
+            get: function useHandCursor() { // (void) -> Boolean
+              return this._useHandCursor;
+            },
+            set: function useHandCursor(value) { // (value:Boolean) -> void
+              this._useHandCursor = value;
+            }
+          },
+          enabled: {
+            get: function enabled() { // (void) -> Boolean
+              return this._enabled;
+            },
+            set: function enabled(value) { // (value:Boolean) -> void
+              this._enabled = value;
+            }
+          },
+          trackAsMenu: {
+            get: function trackAsMenu() { // (void) -> Boolean
+              notImplemented("SimpleButton.trackAsMenu");
+              return this._trackAsMenu;
+            },
+            set: function trackAsMenu(value) { // (value:Boolean) -> void
+              notImplemented("SimpleButton.trackAsMenu");
+              this._trackAsMenu = value;
+            }
+          },
+          upState: {
+            get: function upState() { // (void) -> DisplayObject
+              return this._upState;
+            },
+            set: function upState(value) { // (value:DisplayObject) -> void
+              this._upState = value;
+            }
+          },
+          overState: {
+            get: function overState() { // (void) -> DisplayObject
+              return this._overState;
+            },
+            set: function overState(value) { // (value:DisplayObject) -> void
+              this._overState = value;
+            }
+          },
+          downState: {
+            get: function downState() { // (void) -> DisplayObject
+              return this._downState;
+            },
+            set: function downState(value) { // (value:DisplayObject) -> void
+              this._downState = value;
+            }
+          },
+          hitTestState: {
+            get: function hitTestState() { // (void) -> DisplayObject
+              return this._hitTestState;
+            },
+            set: function hitTestState(value) { // (value:DisplayObject) -> void
+              if (this._hitTestState === value) {
+                return;
+              }
 
-  function createState(symbolInfo, parent) {
-    if (!symbolInfo)
-      return null;
+              this._hitTestState = value;
 
-    var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-      avm2.systemDomain.getClass(symbolInfo.className) :
-      avm2.applicationDomain.getClass(symbolInfo.className);
-    var props = Object.create(symbolInfo.props);
-    props.animated = true;
-    props.parent = parent;
-    var instance = symbolClass.createAsSymbol(props);
-    symbolClass.instanceConstructor.call(instance);
+              value._alpha = 0;
+              value._parent = this;
+              value._index = 1;
+              value._stage = this._stage;
+              this._children.splice(-1, 1, value);
 
-    if (instance._children.length === 1) {
-      return instance._children[0];
-    }
-
-    return instance;
-  }
-
-  var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
-  var AVM1MouseTransitionEvents = [0, 0, 1, 128, 64, 0, 0, 32, 2, 0, 0, 4, 256, 16, 8, 0];
-
-  var desc = Object.getOwnPropertyDescriptor;
-
-  def.__glue__ = {
-    native: {
-      instance: {
-        downState: desc(def, "downState"),
-        hitTestState: desc(def, "hitTestState"),
-        overState: desc(def, "overState"),
-        upState: desc(def, "upState"),
-        useHandCursor: desc(def, "useHandCursor"),
-        _updateButton: def._updateButton,
+              value._invalidate();
+            }
+          },
+          soundTransform: {
+            get: function soundTransform() { // (void) -> SoundTransform
+              notImplemented("SimpleButton.soundTransform");
+              return this._soundTransform;
+            },
+            set: function soundTransform(value) { // (value:SoundTransform) -> void
+              notImplemented("SimpleButton.soundTransform");
+              this._soundTransform = value;
+            }
+          }
+        }
       }
     }
   };
-
-  return def;
 }).call(this);
