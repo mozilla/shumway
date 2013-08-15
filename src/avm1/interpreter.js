@@ -22,6 +22,7 @@ var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
 var MAX_AVM1_INSTRUCTIONS_LIMIT = 100000;
 var MAX_AVM1_ERRORS_LIMIT = 1000;
+var MAX_AVM1_STACK_LIMIT = 256;
 
 function AS2ScopeListItem(scope, next) {
   this.scope = scope;
@@ -39,6 +40,8 @@ function AS2Context(swfVersion) {
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
   this.instructionsExecuted = 0;
+  this.stackDepth = 0;
+  this.isTryCatchListening = false;
   this.errorsIgnored = 0;
   this.deferScriptExecution = true;
   this.pendingScripts = [];
@@ -84,9 +87,16 @@ AS2Context.prototype = {
     this.deferScriptExecution = false;
   }
 };
+
 function AS2Error(error) {
   this.error = error;
 }
+
+function AS2CriticalError(message, error) {
+  this.message = message;
+  this.error = error;
+}
+AS2CriticalError.prototype = Object.create(Error.prototype);
 
 function isAS2MovieClip(obj) {
   return typeof obj === 'object' && obj &&
@@ -421,6 +431,10 @@ function interpretActions(actionsData, scopeContainer,
         resetCounters = currentContext.instructionsExecuted === 0;
         currentContext.defaultTarget = scope;
         actionTracer.indent();
+        currentContext.stackDepth++;
+        if (currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+          throw new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
+        }
         return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
@@ -428,6 +442,7 @@ function interpretActions(actionsData, scopeContainer,
           currentContext.instructionsExecuted = 0;
           currentContext.errorsIgnored = 0;
         }
+        currentContext.stackDepth--;
         actionTracer.unindent();
         currentContext.defaultTarget = defaultTarget;
         AS2Context.instance = savedContext;
@@ -548,9 +563,13 @@ function interpretActions(actionsData, scopeContainer,
   }
   function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
                       tryBlock, catchBlock, finallyBlock) {
+
+    var savedTryCatchState = currentContext.isTryCatchListening;
     try {
+      currentContext.isTryCatchListening = true;
       interpretActions(tryBlock, scopeContainer, constantPool, registers);
     } catch (e) {
+      currentContext.isTryCatchListening = savedTryCatchState;
       if (!catchBlockFlag) {
         throw e;
       }
@@ -564,6 +583,7 @@ function interpretActions(actionsData, scopeContainer,
       }
       interpretActions(catchBlock, scopeContainer, constantPool, registers);
     } finally {
+      currentContext.isTryCatchListening = savedTryCatchState;
       if (finallyBlockFlag) {
         interpretActions(finallyBlock, scopeContainer, constantPool, registers);
       }
@@ -609,16 +629,14 @@ function interpretActions(actionsData, scopeContainer,
   }
 
   var recoveringFromError = false;
-  var executionAborted = false;
   var stackItemsExpected;
   // will try again if we are skipping errors
-  while (stream.position < stream.end && !executionAborted) {
+  while (stream.position < stream.end) {
     try {
 
   while (stream.position < stream.end) {
     if (currentContext.instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
-      executionAborted = true;
-      throw new Error('long running script -- AVM1 instruction limit is reached');
+      throw new AS2CriticalError('long running script -- AVM1 instruction limit is reached');
     }
 
     var actionCode = stream.readUI8();
@@ -1332,7 +1350,8 @@ function interpretActions(actionsData, scopeContainer,
 
     // handling AVM1 errors
     } catch (e) {
-      if (!AVM1_ERRORS_IGNORED || executionAborted) {
+      if ((!AVM1_ERRORS_IGNORED && !currentContext.isTryCatchListening) ||
+          e instanceof AS2CriticalError) {
         throw e;
       }
       if (e instanceof AS2Error) {
@@ -1346,8 +1365,7 @@ function interpretActions(actionsData, scopeContainer,
       }
       if (!recoveringFromError) {
         if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
-          executionAborted = true;
-          throw new Error('long running script -- AVM1 errors limit is reached');
+          throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
         }
         console.error('AVM1 error: ' + e);
         recoveringFromError = true;
