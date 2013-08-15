@@ -390,6 +390,7 @@ AS2Globals.prototype = {
   get Mouse() { return wrapAS2Class(AS2Globals.prototype, 'Mouse', AS2Mouse); },
   // lazy initialized built-ins
   get Sound() { return shadowAVM2Class(AS2Globals.prototype, 'Sound', flash.media.Sound); },
+  get SharedObject() { return shadowAVM2Class(AS2Globals.prototype, 'SharedObject', 'flash.net.SharedObject'); },
   get ContextMenu() { return shadowAVM2Class(AS2Globals.prototype, 'ContextMenu', flash.ui.ContextMenu); },
   get ContextMenuItem() { return shadowAVM2Class(AS2Globals.prototype, 'ContextMenuItem', flash.ui.ContextMenuItem); },
   get ColorTransform() { return shadowAVM2Class(AS2Globals.prototype, 'ColorTransform', flash.geom.ColorTransform); },
