@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, AS2MovieClip, $DEBUG */
+/*global MP3DecoderSession, AS2Globals, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -104,7 +104,8 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2MovieClip().$attachNativeObject(this);
+        var AS2MovieClipClass = AS2Globals.prototype.MovieClip;
+        new AS2MovieClipClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },

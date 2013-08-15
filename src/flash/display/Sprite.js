@@ -187,28 +187,35 @@ var SpriteDefinition = (function () {
 
       if (symbolProps && symbolProps.variableName) {
         var variableName = symbolProps.variableName;
-        var i = variableName.lastIndexOf('.');
+        var hasPath = variableName.lastIndexOf('.') >= 0 ||
+                      variableName.lastIndexOf(':') >= 0;
         var clip;
-        if (i >= 0) {
-          var targetPath = variableName.substring(0, i).split('.');
-          if (targetPath[0] == '_root') {
+        if (hasPath) {
+          var targetPath = variableName.split(/[.:\/]/g);
+          variableName = targetPath.pop();
+          if (targetPath[0] == '_root' || targetPath[0] === '') {
             clip = this.root._getAS2Object();
             targetPath.shift();
+            if (targetPath[0] === '') {
+              targetPath.shift();
+            }
           } else {
             clip = instance._getAS2Object();
           }
           while (targetPath.length > 0) {
-            if (!(targetPath[0] in clip))
-              throw 'Cannot find ' + variableName + ' variable';
-            clip = clip[targetPath.shift()];
+            var childName = targetPath.shift();
+            clip = clip.getMultinameProperty(undefined, childName, 0) || clip[childName];
+            if (!clip) {
+              throw new Error('Cannot find ' + childName + ' variable');
+            }
           }
-          variableName = variableName.substring(i + 1);
         } else
           clip = instance._getAS2Object();
-        if (!(variableName in clip))
-          clip[variableName] = instance.text;
+        if (!clip.hasMultinameProperty(undefined, variableName, 0)) {
+          clip.setMultinameProperty(undefined, variableName, 0, instance.text);
+        }
         instance._addEventListener('constructFrame', function() {
-          instance.text = clip[variableName];
+          instance.text = clip.getMultinameProperty(undefined, variableName, 0);
         });
       }
 
@@ -241,7 +248,8 @@ var SpriteDefinition = (function () {
       }
 
       if (name) {
-        this._getAS2Object()[name] = instance._getAS2Object();
+        this._getAS2Object().setMultinameProperty(undefined, name, 0,
+          instance._getAS2Object());
       }
     },
 

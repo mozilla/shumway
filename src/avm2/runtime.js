@@ -378,6 +378,17 @@ function initializeGlobalObject(global) {
     this[resolved] = value;
   });
 
+  defineNonEnumerableProperty(global.Object.prototype, "defineMultinameProperty", function setMultinameProperty(namespaces, name, flags, value) {
+    if (this.setProperty) {
+      return this.setProperty(namespaces, name, flags, value);
+    }
+    if (typeof name === "object") {
+      name = String(name);
+    }
+    var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+    Object.defineProperty(this, resolved, value);
+  });
+
   var callCounter = new metrics.Counter(true);
   defineNonEnumerableProperty(global.Object.prototype, "callMultinameProperty", function callMultinameProperty(namespaces, name, flags, isLex, args) {
     if (traceCallExecution.value) {
