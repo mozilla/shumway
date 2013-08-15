@@ -330,6 +330,13 @@ ChromeActions.prototype = {
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
   },
+  unsafeSetClipboard: function (data) {
+    if (typeof data !== 'string') {
+      return;
+    }
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(data);
+  },
   endActivation: function () {
     if (ActivationQueue.currentNonActive === this) {
       ActivationQueue.activateNext();
