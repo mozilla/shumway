@@ -85,6 +85,12 @@ function runViewer() {
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
+  if (!movieUrl) {
+    console.log("no movie url provided -- stopping here");
+    FirefoxCom.request('endActivation', null);
+    return;
+  }
+
   movieParams = flashParams.movieParams;
   objectParams = flashParams.objectParams;
   var isOverlay = flashParams.isOverlay;
