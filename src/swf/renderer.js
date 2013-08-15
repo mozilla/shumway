@@ -279,11 +279,22 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
             }
           }
           if (path.strokeStyle) {
-            ctx.strokeStyle = path.strokeStyle;
-            var drawingStyles = path.drawingStyles;
-            for (var prop in drawingStyles)
-              ctx[prop] = drawingStyles[prop];
-            ctx.stroke();
+            var m = path.strokeStyle.currentTransform;
+            if (m) {
+              ctx.fillStyle = path.strokeStyle;
+              ctx.currentPath = path.strokePath(path.drawingStyles);
+              ctx.save();
+              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+              ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.strokeStyle = path.strokeStyle;
+              var drawingStyles = path.drawingStyles;
+              for (var prop in drawingStyles) {
+                ctx[prop] = drawingStyles[prop];
+              }
+              ctx.stroke();
+            }
           }
         }
       }

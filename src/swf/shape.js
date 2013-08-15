@@ -40,6 +40,70 @@ function morphColor(color, colorMorph) {
     morph(color.alpha / 255, colorMorph.alpha / 255) +
   ') + ")"';
 }
+function createFill(fillStyle, dictionary, dependencies) {
+  var fill;
+  switch (fillStyle.type) {
+  case GRAPHICS_FILL_SOLID:
+    if (fillStyle.colorMorph) {
+      fill = morphColor(fillStyle.color, fillStyle.colorMorph);
+    } else {
+      var color = fillStyle.color;
+      fill = '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
+    }
+    break;
+  case GRAPHICS_FILL_LINEAR_GRADIENT:
+  case GRAPHICS_FILL_RADIAL_GRADIENT:
+  case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+    var records = fillStyle.records;
+    var stops = [];
+    for (var j = 0, n = records.length; j < n; j++) {
+      var record = records[j];
+      var color = record.color;
+      if (record.colorMorph) {
+        stops.push('f.addColorStop(' +
+          morph(record.ratio / 255, record.ratioMorph / 255) + ',' +
+          morphColor(color, record.colorMorph) +
+        ')');
+      } else {
+        stops.push('f.addColorStop(' +
+          (record.ratio / 255) + ',' +
+          '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"' +
+        ')');
+      }
+    }
+    var isLinear = fillStyle.type === GRAPHICS_FILL_LINEAR_GRADIENT;
+    fill = '(' +
+      'f=c._create' + (isLinear ? 'Linear' : 'Radial') + 'Gradient(' +
+        (isLinear ?
+          '-1, 0, 1, 0' :
+          '(' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) + ' || 0), 0, 0, 0, 0, 1'
+        ) +
+      '),' +
+      stops.join(',') + ',' +
+      'f.currentTransform=' +
+        toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 20 * 819.2) + ',' +
+    'f)';
+    break;
+  case GRAPHICS_FILL_REPEATING_BITMAP:
+  case GRAPHICS_FILL_CLIPPED_BITMAP:
+  case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+  case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+    var bitmap = dictionary[fillStyle.bitmapId];
+    dependencies.push(bitmap.id);
+    fill = '(' +
+      'f=c._createPattern(' +
+        'd[' + bitmap.id + '].value.props.img,' +
+        (fillStyle.repeat ? '"repeat"' : '"no-repeat"') +
+      '),' +
+      'f.currentTransform=' +
+        toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 1) + ',' +
+    'f)';
+    break;
+  default:
+    fail('invalid fill style', 'shape');
+  }
+  return fill;
+}
 function toMatrixInstance(matrix, matrixMorph, scale) {
   if (scale === undefined)
     scale = 20;
@@ -276,67 +340,7 @@ function defineShape(tag, dictionary) {
       var commands = [];
 
       var fillStyle = fillStyles[i - 1];
-      var fill;
-      switch (fillStyle.type) {
-      case GRAPHICS_FILL_SOLID:
-        if (fillStyle.colorMorph) {
-          fill = morphColor(fillStyle.color, fillStyle.colorMorph);
-        } else {
-          var color = fillStyle.color;
-          fill = '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
-        }
-        break;
-      case GRAPHICS_FILL_LINEAR_GRADIENT:
-      case GRAPHICS_FILL_RADIAL_GRADIENT:
-      case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-        var records = fillStyle.records;
-        var stops = [];
-        for (var j = 0, n = records.length; j < n; j++) {
-          var record = records[j];
-          var color = record.color;
-          if (record.colorMorph) {
-            stops.push('f.addColorStop(' +
-              morph(record.ratio / 255, record.ratioMorph / 255) + ',' +
-              morphColor(color, record.colorMorph) +
-            ')');
-          } else {
-            stops.push('f.addColorStop(' +
-              (record.ratio / 255) + ',' +
-              '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"' +
-            ')');
-          }
-        }
-        var isLinear = fillStyle.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-        fill = '(' +
-          'f=c._create' + (isLinear ? 'Linear' : 'Radial') + 'Gradient(' +
-            (isLinear ?
-              '-1, 0, 1, 0' :
-              '(' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) + ' || 0), 0, 0, 0, 0, 1'
-            ) +
-          '),' +
-          stops.join(',') + ',' +
-          'f.currentTransform=' +
-            toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 20 * 819.2) + ',' +
-        'f)';
-        break;
-      case GRAPHICS_FILL_REPEATING_BITMAP:
-      case GRAPHICS_FILL_CLIPPED_BITMAP:
-      case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
-      case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-        var bitmap = dictionary[fillStyle.bitmapId];
-        dependencies.push(bitmap.id);
-        fill = '(' +
-          'f=c._createPattern(' +
-            'd[' + bitmap.id + '].value.props.img,' +
-            (fillStyle.repeat ? '"repeat"' : '"no-repeat"') +
-          '),' +
-          'f.currentTransform=' +
-            toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 1) + ',' +
-        'f)';
-        break;
-      default:
-        fail('invalid fill style', 'shape');
-      }
+      var fill = createFill(fillStyle, dictionary, dependencies);
 
       var cmds = [];
       var j = 0;
@@ -384,15 +388,19 @@ function defineShape(tag, dictionary) {
   while ((lineStyle = lineStyles[i++])) {
     var segments = lineSegments[i], segment;
     if (segments) {
+      var stroke;
       var color = lineStyle.color;
       if (!color) {
-        // TODO stroke defined by FILL_STYLE
-        color = { red: 255, green: 0, blue: 128, alpha: 255 };
+        if (lineStyle.hasFill) {
+          stroke = createFill(lineStyle.fillStyle, dictionary, dependencies);
+        } else {
+          stroke = '"rgba(' + [255, 0, 128, 1].join(',') + ')"';
+        }
+      } else {
+        stroke = lineStyle.colorMorph ?
+          morphColor(color, lineStyle.colorMorph) :
+          '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
       }
-      var stroke = lineStyle.colorMorph ?
-        morphColor(color, lineStyle.colorMorph) :
-        '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"'
-      ;
       var lineWidth =
         morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined);
       // ignoring startCapStyle ?

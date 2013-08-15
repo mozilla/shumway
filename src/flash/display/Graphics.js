@@ -59,6 +59,40 @@ var GraphicsDefinition = (function () {
       this._parent._bounds = null;
     },
 
+    _createPatternStyle: function(bitmap, matrix, repeat, smooth) {
+      var repeatStyle = (repeat === false) ? 'no-repeat' : 'repeat';
+      var pattern = this._createPattern(bitmap._drawable, repeatStyle);
+
+      // NOTE firefox really sensitive to really small scale when painting gradients
+      var scale = 819.2;
+      pattern.currentTransform = matrix ?
+        { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
+        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+
+      return pattern;
+    },
+    _createGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
+      var gradient;
+      if (type === 'linear') {
+        gradient = this._createLinearGradient(-1, 0, 1, 0);
+      } else if (type == 'radial') {
+        gradient = this._createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
+      } else {
+        throw ArgumentError();
+      }
+
+      for (var i = 0, n = colors.length; i < n; i++) {
+        gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
+      }
+
+      // NOTE firefox really sensitive to really small scale when painting gradients
+      var scale = 819.2;
+      gradient.currentTransform = matrix ?
+        { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, e: matrix.tx, f: matrix.ty } :
+        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+
+      return gradient;
+    },
     _createLinearGradient: function (x0, y0, x1, y1) {
       return fillContext.createLinearGradient(x0, y0, x1, y1);
     },
@@ -99,36 +133,10 @@ var GraphicsDefinition = (function () {
       this._fillStyle = alpha ? toRgba(color, alpha) : null;
     },
     beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      var gradient;
-      if (type === 'linear')
-        gradient = this._createLinearGradient(-1, 0, 1, 0);
-      else if (type == 'radial')
-        gradient = this._createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
-      else
-        throw ArgumentError();
-
-      for (var i = 0, n = colors.length; i < n; i++)
-        gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
-
-      this._fillStyle = gradient;
-
-      // NOTE firefox really sensitive to really small scale when painting gradients
-      var scale = 819.2;
-      gradient.currentTransform = matrix ?
-        { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, e: matrix.tx, f: matrix.ty } :
-        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+      this._fillStyle = this._createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      var repeatStyle = repeat ? 'repeat' : 'no-repeat';
-      var pattern = this._createPattern(bitmap._drawable, repeatStyle);
-
-      this._fillStyle = pattern;
-
-      // NOTE firefox really sensitive to really small scale when painting gradients
-      var scale = 819.2;
-      pattern.currentTransform = matrix ?
-        { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
-        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+      this._fillStyle = this._createPatternStyle(bitmap, matrix, repeat, smooth);
     },
     clear: function () {
       this._invalidate();
@@ -245,10 +253,10 @@ var GraphicsDefinition = (function () {
       this._fillStyle = null;
     },
     lineBitmapStyle: function (bitmap, matrix, repeat, smooth) {
-      notImplemented();
+      this._strokeStyle = this._createPatternStyle(bitmap, matrix, repeat, smooth);
     },
     lineGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      notImplemented();
+      this._strokeStyle = this._createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
