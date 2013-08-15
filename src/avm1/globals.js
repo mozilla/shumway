@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Context, avm2, flash, Multiname, AS2Rectangle, AS2MovieClip,
+/*global AS2Context, avm2, flash, Stubs, Multiname, AS2MovieClip, AS2Object,
          AS2Broadcaster, AS2System, AS2Stage, AS2Button, AS2TextField, AS2Color,
          AS2Key, AS2Mouse, notImplemented */
 
@@ -23,6 +23,68 @@ function ASSetPropFlags(obj, children, flags, allowFalse) {
   // flags (from bit 0): dontenum, dontdelete, readonly, ....
   // TODO
 }
+
+function wrapAS2Class(container, className, fn) {
+  function proxyForProperty(obj, name, target) {
+    Object.defineProperty(obj, name, {
+      get: function () { return this.getMultinameProperty(undefined, name, 0); },
+      set: function (value) { this.setMultinameProperty(undefined, name, 0, value); },
+      enumerable: true,
+      configurable: true
+    });
+  }
+
+  var internalAS2Properties, c, proto, i, j, desc;
+  c = function () {
+    return fn.apply(this, arguments);
+  };
+  c.name = className;
+  c.debugName = 'avm1 ' + className;
+  for (i in fn) {
+    desc = Object.getOwnPropertyDescriptor(fn, i);
+    if (!desc) {
+      continue;
+    }
+    c.defineMultinameProperty(undefined, i, 0, desc);
+    proxyForProperty(c, i);
+  }
+  internalAS2Properties = fn.$$internalAS2Properties;
+  if (internalAS2Properties) {
+    for (j = 0; j < internalAS2Properties.length; j++) {
+      desc = Object.getOwnPropertyDescriptor(fn, internalAS2Properties[j]);
+      Object.defineProperty(c, internalAS2Properties[j], desc);
+    }
+  }
+  proto = c.getMultinameProperty(undefined, 'prototype', 0);
+  for (i in fn.prototype) {
+    desc = Object.getOwnPropertyDescriptor(fn.prototype, i);
+    if (!desc) {
+      continue;
+    }
+    proto.defineMultinameProperty(undefined, i, 0, desc);
+    proxyForProperty(c.prototype, i);
+  }
+  internalAS2Properties = fn.prototype.$$internalAS2Properties;
+  if (internalAS2Properties) {
+    for (j = 0; j < internalAS2Properties.length; j++) {
+      desc = Object.getOwnPropertyDescriptor(fn.prototype, internalAS2Properties[j]);
+      Object.defineProperty(c.prototype, internalAS2Properties[j], desc);
+    }
+  }
+  delete container[className];
+  container[className] = c;
+  return c;
+}
+
+function shadowAVM2Class(container, propertyName, avm2Class) {
+  if (typeof avm2Class === 'string') {
+    avm2Class = avm2.systemDomain.getClass(avm2Class);
+  }
+  delete container[propertyName];
+  container[propertyName] = avm2Class;
+  return avm2Class;
+}
+
 
 var PropertiesIndexMap = [
   '_x', '_y', '_xscale', '_yscale', '_currentframe', '_totalframes', '_alpha',
@@ -32,8 +94,17 @@ var PropertiesIndexMap = [
 ];
 
 function AS2Globals(context) {
-  this._global = this;
 }
+AS2Globals.create = function (context) {
+  var container = {};
+  wrapAS2Class(container, 'AS2Globals', AS2Globals);
+  AS2Globals.create = function (context) {
+    var globals = new container.AS2Globals();
+    globals.setMultinameProperty(undefined, '_global', 0, globals);
+    return globals;
+  };
+  return AS2Globals.create(context);
+};
 AS2Globals.prototype = {
   $asfunction: function(link) {
     notImplemented('AS2Globals.$asfunction');
@@ -65,9 +136,9 @@ AS2Globals.prototype = {
       Multiname.fromSimpleName('flash.system.fscommand'), true, true);
     fscommand.apply(null, arguments);
   },
-  getProperty: function(target, index) {
+  getAS2Property: function(target, index) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    return nativeTarget[PropertiesIndexMap[index]];
+    return nativeTarget.getMultinameProperty(undefined, PropertiesIndexMap[index], 0);
   },
   getTimer: function() {
     var getTimer = avm2.applicationDomain.getProperty(
@@ -221,9 +292,9 @@ AS2Globals.prototype = {
     }
     return setInterval.apply(null, args);
   },
-  setProperty: function(target, index, value) {
+  setAS2Property: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    nativeTarget[PropertiesIndexMap[index]] = value;
+    nativeTarget.setMultinameProperty(undefined, PropertiesIndexMap[index], 0, value);
   },
   setTimeout: function () {
     var setTimeout = avm2.applicationDomain.getProperty(
@@ -245,7 +316,7 @@ AS2Globals.prototype = {
   startDrag: function(target, lock, left, top, right, bottom) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
     nativeTarget.startDrag(lock, arguments.length < 3 ? null :
-      new AS2Rectangle(left, top, right - left, bottom - top));
+      new flash.geom.Rectangle(left, top, right - left, bottom - top));
   },
   stop: function() {
     var nativeTarget = AS2Context.instance.resolveTarget();
@@ -288,38 +359,43 @@ AS2Globals.prototype = {
     notImplemented('AS2Globals.updateAfterEvent');
   },
   // built-ins
-  Boolean: Boolean,
-  Date: Date,
-  Function: Function,
-  Math: Math,
-  Number: Number,
+  get Boolean() { return shadowAVM2Class(AS2Globals.prototype, 'Boolean', Stubs.Boolean); },
+  get Date() { return shadowAVM2Class(AS2Globals.prototype, 'Date', Stubs.Date); },
+  get Function() { return shadowAVM2Class(AS2Globals.prototype, 'Function', Stubs.Function); },
+  get Math() { return shadowAVM2Class(AS2Globals.prototype, 'Math', 'Math'); },
+  get Number() { return shadowAVM2Class(AS2Globals.prototype, 'Number', Stubs.Number); },
   NaN: NaN,
   'Infinity': Infinity,
-  Object: Object,
-  Array: Array,
-  RegExp: RegExp,
-  String: String,
+  get Object() {
+    var c = shadowAVM2Class(AS2Globals.prototype, 'Object', Stubs.Object);
+    AS2Object.$install(c);
+    return c;
+  },
+  get Array() { return shadowAVM2Class(AS2Globals.prototype, 'Array', Stubs.Array); },
+  get RegExp() { return shadowAVM2Class(AS2Globals.prototype, 'RegExp', Stubs.RegExp); },
+  get String() { return shadowAVM2Class(AS2Globals.prototype, 'String', Stubs.String); },
   isFinite: isFinite,
   isNaN: isNaN,
   parseFloat: parseFloat,
   parseInt: parseInt,
   undefined: void(0),
-  MovieClip: AS2MovieClip,
-  AsBroadcaster: AS2Broadcaster,
-  System: AS2System,
-  Stage: AS2Stage,
-  Button: AS2Button,
-  TextField: AS2TextField,
-  Color: AS2Color,
-  Rectangle: AS2Rectangle,
-  Key: AS2Key,
-  Mouse: AS2Mouse,
+  get MovieClip() { return wrapAS2Class(AS2Globals.prototype, 'MovieClip', AS2MovieClip); },
+  get AsBroadcaster() { return wrapAS2Class(AS2Globals.prototype, 'AsBroadcaster', AS2Broadcaster); },
+  get System() { return wrapAS2Class(AS2Globals.prototype, 'System', AS2System); },
+  get Stage() { return wrapAS2Class(AS2Globals.prototype, 'Stage', AS2Stage); },
+  get Button() { return wrapAS2Class(AS2Globals.prototype, 'Button', AS2Button); },
+  get TextField() { return wrapAS2Class(AS2Globals.prototype, 'TextField', AS2TextField); },
+  get Color() { return wrapAS2Class(AS2Globals.prototype, 'Color', AS2Color); },
+  get Key() { return wrapAS2Class(AS2Globals.prototype, 'Key', AS2Key); },
+  get Mouse() { return wrapAS2Class(AS2Globals.prototype, 'Mouse', AS2Mouse); },
   // lazy initialized built-ins
-  get Sound() { return delete this.Sound, this.Sound = flash.media.Sound; },
-  get ContextMenu() { return delete this.ContextMenu, this.ContextMenu = flash.ui.ContextMenu; },
-  get ContextMenuItem() { return delete this.ContextMenuItem, this.ContextMenuItem = flash.ui.ContextMenuItem; },
-  get ColorTransform() { return delete this.ColorTransform, this.ColorTransform = flash.geom.ColorTransform; },
-  get TextFormat() { return delete this.TextFormat, this.TextFormat = flash.text.TextFormat; }
+  get Sound() { return shadowAVM2Class(AS2Globals.prototype, 'Sound', flash.media.Sound); },
+  get ContextMenu() { return shadowAVM2Class(AS2Globals.prototype, 'ContextMenu', flash.ui.ContextMenu); },
+  get ContextMenuItem() { return shadowAVM2Class(AS2Globals.prototype, 'ContextMenuItem', flash.ui.ContextMenuItem); },
+  get ColorTransform() { return shadowAVM2Class(AS2Globals.prototype, 'ColorTransform', flash.geom.ColorTransform); },
+  get Point() { return shadowAVM2Class(AS2Globals.prototype, 'Point', flash.geom.Point); },
+  get Rectange() { return shadowAVM2Class(AS2Globals.prototype, 'Rectangle', flash.geom.Rectangle); },
+  get TextFormat() { return shadowAVM2Class(AS2Globals.prototype, 'TextFormat', flash.text.TextFormat); }
 };
 
 // exports for testing

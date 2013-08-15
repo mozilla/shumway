@@ -27,8 +27,8 @@ var DEFAULT_SETTINGS = {
   pre: true,
   render: true,
   mouse: true,
-  release: true,
-  symbolsInfo: false
+  redraw: false,
+  release: true
 };
 
 function loadState() {
@@ -61,11 +61,11 @@ function updateAVM2State() {
   disablePreVisitor.value = state.pre ? false : true;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
+  showRedrawRegions.value = state.redraw ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
   release = state.release;
-  TRACE_SYMBOLS_INFO = state.symbolsInfo;
   AVM1_TRACE_ENABLED = state.trace;
 }
 

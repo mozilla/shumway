@@ -119,6 +119,22 @@ var Stubs = new (function () {
     });
   }
 
+  // Make special stubs for standard JavaScript classes.
+
+  [
+    "Boolean",
+    "Date",
+    "String",
+    "Function",
+    "Object",
+    "Number",
+    "Math",
+    "Array",
+    "RegExp"
+  ].forEach(function (classSimpleName) {
+    makeStub(that, classSimpleName, classSimpleName);
+  });
+
   // Make special stubs for errors, which shouldn't conflict with JavaScript
   // error constructors.
 

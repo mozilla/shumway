@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2TextField, toStringRgba, warning */
+/*global AS2Globals, toStringRgba, warning */
 
 var TextFieldDefinition = (function () {
 
@@ -516,7 +516,8 @@ var TextFieldDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2TextField().$attachNativeObject(this);
+        var AS2TextFieldClass = AS2Globals.prototype.TextField;
+        new AS2TextFieldClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },
@@ -533,7 +534,7 @@ var TextFieldDefinition = (function () {
     },
 
     invalidateDimensions: function() {
-      this._markAsDirty();
+      this._invalidate();
       this._dimensionsValid = false;
     },
 
@@ -617,7 +618,7 @@ var TextFieldDefinition = (function () {
         return;
       }
       this._bbox.bottom = this._bbox.top + value;
-      this._markAsDirty();
+      this._invalidate();
     }
   };
 

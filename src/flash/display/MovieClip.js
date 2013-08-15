@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, AS2MovieClip, $DEBUG */
+/*global MP3DecoderSession, AS2Globals, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -28,7 +28,7 @@ var MovieClipDefinition = (function () {
       this._currentLabel = null;
       this._currentScene = 0;
       this._deferScriptExecution = false;
-      this._enabled = null;
+      this._enabled = true;
       this._frameScripts = { };
       this._framesLoaded = 1;
       this._isPlaying = true;
@@ -104,7 +104,8 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2MovieClip().$attachNativeObject(this);
+        var AS2MovieClipClass = AS2Globals.prototype.MovieClip;
+        new AS2MovieClipClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },
@@ -146,7 +147,6 @@ var MovieClipDefinition = (function () {
         var displayList = timeline[frameNum - 1];
 
         if (displayList !== currentDisplayList) {
-          this._markAsDirty();
           var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
 
           for (var depth in walkList) {
@@ -173,10 +173,10 @@ var MovieClipDefinition = (function () {
               if (currentChild && currentChild._owned) {
                 children.splice(currentIndex, 1);
 
-                this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
-                if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                if (this._stage) {
+                  this._stage._removeFromStage(currentChild);
+                }
                 currentChild.destroy();
               }
             } else if (cmd !== currentListCmd) {
@@ -184,6 +184,9 @@ var MovieClipDefinition = (function () {
                   cmd.symbolId === currentListCmd.symbolId &&
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
+                  currentChild._invalidate();
+                  currentChild._bounds = null;
+
                   if (cmd.hasClipDepth)
                     currentChild._clipDepth = cmd.clipDepth;
 
@@ -216,16 +219,18 @@ var MovieClipDefinition = (function () {
                   index = currentIndex;
                   replace = true;
 
-                  this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
-                  if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                  if (this._stage) {
+                    this._stage._removeFromStage(currentChild);
+                  }
                   currentChild.destroy();
                 }
 
                 this._addTimelineChild(cmd, index, replace);
               }
             }
+
+            this._bounds = null;
           }
 
           this._constructChildren();
@@ -356,6 +361,12 @@ var MovieClipDefinition = (function () {
           this._soundStream.sound = sound;
           this._soundStream.channel = channel;
         }
+      }
+    },
+
+    _gotoButtonState: function gotoButtonState(buttonState) {
+      if (this._enabled) {
+        this.gotoLabel('_' + buttonState);
       }
     },
 

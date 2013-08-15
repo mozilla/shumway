@@ -15,8 +15,8 @@
 TESTS = \
 	test.stream.js \
 	test.classes.js \
-	test.globals.js \
-	test.interpreter.js \
+#	test.globals.js \
+#	test.interpreter.js \
 	$(NULL)
 
 NODE_MODULES = ../../../utils/node_modules

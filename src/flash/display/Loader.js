@@ -19,7 +19,7 @@
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
          defineLabel, defineButton, defineText,
-         AS2Key, AS2Mouse, AS2Context, executeActions,
+         AS2Globals, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode */
 /*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
@@ -625,6 +625,7 @@ var LoaderDefinition = (function () {
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
             parent._root = root;
+            parent._setup();
           } else {
             loader._children.push(root);
           }
@@ -672,8 +673,8 @@ var LoaderDefinition = (function () {
             var avm1Context = loader._avm1Context;
 
             var as2Object = root._getAS2Object();
-            avm1Context.globals._root = as2Object;
-            avm1Context.globals._level0 = as2Object;
+            avm1Context.globals.setMultinameProperty(undefined, '_root', 0, as2Object);
+            avm1Context.globals.setMultinameProperty(undefined, '_level0', 0, as2Object);
 
             // transfer parameters
             var parameters = loader.loaderInfo._parameters;
@@ -790,7 +791,7 @@ var LoaderDefinition = (function () {
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
       var promiseQueue = [];
-      var props = { loader: this };
+      var props = { symbolId: symbol.id, loader: this };
       var symbolPromise = new Promise();
 
       if (dependencies && dependencies.length) {
@@ -1099,8 +1100,8 @@ var LoaderDefinition = (function () {
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        AS2Key.$bind(stage);
-        AS2Mouse.$bind(stage);
+        AS2Globals.prototype.Key.$bind(stage);
+        AS2Globals.prototype.Mouse.$bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),
