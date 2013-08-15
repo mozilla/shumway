@@ -40,7 +40,7 @@ function morphColor(color, colorMorph) {
     morph(color.alpha / 255, colorMorph.alpha / 255) +
   ') + ")"';
 }
-function createFill(fillStyle) {
+function createFill(fillStyle, dictionary, dependencies) {
   var fill;
   switch (fillStyle.type) {
   case GRAPHICS_FILL_SOLID:
@@ -340,7 +340,7 @@ function defineShape(tag, dictionary) {
       var commands = [];
 
       var fillStyle = fillStyles[i - 1];
-      var fill = createFill(fillStyle);
+      var fill = createFill(fillStyle, dictionary, dependencies);
 
       var cmds = [];
       var j = 0;
@@ -392,7 +392,7 @@ function defineShape(tag, dictionary) {
       var color = lineStyle.color;
       if (!color) {
         if (lineStyle.hasFill) {
-          stroke = createFill(lineStyle.fillStyle);
+          stroke = createFill(lineStyle.fillStyle, dictionary, dependencies);
         } else {
           stroke = '"rgba(' + [255, 0, 128, 1].join(',') + ')"';
         }
