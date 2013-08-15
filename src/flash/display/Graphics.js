@@ -59,9 +59,9 @@ var GraphicsDefinition = (function () {
       this._parent._bounds = null;
     },
 
-    _createPattern: function(bitmap, matrix, repeat, smooth) {
+    _createPatternStyle: function(bitmap, matrix, repeat, smooth) {
       var repeatStyle = (repeat === false) ? 'no-repeat' : 'repeat';
-      var pattern = fillContext.createPattern(bitmap._drawable, repeatStyle);
+      var pattern = this._createPattern(bitmap._drawable, repeatStyle);
 
       // NOTE firefox really sensitive to really small scale when painting gradients
       var scale = 819.2;
@@ -71,7 +71,7 @@ var GraphicsDefinition = (function () {
 
       return pattern;
     },
-    _createGradient: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
+    _createGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
       var gradient;
       if (type === 'linear') {
         gradient = this._createLinearGradient(-1, 0, 1, 0);
@@ -98,6 +98,9 @@ var GraphicsDefinition = (function () {
     },
     _createRadialGradient: function (x0, y0, r0, x1, y1, r1) {
       return fillContext.createRadialGradient(x0, y0, r0, x1, y1, r1);
+    },
+    _createPattern: function(image, repetition) {
+      return fillContext.createPattern(image, repetition);
     },
     _drawPathObject: function (path) {
       if (path.__class__ === 'flash.display.GraphicsPath')
@@ -130,10 +133,10 @@ var GraphicsDefinition = (function () {
       this._fillStyle = alpha ? toRgba(color, alpha) : null;
     },
     beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      this._fillStyle = this._createGradient(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
+      this._fillStyle = this._createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      this._fillStyle = this._createPattern(bitmap, matrix, repeat, smooth);
+      this._fillStyle = this._createPatternStyle(bitmap, matrix, repeat, smooth);
     },
     clear: function () {
       this._invalidate();
@@ -250,10 +253,10 @@ var GraphicsDefinition = (function () {
       this._fillStyle = null;
     },
     lineBitmapStyle: function (bitmap, matrix, repeat, smooth) {
-      this._strokeStyle = this._createPattern(bitmap, matrix, repeat, smooth);
+      this._strokeStyle = this._createPatternStyle(bitmap, matrix, repeat, smooth);
     },
     lineGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      this._strokeStyle = this._createGradient(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
+      this._strokeStyle = this._createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos);
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
