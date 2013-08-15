@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global QuadTree, sortByDepth, TRACE_SYMBOLS_INFO */
+/*global QuadTree, sortByDepth */
 
 var StageDefinition = (function () {
   return {
@@ -201,8 +201,11 @@ var StageDefinition = (function () {
           var interactiveObject;
           var currentNode = target;
           while (currentNode !== this) {
-            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
-                currentNode._mouseEnabled) {
+            if (!currentNode._mouseEnabled) {
+              interactiveObject = null;
+              break;
+            }
+            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
               if (!interactiveObject || !currentNode._mouseChildren) {
                 interactiveObject = currentNode;
               }
@@ -221,18 +224,18 @@ var StageDefinition = (function () {
         target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
         if (this._clickTarget) {
-          this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
-
-          if (TRACE_SYMBOLS_INFO && target._control) {
-            delete target._control.dataset.mouseOver;
+          if (this._clickTarget._buttonMode) {
+            this._clickTarget._gotoButtonState('up');
           }
+
+          this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+        }
+
+        if (target._buttonMode) {
+          target._gotoButtonState('over');
         }
 
         target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
-
-        if (TRACE_SYMBOLS_INFO && target._control) {
-          target._control.dataset.mouseOver = true;
-        }
 
         this._clickTarget = target;
       }

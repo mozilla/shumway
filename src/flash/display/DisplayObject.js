@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-var TRACE_SYMBOLS_INFO = false;
-
 var DisplayObjectDefinition = (function () {
   var BLEND_MODE_ADD        = 'add';
   var BLEND_MODE_ALPHA      = 'alpha';
@@ -55,7 +53,6 @@ var DisplayObjectDefinition = (function () {
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
-      this._control = document.createElement('div');
       this._clipDepth = null;
       this._currentTransform = null;
       this._cxform = null;
@@ -92,6 +89,7 @@ var DisplayObjectDefinition = (function () {
       this._qtree = null;
       this._level = -1;
       this._index = -1;
+      this._mouseEnabled = true;
 
       var s = this.symbol;
       if (s) {
@@ -137,7 +135,6 @@ var DisplayObjectDefinition = (function () {
           this._currentTransform = matrix;
         }
       }
-      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
 
@@ -171,20 +168,6 @@ var DisplayObjectDefinition = (function () {
       }
     },
 
-    _updateTraceSymbolInfo: function () {
-      var s = this.symbol;
-      var info = {
-        className: this.__class__,
-        symbolId: s && s.symbolId,
-        name: this._name
-      };
-      this._control.dataset.symbolInfo = info;
-      this._control.title =
-        (info.symbolId ? 'symbolId: ' + info.symbolId + '\n' : '') +
-        (info.name ? 'name: ' + info.name + '\n' : '') +
-        'class: ' + this.__class__;
-      this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
-    },
     _applyCurrentInverseTransform: function (point, immediate) {
       if (this._parent && this._parent !== this._stage && !immediate)
         this._parent._applyCurrentInverseTransform(point);
@@ -428,7 +411,6 @@ var DisplayObjectDefinition = (function () {
     },
     set name(val) {
       this._name = val;
-      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
     },
     get mouseX() {
       if (!this._stage) {

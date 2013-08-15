@@ -122,9 +122,6 @@ var SpriteDefinition = (function () {
             flash.display.Bitmap.class.instanceConstructor.call(instance, bitmapData);
           }
 
-          assert(instance._control);
-          this._control.appendChild(instance._control);
-
           if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
             instance._dispatchEvent(new flash.events.Event("init"));
@@ -163,9 +160,6 @@ var SpriteDefinition = (function () {
         parent[Multiname.getPublicQualifiedName(name)] = instance;
 
       symbolClass.instanceConstructor.call(instance);
-
-      assert(instance._control);
-      parent._control.appendChild(instance._control);
 
       if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
@@ -299,9 +293,6 @@ var SpriteDefinition = (function () {
       if (this._stage) {
         this._stage._syncCursor();
       }
-    },
-    get shouldHaveHandCursor() {
-      return this._buttonMode && this._useHandCursor;
     },
 
     startDrag: function (lockCenter, bounds) {

@@ -28,7 +28,7 @@ var MovieClipDefinition = (function () {
       this._currentLabel = null;
       this._currentScene = 0;
       this._deferScriptExecution = false;
-      this._enabled = null;
+      this._enabled = true;
       this._frameScripts = { };
       this._framesLoaded = 1;
       this._isPlaying = true;
@@ -173,7 +173,6 @@ var MovieClipDefinition = (function () {
               if (currentChild && currentChild._owned) {
                 children.splice(currentIndex, 1);
 
-                this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
                 if (this._stage) {
                   this._stage._removeFromStage(currentChild);
@@ -220,7 +219,6 @@ var MovieClipDefinition = (function () {
                   index = currentIndex;
                   replace = true;
 
-                  this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
                   if (this._stage) {
                     this._stage._removeFromStage(currentChild);
@@ -363,6 +361,12 @@ var MovieClipDefinition = (function () {
           this._soundStream.sound = sound;
           this._soundStream.channel = channel;
         }
+      }
+    },
+
+    _gotoButtonState: function gotoButtonState(buttonState) {
+      if (this._enabled) {
+        this.gotoLabel('_' + buttonState);
       }
     },
 
