@@ -968,7 +968,9 @@ function interpretActions(actionsData, scopeContainer,
         // checking "if the method name is blank or undefined"
         if (methodName !== null && methodName !== undefined &&
             methodName !== '') {
-          if (obj !== AS2_SUPER_STUB) {
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call method ' + methodName + ' of ' + typeof obj);
+          } else if (obj !== AS2_SUPER_STUB) {
             target = Object(obj);
           } else {
             target = getVariable('__class').__super.prototype;
@@ -1086,8 +1088,14 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
+          }
           method = obj.getMultinameProperty(undefined, resolvedName, 0);
         } else {
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call new using ' + typeof obj);
+          }
           method = obj;
         }
         result = Object.create(method.prototype || Object.prototype);
