@@ -77,7 +77,7 @@ dynamic class GraphicsObject extends Sprite {
                 var colors:Array = [0xFF0000, 0x0000FF];
                 var alphas:Array = [1, 1];
                 var ratios:Array = [0x00, 0xFF];
-                graphics.beginGradientFill(fillType, colors, alphas, ratios);        
+                graphics.beginGradientFill(fillType, colors, alphas, ratios);
                 graphics.drawRect(0,0,size,size);
                 graphics.endFill();
             })();
@@ -121,8 +121,7 @@ dynamic class GraphicsObject extends Sprite {
                 var alphas:Array = [1, 1];
                 var ratios:Array = [0x00, 0xFF];
                 graphics.lineStyle(20);
-                //FIXME not implemented
-                //graphics.lineGradientStyle(fillType, colors, alphas, ratios);        
+                graphics.lineGradientStyle(fillType, colors, alphas, ratios);
                 graphics.moveTo(size/2, size);
                 graphics.lineTo(10, 10);
                 graphics.lineTo(size, 10);

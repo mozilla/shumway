@@ -631,6 +631,10 @@ FlashStreamConverterBase.prototype = {
     return true;
   },
 
+  getUrlHint: function(requestUrl) {
+    return requestUrl.spec;
+  },
+
   createChromeActions: function(window, document, urlHint) {
     var url;
     var baseUrl;
@@ -771,7 +775,7 @@ FlashStreamConverterBase.prototype = {
           // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
                                                       domWindow.document,
-                                                      originalURI.spec);
+                                                      converter.getUrlHint(originalURI));
           if (actions.objectParams['shumwaymode'] === 'off') {
             actions.fallback();
             return;
@@ -836,6 +840,9 @@ FlashStreamConverter2.prototype.isValidRequest =
       return false;
     }
   });
+FlashStreamConverter2.prototype.getUrlHint = function (requestUrl) {
+  return '';
+};
 
 var NSGetFactory1 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter1]);
 var NSGetFactory2 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter2]);
