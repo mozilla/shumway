@@ -675,6 +675,7 @@ var LoaderDefinition = (function () {
             var as2Object = root._getAS2Object();
             avm1Context.globals.setMultinameProperty(undefined, '_root', 0, as2Object);
             avm1Context.globals.setMultinameProperty(undefined, '_level0', 0, as2Object);
+            avm1Context.globals.setMultinameProperty(undefined, '_level1', 0, as2Object);
 
             // transfer parameters
             var parameters = loader.loaderInfo._parameters;

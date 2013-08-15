@@ -20,15 +20,15 @@
 
 function proxyNativeProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject[propertyName]; },
-    set: function setter(value) { this.$nativeObject[propertyName] = value; },
+    get: function getter() { return this.$nativeObject.getMultinameProperty(undefined, propertyName, 0); },
+    set: function setter(value) { this.$nativeObject.setMultinameProperty(undefined, propertyName, 0, value); },
     enumerable: true
   };
 }
 
 function proxyNativeReadonlyProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject[propertyName]; },
+    get: function getter() { return this.$nativeObject.getMultinameProperty(undefined, propertyName, 0); },
     enumerable: true
   };
 }
@@ -36,7 +36,8 @@ function proxyNativeReadonlyProperty(propertyName) {
 function proxyNativeMethod(methodName) {
   return {
     value: function proxyMethod(id) {
-      return this.$nativeObject[methodName].apply(this.$nativeObject, arguments);
+      return this.$nativeObject.callMultinameProperty(undefined, methodName,
+        0, true, arguments);
     },
     enumerable: true
   };
@@ -66,10 +67,10 @@ function proxyEventHandler(eventName, argsConverter) {
       }
       currentHandler = newHandler;
       if (currentHandler) {
-        handlerRunner = function handlerRunner() {
+        handlerRunner = function handlerRunner(handler) {
           var args = argsConverter ? argsConverter(arguments) : null;
-          return currentHandler.apply(this, args);
-        }.bind(this);
+          return handler.apply(this, args);
+        }.bind(this, currentHandler);
         this.$nativeObject._addEventListener(eventName, handlerRunner);
       } else {
         handlerRunner = null;

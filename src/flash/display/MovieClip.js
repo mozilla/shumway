@@ -61,10 +61,18 @@ var MovieClipDefinition = (function () {
 
       this._needAdvance = true;
       this._onConstructFrame = function () {
-        this._gotoFrame(this._currentFrame + 1);
-        this._needAdvance = false;
-        if (!this._isPlaying) {
-          this._removeEventListener('constructFrame', this._onConstructFrame);
+        try {
+          this._gotoFrame(this._currentFrame + 1);
+          this._needAdvance = false;
+          if (!this._isPlaying) {
+            this._removeEventListener('constructFrame', this._onConstructFrame);
+          }
+        } catch (e) {
+          if ($DEBUG) {
+            console.error('error ' + e + ', stack: \n' + e.stack);
+          }
+          this.stop();
+          throw e;
         }
       }.bind(this);
       this._addEventListener('constructFrame', this._onConstructFrame);
@@ -75,15 +83,7 @@ var MovieClipDefinition = (function () {
       if (frameNum in this._frameScripts) {
         var scripts = this._frameScripts[frameNum];
         for (var i = 0, n = scripts.length; i < n; i++) {
-          if ($DEBUG) {
-            try {
-              scripts[i].call(this);
-            } catch (e) {
-              console.error('error ' + e + ', stack: \n' + e.stack);
-            }
-          } else {
-            scripts[i].call(this);
-          }
+          scripts[i].call(this);
         }
       }
       this._deferScriptExecution = false;
