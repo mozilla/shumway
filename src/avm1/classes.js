@@ -67,10 +67,10 @@ function proxyEventHandler(eventName, argsConverter) {
       }
       currentHandler = newHandler;
       if (currentHandler) {
-        handlerRunner = function handlerRunner() {
+        handlerRunner = function handlerRunner(handler) {
           var args = argsConverter ? argsConverter(arguments) : null;
-          return currentHandler.apply(this, args);
-        }.bind(this);
+          return handler.apply(this, args);
+        }.bind(this, currentHandler);
         this.$nativeObject._addEventListener(eventName, handlerRunner);
       } else {
         handlerRunner = null;
