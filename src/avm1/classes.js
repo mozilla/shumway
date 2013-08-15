@@ -276,7 +276,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     set: function set$forceSmoothing(value) { throw 'Not implemented: set$forceSmoothing'; },
     enumerable: true
   },
-  _framesloaded: proxyNativeReadonlyProperty('_framesLoaded'),
+  _framesloaded: proxyNativeReadonlyProperty('framesLoaded'),
   getBounds: {
     value: function getBounds(bounds) {
       var obj = bounds.$nativeObject;
